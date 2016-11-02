@@ -316,7 +316,7 @@ Screen_Qt * Front_Qt::getMainScreen() {
 Front_Qt::~Front_Qt() {
     this->empty_buffer();
     delete(this->_capture);
-    delete(this->_graph_capture);
+
 }
 
 
@@ -327,11 +327,11 @@ Front_Qt::~Front_Qt() {
 //------------------------
 
 void Front_Qt::disconnexionReleased(){
+    this->_replay = false;
     this->dropScreen();
     this->disconnect("");
     this->_cache = nullptr;
     delete(this->_capture);
-    delete(this->_graph_capture);
     this->_capture = nullptr;
     this->_graph_capture = nullptr;
 }
@@ -360,7 +360,6 @@ void Front_Qt::closeFromScreen(int screen_index) {
     }
 
     delete(this->_capture);
-    delete(this->_graph_capture);
     this->_capture = nullptr;
     this->_graph_capture = nullptr;
 
@@ -415,52 +414,6 @@ bool Front_Qt::connect() {
 
     if (this->_mod_qt->connect()) {
 
-          if (this->_record) {
-            Inifile ini;
-            ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
-            ini.set<cfg::video::png_limit>(0);
-            ini.set<cfg::video::disable_keyboard_log>(KeyboardLogFlags::none);
-            ini.set<cfg::session_log::enable_session_log>(0);
-            ini.set<cfg::session_log::keyboard_input_masking_level>(KeyboardInputMaskingLevel::unmasked);
-            ini.set<cfg::context::pattern_kill>("");
-            ini.set<cfg::context::pattern_notify>("");
-            ini.set<cfg::debug::capture>(0xfffffff);
-            ini.set<cfg::video::capture_groupid>(1);
-            ini.set<cfg::video::record_tmp_path>(this->REPLAY_DIR);
-            ini.set<cfg::video::record_path>(this->REPLAY_DIR);
-            ini.set<cfg::video::hash_path>(this->REPLAY_DIR);
-            time_t now;
-            time(&now);
-            std::string data(ctime(&now));
-            std::string data_cut(data.c_str(), data.size()-1);
-            std::string name("-Replay");
-            std::string movie_name(data_cut+name);
-            ini.set<cfg::globals::movie_path>(movie_name.c_str());
-            ini.set<cfg::globals::trace_type>(TraceType::localfile);
-            ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
-            ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned, std::ratio<1, 100>>(6));
-            LCGRandom gen(0);
-            CryptoContext cctx(gen, ini);
-            bool enable_rt(true);
-            auth_api * authentifier(nullptr);
-            struct timeval time;
-            gettimeofday(&time, nullptr);
-            this->_capture = new Capture( time
-                                        , this->_info.width
-                                        , this->_info.height
-                                        , this->_info.bpp
-                                        , this->_info.bpp
-                                        , enable_rt
-                                        , false
-                                        , authentifier
-                                        , ini
-                                        , gen
-                                        , cctx
-                                        , true
-                                        );
-            this->_graph_capture = this->_capture->get_graphic_api();
-        }
-
         this->_cache = new QPixmap(this->_info.width, this->_info.height);
         this->_screen[0] = new Screen_Qt(this, this->_cache);
         for (int i = 1; i < this->_monitorCount; i++) {
@@ -468,11 +421,12 @@ bool Front_Qt::connect() {
             this->_screen[i]->show();
         }
 
+        this->_replay = false;
         this->_connected = true;
         this->_form->hide();
         this->_screen[0]->show();
 
-        if (this->_record) {
+        if (this->_record && !this->_replay) {
             Inifile ini;
             ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
             ini.set<cfg::video::png_limit>(0);
@@ -513,7 +467,7 @@ bool Front_Qt::connect() {
                                         , ini
                                         , gen
                                         , cctx
-                                        , true
+                                        , false
                                         );
             this->_graph_capture = this->_capture->get_graphic_api();
         }
@@ -530,13 +484,13 @@ void Front_Qt::replay(std::string & movie_path) {
     }
     const std::string delimiter = "/";
     size_t pos(movie_path.find(delimiter));
-    this->_record = false;
 
     while(movie_path.length() > pos) {
         movie_path = movie_path.substr(pos + delimiter.length(), movie_path.length());
         pos = movie_path.find(delimiter);
     }
 
+    this->_replay = true;
     this->setScreenDimension();
     this->_cache_replay = new QPixmap(this->_info.width, this->_info.height);
     this->_screen[0] = new Screen_Qt(this, this->_cache_replay, movie_path);
@@ -548,18 +502,23 @@ void Front_Qt::replay(std::string & movie_path) {
     this->_form->hide();
     this->_screen[0]->show();
 
+    this->reload_replay_mod(movie_path);
+
+}
+
+void Front_Qt::reload_replay_mod(std::string & movie_name) {
     this->_replay_mod = new ReplayMod( *(this)
                                      , (this->REPLAY_DIR + "/").c_str()
-                                     , movie_path.c_str()
-                                     , 800
-                                     , 600
+                                     , movie_name.c_str()
+                                     , 0
+                                     , 0
                                      , this->_error
                                      , this->_font
                                      , true
                                      , 0
                                      );
-
 }
+
 
 void Front_Qt::disconnect(std::string const & error) {
 
@@ -783,7 +742,16 @@ QColor Front_Qt::u32_to_qcolor(uint32_t color){
     uint8_t b(color >> 16);
     uint8_t g(color >> 8);
     uint8_t r(color);
+    //std::cout <<  "r=" <<  int(r) <<  " g=" <<  int(g) << " b=" <<  int(b) <<  std::endl;
     return {r, g, b};
+}
+
+QColor Front_Qt::u32_to_qcolor_r(uint32_t color){
+    uint8_t b(color >> 16);
+    uint8_t g(color >> 8);
+    uint8_t r(color);
+    //std::cout <<  "r=" <<  int(r) <<  " g=" <<  int(g) << " b=" <<  int(b) <<  std::endl;
+    return {b, g, r};
 }
 
 
@@ -968,7 +936,7 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
         }
     }
 
-    if (this->_record) {
+    if (this->_record && !this->_replay) {
         this->_graph_capture->draw(cmd, clip);
         struct timeval time;
         gettimeofday(&time, nullptr);
@@ -986,13 +954,20 @@ void Front_Qt::draw(const RDPOpaqueRect & cmd, const Rect & clip) {
     }
     //std::cout << "RDPOpaqueRect" << std::endl;
     RDPOpaqueRect new_cmd24 = cmd;
-    new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
+    new_cmd24.color = color_decode_opaquerect(cmd.color, 24, this->mod_palette);
+    QColor qcolor(this->u32_to_qcolor(new_cmd24.color));
+    if (this->_replay) {
+        decode_color16 decode16;
+        new_cmd24.color = decode16(cmd.color);
+        qcolor = this->u32_to_qcolor_r(new_cmd24.color);
+    }
     Rect rect(new_cmd24.rect.intersect(clip));
-    this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, this->u32_to_qcolor(new_cmd24.color));
+
+    this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, qcolor);
 
 
-    if (this->_record) {
-        this->_graph_capture->draw(cmd, clip);
+    if (this->_record && !this->_replay) {
+        this->_graph_capture->draw(new_cmd24, clip);
         struct timeval time;
         gettimeofday(&time, nullptr);
         this->_capture->snapshot(time, 0, 0, false);
@@ -1045,7 +1020,7 @@ void Front_Qt::draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
         rowYCoord--;
     }
 
-    if (this->_record) {
+    if (this->_record && !this->_replay) {
         this->_graph_capture->draw(bitmap_data, bmp);
         struct timeval time;
         gettimeofday(&time, nullptr);
@@ -1069,7 +1044,7 @@ void Front_Qt::draw(const RDPLineTo & cmd, const Rect & clip) {
     this->_screen[0]->setPenColor(this->u32_to_qcolor(new_cmd24.back_color));
     this->_screen[0]->paintCache().drawLine(new_cmd24.startx, new_cmd24.starty, new_cmd24.endx, new_cmd24.endy);
 
-    if (this->_record) {
+    if (this->_record && !this->_replay) {
         this->_graph_capture->draw(cmd, clip);
         struct timeval time;
         gettimeofday(&time, nullptr);
@@ -1162,7 +1137,7 @@ void Front_Qt::draw(const RDPScrBlt & cmd, const Rect & clip) {
             // +------+-------------------------------+
             // | 0xCC | ROP: 0x00CC0020 (SRCCOPY)     |
             // |      | RPN: S                        |
-            // +------+-------------------------------+*/
+            // +------+-------------------------------+
         case 0xCC: this->draw_RDPScrBlt(srcx, srcy, drect, false);
             break;
             // +------+-------------------------------+
@@ -1186,7 +1161,7 @@ void Front_Qt::draw(const RDPScrBlt & cmd, const Rect & clip) {
             break;
     }
 
-    if (this->_record) {
+    if (this->_record && !this->_replay) {
         this->_graph_capture->draw(cmd, clip);
         struct timeval time;
         gettimeofday(&time, nullptr);
@@ -1450,7 +1425,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         break;
     }
 
-    if (this->_record) {
+    if (this->_record && !this->_replay) {
         this->_graph_capture->draw(cmd, clip, bitmap);
         struct timeval time;
         gettimeofday(&time, nullptr);
@@ -1524,7 +1499,7 @@ void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bi
         break;
     }
 
-    if (this->_record) {
+    if (this->_record && !this->_replay) {
         this->_graph_capture->draw(cmd, clip, bitmap);
         struct timeval time;
         gettimeofday(&time, nullptr);
@@ -1560,7 +1535,7 @@ void Front_Qt::draw(const RDPDestBlt & cmd, const Rect & clip) {
             break;
     }
 
-    if (this->_record) {
+    if (this->_record && !this->_replay) {
         this->_graph_capture->draw(cmd, clip);
         struct timeval time;
         gettimeofday(&time, nullptr);
@@ -1709,7 +1684,7 @@ void Front_Qt::draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCac
     //this->draw_VariableBytes(cmd.data, cmd.data_len, has_delta_bytes,
         //draw_pos, offset_y, color, cmd.bk.x + offset_x, cmd.bk.y,
         //clipped_glyph_fragment_rect, cmd.cache_id, gly_cache);
-    if (this->_record) {
+    if (this->_record && !this->_replay) {
         this->_graph_capture->draw(cmd, clip, gly_cache);
         struct timeval time;
         gettimeofday(&time, nullptr);

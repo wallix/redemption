@@ -1065,26 +1065,43 @@ private Q_SLOTS:
 };
 
 
+
 class ReplayThread : public QThread
 {
     Q_OBJECT
 
 Front_Qt_API * _front;
+bool           _readyToRun;
 
 public:
 
     ReplayThread(Front_Qt_API * front, QObject * screen)
         : QThread(screen)
         , _front(front)
+        , _readyToRun(true)
     {}
+
+    void stop() {
+        this->_readyToRun = false;
+    }
+
+    void reStart() {
+        this->_readyToRun = true;
+    }
 
 protected:
 
     void run() {
-        this->_front->_replay_mod->play();
-        this->exec();
+        while (this->_readyToRun && !this->_front->_replay_mod->get_break_privplay_qt()) {
+            std::cout << "thread loop 1" << std::endl;
+            this->_front->_replay_mod->play_qt();
+            std::cout << "thread loop 2" << std::endl;
+        }
+        std::cout << "thread loop end" << std::endl;
+        QThread::exit(0);
     }
 };
+
 
 
 class Screen_Qt : public QWidget
@@ -1111,6 +1128,7 @@ public:
 
     ReplayThread * _replayThread;
     bool           _running;
+    std::string    _movie_name;
 
     Screen_Qt (Front_Qt_API * front, int screen_index, QPixmap * cache)
         : QWidget()
@@ -1131,9 +1149,9 @@ public:
         this->setMouseTracking(true);
         this->installEventFilter(this);
         this->setAttribute(Qt::WA_DeleteOnClose);
-        //std::string screen_index_str = std::to_string(int(this->_screen_index));
-        //std::string title = "Remote Desktop Player connected to [" + this->_front->_targetIP +  "]. " + screen_index_str;
-        //this->setWindowTitle(QString(title.c_str()));
+        std::string screen_index_str = std::to_string(int(this->_screen_index));
+        std::string title = "Remote Desktop Player connected to [" + this->_front->_targetIP +  "]. " + screen_index_str;
+        this->setWindowTitle(QString(title.c_str()));
 
         if (this->_front->_span) {
             this->setWindowState(Qt::WindowFullScreen);
@@ -1141,30 +1159,6 @@ public:
         } else {
             this->setFixedSize(this->_width, this->_height + Front_Qt_API::BUTTON_HEIGHT);
         }
-
-        QRect rectCtrlAltDel(QPoint(0, this->_height+1),QSize(this->_width/3, Front_Qt_API::BUTTON_HEIGHT));
-        this->_buttonCtrlAltDel.setToolTip(this->_buttonCtrlAltDel.text());
-        this->_buttonCtrlAltDel.setGeometry(rectCtrlAltDel);
-        this->_buttonCtrlAltDel.setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (pressed()),  this, SLOT (CtrlAltDelPressed()));
-        this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));
-        this->_buttonCtrlAltDel.setFocusPolicy(Qt::NoFocus);
-
-        QRect rectRefresh(QPoint(this->_width/3, this->_height+1),QSize(this->_width/3, Front_Qt_API::BUTTON_HEIGHT));
-        this->_buttonRefresh.setToolTip(this->_buttonRefresh.text());
-        this->_buttonRefresh.setGeometry(rectRefresh);
-        this->_buttonRefresh.setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (pressed()),  this, SLOT (RefreshPressed()));
-        this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (released()), this, SLOT (RefreshReleased()));
-        this->_buttonRefresh.setFocusPolicy(Qt::NoFocus);
-
-        QRect rectDisconnexion(QPoint(((this->_width/3)*2), this->_height+1),QSize(this->_width-((this->_width/3)*2), Front_Qt_API::BUTTON_HEIGHT));
-        this->_buttonDisconnexion.setToolTip(this->_buttonDisconnexion.text());
-        this->_buttonDisconnexion.setGeometry(rectDisconnexion);
-        this->_buttonDisconnexion.setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (pressed()),  this, SLOT (disconnexionPressed()));
-        this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (disconnexionRelease()));
-        this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
 
         QDesktopWidget * desktop = QApplication::desktop();
         int shift(10 * this->_screen_index);
@@ -1185,9 +1179,8 @@ public:
     Screen_Qt (Front_Qt_API * front, QPixmap * cache, std::string & movie_path)
         : QWidget()
         , _front(front)
-        , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
         , _buttonRefresh("Play", this)
-        , _buttonDisconnexion("Disconnection", this)
+        , _buttonDisconnexion("Stop", this)
         , _penColor(Qt::black)
         , _cache(cache)
         , _cache_painter(this->_cache)
@@ -1197,12 +1190,13 @@ public:
         , _timer(this)
         , _timer_replay(this)
         , _screen_index(0)
+        , _replayThread(nullptr)
         , _running(false)
+        , _movie_name(movie_path)
     {
-        this->setAttribute(Qt::WA_DeleteOnClose);
-        std::string title = "Remote Desktop Player " + movie_path;
+        std::string title = "Remote Desktop Player " + this->_movie_name;
         this->setWindowTitle(QString(title.c_str()));
-
+        this->setAttribute(Qt::WA_DeleteOnClose);
         this->paintCache().fillRect(0, 0, this->_width, this->_height, {0, 0, 0});
 
         if (this->_front->_span) {
@@ -1211,28 +1205,18 @@ public:
             this->setFixedSize(this->_width, this->_height + Front_Qt_API::BUTTON_HEIGHT);
         }
 
-        QRect rectCtrlAltDel(QPoint(0, this->_height+1),QSize(this->_width/3, Front_Qt_API::BUTTON_HEIGHT));
-        this->_buttonCtrlAltDel.setToolTip(this->_buttonCtrlAltDel.text());
-        this->_buttonCtrlAltDel.setGeometry(rectCtrlAltDel);
-        this->_buttonCtrlAltDel.setCursor(Qt::PointingHandCursor);
-        //this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (pressed()),  this, SLOT (CtrlAltDelPressed()));
-        //this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));
-        this->_buttonCtrlAltDel.setFocusPolicy(Qt::NoFocus);
-
-        QRect rectRefresh(QPoint(this->_width/3, this->_height+1),QSize(this->_width/3, Front_Qt_API::BUTTON_HEIGHT));
+        QRect rectRefresh(QPoint(0, this->_height+1),QSize(this->_width/2, Front_Qt_API::BUTTON_HEIGHT));
         this->_buttonRefresh.setToolTip(this->_buttonRefresh.text());
         this->_buttonRefresh.setGeometry(rectRefresh);
         this->_buttonRefresh.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (pressed()),  this, SLOT (playPressed()));
-        //this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (released()), this, SLOT (RefreshReleased()));
         this->_buttonRefresh.setFocusPolicy(Qt::NoFocus);
 
-        QRect rectDisconnexion(QPoint(((this->_width/3)*2), this->_height+1),QSize(this->_width-((this->_width/3)*2), Front_Qt_API::BUTTON_HEIGHT));
+        QRect rectDisconnexion(QPoint(this->_width/2, this->_height+1),QSize(this->_width/2, Front_Qt_API::BUTTON_HEIGHT));
         this->_buttonDisconnexion.setToolTip(this->_buttonDisconnexion.text());
         this->_buttonDisconnexion.setGeometry(rectDisconnexion);
         this->_buttonDisconnexion.setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (pressed()),  this, SLOT (disconnexionPressed()));
-        this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (disconnexionRelease()));
+        this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (stopRelease()));
         this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
 
         uint32_t centerW = 0;
@@ -1244,8 +1228,10 @@ public:
         }
         this->move(centerW, centerH);
 
-        //this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
-        //this->_timer.start(1000/this->_front->_fps);
+        this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
+        this->_timer.start(1000/this->_front->_fps);
+
+        this->QObject::connect(&(this->_timer_replay), SIGNAL (timeout()),  this, SLOT (playReplay()));
 
         this->setFocusPolicy(Qt::StrongFocus);
     }
@@ -1264,6 +1250,7 @@ public:
         , _connexionLasted(false)
         , _timer(this)
         , _screen_index(0)
+        , _replayThread(nullptr)
         , _running(false)
     {
         this->setMouseTracking(true);
@@ -1383,27 +1370,47 @@ private:
 
 private Q_SLOTS:
     void playPressed() {
-        if (this->_running) {
-            std::cout << "thread stop" <<  std::endl;
-            this->_replayThread->exit();
+        /*if (this->_running) {
+            std::cout << "replay pause" <<  std::endl;
+            this->_replayThread->stop();
+            this->_buttonRefresh.setText("Play");
             this->_running = false;
         } else {
-            std::cout << "thread start" <<  std::endl;
+
             this->_running = true;
-            this->_replayThread = new ReplayThread(this->_front, this);
-            this->_replayThread->start();
+            if (this->_replayThread == nullptr) {
+                std::cout << "replay play" <<  std::endl;
+                this->_replayThread = new ReplayThread(this->_front, this);
+                this->QObject::connect(this->_replayThread, SIGNAL (finished()), this, SLOT (disconnexionRelease()));
+                this->_replayThread->start();
+            } else {
+                this->_replayThread->reStart();
+            }
+        }*/
+
+        //this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
+        if (this->_running) {
+            this->_running = false;
+            this->_buttonRefresh.setText("Play");
+            this->_timer_replay.stop();
+        } else {
+            this->_running = true;
+            this->_buttonRefresh.setText("Pause");
+            this->_timer_replay.start(1);
         }
 
 
-        /*this->QObject::connect(&(this->_timer_replay), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
-        this->QObject::connect(&(this->_timer_replay), SIGNAL (timeout()),  this, SLOT (playReplay()));
-        this->_timer_replay.start(15);*/
     }
 
     void playReplay() {
         this->_front->_replay_mod->play_qt();
         if (this->_front->_replay_mod->get_break_privplay_qt()) {
+            std::cout <<  "movie over" <<  std::endl;
             this->_timer_replay.stop();
+            this->_buttonRefresh.setText("Replay");
+            this->_running = false;
+            this->_front->reload_replay_mod(this->_movie_name);
+            // TODO reset Replay_mod
         }
     }
 
@@ -1428,15 +1435,22 @@ private Q_SLOTS:
     }
 
     void disconnexionPressed() {
-        this->_front->disconnexionPressed();
+        //this->_front->disconnexionPressed();
+    }
+
+    void stopRelease() {
+        /*if (this->_replayThread != nullptr) {
+            this->_buttonRefresh.setEnabled(false);
+            this->_replayThread->stop();
+            this->hide();
+        }*/
+
+        this->_timer_replay.stop();
+        this->_front->disconnexionReleased();
     }
 
     void disconnexionRelease(){
         this->_front->disconnexionReleased();
-    }
-
-    void setMainScreenOnTopPressed() {
-
     }
 
     void setMainScreenOnTopRelease() {

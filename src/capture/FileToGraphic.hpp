@@ -693,7 +693,7 @@ public:
                         uint64_t movie_elapsed = difftimeval(this->record_now, this->start_record_now);
 
                         if (elapsed < movie_elapsed) {
-                            std::cout << "elapsed < movie_elapsed" <<  std::endl;
+                            /*std::cout << "elapsed < movie_elapsed" <<  std::endl;
                             struct timespec wtime     = {
                                   static_cast<time_t>( (movie_elapsed - elapsed) / 1000000LL)
                                 , static_cast<time_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
@@ -702,7 +702,7 @@ public:
 
                             while ((nanosleep(&wtime, &wtime_rem) == -1) && (errno == EINTR)) {
                                 wtime = wtime_rem;
-                            }
+                            } */
                         }
                     }
                 }

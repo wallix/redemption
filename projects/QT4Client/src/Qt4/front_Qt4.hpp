@@ -178,6 +178,7 @@ public:
     bool                 _span;
     Rect                 _screen_dimensions[MAX_MONITOR_COUNT];
     bool                 _record;
+    bool                 _replay;
 
 
     Front_Qt_API( bool param1
@@ -201,6 +202,7 @@ public:
     , _cache_replay(nullptr)
     , _span(false)
     , _record(false)
+    , _replay(false)
     {
         this->_to_client_sender._front = this;
     }
@@ -236,6 +238,7 @@ public:
     virtual bool must_be_stop_capture() override { return true; }
     virtual void emptyLocalBuffer() = 0;
     virtual void replay(std::string & movie_path) = 0;
+    virtual void reload_replay_mod(std::string & movie_name) = 0;
 };
 
 
@@ -389,6 +392,8 @@ public:
 
     void setScreenDimension();
 
+    void reload_replay_mod(std::string & movie_name);
+
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -399,6 +404,8 @@ public:
     void draw_RDPScrBlt(int srcx, int srcy, const Rect & drect, bool invert);
 
     QColor u32_to_qcolor(uint32_t color);
+
+    QColor u32_to_qcolor_r(uint32_t color);
 
     QImage::Format bpp_to_QFormat(int bpp, bool alpha) override;
 
