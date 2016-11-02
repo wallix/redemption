@@ -93,13 +93,18 @@ install:
       export LDFLAGS="-L ${LLVM_DIR}/install/lib -l c++ -l c++abi"
       export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_DIR}/install/lib"
       export PATH="${LLVM_DIR}/clang/bin:${PATH}"
-      export CXX=clang
+      export TOOLSET=clang
     fi
 
 
 script:
   #- sudo cp tools/bjam-patch/clang-linux.jam /usr/share/boost-build/tools/clang-linux.jam
-  - bjam linkflags=-c --toolset=$TOOLSET cxxflags="$CXXFLAGS" -q exe
+  - |
+    if [[ "$CXXFLAGS" = "" ]] ; then
+        bjam linkflags=-c --toolset=$TOOLSET -q exe
+    else
+        bjam linkflags=-c --toolset=$TOOLSET cxxflags="$CXXFLAGS" -q exe
+    fi
 
 
 #branches:
