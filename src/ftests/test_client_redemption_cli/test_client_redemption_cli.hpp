@@ -165,6 +165,10 @@ public:
       , SHOW_CORE_SERVER_INFO       = 32
       , SHOW_SECURITY_SERVER_INFO   = 64
       , SHOW_KEYBOARD_EVENT         = 128
+      , SHOW_FILE_SYSTEM_EXCHANGE   = 256
+      , SHOW_IN_PDU                 = 512
+      , SHOW_OUT_PDU                = 1024
+      , SHOW_CAPS                   = 2048
     };
     CHANNELS::ChannelDefArray   _cl;
     int                      _timer;
@@ -261,7 +265,7 @@ public:
 
 
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //------------------------
     //      CONSTRUCTOR
     //------------------------
@@ -294,12 +298,12 @@ public:
         this->_to_client_sender._front = this;
         this->_keymap.init_layout(this->_info.keylayout);
 
-        CHANNELS::ChannelDef channel { channel_names::cliprdr
-                                     , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                       GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                       GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                     , PDU_MAX_SIZE+1
-                                     };
+        CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
+                                             , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                               GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                               GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                             , PDU_MAX_SIZE+1
+                                             };
 
         this->_clipbrd_formats_list.add_format( ClipbrdFormatsList::CF_CLIENT_FILECONTENTS
                                               , this->_clipbrd_formats_list.FILECONTENTS
@@ -317,8 +321,16 @@ public:
                                               , std::string("\0\0", 2)
                                               );
 
-        this->_to_client_sender._channel = channel;
-        this->_cl.push_back(channel);
+        this->_to_client_sender._channel = channel_cliprdr;
+        this->_cl.push_back(channel_cliprdr);
+
+        CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
+                                      , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                        GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                        GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                      , PDU_MAX_SIZE+1
+                                      };
+        this->_cl.push_back(channel_rdpdr);
 
         if (this->mod_bpp == this->_info.bpp) {
             this->mod_palette = BGRPalette::classic_332();
@@ -342,7 +354,7 @@ public:
 
     virtual void set_pointer(Pointer const & cursor) override {
         if (this->_verbose & SHOW_CURSOR_STATE_CHANGE) {
-            std::cout <<  "cursor=" << int(cursor.pointer_type) <<  std::endl;
+            std::cout <<  "server >> cursor=" << int(cursor.pointer_type) <<  std::endl;
         }
     }
 
@@ -352,7 +364,7 @@ public:
 
     void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
         if (this->_verbose & SHOW_CURSOR_STATE_CHANGE) {
-            std::cout << "update_pointer_position " << int(xPos) << " " << int(yPos) << std::endl;
+            std::cout << "server >> update_pointer_position " << int(xPos) << " " << int(yPos) << std::endl;
         }
     }
 
@@ -377,9 +389,46 @@ public:
         }
     }
 
+    void show_out_stream(int flags, OutStream & chunk, size_t length) {
+        uint8_t * data = chunk.get_data();
+        std::cout <<  std::hex << "     flag=0x" << flags << " total_length=" << std::dec << int(length) <<  std::hex <<  std::endl;
+        std::cout << "      \"";
+        for (size_t i = 0; i < length; i++) {
+            int byte(data[i]);
+            if ((i % 16) == 0 && i != 0) {
+                std::cout << "\"" << std::endl << "      \"";
+            }
+
+            std::cout << "\\x";
+            if (byte < 0x10) {
+                std::cout << "0";
+            }
+            std::cout  <<  byte;
+        }
+        std::cout << "\"" << std::dec << std::endl;
+    }
+
+    void show_in_stream(int flags, InStream & chunk, size_t length) {
+        std::cout <<  std::hex << "     flag=0x" << flags << " total_length=" << std::dec << int(length) <<  std::hex <<  std::endl;
+        std::cout << "      \"";
+        for (size_t i = 0; i < length; i++) {
+            int byte(chunk.in_uint8());
+            if ((i % 16) == 0 && i != 0) {
+                std::cout << "\"" << std::endl << "      \"";
+            }
+
+            std::cout << "\\x";
+            if (byte < 0x10) {
+                std::cout << "0";
+            }
+            std::cout  <<  byte;
+        }
+        std::cout << "\"" << std::dec << std::endl;
+    }
 
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //-----------------------------
     //         CLIPBOARD
     //-----------------------------
@@ -390,34 +439,44 @@ public:
             return;
         }
 
+        InStream chunk(data, chunk_size);
+
+        InStream chunk_series = chunk.clone();
+
+        if (!chunk.in_check_rem(2  /*msgType(2)*/ )) {
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+
+
         if (!strcmp(channel.name, channel_names::cliprdr)) {
-            std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
-            std::cout << std::dec;
-
-            InStream chunk(data, chunk_size);
-
-            InStream chunk_series = chunk.clone();
-
-            if (!chunk.in_check_rem(2  /*msgType(2)*/ )) {
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
+            //std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
             const uint16_t server_message_type = chunk.in_uint16_le();
 
             if (!this->_waiting_for_data) {
                 switch (server_message_type) {
                     case RDPECLIP::CB_CLIP_CAPS:
-                    if (this->_verbose & SHOW_CLPBRD_PDU_EXCHANGE) {
+                    if (this->_verbose & SHOW_CAPS) {
                         std::cout << "server >> Clipboard Capabilities PDU" << std::endl;
+                        if (this->_verbose & SHOW_IN_PDU) {
+                            this->show_in_stream(flags, chunk_series, chunk_size);
+                        }
                     }
 
                     break;
 
                     case RDPECLIP::CB_MONITOR_READY:
-                        std::cout << "server >> Monitor Ready PDU" << std::endl;
+                        if (this->_verbose & SHOW_CAPS) {
+                            std::cout << "server >> Monitor Ready PDU" << std::endl;
+                            if (this->_verbose & SHOW_IN_PDU) {
+                                this->show_in_stream(flags, chunk_series, chunk_size);
+                            }
+                        }
 
                         {
+                            int flag_out = CHANNELS::CHANNEL_FLAG_LAST |
+                                           CHANNELS::CHANNEL_FLAG_FIRST |
+                                           CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
                             RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1, RDPECLIP::GeneralCapabilitySet::size());
                             RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_2, RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_USE_LONG_FORMAT_NAMES | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS);
                             StaticOutStream<1024> out_stream;
@@ -430,13 +489,14 @@ public:
                             this->_callback->send_to_mod_channel( channel_names::cliprdr
                                                                 , chunk
                                                                 , total_length
-                                                                , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                  CHANNELS::CHANNEL_FLAG_FIRST |
-                                                                  CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                                , flag_out
                                                                 );
 
-                            if (this->_verbose & SHOW_CLPBRD_PDU_EXCHANGE) {
+                            if (this->_verbose & SHOW_CAPS) {
                                 std::cout << "client >> Clipboard Capabilities PDU" << std::endl;
+                                if (this->_verbose & SHOW_OUT_PDU) {
+                                    this->show_out_stream(flag_out, out_stream, total_length);
+                                }
                             }
 
                             //this->_monitorCount = this->_info.cs_monitor.monitorCount;
@@ -465,12 +525,133 @@ public:
 
                     case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
                         this->printClpbrdPDUExchange("server >> Format List Response PDU", chunk.in_uint16_le());
+                        if (this->_verbose & SHOW_CLPBRD_PDU_EXCHANGE && this->_verbose & SHOW_IN_PDU) {
+                            this->show_in_stream(flags, chunk_series, chunk_size);
+                        }
                         this->_running = true;
                     break;
 
                     default:
                         break;
                 }
+            }
+        } else if (!strcmp(channel.name, channel_names::rdpdr)) {
+
+            uint16_t component = chunk.in_uint16_le();
+            uint16_t packetId  = chunk.in_uint16_le();
+
+            switch (component) {
+                case rdpdr::Component::RDPDR_CTYP_CORE:
+
+                    switch (packetId) {
+                        case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
+                        {
+                            uint16_t flag_out = CHANNELS::CHANNEL_FLAG_LAST  |
+                                                CHANNELS::CHANNEL_FLAG_FIRST |
+                                                CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
+                            {
+                            if (this->_verbose & SHOW_FILE_SYSTEM_EXCHANGE) {
+                                std::cout << "server >> PAKID_CORE_SERVER_ANNOUNCE" <<  std::endl;
+                                if (this->_verbose & SHOW_IN_PDU) {
+                                    this->show_in_stream(flags, chunk_series, chunk_size);
+                                }
+                            }
+
+                            uint16_t versionMajor(chunk.in_uint16_le());
+                            uint16_t versionMinor(chunk.in_uint16_le());
+                            uint32_t clientId(chunk.in_uint32_le());
+
+                            StaticOutStream<32> stream;
+
+                            rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
+                                                            , rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM);
+                            sharedHeader.emit(stream);
+
+                            rdpdr::ClientAnnounceReply clientAnnounceReply(versionMajor, versionMinor, clientId);
+                            clientAnnounceReply.emit(stream);
+
+                            int total_length(stream.get_offset());
+                            InStream chunk_to_send(stream.get_data(), stream.get_offset());
+
+                            this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                                , chunk_to_send
+                                                                , total_length
+                                                                , flag_out
+                                                                );
+                            if (this->_verbose & SHOW_FILE_SYSTEM_EXCHANGE) {
+                                std::cout << "client >> PAKID_CORE_CLIENTID_CONFIRM" << std::endl;
+                                if (this->_verbose & SHOW_OUT_PDU) {
+                                    this->show_out_stream(flag_out, stream, total_length);
+                                }
+                            }
+                            }
+
+                            {
+                            StaticOutStream<32> stream;
+
+                            rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
+                                                            , rdpdr::PacketId::PAKID_CORE_CLIENT_NAME);
+                            sharedHeader.emit(stream);
+                            char username[LOGIN_NAME_MAX];
+                            gethostname(username, LOGIN_NAME_MAX);
+                            std::string str_username(username);
+
+                            rdpdr::ClientNameRequest clientNameRequest(username);
+                            clientNameRequest.emit(stream);
+
+                            int total_length(stream.get_offset());
+                            InStream chunk_to_send(stream.get_data(), stream.get_offset());
+
+                            this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                                , chunk_to_send
+                                                                , total_length
+                                                                , flag_out
+                                                                );
+                            if (this->_verbose & SHOW_FILE_SYSTEM_EXCHANGE) {
+                                std::cout << "client >> PAKID_CORE_CLIENT_NAME" <<  std::endl;
+                                if (this->_verbose & SHOW_OUT_PDU) {
+                                    this->show_out_stream(flag_out, stream, total_length);
+                                }
+                            }
+                            }
+                        }
+                        break;
+
+                        case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
+                            if (this->_verbose & SHOW_FILE_SYSTEM_EXCHANGE) {
+                                std::cout << "server >> PAKID_CORE_SERVER_CAPABILITY" << std::endl;
+                                if (this->_verbose & SHOW_IN_PDU) {
+                                    this->show_in_stream(flags, chunk_series, chunk_size);
+                                }
+                            }
+                        break;
+
+                        case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
+                            if (this->_verbose & SHOW_FILE_SYSTEM_EXCHANGE) {
+                                std::cout << "server >> PAKID_CORE_CLIENTID_CONFIRM" <<  std::endl;
+                                if (this->_verbose & SHOW_IN_PDU) {
+                                    this->show_in_stream(flags, chunk_series, chunk_size);
+                                }
+                            }
+                        break;
+
+                        default:
+                            break;
+                    }
+
+                break;
+
+                case rdpdr::Component::RDPDR_CTYP_PRT:
+                    if (this->_verbose & SHOW_FILE_SYSTEM_EXCHANGE) {
+                        std::cout <<  "server >> RDPDR_CTYP_PRT" <<  std::endl;
+                        if (this->_verbose & SHOW_IN_PDU) {
+                            this->show_in_stream(flags, chunk_series, chunk_size);
+                        }
+                    }
+                break;
+
+                default:
+                break;
             }
         }
     }
@@ -493,16 +674,21 @@ public:
         }
         const uint32_t total_length = out_stream.get_offset();
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
+        int flag = CHANNELS::CHANNEL_FLAG_LAST
+                 | CHANNELS::CHANNEL_FLAG_FIRST
+                 | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
 
         this->_callback->send_to_mod_channel( channel_names::cliprdr
                                             , chunk
                                             , total_length
-                                            , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |
-                                              CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                            , flag
                                             );
 
         if (this->_verbose & SHOW_CLPBRD_PDU_EXCHANGE) {
             std::cout << "client >> Format List PDU" << std::endl;
+            if (this->_verbose & SHOW_OUT_PDU) {
+                this->show_out_stream(flag, out_stream, total_length);
+            }
         }
     }
 
@@ -518,28 +704,28 @@ public:
 
 
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //-----------------------------
     //       DRAW FUNCTIONS
     //-----------------------------
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
-            std::cout << "server >> RDPOpaqueRect color=" << int(cmd.color) << std::endl;
-            std::cout << "clip x=" << int(clip.x) <<  std::endl;
+            std::cout << "server >> RDPOpaqueRect color=" << int(cmd.color);
+            std::cout << " clip x=" << int(clip.x) <<  std::endl;
         }
     }
 
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
-            std::cout << "server >> RDPScrBlt rop=" << int(cmd.rop) <<  std::endl;
+            std::cout << "server >> RDPScrBlt rop=" << int(cmd.rop);
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
-            std::cout << "server >> RDPMemBlt rop=" << int(cmd.rop) << std::endl;
+            std::cout << "server >> RDPMemBlt rop=" << int(cmd.rop);
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -553,14 +739,14 @@ public:
 
     virtual void draw(const RDPPatBlt & cmd, const Rect & clip) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
-            std::cout << "server >> RDPPatBlt rop=" << int(cmd.rop) << std::endl;
+            std::cout << "server >> RDPPatBlt rop=" << int(cmd.rop);
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
-            std::cout << "server >> RDPMem3Blt rop=" << int(cmd.rop) << std::endl;
+            std::cout << "server >> RDPMem3Blt rop=" << int(cmd.rop);
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -573,7 +759,7 @@ public:
 
     virtual void draw(const RDPDestBlt & cmd, const Rect & clip) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
-            std::cout << "server >> RDPDestBlt rop=" << int(cmd.rop) << std::endl;
+            std::cout << "server >> RDPDestBlt rop=" << int(cmd.rop);
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -725,9 +911,9 @@ public:
         if (this->_callback != nullptr) {
             if (this->_verbose & SHOW_CURSOR_STATE_CHANGE) {
                 if (press) {
-                    std::cout << "mouseButtonPressed=" << int(button) << " x=" << int(x) << " y=" << int(y) << std::endl;
+                    std::cout << "client >> mouseButtonPressed=" << int(button) << " x=" << int(x) << " y=" << int(y) << std::endl;
                 } else {
-                    std::cout << "mouseButtonReleased=" << int(button) << " x=" << int(x) << " y=" << int(y) << std::endl;
+                    std::cout << "client >> mouseButtonReleased=" << int(button) << " x=" << int(x) << " y=" << int(y) << std::endl;
                 }
             }
             int flag(0);
@@ -747,7 +933,7 @@ public:
     void mouseMove(uint32_t x, uint32_t y) {
         if (this->_callback != nullptr) {
             if (this->_verbose & SHOW_CURSOR_STATE_CHANGE) {
-                std::cout << "mouseMove" << " x=" << int(x) << " y=" << int(y) << std::endl;
+                std::cout << "client >> mouseMove" << " x=" << int(x) << " y=" << int(y) << std::endl;
             }
             this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, &(this->_keymap));
         }
@@ -755,7 +941,7 @@ public:
 
     void keyPressed(uint32_t scanCode, uint32_t flag) {
         if (this->_verbose & SHOW_KEYBOARD_EVENT) {
-            std::cout << "keyPressed=" << int(scanCode) << std::endl;
+            std::cout << "client >> keyPressed=" << int(scanCode) << std::endl;
         }
         if (this->_callback != nullptr) {
             this->_callback->rdp_input_scancode(scanCode, 0, flag, this->_timer, &(this->_keymap));
@@ -764,7 +950,7 @@ public:
 
     void keyReleased(uint32_t scanCode, uint32_t flag) {
         if (this->_verbose & SHOW_KEYBOARD_EVENT) {
-            std::cout << "scanCode=" << int(scanCode) << std::endl;
+            std::cout << "client >> scanCode=" << int(scanCode) << std::endl;
         }
         if (this->_callback != nullptr) {
             this->_callback->rdp_input_scancode(scanCode, 0, flag | KBD_FLAG_UP, this->_timer, &(this->_keymap));
@@ -776,147 +962,147 @@ public:
 
 
 
-struct EventConfig
-{
-    TestClientCLI * front;
-    long trigger_time;
 
-
-    EventConfig(TestClientCLI * front)
-    : front(front)
-    , trigger_time(0)
-    {}
-
-    virtual ~EventConfig() {};
-
-    virtual void emit() = 0;
-};
-
-
-struct ClipboardChange : EventConfig
-{
-    uint32_t formatIDs[RDPECLIP::FORMAT_LIST_MAX_SIZE];
-    std::string formatListDataLongName[RDPECLIP::FORMAT_LIST_MAX_SIZE];
-    size_t size;
-
-    ClipboardChange( TestClientCLI * front
-                   , uint32_t * formatIDs
-                   , std::string * formatListDataLongName
-                   , size_t size)
-        : EventConfig(front)
-        , size(size)
-    {
-        for (size_t i = 0; i < this->size; i++) {
-            this->formatIDs[i] = formatIDs[i];
-            this->formatListDataLongName[i] = formatListDataLongName[i];
-        }
-    }
-
-    ClipboardChange( ClipboardChange & clipboardChange)
-      : EventConfig(clipboardChange.front)
-      , size(clipboardChange.size)
-    {
-        for (size_t i = 0; i < this->size; i++) {
-            this->formatIDs[i] = clipboardChange.formatIDs[i];
-            this->formatListDataLongName[i] = clipboardChange.formatListDataLongName[i];
-        }
-    }
-
-    virtual void emit() override {
-        this->front->send_FormatListPDU(this->formatIDs, this->formatListDataLongName, this->size, true);
-    }
-};
-
-
-struct MouseButton : public EventConfig
-{
-    uint8_t button;
-    uint32_t x;
-    uint32_t y;
-    const bool isPressed;
-
-    MouseButton( TestClientCLI * front
-               , uint8_t button
-               , uint32_t x
-               , uint32_t y
-               , bool isPressed
-               )
-        : EventConfig(front)
-        , button(button)
-        , x(x)
-        , y(y)
-        , isPressed(isPressed)
-    {}
-
-
-    virtual void emit() override {
-        this->front->mouseButtons(button, x, y, isPressed);
-    }
-};
-
-
-struct MouseMove : public EventConfig
-{
-    uint32_t x;
-    uint32_t y;
-
-    MouseMove( TestClientCLI * front
-             , uint32_t x
-             , uint32_t y
-             )
-        : EventConfig(front)
-        , x(x)
-        , y(y)
-    {}
-
-    void emit() override {
-        this->front->mouseMove(x, y);
-    }
-};
-
-
-struct KeyPressed : public EventConfig
-{
-    uint32_t scanCode;
-    uint32_t Flag;
-
-    KeyPressed( TestClientCLI * front
-               , uint32_t scanCode
-               , uint32_t Flag = 0
-               )
-    : EventConfig(front)
-    , scanCode(scanCode)
-    , Flag(Flag)
-    {}
-
-    virtual void emit() override {
-        this->front->keyPressed(scanCode, Flag);
-    }
-};
-
-
-struct KeyReleased : public EventConfig
-{
-    uint32_t scanCode;
-    uint32_t Flag;
-
-    KeyReleased( TestClientCLI * front
-               , uint32_t scanCode
-               , uint32_t Flag = 0
-               )
-    : EventConfig(front)
-    , scanCode(scanCode)
-    , Flag(Flag)
-    {}
-
-    virtual void emit() override {
-        this->front->keyReleased(scanCode, Flag);
-    }
-};
 
 
 class EventList
 {
+    struct EventConfig
+    {
+        TestClientCLI * front;
+        long trigger_time;
+
+
+        EventConfig(TestClientCLI * front)
+        : front(front)
+        , trigger_time(0)
+        {}
+
+        virtual ~EventConfig() {};
+
+        virtual void emit() = 0;
+    };
+
+    struct MouseButton : public EventConfig
+    {
+        uint8_t button;
+        uint32_t x;
+        uint32_t y;
+        const bool isPressed;
+
+        MouseButton( TestClientCLI * front
+                , uint8_t button
+                , uint32_t x
+                , uint32_t y
+                , bool isPressed
+                )
+            : EventConfig(front)
+            , button(button)
+            , x(x)
+            , y(y)
+            , isPressed(isPressed)
+        {}
+
+
+        virtual void emit() override {
+            this->front->mouseButtons(button, x, y, isPressed);
+        }
+    };
+
+
+    struct MouseMove : public EventConfig
+    {
+        uint32_t x;
+        uint32_t y;
+
+        MouseMove( TestClientCLI * front
+                , uint32_t x
+                , uint32_t y
+                )
+            : EventConfig(front)
+            , x(x)
+            , y(y)
+        {}
+
+        void emit() override {
+            this->front->mouseMove(x, y);
+        }
+    };
+
+
+    struct KeyPressed : public EventConfig
+    {
+        uint32_t scanCode;
+        uint32_t Flag;
+
+        KeyPressed( TestClientCLI * front
+                , uint32_t scanCode
+                , uint32_t Flag = 0
+                )
+        : EventConfig(front)
+        , scanCode(scanCode)
+        , Flag(Flag)
+        {}
+
+        virtual void emit() override {
+            this->front->keyPressed(scanCode, Flag);
+        }
+    };
+
+
+    struct KeyReleased : public EventConfig
+    {
+        uint32_t scanCode;
+        uint32_t Flag;
+
+        KeyReleased( TestClientCLI * front
+                , uint32_t scanCode
+                , uint32_t Flag = 0
+                )
+        : EventConfig(front)
+        , scanCode(scanCode)
+        , Flag(Flag)
+        {}
+
+        virtual void emit() override {
+            this->front->keyReleased(scanCode, Flag);
+        }
+    };
+
+    struct ClipboardChange : EventConfig
+    {
+        uint32_t formatIDs[RDPECLIP::FORMAT_LIST_MAX_SIZE];
+        std::string formatListDataLongName[RDPECLIP::FORMAT_LIST_MAX_SIZE];
+        size_t size;
+
+        ClipboardChange( TestClientCLI * front
+                    , uint32_t * formatIDs
+                    , std::string * formatListDataLongName
+                    , size_t size)
+            : EventConfig(front)
+            , size(size)
+        {
+            for (size_t i = 0; i < this->size; i++) {
+                this->formatIDs[i] = formatIDs[i];
+                this->formatListDataLongName[i] = formatListDataLongName[i];
+            }
+        }
+
+        ClipboardChange( ClipboardChange & clipboardChange)
+        : EventConfig(clipboardChange.front)
+        , size(clipboardChange.size)
+        {
+            for (size_t i = 0; i < this->size; i++) {
+                this->formatIDs[i] = clipboardChange.formatIDs[i];
+                this->formatListDataLongName[i] = clipboardChange.formatListDataLongName[i];
+            }
+        }
+
+        virtual void emit() override {
+            this->front->send_FormatListPDU(this->formatIDs, this->formatListDataLongName, this->size, true);
+        }
+    };
+
 public:
     std::vector<EventConfig *> list;
     long start_time;
@@ -941,6 +1127,59 @@ public:
     void setAction(EventConfig * action) {
         action->trigger_time = this->wait_time;
         this->list.push_back(action);
+    }
+
+    void setClpbrd_change( TestClientCLI * front
+                         , uint32_t * formatIDs
+                         , std::string * formatListDataLongName
+                         , size_t size) {
+        EventConfig * action = new ClipboardChange(front, formatIDs, formatListDataLongName, size);
+        this->setAction(action);
+    }
+
+    void setKey_press(TestClientCLI * front
+                     , uint32_t scanCode
+                     , uint32_t flag) {
+        EventConfig * action = new KeyPressed(front, scanCode, flag);
+        this->setAction(action);
+    }
+
+    void setKey_release(TestClientCLI * front
+                       , uint32_t scanCode
+                       , uint32_t flag) {
+        EventConfig * action = new KeyReleased(front, scanCode, flag);
+        this->setAction(action);
+    }
+
+    void setMouse_button( TestClientCLI * front
+                        , uint8_t button
+                        , uint32_t x
+                        , uint32_t y
+                        , bool isPressed) {
+        EventConfig * action = new MouseButton(front, button, x, y, isPressed);
+        this->setAction(action);
+    }
+
+    void setKey(TestClientCLI * front
+                , uint32_t scanCode
+                , uint32_t flag) {
+        this->setKey_press(front, scanCode, flag);
+        this->setKey_release(front, scanCode, flag);
+    }
+
+    void setClick( TestClientCLI * front
+                 , uint8_t button
+                 , uint32_t x
+                 , uint32_t y) {
+        this->setMouse_button(front, button, x, y, true);
+        this->setMouse_button(front, button, x, y, false);
+    }
+
+    void setDouble_click( TestClientCLI * front
+                        , uint32_t x
+                        , uint32_t y) {
+        setClick(front, 0x01, x, y);
+        setClick(front, 0x01, x, y);
     }
 
     void wait(int ms) {

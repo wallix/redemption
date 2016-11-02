@@ -26,7 +26,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRegion
+#define BOOST_TEST_MODULE TestSubRegion
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/rect.hpp"
@@ -34,12 +34,12 @@
 //#include <boost/foreach.hpp>
 
 
-BOOST_AUTO_TEST_CASE(TestRegion)
+BOOST_AUTO_TEST_CASE(TestSubRegion)
 {
     /* create a region */
 
     Rect r1(10, 110, 10, 10);
-    Region region;
+    SubRegion region;
     region.rects.push_back(r1);
     region.rects.push_back(r1);
     region.rects.push_back(r1);
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(TestRegion)
     //   x                x
     //   x----------------x
     //
-    Region region2;
+    SubRegion region2;
     region2.rects.push_back(Rect(10,10,90,90));
     BOOST_CHECK_EQUAL(1, region2.rects.size());
 
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(TestRegion)
     BOOST_CHECK_EQUAL(region2.rects[3], Rect(10, 50, 90, 50)); // D
 
     // we substract a traversing rectangle
-    Region region3;
+    SubRegion region3;
     region3.rects.push_back(Rect(10,10,90,90));
     BOOST_CHECK_EQUAL(1, region3.rects.size());
 

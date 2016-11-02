@@ -188,7 +188,7 @@ public:
         char basename[1024];
         char extension[128];
         strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
-        strcpy(basename, "redemption"); // default value actual one should come from movie_path
+        strcpy(basename, ini.get<cfg::globals::movie_path>().c_str());
         strcpy(extension, "");          // extension is currently ignored
 
         if (!canonical_path(
@@ -224,6 +224,7 @@ public:
                         record_tmp_path, basename, groupid
                     ));
                 }
+
             }
 
             if (this->capture_wrm) {
@@ -236,7 +237,6 @@ public:
                         LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
                     }
                 }
-
                 this->pnc.reset(new Native(
                     now, capture_bpp, ini.get<cfg::globals::trace_type>(),
                     cctx, record_path, hash_path, basename,
@@ -296,7 +296,6 @@ public:
         if (enable_kbd) {
             this->pkc.reset(new Kbd(now, authentifier, ini));
         }
-
         ApisRegister apis_register = this->get_apis_register();
 
         if (this->gd ) { this->gd ->attach_apis(apis_register, ini); }

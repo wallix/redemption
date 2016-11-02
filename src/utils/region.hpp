@@ -29,11 +29,11 @@
 #include "utils/rect.hpp"
 
 /* region */
-struct Region {
+struct SubRegion {
     std::vector<Rect> rects;
 
-    Region() {}
-    ~Region() {}
+    SubRegion() {}
+    ~SubRegion() {}
 
     void subtract_rect(const Rect & rect) {
         std::vector<Rect> new_rects;

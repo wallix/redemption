@@ -202,6 +202,8 @@ public:
         uint32_t timestamp_chunk;
     } statistics;
 
+    bool break_privplay_qt;
+
     FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time, uint32_t verbose)
         : stream(stream_buf)
         , compression_wrapper(*trans, WrmCompressionAlgorithm::no_compression)
@@ -247,6 +249,7 @@ public:
         , info_compression_algorithm(WrmCompressionAlgorithm::no_compression)
         , ignore_frame_in_timeval(false)
         , statistics()
+        , break_privplay_qt(false)
     {
         while (this->next_order()){
             this->interpret_order();
@@ -296,7 +299,6 @@ public:
                 return false;
             }
         }
-
         if (!this->remaining_order_count){
             for (gdi::GraphicApi * gd : this->graphic_consumers){
                 gd->sync();
@@ -352,6 +354,7 @@ public:
 
     void interpret_order()
     {
+        //std::cout <<  "interpret_order type=" << int(this->chunk_type) <<  std::endl;
         this->total_orders_count++;
         switch (this->chunk_type){
         case RDP_UPDATE_ORDERS:
@@ -679,6 +682,7 @@ public:
                 }
                 else {
                    if (this->real_time) {
+                       std::cout << "real_time" <<  std::endl;
                         for (gdi::GraphicApi * gd : this->graphic_consumers){
                             gd->sync();
                         }
@@ -689,6 +693,7 @@ public:
                         uint64_t movie_elapsed = difftimeval(this->record_now, this->start_record_now);
 
                         if (elapsed < movie_elapsed) {
+                            /*std::cout << "elapsed < movie_elapsed" <<  std::endl;
                             struct timespec wtime     = {
                                   static_cast<time_t>( (movie_elapsed - elapsed) / 1000000LL)
                                 , static_cast<time_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
@@ -697,7 +702,7 @@ public:
 
                             while ((nanosleep(&wtime, &wtime_rem) == -1) && (errno == EINTR)) {
                                 wtime = wtime_rem;
-                            }
+                            } */
                         }
                     }
                 }
@@ -987,6 +992,7 @@ public:
                 LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
                 throw Error(ERR_WRM);
         }
+        //std::cout <<  "interpret_order end" <<  std::endl;
     }
 
 
@@ -1140,6 +1146,10 @@ public:
         this->privplay([](time_t){}, requested_to_stop);
     }
 
+    void play_qt(bool const & requested_to_stop) {
+        this->privplay_qt([](time_t){}, requested_to_stop);
+    }
+
     template<class CbUpdateProgress>
     void play(CbUpdateProgress update_progess, bool const & requested_to_stop) {
         time_t last_sent_record_now = 0;
@@ -1178,6 +1188,37 @@ private:
             if (this->end_capture.tv_sec && this->end_capture < this->record_now) {
                 break;
             }
+        }
+    }
+
+    template<class CbUpdateProgress>
+    void privplay_qt(CbUpdateProgress update_progess, bool const & requested_to_stop) {
+        if (!requested_to_stop && this->next_order()) {
+            if (this->verbose > 8) {
+                LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
+                   , unsigned(this->record_now.tv_sec), unsigned(this->total_orders_count));
+            }
+            this->interpret_order();
+            if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
+                for (gdi::CaptureApi * cap : this->capture_consumers){
+                    cap->snapshot(
+                        this->record_now, this->mouse_x, this->mouse_y
+                      , this->ignore_frame_in_timeval
+                    );
+                }
+
+                this->ignore_frame_in_timeval = false;
+
+                update_progess(this->record_now.tv_sec);
+            }
+            if (this->max_order_count && this->max_order_count <= this->total_orders_count) {
+                break_privplay_qt = true;
+            }
+            if (this->end_capture.tv_sec && this->end_capture < this->record_now) {
+                break_privplay_qt = true;
+            }
+        } else {
+            break_privplay_qt = true;
         }
     }
 };
