@@ -56,7 +56,7 @@ class Cover:
             parentheses_count = 0
             open_parentheses = False
             block_executed = False
-            
+
             if self.verbose > 1:
                 print("================= Parsing gcov for %s ===============" % module)
             for line in open(fgcov):
@@ -152,11 +152,11 @@ if __name__ == "__main__":
     if not os.path.isfile(sys.argv[3]):
         print "================ GCOV file %s not found for module %s ===================" % (
             str(sys.argv[3]), sys.argv[1])
-    
+
     if not os.path.isfile(sys.argv[2]):
         print "================ ETAGS file %s not found ===================" % (
             str(sys.argv[2]), sys.argv[1])
-    
+
     cover.compute_coverage(sys.argv[1], sys.argv[2], sys.argv[3])
 
     td = ""

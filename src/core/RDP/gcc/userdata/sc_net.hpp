@@ -33,6 +33,7 @@
 #include "core/error.hpp"
 #include "core/RDP/gcc/userdata/mcs_channels.hpp"
 
+#include <inttypes.h>
 
 namespace GCC { namespace UserData {
 

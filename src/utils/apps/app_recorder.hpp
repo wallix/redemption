@@ -44,9 +44,11 @@ enum {
     USE_ORIGINAL_COLOR_DEPTH           = 0xFFFFFFFF
 };
 
-template<typename InWrmTrans>
-unsigned get_file_count( InWrmTrans & in_wrm_trans, uint32_t & begin_cap, uint32_t & end_cap, timeval & begin_record
-                       , timeval & end_record) {
+inline unsigned get_file_count(
+    InMetaSequenceTransport & in_wrm_trans,
+    uint32_t & begin_cap, uint32_t & end_cap,
+    timeval & begin_record, timeval & end_record
+) {
     in_wrm_trans.next();
     begin_record.tv_sec = in_wrm_trans.begin_chunk_time();
     // TODO a negative time should be a time relative to end of movie
@@ -539,7 +541,7 @@ template<class CaptureMaker, class AddProgramOption, class ParseFormat
   , class HasExtraCapture>
 int app_recorder( int argc, char const * const * argv, const char * copyright_notice
                 , AddProgramOption add_prog_option, ParseFormat parse_format
-                , std::string & config_filename, Inifile & ini
+                , std::string config_filename, Inifile & ini
                 , CryptoContext & cctx, Random & rnd
                 , HasExtraCapture has_extra_capture
                 , bool full_video
@@ -891,7 +893,7 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
             std::cerr << "Asked time not found in mwrm file\n";
         }
         else {
-            std::cerr << "Exception code: " << e.id << std::endl;
+            std::cerr << "Error: " << e.errmsg() << std::endl;
         }
         const bool msg_with_error_id = false;
         raise_error(output_filename, e.id, e.errmsg(msg_with_error_id), verbose);
@@ -912,11 +914,12 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
              || show_file_metadata
              || show_statistics
              || file_count > 1
-             || order_count);
+             || order_count
+             || begin_cap != begin_record.tv_sec
+             || end_cap != begin_cap);
 
             if (test){
                 std::cout << "[A]" << std::endl;
-
                 result = do_record<CaptureMaker>(trans
                             , begin_record, end_record
                             , begin_capture, end_capture

@@ -100,6 +100,12 @@
 "#_advanced\n"
 "#bogus_refresh_rect = 1\n\n"
 
+"#_advanced\n"
+"#codec_id = flv\n\n"
+
+"#_advanced\n"
+"#video_quality = high\n\n"
+
 "[session_log]\n\n"
 
 "#enable_session_log = 1\n\n"
@@ -464,6 +470,27 @@
 "#_hidden\n"
 "#on_end_of_data = 0\n\n"
 
+"[ocr]\n\n"
+
+"#   1: v1\n"
+"#   2: v2\n"
+"#version = 2\n\n"
+
+"#locale = latin\n\n"
+
+"# (is in 1/100 second)\n"
+"#_advanced\n"
+"#interval = 100\n\n"
+
+"#_advanced\n"
+"#on_title_bar_only = 1\n\n"
+
+"# Expressed in percentage,\n"
+"#   0   - all of characters need be recognized\n"
+"#   100 - accept all results\n"
+"#_advanced\n"
+"#max_unrecog_char_rate = 40\n\n"
+
 "[video]\n\n"
 
 "#_advanced\n"
@@ -514,6 +541,7 @@
 "#   0: none\n"
 "#   1: disable keyboard log in syslog\n"
 "#   2: disable keyboard log in recorded sessions\n"
+"#   4: disable keyboard log in recorded meta\n"
 "# (note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
 "#disable_keyboard_log = 1\n\n"
 
@@ -546,6 +574,66 @@
 "#   2: snappy\n"
 "#_advanced\n"
 "#wrm_compression_algorithm = 1\n\n"
+
+"# Bitrate for low quality.\n"
+"#_advanced\n"
+"#l_bitrate = 10000\n\n"
+
+"# Framerate for low quality.\n"
+"#_advanced\n"
+"#l_framerate = 5\n\n"
+
+"# Height for low quality.\n"
+"#_advanced\n"
+"#l_height = 480\n\n"
+
+"# Width for low quality.\n"
+"#_advanced\n"
+"#l_width = 640\n\n"
+
+"# Qscale (parameter given to ffmpeg) for low quality.\n"
+"#_advanced\n"
+"#l_qscale = 28\n\n"
+
+"# Bitrate for medium quality.\n"
+"#_advanced\n"
+"#m_bitrate = 20000\n\n"
+
+"# Framerate for medium quality.\n"
+"#_advanced\n"
+"#m_framerate = 5\n\n"
+
+"# Height for medium quality.\n"
+"#_advanced\n"
+"#m_height = 768\n\n"
+
+"# Width for medium quality.\n"
+"#_advanced\n"
+"#m_width = 1024\n\n"
+
+"# Qscale (parameter given to ffmpeg) for medium quality.\n"
+"#_advanced\n"
+"#m_qscale = 14\n\n"
+
+"# Bitrate for high quality.\n"
+"#_advanced\n"
+"#h_bitrate = 30000\n\n"
+
+"# Framerate for high quality.\n"
+"#_advanced\n"
+"#h_framerate = 5\n\n"
+
+"# Height for high quality.\n"
+"#_advanced\n"
+"#h_height = 2048\n\n"
+
+"# Width for high quality.\n"
+"#_advanced\n"
+"#h_width = 2048\n\n"
+
+"# Qscale (parameter given to ffmpeg) for high quality.\n"
+"#_advanced\n"
+"#h_qscale = 7\n\n"
 
 "[crypto]\n\n"
 
@@ -628,6 +716,9 @@
 
 "#_advanced\n"
 "#mod_internal = 0\n\n"
+
+"#_advanced\n"
+"#ocr = 0\n\n"
 
 "#_advanced\n"
 "#config = 1\n\n"

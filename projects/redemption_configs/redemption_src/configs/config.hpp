@@ -372,8 +372,6 @@ public:
         return {*const_cast<Inifile*>(this)};
     }
 
-    void check_record_config();
-
 private:
     std::set<unsigned> to_send_index;
     configs::VariablesConfiguration variables;
@@ -419,4 +417,3 @@ private:
 };
 
 #include "configs/autogen/set_value.tcc"
-#include "configs/variant/check_record_config.tcc"

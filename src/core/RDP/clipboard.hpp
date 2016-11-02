@@ -237,6 +237,23 @@ struct RecvFactory {
     }   // RecvFactory(InStream & stream)
 };
 
+
+struct RecvPredictor {
+    uint16_t msgType;
+
+    explicit RecvPredictor(const InStream & stream) {
+        InStream s = stream.clone();
+        const unsigned expected = 2;    /* msgType(2) */
+        if (!stream.in_check_rem(expected)) {
+            LOG( LOG_INFO, "RDPECLIP::RecvPredictor truncated msgType, need=%u remains=%zu"
+               , expected, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+        this->msgType = s.in_uint16_le();
+    }   // RecvFactory(InStream & stream)
+};
+
+
 struct CliprdrHeader {
     uint16_t msgType()  const { return this->msgType_; }
     uint16_t msgFlags() const { return this->msgFlags_; }
@@ -266,7 +283,7 @@ protected:
         stream.out_uint32_le(this->dataLen_);
     }   // void emit(OutStream & stream)
 
-    void recv(InStream & stream, const RecvFactory & recv_factory) {
+    void recv(InStream & stream) {
         const unsigned expected = 6;    /* msgFlags_(2) + dataLen_(4) */
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_INFO, "RDPECLIP::recv truncated data, need=%u remains=%zu"
@@ -274,7 +291,7 @@ protected:
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
 
-        this->msgType_  = recv_factory.msgType;
+        this->msgType_  = stream.in_uint16_le();
         this->msgFlags_ = stream.in_uint16_le();
         this->dataLen_  = stream.in_uint32_le();
     }
@@ -347,8 +364,8 @@ public:
         stream.out_clear_bytes(2);  // pad1(2)
     }   // void emit(OutStream & stream)
 
-    void recv(InStream & stream, const RecvFactory & recv_factory) {
-        CliprdrHeader::recv(stream, recv_factory);
+    void recv(InStream & stream) {
+        CliprdrHeader::recv(stream);
 
         const unsigned expected = 4;    // cCapabilitiesSets(2) + pad1(2)
         if (!stream.in_check_rem(expected)) {
@@ -673,13 +690,13 @@ enum : size_t {
 };
 
 struct FormatListPDU : public CliprdrHeader {
-    bool contians_data_in_text_format        = false;
-    bool contians_data_in_unicodetext_format = false;
+    bool contains_data_in_text_format        = false;
+    bool contains_data_in_unicodetext_format = false;
 
     FormatListPDU()
         : CliprdrHeader(CB_FORMAT_LIST, 0, 0)
-        , contians_data_in_text_format(false)
-        , contians_data_in_unicodetext_format(false) {}
+        , contains_data_in_text_format(false)
+        , contains_data_in_unicodetext_format(false) {}
 
     void emit(OutStream & stream) {
         this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
@@ -761,8 +778,9 @@ struct FormatListPDU : public CliprdrHeader {
         CliprdrHeader::emit(stream);
     }
 
-    void recv(InStream & stream, const RecvFactory & recv_factory) {
-        CliprdrHeader::recv(stream, recv_factory);
+    void recv(InStream & stream) {
+//        LOG(LOG_INFO, "RDPECLIP::FormatListPDU::recv");
+        CliprdrHeader::recv(stream);
 
         // [MS-RDPECLIP] 2.2.3.1.1.1 Short Format Name (CLIPRDR_SHORT_FORMAT_NAME)
         // =======================================================================
@@ -801,8 +819,7 @@ struct FormatListPDU : public CliprdrHeader {
         //  characters or 16 Unicode characters). If the name does not fit, it
         //  MUST be truncated. Not all Clipboard Formats have a name, and in
         //  that case the formatName field MUST contain only zeros.
-        const uint32_t short_format_name_structure_size =
-            36; /* formatId(4) + formatName(32) */
+        const uint32_t short_format_name_structure_size = 36; /* formatId(4) + formatName(32) */
 
         // Parse PDU to find if clipboard data is available in a TEXT format.
         for (uint32_t i = 0; i < (this->dataLen_ / short_format_name_structure_size); i++) {
@@ -817,56 +834,87 @@ struct FormatListPDU : public CliprdrHeader {
             //LOG(LOG_INFO, "RDPECLIP::FormatListPDU formatId=%u", formatId);
 
             if (formatId == CF_TEXT) {
-                this->contians_data_in_text_format = true;
+                this->contains_data_in_text_format = true;
             }
             else if (formatId == CF_UNICODETEXT) {
-                this->contians_data_in_unicodetext_format = true;
+                this->contains_data_in_unicodetext_format = true;
             }
 
             stream.in_skip_bytes(32);   // formatName(32)
         }
-    }   // void recv(InStream & stream, const RecvFactory & recv_factory)
+    }   // void recv(InStream & stream)
 
-    void recv_long(InStream & stream, const RecvFactory & recv_factory) {
-        CliprdrHeader::recv(stream, recv_factory);
+    void recv_long(InStream & stream) {
+        // 2.2.3.1.2 Long Format Names (CLIPRDR_LONG_FORMAT_NAMES)
+        // =======================================================
+
+        // The CLIPRDR_LONG_FORMAT_NAMES structure holds a collection of 
+        // CLIPRDR_LONG_FORMAT_NAME structures.
+        // longFormatNames (variable): An array of CLIPRDR_LONG_FORMAT_NAME structures.
+        
+        // 2.2.3.1.2.1 Long Format Name (CLIPRDR_LONG_FORMAT_NAME)
+        // =======================================================
+
+        // The CLIPRDR_LONG_FORMAT_NAME structure holds a Clipboard Format ID and a Clipboard Format name pair.
+        
+        // formatId (4 bytes): An unsigned, 32-bit integer that specifies the Clipboard Format ID.
+
+        // wszFormatName (variable): A variable length null-terminated Unicode
+        // string name that contains the Clipboard Format name. Not all 
+        // Clipboard Formats have a name; in such cases, the formatName field
+        // MUST consist of a single Unicode null character.
+
+// length: 0x24, 0x00, 0x00, 0x00, 
+// flags:  0x13, 0x00, 0x00, 0x00, 
+
+    // TODO: les structures CB_xxx heritent de CliprdrHeader
+    // ça ne devrait pas être le cas, elles ONT un header
+    // elles ne SONT PAS une sorte de header!
+    // Remplacer l'héritage par un champ membre
+    
+        CliprdrHeader::recv(stream);
+// msgType:  2 = CB_FORMAT_LIST | 0x02, 0x00,
+// msgFlags: 0                  | 0x00, 0x00,
+// datalen: 24 (after headers)| 0x18, 0x00, 0x00, 0x00,
 
         const size_t max_length_of_format_name = 256;
+// FormatId[]: CF_UNICODETEXT 0x0d, 0x00, 0x00, 0x00,
+// 0x00, 0x00,
+// FormatId[]: CF_LOCALE 0x10, 0x00, 0x00, 0x00,
+// 0x00, 0x00,
+// FormatId[]: CF_TEXT 0x01, 0x00, 0x00, 0x00,
+// 0x00, 0x00,
+// FormatId[]: CF_OEMTEXT 0x07, 0x00, 0x00, 0x00,
+// 0x00, 0x00,
 
-        for (uint32_t remaining_data_length = stream.in_remain();
-             remaining_data_length; ) {
-            const uint32_t formatId                     =
-                stream.in_uint32_le();
-            //LOG(LOG_INFO, "RDPECLIP::FormatListPDU formatId=%u", formatId);
-            const size_t   format_name_length           =
-                ::UTF16StrLen(stream.get_current()) + 1;
-            const size_t   adjusted_format_name_length =
-                std::min(format_name_length - 1,
-                    max_length_of_format_name);
+// Padding ? : 0x00, 0x00, 0x00, 0x00,
 
-            constexpr size_t size_of_utf8_string =
-                max_length_of_format_name *
-                maximum_length_of_utf8_character_in_bytes;
-            uint8_t utf8_string[size_of_utf8_string + 1];
-            ::memset(utf8_string, 0, sizeof(utf8_string));
-            ::UTF16toUTF8(
-                stream.get_current(), adjusted_format_name_length,
-                utf8_string, size_of_utf8_string);
-
-            remaining_data_length -=
-                      4                      /* formatId(4) */
-                    + format_name_length * 2 /* wszFormatName(variable) */
-                ;
-
-            if (formatId == CF_TEXT) {
-                this->contians_data_in_text_format = true;
+        InStream fns(stream.get_current(), this->dataLen());
+        while (fns.in_remain()) {
+            if (fns.in_remain() < 6){
+                // Minimal Possible remaining data: FormatId + 0 + 0
+                // TODO: this should probably raise an error, as it is
+                // an incorrent clipboard format is we don't have exactly
+                // the expected datas
+                stream.in_skip_bytes(fns.in_remain());
+                return;
             }
-            else if (formatId == CF_UNICODETEXT) {
-                this->contians_data_in_unicodetext_format = true;
+            const uint32_t formatId = fns.in_uint32_le();
+            switch (formatId){
+            case CF_UNICODETEXT:
+                this->contains_data_in_unicodetext_format = true;
+            break;
+            case CF_TEXT:
+                this->contains_data_in_text_format = true;
+            break;
+            default:
+             ;   // other formats unsupported
             }
-
-            stream.in_skip_bytes(format_name_length * 2);
+            uint16_t buffer[max_length_of_format_name];
+            (void)fns.in_utf16_sz(buffer, 
+                    std::min(fns.in_remain(),max_length_of_format_name-2)/2);
         }
-    }   // void recv_long(InStream & stream, const RecvFactory & recv_factory)
+    }   // void recv_long(InStream & stream)
 };  // struct FormatListPDU
 
 // [MS-RDPECLIP] 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
@@ -945,8 +993,15 @@ struct FormatDataRequestPDU : public CliprdrHeader {
         stream.out_uint32_le(this->requestedFormatId);
     }   // void emit(OutStream & stream)
 
-    void recv(InStream & stream, const RecvFactory & recv_factory) {
-        CliprdrHeader::recv(stream, recv_factory);
+    void recv(InStream & stream) {
+        CliprdrHeader::recv(stream);
+        const unsigned expected = 4;   // requestedFormatId
+        if (!stream.in_check_rem(expected)) {
+            LOG(LOG_INFO
+               , "FormatDataRequestPDU::recv truncated requestedFormatId, need=%u remains=%zu"
+               , expected, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
 
         this->requestedFormatId = stream.in_uint32_le();
     }

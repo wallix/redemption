@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "../mod/mod_api.hpp"
+#include "mod/mod_api.hpp"
 #include "widget2/screen.hpp"
 #include "configs/config.hpp"
 #include "core/front_api.hpp"

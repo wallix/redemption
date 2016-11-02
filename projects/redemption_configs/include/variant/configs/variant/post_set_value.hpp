@@ -31,7 +31,9 @@ namespace configs
         Theme & theme = static_cast<cfg::theme&>(vars).value;
 
         auto & str = cfg_value.value;
-        LOG(LOG_INFO, "LOAD_THEME: %s", str.c_str());
+        if (static_cast<cfg::debug::config>(vars).value) {
+            LOG(LOG_INFO, "LOAD_THEME: %s", str.c_str());
+        }
 
         {
             char theme_path[1024] = {};

@@ -164,15 +164,8 @@ public:
                 this->selector.selector_lines.get_selection(row_index, column_index);
                 const char * target = this->selector.selector_lines.get_cell_text(row_index, WidgetSelectorFlat2::IDX_TARGET);
                 const char * groups = this->selector.selector_lines.get_cell_text(row_index, WidgetSelectorFlat2::IDX_TARGETGROUP);
-                int pos = 0;
-                while (groups[pos] && (groups[pos] != ';')) {
-                    pos++;
-                }
-                char group_buffer[512] = {};
-                snprintf(group_buffer, sizeof(group_buffer), "%s", groups);
-                group_buffer[pos] = 0;
                 snprintf(buffer, sizeof(buffer), "%s:%s:%s",
-                         target, group_buffer, this->vars.get<cfg::globals::auth_user>().c_str());
+                         target, groups, this->vars.get<cfg::globals::auth_user>().c_str());
                 this->vars.set_acl<cfg::globals::auth_user>(buffer);
                 this->vars.ask<cfg::globals::target_user>();
                 this->vars.ask<cfg::globals::target_device>();

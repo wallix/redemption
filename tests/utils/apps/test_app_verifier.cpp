@@ -27,8 +27,8 @@
 #include "check_mem.hpp"
 
 
-#define LOGPRINT
-//#define LOGNULL
+//#define LOGPRINT
+#define LOGNULL
 
 #include <fstream>
 
@@ -208,10 +208,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 
     std::string full_test_file_name = test_mwrm_path + test_file_name;
     int system_fd = open(full_test_file_name.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0600);
-    if (system_fd == -1){
-        printf("failed opening=%s\n", full_test_file_name.c_str());
-        BOOST_CHECK(false);
-    }
+    BOOST_REQUIRE_MESSAGE(system_fd != -1, "failed opening=" << full_test_file_name);
 
     struct crypto_file
     {
@@ -303,182 +300,298 @@ extern "C" {
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
+
+template<class Exception>
+bool is_except( Exception const & ) { return true; }
+
+BOOST_AUTO_TEST_CASE(TestVerifierFileNotFound)
 {
-        Inifile ini;
-        ini.set<cfg::debug::config>(false);
-        UdevRandom rnd;
-        CryptoContext cctx(rnd, ini);
-        cctx.set_get_hmac_key_cb(hmac_fn);
-        cctx.set_get_trace_key_cb(trace_fn);
+    Inifile ini;
+    ini.set<cfg::debug::config>(false);
+    UdevRandom rnd;
+    CryptoContext cctx(rnd, ini);
+    cctx.set_get_hmac_key_cb(hmac_fn);
+    cctx.set_get_trace_key_cb(trace_fn);
 
-        char const * argv[] = {
-            "verifier.py",
-            "-i",
-                "toto@10.10.43.13,Administrateur@QA@cible,"
-                "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm",
-            "--hash-path",
-                FIXTURES_PATH "/verifier/hash",
-            "--mwrm-path",
-                FIXTURES_PATH "/verifier/recorded/bad",
-            "--verbose",
-                "10",
-        };
-        int argc = sizeof(argv)/sizeof(char*);
+    char const * argv[] = {
+        "verifier.py",
+        "-i",
+            "asdfgfsghsdhds.mwrm",
+        "--hash-path",
+            FIXTURES_PATH "/verifier/hash",
+        "--mwrm-path",
+            FIXTURES_PATH "/verifier/recorded/bad",
+        "--verbose",
+            "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
 
-        int res = -1;
-        try {
-            res = app_verifier(ini,
-                argc, argv
-              , "ReDemPtion VERifier " VERSION ".\n"
-                "Copyright (C) Wallix 2010-2016.\n"
-                "Christophe Grosjean, Raphael Zhou."
-              , cctx);
-            if (res == 0){
-                printf("verify ok\n");
-            }
-            else {
-                printf("verify failed\n");
-            }
-        } catch (const Error & e) {
-            printf("verify failed: with id=%d\n", e.id);
+    BOOST_CHECK_EXCEPTION(
+        app_verifier(ini,
+            argc, argv
+          , "ReDemPtion VERifier " VERSION ".\n"
+            "Copyright (C) Wallix 2010-2016.\n"
+            "Christophe Grosjean, Raphael Zhou."
+          , cctx),
+        Error,
+        [](Error const & e){
+            BOOST_CHECK_EQUAL(e.id, ERR_TRANSPORT_OPEN_FAILED);
+            return true;
         }
-        BOOST_CHECK_EQUAL(1, res);
+    );
 }
 
+BOOST_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
+{
+    Inifile ini;
+    ini.set<cfg::debug::config>(false);
+    UdevRandom rnd;
+    CryptoContext cctx(rnd, ini);
+    cctx.set_get_hmac_key_cb(hmac_fn);
+    cctx.set_get_trace_key_cb(trace_fn);
+
+    char const * argv[] = {
+        "verifier.py",
+        "-i",
+            "toto@10.10.43.13,Administrateur@QA@cible,"
+            "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm",
+        "--hash-path",
+            FIXTURES_PATH "/verifier/hash",
+        "--mwrm-path",
+            FIXTURES_PATH "/verifier/recorded/bad",
+        "--verbose",
+            "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    int res = -1;
+    BOOST_CHECK_NO_THROW(
+        res = app_verifier(ini,
+            argc, argv
+          , "ReDemPtion VERifier " VERSION ".\n"
+            "Copyright (C) Wallix 2010-2016.\n"
+            "Christophe Grosjean, Raphael Zhou."
+          , cctx)
+    );
+    BOOST_CHECK_EQUAL(1, res);
+}
 
 BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
 {
-        Inifile ini;
-        ini.set<cfg::debug::config>(false);
-        UdevRandom rnd;
-        CryptoContext cctx(rnd, ini);
-        cctx.set_get_hmac_key_cb(hmac_fn);
-        cctx.set_get_trace_key_cb(trace_fn);
+    Inifile ini;
+    ini.set<cfg::debug::config>(false);
+    UdevRandom rnd;
+    CryptoContext cctx(rnd, ini);
+    cctx.set_get_hmac_key_cb(hmac_fn);
+    cctx.set_get_trace_key_cb(trace_fn);
 
-        char const * argv[] = {
-            "verifier.py",
-            "-i",
-                "toto@10.10.43.13,Administrateur@QA@cible,"
-                "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm",
-            "--hash-path",
-                FIXTURES_PATH "/verifier/hash",
-            "--mwrm-path",
-                FIXTURES_PATH "/verifier/recorded",
-            "--verbose",
-                "10",
-        };
-        int argc = sizeof(argv)/sizeof(char*);
+    char const * argv[] = {
+        "verifier.py",
+        "-i",
+            "toto@10.10.43.13,Administrateur@QA@cible,"
+            "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm",
+        "--hash-path",
+            FIXTURES_PATH "/verifier/hash",
+        "--mwrm-path",
+            FIXTURES_PATH "/verifier/recorded",
+        "--verbose",
+            "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
 
-        int res = -1;
-        try {
-            res = app_verifier(ini,
-                argc, argv
-              , "ReDemPtion VERifier " VERSION ".\n"
-                "Copyright (C) Wallix 2010-2016.\n"
-                "Christophe Grosjean, Raphael Zhou."
-              , cctx);
-            if (res == 0){
-                printf("verify ok\n");
-            }
-            else {
-                printf("verify failed\n");
-            }
-        } catch (const Error & e) {
-            printf("verify failed: with id=%d\n", e.id);
-        }
-        BOOST_CHECK_EQUAL(0, res);
+    int res = -1;
+    BOOST_CHECK_NO_THROW(
+        res = app_verifier(ini,
+            argc, argv
+          , "ReDemPtion VERifier " VERSION ".\n"
+            "Copyright (C) Wallix 2010-2016.\n"
+            "Christophe Grosjean, Raphael Zhou."
+          , cctx)
+    );
+    BOOST_CHECK_EQUAL(0, res);
 }
 
 BOOST_AUTO_TEST_CASE(TestVerifierClearData)
 {
-        Inifile ini;
-        ini.set<cfg::debug::config>(false);
-        UdevRandom rnd;
-        CryptoContext cctx(rnd, ini);
-        cctx.set_get_hmac_key_cb(hmac_fn);
-        cctx.set_get_trace_key_cb(trace_fn);
+    Inifile ini;
+    ini.set<cfg::debug::config>(false);
+    UdevRandom rnd;
+    CryptoContext cctx(rnd, ini);
+    cctx.set_get_hmac_key_cb(hmac_fn);
+    cctx.set_get_trace_key_cb(trace_fn);
 
-        char const * argv[] {
-            "verifier.py",
-            "-i",
-                "toto@10.10.43.13,Administrateur@QA@cible"
-                ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
-            "--hash-path",
-                FIXTURES_PATH "/verifier/hash/",
-            "--mwrm-path",
-                FIXTURES_PATH "/verifier/recorded/",
-            "--verbose",
-                "10",
-            "--ignore-stat-info"
-        };
-        int argc = sizeof(argv)/sizeof(char*);
+    char const * argv[] {
+        "verifier.py",
+        "-i",
+            "toto@10.10.43.13,Administrateur@QA@cible"
+            ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
+        "--hash-path",
+            FIXTURES_PATH "/verifier/hash/",
+        "--mwrm-path",
+            FIXTURES_PATH "/verifier/recorded/",
+        "--verbose",
+            "10",
+        "--ignore-stat-info"
+    };
+    int argc = sizeof(argv)/sizeof(char*);
 
-        BOOST_CHECK_EQUAL(true, true);
+    BOOST_CHECK_EQUAL(true, true);
 
-        int res = -1;
-        try {
-            res = app_verifier(ini,
-                argc, argv
-              , "ReDemPtion VERifier " VERSION ".\n"
-                "Copyright (C) Wallix 2010-2016.\n"
-                "Christophe Grosjean, Raphael Zhou."
-              , cctx);
-            if (res == 0){
-                printf("verify ok\n");
-            }
-            else {
-                printf("verify failed\n");
-            }
-        } catch (const Error & e) {
-            printf("verify failed: with id=%d\n", e.id);
-        }
-        BOOST_CHECK_EQUAL(0, res);
+    int res = -1;
+    BOOST_CHECK_NO_THROW(
+        res = app_verifier(ini,
+            argc, argv
+          , "ReDemPtion VERifier " VERSION ".\n"
+            "Copyright (C) Wallix 2010-2016.\n"
+            "Christophe Grosjean, Raphael Zhou."
+          , cctx)
+    );
+    BOOST_CHECK_EQUAL(0, res);
+}
+
+#include <fstream>
+#include <sstream>
+
+BOOST_AUTO_TEST_CASE(TestVerifierUpdateData)
+{
+    Inifile ini;
+    ini.set<cfg::debug::config>(false);
+    UdevRandom rnd;
+    CryptoContext cctx(rnd, ini);
+    cctx.set_get_hmac_key_cb(hmac_fn);
+    cctx.set_get_trace_key_cb(trace_fn);
+
+#define MWRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" \
+    ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm"
+#define WRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" \
+    ",20160218-181658,wab-5-0-0.yourdomain,7681-000000.wrm"
+#define TMP_VERIFIER "/tmp/app_verifier_test"
+
+    char const * tmp_recorded_mwrm = TMP_VERIFIER "/recorded/" MWRM_FILENAME;
+    char const * tmp_recorded_wrm = TMP_VERIFIER "/recorded/" WRM_FILENAME;
+    char const * tmp_hash_mwrm = TMP_VERIFIER "/hash/" MWRM_FILENAME;
+
+    mkdir(TMP_VERIFIER, 0777);
+    mkdir(TMP_VERIFIER "/hash", 0777);
+    mkdir(TMP_VERIFIER "/recorded", 0777);
+    std::ofstream(tmp_hash_mwrm, std::ios::trunc)
+      << std::ifstream(FIXTURES_PATH "/verifier/hash/" MWRM_FILENAME).rdbuf();
+    std::ofstream(tmp_recorded_mwrm, std::ios::trunc)
+      << std::ifstream(FIXTURES_PATH "/verifier/recorded/" MWRM_FILENAME).rdbuf();
+    std::ofstream(tmp_recorded_wrm, std::ios::trunc | std::ios::binary)
+      << std::ifstream(FIXTURES_PATH "/verifier/recorded/" WRM_FILENAME).rdbuf();
+
+    auto str_stat = [](char const * filename){
+        std::string s;
+        struct stat64 stat;
+        ::stat64(filename, &stat);
+        s += std::to_string(stat.st_size);
+        s += ' ';
+        s += std::to_string(stat.st_mode);
+        s += ' ';
+        s += std::to_string(stat.st_uid);
+        s += ' ';
+        s += std::to_string(stat.st_gid);
+        s += ' ';
+        s += std::to_string(stat.st_dev);
+        s += ' ';
+        s += std::to_string(stat.st_ino);
+        s += ' ';
+        s += std::to_string(stat.st_mtime);
+        s += ' ';
+        s += std::to_string(stat.st_ctime);
+        return s;
+    };
+
+    std::string mwrm_hash_contents = "v2\n\n\n" MWRM_FILENAME " " + str_stat(tmp_recorded_mwrm) + "\n";
+    std::string mwrm_recorded_contents = "v2\n800 600\nnochecksum\n\n\n/var/wab/recorded/rdp/"
+        WRM_FILENAME " " + str_stat(tmp_recorded_wrm) + " 1455815820 1455816422\n";
+
+    auto get_file_contents = [](char const * filename){
+      std::ostringstream out;
+      out << std::ifstream(filename).rdbuf();
+      return out.str();
+    };
+
+    BOOST_CHECK_NE(get_file_contents(tmp_hash_mwrm), mwrm_hash_contents);
+    BOOST_CHECK_NE(get_file_contents(tmp_recorded_mwrm), mwrm_recorded_contents);
+
+    char const * argv[] {
+        "verifier.py",
+        "-i",
+            MWRM_FILENAME,
+        "--hash-path",
+            TMP_VERIFIER "/hash/",
+        "--mwrm-path",
+            TMP_VERIFIER "/recorded/",
+        "--verbose",
+            "10",
+        "--update-stat-info"
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    int res = -1;
+    BOOST_CHECK_NO_THROW(
+        res = app_verifier(ini,
+            argc, argv
+          , "ReDemPtion VERifier " VERSION ".\n"
+            "Copyright (C) Wallix 2010-2016.\n"
+            "Christophe Grosjean, Raphael Zhou."
+          , cctx)
+    );
+    BOOST_CHECK_EQUAL(0, res);
+
+    mwrm_hash_contents = "v2\n\n\n" MWRM_FILENAME " " + str_stat(tmp_recorded_mwrm) + "\n";
+    mwrm_recorded_contents = "v2\n800 600\nnochecksum\n\n\n/var/wab/recorded/rdp/"
+        WRM_FILENAME " " + str_stat(tmp_recorded_wrm) + " 1455815820 1455816422\n";
+
+    BOOST_CHECK_EQUAL(get_file_contents(tmp_hash_mwrm), mwrm_hash_contents);
+    BOOST_CHECK_EQUAL(get_file_contents(tmp_recorded_mwrm), mwrm_recorded_contents);
+
+    remove(tmp_hash_mwrm);
+    remove(tmp_recorded_mwrm);
+    remove(tmp_recorded_wrm);
+
+#undef TMP_VERIFIER
+#undef WRM_FILENAME
+#undef MWRM_FILENAME
 }
 
 BOOST_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
 {
-        Inifile ini;
-        ini.set<cfg::debug::config>(false);
-        UdevRandom rnd;
-        CryptoContext cctx(rnd, ini);
-        cctx.set_get_hmac_key_cb(hmac_fn);
-        cctx.set_get_trace_key_cb(trace_fn);
+    Inifile ini;
+    ini.set<cfg::debug::config>(false);
+    UdevRandom rnd;
+    CryptoContext cctx(rnd, ini);
+    cctx.set_get_hmac_key_cb(hmac_fn);
+    cctx.set_get_trace_key_cb(trace_fn);
 
-        char const * argv[] {
-            "verifier.py",
-            "-i",
-                "toto@10.10.43.13,Administrateur@QA@cible"
-                ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
-            "--hash-path",
-                FIXTURES_PATH "/verifier/hash/",
-            "--mwrm-path",
-                FIXTURES_PATH "/verifier/recorded/",
-            "--verbose",
-                "10",
-        };
-        int argc = sizeof(argv)/sizeof(char*);
+    char const * argv[] {
+        "verifier.py",
+        "-i",
+            "toto@10.10.43.13,Administrateur@QA@cible"
+            ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
+        "--hash-path",
+            FIXTURES_PATH "/verifier/hash/",
+        "--mwrm-path",
+            FIXTURES_PATH "/verifier/recorded/",
+        "--verbose",
+            "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
 
-        BOOST_CHECK_EQUAL(true, true);
+    BOOST_CHECK_EQUAL(true, true);
 
-        int res = -1;
-        try {
-            res = app_verifier(ini,
-                argc, argv
-              , "ReDemPtion VERifier " VERSION ".\n"
-                "Copyright (C) Wallix 2010-2016.\n"
-                "Christophe Grosjean, Raphael Zhou."
-              , cctx);
-            if (res == 0){
-                printf("verify ok\n");
-            }
-            else {
-                printf("verify failed\n");
-            }
-        } catch (const Error & e) {
-            printf("verify failed: with id=%d\n", e.id);
-        }
-        BOOST_CHECK_EQUAL(1, res);
+    int res = -1;
+    BOOST_CHECK_NO_THROW(
+        res = app_verifier(ini,
+            argc, argv
+          , "ReDemPtion VERifier " VERSION ".\n"
+            "Copyright (C) Wallix 2010-2016.\n"
+            "Christophe Grosjean, Raphael Zhou."
+          , cctx)
+    );
+    BOOST_CHECK_EQUAL(1, res);
 }
 
 BOOST_AUTO_TEST_CASE(ReadClearHeaderV2)
@@ -608,14 +721,11 @@ BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
     MetaLine2 meta_line;
     BOOST_CHECK(reader.read_meta_file(meta_line));
 
-    printf("%s\n", meta_line.filename);
-
     {
-        std::string got(meta_line.filename);
         std::string expected("/var/wab/recorded/rdp"
                              "/toto@10.10.43.13,Administrateur@QA@cible,"
                              "20160218-183009,wab-5-0-0.yourdomain,7335-000000.wrm");
-        BOOST_CHECK_EQUAL(got, expected);
+        BOOST_REQUIRE_EQUAL(meta_line.filename, expected);
     }
     BOOST_CHECK_EQUAL(meta_line.size, 163032);
     BOOST_CHECK_EQUAL(meta_line.mode, 33056);

@@ -17,6 +17,17 @@ To compile ReDemPtion you need the following packages:
 - libsnappy-dev
 - libpng12-dev
 - python2.7-dev or python2.6-dev
+<!-- BEGIN optional if NO_FFMPEG ? (note: ok with 53 (?) and 54 version)-->
+- libavcodec-dev (or set `FFMPEG_INC_PATH` to environment variable)
+- libavformat-dev (or set `FFMPEG_INC_PATH` to environment variable)
+- libavutil-dev (or set `FFMPEG_INC_PATH` to environment variable)
+- libswscale-dev (or set `FFMPEG_INC_PATH` to environment variable)
+- libavcodec-ffmpeg56 (or set `FFMPEG_LIB_PATH` to environment variable)
+- libavformat-ffmpeg56 (or set `FFMPEG_LIB_PATH` to environment variable)
+- libavutil-ffmpeg54 (or set `FFMPEG_LIB_PATH` to environment variable)
+- libswscale-ffmpeg3 (or set `FFMPEG_LIB_PATH` to environment variable)
+- libbz2-dev
+<!-- END optional -->
 - g++ >= 4.9 or clang++ >= 3.5 or other C++11 compiler
 
 Optionally:

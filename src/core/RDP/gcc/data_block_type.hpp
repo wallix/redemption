@@ -43,6 +43,8 @@ enum DATA_BLOCK_TYPE {
     CS_MCS_MSGCHANNEL = 0xC006,
     // The data block that follows contains Client Multitransport Channel Data (section 2.2.1.3.8).
     CS_MULTITRANSPORT = 0xC00A,
+    // The data block that follows contains Client Monitor Ex Data (section 2.2.1.3.9).
+    CS_MONITOR_EX = 0xc008,
     // The data block that follows contains Server Core Data (section 2.2.1.4.2).
     SC_CORE = 0x0C01,
     // The data block that follows contains Server Security Data (section 2.2.1.4.3).

@@ -115,8 +115,8 @@ public:
     {
         this->impl = &composite_array;
 
-        this->add_widget(&this->helpicon);
         this->add_widget(&this->img);
+        this->add_widget(&this->helpicon);
         this->add_widget(&this->login_edit);
         this->add_widget(&this->password_edit);
         if (width > 640) {
@@ -169,6 +169,9 @@ public:
             ?(height - (bbloc_h + 10))
             :(height/2 + cbloc_h/2 + bottom_height/2);
         this->img.set_xy(left + (width - this->img.rect.cx) / 2, top + y_bbloc);
+        if (this->img.rect.y + this->img.cy() > height) {
+            this->img.rect.y = 0;
+        }
         this->version_label.set_xy(left + (width - this->version_label.rect.cx) / 2,
                                    top + y_bbloc + this->img.rect.cy + 10);
 

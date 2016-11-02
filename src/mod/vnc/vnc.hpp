@@ -142,7 +142,7 @@ private:
     const bool enable_clipboard_down; // true clipboard available, false clipboard unavailable
 
     bool client_use_long_format_names = false;
-    bool server_use_long_format_names = false;
+    bool server_use_long_format_names = true;
 
     z_stream zstrm;
 
@@ -686,13 +686,11 @@ public:
 
                 RDPECLIP::GeneralCapabilitySet general_caps(
                     RDPECLIP::CB_CAPS_VERSION_1,
-                    RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+                    this->server_use_long_format_names?RDPECLIP::CB_USE_LONG_FORMAT_NAMES:0);
 
-                if (general_caps.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES) {
-                    this->server_use_long_format_names = true;
-                }
                 if (this->verbose) {
-                    LOG(LOG_INFO, "Server use %s format name", (this->server_use_long_format_names ? "long" : "short"));
+                    LOG(LOG_INFO, "Server use %s format name", 
+                        (this->server_use_long_format_names ? "long" : "short"));
                 }
 
                 RDPECLIP::ClipboardCapabilitiesPDU clip_cap_pdu(
@@ -2204,7 +2202,8 @@ private:
     void clipboard_send_to_vnc(InStream & chunk, size_t length, uint32_t flags)
     {
         if (this->verbose) {
-            LOG( LOG_INFO, "mod_vnc::clipboard_send_to_vnc: length=%zu chunk_size=%zu flags=0x%08X"
+            LOG( LOG_INFO, "mod_vnc::clipboard_send_to_vnc:"
+                           " length=%zu chunk_size=%zu flags=0x%08X"
                , length, chunk.get_capacity(), flags);
         }
 
@@ -2247,36 +2246,36 @@ private:
          */
 
         // specific treatement depending on msgType
-        InStream stream(chunk.get_data(), chunk.get_capacity());
-
-        RDPECLIP::RecvFactory recv_factory(stream);
+        RDPECLIP::RecvPredictor rp(chunk);
+        uint16_t msgType = rp.msgType;
 
         if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) == 0) {
-            recv_factory.msgType = RDPECLIP::CB_CHUNKED_FORMAT_DATA_RESPONSE;
-
-            // msgType is non msgType, is a part of data.
-            stream.rewind();
+            msgType = RDPECLIP::CB_CHUNKED_FORMAT_DATA_RESPONSE;
+            // msgType read is not a msgType, it's a part of data.
         }
 
         if (this->verbose) {
             LOG(LOG_INFO, "mod_vnc client clipboard PDU: msgType=%s(%d)",
-                RDPECLIP::get_msgType_name(recv_factory.msgType), recv_factory.msgType);
+                RDPECLIP::get_msgType_name(msgType), msgType);
         }
 
-        switch (recv_factory.msgType) {
-            // Client notify that a copy operation have occured. Two operations should be done :
-            //  - Always: send a RDP acknowledge (CB_FORMAT_LIST_RESPONSE)
-            //  - Only if clipboard content formats list include "UNICODETEXT: send a request for it in that format
+        switch (msgType) {
             case RDPECLIP::CB_FORMAT_LIST: {
+                // Client notify that a copy operation have occured. 
+                // Two operations should be done :
+                //  - Always: send a RDP acknowledge (CB_FORMAT_LIST_RESPONSE)
+                //  - Only if clipboard content formats list include "UNICODETEXT: 
+                // send a request for it in that format
                 RDPECLIP::FormatListPDU format_list_pdu;
 
-                if (!this->client_use_long_format_names || !this->server_use_long_format_names) {
-                    format_list_pdu.recv(stream, recv_factory);
+                if (!this->client_use_long_format_names) {
+                    format_list_pdu.recv(chunk);
                 }
-                else
-                    format_list_pdu.recv_long(stream, recv_factory);
+                else {
+                    format_list_pdu.recv_long(chunk);
+                }
 
-                //--------------------------- Beginning of clipboard PDU Header ----------------------------
+                //---- Beginning of clipboard PDU Header ----------------------------
 
                 if (this->verbose) {
                     LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=CB_FORMAT_LIST_RESPONSE(%u)",
@@ -2305,18 +2304,17 @@ private:
 
                 const uint64_t MINIMUM_TIMEVAL = 250000LL;
 
-                if (this->enable_clipboard_up &&
-//                    ((format_list_pdu.contians_data_in_text_format && (this->clipboard_server_encoding_type == ClipboardEncodingType::Latin1)) ||
-//                     (format_list_pdu.contians_data_in_unicodetext_format && (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8)))) {
-                    (format_list_pdu.contians_data_in_text_format || format_list_pdu.contians_data_in_unicodetext_format)) {
+                if (this->enable_clipboard_up 
+                && (format_list_pdu.contains_data_in_text_format 
+                 || format_list_pdu.contains_data_in_unicodetext_format)) {
                     if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
                         this->clipboard_requested_format_id =
-                            (format_list_pdu.contians_data_in_unicodetext_format ?
+                            (format_list_pdu.contains_data_in_unicodetext_format ?
                              RDPECLIP::CF_UNICODETEXT : RDPECLIP::CF_TEXT);
                     }
                     else {
                         this->clipboard_requested_format_id =
-                            (format_list_pdu.contians_data_in_text_format ?
+                            (format_list_pdu.contains_data_in_text_format ?
                              RDPECLIP::CF_TEXT : RDPECLIP::CF_UNICODETEXT);
                     }
 
@@ -2365,12 +2363,15 @@ private:
 
                             this->clipboard_requesting_for_data_is_delayed = true;
                         }
-                        else if (this->bogus_clipboard_infinite_loop != VncBogusClipboardInfiniteLoop::duplicated &&
-                                 (this->clipboard_general_capability_flags & RDPECLIP::CB_ALL_GENERAL_CAPABILITY_FLAGS)) {
+                        else if (this->bogus_clipboard_infinite_loop 
+                            != VncBogusClipboardInfiniteLoop::duplicated 
+                        && (this->clipboard_general_capability_flags 
+                            & RDPECLIP::CB_ALL_GENERAL_CAPABILITY_FLAGS)) {
                             if (this->verbose) {
                                 LOG( LOG_INFO
                                    , "mod_vnc::clipboard_send_to_vnc: "
-                                     "duplicated clipboard update event form Windows client is ignored"
+                                     "duplicated clipboard update event "
+                                     "from Windows client is ignored"
                                    );
                             }
                         }
@@ -2406,10 +2407,10 @@ private:
 
             case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
                 const unsigned expected = 10; /* msgFlags(2) + datalen(4) + requestedFormatId(4) */
-                if (!stream.in_check_rem(expected)) {
+                if (!chunk.in_check_rem(expected)) {
                     LOG( LOG_ERR
                        , "mod_vnc::clipboard_send_to_vnc: truncated CB_FORMAT_DATA_REQUEST(%d) data, need=%u remains=%zu"
-                       , RDPECLIP::CB_FORMAT_DATA_REQUEST, expected, stream.in_remain());
+                       , RDPECLIP::CB_FORMAT_DATA_REQUEST, expected, chunk.in_remain());
                     throw Error(ERR_VNC);
                 }
 
@@ -2420,7 +2421,7 @@ private:
                 RDPECLIP::FormatDataRequestPDU format_data_request_pdu;
 
                 // 04 00 00 00 04 00 00 00 0d 00 00 00 00 00 00 00
-                format_data_request_pdu.recv(stream, recv_factory);
+                format_data_request_pdu.recv(chunk);
 
                 if (this->verbose) {
                     LOG( LOG_INFO
@@ -2587,21 +2588,21 @@ private:
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
                 RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
 
-                format_data_response_pdu.recv(stream, recv_factory);
+                format_data_response_pdu.recv(chunk);
 
                 if (format_data_response_pdu.msgFlags() == RDPECLIP::CB_RESPONSE_OK) {
                     if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
-                        if (!stream.in_check_rem(format_data_response_pdu.dataLen())) {
+                        if (!chunk.in_check_rem(format_data_response_pdu.dataLen())) {
                             LOG( LOG_ERR
                                , "mod_vnc::clipboard_send_to_vnc: truncated CB_FORMAT_DATA_RESPONSE(%d), need=%" PRIu32 " remains=%zu"
                                , RDPECLIP::CB_FORMAT_DATA_RESPONSE
-                               , format_data_response_pdu.dataLen(), stream.in_remain());
+                               , format_data_response_pdu.dataLen(), chunk.in_remain());
                             throw Error(ERR_VNC);
                         }
 
                         this->to_vnc_clipboard_data.rewind();
 
-                        this->to_vnc_clipboard_data.out_copy_bytes(stream.get_current(), format_data_response_pdu.dataLen());
+                        this->to_vnc_clipboard_data.out_copy_bytes(chunk.get_current(), format_data_response_pdu.dataLen());
 
                         this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_data(),
                             this->to_vnc_clipboard_data.get_offset());
@@ -2628,9 +2629,9 @@ private:
                         if (this->to_vnc_clipboard_data.get_capacity() >= this->to_vnc_clipboard_data_size) {
                             uint32_t number_of_bytes_to_read = std::min<uint32_t>(
                                     this->to_vnc_clipboard_data_remaining,
-                                    stream.in_remain()
+                                    chunk.in_remain()
                                 );
-                            this->to_vnc_clipboard_data.out_copy_bytes(stream.get_current(), number_of_bytes_to_read);
+                            this->to_vnc_clipboard_data.out_copy_bytes(chunk.get_current(), number_of_bytes_to_read);
 
                             this->to_vnc_clipboard_data_remaining -= number_of_bytes_to_read;
                         }
@@ -2673,16 +2674,16 @@ private:
 
                 // if (this->verbose) {
                 //     LOG( LOG_INFO, "mod_vnc::clipboard_send_to_vnc: trunk size=%u, capacity=%u"
-                //        , stream.in_remain(), static_cast<unsigned>(this->to_vnc_clipboard_data.tailroom()));
+                //        , chunk.in_remain(), static_cast<unsigned>(this->to_vnc_clipboard_data.tailroom()));
                 // }
 
                 if (this->to_vnc_clipboard_data.get_capacity() >= this->to_vnc_clipboard_data_size) {
                     uint32_t number_of_bytes_to_read = std::min<uint32_t>(
                             this->to_vnc_clipboard_data_remaining,
-                            stream.in_remain()
+                            chunk.in_remain()
                         );
 
-                    this->to_vnc_clipboard_data.out_copy_bytes(stream.get_current(), number_of_bytes_to_read);
+                    this->to_vnc_clipboard_data.out_copy_bytes(chunk.get_current(), number_of_bytes_to_read);
 
                     this->to_vnc_clipboard_data_remaining -= number_of_bytes_to_read;
                 }
@@ -2700,14 +2701,13 @@ private:
             {
                 RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu;
 
-                clipboard_caps_pdu.recv(stream, recv_factory);
+                clipboard_caps_pdu.recv(chunk);
 
-                RDPECLIP::CapabilitySetRecvFactory caps_recv_factory(stream);
+                RDPECLIP::CapabilitySetRecvFactory caps_recv_factory(chunk);
 
                 if (caps_recv_factory.capabilitySetType == RDPECLIP::CB_CAPSTYPE_GENERAL) {
                     RDPECLIP::GeneralCapabilitySet general_caps;
-
-                    general_caps.recv(stream, caps_recv_factory);
+                    general_caps.recv(chunk, caps_recv_factory);
 
                     this->clipboard_general_capability_flags = general_caps.generalFlags();
 
@@ -2715,7 +2715,8 @@ private:
                         this->client_use_long_format_names = true;
                     }
                     if (this->verbose) {
-                        LOG(LOG_INFO, "Client use %s format name", (this->client_use_long_format_names ? "long" : "short"));
+                        LOG(LOG_INFO, "Client use %s format name", 
+                            (this->client_use_long_format_names ? "long" : "short"));
                     }
 
                     if (this->verbose) {
