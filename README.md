@@ -26,7 +26,7 @@ To compile ReDemPtion you need the following packages:
 - libavformat-ffmpeg56 (or set `FFMPEG_LIB_PATH` to environment variable)
 - libavutil-ffmpeg54 (or set `FFMPEG_LIB_PATH` to environment variable)
 - libswscale-ffmpeg3 (or set `FFMPEG_LIB_PATH` to environment variable)
-- libbz2-dev
+<!-- - libbz2-dev -->
 <!-- END optional -->
 - g++ >= 4.9 or clang++ >= 3.5 or other C++11 compiler
 
