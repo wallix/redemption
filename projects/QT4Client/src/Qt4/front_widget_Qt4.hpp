@@ -205,7 +205,6 @@ public:
             this->_front->_callback = this->_callback;
             this->_sckRead = new QSocketNotifier(this->_client_sck, QSocketNotifier::Read, this);
             this->QObject::connect(this->_sckRead,   SIGNAL(activated(int)), this,  SLOT(call_Draw()));
-            std::cout << "Early negociations start.." <<  std::endl;
 
         } catch (const Error & e) {
             const std::string errorMsg("Error: RDP Initialization failed.");
@@ -216,10 +215,14 @@ public:
             return false;
         }
 
+        std::cout << "Early negociations start.." <<  std::endl;
         if (this->_callback != nullptr) {
+            int i(0);
             while (!this->_callback->is_up_and_running()) {
                 try {
+                    std::cout << "Early negociations step " << i <<  std::endl;
                     this->_callback->draw_event(time(nullptr), *(this->_front));
+                    i++;
                 } catch (const Error & e) {
                     const std::string errorMsg("Error: Failed during RDP early negociations.");
                     std::cout << errorMsg << std::endl;

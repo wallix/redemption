@@ -18,7 +18,7 @@
    Author(s): Clément Moroldo
 */
 
-//#define LOGPRINT
+#define LOGPRINT
 
 #include "test_client_redemption_cli.hpp"
 
