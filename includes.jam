@@ -4,8 +4,6 @@ rule includes ( properties * )
 
     incs += <include>$(REDEMPTION_SRC_PATH) ;
     incs += <include>$(REDEMPTION_SRC_PATH)/system/$(SYSTEM_TYPE) ;
-    # TODO move to system
-    incs += <include>$(REDEMPTION_SRC_PATH)/headers ;
     incs += <include>$(INCLUDES_PATH) ;
 
     incs += <include>$(MLN_INCLUDES_PATH) ;
