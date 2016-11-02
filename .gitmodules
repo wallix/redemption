@@ -3,4 +3,4 @@
 	url = https://github.com/wallix/program_options.git
 [submodule "modules/ppocr"]
 	path = modules/ppocr
-	url = git@github.com:wallix/ppocr.git
+	url = https://github.com/wallix/ppocr.git

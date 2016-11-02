@@ -449,7 +449,8 @@ public:
                 return this->current_focus;
             }
         }
-        CompositeContainer::iterator iter_w_current = this->impl->get_first();
+        // Foreground widget is the last in the list.
+        CompositeContainer::iterator iter_w_current = this->impl->get_last();
         while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
             Widget2 * w = this->impl->get(iter_w_current);
             REDASSERT(w);
@@ -457,7 +458,7 @@ public:
                 return w;
             }
 
-            iter_w_current = this->impl->get_next(iter_w_current);
+            iter_w_current = this->impl->get_previous(iter_w_current);
         }
 
         return nullptr;
@@ -540,4 +541,3 @@ public:
         this->draw_children(rect_intersect);
     }
 };
-
