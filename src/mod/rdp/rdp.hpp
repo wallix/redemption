@@ -658,6 +658,7 @@ public:
 
     GCC::UserData::SCCore sc_core;
     GCC::UserData::SCSecurity sc_sec1;
+    GCC::UserData::CSSecurity cs_security;
 
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -1921,9 +1922,9 @@ public:
                 }
                 cs_cluster.emit(stream);
                 // ------------------------------------------------------------
-                GCC::UserData::CSSecurity cs_security;
+
                 if (this->verbose & 1) {
-                    cs_security.log("Sending to server");
+                    this->cs_security.log("Sending to server");
                 }
                 cs_security.emit(stream);
                 // ------------------------------------------------------------
@@ -2146,6 +2147,7 @@ public:
 
             MCS::CONNECT_RESPONSE_PDU_Recv mcs(x224.payload, MCS::BER_ENCODING);
             GCC::Create_Response_Recv gcc_cr(mcs.payload);
+
             while (gcc_cr.payload.in_check_rem(4)) {
                 GCC::UserData::RecvFactory f(gcc_cr.payload);
 

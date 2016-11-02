@@ -1972,8 +1972,9 @@ public:
 //  PAKID_CORE_CLIENT_NAME.
 
 // UnicodeFlag (4 bytes): A 32-bit unsigned integer that indicates the format
-//  of the ComputerName field. This field MUST be set to one of the following
-//  values.
+//  of the ComputerName field. Only the least significant bit of this field is
+//  valid (the most significant 31 bits MUST be ignored). This field MUST be
+//  set to one of the following values.
 
 //  +------------+----------------------------------------+
 //  | Value      | Meaning                                |
@@ -1996,7 +1997,7 @@ public:
 //  characters used in this field.
 
 class ClientNameRequest {
-    uint32_t UnicodeFlag = 0x00000001 /* ComputerName is in Unicode characters. */;
+    uint32_t UnicodeFlag = 0x000007ff /* ComputerName is in Unicode characters. */;
     uint32_t CodePage    = 0;
 
     std::string computer_name;
