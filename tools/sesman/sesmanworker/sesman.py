@@ -1585,7 +1585,8 @@ class Sesman():
                                     Logger().info(u"Auth channel target=\"%s\"" % self.shared.get(u'auth_channel_target'))
 
                                     if self.shared.get(u'auth_channel_target') == u'GetWabSessionParameters':
-                                        account_login = selected_target.account.login
+                                        app_info =  self.engine.get_target_login_info(selected_target)
+                                        account_login = app_info.account_login
                                         application_password = self.engine.get_target_password(selected_target)
 
                                         _message = { 'user' : account_login, 'password' : application_password }
