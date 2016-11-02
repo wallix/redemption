@@ -43,7 +43,7 @@ namespace GCC { namespace UserData {
 // (0x00000001) as described in section 2.2.1.2.1.
 
 //    header (4 bytes): A GCC user data block header, as specified in User Data
-//                      Header (section 2.2.1.3.1). The User Data Header type  
+//                      Header (section 2.2.1.3.1). The User Data Header type
 //                      field MUST be set to CS_MONITOR_EX (0xC008).
 
 //    flags (4 bytes): A 32-bit, unsigned integer. This field is unused and reserved for
@@ -51,17 +51,17 @@ namespace GCC { namespace UserData {
 
 //    monitorAttributeSize (4 bytes): A 32-bit, unsigned integer. The size, in bytes, of a
 //                                    single element in the monitorAttributesArray field.
-//                                    This field MUST be set to 20 bytes, which is the size of  
+//                                    This field MUST be set to 20 bytes, which is the size of
 //                                    the Monitor Attributes structure (section 2.2.1.3.9.1).
 
 //    monitorCount (4 bytes): A 32-bit, unsigned integer. The number of elements in the
-//                            monitorAttributesArray field. This value MUST be the same 
-//                            as the monitorCount field specified in the Client Monitor 
-//                            Data (section 2.2.1.3.6 block (section).   
+//                            monitorAttributesArray field. This value MUST be the same
+//                            as the monitorCount field specified in the Client Monitor
+//                            Data (section 2.2.1.3.6 block (section).
 
 //    monitorAttributesArray (variable): A variable-length array containing a series of
-//                                       TS_MONITOR_ATTRIBUTES structures (section 
-//                                       2.2.1.3.9.1) which describe extended attributes   
+//                                       TS_MONITOR_ATTRIBUTES structures (section
+//                                       2.2.1.3.9.1) which describe extended attributes
 //                                       of each display monitor specified in the Client
 //                                       Monitor Data block. The number of TS_MONITOR_ATTRIBUTES
 //                                       structures is specified by the monitorCount field.
@@ -73,7 +73,7 @@ namespace GCC { namespace UserData {
 // The TS_MONITOR_ATTRIBUTES packet describes extended attributes of a client-side display
 // monitor.
 
-// physicalWidth (4 bytes): A 32-bit, unsigned integer. The physical width of the monitor, 
+// physicalWidth (4 bytes): A 32-bit, unsigned integer. The physical width of the monitor,
 // in millimeters (mm). This value MUST be ignored if it is less than 10 mm or greater than
 // 10,000 mm or physicalHeight is less than 10 mm or greater than 10,000 mm.
 
@@ -87,7 +87,7 @@ namespace GCC { namespace UserData {
 //        Value                                Meaning
 // -------------------------------------------------------------------------
 // ORIENTATION_LANDSCAPE            The desktop is not rotated.
-//       0                        
+//       0
 // ORIENTATION_PORTRAIT             The desktop is rotated clockwise by 90 degrees.
 //       90
 // ORIENTATION_LANDSCAPE_FLIPPED    The desktop is rotated clockwise by 180 degrees.
@@ -162,7 +162,7 @@ struct CSMonitorEx {
                 stream.in_remain());
             throw Error(ERR_GCC);
         }
-       
+
         this->userDataType = stream.in_uint16_le();
         this->length       = stream.in_uint16_le();
 
@@ -205,7 +205,7 @@ struct CSMonitorEx {
             throw Error(ERR_GCC);
         }
 
-        for (uint32_t i = 0; i < this->monitorCount; i++) { 
+        for (uint32_t i = 0; i < this->monitorCount; i++) {
             this->monitorAttributesArray[i].physicalWidth      = stream.in_uint32_le();
             this->monitorAttributesArray[i].physicalHeight     = stream.in_uint32_le();
             this->monitorAttributesArray[i].orientation        = stream.in_uint32_le();
@@ -235,7 +235,7 @@ struct CSMonitorEx {
                this->monitorAttributesArray[i].orientation = ORIENTATION_LANDSCAPE; // ignored
             }
 
-            if (  ( (this->monitorAttributesArray[i].desktopScaleFactor < 100) &&
+            if (  ( (this->monitorAttributesArray[i].desktopScaleFactor < 100) ||
                     (this->monitorAttributesArray[i].desktopScaleFactor > 500) )
                  ||
                   (  (this->monitorAttributesArray[i].deviceScaleFactor != 100) &&

@@ -433,7 +433,7 @@ public:
     //         CLIPBOARD
     //-----------------------------
 
-    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t , size_t chunk_size, int flags) {
+    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t , size_t chunk_size, int flags) override {
         const CHANNELS::ChannelDef * mod_channel = this->_cl.get_by_name(channel.name);
         if (!mod_channel) {
             return;
@@ -692,7 +692,7 @@ public:
         }
     }
 
-    void send_to_clipboard_Buffer(InStream & chunk) {}
+    void send_to_clipboard_Buffer(InStream & chunk) { (void)chunk; }
 
     void send_textBuffer_to_clipboard() {}
 
@@ -700,7 +700,12 @@ public:
 
     void empty_buffer() {}
 
-    void process_client_clipboard_outdata(uint64_t total_length, OutStream & out_streamfirst, int firstPartSize, uint8_t const * data) {}
+    void process_client_clipboard_outdata(uint64_t total_length, OutStream & out_streamfirst, int firstPartSize, uint8_t const * data) {
+        (void)total_length;
+        (void)out_streamfirst;
+        (void)firstPartSize;
+        (void)data;
+    }
 
 
 
@@ -724,6 +729,7 @@ public:
     }
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override {
+        (void)bitmap;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMemBlt rop=" << int(cmd.rop);
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
@@ -731,6 +737,7 @@ public:
     }
 
     virtual void draw(const RDPLineTo & cmd, const Rect & clip) override {
+        (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPLineTo " << std::endl;
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
@@ -745,6 +752,7 @@ public:
     }
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
+        (void)bitmap;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMem3Blt rop=" << int(cmd.rop);
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
@@ -752,6 +760,8 @@ public:
     }
 
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
+        (void)bitmap_data;
+        (void)bmp;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPBitmapData " << std::endl;
         }
@@ -765,6 +775,7 @@ public:
     }
 
     virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
+        (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMultiDstBlt " << std::endl;
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
@@ -772,6 +783,7 @@ public:
     }
 
     virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
+        (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMultiOpaqueRect " << std::endl;
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
@@ -779,6 +791,7 @@ public:
     }
 
     virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
+        (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMultiPatBlt " << std::endl;
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
@@ -786,6 +799,7 @@ public:
     }
 
     virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
+        (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMultiScrBlt " << std::endl;
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
@@ -793,6 +807,8 @@ public:
     }
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
+        (void)cmd;
+        (void)gly_cache;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPGlyphIndex " << std::endl;
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
@@ -800,6 +816,7 @@ public:
     }
 
     void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
+        (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPolygonSC " << std::endl;
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
@@ -807,6 +824,7 @@ public:
     }
 
     void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
+        (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPolygonCB " << std::endl;
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
@@ -814,6 +832,7 @@ public:
     }
 
     void draw(const RDPPolyline & cmd, const Rect & clip) override {
+        (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPolyline " << std::endl;
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
@@ -821,6 +840,7 @@ public:
     }
 
     virtual void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
+        (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPEllipseSC " << std::endl;
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
@@ -828,6 +848,7 @@ public:
     }
 
     virtual void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
+        (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPEllipseCB " << std::endl;
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
@@ -835,66 +856,77 @@ public:
     }
 
     virtual void draw(const RDP::FrameMarker & order) override {
+        (void)order;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> FrameMarker " << std::endl;
         }
     }
 
     virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
+        (void)order;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> NewOrExistingWindow " << std::endl;
         }
     }
 
     virtual void draw(const RDP::RAIL::WindowIcon & order) override {
+        (void)order;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> WindowIcon " << std::endl;
         }
     }
 
     virtual void draw(const RDP::RAIL::CachedIcon & order) override {
+        (void)order;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> CachedIcon " << std::endl;
         }
     }
 
     virtual void draw(const RDP::RAIL::DeletedWindow & order) override {
+        (void)order;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> DeletedWindow " << std::endl;
         }
     }
 
     virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override {
+        (void)order;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> NewOrExistingNotificationIcons " << std::endl;
         }
     }
 
     virtual void draw(const RDP::RAIL::DeletedNotificationIcons & order) override {
+        (void)order;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> DeletedNotificationIcons " << std::endl;
         }
     }
 
     virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override {
+        (void)order;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> ActivelyMonitoredDesktop " << std::endl;
         }
     }
 
     virtual void draw(const RDP::RAIL::NonMonitoredDesktop & order) override {
+        (void)order;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> NonMonitoredDesktop " << std::endl;
         }
     }
 
-    virtual void draw(const RDPColCache   & cmd) override {
+    virtual void draw(const RDPColCache & cmd) override {
+        (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPColCache " << std::endl;
         }
     }
 
     virtual void draw(const RDPBrushCache & cmd) override {
+        (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPBrushCache " << std::endl;
         }
