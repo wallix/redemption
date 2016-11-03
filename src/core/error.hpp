@@ -310,7 +310,6 @@ enum error_type {
     ERR_PDBC_SAVE,
 
     ERR_SESSION_PROBE_LAUNCH = 24200,
-    ERR_SESSION_PROBE_KEEPALIVE,
     ERR_SESSION_PROBE_ENDING_IN_PROGRESS,
     ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION,
 
@@ -369,10 +368,6 @@ public:
         case ERR_WIDGET_INVALID_COMPOSITE_DESTROY:
             return "Composite Widget Destroyed without child list not empty";
 
-        case ERR_SESSION_PROBE_LAUNCH:
-            return "Could not launch Session Probe";
-        case ERR_SESSION_PROBE_KEEPALIVE:
-            return "Keep alive has been missed, connection may be dead or slow";
         case ERR_SESSION_PROBE_ENDING_IN_PROGRESS:
             return "Session logoff in progress";
 

@@ -28,6 +28,7 @@
 #include <cstring>
 #include <cerrno>
 
+#include <vector>
 #include <algorithm>
 #include "utils/bitfu.hpp"
 #include "utils/sugar/non_null_ptr.hpp"

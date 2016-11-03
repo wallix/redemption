@@ -1559,9 +1559,15 @@ class Sesman():
                                         release_reason = u'Session exception: ' + _reporting_message
                                         self.engine.set_session_status(
                                             result=False, diag=release_reason)
+                                    elif _reporting_reason == u'SESSION_PROBE_LAUNCH_FAILED':
+                                        Logger().info(u'RDP connection terminated. Reason: Session Probe launch failed')
+                                        release_reason = u'Interrupt: Session Probe launch failed'
+                                        self.engine.set_session_status(
+                                            result=False, diag=release_reason)
+                                        self.send_data({u'disconnect_reason': TR(u"session_probe_launch_failed")})
                                     elif _reporting_reason == u'SESSION_PROBE_KEEPALIVE_MISSED':
-                                        Logger().info(u'RDP connection terminated. Reason: Session Probe Keepalive missed')
-                                        release_reason = u'Interrupt: Session Probe Keepalive missed'
+                                        Logger().info(u'RDP connection terminated. Reason: Session Probe keepalive missed')
+                                        release_reason = u'Interrupt: Session Probe keepalive missed'
                                         self.engine.set_session_status(
                                             result=False, diag=release_reason)
                                         self.send_data({u'disconnect_reason': TR(u"session_probe_keepalive_missed")})
@@ -1585,7 +1591,8 @@ class Sesman():
                                     Logger().info(u"Auth channel target=\"%s\"" % self.shared.get(u'auth_channel_target'))
 
                                     if self.shared.get(u'auth_channel_target') == u'GetWabSessionParameters':
-                                        account_login = selected_target.account.login
+                                        app_info =  self.engine.get_target_login_info(selected_target)
+                                        account_login = app_info.account_login
                                         application_password = self.engine.get_target_password(selected_target)
 
                                         _message = { 'user' : account_login, 'password' : application_password }
@@ -1690,6 +1697,8 @@ class Sesman():
         elif reason == u'SESSION_EXCEPTION':
             pass
         elif reason == u'SESSION_EXCEPTION_NO_RECORD':
+            pass
+        elif reason == u'SESSION_PROBE_LAUNCH_FAILED':
             pass
         elif reason == u'SESSION_PROBE_KEEPALIVE_MISSED':
             pass

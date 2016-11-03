@@ -556,7 +556,7 @@ public:
         const bool session_log =
             this->ini.get<cfg::session_log::enable_session_log>();
         if (!duplicate_with_pid && !session_log) return;
-        
+
         /* Log to file */
         const bool log_redir = this->ini.get<cfg::session_log::session_log_redirection>();
 
@@ -567,9 +567,9 @@ public:
             if (log_redir) {
                 if(log_file.bad()) {
                     LOG(LOG_INFO, "auth::bad SIEM log file creation");
-                }      
+                }
                 else {
-                    time_t seconds = time(NULL);
+                    time_t seconds = time(nullptr);
                     struct tm * timeinfo = localtime(&seconds);
                     log_file << (1900+timeinfo->tm_year) << "-";
                     log_file << (timeinfo->tm_mon+1) << "-" << timeinfo->tm_mday << " " << timeinfo->tm_hour << ":" <<timeinfo->tm_min << ":" <<timeinfo->tm_sec << " ";

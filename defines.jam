@@ -56,5 +56,12 @@ rule defines ( properties * )
     return $(defs) ;
 }
 
+## ffmpeg {
+# empty for default system header
+_FFMPEG_INC_PATH ?= "" ;
+# empty for default system library
+_FFMPEG_LIB_PATH ?= "" ;
+## }
+
 constant FFMPEG_INC_PATH : [ setvar FFMPEG_INC_PATH : $(_FFMPEG_INC_PATH) ] ;
 constant FFMPEG_LIB_PATH : [ setvar FFMPEG_LIB_PATH : $(_FFMPEG_LIB_PATH) ] ;

@@ -5,6 +5,7 @@ addons:
   apt:
     packages:
       - g++-5
+      - g++-6
       - libssl-dev
       - libpng12-dev
       - libboost-dev
@@ -26,20 +27,31 @@ cache:
 
 matrix:
   include:
+    # GCC 5
     - os: linux
-      env: TOOLSET=gcc-5.0
+      env: TOOLSET=gcc
       compiler: gcc
       before_script:
-        - "echo -e 'using gcc : 5.0 : g++-5 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
+        - "echo -e 'using gcc : : g++-5 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
 
+    # GCC 6
+    - os: linux
+      env: COMPILER=gcc
+      compiler: gcc
+      before_script:
+        - "echo -e 'using gcc : : g++-6 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
+
+    # Clang 3.6
     - os: linux
       env: LLVM_VERSION=3.6.2
       compiler: clang
 
+    # Clang 3.7
     - os: linux
       env: LLVM_VERSION=3.7.1
       compiler: clang
 
+    # Clang 3.8
     - os: linux
       env: LLVM_VERSION=3.8.0
       compiler: clang
@@ -139,12 +151,8 @@ install:
 
 
 script:
-  - |
-    if [[ "${CXXFLAGS}" = "" ]] ; then
-        bjam linkflags=-c --toolset=$TOOLSET -q exe
-    else
-        bjam linkflags=-c --toolset=$TOOLSET cxxflags="$CXXFLAGS" -q exe
-    fi
+  - cd ${TRAVIS_BUILD_DIR}
+  - bjam linkflags=-c --toolset=$TOOLSET cxxflags="-std=c++11 $CXXFLAGS" -q exe
 
 
 #branches:

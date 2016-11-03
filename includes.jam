@@ -4,8 +4,6 @@ rule includes ( properties * )
 
     incs += <include>$(REDEMPTION_SRC_PATH) ;
     incs += <include>$(REDEMPTION_SRC_PATH)/system/$(SYSTEM_TYPE) ;
-    # TODO move to system
-    incs += <include>$(REDEMPTION_SRC_PATH)/headers ;
     incs += <include>$(INCLUDES_PATH) ;
 
     incs += <include>$(MLN_INCLUDES_PATH) ;
@@ -14,8 +12,8 @@ rule includes ( properties * )
 
     ## configs @{
     incs += <include>$(REDEMPTION_CONFIG_PATH)/redemption_src ;
-    incs += <include>$(REDEMPTION_CONFIG_PATH)/include/autogen ;
-    incs += <include>$(REDEMPTION_CONFIG_PATH)/include/variant ;
+    incs += <include>$(REDEMPTION_CONFIG_PATH_INCLUDE)/autogen ;
+    incs += <include>$(REDEMPTION_CONFIG_PATH_INCLUDE)/variant ;
     ## @}
 
     if $(FFMPEG_INC_PATH) != ""
