@@ -212,7 +212,6 @@ public:
     virtual bool connexionReleased() = 0;
     virtual void closeFromScreen(int screen_index) = 0;
     virtual void RefreshPressed() = 0;
-    virtual void RefreshReleased() = 0;
     virtual void CtrlAltDelPressed() = 0;
     virtual void CtrlAltDelReleased() = 0;
     virtual void disconnexionPressed() = 0;
@@ -230,7 +229,7 @@ public:
     virtual void dropScreen() = 0;
     virtual bool setClientInfo() = 0;
     virtual void writeClientInfo() = 0;
-    virtual void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size, bool) = 0;
+    virtual void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) = 0;
     virtual void empty_buffer() = 0;
     virtual bool can_be_start_capture(auth_api *) override { return true; }
     virtual bool can_be_pause_capture() override { return true; }
@@ -369,7 +368,7 @@ public:
 
     void process_server_clipboard_indata(int flags, InStream & chunk);
 
-    void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size,  bool) override;
+    void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size) override;
 
     void send_to_clipboard_Buffer(InStream & chunk);
 
@@ -514,8 +513,6 @@ public:
     bool connexionReleased() override;
 
     void RefreshPressed() override;
-
-    void RefreshReleased() override;
 
     void CtrlAltDelPressed() override;
 
