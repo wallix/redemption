@@ -21,6 +21,7 @@ constant MODULEDIR : ../../modules ;
 constant INCLUDEDIR : ../../include ;
 constant INCLUDEPPOCR : ../../modules/ppocr/src ;
 constant INCLUDEFFMPEG : ../../ffmpeg ;
+constant INCLUDEMLN : ../../modules/ppocr/includes ;
 
 path-constant REDCONFIGSDIR : ../../projects/redemption_configs ;
 
@@ -107,6 +108,7 @@ project redemption
     <include>$(REDCONFIGSDIR)/include/variant
     <include>$(INCLUDEPPOCR)
     <include>$(INCLUDEFFMPEG)
+    <include>$(INCLUDEMLN)
 
 
     <conditional>@defines

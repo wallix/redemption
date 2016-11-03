@@ -34,7 +34,7 @@
 BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
 {
 
-    RDPECLIP::FormatDataResponsePDU formatDataResponsePDU(true);
+
 
     {
         //  emit_fileList
@@ -47,8 +47,9 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         std::string name = nameUTF16 ;
         uint64_t size = 17 ;
         const int cItems = 1;
- 
-        formatDataResponsePDU.emit_fileList(ou_stream_fileList, cItems, name, size);
+
+        RDPECLIP::FormatDataResponsePDU_FileList fdr(cItems, name, size);
+        fdr.emit(ou_stream_fileList);
 
         const uint8_t file_list_data[] =
             "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x64\x40\x00\x00\x00\x00\x00\x00"
@@ -114,7 +115,8 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         int data_lenght = height * width * 3;
         const double ARBITRARY_SCALE = 40;
 
-        formatDataResponsePDU.emit_metaFilePic(ou_stream_metaFilePic, data_lenght, width, height, bpp, ARBITRARY_SCALE);
+        RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr(data_lenght, width, height, bpp, ARBITRARY_SCALE);
+        fdr.emit(ou_stream_metaFilePic);
 
         std::string out_data(reinterpret_cast<char *>(ou_stream_metaFilePic.get_data()), 130);
 
@@ -227,5 +229,10 @@ BOOST_AUTO_TEST_CASE(TestFileDescriptor)
 }
 
 
+BOOST_AUTO_TEST_CASE(TestFormatListPDU) {
 
+}
 
+BOOST_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
+
+}

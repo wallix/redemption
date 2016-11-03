@@ -693,10 +693,24 @@ struct FormatListPDU : public CliprdrHeader {
     bool contains_data_in_text_format        = false;
     bool contains_data_in_unicodetext_format = false;
 
+    uint32_t const    * formatListDataIDs;
+    std::string const * formatListDataName;
+    std::size_t         formatListDataSize;
+
+    FormatListPDU( uint32_t const * formatListDataIDs
+                 , std::string const * formatListDataName
+                 , std::size_t formatListDataSize)
+        : CliprdrHeader(CB_FORMAT_LIST, 0, 0)
+        , formatListDataIDs(formatListDataIDs)
+        , formatListDataName(formatListDataName)
+        , formatListDataSize(formatListDataSize)
+        {}
+
     FormatListPDU()
         : CliprdrHeader(CB_FORMAT_LIST, 0, 0)
         , contains_data_in_text_format(false)
-        , contains_data_in_unicodetext_format(false) {}
+        , contains_data_in_unicodetext_format(false)
+        {}
 
     void emit(OutStream & stream) {
         this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
@@ -705,45 +719,6 @@ struct FormatListPDU : public CliprdrHeader {
         // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
         stream.out_uint32_le(CF_TEXT);
         stream.out_clear_bytes(SHORT_NAME_MAX_SIZE); // formatName(32)
-    }
-
-    void emit_short(OutStream & stream, uint32_t const * formatListData, std::string const * formatListDataShortName, std::size_t formatListData_size) {
-
-        // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
-        if (formatListData_size > FORMAT_LIST_MAX_SIZE) {
-            formatListData_size = FORMAT_LIST_MAX_SIZE;
-        }
-
-        this->dataLen_ = formatListData_size * (4 + SHORT_NAME_MAX_SIZE);    /* formatId(4) + formatName(32) */
-        CliprdrHeader::emit(stream);
-
-
-        for (std::size_t i = 0; i < formatListData_size; i++) {
-            stream.out_uint32_le(formatListData[i]);
-            std::string const & currentStr = formatListDataShortName[i];
-            REDASSERT(currentStr.size() <= SHORT_NAME_MAX_SIZE);
-            stream.out_copy_bytes(currentStr.data(), currentStr.size());
-            stream.out_clear_bytes(SHORT_NAME_MAX_SIZE - currentStr.size()); // formatName(32)
-        }
-    }
-
-    void emit_long(OutStream & stream, uint32_t const * formatListData, std::string const * formatListDatalongName, std::size_t formatListData_size) {
-        if (formatListData_size > FORMAT_LIST_MAX_SIZE) {
-            formatListData_size = FORMAT_LIST_MAX_SIZE;
-        }
-
-        for (std::size_t i = 0; i < formatListData_size; i++) {
-            this->dataLen_ += formatListDatalongName[i].size() + 4;    /* formatId(4) + formatName(variable) */
-        }
-        REDASSERT(this->dataLen_ <= 1024);
-        CliprdrHeader::emit(stream);
-
-        for (std::size_t i = 0; i < formatListData_size; i++) {
-            stream.out_uint32_le(formatListData[i]);
-            std::string const & currentStr = formatListDatalongName[i];
-            stream.out_copy_bytes(currentStr.data(), currentStr.size());
-
-        }
     }
 
     void emit_ex(OutStream & stream, bool unicodetext) {
@@ -848,30 +823,30 @@ struct FormatListPDU : public CliprdrHeader {
         // 2.2.3.1.2 Long Format Names (CLIPRDR_LONG_FORMAT_NAMES)
         // =======================================================
 
-        // The CLIPRDR_LONG_FORMAT_NAMES structure holds a collection of 
+        // The CLIPRDR_LONG_FORMAT_NAMES structure holds a collection of
         // CLIPRDR_LONG_FORMAT_NAME structures.
         // longFormatNames (variable): An array of CLIPRDR_LONG_FORMAT_NAME structures.
-        
+
         // 2.2.3.1.2.1 Long Format Name (CLIPRDR_LONG_FORMAT_NAME)
         // =======================================================
 
         // The CLIPRDR_LONG_FORMAT_NAME structure holds a Clipboard Format ID and a Clipboard Format name pair.
-        
+
         // formatId (4 bytes): An unsigned, 32-bit integer that specifies the Clipboard Format ID.
 
         // wszFormatName (variable): A variable length null-terminated Unicode
-        // string name that contains the Clipboard Format name. Not all 
+        // string name that contains the Clipboard Format name. Not all
         // Clipboard Formats have a name; in such cases, the formatName field
         // MUST consist of a single Unicode null character.
 
-// length: 0x24, 0x00, 0x00, 0x00, 
-// flags:  0x13, 0x00, 0x00, 0x00, 
+// length: 0x24, 0x00, 0x00, 0x00,
+// flags:  0x13, 0x00, 0x00, 0x00,
 
     // TODO: les structures CB_xxx heritent de CliprdrHeader
     // ça ne devrait pas être le cas, elles ONT un header
     // elles ne SONT PAS une sorte de header!
     // Remplacer l'héritage par un champ membre
-    
+
         CliprdrHeader::recv(stream);
 // msgType:  2 = CB_FORMAT_LIST | 0x02, 0x00,
 // msgFlags: 0                  | 0x00, 0x00,
@@ -911,11 +886,65 @@ struct FormatListPDU : public CliprdrHeader {
              ;   // other formats unsupported
             }
             uint16_t buffer[max_length_of_format_name];
-            (void)fns.in_utf16_sz(buffer, 
+            (void)fns.in_utf16_sz(buffer,
                     std::min(fns.in_remain(),max_length_of_format_name-2)/2);
         }
     }   // void recv_long(InStream & stream)
 };  // struct FormatListPDU
+
+struct FormatListPDU_LongName : public FormatListPDU {
+
+    explicit FormatListPDU_LongName( uint32_t const * formatListDataIDs
+                                   , std::string const * formatListDataName
+                                   , std::size_t formatListDataSize)
+        : FormatListPDU(formatListDataIDs, formatListDataName, formatListDataSize)
+    {}
+
+    void emit(OutStream & stream) {
+        if (this->formatListDataSize > FORMAT_LIST_MAX_SIZE) {
+            this->formatListDataSize = FORMAT_LIST_MAX_SIZE;
+        }
+
+        for (std::size_t i = 0; i < this->formatListDataSize; i++) {
+            this->dataLen_ += formatListDataName[i].size() + 4;    /* formatId(4) + formatName(variable) */
+        }
+        REDASSERT(this->dataLen_ <= 1024);
+        CliprdrHeader::emit(stream);
+
+        for (std::size_t i = 0; i < this->formatListDataSize; i++) {
+            stream.out_uint32_le(this->formatListDataIDs[i]);
+            std::string const & currentStr = this->formatListDataName[i];
+            stream.out_copy_bytes(currentStr.data(), currentStr.size());
+
+        }
+    }
+};
+
+struct FormatListPDU_ShortName : public FormatListPDU {
+
+    explicit FormatListPDU_ShortName( uint32_t const * formatListDataIDs
+                                    , std::string const * formatListDataName
+                                    , std::size_t formatListDataSize)
+        : FormatListPDU(formatListDataIDs, formatListDataName, formatListDataSize)
+    {}
+
+    void emit(OutStream & stream) {
+        if (this->formatListDataSize > FORMAT_LIST_MAX_SIZE) {
+            this->formatListDataSize = FORMAT_LIST_MAX_SIZE;
+        }
+
+        this->dataLen_ = this->formatListDataSize * (4 + SHORT_NAME_MAX_SIZE);    /* formatId(4) + formatName(32) */
+        CliprdrHeader::emit(stream);
+
+        for (std::size_t i = 0; i < this->formatListDataSize; i++) {
+            stream.out_uint32_le(this->formatListDataIDs[i]);
+            std::string const & currentStr = this->formatListDataName[i];
+            REDASSERT(currentStr.size() <= SHORT_NAME_MAX_SIZE);
+            stream.out_copy_bytes(currentStr.data(), currentStr.size());
+            stream.out_clear_bytes(SHORT_NAME_MAX_SIZE - currentStr.size()); // formatName(32)
+        }
+    }
+};
 
 // [MS-RDPECLIP] 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
 // =====================================================================
@@ -1086,20 +1115,34 @@ enum : int {
 };
 
 struct FileContentsRequestPDU : CliprdrHeader {
+    int streamID;
+    int flag;
+    int lindex;
+    uint64_t sizeRequested;
+
+    explicit FileContentsRequestPDU( int streamID
+                                   , int flag
+                                   , int lindex
+                                   , uint64_t sizeRequested)
+    : CliprdrHeader( CB_FILECONTENTS_REQUEST, CB_RESPONSE_OK, 24)
+    , streamID(streamID)
+    , flag(flag)
+    , lindex(lindex)
+    , sizeRequested(sizeRequested)
+    {}
+
     explicit FileContentsRequestPDU(bool response_ok = false)
     : CliprdrHeader( CB_FILECONTENTS_REQUEST, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 24)
     {}
 
-    void emit(OutStream & stream, int streamID, int flag, int lindex, uint64_t sizeRequested) {
-        stream.out_uint16_le(this->msgType_);
-        stream.out_uint16_le(this->msgFlags_);
-        stream.out_uint32_le(this->dataLen_);
-        stream.out_uint32_le(streamID);
-        stream.out_uint32_le(lindex);
-        stream.out_uint32_le(flag);
-        stream.out_uint32_le(sizeRequested >> 32);
-        stream.out_uint32_le(sizeRequested);
-        stream.out_uint32_le(sizeRequested);
+    void emit(OutStream & stream) {
+        CliprdrHeader::emit(stream);
+        stream.out_uint32_le(this->streamID);
+        stream.out_uint32_le(this->lindex);
+        stream.out_uint32_le(this->flag);
+        stream.out_uint32_le(this->sizeRequested >> 32);
+        stream.out_uint32_le(this->sizeRequested);
+        stream.out_uint32_le(this->sizeRequested);
     }
 };
 
@@ -1131,30 +1174,51 @@ struct FileContentsRequestPDU : CliprdrHeader {
     // requestedFileContentsData (variable): This field contains a variable number of bytes. If the response is to a FILECONTENTS_SIZE (0x00000001) operation, the requestedFileContentsData field holds a 64-bit, unsigned integer containing the size of the file. In the case of a FILECONTENTS_RANGE (0x00000002) operation, the requestedFileContentsData field contains a byte-stream of data extracted from the file.
 
 struct FileContentsResponse : CliprdrHeader {
+    const uint32_t streamID;
+    const uint64_t size;
+
+    explicit FileContentsResponse(const uint32_t streamID, const uint64_t size, uint32_t data_size)
+    : CliprdrHeader( CB_FILECONTENTS_RESPONSE, CB_RESPONSE_OK, data_size)
+    , streamID(streamID)
+    , size(size)
+    {}
+
     explicit FileContentsResponse(bool response_ok = false)
     : CliprdrHeader( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 4)
+    , streamID(0)
+    , size(0)
     {}
 
     void emit(OutStream & stream) {
         CliprdrHeader::emit(stream);
     }
+};
 
-    void emit_size(OutStream & stream, const uint32_t streamID, const uint64_t size) {
-        this->dataLen_ += 12;
+struct FileContentsResponse_Size : FileContentsResponse {
+
+    explicit FileContentsResponse_Size(const uint32_t streamID, const uint64_t size)
+    : FileContentsResponse(streamID, size, 16)
+    {}
+
+    void emit(OutStream & stream) {
         CliprdrHeader::emit(stream);
-        stream.out_uint32_le(streamID);
-        stream.out_uint64_le(size);
+        stream.out_uint32_le(this->streamID);
+        stream.out_uint64_le(this->size);
         stream.out_uint32_le(0);
-    }
-
-    void emit_range(OutStream & stream, const uint32_t streamID, const uint64_t size) {
-        this->dataLen_ += size;                          //  requestedFileContentsData range
-        CliprdrHeader::emit(stream);
-        stream.out_uint32_le(streamID);
     }
 };
 
+struct FileContentsResponse_Range : FileContentsResponse {
 
+    explicit FileContentsResponse_Range(const uint32_t streamID, const uint64_t size)
+    : FileContentsResponse(streamID, size, size+4)
+    {}
+
+    void emit(OutStream & stream) {
+        CliprdrHeader::emit(stream);
+        stream.out_uint32_le(this->streamID);
+    }
+};
 
 
 struct PacketFileList {
@@ -1784,12 +1848,16 @@ enum : uint64_t {
 
 struct FormatDataResponsePDU : public CliprdrHeader {
 
-    const double ARBITRARY_SCALE = 40;
-
     FormatDataResponsePDU()
         : CliprdrHeader( CB_FORMAT_DATA_RESPONSE
                        , CB_RESPONSE_FAIL
                        , 0) {
+    }
+
+    explicit FormatDataResponsePDU(std::size_t data_len)
+        : CliprdrHeader( CB_FORMAT_DATA_RESPONSE
+                       , CB_RESPONSE_OK
+                       , data_len) {
     }
 
     explicit FormatDataResponsePDU(bool response_ok)
@@ -1825,63 +1893,31 @@ struct FormatDataResponsePDU : public CliprdrHeader {
             );
     }
 
+    using CliprdrHeader::recv;
+}; // struct FormatDataResponsePDU
 
 
+struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
 
-    // 2.2.5.2.3 Packed File List (CLIPRDR_FILELIST)
+    const std::size_t data_length;
+    const uint16_t    width;
+    const uint16_t    height;
+    const uint16_t    depth;
+    const double      ARBITRARY_SCALE;
 
-    //  The CLIPRDR_FILELIST structure is used to describe a list of files, each file in the list being represented by a File Descriptor (section 2.2.5.2.3.1).
+    explicit FormatDataResponsePDU_MetaFilePic(const std::size_t data_length, const uint16_t width, const uint16_t height, const uint16_t depth, const double ARBITRARY_SCALE)
+      : FormatDataResponsePDU(data_length + METAFILE_HEADERS_SIZE)
+      , data_length(data_length)
+      , width(width)
+      , height(height)
+      , depth(depth)
+      , ARBITRARY_SCALE(ARBITRARY_SCALE)
+    {}
 
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // |                            cItems                             |
-    // +---------------------------------------------------------------+
-    // |                 fileDescriptorArray (variable)                |
-    // +---------------------------------------------------------------+
-    // |                              ...                              |
-    // +---------------------------------------------------------------+
-
-    // cItems (4 bytes): An unsigned 32-bit integer that specifies the number of entries in the fileDescriptorArray field.
-
-    // fileDescriptorArray (variable): An array of File Descriptors (section 2.2.5.2.3.1). The number of elements in the array is specified by the cItems field.
-
-    void emit_fileList(OutStream & stream, const int cItems, const std::string name, const uint64_t size) {
-        this->dataLen_ = (FileDescriptor::size() * cItems) + 4;
+    void emit(OutStream & stream) {
         CliprdrHeader::emit(stream);
 
-        stream.out_uint32_le(cItems);
-
-        stream.out_uint32_le(FD_SHOWPROGRESSUI |
-                             FD_FILESIZE       |
-                             FD_WRITESTIME     |
-                             FD_ATTRIBUTES
-                            );
-        stream.out_clear_bytes(32);
-        stream.out_uint32_le(FILE_ATTRIBUTE_ARCHIVE);
-        stream.out_clear_bytes(16);
-        stream.out_uint64_le(TIME64_FILE_LIST);
-        stream.out_uint32_le(size >> 32);
-        stream.out_uint32_le(size);
-        size_t sizeName(name.size());
-        if (sizeName > 520) {
-            sizeName = 520;
-        }
-        stream.out_copy_bytes(name.data(), sizeName);;
-        stream.out_clear_bytes(520 - sizeName);
-    }
-
-    void emit_text(OutStream & stream, uint32_t length) {
-        this->dataLen_ = length;
-        CliprdrHeader::emit(stream);
-    }
-
-    void emit_metaFilePic(OutStream & stream, const uint32_t data_length, const uint16_t width, const uint16_t height, const uint16_t depth, const double ARBITRARY_SCALE) {
-        this->dataLen_ = data_length + METAFILE_HEADERS_SIZE;
-        CliprdrHeader::emit(stream);
-
-        const int largeRecordWordsSize((data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2);
+        const int largeRecordWordsSize((this->data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2);
 
 
         // 2.2.5.2.1 Packed Metafile Payload
@@ -1957,8 +1993,8 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         // metaFileData (variable): The variable sized contents of the metafile as specified in [MS-WMF] section 2.
 
         stream.out_uint32_le(MM_ANISOTROPIC);
-        stream.out_uint32_le(int(double(width)  * ARBITRARY_SCALE));
-        stream.out_uint32_le(int(double(height) * ARBITRARY_SCALE));
+        stream.out_uint32_le(int(double(this->width)  * this->ARBITRARY_SCALE));
+        stream.out_uint32_le(int(double(this->height) * this->ARBITRARY_SCALE));
 
 
         // 3.2.1 META_HEADER Example
@@ -2004,7 +2040,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         stream.out_uint16_le(MEMORYMETAFILE);
         stream.out_uint16_le(9);
         stream.out_uint16_le(METAVERSION300);
-        stream.out_uint32_le((data_length + METAFILE_WORDS_HEADER_SIZE)/2);
+        stream.out_uint32_le((this->data_length + METAFILE_WORDS_HEADER_SIZE)/2);
         stream.out_uint16_le(0);
         stream.out_uint32_le(largeRecordWordsSize);
         stream.out_uint16_le(0);
@@ -2040,8 +2076,8 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         //      META_SETWINDOWEXT (10 bytes)
         stream.out_uint32_le(5);
         stream.out_uint16_le(META_SETWINDOWEXT);
-        stream.out_uint16_le( - height);
-        stream.out_uint16_le(width);
+        stream.out_uint16_le( - this->height);
+        stream.out_uint16_le(this->width);
 
 
         //      META_SETWINDOWORG (10 bytes)
@@ -2093,12 +2129,12 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         stream.out_uint32_le(largeRecordWordsSize);
         stream.out_uint16_le(META_DIBSTRETCHBLT);
         stream.out_uint32_le(0x00CC0020); // SRCCOPY
-        stream.out_uint16_le(height);
-        stream.out_uint16_le(width);
+        stream.out_uint16_le(this->height);
+        stream.out_uint16_le(this->width);
         stream.out_uint16_le(0);
         stream.out_uint16_le(0);
-        stream.out_uint16_le(- height);
-        stream.out_uint16_le(width);
+        stream.out_uint16_le(- this->height);
+        stream.out_uint16_le(this->width);
         stream.out_uint16_le(0);
         stream.out_uint16_le(0);
 
@@ -2259,21 +2295,86 @@ struct FormatDataResponsePDU : public CliprdrHeader {
 
         // 40 bytes
         stream.out_uint32_le(40);
-        stream.out_uint32_le(width);
-        stream.out_uint32_le( - height);
+        stream.out_uint32_le(this->width);
+        stream.out_uint32_le( - this->height);
         stream.out_uint16_le(1);
-        stream.out_uint16_le(depth);
+        stream.out_uint16_le(this->depth);
         stream.out_uint32_le(0);  // BI_RGB
-        stream.out_uint32_le(data_length);
+        stream.out_uint32_le(this->data_length);
         stream.out_uint32_le(0);
         stream.out_uint32_le(0);
         stream.out_uint32_le(0);
         stream.out_uint32_le(0);
     }
+};
 
-    using CliprdrHeader::recv;
-}; // struct FormatDataResponsePDU
+struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
 
+    explicit FormatDataResponsePDU_Text(std::size_t length)
+      : FormatDataResponsePDU(length)
+    {}
+
+    void emit(OutStream & stream) {
+        CliprdrHeader::emit(stream);
+    }
+};
+
+struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
+
+    const int cItems;
+    const std::string name;
+    const uint64_t size;
+
+    // 2.2.5.2.3 Packed File List (CLIPRDR_FILELIST)
+
+    //  The CLIPRDR_FILELIST structure is used to describe a list of files, each file in the list being represented by a File Descriptor (section 2.2.5.2.3.1).
+
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // |                            cItems                             |
+    // +---------------------------------------------------------------+
+    // |                 fileDescriptorArray (variable)                |
+    // +---------------------------------------------------------------+
+    // |                              ...                              |
+    // +---------------------------------------------------------------+
+
+    // cItems (4 bytes): An unsigned 32-bit integer that specifies the number of entries in the fileDescriptorArray field.
+
+    // fileDescriptorArray (variable): An array of File Descriptors (section 2.2.5.2.3.1). The number of elements in the array is specified by the cItems field.
+
+    explicit FormatDataResponsePDU_FileList(const std::size_t cItems, const std::string name, const uint64_t size)
+      : FormatDataResponsePDU((FileDescriptor::size() * cItems) + 4)
+      , cItems(cItems)
+      , name(name)
+      , size(size)
+    {}
+
+    void emit(OutStream & stream) {
+        CliprdrHeader::emit(stream);
+
+        stream.out_uint32_le(this->cItems);
+
+        stream.out_uint32_le(FD_SHOWPROGRESSUI |
+                             FD_FILESIZE       |
+                             FD_WRITESTIME     |
+                             FD_ATTRIBUTES
+                            );
+        stream.out_clear_bytes(32);
+        stream.out_uint32_le(FILE_ATTRIBUTE_ARCHIVE);
+        stream.out_clear_bytes(16);
+        stream.out_uint64_le(TIME64_FILE_LIST);
+        stream.out_uint32_le(this->size >> 32);
+        stream.out_uint32_le(this->size);
+        size_t sizeName(this->name.size());
+        if (sizeName > 520) {
+            sizeName = 520;
+        }
+        stream.out_copy_bytes(this->name.data(), sizeName);;
+        stream.out_clear_bytes(520 - sizeName);
+    }
+};
 
 class MetaFilePicDescriptor
 {
