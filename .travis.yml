@@ -110,6 +110,16 @@ install:
     fi
 
   ############################################################################
+  # Install libav
+  ############################################################################
+  - |
+    LIBAV_URL=https://github.com/libav/libav/archive/v12_beta1.tar.gz
+    LIBAV_DIR=${DEPS_DIR}/libav
+    mkdir -p ${LIBAV_DIR}/libav
+    travis_retry wget --quiet -O - ${LIBAV_URL} | tar --strip-components=1 -xz -C ${LIBAV_DIR}
+    export FFMPEG_INC_PATH=${LIBAV_DIR}
+
+  ############################################################################
   # Install Boost Build
   ############################################################################
   - |
@@ -127,7 +137,7 @@ install:
 
 script:
   - cd ${TRAVIS_BUILD_DIR}
-  - bjam linkflags=-c --toolset=$TOOLSET cxxflags="-std=c++11 $CXXFLAGS" -q exe
+  - bjam linkflags=-c --toolset=$TOOLSET cxxflags="-std=c++11 $CXXFLAGS" -q exe libs
 
 
 #branches:

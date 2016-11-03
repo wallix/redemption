@@ -23,17 +23,38 @@ if $(FFMPEG_LIB_PATH) = "" {
 }
 else {
     # echo ffmpeg library path: $(FFMPEG_LIB_PATH) ;
-    lib avcodec  : : <link>static <name>avcodec  <file>$(FFMPEG_LIB_PATH)/libavcodec.a ;
-    lib avformat : : <link>static <name>avformat <file>$(FFMPEG_LIB_PATH)/libavformat.a ;
-    lib avutil   : : <link>static <name>avutil   <file>$(FFMPEG_LIB_PATH)/libavutil.a ;
-    lib swscale  : : <link>static <name>swscale  <file>$(FFMPEG_LIB_PATH)/libswscale.a ;
-    lib x264 : : <link>static <name>avutil <file>$(FFMPEG_LIB_PATH)/libx264.a ;
+
+    if $(FFMPEG_LINK_MODE) = "shared" {
+        constant _FFMPEG_LIBRARY_EXT="so" ;
+    }
+    else {
+        constant _FFMPEG_LIBRARY_EXT="a" ;
+    }
+
+    lib avcodec  : :
+        <name>avcodec
+        <link>$(FFMPEG_LINK_MODE)
+        <file>$(FFMPEG_LIB_PATH)/libavcodec.$(_FFMPEG_LIBRARY_EXT) ;
+    lib avformat : :
+        <name>avformat
+        <link>$(FFMPEG_LINK_MODE)
+        <file>$(FFMPEG_LIB_PATH)/libavformat.$(_FFMPEG_LIBRARY_EXT) ;
+    lib avutil   : :
+        <name>avutil
+        <link>$(FFMPEG_LINK_MODE)
+        <file>$(FFMPEG_LIB_PATH)/libavutil.$(_FFMPEG_LIBRARY_EXT) ;
+    lib swscale  : :
+        <name>swscale
+        <link>$(FFMPEG_LINK_MODE)
+        <file>$(FFMPEG_LIB_PATH)/libswscale.$(_FFMPEG_LIBRARY_EXT) ;
+    lib x264 : :
+        <name>avutil
+        <link>$(FFMPEG_LINK_MODE)
+        <file>$(FFMPEG_LIB_PATH)/libx264.$(_FFMPEG_LIBRARY_EXT) ;
     alias ffmpeg : pthread avcodec avformat swscale x264 avutil bz2 png z dl ;
 }
 
-
 lib pthread : : <name>pthread <link>shared ;
-
 ## }
 
 lib libpng : : <name>png <link>shared ;
