@@ -7,28 +7,7 @@ alias ppocr_image_compare_src   : $(PPOCR_SRC_PATH)/ppocr/utils/image_compare.cp
 alias ppocr_loader2_image_io_src : $(PPOCR_SRC_PATH)/ppocr/loader2/image_io.cpp ;
 
 alias ppocr_strategies_src :
-    $(PPOCR_SRC_PATH)/ppocr/strategies/agravity.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/alternation.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/compass.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/dcompass.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/density.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/direction.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/dvdirection2.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/dvdirection.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/dvgravity2.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/dvgravity.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/dzdensity.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/gravity2.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/gravity.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/hbar.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/hdirection2.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/hdirection.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/hgravity2.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/hgravity.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/zone.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/proportionality.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/proportionality_zone.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/utils/basic_proportionality.cpp
+    [ glob $(PPOCR_SRC_PATH)/ppocr/strategies/*.cpp ]
 ;
 
 alias ppocr_image_src :
