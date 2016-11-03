@@ -377,7 +377,7 @@ public:
     void send_imageBuffer_to_clipboard();
 
     void empty_buffer() override;
-
+ 
     void process_client_clipboard_outdata(uint64_t total_length, OutStream & out_streamfirst, int firstPartSize, uint8_t const * data);
 
     virtual void set_pointer(Pointer const & cursor) override;

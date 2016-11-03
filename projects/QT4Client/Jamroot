@@ -22,6 +22,7 @@ constant INCLUDEDIR : ../../include ;
 constant INCLUDEPPOCR : ../../modules/ppocr/src ;
 constant INCLUDEFFMPEG : ../../ffmpeg ;
 constant INCLUDEMLN : ../../modules/ppocr/includes ;
+constant INCLUDEOCR1 : ../ocr1/include ;
 
 path-constant REDCONFIGSDIR : ../../projects/redemption_configs ;
 
@@ -99,7 +100,6 @@ project redemption
     <include>$(SRCDIR)/capture
     <include>$(SRCDIR)/keyboard
     <include>$(SRCDIR)/keyboard/reversed_keymaps
-    <include>$(SRCDIR)/headers
     <include>$(SRCDIR)/main
     <include>$(MODULEDIR)/includes
     <include>$(INCLUDEDIR)
@@ -109,6 +109,7 @@ project redemption
     <include>$(INCLUDEPPOCR)
     <include>$(INCLUDEFFMPEG)
     <include>$(INCLUDEMLN)
+    <include>$(INCLUDEOCR1)
 
 
     <conditional>@defines
