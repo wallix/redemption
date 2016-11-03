@@ -238,7 +238,8 @@ public:
     virtual bool must_be_stop_capture() override { return true; }
     virtual void emptyLocalBuffer() = 0;
     virtual void replay(std::string & movie_path) = 0;
-    virtual void reload_replay_mod(std::string & movie_name) = 0;
+    virtual void load_replay_mod(std::string & movie_name) = 0;
+    virtual void delete_replay_mod() = 0;
 };
 
 
@@ -392,7 +393,9 @@ public:
 
     void setScreenDimension();
 
-    void reload_replay_mod(std::string & movie_name);
+    void load_replay_mod(std::string & movie_name);
+
+    void delete_replay_mod();
 
 
 

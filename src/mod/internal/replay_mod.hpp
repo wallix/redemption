@@ -142,8 +142,8 @@ public:
         this->reader->play(false);
     }
 
-    void play_qt() {
-        this->reader->play_qt(false);
+    bool play_qt() {
+        return this->reader->play_qt();
     }
 
     bool get_break_privplay_qt() {

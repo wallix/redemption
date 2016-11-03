@@ -502,11 +502,17 @@ void Front_Qt::replay(std::string & movie_path) {
     this->_form->hide();
     this->_screen[0]->show();
 
-    this->reload_replay_mod(movie_path);
+    this->load_replay_mod(movie_path);
 
 }
 
-void Front_Qt::reload_replay_mod(std::string & movie_name) {
+void Front_Qt::delete_replay_mod() {
+    delete (this->_replay_mod);
+    this->_replay_mod = nullptr;
+}
+
+void Front_Qt::load_replay_mod(std::string & movie_name) {
+    this->delete_replay_mod();
     this->_replay_mod = new ReplayMod( *(this)
                                      , (this->REPLAY_DIR + "/").c_str()
                                      , movie_name.c_str()
@@ -637,8 +643,6 @@ void Front_Qt::RefreshPressed() {
     Rect rect(0, 0, this->_info.width * this->_monitorCount, this->_info.height);
     this->_callback->rdp_input_invalidate(rect);
 }
-
-void Front_Qt::RefreshReleased() {}
 
 void Front_Qt::CtrlAltDelPressed() {
     int flag = Keymap2::KBDFLAGS_EXTENDED;
@@ -942,7 +946,6 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
         gettimeofday(&time, nullptr);
         this->_capture->snapshot(time, 0, 0, false);
     }
-
 }
 
 
@@ -954,17 +957,11 @@ void Front_Qt::draw(const RDPOpaqueRect & cmd, const Rect & clip) {
     }
     //std::cout << "RDPOpaqueRect" << std::endl;
     RDPOpaqueRect new_cmd24 = cmd;
-    new_cmd24.color = color_decode_opaquerect(cmd.color, 24, this->mod_palette);
+    new_cmd24.color = color_decode_opaquerect(cmd.color, this->_info.bpp, this->mod_palette);
     QColor qcolor(this->u32_to_qcolor(new_cmd24.color));
-    if (this->_replay) {
-        decode_color16 decode16;
-        new_cmd24.color = decode16(cmd.color);
-        qcolor = this->u32_to_qcolor_r(new_cmd24.color);
-    }
     Rect rect(new_cmd24.rect.intersect(clip));
 
     this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, qcolor);
-
 
     if (this->_record && !this->_replay) {
         this->_graph_capture->draw(new_cmd24, clip);
@@ -1042,6 +1039,7 @@ void Front_Qt::draw(const RDPLineTo & cmd, const Rect & clip) {
 
     // TO DO clipping
     this->_screen[0]->setPenColor(this->u32_to_qcolor(new_cmd24.back_color));
+
     this->_screen[0]->paintCache().drawLine(new_cmd24.startx, new_cmd24.starty, new_cmd24.endx, new_cmd24.endy);
 
     if (this->_record && !this->_replay) {
@@ -1771,7 +1769,14 @@ void Front_Qt::draw(const RDP::FrameMarker & order) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-    //std::cout << "FrameMarker" << std::endl;
+    if (this->_record && !this->_replay) {
+        this->_graph_capture->draw(order);
+        struct timeval time;
+        gettimeofday(&time, nullptr);
+        this->_capture->snapshot(time, 0, 0, false);
+    }
+
+    std::cout << "FrameMarker" << std::endl;
     //this->gd.draw(order);
 }
 
@@ -1887,9 +1892,9 @@ int Front_Qt::server_resize(int width, int height, int bpp) {
     }
     //std::cout << "resize serveur" << std::endl;
     this->mod_bpp = bpp;
-    //this->_info.bpp = bpp;
-    //this->_info.width = width;
-    //this->_info.height = height;
+    this->_info.bpp = bpp;
+    this->_info.width = width;
+    this->_info.height = height;
 
     //this->_screen[0]->setUpdate();
 
