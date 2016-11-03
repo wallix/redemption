@@ -23,8 +23,6 @@ project configs
     $(CXXFLAGS)
     <toolset>clang:<cxxflags>-Wno-class-varargs
 
-    <define>PUBLIC
-
    : default-build release
 ;
 

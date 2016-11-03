@@ -13,7 +13,7 @@ for f in "$@" ; do
     echo 'inline'
     echo 'const char * '"$funcname"'(unsigned width, unsigned height, unsigned count, Pixel pixel)'
     echo '{'
-    echo '# include "'./classifiers/"$bname"'"'
+    echo '# include "'./ocr1/classifiers/"$bname"'"'
     echo '  return unknown;'
     echo '}'
     echo
@@ -34,7 +34,7 @@ out_hxx="${out%%.hxx}.names.hxx"
 tab=$(echo "\t")
 err=0
 for f in "$@" ; do
-    fonttxt="$pwd/fonts/$(basename "${f%%.hxx}").txt"
+    fonttxt="$pwd/include/ocr1/fonts/$(basename "${f%%.hxx}").txt"
     # NOTE 'a' latin, 'a' cyrillic
     hmin=$(grep -E ^'[aа]'"$tab" "$fonttxt" | cut -d"$tab" -f4 | sort -unr | head -n1)
     hmax=$(cut -d"$tab" -f4 "$fonttxt" | sort -unr | head -n1)
