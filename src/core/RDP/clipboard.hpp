@@ -693,10 +693,26 @@ struct FormatListPDU : public CliprdrHeader {
     bool contains_data_in_text_format        = false;
     bool contains_data_in_unicodetext_format = false;
 
+    uint32_t const    * formatListDataIDs;
+    std::string const * formatListDataName;
+    std::size_t         formatListDataSize;
+
+    FormatListPDU( uint32_t const * formatListDataIDs
+                 , std::string const * formatListDataName
+                 , std::size_t formatListDataSize)
+        : CliprdrHeader(CB_FORMAT_LIST, 0, 0)
+        , contains_data_in_text_format(false)
+        , contains_data_in_unicodetext_format(false)
+        , formatListDataIDs(formatListDataIDs)
+        , formatListDataName(formatListDataName)
+        , formatListDataSize(formatListDataSize)
+        {}
+
     FormatListPDU()
         : CliprdrHeader(CB_FORMAT_LIST, 0, 0)
         , contains_data_in_text_format(false)
-        , contains_data_in_unicodetext_format(false) {}
+        , contains_data_in_unicodetext_format(false)
+        {}
 
     void emit(OutStream & stream) {
         this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
@@ -707,14 +723,14 @@ struct FormatListPDU : public CliprdrHeader {
         stream.out_clear_bytes(SHORT_NAME_MAX_SIZE); // formatName(32)
     }
 
-    void emit_short(OutStream & stream, uint32_t const * formatListData, std::string const * formatListDataShortName, std::size_t formatListData_size) {
+    /*void emit_short(OutStream & stream, uint32_t const * formatListData, std::string const * formatListDataShortName, std::size_t formatListData_size) {
 
         // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
         if (formatListData_size > FORMAT_LIST_MAX_SIZE) {
             formatListData_size = FORMAT_LIST_MAX_SIZE;
         }
 
-        this->dataLen_ = formatListData_size * (4 + SHORT_NAME_MAX_SIZE);    /* formatId(4) + formatName(32) */
+        this->dataLen_ = formatListData_size * (4 + SHORT_NAME_MAX_SIZE);
         CliprdrHeader::emit(stream);
 
 
@@ -725,15 +741,15 @@ struct FormatListPDU : public CliprdrHeader {
             stream.out_copy_bytes(currentStr.data(), currentStr.size());
             stream.out_clear_bytes(SHORT_NAME_MAX_SIZE - currentStr.size()); // formatName(32)
         }
-    }
+    } */
 
-    void emit_long(OutStream & stream, uint32_t const * formatListData, std::string const * formatListDatalongName, std::size_t formatListData_size) {
+    /*void emit_long(OutStream & stream, uint32_t const * formatListData, std::string const * formatListDatalongName, std::size_t formatListData_size) {
         if (formatListData_size > FORMAT_LIST_MAX_SIZE) {
             formatListData_size = FORMAT_LIST_MAX_SIZE;
         }
 
         for (std::size_t i = 0; i < formatListData_size; i++) {
-            this->dataLen_ += formatListDatalongName[i].size() + 4;    /* formatId(4) + formatName(variable) */
+            this->dataLen_ += formatListDatalongName[i].size() + 4;   
         }
         REDASSERT(this->dataLen_ <= 1024);
         CliprdrHeader::emit(stream);
@@ -744,7 +760,7 @@ struct FormatListPDU : public CliprdrHeader {
             stream.out_copy_bytes(currentStr.data(), currentStr.size());
 
         }
-    }
+    } */
 
     void emit_ex(OutStream & stream, bool unicodetext) {
         this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
@@ -848,30 +864,30 @@ struct FormatListPDU : public CliprdrHeader {
         // 2.2.3.1.2 Long Format Names (CLIPRDR_LONG_FORMAT_NAMES)
         // =======================================================
 
-        // The CLIPRDR_LONG_FORMAT_NAMES structure holds a collection of 
+        // The CLIPRDR_LONG_FORMAT_NAMES structure holds a collection of
         // CLIPRDR_LONG_FORMAT_NAME structures.
         // longFormatNames (variable): An array of CLIPRDR_LONG_FORMAT_NAME structures.
-        
+
         // 2.2.3.1.2.1 Long Format Name (CLIPRDR_LONG_FORMAT_NAME)
         // =======================================================
 
         // The CLIPRDR_LONG_FORMAT_NAME structure holds a Clipboard Format ID and a Clipboard Format name pair.
-        
+
         // formatId (4 bytes): An unsigned, 32-bit integer that specifies the Clipboard Format ID.
 
         // wszFormatName (variable): A variable length null-terminated Unicode
-        // string name that contains the Clipboard Format name. Not all 
+        // string name that contains the Clipboard Format name. Not all
         // Clipboard Formats have a name; in such cases, the formatName field
         // MUST consist of a single Unicode null character.
 
-// length: 0x24, 0x00, 0x00, 0x00, 
-// flags:  0x13, 0x00, 0x00, 0x00, 
+// length: 0x24, 0x00, 0x00, 0x00,
+// flags:  0x13, 0x00, 0x00, 0x00,
 
     // TODO: les structures CB_xxx heritent de CliprdrHeader
     // ça ne devrait pas être le cas, elles ONT un header
     // elles ne SONT PAS une sorte de header!
     // Remplacer l'héritage par un champ membre
-    
+
         CliprdrHeader::recv(stream);
 // msgType:  2 = CB_FORMAT_LIST | 0x02, 0x00,
 // msgFlags: 0                  | 0x00, 0x00,
@@ -911,11 +927,68 @@ struct FormatListPDU : public CliprdrHeader {
              ;   // other formats unsupported
             }
             uint16_t buffer[max_length_of_format_name];
-            (void)fns.in_utf16_sz(buffer, 
+            (void)fns.in_utf16_sz(buffer,
                     std::min(fns.in_remain(),max_length_of_format_name-2)/2);
         }
     }   // void recv_long(InStream & stream)
 };  // struct FormatListPDU
+
+struct FormatListPDU_LongName : public FormatListPDU {
+
+    FormatListPDU_LongName( uint32_t const * formatListDataIDs
+                          , std::string const * formatListDataName
+                          , std::size_t formatListDataSize)
+        : FormatListPDU(formatListDataIDs, formatListDataName, formatListDataSize)
+    {}
+
+    void emit_(OutStream & stream) {
+        if (this->formatListDataSize > FORMAT_LIST_MAX_SIZE) {
+            this->formatListDataSize = FORMAT_LIST_MAX_SIZE;
+        }
+
+        for (std::size_t i = 0; i < this->formatListDataSize; i++) {
+            this->dataLen_ += formatListDataName[i].size() + 4;    /* formatId(4) + formatName(variable) */
+        }
+        REDASSERT(this->dataLen_ <= 1024);
+        CliprdrHeader::emit(stream);
+
+        for (std::size_t i = 0; i < this->formatListDataSize; i++) {
+            stream.out_uint32_le(this->formatListDataIDs[i]);
+            std::string const & currentStr = this->formatListDataName[i];
+            stream.out_copy_bytes(currentStr.data(), currentStr.size());
+
+        }
+    }
+};
+
+struct FormatListPDU_ShortName : public FormatListPDU {
+
+    FormatListPDU_ShortName( uint32_t const * formatListDataIDs
+                          , std::string const * formatListDataName
+                          , std::size_t formatListDataSize)
+        : FormatListPDU(formatListDataIDs, formatListDataName, formatListDataSize)
+    {}
+
+    void emit(OutStream & stream) {
+
+        // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
+        if (this->formatListDataSize > FORMAT_LIST_MAX_SIZE) {
+            this->formatListDataSize = FORMAT_LIST_MAX_SIZE;
+        }
+
+        this->dataLen_ = this->formatListDataSize * (4 + SHORT_NAME_MAX_SIZE);    /* formatId(4) + formatName(32) */
+        CliprdrHeader::emit(stream);
+
+
+        for (std::size_t i = 0; i < this->formatListDataSize; i++) {
+            stream.out_uint32_le(this->formatListDataIDs[i]);
+            std::string const & currentStr = this->formatListDataName[i];
+            REDASSERT(currentStr.size() <= SHORT_NAME_MAX_SIZE);
+            stream.out_copy_bytes(currentStr.data(), currentStr.size());
+            stream.out_clear_bytes(SHORT_NAME_MAX_SIZE - currentStr.size()); // formatName(32)
+        }
+    }
+};
 
 // [MS-RDPECLIP] 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
 // =====================================================================

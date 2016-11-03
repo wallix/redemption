@@ -2812,12 +2812,13 @@ void Front_Qt::emptyLocalBuffer() {
 
 void Front_Qt::send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size, bool isLong) {
 
-    RDPECLIP::FormatListPDU format_list_pdu;
     StaticOutStream<1024> out_stream;
     if (isLong) {
-        format_list_pdu.emit_long(out_stream, formatIDs, formatListDataShortName, formatIDs_size);
+        RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListDataShortName, formatIDs_size);
+        format_list_pdu_long.emit(out_stream);
     } else {
-        format_list_pdu.emit_short(out_stream, formatIDs, formatListDataShortName, formatIDs_size);
+        RDPECLIP::FormatListPDU_ShortName format_list_pdu_short(formatIDs, formatListDataShortName, formatIDs_size);
+        format_list_pdu_short.emit(out_stream);
     }
     const uint32_t total_length = out_stream.get_offset();
     InStream chunk(out_stream.get_data(), out_stream.get_offset());
