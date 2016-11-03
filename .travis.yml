@@ -10,10 +10,6 @@ addons:
       - libpng12-dev
       - libboost-dev
       - libsnappy-dev
-      - libavcodec-dev
-      - libavformat-dev
-      - libavutil-dev
-      - libswscale-dev
     sources: &sources
       - ubuntu-toolchain-r-test
 
@@ -113,7 +109,7 @@ install:
   # Install libav
   ############################################################################
   - |
-    LIBAV_URL=https://github.com/libav/libav/archive/v12_beta1.tar.gz
+    LIBAV_URL=https://github.com/FFmpeg/FFmpeg/archive/n2.5.11.tar.gz
     LIBAV_DIR=${DEPS_DIR}/libav
     mkdir -p ${LIBAV_DIR}/libav
     travis_retry wget --quiet -O - ${LIBAV_URL} | tar --strip-components=1 -xz -C ${LIBAV_DIR}
