@@ -1,7 +1,7 @@
 inline
 const char * tahoma_8_bold(unsigned width, unsigned height, unsigned count, Pixel pixel)
 {
-# include "./classifiers/tahoma_8_bold.hxx"
+# include "./ocr1/classifiers/tahoma_8_bold.hxx"
   return unknown;
 }
 
