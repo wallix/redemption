@@ -65,17 +65,10 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
     , _error("error")
     , _keymap()
     , _ctrl_alt_delete(false)
-    , _bufferRDPClipboardChannel(nullptr)
-    , _bufferRDPClipboardChannelSize(0)
-    , _bufferRDPClipboardChannelSizeTotal(0)
-    , _bufferRDPCLipboardMetaFilePic_width(0)
-    , _bufferRDPCLipboardMetaFilePic_height(0)
-    , _clipbrdFormatsList()
-    , _cItems(0)
-    , _lindexToRequest(0)
-    , _streamIDToRequest(0)
     , _waiting_for_data(false)
-    , _lindex(0)
+    , _clipbrdFormatsList()
+    , _cb_filesList()
+    , _cb_buffers()
 {
     // Windows and socket contrainer
     this->_mod_qt = new Mod_Qt(this, this->_form);
@@ -699,6 +692,52 @@ void Front_Qt::setMainScreenOnTopRelease() {
 //   GRAPHIC FUNCTIONS (factorization)
 //---------------------------------------
 
+template<class Op>
+void Front_Qt::draw_memblt_op(const Rect & drect, const Bitmap & bitmap) {
+    const uint16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
+    const uint16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->_info.height - drect.y, drect.cy));
+
+    if (mincx <= 0 || mincy <= 0) {
+        return;
+    }
+
+    int rowYCoord(drect.y + drect.cy-1);
+
+    QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
+    QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
+    QImage dstBitmap(this->_screen[0]->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
+
+    if (bitmap.bpp() == 24) {
+        srcBitmap = srcBitmap.rgbSwapped();
+    }
+
+    if (bitmap.bpp() != this->_info.bpp) {
+        srcBitmap = srcBitmap.convertToFormat(this->_imageFormatRGB);
+    }
+    dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
+
+    int indice(mincy-1);
+
+    std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(srcBitmap.bytesPerLine());
+
+    for (size_t k = 0 ; k < mincy; k++) {
+
+        const uchar * srcData = srcBitmap.constScanLine(k);
+        const uchar * dstData = dstBitmap.constScanLine(indice - k);
+
+        Op op;
+        for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+             op.op(srcData[i], dstData[i]);
+        }
+
+        QImage image(data.get(), mincx, 1, srcBitmap.format());
+        QRect trect(drect.x, rowYCoord, mincx, 1);
+        this->_screen[0]->paintCache().drawImage(trect, image);
+
+        rowYCoord--;
+    }
+}
+
 void Front_Qt::draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool invert, int srcx, int srcy) {
     const int16_t mincx = bitmap.cx();
     const int16_t mincy = bitmap.cy();
@@ -1179,238 +1218,32 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
     switch (cmd.rop) {
 
         case 0x00: this->_screen[0]->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
-        break;
+            break;
 
-        case 0x22:
-        {
-            const uint16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
-            const uint16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->_info.height - drect.y, drect.cy));
+        case 0x22: this->draw_memblt_op<Op_0x22>(drect, bitmap);
+            break;
 
-            if (mincx <= 0 || mincy <= 0) {
-                return;
-            }
-
-            int rowYCoord(drect.y + drect.cy-1);
-
-            QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
-            QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
-            QImage dstBitmap(this->_screen[0]->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
-
-            if (bitmap.bpp() == 24) {
-                srcBitmap = srcBitmap.rgbSwapped();
-            }
-
-            if (bitmap.bpp() != this->_info.bpp) {
-                srcBitmap = srcBitmap.convertToFormat(this->_imageFormatRGB);
-            }
-            dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
-
-            int indice(mincy-1);
-
-            std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(srcBitmap.bytesPerLine());
-
-            for (size_t k = 0 ; k < mincy; k++) {
-
-                const uchar * srcData = srcBitmap.constScanLine(k);
-                const uchar * dstData = dstBitmap.constScanLine(indice - k);
-
-                for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
-                    data[i] = ~(srcData[i]) & dstData[i];
-                }
-
-                QImage image(data.get(), mincx, 1, srcBitmap.format());
-                QRect trect(drect.x, rowYCoord, mincx, 1);
-                this->_screen[0]->paintCache().drawImage(trect, image);
-
-                rowYCoord--;
-            }
-        }
-        break;
-
-        case 0x33:this->draw_MemBlt(drect, bitmap, true, cmd.srcx + (drect.x - cmd.rect.x), cmd.srcy + (drect.y - cmd.rect.y));
-        break;
+        case 0x33: this->draw_MemBlt(drect, bitmap, true, cmd.srcx + (drect.x - cmd.rect.x), cmd.srcy + (drect.y - cmd.rect.y));
+            break;
 
         case 0x55:
-        {
-            const uint16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
-            const uint16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->_info.height - drect.y, drect.cy));
-
-            if (mincx <= 0 || mincy <= 0) {
-                return;
-            }
-
-            int rowYCoord(drect.y + drect.cy-1);
-
-            QImage dstBitmap(this->_screen[0]->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
-
-            int indice(mincy-1);
-
-            std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(dstBitmap.bytesPerLine());
-
-            for (size_t k = 0 ; k < mincy; k++) {
-
-                const uchar * dstData = dstBitmap.constScanLine(indice - k);
-
-                for (int i = 0; i < dstBitmap.bytesPerLine(); i++) {
-                    data[i] = ~(dstData[i]);
-                }
-
-                QImage image(data.get(), mincx, 1, dstBitmap.format());
-
-                QRect trect(drect.x, rowYCoord, mincx, 1);
-                this->_screen[0]->paintCache().drawImage(trect, image);
-
-                rowYCoord--;
-            }
-        }
+            this->draw_memblt_op<Op_0x55>(drect, bitmap);
         break;
 
-        case 0x66:
-        {
-            const uint16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
-            const uint16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->_info.height - drect.y, drect.cy));
-
-            if (mincx <= 0 || mincy <= 0) {
-                return;
-            }
-
-            int rowYCoord(drect.y + drect.cy-1);
-
-            QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
-            QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
-            QImage dstBitmap(this->_screen[0]->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
-
-            if (bitmap.bpp() == 24) {
-                srcBitmap = srcBitmap.rgbSwapped();
-            }
-
-            if (bitmap.bpp() != this->_info.bpp) {
-                srcBitmap = srcBitmap.convertToFormat(this->_imageFormatRGB);
-            }
-            dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
-
-            int indice(mincy-1);
-
-            std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(srcBitmap.bytesPerLine());
-
-            for (size_t k = 0 ; k < mincy; k++) {
-
-                const uchar * srcData = srcBitmap.constScanLine(k);
-                const uchar * dstData = dstBitmap.constScanLine(indice - k);
-
-                for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
-                    data[i] = srcData[i] ^ dstData[i];
-                }
-
-                QImage image(data.get(), mincx, 1, dstBitmap.format());
-
-                QRect trect(drect.x, rowYCoord, mincx, 1);
-                this->_screen[0]->paintCache().drawImage(trect, image);
-
-                rowYCoord--;
-            }
-        }
-        break;
+        case 0x66: this->draw_memblt_op<Op_0x66>(drect, bitmap);
+            break;
 
         case 0x99:  // nothing to change
         break;
 
         case 0xCC: this->draw_MemBlt(drect, bitmap, false, cmd.srcx + (drect.x - cmd.rect.x), cmd.srcy + (drect.y - cmd.rect.y));
-        break;
+            break;
 
-        case 0xEE:
-        {
-            const uint16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
-            const uint16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->_info.height - drect.y, drect.cy));
+        case 0xEE: this->draw_memblt_op<Op_0xEE>(drect, bitmap);
+            break;
 
-            if (mincx <= 0 || mincy <= 0) {
-                return;
-            }
-
-            int rowYCoord(drect.y + drect.cy-1);
-
-            QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
-            QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
-            QImage dstBitmap(this->_screen[0]->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
-
-            if (bitmap.bpp() == 24) {
-                srcBitmap = srcBitmap.rgbSwapped();
-            }
-
-            if (bitmap.bpp() != this->_info.bpp) {
-                srcBitmap = srcBitmap.convertToFormat(this->_imageFormatRGB);
-            }
-            dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
-
-            int indice(mincy-1);
-
-            std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(srcBitmap.bytesPerLine());
-
-            for (size_t k = 0 ; k < mincy; k++) {
-
-                const uchar * srcData = srcBitmap.constScanLine(k);
-                const uchar * dstData = dstBitmap.constScanLine(indice - k);
-
-                for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
-                    data[i] = srcData[i] | dstData[i];
-                }
-
-                QImage image(data.get(), mincx, 1, srcBitmap.format());
-
-                QRect trect(drect.x, rowYCoord, mincx, 1);
-                this->_screen[0]->paintCache().drawImage(trect, image);
-
-                rowYCoord--;
-            }
-        }
-        break;
-
-        case 0x88:
-        {
-            const uint16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
-            const uint16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->_info.height - drect.y, drect.cy));
-
-            if (mincx <= 0 || mincy <= 0) {
-                return;
-            }
-
-            int rowYCoord(drect.y + drect.cy-1);
-
-            QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
-            QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
-            QImage dstBitmap(this->_screen[0]->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
-
-            if (bitmap.bpp() == 24) {
-                srcBitmap = srcBitmap.rgbSwapped();
-            }
-
-            if (bitmap.bpp() != this->_info.bpp) {
-                srcBitmap = srcBitmap.convertToFormat(this->_imageFormatRGB);
-            }
-            dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
-
-            int indice(mincy-1);
-
-            std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(srcBitmap.bytesPerLine());
-
-            for (size_t k = 0 ; k < mincy; k++) {
-
-                const uchar * srcData = srcBitmap.constScanLine(k);
-                const uchar * dstData = dstBitmap.constScanLine(indice - k);
-
-                for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
-                    data[i] = srcData[i] & dstData[i];
-                }
-
-                QImage image(data.get(), mincx, 1, srcBitmap.format());
-
-                QRect trect(drect.x, rowYCoord, mincx, 1);
-                this->_screen[0]->paintCache().drawImage(trect, image);
-
-                rowYCoord--;
-            }
-        }
-        break;
+        case 0x88: this->draw_memblt_op<Op_0x88>(drect, bitmap);
+            break;
 
         case 0xFF: this->_screen[0]->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
         break;
@@ -2573,8 +2406,8 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
 
     if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
         this->_waiting_for_data = true;
-        this->_bufferRDPClipboardChannelSizeTotal = chunk.in_uint32_le();
-        this->_bufferRDPClipboardChannel = std::make_unique<uint8_t[]>(this->_bufferRDPClipboardChannelSizeTotal);
+        this->_cb_buffers.sizeTotal = chunk.in_uint32_le();
+        this->_cb_buffers.data = std::make_unique<uint8_t[]>(this->_cb_buffers.sizeTotal);
     }
 
     switch (this->_requestedFormatId) {
@@ -2594,11 +2427,11 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
                 RDPECLIP::MetaFilePicDescriptor mfpd;
                 mfpd.receive(chunk);
 
-                this->_bufferRDPCLipboardMetaFilePic_height = mfpd.height;
-                this->_bufferRDPCLipboardMetaFilePic_width  = mfpd.width;
-                this->_bufferRDPClipboardMetaFilePicBPP     = mfpd.bpp;
-                this->_bufferRDPClipboardChannelSizeTotal   = mfpd.imageSize;
-                this->_bufferRDPClipboardChannel = std::make_unique<uint8_t[]>(this->_bufferRDPClipboardChannelSizeTotal);
+                this->_cb_buffers.pic_height = mfpd.height;
+                this->_cb_buffers.pic_width  = mfpd.width;
+                this->_cb_buffers.pic_bpp    = mfpd.bpp;
+                this->_cb_buffers.sizeTotal  = mfpd.imageSize;
+                this->_cb_buffers.data       = std::make_unique<uint8_t[]>(this->_cb_buffers.sizeTotal);
             }
 
             this->send_to_clipboard_Buffer(chunk);
@@ -2611,32 +2444,32 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
         case ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                this->_bufferRDPClipboardChannelSizeTotal -= 4;
-                this->_cItems = chunk.in_uint32_le();
-                this->_lindexToRequest = 0;
+                this->_cb_buffers.sizeTotal -= 4;
+                this->_cb_filesList.cItems= chunk.in_uint32_le();
+                this->_cb_filesList.lindexToRequest= 0;
                 this->_clipboard_qt->emptyBuffer();
-                this->_items_list.clear();
+                this->_cb_filesList.itemslist.clear();
             }
 
             this->send_to_clipboard_Buffer(chunk);
 
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                InStream stream(this->_bufferRDPClipboardChannel.get(), this->_bufferRDPClipboardChannelSizeTotal);
+                InStream stream(this->_cb_buffers.data.get(), this->_cb_buffers.sizeTotal);
 
                 RDPECLIP::FileDescriptor fd;
 
-                for (int i = 0; i < this->_cItems; i++) {
+                for (int i = 0; i < this->_cb_filesList.cItems; i++) {
                     fd.receive(stream);
-                    CB_in_Files file;
+                    CB_FilesList::CB_in_Files file;
                     file.size = fd.file_size();
                     file.name = fd.fileName();
-                    this->_items_list.push_back(file);
+                    this->_cb_filesList.itemslist.push_back(file);
                 }
 
-                RDPECLIP::FileContentsRequestPDU fileContentsRequest( this->_streamIDToRequest
+                RDPECLIP::FileContentsRequestPDU fileContentsRequest( this->_cb_filesList.streamIDToRequest
                                                                     , RDPECLIP::FILECONTENTS_RANGE
-                                                                    , this->_lindexToRequest
-                                                                    , this->_items_list[this->_lindexToRequest].size);
+                                                                    , this->_cb_filesList.lindexToRequest
+                                                                    , this->_cb_filesList.itemslist[this->_cb_filesList.lindexToRequest].size);
                 StaticOutStream<32> out_streamRequest;
                 fileContentsRequest.emit(out_streamRequest);
                 const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
@@ -2650,7 +2483,7 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
                                                       CHANNELS::CHANNEL_FLAG_FIRST |
                                                       CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                     );
-                std::cout << "client >> File Contents Resquest PDU FILECONTENTS_RANGE streamID=" << this->_streamIDToRequest << " lindex=" << this->_lindexToRequest << std::endl;
+                std::cout << "client >> File Contents Resquest PDU FILECONTENTS_RANGE streamID=" << this->_cb_filesList.streamIDToRequest << " lindex=" << this->_cb_filesList.lindexToRequest<< std::endl;
 
                 this->empty_buffer();
             }
@@ -2659,9 +2492,9 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
         case ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS:
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                this->_bufferRDPClipboardChannelSizeTotal = this->_items_list[this->_lindexToRequest].size;
-                this->_streamIDToRequest = chunk.in_uint32_le();
-                this->_bufferRDPClipboardChannel = std::make_unique<uint8_t[]>(this->_items_list[this->_lindexToRequest].size);
+                this->_cb_buffers.sizeTotal = this->_cb_filesList.itemslist[this->_cb_filesList.lindexToRequest].size;
+                this->_cb_filesList.streamIDToRequest = chunk.in_uint32_le();
+                this->_cb_buffers.data = std::make_unique<uint8_t[]>(this->_cb_filesList.itemslist[this->_cb_filesList.lindexToRequest].size);
             }
 
             this->send_to_clipboard_Buffer(chunk);
@@ -2669,16 +2502,16 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                 this->_waiting_for_data = false;
 
-                 this->_clipboard_qt->write_clipboard_temp_file( this->_items_list[this->_lindexToRequest].name
-                                                               , this->_bufferRDPClipboardChannel.get()
-                                                               , this->_items_list[this->_lindexToRequest].size
+                 this->_clipboard_qt->write_clipboard_temp_file( this->_cb_filesList.itemslist[this->_cb_filesList.lindexToRequest].name
+                                                               , this->_cb_buffers.data.get()
+                                                               , this->_cb_filesList.itemslist[this->_cb_filesList.lindexToRequest].size
                                                                );
-                this->_lindexToRequest++;
+                this->_cb_filesList.lindexToRequest++;
 
-                if (this->_lindexToRequest >= this->_cItems) {
+                if (this->_cb_filesList.lindexToRequest>= this->_cb_filesList.cItems) {
 
                     this->_clipboard_qt->_local_clipboard_stream = false;
-                    this->_clipboard_qt->setClipboard_files(this->_items_list);
+                    this->_clipboard_qt->setClipboard_files(this->_cb_filesList.itemslist);
                     this->_clipboard_qt->_local_clipboard_stream = true;
 
                     RDPECLIP::UnlockClipboardDataPDU unlockClipboardDataPDU;
@@ -2697,11 +2530,11 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
                     std::cout << "client >> Unlock Clipboard Data PDU" << std::endl;
 
                 } else {
-                    this->_streamIDToRequest++;
-                    RDPECLIP::FileContentsRequestPDU fileContentsRequest( this->_streamIDToRequest
+                    this->_cb_filesList.streamIDToRequest++;
+                    RDPECLIP::FileContentsRequestPDU fileContentsRequest( this->_cb_filesList.streamIDToRequest
                                                                         , RDPECLIP::FILECONTENTS_RANGE
-                                                                        , this->_lindexToRequest
-                                                                        , this->_items_list[this->_lindexToRequest].size);
+                                                                        , this->_cb_filesList.lindexToRequest
+                                                                        , this->_cb_filesList.itemslist[this->_cb_filesList.lindexToRequest].size);
                     StaticOutStream<32> out_streamRequest;
                     fileContentsRequest.emit(out_streamRequest);
                     const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
@@ -2718,7 +2551,7 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
                                                           CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                         );
 
-                    std::cout << "client >> File Contents Resquest PDU FILECONTENTS_RANGE streamID=" << this->_streamIDToRequest << " lindex=" << this->_lindexToRequest << std::endl;
+                    std::cout << "client >> File Contents Resquest PDU FILECONTENTS_RANGE streamID=" << this->_cb_filesList.streamIDToRequest << " lindex=" << this->_cb_filesList.lindexToRequest<< std::endl;
                 }
 
                 this->empty_buffer();
@@ -2747,22 +2580,22 @@ void Front_Qt::send_to_clipboard_Buffer(InStream & chunk) {
     // 3.1.5.2.2.1 Reassembly of Chunked Virtual Channel Data
 
     const size_t length_of_data_to_dump(chunk.in_remain());
-    const size_t sum_buffer_and_data(this->_bufferRDPClipboardChannelSize + length_of_data_to_dump);
+    const size_t sum_buffer_and_data(this->_cb_buffers.size + length_of_data_to_dump);
     const uint8_t * utf8_data = chunk.get_current();
 
-    for (size_t i = 0; i < length_of_data_to_dump && i + this->_bufferRDPClipboardChannelSize < this->_bufferRDPClipboardChannelSizeTotal; i++) {
-        this->_bufferRDPClipboardChannel[i + this->_bufferRDPClipboardChannelSize] = utf8_data[i];
+    for (size_t i = 0; i < length_of_data_to_dump && i + this->_cb_buffers.size < this->_cb_buffers.sizeTotal; i++) {
+        this->_cb_buffers.data[i + this->_cb_buffers.size] = utf8_data[i];
     }
 
-    this->_bufferRDPClipboardChannelSize = sum_buffer_and_data;
+    this->_cb_buffers.size = sum_buffer_and_data;
 }
 
 void Front_Qt::send_imageBuffer_to_clipboard() {
 
-    QImage image(this->_bufferRDPClipboardChannel.get(),
-                 this->_bufferRDPCLipboardMetaFilePic_width,
-                 this->_bufferRDPCLipboardMetaFilePic_height,
-                 this->bpp_to_QFormat(this->_bufferRDPClipboardMetaFilePicBPP, false));
+    QImage image(this->_cb_buffers.data.get(),
+                 this->_cb_buffers.pic_width,
+                 this->_cb_buffers.pic_height,
+                 this->bpp_to_QFormat(this->_cb_buffers.pic_bpp, false));
 
     QImage imageSwapped(image.rgbSwapped().mirrored(false, true));
 
@@ -2774,10 +2607,10 @@ void Front_Qt::send_imageBuffer_to_clipboard() {
 }
 
 void Front_Qt::send_textBuffer_to_clipboard() {
-    std::unique_ptr<uint8_t[]> utf8_string = std::make_unique<uint8_t[]>(this->_bufferRDPClipboardChannelSizeTotal);
+    std::unique_ptr<uint8_t[]> utf8_string = std::make_unique<uint8_t[]>(this->_cb_buffers.sizeTotal);
     size_t length_of_utf8_string = ::UTF16toUTF8(
-        this->_bufferRDPClipboardChannel.get(), this->_bufferRDPClipboardChannelSizeTotal,
-        utf8_string.get(), this->_bufferRDPClipboardChannelSizeTotal);
+        this->_cb_buffers.data.get(), this->_cb_buffers.sizeTotal,
+        utf8_string.get(), this->_cb_buffers.sizeTotal);
     std::string str(reinterpret_cast<const char*>(utf8_string.get()), length_of_utf8_string);
 
     this->_clipboard_qt->_local_clipboard_stream = false;
@@ -2788,11 +2621,11 @@ void Front_Qt::send_textBuffer_to_clipboard() {
 }
 
 void Front_Qt::empty_buffer() {
-    this->_bufferRDPClipboardMetaFilePicBPP     = 0;
-    this->_bufferRDPClipboardChannelSizeTotal   = 0;
-    this->_bufferRDPCLipboardMetaFilePic_width  = 0;
-    this->_bufferRDPCLipboardMetaFilePic_height = 0;
-    this->_bufferRDPClipboardChannelSize        = 0;
+    this->_cb_buffers.pic_bpp    = 0;
+    this->_cb_buffers.sizeTotal  = 0;
+    this->_cb_buffers.pic_width  = 0;
+    this->_cb_buffers.pic_height = 0;
+    this->_cb_buffers.size       = 0;
     this->_waiting_for_data = false;
 }
 
@@ -2999,7 +2832,7 @@ int main(int argc, char** argv){
 
     QApplication app(argc, argv);
 
-    int verbose = 0;                                        //MODRDP_LOGLEVEL_CLIPRDR;              //0x04000000 | 0x40000000;
+    int verbose = MODRDP_LOGLEVEL_CLIPRDR | MODRDP_LOGLEVEL_CLIPRDR_DUMP;                    //0x04000000 | 0x40000000;
 
     Front_Qt front(argv, argc, verbose);
 

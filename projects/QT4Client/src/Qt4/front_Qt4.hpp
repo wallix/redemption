@@ -294,12 +294,8 @@ public:
     //  Clipboard Channel Management members
     uint32_t                    _requestedFormatId = 0;
     std::string                 _requestedFormatName;
-    std::unique_ptr<uint8_t[]>  _bufferRDPClipboardChannel;
-    size_t                      _bufferRDPClipboardChannelSize;
-    size_t                      _bufferRDPClipboardChannelSizeTotal;
-    int                         _bufferRDPCLipboardMetaFilePic_width;
-    int                         _bufferRDPCLipboardMetaFilePic_height;
-    int                         _bufferRDPClipboardMetaFilePicBPP;
+    bool                        _waiting_for_data;
+
     struct ClipbrdFormatsList{
         enum : uint16_t {
               CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
@@ -334,17 +330,31 @@ public:
                 index++;
             }
         }
-    }                           _clipbrdFormatsList;
-    int                         _cItems;
-    int                         _lindexToRequest;
-    int                         _streamIDToRequest;
-    struct CB_in_Files {
-        int         size;
-        std::string name;
-    };
-    std::vector<CB_in_Files>    _items_list;
-    bool                        _waiting_for_data;
-    int                         _lindex;
+
+    } _clipbrdFormatsList;
+
+    struct CB_FilesList {
+        struct CB_in_Files {
+            int         size;
+            std::string name;
+        };
+        int                      cItems = 0;
+        int                      lindexToRequest = 0;
+        int                      streamIDToRequest = 0;
+        std::vector<CB_in_Files> itemslist;
+        int                      lindex = 0;
+
+    }  _cb_filesList;
+
+    struct CB_Buffers {
+        std::unique_ptr<uint8_t[]>  data = nullptr;
+        size_t size = 0;
+        size_t sizeTotal = 0;
+        int    pic_width = 0;
+        int    pic_height = 0;
+        int    pic_bpp = 0;
+
+    } _cb_buffers;
 
 
 
@@ -377,7 +387,7 @@ public:
     void send_imageBuffer_to_clipboard();
 
     void empty_buffer() override;
- 
+
     void process_client_clipboard_outdata(uint64_t total_length, OutStream & out_streamfirst, int firstPartSize, uint8_t const * data);
 
     virtual void set_pointer(Pointer const & cursor) override;
@@ -402,6 +412,35 @@ public:
     //---------------------------------------
     //   GRAPHIC FUNCTIONS (factorization)
     //---------------------------------------
+
+    template<class Op>
+    void draw_memblt_op(const Rect & drect, const Bitmap & bitmap);
+
+    struct Op_0x22 {
+        constexpr uint8_t op(const uchar src, const uchar dst) {
+            return ~(src) & dst;
+        }
+    };
+    struct Op_0x55 {
+        constexpr uint8_t op(const uchar, const uchar dst) {
+            return ~(dst);
+        }
+    };
+    struct Op_0x66 {
+        constexpr uint8_t op(const uchar src, const uchar dst) {
+            return src ^ dst;
+        }
+    };
+    struct Op_0xEE {
+        constexpr uint8_t op(const uchar src, const uchar dst) {
+            return src | dst;
+        }
+    };
+    struct Op_0x88 {
+        constexpr uint8_t op(const uchar src, const uchar dst) {
+            return src & dst;
+        }
+    };
 
     void draw_RDPScrBlt(int srcx, int srcy, const Rect & drect, bool invert);
 

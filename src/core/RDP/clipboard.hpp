@@ -915,7 +915,6 @@ struct FormatListPDU_LongName : public FormatListPDU {
             stream.out_uint32_le(this->formatListDataIDs[i]);
             std::string const & currentStr = this->formatListDataName[i];
             stream.out_copy_bytes(currentStr.data(), currentStr.size());
-
         }
     }
 };
@@ -1114,7 +1113,7 @@ enum : int {
   , FILECONTENTS_SIZE_CB_REQUESTED = 0x00000008
 };
 
-struct FileContentsRequestPDU : CliprdrHeader {
+struct FileContentsRequestPDU : CliprdrHeader {             // Resquest RANGE
     int streamID;
     int flag;
     int lindex;
@@ -1142,7 +1141,11 @@ struct FileContentsRequestPDU : CliprdrHeader {
         stream.out_uint32_le(this->flag);
         stream.out_uint32_le(this->sizeRequested >> 32);
         stream.out_uint32_le(this->sizeRequested);
-        stream.out_uint32_le(this->sizeRequested);
+        if (flag & FILECONTENTS_SIZE) {
+            stream.out_uint32_le(FILECONTENTS_SIZE_CB_REQUESTED);
+        } else {
+            stream.out_uint32_le(this->sizeRequested);
+        }
     }
 };
 

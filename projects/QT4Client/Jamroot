@@ -21,7 +21,7 @@ constant MODULEDIR : ../../modules ;
 constant INCLUDEDIR : ../../include ;
 constant INCLUDEPPOCR : ../../modules/ppocr/src ;
 constant INCLUDEFFMPEG : ../../ffmpeg ;
-constant INCLUDEMLN : ../../modules/ppocr/includes ;
+constant INCLUDEMLN : ../../modules/ppocr/includes/mln ;
 constant INCLUDEOCR1 : ../ocr1/include ;
 
 path-constant REDCONFIGSDIR : ../../projects/redemption_configs ;
