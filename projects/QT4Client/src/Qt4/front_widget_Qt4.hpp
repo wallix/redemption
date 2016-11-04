@@ -175,7 +175,7 @@ public:
         mod_rdp_params.allow_channels                  = &allow_channels;
         //mod_rdp_params.allow_using_multiple_monitors   = true;
         //mod_rdp_params.bogus_refresh_rect              = true;
-        mod_rdp_params.verbose = 0x080000ff;                      //MODRDP_LOGLEVEL_CLIPRDR | 16;
+        mod_rdp_params.verbose = 0;                      //MODRDP_LOGLEVEL_CLIPRDR | 16;
 
         LCGRandom gen(0); // To always get the same client random, in tests
 
@@ -1497,7 +1497,7 @@ public:
         }
     }
 
-    void setClipboard_files(std::vector<Front_Qt::CB_in_Files> items_list) {
+    void setClipboard_files(std::vector<Front_Qt::CB_FilesList::CB_in_Files> items_list) {
 
         /*QClipboard *cb = QApplication::clipboard();
         QMimeData* newMimeData = new QMimeData();
