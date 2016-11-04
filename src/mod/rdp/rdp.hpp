@@ -319,6 +319,8 @@ protected:
     const std::chrono::milliseconds   session_probe_disconnected_session_limit;
     const std::chrono::milliseconds   session_probe_idle_session_limit;
           std::string                 session_probe_alternate_shell;
+          std::string                 session_probe_exe_or_file;
+          std::string                 session_probe_arguments;
     const bool                        session_probe_use_clipboard_based_launcher;
 
     std::string session_probe_target_informations;
@@ -390,6 +392,8 @@ protected:
     const bool allow_using_multiple_monitors;
 
     bool already_upped_and_running = false;
+
+    static constexpr uint32_t BmpCacheRev2_Cache_NumEntries[BmpCache::MAXIMUM_NUMBER_OF_CACHES] = { 120, 120, 2553, 0, 0 };
 
     class ToServerAsynchronousSender : public VirtualChannelDataSender
     {
@@ -731,7 +735,8 @@ public:
         , session_probe_disconnected_application_limit(mod_rdp_params.session_probe_disconnected_application_limit)
         , session_probe_disconnected_session_limit(mod_rdp_params.session_probe_disconnected_session_limit)
         , session_probe_idle_session_limit(mod_rdp_params.session_probe_idle_session_limit)
-        , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
+        , session_probe_exe_or_file(mod_rdp_params.session_probe_exe_or_file)
+        , session_probe_arguments(mod_rdp_params.session_probe_arguments)
         , session_probe_use_clipboard_based_launcher(mod_rdp_params.session_probe_use_clipboard_based_launcher &&
                                                      (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)) &&
                                                      (!mod_rdp_params.use_client_provided_alternate_shell ||
@@ -1002,7 +1007,7 @@ public:
             else {
                 ::memset(exe_var_str, 0, sizeof(exe_var_str));
             }
-            replace_tag(this->session_probe_alternate_shell, "${EXE_VAR}",
+            replace_tag(this->session_probe_arguments, "${EXE_VAR}",
                 exe_var_str);
 
             if (mod_rdp_params.session_probe_use_clipboard_based_launcher &&
@@ -1021,11 +1026,15 @@ public:
             this->session_probe_target_informations += mod_rdp_params.auth_user;
 
             if (this->session_probe_use_clipboard_based_launcher) {
-                replace_tag(this->session_probe_alternate_shell,
+                replace_tag(this->session_probe_arguments,
                     " /${COOKIE_VAR}", "");
 
-                replace_tag(this->session_probe_alternate_shell,
+                replace_tag(this->session_probe_arguments,
                     "${CBSPL_VAR} ", "CD %TMP%&");
+
+                this->session_probe_alternate_shell  = this->session_probe_exe_or_file;
+                this->session_probe_alternate_shell += " ";
+                this->session_probe_alternate_shell += this->session_probe_arguments;
 
                 this->session_probe_launcher =
                     std::make_unique<SessionProbeClipboardBasedLauncher>(
@@ -1040,11 +1049,15 @@ public:
                     proxy_managed_connection_cookie);
                 std::string param = " /#";
                 param += proxy_managed_connection_cookie;
-                replace_tag(this->session_probe_alternate_shell,
+                replace_tag(this->session_probe_arguments,
                     " /${COOKIE_VAR}", param.c_str());
 
-                replace_tag(this->session_probe_alternate_shell,
+                replace_tag(this->session_probe_arguments,
                     "${CBSPL_VAR} ", "");
+
+                this->session_probe_alternate_shell  = this->session_probe_exe_or_file;
+                this->session_probe_alternate_shell += " ";
+                this->session_probe_alternate_shell += this->session_probe_arguments;
 
                 strncpy(this->program, this->session_probe_alternate_shell.c_str(), sizeof(this->program) - 1);
                 this->program[sizeof(this->program) - 1] = 0;
@@ -3515,7 +3528,7 @@ public:
     }
 
     void draw_event(time_t now, gdi::GraphicApi & drawable) override {
-        LOG(LOG_INFO, "mod_rdp::draw_event()");
+        //LOG(LOG_INFO, "mod_rdp::draw_event()");
 
         if ((!this->event.waked_up_by_time
             && (!this->session_probe_virtual_channel_p
@@ -3524,7 +3537,7 @@ public:
             && ((this->nego.state == RdpNego::NEGO_STATE_INITIAL)
                 || (this->nego.state == RdpNego::NEGO_STATE_FINAL)))) {
             try{
-                LOG(LOG_INFO, "mod_rdp::draw_event() state switch");
+                //LOG(LOG_INFO, "mod_rdp::draw_event() state switch");
                 switch (this->state){
                 case MOD_RDP_NEGO:
                     this->early_tls_security_exchange();
@@ -3625,8 +3638,8 @@ public:
             }
         }
 
-        LOG(LOG_INFO, "mod_rdp::draw_event() session timeout check count=%u",
-                static_cast<unsigned>(this->open_session_timeout.count()));
+        //LOG(LOG_INFO, "mod_rdp::draw_event() session timeout check count=%u",
+        //        static_cast<unsigned>(this->open_session_timeout.count()));
         if (this->open_session_timeout.count()) {
             LOG(LOG_INFO, "mod_rdp::draw_event() session timeout check switch");
             switch(this->open_session_timeout_checker.check(now)) {
@@ -3663,7 +3676,7 @@ public:
             }
         }
 
-        LOG(LOG_INFO, "mod_rdp::draw_event() session_probe_virtual_channel_p");
+        //LOG(LOG_INFO, "mod_rdp::draw_event() session_probe_virtual_channel_p");
         try{
             if (this->session_probe_virtual_channel_p) {
                 this->session_probe_virtual_channel_p->process_event();
@@ -3681,7 +3694,7 @@ public:
 
             this->event.signal = BACK_EVENT_NEXT;
         }
-        LOG(LOG_INFO, "mod_rdp::draw_event() done");
+        //LOG(LOG_INFO, "mod_rdp::draw_event() done");
     }   // draw_event
 
     wait_obj * get_secondary_event() override {
@@ -3876,9 +3889,9 @@ public:
                 BmpCache2Caps bmpcache2_caps;
                 bmpcache2_caps.cacheFlags           = PERSISTENT_KEYS_EXPECTED_FLAG | (this->enable_cache_waiting_list ? ALLOW_CACHE_WAITING_LIST_FLAG : 0);
                 bmpcache2_caps.numCellCaches        = 3;
-                bmpcache2_caps.bitmapCache0CellInfo = 120;
-                bmpcache2_caps.bitmapCache1CellInfo = 120;
-                bmpcache2_caps.bitmapCache2CellInfo = (2553 | 0x80000000);
+                bmpcache2_caps.bitmapCache0CellInfo = this->BmpCacheRev2_Cache_NumEntries[0];
+                bmpcache2_caps.bitmapCache1CellInfo = this->BmpCacheRev2_Cache_NumEntries[1];
+                bmpcache2_caps.bitmapCache2CellInfo = (this->BmpCacheRev2_Cache_NumEntries[2] | 0x80000000);
 
                 bool use_bitmapcache_rev2 = false;
 
@@ -5551,7 +5564,26 @@ public:
                 while (idx < cache.size() && cache[idx]) {
                     ++idx;
                 }
-                totalEntriesCache[cache_id] = idx;
+                uint32_t max_cache_num_entries = 0;
+                switch (cache_id) {
+                    case 0:
+                        max_cache_num_entries = this->BmpCacheRev2_Cache_NumEntries[0];
+                        break;
+                    case 1:
+                        max_cache_num_entries = this->BmpCacheRev2_Cache_NumEntries[1];
+                        break;
+                    case 2:
+                        max_cache_num_entries = this->BmpCacheRev2_Cache_NumEntries[2];
+                        break;
+                    case 3:
+                        max_cache_num_entries = this->BmpCacheRev2_Cache_NumEntries[3];
+                        break;
+                    case 4:
+                        max_cache_num_entries = this->BmpCacheRev2_Cache_NumEntries[4];
+                        break;
+                }
+                totalEntriesCache[cache_id] = std::min<uint32_t>(idx, max_cache_num_entries);
+                //LOG(LOG_INFO, "totalEntriesCache[%d]=%d", cache_id, idx);
             }
         }
         //LOG(LOG_INFO, "totalEntriesCache0=%u totalEntriesCache1=%u totalEntriesCache2=%u totalEntriesCache3=%u totalEntriesCache4=%u",

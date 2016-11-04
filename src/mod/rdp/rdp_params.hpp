@@ -67,7 +67,8 @@ struct ModRDPParams {
     std::chrono::milliseconds    session_probe_disconnected_application_limit {};
     std::chrono::milliseconds    session_probe_disconnected_session_limit {};
     std::chrono::milliseconds    session_probe_idle_session_limit {};
-    const char *                 session_probe_alternate_shell = "";
+    const char *                 session_probe_exe_or_file = "";
+    const char *                 session_probe_arguments = "";
 
     bool         enable_transparent_mode = false;
     const char * output_filename = "";

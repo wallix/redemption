@@ -1084,16 +1084,28 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 static_cast<cfg::mod_rdp::session_probe_idle_session_limit&>(this->variables)
             );
         }
-        else if (0 == strcmp(key, "session_probe_alternate_shell")) {
+        else if (0 == strcmp(key, "session_probe_exe_or_file")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::mod_rdp::session_probe_alternate_shell&>(this->variables).value,
+                static_cast<cfg::mod_rdp::session_probe_exe_or_file&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::fixed_string>{},
                 av
             );
             ::configs::post_set_value(
                 this->variables,
-                static_cast<cfg::mod_rdp::session_probe_alternate_shell&>(this->variables)
+                static_cast<cfg::mod_rdp::session_probe_exe_or_file&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "session_probe_arguments")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::session_probe_arguments&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::fixed_string>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_rdp::session_probe_arguments&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "server_cert_store")) {
