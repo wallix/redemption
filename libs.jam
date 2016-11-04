@@ -25,10 +25,10 @@ else {
     # echo ffmpeg library path: $(FFMPEG_LIB_PATH) ;
 
     if $(FFMPEG_LINK_MODE) = "shared" {
-        constant _FFMPEG_LIBRARY_EXT="so" ;
+        constant _FFMPEG_LIBRARY_EXT : so ;
     }
     else {
-        constant _FFMPEG_LIBRARY_EXT="a" ;
+        constant _FFMPEG_LIBRARY_EXT : a ;
     }
 
     lib avcodec  : :
