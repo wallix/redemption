@@ -5,7 +5,7 @@ addons:
   apt:
     packages:
       - g++-5
-      - g++-6
+      #- g++-6
       - libssl-dev
       - libpng12-dev
       - libboost-dev
@@ -32,11 +32,11 @@ matrix:
         - "echo -e 'using gcc : : g++-5 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
 
     # GCC 6
-    - os: linux
-      env: COMPILER=gcc-6
-      compiler: gcc
-      before_script:
-        - "echo -e 'using gcc : : g++-6 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
+    #- os: linux
+    #  env: COMPILER=gcc-6
+    #  compiler: gcc
+    #  before_script:
+    #    - "echo -e 'using gcc : : g++-6 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
 
     # Clang 3.6
     - os: linux
