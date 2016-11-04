@@ -1,7 +1,9 @@
-include redemption-config.jam ;
-include cxxflags.jam ;
-include defines.jam ;
-include includes.jam ;
+JAM_INCLUDE_PATH ?= . ;
+
+include $(JAM_INCLUDE_PATH)/redemption-config.jam ;
+include $(JAM_INCLUDE_PATH)/cxxflags.jam ;
+include $(JAM_INCLUDE_PATH)/defines.jam ;
+include $(JAM_INCLUDE_PATH)/includes.jam ;
 
 REDEMPTION_CXXFLAGS ?= <cxxflags>-std=c++11 ;
 
@@ -37,8 +39,8 @@ project redemption
    : default-build release
 ;
 
-include ocr.jam ;
-include libs.jam ;
+include $(JAM_INCLUDE_PATH)/ocr.jam ;
+include $(JAM_INCLUDE_PATH)/libs.jam ;
 
 explicit
     install
