@@ -4,6 +4,8 @@ language: cpp
 addons:
   apt:
     packages:
+      - g++-5
+      - g++-6
       - libssl-dev
       - libpng12-dev
       - libboost-dev
@@ -26,12 +28,6 @@ matrix:
     - os: linux
       env: TOOLSET=gcc-5
       compiler: gcc
-      addons:
-        apt:
-          packages:
-            - g++-5
-          sources: &sources
-            - ubuntu-toolchain-r-test
       before_script:
         - "echo -e 'using gcc : : g++-5 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
 
@@ -39,12 +35,6 @@ matrix:
     - os: linux
       env: COMPILER=gcc-6
       compiler: gcc
-      addons:
-        apt:
-          packages:
-            - g++-6
-          sources: &sources
-            - ubuntu-toolchain-r-test
       before_script:
         - "echo -e 'using gcc : : g++-6 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
 
