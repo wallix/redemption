@@ -2012,7 +2012,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     if (first_part_data_size > PASTE_PIC_CONTENT_SIZE) {
                                         first_part_data_size = PASTE_PIC_CONTENT_SIZE;
                                     }
-                                    total_length += RDPECLIP::METAFILE_HEADERS_SIZE;
+                                    total_length += RDPECLIP::METAFILE_HEADERS_SIZE - 6;
                                     RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr( this->_clipboard_qt->_cliboard_data_length
                                                                                    , this->_clipboard_qt->_bufferImage->width()
                                                                                    , this->_clipboard_qt->_bufferImage->height()
@@ -2742,10 +2742,10 @@ void Front_Qt::process_client_clipboard_outdata(uint64_t total_length, OutStream
             out_stream_last_part.out_copy_bytes(data + data_sent, remains_PDU);
 
             // Specific
-            if (this->_clipboard_qt->_bufferTypeID == RDPECLIP::CF_METAFILEPICT) {
+            /*if (this->_clipboard_qt->_bufferTypeID == RDPECLIP::CF_METAFILEPICT) {
                 out_stream_last_part.out_uint32_le(3);
                 out_stream_last_part.out_uint16_le(0);
-            }
+            }*/
             data_sent += remains_PDU;
             InStream chunk_last(out_stream_last_part.get_data(), out_stream_last_part.get_offset());
 
