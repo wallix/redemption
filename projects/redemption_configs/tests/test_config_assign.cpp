@@ -283,7 +283,8 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::mod_rdp::server_cert_store>(true);
     ini.set<cfg::mod_rdp::server_cert_success_message>(ServerNotification::admin);
     ini.set<cfg::mod_rdp::server_redirection_support>(true);
-    ini.set<cfg::mod_rdp::session_probe_alternate_shell>(s);
+    ini.set<cfg::mod_rdp::session_probe_exe_or_file>(s);
+    ini.set<cfg::mod_rdp::session_probe_arguments>(s);
     ini.set<cfg::mod_rdp::session_probe_customize_executable_name>(true);
     ini.set<cfg::mod_rdp::session_probe_end_disconnected_session>(true);
     ini.set<cfg::mod_rdp::session_probe_keepalive_timeout>(std::chrono::seconds{1});
