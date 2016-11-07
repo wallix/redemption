@@ -1,7 +1,9 @@
-include redemption-config.jam ;
-include cxxflags.jam ;
-include defines.jam ;
-include includes.jam ;
+JAM_INCLUDE_PATH ?= . ;
+
+include $(JAM_INCLUDE_PATH)/redemption-config.jam ;
+include $(JAM_INCLUDE_PATH)/cxxflags.jam ;
+include $(JAM_INCLUDE_PATH)/defines.jam ;
+include $(JAM_INCLUDE_PATH)/includes.jam ;
 
 REDEMPTION_CXXFLAGS ?= <cxxflags>-std=c++11 ;
 
@@ -37,8 +39,8 @@ project redemption
    : default-build release
 ;
 
-include ocr.jam ;
-include libs.jam ;
+include $(JAM_INCLUDE_PATH)/ocr.jam ;
+include $(JAM_INCLUDE_PATH)/libs.jam ;
 
 explicit
     install
@@ -49,6 +51,9 @@ explicit
     install-share
     install-etc
     install-etc-themes
+    install-etc-ppocr
+    install-etc-ppocr-latin
+    install-etc-ppocr-latin-cyrillic
     exe
     libs
 ;
@@ -56,11 +61,15 @@ explicit
 alias instexe : install-bin ;
 alias install :
     install-bin install-lib
-    install-etc install-etc-themes install-etc-ppocr
+    install-etc
+    install-etc-themes
+    install-etc-ppocr
     install-share
 ;
 alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient ;
 alias libs    : libredrec ;
+
+alias install-etc-ppocr : install-etc-ppocr-latin install-etc-ppocr-latin-cyrillic ;
 
 install install-bin
     : exe
@@ -79,10 +88,21 @@ install install-etc
     : [ glob
         $(REDEMPTION_ETC_DH_GLOG)
         $(REDEMPTION_INI_GLOB)
-        $(REDEMPTION_SYS_PATH)/etc/rdpproxy/ppocr.*
     ]
     :
     : <location>$(INSTALLDIR)$(ETC_PREFIX)
+    ;
+
+install install-etc-ppocr-latin
+    : [ glob $(REDEMPTION_SYS_PATH)/etc/rdpproxy/ppocr.latin/* ]
+    :
+    : <location>$(INSTALLDIR)$(ETC_PREFIX)/ppocr.latin
+    ;
+
+install install-etc-ppocr-latin-cyrillic
+    : [ glob $(REDEMPTION_SYS_PATH)/etc/rdpproxy/ppocr.latin-cyrillic/* ]
+    :
+    : <location>$(INSTALLDIR)$(ETC_PREFIX)/ppocr.latin-cyrillic
     ;
 
 install install-etc-themes
