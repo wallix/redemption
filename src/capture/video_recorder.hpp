@@ -41,15 +41,12 @@ extern "C" {
     #define UINT64_C uint64_t
     #endif
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-    #include "libavutil/avutil.h"
-    #include "libavutil/imgutils.h"
-    #include "libavcodec/avcodec.h"
-    #include "libavutil/mathematics.h"
-    #include "libavformat/avformat.h"
-    #include "libswscale/swscale.h"
-#pragma GCC diagnostic pop
+    #include <libavutil/avutil.h>
+    #include <libavutil/imgutils.h>
+    #include <libavcodec/avcodec.h>
+    #include <libavutil/mathematics.h>
+    #include <libavformat/avformat.h>
+    #include <libswscale/swscale.h>
 }
 
 #undef exit
