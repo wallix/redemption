@@ -5,15 +5,11 @@ addons:
   apt:
     packages:
       - g++-5
-      - g++-6
+      #- g++-6
       - libssl-dev
       - libpng12-dev
       - libboost-dev
       - libsnappy-dev
-      - libavcodec-dev
-      - libavformat-dev
-      - libavutil-dev
-      - libswscale-dev
     sources: &sources
       - ubuntu-toolchain-r-test
 
@@ -23,23 +19,24 @@ cache:
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.6.2
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.7.1
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.8.0
+    - ${TRAVIS_BUILD_DIR}/deps
 
 
 matrix:
   include:
     # GCC 5
     - os: linux
-      env: TOOLSET=gcc
+      env: TOOLSET=gcc-5
       compiler: gcc
       before_script:
         - "echo -e 'using gcc : : g++-5 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
 
     # GCC 6
-    - os: linux
-      env: COMPILER=gcc
-      compiler: gcc
-      before_script:
-        - "echo -e 'using gcc : : g++-6 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
+    #- os: linux
+    #  env: COMPILER=gcc-6
+    #  compiler: gcc
+    #  before_script:
+    #    - "echo -e 'using gcc : : g++-6 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
 
     # Clang 3.6
     - os: linux
@@ -87,12 +84,12 @@ install:
   - |
     if [[ "${LLVM_VERSION}" != "" ]]; then
       LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
-      if [[ -z "$(ls -A ${LLVM_DIR})" ]]; then
+      if [[ ! -d "${LLVM_DIR}" ]]; then
         LLVM_URL="http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz"
         LIBCXX_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz"
         LIBCXXABI_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxxabi-${LLVM_VERSION}.src.tar.xz"
         CLANG_URL="http://llvm.org/releases/${LLVM_VERSION}/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-14.04.tar.xz"
-        mkdir -p ${LLVM_DIR} ${LLVM_DIR}/build ${LLVM_DIR}/projects/libcxx ${LLVM_DIR}/projects/libcxxabi ${LLVM_DIR}/clang
+        mkdir -p ${LLVM_DIR}/build ${LLVM_DIR}/projects/libcxx ${LLVM_DIR}/projects/libcxxabi ${LLVM_DIR}/clang
         travis_retry wget --quiet -O - ${LLVM_URL}      | tar --strip-components=1 -xJ -C ${LLVM_DIR}
         travis_retry wget --quiet -O - ${LIBCXX_URL}    | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxx
         travis_retry wget --quiet -O - ${LIBCXXABI_URL} | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxxabi
@@ -102,6 +99,7 @@ install:
         (cd ${LLVM_DIR}/build/projects/libcxxabi && make install -j2)
       fi
       export CXXFLAGS="-nostdinc++ -isystem ${LLVM_DIR}/install/include/c++/v1"
+      [ "${LLVM_VERSION}" = "3.6.2" ] && CXXFLAGS+=" -Wunknown-warning-option"
       export LDFLAGS="-L ${LLVM_DIR}/install/lib -l c++ -l c++abi"
       export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_DIR}/install/lib"
       export PATH="${LLVM_DIR}/clang/bin:${PATH}"
@@ -109,30 +107,24 @@ install:
     fi
 
   ############################################################################
-  # Install Clang, libc++ and libc++abi
+  # Install libav
   ############################################################################
   - |
-    if [[ "${LLVM_VERSION}" != "" ]]; then
-      LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
-      if [[ -z "$(ls -A ${LLVM_DIR})" ]]; then
-        LLVM_URL="http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz"
-        LIBCXX_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz"
-        LIBCXXABI_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxxabi-${LLVM_VERSION}.src.tar.xz"
-        CLANG_URL="http://llvm.org/releases/${LLVM_VERSION}/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-14.04.tar.xz"
-        mkdir -p ${LLVM_DIR} ${LLVM_DIR}/build ${LLVM_DIR}/projects/libcxx ${LLVM_DIR}/projects/libcxxabi ${LLVM_DIR}/clang
-        travis_retry wget --quiet -O - ${LLVM_URL}      | tar --strip-components=1 -xJ -C ${LLVM_DIR}
-        travis_retry wget --quiet -O - ${LIBCXX_URL}    | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxx
-        travis_retry wget --quiet -O - ${LIBCXXABI_URL} | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxxabi
-        travis_retry wget --quiet -O - ${CLANG_URL}     | tar --strip-components=1 -xJ -C ${LLVM_DIR}/clang
-        (cd ${LLVM_DIR}/build && cmake .. -DCMAKE_INSTALL_PREFIX=${LLVM_DIR}/install -DCMAKE_CXX_COMPILER=clang++)
-        (cd ${LLVM_DIR}/build/projects/libcxx && make install -j2)
-        (cd ${LLVM_DIR}/build/projects/libcxxabi && make install -j2)
-      fi
-      export CXXFLAGS="-nostdinc++ -isystem ${LLVM_DIR}/install/include/c++/v1"
-      export LDFLAGS="-L ${LLVM_DIR}/install/lib -l c++ -l c++abi"
-      export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_DIR}/install/lib"
-      export PATH="${LLVM_DIR}/clang/bin:${PATH}"
-    fi
+    LIBAV_URL=https://github.com/FFmpeg/FFmpeg/archive/n2.5.11.tar.gz
+    LIBAV_DIR=${DEPS_DIR}/libav
+    mkdir -p ${LIBAV_DIR}/libav
+    travis_retry wget --quiet -O - ${LIBAV_URL} | tar --strip-components=1 -xz -C ${LIBAV_DIR}
+    ${LIBAV_DIR}/libavformat/avconfig.h
+    # quick install (very bad)
+    echo -e \
+        "#ifndef AVUTIL_AVCONFIG_H\n" \
+        "#define AVUTIL_AVCONFIG_H\n" \
+        "#define AV_HAVE_BIGENDIAN 0\n" \
+        "#define AV_HAVE_FAST_UNALIGNED 1\n" \
+        "#define AV_HAVE_INCOMPATIBLE_LIBAV_ABI 0\n" \
+        "#endif\n" \
+        > ${LIBAV_DIR}/libavutil/avconfig.h
+    export FFMPEG_INC_PATH=${LIBAV_DIR}
 
   ############################################################################
   # Install Boost Build
@@ -140,7 +132,7 @@ install:
   - |
     BOOST_VERSION=1.59.0
     BOOST_DIR=${DEPS_DIR}/boost-${BOOST_VERSION}
-    if [[ -z "$(ls -A ${BOOST_DIR})" ]]; then
+    if [[ ! -d "${BOOST_DIR}" ]]; then
         BOOST_URL="http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_1_59_0.tar.gz"
         mkdir -p ${BOOST_DIR}
         { travis_retry wget --quiet -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
@@ -152,7 +144,7 @@ install:
 
 script:
   - cd ${TRAVIS_BUILD_DIR}
-  - bjam linkflags=-c --toolset=$TOOLSET cxxflags="-std=c++11 $CXXFLAGS" -q exe
+  - bjam linkflags=-c --toolset=$TOOLSET cxxflags="-std=c++11 $CXXFLAGS" -q exe libs
 
 
 #branches:

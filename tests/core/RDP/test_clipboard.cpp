@@ -34,7 +34,24 @@
 BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
 {
 
-    RDPECLIP::FormatDataResponsePDU formatDataResponsePDU(true);
+/*uint8_t * data = out_stream.get_data();
+    size_t length = out_stream.get_offset();
+    std::cout << std::hex << std::endl;
+    std::cout << "\"";
+    for (size_t i = 0; i < length; i++) {
+        int byte(data[i]);
+        if ((i % 16) == 0 && i != 0) {
+            std::cout << "\"" << std::endl << "\"";
+        }
+
+        std::cout << "\\x";
+        if (byte < 0x10) {
+            std::cout << "0";
+        }
+        std::cout  <<  byte;
+    }
+    std::cout << "\"" << std::dec << std::endl;*/
+
 
     {
         //  emit_fileList
@@ -47,8 +64,9 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         std::string name = nameUTF16 ;
         uint64_t size = 17 ;
         const int cItems = 1;
- 
-        formatDataResponsePDU.emit_fileList(ou_stream_fileList, cItems, name, size);
+
+        RDPECLIP::FormatDataResponsePDU_FileList fdr(cItems, name, size);
+        fdr.emit(ou_stream_fileList);
 
         const uint8_t file_list_data[] =
             "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x64\x40\x00\x00\x00\x00\x00\x00"
@@ -114,7 +132,8 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         int data_lenght = height * width * 3;
         const double ARBITRARY_SCALE = 40;
 
-        formatDataResponsePDU.emit_metaFilePic(ou_stream_metaFilePic, data_lenght, width, height, bpp, ARBITRARY_SCALE);
+        RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr(data_lenght, width, height, bpp, ARBITRARY_SCALE);
+        fdr.emit(ou_stream_metaFilePic);
 
         std::string out_data(reinterpret_cast<char *>(ou_stream_metaFilePic.get_data()), 130);
 
@@ -228,4 +247,79 @@ BOOST_AUTO_TEST_CASE(TestFileDescriptor)
 
 
 
+BOOST_AUTO_TEST_CASE(TestFormatListPDU) {
+
+    // inData
+    uint32_t IDs[] = {48026, 48025, RDPECLIP::CF_UNICODETEXT, RDPECLIP::CF_TEXT, RDPECLIP::CF_METAFILEPICT};
+    std::string names[] = {std::string("F\0i\0l\0e\0C\0o\0n\0t\0e\0n\0t\0s\0\0\0", 26), std::string("F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0", 42), std::string("\0\0", 2), std::string("\0\0", 2), std::string("\0\0", 2)};
+    std::size_t size = 5;
+
+    // Init stream format list PDU long name
+    StaticOutStream<1024> out_stream;
+    RDPECLIP::FormatListPDU_LongName format_list_pdu_long(IDs, names, size);
+    format_list_pdu_long.emit(out_stream);
+
+    const char exp_data[] =
+        "\x02\x00\x00\x00\x5e\x00\x00\x00\x9a\xbb\x00\x00\x46\x00\x69\x00" //....^.......F.i.
+        "\x6c\x00\x65\x00\x43\x00\x6f\x00\x6e\x00\x74\x00\x65\x00\x6e\x00" //l.e.C.o.n.t.e.n.
+        "\x74\x00\x73\x00\x00\x00\x99\xbb\x00\x00\x46\x00\x69\x00\x6c\x00" //t.s.......F.i.l.
+        "\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00\x65\x00" //e.G.r.o.u.p.D.e.
+        "\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00\x72\x00" //s.c.r.i.p.t.o.r.
+        "\x57\x00\x00\x00\x0d\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00" //W...............
+        "\x03\x00\x00\x00\x00\x00";
+
+    std::string expected(reinterpret_cast<const char *>(exp_data), sizeof(exp_data)-1);
+    std::string out_data(reinterpret_cast<char *>(out_stream.get_data()), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(expected, out_data);
+}
+
+
+
+BOOST_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
+
+    {   // FILECONTENTS_RANGE TEST
+    // inData
+    uint32_t ID = 1;
+    uint32_t index = 3;
+    uint32_t flag = RDPECLIP::FILECONTENTS_RANGE;
+    uint64_t size = 0x0000000000000007;
+
+    // Init Stream
+    StaticOutStream<32> out_stream;
+    RDPECLIP::FileContentsRequestPDU fileContentsRequest(ID, flag, index, size);
+    fileContentsRequest.emit(out_stream);
+
+    const char exp_data[] =
+        "\x08\x00\x01\x00\x18\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
+        "\x02\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x07\x00\x00\x00";
+
+    std::string expected(reinterpret_cast<const char *>(exp_data), sizeof(exp_data)-1);
+    std::string out_data(reinterpret_cast<char *>(out_stream.get_data()), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(expected, out_data);
+    }
+
+    { // FILECONTENTS_SIZE TEST
+        // inData
+    uint32_t ID = 1;
+    uint32_t index = 3;
+    uint32_t flag = RDPECLIP::FILECONTENTS_SIZE;
+    uint64_t size = 0x0000000000000007;
+
+    // Init Stream
+    StaticOutStream<32> out_stream;
+    RDPECLIP::FileContentsRequestPDU fileContentsRequest(ID, flag, index, size);
+    fileContentsRequest.emit(out_stream);
+
+    const char exp_data[] =
+        "\x08\x00\x01\x00\x18\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
+        "\x01\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x08\x00\x00\x00";
+
+    std::string expected(reinterpret_cast<const char *>(exp_data), sizeof(exp_data)-1);
+    std::string out_data(reinterpret_cast<char *>(out_stream.get_data()), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(expected, out_data);
+    }
+}
 

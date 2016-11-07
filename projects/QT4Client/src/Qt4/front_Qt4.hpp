@@ -212,7 +212,6 @@ public:
     virtual bool connexionReleased() = 0;
     virtual void closeFromScreen(int screen_index) = 0;
     virtual void RefreshPressed() = 0;
-    virtual void RefreshReleased() = 0;
     virtual void CtrlAltDelPressed() = 0;
     virtual void CtrlAltDelReleased() = 0;
     virtual void disconnexionPressed() = 0;
@@ -230,7 +229,7 @@ public:
     virtual void dropScreen() = 0;
     virtual bool setClientInfo() = 0;
     virtual void writeClientInfo() = 0;
-    virtual void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size, bool) = 0;
+    virtual void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) = 0;
     virtual void empty_buffer() = 0;
     virtual bool can_be_start_capture(auth_api *) override { return true; }
     virtual bool can_be_pause_capture() override { return true; }
@@ -238,7 +237,8 @@ public:
     virtual bool must_be_stop_capture() override { return true; }
     virtual void emptyLocalBuffer() = 0;
     virtual void replay(std::string & movie_path) = 0;
-    virtual void reload_replay_mod(std::string & movie_name) = 0;
+    virtual void load_replay_mod(std::string & movie_name) = 0;
+    virtual void delete_replay_mod() = 0;
 };
 
 
@@ -294,12 +294,8 @@ public:
     //  Clipboard Channel Management members
     uint32_t                    _requestedFormatId = 0;
     std::string                 _requestedFormatName;
-    std::unique_ptr<uint8_t[]>  _bufferRDPClipboardChannel;
-    size_t                      _bufferRDPClipboardChannelSize;
-    size_t                      _bufferRDPClipboardChannelSizeTotal;
-    int                         _bufferRDPCLipboardMetaFilePic_width;
-    int                         _bufferRDPCLipboardMetaFilePic_height;
-    int                         _bufferRDPClipboardMetaFilePicBPP;
+    bool                        _waiting_for_data;
+
     struct ClipbrdFormatsList{
         enum : uint16_t {
               CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
@@ -334,17 +330,31 @@ public:
                 index++;
             }
         }
-    }                           _clipbrdFormatsList;
-    int                         _cItems;
-    int                         _lindexToRequest;
-    int                         _streamIDToRequest;
-    struct CB_in_Files {
-        int         size;
-        std::string name;
-    };
-    std::vector<CB_in_Files>    _items_list;
-    bool                        _waiting_for_data;
-    int                         _lindex;
+
+    } _clipbrdFormatsList;
+
+    struct CB_FilesList {
+        struct CB_in_Files {
+            int         size;
+            std::string name;
+        };
+        int                      cItems = 0;
+        int                      lindexToRequest = 0;
+        int                      streamIDToRequest = 0;
+        std::vector<CB_in_Files> itemslist;
+        int                      lindex = 0;
+
+    }  _cb_filesList;
+
+    struct CB_Buffers {
+        std::unique_ptr<uint8_t[]>  data = nullptr;
+        size_t size = 0;
+        size_t sizeTotal = 0;
+        int    pic_width = 0;
+        int    pic_height = 0;
+        int    pic_bpp = 0;
+
+    } _cb_buffers;
 
 
 
@@ -368,7 +378,7 @@ public:
 
     void process_server_clipboard_indata(int flags, InStream & chunk);
 
-    void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size,  bool) override;
+    void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size) override;
 
     void send_to_clipboard_Buffer(InStream & chunk);
 
@@ -392,7 +402,9 @@ public:
 
     void setScreenDimension();
 
-    void reload_replay_mod(std::string & movie_name);
+    void load_replay_mod(std::string & movie_name);
+
+    void delete_replay_mod();
 
 
 
@@ -400,6 +412,35 @@ public:
     //---------------------------------------
     //   GRAPHIC FUNCTIONS (factorization)
     //---------------------------------------
+
+    template<class Op>
+    void draw_memblt_op(const Rect & drect, const Bitmap & bitmap);
+
+    struct Op_0x22 {
+        constexpr uint8_t op(const uchar src, const uchar dst) {
+            return ~(src) & dst;
+        }
+    };
+    struct Op_0x55 {
+        constexpr uint8_t op(const uchar, const uchar dst) {
+            return ~(dst);
+        }
+    };
+    struct Op_0x66 {
+        constexpr uint8_t op(const uchar src, const uchar dst) {
+            return src ^ dst;
+        }
+    };
+    struct Op_0xEE {
+        constexpr uint8_t op(const uchar src, const uchar dst) {
+            return src | dst;
+        }
+    };
+    struct Op_0x88 {
+        constexpr uint8_t op(const uchar src, const uchar dst) {
+            return src & dst;
+        }
+    };
 
     void draw_RDPScrBlt(int srcx, int srcy, const Rect & drect, bool invert);
 
@@ -511,8 +552,6 @@ public:
     bool connexionReleased() override;
 
     void RefreshPressed() override;
-
-    void RefreshReleased() override;
 
     void CtrlAltDelPressed() override;
 

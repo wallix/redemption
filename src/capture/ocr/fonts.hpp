@@ -74,19 +74,19 @@ namespace fonts {
     };
 
     namespace {
-#       include "../../tools/ocr/common_classifier.hxx"
-#       include "../../tools/ocr/latin_classifier.hxx"
-#       include "../../tools/ocr/cyrillic_classifier.hxx"
+#       include "ocr1/common_classifier.hxx"
+#       include "ocr1/latin_classifier.hxx"
+#       include "ocr1/cyrillic_classifier.hxx"
     }
 
     static constexpr Font latin_fonts[] = {
-#       include "../../tools/ocr/common_classifier.names.hxx"
-#       include "../../tools/ocr/latin_classifier.names.hxx"
+#       include "ocr1/common_classifier.names.hxx"
+#       include "ocr1/latin_classifier.names.hxx"
     };
 
     static constexpr Font cyrillic_fonts[] = {
-#       include "../../tools/ocr/common_classifier.names.hxx"
-#       include "../../tools/ocr/cyrillic_classifier.names.hxx"
+#       include "ocr1/common_classifier.names.hxx"
+#       include "ocr1/cyrillic_classifier.names.hxx"
     };
 
     static constexpr Font const * fonts[] = {latin_fonts, cyrillic_fonts};

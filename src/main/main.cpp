@@ -35,14 +35,12 @@ namespace po = program_options;
 
 int main(int argc, char** argv)
 {
-    std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
     Inifile ini;
-    { ConfigurationLoader cfg_loader(ini.configuration_holder(), config_filename.c_str()); }
 
     UdevRandom rnd;
     CryptoContext cctx(rnd, ini);
 
-    static constexpr char const * opt_print_spec = "print-config-spec";
+    static constexpr char const * opt_print_spec = "print-spec";
     static constexpr char const * opt_print_ini = "print-default-ini";
 
     return app_proxy(

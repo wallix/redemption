@@ -1,8 +1,11 @@
-include redemption-config.jam ;
-include cxxflags.jam ;
-include defines.jam ;
-include includes.jam ;
+JAM_INCLUDE_PATH ?= . ;
 
+include $(JAM_INCLUDE_PATH)/redemption-config.jam ;
+include $(JAM_INCLUDE_PATH)/cxxflags.jam ;
+include $(JAM_INCLUDE_PATH)/defines.jam ;
+include $(JAM_INCLUDE_PATH)/includes.jam ;
+
+REDEMPTION_CXXFLAGS ?= <cxxflags>-std=c++11 ;
 
 variant coverage : debug : <cxxflags>--profile-arcs <cxxflags>--test-coverage <cxxflags>--coverage <link>shared ;
 
@@ -21,13 +24,12 @@ project redemption
 
     <conditional>@defines
 
-    <cxxflags>-std=c++11
-
     $(CXXFLAGS)
 
 #    <cxxflags>-fpie
     <cxxflags>-fPIC
 
+    $(REDEMPTION_CXXFLAGS)
 
     <define>_FILE_OFFSET_BITS=64
     <define>_LARGEFILE64_SOURCE
@@ -37,23 +39,31 @@ project redemption
    : default-build release
 ;
 
-include ocr.jam ;
-include libs.jam ;
+include $(JAM_INCLUDE_PATH)/ocr.jam ;
+include $(JAM_INCLUDE_PATH)/libs.jam ;
 
 explicit
     install
-    instexe install-bin
-    install-etc install-etc-themes
+    instexe
+    install-bin
+    install-lib
     install-share
-    install-share install-lib
-    install-etc-ppocr install-etc-ppocr-latin install-etc-ppocr-latin-cyrillic
-    exe libs
+    install-share
+    install-etc
+    install-etc-themes
+    install-etc-ppocr
+    install-etc-ppocr-latin
+    install-etc-ppocr-latin-cyrillic
+    exe
+    libs
 ;
 
 alias instexe : install-bin ;
 alias install :
     install-bin install-lib
-    install-etc install-etc-themes install-etc-ppocr
+    install-etc
+    install-etc-themes
+    install-etc-ppocr
     install-share
 ;
 alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient ;
@@ -63,26 +73,24 @@ alias install-etc-ppocr : install-etc-ppocr-latin install-etc-ppocr-latin-cyrill
 
 install install-bin
     : exe
-    : <install-type>EXE <install-dependencies>on
+    : <install-type>EXE
+      #<install-dependencies>on
     : <location>$(INSTALLDIR)$(BIN_PREFIX)
     ;
 
 install install-share
     : [ glob $(REDEMPTION_SYS_PATH)/share/rdpproxy/[^.k]* ]
     :
-    : <location>$(INSTALLDIR)/usr/local/share/rdpproxy
+    : <location>$(INSTALLDIR)$(SHARE_PREFIX)
     ;
 
 install install-etc
-    : [ glob $(REDEMPTION_SYS_PATH)/etc/rdpproxy/*ini $(REDEMPTION_SYS_PATH)/etc/rdpproxy/*pem $(REDEMPTION_SYS_PATH)/etc/rdpproxy/*crt $(REDEMPTION_SYS_PATH)/etc/rdpproxy/*key $(REDEMPTION_SYS_PATH)/etc/rdpproxy/*p12 ]
+    : [ glob
+        $(REDEMPTION_ETC_DH_GLOG)
+        $(REDEMPTION_INI_GLOB)
+    ]
     :
-    : <location>$(INSTALLDIR)/etc/rdpproxy
-    ;
-
-install install-etc-themes
-    : [ glob $(REDEMPTION_SYS_PATH)/etc/rdpproxy/themes/HOWTO ]
-    :
-    : <location>$(INSTALLDIR)/etc/rdpproxy/themes
+    : <location>$(INSTALLDIR)$(ETC_PREFIX)
     ;
 
 install install-etc-ppocr-latin
@@ -97,10 +105,16 @@ install install-etc-ppocr-latin-cyrillic
     : <location>$(INSTALLDIR)$(ETC_PREFIX)/ppocr.latin-cyrillic
     ;
 
+install install-etc-themes
+    : [ glob $(REDEMPTION_SYS_PATH)/etc/rdpproxy/themes/HOWTO ]
+    :
+    : <location>$(INSTALLDIR)$(ETC_PREFIX)/themes
+    ;
+
 install install-lib
     : libs
     :
-    : <location>$(INSTALLDIR)/usr/lib
+    : <location>$(INSTALLDIR)$(LIB_PREFIX)
     ;
 
 
@@ -523,7 +537,7 @@ actions cover
 rule test-run ( target : sources + : tested ? : requirements * )
 {
 #    ECHO " TEST RUN" ;
-    local ROOT_TEST_DIR = $(REDEMPTION_TESTS_PATH) ;
+    local ROOT_TEST_DIR = $(REDEMPTION_TEST_PATH) ;
     if $(sources:P) = "system" {
         ROOT_TEST_DIR = $(SYSTEMTESTDIR) ;
     }
@@ -1183,7 +1197,7 @@ test-canonical gdi/graphic_cmd_color_converter.hpp ;
 
 #explicit test_show_data.o bitmap_data_allocator.o test_data_draw ; #
 
-#obj test_show_data.o : $(REDEMPTION_TESTS_PATH)/mod/rdp/test_show_data.cpp
+#obj test_show_data.o : $(REDEMPTION_TEST_PATH)/mod/rdp/test_show_data.cpp
 #    : <cxxflags>-fPIC ;
 
 #exe test_show_data :
@@ -1208,21 +1222,21 @@ explicit server_sc1 client_sc1 ;
 
 exe server_sc1
     :
-        $(REDEMPTION_TESTS_PATH)/tcptest/Server_Sc1.cpp
+        $(REDEMPTION_TEST_PATH)/tcptest/Server_Sc1.cpp
     :
         $(EXE_DEPENDENCIES)
     ;
 
 exe client_sc1
     :
-        $(REDEMPTION_TESTS_PATH)/tcptest/Client_Sc1.cpp
+        $(REDEMPTION_TEST_PATH)/tcptest/Client_Sc1.cpp
     :
         $(EXE_DEPENDENCIES)
     ;
 
 exe proxy_sc1
     :
-        $(REDEMPTION_TESTS_PATH)/tcptest/Proxy_Sc1.cpp
+        $(REDEMPTION_TEST_PATH)/tcptest/Proxy_Sc1.cpp
     :
         $(EXE_DEPENDENCIES)
     ;
@@ -1291,7 +1305,7 @@ lib sashimi :
 ##
 
 unit-test test_buffer :
-    $(REDEMPTION_TESTS_PATH)/sashimi/test_buffer.cpp
+    $(REDEMPTION_TEST_PATH)/sashimi/test_buffer.cpp
     sashimi_error
     libboost_unit_test
     :
@@ -1299,7 +1313,7 @@ unit-test test_buffer :
     ;
 
 unit-test test_crypto :
-    $(REDEMPTION_TESTS_PATH)/sashimi/test_crypto.cpp
+    $(REDEMPTION_TEST_PATH)/sashimi/test_crypto.cpp
     sashimi_error
     crypto
     libboost_unit_test
