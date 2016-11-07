@@ -377,7 +377,7 @@ protected:
         }
 
         if (!this->client_execute_pdu_sent && !this->param_client_execute_exe_or_file.empty()) {
-            StaticOutStream<256> out_s;
+            StaticOutStream<16384> out_s;
             RAILPDUHeader header;
             header.emit_begin(out_s, TS_RAIL_ORDER_EXEC);
 

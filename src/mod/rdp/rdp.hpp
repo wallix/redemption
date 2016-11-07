@@ -984,9 +984,6 @@ public:
                 (this->enable_session_probe ? "yes" : "no"));
         }
         if (this->enable_session_probe) {
-            this->real_alternate_shell = std::move(alternate_shell);
-            this->real_working_dir     = tmp_working_dir;
-
             auto replace_tag = [](std::string & str, const char * tag,
                                   const char * replacement_text) {
                 const size_t replacement_text_len = ::strlen(replacement_text);
@@ -1010,67 +1007,100 @@ public:
             replace_tag(this->session_probe_arguments, "${EXE_VAR}",
                 exe_var_str);
 
-            if (mod_rdp_params.session_probe_use_clipboard_based_launcher &&
-                (mod_rdp_params.target_application && (*mod_rdp_params.target_application))) {
-                REDASSERT(!this->session_probe_use_clipboard_based_launcher);
-
-                LOG(LOG_WARNING,
-                    "mod_rdp: "
-                        "Clipboard based Session Probe launcher is not compatible with application."
-                        "Falled back to using AlternateShell based launcher.");
-            }
-
             // Target informations
             this->session_probe_target_informations  = mod_rdp_params.target_application;
             this->session_probe_target_informations += ":";
             this->session_probe_target_informations += mod_rdp_params.auth_user;
 
-            if (this->session_probe_use_clipboard_based_launcher) {
-                replace_tag(this->session_probe_arguments,
-                    " /${COOKIE_VAR}", "");
 
-                replace_tag(this->session_probe_arguments,
-                    "${CBSPL_VAR} ", "CD %TMP%&");
+            if (this->remote_program) {
+                this->real_alternate_shell  = this->client_execute_exe_or_file;
+                this->real_alternate_shell += " ";
+                this->real_alternate_shell += this->client_execute_arguments;
 
-                this->session_probe_alternate_shell  = this->session_probe_exe_or_file;
-                this->session_probe_alternate_shell += " ";
-                this->session_probe_alternate_shell += this->session_probe_arguments;
+                this->real_working_dir = this->client_execute_working_dir;
 
-                this->session_probe_launcher =
-                    std::make_unique<SessionProbeClipboardBasedLauncher>(
-                        *this, this->session_probe_alternate_shell,
-                        this->verbose);
-            }
-            else {
                 char proxy_managed_connection_cookie[9];
                 get_proxy_managed_connection_cookie(
                     this->session_probe_target_informations.c_str(),
                     this->session_probe_target_informations.length(),
                     proxy_managed_connection_cookie);
-                std::string param = " /#";
+                std::string param = "/#";
                 param += proxy_managed_connection_cookie;
+                param += " ";
                 replace_tag(this->session_probe_arguments,
-                    " /${COOKIE_VAR}", param.c_str());
+                    "/${COOKIE_VAR} ", param.c_str());
 
                 replace_tag(this->session_probe_arguments,
                     "${CBSPL_VAR} ", "");
 
-                this->session_probe_alternate_shell  = this->session_probe_exe_or_file;
-                this->session_probe_alternate_shell += " ";
-                this->session_probe_alternate_shell += this->session_probe_arguments;
+                this->client_execute_exe_or_file = this->session_probe_exe_or_file;
+                this->client_execute_arguments   = this->session_probe_arguments;
+                this->client_execute_working_dir = "%TMP%";
+                this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
+            }   // if (this->remote_program)
+            else {
+                this->real_alternate_shell = std::move(alternate_shell);
+                this->real_working_dir     = tmp_working_dir;
 
-                strncpy(this->program, this->session_probe_alternate_shell.c_str(), sizeof(this->program) - 1);
-                this->program[sizeof(this->program) - 1] = 0;
-                //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
+                if (mod_rdp_params.session_probe_use_clipboard_based_launcher &&
+                    (mod_rdp_params.target_application && (*mod_rdp_params.target_application))) {
+                    REDASSERT(!this->session_probe_use_clipboard_based_launcher);
 
-                const char * session_probe_working_dir = "%TMP%";
-                strncpy(this->directory, session_probe_working_dir, sizeof(this->directory) - 1);
-                this->directory[sizeof(this->directory) - 1] = 0;
+                    LOG(LOG_WARNING,
+                        "mod_rdp: "
+                            "Clipboard based Session Probe launcher is not compatible with application."
+                            "Falled back to using AlternateShell based launcher.");
+                }
 
-                this->session_probe_launcher =
-                    std::make_unique<SessionProbeAlternateShellBasedLauncher>(
-                        this->verbose);
-            }
+                if (this->session_probe_use_clipboard_based_launcher) {
+                    replace_tag(this->session_probe_arguments,
+                        "/${COOKIE_VAR} ", "");
+
+                    replace_tag(this->session_probe_arguments,
+                        "${CBSPL_VAR} ", "CD %TMP%&");
+
+                    this->session_probe_alternate_shell  = this->session_probe_exe_or_file;
+                    this->session_probe_alternate_shell += " ";
+                    this->session_probe_alternate_shell += this->session_probe_arguments;
+
+                    this->session_probe_launcher =
+                        std::make_unique<SessionProbeClipboardBasedLauncher>(
+                            *this, this->session_probe_alternate_shell,
+                            this->verbose);
+                }
+                else {
+                    char proxy_managed_connection_cookie[9];
+                    get_proxy_managed_connection_cookie(
+                        this->session_probe_target_informations.c_str(),
+                        this->session_probe_target_informations.length(),
+                        proxy_managed_connection_cookie);
+                    std::string param = "/#";
+                    param += proxy_managed_connection_cookie;
+                    param += " ";
+                    replace_tag(this->session_probe_arguments,
+                        "/${COOKIE_VAR} ", param.c_str());
+
+                    replace_tag(this->session_probe_arguments,
+                        "${CBSPL_VAR} ", "");
+
+                    this->session_probe_alternate_shell  = this->session_probe_exe_or_file;
+                    this->session_probe_alternate_shell += " ";
+                    this->session_probe_alternate_shell += this->session_probe_arguments;
+
+                    strncpy(this->program, this->session_probe_alternate_shell.c_str(), sizeof(this->program) - 1);
+                    this->program[sizeof(this->program) - 1] = 0;
+                    //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
+
+                    const char * session_probe_working_dir = "%TMP%";
+                    strncpy(this->directory, session_probe_working_dir, sizeof(this->directory) - 1);
+                    this->directory[sizeof(this->directory) - 1] = 0;
+
+                    this->session_probe_launcher =
+                        std::make_unique<SessionProbeAlternateShellBasedLauncher>(
+                            this->verbose);
+                }
+            }   // if (!this->remote_program)
         }
         else {
             strncpy(this->program, alternate_shell.c_str(), sizeof(this->program) - 1);
@@ -1097,77 +1127,6 @@ public:
                                        this->redir_info.lb_info_length);
             }
         }
-
-/*
-        while (UP_AND_RUNNING != this->connection_finalization_state){
-            this->draw_event(time(nullptr), front);
-            if (this->event.signal != BACK_EVENT_NONE){
-                char statestr[256];
-                switch (this->state) {
-                case MOD_RDP_NEGO:
-                    snprintf(statestr, sizeof(statestr), "RDP_NEGO");
-                    break;
-                case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
-                    snprintf(statestr, sizeof(statestr), "RDP_BASIC_SETTINGS_EXCHANGE");
-                    break;
-                case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
-                    snprintf(statestr, sizeof(statestr),
-                             "RDP_CHANNEL_CONNECTION_ATTACH_USER");
-                    break;
-                case MOD_RDP_GET_LICENSE:
-                    snprintf(statestr, sizeof(statestr), "RDP_GET_LICENSE");
-                    break;
-                case MOD_RDP_CONNECTED:
-                    snprintf(statestr, sizeof(statestr), "RDP_CONNECTED");
-                    break;
-                default:
-                    snprintf(statestr, sizeof(statestr), "UNKNOWN");
-                    break;
-                }
-                statestr[255] = 0;
-                LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state", statestr);
-                throw Error(ERR_SESSION_UNKNOWN_BACKEND);
-            }
-        }
-
-        if (enable_session_probe) {
-            ClipboardVirtualChannel& cvc =
-                this->get_clipboard_virtual_channel();
-            cvc.set_session_probe_launcher(
-                this->session_probe_launcher.get());
-
-            FileSystemVirtualChannel& fsvc =
-                this->get_file_system_virtual_channel();
-            fsvc.set_session_probe_launcher(
-                this->session_probe_launcher.get());
-
-            this->file_system_drive_manager.set_session_probe_launcher(
-                this->session_probe_launcher.get());
-
-            SessionProbeVirtualChannel& spvc =
-                this->get_session_probe_virtual_channel();
-            spvc.set_session_probe_launcher(this->session_probe_launcher.get());
-            this->session_probe_virtual_channel_p = &spvc;
-            if (!this->session_probe_start_launch_timeout_timer_only_after_logon) {
-                spvc.start_launch_timeout_timer();
-            }
-
-            if (this->session_probe_launcher) {
-                this->session_probe_launcher->set_clipboard_virtual_channel(
-                    &cvc);
-
-                this->session_probe_launcher->set_session_probe_virtual_channel(
-                    this->session_probe_virtual_channel_p);
-            }
-        }
-
-        if (this->acl) {
-            this->acl->report("CONNECTION_SUCCESSFUL", "OK.");
-        }
-*/
-
-        // this->end_session_reason.copy_c_str("OPEN_SESSION_FAILED");
-        // this->end_session_message.copy_c_str("Open RDP session cancelled.");
     }   // mod_rdp
 
     ~mod_rdp() override {
