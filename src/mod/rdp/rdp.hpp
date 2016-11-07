@@ -1060,9 +1060,14 @@ public:
                     replace_tag(this->session_probe_arguments,
                         "${CBSPL_VAR} ", "CD %TMP%&");
 
+
+
                     this->session_probe_alternate_shell  = this->session_probe_exe_or_file;
                     this->session_probe_alternate_shell += " ";
                     this->session_probe_alternate_shell += this->session_probe_arguments;
+
+                    if (!::strncmp(this->session_probe_alternate_shell.c_str(), "||", 2))
+                        this->session_probe_alternate_shell.erase(0, 2);
 
                     this->session_probe_launcher =
                         std::make_unique<SessionProbeClipboardBasedLauncher>(
@@ -1087,6 +1092,9 @@ public:
                     this->session_probe_alternate_shell  = this->session_probe_exe_or_file;
                     this->session_probe_alternate_shell += " ";
                     this->session_probe_alternate_shell += this->session_probe_arguments;
+
+                    if (!::strncmp(this->session_probe_alternate_shell.c_str(), "||", 2))
+                        this->session_probe_alternate_shell.erase(0, 2);
 
                     strncpy(this->program, this->session_probe_alternate_shell.c_str(), sizeof(this->program) - 1);
                     this->program[sizeof(this->program) - 1] = 0;
