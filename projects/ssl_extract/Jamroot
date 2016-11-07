@@ -1,4 +1,4 @@
-include ../../cxxflags.jam ;
+include ../../jam/cxxflags.jam ;
 
 import os ;
 

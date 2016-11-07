@@ -4,7 +4,7 @@ REDEMPTION_ROOT_PATH ?= ../../ ;
 REDEMPTION_SRC_PATH ?= $(REDEMPTION_ROOT_PATH)/src ;
 SYSTEM_TYPE ?= linux ;
 
-include ../../cxxflags.jam ;
+include ../../jam/cxxflags.jam ;
 include ../../defines.jam ;
 
 project configs
