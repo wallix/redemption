@@ -518,7 +518,7 @@ public:
                             //this->_monitorCountNegociated = true;
                         }
                         {
-                            this->send_FormatListPDU(this->_clipbrd_formats_list.IDs, this->_clipbrd_formats_list.names, ClipbrdFormatsList::CLIPBRD_FORMAT_COUNT, true);
+                            this->send_FormatListPDU(this->_clipbrd_formats_list.IDs, this->_clipbrd_formats_list.names, ClipbrdFormatsList::CLIPBRD_FORMAT_COUNT);
 
                         }
                     break;
@@ -664,32 +664,21 @@ public:
         this->send_to_clipboard_Buffer(chunk);
     }
 
-    void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size,  bool isLong) {
-        RDPECLIP::FormatListPDU format_list_pdu;
+    void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) {
         StaticOutStream<1024> out_stream;
-        if (isLong) {
-            format_list_pdu.emit_long(out_stream, formatIDs, formatListDataShortName, formatIDs_size);
-        } else {
-            format_list_pdu.emit_short(out_stream, formatIDs, formatListDataShortName, formatIDs_size);
-        }
+        RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListDataShortName, formatIDs_size);
+        format_list_pdu_long.emit(out_stream);
         const uint32_t total_length = out_stream.get_offset();
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
-        int flag = CHANNELS::CHANNEL_FLAG_LAST
-                 | CHANNELS::CHANNEL_FLAG_FIRST
-                 | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
 
         this->_callback->send_to_mod_channel( channel_names::cliprdr
                                             , chunk
                                             , total_length
-                                            , flag
+                                            , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |
+                                            CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                             );
 
-        if (this->_verbose & SHOW_CLPBRD_PDU_EXCHANGE) {
-            std::cout << "client >> Format List PDU" << std::endl;
-            if (this->_verbose & SHOW_OUT_PDU) {
-                this->show_out_stream(flag, out_stream, total_length);
-            }
-        }
+        std::cout << "client >> Format List PDU" << std::endl;
     }
 
     void send_to_clipboard_Buffer(InStream & chunk) { (void)chunk; }
@@ -1131,7 +1120,7 @@ class EventList
         }
 
         virtual void emit() override {
-            this->front->send_FormatListPDU(this->formatIDs, this->formatListDataLongName, this->size, true);
+            this->front->send_FormatListPDU(this->formatIDs, this->formatListDataLongName, this->size);
         }
     };
 
