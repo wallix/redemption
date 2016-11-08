@@ -42,6 +42,7 @@ struct VideoParams {
     unsigned qscale;
     unsigned bitrate;
     std::string codec;
+    unsigned verbosity;
 };
 
 class VideoCapture : public gdi::CaptureApi
@@ -71,11 +72,12 @@ public:
     , inter_frame_interval(1000000L / this->video_params.frame_rate)
     , no_timestamp(no_timestamp)
     {
-        // TODO Only on verbose
-        LOG(LOG_INFO, "Video recording %d x %d, rate: %d, qscale: %d, brate: %d, codec: %s",
-            this->video_params.target_width, this->video_params.target_height,
-            this->video_params.frame_rate, this->video_params.qscale, this->video_params.bitrate,
-            this->video_params.codec.c_str());
+        if (this->video_params.verbosity) {
+            LOG(LOG_INFO, "Video recording %d x %d, rate: %d, qscale: %d, brate: %d, codec: %s",
+                this->video_params.target_width, this->video_params.target_height,
+                this->video_params.frame_rate, this->video_params.qscale, this->video_params.bitrate,
+                this->video_params.codec.c_str());
+        }
 
         this->next_video();
     }
@@ -97,7 +99,8 @@ public:
             this->video_params.qscale,
             this->video_params.codec.c_str(),
             this->video_params.target_width,
-            this->video_params.target_height
+            this->video_params.target_height,
+            this->video_params.verbosity
         ));
     }
 

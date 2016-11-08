@@ -354,9 +354,8 @@ public:
         return true;
     }
 
-    bool interpret_order()
+    void interpret_order()
     {
-        bool res(false);
         this->total_orders_count++;
         switch (this->chunk_type){
         case RDP_UPDATE_ORDERS:
@@ -688,15 +687,16 @@ public:
                             gd->sync();
                         }
 
-                        struct timeval now     = tvtime();
+                        this->movie_elapsed_qt = difftimeval(this->record_now, this->start_record_now);
+
+                        /*struct timeval now     = tvtime();
                         uint64_t       elapsed = difftimeval(now, this->start_synctime_now);
 
                         uint64_t movie_elapsed = difftimeval(this->record_now, this->start_record_now);
                         this->movie_elapsed_qt = movie_elapsed;
 
                         if (elapsed < movie_elapsed) {
-                            res = true;
-                            /*struct timespec wtime     = {
+                            struct timespec wtime     = {
                                   static_cast<time_t>( (movie_elapsed - elapsed) / 1000000LL)
                                 , static_cast<time_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
                                 };
@@ -704,8 +704,8 @@ public:
 
                             /*while ((nanosleep(&wtime, &wtime_rem) == -1) && (errno == EINTR)) {
                                 wtime = wtime_rem;
-                            }*/
-                        }
+                            }
+                        } */
                     }
                 }
             }
@@ -972,15 +972,16 @@ public:
                             gd->sync();
                         }
 
-                        struct timeval now     = tvtime();
+                        this->movie_elapsed_qt = difftimeval(this->record_now, this->start_record_now);
+
+                        /*struct timeval now     = tvtime();
                         uint64_t       elapsed = difftimeval(now, this->start_synctime_now);
 
                         uint64_t movie_elapsed = difftimeval(this->record_now, this->start_record_now);
-                        this->movie_elapsed_qt = movie_elapsed;
+
 
                         if (elapsed < movie_elapsed) {
-                            res = true;
-                            /*struct timespec wtime     = {
+                            struct timespec wtime     = {
                                   static_cast<time_t>( (movie_elapsed - elapsed) / 1000000LL)
                                 , static_cast<time_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
                                 };
@@ -988,8 +989,8 @@ public:
 
                             /*while ((nanosleep(&wtime, &wtime_rem) == -1) && (errno == EINTR)) {
                                 wtime = wtime_rem;
-                            }*/
-                        }
+                            }
+                        }*/
                     }
                 }
             break;
@@ -997,8 +998,6 @@ public:
                 LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
                 throw Error(ERR_WRM);
         }
-
-        return res;
     }
 
 
@@ -1212,8 +1211,11 @@ private:
                     , unsigned(this->record_now.tv_sec), unsigned(this->total_orders_count));
                 }
 
+                if (this->remaining_order_count > 0) {
+                    res = true;
+                }
 
-                res = this->interpret_order();
+                this->interpret_order();
 
                 if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
                     for (gdi::CaptureApi * cap : this->capture_consumers){
@@ -1236,8 +1238,6 @@ private:
             } else {
                 break_privplay_qt = true;
             }
-
-            //return true;
         }
 
         return res;

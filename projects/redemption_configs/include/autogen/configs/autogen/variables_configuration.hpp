@@ -2250,6 +2250,17 @@ namespace cfg {
             using mapped_type = sesman_and_spec_type;
             type value{};
         };
+        // type: uint32_t
+        struct ffmpeg {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "debug"; }
+            static constexpr char const * name() { return "ffmpeg"; }
+            using type = uint32_t;
+            using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
+            type value{};
+        };
         // type: unsigned int
         struct config {
             static constexpr bool is_readable() { return 0; }
@@ -3261,6 +3272,7 @@ struct debug
 , cfg::debug::pass_dialog_box
 , cfg::debug::mod_internal
 , cfg::debug::ocr
+, cfg::debug::ffmpeg
 , cfg::debug::config
 { static constexpr bool is_section = true; };
 

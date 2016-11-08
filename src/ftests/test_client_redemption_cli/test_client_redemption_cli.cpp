@@ -18,7 +18,7 @@
    Author(s): Clément Moroldo
 */
 
-#define LOGPRINT
+//#define LOGPRINT
 
 #include "test_client_redemption_cli.hpp"
 
@@ -645,6 +645,12 @@ int main(int argc, char** argv){
 
                                 eventList.setKey(&front, scanCode, flag);
 
+                            } else if (tag == "loop") {
+                                pos = info.find(delimiter);
+                                uint32_t jump_size(std::stoi(info.substr(0, pos)));
+                                uint32_t count_steps(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                                eventList.setLoop(jump_size, count_steps);
                             }
                         }
                     } else {
@@ -669,6 +675,7 @@ void print_help(ModRDPParamsConfig * mod_rdp_params_config, size_t nb_mod_rdp_pa
     std::cout << std::endl;
 
     std::cout << "Command Line Interface RDP Redemption Client help:" << std::endl;
+    std::cout << "  ========= TOOLS =========" << std::endl;
     std::cout << "  -h or --help              Show help" << std::endl;
     std::cout << "  -v or --version           Show version" <<  std::endl;
     std::cout << "  --script_help             Show all script event commands" << std::endl;
@@ -689,6 +696,7 @@ void print_help(ModRDPParamsConfig * mod_rdp_params_config, size_t nb_mod_rdp_pa
     std::cout << "  --show_caps               Show capabilities PDU exchange" <<  std::endl;
     std::cout << "  --script [file_path]      Set a test PDU file script" << std::endl;
     std::cout << std::endl;
+    std::cout << "  ========= USER =========" << std::endl;
     std::cout << "  --user [user_name]        Set session user name" << std::endl;
     std::cout << "  --pwd [user_password]     Set sessoion user password" << std::endl;
     std::cout << "  --ip [ip]                 Set target IP" << std::endl;
@@ -704,6 +712,7 @@ void print_help(ModRDPParamsConfig * mod_rdp_params_config, size_t nb_mod_rdp_pa
     std::cout << "  --height [height_value]   Set screen height" << std::endl;
     std::cout << "  --encrpt_methds           Set encryption methods as any addition of 1, 2, 8 and 16" <<  std::endl;
     std::cout << std::endl;
+    std::cout << "  ======== CONFIG ========" << std::endl;
     for (size_t i = 0; i < nb_mod_rdp_params_config; i++) {
         std::cout << "  " << mod_rdp_params_config[i].cmd << " [on/off] " << mod_rdp_params_config[i].descrpt << std::endl;
     }

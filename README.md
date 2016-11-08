@@ -16,7 +16,8 @@ To compile ReDemPtion you need the following packages:
 - libgssglue-dev
 - libsnappy-dev
 - libpng12-dev
-- python2.7-dev or python2.6-dev
+- python2 or python3
+<!-- - python2.7-dev or python2.6-dev -->
 <!-- BEGIN optional if NO_FFMPEG ? (note: ok with 53 (?) and 54 version)-->
 - libavcodec-dev (or set `FFMPEG_INC_PATH` to environment variable)
 - libavformat-dev (or set `FFMPEG_INC_PATH` to environment variable)
@@ -30,11 +31,12 @@ To compile ReDemPtion you need the following packages:
 <!-- END optional -->
 - g++ >= 4.9 or clang++ >= 3.5 or other C++11 compiler
 
-Optionally:
-- python (python-dev)
+<!--Optionally:
+- python (python-dev)-->
 
 Submodule (`$ git submodule init && git submodule update`):
-- https://github.com/wallix/program_options.git
+- https://github.com/wallix/program_options
+- https://github.com/wallix/ppocr
 
 
 FAQ
@@ -115,7 +117,7 @@ $ `bjam` or `bjam toolset=compiler` (see http://www.boost.org/build/doc/html/bbv
 
 Compile executables without tests (as user):
 
-$ `bjam exe`
+$ `bjam exe libs`
 
 and install (as administrator):
 

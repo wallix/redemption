@@ -56,13 +56,18 @@ def get_trace_key(base, lg, resbuf):
 get_hmac_key_func = GETHMACKEY(get_hmac_key)
 get_trace_key_func = GETTRACEKEY(get_trace_key)
 
-libred = ctypes.CDLL(pathlib)
-libred.do_main.argtypes = [ctypes.c_uint, ctypes.c_uint, ctypes.POINTER(ctypes.c_char_p), GETHMACKEY, GETTRACEKEY]
-libred.do_main.restype = ctypes.c_int
+try:
+    libred = ctypes.CDLL(pathlib)
+    libred.do_main.argtypes = [ctypes.c_uint, ctypes.c_uint, ctypes.POINTER(ctypes.c_char_p), GETHMACKEY, GETTRACEKEY]
+    libred.do_main.restype = ctypes.c_int
 
-libred.memcpy.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
-libred.memcpy.restype = ctypes.c_int
+    libred.memcpy.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
+    libred.memcpy.restype = ctypes.c_int
 
-myargv = ctypes.c_char_p * (len(sys.argv) - arg_consumed)
-argv = myargv(*tuple(sys.argv[arg_consumed:]))
-libred.do_main(role, len(argv), argv, get_hmac_key_func, get_trace_key_func)
+    myargv = ctypes.c_char_p * (len(sys.argv) - arg_consumed)
+    argv = myargv(*tuple(sys.argv[arg_consumed:]))
+    errcode = libred.do_main(role, len(argv), argv, get_hmac_key_func, get_trace_key_func)
+    sys.exit(errcode)
+except Exception as e:
+    print("Failed to load redrec library: %s\n" % str(e))
+    sys.exit(10)

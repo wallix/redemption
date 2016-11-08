@@ -69,6 +69,8 @@ alias install :
 alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient ;
 alias libs    : libredrec ;
 
+alias ocr_tools : display_learning extract_text ppocr_extract_text ;
+
 alias install-etc-ppocr : install-etc-ppocr-latin install-etc-ppocr-latin-cyrillic ;
 
 install install-bin
@@ -141,35 +143,6 @@ constant TEST_DEPENDENCIES :
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
 ;
-
-
-actions gen_redcryptofile {
-    echo "$(>)" "$(<)" ;
-    cp "$(>)" "$(<)"
-    cp "$(<)" $(TOOLS_PATH)/redcryptofile/redcryptofile.so
-}
-
-explicit pycryptofile redcryptofile.so ;
-
-lib pycryptofile :
-        $(TOOLS_PATH)/redcryptofile/pycrypto.cpp
-    :
-        $(LIB_DEPENDENCIES)
-        <define>REDPYTHON_BINDING
-        <include>$(PYTHON_INCLUDE)
-        <link>shared
-        <library>snappy
-        <library>python2
-        <library>crypto
-        <cxxflags>-fvisibility=hidden&&-fvisibility=default
-    ;
-
-make redcryptofile.so
-    :
-        pycryptofile
-    :
-        @gen_redcryptofile
-    ;
 
 
 obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp ;
@@ -1114,22 +1087,6 @@ exe proxy_sc1
 actions pass {
     touch $(<)
 }
-
-
-actions run-python-test {
-    rm -f $(<)
-    python $(>[1]) && touch $(<)
-}
-
-make test_trace.py.unittest
-    :
-        $(TOOLS_PATH)/redcryptofile/test_trace.py
-        redcryptofile.so
-    :
-        run-python-test
-    :
-        <variant>coverage:<action>@pass
-    ;
 
 explicit install-sashimi local-install-sashimi sashimi ;
 
