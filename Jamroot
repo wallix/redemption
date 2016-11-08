@@ -69,6 +69,8 @@ alias install :
 alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient ;
 alias libs    : libredrec ;
 
+alias ocr_tools : display_learning extract_text ppocr_extract_text ;
+
 alias install-etc-ppocr : install-etc-ppocr-latin install-etc-ppocr-latin-cyrillic ;
 
 install install-bin
