@@ -531,17 +531,12 @@ private:
         );
     }
 
-    static gdi::GraphicApi & null_gd() {
-        static gdi::BlackoutGraphic gd;
-        return gd;
-    }
-
-    non_null_ptr<gdi::GraphicApi> gd = &null_gd();
-    non_null_ptr<gdi::GraphicApi> graphics_update = &null_gd();
+    non_null_ptr<gdi::GraphicApi> gd = &gdi::null_gd();
+    non_null_ptr<gdi::GraphicApi> graphics_update = &gdi::null_gd();
 
     void set_gd(gdi::GraphicApi * new_gd) {
         this->gd = new_gd;
-        this->graphics_update = this->graphics_update_disabled ? &null_gd() : new_gd;
+        this->graphics_update = new_gd;
     }
 
     void set_gd(gdi::GraphicApi & new_gd) {
@@ -630,9 +625,6 @@ private:
 
     bool focus_on_password_textbox = false;
     bool consent_ui_is_visible     = false;
-
-    bool input_event_disabled     = false;
-    bool graphics_update_disabled = false;
 
     bool session_probe_started_ = false;
 
@@ -2293,9 +2285,7 @@ public:
                             this->mouse_x = me.xPos;
                             this->mouse_y = me.yPos;
                             if (this->up_and_running) {
-                                if (!this->input_event_disabled) {
-                                    cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
-                                }
+                                cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
                                 this->has_activity = true;
                             }
 
@@ -2710,27 +2700,6 @@ private:
 
             this->capture->session_update(now, message);
         }
-    }
-
-    bool disable_input_event_and_graphics_update(bool disable_input_event,
-            bool disable_graphics_update) override {
-        bool need_full_screen_update =
-            (this->graphics_update_disabled && !disable_graphics_update);
-
-        if (this->input_event_disabled != disable_input_event) {
-            LOG(LOG_INFO, "Front: %s input event.",
-                (disable_input_event ? "Disable" : "Enable"));
-        }
-        if (this->graphics_update_disabled != disable_graphics_update) {
-            LOG(LOG_INFO, "Front: %s graphics update.",
-                (disable_graphics_update ? "Disable" : "Enable"));
-        }
-
-        this->input_event_disabled     = disable_input_event;
-        this->graphics_update_disabled = disable_graphics_update;
-        this->set_gd(this->gd.get());
-
-        return need_full_screen_update;
     }
 
     /*****************************************************************************/
@@ -3685,9 +3654,7 @@ private:
                             this->mouse_x = me.xPos;
                             this->mouse_y = me.yPos;
                             if (this->up_and_running) {
-                                if (!this->input_event_disabled) {
-                                    cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
-                                }
+                                cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
                                 this->has_activity = true;
                             }
 
@@ -4512,9 +4479,8 @@ private:
                 LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
             }
             else {
-                if (!this->input_event_disabled && send_to_mod) {
+                if (send_to_mod) {
                     cb.rdp_input_scancode(ke.keyCode, 0, KeyboardFlags::get(ke), event_time, &this->keymap);
-
                 }
                 this->has_activity = true;
             }

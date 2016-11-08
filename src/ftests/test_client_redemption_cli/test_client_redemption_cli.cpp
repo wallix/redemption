@@ -122,11 +122,14 @@ int main(int argc, char** argv){
     const char * pwd_param(userPwd.c_str());
     const char * local_IP_param(localIP.c_str());
 
+    Inifile ini;
     ModRDPParams mod_rdp_params( name_param
                                , pwd_param
                                , targetIP_param
                                , local_IP_param
                                , 2
+                               , ini.get<cfg::font>()
+                               , ini.get<cfg::theme>()
                                , 0
                                );
 
@@ -433,9 +436,6 @@ int main(int argc, char** argv){
         if (connection_succed) {
 
             mod_rdp * mod(nullptr);
-
-            Inifile ini;
-            //ini.set<cfg::debug::rdp>(MODRDP_LOGLEVEL_CLIPRDR);
 
             LCGRandom gen(0); // To always get the same client random, in tests
             TimeSystem timeSystem;

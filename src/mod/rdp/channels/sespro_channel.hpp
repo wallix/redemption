@@ -268,7 +268,7 @@ public:
             const bool disable_input_event     = false;
             const bool disable_graphics_update = false;
             const bool need_full_screen_update =
-                 this->front.disable_input_event_and_graphics_update(
+                 this->mod.disable_input_event_and_graphics_update(
                      disable_input_event, disable_graphics_update);
 
             if (this->param_session_probe_on_launch_failure ==
@@ -294,7 +294,7 @@ public:
             if (!this->session_probe_keep_alive_received) {
                 const bool disable_input_event     = false;
                 const bool disable_graphics_update = false;
-                this->front.disable_input_event_and_graphics_update(
+                this->mod.disable_input_event_and_graphics_update(
                     disable_input_event, disable_graphics_update);
 
                 LOG(LOG_ERR,
@@ -425,7 +425,7 @@ public:
 
             const bool disable_input_event     = false;
             const bool disable_graphics_update = false;
-            if (this->front.disable_input_event_and_graphics_update(
+            if (this->mod.disable_input_event_and_graphics_update(
                     disable_input_event, disable_graphics_update)) {
                 if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
                     LOG(LOG_INFO,

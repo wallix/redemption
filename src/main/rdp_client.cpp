@@ -498,12 +498,15 @@ int main(int argc, char** argv)
     }
 
 
+    Inifile ini;
     ClientFront front(client_info, verbose);
     ModRDPParams mod_rdp_params( username.c_str()
                                , password.c_str()
                                , target_device.c_str()
                                , "0.0.0.0"   // client ip is silenced
                                , /*front.keymap.key_flags*/ 0
+                               , ini.get<cfg::font>()
+                               , ini.get<cfg::theme>()
                                , verbose);
 
     if (verbose > 128) {

@@ -227,6 +227,8 @@ BOOST_AUTO_TEST_CASE(TestFront)
                                    , "10.10.47.36"
                                    , "10.10.43.33"
                                    , 2
+                                   , ini.get<cfg::font>()
+                                   , ini.get<cfg::theme>()
                                    , 0
                                    );
         mod_rdp_params.device_id                       = "device_id";
@@ -413,6 +415,8 @@ BOOST_AUTO_TEST_CASE(TestFront2)
                                    , "10.10.47.36"
                                    , "10.10.43.33"
                                    , 2
+                                   , ini.get<cfg::font>()
+                                   , ini.get<cfg::theme>()
                                    , 0
                                    );
         mod_rdp_params.device_id                       = "device_id";
@@ -652,6 +656,8 @@ BOOST_AUTO_TEST_CASE(TestFront3)
                                    , "10.10.47.36"
                                    , "10.10.43.33"
                                    , 2
+                                   , ini.get<cfg::font>()
+                                   , ini.get<cfg::theme>()
                                    , 0
                                    );
         mod_rdp_params.device_id                       = "device_id";
