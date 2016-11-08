@@ -2086,6 +2086,18 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 static_cast<cfg::debug::ocr&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "ffmpeg")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::debug::ffmpeg&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::debug::ffmpeg&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "config")) {
             ::configs::parse_and_log(
                 context, key,

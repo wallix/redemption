@@ -434,6 +434,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<types::u32>(), "pass_dialog_box");
         W.member(A, type_<types::u32>(), "mod_internal");
         W.member(A, type_<types::u32>(), "ocr");
+        W.member(A, type_<types::u32>(), "ffmpeg");
         W.sep();
         W.member(A, type_<unsigned>(), spec::type_<bool>(), "config", set(2));
     });

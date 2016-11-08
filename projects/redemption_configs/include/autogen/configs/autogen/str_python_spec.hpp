@@ -724,6 +724,9 @@
 "ocr = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"ffmpeg = integer(min=0, default=0)\n\n"
+
+"#_advanced\n"
 "config = boolean(default=True)\n\n"
 
 "[translation]\n\n"

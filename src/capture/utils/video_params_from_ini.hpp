@@ -37,7 +37,8 @@ inline VideoParams video_params_from_ini(
                 ini.get<cfg::video::l_qscale>(),
                 ini.get<cfg::video::l_framerate>(),
                 ini.get<cfg::video::l_bitrate>(),
-                ini.get<cfg::globals::codec_id>()
+                ini.get<cfg::globals::codec_id>(),
+                ini.get<cfg::debug::ffmpeg>()
             };
             case Level::high: return VideoParams{
                 original_width,
@@ -45,7 +46,8 @@ inline VideoParams video_params_from_ini(
                 ini.get<cfg::video::h_qscale>(),
                 ini.get<cfg::video::h_framerate>(),
                 ini.get<cfg::video::h_bitrate>(),
-                ini.get<cfg::globals::codec_id>()
+                ini.get<cfg::globals::codec_id>(),
+                ini.get<cfg::debug::ffmpeg>()
             };
             case Level::medium:
             default: return VideoParams{
@@ -54,7 +56,8 @@ inline VideoParams video_params_from_ini(
                 ini.get<cfg::video::m_qscale>(),
                 ini.get<cfg::video::m_framerate>(),
                 ini.get<cfg::video::m_bitrate>(),
-                ini.get<cfg::globals::codec_id>()
+                ini.get<cfg::globals::codec_id>(),
+                ini.get<cfg::debug::ffmpeg>()
             };
         }
     }();
