@@ -261,6 +261,7 @@ public:
     QComboBox            _languageComboBox;
     QComboBox            _fpsComboBox;
     QComboBox            _monitorCountComboBox;
+    QComboBox            _captureSnapFreqComboBox;
     QFormLayout        * _layoutView;
     QFormLayout        * _layoutConnection;
     QFormLayout        * _layoutKeyboard;
@@ -274,6 +275,7 @@ public:
     QLabel               _labelRecording;
     QLabel               _labelTls;
     QLabel               _labelNla;
+    QLabel               _labelCaptureFreq;
     QTableWidget       * _tableKeySetting;
     const int            _columnNumber;
     const int            _tableKeySettingMaxHeight;
@@ -301,6 +303,8 @@ public:
         , _recordingCB(this)
         , _languageComboBox(this)
         , _fpsComboBox(this)
+        , _monitorCountComboBox(this)
+        , _captureSnapFreqComboBox(this)
         , _layoutView(nullptr)
         , _layoutConnection(nullptr)
         , _layoutKeyboard(nullptr)
@@ -314,6 +318,7 @@ public:
         , _labelRecording("Record movie :", this)
         , _labelTls("TLS :", this)
         , _labelNla("NLA :", this)
+        , _labelCaptureFreq("Capture per second :", this)
         , _tableKeySetting(nullptr)
         , _columnNumber(4)
         , _tableKeySettingMaxHeight((20*6)+11)
@@ -360,7 +365,6 @@ public:
         }
         this->_resolutionComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutView->addRow(&(this->_labelResolution), &(this->_resolutionComboBox));
-
 
         this->_fpsComboBox.addItem("20", 20);
         this->_fpsComboBox.addItem("30", 30);
@@ -413,11 +417,25 @@ public:
             this->_recordingCB.setCheckState(Qt::Checked);
         }
         this->_layoutConnection->addRow(&(this->_labelRecording), &(this->_recordingCB));
+        this->QObject::connect(&(this->_recordingCB), SIGNAL(stateChanged(int)), this, SLOT(recordingCheckChange(int)));
+
+        this->_captureSnapFreqComboBox.addItem("1000", 1000);
+        this->_captureSnapFreqComboBox.addItem("100" , 10000);
+        this->_captureSnapFreqComboBox.addItem("10"  , 100000);
+        this->_captureSnapFreqComboBox.addItem("1"   , 1000000);
+        int indexCaptureFreq = this->_captureSnapFreqComboBox.findData(this->_front->_delta_time);
+        if ( indexCaptureFreq != -1 ) {
+            this->_captureSnapFreqComboBox.setCurrentIndex(indexCaptureFreq);
+        }
+        this->_captureSnapFreqComboBox.setStyleSheet("combobox-popup: 0;");
+        this->_layoutConnection->addRow(&(this->_labelCaptureFreq), &(this->_captureSnapFreqComboBox));
+        this->_captureSnapFreqComboBox.setEnabled(this->_front->_record);
 
         if (this->_front->_mod_qt->_modRDPParamsData.enable_tls) {
             this->_tlsBox.setCheckState(Qt::Checked);
         }
         this->_layoutConnection->addRow(&(this->_labelTls), &(this->_tlsBox));
+
 
         if (this->_front->_mod_qt->_modRDPParamsData.enable_nla) {
             this->_nlaBox.setCheckState(Qt::Checked);
@@ -626,6 +644,7 @@ public Q_SLOTS:
         this->_front->_monitorCount = this->_front->_info.cs_monitor.monitorCount;
         this->_front->_info.width   = this->_front->_width * this->_front->_monitorCount;
         this->_front->_info.height  = this->_front->_height;
+        this->_front->_delta_time   = this->_captureSnapFreqComboBox.itemData(this->_captureSnapFreqComboBox.currentIndex()).toInt();
 
         this->_front->writeClientInfo();
 
@@ -708,6 +727,14 @@ public Q_SLOTS:
     void spanCheckChange(int state) {
         if (state == Qt::Unchecked) {
             this->_monitorCountComboBox.setCurrentIndex(0);
+        }
+    }
+
+    void recordingCheckChange(int state) {
+        if (state == Qt::Unchecked) {
+            this->_captureSnapFreqComboBox.setEnabled(false);
+        } else {
+            this->_captureSnapFreqComboBox.setEnabled(true);
         }
     }
 
@@ -1382,6 +1409,7 @@ private Q_SLOTS:
         if (this->_front->_replay_mod->get_break_privplay_qt()) {
             std::cout <<  "movie over" <<  std::endl;
             this->_timer_replay.stop();
+            this->slotRepaint();
             this->_buttonCtrlAltDel.setText("Replay");
             this->_running = false;
             this->_front->load_replay_mod(this->_movie_name);
@@ -1610,14 +1638,15 @@ public Q_SLOTS:
                 }
                 this->_bufferImage = new QImage(bufferImageTmp);
 
-                this->_cliboard_data_length = this->_bufferImage->byteCount() + 6;
+                this->_cliboard_data_length = this->_bufferImage->byteCount();
 
-                this->_chunk = std::make_unique<uint8_t[]>(this->_cliboard_data_length);
+                this->_chunk = std::make_unique<uint8_t[]>(this->_cliboard_data_length + 6);
 
                 for (int i  = 0; i < this->_bufferImage->byteCount(); i++) {
                     this->_chunk[i] = this->_bufferImage->bits()[i];
                 }
 
+                // Ender
                 this->_chunk[this->_cliboard_data_length - 6] = 0x03;
                 this->_chunk[this->_cliboard_data_length - 5] = 0x00;
                 this->_chunk[this->_cliboard_data_length - 4] = 0x00;

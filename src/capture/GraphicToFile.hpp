@@ -96,6 +96,7 @@ class GraphicToFile
     StaticOutStream<65536> buffer_stream_orders;
     StaticOutStream<65536> buffer_stream_bitmaps;
 
+    const int dela_time;
     timeval last_sent_timer;
     timeval timer;
     const uint16_t width;
@@ -129,6 +130,7 @@ public:
                 , PointerCache & ptr_cache
                 , gdi::DumpPng24Api & dump_png24
                 , const Inifile & ini
+                , const int dela_time
                 , SendInput send_input = SendInput::NO
                 , uint32_t verbose = 0)
     : RDPSerializer( this->buffer_stream_orders, this->buffer_stream_bitmaps, capture_bpp
@@ -136,6 +138,7 @@ public:
     , compression_wrapper(trans, ini.get<cfg::video::wrm_compression_algorithm>())
     , trans_target(trans)
     , trans(this->compression_wrapper.get())
+    , dela_time(dela_time)
     , last_sent_timer()
     , timer(now)
     , width(width)
@@ -349,9 +352,23 @@ public:
     }
 
 protected:
+
+    bool timeval_comp(timeval a, timeval b) {
+
+        int sec = a.tv_sec - b.tv_sec;
+        if (sec > 0) {
+            return true;
+        }
+        if ( (sec == 0) && (a.tv_usec - b.tv_usec > this->dela_time) ) {
+            return true;
+        }
+
+        return false;
+    }
+
     void flush_orders() override {
         if (this->order_count > 0) {
-            if (this->timer.tv_sec - this->last_sent_timer.tv_sec > 0) {
+            if (timeval_comp(this->timer, this->last_sent_timer)) {
                 this->send_timestamp_chunk();
             }
             this->send_orders_chunk();
@@ -370,7 +387,7 @@ public:
 protected:
     void flush_bitmaps() override {
         if (this->bitmap_count > 0) {
-            if (this->timer.tv_sec - this->last_sent_timer.tv_sec > 0) {
+            if (timeval_comp(this->timer, this->last_sent_timer)) {
                 this->send_timestamp_chunk();
             }
             this->send_bitmaps_chunk();

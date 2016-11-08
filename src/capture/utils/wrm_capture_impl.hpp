@@ -97,6 +97,7 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
         }
     } trans_variant;
 
+
     struct Serializer final : GraphicToFile {
         using GraphicToFile::GraphicToFile;
 
@@ -140,13 +141,14 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
 
     ApiRegisterElement<gdi::KbdInputApi> kbd_element;
 
+
 public:
     WrmCaptureImpl(
         const timeval & now, uint8_t capture_bpp, TraceType trace_type,
         CryptoContext & cctx,
         const char * record_path, const char * hash_path, const char * basename,
         int groupid, auth_api * authentifier,
-        RDPDrawable & drawable, const Inifile & ini
+        RDPDrawable & drawable, const Inifile & ini, const int delta_time
     )
     : bmp_cache(
         BmpCache::Recorder, capture_bpp, 3, false,
@@ -161,7 +163,7 @@ public:
     , graphic_to_file(
         now, *this->trans_variant.trans, drawable.width(), drawable.height(), capture_bpp,
         this->bmp_cache, this->gly_cache, this->ptr_cache,
-        this->dump_png24_api, ini, GraphicToFile::SendInput::YES, ini.get<cfg::debug::capture>())
+        this->dump_png24_api, ini, delta_time, GraphicToFile::SendInput::YES, ini.get<cfg::debug::capture>())
     , nc(this->graphic_to_file, now, ini)
     {}
 

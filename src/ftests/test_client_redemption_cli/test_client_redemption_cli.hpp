@@ -971,7 +971,7 @@ public:
 
     void keyReleased(uint32_t scanCode, uint32_t flag) {
         if (this->_verbose & SHOW_KEYBOARD_EVENT) {
-            std::cout << "client >> scanCode=" << int(scanCode) << std::endl;
+            std::cout << "client >> keyRelease=" << int(scanCode) << std::endl;
         }
         if (this->_callback != nullptr) {
             this->_callback->rdp_input_scancode(scanCode, 0, flag | KBD_FLAG_UP, this->_timer, &(this->_keymap));
@@ -1090,6 +1090,28 @@ class EventList
         }
     };
 
+    struct Loop : EventConfig {
+        EventList * list;
+        int jumpt_size;
+        int count_steps;
+
+        Loop( EventList * list
+            , int jumpt_size
+            , int count_steps)
+        : EventConfig(nullptr)
+        , list(list)
+        , jumpt_size(jumpt_size)
+        , count_steps(count_steps)
+        {}
+
+        virtual void emit() override {
+            if (count_steps) {
+                this->list->index -= jumpt_size;
+                count_steps--;
+            }
+        }
+    };
+
     struct ClipboardChange : EventConfig
     {
         uint32_t formatIDs[RDPECLIP::FORMAT_LIST_MAX_SIZE];
@@ -1141,13 +1163,20 @@ public:
 
     ~EventList()
     {
-
+        for (size_t i = 0; i < this->list.size(); i++) {
+            delete this->list[i];
+        }
         this->list.clear();
     }
 
     void setAction(EventConfig * action) {
         action->trigger_time = this->wait_time;
         this->list.push_back(action);
+    }
+
+    void setLoop(int jump_size, int count_steps) {
+        EventConfig * action = new Loop(this, jump_size, count_steps);
+        this->setAction(action);
     }
 
     void setClpbrd_change( TestClientCLI * front
@@ -1224,7 +1253,7 @@ public:
             if (triggger <= current_time) {
                 this->list[i]->emit();
                 this->index++;
-                delete(this->list[i]);
+
 
             } else {
                 next = false;

@@ -179,6 +179,7 @@ public:
     Rect                 _screen_dimensions[MAX_MONITOR_COUNT];
     bool                 _record;
     bool                 _replay;
+    int                  _delta_time;
 
 
     Front_Qt_API( bool param1
@@ -203,6 +204,7 @@ public:
     , _span(false)
     , _record(false)
     , _replay(false)
+    , _delta_time(1000000)
     {
         this->_to_client_sender._front = this;
     }
@@ -273,6 +275,7 @@ public:
     Screen_Qt          * _screen[MAX_MONITOR_COUNT] {};
     QPixmap            * _cache;
     gdi::GraphicApi    * _graph_capture;
+
 
     // Connexion socket members
     ClipBoard_Qt       * _clipboard_qt;
@@ -388,7 +391,7 @@ public:
 
     void empty_buffer() override;
 
-    void process_client_clipboard_outdata(uint64_t total_length, OutStream & out_streamfirst, int firstPartSize, uint8_t const * data);
+    void process_client_clipboard_outdata(const uint64_t total_length, OutStream & out_streamfirst, size_t firstPartSize, uint8_t const * data, size_t data_len, mod_api * callback);
 
     virtual void set_pointer(Pointer const & cursor) override;
 
