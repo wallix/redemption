@@ -68,6 +68,6 @@ try:
     argv = myargv(*tuple(sys.argv[arg_consumed:]))
     errcode = libred.do_main(role, len(argv), argv, get_hmac_key_func, get_trace_key_func)
     sys.exit(errcode)
-except Exception, e:
+except Exception as e:
     print("Failed to load redrec library: %s\n" % str(e))
     sys.exit(10)
