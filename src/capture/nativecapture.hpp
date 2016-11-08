@@ -41,6 +41,7 @@ class NativeCapture
     GraphicToFile & recorder;
     uint64_t time_to_wait;
 
+
 public:
     NativeCapture( GraphicToFile & recorder, const timeval & now, const Inifile & ini)
     : start_native_capture(now)

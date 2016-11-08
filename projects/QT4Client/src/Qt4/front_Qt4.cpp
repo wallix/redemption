@@ -250,6 +250,11 @@ bool Front_Qt::setClientInfo() {
                 if (std::stoi(info)) {
                     this->_mod_qt->_modRDPParamsData.enable_nla = true;
                 } else { this->_mod_qt->_modRDPParamsData.enable_nla = false; }
+            } else
+            if (tag.compare(std::string("delta_time")) == 0) {
+                if (std::stoi(info)) {
+                    this->_delta_time = std::stoi(info);
+                }
             }
         }
 
@@ -293,6 +298,7 @@ void Front_Qt::writeClientInfo() {
         ofichier << "record "                << this->_record                       << "\n";
         ofichier << "tls "                   << this->_mod_qt->_modRDPParamsData.enable_tls << "\n";
         ofichier << "nla "                   << this->_mod_qt->_modRDPParamsData.enable_nla << "\n";
+        ofichier << "delta_time "           << this->_delta_time << "\n";
     }
 }
 
@@ -461,6 +467,7 @@ bool Front_Qt::connect() {
                                         , gen
                                         , cctx
                                         , false
+                                        , this->_delta_time
                                         );
             this->_graph_capture = this->_capture->get_graphic_api();
         }
@@ -999,7 +1006,7 @@ void Front_Qt::draw(const RDPOpaqueRect & cmd, const Rect & clip) {
     this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, qcolor);
 
     if (this->_record && !this->_replay) {
-        this->_graph_capture->draw(new_cmd24, clip);
+        this->_graph_capture->draw(cmd, clip);
         struct timeval time;
         gettimeofday(&time, nullptr);
         this->_capture->snapshot(time, 0, 0, false);
@@ -2012,7 +2019,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     if (first_part_data_size > PASTE_PIC_CONTENT_SIZE) {
                                         first_part_data_size = PASTE_PIC_CONTENT_SIZE;
                                     }
-                                    total_length += RDPECLIP::METAFILE_HEADERS_SIZE - 6;
+                                    total_length += RDPECLIP::METAFILE_HEADERS_SIZE;
                                     RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr( this->_clipboard_qt->_cliboard_data_length
                                                                                    , this->_clipboard_qt->_bufferImage->width()
                                                                                    , this->_clipboard_qt->_bufferImage->height()
@@ -2025,6 +2032,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                           , out_stream_first_part
                                                                           , first_part_data_size
                                                                           , this->_clipboard_qt->_chunk.get()
+                                                                          , total_length + 6
+                                                                          , this->_callback
                                                                           );
                                 }
                                 break;
@@ -2046,6 +2055,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                           , out_stream_first_part
                                                                           , first_part_data_size
                                                                           , this->_clipboard_qt->_chunk.get()
+                                                                          , total_length
+                                                                          , this->_callback
                                                                           );
                                 }
                                 break;
@@ -2185,6 +2196,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                       , first_part_data_size
                                                                       , reinterpret_cast<uint8_t *>(
                                                                         this->_clipboard_qt->_items_list[lindex]->chunk)
+                                                                      , total_length
+                                                                      , this->_callback
                                                                       );
                             }
                             break;
@@ -2652,7 +2665,7 @@ void Front_Qt::send_FormatListPDU(uint32_t const * formatIDs, std::string const 
 }
 
 
-void Front_Qt::process_client_clipboard_outdata(uint64_t total_length, OutStream & out_stream_first_part, int first_part_data_size,  uint8_t const * data){
+void Front_Qt::process_client_clipboard_outdata(const uint64_t total_length, OutStream & out_stream_first_part, const size_t first_part_data_size,  uint8_t const * data, size_t data_len, mod_api * callback){
 
     // 3.1.5.2.2.1 Reassembly of Chunked Virtual Channel Dat
 
@@ -2701,8 +2714,8 @@ void Front_Qt::process_client_clipboard_outdata(uint64_t total_length, OutStream
 
     if (total_length > PDU_MAX_SIZE) {
 
-        const int cmpt_PDU_part(total_length / PDU_MAX_SIZE);
-        const int remains_PDU  (total_length % PDU_MAX_SIZE);
+        const int cmpt_PDU_part(data_len / PDU_MAX_SIZE);
+        const int remains_PDU  (data_len % PDU_MAX_SIZE);
         int data_sent(0);
 
         // First Part
@@ -2710,13 +2723,13 @@ void Front_Qt::process_client_clipboard_outdata(uint64_t total_length, OutStream
             data_sent += first_part_data_size;
             InStream chunk_first(out_stream_first_part.get_data(), out_stream_first_part.get_offset());
 
-            this->_callback->send_to_mod_channel( channel_names::cliprdr
+            callback->send_to_mod_channel( channel_names::cliprdr
                                                 , chunk_first
                                                 , total_length
                                                 , CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
 
-            std::cout << "client >> Data PDU " << data_sent << " / " << this->_clipboard_qt->_cliboard_data_length << std::endl;
+            std::cout << "client >> Data PDU " << data_sent << " / " << data_len << std::endl;
 
 
         for (int i = 0; i < cmpt_PDU_part - 1; i++) {
@@ -2727,13 +2740,14 @@ void Front_Qt::process_client_clipboard_outdata(uint64_t total_length, OutStream
             data_sent += PDU_MAX_SIZE;
             InStream chunk_next(out_stream_next_part.get_data(), out_stream_next_part.get_offset());
 
-            this->_callback->send_to_mod_channel( channel_names::cliprdr
+
+            callback->send_to_mod_channel( channel_names::cliprdr
                                                 , chunk_next
                                                 , total_length
                                                 , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
 
-            std::cout << "client >> Data PDU " << data_sent << " / " << this->_clipboard_qt->_cliboard_data_length << std::endl;
+            std::cout << "client >> Data PDU " << data_sent << " / " << data_len << std::endl;
 
         }
 
@@ -2741,21 +2755,16 @@ void Front_Qt::process_client_clipboard_outdata(uint64_t total_length, OutStream
             StaticOutStream<PDU_MAX_SIZE> out_stream_last_part;
             out_stream_last_part.out_copy_bytes(data + data_sent, remains_PDU);
 
-            // Specific
-            /*if (this->_clipboard_qt->_bufferTypeID == RDPECLIP::CF_METAFILEPICT) {
-                out_stream_last_part.out_uint32_le(3);
-                out_stream_last_part.out_uint16_le(0);
-            }*/
             data_sent += remains_PDU;
             InStream chunk_last(out_stream_last_part.get_data(), out_stream_last_part.get_offset());
 
-            this->_callback->send_to_mod_channel( channel_names::cliprdr
+            callback->send_to_mod_channel( channel_names::cliprdr
                                                 , chunk_last
                                                 , total_length
                                                 , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
 
-            std::cout << "client >> Data PDU " << data_sent << " / " << this->_clipboard_qt->_cliboard_data_length << std::endl;
+            std::cout << "client >> Data PDU " << data_sent << " / " << data_len << std::endl;
 
 
     } else {
@@ -2763,7 +2772,7 @@ void Front_Qt::process_client_clipboard_outdata(uint64_t total_length, OutStream
         out_stream_first_part.out_copy_bytes(data, this->_clipboard_qt->_cliboard_data_length);
         InStream chunk(out_stream_first_part.get_data(), out_stream_first_part.get_offset());
 
-        this->_callback->send_to_mod_channel( channel_names::cliprdr
+        callback->send_to_mod_channel( channel_names::cliprdr
                                             , chunk
                                             , total_length
                                             , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |
