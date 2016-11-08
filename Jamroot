@@ -145,35 +145,6 @@ constant TEST_DEPENDENCIES :
 ;
 
 
-actions gen_redcryptofile {
-    echo "$(>)" "$(<)" ;
-    cp "$(>)" "$(<)"
-    cp "$(<)" $(TOOLS_PATH)/redcryptofile/redcryptofile.so
-}
-
-explicit pycryptofile redcryptofile.so ;
-
-lib pycryptofile :
-        $(TOOLS_PATH)/redcryptofile/pycrypto.cpp
-    :
-        $(LIB_DEPENDENCIES)
-        <define>REDPYTHON_BINDING
-        <include>$(PYTHON_INCLUDE)
-        <link>shared
-        <library>snappy
-        <library>python2
-        <library>crypto
-        <cxxflags>-fvisibility=hidden&&-fvisibility=default
-    ;
-
-make redcryptofile.so
-    :
-        pycryptofile
-    :
-        @gen_redcryptofile
-    ;
-
-
 obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp ;
 obj d3des : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 obj bitmap : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
@@ -1116,22 +1087,6 @@ exe proxy_sc1
 actions pass {
     touch $(<)
 }
-
-
-actions run-python-test {
-    rm -f $(<)
-    python $(>[1]) && touch $(<)
-}
-
-make test_trace.py.unittest
-    :
-        $(TOOLS_PATH)/redcryptofile/test_trace.py
-        redcryptofile.so
-    :
-        run-python-test
-    :
-        <variant>coverage:<action>@pass
-    ;
 
 explicit install-sashimi local-install-sashimi sashimi ;
 
