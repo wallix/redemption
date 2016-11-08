@@ -1082,43 +1082,6 @@ private Q_SLOTS:
 
 
 
-class ReplayThread : public QThread
-{
-    Q_OBJECT
-
-Front_Qt_API * _front;
-bool           _readyToRun;
-
-public:
-
-    ReplayThread(Front_Qt_API * front, QObject * screen)
-        : QThread(screen)
-        , _front(front)
-        , _readyToRun(true)
-    {}
-
-    void stop() {
-        this->_readyToRun = false;
-    }
-
-    void reStart() {
-        this->_readyToRun = true;
-    }
-
-protected:
-
-    void run() {
-        while (this->_readyToRun && !this->_front->_replay_mod->get_break_privplay_qt()) {
-            std::cout << "thread loop 1" << std::endl;
-            this->_front->_replay_mod->play_qt();
-            std::cout << "thread loop 2" << std::endl;
-        }
-        std::cout << "thread loop end" << std::endl;
-        QThread::exit(0);
-    }
-};
-
-
 
 class Screen_Qt : public QWidget
 {
@@ -1141,8 +1104,6 @@ public:
     QTimer               _timer_replay;
     uint8_t              _screen_index;
 
-
-    ReplayThread * _replayThread;
     bool           _running;
     std::string    _movie_name;
 
@@ -1159,7 +1120,6 @@ public:
         , _connexionLasted(false)
         , _timer(this)
         , _screen_index(screen_index)
-        , _replayThread(nullptr)
         , _running(false)
     {
         this->setMouseTracking(true);
@@ -1207,7 +1167,6 @@ public:
         , _timer(this)
         , _timer_replay(this)
         , _screen_index(0)
-        , _replayThread(nullptr)
         , _running(false)
         , _movie_name(movie_path)
     {
@@ -1272,7 +1231,6 @@ public:
         , _connexionLasted(false)
         , _timer(this)
         , _screen_index(0)
-        , _replayThread(nullptr)
         , _running(false)
     {
         this->setMouseTracking(true);

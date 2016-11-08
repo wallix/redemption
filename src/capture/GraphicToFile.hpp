@@ -356,10 +356,11 @@ protected:
     bool timeval_comp(timeval a, timeval b) {
 
         int sec = a.tv_sec - b.tv_sec;
+        int usec = a.tv_usec - b.tv_usec;
         if (sec > 0) {
             return true;
         }
-        if ( (sec == 0) && (a.tv_usec - b.tv_usec > this->dela_time) ) {
+        if ( (sec == 0) && (usec > this->dela_time) ) {
             return true;
         }
 
