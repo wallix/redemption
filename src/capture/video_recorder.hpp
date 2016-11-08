@@ -70,21 +70,18 @@ class video_recorder
 {
     struct default_av_free {
         void operator()(void * ptr) {
-//            std::cerr << __func__ << std::endl;
             av_free(ptr);
         }
     };
 
     struct default_av_free_format_context {
         void operator()(AVFormatContext * ctx) {
-//            std::cerr << __func__ << std::endl;
             avformat_free_context(ctx);
         }
     };
 
     struct default_sws_free_context {
         void operator()(SwsContext * sws_ctx) {
-//            std::cerr << __func__ << std::endl;
             sws_freeContext(sws_ctx);
         }
     };
@@ -160,15 +157,11 @@ public:
         , duration_frame(std::max(1000ull / frame_rate, 1ull))
     {
         /* initialize libavcodec, and register all codecs and formats */
-
-//        avcodec_init();
-//        avcodec_register_all();
         av_register_all();
 
         this->oc.reset(avformat_alloc_context());
         if (!this->oc) {
             LOG(LOG_ERR, "recorder failed allocating output media context");
-//            std::cerr << "throw" << __LINE__ << std::endl;
             throw Error(ERR_RECORDER_FAILED_ALLOCATING_OUTPUT_MEDIA_CONTEXT);
         }
 
@@ -180,18 +173,15 @@ public:
         }
         if (!fmt) {
             LOG(LOG_ERR, "Could not find suitable output format");
-//            std::cerr << "throw" << __LINE__ << std::endl;
             throw Error(ERR_RECORDER_NO_OUTPUT_CODEC);
         }
 
         if (fmt->video_codec == AV_CODEC_ID_NONE) {
             LOG(LOG_ERR, "video recorder error : no codec defined");
-//            std::cerr << "throw" << __LINE__ << std::endl;
             throw Error(ERR_RECORDER_CODEC_NOT_FOUND);
         }
 
         this->oc->oformat = fmt;
-//         av_dump_format(this->oc.get(), 0, file, 1);
         //strncpy(this->oc->filename, file, sizeof(this->oc->filename));
 
         // add the video streams using the default format codecs and initialize the codecs
@@ -199,7 +189,6 @@ public:
 
         if (!this->video_st) {
             LOG(LOG_ERR, "Could not find suitable output format");
-//            std::cerr << "throw" << __LINE__ << std::endl;
             throw Error(ERR_RECORDER_FAILED_TO_ALLOC_STREAM);
         }
 
@@ -236,13 +225,11 @@ public:
 #endif
         switch (this->video_st->codec->codec_id){
             case AV_CODEC_ID_H264:
-//                std::cerr << "AV_CODEC_ID_H264 " << __LINE__ << std::endl;
                 //this->video_st->codec->coder_type = FF_CODER_TYPE_AC;
                 //this->video_st->codec->flags2 = CODEC_FLAG2_WPRED | CODEC_FLAG2_MIXED_REFS |
                 //                                CODEC_FLAG2_8X8DCT | CODEC_FLAG2_FASTPSKIP;
 
                 //this->video_st->codec->partitions = X264_PART_I8X8 | X264_PART_P8X8 | X264_PART_I4X4;
-//                 this->video_st->codec->me_method = 7;
                 this->video_st->codec->me_range = 16;
                 //this->video_st->codec->refs = 1;
                 //this->video_st->codec->flags = CODEC_FLAG_4MV | CODEC_FLAG_LOOP_FILTER;
@@ -252,27 +239,22 @@ public:
                 this->video_st->codec->gop_size = frame_rate;
             break;
             case AV_CODEC_ID_MPEG2VIDEO:
-//                std::cerr << "AV_CODEC_ID_MPEG2VIDEO " << __LINE__ << std::endl;
                 // TODO warning do we need B frames ?
                 // just for testing, we also add B frames
                 this->video_st->codec->max_b_frames = 2;
                 this->video_st->codec->gop_size = frame_rate;
             break;
             case AV_CODEC_ID_MPEG1VIDEO:
-//                std::cerr << "AV_CODEC_ID_MPEG1VIDEO " << __LINE__ << std::endl;
                 // Needed to avoid using macroblocks in which some coeffs overflow.
                 // This does not happen with normal video, it just happens here as
                 // the motion of the chroma plane does not match the luma plane.
                 this->video_st->codec->mb_decision = 2;
             break;
             case AV_CODEC_ID_MPEG4:
-//                std::cerr << "AV_CODEC_ID_MPEG4 " << __LINE__ << std::endl;
             break;
             case AV_CODEC_ID_FLV1:
-//                std::cerr << "AV_CODEC_ID_FLV1 " << __LINE__ << std::endl;
             break;
             default:
-//                std::cerr << "AV_CODEC default " << __LINE__ << std::endl;
             break;
         }
 
@@ -288,7 +270,6 @@ public:
         AVCodec * codec = avcodec_find_encoder(this->video_st->codec->codec_id);
         if (codec == nullptr) {
             LOG(LOG_ERR, "video recorder error : codec not found");
-//            std::cerr << "throw" << __LINE__ << std::endl;
             throw Error(ERR_RECORDER_CODEC_NOT_FOUND);
         }
 
@@ -304,7 +285,6 @@ public:
         // open the codec
         if (avcodec_open2(this->video_st->codec, codec, nullptr) < 0) {
             LOG(LOG_ERR, "video recorder error : failed to open codec");
-//            std::cerr << "throw" << __LINE__ << std::endl;
             throw Error(ERR_RECORDER_FAILED_TO_OPEN_CODEC);
         }
 
@@ -316,18 +296,13 @@ public:
             avcodec_not_close_if_success(AVCodecContext * codec)
             : codec(codec)
             , success(false)
-            {
-//                std::cerr << __LINE__ << std::endl;
-            }
+            {}
 
             ~avcodec_not_close_if_success()
             {
-//                std::cerr << __func__ << std::endl;
                 if (!this->success) {
                     avcodec_close(this->codec);
                 }
-//                std::cerr << __func__ << " done" << std::endl;
-
             }
         } no_close_if_success(this->video_st->codec);
 
@@ -339,7 +314,6 @@ public:
                 they're freed appropriately (such as using av_free for buffers
                 allocated with av_malloc) */
             if (video_outbuf_size){
-//                std::cerr << "video_outbuf_size=" << video_outbuf_size << std::endl;
                 this->video_outbuf_size = video_outbuf_size;
             }
             else {
@@ -348,10 +322,8 @@ public:
             this->video_outbuf.reset(static_cast<uint8_t*>(av_malloc(this->video_outbuf_size)));
             if (!this->video_outbuf){
                 LOG(LOG_ERR, "video recorder error : failed to allocate video output buffer");
-//                std::cerr << "throw" << __LINE__ << std::endl;
                 throw Error(ERR_RECORDER_FAILED_TO_ALLOCATE_PICTURE);
             }
-//            std::cerr << __func__ << " done" << std::endl;
         }
 
         // init picture frame
@@ -379,7 +351,6 @@ public:
 
         this->custom_io_buffer.reset(static_cast<unsigned char *>(av_malloc(32768)));
         if (!this->custom_io_buffer) {
-//            std::cerr << "throw" << __LINE__ << std::endl;
             throw Error(ERR_RECORDER_ALLOCATION_FAILED);
         }
 
@@ -393,7 +364,6 @@ public:
             seek_fn                       // function for seeking to specified byte position, may be nullptr.
         ));
         if (!this->custom_io_context) {
-//            std::cerr << "throw" << __LINE__ << std::endl;
             throw Error(ERR_RECORDER_ALLOCATION_FAILED);
         }
 
@@ -401,23 +371,13 @@ public:
 
         int res = avformat_write_header(this->oc.get(), nullptr);
         if (res < 0){
-//            std::cerr << "video recorder : wite header failed\n" << std::endl;
+            LOG(LOG_ERR, "video recorder error : failed to write header");
         }
-
-//        this->original_picture.reset(av_frame_alloc());
-//        if (!this->original_picture){
-//            LOG(LOG_ERR, "video recorder error : failed to allocate frame");
-//            throw Error(ERR_RECORDER_FAILED_TO_ALLOCATE_FRAME);
-//        }
-
-//        std::cerr << "video recorder : AVPicture fill original_picture\n" << std::endl;
 
         av_image_fill_arrays(
             this->original_picture->data, this->original_picture->linesize,
             bmp_data, AV_PIX_FMT_BGR24, width, height, 1
         );
-
-//        std::cerr << "video recorder : AVPicture fill original_picture done\n" << std::endl;
 
         this->img_convert_ctx.reset(sws_getContext(
             width, height, AV_PIX_FMT_BGR24,
@@ -425,21 +385,12 @@ public:
             SWS_BICUBIC, nullptr, nullptr, nullptr
         ));
 
-//        std::cerr << "video recorder : AVPicture convert done\n" << std::endl;
-//        std::cerr << " width=" << width
-//                  << " height=" << height
-//                  << " target_width=" << target_width
-//                  << " target_height=" << target_height
-//                  << std::endl;
-
         if (!this->img_convert_ctx) {
             LOG(LOG_ERR, "Cannot initialize the conversion context");
-//            std::cerr << "throw" << __LINE__ << std::endl;
             throw Error(ERR_RECORDER_FAILED_TO_INITIALIZE_CONVERSION_CONTEXT);
         }
 
         no_close_if_success.success = true;
-//        std::cerr << "video recorder : constructor done\n" << std::endl;
 
         av_init_packet(&this->pkt);
         this->pkt.data = this->video_outbuf.get();
@@ -447,7 +398,6 @@ public:
     }
 
     ~video_recorder() {
-//        std::cerr << __func__ << std::endl;
         // write last frame : we must ensure writing at least one frame to avoid empty movies
         encoding_video_frame();
 
@@ -459,32 +409,25 @@ public:
 
         // close each codec */
         avcodec_close(this->video_st->codec);
-//        std::cerr << __func__ << " done" << std::endl;
     }
 
     void preparing_video_frame(bool external_caller) {
-//        std::cerr << __func__ << std::endl;
         if (external_caller) {
             this->has_external_caller = true;
         }
 
         if (external_caller || !this->video_frame_prepared || !this->has_external_caller) {
-//            std::cerr << __func__ << " before scale" << std::endl;
             sws_scale(
                 this->img_convert_ctx.get(),
                 this->original_picture->data, this->original_picture->linesize,
                 0, this->original_height, this->picture->data, this->picture->linesize);
 
-//            std::cerr << __func__ << " scale done" << std::endl;
-
             this->video_frame_prepared = true;
         }
-//        std::cerr << __func__ << " done" << std::endl;
     }
 
     void encoding_video_frame()
     {
-//        std::cerr << __func__ << std::endl;
         this->preparing_video_frame(false);
 
         // encode the image
@@ -534,11 +477,7 @@ public:
             this->picture.get(),
             &got_packet);
 
-//        std::cerr << __func__ << " B " << res << " got_packet=" << got_packet << std::endl;
-
         if (res == 0 && got_packet) {
-//            std::cerr << __func__ << " got packet" << std::endl;
-
             if (this->frame_key == frame_key_limit) {
                 this->pkt.flags |= AV_PKT_FLAG_KEY;
                 this->frame_key = 0;
@@ -552,11 +491,8 @@ public:
                 this->pkt.pts = this->duration.count();
             }
 
-//            std::cerr << __func__ << " C" << std::endl;
-
             if (0 != av_interleaved_write_frame(this->oc.get(), &this->pkt)){
                 LOG(LOG_ERR, "video recorder : failed to write encoded frame");
-//                std::cerr << "throw" << __LINE__ << std::endl;
                 throw Error(ERR_RECORDER_FAILED_TO_WRITE_ENCODED_FRAME);
             }
         }
