@@ -113,6 +113,67 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCapture)
 }
 
 
+BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureMP4)
+{
+    const int groupid = 0;
+    OutFilenameSequenceSeekableTransport trans(
+        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+        "./", "opaquerect_videocapture", ".mp4", groupid);
+
+    {
+        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
+        const int width  = 800;
+        const int height = 600;
+        Drawable drawable(width, height);
+
+        VideoCapture flvgen(now, trans, drawable, false, {width, height, 25, 15, 100000, "mp4"});
+        VideoSequencer flvseq(now, std::chrono::microseconds{2 * 1000000l}, VideoSequencerAction{flvgen});
+
+        auto const color1 = drawable.u32bgr_to_color(BLUE);
+        auto const color2 = drawable.u32bgr_to_color(WABGREEN);
+
+        Rect screen(0, 0, width, height);
+        drawable.opaquerect(screen, color1);
+        uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
+        Rect r(10, 10, 50, 50);
+        int vx = 5;
+        int vy = 4;
+        bool ignore_frame_in_timeval = false;
+        for (size_t x = 0; x < 100; x++) {
+            drawable.opaquerect(r.intersect(screen), color1);
+            r.y += vy;
+            r.x += vx;
+            drawable.opaquerect(r.intersect(screen), color2);
+            usec += 40000LL;
+            now.tv_sec  = usec / 1000000LL;
+            now.tv_usec = (usec % 1000000LL);
+            //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
+            drawable.set_mouse_cursor_pos(r.x + 10, r.y + 10);
+            flvgen.snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+            flvseq.snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+            if ((r.x + r.cx >= width ) || (r.x < 0)) { vx = -vx; }
+            if ((r.y + r.cy >= height) || (r.y < 0)) { vy = -vy; }
+        }
+    }
+
+    trans.disconnect();
+    auto & file_gen = *trans.seqgen();
+
+    // actual generated files depends on ffmpeg version
+    // values below depends on current embedded ffmpeg version
+    const char * filename;
+    filename = (file_gen.get(0));
+    BOOST_CHECK_EQUAL(8584, filesize(filename));
+    ::unlink(filename);
+    filename = (file_gen.get(1));
+    BOOST_CHECK_EQUAL(9086, filesize(filename));
+    ::unlink(filename);
+    filename = (file_gen.get(2));
+    BOOST_CHECK_EQUAL(262, filesize(filename));
+    ::unlink(filename);
+}
+
+
 BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureOneChunk)
 {
     const int groupid = 0;

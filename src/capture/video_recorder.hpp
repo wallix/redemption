@@ -116,7 +116,6 @@ class video_recorder
     std::unique_ptr<uint8_t, default_av_free> picture_buf;
 
     AVFramePtr picture;
-//    std::unique_ptr<AVFrame, default_av_free> original_picture;
     AVFramePtr original_picture;
     std::unique_ptr<uint8_t, default_av_free> video_outbuf;
 
@@ -131,19 +130,21 @@ class video_recorder
     std::unique_ptr<unsigned char, default_av_free> custom_io_buffer;
     std::unique_ptr<AVIOContext, default_av_free> custom_io_context;
 
+    AVPacket pkt;
+
     bool video_frame_prepared;
     bool has_external_caller;
 
-    std::chrono::milliseconds duration_frame;
+    const std::chrono::milliseconds duration_frame;
     std::chrono::milliseconds duration {};
 
     static const unsigned frame_key_limit = 100;
     unsigned frame_key = frame_key_limit;
 
 public:
-    //typedef int(* read_packet_t)(void *io_params, uint8_t *buf, int buf_size);
-    typedef int(* write_packet_fn_t)(void *io_params, uint8_t *buf, int buf_size);
-    typedef int64_t (* seek_fn_t)(void *io_params, int64_t offset, int whence);
+    //typedef int(*read_packet_t)(void *io_params, uint8_t *buf, int buf_size);
+    typedef int(*write_packet_fn_t)(void *io_params, uint8_t *buf, int buf_size);
+    typedef int64_t(*seek_fn_t)(void *io_params, int64_t offset, int whence);
 
     video_recorder(write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,
                    int width, int height,
@@ -243,8 +244,9 @@ public:
                 //this->video_st->codec->partitions = X264_PART_I8X8 | X264_PART_P8X8 | X264_PART_I4X4;
 //                 this->video_st->codec->me_method = 7;
                 this->video_st->codec->me_range = 16;
-                this->video_st->codec->refs = 1;
-                this->video_st->codec->flags = CODEC_FLAG_4MV | CODEC_FLAG_LOOP_FILTER;
+                //this->video_st->codec->refs = 1;
+                //this->video_st->codec->flags = CODEC_FLAG_4MV | CODEC_FLAG_LOOP_FILTER;
+                this->video_st->codec->flags |= AVFMT_NOTIMESTAMPS;
                 this->video_st->codec->qcompress = 0.0;
                 this->video_st->codec->max_qdiff = 4;
                 this->video_st->codec->gop_size = frame_rate;
@@ -439,6 +441,9 @@ public:
         no_close_if_success.success = true;
 //        std::cerr << "video recorder : constructor done\n" << std::endl;
 
+        av_init_packet(&this->pkt);
+        this->pkt.data = this->video_outbuf.get();
+        this->pkt.size = this->video_outbuf_size;
     }
 
     ~video_recorder() {
@@ -520,61 +525,36 @@ public:
 
         int got_packet = 0;
 
-        // TODO The new API should lead to some simplification in following code
-        AVPacket tmp_pkt;
-        av_init_packet(&tmp_pkt);
-
-        // fix "non-strictly-monotonic PTS" warning, but the player (mpv) indicate "No video PTS!".
-        // this->picture->pts += this->duration_frame.count();
-        tmp_pkt.data = this->video_outbuf.get();
-        tmp_pkt.size = this->video_outbuf_size;
-
-//        std::cerr << __func__ << " A " << this->video_st->codec->codec_id << " " << AV_CODEC_ID_FLV1 << std::endl;
+        // fix "non-strictly-monotonic PTS" warning, but grow file
+        //this->picture->pts += this->duration_frame.count();
 
         const int res = avcodec_encode_video2(
             this->video_st->codec,
-            &tmp_pkt,
+            &this->pkt,
             this->picture.get(),
             &got_packet);
-
-        av_packet_free_side_data(&tmp_pkt);
-
-//        const int out_size = avcodec_encode_video(
-//            this->video_st->codec,
-//            this->video_outbuf.get(),
-//            this->video_outbuf_size,
-//            this->picture.get());
 
 //        std::cerr << __func__ << " B " << res << " got_packet=" << got_packet << std::endl;
 
         if (res == 0 && got_packet) {
 //            std::cerr << __func__ << " got packet" << std::endl;
 
-            AVPacket pkt;
-            av_init_packet(&pkt);
-
-//             if (this->video_st->codec->coded_frame->pts != AV_NOPTS_VALUE){
-//                 pkt.pts = av_rescale_q(
-//                     this->video_st->codec->coded_frame->pts,
-//                     this->video_st->codec->time_base,
-//                     this->video_st->time_base);
-//             }
             if (this->frame_key == frame_key_limit) {
-                pkt.flags |= AV_PKT_FLAG_KEY;
+                this->pkt.flags |= AV_PKT_FLAG_KEY;
                 this->frame_key = 0;
             }
             ++this->frame_key;
-            pkt.stream_index = this->video_st->index;
-            pkt.data = this->video_outbuf.get();
-            pkt.size = tmp_pkt.size;
-            pkt.duration = this->duration_frame.count();
-            pkt.dts = this->duration.count();
-            this->duration += this->duration_frame;
-            pkt.pts = this->duration.count();
+            this->pkt.stream_index = this->video_st->index;
+            this->pkt.duration = this->duration_frame.count();
+            if (!(this->video_st->codec->flags & AVFMT_NOTIMESTAMPS)) {
+                this->pkt.dts = this->duration.count();
+                this->duration += this->duration_frame;
+                this->pkt.pts = this->duration.count();
+            }
 
 //            std::cerr << __func__ << " C" << std::endl;
 
-            if (0 != av_write_frame(this->oc.get(), &pkt)){
+            if (0 != av_interleaved_write_frame(this->oc.get(), &this->pkt)){
                 LOG(LOG_ERR, "video recorder : failed to write encoded frame");
 //                std::cerr << "throw" << __LINE__ << std::endl;
                 throw Error(ERR_RECORDER_FAILED_TO_WRITE_ENCODED_FRAME);
@@ -584,6 +564,7 @@ public:
         this->video_frame_prepared = false;
     }
 };
+
 
 struct io_video_recorder_with_transport
 {
