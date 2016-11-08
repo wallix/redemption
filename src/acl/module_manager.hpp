@@ -1229,7 +1229,8 @@ public:
                                                                    this->ini.get<cfg::mod_rdp::session_probe_disconnected_session_limit>();
                 mod_rdp_params.session_probe_idle_session_limit    =
                                                                    this->ini.get<cfg::mod_rdp::session_probe_idle_session_limit>();
-                mod_rdp_params.session_probe_alternate_shell       = this->ini.get<cfg::mod_rdp::session_probe_alternate_shell>();
+                mod_rdp_params.session_probe_exe_or_file           = this->ini.get<cfg::mod_rdp::session_probe_exe_or_file>();
+                mod_rdp_params.session_probe_arguments             = this->ini.get<cfg::mod_rdp::session_probe_arguments>();
 
                 mod_rdp_params.disable_clipboard_log_syslog        = bool(this->ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
                 mod_rdp_params.disable_clipboard_log_wrm           = bool(this->ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm);

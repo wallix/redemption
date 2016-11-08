@@ -371,7 +371,10 @@
 "session_probe_idle_session_limit = integer(min=0, default=0)\n\n"
 
 "#_hidden\n"
-"session_probe_alternate_shell = string(max=511, default='cmd /k')\n\n"
+"session_probe_exe_or_file = string(max=511, default='CMD')\n\n"
+
+"#_hidden\n"
+"session_probe_arguments = string(max=511, default='/K')\n\n"
 
 "# Keep known server certificates on WAB\n"
 "#_hidden\n"

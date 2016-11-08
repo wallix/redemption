@@ -371,7 +371,10 @@
 "#session_probe_idle_session_limit = 0\n\n"
 
 "#_hidden\n"
-"#session_probe_alternate_shell = cmd /k\n\n"
+"#session_probe_exe_or_file = CMD\n\n"
+
+"#_hidden\n"
+"#session_probe_arguments = /K\n\n"
 
 "# Keep known server certificates on WAB\n"
 "#_hidden\n"
