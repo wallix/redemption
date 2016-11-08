@@ -52,12 +52,32 @@ host_key = '/etc/sashimi/server_rsa.key'
 
 class EchoChannel(object):
     def __init__(self, session):
+        self.buffer = []
         self.session = session
         self.callbacks = pysshct.buildCallbacks(
             pysshct.ssh_channel_callbacks_struct, 
             pysshct.CB_CHANNEL_FUNCS, self)
         self.libssh_channel = pysshct.lib.ssh_new_channel(
             session.libssh_session, self.callbacks)
+
+    def flush(self):
+        Logger.info("@@@%s.flush() data='%s'" %
+            (self.__class__.__name__, str(self.buffer)))
+        if self.buffer:
+            try:
+                pos = self.buffer.index('\r')
+            except:
+                return
+            if pos == -1:
+                return
+            tosend = "".join(self.buffer[0:pos+1])+'\r\n'
+            res = pysshct.lib.ssh_channel_write_server(
+                self.session.libssh_session,
+                self.libssh_channel, tosend, pos+1)
+            if res > 0: 
+                self.buffer[0:res+1] = []
+            return
+            
 
     def __del__(self):
         if self.libssh_channel is not None:
@@ -67,9 +87,8 @@ class EchoChannel(object):
     def cb_data_stdout(self, data):
         Logger.info("@@@%s.cb_data_stdout(%s)" %
             (self.__class__.__name__, data))
-        return pysshct.lib.ssh_channel_write_server(
-            self.session.libssh_session,
-            self.libssh_channel, data, len(data))
+        self.buffer.append(data)
+        return len(data)
 
     # CHANNEL API
     def cb_data_stderr(self, data):
@@ -179,6 +198,7 @@ class SSHServer(object):
         self.client_socket = client_socket
         self.client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         self.local_ip, self.local_port = client_socket.getsockname()
+        self.channels = []
 
         self.client_addr = addr[0]
         self.client_port = addr[1]
@@ -214,6 +234,8 @@ class SSHServer(object):
             rc = pysshct.lib.ssh_event_dopoll(self.libssh_mainloop, 20000)
             if rc == pysshct.SSH_ERROR:
                 break
+            for channel in self.channels:
+                channel.flush()
             polltime = time.time()
             print "Polling %s" % str(polltime)
 
@@ -280,6 +302,7 @@ class SSHServer(object):
     def cb_channelOpenSessionRequest(self):
         Logger.info("@@%s.cb_channelOpenSessionRequest()" % self.__class__.__name__)
         channel = EchoChannel(self)
+        self.channels.append(channel)
         return channel.libssh_channel
 
     # SERVER SESSION API
