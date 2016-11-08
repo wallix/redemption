@@ -1253,15 +1253,26 @@ namespace cfg {
             type value{0};
         };
         // type: char[512]
-        struct session_probe_alternate_shell {
+        struct session_probe_exe_or_file {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
-            static constexpr char const * name() { return "session_probe_alternate_shell"; }
+            static constexpr char const * name() { return "session_probe_exe_or_file"; }
             using type = char[512];
             using sesman_and_spec_type = ::configs::spec_types::fixed_string;
             using mapped_type = sesman_and_spec_type;
-            type value = "cmd /k";
+            type value = "CMD";
+        };
+        // type: char[512]
+        struct session_probe_arguments {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "mod_rdp"; }
+            static constexpr char const * name() { return "session_probe_arguments"; }
+            using type = char[512];
+            using sesman_and_spec_type = ::configs::spec_types::fixed_string;
+            using mapped_type = sesman_and_spec_type;
+            type value = "/K";
         };
         // Keep known server certificates on WAB
         // AUTHID_MOD_RDP_SERVER_CERT_STORE
@@ -3149,7 +3160,8 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_disconnected_application_limit
 , cfg::mod_rdp::session_probe_disconnected_session_limit
 , cfg::mod_rdp::session_probe_idle_session_limit
-, cfg::mod_rdp::session_probe_alternate_shell
+, cfg::mod_rdp::session_probe_exe_or_file
+, cfg::mod_rdp::session_probe_arguments
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check
 , cfg::mod_rdp::server_access_allowed_message

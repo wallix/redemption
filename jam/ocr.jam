@@ -1,0 +1,60 @@
+obj ocr : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp : ;
+
+## ppocr {
+alias ppocr_dictionary_src      : $(PPOCR_SRC_PATH)/ppocr/spell/dictionary.cpp ;
+alias ppocr_glyphs_loader_src   : $(PPOCR_SRC_PATH)/ppocr/loader2/glyphs_loader.cpp ;
+alias ppocr_image_compare_src   : $(PPOCR_SRC_PATH)/ppocr/utils/image_compare.cpp ;
+alias ppocr_loader2_image_io_src : $(PPOCR_SRC_PATH)/ppocr/loader2/image_io.cpp ;
+
+alias ppocr_strategies_src :
+    [ glob $(PPOCR_SRC_PATH)/ppocr/strategies/*.cpp ]
+;
+
+alias ppocr_image_src :
+    $(PPOCR_SRC_PATH)/ppocr/image/coordinate.cpp
+    $(PPOCR_SRC_PATH)/ppocr/image/image.cpp
+;
+
+alias ppocr_image_from_file_src :
+    ppocr_image_src
+    $(PPOCR_SRC_PATH)/ppocr/image/image_from_file.cpp
+;
+
+alias ppocr_box_character_src :
+    $(PPOCR_SRC_PATH)/ppocr/box_char/box.cpp
+    $(PPOCR_SRC_PATH)/ppocr/box_char/make_box_character.cpp
+;
+
+alias ppocr_glyphs_src :
+    ppocr_loader2_image_io_src
+    ppocr_image_src
+    ppocr_box_character_src
+    ppocr_image_from_file_src
+;
+
+alias ppocr_datas_and_glyphs_src :
+    ppocr_image_compare_src
+    ppocr_dictionary_src
+    ppocr_strategies_src
+    ppocr_glyphs_loader_src
+    ppocr_glyphs_src
+;
+
+
+alias ppocr :
+    $(PPOCR_SRC_PATH)/ppocr/ocr2/glyphs.cpp
+    $(PPOCR_SRC_PATH)/ppocr/ocr2/word_lines.cpp
+    $(PPOCR_SRC_PATH)/ppocr/ocr2/replacement.cpp
+    $(PPOCR_SRC_PATH)/ppocr/ocr2/data_indexes_by_words.cpp
+    $(PPOCR_SRC_PATH)/ppocr/ocr2/filter_by_lines.cpp
+    $(PPOCR_SRC_PATH)/ppocr/ocr2/filter_by_font.cpp
+    $(PPOCR_SRC_PATH)/ppocr/ocr2/disambiguous_with_dict.cpp
+
+    ppocr_datas_and_glyphs_src
+    $(REDEMPTION_SRC_PATH)/capture/rdp_ppocr/get_ocr_constants.cpp
+;
+
+lib ppocr_static : ppocr/<linkflags>-Wl,-Bsymbolic,<cxxflags>-fvisibility=hidden : <link>static ;
+
+lib ppocr_test : ppocr/<cxxflags>-frtti,<linkflags>-fvisibility=default : <link>static ;
+## } ppocr

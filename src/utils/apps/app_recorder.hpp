@@ -64,7 +64,7 @@ inline unsigned get_file_count(
     while (begin_cap >= in_wrm_trans.end_chunk_time()) {
         in_wrm_trans.next();
     }
-    unsigned result = in_wrm_trans.get_seqno();
+    unsigned const result = in_wrm_trans.get_seqno();
     try {
         do {
             end_record.tv_sec = in_wrm_trans.end_chunk_time();

@@ -124,7 +124,6 @@ public:
         snprintf(label, sizeof(label), "%s:", TR("timeleft", lang));
         this->timeleft_label.set_text(label);
 
-        // this->img.rect.x = (this->cx() - this->img.cx()) / 2;
         int const back_width = this->back ? this->back->cx() + 10 : 0;
         this->cancel.set_button_x(left + (this->cx() - (this->cancel.cx() + back_width)) / 2);
         this->connection_closed_label.rect.x = left + (this->cx() - this->connection_closed_label.cx()) / 2;
@@ -139,10 +138,15 @@ public:
         this->add_widget(&this->separator);
 
         uint16_t px = this->diagnostic.cx() + 10;
+        if (username && *username) {
+            px = std::max<uint16_t>(this->username_label.cx() + 10, px);
+            px = std::max<uint16_t>(this->target_label.cx() + 10, px);
+        }
+        if (showtimer) {
+            px = std::max<uint16_t>(this->timeleft_label.cx() + 10, px);
+        }
 
         int y = this->dy() + 10 - top;
-        // this->img.rect.y = y;
-        // y += this->img.cy() + 20;
 
         this->connection_closed_label.rect.y = top + y;
         y += this->connection_closed_label.cy();
@@ -156,14 +160,12 @@ public:
             this->add_widget(&this->target_label);
             this->add_widget(&this->target_label_value);
 
-            px = std::max(this->username_label.cx(), this->diagnostic.cx());
-            px = std::max(px, this->timeleft_label.cx()) + 10;
             this->username_label_value.rect.x = this->username_label.dx() + px;
             this->target_label_value.rect.x = this->username_label.dx() + px;
 
             this->username_label.rect.y = top + y;
             this->username_label_value.rect.y = top + y;
-            y += this->username_label.cy() + 10;
+            y += this->username_label.cy() + 20;
             this->target_label.rect.y = top + y;
             this->target_label_value.rect.y = top + y;
             y += this->target_label.cy() + 20;
@@ -185,10 +187,6 @@ public:
             this->add_widget(&this->timeleft_value);
             this->timeleft_label.rect.y = top + y;
             this->timeleft_value.rect.y = top + y;
-            if (this->timeleft_label.cx() + 10 > px) {
-                px = this->timeleft_label.cx() + 10;
-                this->diagnostic_lines.rect.x = this->username_label.dx() + px;
-            }
             this->timeleft_value.rect.x =
                 this->username_label.dx() + px;
             y += this->timeleft_label.cy() + 20;
@@ -237,10 +235,15 @@ public:
         this->separator.rect.x = left + (this->cx() - 600) / 2;
 
         uint16_t px = this->diagnostic.cx() + 10;
+        if (this->username_label_value.buffer[0]) {
+            px = std::max<uint16_t>(this->username_label.cx() + 10, px);
+            px = std::max<uint16_t>(this->target_label.cx() + 10, px);
+        }
+        if (showtimer) {
+            px = std::max<uint16_t>(this->timeleft_label.cx() + 10, px);
+        }
 
         int y = this->dy() + 10 - top;
-        // this->img.rect.y = y;
-        // y += this->img.cy() + 20;
 
         this->connection_closed_label.rect.y = top + y;
         y += this->connection_closed_label.cy();
@@ -249,14 +252,12 @@ public:
         y += 30;
 
         if (this->username_label_value.buffer[0]) {
-            px = std::max(this->username_label.cx(), this->diagnostic.cx());
-            px = std::max(px, this->timeleft_label.cx()) + 10;
             this->username_label_value.rect.x = this->username_label.dx() + px;
             this->target_label_value.rect.x = this->username_label.dx() + px;
 
             this->username_label.rect.y = top + y;
             this->username_label_value.rect.y = top + y;
-            y += this->username_label.cy() + 10;
+            y += this->username_label.cy() + 20;
             this->target_label.rect.y = top + y;
             this->target_label_value.rect.y = top + y;
             y += this->target_label.cy() + 20;
@@ -276,10 +277,6 @@ public:
         if (this->showtimer) {
             this->timeleft_label.rect.y = top + y;
             this->timeleft_value.rect.y = top + y;
-            if (this->timeleft_label.cx() + 10 > px) {
-                px = this->timeleft_label.cx() + 10;
-                this->diagnostic_lines.rect.x = this->username_label.dx() + px;
-            }
             this->timeleft_value.rect.x =
                 this->username_label.dx() + px;
             y += this->timeleft_label.cy() + 20;
@@ -311,7 +308,7 @@ public:
         }
         if (this->prev_time != tl) {
             char buff[256];
-            snprintf(buff, sizeof(buff), "%2ld %s%s %s. ",
+            snprintf(buff, sizeof(buff), "%ld %s%s %s. ",
                      tl,
                      seconds?TR("second", this->lang):TR("minute", this->lang),
                      (tl <= 1)?"":"s",

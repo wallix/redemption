@@ -113,7 +113,7 @@ struct ssh_buffer_struct {
       if (this->data) {
         /* burn the data */
         memset(this->data, 0, this->allocated);
-        free(this->data);
+        delete [] this->data;
         this->data = nullptr;
       }
       memset(this, 'X', sizeof(*this));
@@ -123,8 +123,6 @@ struct ssh_buffer_struct {
      * @internal
      *
      * @brief Reinitialize a SSH buffer.
-     *
-     * @param[in]  buffer   The buffer to reinitialize.
      *
      * @return              0 on success, < 0 on error.
      */
@@ -214,8 +212,6 @@ struct ssh_buffer_struct {
      *
      * @brief Add data at the head of a buffer.
      *
-     * @param[in]  buffer   The buffer to add the data.
-     *
      * @param[in]  data     The data to prepend.
      *
      * @param[in]  len      The length of data to prepend.
@@ -236,15 +232,12 @@ struct ssh_buffer_struct {
      *
      * @brief Get the remaining data out of the buffer and adjust the read pointer.
      *
-     * @param[in]  buffer   The buffer to read.
-     *
      * @param[in]  data     The data buffer where to store the data.
      *
      * @param[in]  len      The length to read from the buffer.
      *
      * @returns             0 if there is not enough data in buffer, len otherwise.
      */
-    // TODO: replace call sites by buffer_get_sshstring, it's usually what it's used for
     uint32_t buffer_get_data(void *data, uint32_t len){
         memcpy(data, this->data+this->pos,len);
         this->pos+=len;
