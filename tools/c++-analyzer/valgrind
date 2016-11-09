@@ -43,7 +43,7 @@ fi \
     fi
     echo -e "  \e[38;5;221;1mfail\e[0m"
     echo "$outvalgrind" | ./tools/valgrind-filter/valgrind-output-color
-    echo "$f (valgrind error)" >&2
+    echo "$f (valgrind ${error#* })" >&2
     if [[ $n1 != $n2 ]] ; then
         echo "$f (leak: $n1 allocs, $n2 frees)" >&2
     fi
