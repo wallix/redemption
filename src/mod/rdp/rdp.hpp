@@ -1057,7 +1057,7 @@ public:
 
                     LOG(LOG_WARNING,
                         "mod_rdp: "
-                            "Clipboard based Session Probe launcher is not compatible with application."
+                            "Clipboard based Session Probe launcher is not compatible with application. "
                             "Falled back to using AlternateShell based launcher.");
                 }
 

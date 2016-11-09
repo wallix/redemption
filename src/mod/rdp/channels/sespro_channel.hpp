@@ -405,7 +405,8 @@ public:
 
         const char request_hello[] = "Request=Hello";
 
-        const char version[] = "Version=";
+        const char ExtraInfo[] = "ExtraInfo=";
+        const char version[]   = "Version=";
 
         if (!this->server_message.compare(request_hello)) {
             if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
@@ -490,6 +491,35 @@ public:
                 {
                     const char cstr[] = "Version=" "1" "\x01" "1";
                     out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                out_s.out_clear_bytes(1);   // Null-terminator.
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset -
+                        sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_message_to_server(out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    out_s.get_data(), out_s.get_offset());
+            }
+
+            {
+                StaticOutStream<1024> out_s;
+
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_skip_bytes(sizeof(uint16_t));
+
+                {
+                    const char cstr[] = "ExtraInfo=";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                {
+                    char cstr[128];
+                    snprintf(cstr, sizeof(cstr), "%u", ::getpid());
+                    out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
 
                 out_s.out_clear_bytes(1);   // Null-terminator.
@@ -702,6 +732,20 @@ public:
                 this->send_message_to_server(out_s.get_offset(),
                     CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
                     out_s.get_data(), out_s.get_offset());
+            }
+        }
+        else if (!this->server_message.compare(
+                     0,
+                     sizeof(ExtraInfo) - 1,
+                     ExtraInfo)) {
+            const char * session_probe_pid =
+                (this->server_message.c_str() + sizeof(ExtraInfo) - 1);
+
+            if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
+                LOG(LOG_INFO,
+                    "SessionProbeVirtualChannel::process_server_message: "
+                        "SessionProbePID=%s",
+                    session_probe_pid);
             }
         }
         else if (!this->server_message.compare(
