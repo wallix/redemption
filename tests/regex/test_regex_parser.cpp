@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
         Reg(const char * s)
         {
             this->stparser.compile(s);
-            ///\ATTENTION not save
+            ///\ATTENTION not safe
             this->str = st_to_string(const_cast<State*>(this->stparser.root()));
         }
 

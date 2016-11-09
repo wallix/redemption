@@ -724,6 +724,9 @@
 "#ocr = 0\n\n"
 
 "#_advanced\n"
+"#ffmpeg = 0\n\n"
+
+"#_advanced\n"
 "#config = 1\n\n"
 
 "[translation]\n\n"

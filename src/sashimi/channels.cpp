@@ -1120,47 +1120,51 @@ int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
     bool polling_target = false;
 
     uint8_t n = 0;
-    ssh_pollfd_t * front_pollfd = nullptr;
+    ssh_pollfd_t & front_pollfd = pollfds[n];
 
-    syslog(LOG_INFO, "%s --- POLLING FRONT to_send=%d received=%d", __FUNCTION__,
-         static_cast<int>(ctx->front_session->socket->out_buffer->in_remain()),
-         static_cast<int>(ctx->front_session->socket->in_buffer->in_remain()));
-    front_pollfd = &pollfds[0];
-    front_pollfd->fd = ctx->front_session->poll->socket->fd_in;
-    front_pollfd->events = POLLIN;
 
-    /* If no data is pending at session level
-       check if channel data is pending
-       TODO: we should probably perform some rotation
-       on channels or we may privilege some channels
-       above the others
-       TODO: should we send as much data as possible at once ?
-    */
+    if (ctx->front_session && ctx->front_session->poll) {
+        syslog(LOG_INFO, "%s --- POLLING FRONT to_send=%d received=%d", __FUNCTION__,
+             static_cast<int>(ctx->front_session->socket->out_buffer->in_remain()),
+             static_cast<int>(ctx->front_session->socket->in_buffer->in_remain()));
+        front_pollfd.fd = ctx->front_session->poll->socket->fd_in;
+        front_pollfd.events = POLLIN;
 
-    if(ctx->front_session->socket->out_buffer->in_remain() == 0){
-        ctx->front_session->do_delayed_sending();
+        /* If no data is pending at session level
+           check if channel data is pending
+           TODO: we should probably perform some rotation
+           on channels or we may privilege some channels
+           above the others
+           TODO: should we send as much data as possible at once ?
+        */
+
+        if(ctx->front_session->socket->out_buffer->in_remain() == 0){
+            ctx->front_session->do_delayed_sending();
+        }
+
+        if(ctx->front_session->socket->out_buffer->in_remain() > 0){
+            front_pollfd.events |= POLLOUT;
+        }
+
+        if (ctx->front_session->socket->state == SSH_SOCKET_CONNECTING){
+            front_pollfd.events |= POLLOUT;
+        }
+        if (ctx->front_session->poll->lock){
+            front_pollfd.events &= ~POLLIN;
+        }
+
+        front_pollfd.revents = 0;
+        n++;
     }
 
-    if(ctx->front_session->socket->out_buffer->in_remain() > 0){
-        front_pollfd->events |= POLLOUT;
-    }
-
-    if (ctx->front_session->socket->state == SSH_SOCKET_CONNECTING){
-        front_pollfd->events |= POLLOUT;
-    }
-    if (ctx->front_session->poll->lock){
-        front_pollfd->events &= ~POLLIN;
-    }
-
-    front_pollfd->revents = 0;
-    n++;
-
+    ssh_pollfd_t & target_pollfd = pollfds[n];
+    
     if ((ctx->target_session && ctx->target_session->poll) || ctx->fd_poll){
         polling_target = true;
 
-        pollfds[n].fd = (ctx->fd_poll) ? ctx->fd_poll->x_fd : ctx->target_session->poll->socket->fd_in;
-        pollfds[n].events = POLLIN;
-        pollfds[n].events &= ~POLLOUT;
+        target_pollfd.fd = (ctx->fd_poll) ? ctx->fd_poll->x_fd : ctx->target_session->poll->socket->fd_in;
+        target_pollfd.events = POLLIN;
+        target_pollfd.events &= ~POLLOUT;
 
         if (ctx->fd_poll){
             syslog(LOG_INFO, "%s --- POLLING FD TARGET", __FUNCTION__);
@@ -1173,16 +1177,16 @@ int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
             if(ctx->target_session->socket->out_buffer->in_remain() > 0){
                 syslog(LOG_INFO, "%s --- POLLOUT TARGET because %d to send",
                     __FUNCTION__, static_cast<int>(ctx->target_session->socket->out_buffer->in_remain()));
-                pollfds[n].events |= POLLOUT;
+                target_pollfd.events |= POLLOUT;
             }
 
             if (ctx->target_session->socket->state == SSH_SOCKET_CONNECTING){
                 syslog(LOG_INFO, "%s --- POLLOUT TARGET because connecting", __FUNCTION__);
-                pollfds[n].events |= POLLOUT;
+                target_pollfd.events |= POLLOUT;
             }
         }
 
-        pollfds[n].revents = 0;
+        target_pollfd.revents = 0;
         n++;
     }
 
@@ -1198,33 +1202,35 @@ int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
 
   }
 
-    syslog(LOG_INFO, "%s FRONT state rc=%d %p revent=%d lock=%d",
-        __FUNCTION__, rc, static_cast<void*>(front_pollfd), pollfds[0].revents,
-        ctx->front_session->poll->lock);
+    if (ctx->front_session && ctx->front_session->poll)
+    {
+        syslog(LOG_INFO, "%s FRONT state rc=%d revent=%d lock=%d",
+            __FUNCTION__, rc, front_pollfd.revents, ctx->front_session->poll->lock);
 
-    /* Do not do anything if this socket was already closed */
-    if(front_pollfd->fd != INVALID_SOCKET && front_pollfd->revents){
-        ctx->front_session->do_front_event(front_pollfd->revents);
+        /* Do not do anything if this socket was already closed */
+        if(front_pollfd.fd != INVALID_SOCKET && front_pollfd.revents){
+            ctx->front_session->do_front_event(front_pollfd.revents);
 
-        if (ctx->front_session->waiting_list.size() > 0){
-            Event * event = ctx->front_session->waiting_list.back();
-            if (event->trigger()){
-                event->action();
-                ctx->front_session->waiting_list.pop_back();
-                delete event;
+            if (ctx->front_session->waiting_list.size() > 0){
+                Event * event = ctx->front_session->waiting_list.back();
+                if (event->trigger()){
+                    event->action();
+                    ctx->front_session->waiting_list.pop_back();
+                    delete event;
+                }
             }
         }
     }
 
     if (polling_target && ctx->fd_poll){
-        if (pollfds[n-1].revents){
-            do_fd_target_event(ctx->fd_poll, pollfds[n-1].revents);
+        if (target_pollfd.revents){
+            do_fd_target_event(ctx->fd_poll, target_pollfd.revents);
         }
     }
 
     if (polling_target && ctx->target_session){
-        if (pollfds[n-1].revents){
-            ctx->target_session->do_target_event(pollfds[n-1].revents);
+        if (target_pollfd.revents){
+            ctx->target_session->do_target_event(target_pollfd.revents);
         }
 
         if (ctx->target_session->waiting_list.size() > 0){
@@ -1239,8 +1245,6 @@ int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
 
     return SSH_OK;
 }
-
-
 
 
 // ==================================== END SSH_MSG_DISCONNECT ================================

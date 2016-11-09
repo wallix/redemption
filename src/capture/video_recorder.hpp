@@ -116,8 +116,8 @@ class video_recorder
     AVFramePtr original_picture;
     std::unique_ptr<uint8_t, default_av_free> video_outbuf;
 
-    int original_height;
-    int video_outbuf_size;
+    const int original_height;
+    const int video_outbuf_size;
 
     std::unique_ptr<AVFormatContext, default_av_free_format_context> oc;
     AVStream *video_st;
@@ -138,23 +138,28 @@ class video_recorder
     static const unsigned frame_key_limit = 100;
     unsigned frame_key = frame_key_limit;
 
+    uint32_t verbose;
+
 public:
     //typedef int(*read_packet_t)(void *io_params, uint8_t *buf, int buf_size);
     typedef int(*write_packet_fn_t)(void *io_params, uint8_t *buf, int buf_size);
     typedef int64_t(*seek_fn_t)(void *io_params, int64_t offset, int whence);
 
-    video_recorder(write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,
-                   int width, int height,
-                   int /*imageSize*/, const uint8_t* bmp_data, int bitrate,
-                   int frame_rate, int qscale, const char * codec_id,
-                   const int target_width, const int target_height,
-                   int video_outbuf_size = 0)
-        : original_height(height)
-        , video_outbuf_size(0)
-        , video_st(nullptr)
-        , video_frame_prepared(false)
-        , has_external_caller(false)
-        , duration_frame(std::max(1000ull / frame_rate, 1ull))
+    video_recorder(
+        write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,
+        int width, int height,
+        int /*imageSize*/, const uint8_t* bmp_data, int bitrate,
+        int frame_rate, int qscale, const char * codec_id,
+        const int target_width, const int target_height,
+        uint32_t verbose
+    )
+    : original_height(height)
+    , video_outbuf_size(target_width * target_height * 3 * 5)
+    , video_st(nullptr)
+    , video_frame_prepared(false)
+    , has_external_caller(false)
+    , duration_frame(std::max(1000ull / frame_rate, 1ull))
+    , verbose(verbose)
     {
         /* initialize libavcodec, and register all codecs and formats */
         av_register_all();
@@ -313,12 +318,6 @@ public:
                 as long as they're aligned enough for the architecture, and
                 they're freed appropriately (such as using av_free for buffers
                 allocated with av_malloc) */
-            if (video_outbuf_size){
-                this->video_outbuf_size = video_outbuf_size;
-            }
-            else {
-                this->video_outbuf_size = target_width * target_height * 3 * 5;
-            }
             this->video_outbuf.reset(static_cast<uint8_t*>(av_malloc(this->video_outbuf_size)));
             if (!this->video_outbuf){
                 LOG(LOG_ERR, "video recorder error : failed to allocate video output buffer");
@@ -395,6 +394,8 @@ public:
         av_init_packet(&this->pkt);
         this->pkt.data = this->video_outbuf.get();
         this->pkt.size = this->video_outbuf_size;
+
+        av_log_set_level(this->verbose);
     }
 
     ~video_recorder() {

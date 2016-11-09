@@ -107,17 +107,9 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
             fd.receive(in_stream_fileList);
         }
 
-        std::string out_data(reinterpret_cast<char *>(ou_stream_fileList.get_data()), 604);
-
-        std::string expected(reinterpret_cast<const char *>(file_list_data), 604);
-
-        try {
-            BOOST_CHECK_EQUAL(expected, out_data);
-        } catch (Error err) {
-            for (int i = 0; i < 604; i++) {
-                std::cout << int(ou_stream_fileList.get_data()[i]) << " " << int(file_list_data[i]) <<  std::endl;
-            }
-        }
+        std::string const out_data(reinterpret_cast<char *>(ou_stream_fileList.get_data()), 604);
+        std::string const expected(reinterpret_cast<const char *>(file_list_data), 604);
+        BOOST_CHECK_EQUAL(expected, out_data);
     }
 
 
