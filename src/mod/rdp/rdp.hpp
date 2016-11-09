@@ -393,7 +393,9 @@ protected:
 
     bool already_upped_and_running = false;
 
-    static constexpr uint32_t BmpCacheRev2_Cache_NumEntries[BmpCache::MAXIMUM_NUMBER_OF_CACHES] = { 120, 120, 2553, 0, 0 };
+    static constexpr std::array<uint32_t, BmpCache::MAXIMUM_NUMBER_OF_CACHES>
+    BmpCacheRev2_Cache_NumEntries()
+    { return std::array<uint32_t, BmpCache::MAXIMUM_NUMBER_OF_CACHES>{{ 120, 120, 2553, 0, 0 }}; }
 
     class ToServerAsynchronousSender : public VirtualChannelDataSender
     {
@@ -3856,9 +3858,9 @@ public:
                 BmpCache2Caps bmpcache2_caps;
                 bmpcache2_caps.cacheFlags           = PERSISTENT_KEYS_EXPECTED_FLAG | (this->enable_cache_waiting_list ? ALLOW_CACHE_WAITING_LIST_FLAG : 0);
                 bmpcache2_caps.numCellCaches        = 3;
-                bmpcache2_caps.bitmapCache0CellInfo = this->BmpCacheRev2_Cache_NumEntries[0];
-                bmpcache2_caps.bitmapCache1CellInfo = this->BmpCacheRev2_Cache_NumEntries[1];
-                bmpcache2_caps.bitmapCache2CellInfo = (this->BmpCacheRev2_Cache_NumEntries[2] | 0x80000000);
+                bmpcache2_caps.bitmapCache0CellInfo = this->BmpCacheRev2_Cache_NumEntries()[0];
+                bmpcache2_caps.bitmapCache1CellInfo = this->BmpCacheRev2_Cache_NumEntries()[1];
+                bmpcache2_caps.bitmapCache2CellInfo = (this->BmpCacheRev2_Cache_NumEntries()[2] | 0x80000000);
 
                 bool use_bitmapcache_rev2 = false;
 
@@ -5531,24 +5533,7 @@ public:
                 while (idx < cache.size() && cache[idx]) {
                     ++idx;
                 }
-                uint32_t max_cache_num_entries = 0;
-                switch (cache_id) {
-                    case 0:
-                        max_cache_num_entries = this->BmpCacheRev2_Cache_NumEntries[0];
-                        break;
-                    case 1:
-                        max_cache_num_entries = this->BmpCacheRev2_Cache_NumEntries[1];
-                        break;
-                    case 2:
-                        max_cache_num_entries = this->BmpCacheRev2_Cache_NumEntries[2];
-                        break;
-                    case 3:
-                        max_cache_num_entries = this->BmpCacheRev2_Cache_NumEntries[3];
-                        break;
-                    case 4:
-                        max_cache_num_entries = this->BmpCacheRev2_Cache_NumEntries[4];
-                        break;
-                }
+                uint32_t const max_cache_num_entries = this->BmpCacheRev2_Cache_NumEntries()[cache_id];
                 totalEntriesCache[cache_id] = std::min<uint32_t>(idx, max_cache_num_entries);
                 //LOG(LOG_INFO, "totalEntriesCache[%d]=%d", cache_id, idx);
             }
