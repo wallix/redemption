@@ -563,9 +563,14 @@ void Front_Qt::mousePressEvent(QMouseEvent *e, int screen_shift) {
     if (this->_callback != nullptr) {
         int flag(0);
         switch (e->button()) {
-            case 1: flag = MOUSE_FLAG_BUTTON1; break;
-            case 2: flag = MOUSE_FLAG_BUTTON2; break;
-            case 4: flag = MOUSE_FLAG_BUTTON4; break;
+            case Qt::LeftButton:  flag = MOUSE_FLAG_BUTTON1; break;
+            case Qt::RightButton: flag = MOUSE_FLAG_BUTTON2; break;
+            case Qt::MidButton:   flag = MOUSE_FLAG_BUTTON4; break;
+            case Qt::XButton1:
+            case Qt::XButton2:
+            case Qt::NoButton:
+            case Qt::MouseButtonMask:
+
             default: break;
         }
         //std::cout << "mousePressed " << e->x() << " " <<  e->y() << std::endl;
@@ -578,9 +583,14 @@ void Front_Qt::mouseReleaseEvent(QMouseEvent *e, int screen_shift) {
         int flag(0);
         switch (e->button()) {
 
-            case 1: flag = MOUSE_FLAG_BUTTON1; break;
-            case 2: flag = MOUSE_FLAG_BUTTON2; break;
-            case 4: flag = MOUSE_FLAG_BUTTON4; break;
+            case Qt::LeftButton:  flag = MOUSE_FLAG_BUTTON1; break;
+            case Qt::RightButton: flag = MOUSE_FLAG_BUTTON2; break;
+            case Qt::MidButton:   flag = MOUSE_FLAG_BUTTON4; break;
+            case Qt::XButton1:
+            case Qt::XButton2:
+            case Qt::NoButton:
+            case Qt::MouseButtonMask:
+                
             default: break;
         }
         //std::cout << "mouseRelease" << std::endl;
@@ -2249,8 +2259,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         {
                         std::cout << "server >> PAKID_CORE_SERVER_ANNOUNCE" <<  std::endl;
 
-                        uint16_t versionMajor(chunk.in_uint16_le());
-                        uint16_t versionMinor(chunk.in_uint16_le());
+                        uint16_t versionMajor(0x0001);      //chunk.in_uint16_le());
+                        uint16_t versionMinor(0x0002);      //chunk.in_uint16_le());
                         uint32_t clientId(chunk.in_uint32_le());
 
                         StaticOutStream<32> stream;
@@ -2265,7 +2275,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         int total_length(stream.get_offset());
                         InStream chunk_to_send(stream.get_data(), stream.get_offset());
 
-                        //this->show_out_stream(CHANNELS::CHANNEL_FLAG_LAST |CHANNELS::CHANNEL_FLAG_FIRST, stream, total_length);
+                        this->show_out_stream(CHANNELS::CHANNEL_FLAG_LAST |CHANNELS::CHANNEL_FLAG_FIRST, stream, total_length);
 
                         this->_callback->send_to_mod_channel( channel_names::rdpdr
                                                             , chunk_to_send
@@ -2769,7 +2779,7 @@ void Front_Qt::process_client_clipboard_outdata(const uint64_t total_length, Out
 
     } else {
 
-        out_stream_first_part.out_copy_bytes(data, this->_clipboard_qt->_cliboard_data_length);
+        out_stream_first_part.out_copy_bytes(data, data_len);
         InStream chunk(out_stream_first_part.get_data(), out_stream_first_part.get_offset());
 
         callback->send_to_mod_channel( channel_names::cliprdr
@@ -2779,7 +2789,7 @@ void Front_Qt::process_client_clipboard_outdata(const uint64_t total_length, Out
                                               CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                             );
 
-        std::cout << "client >> Data PDU  " << this->_clipboard_qt->_cliboard_data_length << " / " << this->_clipboard_qt->_cliboard_data_length << std::endl;
+        std::cout << "client >> Data PDU  " << data_len << " / " << data_len << std::endl;
     }
 }
 
@@ -2811,7 +2821,7 @@ void Front_Qt::call_Draw() {
     if (this->_callback != nullptr && this->_cache != nullptr) {
         try {
             this->_callback->draw_event(time(nullptr), *(this));
-        } catch (const Error & e) {
+        } catch (const Error &) {
             this->dropScreen();
             const std::string errorMsg("Error: connexion to [" + this->_targetIP +  "] is closed.");
             std::cout << errorMsg << std::endl;
@@ -2836,7 +2846,7 @@ int main(int argc, char** argv){
 
     // sudo bin/gcc-4.9.2/san/rdpproxy -nf
 
-    //bjam -a client_rdp_Qt4 |& sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' && bin/gcc-4.9.2/release/threading-multi/client_rdp_Qt4 -n admin -pwd $mdp -ip 10.10.40.22 -p 3389
+    //bjam debug client_rdp_Qt4 |& sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' && bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4 -n admin -pwd $mdp -ip 10.10.40.22 -p 3389
 
     QApplication app(argc, argv);
 

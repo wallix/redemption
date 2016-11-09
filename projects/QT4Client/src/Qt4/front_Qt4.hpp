@@ -399,48 +399,48 @@ public:
 
     void show_out_stream(int flags, OutStream & chunk, size_t length);
 
-    Screen_Qt * getMainScreen();
+    Screen_Qt * getMainScreen() override;
 
-    virtual void emptyLocalBuffer();
+    virtual void emptyLocalBuffer() override;
 
     void setScreenDimension();
 
-    void load_replay_mod(std::string & movie_name);
+    void load_replay_mod(std::string & movie_name) override;
 
-    void delete_replay_mod();
+    void delete_replay_mod() override;
 
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //---------------------------------------
     //   GRAPHIC FUNCTIONS (factorization)
-    //---------------------------------------
+    //----------------------------- ----------
 
     template<class Op>
     void draw_memblt_op(const Rect & drect, const Bitmap & bitmap);
 
     struct Op_0x22 {
-        constexpr uint8_t op(const uchar src, const uchar dst) {
+        uint8_t op(const uchar src, const uchar dst) const {
             return ~(src) & dst;
         }
     };
     struct Op_0x55 {
-        constexpr uint8_t op(const uchar, const uchar dst) {
+        uint8_t op(const uchar, const uchar dst) const {
             return ~(dst);
         }
     };
     struct Op_0x66 {
-        constexpr uint8_t op(const uchar src, const uchar dst) {
+        uint8_t op(const uchar src, const uchar dst) const {
             return src ^ dst;
         }
     };
     struct Op_0xEE {
-        constexpr uint8_t op(const uchar src, const uchar dst) {
+        uint8_t op(const uchar src, const uchar dst) const {
             return src | dst;
         }
     };
     struct Op_0x88 {
-        constexpr uint8_t op(const uchar src, const uchar dst) {
+        uint8_t op(const uchar src, const uchar dst) const {
             return src & dst;
         }
     };
@@ -516,9 +516,9 @@ public:
 
     virtual void draw(const RDP::RAIL::NonMonitoredDesktop & order) override;
 
-    virtual void draw(const RDPColCache   & cmd);
+    virtual void draw(const RDPColCache   & cmd) override;
 
-    virtual void draw(const RDPBrushCache & cmd);
+    virtual void draw(const RDPBrushCache & cmd) override;
 
 
 
