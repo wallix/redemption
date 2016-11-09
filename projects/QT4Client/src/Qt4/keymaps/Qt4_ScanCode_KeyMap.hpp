@@ -165,7 +165,7 @@ private:
                 const Keylayout_r::KeyLayoutMap_t & layout = *(this->_layout);
                 this->scanCode = layout.at(scanCode);
             }
-        } catch (const std::exception & e) {
+        } catch (const std::exception &) {
             std::cerr << std::hex << "Unknown key(0x" << this->scanCode << ") to current layout 0x" << this->_keylayout_WORK->LCID << " " << this->_keylayout_WORK->locale_name << "." << std::endl;
             this->_unvalidScanCode = true;
         }
@@ -490,7 +490,7 @@ private:
             //-----------------------------
             this->applyCharTable();
             return true;
-        } catch (const std::exception & e) {
+        } catch (const std::exception &) {
             return false;
         }
     }//------------------------------------------------------------------------
@@ -502,7 +502,7 @@ private:
         try {
             this->scanCode = this->_customNoExtended.at(this->scanCode);
             return true;
-        } catch (const std::exception & e) {
+        } catch (const std::exception &) {
             return false;
         }
     }//========================================================================
@@ -524,7 +524,7 @@ private:
             this->applyCharTable();
             this->flag = this->flag | KBD_FLAGS_EXTENDED;
             return true;
-        } catch (const std::exception & e) {
+        } catch (const std::exception &) {
             this->scanCode = 0;
             return false;
         }
@@ -538,7 +538,7 @@ private:
             this->scanCode = this->_customExtended.at(this->scanCode);
             this->flag = this->flag | KBD_FLAGS_EXTENDED;
             return true;
-        } catch (const std::exception & e) {
+        } catch (const std::exception &) {
             return false;
         }
     }//============================================================================================================

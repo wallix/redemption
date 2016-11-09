@@ -25,7 +25,7 @@
 
 #define LOGNULL
 //#define LOGPRINT
-
+#include <iostream>
 #include "core/RDP/channels/rdpdr.hpp"
 
 BOOST_AUTO_TEST_CASE(TestDeviceCreateRequest1)
@@ -168,6 +168,27 @@ BOOST_AUTO_TEST_CASE(TestDeviceCreateResponse3)
 
     BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+}
+
+
+BOOST_AUTO_TEST_CASE(ClientAnnounceReply) {
+
+    StaticOutStream<16> out_stream;
+
+    rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
+                                    , rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM);
+    sharedHeader.emit(out_stream);
+
+    rdpdr::ClientAnnounceReply clientAnnounceReply(0x0001, 0x0002, 0x00000001);
+    clientAnnounceReply.emit(out_stream);
+
+    std::string out_data(reinterpret_cast<char *>(out_stream.get_data()), 12);
+
+    const char expected_data[] =
+        "\x72\x44\x43\x43\x01\x00\x02\x00\x01\x00\x00\x00";
+    std::string expected(reinterpret_cast<const char *>(expected_data), 12);
+
+    BOOST_CHECK_EQUAL(expected, out_data);
 }
 
 

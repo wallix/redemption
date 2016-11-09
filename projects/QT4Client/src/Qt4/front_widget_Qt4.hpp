@@ -133,7 +133,7 @@ public:
                 std::cout << "Connected to [" << targetIP <<  "]." << std::endl;
                 return true;
 
-            } catch (const std::exception & e) {
+            } catch (const std::exception &) {
                 std::string windowErrorMsg(errorMsg+" Socket error.");
                 std::cout << windowErrorMsg << std::endl;
                 this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
@@ -194,7 +194,7 @@ public:
             this->_sckRead = new QSocketNotifier(this->_client_sck, QSocketNotifier::Read, this);
             this->QObject::connect(this->_sckRead,   SIGNAL(activated(int)), this,  SLOT(call_Draw()));
 
-        } catch (const Error & e) {
+        } catch (const Error &) {
             const std::string errorMsg("Error: RDP Initialization failed.");
             std::cout << errorMsg << std::endl;
             std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
@@ -209,7 +209,7 @@ public:
                 try {
                     this->_callback->draw_event(time(nullptr), *(this->_front));
 
-                } catch (const Error & e) {
+                } catch (const Error &) {
                     const std::string errorMsg("Error: Failed during RDP early negociations.");
                     std::cout << errorMsg << std::endl;
                     std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
@@ -419,10 +419,11 @@ public:
         this->_layoutConnection->addRow(&(this->_labelRecording), &(this->_recordingCB));
         this->QObject::connect(&(this->_recordingCB), SIGNAL(stateChanged(int)), this, SLOT(recordingCheckChange(int)));
 
-        this->_captureSnapFreqComboBox.addItem("1000", 1000);
-        this->_captureSnapFreqComboBox.addItem("100" , 10000);
-        this->_captureSnapFreqComboBox.addItem("10"  , 100000);
         this->_captureSnapFreqComboBox.addItem("1"   , 1000000);
+        this->_captureSnapFreqComboBox.addItem("10"   , 1000000/10);
+        this->_captureSnapFreqComboBox.addItem("20"   , 1000000/20);
+        this->_captureSnapFreqComboBox.addItem("40"   , 1000000/40);
+        this->_captureSnapFreqComboBox.addItem("60"   , 1000000/60);
         int indexCaptureFreq = this->_captureSnapFreqComboBox.findData(this->_front->_delta_time);
         if ( indexCaptureFreq != -1 ) {
             this->_captureSnapFreqComboBox.setCurrentIndex(indexCaptureFreq);
