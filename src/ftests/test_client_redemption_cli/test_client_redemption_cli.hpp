@@ -270,7 +270,7 @@ public:
     //      CONSTRUCTOR
     //------------------------
 
-    TestClientCLI(ClientInfo info, uint32_t verbose)
+    TestClientCLI(ClientInfo const & info, uint32_t verbose)
     : FrontAPI(false, false)
     , _verbose(verbose)
     , _clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [](){
@@ -289,7 +289,7 @@ public:
 
         return params;
     }())
-    , mod_bpp(this->_info.bpp)
+    , mod_bpp(info.bpp)
     , mod_palette(BGRPalette::classic_332())
     , _info(info)
     , _callback(nullptr)
@@ -421,7 +421,7 @@ public:
             if (byte < 0x10) {
                 std::cout << "0";
             }
-            std::cout  <<  byte;
+            std::cout << byte;
         }
         std::cout << "\"" << std::dec << std::endl;
     }
@@ -999,7 +999,7 @@ class EventList
         , trigger_time(0)
         {}
 
-        virtual ~EventConfig() {};
+        virtual ~EventConfig() {}
 
         virtual void emit() = 0;
     };

@@ -52,11 +52,11 @@ int main(int argc, char** argv){
     info.cs_monitor.monitorCount = 1;
     //info.encryptionLevel = 1;
     int verbose(0);
-    std::string userName("");
-    std::string ip("");
-    std::string userPwd("");
+    std::string userName;
+    std::string ip;
+    std::string userPwd;
     int port(0);
-    std::string localIP("");
+    std::string localIP;
     int nbTry(3);
     int retryDelay(1000);
     //=========================================================
@@ -65,8 +65,9 @@ int main(int argc, char** argv){
 
     std::string script_file_path;
     uint8_t input_connection_data_complete(0);
-    for (int i = 0; i <  argc; i++) {
+    for (int i = 0; i < argc; i++) {
 
+        // TODO string_view
         std::string word(argv[i]);
 
         //================================
@@ -135,6 +136,7 @@ int main(int argc, char** argv){
     const size_t nb_mod_rdp_params_config(34);
     std::string dscr(" Active/unactive ");
 
+    // TODO What that ? See program_options
     ModRDPParamsConfig mod_rdp_params_config[] = {
 
       ModRDPParamsConfig(&(mod_rdp_params.enable_tls), false
@@ -308,10 +310,11 @@ int main(int argc, char** argv){
     } //==============================================================
 
 
+    // TODO too std::endl
 
     std::cout << std::endl << std::endl;
     std::cout << " ================================" << std::endl;
-    std::cout << " ========== Log Config ==========" << std::dec << std::endl;
+    std::cout << " ========== Log Config ==========" << std::endl;
     std::cout << " ================================" << std::endl;
     std::cout << " SHOW_USER_AND_TARGET_PARAMS = " << bool(verbose & TestClientCLI::SHOW_USER_AND_TARGET_PARAMS) <<  std::endl;
     std::cout << " SHOW_MOD_RDP_PARAMS         = " << bool(verbose & TestClientCLI::SHOW_MOD_RDP_PARAMS) <<  std::endl;
@@ -330,7 +333,7 @@ int main(int argc, char** argv){
     if (verbose & TestClientCLI::SHOW_USER_AND_TARGET_PARAMS) {
         std::cout <<  std::endl;
         std::cout << " ================================" << std::endl;
-        std::cout << " == User And Target Parameters ==" << std::dec << std::endl;
+        std::cout << " == User And Target Parameters ==" << std::endl;
         std::cout << " ================================" << std::endl;
 
         std::cout << " user_name= \"" << userName << "\"" <<  std::endl;
@@ -375,7 +378,7 @@ int main(int argc, char** argv){
     if (verbose & TestClientCLI::SHOW_MOD_RDP_PARAMS) {
         std::cout <<  std::endl;
         std::cout << " ================================" << std::endl;
-        std::cout << " ======= ModRDP Parameters ======" << std::dec << std::endl;
+        std::cout << " ======= ModRDP Parameters ======" << std::endl;
         std::cout << " ================================" << std::endl;
         for (size_t i = 0; i < nb_mod_rdp_params_config; i++ ) {
             std::cout << " " << mod_rdp_params_config[i].name << "=" << *(mod_rdp_params_config[i].param) << std::endl;
@@ -404,14 +407,14 @@ int main(int argc, char** argv){
         const std::string errorMsg(" Cannot connect to [" + ip +  "].");
 
         std::cout << " ================================" << std::endl;
-        std::cout << " ======= Connection steps =======" << std::dec << std::endl;
+        std::cout << " ======= Connection steps =======" << std::endl;
         std::cout << " ================================" << std::endl;
 
         sck = ip_connect(targetIP, port, nbTry, retryDelay);
 
         if (sck > 0) {
             try {
-                std::string error_message("");
+                std::string error_message; // BUG lifetime error to SocketTransport
                 socket = new SocketTransport( name
                                             , sck
                                             , targetIP
@@ -421,13 +424,11 @@ int main(int argc, char** argv){
                                             );
                 connection_succed = true;
 
-            } catch (const std::exception & e) {
-                std::string windowErrorMsg(errorMsg+" Socket error.");
-                std::cout << windowErrorMsg << std::endl;
+            } catch (const std::exception & e) { // TODO no throwing exception to SocketTransport ctor
+                std::cout << errorMsg << " Socket error. " << e.what() << std::endl;
             }
         } else {
-            std::string windowErrorMsg(errorMsg+" ip_connect error.");
-            std::cout << windowErrorMsg << std::endl;
+            std::cout << errorMsg << " ip_connect error." << std::endl;
         }
 
         if (connection_succed) {
@@ -441,7 +442,7 @@ int main(int argc, char** argv){
             TimeSystem timeSystem;
 
             try {
-                mod = new mod_rdp( *socket
+                mod = new mod_rdp( *socket // BUG may be uninitialized when used here
                                  , front
                                  , info
                                  , ini.get_ref<cfg::mod_rdp::redir_info>()
@@ -457,7 +458,7 @@ int main(int argc, char** argv){
                 std::cout << " Connected to [" << targetIP <<  "]." << std::endl;
 
             } catch (const Error & e) {
-                std::cout << " Error: RDP Initialization failed." << std::endl;
+                std::cout << " Error: RDP Initialization failed. " << e.errmsg() << std::endl;
                 connection_succed = false;
             }
 
@@ -466,11 +467,11 @@ int main(int argc, char** argv){
                     int i = 1;
                     while (!mod->is_up_and_running()) {
                         try {
-                            std::cout <<  " Early negociations step " << i <<  std::endl;
+                            std::cout <<  " Early negociations step " << i << std::endl;
                             mod->draw_event(time(nullptr), front);
                             i++;
                          } catch (const Error & e) {
-                            std::cout << " Error: Failed during RDP early negociations step " << i << "." << std::endl;
+                            std::cout << " Error: Failed during RDP early negociations step " << i << ". " << e.errmsg() << std::endl;
                             connection_succed = false;
                         }
                     }
@@ -484,7 +485,7 @@ int main(int argc, char** argv){
                 if (verbose & TestClientCLI::SHOW_CORE_SERVER_INFO) {
                     std::cout <<  std::endl;
                     std::cout << " ================================" << std::endl;
-                    std::cout << " ======= Server Core Info =======" << std::dec << std::endl;
+                    std::cout << " ======= Server Core Info =======" << std::endl;
                     std::cout << " ================================" << std::endl;
                     GCC::UserData::SCCore sc_core = mod->sc_core;
                     std::cout << " userDataType = " << int(sc_core.userDataType) << std::endl;
@@ -497,8 +498,12 @@ int main(int argc, char** argv){
 
                 if (verbose & TestClientCLI::SHOW_SECURITY_SERVER_INFO) {
                     std::cout << " ================================" << std::endl;
-                    std::cout << " ===== Server Security Info =====" << std::dec << std::endl;
+                    std::cout << " ===== Server Security Info =====" << std::endl;
                     std::cout << " ================================" << std::endl;
+                    /* TODO
+                     * definition of implicit copy constructor for 'SCSecurity' is deprecated because it has a user-declared destructor [-Wdeprecated]
+                     * implicit copy constructor for 'SCSecurity' first required here
+                     */
                     GCC::UserData::SCSecurity sc_sec1 = mod->sc_sec1;
                     std::cout << " userDataType = " << int(sc_sec1.userDataType) << std::endl;
                     std::cout << " length = " << int(sc_sec1.length) << std::endl;
@@ -509,39 +514,42 @@ int main(int argc, char** argv){
                     std::cout << " dwVersion = " << int(sc_sec1.dwVersion) << std::endl;
                     std::cout << " temporary = " << sc_sec1.temporary << std::endl;
                     std::cout << " serverRandom : ";
+                    // TODO Code duplicated (1)
                     for (size_t i = 0; i < SEC_RANDOM_SIZE; i++) {
                         if ((i % 16) == 0 && i != 0) {
                             std::cout << std::endl << "                ";
                         }
-                        std::string space("");
+                        std::string space;
                         if (sc_sec1.serverRandom[i] < 0x10) {
-                            space = std::string("0");
+                            space = "0";
                         }
                         std::cout <<"0x" << space << std::hex << int(sc_sec1.serverRandom[i]) << std::dec << " ";
                     }
                     std::cout << std::endl;
                     std::cout << std::endl;
                     std::cout << " pri_exp : ";
+                    // TODO Code duplicated (2)
                     for (size_t i = 0; i < 64; i++) {
                         if ((i % 16) == 0 && i != 0) {
                             std::cout << std::endl << "           ";
                         }
-                        std::string space("");
+                        std::string space;
                         if (sc_sec1.pri_exp[i] < 0x10) {
-                            space = std::string("0");
+                            space = "0";
                         }
                         std::cout <<"0x" << space << std::hex << int(sc_sec1.pri_exp[i]) <<  std::dec << " ";
                     }
                     std::cout << std::endl;
                     std::cout << std::endl;
                     std::cout << " pub_sig : ";
+                    // TODO Code duplicated (3)
                     for (size_t i = 0; i < 64; i++) {
                         if ((i % 16) == 0 && i != 0) {
                             std::cout << std::endl << "           ";
                         }
-                        std::string space("");
+                        std::string space;
                         if (sc_sec1.pub_sig[i] < 0x10) {
-                            space = std::string("0");
+                            space = "0";
                         }
                         std::cout <<"0x" << space << std::hex << int(sc_sec1.pub_sig[i]) << std::dec << " ";
                     }
@@ -555,7 +563,7 @@ int main(int argc, char** argv){
                     std::cout << "     wPublicKeyBlobLen = " << int(sc_sec1.proprietaryCertificate.wPublicKeyBlobLen) << std::endl;
                     std::cout << std::endl;
                     std::cout << "     RSAPK : " << std::endl;
-                     std::cout << "        magic = " << int(sc_sec1.proprietaryCertificate.RSAPK.magic) << std::endl;
+                    std::cout << "        magic = " << int(sc_sec1.proprietaryCertificate.RSAPK.magic) << std::endl;
                     std::cout << std::endl << std::endl;
 
                 }
@@ -574,7 +582,9 @@ int main(int argc, char** argv){
 
                         while(std::getline(ifichier, ligne)) {
                             auto pos(ligne.find(delimiter));
+                            // TODO tag : string_view
                             std::string tag  = ligne.substr(0, pos);
+                            // TODO tag : string_view
                             std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
 
                             if (       tag == "wait") {
@@ -616,10 +626,12 @@ int main(int argc, char** argv){
 
                             } else if (tag == "clpbrd_change") {
                                 // TODO dynamique data and format injection
-                                uint32_t formatIDs[]                 = { RDPECLIP::CF_TEXT };
-                                std::string formatListDataLongName[] = { std::string("\0\0", 2) };
+                                uint32_t formatIDs                 = RDPECLIP::CF_TEXT;
+                                std::string formatListDataLongName("\0\0", 2);
 
-                                eventList.setClpbrd_change(&front, formatIDs, formatListDataLongName, 1);
+                                // TODO { formatListDataLongName, 1 } -> array_view
+                                // TODO { formatIDs, 1 } -> array_view
+                                eventList.setClpbrd_change(&front, &formatIDs, &formatListDataLongName, 1);
 
                             } else if (tag == "click") {
                                 pos = info.find(delimiter);
@@ -664,6 +676,7 @@ int main(int argc, char** argv){
 
             }
         }
+        // else { TODO What to do if connection_succed = false ? }
     }
 
     return 0;
