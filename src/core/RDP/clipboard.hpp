@@ -2347,10 +2347,10 @@ struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
 
     // fileDescriptorArray (variable): An array of File Descriptors (section 2.2.5.2.3.1). The number of elements in the array is specified by the cItems field.
 
-    explicit FormatDataResponsePDU_FileList(const std::size_t cItems, const std::string name, const uint64_t size)
+    explicit FormatDataResponsePDU_FileList(const std::size_t cItems, std::string name, const uint64_t size)
       : FormatDataResponsePDU((FileDescriptor::size() * cItems) + 4)
       , cItems(cItems)
-      , name(name)
+      , name(std::move(name))
       , size(size)
     {}
 

@@ -137,7 +137,8 @@ public:
     }
 
     void notify(Widget2* widget, notify_event_t event) override {
-        if (NOTIFY_CANCEL == event) {
+        switch (event) {
+        case NOTIFY_CANCEL: {
             if (this->waiting_for_next_module) {
                 LOG(LOG_INFO, "FlatSelector2Mod::notify: NOTIFY_CANCEL - Waiting for next module.");
                 return;
@@ -150,8 +151,8 @@ public:
             this->event.set();
 
             this->waiting_for_next_module = true;
-        }
-        else if (NOTIFY_SUBMIT == event) {
+        } break;
+        case NOTIFY_SUBMIT: {
             if (this->waiting_for_next_module) {
                 LOG(LOG_INFO, "FlatSelector2Mod::notify: NOTIFY_SUBMIT - Waiting for next module.");
                 return;
@@ -210,9 +211,13 @@ public:
                     this->ask_page();
                 }
             }
-        }
-        else if (this->copy_paste) {
-            copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(widget), event);
+        } break;
+        case NOTIFY_PASTE: case NOTIFY_COPY: case NOTIFY_CUT: {
+            if (this->copy_paste) {
+                copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(widget), event);
+            }
+        } break;
+        default:;
         }
     }
 

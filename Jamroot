@@ -298,6 +298,7 @@ exe rdpclientcli
 exe redrec
     :
         $(REDEMPTION_SRC_PATH)/main/redrec.cpp
+        libredrec
         dl
     :
 #         <link>static

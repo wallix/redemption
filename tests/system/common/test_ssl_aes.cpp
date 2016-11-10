@@ -23,7 +23,6 @@
 
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/log.hpp"
 #include "check_mem.hpp"
 
 
@@ -70,7 +69,6 @@ BOOST_AUTO_TEST_CASE(TestAES128_CBC)
 
 //        hexdump_d(outbuf, 16);
 
-        LOG(LOG_INFO, "tiv");
 //        hexdump_d(aes.tiv.iv, 16);
 
         aes.crypt_cbc(16, inbuf+16, outbuf+16);

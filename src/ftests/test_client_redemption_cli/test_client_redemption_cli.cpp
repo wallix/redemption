@@ -23,9 +23,11 @@
 #include "test_client_redemption_cli.hpp"
 
 
-// bjam -a rdpclientcli && bin/gcc-4.9.2/release/rdpclientcli --user QA\\proxyuser --pwd $mdp --ip 10.10.46.88 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt
+// bjam rdpclientcli && bin/gcc-4.9.2/release/rdpclientcli --user QA\\proxyuser --pwd $mdp --ip 10.10.46.88 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_keyboard
 
-// bjam -a rdpclientcli && bin/gcc-4.9.2/release/rdpclientcli --user 'qa\\proxyuser@local@win2k8:rdp:x' --pwd $mdp --ip 10.10.43.46 --port 3389 --show_clpbrd --show_cursor --show_keyboard --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt
+// bjam rdpclientcli && bin/gcc-4.9.2/release/rdpclientcli --user admin --pwd $mdp --ip 10.10.40.22 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_keyboard
+
+
 
 void run_mod(mod_api *, TestClientCLI &, SocketTransport *, EventList &);
 void print_help(ModRDPParamsConfig *, size_t);
@@ -55,7 +57,7 @@ int main(int argc, char** argv){
     std::string userName;
     std::string ip;
     std::string userPwd;
-    int port(0);
+    int port{};
     std::string localIP;
     int nbTry(3);
     int retryDelay(1000);
@@ -261,12 +263,12 @@ int main(int argc, char** argv){
         } else if (word == "--script_help") {
             // TODO show all script cmd
         } else if (word == "-v") {
-            std::cout << "version 1.0" << std::endl;
+            std::cout << "version 1.0" << "\n";
         } else if (word ==  "--script") {
             script_file_path = std::string(argv[i+1]);
             script_on = true;
         } else if (word == "--version") {
-            std::cout << "version 1.0" << std::endl;
+            std::cout << "version 1.0" << "\n";
         } else if (word == "--show_user_params") {
             verbose = verbose | TestClientCLI::SHOW_USER_AND_TARGET_PARAMS;
         } else if (word == "--show_rdp_params") {
@@ -313,44 +315,43 @@ int main(int argc, char** argv){
     } //==============================================================
 
 
-    // TODO too std::endl
 
-    std::cout << std::endl << std::endl;
-    std::cout << " ================================" << std::endl;
-    std::cout << " ========== Log Config ==========" << std::endl;
-    std::cout << " ================================" << std::endl;
-    std::cout << " SHOW_USER_AND_TARGET_PARAMS = " << bool(verbose & TestClientCLI::SHOW_USER_AND_TARGET_PARAMS) <<  std::endl;
-    std::cout << " SHOW_MOD_RDP_PARAMS         = " << bool(verbose & TestClientCLI::SHOW_MOD_RDP_PARAMS) <<  std::endl;
-    std::cout << " SHOW_DRAW_ORDERS            = " << bool(verbose & TestClientCLI::SHOW_DRAW_ORDERS_INFO) <<  std::endl;
-    std::cout << " SHOW_CLPBRD_PDU_EXCHANGE    = " << bool(verbose & TestClientCLI::SHOW_CLPBRD_PDU_EXCHANGE) <<  std::endl;
-    std::cout << " SHOW_CURSOR_STATE_CHANGE    = " << bool(verbose & TestClientCLI::SHOW_CURSOR_STATE_CHANGE) <<  std::endl;
-    std::cout << " SHOW_CORE_SERVER_INFO       = " << bool(verbose & TestClientCLI::SHOW_CORE_SERVER_INFO) <<  std::endl;
-    std::cout << " SHOW_SECURITY_SERVER_INFO   = " << bool(verbose & TestClientCLI::SHOW_SECURITY_SERVER_INFO) <<  std::endl;
-    std::cout << " SHOW_KEYBOARD_EVENT         = " << bool(verbose & TestClientCLI::SHOW_KEYBOARD_EVENT) <<  std::endl;
-    std::cout << " SHOW_FILE_SYSTEM_EXCHANGE   = " << bool(verbose & TestClientCLI::SHOW_FILE_SYSTEM_EXCHANGE) <<  std::endl;
-    std::cout << " SHOW_CAPS                   = " << bool(verbose & TestClientCLI::SHOW_CAPS) <<  std::endl;
-    std::cout << " SHOW_OUT_PDU                = " << bool(verbose & TestClientCLI::SHOW_OUT_PDU) <<  std::endl;
-    std::cout << " SHOW_IN_PDU                 = " << bool(verbose & TestClientCLI::SHOW_IN_PDU) <<  std::endl;
+    std::cout << "\n" << "\n";
+    std::cout << " ================================" << "\n";
+    std::cout << " ========== Log Config ==========" << "\n";
+    std::cout << " ================================" << "\n";
+    std::cout << " SHOW_USER_AND_TARGET_PARAMS = " << bool(verbose & TestClientCLI::SHOW_USER_AND_TARGET_PARAMS) <<  "\n";
+    std::cout << " SHOW_MOD_RDP_PARAMS         = " << bool(verbose & TestClientCLI::SHOW_MOD_RDP_PARAMS) <<  "\n";
+    std::cout << " SHOW_DRAW_ORDERS            = " << bool(verbose & TestClientCLI::SHOW_DRAW_ORDERS_INFO) <<  "\n";
+    std::cout << " SHOW_CLPBRD_PDU_EXCHANGE    = " << bool(verbose & TestClientCLI::SHOW_CLPBRD_PDU_EXCHANGE) <<  "\n";
+    std::cout << " SHOW_CURSOR_STATE_CHANGE    = " << bool(verbose & TestClientCLI::SHOW_CURSOR_STATE_CHANGE) <<  "\n";
+    std::cout << " SHOW_CORE_SERVER_INFO       = " << bool(verbose & TestClientCLI::SHOW_CORE_SERVER_INFO) <<  "\n";
+    std::cout << " SHOW_SECURITY_SERVER_INFO   = " << bool(verbose & TestClientCLI::SHOW_SECURITY_SERVER_INFO) <<  "\n";
+    std::cout << " SHOW_KEYBOARD_EVENT         = " << bool(verbose & TestClientCLI::SHOW_KEYBOARD_EVENT) <<  "\n";
+    std::cout << " SHOW_FILE_SYSTEM_EXCHANGE   = " << bool(verbose & TestClientCLI::SHOW_FILE_SYSTEM_EXCHANGE) <<  "\n";
+    std::cout << " SHOW_CAPS                   = " << bool(verbose & TestClientCLI::SHOW_CAPS) <<  "\n";
+    std::cout << " SHOW_OUT_PDU                = " << bool(verbose & TestClientCLI::SHOW_OUT_PDU) <<  "\n";
+    std::cout << " SHOW_IN_PDU                 = " << bool(verbose & TestClientCLI::SHOW_IN_PDU) <<  "\n";
     std::cout <<  std::endl;
 
     if (verbose & TestClientCLI::SHOW_USER_AND_TARGET_PARAMS) {
-        std::cout <<  std::endl;
-        std::cout << " ================================" << std::endl;
-        std::cout << " == User And Target Parameters ==" << std::endl;
-        std::cout << " ================================" << std::endl;
+        std::cout <<  "\n";
+        std::cout << " ================================" << "\n";
+        std::cout << " == User And Target Parameters ==" << "\n";
+        std::cout << " ================================" << "\n";
 
-        std::cout << " user_name= \"" << userName << "\"" <<  std::endl;
-        std::cout << " user_password= \"" << userPwd << "\"" << std::endl;
-        std::cout << " ip= \"" << ip << "\"" << std::endl;
-        std::cout << " port=" << port << std::endl;
-        std::cout << " ip_local= \"" << localIP << "\"" << std::endl;
-        std::cout << " keylayout=0x" << std::hex << info.keylayout << std::dec << std::endl;
-        std::cout << " bpp=" << info.bpp << std::endl;
-        std::cout << " width=" << info.width << std::endl;
-        std::cout << " height=" << info.height << std::endl;
-        std::cout << " wallpaper_on=" << bool(info.rdp5_performanceflags & PERF_DISABLE_WALLPAPER) << std::endl;
-        std::cout << " full_window_drag_on=" << bool(info.rdp5_performanceflags & PERF_DISABLE_FULLWINDOWDRAG) << std::endl;
-        std::cout << " menu_animations_on=" << bool(info.rdp5_performanceflags & PERF_DISABLE_MENUANIMATIONS) << std::endl;
+        std::cout << " user_name= \"" << userName << "\"" <<  "\n";
+        std::cout << " user_password= \"" << userPwd << "\"" << "\n";
+        std::cout << " ip= \"" << ip << "\"" << "\n";
+        std::cout << " port=" << port << "\n";
+        std::cout << " ip_local= \"" << localIP << "\"" << "\n";
+        std::cout << " keylayout=0x" << std::hex << info.keylayout << std::dec << "\n";
+        std::cout << " bpp=" << info.bpp << "\n";
+        std::cout << " width=" << info.width << "\n";
+        std::cout << " height=" << info.height << "\n";
+        std::cout << " wallpaper_on=" << bool(info.rdp5_performanceflags & PERF_DISABLE_WALLPAPER) << "\n";
+        std::cout << " full_window_drag_on=" << bool(info.rdp5_performanceflags & PERF_DISABLE_FULLWINDOWDRAG) << "\n";
+        std::cout << " menu_animations_on=" << bool(info.rdp5_performanceflags & PERF_DISABLE_MENUANIMATIONS) << "\n";
         std::cout <<  std::endl;
     }
 
@@ -379,15 +380,15 @@ int main(int argc, char** argv){
     }
 
     if (verbose & TestClientCLI::SHOW_MOD_RDP_PARAMS) {
-        std::cout <<  std::endl;
-        std::cout << " ================================" << std::endl;
-        std::cout << " ======= ModRDP Parameters ======" << std::endl;
-        std::cout << " ================================" << std::endl;
+        std::cout <<  "\n";
+        std::cout << " ================================" << "\n";
+        std::cout << " ======= ModRDP Parameters ======" << "\n";
+        std::cout << " ================================" << "\n";
         for (size_t i = 0; i < nb_mod_rdp_params_config; i++ ) {
-            std::cout << " " << mod_rdp_params_config[i].name << "=" << *(mod_rdp_params_config[i].param) << std::endl;
+            std::cout << " " << mod_rdp_params_config[i].name << "=" << *(mod_rdp_params_config[i].param) << "\n";
         }
     }
-    std::cout << std::endl << std::endl;
+    std::cout << "\n" << "\n";
     std::string allow_channels = "*";
     mod_rdp_params.allow_channels                  = &allow_channels;
     //mod_rdp_params.allow_using_multiple_monitors   = true;
@@ -403,32 +404,32 @@ int main(int argc, char** argv){
 
     if (input_connection_data_complete == TestClientCLI::INPUT_COMPLETE) {
         int sck(0);
-        SocketTransport * socket;
+        std::unique_ptr<SocketTransport> socket;
+        std::string error_message;
         bool connection_succed(false);
         const char * name(userName.c_str());
         const char * targetIP(ip.c_str());
         const std::string errorMsg(" Cannot connect to [" + ip +  "].");
 
-        std::cout << " ================================" << std::endl;
-        std::cout << " ======= Connection steps =======" << std::endl;
-        std::cout << " ================================" << std::endl;
+        std::cout << " ================================" << "\n";
+        std::cout << " ======= Connection steps =======" << "\n";
+        std::cout << " ================================" << "\n";
 
         sck = ip_connect(targetIP, port, nbTry, retryDelay);
 
         if (sck > 0) {
             try {
-                std::string error_message; // BUG lifetime error to SocketTransport
-                socket = new SocketTransport( name
-                                            , sck
-                                            , targetIP
-                                            , port
-                                            , verbose
-                                            , &error_message
-                                            );
+                socket = std::make_unique<SocketTransport>( name
+                                                          , sck
+                                                          , targetIP
+                                                          , port
+                                                          , verbose
+                                                          , &error_message
+                                                          );
                 connection_succed = true;
 
-            } catch (const std::exception & e) { // TODO no throwing exception to SocketTransport ctor
-                std::cout << errorMsg << " Socket error. " << e.what() << std::endl;
+            } catch (const std::exception &) { // TODO no throwing exception to SocketTransport ctor
+                std::cout << errorMsg << " Socket error. " << std::endl;
             }
         } else {
             std::cout << errorMsg << " ip_connect error." << std::endl;
@@ -442,7 +443,7 @@ int main(int argc, char** argv){
             TimeSystem timeSystem;
 
             try {
-                mod = new mod_rdp( *socket // BUG may be uninitialized when used here
+                mod = new mod_rdp( *(socket.get())
                                  , front
                                  , info
                                  , ini.get_ref<cfg::mod_rdp::redir_info>()
@@ -467,15 +468,15 @@ int main(int argc, char** argv){
                     int i = 1;
                     while (!mod->is_up_and_running()) {
                         try {
-                            std::cout <<  " Early negociations step " << i << std::endl;
+                            std::cout <<  " Early negociations step " << i << "\n";
                             mod->draw_event(time(nullptr), front);
                             i++;
                          } catch (const Error & e) {
-                            std::cout << " Error: Failed during RDP early negociations step " << i << ". " << e.errmsg() << std::endl;
+                            std::cout << " Error: Failed during RDP early negociations step " << i << ". " << e.errmsg() << "\n";
                             connection_succed = false;
                         }
                     }
-                    std::cout << " Early negociations complete." <<  std::endl;
+                    std::cout << " Early negociations complete." <<  "\n";
                     std::cout << std::endl;
                 }
             }
@@ -483,41 +484,37 @@ int main(int argc, char** argv){
             if (connection_succed) {
 
                 if (verbose & TestClientCLI::SHOW_CORE_SERVER_INFO) {
-                    std::cout <<  std::endl;
-                    std::cout << " ================================" << std::endl;
-                    std::cout << " ======= Server Core Info =======" << std::endl;
-                    std::cout << " ================================" << std::endl;
+                    std::cout <<  "\n";
+                    std::cout << " ================================" << "\n";
+                    std::cout << " ======= Server Core Info =======" << "\n";
+                    std::cout << " ================================" << "\n";
                     GCC::UserData::SCCore sc_core = mod->sc_core;
-                    std::cout << " userDataType = " << int(sc_core.userDataType) << std::endl;
-                    std::cout << " length = " << int(sc_core.length) << std::endl;
-                    std::cout << " version = " << int(sc_core.version) << std::endl;
-                    std::cout << " clientRequestedProtocols = " << int(sc_core.clientRequestedProtocols) << std::endl;
-                    std::cout << " earlyCapabilityFlags = " << int(sc_core.earlyCapabilityFlags) << std::endl;
-                    std::cout << std::endl << std::endl;
+                    std::cout << " userDataType = " << int(sc_core.userDataType) << "\n";
+                    std::cout << " length = " << int(sc_core.length) << "\n";
+                    std::cout << " version = " << int(sc_core.version) << "\n";
+                    std::cout << " clientRequestedProtocols = " << int(sc_core.clientRequestedProtocols) << "\n";
+                    std::cout << " earlyCapabilityFlags = " << int(sc_core.earlyCapabilityFlags) << "\n";
+                    std::cout << "\n" << std::endl;
                 }
 
                 if (verbose & TestClientCLI::SHOW_SECURITY_SERVER_INFO) {
-                    std::cout << " ================================" << std::endl;
-                    std::cout << " ===== Server Security Info =====" << std::endl;
-                    std::cout << " ================================" << std::endl;
-                    /* TODO
-                     * definition of implicit copy constructor for 'SCSecurity' is deprecated because it has a user-declared destructor [-Wdeprecated]
-                     * implicit copy constructor for 'SCSecurity' first required here
-                     */
-                    GCC::UserData::SCSecurity sc_sec1 = mod->sc_sec1;
-                    std::cout << " userDataType = " << int(sc_sec1.userDataType) << std::endl;
-                    std::cout << " length = " << int(sc_sec1.length) << std::endl;
-                    std::cout << " encryptionMethod = " << GCC::UserData::SCSecurity::get_encryptionMethod_name(sc_sec1.encryptionMethod) << std::endl;
-                    std::cout << " encryptionLevel = " << GCC::UserData::SCSecurity::get_encryptionLevel_name(sc_sec1.encryptionLevel) << std::endl;
-                    std::cout << " serverRandomLen = " << int(sc_sec1.serverRandomLen) << std::endl;
-                    std::cout << " serverCertLen = " << int(sc_sec1.serverCertLen) << std::endl;
-                    std::cout << " dwVersion = " << int(sc_sec1.dwVersion) << std::endl;
-                    std::cout << " temporary = " << sc_sec1.temporary << std::endl;
+                    std::cout << " ================================" << "\n";
+                    std::cout << " ===== Server Security Info =====" << "\n";
+                    std::cout << " ================================" << "\n";
+                    GCC::UserData::SCSecurity & sc_sec1 = mod->sc_sec1;
+                    std::cout << " userDataType = " << int(sc_sec1.userDataType) << "\n";
+                    std::cout << " length = " << int(sc_sec1.length) << "\n";
+                    std::cout << " encryptionMethod = " << GCC::UserData::SCSecurity::get_encryptionMethod_name(sc_sec1.encryptionMethod) << "\n";
+                    std::cout << " encryptionLevel = " << GCC::UserData::SCSecurity::get_encryptionLevel_name(sc_sec1.encryptionLevel) << "\n";
+                    std::cout << " serverRandomLen = " << int(sc_sec1.serverRandomLen) << "\n";
+                    std::cout << " serverCertLen = " << int(sc_sec1.serverCertLen) << "\n";
+                    std::cout << " dwVersion = " << int(sc_sec1.dwVersion) << "\n";
+                    std::cout << " temporary = " << sc_sec1.temporary << "\n";
                     std::cout << " serverRandom : ";
                     // TODO Code duplicated (1)
                     for (size_t i = 0; i < SEC_RANDOM_SIZE; i++) {
                         if ((i % 16) == 0 && i != 0) {
-                            std::cout << std::endl << "                ";
+                            std::cout << "\n" << "                ";
                         }
                         std::string space;
                         if (sc_sec1.serverRandom[i] < 0x10) {
@@ -525,13 +522,13 @@ int main(int argc, char** argv){
                         }
                         std::cout <<"0x" << space << std::hex << int(sc_sec1.serverRandom[i]) << std::dec << " ";
                     }
-                    std::cout << std::endl;
-                    std::cout << std::endl;
+                    std::cout << "\n";
+                    std::cout << "\n";
                     std::cout << " pri_exp : ";
                     // TODO Code duplicated (2)
                     for (size_t i = 0; i < 64; i++) {
                         if ((i % 16) == 0 && i != 0) {
-                            std::cout << std::endl << "           ";
+                            std::cout << "\n" << "           ";
                         }
                         std::string space;
                         if (sc_sec1.pri_exp[i] < 0x10) {
@@ -539,13 +536,13 @@ int main(int argc, char** argv){
                         }
                         std::cout <<"0x" << space << std::hex << int(sc_sec1.pri_exp[i]) <<  std::dec << " ";
                     }
-                    std::cout << std::endl;
-                    std::cout << std::endl;
+                    std::cout << "\n";
+                    std::cout << "\n";
                     std::cout << " pub_sig : ";
                     // TODO Code duplicated (3)
                     for (size_t i = 0; i < 64; i++) {
                         if ((i % 16) == 0 && i != 0) {
-                            std::cout << std::endl << "           ";
+                            std::cout << "\n" << "           ";
                         }
                         std::string space;
                         if (sc_sec1.pub_sig[i] < 0x10) {
@@ -554,17 +551,17 @@ int main(int argc, char** argv){
                         std::cout <<"0x" << space << std::hex << int(sc_sec1.pub_sig[i]) << std::dec << " ";
                     }
 
-                    std::cout << std::endl;
-                    std::cout << std::endl;
-                    std::cout << " proprietaryCertificate : " << std::endl;
-                    std::cout << "     dwSigAlgId = " << int(sc_sec1.proprietaryCertificate.dwSigAlgId) << std::endl;
-                    std::cout << "     dwKeyAlgId = " << int(sc_sec1.proprietaryCertificate.dwKeyAlgId) << std::endl;
-                    std::cout << "     wPublicKeyBlobType = " << int(sc_sec1.proprietaryCertificate.wPublicKeyBlobType) << std::endl;
-                    std::cout << "     wPublicKeyBlobLen = " << int(sc_sec1.proprietaryCertificate.wPublicKeyBlobLen) << std::endl;
-                    std::cout << std::endl;
-                    std::cout << "     RSAPK : " << std::endl;
-                    std::cout << "        magic = " << int(sc_sec1.proprietaryCertificate.RSAPK.magic) << std::endl;
-                    std::cout << std::endl << std::endl;
+                    std::cout << "\n";
+                    std::cout << "\n";
+                    std::cout << " proprietaryCertificate : " << "\n";
+                    std::cout << "     dwSigAlgId = " << int(sc_sec1.proprietaryCertificate.dwSigAlgId) << "\n";
+                    std::cout << "     dwKeyAlgId = " << int(sc_sec1.proprietaryCertificate.dwKeyAlgId) << "\n";
+                    std::cout << "     wPublicKeyBlobType = " << int(sc_sec1.proprietaryCertificate.wPublicKeyBlobType) << "\n";
+                    std::cout << "     wPublicKeyBlobLen = " << int(sc_sec1.proprietaryCertificate.wPublicKeyBlobLen) << "\n";
+                    std::cout << "\n";
+                    std::cout << "     RSAPK : " << "\n";
+                    std::cout << "        magic = " << int(sc_sec1.proprietaryCertificate.RSAPK.magic) << "\n";
+                    std::cout << "\n" << std::endl;
 
                 }
 
@@ -582,9 +579,7 @@ int main(int argc, char** argv){
 
                         while(std::getline(ifichier, ligne)) {
                             auto pos(ligne.find(delimiter));
-                            // TODO tag : string_view
                             std::string tag  = ligne.substr(0, pos);
-                            // TODO tag : string_view
                             std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
 
                             if (       tag == "wait") {
@@ -666,17 +661,15 @@ int main(int argc, char** argv){
                             }
                         }
                     } else {
-                        std::cout <<  "Can't find " << script_file_path << std::endl;
+                        std::cout <<  "Can't find " << script_file_path << "\n";
                     }
                 }
 
 
-
-                run_mod(mod, front, socket, eventList);
+                run_mod(mod, front, socket.get(), eventList);
 
             }
         }
-        // else { TODO What to do if connection_succed = false ? }
     }
 
     return 0;
@@ -685,49 +678,49 @@ int main(int argc, char** argv){
 
 
 void print_help(ModRDPParamsConfig * mod_rdp_params_config, size_t nb_mod_rdp_params_config) {
-    std::cout << std::endl;
+    std::cout << "\n";
 
-    std::cout << "Command Line Interface RDP Redemption Client help:" << std::endl;
-    std::cout << "  ========= TOOLS =========" << std::endl;
-    std::cout << "  -h or --help              Show help" << std::endl;
-    std::cout << "  -v or --version           Show version" <<  std::endl;
-    std::cout << "  --script_help             Show all script event commands" << std::endl;
-    std::cout << "  --show_user_params        Show user info parameters" << std::endl;
-    std::cout << "  --show_rdp_params         Show mod rdp parameters" << std::endl;
-    std::cout << "  --show_draw               Show draw orders info" << std::endl;
-    std::cout << "  --show_clpbrd             Show clipboard echange PDU info" << std::endl;
-    std::cout << "  --show_cursor             Show cursor change" << std::endl;
-    std::cout << "  --show_all                Show all log info, except PDU content" << std::endl;
-    std::cout << "  --show_core               Show core server info" << std::endl;
-    std::cout << "  --show_security           Show scurity server info" << std::endl;
-    std::cout << "  --show_keyboard           Show keyboard event" << std::endl;
-    std::cout << "  --show_files_sys          Show files sytem exchange info" << std::endl;
-    std::cout << "  --show_channels           Show all channels exchange info" << std::endl;
-    std::cout << "  --show_in_pdu             Show received PDU content from shown channels" << std::endl;
-    std::cout << "  --show_out_pdu            Show sent PDU content from shown channels" << std::endl;
-    std::cout << "  --show_pdu                Show both sent and received PDU content from shown channels" << std::endl;
-    std::cout << "  --show_caps               Show capabilities PDU exchange" <<  std::endl;
-    std::cout << "  --script [file_path]      Set a test PDU file script" << std::endl;
-    std::cout << std::endl;
-    std::cout << "  ========= USER =========" << std::endl;
-    std::cout << "  --user [user_name]        Set session user name" << std::endl;
-    std::cout << "  --pwd [user_password]     Set sessoion user password" << std::endl;
-    std::cout << "  --ip [ip]                 Set target IP" << std::endl;
-    std::cout << "  --port [port]             Set target port" << std::endl;
-    std::cout << "  --local_ip [local_ip]     Set local IP" << std::endl;
-    std::cout << "  --mon_count [number]      Set the number of monitor" <<  std::endl;
-    std::cout << "  --wallpaper [on/off]      Active/unactive wallpapert" << std::endl;
-    std::cout << "  --fullwindowdrag [on/off] Active/unactive full window drag" << std::endl;
-    std::cout << "  --menuanimations [on/off] Active/unactive menu animations" << std::endl;
-    std::cout << "  --keylayout [keylaout_id] Set decimal keylouat window id" << std::endl;
-    std::cout << "  --bpp [bpp_value]         Set bit per pixel value" << std::endl;
-    std::cout << "  --width [width_value]     Set screen width" << std::endl;
-    std::cout << "  --height [height_value]   Set screen height" << std::endl;
-    std::cout << "  --encrpt_methds           Set encryption methods as any addition of 1, 2, 8 and 16" <<  std::endl;
-    std::cout << std::endl;
-    std::cout << "  ======== CONFIG ========" << std::endl;
+    std::cout << "Command Line Interface RDP Redemption Client help:" << "\n";
+    std::cout << "  ========= TOOLS =========" << "\n";
+    std::cout << "  -h or --help              Show help" << "\n";
+    std::cout << "  -v or --version           Show version" <<  "\n";
+    std::cout << "  --script_help             Show all script event commands" << "\n";
+    std::cout << "  --show_user_params        Show user info parameters" << "\n";
+    std::cout << "  --show_rdp_params         Show mod rdp parameters" << "\n";
+    std::cout << "  --show_draw               Show draw orders info" << "\n";
+    std::cout << "  --show_clpbrd             Show clipboard echange PDU info" << "\n";
+    std::cout << "  --show_cursor             Show cursor change" << "\n";
+    std::cout << "  --show_all                Show all log info, except PDU content" << "\n";
+    std::cout << "  --show_core               Show core server info" << "\n";
+    std::cout << "  --show_security           Show scurity server info" << "\n";
+    std::cout << "  --show_keyboard           Show keyboard event" << "\n";
+    std::cout << "  --show_files_sys          Show files sytem exchange info" << "\n";
+    std::cout << "  --show_channels           Show all channels exchange info" << "\n";
+    std::cout << "  --show_in_pdu             Show received PDU content from shown channels" << "\n";
+    std::cout << "  --show_out_pdu            Show sent PDU content from shown channels" << "\n";
+    std::cout << "  --show_pdu                Show both sent and received PDU content from shown channels" << "\n";
+    std::cout << "  --show_caps               Show capabilities PDU exchange" <<  "\n";
+    std::cout << "  --script [file_path]      Set a test PDU file script" << "\n";
+    std::cout << "\n";
+    std::cout << "  ========= USER =========" << "\n";
+    std::cout << "  --user [user_name]        Set session user name" << "\n";
+    std::cout << "  --pwd [user_password]     Set sessoion user password" << "\n";
+    std::cout << "  --ip [ip]                 Set target IP" << "\n";
+    std::cout << "  --port [port]             Set target port" << "\n";
+    std::cout << "  --local_ip [local_ip]     Set local IP" << "\n";
+    std::cout << "  --mon_count [number]      Set the number of monitor" <<  "\n";
+    std::cout << "  --wallpaper [on/off]      Active/unactive wallpapert" << "\n";
+    std::cout << "  --fullwindowdrag [on/off] Active/unactive full window drag" << "\n";
+    std::cout << "  --menuanimations [on/off] Active/unactive menu animations" << "\n";
+    std::cout << "  --keylayout [keylaout_id] Set decimal keylouat window id" << "\n";
+    std::cout << "  --bpp [bpp_value]         Set bit per pixel value" << "\n";
+    std::cout << "  --width [width_value]     Set screen width" << "\n";
+    std::cout << "  --height [height_value]   Set screen height" << "\n";
+    std::cout << "  --encrpt_methds           Set encryption methods as any addition of 1, 2, 8 and 16" <<  "\n";
+    std::cout << "\n";
+    std::cout << "  ======== CONFIG ========" << "\n";
     for (size_t i = 0; i < nb_mod_rdp_params_config; i++) {
-        std::cout << "  " << mod_rdp_params_config[i].cmd << " [on/off] " << mod_rdp_params_config[i].descrpt << std::endl;
+        std::cout << "  " << mod_rdp_params_config[i].cmd << " [on/off] " << mod_rdp_params_config[i].descrpt << "\n";
     }
 
     std::cout << std::endl;
@@ -780,7 +773,7 @@ void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, Eve
 
         } catch (Error & e) {
             LOG(LOG_ERR, "RDP CLIENT :: Exception raised = %d!\n", e.id);
-            std::cout << "RDP CLIENT :: Exception raised = " << e.id << std::endl;
+            std::cout << "RDP CLIENT :: Exception raised = " << e.id << "\n";
             run_session = false;
         };
     }
