@@ -68,12 +68,11 @@ class EchoChannel(object):
                 pos = self.buffer.index('\r')
             except:
                 return
-            if pos == -1:
-                return
-            tosend = "".join(self.buffer[0:pos+1])+'\r\n'
+
+            tosend = "".join(self.buffer[0:pos+1])
             res = pysshct.lib.ssh_channel_write_server(
                 self.session.libssh_session,
-                self.libssh_channel, tosend, pos+1)
+                self.libssh_channel, tosend, len(tosend))
             if res > 0: 
                 self.buffer[0:res+1] = []
             return
@@ -85,8 +84,8 @@ class EchoChannel(object):
 
     # CHANNEL API
     def cb_data_stdout(self, data):
-        Logger.info("@@@%s.cb_data_stdout(%s)" %
-            (self.__class__.__name__, data))
+        Logger.info("@@@%s.cb_data_stdout(data='%s' len=%d)" %
+            (self.__class__.__name__, data, len(data)))
         self.buffer.append(data)
         return len(data)
 
