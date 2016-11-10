@@ -295,11 +295,17 @@ exe rdpclientcli
         $(EXE_DEPENDENCIES)
     ;
 
+exe ini_checker
+    :
+        $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp
+    :
+        $(EXE_DEPENDENCIES)
+    ;
+
 exe redrec
     :
         $(REDEMPTION_SRC_PATH)/main/redrec.cpp
         libredrec
-        dl
     :
 #         <link>static
         $(EXE_DEPENDENCIES)
