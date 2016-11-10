@@ -132,7 +132,6 @@ class ifile_read_encrypted : public ifile_read
 {
 public:
     CryptoContext * cctx;
-    int fd;
     char clear_data[CRYPTO_BUFFER_SIZE];  // contains either raw data from unencrypted file
                                           // or already decrypted/decompressed data
     uint32_t clear_pos;                   // current position in clear_data buf
