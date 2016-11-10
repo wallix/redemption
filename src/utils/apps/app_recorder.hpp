@@ -236,7 +236,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , bool enable_rt
                     , bool no_timestamp
                     , auth_api * authentifier
-                    , Inifile & ini, Random & rnd, CryptoContext & cctx
+                    , Inifile & ini, CryptoContext & cctx
 
                     , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , unsigned png_width, unsigned png_height
@@ -321,7 +321,6 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , no_timestamp
                     , authentifier
                     , ini
-                    , rnd
                     , cctx
                     , full_video);
 
@@ -542,7 +541,7 @@ template<class CaptureMaker, class AddProgramOption, class ParseFormat
 int app_recorder( int argc, char const * const * argv, const char * copyright_notice
                 , AddProgramOption add_prog_option, ParseFormat parse_format
                 , std::string config_filename, Inifile & ini
-                , CryptoContext & cctx, Random & rnd
+                , CryptoContext & cctx
                 , HasExtraCapture has_extra_capture
                 , bool full_video
                 )
@@ -928,7 +927,7 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
                             , enable_rt
                             , no_timestamp
                             , nullptr
-                            , ini, rnd, cctx
+                            , ini, cctx
                             , file_count, order_count, clear, zoom
                             , png_width, png_height
                             , show_file_metadata, show_statistics, verbose

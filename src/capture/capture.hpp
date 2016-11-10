@@ -74,25 +74,21 @@ class Capture final
 public:
     const bool capture_wrm;
     const bool capture_png;
-// private extension
     const bool capture_ocr;
     const bool capture_flv;
     const bool capture_flv_full; // capturewab only
     const bool capture_meta; // capturewab only
-// end private extension
 
 private:
     std::unique_ptr<Graphic> gd;
     std::unique_ptr<Native> pnc;
     std::unique_ptr<Static> psc;
     std::unique_ptr<Kbd> pkc;
-// private extension
     std::unique_ptr<Video> pvc;
     std::unique_ptr<Video> pvc_full;
     std::unique_ptr<Meta> pmc;
     std::unique_ptr<Title> ptc;
     std::unique_ptr<VideoImageCapture> pivc;
-// end private extension
 
     CaptureApisImpl::Capture capture_api;
     CaptureApisImpl::KbdInput kbd_input_api;
@@ -128,7 +124,6 @@ public:
         bool no_timestamp,
         auth_api * authentifier,
         const Inifile & ini,
-        Random & rnd,
         CryptoContext & cctx,
         bool full_video,
         bool force_capture_png_if_enable = false,
@@ -137,21 +132,17 @@ public:
     , capture_wrm(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::wrm))
     , capture_png(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png)
                   && (!authentifier || ini.get<cfg::video::png_limit>() > 0))
-// private extension
     , capture_ocr(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::ocr)
                  || ::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
                  || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()))
     , capture_flv(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::flv))
     // capture wab only
     , capture_flv_full(authentifier && this->capture_flv && ini.get<cfg::globals::capture_chunk>() && full_video)
+    // capture wab only
     , capture_meta(this->capture_ocr)
-// end private extension
     , capture_api(now, width / 2, height / 2)
     , delta_time(delta_time)
     {
-        // TODO Remove that after change of capture interface
-        (void)rnd;
-
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
 
         bool const enable_kbd

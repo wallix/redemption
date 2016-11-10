@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         Capture capture(
             now, scr.cx, scr.cy, 24, 24
             , clear_png, no_timestamp, authentifier
-            , ini, rnd, cctx, full_video, force_capture_png_if_enable);
+            , ini, cctx, full_video, force_capture_png_if_enable);
         bool ignore_frame_in_timeval = false;
 
         capture.draw(RDPOpaqueRect(scr, GREEN), scr);
@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
         Capture capture(now, scr.cx, scr.cy, 16, 16
                         , clear_png, no_timestamp, authentifier
-                        , ini, rnd, cctx, full_video, force_capture_png_if_enable);
+                        , ini, cctx, full_video, force_capture_png_if_enable);
 
         Pointer pointer1(Pointer::POINTER_EDIT);
         capture.set_pointer(pointer1);

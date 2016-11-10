@@ -151,7 +151,6 @@ extern "C" {
                     , config_filename
                     , ini
                     , cctx
-                    , rnd
                     , [](Inifile const & ini) {
                         return bool(ini.get<cfg::video::capture_flags>()
                             & (CaptureFlags::flv | CaptureFlags::ocr)
