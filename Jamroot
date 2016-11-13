@@ -131,7 +131,7 @@ constant LIB_DEPENDENCIES :
 ;
 constant EXE_DEPENDENCIES :
     $(COMMON_OBJ_DEPENDENCIES)
-    $(GCOV)
+    $(GCOV_NO_BUILD)
 ;
 
 constant TEST_DEPENDENCIES :
