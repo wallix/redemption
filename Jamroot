@@ -225,7 +225,7 @@ obj program_options : modules/program_options/src/program_options.cpp ;
 constant LIB_TEST_DEPENDENCY : <library>libboost_unit_test ;
 constant COMMON_OBJ_DEPENDENCIES : <define>SHARE_PATH='\"$(SHARE_PREFIX)\"' ;
 constant LIB_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) <cxxflags>-fPIC <cxxflags>-fvisibility=hidden ;
-constant EXE_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) $(GCOV) ;
+constant EXE_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) $(GCOV_NO_BUILD) ;
 constant TEST_DEPENDENCIES :
     $(LIB_TEST_DEPENDENCY)
     $(GCOV)
