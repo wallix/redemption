@@ -176,12 +176,14 @@ static inline int ip_connect(const char* ip, int port,
     int status = resolve_ipv4_address(ip, u.s4.sin_addr);
     if (status){
         LOG(LOG_INFO, "Connecting to %s:%d failed\n", ip, port);
+        close(sck);
         return status;
     }
 
     /* set snd buffer to at least 32 Kbytes */
     if (!set_snd_buffer(sck, 32768)) {
         LOG(LOG_INFO, "Connecting to %s:%d failed : cannot set socket buffer size\n", ip, port);
+        close(sck);
         return -1;
     }
 

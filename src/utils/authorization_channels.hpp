@@ -129,11 +129,10 @@ public:
             case rdpdr::RDPDR_DTYP_SMARTCARD:
                 return this->rdpdr_restriction_[4];
 
-            default:;
+            default:
+                assert("Unknown RDPDR DeviceType");
+                return false;
         }
-
-        assert(true && "Unknown RDPDR DeviceType");
-        return false;
     }
 
     inline bool rdpdr_drive_read_is_authorized() const noexcept {

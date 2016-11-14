@@ -605,27 +605,6 @@ public:
 
 //  All fragment cache indices MUST be in the range 0 to 255 (inclusive).
 
-//                const int16_t px = x + fc.offset * use_offset;
-//                if (Rect(0,0,0,0) != screen_rect.intersect(Rect(x, y, fc.incby, fc.height))){
-//                    const uint8_t * fc_data            = fc.data.get();
-//                    for (int yy = 0 ; yy < fc.height; yy++) {
-//                        unsigned char fc_bit_mask = 128;
-//                        for (int xx = 0 ; xx < fc.width ; xx++) {
-//                            if (!fc_bit_mask) {
-//                                fc_bit_mask = 128;
-//                                fc_data++;
-//                            }
-//                            if (screen_rect.contains_pt(px + xx, y + yy)
-//                                && (*fc_data & fc_bit_mask)){
-//                                this->drawable.draw_pixel(px + xx, y + yy, fg_color);
-//                             }
-//                            fc_bit_mask >>= 1;
-//                         }
-//                         fc_data++;
-//                     }
-//                }
-
-
 private:
     void draw_glyph( FontChar const & fc, int16_t px, int16_t pos_y, Color fg_color, Rect const & clip)
     {

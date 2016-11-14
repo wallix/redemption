@@ -88,10 +88,12 @@ public:
             case NOTIFY_SUBMIT: this->accepted(); break;
             case NOTIFY_CANCEL: this->refused(); break;
             case NOTIFY_TEXT_CHANGED: this->confirm(); break;
-            default:
+            case NOTIFY_PASTE: case NOTIFY_COPY: case NOTIFY_CUT:
                 if (this->copy_paste) {
                     copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit *>(sender), event);
                 };
+                break;
+            default:;
         }
     }
 
