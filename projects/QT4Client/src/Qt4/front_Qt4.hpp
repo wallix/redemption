@@ -276,6 +276,11 @@ public:
     QPixmap            * _cache;
     gdi::GraphicApi    * _graph_capture;
 
+    struct MouseData {
+        uint16_t x = 0;
+        uint16_t y = 0;
+        QColor color_last = {0, 0, 0};
+    } _mouse_data;
 
     // Connexion socket members
     ClipBoard_Qt       * _clipboard_qt;
@@ -294,10 +299,11 @@ public:
     uint8_t              _keyboardMods;
     CHANNELS::ChannelDefArray   _cl;
 
-    //  Clipboard Channel Management members
+    // Clipboard Channel Management members
     uint32_t                    _requestedFormatId = 0;
     std::string                 _requestedFormatName;
     bool                        _waiting_for_data;
+
 
     struct ClipbrdFormatsList{
         enum : uint16_t {
@@ -336,6 +342,7 @@ public:
 
     } _clipbrdFormatsList;
 
+
     struct CB_FilesList {
         struct CB_in_Files {
             int         size;
@@ -348,6 +355,7 @@ public:
         int                      lindex = 0;
 
     }  _cb_filesList;
+
 
     struct CB_Buffers {
         std::unique_ptr<uint8_t[]>  data = nullptr;
@@ -391,7 +399,7 @@ public:
 
     void empty_buffer() override;
 
-    void process_client_clipboard_outdata(const uint64_t total_length, OutStream & out_streamfirst, size_t firstPartSize, uint8_t const * data, size_t data_len, mod_api * callback);
+    void process_client_clipboard_out_data(const uint64_t total_length, OutStream & out_streamfirst, size_t firstPartSize, uint8_t const * data, const size_t data_len);
 
     virtual void set_pointer(Pointer const & cursor) override;
 
@@ -419,31 +427,79 @@ public:
     template<class Op>
     void draw_memblt_op(const Rect & drect, const Bitmap & bitmap);
 
+
+    struct Op_0x11 {
+        uchar op(const uchar src, const uchar dst) const {  // +------+-------------------------------+
+             return ~(src | dst);                           // | 0x11 | ROP: 0x001100A6 (NOTSRCERASE) |
+         }                                                  // |      | RPN: DSon                     |
+     };                                                     // +------+-------------------------------+
+
     struct Op_0x22 {
-        uint8_t op(const uchar src, const uchar dst) const {
-            return ~(src) & dst;
-        }
-    };
+        uchar op(const uchar src, const uchar dst) const {  // +------+-------------------------------+
+             return (~src & dst);                           // | 0x22 | ROP: 0x00220326               |
+         }                                                  // |      | RPN: DSna                     |
+     };                                                     // +------+-------------------------------+
+
+     struct Op_0x33 {
+        uchar op(const uchar src, const uchar) const {      // +------+-------------------------------+
+             return (~src);                                 // | 0x33 | ROP: 0x00330008 (NOTSRCCOPY)  |
+        }                                                   // |      | RPN: Sn                       |
+     };                                                     // +------+-------------------------------+
+
+     struct Op_0x44 {
+        uchar op(const uchar src, const uchar dst) const {  // +------+-------------------------------+
+            return (src & ~dst);                            // | 0x44 | ROP: 0x00440328 (SRCERASE)    |
+        }                                                   // |      | RPN: SDna                     |
+    };                                                      // +------+-------------------------------+
+
     struct Op_0x55 {
-        uint8_t op(const uchar, const uchar dst) const {
-            return ~(dst);
-        }
-    };
+        uchar op(const uchar, const uchar dst) const {      // +------+-------------------------------+
+             return (~dst);                                 // | 0x55 | ROP: 0x00550009 (DSTINVERT)   |
+        }                                                   // |      | RPN: Dn                       |
+     };                                                     // +------+-------------------------------+
+
     struct Op_0x66 {
-        uint8_t op(const uchar src, const uchar dst) const {
-            return src ^ dst;
-        }
-    };
-    struct Op_0xEE {
-        uint8_t op(const uchar src, const uchar dst) const {
-            return src | dst;
-        }
-    };
+        uchar op(const uchar src, const uchar dst) const {  // +------+-------------------------------+
+            return (src ^ dst);                             // | 0x66 | ROP: 0x00660046 (SRCINVERT)   |
+        }                                                   // |      | RPN: DSx                      |
+     };                                                     // +------+-------------------------------+
+
+     struct Op_0x77 {
+         uchar op(const uchar src, const uchar dst) const { // +------+-------------------------------+
+             return ~(src & dst);                           // | 0x77 | ROP: 0x007700E6               |
+         }                                                  // |      | RPN: DSan                     |
+     };                                                     // +------+-------------------------------+
+
     struct Op_0x88 {
-        uint8_t op(const uchar src, const uchar dst) const {
-            return src & dst;
-        }
-    };
+        uchar op(const uchar src, const uchar dst) const {  // +------+-------------------------------+
+            return (src & dst);                             // | 0x88 | ROP: 0x008800C6 (SRCAND)      |
+        }                                                   // |      | RPN: DSa                      |
+     };                                                     // +------+-------------------------------+
+
+     struct Op_0x99 {
+         uchar op(const uchar src, const uchar dst) const { // +------+-------------------------------+
+            return ~(src ^ dst);                            // | 0x99 | ROP: 0x00990066               |
+        }                                                   // |      | RPN: DSxn                     |
+     };                                                     // +------+-------------------------------+
+
+     struct Op_0xBB {
+        uchar op(const uchar src, const uchar dst) const {  // +------+-------------------------------+
+            return (~src | dst);                            // | 0xBB | ROP: 0x00BB0226 (MERGEPAINT)  |
+        }                                                   // |      | RPN: DSno                     |
+     };                                                     // +------+-------------------------------+
+
+     struct Op_0xDD {
+        uchar op(const uchar src, const uchar dst) const {  // +------+-------------------------------+
+            return (src | ~dst);                            // | 0xDD | ROP: 0x00DD0228               |
+        }                                                   // |      | RPN: SDno                     |
+     };                                                     // +------+-------------------------------+
+
+    struct Op_0xEE {
+        uchar op(const uchar src, const uchar dst) const {  // +------+-------------------------------+
+            return (src | dst);                             // | 0xEE | ROP: 0x00EE0086 (SRCPAINT)    |
+        }                                                   // |      | RPN: DSo                      |
+    };                                                      // +------+-------------------------------+
+
 
     void draw_RDPScrBlt(int srcx, int srcy, const Rect & drect, bool invert);
 

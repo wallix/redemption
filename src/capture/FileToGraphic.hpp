@@ -127,6 +127,7 @@ public:
     };
 
     fixed_ptr_array<gdi::GraphicApi, 10> graphic_consumers;
+    fixed_ptr_array<gdi::MouseInputApi, 10> mouse_input_consumers;
     fixed_ptr_array<gdi::CaptureApi, 10> capture_consumers;
     fixed_ptr_array<gdi::KbdInputApi, 10> kbd_input_consumers;
     fixed_ptr_array<gdi::CaptureProbeApi, 10> capture_probe_consumers;
@@ -268,12 +269,14 @@ public:
 
     void add_consumer(
         gdi::GraphicApi * graphic_ptr,
+        gdi::MouseInputApi * mouse_input_ptr,
         gdi::CaptureApi * capture_ptr,
         gdi::KbdInputApi * kbd_input_ptr,
         gdi::CaptureProbeApi * capture_probe_ptr,
         gdi::ExternalCaptureApi * external_event_ptr
     ) {
         this->graphic_consumers.push_back(graphic_ptr);
+        this->mouse_input_consumers.push_back(mouse_input_ptr);
         this->capture_consumers.push_back(capture_ptr);
         this->kbd_input_consumers.push_back(kbd_input_ptr);
         this->capture_probe_consumers.push_back(capture_probe_ptr);
@@ -895,7 +898,7 @@ public:
             {
                 uint8_t          cache_idx;
 
-                this->mouse_x = this->stream.in_uint16_le();
+                    this->mouse_x = this->stream.in_uint16_le();
                 this->mouse_y = this->stream.in_uint16_le();
                 cache_idx     = this->stream.in_uint8();
 

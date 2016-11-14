@@ -1599,19 +1599,12 @@ public Q_SLOTS:
 
                 this->_cliboard_data_length = this->_bufferImage->byteCount();
 
-                this->_chunk = std::make_unique<uint8_t[]>(this->_cliboard_data_length + 6);
-
+                this->_chunk = std::make_unique<uint8_t[]>(this->_cliboard_data_length + RDPECLIP::FormatDataResponsePDU_MetaFilePic::MetaFilePicEnder::SIZE);
                 for (int i  = 0; i < this->_bufferImage->byteCount(); i++) {
                     this->_chunk[i] = this->_bufferImage->bits()[i];
                 }
-
-                // Ender
-                this->_chunk[this->_cliboard_data_length - 6] = 0x03;
-                this->_chunk[this->_cliboard_data_length - 5] = 0x00;
-                this->_chunk[this->_cliboard_data_length - 4] = 0x00;
-                this->_chunk[this->_cliboard_data_length - 3] = 0x00;
-                this->_chunk[this->_cliboard_data_length - 2] = 0x00;
-                this->_chunk[this->_cliboard_data_length - 1] = 0x00;
+                RDPECLIP::FormatDataResponsePDU_MetaFilePic::MetaFilePicEnder ender;
+                ender.emit(this->_chunk.get(), this->_cliboard_data_length);
 
                 this->send_FormatListPDU();
             //==========================================================================
@@ -1715,15 +1708,16 @@ public Q_SLOTS:
                         pos = tmp.find("\n"); // for linux install
                     }
 
-                    size_t size( (str.length() + cmptCR*2) * 4 );
+                    size_t size( ( (str.length() + cmptCR*2) * 4) + 2 );
 
                     this->_chunk = std::make_unique<uint8_t[]>(size);
                     // UTF8toUTF16_CrLf for linux install
-                    this->_cliboard_data_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size) + 2;
+                    this->_cliboard_data_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size);
 
-                    // Ender uint16_t = 0x0000
-                    this->_chunk[this->_cliboard_data_length-2] = 0;
-                    this->_chunk[this->_cliboard_data_length-1] = 0;
+                    RDPECLIP::FormatDataResponsePDU_Text::TextEnder  ender;
+                    ender.emit(this->_chunk.get(), this->_cliboard_data_length);
+
+                    this->_cliboard_data_length += RDPECLIP::FormatDataResponsePDU_Text::TextEnder::SIZE;
 
                     this->send_FormatListPDU();
             //==========================================================================

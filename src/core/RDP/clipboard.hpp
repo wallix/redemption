@@ -1902,6 +1902,22 @@ struct FormatDataResponsePDU : public CliprdrHeader {
 
 struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
 
+    struct MetaFilePicEnder {
+        enum : uint32_t {
+            SIZE = 6
+          , FLAG = 0x03
+        };
+
+        void emit(uint8_t * chunk, const size_t data_len) {
+            chunk[data_len + 1] = FLAG;
+            chunk[data_len + 2] = 0x00;
+            chunk[data_len + 3] = 0x00;
+            chunk[data_len + 4] = 0x00;
+            chunk[data_len + 5] = 0x00;
+            chunk[data_len + 6] = 0x00;
+        }
+    };
+
     const std::size_t data_length;
     const uint16_t    width;
     const uint16_t    height;
@@ -2313,6 +2329,17 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
 
 struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
 
+    struct TextEnder {
+        enum : uint32_t {
+            SIZE = 2
+        };
+
+        void emit (uint8_t * chunk, size_t data_len) {
+            chunk[data_len + 1] = 0;
+            chunk[data_len + 2] = 0;
+        }
+    };
+
     explicit FormatDataResponsePDU_Text(std::size_t length)
       : FormatDataResponsePDU(length)
     {}
@@ -2534,6 +2561,8 @@ struct UnlockClipboardDataPDU : public CliprdrHeader {
         stream.out_uint32_le(streamDataID);
     }
 };
+
+
 
 
 }   // namespace RDPECLIP

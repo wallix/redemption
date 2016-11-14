@@ -203,7 +203,7 @@ namespace Ops {
     {
         constexpr u8 operator()(u8 target, u8 source) const noexcept
         {
-            return ~(target | ~source);
+            return ~(target | source);
         }
     };
 
