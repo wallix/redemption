@@ -61,7 +61,7 @@ private:
         { return !(*this == k); }
     };
 
-    typedef std::array<value_type, 57> trans_t;
+    typedef std::array<value_type, 58> trans_t;
 
     language_t lang;
     trans_t trans;
@@ -178,6 +178,10 @@ private:
         {"session_logoff_in_progress",
             {"Session logoff in progress.",
              "Fermeture de session en cours."}},
+
+        {"starting_remoteapp",
+            {"Starting RemoteApp.",
+             "Lancement de RemoteApp..."}},
     }}
     {
         std::sort(this->trans.begin(), this->trans.end());

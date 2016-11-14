@@ -1852,7 +1852,11 @@ public:
 
     uint32_t WindowId() const { return this->WindowId_; }
 
+    void WindowId(uint32_t WindowId_) { this->WindowId_ = WindowId_; }
+
     uint16_t Command() const { return this->Command_; }
+
+    void Command(uint16_t Command_) { this->Command_ = Command_; }
 
     static size_t size() {
         return 6;   // WindowId(4) + Command(2)

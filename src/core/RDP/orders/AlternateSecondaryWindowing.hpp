@@ -1910,8 +1910,10 @@ enum {
 //  Describes a cached icon on the client.
 
 class CachedIcon {
+public:
     WindowInformationCommonHeader header;
 
+private:
     CachedIconInfo cached_icon_info;
 
 public:
