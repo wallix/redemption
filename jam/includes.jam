@@ -20,7 +20,7 @@ rule includes ( properties * )
     if $(FFMPEG_INC_PATH) != ""
     {
         # echo ffmpeg include path: $(FFMPEG_INC_PATH) ;
-        incs += <cxxflags>-isystem$(FFMPEG_INC_PATH) ;
+        incs += <cxxflags>-isystem"$(FFMPEG_INC_PATH)" ;
     }
 
     return $(incs) ;
