@@ -568,7 +568,6 @@ inline int app_recorder(
     bool        remove_input_file  = false;
     uint32_t    flv_break_interval = 10*60;
     std::string flv_quality;
-    bool        full_video = false;
     unsigned    ocr_version = -1u;
 
     std::string wrm_compression_algorithm;  // output compression algorithm.
@@ -598,7 +597,7 @@ inline int app_recorder(
         {'w', "wrm", "enable wrm capture"},
         {'t', "ocr", "enable ocr title bar detection"},
         {'f', "flv", "enable flv capture"},
-        {'u', "full", "create full video in addition to OCR chunked video"},
+        {'u', "full", "create full video"},
         {'c', "chunk", "chunk splitting on title bar change detection"},
 
         {"clear", &clear, "clear old capture files with same prefix (default on)"},
@@ -608,7 +607,6 @@ inline int app_recorder(
         {'m', "meta", "show file metadata"},
         {'s', "statistics", "show statistics"},
 
-        //{"compression,z", &wrm_compression_algorithm, "wrm compression algorithm (default=original, none, gzip, snappy, lzma)"},
         {'z', "compression", &wrm_compression_algorithm, "wrm compression algorithm (default=original, none, gzip, snappy)"},
         {'d', "color-depth", &wrm_color_depth,           "wrm color depth (default=original, 16, 24)"},
         {'y', "encryption",  &wrm_encryption,            "wrm encryption (default=original, enable, disable)"},
@@ -620,7 +618,7 @@ inline int app_recorder(
 
         {"hash-path", &hash_path, "output hash dirname (if empty, use hash_path of ini)"},
 
-        {'a', "flvbreakinterval", &flv_break_interval, "number of seconds between splitting flv files in seconds(default, one flv every 10 minutes)"},
+        {'a', "flvbreakinterval", &flv_break_interval, "number of seconds between splitting flv files (by default, one flv every 10 minutes)"},
 
         {'q', "flv-quality", &flv_quality, "flv quality (high, medium, low)"},
 
@@ -802,8 +800,10 @@ inline int app_recorder(
     //    return 1;
     //}
 
-    if (output_filename.length() && !bool(ini.get<cfg::video::capture_flags>())) {
-        std::cerr << "Missing target format : need --png, --ocr, --flv, --wrm or --chunk" << std::endl;
+    bool const full_video = (options.count("full") > 0);
+
+    if (output_filename.length() && (!full_video && !bool(ini.get<cfg::video::capture_flags>()))) {
+        std::cerr << "Missing target format : need --png, --ocr, --flv, --full, --wrm or --chunk" << std::endl;
         return 1;
     }
 
@@ -822,8 +822,6 @@ inline int app_recorder(
             return 1;
         }
     }
-
-    full_video = (options.count("full") > 0);
 
     //extract_meta_data = (options.count("extract-meta-data") > 0);
 
@@ -895,7 +893,9 @@ inline int app_recorder(
         OpenSSL_add_all_digests();
     }
 
-    bool const force_record = bool(ini.get<cfg::video::capture_flags>() & (CaptureFlags::flv | CaptureFlags::ocr));
+    bool const force_record
+      = bool(ini.get<cfg::video::capture_flags>() & (CaptureFlags::flv | CaptureFlags::ocr))
+      || full_video;
 
 /*
     char infile_path     [1024] = "./"          ;   // default value, actual one should come from output_filename

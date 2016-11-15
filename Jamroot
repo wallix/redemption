@@ -674,7 +674,8 @@ test-canonical utils/apps/app_decrypter.hpp :
 test-canonical utils/apps/app_proxy.hpp ;
 
 test-canonical utils/apps/app_recorder.hpp :
-    <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+    <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z
+    <library>ffmpeg <library>ocr <library>ppocr_test <library>bitmap ;
 
 test-canonical utils/apps/app_verifier.hpp :
     <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;

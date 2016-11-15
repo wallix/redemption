@@ -134,7 +134,7 @@ public:
                  || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()))
     , capture_flv(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::flv))
     // capture wab only
-    , capture_flv_full(authentifier && this->capture_flv && ini.get<cfg::globals::capture_chunk>() && full_video)
+    , capture_flv_full(full_video)
     // capture wab only
     , capture_meta(this->capture_ocr)
     , capture_api(now, width / 2, height / 2)
@@ -165,7 +165,8 @@ public:
 
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const bool capture_drawable = this->capture_wrm || this->capture_flv
-                                   || this->capture_ocr || this->capture_png;
+                                   || this->capture_ocr || this->capture_png
+                                   || this->capture_flv_full;
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
@@ -258,18 +259,11 @@ public:
             }
 
             if (this->capture_flv_full) {
-                char full_basename[1024] = {};
-                snprintf(full_basename, sizeof(full_basename), "%s-full", basename);
-
-                if (clear_png == 1) {
-                    clear_files_flv_meta_png(path, full_basename);
-                }
-
                 this->pvc_full.reset(new Video(
                     now, record_path, basename, groupid, authentifier,
                     no_timestamp, this->gd->impl(),
                     video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini),
-                    std::chrono::minutes(10),
+                    std::chrono::seconds(0),
                     Video::SynchronizerNext{nullptr, nullptr}
                 ));
             }
@@ -295,6 +289,7 @@ public:
         if (this->psc) { this->psc->attach_apis(apis_register, ini); }
         if (this->pkc) { this->pkc->attach_apis(apis_register, ini); }
         if (this->pvc) { this->pvc->attach_apis(apis_register, ini); }
+        if (this->pvc_full) { this->pvc_full->attach_apis(apis_register, ini); }
         if (this->pmc) { this->pmc->attach_apis(apis_register, ini); }
         if (this->ptc) { this->ptc->attach_apis(apis_register, ini); }
 

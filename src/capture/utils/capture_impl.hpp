@@ -440,14 +440,13 @@ class VideoCaptureImpl
 
     public:
         VideoTransport(
+            FilenameGenerator::Format format,
             const char * const record_path,
             const char * const basename,
             const char * const suffix,
             const int groupid
         )
-        : transport_base(
-            FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-            record_path, basename, suffix, groupid)
+        : transport_base(format, record_path, basename, suffix, groupid)
         {
             this->remove_current_path();
         }
@@ -556,7 +555,11 @@ public:
         VideoParams video_param,
         std::chrono::microseconds video_interval,
         SynchronizerNext video_synchronizer_next)
-    : trans(record_path, basename, ".flv", groupid)
+    : trans(
+        video_interval.count()
+            ? FilenameGenerator::PATH_FILE_COUNT_EXTENSION
+            : FilenameGenerator::PATH_FILE_EXTENSION,
+        record_path, basename, ".flv", groupid)
     , vc(now, this->trans, drawable, no_timestamp, std::move(video_param))
     , synchronizer_next(video_synchronizer_next)
     , video_sequencer(now, video_interval, VideoSequencerAction{*this})
