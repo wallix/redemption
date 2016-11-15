@@ -81,6 +81,7 @@
 #include <QtGui/QImage>
 #include <QtGui/QRgb>
 #include <QtGui/QBitmap>
+#include <QtGui/QColormap>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
@@ -274,12 +275,76 @@ public:
     Form_Qt            * _form;
     Screen_Qt          * _screen[MAX_MONITOR_COUNT] {};
     QPixmap            * _cache;
+    QPixmap            * _trans_cache;
     gdi::GraphicApi    * _graph_capture;
 
     struct MouseData {
         uint16_t x = 0;
         uint16_t y = 0;
-        QColor color_last = {0, 0, 0};
+        const size_t max = 19*11;
+
+        const char * data_cursor0 =
+            "X.........."
+            "XX........."
+            "XOX........"
+            "XOOX......."
+            "XOOOX......"
+            "XOOOOX....."
+            "XOOOOOX...."
+            "XOOOOOOX..."
+            "XOOOOOOOX.."
+            "XOOOOOOOOX."
+            "XOOOOOXXXXX"
+            "XOOXOOX...."
+            "XOX.XOOX..."
+            "XX..XOOX..."
+            "X....XOOX.."
+            ".....XOOX.."
+            "......XOOX."
+            "......XOOX."
+            ".......XX..";
+
+        std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(max*4);
+        QImage cursor_image;
+
+        enum : int {
+            PIXEL_X   = 88
+          , PIXEL_O   = 79
+          , PIXEL_DOT = 46
+        };
+
+        MouseData() {
+
+            for(size_t i = 0; i < max; i++) {
+                size_t j = i*4;
+                switch (data_cursor0[i]) {
+                    case PIXEL_X:
+                        data[j  ] = 0xFF;
+                        data[j+1] = 0xFF;
+                        data[j+2] = 0xFF;
+                        data[j+3] = 0xFF;
+                        break;
+
+                    case PIXEL_O:
+                        data[j  ] = 0x00;
+                        data[j+1] = 0x00;
+                        data[j+2] = 0x00;
+                        data[j+3] = 0xFF;
+                        break;
+
+                    case PIXEL_DOT:
+                        data[j  ] = 0x00;
+                        data[j+1] = 0x00;
+                        data[j+2] = 0x00;
+                        data[j+3] = 0x00;
+                        break;
+                }
+            }
+
+            cursor_image = QImage(data.get(), 11, 19, QImage::Format_ARGB32_Premultiplied);
+        }
+
+
     } _mouse_data;
 
     // Connexion socket members

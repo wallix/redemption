@@ -898,7 +898,7 @@ public:
             {
                 uint8_t          cache_idx;
 
-                    this->mouse_x = this->stream.in_uint16_le();
+                this->mouse_x = this->stream.in_uint16_le();
                 this->mouse_y = this->stream.in_uint16_le();
                 cache_idx     = this->stream.in_uint8();
 
@@ -1226,6 +1226,10 @@ private:
                             this->record_now, this->mouse_x, this->mouse_y
                         , this->ignore_frame_in_timeval
                         );
+                    }
+
+                    for (gdi::MouseInputApi * mia : this->mouse_input_consumers){
+                        mia->update_pointer_position(this->mouse_x, this->mouse_y);
                     }
 
                     this->ignore_frame_in_timeval = false;

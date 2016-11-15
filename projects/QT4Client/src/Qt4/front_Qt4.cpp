@@ -42,6 +42,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
     , mod_palette(BGRPalette::classic_332())
     , _form(nullptr)
     , _cache(nullptr)
+    , _trans_cache(nullptr)
     , _graph_capture(nullptr)
     , _clipboard_qt(nullptr)
     , _timer(0)
@@ -305,11 +306,9 @@ void Front_Qt::writeClientInfo() {
 }
 
 void Front_Qt::set_pointer(Pointer const & cursor) {
-    //if (cursor.pointer_type !=  0) {
-        //std::cout <<  "cursor=" << int(cursor.pointer_type) <<  std::endl;
-    //}
-
-    std::cout <<  "cursor=" << int(cursor.pointer_type) <<  std::endl;
+    if (cursor.pointer_type !=  0) {
+        std::cout <<  "cursor=" << int(cursor.pointer_type) <<  std::endl;
+    }
 }
 
 Screen_Qt * Front_Qt::getMainScreen() {
@@ -334,6 +333,7 @@ void Front_Qt::disconnexionReleased(){
     this->dropScreen();
     this->disconnect("");
     this->_cache = nullptr;
+    this->_trans_cache = nullptr;
     delete(this->_capture);
     this->_capture = nullptr;
     this->_graph_capture = nullptr;
@@ -418,9 +418,11 @@ bool Front_Qt::connect() {
     if (this->_mod_qt->connect()) {
 
         this->_cache = new QPixmap(this->_info.width, this->_info.height);
-        this->_screen[0] = new Screen_Qt(this, this->_cache);
+        this->_trans_cache = new QPixmap(this->_info.width, this->_info.height);
+        this->_trans_cache->fill(Qt::transparent);
+        this->_screen[0] = new Screen_Qt(this, this->_cache, this->_trans_cache);
         for (int i = 1; i < this->_monitorCount; i++) {
-            this->_screen[i] = new Screen_Qt(this, i, this->_cache);
+            this->_screen[i] = new Screen_Qt(this, i, this->_cache, this->_trans_cache);
             this->_screen[i]->show();
         }
 
@@ -497,9 +499,11 @@ void Front_Qt::replay(std::string & movie_path) {
     this->_replay = true;
     this->setScreenDimension();
     this->_cache_replay = new QPixmap(this->_info.width, this->_info.height);
-    this->_screen[0] = new Screen_Qt(this, this->_cache_replay, movie_path);
+    this->_trans_cache = new QPixmap(this->_info.width, this->_info.height);
+    this->_trans_cache->fill(Qt::transparent);
+    this->_screen[0] = new Screen_Qt(this, this->_cache_replay, movie_path, this->_trans_cache);
     for (int i = 1; i < this->_monitorCount; i++) {
-        this->_screen[i] = new Screen_Qt(this, i, this->_cache_replay);
+        this->_screen[i] = new Screen_Qt(this, i, this->_cache_replay, this->_trans_cache);
         this->_screen[i]->show();
     }
     this->_connected = true;
@@ -913,7 +917,7 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                 // |      | RPN: 0                        |
                 // +------+-------------------------------+
             case 0x00: // blackness
-                this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
+                this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::black);
                 break;
                 // +------+-------------------------------+
                 // | 0x05 | ROP: 0x000500A9               |
@@ -992,7 +996,7 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                 // |      | RPN: 1                        |
                 // +------+-------------------------------+
             case 0xFF: // whiteness
-                this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
+                this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::white);
                 break;
             default:
                 std::cout << "RDPPatBlt " << int(cmd.rop) << std::endl;
@@ -1683,20 +1687,16 @@ int Front_Qt::server_resize(int width, int height, int bpp) {
     this->_info.width = width;
     this->_info.height = height;
 
-    //this->_screen[0]->setUpdate();
-
     return 1;
 }
 
 void Front_Qt::update_pointer_position(uint16_t xPos, uint16_t yPos) {
-    std::cout << "update_pointer_position " << int(xPos) << " " << int(yPos) << std::endl;
+    //std::cout << "update_pointer_position " << int(xPos) << " " << int(yPos) << std::endl;
 
     if (this->_replay) {
-        this->_screen[0]->paintCache().fillRect(this->_mouse_data.x, this->_mouse_data.y, 1, 1, this->_mouse_data.color_last);
-        this->_mouse_data.x = xPos;
-        this->_mouse_data.y = yPos;
-        this->_mouse_data.color_last = this->_screen[0]->getCache()->toImage().copy(xPos, yPos, 10, 10).color(0);
-        this->_screen[0]->paintCache().fillRect(xPos, yPos, 1, 1, Qt::red);
+        this->_trans_cache->fill(Qt::transparent);
+        QRect nrect(xPos, yPos, this->_mouse_data.cursor_image.width(), this->_mouse_data.cursor_image.height());
+        this->_screen[0]->paintTransCache().drawImage(nrect, this->_mouse_data.cursor_image);
     }
 }
 
@@ -2648,7 +2648,7 @@ void Front_Qt::process_client_clipboard_out_data(const uint64_t total_length, Ou
     //    CHANNEL_PDU_HEADER::flags = CHANNEL_FLAG_LAST
     //    Actual virtual channel data is 62 bytes.
 
-    // The size of the virtual channel data in the last PDU (the data in the virtualChannelData field)
+//     // The size of the virtual channel data in the last PDU (the data in the virtualChannelData field)
     // is determined by subtracting the offset of the virtualChannelData field in the encapsulating
     // Virtual Channel PDU from the total size specified in the tpktHeader field. This length is
     // referred to as chunkLength.

@@ -1097,9 +1097,11 @@ public:
     QColor               _penColor;
     QPixmap            * _cache;
     QPainter             _cache_painter;
-
+    QPixmap            * _trans_cache;
+    QPainter             _trans_cache_painter;
     int            _width;
     int            _height;
+    QPixmap              _match_pixmap;
     bool                 _connexionLasted;
     QTimer               _timer;
     QTimer               _timer_replay;
@@ -1108,7 +1110,7 @@ public:
     bool           _running;
     std::string    _movie_name;
 
-    Screen_Qt (Front_Qt_API * front, int screen_index, QPixmap * cache)
+    Screen_Qt (Front_Qt_API * front, int screen_index, QPixmap * cache, QPixmap * trans_cache)
         : QWidget()
         , _front(front)
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
@@ -1116,8 +1118,10 @@ public:
         , _buttonDisconnexion("Disconnection", this)
         , _penColor(Qt::black)
         , _cache(cache)
+        , _trans_cache(trans_cache)
         , _width(this->_front->_screen_dimensions[screen_index].cx)
         , _height(this->_front->_screen_dimensions[screen_index].cy)
+        , _match_pixmap(this->_width, this->_height)
         , _connexionLasted(false)
         , _timer(this)
         , _screen_index(screen_index)
@@ -1153,7 +1157,7 @@ public:
         this->setFocusPolicy(Qt::StrongFocus);
     }
 
-    Screen_Qt (Front_Qt_API * front, QPixmap * cache, std::string & movie_path)
+    Screen_Qt (Front_Qt_API * front, QPixmap * cache, std::string & movie_path, QPixmap * trans_cache)
         : QWidget()
         , _front(front)
         , _buttonCtrlAltDel("Play", this)
@@ -1162,8 +1166,11 @@ public:
         , _penColor(Qt::black)
         , _cache(cache)
         , _cache_painter(this->_cache)
+        , _trans_cache(trans_cache)
+        , _trans_cache_painter(this->_trans_cache)
         , _width(this->_front->_screen_dimensions[0].cx)
         , _height(this->_front->_screen_dimensions[0].cy)
+        , _match_pixmap(this->_width, this->_height)
         , _connexionLasted(false)
         , _timer(this)
         , _timer_replay(this)
@@ -1218,7 +1225,7 @@ public:
         this->setFocusPolicy(Qt::StrongFocus);
     }
 
-    Screen_Qt (Front_Qt_API * front, QPixmap * cache)
+    Screen_Qt (Front_Qt_API * front, QPixmap * cache, QPixmap * trans_cache)
         : QWidget()
         , _front(front)
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
@@ -1227,8 +1234,10 @@ public:
         , _penColor(Qt::black)
         , _cache(cache)
         , _cache_painter(this->_cache)
+        , _trans_cache(trans_cache)
         , _width(this->_front->_screen_dimensions[0].cx)
         , _height(this->_front->_screen_dimensions[0].cy)
+        , _match_pixmap(this->_width, this->_height)
         , _connexionLasted(false)
         , _timer(this)
         , _screen_index(0)
@@ -1297,6 +1306,10 @@ public:
         return this->_cache_painter;
     }
 
+    QPainter & paintTransCache() {
+        return this->_trans_cache_painter;
+    }
+
     void paintEvent(QPaintEvent * event) {
         Q_UNUSED(event);
 
@@ -1307,7 +1320,7 @@ public:
         pen.setWidth(1);
         pen.setBrush(this->_penColor);
         painter.setPen(pen);
-        painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(this->_front->_info.cs_monitor.monitorDefArray[this->_screen_index].left, 0, this->_width, this->_height));
+        painter.drawPixmap(QPoint(0, 0), this->_match_pixmap, QRect(this->_front->_info.cs_monitor.monitorDefArray[this->_screen_index].left, 0, this->_width, this->_height));
         painter.end();
     }
 
@@ -1381,6 +1394,10 @@ private Q_SLOTS:
     }
 
     void slotRepaint() {
+
+        QPainter match_painter(&(this->_match_pixmap));
+        match_painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(this->_front->_info.cs_monitor.monitorDefArray[this->_screen_index].left, 0, this->_width, this->_height));
+        match_painter.drawPixmap(QPoint(0, 0), *(this->_trans_cache), QRect(this->_front->_info.cs_monitor.monitorDefArray[this->_screen_index].left, 0, this->_width, this->_height));
         this->repaint();
     }
 
