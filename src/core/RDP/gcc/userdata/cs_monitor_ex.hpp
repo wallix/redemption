@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2016
-   Author(s): Christophe Grosjean
+   Author(s): Christophe Grosjean, Jennifer Inthavong
 
    Generic Conference Control (T.124)
 

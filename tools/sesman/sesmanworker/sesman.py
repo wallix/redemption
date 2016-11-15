@@ -1542,6 +1542,9 @@ class Sesman():
                                             result=False, diag=release_reason)
                                         self.send_data({u'disconnect_reason': TR(u"pattern_kill")})
                                     elif _reporting_reason == u'SERVER_REDIRECTION':
+
+                                        log_redir = this->ini.get<cfg::session_log::session_log_redirection>();
+
                                         (redir_login, _, redir_host) = \
                                             _reporting_message.rpartition('@')
                                         update_args = {}
@@ -1549,6 +1552,8 @@ class Sesman():
                                             update_args["target_host"] = redir_host
                                         if redir_login:
                                             update_args["target_account"] = redir_login
+                                        if log_redir:
+                                            update_args["log_file_path"] = u'/var/wab/recorded/rdp/'+ session_id + u'_traces.log'
                                         self.engine.update_session(physical_target,
                                                                    **update_args)
                                     elif _reporting_reason == u'SESSION_EXCEPTION':
