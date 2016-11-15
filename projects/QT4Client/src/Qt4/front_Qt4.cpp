@@ -514,23 +514,44 @@ void Front_Qt::replay(std::string & movie_path) {
 
 }
 
+struct Front_Qt::ReplayModInternal {
+    struct Snapshoter : gdi::CaptureApi
+    {
+        Front_Qt & front;
+
+        Snapshoter(Front_Qt & front) : front(front) {}
+
+        virtual std::chrono::microseconds do_snapshot(
+            const timeval& /*now*/, int cursor_x, int cursor_y, bool /*ignore_frame_in_timeval*/
+        ) {
+            this->front.update_pointer_position(cursor_x, cursor_y);
+        }
+        virtual void do_pause_capture(const timeval&) {}
+        virtual void do_resume_capture(const timeval&) {}
+    } snapshoter;
+    ReplayMod mod;
+};
+
 void Front_Qt::delete_replay_mod() {
-    delete (this->_replay_mod);
-    this->_replay_mod = nullptr;
+    this->_replay_mod.reset();
 }
 
 void Front_Qt::load_replay_mod(std::string & movie_name) {
-    this->delete_replay_mod();
-    this->_replay_mod = new ReplayMod( *(this)
-                                     , (this->REPLAY_DIR + "/").c_str()
-                                     , movie_name.c_str()
-                                     , 0
-                                     , 0
-                                     , this->_error
-                                     , this->_font
-                                     , true
-                                     , 0
-                                     );
+    this->_replay_mod.reset(new ReplayModInternal{
+        {*this},
+        {
+            *(this)
+          , (this->REPLAY_DIR + "/").c_str()
+          , movie_name.c_str()
+          , 0
+          , 0
+          , this->_error
+          , this->_font
+          , true
+          , 0
+        }
+    });
+    this->_replay_mod->mod.add_consumer(nullptr, this->_replay_mod->snapshoter, nullptr, nullptr, nullptr);
 }
 
 

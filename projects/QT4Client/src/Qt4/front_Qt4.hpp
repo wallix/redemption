@@ -138,6 +138,7 @@ private:
         }
     };
 
+    class ReplayModInternal;
 
 public:
 
@@ -161,7 +162,7 @@ public:
     int               _nbTry;
     int               _retryDelay;
     mod_api         * _callback;
-    ReplayMod       * _replay_mod;
+    std::unique_ptr<ReplayModInternal> _replay_mod;
     Mod_Qt          * _mod_qt;
     QImage::Format    _imageFormatRGB;
     QImage::Format    _imageFormatARGB;
