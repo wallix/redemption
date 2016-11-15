@@ -559,7 +559,7 @@ public:
         video_interval.count()
             ? FilenameGenerator::PATH_FILE_COUNT_EXTENSION
             : FilenameGenerator::PATH_FILE_EXTENSION,
-        record_path, basename, ".flv", groupid)
+        record_path, basename, ("." + video_param.codec).c_str(), groupid)
     , vc(now, this->trans, drawable, no_timestamp, std::move(video_param))
     , synchronizer_next(video_synchronizer_next)
     , video_sequencer(now, video_interval, VideoSequencerAction{*this})
