@@ -1542,6 +1542,7 @@ class Sesman():
                                             result=False, diag=release_reason)
                                         self.send_data({u'disconnect_reason': TR(u"pattern_kill")})
                                     elif _reporting_reason == u'SERVER_REDIRECTION':
+
                                         (redir_login, _, redir_host) = \
                                             _reporting_message.rpartition('@')
                                         update_args = {}
