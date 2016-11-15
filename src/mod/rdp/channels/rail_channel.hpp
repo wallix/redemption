@@ -22,6 +22,7 @@
 #pragma once
 
 #include "mod/rdp/channels/base_channel.hpp"
+#include "mod/rdp/channels/rail_session_manager.hpp"
 
 class FrontAPI;
 
@@ -39,6 +40,8 @@ private:
     std::string param_client_execute_working_dir;
     std::string param_client_execute_arguments;
 
+    RemoteProgramsSessionManager * param_remote_programs_session_manager;
+
     bool client_execute_pdu_sent = false;
 
 public:
@@ -48,6 +51,8 @@ public:
         const char* client_execute_exe_or_file;
         const char* client_execute_working_dir;
         const char* client_execute_arguments;
+
+        RemoteProgramsSessionManager * remote_programs_session_manager;
     };
 
     RemoteProgramsVirtualChannel(
@@ -62,7 +67,8 @@ public:
     , param_client_execute_flags(params.client_execute_flags)
     , param_client_execute_exe_or_file(params.client_execute_exe_or_file)
     , param_client_execute_working_dir(params.client_execute_working_dir)
-    , param_client_execute_arguments(params.client_execute_arguments) {}
+    , param_client_execute_arguments(params.client_execute_arguments)
+    , param_remote_programs_session_manager(params.remote_programs_session_manager) {}
 
 protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const
@@ -96,7 +102,7 @@ protected:
             capdu.log(LOG_INFO);
         }
 
-        return true;
+        return !this->param_remote_programs_session_manager->is_window_blocked(capdu.WindowId());
     }
 
     bool process_client_compartment_status_information_pdu(uint32_t total_length,
@@ -348,7 +354,7 @@ protected:
             cscpdu.log(LOG_INFO);
         }
 
-        return true;
+        return !this->param_remote_programs_session_manager->is_window_blocked(cscpdu.WindowId());
     }
 
     bool process_client_system_parameters_update_pdu(uint32_t total_length,

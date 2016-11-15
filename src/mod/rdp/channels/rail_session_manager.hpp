@@ -90,12 +90,11 @@ public:
         }
     }
 
-private:
+public:
     bool is_window_blocked(uint32_t window_id) {
         return (this->blocked_windows.find(window_id) != this->blocked_windows.end());
     }
 
-public:
     void set_drawable(gdi::GraphicApi * drawable, int bpp) {
         this->drawable = drawable;
         this->bpp      = bpp;
