@@ -1355,7 +1355,9 @@ class Sesman():
                                 self.target_context.login or ""
                         if u'${PASSWORD}' in app_params.params:
                             kv[u'target_application_password'] = \
-                                self.engine.get_target_password(selected_target)
+                                self.engine.get_target_password(selected_target) \
+                                or self.engine.get_primary_password(selected_target) \
+                                or ''
 
                     # kv[u'target_application'] = selected_target.service_login
                     kv[u'disable_tsk_switch_shortcuts'] = u'yes'
@@ -1591,10 +1593,12 @@ class Sesman():
                                     Logger().info(u"Auth channel target=\"%s\"" % self.shared.get(u'auth_channel_target'))
 
                                     if self.shared.get(u'auth_channel_target') == u'GetWabSessionParameters':
-                                        app_info =  self.engine.get_target_login_info(selected_target)
+                                        app_info = self.engine.get_target_login_info(selected_target)
                                         account_login = app_info.account_login
-                                        application_password = self.engine.get_target_password(selected_target)
-
+                                        application_password = \
+                                            self.engine.get_target_password(selected_target) \
+                                            or self.engine.get_primary_password(selected_target) \
+                                            or ''
                                         _message = { 'user' : account_login, 'password' : application_password }
 
                                         #Logger().info(u"GetWabSessionParameters (response):" % json.dumps(_message))

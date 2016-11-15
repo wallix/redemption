@@ -28,7 +28,7 @@
 #include <string>
 
 #include "capture/FileToChunk.hpp"
-#include "capture/ChunkToFile.hpp"
+#include "capture/GraphicToFile.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "recording_progress.hpp"

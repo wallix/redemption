@@ -462,7 +462,6 @@ test-canonical capture/ocr/locale/latin_to_cyrillic.hpp : <library>ocr ;
 
 ## Capture tests
 ## @{
-test-canonical capture/ChunkToFile.hpp ;
 test-canonical capture/FileToChunk.hpp : <library>png ;
 test-canonical capture/FileToGraphic.hpp : <library>bitmap <library>snappy <library>crypto <library>png ;
 test-canonical capture/GraphicToFile.hpp : <library>bitmap <library>snappy <library>crypto <library>png ;
@@ -472,7 +471,6 @@ test-canonical capture/chunked_image_transport.hpp : <library>bitmap <library>pn
 test-canonical capture/image_capture.hpp : <library>bitmap <library>png ;
 test-canonical capture/nativecapture.hpp : <library>bitmap <library>crypto <library>snappy <library>png ;
 test-canonical capture/new_kbdcapture.hpp ;
-test-canonical capture/send_wrm_chunk.hpp ;
 test-canonical capture/session_meta.hpp ;
 test-canonical capture/transparentchunk.hpp ;
 test-canonical capture/transparentplayer.hpp ;
