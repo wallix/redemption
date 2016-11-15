@@ -37,8 +37,6 @@
 #include "utils/pattutils.hpp"
 // end private extension
 
-#include "gdi/input_pointer_api.hpp"
-
 #include "capture/session_log_agent.hpp"
 #include "capture/title_extractors/agent_title_extractor.hpp"
 #include "capture/title_extractors/ocr_title_filter.hpp"

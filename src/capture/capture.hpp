@@ -34,7 +34,6 @@ class Capture final
 : public gdi::GraphicBase<Capture>
 , public gdi::CaptureApi
 , public gdi::KbdInputApi
-, public gdi::MouseInputApi
 , public gdi::CaptureProbeApi
 , public gdi::ExternalCaptureApi
 , public gdi::UpdateConfigCaptureApi
@@ -92,7 +91,6 @@ private:
 
     CaptureApisImpl::Capture capture_api;
     CaptureApisImpl::KbdInput kbd_input_api;
-    CaptureApisImpl::MouseInput mouse_input_api;
     CaptureApisImpl::CaptureProbe capture_probe_api;
     CaptureApisImpl::ExternalCapture external_capture_api;
     CaptureApisImpl::UpdateConfigCapture update_config_capture_api;
@@ -106,7 +104,6 @@ private:
             this->graphic_api ? &this->graphic_api->snapshoters : nullptr,
             this->capture_api.caps,
             this->kbd_input_api.kbds,
-            this->mouse_input_api.mouses,
             this->capture_probe_api.probes,
             this->external_capture_api.objs,
             this->update_config_capture_api.objs,
@@ -371,10 +368,6 @@ public:
 
     void enable_kbd_input_mask(bool enable) override {
         this->kbd_input_api.enable_kbd_input_mask(enable);
-    }
-
-    void update_pointer_position(uint16_t x, uint16_t y) override {
-        this->mouse_input_api.update_pointer_position(x, y);
     }
 
     gdi::GraphicApi * get_graphic_api() const {
