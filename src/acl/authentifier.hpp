@@ -561,33 +561,34 @@ public:
         const bool log_redir = this->ini.get<cfg::session_log::session_log_redirection>();
 
         if (log_redir) {
-            std::string filename = std::string("/var/wab/recorded/rdp/") + this->ini.get<cfg::context::session_id>().c_str()  + "_traces.txt";
+            std::string filename = std::string("/var/wab/recorded/rdp/")
+                                   + this->ini.get<cfg::context::session_id>().c_str()
+                                   + std::string("_traces.log");
             std::ofstream log_file(filename, std::fstream::out | std::fstream::app);
 
-            if (log_redir) {
-                if(log_file.bad()) {
-                    LOG(LOG_INFO, "auth::bad SIEM log file creation");
-                }
-                else {
-                    time_t seconds = time(nullptr);
-                    struct tm * timeinfo = localtime(&seconds);
-                    log_file << (1900+timeinfo->tm_year) << "-";
-                    log_file << (timeinfo->tm_mon+1) << "-" << timeinfo->tm_mday << " " << timeinfo->tm_hour << ":" <<timeinfo->tm_min << ":" <<timeinfo->tm_sec << " ";
-                    log_file << "[" << (this->session_type.empty() ? "Neutral" : this->session_type.c_str()) << " Session] " << " " ;
-                    log_file << "type=" << type << " " ;
-                    log_file << "session_id=" << this->ini.get<cfg::context::session_id>().c_str() << " " ;
-                    log_file << "client_ip=" << this->ini.get<cfg::globals::host>().c_str() << " " ;
-                    log_file << "target_ip=" << (isdigit(*this->ini.get<cfg::context::target_host>().c_str()) ?
-                                                 this->ini.get<cfg::context::target_host>().c_str() :
-                                                 this->ini.get<cfg::context::ip_target>().c_str()) << " " ;
-                    log_file << "user=" << this->ini.get<cfg::globals::auth_user>().c_str() << " " ;
-                    log_file << "device=" << this->ini.get<cfg::globals::target_device>().c_str() << " " ;
-                    log_file << "service=" << this->ini.get<cfg::context::target_service>().c_str() << " " ;
-                    log_file << "account=" << this->ini.get<cfg::globals::target_user>().c_str() << " " ;
-                    log_file << (extra ? extra : "") << std::endl << std::endl;
-                    log_file.close();
-                }
+            if(log_file.bad()) {
+                LOG(LOG_INFO, "auth::bad SIEM log file creation");
             }
+            else {
+                time_t seconds = time(nullptr);
+                struct tm * timeinfo = localtime(&seconds);
+                log_file << (1900+timeinfo->tm_year) << "-";
+                log_file << (timeinfo->tm_mon+1) << "-" << timeinfo->tm_mday << " " << timeinfo->tm_hour << ":" <<timeinfo->tm_min << ":" <<timeinfo->tm_sec << " ";
+                log_file << " [" << (this->session_type.empty() ? "Neutral" : this->session_type.c_str()) << " Session] " << " " ;
+                log_file << "type=" << type << " " ;
+                log_file << "session_id=" << this->ini.get<cfg::context::session_id>().c_str() << " " ;
+                log_file << "client_ip=" << this->ini.get<cfg::globals::host>().c_str() << " " ;
+                log_file << "target_ip=" << (isdigit(*this->ini.get<cfg::context::target_host>().c_str()) ?
+                                             this->ini.get<cfg::context::target_host>().c_str() :
+                                             this->ini.get<cfg::context::ip_target>().c_str()) << " " ;
+                log_file << "user=" << this->ini.get<cfg::globals::auth_user>().c_str() << " " ;
+                log_file << "device=" << this->ini.get<cfg::globals::target_device>().c_str() << " " ;
+                log_file << "service=" << this->ini.get<cfg::context::target_service>().c_str() << " " ;
+                log_file << "account=" << this->ini.get<cfg::globals::target_user>().c_str() << " " ;
+                log_file << (extra ? extra : "") << std::endl << std::endl;
+                log_file.close();
+            }
+
         }
 
         /* Log to syslog */
