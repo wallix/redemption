@@ -624,7 +624,6 @@ struct ssh_session_struct {
 
     z_stream *initcompress(int level) {
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
-        int status;
 
         z_stream *stream = static_cast<z_stream *>(malloc(sizeof(z_stream)));
         if (stream == nullptr) {
@@ -632,7 +631,7 @@ struct ssh_session_struct {
         }
         memset(stream, 0, sizeof(z_stream));
 
-        status = deflateInit(stream, level);
+        int const status = deflateInit(stream, level);
         if (status != Z_OK) {
             free(stream);
             stream = nullptr;
@@ -3869,6 +3868,7 @@ struct SshServerSession : public ssh_session_struct
                     this->current_crypto->do_compress_in=1;
                 }
             }
+            CPP_FALLTHROUGH;
         default:
             ssh_auth_reply_denied_server(this);
         }
@@ -5573,6 +5573,7 @@ struct SshServerSession : public ssh_session_struct
         switch (this->session_state){
         case SSH_SESSION_STATE_AUTHENTICATED:
             syslog(LOG_WARNING, "Other side initiating key re-exchange");
+            CPP_FALLTHROUGH;
         case SSH_SESSION_STATE_INITIAL_KEX:
             break;
         default:
@@ -6021,6 +6022,7 @@ struct SshServerSession : public ssh_session_struct
         break;
         case REQUEST_STRING_CHANNEL_OPEN_UNKNOWN:
             syslog(LOG_INFO, "%s --- REQUEST_CHANNEL_OPEN_UNKNOWN", __FUNCTION__);
+            CPP_FALLTHROUGH;
         default:
         break;
         }
@@ -6878,10 +6880,9 @@ struct SshServerSession : public ssh_session_struct
 
     void handle_x11_req_request_server(ssh_channel channel, int want_reply, ssh_buffer_struct *packet)
     {
-        (void)want_reply;
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
         syslog(LOG_INFO,
-          "Received a %s channel_request for channel (%d:%d) (want_reply=%hhd)",
+          "Received a %s channel_request for channel (%d:%d) (want_reply=%d)",
           "x11-req", channel->local_channel, channel->remote_channel, want_reply);
 
         uint8_t x11_single_connection = packet->in_uint8();

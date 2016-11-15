@@ -62,6 +62,7 @@ int SshServerSession::ssh_channel_open_auth_agent_server(ssh_channel channel){
 
         this->packet_send();
 
+        CPP_FALLTHROUGH;
     // Beware, this is fallthrough behavior to opening
     // But maybe we should have some error if we call open and channel is already opening
     // instead of accepting it.
