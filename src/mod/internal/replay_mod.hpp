@@ -135,7 +135,7 @@ public:
             throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
         }
 
-        this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
+        this->reader->add_consumer(&this->front, &this->front, nullptr, nullptr, nullptr, nullptr);
     }
 
     void play() {
