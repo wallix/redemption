@@ -66,22 +66,24 @@ namespace { namespace compiler_aux_ {
 #  define LOG LOGSYSLOG__REDEMPTION__INTERNAL
 
 #elif defined(LOGPRINT)
-#  define LOG(priority, ...)                                                     \
-    LOGCHECK__REDEMPTION__INTERNAL((                                             \
-        LOG_FORMAT_CHECK(__VA_ARGS__),                                           \
-        LOGPRINT__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- " __VA_ARGS__),  \
-        1                                                                        \
+#  define LOG(priority, ...)                                                    \
+    LOGCHECK__REDEMPTION__INTERNAL((                                            \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                                          \
+        LOGPRINT__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- " __VA_ARGS__), \
+        1                                                                       \
     ))
 
 #elif defined(LOGNULL)
-#  define LOG(priority, ...) LOGCHECK__REDEMPTION__INTERNAL(( \
-        LOG_FORMAT_CHECK(__VA_ARGS__), priority))
+#  define LOG(priority, ...)                    \
+    LOGCHECK__REDEMPTION__INTERNAL((            \
+        LOG_FORMAT_CHECK(__VA_ARGS__), priority \
+    ))
 
 #elif defined(LOGASMJS) && defined(EM_ASM)
-#  define LOG(priority, ...) LOGCHECK__REDEMPTION__INTERNAL(( \
-        LOG_FORMAT_CHECK(__VA_ARGS__),                                           \
-        LOGPRINT__REDEMPTION__ASMJS(priority, "%s (%d/%d) -- " __VA_ARGS__),  \
-        1                                                                        \
+#  define LOG(priority, ...) LOGCHECK__REDEMPTION__INTERNAL((                \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                                       \
+        LOGPRINT__REDEMPTION__ASMJS(priority, "%s (%d/%d) -- " __VA_ARGS__), \
+        1                                                                    \
     ))
 
 #else
@@ -122,11 +124,12 @@ namespace {
     template<class... Ts>
     void LOGPRINT__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args)
     {
+        int const pid = getpid();
         #ifdef __GNUG__
             #pragma GCC diagnostic push
             #pragma GCC diagnostic ignored "-Wformat-nonliteral"
         #endif
-        printf(format, prioritynames[priority], getpid(), getpid(), args...);
+        printf(format, prioritynames[priority], pid, pid, args...);
         #ifdef __GNUG__
             #pragma GCC diagnostic pop
         #endif
@@ -137,12 +140,13 @@ namespace {
     template<class... Ts>
     void LOGPRINT__REDEMPTION__ASMJS(int priority, char const * format, Ts const & ... args)
     {
+        int const pid = getpid();
+        char buffer[4096];
         #ifdef __GNUG__
             #pragma GCC diagnostic push
             #pragma GCC diagnostic ignored "-Wformat-nonliteral"
         #endif
-        char buffer[4096];
-        int len = snprintf(buffer, sizeof(buffer)-2, format, prioritynames[priority], getpid(), getpid(), args...);
+        int len = snprintf(buffer, sizeof(buffer)-2, format, prioritynames[priority], pid, pid, args...);
         #ifdef __GNUG__
             #pragma GCC diagnostic pop
         #endif
@@ -155,11 +159,12 @@ namespace {
     template<class... Ts>
     void LOGSYSLOG__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args)
     {
+        int const pid = getpid();
         #ifdef __GNUG__
             #pragma GCC diagnostic push
             #pragma GCC diagnostic ignored "-Wformat-nonliteral"
         #endif
-        syslog(priority, format, prioritynames[priority], getpid(), getpid(), args...);
+        syslog(priority, format, prioritynames[priority], pid, pid, args...);
         #ifdef __GNUG__
             #pragma GCC diagnostic pop
         #endif
