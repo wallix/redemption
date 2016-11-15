@@ -238,13 +238,6 @@ private:
 
             if ((title_info_length >= sizeof(session_probe_window_title) - 1) &&
                 !::strcmp(title_info + (title_info_length - sizeof(session_probe_window_title) + 1), session_probe_window_title)) {
-                this->blocked_windows.insert(window_id);
-
-                REDASSERT(this->is_window_blocked(window_id));
-
-                window_is_blocked = true;
-
-                LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(NewOrExistingWindow): Added window 0x%X to blocked windows list.", window_id);
 
                 {
                     RAILPDUHeader rpduh;
@@ -273,6 +266,14 @@ private:
                 }
 
                 LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(NewOrExistingWindow): Window 0x%X is minimized.", window_id);
+
+                this->blocked_windows.insert(window_id);
+
+                REDASSERT(this->is_window_blocked(window_id));
+
+                window_is_blocked = true;
+
+                LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(NewOrExistingWindow): Added window 0x%X to blocked windows list.", window_id);
 
                 this->splash_screen_create(window_id);
                 this->splash_screen_draw();
