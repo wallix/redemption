@@ -1162,6 +1162,7 @@ static int dh_handshake_client(SshClientSession * client_session, error_struct &
         }
 
         client_session->dh_handshake_state = DH_STATE_INIT_SENT;
+        CPP_FALLTHROUGH;
     case DH_STATE_INIT_SENT:
         /* wait until ssh_packet_dh_reply_client is called */
         break;
@@ -1697,7 +1698,7 @@ static inline void handle_x11_req_request_client(SshClientSession * client_sessi
     (void)client_session;
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_INFO,
-      "Received a %s channel_request for channel (%d:%d) (want_reply=%hhd)",
+      "Received a %s channel_request for channel (%d:%d) (want_reply=%d)",
       "x11-req", channel->local_channel, channel->remote_channel, want_reply);
 
     /* uint8_t x11_single_connection = */ packet->in_uint8();
@@ -2029,6 +2030,7 @@ static inline int handle_channel_open_client(SshClientSession * client_session, 
     break;
     case REQUEST_STRING_CHANNEL_OPEN_UNKNOWN:
         syslog(LOG_INFO, "%s --- REQUEST_CHANNEL_OPEN_UNKNOWN", __FUNCTION__);
+        CPP_FALLTHROUGH;
     default:
     break;
     }
@@ -4928,6 +4930,7 @@ ssh_auth_e ssh_userauth_try_publickey_client(SshClientSession * client_session, 
 
             client_session->packet_send();
             syslog(LOG_INFO, "%s packet_send -> TO FALLBACK ---", __FUNCTION__);
+            CPP_FALLTHROUGH;
         case SSH_PENDING_CALL_AUTH_OFFER_PUBKEY:
             syslog(LOG_INFO, "%s SSH_PENDING_CALL_OFFER_PUBKEY -> waiting response", __FUNCTION__);
             switch (ssh_userauth_get_response_client(client_session)){
@@ -5117,6 +5120,7 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
         case SSH_AGENT_STATE_NONE:
             syslog(LOG_INFO, "SSH_AGENT_STATE_NONE %s ---", __FUNCTION__);
             syslog(LOG_DEBUG, "Trying identity %s", client_session->agent_state->comment);
+            CPP_FALLTHROUGH;
         case SSH_AGENT_STATE_PUBKEY:
         {
             syslog(LOG_INFO, "SSH_AGENT_STATE_PUBKEY %s ---", __FUNCTION__);
@@ -5395,6 +5399,7 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
                 ;
             }
         }
+        CPP_FALLTHROUGH;
         default:;
             syslog(LOG_INFO, "SSH_AGENT_STATE ???? DEFAULT %s ---", __FUNCTION__);
 
@@ -5456,6 +5461,7 @@ int ssh_userauth_password_client(SshClientSession * client_session,
             if (rc != SSH_AUTH_AGAIN) {
                 client_session->pending_call_state = SSH_PENDING_CALL_NONE;
             }
+            CPP_FALLTHROUGH;
         default:
             ssh_set_error(client_session->error,
                           SSH_FATAL,
@@ -5553,6 +5559,7 @@ static int ssh_userauth_kbdint_init_client(SshClientSession * client_session,
                 "Sending keyboard-interactive init request");
 
         client_session->packet_send();
+        CPP_FALLTHROUGH;
     // fallbak to next case
     case SSH_PENDING_CALL_AUTH_KBDINT_INIT:
         rc = ssh_userauth_get_response_client(client_session);
@@ -5910,6 +5917,7 @@ int ssh_userauth_gssapi_client(SshClientSession * client_session, error_struct *
 		    client_session->pending_call_state = SSH_PENDING_CALL_NONE;
 		    return rc;
 	    }
+        CPP_FALLTHROUGH;
 	case SSH_PENDING_CALL_AUTH_GSSAPI_MIC:
 	    rc = ssh_userauth_get_response_client(client_session);
 	    if (rc != SSH_AUTH_AGAIN) {

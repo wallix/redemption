@@ -18,7 +18,6 @@
 *   Author(s): Jonathan Poelen
 */
 
-
 #pragma once
 
 #include <signal.h>
@@ -27,6 +26,7 @@
 #include <vector>
 #include <string>
 
+#include "capture/capture.hpp"
 #include "capture/FileToChunk.hpp"
 #include "capture/GraphicToFile.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
@@ -87,10 +87,10 @@ void remove_file( InWrmTrans & in_wrm_trans, const char * hash_path, const char 
 
     char infile_fullpath[2048];
     if (is_encrypted) {
-        snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", hash_path, infile_basename, infile_extension);
+        std::snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", hash_path, infile_basename, infile_extension);
         files.push_back(infile_fullpath);
     }
-    snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", infile_path, infile_basename, infile_extension);
+    std::snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", infile_path, infile_basename, infile_extension);
     files.push_back(infile_fullpath);
 
     try {
@@ -120,7 +120,7 @@ static void raise_error(std::string const & output_filename, int code, const cha
     }
 
     char outfile_pid[32];
-    snprintf(outfile_pid, sizeof(outfile_pid), "%06u", unsigned(getpid()));
+    std::snprintf(outfile_pid, sizeof(outfile_pid), "%06u", unsigned(getpid()));
 
     char outfile_path     [1024] = {};
     char outfile_basename [1024] = {};
@@ -137,7 +137,7 @@ static void raise_error(std::string const & output_filename, int code, const cha
                   );
 
     char progress_filename[4096];
-    snprintf( progress_filename, sizeof(progress_filename), "%s%s-%s.pgs"
+    std::snprintf( progress_filename, sizeof(progress_filename), "%s%s-%s.pgs"
             , outfile_path, outfile_basename, outfile_pid);
 
     UpdateProgressData update_progress_data(progress_filename, 0, 0, 0, 0);
@@ -228,7 +228,6 @@ static void show_statistics(FileToGraphic::Statistics const & statistics) {
     << std::endl;
 }
 
-template<class CaptureMaker>
 static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
                     , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
                     , int capture_bpp, int wrm_compression_algorithm_
@@ -236,7 +235,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , bool enable_rt
                     , bool no_timestamp
                     , auth_api * authentifier
-                    , Inifile & ini, Random & rnd, CryptoContext & cctx
+                    , Inifile & ini, CryptoContext & cctx
 
                     , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , unsigned png_width, unsigned png_height
@@ -262,7 +261,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
 
     if (output_filename.length()) {
 //        char outfile_pid[32];
-//        snprintf(outfile_pid, sizeof(outfile_pid), "%06u", getpid());
+//        std::snprintf(outfile_pid, sizeof(outfile_pid), "%06u", getpid());
 
         char outfile_path     [1024] = {};
         char outfile_basename [1024] = {};
@@ -311,7 +310,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
             ini.set<cfg::video::record_path>(outfile_path);
 
             ini.set<cfg::globals::movie_path>(&output_filename[0]);
-            CaptureMaker capture(
+            Capture capture(
                     ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                     , player.screen_rect.cx
                     , player.screen_rect.cy
@@ -321,7 +320,6 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , no_timestamp
                     , authentifier
                     , ini
-                    , rnd
                     , cctx
                     , full_video);
 
@@ -342,7 +340,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
             player.add_consumer(&capture, &capture, &capture, &capture, &capture);
 
             char progress_filename[4096];
-            snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
+            std::snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
                     , outfile_path, outfile_basename);
 
             UpdateProgressData update_progress_data(
@@ -537,16 +535,10 @@ inline int is_encrypted_file(const char * input_filename, bool & infile_is_encry
 }
 
 
-template<class CaptureMaker, class AddProgramOption, class ParseFormat
-  , class HasExtraCapture>
-int app_recorder( int argc, char const * const * argv, const char * copyright_notice
-                , AddProgramOption add_prog_option, ParseFormat parse_format
-                , std::string config_filename, Inifile & ini
-                , CryptoContext & cctx, Random & rnd
-                , HasExtraCapture has_extra_capture
-                , bool full_video
-                )
-{
+inline int app_recorder(
+    int argc, char const * const * argv, const char * copyright_notice,
+    std::string config_filename, Inifile & ini,CryptoContext & cctx
+) {
     openlog("redrec", LOG_CONS | LOG_PERROR, LOG_USER);
 
     init_signals();
@@ -574,6 +566,9 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
     bool        show_statistics    = false;
     bool        auto_output_file   = false;
     bool        remove_input_file  = false;
+    uint32_t    flv_break_interval = 10*60;
+    std::string flv_quality;
+    unsigned    ocr_version = -1u;
 
     std::string wrm_compression_algorithm;  // output compression algorithm.
     std::string wrm_color_depth;
@@ -600,15 +595,18 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
 
         {'p', "png", "enable png capture"},
         {'w', "wrm", "enable wrm capture"},
+        {'t', "ocr", "enable ocr title bar detection"},
+        {'f', "flv", "enable flv capture"},
+        {'u', "full", "create full video"},
+        {'c', "chunk", "chunk splitting on title bar change detection"},
 
         {"clear", &clear, "clear old capture files with same prefix (default on)"},
         {"verbose", &verbose, "more logs"},
         {"zoom", &zoom, "scaling factor for png capture (default 100%)"},
-        {'g', "png-geometry", & png_geometry, "png capture geometry (Ex. 160x120)"},
+        {'g', "png-geometry", &png_geometry, "png capture geometry (Ex. 160x120)"},
         {'m', "meta", "show file metadata"},
         {'s', "statistics", "show statistics"},
 
-        //{"compression,z", &wrm_compression_algorithm, "wrm compression algorithm (default=original, none, gzip, snappy, lzma)"},
         {'z', "compression", &wrm_compression_algorithm, "wrm compression algorithm (default=original, none, gzip, snappy)"},
         {'d', "color-depth", &wrm_color_depth,           "wrm color depth (default=original, 16, 24)"},
         {'y', "encryption",  &wrm_encryption,            "wrm encryption (default=original, enable, disable)"},
@@ -619,10 +617,13 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
         {"config-file", &config_filename, "used an another ini file"},
 
         {"hash-path", &hash_path, "output hash dirname (if empty, use hash_path of ini)"},
+
+        {'a', "flvbreakinterval", &flv_break_interval, "number of seconds between splitting flv files (by default, one flv every 10 minutes)"},
+
+        {'q', "flv-quality", &flv_quality, "flv quality (high, medium, low)"},
+
+        {"ocr-version", &ocr_version, "version 1 or 2"},
     });
-
-    add_prog_option(desc);
-
 
     auto options = program_options::parse_command_line(argc, argv, desc);
 
@@ -640,7 +641,7 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
 
     if (input_filename.empty()) {
         std::cerr << "Missing input filename : use -i filename\n\n";
-        return -1;
+        return 1;
     }
 
     show_file_metadata = (options.count("meta"             ) > 0);
@@ -650,17 +651,17 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
 
     if (!show_file_metadata && !show_statistics && !auto_output_file && output_filename.empty()) {
         std::cerr << "Missing output filename : use -o filename\n\n";
-        return -1;
+        return 1;
     }
 
     if (!output_filename.empty() && auto_output_file) {
         std::cerr << "Conflicting options : --output-file and --auto-output-file\n\n";
-        return -1;
+        return 1;
     }
 
     if ((options.count("zoom") > 0) & (options.count("png-geometry") > 0)) {
         std::cerr << "Conflicting options : --zoom and --png-geometry\n\n";
-        return -1;
+        return 1;
     }
 
     if (options.count("png-geometry") > 0) {
@@ -673,7 +674,7 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
         }
         if (!png_w || !png_h) {
             std::cerr << "Invalide png geometry\n\n";
-            return -1;
+            return 1;
         }
         png_width  = png_w;
         png_height = png_h;
@@ -708,7 +709,7 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
         }
         else {
             std::cerr << "Unknown wrm compression algorithm\n\n";
-            return -1;
+            return 1;
         }
     }
     else {
@@ -733,7 +734,7 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
         }
         else {
             std::cerr << "Unknown wrm color depth\n\n";
-            return -1;
+            return 1;
         }
     }
     else {
@@ -753,9 +754,76 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
         ini.get_ref<cfg::video::capture_flags>() |= CaptureFlags::png;
     }
 
-    if (int status = parse_format(ini, options, output_filename)) {
-        return status;
+    ini.set<cfg::globals::capture_chunk>(options.count("chunk") > 0);
+
+    ini.set<cfg::video::flv_break_interval>(std::chrono::seconds{flv_break_interval});
+
+    if (ini.get<cfg::globals::capture_chunk>()) {
+        ini.get_ref<cfg::video::capture_flags>()
+            |= CaptureFlags::flv
+            |  CaptureFlags::ocr
+            |  CaptureFlags::png;
+
+        ini.get_ref<cfg::video::disable_keyboard_log>() &= ~KeyboardLogFlags::meta;
+
+        ini.set<cfg::video::flv_break_interval>(std::chrono::minutes{10});
+        ini.set<cfg::video::png_interval>(std::chrono::minutes{1});
+        ini.set<cfg::video::png_limit>(0xFFFF);
+        ini.set<cfg::ocr::interval>(std::chrono::seconds{1});
     }
+    else {
+        auto set_flag = [&](char const * opt, CaptureFlags f) {
+            if (options.count(opt) > 0) {
+                ini.get_ref<cfg::video::capture_flags>() |= f;
+            }
+            else {
+                ini.get_ref<cfg::video::capture_flags>() &= ~f;
+            }
+        };
+        set_flag("flv", CaptureFlags::flv);
+        set_flag("ocr", CaptureFlags::ocr);
+    }
+
+    if (options.count("ocr-version")) {
+        ini.set<cfg::ocr::version>(ocr_version == 2 ? OcrVersion::v2 : OcrVersion::v1);
+    }
+
+    //if (options.count("extract-meta-data") &&
+    //    (options.count("png") || options.count("flv") || options.count("wrm") || options.count("chunk"))) {
+    //    std::cerr << "Option --extract-meta-data is not compatible with options --png, --flv, --wrm or --chunk" << std::endl;
+    //    return 1;
+    //}
+
+    // TODO("extract-meta-data should be independant capture type")
+    ////if (options.count("extract-meta-data") && !options.count("ocr")) {
+    //    std::cerr << "Option --extract-meta-data should be used with option --ocr" << std::endl;
+    //    return 1;
+    //}
+
+    bool const full_video = (options.count("full") > 0);
+
+    if (output_filename.length() && (!full_video && !bool(ini.get<cfg::video::capture_flags>()))) {
+        std::cerr << "Missing target format : need --png, --ocr, --flv, --full, --wrm or --chunk" << std::endl;
+        return 1;
+    }
+
+    if (options.count("flv-quality") > 0) {
+            if (0 == strcmp(flv_quality.c_str(), "high")) {
+            ini.set<cfg::globals::video_quality>(Level::high);
+        }
+        else if (0 == strcmp(flv_quality.c_str(), "low")) {
+            ini.set<cfg::globals::video_quality>(Level::low);
+        }
+        else  if (0 == strcmp(flv_quality.c_str(), "medium")) {
+            ini.set<cfg::globals::video_quality>(Level::medium);
+        }
+        else {
+            std::cerr << "Unknown video quality" << std::endl;
+            return 1;
+        }
+    }
+
+    //extract_meta_data = (options.count("extract-meta-data") > 0);
 
     ini.set<cfg::video::rt_display>(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png));
 
@@ -799,7 +867,7 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
     bool infile_is_encrypted;
     if (is_encrypted_file(input_filename.c_str(), infile_is_encrypted) == -1) {
         std::cerr << "Input file is absent.\n";
-        return -1;
+        return 1;
     }
 
     if (options.count("encryption") > 0) {
@@ -814,7 +882,7 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
         }
         else {
             std::cerr << "Unknown wrm encryption parameter\n\n";
-            return -1;
+            return 1;
         }
     }
     else {
@@ -825,7 +893,9 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
         OpenSSL_add_all_digests();
     }
 
-    bool force_record = has_extra_capture(ini);
+    bool const force_record
+      = bool(ini.get<cfg::video::capture_flags>() & (CaptureFlags::flv | CaptureFlags::ocr))
+      || full_video;
 
 /*
     char infile_path     [1024] = "./"          ;   // default value, actual one should come from output_filename
@@ -851,7 +921,7 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
     ParsePath(input_filename.c_str(), infile_path, infile_basename, infile_extension);
 
     char infile_prefix[4096];
-    snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), infile_basename.c_str());
+    std::snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), infile_basename.c_str());
 
     if (auto_output_file) {
         output_filename =  infile_path;
@@ -900,7 +970,13 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
         return -1;
     };
 
-    auto run = [&](Transport && trans) {
+    {
+        InMetaSequenceTransport trans(
+            &cctx, infile_prefix,
+            infile_extension.c_str(),
+            infile_is_encrypted?1:0, 0
+        );
+
         timeval begin_capture = {0, 0};
         timeval end_capture = {0, 0};
 
@@ -908,19 +984,19 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
         try {
             bool test = (
                 force_record
-             || bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png)
-//             || ini.get<cfg::video::wrm_color_depth_selection_strategy>() != USE_ORIGINAL_COLOR_DEPTH
-             || capture_bpp != static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)
-             || show_file_metadata
-             || show_statistics
-             || file_count > 1
-             || order_count
-             || begin_cap != begin_record.tv_sec
-             || end_cap != begin_cap);
+                || bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png)
+    //             || ini.get<cfg::video::wrm_color_depth_selection_strategy>() != USE_ORIGINAL_COLOR_DEPTH
+                || capture_bpp != static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)
+                || show_file_metadata
+                || show_statistics
+                || file_count > 1
+                || order_count
+                || begin_cap != begin_record.tv_sec
+                || end_cap != begin_cap);
 
             if (test){
                 std::cout << "[A]" << std::endl;
-                result = do_record<CaptureMaker>(trans
+                result = do_record(trans
                             , begin_record, end_record
                             , begin_capture, end_capture
                             , output_filename, capture_bpp
@@ -928,7 +1004,7 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
                             , enable_rt
                             , no_timestamp
                             , nullptr
-                            , ini, rnd, cctx
+                            , ini, cctx
                             , file_count, order_count, clear, zoom
                             , png_width, png_height
                             , show_file_metadata, show_statistics, verbose
@@ -959,17 +1035,12 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
                 infile_extension.c_str(), infile_is_encrypted?1:0, 0);
 
             remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>().c_str(), infile_path.c_str()
-                       , infile_basename.c_str(), infile_extension.c_str()
-                       , infile_is_encrypted);
+                        , infile_basename.c_str(), infile_extension.c_str()
+                        , infile_is_encrypted);
         }
 
         std::cout << std::endl;
 
         return result;
-    };
-
-    return run( InMetaSequenceTransport(&cctx, infile_prefix,
-                infile_extension.c_str(),
-                infile_is_encrypted?1:0, 0) );
+    }
 }
-

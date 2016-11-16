@@ -199,11 +199,11 @@ namespace Ops {
     typedef Op2_0x0E Op_0xF5;
     typedef Op2_0x0F Op_0xFA;
 
-    struct Op_0x11
+    struct Op_0x11 // NOTSRCERASE DSon
     {
         constexpr u8 operator()(u8 target, u8 source) const noexcept
         {
-            return ~(target | ~source);
+            return ~(target | source);
         }
     };
 

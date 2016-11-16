@@ -138,6 +138,22 @@ public:
         this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
     }
 
+    void add_consumer(
+        gdi::GraphicApi * graphic_ptr,
+        gdi::CaptureApi * capture_ptr,
+        gdi::KbdInputApi * kbd_input_ptr,
+        gdi::CaptureProbeApi * capture_probe_ptr,
+        gdi::ExternalCaptureApi * external_event_ptr
+    ) {
+        this->reader->add_consumer(
+            graphic_ptr,
+            capture_ptr,
+            kbd_input_ptr,
+            capture_probe_ptr,
+            external_event_ptr
+        );
+    }
+
     void play() {
         this->reader->play(false);
     }

@@ -32,7 +32,7 @@
 #endif
 
 #include <inttypes.h>
-#include <sys/stat.h> // for mode_t 
+#include <sys/stat.h> // for mode_t
 #include <unistd.h>
 
 #include <memory>
@@ -75,7 +75,9 @@ extern "C"
     LIBSSH_API void ssh_free_error(struct error_struct*);
 }
 
-
+#ifdef __GNUC__
+__attribute__((format(printf, 3, 4)))
+#endif
 static inline void ssh_set_error(error_struct & error, int code, const char *descr, ...)
 {
     va_list va;
@@ -129,11 +131,26 @@ typedef struct ssh_channel_struct * ssh_channel;
  *
  * @return              0 on success, < 0 on error.
  */
+
+/* Socket type */
+#ifndef socket_t
+typedef int socket_t;
+#endif
+
+typedef struct ssh_channel_struct * ssh_channel;
+
 typedef int (*ssh_auth_callback) (const char *prompt, char *buf, size_t len, int echo, int verify, void *userdata);
 
 typedef int (*ssh_event_callback)(socket_t fd, int revents, void *userdata);
 
-typedef void (*ssh_global_request_callback) (struct ssh_session_struct * session, 
+/**
+ * @brief SSH global request callback. All global request will go through this
+ * callback.
+ * @param session Current session handler
+ * @param message the actual message
+ * @param userdata Userdata to be passed to the callback function.
+ */
+typedef void (*ssh_global_request_callback) (struct ssh_session_struct * session,
             int type, int want_reply,
             char * bind_address, uint32_t bind_port,
             void *userdata);
@@ -242,8 +259,8 @@ typedef ssh_channel (*ssh_channel_open_request_session_callback) (void *userdata
  * @brief Handles an SSH new channel open direct TCPIP request
  */
 typedef ssh_channel (*ssh_channel_open_request_direct_tcpip_callback) (
-            const char *destination, uint16_t destination_port, 
-            const char *originator, uint16_t originator_port, 
+            const char *destination, uint16_t destination_port,
+            const char *originator, uint16_t originator_port,
             void *userdata);
 
 /*
@@ -264,7 +281,7 @@ struct ssh_server_callbacks_struct {
    * User-provided data. User is free to set anything he wants here
    */
   void *userdata;
-  
+
   /**
    * This function gets called during connection time to indicate the
    * percentage of connection steps completed.
@@ -274,7 +291,7 @@ struct ssh_server_callbacks_struct {
    * This function will be called each time a global request is received.
    */
   ssh_global_request_callback global_request_server_cb;
-    
+
   /** This function gets called when a client tries to authenticate through
    * password method.
    */
@@ -358,7 +375,7 @@ struct ssh_client_callbacks_struct {
   /** This function will be called when an incoming X11 request is received.
    */
   ssh_channel_open_request_x11_callback channel_open_request_x11_function;
-  
+
   /** This function will be called when an incoming auth_agent request is received.
    */
   ssh_channel_open_request_auth_agent_callback channel_open_request_auth_agent_function;
@@ -387,7 +404,7 @@ enum {
 
     SSH_MSG_KEXINIT         = 20,
     SSH_MSG_NEWKEYS         = 21,
-    
+
     SSH_MSG_KEXDH_INIT      = 30,
     SSH_MSG_KEXDH_REPLY     = 31,
 };
@@ -451,7 +468,7 @@ enum {
   SSH_MSG_USERAUTH_SUCCESS = 52,
   SSH_MSG_USERAUTH_BANNER  = 53,
 };
-  
+
 // SSH-CONNECT constants
 enum {
   SSH_MSG_GLOBAL_REQUEST               =  80,
@@ -819,7 +836,7 @@ struct ssh_channel_callbacks_struct {
    */
   void (*channel_open_x11_server_status_function)(ssh_session_struct * session,
                                             ssh_channel channel,
-                                            int status, 
+                                            int status,
                                             void *userdata);
 };
 
@@ -1052,7 +1069,7 @@ LIBSSH_API int ssh_channel_send_eof_server(ssh_session_struct * session, ssh_cha
 LIBSSH_API void ssh_disconnect_server(ssh_session_struct * session);
 LIBSSH_API int ssh_userauth_kbdint_getnanswers_server(ssh_session_struct * session, error_struct * error);
 LIBSSH_API const char *ssh_userauth_kbdint_getanswer_server(ssh_session_struct * session, unsigned int i, error_struct * error);
-    
+
 LIBSSH_API int ssh_userauth_kbdint_settmpprompts_server(ssh_session_struct * session, const char * name,
                                                 const char * instruction,
                                                 unsigned int num_prompt,

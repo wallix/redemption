@@ -25,7 +25,6 @@
 
 #include "utils/log.hpp"
 #include "RDPSerializer.hpp"
-#include "gdi/input_pointer_api.hpp"
 #include "gcc.hpp"
 #include "sec.hpp"
 #include "mcs.hpp"
@@ -410,7 +409,7 @@ namespace detail
     };
 }
 
-class GraphicsUpdatePDU : private detail::GraphicsUpdatePDUBuffer, public RDPSerializer, public gdi::MouseInputApi
+class GraphicsUpdatePDU : private detail::GraphicsUpdatePDUBuffer, public RDPSerializer
 {
     uint16_t     & userid;
     int          & shareid;
@@ -778,7 +777,7 @@ protected:
 public:
     using RDPSerializer::set_pointer;
 
-    void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
+    void update_pointer_position(uint16_t xPos, uint16_t yPos) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::update_pointer_position(xPos=%u, yPos=%u)", xPos, yPos);
         }

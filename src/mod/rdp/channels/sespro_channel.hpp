@@ -33,6 +33,7 @@
 #include <chrono>
 #include <memory>
 #include <sstream>
+#include <cinttypes> // PRId64, ...
 
 class SessionProbeVirtualChannel : public BaseVirtualChannel
 {
@@ -43,9 +44,9 @@ private:
 
     bool session_probe_launch_timeout_timer_started = false;
 
-    const std::chrono::duration<unsigned, std::milli> session_probe_effective_launch_timeout;
+    const std::chrono::milliseconds session_probe_effective_launch_timeout;
 
-    const std::chrono::duration<unsigned, std::milli> param_session_probe_keepalive_timeout;
+    const std::chrono::milliseconds param_session_probe_keepalive_timeout;
     const bool     param_session_probe_on_keepalive_timeout_disconnect_user;
 
     const SessionProbeOnLaunchFailure param_session_probe_on_launch_failure;
@@ -57,9 +58,9 @@ private:
     const uint16_t param_front_width;
     const uint16_t param_front_height;
 
-    const std::chrono::duration<unsigned, std::milli> param_session_probe_disconnected_application_limit;
-    const std::chrono::duration<unsigned, std::milli> param_session_probe_disconnected_session_limit;
-    const std::chrono::duration<unsigned, std::milli> param_session_probe_idle_session_limit;
+    const std::chrono::milliseconds param_session_probe_disconnected_application_limit;
+    const std::chrono::milliseconds param_session_probe_disconnected_session_limit;
+    const std::chrono::milliseconds param_session_probe_idle_session_limit;
 
     std::string param_real_alternate_shell;
     std::string param_real_working_dir;
@@ -89,9 +90,9 @@ private:
 
 public:
     struct Params : public BaseVirtualChannel::Params {
-        std::chrono::duration<unsigned, std::milli> session_probe_launch_timeout;
-        std::chrono::duration<unsigned, std::milli> session_probe_launch_fallback_timeout;
-        std::chrono::duration<unsigned, std::milli> session_probe_keepalive_timeout;
+        std::chrono::milliseconds session_probe_launch_timeout;
+        std::chrono::milliseconds session_probe_launch_fallback_timeout;
+        std::chrono::milliseconds session_probe_keepalive_timeout;
         bool     session_probe_on_keepalive_timeout_disconnect_user;
 
         SessionProbeOnLaunchFailure session_probe_on_launch_failure;
@@ -103,9 +104,9 @@ public:
         uint16_t front_width;
         uint16_t front_height;
 
-        std::chrono::duration<unsigned, std::milli> session_probe_disconnected_application_limit;
-        std::chrono::duration<unsigned, std::milli> session_probe_disconnected_session_limit;
-        std::chrono::duration<unsigned, std::milli> session_probe_idle_session_limit;
+        std::chrono::milliseconds session_probe_disconnected_application_limit;
+        std::chrono::milliseconds session_probe_disconnected_session_limit;
+        std::chrono::milliseconds session_probe_idle_session_limit;
 
         const char* real_alternate_shell;
         const char* real_working_dir;
@@ -165,7 +166,8 @@ public:
         if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
             LOG(LOG_INFO,
                 "SessionProbeVirtualChannel::SessionProbeVirtualChannel: "
-                    "timeout=%u fallback_timeout=%u effective_timeout=%u on_launch_failure=%d",
+                    "timeout=%" PRId64 " fallback_timeout=%" PRId64
+                    " effective_timeout=%" PRId64 " on_launch_failure=%d",
                 params.session_probe_launch_timeout.count(),
                 params.session_probe_launch_fallback_timeout.count(),
                 this->session_probe_effective_launch_timeout.count(),
@@ -588,7 +590,7 @@ public:
 
                 {
                     char cstr[128];
-                    snprintf(cstr, sizeof(cstr), "%u",
+                    snprintf(cstr, sizeof(cstr), "%" PRId64,
                         this->param_session_probe_idle_session_limit.count());
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
