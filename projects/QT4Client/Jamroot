@@ -1,116 +1,20 @@
-include ../../jam/cxxflags.jam ;
+JAM_INCLUDE_PATH ?= ../../jam ;
 
-import os ;
+REDEMPTION_PUBLIC_PATH ?= ../.. ;
+REDEMPTION_INCLUDE_PATH ?= $(REDEMPTION_PUBLIC_PATH)/include ;
+REDEMPTION_MODULES_SRC_PATH ?= $(REDEMPTION_PUBLIC_PATH)/modules ;
 
-# below feature rule come from http://www.boost.org/doc/tools/build/doc/html/bbv2/extending/features.html
+include $(JAM_INCLUDE_PATH)/redemption-config.jam ;
+include $(JAM_INCLUDE_PATH)/cxxflags.jam ;
+include $(JAM_INCLUDE_PATH)/defines.jam ;
+include $(JAM_INCLUDE_PATH)/includes.jam ;
 
-import feature : feature ;
-import modules : poke ;
+constant MAIN_PATH : [ setvar MAIN_PATH : ./ ] ;
 
-# this feature is defined so we can add a dependency on <distri>lenny for some targets
-# disabled because in our current code it finds the right library
-#feature distri : none lenny : propagated ;
-
-# No need to make it a new variant after all
-#variant lenny : release ;
-
-path-constant TOP : . ;
-constant SRCDIR : ../../src ;
-constant TESTDIR : ../../tests ;
-constant MODULEDIR : ../../modules ;
-constant INCLUDEDIR : ../../include ;
-constant INCLUDEPPOCR : ../../modules/ppocr/src ;
-constant INCLUDEFFMPEG : ../../ffmpeg ;
-constant INCLUDEMLN : ../../modules/ppocr/includes/mln ;
-constant INCLUDEOCR1 : ../ocr1/include ;
-
-path-constant REDCONFIGSDIR : ../../projects/redemption_configs ;
-
-
-# Returns environment value if it exists or default otherwise.
-# Allow us to customize install path with shell variables like $PREFIX...
-# (this is bad practice and should be replaced by a site configuration file
-# but I until now I miserably failed creating a clean separate configuration file)
-rule setvar ( env : default * )
-{
-    if [ os.environ $(env) ]
-    {
-        return [ os.environ $(env) ] ;
-    }
-    else
-    {
-        return $(default) ;
-    }
-}
-
-constant ARCH : [ SHELL "lscpu | perl -ne 'if (/^Architecture.*(x86_64|i386|i686)/) {print $1};'" ] ;
-# constant ARCH : [ SHELL "lscpu | perl -ane 'my %h = map { $F[0], $F[1] } <>; print $h{q{Architecture:}}'" ] ;
-constant PYTHON_VER : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6}) { if (-e q{/usr/include/}.$x.q{/Python.h}){ print $x; last;}};'" ] ;
-constant PYTHON_INCLUDE : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6}) { if (-e q{/usr/include/}.$x.q{/Python.h}){ print q{/usr/include/}.$x; last;}};'" ] ;
-
-
-constant FIXTURES_PATH : [ setvar FIXTURES_PATH : $(TESTDIR)/fixtures ] ;
-constant INSTALLDIR : [ setvar DESTDIR : "" ] ;
-constant PREFIX : [ setvar PREFIX : /usr/local ] ;
-constant BIN_PREFIX : [ setvar BIN_PREFIX : $(PREFIX)/bin ] ;
-constant LIB_PREFIX : [ setvar LIB_PREFIX : $(PREFIX)/lib ] ;
-constant SHARE_PREFIX : [ setvar SHARE_PREFIX : $(PREFIX)/share/rdpproxy ] ;
-constant RECORD_TMP_PATH : [ setvar RECORD_TMP_PATH : /var/rdpproxy/tmp ] ;
-constant RECORD_PATH : [ setvar RECORD_PATH : /var/rdpproxy/recorded ] ;
-constant ETC_PREFIX : [ setvar ETC_PREFIX : /etc/rdpproxy ] ;
-constant CERT_PREFIX : [ setvar CERT_PREFIX : /etc/rdpproxy/cert ] ;
-constant HASH_PATH : [ setvar HASH_PATH : /var/rdpproxy/hash ] ;
-constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : /var/lib/redemption/cache ] ;
-constant DRIVE_REDIRECTION_PATH : [ setvar DRIVE_REDIRECTION_PATH : /var/rdpproxy/drive_redirection ] ;
-constant MAIN_PATH : [ setvar MAIN_PATH : /home/cmoroldo/Bureau/redemption/projects/QT4Client/ ] ;
-
-constant PNG_DEBUG : <variant>debug:<library>png ;
-
-rule defines ( properties * )
-{
-    local defs ;
-    defs += <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"' ;
-    defs += <define>CFG_PATH='\"$(ETC_PREFIX)\"' ;
-    defs += <define>RECORD_PATH='\"$(RECORD_PATH)\"' ;
-    defs += <define>RECORD_TMP_PATH='\"$(RECORD_TMP_PATH)\"' ;
-    defs += <define>FLV_PATH='\"$(RECORD_TMP_PATH)\"' ;
-    defs += <define>OCR_PATH='\"$(RECORD_TMP_PATH)\"' ;
-    defs += <define>PNG_PATH='\"$(RECORD_TMP_PATH)\"' ;
-    defs += <define>WRM_PATH='\"$(RECORD_PATH)\"' ;
-    defs += <define>HASH_PATH='\"$(HASH_PATH)\"' ;
-    defs += <define>LICENSE_PATH='\"$(CERT_PREFIX)/rdplicense\"' ;
-    defs += <define>CERTIF_PATH='\"$(CERT_PREFIX)/rdp\"' ;
-    defs += <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"' ;
-    defs += <define>PERSISTENT_PATH='\"$(PERSISTENT_PATH)\"' ;
-    defs += <define>DRIVE_REDIRECTION_PATH='\"$(DRIVE_REDIRECTION_PATH)\"' ;
-    defs += <define>MAIN_PATH='\"$(MAIN_PATH)\"' ;
-    if [ os.environ VERBOSE ]
-    {
-        defs += <define>VERBOSE ;
-    }
-    return $(defs) ;
-}
-variant coverage : debug : <cxxflags>--profile-arcs <cxxflags>--test-coverage <cxxflags>--coverage <link>shared ;
-
-
-project redemption
+project qt4_client
     : requirements
-    <include>$(SRCDIR)
-    <include>$(SRCDIR)/system/linux
-    <include>$(SRCDIR)/capture
-    <include>$(SRCDIR)/keyboard
-    <include>$(SRCDIR)/keyboard/reversed_keymaps
-    <include>$(SRCDIR)/main
-    <include>$(MODULEDIR)/includes
-    <include>$(INCLUDEDIR)
-    <include>$(REDCONFIGSDIR)/include/autogen
-    <include>$(REDCONFIGSDIR)/redemption_src
-    <include>$(REDCONFIGSDIR)/include/variant
-    <include>$(INCLUDEPPOCR)
-    <include>$(INCLUDEFFMPEG)
-    <include>$(INCLUDEMLN)
-    <include>$(INCLUDEOCR1)
 
+    <conditional>@includes
 
     <conditional>@defines
 
@@ -128,180 +32,37 @@ project redemption
 
     <define>__STDC_FORMAT_MACROS
 
-    <define>PUBLIC
-    #<define>QT_NO_KEYWORDS
+    <define>QT_NO_KEYWORDS
+    # TODO search include qt4 directory
+    <include>/usr/include/qt4
 
    : default-build release
 
 ;
 
-explicit install instexe install-bin install-share install-etc ;
+include $(JAM_INCLUDE_PATH)/ocr.jam ;
+include $(JAM_INCLUDE_PATH)/libs.jam ;
+
+explicit install instexe install-bin ;
 
 alias instexe : install-bin ;
-alias install : install-bin install-etc install-etc-themes install-share install-lib ;
+alias install : install-bin ;
 
 install install-bin
-    : client_rdp_Qt5
+    : client_rdp_Qt4
     : <install-type>EXE <install-dependencies>on
     : <location>$(INSTALLDIR)/usr/local/bin
     ;
 
-install install-share
-    : [ glob sys/share/rdpproxy/[^.k]* ]
-    :
-    : <location>$(INSTALLDIR)/usr/local/share/rdpproxy
-    ;
-
-install install-etc
-    : [ glob sys/etc/rdpproxy/*ini sys/etc/rdpproxy/*pem sys/etc/rdpproxy/*crt sys/etc/rdpproxy/*key sys/etc/rdpproxy/*p12 ]
-    :
-    : <location>$(INSTALLDIR)/etc/rdpproxy
-    ;
-
-## ffmpg {
-lib acodec : : <name>avcodec <file>../../ffmpeg/precompiled/$(ARCH)/libavcodec/libavcodec.a <link>static ;
-#lib acodec : : <name>avcodec <link>shared ;
-lib aformat : : <name>avformat <file>../../ffmpeg/precompiled/$(ARCH)/libavformat/libavformat.a <link>static ;
-#lib aformat : : <name>avformat <link>shared ;
-lib swscale : : <name>swscale <file>../../ffmpeg/precompiled/$(ARCH)/libswscale/libswscale.a <link>static ;
-#lib swscale_so : : <name>swscale <file>../../ffmpeg/precompiled/$(ARCH)/libswscale/libswscale.so <link>shared ;
-#lib swscale : : <name>swscale <link>shared ;
-lib x264 : : <name>x264 <file>../../ffmpeg/precompiled/$(ARCH)/libx264.a <link>static ;
-#lib swresample : : <name>swresample <file>../../ffmpeg/precompiled/$(ARCH)/libswresample/libswresample.a <link>static ;
-lib avutil : : <file>../../ffmpeg/precompiled/$(ARCH)/libavutil/libavutil.a <link>static ;
-#lib avutil : : <name>avutil <link>shared ;
-lib bz2 : : <name>bz2 <link>shared ;
-
-alias ffmpeg : pthread acodec aformat swscale avutil bz2 x264 png z dl ;
-# lib x264 : : <name>x264 <link>shared ;
-
-lib pthread : : <name>pthread <link>shared ;
-
-
-## }
-
-obj ocr : $(SRCDIR)/capture/ocr/locale/latin_to_cyrillic.cpp : ;
-
-## ppocr {
-alias ppocr_dictionary_src      : $(INCLUDEPPOCR)/ppocr/spell/dictionary.cpp ;
-alias ppocr_glyphs_loader_src   : $(INCLUDEPPOCR)/ppocr/loader2/glyphs_loader.cpp ;
-alias ppocr_image_compare_src   : $(INCLUDEPPOCR)/ppocr/utils/image_compare.cpp ;
-alias ppocr_loader2_image_io_src : $(INCLUDEPPOCR)/ppocr/loader2/image_io.cpp ;
-
-alias ppocr_strategies_src :
-    $(INCLUDEPPOCR)/ppocr/strategies/agravity.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/alternation.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/compass.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/dcompass.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/density.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/direction.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/dvdirection2.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/dvdirection.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/dvgravity2.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/dvgravity.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/dzdensity.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/gravity2.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/gravity.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/hbar.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/hdirection2.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/hdirection.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/hgravity2.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/hgravity.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/zone.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/proportionality.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/proportionality_zone.cpp
-    $(INCLUDEPPOCR)/ppocr/strategies/utils/basic_proportionality.cpp
-;
-
-alias ppocr_image_src :
-    $(INCLUDEPPOCR)/ppocr/image/coordinate.cpp
-    $(INCLUDEPPOCR)/ppocr/image/image.cpp
-;
-
-alias ppocr_image_from_file_src :
-    ppocr_image_src
-    $(INCLUDEPPOCR)/ppocr/image/image_from_file.cpp
-;
-
-alias ppocr_box_character_src :
-    $(INCLUDEPPOCR)/ppocr/box_char/box.cpp
-    $(INCLUDEPPOCR)/ppocr/box_char/make_box_character.cpp
-;
-
-alias ppocr_glyphs_src :
-    ppocr_loader2_image_io_src
-    ppocr_image_src
-    ppocr_box_character_src
-    ppocr_image_from_file_src
-;
-
-alias ppocr_datas_and_glyphs_src :
-    ppocr_image_compare_src
-    ppocr_dictionary_src
-    ppocr_strategies_src
-    ppocr_glyphs_loader_src
-    ppocr_glyphs_src
-;
-
-## } ppocr
-
-alias ppocr :
-    $(INCLUDEPPOCR)/ppocr/ocr2/glyphs.cpp
-    $(INCLUDEPPOCR)/ppocr/ocr2/word_lines.cpp
-    $(INCLUDEPPOCR)/ppocr/ocr2/replacement.cpp
-    $(INCLUDEPPOCR)/ppocr/ocr2/data_indexes_by_words.cpp
-    $(INCLUDEPPOCR)/ppocr/ocr2/filter_by_lines.cpp
-    $(INCLUDEPPOCR)/ppocr/ocr2/filter_by_font.cpp
-    $(INCLUDEPPOCR)/ppocr/ocr2/disambiguous_with_dict.cpp
-
-    ppocr_datas_and_glyphs_src
-    $(SRCDIR)/capture/rdp_ppocr/get_ocr_constants.cpp
-;
-
-lib ppocr_test : ppocr/<cxxflags>-frtti,<linkflags>-fvisibility=default : <link>static ;
-
-lib ppocr_static : ppocr/<linkflags>-Wl,-Bsymbolic,<cxxflags>-fvisibility=hidden : <link>static ;
-
-
-lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
-lib openssl : : <name>ssl <link>shared ;
-lib krb5 : : <name>krb5 <link>shared ;
-lib gssglue : : <name>gssglue <link>shared ;
-
-lib crypto : : <name>crypto <link>shared ;
-lib z : : <name>z <link>shared ;
-lib snappy : : <name>snappy <link>shared ;
-lib dl : : <name>dl <link>shared ;
-lib python2 : : <name>$(PYTHON_VER) <link>shared ;
-lib libpng : : <name>png <link>shared ;
-
-alias png : libpng z ;
-
-obj mainloop : $(SRCDIR)/core/mainloop.cpp ;
-obj d3des : $(SRCDIR)/utils/d3des.cpp ;
-obj bitmap : $(SRCDIR)/utils/bitmap_data_allocator.cpp ;
-obj program_options : $(MODULEDIR)/program_options/src/program_options.cpp ;
-
+obj bitmap : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
+obj d3des : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 
 using qt : /usr ; #4
 
-
-obj front_Qt4.o : src/Qt4/front_Qt4.cpp
-    :
-    <define>QT_NO_KEYWORDS
-    <include>/usr/include/qt4                   #4
-#    <cxxflags>-fPIC
-    ;
-
-obj bitmap_data_allocator.o : $(SRCDIR)/utils/bitmap_data_allocator.cpp ;
-
 exe client_rdp_Qt4 :
-    src/Qt4/front_Qt4.hpp
-    src/Qt4/front_widget_Qt4.hpp
-    src/Qt4/keymaps/Qt4_ScanCode_KeyMap.hpp
-    front_Qt4.o
-    bitmap_data_allocator.o
+    src/Qt4/front_Qt4.cpp
     /qt//QtGui       #4
+    bitmap
     krb5
     openssl
     crypto
@@ -311,12 +72,11 @@ exe client_rdp_Qt4 :
     ppocr
     ocr
     ffmpeg
-    z
     dl
     snappy
-    :
-    <define>QT_NO_KEYWORDS
-    <include>/usr/include/qt4                   #4
-#    <cxxflags>-fPIC
-    ;
-
+:
+    #<define>SHARE_PATH='\"$(SHARE_PREFIX)\"'
+    #<define>CFG_PATH='\"$(ETC_PREFIX)\"'
+    <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
+    <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
+;
