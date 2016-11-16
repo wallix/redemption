@@ -11,7 +11,7 @@ include $(JAM_INCLUDE_PATH)/includes.jam ;
 
 constant MAIN_PATH : [ setvar MAIN_PATH : ./ ] ;
 
-project qt4_client
+project redemption_qt4_client
     : requirements
 
     <conditional>@includes
@@ -21,7 +21,7 @@ project qt4_client
     <cxxflags>-std=c++11
 
     $(CXXFLAGS)
-    <cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant
+    <toolset>gcc:<cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant
 
 #    <cxxflags>-fpie
     <cxxflags>-fPIC
@@ -34,11 +34,24 @@ project qt4_client
 
     <define>QT_NO_KEYWORDS
     # TODO search include qt4 directory
-    <include>/usr/include/qt4
+    <cxxflags>-isystem/usr/include/qt4
+    <toolset>gcc:<cxxflags>-Wno-missing-include-dirs
 
    : default-build release
 
 ;
+
+constant EXE_DEPENDENCIES :
+    <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
+    <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
+    <define>MAIN_PATH='\"$(MAIN_PATH)\"'
+;
+
+# constant TEST_DEPENDENCIES :
+#     <define>SHARE_PATH='\"$(SHARE_PREFIX)\"'
+#     <define>CFG_PATH='\"$(ETC_PREFIX)\"'
+#     <define>MAIN_PATH='\"$(MAIN_PATH)\"'
+# ;
 
 include $(JAM_INCLUDE_PATH)/ocr.jam ;
 include $(JAM_INCLUDE_PATH)/libs.jam ;
@@ -60,6 +73,9 @@ obj d3des : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 using qt : /usr ; #4
 
 exe client_rdp_Qt4 :
+    src/Qt4/front_Qt4.hpp
+    src/Qt4/front_widget_Qt4.hpp
+    src/Qt4/keymaps/Qt4_ScanCode_KeyMap.hpp
     src/Qt4/front_Qt4.cpp
     /qt//QtGui       #4
     bitmap
@@ -75,8 +91,5 @@ exe client_rdp_Qt4 :
     dl
     snappy
 :
-    #<define>SHARE_PATH='\"$(SHARE_PREFIX)\"'
-    #<define>CFG_PATH='\"$(ETC_PREFIX)\"'
-    <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
-    <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
+    $(EXE_DEPENDENCIES)
 ;

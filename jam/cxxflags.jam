@@ -35,7 +35,8 @@ constant CXXFLAGS-COMMON :
     <cxxflags>-Wendif-labels
     <cxxflags>-Wwrite-strings
 #    <cxxflags>-Wpadded
-    <cxxflags>-Wstrict-overflow=5
+    <cxxflags>-Wstrict-overflow=1
+#     <cxxflags>-Wstrict-overflow=5
     <cxxflags>-Wvolatile-register-var
 #    <cxxflags>-Wdisabled-optimization
     <cxxflags>-Warray-bounds

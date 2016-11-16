@@ -7,16 +7,6 @@ include $(JAM_INCLUDE_PATH)/includes.jam ;
 
 REDEMPTION_CXXFLAGS ?= <cxxflags>-std=c++11 ;
 
-variant coverage : debug : <cxxflags>--profile-arcs <cxxflags>--test-coverage <cxxflags>--coverage <link>shared ;
-
-#gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
-
-lib gcov : : <name>gcov : ;
-
-constant GCOV : <variant>coverage:<library>gcov ;
-constant GCOV_NO_BUILD : <variant>coverage:<build>no ;
-
-
 project redemption
     : requirements
 
@@ -41,6 +31,8 @@ project redemption
 
 include $(JAM_INCLUDE_PATH)/ocr.jam ;
 include $(JAM_INCLUDE_PATH)/libs.jam ;
+
+include $(JAM_INCLUDE_PATH)/testing-coverage.jam ;
 
 explicit
     install
@@ -434,8 +426,6 @@ exe tls_test_server
 #
 # Unit Tests
 #
-include $(JAM_INCLUDE_PATH)/testing-coverage.jam ;
-
 
 # To compute coverage
 # ===================

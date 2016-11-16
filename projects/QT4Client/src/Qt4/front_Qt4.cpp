@@ -38,6 +38,7 @@
 
 Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
     : Front_Qt_API(false, false, verbose)
+    , snapshoter(*this)
     , mod_bpp(24)
     , mod_palette(BGRPalette::classic_332())
     , _form(nullptr)
@@ -470,7 +471,6 @@ bool Front_Qt::connect() {
                                         , false
                                         , authentifier
                                         , ini
-                                        , gen
                                         , cctx
                                         , false
                                         , this->_delta_time
@@ -484,17 +484,14 @@ bool Front_Qt::connect() {
     return false;
 }
 
-void Front_Qt::replay(std::string & movie_path) {
-    if (movie_path ==  "") {
+void Front_Qt::replay(std::string const & movie_path_) {
+    if (movie_path_.empty()) {
         return;
     }
-    const std::string delimiter = "/";
-    size_t pos(movie_path.find(delimiter));
-
-    while(movie_path.length() > pos) {
-        movie_path = movie_path.substr(pos + delimiter.length(), movie_path.length());
-        pos = movie_path.find(delimiter);
-    }
+    auto const last_delimiter_it = std::find(movie_path_.rbegin(), movie_path_.rend(), '/');
+    std::string const movie_path = (last_delimiter_it == movie_path_.rend())
+      ? movie_path_
+      : movie_path_.substr(movie_path_.size() - (last_delimiter_it - movie_path_.rbegin()));
 
     this->_replay = true;
     this->setScreenDimension();
@@ -511,59 +508,25 @@ void Front_Qt::replay(std::string & movie_path) {
     this->_screen[0]->show();
 
     this->load_replay_mod(movie_path);
-
 }
-
-struct Front_Qt::ReplayModInternal {
-    struct Snapshoter : gdi::CaptureApi
-    {
-        Front_Qt & front;
-
-        Snapshoter(Front_Qt & front) : front(front) {}
-
-        virtual std::chrono::microseconds do_snapshot(
-            const timeval& /*now*/, int cursor_x, int cursor_y, bool /*ignore_frame_in_timeval*/
-        ) {
-            this->front.update_pointer_position(cursor_x, cursor_y);
-        }
-        virtual void do_pause_capture(const timeval&) {}
-        virtual void do_resume_capture(const timeval&) {}
-    };
-
-    Snapshoter snapshoter;
-    ReplayMod mod;
-
-    ReplayModInternal(Front_Qt & front, std::string const & movie_name)
-    : snapshoter(front)
-    , mod(
-        front
-      , (front.REPLAY_DIR + "/").c_str()
-      , movie_name.c_str()
-      , 0
-      , 0
-      , front._error
-      , front._font
-      , true
-      , 0)
-    {
-        this->mod.add_consumer(nullptr, this->snapshoter, nullptr, nullptr, nullptr);
-    }
-
-    bool play_qt() {
-        return this->mod.play_qt();
-    }
-
-    bool get_break_privplay_qt() {
-        return this->mod.get_break_privplay_qt();
-    }
-};
 
 void Front_Qt::delete_replay_mod() {
     this->_replay_mod.reset();
 }
 
 void Front_Qt::load_replay_mod(std::string const & movie_name) {
-    this->_replay_mod.reset(new ReplayModInternal{*this, movie_name});
+    this->_replay_mod.reset(new ReplayMod(
+        *this
+      , (this->REPLAY_DIR + "/").c_str()
+      , movie_name.c_str()
+      , 0
+      , 0
+      , this->_error
+      , this->_font
+      , true
+      , 0
+    ));
+    this->_replay_mod->add_consumer(nullptr, &this->snapshoter, nullptr, nullptr, nullptr);
 }
 
 

@@ -1157,7 +1157,7 @@ public:
         this->setFocusPolicy(Qt::StrongFocus);
     }
 
-    Screen_Qt (Front_Qt_API * front, QPixmap * cache, std::string & movie_path, QPixmap * trans_cache)
+    Screen_Qt (Front_Qt_API * front, QPixmap * cache, std::string const & movie_path, QPixmap * trans_cache)
         : QWidget()
         , _front(front)
         , _buttonCtrlAltDel("Play", this)
