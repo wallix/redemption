@@ -108,6 +108,14 @@ extern "C" {
 #include <sys/time.h>
 #endif
 
+ 
+/* Socket type */
+#ifndef socket_t
+typedef int socket_t;
+#endif
+
+typedef struct ssh_channel_struct * ssh_channel;
+
 /**
  * @brief SSH authentication callback.
  *
@@ -121,25 +129,10 @@ extern "C" {
  *
  * @return              0 on success, < 0 on error.
  */
- 
-/* Socket type */
-#ifndef socket_t
-typedef int socket_t;
-#endif
-
-typedef struct ssh_channel_struct * ssh_channel;
- 
 typedef int (*ssh_auth_callback) (const char *prompt, char *buf, size_t len, int echo, int verify, void *userdata);
 
 typedef int (*ssh_event_callback)(socket_t fd, int revents, void *userdata);
 
-/**
- * @brief SSH global request callback. All global request will go through this
- * callback.
- * @param session Current session handler
- * @param message the actual message
- * @param userdata Userdata to be passed to the callback function.
- */
 typedef void (*ssh_global_request_callback) (struct ssh_session_struct * session, 
             int type, int want_reply,
             char * bind_address, uint32_t bind_port,
@@ -148,10 +141,6 @@ typedef void (*ssh_global_request_callback) (struct ssh_session_struct * session
 /**
  * @brief Handles an SSH new channel open X11 request. This happens when the server
  * sends back an X11 connection attempt. This is a client-side API
- * @param session current session handler
- * @param userdata Userdata to be passed to the callback function.
- * @returns a valid ssh_channel handle if the request is to be allowed
- * @returns NULL if the request should not be allowed
  * @warning The channel pointer returned by this callback must be closed by the application.
  */
 typedef ssh_channel (*ssh_channel_open_request_x11_callback) (ssh_session_struct * session,
@@ -174,13 +163,11 @@ typedef ssh_channel (*ssh_channel_open_request_auth_agent_callback) (ssh_session
  * @returns SSH_AUTH_PARTIAL Partial authentication, more authentication means are needed.
  * @returns SSH_AUTH_DENIED Authentication failed.
  */
-typedef int (*ssh_auth_password_callback) (ssh_session_struct * session, const char *user, const char *password,
-		void *userdata);
+typedef int (*ssh_auth_password_callback) (ssh_session_struct * session, const char *user, const char *password, void *userdata);
 
 /**
  * @brief SSH authentication callback. Tries to authenticates user with the "none" method
  * which is anonymous or passwordless.
- * @param session Current session handler
  * @param user User that wants to authenticate
  * @param userdata Userdata to be passed to the callback function.
  * @returns SSH_AUTH_SUCCESS Authentication is accepted.
@@ -191,9 +178,7 @@ typedef int (*ssh_auth_none_callback) (const char *user, void *userdata);
 
 
 /**
- * @brief SSH authentication callback. Tries to authenticates user with the "none" method
- * which is anonymous or passwordless.
- * @param session Current session handler
+ * @brief SSH authentication callback. Tries to authenticates user with the "interactive" method
  * @param user User that wants to authenticate
  * @param userdata Userdata to be passed to the callback function.
  * @returns SSH_AUTH_SUCCESS Authentication is accepted.
@@ -215,8 +200,7 @@ typedef int (*ssh_auth_none_callback) (const char *user, void *userdata);
  * @warning Implementations should verify that parameter user matches in some way the principal.
  * user and principal can be different. Only the latter is guaranteed to be safe.
  */
-typedef int (*ssh_auth_gssapi_mic_callback) (const char *user, const char *principal,
-		void *userdata);
+typedef int (*ssh_auth_gssapi_mic_callback) (const char *user, const char *principal, void *userdata);
 
 /**
  * @brief SSH authentication callback.
@@ -224,8 +208,8 @@ typedef int (*ssh_auth_gssapi_mic_callback) (const char *user, const char *princ
  * @param user User that wants to authenticate
  * @param pubkey public key used for authentication
  * @param signature_state SSH_PUBLICKEY_STATE_NONE if the key is not signed (simple public key probe),
- * 							SSH_PUBLICKEY_STATE_VALID if the signature is valid. Others values should be
- * 							replied with a SSH_AUTH_DENIED.
+*                          SSH_PUBLICKEY_STATE_VALID if the signature is valid. Others values should be
+ *                         replied with a SSH_AUTH_DENIED.
  * @param userdata Userdata to be passed to the callback function.
  * @returns SSH_AUTH_SUCCESS Authentication is accepted.
  * @returns SSH_AUTH_PARTIAL Partial authentication, more authentication means are needed.
