@@ -71,13 +71,13 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
                 case TraceType::cryptofile:
                     this->trans = new (&this->variant.out_crypto)
                     CryptoOutMetaSequenceTransport(
-                        &cctx, path, hash_path, basename, now,
+                        cctx, cctx.gen, path, hash_path, basename, now,
                         width, height, groupid, authentifier);
                     break;
                 case TraceType::localfile_hashed:
                     this->trans = new (&this->variant.out_with_sum)
                     OutMetaSequenceTransportWithSum(
-                        &cctx, path, hash_path, basename, now,
+                        cctx, path, hash_path, basename, now,
                         width, height, groupid, authentifier);
                     break;
                 default:

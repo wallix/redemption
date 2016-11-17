@@ -90,6 +90,7 @@ public:
 
     // TODO unused
     Random & gen;
+    // TODO only for cfg::crypto::key0 and key1
     const Inifile & ini;
 private:
     unsigned char hmac_key[HMAC_KEY_LENGTH];
@@ -172,11 +173,6 @@ public:
             "\x01\x02\x03\x04\x05\x06\x07\x08"
             "\x01\x02\x03\x04\x05\x06\x07\x08",
             HMAC_KEY_LENGTH);
-    }
-
-    void random(void * dest, size_t size)
-    {
-        this->gen.random(dest, size);
     }
 
     size_t unbase64(char *buffer, size_t bufsiz, const char *txt)

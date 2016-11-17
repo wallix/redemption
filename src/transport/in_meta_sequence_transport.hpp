@@ -1068,7 +1068,9 @@ private:
     }
 
 public:
-    InMetaSequenceTransport(CryptoContext * cctx,
+    // TODO cctx by reference
+    InMetaSequenceTransport(
+        CryptoContext * cctx,
         const char * filename,
         const char * extension,
         int encryption,

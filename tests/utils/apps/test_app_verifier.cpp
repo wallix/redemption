@@ -221,7 +221,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     } * cf_struct = new (std::nothrow) crypto_file(system_fd);
 
     if (cf_struct) {
-        if (-1 == cf_struct->encrypt.open(cf_struct->file, trace_key, &cctx, iv)) {
+        if (-1 == cf_struct->encrypt.open(cf_struct->file, trace_key, cctx, iv)) {
             delete cf_struct;
             cf_struct = nullptr;
             close(system_fd);

@@ -561,7 +561,7 @@ namespace transbuf {
             const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
             this->cctx->get_derived_key(trace_key, base, base_len);
             unsigned char iv[32];
-            this->cctx->random(iv, 32);
+            this->cctx->gen.random(iv, 32);
 //            if (-1 == urandom_read(iv, 32)) {
 //                LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
 //                return -1;

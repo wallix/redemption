@@ -477,30 +477,28 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
         };
 
         if (ini.get<cfg::globals::trace_type>() == TraceType::cryptofile) {
-            run(
-                CryptoOutMetaSequenceTransport(
-                    &cctx,
-                    outfile_path.c_str(),
-                    ini.get<cfg::video::hash_path>().c_str(),
-                    outfile_basename.c_str(),
-                    begin_record,
-                    player.info_width,
-                    player.info_height,
-                    ini.get<cfg::video::capture_groupid>()
-                    )
-                );
+            run(CryptoOutMetaSequenceTransport(
+                cctx,
+                cctx.gen,
+                outfile_path.c_str(),
+                ini.get<cfg::video::hash_path>().c_str(),
+                outfile_basename.c_str(),
+                begin_record,
+                player.info_width,
+                player.info_height,
+                ini.get<cfg::video::capture_groupid>()
+            ));
         }
         else {
-            run(
-                OutMetaSequenceTransport(
-                    outfile_path.c_str(),
-                    ini.get<cfg::video::hash_path>().c_str(),
-                    outfile_basename.c_str(),
-                    begin_record,
-                    player.info_width,
-                    player.info_height,
-                    ini.get<cfg::video::capture_groupid>()
-                ));
+            run(OutMetaSequenceTransport(
+                outfile_path.c_str(),
+                ini.get<cfg::video::hash_path>().c_str(),
+                outfile_basename.c_str(),
+                begin_record,
+                player.info_width,
+                player.info_height,
+                ini.get<cfg::video::capture_groupid>()
+            ));
         }
     }
     catch (...) {
@@ -537,7 +535,7 @@ inline int is_encrypted_file(const char * input_filename, bool & infile_is_encry
 
 inline int app_recorder(
     int argc, char const * const * argv, const char * copyright_notice,
-    std::string config_filename, Inifile & ini,CryptoContext & cctx
+    std::string config_filename, Inifile & ini, CryptoContext & cctx
 ) {
     openlog("redrec", LOG_CONS | LOG_PERROR, LOG_USER);
 
