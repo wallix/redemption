@@ -129,7 +129,7 @@ constant EXE_DEPENDENCIES :
 constant TEST_DEPENDENCIES :
     $(GCOV)
     <library>libboost_unit_test
-    <include>tests
+    <include>$(REDEMPTION_TEST_PATH)/tests
     <cxxflags>-frtti
     <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
