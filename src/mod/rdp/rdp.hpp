@@ -2988,6 +2988,28 @@ public:
                     }
                     break;
 
+
+    // 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE)
+    // =========================================================================
+
+    // updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is
+    // the same as the updateHeader byte field specified in the Fast-Path Update
+    // (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST
+    // be set to FASTPATH_UPDATETYPE_COLOR (9).
+
+    // compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional
+    // field (as well as the possible values) is the same as the compressionFlags field
+    // specified in the Fast-Path Update structure.
+
+    // size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as
+    // the possible values) is the same as the size field specified in the Fast-Path
+    // Update structure.
+
+    // colorPointerUpdateData (variable): Color pointer data. Both slow-path and
+    // fast-path utilize the same data format, a Color Pointer Update (section
+    // 2.2.9.1.1.4.4) structure, to represent this information.
+
+
                 case FastPath::UpdateType::COLOR:
                     this->process_color_pointer_pdu(upd.payload);
                     break;
@@ -5906,27 +5928,6 @@ public:
             LOG(LOG_INFO, "mod_rdp::rdp_suppress_display_updates done");
         }
     }
-
-    // 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE)
-    // =========================================================================
-
-    // updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is
-    // the same as the updateHeader byte field specified in the Fast-Path Update
-    // (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST
-    // be set to FASTPATH_UPDATETYPE_COLOR (9).
-
-    // compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional
-    // field (as well as the possible values) is the same as the compressionFlags field
-    // specified in the Fast-Path Update structure.
-
-    // size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as
-    // the possible values) is the same as the size field specified in the Fast-Path
-    // Update structure.
-
-    // colorPointerUpdateData (variable): Color pointer data. Both slow-path and
-    // fast-path utilize the same data format, a Color Pointer Update (section
-    // 2.2.9.1.1.4.4) structure, to represent this information.
-
 
     // [referenced from 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE) ]
     // [referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
