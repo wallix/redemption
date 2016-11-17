@@ -306,8 +306,42 @@ void Front_Qt::writeClientInfo() {
 }
 
 void Front_Qt::set_pointer(Pointer const & cursor) {
-    if (cursor.pointer_type !=  0) {
-        std::cout <<  "cursor=" << int(cursor.pointer_type) <<  std::endl;
+
+
+    QImage image_data(cursor.data, cursor.width, cursor.height, QImage::Format_RGB888);
+    QImage image_mask(cursor.mask, cursor.width, cursor.height, QImage::Format_Mono);
+
+    if (cursor.mask[0x48] == 0xFF &&
+        cursor.mask[0x49] == 0xFF &&
+        cursor.mask[0x4A] == 0xFF &&
+        cursor.mask[0x4B] == 0xFF) {
+
+        image_mask = image_data.convertToFormat(QImage::Format_Mono);
+        image_data.invertPixels();
+    }
+
+    image_mask.invertPixels();
+    image_mask = image_mask.mirrored(false, true);
+    image_data = image_data.convertToFormat(QImage::Format_Mono).mirrored(false, true);
+
+    if (this->_replay) {
+        this->_mouse_data.cursor_image = image_data;
+        this->_mouse_data.cusor_mask   = image_mask;
+
+    } else {
+
+        QBitmap bitData = QBitmap::fromData(QSize(cursor.width, cursor.height), image_data.bits(), QImage::Format_Mono);
+        QBitmap bitMask = QBitmap::fromData(QSize(cursor.width, cursor.height), image_mask.bits(), QImage::Format_Mono);
+
+        QCursor qcursor(bitData, bitMask, cursor.x, cursor.y);
+        this->_screen[this->_current_screen_index]->setCursor(qcursor);
+
+        if (this->_record) {
+            this->_graph_capture->set_pointer(cursor);
+            struct timeval time;
+            gettimeofday(&time, nullptr);
+            this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
+        }
     }
 }
 
@@ -318,7 +352,6 @@ Screen_Qt * Front_Qt::getMainScreen() {
 Front_Qt::~Front_Qt() {
     this->empty_buffer();
     delete(this->_capture);
-
 }
 
 
@@ -2738,6 +2771,9 @@ void Front_Qt::begin_update() {
 }
 
 void Front_Qt::end_update() {
+    for (size_t i = 0; i < this->_info.cs_monitor.monitorCount; i++) {
+        this->_screen[i]->update_view();
+    }
     //if (this->verbose > 10) {
     //    LOG(LOG_INFO, "--------- FRONT ------------------------");
     //    LOG(LOG_INFO, "end_update");

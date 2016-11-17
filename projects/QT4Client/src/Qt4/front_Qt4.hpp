@@ -181,6 +181,7 @@ public:
     bool                 _record;
     bool                 _replay;
     int                  _delta_time;
+    int                  _current_screen_index;
 
 
     Front_Qt_API( bool param1
@@ -206,6 +207,7 @@ public:
     , _record(false)
     , _replay(false)
     , _delta_time(1000000)
+    , _current_screen_index(0)
     {
         this->_to_client_sender._front = this;
     }
@@ -279,72 +281,10 @@ public:
     gdi::GraphicApi    * _graph_capture;
 
     struct MouseData {
+        QImage cursor_image;
+        QImage cusor_mask;
         uint16_t x = 0;
         uint16_t y = 0;
-        const size_t max = 19*11;
-
-        const char * data_cursor0 =
-            "X.........."
-            "XX........."
-            "XOX........"
-            "XOOX......."
-            "XOOOX......"
-            "XOOOOX....."
-            "XOOOOOX...."
-            "XOOOOOOX..."
-            "XOOOOOOOX.."
-            "XOOOOOOOOX."
-            "XOOOOOXXXXX"
-            "XOOXOOX...."
-            "XOX.XOOX..."
-            "XX..XOOX..."
-            "X....XOOX.."
-            ".....XOOX.."
-            "......XOOX."
-            "......XOOX."
-            ".......XX..";
-
-        std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(max*4);
-        QImage cursor_image;
-
-        enum : int {
-            PIXEL_X   = 88
-          , PIXEL_O   = 79
-          , PIXEL_DOT = 46
-        };
-
-        MouseData() {
-
-            for(size_t i = 0; i < max; i++) {
-                size_t j = i*4;
-                switch (data_cursor0[i]) {
-                    case PIXEL_X:
-                        data[j  ] = 0xFF;
-                        data[j+1] = 0xFF;
-                        data[j+2] = 0xFF;
-                        data[j+3] = 0xFF;
-                        break;
-
-                    case PIXEL_O:
-                        data[j  ] = 0x00;
-                        data[j+1] = 0x00;
-                        data[j+2] = 0x00;
-                        data[j+3] = 0xFF;
-                        break;
-
-                    case PIXEL_DOT:
-                        data[j  ] = 0x00;
-                        data[j+1] = 0x00;
-                        data[j+2] = 0x00;
-                        data[j+3] = 0x00;
-                        break;
-                }
-            }
-
-            cursor_image = QImage(data.get(), 11, 19, QImage::Format_ARGB32_Premultiplied);
-        }
-
-
     } _mouse_data;
 
     // Connexion socket members
