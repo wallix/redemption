@@ -1117,6 +1117,11 @@ struct TLSContext
         LOG(LOG_INFO, "SocketTransport::enable_server_tls() done");
     }
 
+    ssize_t privrecv_tls(uint8_t * data, size_t len)
+    {
+        return this->privrecv_tls(reinterpret_cast<char *>(data), len);
+    }
+
     ssize_t privrecv_tls(char * data, size_t len)
     {
         char * pbuffer = data;
@@ -1176,9 +1181,9 @@ struct TLSContext
         return len;
     }
 
-    ssize_t privsend_tls(const char * data, size_t len)
+    ssize_t privsend_tls(const uint8_t * data, size_t len)
     {
-        const char * const buffer = data;
+        const uint8_t * const buffer = data;
         size_t remaining_len = len;
         size_t offset = 0;
         while (remaining_len > 0){

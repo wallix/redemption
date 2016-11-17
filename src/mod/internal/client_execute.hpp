@@ -134,7 +134,9 @@ public:
     }   // ClientExecute
 
     Rect adjust_rect(Rect rect) {
-        if (!this->front_->get_channel_list().get_by_name(channel_names::rail)) return rect;
+        if (!this->front_->get_channel_list().get_by_name(channel_names::rail)) {
+            return rect;
+        }
 
         if (this->window_rect.isempty()) {
             this->window_rect.x  = rect.x + rect.cx * 10 / 100;

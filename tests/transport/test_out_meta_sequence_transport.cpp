@@ -92,16 +92,13 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
                                          "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
     ini.configuration_holder().set_value("crypto", "key1", "12345678901234567890123456789012");
 
-    LCGRandom rnd(0);
-
-    CryptoContext cctx(rnd, ini);
-
     {
+        CryptoContext cctx(ini);
         timeval now;
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        OutMetaSequenceTransportWithSum wrm_trans(&cctx, "./", "./", "xxx", now, 800, 600, groupid);
+        OutMetaSequenceTransportWithSum wrm_trans(cctx, "./", "./", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -190,8 +187,7 @@ BOOST_AUTO_TEST_CASE(TestOSumBuf)
     );
     ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
 
-    LCGRandom rnd(0);
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(ini);
     cctx.get_master_key();
 //    memcpy(cctx.hmac_key, "12345678901234567890123456789012", 32);
     transbuf::ochecksum_buf_null_buf buf(cctx.get_hmac_key());

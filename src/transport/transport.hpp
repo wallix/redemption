@@ -140,22 +140,22 @@ public:
 
     void recv(char ** pbuffer, size_t len)
     {
-        this->do_recv(pbuffer, len);
+        this->do_recv(reinterpret_cast<uint8_t **>(pbuffer), len);
     }
 
     void send(const char * const buffer, size_t len)
     {
-        this->do_send(buffer, len);
+        this->do_send(reinterpret_cast<const uint8_t * const>(buffer), len);
     }
 
     void recv(uint8_t ** pbuffer, size_t len)
     {
-        this->do_recv(reinterpret_cast<char **>(pbuffer), len);
+        this->do_recv(pbuffer, len);
     }
 
     void send(const uint8_t * const buffer, size_t len)
     {
-        this->do_send(reinterpret_cast<const char * const>(buffer), len);
+        this->do_send(buffer, len);
     }
 
     virtual void flush()
@@ -169,13 +169,13 @@ public:
     }
 
 private:
-    virtual void do_recv(char ** pbuffer, size_t len) {
+    virtual void do_recv(uint8_t ** pbuffer, size_t len) {
         (void)pbuffer;
         (void)len;
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
     }
 
-    virtual void do_send(const char * const buffer, size_t len) {
+    virtual void do_send(const uint8_t * buffer, size_t len) {
         (void)buffer;
         (void)len;
         throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);

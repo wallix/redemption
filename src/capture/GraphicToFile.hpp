@@ -357,7 +357,7 @@ public:
     }
 
 private:
-    void do_send(const char * const buffer, size_t len) override {
+    void do_send(const uint8_t * const buffer, size_t len) override {
         size_t to_buffer_len = len;
         while (this->stream.get_offset() + to_buffer_len > this->max) {
             send_wrm_chunk(this->trans, PARTIAL_IMAGE_CHUNK, this->max, 1);

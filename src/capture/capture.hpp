@@ -122,6 +122,7 @@ public:
         auth_api * authentifier,
         const Inifile & ini,
         CryptoContext & cctx,
+        Random & rnd,
         bool full_video,
         bool force_capture_png_if_enable = false,
         const int delta_time = 1000)
@@ -232,7 +233,7 @@ public:
                 }
                 this->pnc.reset(new Native(
                     now, capture_bpp, ini.get<cfg::globals::trace_type>(),
-                    cctx, record_path, hash_path, basename,
+                    cctx, rnd, record_path, hash_path, basename,
                     groupid, authentifier, this->gd->rdp_drawable(), ini, this->delta_time
                 ));
             }

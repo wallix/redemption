@@ -228,12 +228,12 @@ public:
         return rv;
     }
 
-    void do_recv(char ** pbuffer, size_t len) override {
+    void do_recv(uint8_t ** pbuffer, size_t len) override {
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
         }
 
-        char * start = *pbuffer;
+        uint8_t * start = *pbuffer;
         ssize_t res = (this->tls) ? this->tls->privrecv_tls(*pbuffer, len) : this->privrecv(*pbuffer, len);
         //std::cout << "res=" << int(res) << " len=" << int(len) <<  std::endl;
 
@@ -256,7 +256,7 @@ public:
         this->last_quantum_received += len;
     }
 
-    void do_send(const char * const buffer, size_t len) override {
+    void do_send(const uint8_t * const buffer, size_t len) override {
         if (len == 0) { return; }
 
         if (this->verbose & 0x100){
@@ -281,7 +281,7 @@ public:
     }
 
 private:
-    ssize_t privrecv(char * data, size_t len)
+    ssize_t privrecv(uint8_t * data, size_t len)
     {
         size_t remaining_len = len;
 
@@ -326,7 +326,7 @@ private:
         return len;
     }
 
-    ssize_t privsend(const char * data, size_t len)
+    ssize_t privsend(const uint8_t * data, size_t len)
     {
         size_t total = 0;
         while (total < len) {

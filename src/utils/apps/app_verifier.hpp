@@ -131,7 +131,7 @@ struct HashHeader {
 class ifile_read_encrypted : public ifile_read
 {
 public:
-    CryptoContext * cctx;
+    CryptoContext & cctx;
     char clear_data[CRYPTO_BUFFER_SIZE];  // contains either raw data from unencrypted file
                                           // or already decrypted/decompressed data
     uint32_t clear_pos;                   // current position in clear_data buf
@@ -144,8 +144,7 @@ public:
     bool encrypted;
 
 public:
-    explicit ifile_read_encrypted(CryptoContext * cctx, int encryption)
-
+    explicit ifile_read_encrypted(CryptoContext & cctx, int encryption)
     : cctx(cctx)
     , clear_data{}
     , clear_pos(0)
@@ -260,7 +259,7 @@ public:
         const int          nrounds = 5;
         unsigned char      key[32];
         unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-        cctx->get_derived_key(trace_key, base, base_len);
+        cctx.get_derived_key(trace_key, base, base_len);
         if (32 != ::EVP_BytesToKey(cipher, ::EVP_sha1(), salt,
                            trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr)){
             // TODO: add true error management
@@ -734,7 +733,7 @@ inline void load_hash(
     MetaLine2 & hash_line,
     const std::string & full_hash_path, const std::string & input_filename,
     unsigned int infile_version, bool infile_is_checksumed,
-    CryptoContext * cctx, bool infile_is_encrypted, int verbose
+    CryptoContext & cctx, bool infile_is_encrypted, int verbose
 ) {
     ifile_read_encrypted in_hash_fb(cctx, infile_is_encrypted);
 
@@ -918,14 +917,15 @@ static inline int check_file(const std::string & filename, const MetaLine2 & met
 }
 
 static inline int check_encrypted_or_checksumed(
-                                       std::string const & input_filename,
-                                       std::string const & mwrm_path,
-                                       std::string const & hash_path,
-                                       bool quick_check,
-                                       bool ignore_stat_info,
-                                       bool update_stat_info,
-                                       uint32_t verbose,
-                                       CryptoContext * cctx) {
+    std::string const & input_filename,
+    std::string const & mwrm_path,
+    std::string const & hash_path,
+    bool quick_check,
+    bool ignore_stat_info,
+    bool update_stat_info,
+    uint32_t verbose,
+    CryptoContext & cctx
+) {
 
     std::string const full_mwrm_filename = mwrm_path + input_filename;
 
@@ -977,7 +977,7 @@ static inline int check_encrypted_or_checksumed(
     ******************/
     if (!check_file(
         full_mwrm_filename, hash_line, quick_check, reader.header.has_checksum,
-        ignore_stat_info, cctx->get_hmac_key(), 32,
+        ignore_stat_info, cctx.get_hmac_key(), 32,
         update_stat_info, out_is_mismatch{has_mismatch_stat_hash}
     )){
         if (!has_mismatch_stat_hash) {
@@ -1006,7 +1006,7 @@ static inline int check_encrypted_or_checksumed(
         bool has_mismatch_stat_mwrm = false;
         if (!check_file(
             full_part_filename, meta_line_wrm, quick_check, reader.header.has_checksum,
-            ignore_stat_info, cctx->get_hmac_key(), 32,
+            ignore_stat_info, cctx.get_hmac_key(), 32,
             update_stat_info, out_is_mismatch{has_mismatch_stat_mwrm})
         ){
             if (has_mismatch_stat_mwrm) {
@@ -1234,6 +1234,7 @@ static inline int app_verifier(Inifile & ini, int argc, char const * const * arg
     OpenSSL_add_all_digests();
 
     return check_encrypted_or_checksumed(
-                input_filename, mwrm_path, hash_path,
-                quick_check, ignore_stat_info, update_stat_info, verbose, &cctx);
+        input_filename, mwrm_path, hash_path,
+        quick_check, ignore_stat_info, update_stat_info, verbose, cctx
+    );
 }

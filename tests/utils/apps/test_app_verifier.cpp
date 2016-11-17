@@ -165,9 +165,8 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
         "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
     );
     ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
-    LCGRandom rnd(0);
 
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(ini);
 
     uint8_t hmac_key[32] = {};
 
@@ -221,7 +220,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     } * cf_struct = new (std::nothrow) crypto_file(system_fd);
 
     if (cf_struct) {
-        if (-1 == cf_struct->encrypt.open(cf_struct->file, trace_key, &cctx, iv)) {
+        if (-1 == cf_struct->encrypt.open(cf_struct->file, trace_key, cctx, iv)) {
             delete cf_struct;
             cf_struct = nullptr;
             close(system_fd);
@@ -308,8 +307,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierFileNotFound)
 {
     Inifile ini;
     ini.set<cfg::debug::config>(false);
-    UdevRandom rnd;
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(ini);
     cctx.set_get_hmac_key_cb(hmac_fn);
     cctx.set_get_trace_key_cb(trace_fn);
 
@@ -345,8 +343,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
 {
     Inifile ini;
     ini.set<cfg::debug::config>(false);
-    UdevRandom rnd;
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(ini);
     cctx.set_get_hmac_key_cb(hmac_fn);
     cctx.set_get_trace_key_cb(trace_fn);
 
@@ -380,8 +377,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
 {
     Inifile ini;
     ini.set<cfg::debug::config>(false);
-    UdevRandom rnd;
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(ini);
     cctx.set_get_hmac_key_cb(hmac_fn);
     cctx.set_get_trace_key_cb(trace_fn);
 
@@ -415,8 +411,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
 {
     Inifile ini;
     ini.set<cfg::debug::config>(false);
-    UdevRandom rnd;
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(ini);
     cctx.set_get_hmac_key_cb(hmac_fn);
     cctx.set_get_trace_key_cb(trace_fn);
 
@@ -456,8 +451,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierUpdateData)
 {
     Inifile ini;
     ini.set<cfg::debug::config>(false);
-    UdevRandom rnd;
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(ini);
     cctx.set_get_hmac_key_cb(hmac_fn);
     cctx.set_get_trace_key_cb(trace_fn);
 
@@ -561,8 +555,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
 {
     Inifile ini;
     ini.set<cfg::debug::config>(false);
-    UdevRandom rnd;
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(ini);
     cctx.set_get_hmac_key_cb(hmac_fn);
     cctx.set_get_trace_key_cb(trace_fn);
 
@@ -701,12 +694,11 @@ BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
 
     Inifile ini;
     ini.set<cfg::debug::config>(false);
-    UdevRandom rnd;
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(ini);
     cctx.set_get_hmac_key_cb(hmac_fn);
     cctx.set_get_trace_key_cb(trace_fn);
 
-    ifile_read_encrypted fd(&cctx, 1);
+    ifile_read_encrypted fd(cctx, 1);
     fd.open(FIXTURES_PATH
         "/verifier/recorded/"
         "toto@10.10.43.13,Administrateur@QA@cible,"
