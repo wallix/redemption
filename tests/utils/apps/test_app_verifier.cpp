@@ -746,3 +746,116 @@ BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
 
     BOOST_CHECK(!reader.read_meta_file(meta_line));
 }
+
+
+extern "C" {
+    inline int hmac_old_fn(char * buffer)
+    {
+    
+        uint8_t hmac_key[32] = {
+            0x56 , 0xdd , 0xb2 , 0x92 , 0x47 , 0xbe , 0x4b , 0x89 ,
+            0x1f , 0x12 , 0x62 , 0x39 , 0x0f , 0x10 , 0xb9 , 0x8e ,
+            0xac , 0xff , 0xbc , 0x8a , 0x8f , 0x71 , 0xfb , 0x21 ,
+            0x07 , 0x7d , 0xef , 0x9c , 0xb3 , 0x5f , 0xf9 , 0x7b ,
+         };
+        memcpy(buffer, hmac_key, 32);
+        return 0;
+    }
+
+//get_trace_key_cb:::::(new scheme)
+///* 0000 */ "\x08\x00\x10\x00\xf0\xff\x01\x00\x08\x00\x00\x00\x00\x00\x00\x00"
+///* 0010 */ "\x00\x00\x00\x7f\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x7f\x00"
+//derivator used:::::(new scheme)
+///* 0000 */ "\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x40\x31\x30\x2e\x31\x30\x2e" //cgrosjean@10.10.
+///* 0010 */ "\x34\x33\x2e\x31\x33\x2c\x70\x72\x6f\x78\x79\x75\x73\x65\x72\x40" //43.13,proxyuser@
+///* 0020 */ "\x77\x69\x6e\x32\x30\x30\x38\x2c\x32\x30\x31\x36\x31\x30\x32\x35" //win2008,20161025
+///* 0030 */ "\x2d\x31\x39\x32\x33\x30\x34\x2c\x77\x61\x62\x2d\x34\x2d\x32\x2d" //-192304,wab-4-2-
+///* 0040 */ "\x34\x2e\x79\x6f\x75\x72\x64\x6f\x6d\x61\x69\x6e\x2c\x35\x35\x36" //4.yourdomain,556
+///* 0050 */ "\x30\x2e\x6d\x77\x72\x6d"                                         //0.mwrm
+//Nov 16 18:26:31 wab-4-2-4 redrec: ERR (29540/29540) -- [CRYPTO_ERROR][29540]: Could not finish decryption!
+//get_trace_key_cb:::::(old scheme)
+///* 0000 */ "\xa8\x6e\x1c\x63\xe1\xa6\xfd\xed\x2f\x73\x17\xca\x97\xad\x48\x07" //.n.c..../s....H.
+///* 0010 */ "\x99\xf5\xcf\x84\xad\x9f\x4a\x16\x66\x38\x09\xb7\x74\xe0\x58\x34" //......J.f8..t.X4
+//derivator used:::::(old scheme)
+///* 0000 */ "\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x40\x31\x30\x2e\x31\x30\x2e" //cgrosjean@10.10.
+///* 0010 */ "\x34\x33\x2e\x31\x33\x2c\x70\x72\x6f\x78\x79\x75\x73\x65\x72\x40" //43.13,proxyuser@
+///* 0020 */ "\x77\x69\x6e\x32\x30\x30\x38\x2c\x32\x30\x31\x36\x31\x30\x32\x35" //win2008,20161025
+///* 0030 */ "\x2d\x31\x39\x32\x33\x30\x34\x2c\x77\x61\x62\x2d\x34\x2d\x32\x2d" //-192304,wab-4-2-
+///* 0040 */ "\x34\x2e\x79\x6f\x75\x72\x64\x6f\x6d\x61\x69\x6e\x2c\x35\x35\x36" //4.yourdomain,556
+///* 0050 */ "\x30\x2e\x6d\x77\x72\x6d"                                         //0.mwrm
+//get_trace_key_cb:::::(old scheme)
+///* 0000 */ "\xa8\x6e\x1c\x63\xe1\xa6\xfd\xed\x2f\x73\x17\xca\x97\xad\x48\x07" //.n.c..../s....H.
+///* 0010 */ "\x99\xf5\xcf\x84\xad\x9f\x4a\x16\x66\x38\x09\xb7\x74\xe0\x58\x34" //......J.f8..t.X4
+//derivator used:::::(old scheme)
+///* 0000 */ "\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x40\x31\x30\x2e\x31\x30\x2e" //cgrosjean@10.10.
+///* 0010 */ "\x34\x33\x2e\x31\x33\x2c\x70\x72\x6f\x78\x79\x75\x73\x65\x72\x40" //43.13,proxyuser@
+///* 0020 */ "\x77\x69\x6e\x32\x30\x30\x38\x2c\x32\x30\x31\x36\x31\x30\x32\x35" //win2008,20161025
+///* 0030 */ "\x2d\x31\x39\x32\x33\x30\x34\x2c\x77\x61\x62\x2d\x34\x2d\x32\x2d" //-192304,wab-4-2-
+///* 0040 */ "\x34\x2e\x79\x6f\x75\x72\x64\x6f\x6d\x61\x69\x6e\x2c\x35\x35\x36" //4.yourdomain,556
+///* 0050 */ "\x30\x2e\x6d\x77\x72\x6d"                                         //0.mwrm
+//get_trace_key_cb:::::(old scheme)
+///* 0000 */ "\xfc\x06\xf3\x0f\xc8\x3d\x16\x9f\xa1\x64\xb8\xca\x0f\xf3\x85\xf0" //.....=...d......
+///* 0010 */ "\x22\x09\xaf\xfc\x0c\xe0\x76\x13\x46\x62\xff\x55\xcb\x41\x87\x6a" //".....v.Fb.U.A.j
+//derivator used:::::(old scheme)
+///* 0000 */ "\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x40\x31\x30\x2e\x31\x30\x2e" //cgrosjean@10.10.
+///* 0010 */ "\x34\x33\x2e\x31\x33\x2c\x70\x72\x6f\x78\x79\x75\x73\x65\x72\x40" //43.13,proxyuser@
+///* 0020 */ "\x77\x69\x6e\x32\x30\x30\x38\x2c\x32\x30\x31\x36\x31\x30\x32\x35" //win2008,20161025
+///* 0030 */ "\x2d\x31\x39\x32\x33\x30\x34\x2c\x77\x61\x62\x2d\x34\x2d\x32\x2d" //-192304,wab-4-2-
+///* 0040 */ "\x34\x2e\x79\x6f\x75\x72\x64\x6f\x6d\x61\x69\x6e\x2c\x35\x35\x36" //4.yourdomain,556
+///* 0050 */ "\x30\x2d\x30\x30\x30\x30\x30\x30\x2e\x77\x72\x6d"                 //0-000000.wrm
+
+
+    inline int trace_old_fn(char * base, int len, char * buffer)
+    {
+        (void)base;
+        (void)len;
+        // in real uses actual trace_key is derived from base and some master key
+        static int i = 0;
+        uint8_t trace_key[10][32] = {
+            0x56, 0x3e, 0xb6, 0xe8, 0x15, 0x8f, 0x0e, 0xed,
+            0x2e, 0x5f, 0xb6, 0xbc, 0x28, 0x93, 0xbc, 0x15,
+            0x27, 0x0d, 0x7e, 0x78, 0x15, 0xfa, 0x80, 0x4a,
+            0x72, 0x3e, 0xf4, 0xfb, 0x31, 0x5f, 0xf4, 0xb2
+         };
+        memcpy(buffer, trace_key, 32);
+        return 0;
+    }
+}
+
+//BOOST_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
+//{
+//    Inifile ini;
+//    ini.set<cfg::debug::config>(false);
+//    UdevRandom rnd;
+//    CryptoContext cctx(rnd, ini);
+//    cctx.set_get_hmac_key_cb(hmac_old_fn);
+//    cctx.set_get_trace_key_cb(trace_old_fn);
+
+//    char const * argv[] {
+//        "verifier.py",
+//        "-i",
+//        "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
+//            "-192304,wab-4-2-4.yourdomain,5560.mwrm",
+//        "--hash-path",
+//            FIXTURES_PATH "/verifier/hash/",
+//        "--mwrm-path",
+//            FIXTURES_PATH "/verifier/recorded/",
+//        "--verbose",
+//            "10",
+//    };
+//    int argc = sizeof(argv)/sizeof(char*);
+
+//    BOOST_CHECK_EQUAL(true, true);
+
+//    int res = -1;
+//    BOOST_CHECK_NO_THROW(
+//        res = app_verifier(ini,
+//            argc, argv
+//          , "ReDemPtion VERifier " VERSION ".\n"
+//            "Copyright (C) Wallix 2010-2016.\n"
+//            "Christophe Grosjean, Raphael Zhou."
+//          , cctx)
+//    );
+//    BOOST_CHECK_EQUAL(1, res);
+//}
+
