@@ -906,7 +906,7 @@ public:
             this->client_info.width, this->client_info.height,
             this->mod_bpp, this->capture_bpp
           , true, false, authentifier
-          , ini, this->cctx
+          , ini, this->cctx, this->gen
           , full_video
         );
         if (this->nomouse) {

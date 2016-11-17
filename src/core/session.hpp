@@ -82,7 +82,6 @@ class Session {
 
     Front * front;
 
-    UdevRandom gen;
     TimeSystem timeobj;
 
     class Client {
@@ -122,7 +121,7 @@ class Session {
     static const time_t select_timeout_tv_sec = 3;
 
 public:
-    Session(int sck, Inifile & ini, CryptoContext & cctx)
+    Session(int sck, Inifile & ini, CryptoContext & cctx, Random & rnd)
             : ini(ini)
             , perf_last_info_collect_time(0)
             , perf_pid(getpid())
@@ -140,11 +139,11 @@ public:
 
             time_t now = time(nullptr);
 
-            this->front = new Front( front_trans, this->gen
+            this->front = new Front( front_trans, rnd
                                    , this->ini, cctx, this->ini.get<cfg::client::fast_path>(), mem3blt_support
                                    , now);
 
-            ModuleManager mm(*this->front, this->ini, this->gen, this->timeobj);
+            ModuleManager mm(*this->front, this->ini, rnd, this->timeobj);
             BackEvent_t signal = BACK_EVENT_NONE;
 
             // Under conditions (if this->ini.get<cfg::video::inactivity_pause>() == true)

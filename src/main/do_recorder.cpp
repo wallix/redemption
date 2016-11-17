@@ -34,7 +34,7 @@ extern "C" {
         auto config_filename = CFG_PATH "/" RDPPROXY_INI;
 
         UdevRandom rnd;
-        CryptoContext cctx(rnd, ini);
+        CryptoContext cctx(ini);
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
 
@@ -51,7 +51,8 @@ extern "C" {
                     "Compatible with any WRM file format up to 4."
                   , config_filename
                   , ini
-                  , cctx);
+                  , cctx
+                  , rnd);
             } catch (const Error & e) {
                 std::printf("decrypt failed: with id=%d\n", e.id);
             }

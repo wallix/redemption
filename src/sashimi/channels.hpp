@@ -664,7 +664,7 @@ struct ssh_agent_struct {
 
             if (this->agent_talk_channel_server(server_session, &request, reply, error) < 0) {
                 syslog(LOG_INFO, "%s agent talk channel error ---", __FUNCTION__);
-                ssh_set_error(error, SSH_NO_ERROR, "");
+                error.error_code = SSH_NO_ERROR;
                 error.eid = 0;
                 throw error;
             }
@@ -680,7 +680,7 @@ struct ssh_agent_struct {
 
             if ((type == SSH_AGENT_FAILURE) || (type == SSH_COM_AGENT2_FAILURE) || (type == SSH2_AGENT_FAILURE)) {
                 syslog(LOG_INFO, "%s type = FAILURE ---", __FUNCTION__);
-                ssh_set_error(error, SSH_NO_ERROR, "");
+                error.error_code = SSH_NO_ERROR;
                 error.eid = 0;
                 throw error;
             }

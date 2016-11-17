@@ -182,11 +182,6 @@ int main(int argc, char * argv[]) {
                                , ini.get<cfg::debug::front>(), nullptr);
     wait_obj front_event;
 
-    UdevRandom gen;
-    TimeSystem timeobj;
-
-    CryptoContext cctx(gen, ini);
-
     // Remove existing Persistent Key List file.
     unlink(persistent_key_list_filename.c_str());
 
@@ -205,6 +200,9 @@ int main(int argc, char * argv[]) {
 
     time_t now = time(nullptr);
 
+    UdevRandom gen;
+    TimeSystem timeobj;
+    CryptoContext cctx(ini);
     const bool fastpath_support = true;
     const bool mem3blt_support  = true;
     Front front(front_trans, gen, ini, cctx,

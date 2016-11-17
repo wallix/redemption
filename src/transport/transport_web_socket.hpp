@@ -20,8 +20,6 @@
    Transport layer abstraction
 */
 
-
-
 #pragma once
 
 
@@ -66,7 +64,7 @@ class TransportWebSocket :  public Transport
 
 
 
-    void do_send(const char * const buffer, size_t len) override {
+    void do_send(const uint8_t * const buffer, size_t len) override {
         //EM_ASM_({ console.log('Data sent to server: '+$0+', '+$1+', '+$2+', '+$3+', '+$4+'...'); }, buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
         /*EM_ASM_({ console.log('Data sent to server: '); }, 0);
         for (size_t i = 0; i < len; i++) {
@@ -76,7 +74,7 @@ class TransportWebSocket :  public Transport
         EM_ASM_({ send_to_serveur(HEAPU8.subarray($0, $0 + $1), $1); }, buffer, len);
     }
 
-    void do_recv(char ** pbuffer, size_t len) override {
+    void do_recv(uint8_t ** pbuffer, size_t len) override {
 
         if (this->buffer !=  nullptr) {
 

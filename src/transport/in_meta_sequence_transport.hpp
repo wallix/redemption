@@ -1068,7 +1068,8 @@ private:
     }
 
 public:
-    InMetaSequenceTransport(CryptoContext * cctx,
+    InMetaSequenceTransport(
+        CryptoContext * cctx,
         const char * filename,
         const char * extension,
         int encryption,
@@ -1080,6 +1081,8 @@ public:
     , encryption(encryption)
     , verbose(verbose)
     {
+        assert(encryption ? bool(cctx) : true);
+
         temporary_concat tmp(filename, extension);
         const char * meta_filename = tmp.c_str();
         this->buf_meta.open(meta_filename);
@@ -1177,7 +1180,7 @@ public:
         return true;
     }
 
-    void do_recv(char ** pbuffer, size_t len) override {
+    void do_recv(uint8_t ** pbuffer, size_t len) override {
         const ssize_t res = this->buf_read(*pbuffer, len);
         if (res < 0){
             this->status = false;

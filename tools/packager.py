@@ -240,10 +240,10 @@ def copy_and_replace_dict_file(filename, dico, target):
 
 # UPDATE VERSION FUNCTIONS
 def update_version_file(newtag):
-  # Set tag version in main/version.hpp
-  out = readall("main/version.hpp")
+  # Set tag version in include/main/version.hpp
+  out = readall("include/main/version.hpp")
   out = re.sub('#\s*define\sVERSION\s".*"', '#define VERSION "%s"' % newtag, out, 1)
-  writeall("main/version.hpp", out)
+  writeall("include/main/version.hpp", out)
 def update_changelog_template(newtag):
   # write changelog
   changelog = "redemption (%s%%TARGET_NAME%%) %%PKG_DISTRIBUTION%%; urgency=low\n\n" % newtag
@@ -295,7 +295,7 @@ def check_new_tag_version_with_local_and_remote_tags(newtag):
 # Check matching versions BEGIN
 def check_matching_version_changelog():
   found = False
-  out = readall("main/version.hpp")
+  out = readall("include/main/version.hpp")
   out = out.split('\n')
   for line in out:
     res = re.match('^[#]define\sVERSION\s["](((\d+)[.](\d+)[.](\d+))(-?[a-z]*)*)["]\s*$', line)
@@ -308,7 +308,7 @@ def check_matching_version_changelog():
       found = True
       break
   if not found:
-    raise Exception('Source Version not found in file main/version.hpp')
+    raise Exception('Source Version not found in file include/main/version.hpp')
 
   found = False
   out = readall("%s/changelog" % opts.packagetemp)
@@ -329,7 +329,7 @@ def check_matching_version_changelog():
     raise Exception('Source Version not found in debian/changelog')
 
   if changelog_red_source_version != red_source_version:
-    raise Exception('Version mismatch between changelog and main/version ("%s" != "%s")' %
+    raise Exception('Version mismatch between changelog and include/main/version ("%s" != "%s")' %
                     (changelog_red_source_version, red_source_version))
   return red_source_version
 # Check matching versions END
@@ -371,7 +371,7 @@ try:
   if update_tag:
     # check tag does not exist
     check_new_tag_version_with_local_and_remote_tags(opts.tag)
-    # update changelog and version (write in main/version.hpp and changelog template)
+    # update changelog and version (write in include/main/version.hpp and changelog template)
     update_version_file(opts.tag)
     update_changelog_template(opts.tag)
 

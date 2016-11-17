@@ -29,6 +29,7 @@
 // #define LOGNULL
 
 #include "utils/fileutils.hpp"
+#include "utils/genrandom.hpp"
 
 #include "transport/in_filename_transport.hpp"
 
@@ -60,7 +61,7 @@ public:
     }
 
 private:
-    void do_send(const char * data, size_t len) override {
+    void do_send(const uint8_t * data, size_t len) override {
         const ssize_t res = this->buf.write(data, len);
         if (res < 0) {
             this->status = false;
@@ -70,11 +71,8 @@ private:
                 snprintf(message, sizeof(message), "100|%s", filename ? filename : "unknow");
                 this->authentifier->report("FILESYSTEM_FULL", message);
                 errno = ENOSPC;
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
             }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
         this->last_quantum_sent += res;
     }
@@ -170,7 +168,7 @@ namespace transfil {
         //{}
 
         template<class Sink>
-        int open(Sink & snk, const unsigned char * trace_key, CryptoContext * cctx, const unsigned char * iv)
+        int open(Sink & snk, const unsigned char * trace_key, CryptoContext & cctx, const unsigned char * iv)
         {
             ::memset(this->buf, 0, sizeof(this->buf));
             ::memset(&this->ectx, 0, sizeof(this->ectx));
@@ -227,14 +225,14 @@ namespace transfil {
                 ::memset(key_buf, 0, blocksize);
                 if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
                     unsigned char keyhash[MD_HASH_LENGTH];
-                    if ( ! ::MD_HASH_FUNC(static_cast<unsigned char *>(cctx->get_hmac_key()), CRYPTO_KEY_LENGTH, keyhash)) {
+                    if ( ! ::MD_HASH_FUNC(static_cast<unsigned char *>(cctx.get_hmac_key()), CRYPTO_KEY_LENGTH, keyhash)) {
                         LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key!\n", ::getpid());
                         return -1;
                     }
                     ::memcpy(key_buf, keyhash, MIN(MD_HASH_LENGTH, blocksize));
                 }
                 else {
-                    ::memcpy(key_buf, cctx->get_hmac_key(), CRYPTO_KEY_LENGTH);
+                    ::memcpy(key_buf, cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
                 }
                 for (int idx = 0; idx <  blocksize; idx++) {
                     key_buf[idx] = key_buf[idx] ^ 0x36;
@@ -527,20 +525,27 @@ namespace transfil {
 
 
 namespace transbuf {
+    struct ocrypto_filename_buf2_params
+    {
+        CryptoContext & cctx;
+        Random & rnd;
+    };
+
     class ocrypto_filename_buf2
     {
         transfil::encrypt_filter2 encrypt;
-        CryptoContext * cctx;
+        CryptoContext & cctx;
+        Random & rnd;
         ofile_buf file;
 
     public:
-        explicit ocrypto_filename_buf2(CryptoContext * cctx)
-        : cctx(cctx)
+        explicit ocrypto_filename_buf2(ocrypto_filename_buf2_params params)
+        : cctx(params.cctx)
+        , rnd(params.rnd)
         {}
 
-        explicit ocrypto_filename_buf2(CryptoContext & cctx)
-        : cctx(&cctx)
-        {}
+        ocrypto_filename_buf2(ocrypto_filename_buf2 const &) = delete;
+        ocrypto_filename_buf2 operator = (ocrypto_filename_buf2 const &) = delete;
 
         ~ocrypto_filename_buf2()
         {
@@ -559,9 +564,9 @@ namespace transbuf {
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
             size_t base_len = 0;
             const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-            this->cctx->get_derived_key(trace_key, base, base_len);
+            this->cctx.get_derived_key(trace_key, base, base_len);
             unsigned char iv[32];
-            this->cctx->random(iv, 32);
+            this->rnd.random(iv, 32);
 //            if (-1 == urandom_read(iv, 32)) {
 //                LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
 //                return -1;
@@ -574,7 +579,7 @@ namespace transbuf {
 
         int close(unsigned char hash[MD_HASH_LENGTH << 1])
         {
-            const int res1 = this->encrypt.close(this->file, hash, this->cctx->get_hmac_key());
+            const int res1 = this->encrypt.close(this->file, hash, this->cctx.get_hmac_key());
             const int res2 = this->file.close();
             return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
         }
@@ -611,8 +616,8 @@ struct OutFilenameTransport
 struct CryptoOutFilenameTransport
 : OutputTransport<transbuf::ocrypto_filename_buf2>
 {
-    CryptoOutFilenameTransport(CryptoContext * crypto_ctx, const char * filename, auth_api * authentifier = nullptr)
-    : CryptoOutFilenameTransport::TransportType(crypto_ctx)
+    CryptoOutFilenameTransport(CryptoContext & crypto_ctx, Random & rnd, const char * filename, auth_api * authentifier = nullptr)
+    : CryptoOutFilenameTransport::TransportType(transbuf::ocrypto_filename_buf2_params{crypto_ctx, rnd})
     {
         if (this->buffer().open(filename, 0440) < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
@@ -648,10 +653,6 @@ BOOST_AUTO_TEST_CASE(TestFilename)
         ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
 
 
-        LCGRandom rnd(0);
-
-        CryptoContext cctx(rnd, ini);
-
         size_t base_len = 0;
         const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
 
@@ -661,7 +662,8 @@ BOOST_AUTO_TEST_CASE(TestFilename)
             BOOST_CHECK(false);
         }
 
-        InFilenameTransport in(&cctx, fd, base, base_len);
+        CryptoContext cctx(ini);
+        InFilenameTransport in(cctx, fd, base, base_len);
         char s[5];
         char * sp = s;
         char ** p = &sp;
@@ -699,12 +701,11 @@ BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
     );
     ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
 
-    LCGRandom rnd(0);
-
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(ini);
 
     {
-        CryptoOutFilenameTransport out(&cctx, filename);
+        LCGRandom rnd(0);
+        CryptoOutFilenameTransport out(cctx, rnd, filename);
         out.send("ABCDE", 5);
     }
 
@@ -718,7 +719,7 @@ BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
             BOOST_CHECK(false);
         }
 
-        InFilenameTransport in(&cctx, fd, base, base_len);
+        InFilenameTransport in(cctx, fd, base, base_len);
         char s[5];
         char * sp = s;
         char ** p = &sp;

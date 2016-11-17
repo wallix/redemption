@@ -30,6 +30,9 @@
 #include "capture/rdp_ppocr/get_ocr_constants.hpp"
 
 #include "utils/apps/cryptofile.hpp"
+#include "utils/genrandom.hpp"
+
+#include "main/version.hpp"
 
 namespace po = program_options;
 
@@ -38,10 +41,7 @@ int main(int argc, char** argv)
     Inifile ini;
 
     UdevRandom rnd;
-    CryptoContext cctx(rnd, ini);
-
-    static constexpr char const * opt_print_spec = "print-spec";
-    static constexpr char const * opt_print_ini = "print-default-ini";
+    CryptoContext cctx(ini);
 
     return app_proxy(
         argc, argv
@@ -51,34 +51,6 @@ int main(int argc, char** argv)
         "Martin Potier, Dominique Lafages, Jonathan Poelen, Raphael Zhou\n"
         "and Meng Tan."
       , cctx
-      , extra_option_list{
-          {opt_print_spec, "Configuration file spec for rdpproxy.ini"},
-          {opt_print_ini, "rdpproxy.ini by default"}
-      }
-      , [argv](po::variables_map const & options, bool * quit) {
-        if (options.count(opt_print_spec)) {
-            *quit = true;
-            std::cout <<
-                #include "configs/autogen/str_python_spec.hpp"
-            ;
-        }
-        if (options.count(opt_print_ini)) {
-            *quit = true;
-            std::cout <<
-                #include "configs/autogen/str_ini.hpp"
-            ;
-        }
-        return 0;
-      }
-      , [](Inifile & ini) {
-        if (bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::ocr)
-        && ini.get<cfg::ocr::version>() == OcrVersion::v2) {
-            // load global constant...
-            rdp_ppocr::get_ocr_constants(
-                CFG_PATH,
-                static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())
-            );
-        }
-      }
+      , rnd
     );
 }

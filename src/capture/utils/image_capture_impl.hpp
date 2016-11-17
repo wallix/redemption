@@ -64,7 +64,7 @@ class ImageCaptureImpl final : private gdi::UpdateConfigCaptureApi, gdi::Capture
             return this->trans.next();
         }
 
-        void do_send(const char * const buffer, size_t len) override {
+        void do_send(const uint8_t * const buffer, size_t len) override {
             this->trans.send(buffer, len);
         }
 
