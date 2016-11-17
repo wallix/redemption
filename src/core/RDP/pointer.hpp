@@ -27,6 +27,7 @@
 #include <algorithm> // std:min
 
 struct Pointer {
+
     enum  {
         POINTER_NULL             ,
         POINTER_NORMAL           ,
