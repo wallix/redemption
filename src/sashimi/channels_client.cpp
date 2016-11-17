@@ -1480,6 +1480,12 @@ static void ssh_connection_callback_client(SshClientSession * client_session, er
             client_session->socket->close();
             client_session->session_state = SSH_SESSION_STATE_ERROR;
             return;
+        case SSH_SESSION_STATE_DISCONNECTED:
+            CPP_FALLTHROUGH;
+        case SSH_SESSION_STATE_AUTHENTICATED:
+            CPP_FALLTHROUGH;
+        case SSH_SESSION_STATE_BANNER_RECEIVED:
+            CPP_FALLTHROUGH;
         default:
             ssh_set_error(error, SSH_FATAL,"Invalid state %d",client_session->session_state);
     }
@@ -4100,7 +4106,7 @@ inline int ssh_packet_global_request_client(SshClientSession * client_session, s
 // that generate the "keepalive@openssh.com" messages and these that you
 // need to change in your case, (in addition to KeepAlive).
 
-//	Later versions (3.8 and up) also have the client-side equivalent
+//    Later versions (3.8 and up) also have the client-side equivalent
 // (ServerAliveInterval and ServerAliveCountMax).
 
 
@@ -4959,6 +4965,22 @@ ssh_auth_e ssh_userauth_try_publickey_client(SshClientSession * client_session, 
                 return SSH_AUTH_INFO;
             }
             break;
+        case SSH_PENDING_CALL_AUTH_GSSAPI_MIC:
+            CPP_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_KBDINT_SEND:
+            CPP_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_KBDINT_INIT:
+            CPP_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_AGENT:
+            CPP_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_PUBKEY:
+            CPP_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_PASSWORD:
+            CPP_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_NONE:
+            CPP_FALLTHROUGH;
+        case SSH_PENDING_CALL_CONNECT:
+            CPP_FALLTHROUGH;            
         default:
             syslog(LOG_INFO, "%s F ---", __FUNCTION__);
             syslog(LOG_INFO, "%s Wrong state during pending SSH call", __FUNCTION__);
@@ -5395,6 +5417,22 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
                     continue;
                 }
             }
+            case SSH_PENDING_CALL_AUTH_NONE:
+                CPP_FALLTHROUGH;
+            case SSH_PENDING_CALL_AUTH_PASSWORD:
+                CPP_FALLTHROUGH;
+            case SSH_PENDING_CALL_AUTH_OFFER_PUBKEY:
+                CPP_FALLTHROUGH;
+            case SSH_PENDING_CALL_AUTH_PUBKEY:
+                CPP_FALLTHROUGH;
+            case SSH_PENDING_CALL_AUTH_KBDINT_INIT:
+                CPP_FALLTHROUGH;
+            case SSH_PENDING_CALL_AUTH_KBDINT_SEND:
+                CPP_FALLTHROUGH;
+            case SSH_PENDING_CALL_AUTH_GSSAPI_MIC:
+                CPP_FALLTHROUGH;
+            case SSH_PENDING_CALL_CONNECT:
+                CPP_FALLTHROUGH;
             default:
                 ;
             }
@@ -5462,6 +5500,22 @@ int ssh_userauth_password_client(SshClientSession * client_session,
                 client_session->pending_call_state = SSH_PENDING_CALL_NONE;
             }
             CPP_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_GSSAPI_MIC:
+            CPP_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_KBDINT_SEND:
+            CPP_FALLTHROUGH;        
+        case SSH_PENDING_CALL_AUTH_KBDINT_INIT:
+            CPP_FALLTHROUGH;        
+        case SSH_PENDING_CALL_AUTH_AGENT:
+            CPP_FALLTHROUGH;        
+        case SSH_PENDING_CALL_AUTH_PUBKEY:
+            CPP_FALLTHROUGH;        
+        case SSH_PENDING_CALL_AUTH_PASSWORD:
+            CPP_FALLTHROUGH;        
+        case SSH_PENDING_CALL_AUTH_NONE:
+            CPP_FALLTHROUGH;        
+        case SSH_PENDING_CALL_CONNECT:
+            CPP_FALLTHROUGH;        
         default:
             ssh_set_error(client_session->error,
                           SSH_FATAL,
@@ -5567,6 +5621,22 @@ static int ssh_userauth_kbdint_init_client(SshClientSession * client_session,
             client_session->pending_call_state = SSH_PENDING_CALL_NONE;
         }
         return rc;
+    case SSH_PENDING_CALL_AUTH_OFFER_PUBKEY:
+    CPP_FALLTHROUGH;
+    case SSH_PENDING_CALL_AUTH_AGENT:
+    CPP_FALLTHROUGH;    
+    case SSH_PENDING_CALL_AUTH_NONE:
+    CPP_FALLTHROUGH;    
+    case SSH_PENDING_CALL_AUTH_PASSWORD:
+    CPP_FALLTHROUGH;    
+    case SSH_PENDING_CALL_AUTH_GSSAPI_MIC:
+    CPP_FALLTHROUGH;    
+    case SSH_PENDING_CALL_AUTH_PUBKEY:
+    CPP_FALLTHROUGH;    
+    case SSH_PENDING_CALL_AUTH_KBDINT_SEND:
+    CPP_FALLTHROUGH;    
+    case SSH_PENDING_CALL_CONNECT:
+    CPP_FALLTHROUGH;
     default:
         ssh_set_error(client_session->error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return SSH_AUTH_ERROR;
@@ -5895,10 +5965,10 @@ inline int ssh_gssapi_auth_mic_client(SshClientSession * client_session)
 int ssh_userauth_gssapi_client(SshClientSession * client_session, error_struct * error) {
     (void)error;
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
-	int rc = SSH_AUTH_DENIED;
+    int rc = SSH_AUTH_DENIED;
 
-	switch(client_session->pending_call_state) {
-	case SSH_PENDING_CALL_NONE:
+    switch(client_session->pending_call_state) {
+    case SSH_PENDING_CALL_NONE:
         rc = ssh_send_service_request_client(client_session, "ssh-userauth");
         if (rc == SSH_AGAIN) {
             return SSH_AUTH_AGAIN;
@@ -5907,30 +5977,46 @@ int ssh_userauth_gssapi_client(SshClientSession * client_session, error_struct *
                 "Failed to request \"ssh-userauth\" service");
             return SSH_AUTH_ERROR;
         }
-	    syslog(LOG_INFO, "Authenticating with gssapi-with-mic");
-	    client_session->auth_state = SSH_AUTH_STATE_NONE;
-	    client_session->pending_call_state = SSH_PENDING_CALL_AUTH_GSSAPI_MIC;
-	    rc = ssh_gssapi_auth_mic_client(client_session);
+        syslog(LOG_INFO, "Authenticating with gssapi-with-mic");
+        client_session->auth_state = SSH_AUTH_STATE_NONE;
+        client_session->pending_call_state = SSH_PENDING_CALL_AUTH_GSSAPI_MIC;
+        rc = ssh_gssapi_auth_mic_client(client_session);
 
-	    if (rc == SSH_AUTH_ERROR || rc == SSH_AUTH_DENIED) {
-		    client_session->auth_state = SSH_AUTH_STATE_NONE;
-		    client_session->pending_call_state = SSH_PENDING_CALL_NONE;
-		    return rc;
-	    }
+        if (rc == SSH_AUTH_ERROR || rc == SSH_AUTH_DENIED) {
+            client_session->auth_state = SSH_AUTH_STATE_NONE;
+            client_session->pending_call_state = SSH_PENDING_CALL_NONE;
+            return rc;
+        }
         CPP_FALLTHROUGH;
-	case SSH_PENDING_CALL_AUTH_GSSAPI_MIC:
-	    rc = ssh_userauth_get_response_client(client_session);
-	    if (rc != SSH_AUTH_AGAIN) {
-		    client_session->pending_call_state = SSH_PENDING_CALL_NONE;
-	    }
-	    return rc;
-	default:
-		ssh_set_error(client_session->error,
-				SSH_FATAL,
-				"Wrong state during pending SSH call");
-		return SSH_ERROR;
-	}
-	return SSH_AUTH_ERROR;
+    case SSH_PENDING_CALL_AUTH_GSSAPI_MIC:
+        rc = ssh_userauth_get_response_client(client_session);
+        if (rc != SSH_AUTH_AGAIN) {
+            client_session->pending_call_state = SSH_PENDING_CALL_NONE;
+        }
+        return rc;
+    case SSH_PENDING_CALL_AUTH_OFFER_PUBKEY:
+    CPP_FALLTHROUGH;
+    case SSH_PENDING_CALL_AUTH_AGENT:
+    CPP_FALLTHROUGH;    
+    case SSH_PENDING_CALL_AUTH_NONE:
+    CPP_FALLTHROUGH;    
+    case SSH_PENDING_CALL_AUTH_PASSWORD:
+    CPP_FALLTHROUGH;    
+    case SSH_PENDING_CALL_AUTH_PUBKEY:
+    CPP_FALLTHROUGH;    
+    case SSH_PENDING_CALL_CONNECT:
+    CPP_FALLTHROUGH;
+    case SSH_PENDING_CALL_AUTH_KBDINT_SEND:
+    CPP_FALLTHROUGH;    
+    case SSH_PENDING_CALL_AUTH_KBDINT_INIT:
+    CPP_FALLTHROUGH;    
+    default:
+        ssh_set_error(client_session->error,
+                SSH_FATAL,
+                "Wrong state during pending SSH call");
+        return SSH_ERROR;
+    }
+    return SSH_AUTH_ERROR;
 }
 
 
@@ -6574,6 +6660,15 @@ int ssh_channel_request_env_client(SshClientSession * client_session, ssh_channe
         }
     }
     break;
+    case SSH_CHANNEL_REQ_STATE_PENDING:
+    CPP_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_DENIED:
+    CPP_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ACCEPTED:
+    CPP_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ERROR:
+    CPP_FALLTHROUGH;
+    
     default:
     break;
     }
@@ -6662,6 +6757,15 @@ int ssh_channel_request_x11_client(SshClientSession * client_session, ssh_channe
         }
     }
     break;
+    case SSH_CHANNEL_REQ_STATE_PENDING:
+    CPP_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_DENIED:
+    CPP_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ACCEPTED:
+    CPP_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ERROR:
+    CPP_FALLTHROUGH;
+    
     default:
     break;
     }
@@ -6737,6 +6841,15 @@ int ssh_channel_request_send_signal_client(SshClientSession * client_session, ss
         }
     }
     break;
+    case SSH_CHANNEL_REQ_STATE_PENDING:
+    CPP_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_DENIED:
+    CPP_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ACCEPTED:
+    CPP_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ERROR:
+    CPP_FALLTHROUGH;
+    
     default:
         break;
     }
@@ -6786,6 +6899,14 @@ int ssh_channel_change_pty_size_client(SshClientSession * client_session, ssh_ch
         }
     }
     break;
+    case SSH_CHANNEL_REQ_STATE_PENDING:
+    CPP_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_DENIED:
+    CPP_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ACCEPTED:
+    CPP_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ERROR:
+    CPP_FALLTHROUGH;
     default:
         break;
     }
@@ -6845,6 +6966,14 @@ int ssh_channel_request_exec_client(SshClientSession * client_session, ssh_chann
         }
     }
     break;
+    case SSH_CHANNEL_REQ_STATE_PENDING:
+    CPP_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_DENIED:
+    CPP_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ACCEPTED:
+    CPP_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ERROR:
+    CPP_FALLTHROUGH;
     default:
         ;
     }
@@ -6913,6 +7042,14 @@ int ssh_channel_request_pty_size_client(SshClientSession * client_session, ssh_c
         }
     }
     break;
+    case SSH_CHANNEL_REQ_STATE_PENDING:
+    CPP_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_DENIED:
+    CPP_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ACCEPTED:
+    CPP_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ERROR:
+    CPP_FALLTHROUGH;
     default:
     break;
     }
