@@ -296,7 +296,6 @@ public:
 
     struct MouseData {
         QImage cursor_image;
-        QImage cusor_mask;
         uint16_t x = 0;
         uint16_t y = 0;
     } _mouse_data;
