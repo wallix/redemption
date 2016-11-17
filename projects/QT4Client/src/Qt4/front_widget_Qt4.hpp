@@ -171,6 +171,7 @@ public:
         mod_rdp_params.enable_bitmap_update            = true;
         mod_rdp_params.enable_new_pointer              = true;
         mod_rdp_params.server_redirection_support      = true;
+        mod_rdp_params.enable_new_pointer              = true;
         std::string allow_channels = "*";
         mod_rdp_params.allow_channels                  = &allow_channels;
         //mod_rdp_params.allow_using_multiple_monitors   = true;
@@ -1090,22 +1091,22 @@ class Screen_Qt : public QWidget
 Q_OBJECT
 
 public:
-    Front_Qt_API       * _front;
-    QPushButton          _buttonCtrlAltDel;
-    QPushButton          _buttonRefresh;
-    QPushButton          _buttonDisconnexion;
-    QColor               _penColor;
-    QPixmap            * _cache;
-    QPainter             _cache_painter;
-    QPixmap            * _trans_cache;
-    QPainter             _trans_cache_painter;
+    Front_Qt_API  * _front;
+    QPushButton     _buttonCtrlAltDel;
+    QPushButton     _buttonRefresh;
+    QPushButton     _buttonDisconnexion;
+    QColor          _penColor;
+    QPixmap      * _cache;
+    QPainter       _cache_painter;
+    QPixmap      * _trans_cache;
+    QPainter       _trans_cache_painter;
     int            _width;
     int            _height;
-    QPixmap              _match_pixmap;
-    bool                 _connexionLasted;
-    QTimer               _timer;
-    QTimer               _timer_replay;
-    uint8_t              _screen_index;
+    QPixmap        _match_pixmap;
+    bool           _connexionLasted;
+    QTimer         _timer;
+    QTimer         _timer_replay;
+    uint8_t        _screen_index;
 
     bool           _running;
     std::string    _movie_name;
@@ -1123,7 +1124,6 @@ public:
         , _height(this->_front->_screen_dimensions[screen_index].cy)
         , _match_pixmap(this->_width, this->_height)
         , _connexionLasted(false)
-        , _timer(this)
         , _screen_index(screen_index)
         , _running(false)
     {
@@ -1151,9 +1151,6 @@ public:
         }
         this->move(centerW + shift, centerH + shift);
 
-        this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
-        this->_timer.start(1000/this->_front->_fps);
-
         this->setFocusPolicy(Qt::StrongFocus);
     }
 
@@ -1172,7 +1169,6 @@ public:
         , _height(this->_front->_screen_dimensions[0].cy)
         , _match_pixmap(this->_width, this->_height)
         , _connexionLasted(false)
-        , _timer(this)
         , _timer_replay(this)
         , _screen_index(0)
         , _running(false)
@@ -1239,7 +1235,6 @@ public:
         , _height(this->_front->_screen_dimensions[0].cy)
         , _match_pixmap(this->_width, this->_height)
         , _connexionLasted(false)
-        , _timer(this)
         , _screen_index(0)
         , _running(false)
     {
@@ -1286,9 +1281,6 @@ public:
         }
         this->move(centerW, centerH);
 
-        this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
-        this->_timer.start(1000/this->_front->_fps);
-
         this->setFocusPolicy(Qt::StrongFocus);
     }
 
@@ -1296,6 +1288,10 @@ public:
         if (!this->_connexionLasted) {
             this->_front->closeFromScreen(this->_screen_index);
         }
+    }
+
+    void update_view() {
+        this->slotRepaint();
     }
 
     void disConnection() {
@@ -1354,6 +1350,10 @@ private:
         this->_front->wheelEvent(e);
     }
 
+    void enterEvent(QEvent *event) {
+        Q_UNUSED(event);
+        this->_front->_current_screen_index =  this->_screen_index;
+    }
     bool eventFilter(QObject *obj, QEvent *e) {
         this->_front->eventFilter(obj, e, this->_front->_info.cs_monitor.monitorDefArray[this->_screen_index].left);
         return false;

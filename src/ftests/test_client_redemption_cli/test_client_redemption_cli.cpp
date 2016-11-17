@@ -331,6 +331,8 @@ int main(int argc, char** argv){
     std::cout << " SHOW_IN_PDU                 = " << bool(verbose & TestClientCLI::SHOW_IN_PDU) <<  "\n";
     std::cout <<  std::endl;
 
+    
+
     if (verbose & TestClientCLI::SHOW_USER_AND_TARGET_PARAMS) {
         std::cout <<  "\n";
         std::cout << " ================================" << "\n";
