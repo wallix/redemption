@@ -459,7 +459,7 @@ static inline void insert_n_bits_40_50(uint8_t n, uint32_t data, uint8_t * outpu
                                        const uint16_t outputBufferSize)
 {
     uint8_t bits_to_serialize = n;
-    if (bits_left >= bits_to_serialize + 1) {
+    if (bits_left > bits_to_serialize) {
         const int i = bits_left - bits_to_serialize;
         outputBuffer[opb_index] |= data << i;
         bits_left = i;
