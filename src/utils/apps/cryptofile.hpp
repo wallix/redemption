@@ -105,7 +105,7 @@ public:
             }
             this->hmac_key_loaded = true;
         }
-        return hmac_key;
+        return this->hmac_key;
     }
 
     void get_derived_key(uint8_t (& trace_key)[CRYPTO_KEY_LENGTH], const uint8_t * derivator, size_t derivator_len)

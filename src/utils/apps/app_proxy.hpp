@@ -45,8 +45,11 @@
 #include "utils/fdbuf.hpp"
 
 #include "program_options/program_options.hpp"
+#include "capture/rdp_ppocr/get_ocr_constants.hpp"
 
-#include "main/version.hpp"
+#include "utils/apps/cryptofile.hpp"
+#include "utils/genrandom.hpp"
+
 
 inline void daemonize(const char * pid_file)
 {
@@ -192,18 +195,9 @@ struct extra_option {
 };
 using extra_option_list = std::initializer_list<extra_option>;
 
-struct EmptyPreLoopFn { void operator()(Inifile &) const {} };
-
-class Random;
-// ExtraOptions = extra_option container
-// ExtracOptionChecker = int(po::variables_map &, bool * quit)
-// PreLoopFn = void(Inifile &)
-template<class ExtraOptions, class ExtracOptionChecker, class PreLoopFn = EmptyPreLoopFn>
-int app_proxy(
+static inline int app_proxy(
     int argc, char const * const * argv, const char * copyright_notice
   , CryptoContext & cctx, Random & rnd
-  , ExtraOptions const & extrax_options, ExtracOptionChecker extrac_options_checker
-  , PreLoopFn pre_loop_fn = PreLoopFn()
 ) {
     setlocale(LC_CTYPE, "C");
 
@@ -214,6 +208,9 @@ int app_proxy(
     unsigned egid = gid;
 
     std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
+
+    static constexpr char const * opt_print_spec = "print-spec";
+    static constexpr char const * opt_print_ini = "print-default-ini";
 
     program_options::options_description desc({
         {'h', "help", "produce help message"},
@@ -235,12 +232,11 @@ int app_proxy(
 
         {"config-file", &config_filename, "use an another ini file"},
 
+        {opt_print_spec, "Configuration file spec for rdpproxy.ini"},
+        {opt_print_ini, "Show rdpproxy.ini by default"}
+
         //{"test", "check Inifile syntax"}
     });
-
-    for (extra_option const & extra : extrax_options) {
-        desc.add({extra.option_long, extra.description});
-    }
 
     auto options = program_options::parse_command_line(argc, const_cast<char**>(argv), desc);
 
@@ -253,25 +249,30 @@ int app_proxy(
         }
         return status;
     }
+
     if (options.count("help")) {
         std::cout << copyright_notice << "\n\n";
         std::cout << "Usage: rdpproxy [options]\n\n";
         std::cout << desc << std::endl;
         return 0;
     }
+
     if (options.count("version")) {
         std::cout << copyright_notice << std::endl;
         return 0;
     }
 
-    {
-        bool quit = false;
-        if (int status = extrac_options_checker(options, &quit)) {
-            return status;
-        }
-        else if (quit) {
-            return 0;
-        }
+    if (options.count(opt_print_spec)) {
+        std::cout <<
+            #include "configs/autogen/str_python_spec.hpp"
+        ;
+        return 0;
+    }
+    if (options.count(opt_print_ini)) {
+        std::cout <<
+            #include "configs/autogen/str_ini.hpp"
+        ;
+        return 0;
     }
 
     openlog("rdpproxy", LOG_CONS | LOG_PERROR, LOG_USER);
@@ -384,7 +385,15 @@ int app_proxy(
         }
     }
 
-    pre_loop_fn(ini);
+    if (bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::ocr)
+     && ini.get<cfg::ocr::version>() == OcrVersion::v2
+    ) {
+        // load global constant...
+        rdp_ppocr::get_ocr_constants(
+            CFG_PATH,
+            static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())
+        );
+    }
 
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");
     redemption_main_loop(ini, cctx, rnd, euid, egid, std::move(config_filename));

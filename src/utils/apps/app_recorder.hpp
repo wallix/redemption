@@ -80,9 +80,10 @@ inline unsigned get_file_count(
     return result;
 }
 
-template<typename InWrmTrans>
-void remove_file( InWrmTrans & in_wrm_trans, const char * hash_path, const char * infile_path
-                , const char * infile_basename, const char * infile_extension, bool is_encrypted) {
+inline void remove_file(
+    InMetaSequenceTransport & in_wrm_trans, const char * hash_path, const char * infile_path
+  , const char * infile_basename, const char * infile_extension, bool is_encrypted
+) {
     std::vector<std::string> files;
 
     char infile_fullpath[2048];
