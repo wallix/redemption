@@ -1068,7 +1068,6 @@ private:
     }
 
 public:
-    // TODO cctx by reference
     InMetaSequenceTransport(
         CryptoContext * cctx,
         const char * filename,
@@ -1082,6 +1081,8 @@ public:
     , encryption(encryption)
     , verbose(verbose)
     {
+        assert(encryption ? bool(cctx) : true);
+
         temporary_concat tmp(filename, extension);
         const char * meta_filename = tmp.c_str();
         this->buf_meta.open(meta_filename);

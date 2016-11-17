@@ -71,11 +71,8 @@ private:
                 snprintf(message, sizeof(message), "100|%s", filename ? filename : "unknow");
                 this->authentifier->report("FILESYSTEM_FULL", message);
                 errno = ENOSPC;
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
             }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
         this->last_quantum_sent += res;
     }
