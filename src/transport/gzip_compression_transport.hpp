@@ -68,8 +68,8 @@ public:
     }
 
 private:
-    void do_recv(char ** pbuffer, size_t len) override {
-        uint8_t * temp_data        = reinterpret_cast<uint8_t *>(*pbuffer);
+    void do_recv(uint8_t ** pbuffer, size_t len) override {
+        uint8_t * temp_data        = *pbuffer;
         size_t    temp_data_length = len;
 
         while (temp_data_length) {
@@ -265,12 +265,12 @@ private:
         REDASSERT(this->compression_stream.avail_in == 0);
     }
 
-    void do_send(const char * const buffer, size_t len) override {
+    void do_send(const uint8_t * const buffer, size_t len) override {
         if (this->verbose & 0x4) {
             LOG(LOG_INFO, "GZipCompressionOutTransport::do_send: len=%zu", len);
         }
 
-        const uint8_t * temp_data        = reinterpret_cast<const uint8_t *>(buffer);
+        const uint8_t * temp_data        = buffer;
         size_t          temp_data_length = len;
 
         while (temp_data_length) {

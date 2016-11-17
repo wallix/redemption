@@ -196,7 +196,7 @@ public:
         return !0;
     }
 private:
-    void do_recv(char ** pbuffer, size_t requested_size) override {
+    void do_recv(uint8_t ** pbuffer, size_t requested_size) override {
         if (!this->status){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }

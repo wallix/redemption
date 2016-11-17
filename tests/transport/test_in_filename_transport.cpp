@@ -61,7 +61,7 @@ public:
     }
 
 private:
-    void do_send(const char * data, size_t len) override {
+    void do_send(const uint8_t * data, size_t len) override {
         const ssize_t res = this->buf.write(data, len);
         if (res < 0) {
             this->status = false;

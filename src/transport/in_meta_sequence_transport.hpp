@@ -1180,7 +1180,7 @@ public:
         return true;
     }
 
-    void do_recv(char ** pbuffer, size_t len) override {
+    void do_recv(uint8_t ** pbuffer, size_t len) override {
         const ssize_t res = this->buf_read(*pbuffer, len);
         if (res < 0){
             this->status = false;

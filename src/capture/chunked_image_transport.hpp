@@ -53,7 +53,7 @@ public:
     }
 
 private:
-    void do_recv(char ** pbuffer, size_t len) override {
+    void do_recv(uint8_t ** pbuffer, size_t len) override {
         size_t total_len = 0;
         while (total_len < len){
             size_t remaining = in_stream.in_remain();
