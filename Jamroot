@@ -7,16 +7,6 @@ include $(JAM_INCLUDE_PATH)/includes.jam ;
 
 REDEMPTION_CXXFLAGS ?= <cxxflags>-std=c++11 ;
 
-variant coverage : debug : <cxxflags>--profile-arcs <cxxflags>--test-coverage <cxxflags>--coverage <link>shared ;
-
-#gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
-
-lib gcov : : <name>gcov : ;
-
-constant GCOV : <variant>coverage:<library>gcov ;
-constant GCOV_NO_BUILD : <variant>coverage:<build>no ;
-
-
 project redemption
     : requirements
 
@@ -41,6 +31,8 @@ project redemption
 
 include $(JAM_INCLUDE_PATH)/ocr.jam ;
 include $(JAM_INCLUDE_PATH)/libs.jam ;
+
+include $(JAM_INCLUDE_PATH)/testing-coverage.jam ;
 
 explicit
     install
@@ -295,11 +287,17 @@ exe rdpclientcli
         $(EXE_DEPENDENCIES)
     ;
 
+exe ini_checker
+    :
+        $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp
+    :
+        $(EXE_DEPENDENCIES)
+    ;
+
 exe redrec
     :
         $(REDEMPTION_SRC_PATH)/main/redrec.cpp
         libredrec
-        dl
     :
 #         <link>static
         $(EXE_DEPENDENCIES)
@@ -428,8 +426,6 @@ exe tls_test_server
 #
 # Unit Tests
 #
-include $(JAM_INCLUDE_PATH)/testing-coverage.jam ;
-
 
 # To compute coverage
 # ===================
@@ -668,7 +664,8 @@ test-canonical utils/apps/app_decrypter.hpp :
 test-canonical utils/apps/app_proxy.hpp ;
 
 test-canonical utils/apps/app_recorder.hpp :
-    <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+    <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z
+    <library>ffmpeg <library>ocr <library>ppocr_test <library>bitmap ;
 
 test-canonical utils/apps/app_verifier.hpp :
     <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;

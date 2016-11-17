@@ -88,6 +88,7 @@ public:
     get_hmac_key_prototype * get_hmac_key_cb;
     get_trace_key_prototype * get_trace_key_cb;
 
+    // TODO unused
     Random & gen;
     const Inifile & ini;
 private:
@@ -150,28 +151,28 @@ public:
     }
 
     CryptoContext(Random & gen, const Inifile & ini)
-        : master_key_loaded(false)
-        , hmac_key_loaded(false)
-        , master_key{}
-        , get_hmac_key_cb(nullptr)
-        , get_trace_key_cb(nullptr)
-        , gen(gen)
-        , ini(ini)
-        , hmac_key{}
-        {
-            memcpy(this->master_key,
-                "\x01\x02\x03\x04\x05\x06\x07\x08"
-                "\x01\x02\x03\x04\x05\x06\x07\x08"
-                "\x01\x02\x03\x04\x05\x06\x07\x08"
-                "\x01\x02\x03\x04\x05\x06\x07\x08",
-                CRYPTO_KEY_LENGTH);
-            memcpy(this->hmac_key,
-                "\x01\x02\x03\x04\x05\x06\x07\x08"
-                "\x01\x02\x03\x04\x05\x06\x07\x08"
-                "\x01\x02\x03\x04\x05\x06\x07\x08"
-                "\x01\x02\x03\x04\x05\x06\x07\x08",
-                HMAC_KEY_LENGTH);
-        }
+    : master_key_loaded(false)
+    , hmac_key_loaded(false)
+    , master_key{}
+    , get_hmac_key_cb(nullptr)
+    , get_trace_key_cb(nullptr)
+    , gen(gen)
+    , ini(ini)
+    , hmac_key{}
+    {
+        memcpy(this->master_key,
+            "\x01\x02\x03\x04\x05\x06\x07\x08"
+            "\x01\x02\x03\x04\x05\x06\x07\x08"
+            "\x01\x02\x03\x04\x05\x06\x07\x08"
+            "\x01\x02\x03\x04\x05\x06\x07\x08",
+            CRYPTO_KEY_LENGTH);
+        memcpy(this->hmac_key,
+            "\x01\x02\x03\x04\x05\x06\x07\x08"
+            "\x01\x02\x03\x04\x05\x06\x07\x08"
+            "\x01\x02\x03\x04\x05\x06\x07\x08"
+            "\x01\x02\x03\x04\x05\x06\x07\x08",
+            HMAC_KEY_LENGTH);
+    }
 
     void random(void * dest, size_t size)
     {

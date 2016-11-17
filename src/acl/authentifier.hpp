@@ -466,7 +466,7 @@ public:
             {
                 if (!this->ini.get<cfg::context::disconnect_reason>().empty()) {
                     this->ini.set<cfg::context::manager_disconnect_reason>(
-                        this->ini.get<cfg::context::disconnect_reason>().c_str());
+                        this->ini.get<cfg::context::disconnect_reason>());
                     this->ini.get_ref<cfg::context::disconnect_reason>().clear();
 
                     this->ini.set_acl<cfg::context::disconnect_reason_ack>(true);
@@ -501,7 +501,7 @@ public:
 
             if (!this->ini.get<cfg::context::module>().compare("RDP") ||
                 !this->ini.get<cfg::context::module>().compare("VNC")) {
-                this->session_type = this->ini.get<cfg::context::module>().c_str();
+                this->session_type = this->ini.get<cfg::context::module>();
             }
 
             this->remote_answer = true;
@@ -515,7 +515,7 @@ public:
             }
             else {
                 this->ini.set_acl<cfg::context::rejected>(
-                    this->ini.get<cfg::context::manager_disconnect_reason>().c_str());
+                    this->ini.get<cfg::context::manager_disconnect_reason>());
                 this->ini.get_ref<cfg::context::manager_disconnect_reason>().clear();
             }
         }
@@ -562,7 +562,7 @@ public:
 
         if (log_redir) {
             std::string filename = std::string("/var/wab/recorded/rdp/")
-                                   + this->ini.get<cfg::context::session_id>().c_str()
+                                   + this->ini.get<cfg::context::session_id>()
                                    + std::string("_traces.log");
             std::ofstream log_file(filename, std::fstream::out | std::fstream::app);
 
@@ -576,16 +576,16 @@ public:
                 log_file << (timeinfo->tm_mon+1) << "-" << timeinfo->tm_mday << " " << timeinfo->tm_hour << ":" <<timeinfo->tm_min << ":" <<timeinfo->tm_sec << " ";
                 log_file << " [" << (this->session_type.empty() ? "Neutral" : this->session_type.c_str()) << " Session] " << " " ;
                 log_file << "type=" << type << " " ;
-                log_file << "session_id=" << this->ini.get<cfg::context::session_id>().c_str() << " " ;
-                log_file << "client_ip=" << this->ini.get<cfg::globals::host>().c_str() << " " ;
-                log_file << "target_ip=" << (isdigit(*this->ini.get<cfg::context::target_host>().c_str()) ?
-                                             this->ini.get<cfg::context::target_host>().c_str() :
-                                             this->ini.get<cfg::context::ip_target>().c_str()) << " " ;
-                log_file << "user=" << this->ini.get<cfg::globals::auth_user>().c_str() << " " ;
-                log_file << "device=" << this->ini.get<cfg::globals::target_device>().c_str() << " " ;
-                log_file << "service=" << this->ini.get<cfg::context::target_service>().c_str() << " " ;
-                log_file << "account=" << this->ini.get<cfg::globals::target_user>().c_str() << " " ;
-                log_file << (extra ? extra : "") << std::endl << std::endl;
+                log_file << "session_id=" << this->ini.get<cfg::context::session_id>() << " " ;
+                log_file << "client_ip=" << this->ini.get<cfg::globals::host>() << " " ;
+                log_file << "target_ip=" << (isdigit(this->ini.get<cfg::context::target_host>()[0]) ?
+                                             this->ini.get<cfg::context::target_host>() :
+                                             this->ini.get<cfg::context::ip_target>()) << " " ;
+                log_file << "user=" << this->ini.get<cfg::globals::auth_user>() << " " ;
+                log_file << "device=" << this->ini.get<cfg::globals::target_device>() << " " ;
+                log_file << "service=" << this->ini.get<cfg::context::target_service>() << " " ;
+                log_file << "account=" << this->ini.get<cfg::globals::target_user>() << " " ;
+                log_file << (extra ? extra : "") << "\n" << std::endl;
                 log_file.close();
             }
 

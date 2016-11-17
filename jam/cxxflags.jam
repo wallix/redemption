@@ -36,17 +36,15 @@ constant CXXFLAGS-COMMON :
     <cxxflags>-Wwrite-strings
 #    <cxxflags>-Wpadded
     <cxxflags>-Wstrict-overflow=1
-#    <cxxflags>-Wstrict-overflow=5
-    <cxxflags>-Wc++11-compat
-    <cxxflags>-Wnarrowing
+#     <cxxflags>-Wstrict-overflow=5
     <cxxflags>-Wvolatile-register-var
-    <cxxflags>-Wdisabled-optimization
+#    <cxxflags>-Wdisabled-optimization
     <cxxflags>-Warray-bounds
     <cxxflags>-Wold-style-cast
     <cxxflags>-Wno-overlength-strings
     <cxxflags>-Wunused-macros
 
-#     <cxxflags>-Wswitch-enum
+    <cxxflags>-Wswitch-enum
 #     <cxxflags>-Wswitch-default
 #     <cxxflags>-Wsign-conversion
 #     <cxxflags>-Wconversion

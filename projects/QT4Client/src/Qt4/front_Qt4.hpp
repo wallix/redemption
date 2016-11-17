@@ -73,7 +73,7 @@
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
 #include "core/RDP/bitmapupdate.hpp"
-#include "keymap2.hpp"
+#include "keyboard/keymap2.hpp"
 #include "core/client_info.hpp"
 #include "keymaps/Qt4_ScanCode_KeyMap.hpp"
 #include "capture/capture.hpp"
@@ -138,7 +138,6 @@ private:
         }
     };
 
-
 public:
 
     enum : int {
@@ -161,7 +160,7 @@ public:
     int               _nbTry;
     int               _retryDelay;
     mod_api         * _callback;
-    ReplayMod       * _replay_mod;
+    std::unique_ptr<ReplayMod> _replay_mod;
     Mod_Qt          * _mod_qt;
     QImage::Format    _imageFormatRGB;
     QImage::Format    _imageFormatARGB;
@@ -241,8 +240,8 @@ public:
     virtual bool can_be_resume_capture() override { return true; }
     virtual bool must_be_stop_capture() override { return true; }
     virtual void emptyLocalBuffer() = 0;
-    virtual void replay(std::string & movie_path) = 0;
-    virtual void load_replay_mod(std::string & movie_name) = 0;
+    virtual void replay(std::string const & movie_path) = 0;
+    virtual void load_replay_mod(std::string const & movie_name) = 0;
     virtual void delete_replay_mod() = 0;
 };
 
@@ -250,6 +249,21 @@ public:
 
 class Front_Qt : public Front_Qt_API
 {
+    struct Snapshoter : gdi::CaptureApi
+    {
+        Front_Qt & front;
+
+        Snapshoter(Front_Qt & front) : front(front) {}
+
+        std::chrono::microseconds do_snapshot(
+            const timeval& /*now*/, int cursor_x, int cursor_y, bool /*ignore_frame_in_timeval*/
+        ) override {
+            this->front.update_pointer_position(cursor_x, cursor_y);
+        }
+        void do_pause_capture(const timeval&) override {}
+        void do_resume_capture(const timeval&) override {}
+    };
+    Snapshoter snapshoter;
 
 public:
     enum : int {
@@ -418,7 +432,7 @@ public:
 
     void setScreenDimension();
 
-    void load_replay_mod(std::string & movie_name) override;
+    void load_replay_mod(std::string const & movie_name) override;
 
     void delete_replay_mod() override;
 
@@ -633,13 +647,13 @@ public:
 
     bool connect();
 
-    void disconnect( std::string const &) override;
+    void disconnect(std::string const &) override;
 
     void closeFromScreen(int screen_index) override;
 
     void dropScreen() override;
 
-    void replay(std::string & movie_path) override;
+    void replay(std::string const & movie_path) override;
 
 
 

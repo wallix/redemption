@@ -589,7 +589,7 @@ BOOST_AUTO_TEST_CASE(TestDrawableScrBltDown11)
 {
     char message[1024];
     int res = test_scrblt2(0x11, 0, 20, "down11",
-    "\x20\xd5\x27\xaa\x91\xff\xa5\x21\x91\xe8\x94\x08\x6d\x7f\xb3\x52\x38\x62\x96\x2b"
+    "\xd4\x3a\x6e\xea\x67\xe4\x0c\xe2\xc9\xde\xd0\x0f\x3f\xd7\x2d\x26\x93\xcf\x40\x53"
     , message);
     if (!res){
         BOOST_CHECK_MESSAGE(false, message);
@@ -600,7 +600,7 @@ BOOST_AUTO_TEST_CASE(TestDrawableScrBltRight11)
 {
     char message[1024];
     int res = test_scrblt2(0x11, 20, 0, "right11",
-    "\x85\x82\xdd\x28\x3c\x75\x9c\xdb\xc3\x94\xc8\xd3\x67\x7e\xdf\x76\xfb\x74\x84\x30"
+    "\x44\x93\x9e\xf8\x40\x9d\x18\x24\x27\xcf\x53\x76\xde\xd6\x05\x0f\x33\x65\x79\xfc"
     , message);
     if (!res){
         BOOST_CHECK_MESSAGE(false, message);
@@ -611,7 +611,7 @@ BOOST_AUTO_TEST_CASE(TestDrawableScrBltLeft11)
 {
     char message[1024];
     int res = test_scrblt2(0x11, -20, 0, "left11",
-    "\x44\xb8\x04\x46\xf6\x80\x67\x05\x5c\xaf\xb4\xd1\xa3\xcc\x56\x9c\xd6\x97\x1f\x67"
+    "\x8b\x54\x94\x20\x65\xf3\x91\x64\x9a\x25\xca\x18\x18\x46\x0c\x1f\x00\x22\x18\x7c"
     , message);
     if (!res){
         BOOST_CHECK_MESSAGE(false, message);
@@ -622,7 +622,7 @@ BOOST_AUTO_TEST_CASE(TestDrawableScrBltUp11)
 {
     char message[1024];
     int res = test_scrblt2(0x11, 0, -20, "up11",
-    "\x8e\xdb\x52\x5b\x59\x6f\xfc\x9c\x70\x6e\x1f\x4d\x73\xad\x46\xa8\x01\xea\xe3\x4d"
+    "\x82\x1a\x1c\xa5\xe2\x53\x37\xbd\x39\x21\x74\xd6\xd8\x57\xd7\xaf\xaf\xe0\xc9\x18"
     , message);
     if (!res){
         BOOST_CHECK_MESSAGE(false, message);
@@ -633,7 +633,7 @@ BOOST_AUTO_TEST_CASE(TestDrawableScrBltLeftUp11)
 {
     char message[1024];
     int res = test_scrblt2(0x11, -20, -20, "left_up11",
-    "\x5a\xa8\xea\x06\xa6\xa3\xa0\x57\x76\xcb\xc0\xb5\xc3\xb7\x53\x5e\x2b\x7f\xad\x9c"
+    "\x02\xb8\x82\xa6\x44\x12\x7c\xcd\xb6\x38\xa3\xef\x1c\xe7\xaa\x54\xcd\xf2\x75\xdb"
     , message);
     if (!res){
         BOOST_CHECK_MESSAGE(false, message);

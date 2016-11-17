@@ -31,7 +31,6 @@
 
 #include "gdi/capture_api.hpp"
 #include "gdi/capture_probe_api.hpp"
-#include "gdi/input_pointer_api.hpp"
 #include "gdi/kbd_input_api.hpp"
 #include "capture/utils/mouse_trace.hpp"
 
@@ -120,18 +119,6 @@ struct CaptureApisImpl
         }
 
         std::vector<std::reference_wrapper<gdi::KbdInputApi>> kbds;
-    };
-
-
-    struct MouseInput : gdi::MouseInputApi
-    {
-        void update_pointer_position(uint16_t x, uint16_t y) override {
-            for (gdi::MouseInputApi & mouse : this->mouses) {
-                mouse.update_pointer_position(x, y);
-            }
-        }
-
-        std::vector<std::reference_wrapper<gdi::MouseInputApi>> mouses;
     };
 
 

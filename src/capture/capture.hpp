@@ -34,7 +34,6 @@ class Capture final
 : public gdi::GraphicBase<Capture>
 , public gdi::CaptureApi
 , public gdi::KbdInputApi
-, public gdi::MouseInputApi
 , public gdi::CaptureProbeApi
 , public gdi::ExternalCaptureApi
 , public gdi::UpdateConfigCaptureApi
@@ -74,29 +73,24 @@ class Capture final
 public:
     const bool capture_wrm;
     const bool capture_png;
-// private extension
     const bool capture_ocr;
     const bool capture_flv;
     const bool capture_flv_full; // capturewab only
     const bool capture_meta; // capturewab only
-// end private extension
 
 private:
     std::unique_ptr<Graphic> gd;
     std::unique_ptr<Native> pnc;
     std::unique_ptr<Static> psc;
     std::unique_ptr<Kbd> pkc;
-// private extension
     std::unique_ptr<Video> pvc;
     std::unique_ptr<Video> pvc_full;
     std::unique_ptr<Meta> pmc;
     std::unique_ptr<Title> ptc;
     std::unique_ptr<VideoImageCapture> pivc;
-// end private extension
 
     CaptureApisImpl::Capture capture_api;
     CaptureApisImpl::KbdInput kbd_input_api;
-    CaptureApisImpl::MouseInput mouse_input_api;
     CaptureApisImpl::CaptureProbe capture_probe_api;
     CaptureApisImpl::ExternalCapture external_capture_api;
     CaptureApisImpl::UpdateConfigCapture update_config_capture_api;
@@ -110,7 +104,6 @@ private:
             this->graphic_api ? &this->graphic_api->snapshoters : nullptr,
             this->capture_api.caps,
             this->kbd_input_api.kbds,
-            this->mouse_input_api.mouses,
             this->capture_probe_api.probes,
             this->external_capture_api.objs,
             this->update_config_capture_api.objs,
@@ -128,7 +121,6 @@ public:
         bool no_timestamp,
         auth_api * authentifier,
         const Inifile & ini,
-        Random & rnd,
         CryptoContext & cctx,
         bool full_video,
         bool force_capture_png_if_enable = false,
@@ -137,21 +129,17 @@ public:
     , capture_wrm(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::wrm))
     , capture_png(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png)
                   && (!authentifier || ini.get<cfg::video::png_limit>() > 0))
-// private extension
     , capture_ocr(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::ocr)
                  || ::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
                  || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()))
     , capture_flv(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::flv))
     // capture wab only
-    , capture_flv_full(authentifier && this->capture_flv && ini.get<cfg::globals::capture_chunk>() && full_video)
+    , capture_flv_full(full_video)
+    // capture wab only
     , capture_meta(this->capture_ocr)
-// end private extension
     , capture_api(now, width / 2, height / 2)
     , delta_time(delta_time)
     {
-        // TODO Remove that after change of capture interface
-        (void)rnd;
-
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
 
         bool const enable_kbd
@@ -177,7 +165,8 @@ public:
 
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const bool capture_drawable = this->capture_wrm || this->capture_flv
-                                   || this->capture_ocr || this->capture_png;
+                                   || this->capture_ocr || this->capture_png
+                                   || this->capture_flv_full;
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
@@ -270,18 +259,11 @@ public:
             }
 
             if (this->capture_flv_full) {
-                char full_basename[1024] = {};
-                snprintf(full_basename, sizeof(full_basename), "%s-full", basename);
-
-                if (clear_png == 1) {
-                    clear_files_flv_meta_png(path, full_basename);
-                }
-
                 this->pvc_full.reset(new Video(
                     now, record_path, basename, groupid, authentifier,
                     no_timestamp, this->gd->impl(),
                     video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini),
-                    std::chrono::minutes(10),
+                    std::chrono::seconds(0),
                     Video::SynchronizerNext{nullptr, nullptr}
                 ));
             }
@@ -307,6 +289,7 @@ public:
         if (this->psc) { this->psc->attach_apis(apis_register, ini); }
         if (this->pkc) { this->pkc->attach_apis(apis_register, ini); }
         if (this->pvc) { this->pvc->attach_apis(apis_register, ini); }
+        if (this->pvc_full) { this->pvc_full->attach_apis(apis_register, ini); }
         if (this->pmc) { this->pmc->attach_apis(apis_register, ini); }
         if (this->ptc) { this->ptc->attach_apis(apis_register, ini); }
 
@@ -380,10 +363,6 @@ public:
 
     void enable_kbd_input_mask(bool enable) override {
         this->kbd_input_api.enable_kbd_input_mask(enable);
-    }
-
-    void update_pointer_position(uint16_t x, uint16_t y) override {
-        this->mouse_input_api.update_pointer_position(x, y);
     }
 
     gdi::GraphicApi * get_graphic_api() const {
