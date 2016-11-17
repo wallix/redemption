@@ -42,9 +42,8 @@ class ReplayMod : public InternalMod
             InMetaSequenceTransport in_trans;
             FileToGraphic           reader;
 
-            Impl(LCGRandom & rnd, Inifile & ini, char const * prefix, char const * extension, uint32_t debug_capture)
-            // TODO We don't know yet how to manage encryption for replay. For now its just not supported, rnd and ini will never be used
-            : cctx(rnd, ini)
+            Impl(Inifile & ini, char const * prefix, char const * extension, uint32_t debug_capture)
+            : cctx(ini)
             , in_trans(&this->cctx, prefix, extension, 0, 0)
             , reader(&this->in_trans, /*begin_capture*/{0, 0}, /*end_capture*/{0, 0}, true, debug_capture)
             {
@@ -55,9 +54,8 @@ class ReplayMod : public InternalMod
 
         void construct(char const * prefix, char const * extension, uint32_t debug_capture)
         {
-            LCGRandom rnd(0);
             Inifile ini;
-            this->impl = std::make_unique<Impl>(rnd, ini, prefix, extension, debug_capture);
+            this->impl = std::make_unique<Impl>(ini, prefix, extension, debug_capture);
         }
 
         void destruct()
@@ -136,6 +134,22 @@ public:
         }
 
         this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
+    }
+
+    void add_consumer(
+        gdi::GraphicApi * graphic_ptr,
+        gdi::CaptureApi * capture_ptr,
+        gdi::KbdInputApi * kbd_input_ptr,
+        gdi::CaptureProbeApi * capture_probe_ptr,
+        gdi::ExternalCaptureApi * external_event_ptr
+    ) {
+        this->reader->add_consumer(
+            graphic_ptr,
+            capture_ptr,
+            kbd_input_ptr,
+            capture_probe_ptr,
+            external_event_ptr
+        );
     }
 
     void play() {

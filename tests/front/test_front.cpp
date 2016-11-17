@@ -167,10 +167,6 @@ BOOST_AUTO_TEST_CASE(TestFront)
 
         time_t now = 1450864840;
 
-        LCGRandom gen1(0);
-
-        CryptoContext cctx(gen1, ini);
-
         // Comment the code block below to generate testing data.
         #include "fixtures/trace_front_client.hpp"
 
@@ -178,6 +174,9 @@ BOOST_AUTO_TEST_CASE(TestFront)
         GeneratorTransport front_trans(indata, sizeof(indata), verbose);
 
         BOOST_CHECK(true);
+
+        LCGRandom gen1(0);
+        CryptoContext cctx(ini);
 
         const bool fastpath_support = false;
         const bool mem3blt_support  = false;
@@ -354,10 +353,6 @@ BOOST_AUTO_TEST_CASE(TestFront2)
 
         time_t now = 1450864840;
 
-        LCGRandom gen1(0);
-
-        CryptoContext cctx(gen1, ini);
-
         // Comment the code block below to generate testing data.
         #include "fixtures/trace_front_client.hpp"
 
@@ -366,6 +361,8 @@ BOOST_AUTO_TEST_CASE(TestFront2)
 
         BOOST_CHECK(true);
 
+        LCGRandom gen1(0);
+        CryptoContext cctx(ini);
         const bool fastpath_support = false;
         const bool mem3blt_support  = false;
 
@@ -543,10 +540,6 @@ BOOST_AUTO_TEST_CASE(TestFront3)
 
         time_t now = 1450864840;
 
-        LCGRandom gen1(0);
-
-        CryptoContext cctx(gen1, ini);
-
         // Comment the code block below to generate testing data.
         #include "fixtures/trace_front_client_patblt.hpp"
 
@@ -556,6 +549,8 @@ BOOST_AUTO_TEST_CASE(TestFront3)
 
         BOOST_CHECK(true);
 
+        LCGRandom gen1(0);
+        CryptoContext cctx(ini);
         const bool fastpath_support = false;
         const bool mem3blt_support  = false;
 

@@ -34,9 +34,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "utils/genrandom.hpp"
 #include "system/ssl_calls.hpp"
-#include "utils/sugar/cast.hpp"
 #include "system/ssl_sha256.hpp"
 
 #include "openssl_crypto.hpp"
@@ -88,7 +86,7 @@ public:
     get_hmac_key_prototype * get_hmac_key_cb;
     get_trace_key_prototype * get_trace_key_cb;
 
-    Random & gen;
+    // TODO only for cfg::crypto::key0 and key1
     const Inifile & ini;
 private:
     unsigned char hmac_key[HMAC_KEY_LENGTH];
@@ -107,7 +105,7 @@ public:
             }
             this->hmac_key_loaded = true;
         }
-        return hmac_key;
+        return this->hmac_key;
     }
 
     void get_derived_key(uint8_t (& trace_key)[CRYPTO_KEY_LENGTH], const uint8_t * derivator, size_t derivator_len)
@@ -149,33 +147,27 @@ public:
         this->hmac_key_loaded = false;
     }
 
-    CryptoContext(Random & gen, const Inifile & ini)
-        : master_key_loaded(false)
-        , hmac_key_loaded(false)
-        , master_key{}
-        , get_hmac_key_cb(nullptr)
-        , get_trace_key_cb(nullptr)
-        , gen(gen)
-        , ini(ini)
-        , hmac_key{}
-        {
-            memcpy(this->master_key,
-                "\x01\x02\x03\x04\x05\x06\x07\x08"
-                "\x01\x02\x03\x04\x05\x06\x07\x08"
-                "\x01\x02\x03\x04\x05\x06\x07\x08"
-                "\x01\x02\x03\x04\x05\x06\x07\x08",
-                CRYPTO_KEY_LENGTH);
-            memcpy(this->hmac_key,
-                "\x01\x02\x03\x04\x05\x06\x07\x08"
-                "\x01\x02\x03\x04\x05\x06\x07\x08"
-                "\x01\x02\x03\x04\x05\x06\x07\x08"
-                "\x01\x02\x03\x04\x05\x06\x07\x08",
-                HMAC_KEY_LENGTH);
-        }
-
-    void random(void * dest, size_t size)
+    CryptoContext(const Inifile & ini)
+    : master_key_loaded(false)
+    , hmac_key_loaded(false)
+    , master_key{}
+    , get_hmac_key_cb(nullptr)
+    , get_trace_key_cb(nullptr)
+    , ini(ini)
+    , hmac_key{}
     {
-        this->gen.random(dest, size);
+        memcpy(this->master_key,
+            "\x01\x02\x03\x04\x05\x06\x07\x08"
+            "\x01\x02\x03\x04\x05\x06\x07\x08"
+            "\x01\x02\x03\x04\x05\x06\x07\x08"
+            "\x01\x02\x03\x04\x05\x06\x07\x08",
+            CRYPTO_KEY_LENGTH);
+        memcpy(this->hmac_key,
+            "\x01\x02\x03\x04\x05\x06\x07\x08"
+            "\x01\x02\x03\x04\x05\x06\x07\x08"
+            "\x01\x02\x03\x04\x05\x06\x07\x08"
+            "\x01\x02\x03\x04\x05\x06\x07\x08",
+            HMAC_KEY_LENGTH);
     }
 
     size_t unbase64(char *buffer, size_t bufsiz, const char *txt)

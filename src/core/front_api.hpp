@@ -25,7 +25,6 @@
 #pragma once
 
 #include "gdi/graphic_api.hpp"
-#include "gdi/input_pointer_api.hpp"
 
 #include "core/wait_obj.hpp"
 #include "utils/sugar/array_view.hpp"
@@ -40,7 +39,7 @@ namespace CHANNELS {
     struct ChannelDef;
 }
 
-class FrontAPI : public gdi::GraphicApi, public gdi::MouseInputApi
+class FrontAPI : public gdi::GraphicApi
 {
 public:
     virtual bool can_be_start_capture(auth_api * auth) = 0;
@@ -54,6 +53,8 @@ public:
 
     virtual int server_resize(int width, int height, int bpp) = 0;
     //virtual void update_config(const timeval & now, const Inifile & ini) {}
+
+    virtual void update_pointer_position(uint16_t, uint16_t) {}
 
     int mouse_x;
     int mouse_y;

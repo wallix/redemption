@@ -39,8 +39,6 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
     ini.set<cfg::video::rt_display>(1);
     ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
     {
-        LCGRandom rnd(0);
-
         // Timestamps are applied only when flushing
         timeval now;
         now.tv_usec = 0;
@@ -62,7 +60,8 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.set<cfg::video::hash_path>("/tmp");
         ini.set<cfg::globals::movie_path>("capture");
 
-        CryptoContext cctx(rnd, ini);
+        LCGRandom rnd(0);
+        CryptoContext cctx(ini);
 
         // TODO remove this after unifying capture interface
         bool full_video = false;
@@ -77,7 +76,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         Capture capture(
             now, scr.cx, scr.cy, 24, 24
             , clear_png, no_timestamp, authentifier
-            , ini, rnd, cctx, full_video, force_capture_png_if_enable);
+            , ini, cctx, rnd, full_video, force_capture_png_if_enable);
         bool ignore_frame_in_timeval = false;
 
         capture.draw(RDPOpaqueRect(scr, GREEN), scr);
@@ -196,7 +195,6 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 {
     try {
 
-    LCGRandom rnd(0);
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
     {
@@ -221,7 +219,8 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         ini.set<cfg::video::hash_path>("/tmp");
         ini.set<cfg::globals::movie_path>("capture");
 
-        CryptoContext cctx(rnd, ini);
+        LCGRandom rnd(0);
+        CryptoContext cctx(ini);
 
         // TODO remove this after unifying capture interface
         bool full_video = false;
@@ -236,7 +235,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
         Capture capture(now, scr.cx, scr.cy, 16, 16
                         , clear_png, no_timestamp, authentifier
-                        , ini, rnd, cctx, full_video, force_capture_png_if_enable);
+                        , ini, cctx, rnd, full_video, force_capture_png_if_enable);
 
         Pointer pointer1(Pointer::POINTER_EDIT);
         capture.set_pointer(pointer1);

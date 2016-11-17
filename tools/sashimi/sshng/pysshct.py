@@ -44,8 +44,7 @@ class ssh_client_callbacks_struct(Structure):
         ('channel_open_request_x11_function', channel_open_request_x11_cb),
         ('channel_open_request_auth_agent_function', channel_open_request_auth_agent_cb)]
 
-auth_password_cb = CFUNCTYPE(c_int,
-    c_void_p, c_char_p, c_char_p, py_object)
+auth_password_cb = CFUNCTYPE(c_int, c_char_p, c_char_p, py_object)
 
 auth_none_cb = CFUNCTYPE(c_int, c_char_p, py_object)
 

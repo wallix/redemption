@@ -171,6 +171,7 @@ public:
         mod_rdp_params.enable_bitmap_update            = true;
         mod_rdp_params.enable_new_pointer              = true;
         mod_rdp_params.server_redirection_support      = true;
+        mod_rdp_params.enable_new_pointer              = true;
         std::string allow_channels = "*";
         mod_rdp_params.allow_channels                  = &allow_channels;
         //mod_rdp_params.allow_using_multiple_monitors   = true;
@@ -1090,25 +1091,27 @@ class Screen_Qt : public QWidget
 Q_OBJECT
 
 public:
-    Front_Qt_API       * _front;
-    QPushButton          _buttonCtrlAltDel;
-    QPushButton          _buttonRefresh;
-    QPushButton          _buttonDisconnexion;
-    QColor               _penColor;
-    QPixmap            * _cache;
-    QPainter             _cache_painter;
-
+    Front_Qt_API  * _front;
+    QPushButton     _buttonCtrlAltDel;
+    QPushButton     _buttonRefresh;
+    QPushButton     _buttonDisconnexion;
+    QColor          _penColor;
+    QPixmap      * _cache;
+    QPainter       _cache_painter;
+    QPixmap      * _trans_cache;
+    QPainter       _trans_cache_painter;
     int            _width;
     int            _height;
-    bool                 _connexionLasted;
-    QTimer               _timer;
-    QTimer               _timer_replay;
-    uint8_t              _screen_index;
+    QPixmap        _match_pixmap;
+    bool           _connexionLasted;
+    QTimer         _timer;
+    QTimer         _timer_replay;
+    uint8_t        _screen_index;
 
     bool           _running;
     std::string    _movie_name;
 
-    Screen_Qt (Front_Qt_API * front, int screen_index, QPixmap * cache)
+    Screen_Qt (Front_Qt_API * front, int screen_index, QPixmap * cache, QPixmap * trans_cache)
         : QWidget()
         , _front(front)
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
@@ -1116,10 +1119,11 @@ public:
         , _buttonDisconnexion("Disconnection", this)
         , _penColor(Qt::black)
         , _cache(cache)
+        , _trans_cache(trans_cache)
         , _width(this->_front->_screen_dimensions[screen_index].cx)
         , _height(this->_front->_screen_dimensions[screen_index].cy)
+        , _match_pixmap(this->_width, this->_height)
         , _connexionLasted(false)
-        , _timer(this)
         , _screen_index(screen_index)
         , _running(false)
     {
@@ -1147,13 +1151,10 @@ public:
         }
         this->move(centerW + shift, centerH + shift);
 
-        this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
-        this->_timer.start(1000/this->_front->_fps);
-
         this->setFocusPolicy(Qt::StrongFocus);
     }
 
-    Screen_Qt (Front_Qt_API * front, QPixmap * cache, std::string & movie_path)
+    Screen_Qt (Front_Qt_API * front, QPixmap * cache, std::string const & movie_path, QPixmap * trans_cache)
         : QWidget()
         , _front(front)
         , _buttonCtrlAltDel("Play", this)
@@ -1162,10 +1163,12 @@ public:
         , _penColor(Qt::black)
         , _cache(cache)
         , _cache_painter(this->_cache)
+        , _trans_cache(trans_cache)
+        , _trans_cache_painter(this->_trans_cache)
         , _width(this->_front->_screen_dimensions[0].cx)
         , _height(this->_front->_screen_dimensions[0].cy)
+        , _match_pixmap(this->_width, this->_height)
         , _connexionLasted(false)
-        , _timer(this)
         , _timer_replay(this)
         , _screen_index(0)
         , _running(false)
@@ -1218,7 +1221,7 @@ public:
         this->setFocusPolicy(Qt::StrongFocus);
     }
 
-    Screen_Qt (Front_Qt_API * front, QPixmap * cache)
+    Screen_Qt (Front_Qt_API * front, QPixmap * cache, QPixmap * trans_cache)
         : QWidget()
         , _front(front)
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
@@ -1227,10 +1230,11 @@ public:
         , _penColor(Qt::black)
         , _cache(cache)
         , _cache_painter(this->_cache)
+        , _trans_cache(trans_cache)
         , _width(this->_front->_screen_dimensions[0].cx)
         , _height(this->_front->_screen_dimensions[0].cy)
+        , _match_pixmap(this->_width, this->_height)
         , _connexionLasted(false)
-        , _timer(this)
         , _screen_index(0)
         , _running(false)
     {
@@ -1277,9 +1281,6 @@ public:
         }
         this->move(centerW, centerH);
 
-        this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
-        this->_timer.start(1000/this->_front->_fps);
-
         this->setFocusPolicy(Qt::StrongFocus);
     }
 
@@ -1289,12 +1290,20 @@ public:
         }
     }
 
+    void update_view() {
+        this->slotRepaint();
+    }
+
     void disConnection() {
         this->_connexionLasted = true;
     }
 
     QPainter & paintCache() {
         return this->_cache_painter;
+    }
+
+    QPainter & paintTransCache() {
+        return this->_trans_cache_painter;
     }
 
     void paintEvent(QPaintEvent * event) {
@@ -1307,7 +1316,7 @@ public:
         pen.setWidth(1);
         pen.setBrush(this->_penColor);
         painter.setPen(pen);
-        painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(this->_front->_info.cs_monitor.monitorDefArray[this->_screen_index].left, 0, this->_width, this->_height));
+        painter.drawPixmap(QPoint(0, 0), this->_match_pixmap, QRect(this->_front->_info.cs_monitor.monitorDefArray[this->_screen_index].left, 0, this->_width, this->_height));
         painter.end();
     }
 
@@ -1341,6 +1350,10 @@ private:
         this->_front->wheelEvent(e);
     }
 
+    void enterEvent(QEvent *event) {
+        Q_UNUSED(event);
+        this->_front->_current_screen_index =  this->_screen_index;
+    }
     bool eventFilter(QObject *obj, QEvent *e) {
         this->_front->eventFilter(obj, e, this->_front->_info.cs_monitor.monitorDefArray[this->_screen_index].left);
         return false;
@@ -1381,6 +1394,10 @@ private Q_SLOTS:
     }
 
     void slotRepaint() {
+
+        QPainter match_painter(&(this->_match_pixmap));
+        match_painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(this->_front->_info.cs_monitor.monitorDefArray[this->_screen_index].left, 0, this->_width, this->_height));
+        match_painter.drawPixmap(QPoint(0, 0), *(this->_trans_cache), QRect(this->_front->_info.cs_monitor.monitorDefArray[this->_screen_index].left, 0, this->_width, this->_height));
         this->repaint();
     }
 
@@ -1599,19 +1616,12 @@ public Q_SLOTS:
 
                 this->_cliboard_data_length = this->_bufferImage->byteCount();
 
-                this->_chunk = std::make_unique<uint8_t[]>(this->_cliboard_data_length + 6);
-
+                this->_chunk = std::make_unique<uint8_t[]>(this->_cliboard_data_length + RDPECLIP::FormatDataResponsePDU_MetaFilePic::MetaFilePicEnder::SIZE);
                 for (int i  = 0; i < this->_bufferImage->byteCount(); i++) {
                     this->_chunk[i] = this->_bufferImage->bits()[i];
                 }
-
-                // Ender
-                this->_chunk[this->_cliboard_data_length - 6] = 0x03;
-                this->_chunk[this->_cliboard_data_length - 5] = 0x00;
-                this->_chunk[this->_cliboard_data_length - 4] = 0x00;
-                this->_chunk[this->_cliboard_data_length - 3] = 0x00;
-                this->_chunk[this->_cliboard_data_length - 2] = 0x00;
-                this->_chunk[this->_cliboard_data_length - 1] = 0x00;
+                RDPECLIP::FormatDataResponsePDU_MetaFilePic::MetaFilePicEnder ender;
+                ender.emit(this->_chunk.get(), this->_cliboard_data_length);
 
                 this->send_FormatListPDU();
             //==========================================================================
@@ -1715,15 +1725,16 @@ public Q_SLOTS:
                         pos = tmp.find("\n"); // for linux install
                     }
 
-                    size_t size( (str.length() + cmptCR*2) * 4 );
+                    size_t size( ( (str.length() + cmptCR*2) * 4) + 2 );
 
                     this->_chunk = std::make_unique<uint8_t[]>(size);
                     // UTF8toUTF16_CrLf for linux install
-                    this->_cliboard_data_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size) + 2;
+                    this->_cliboard_data_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size);
 
-                    // Ender uint16_t = 0x0000
-                    this->_chunk[this->_cliboard_data_length-2] = 0;
-                    this->_chunk[this->_cliboard_data_length-1] = 0;
+                    RDPECLIP::FormatDataResponsePDU_Text::TextEnder  ender;
+                    ender.emit(this->_chunk.get(), this->_cliboard_data_length);
+
+                    this->_cliboard_data_length += RDPECLIP::FormatDataResponsePDU_Text::TextEnder::SIZE;
 
                     this->send_FormatListPDU();
             //==========================================================================

@@ -3003,6 +3003,28 @@ public:
                     }
                     break;
 
+
+    // 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE)
+    // =========================================================================
+
+    // updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is
+    // the same as the updateHeader byte field specified in the Fast-Path Update
+    // (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST
+    // be set to FASTPATH_UPDATETYPE_COLOR (9).
+
+    // compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional
+    // field (as well as the possible values) is the same as the compressionFlags field
+    // specified in the Fast-Path Update structure.
+
+    // size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as
+    // the possible values) is the same as the size field specified in the Fast-Path
+    // Update structure.
+
+    // colorPointerUpdateData (variable): Color pointer data. Both slow-path and
+    // fast-path utilize the same data format, a Color Pointer Update (section
+    // 2.2.9.1.1.4.4) structure, to represent this information.
+
+
                 case FastPath::UpdateType::COLOR:
                     this->process_color_pointer_pdu(upd.payload);
                     break;
@@ -4035,6 +4057,32 @@ public:
         }
     }   // send_confirm_active
 
+
+// 3.2.5.9.2 Processing Slow-Path Pointer Update PDU
+// =================================================
+
+// The structure and fields of the Slow-Path Pointer Update PDU are specified in section 2.2.9.1.1.4,
+// and the techniques specified in section 3.2.5.9.2 demonstrate how to process the contents of the PDU.
+// The messageType field contains an identifier that describes the type of Pointer Update data (see
+// section 2.2.9.1.1.4 for a list of possible values) present in the pointerAttributeData field:
+
+// Pointer Position Update (section 2.2.9.1.1.4.2)
+// System Pointer Update (section 2.2.9.1.1.4.3)
+// Color Pointer Update (section 2.2.9.1.1.4.4)
+// New Pointer Update (section 2.2.9.1.1.4.5)
+// Cached Pointer Update (section 2.2.9.1.1.4.6)
+
+// If a slow-path update structure is received which does not match one of the known types, the client
+// SHOULD ignore the data in the update.
+
+// Once this PDU has been processed, the client MUST carry out any operations necessary to update the
+// local pointer position (in the case of the Position Update) or change the shape (in the case of the
+// System, Color, New, and Cached Pointer Updates). In the case of the Color and New Pointer Updates
+// the new pointer image MUST also be stored in the Pointer Image Cache (section 3.2.1.11), in the slot
+// specified by the cacheIndex field. This necessary step ensures that the client is able to correctly
+// process future Cached Pointer Updates.
+
+
     void process_pointer_pdu(InStream & stream)
     {
         if (this->verbose & 4){
@@ -4044,6 +4092,7 @@ public:
         int message_type = stream.in_uint16_le();
         stream.in_skip_bytes(2); /* pad */
         switch (message_type) {
+        // Cached Pointer Update (section 2.2.9.1.1.4.6)
         case RDP_POINTER_CACHED:
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Process pointer cached");
@@ -4053,15 +4102,17 @@ public:
                 LOG(LOG_INFO, "Process pointer cached done");
             }
             break;
+        // Color Pointer Update (section 2.2.9.1.1.4.4)
         case RDP_POINTER_COLOR:
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Process pointer color");
             }
-            this->process_system_pointer_pdu(stream);
+            this->process_color_pointer_pdu(stream);
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Process pointer system done");
             }
             break;
+        // New Pointer Update (section 2.2.9.1.1.4.5)
         case RDP_POINTER_NEW:
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Process pointer new");
@@ -4073,11 +4124,30 @@ public:
                 LOG(LOG_INFO, "Process pointer new done");
             }
             break;
+        // System Pointer Update (section 2.2.9.1.1.4.3)
+        
         case RDP_POINTER_SYSTEM:
+        {
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Process pointer system");
             }
-            CPP_FALLTHROUGH;
+            // TODO: actually show mouse cursor or get back to default
+            this->process_system_pointer_pdu(stream);
+        }
+        break;
+        // Pointer Position Update (section 2.2.9.1.1.4.2)
+
+        // [ referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
+        // 2.2.9.1.1.4.2 Pointer Position Update (TS_POINTERPOSATTRIBUTE)
+        // ==============================================================
+
+        // The TS_POINTERPOSATTRIBUTE structure is used to indicate that
+        // the client pointer MUST be moved to the specified position 
+        // relative to the top-left corner of the server's desktop ([T128]
+        // section 8.14.4).
+        
+        // position (4 bytes): Point (section 2.2.9.1.1.4.1) structure 
+        // containing the new x-coordinates and y-coordinates of the pointer.
         case RDP_POINTER_MOVE:
             {
                 if (this->verbose & 4) {
@@ -5888,26 +5958,8 @@ public:
         }
     }
 
-    // 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE)
-    // =========================================================================
-
-    // updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is
-    // the same as the updateHeader byte field specified in the Fast-Path Update
-    // (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST
-    // be set to FASTPATH_UPDATETYPE_COLOR (9).
-
-    // compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional
-    // field (as well as the possible values) is the same as the compressionFlags field
-    // specified in the Fast-Path Update structure.
-
-    // size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as
-    // the possible values) is the same as the size field specified in the Fast-Path
-    // Update structure.
-
-    // colorPointerUpdateData (variable): Color pointer data. Both slow-path and
-    // fast-path utilize the same data format, a Color Pointer Update (section
-    // 2.2.9.1.1.4.4) structure, to represent this information.
-
+    // [referenced from 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE) ]
+    // [referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
     // 2.2.9.1.1.4.4 Color Pointer Update (TS_COLORPOINTERATTRIBUTE)
     // =============================================================
 
@@ -5991,6 +6043,7 @@ public:
         }
     }
 
+    // [ referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
     // 2.2.9.1.1.4.6 Cached Pointer Update (TS_CACHEDPOINTERATTRIBUTE)
     // ---------------------------------------------------------------
 
@@ -6034,6 +6087,7 @@ public:
         }
     }
 
+    // [ referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
     // 2.2.9.1.1.4.3 System Pointer Update (TS_SYSTEMPOINTERATTRIBUTE)
     // ---------------------------------------------------------------
 
@@ -6161,6 +6215,7 @@ public:
         }
     }
 
+    // [ referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
     // 2.2.9.1.1.4.5 New Pointer Update (TS_POINTERATTRIBUTE)
     // ------------------------------------------------------
 

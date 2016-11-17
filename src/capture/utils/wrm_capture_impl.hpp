@@ -56,6 +56,7 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
         TransportVariant(
             TraceType trace_type,
             CryptoContext & cctx,
+            Random & rnd,
             const char * path,
             const char * hash_path,
             const char * basename,
@@ -71,13 +72,13 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
                 case TraceType::cryptofile:
                     this->trans = new (&this->variant.out_crypto)
                     CryptoOutMetaSequenceTransport(
-                        &cctx, path, hash_path, basename, now,
+                        cctx, rnd, path, hash_path, basename, now,
                         width, height, groupid, authentifier);
                     break;
                 case TraceType::localfile_hashed:
                     this->trans = new (&this->variant.out_with_sum)
                     OutMetaSequenceTransportWithSum(
-                        &cctx, path, hash_path, basename, now,
+                        cctx, path, hash_path, basename, now,
                         width, height, groupid, authentifier);
                     break;
                 default:
@@ -145,7 +146,7 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
 public:
     WrmCaptureImpl(
         const timeval & now, uint8_t capture_bpp, TraceType trace_type,
-        CryptoContext & cctx,
+        CryptoContext & cctx, Random & rnd,
         const char * record_path, const char * hash_path, const char * basename,
         int groupid, auth_api * authentifier,
         RDPDrawable & drawable, const Inifile & ini, const int delta_time
@@ -158,7 +159,7 @@ public:
     , ptr_cache(/*pointerCacheSize=*/0x19)
     , dump_png24_api{drawable}
     , trans_variant(
-        trace_type, cctx, record_path, hash_path, basename, now,
+        trace_type, cctx, rnd, record_path, hash_path, basename, now,
         drawable.width(), drawable.height(), groupid, authentifier)
     , graphic_to_file(
         now, *this->trans_variant.trans, drawable.width(), drawable.height(), capture_bpp,

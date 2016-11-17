@@ -77,7 +77,7 @@ inline int app_decrypter(int argc, char const * const * argv, const char * copyr
     const uint8_t * base = reinterpret_cast<const uint8_t *>(
                     basename_len(input_filename.c_str(), base_len));
 
-    InFilenameTransport in_t(&cctx, fd, base, base_len);
+    InFilenameTransport in_t(cctx, fd, base, base_len);
     if (!in_t.is_encrypted()){
         std::cout << "Input file is unencrypted.\n\n";
         return 0;

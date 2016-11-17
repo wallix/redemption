@@ -21,6 +21,7 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
 */
 
+#include "sashimi/channels.hpp"
 
 // ================================= SSH_MSG_SERVICE_ACCEPT =================================
 
@@ -62,6 +63,7 @@ int SshServerSession::ssh_channel_open_auth_agent_server(ssh_channel channel){
 
         this->packet_send();
 
+        CPP_FALLTHROUGH;
     // Beware, this is fallthrough behavior to opening
     // But maybe we should have some error if we call open and channel is already opening
     // instead of accepting it.
@@ -111,7 +113,7 @@ int SshServerSession::ssh_channel_open_auth_agent_server(ssh_channel channel){
         err = SSH_ERROR;
         break;
     default:
-        ssh_set_error(this->error, SSH_FATAL,"Bad state in channel_open: %d",channel->state);
+        ssh_set_error(this->error, SSH_FATAL,"Bad state in channel_open: %d", int(channel->state));
         err = SSH_ERROR;
     }
     return err;

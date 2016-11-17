@@ -131,3 +131,12 @@ rule test-canonical ( base : requirements * )
 
     test-run $(target) : $(source) : $(tested) : $(requirements) ;
 }
+
+variant coverage : debug : <cxxflags>--profile-arcs <cxxflags>--test-coverage <cxxflags>--coverage <link>shared ;
+
+#gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
+
+lib gcov : : <name>gcov : ;
+
+constant GCOV : <variant>coverage:<library>gcov ;
+constant GCOV_NO_BUILD : <variant>coverage:<build>no ;
