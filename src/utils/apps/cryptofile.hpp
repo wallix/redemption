@@ -34,7 +34,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "utils/genrandom.hpp"
 #include "system/ssl_calls.hpp"
 #include "utils/sugar/cast.hpp"
 #include "system/ssl_sha256.hpp"
@@ -88,8 +87,6 @@ public:
     get_hmac_key_prototype * get_hmac_key_cb;
     get_trace_key_prototype * get_trace_key_cb;
 
-    // TODO unused
-    Random & gen;
     // TODO only for cfg::crypto::key0 and key1
     const Inifile & ini;
 private:
@@ -151,13 +148,12 @@ public:
         this->hmac_key_loaded = false;
     }
 
-    CryptoContext(Random & gen, const Inifile & ini)
+    CryptoContext(const Inifile & ini)
     : master_key_loaded(false)
     , hmac_key_loaded(false)
     , master_key{}
     , get_hmac_key_cb(nullptr)
     , get_trace_key_cb(nullptr)
-    , gen(gen)
     , ini(ini)
     , hmac_key{}
     {

@@ -1474,7 +1474,7 @@ namespace transbuf {
     struct ocrypto_filename_params
     {
         CryptoContext & crypto_ctx;
-        Random & gen;
+        Random & rnd;
     };
 }
 
@@ -1484,11 +1484,11 @@ namespace detail
     : transfil::encrypt_filter
     {
         CryptoContext & cctx;
-        Random & gen;
+        Random & rnd;
 
         explicit ocrypto_filter(transbuf::ocrypto_filename_params params)
         : cctx(params.crypto_ctx)
-        , gen(params.gen)
+        , rnd(params.rnd)
         {}
 
         template<class Buf>
@@ -1500,7 +1500,7 @@ namespace detail
 
             this->cctx.get_derived_key(trace_key, base, base_len);
             unsigned char iv[32];
-            this->gen.random(iv, 32);
+            this->rnd.random(iv, 32);
             return transfil::encrypt_filter::open(buf, trace_key, this->cctx, iv);
         }
     };
@@ -1660,13 +1660,13 @@ namespace transbuf {
     {
         transfil::encrypt_filter encrypt;
         CryptoContext & cctx;
-        Random & gen;
+        Random & rnd;
         ofile_buf_out file;
 
     public:
         explicit ocrypto_filename_buf(ocrypto_filename_params params)
         : cctx(params.crypto_ctx)
-        , gen(params.gen)
+        , rnd(params.rnd)
         {}
 
         ~ocrypto_filename_buf()
@@ -1688,7 +1688,7 @@ namespace transbuf {
             const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
             this->cctx.get_derived_key(trace_key, base, base_len);
             unsigned char iv[32];
-            this->gen.random(iv, 32);
+            this->rnd.random(iv, 32);
             return this->encrypt.open(this->file, trace_key, this->cctx, iv);
         }
 
@@ -1830,7 +1830,7 @@ struct CryptoOutMetaSequenceTransport
 {
     CryptoOutMetaSequenceTransport(
         CryptoContext & crypto_ctx,
-        Random & gen,
+        Random & rnd,
         const char * path,
         const char * hash_path,
         const char * basename,
@@ -1845,7 +1845,7 @@ struct CryptoOutMetaSequenceTransport
         detail::out_hash_meta_sequence_filename_buf_param<transbuf::ocrypto_filename_params>(
             crypto_ctx,
             now.tv_sec, format, hash_path, path, basename, ".wrm", groupid,
-            {crypto_ctx, gen},
+            {crypto_ctx, rnd},
             verbose
         )
     ) {

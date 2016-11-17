@@ -96,10 +96,6 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     //SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
     //                           , ini.get<cfg::debug::front>(), 0);
 
-    LCGRandom gen(0);
-
-    CryptoContext cctx(gen, ini);
-
     // Comment the code block below to generate testing data.
     #include "../fixtures/trace_mstsc_client_rdp50bulk.hpp"
 
@@ -114,6 +110,8 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     time_t now = 1450864840;
 
+    LCGRandom gen(0);
+    CryptoContext cctx(ini);
     const bool fastpath_support = true;
     const bool mem3blt_support  = false;
     Front front( front_trans, gen, ini, cctx, fastpath_support, mem3blt_support, now);

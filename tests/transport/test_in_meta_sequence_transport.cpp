@@ -738,14 +738,13 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
     ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
 
 
-    LCGRandom rnd(0);
-
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(ini);
 
     BOOST_CHECK(true);
 
     {
-        struct timeval tv;
+        LCGRandom rnd(0);
+        timeval tv;
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
         const int groupid = 0;
@@ -817,9 +816,7 @@ BOOST_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)
     );
     ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
 
-    LCGRandom rnd(0);
-
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(ini);
 
     try {
         InMetaSequenceTransport(&cctx, "TESTOFSXXX", ".mwrm", 1, 0);

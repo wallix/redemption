@@ -30,6 +30,7 @@
 #include "capture/rdp_ppocr/get_ocr_constants.hpp"
 
 #include "utils/apps/cryptofile.hpp"
+#include "utils/genrandom.hpp"
 
 namespace po = program_options;
 
@@ -38,7 +39,7 @@ int main(int argc, char** argv)
     Inifile ini;
 
     UdevRandom rnd;
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(ini);
 
     static constexpr char const * opt_print_spec = "print-spec";
     static constexpr char const * opt_print_ini = "print-default-ini";
@@ -51,6 +52,7 @@ int main(int argc, char** argv)
         "Martin Potier, Dominique Lafages, Jonathan Poelen, Raphael Zhou\n"
         "and Meng Tan."
       , cctx
+      , rnd
       , extra_option_list{
           {opt_print_spec, "Configuration file spec for rdpproxy.ini"},
           {opt_print_ini, "rdpproxy.ini by default"}

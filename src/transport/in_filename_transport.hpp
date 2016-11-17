@@ -97,7 +97,7 @@ public:
     // that can be either stored as clear text or compressed/encrypted text following a special
     // purpose format defined by redemption. These files are also non-seekable to make
     // it possible to send them over wires or in non block devices..
-    InFilenameTransport(CryptoContext * cctx, int fd, const uint8_t * base, size_t base_len)
+    InFilenameTransport(CryptoContext & cctx, int fd, const uint8_t * base, size_t base_len)
         : fd(fd)
         , pos(0)
         , raw_size(0)
@@ -133,7 +133,7 @@ public:
 
             uint8_t trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
 
-            cctx->get_derived_key(trace_key, base, base_len);
+            cctx.get_derived_key(trace_key, base, base_len);
 
             const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
             const uint8_t salt[]  = { 0x39, 0x30, 0, 0, 0x31, 0xd4, 0, 0 };

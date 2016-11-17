@@ -771,8 +771,6 @@ BOOST_AUTO_TEST_CASE(TestDecrypt)
 {
     OpenSSL_add_all_digests();
 
-    LCGRandom rnd(0);
-
     Inifile ini;
     ini.set<cfg::crypto::key0>(
         "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
@@ -788,7 +786,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypt)
         "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
     );
 
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(ini);
 
     const char * file = FIXTURES_PATH "/encrypted_video/"
         "x@10.10.43.13,qaadministrateur@win78,20131211-085926,wab2-4-0-0.yourdomain,5423.rdptrc";
@@ -873,8 +871,7 @@ BOOST_AUTO_TEST_CASE(TestDerivationOfHmacKeyFromCryptoKey)
          "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
          "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
     );
-    LCGRandom rnd(0);
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(ini);
     cctx.get_master_key();
 //    hexdump_c(cctx.get_hmac_key(), HMAC_KEY_LENGTH);
     BOOST_CHECK(0 == memcmp(expected_hmac_key, cctx.get_hmac_key(), 32));
@@ -890,7 +887,6 @@ BOOST_AUTO_TEST_CASE(TestDerivationOfHmacKeyFromCryptoKey2)
          0x20U, 0xfeU, 0xc2U, 0xc9U, 0xb8U, 0x72U, 0xc8U, 0x2cU
          };
 
-    LCGRandom rnd(0);
     Inifile ini;
     ini.set<cfg::crypto::key0>(
         "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
@@ -904,7 +900,7 @@ BOOST_AUTO_TEST_CASE(TestDerivationOfHmacKeyFromCryptoKey2)
          "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
     );
 
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(ini);
     cctx.get_master_key();
     BOOST_CHECK(0 == memcmp(expected_hmac_key, cctx.get_hmac_key(), HMAC_KEY_LENGTH));
 }
@@ -914,7 +910,6 @@ BOOST_AUTO_TEST_CASE(TestCryptAndReadBack)
     const char * file = "/tmp/testcryptofile.tmp";
     unlink(file);
 
-    LCGRandom rnd(0);
     Inifile ini;
     ini.set<cfg::crypto::key0>(
         "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
@@ -929,7 +924,7 @@ BOOST_AUTO_TEST_CASE(TestCryptAndReadBack)
          "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
     );
 
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(ini);
     cctx.get_master_key();
 
     OpenSSL_add_all_digests();

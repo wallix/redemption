@@ -194,13 +194,14 @@ using extra_option_list = std::initializer_list<extra_option>;
 
 struct EmptyPreLoopFn { void operator()(Inifile &) const {} };
 
+class Random;
 // ExtraOptions = extra_option container
 // ExtracOptionChecker = int(po::variables_map &, bool * quit)
 // PreLoopFn = void(Inifile &)
 template<class ExtraOptions, class ExtracOptionChecker, class PreLoopFn = EmptyPreLoopFn>
 int app_proxy(
     int argc, char const * const * argv, const char * copyright_notice
-  , CryptoContext & cctx
+  , CryptoContext & cctx, Random & rnd
   , ExtraOptions const & extrax_options, ExtracOptionChecker extrac_options_checker
   , PreLoopFn pre_loop_fn = PreLoopFn()
 ) {
@@ -312,7 +313,7 @@ int app_proxy(
     }
 
     if (options.count("inetd")) {
-        redemption_new_session(cctx, config_filename.c_str());
+        redemption_new_session(cctx, rnd, config_filename.c_str());
         return 0;
     }
 
@@ -386,7 +387,7 @@ int app_proxy(
     pre_loop_fn(ini);
 
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");
-    redemption_main_loop(ini, cctx, euid, egid, std::move(config_filename));
+    redemption_main_loop(ini, cctx, rnd, euid, egid, std::move(config_filename));
 
     /* delete the .pid file if it exists */
     /* don't care about errors. */

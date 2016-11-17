@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(TestAppRecorder)
     Inifile ini;
     ini.set<cfg::debug::config>(false);
     UdevRandom rnd;
-    CryptoContext cctx(rnd, ini);
+    CryptoContext cctx(ini);
     cctx.set_get_hmac_key_cb(hmac_fn);
     cctx.set_get_trace_key_cb(trace_fn);
 
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(TestAppRecorder)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    int res = app_recorder(argc, argv, "Recorder", CFG_PATH "/" RDPPROXY_INI, ini, cctx);
+    int res = app_recorder(argc, argv, "Recorder", CFG_PATH "/" RDPPROXY_INI, ini, cctx, rnd);
     BOOST_CHECK_EQUAL(0, res);
 
     const char * filename;

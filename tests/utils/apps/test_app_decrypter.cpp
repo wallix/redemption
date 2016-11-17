@@ -57,7 +57,7 @@
 
 extern "C" {
     int hmac_fn(char * buffer);
-    
+
     int hmac_fn(char * buffer)
     {
         uint8_t hmac_key[SslSha256::DIGEST_LENGTH] = {
@@ -84,7 +84,7 @@ extern "C" {
          };
         memset(buffer, 0, len);
         memcpy(buffer, trace_key, std::min(
-                static_cast<size_t>(len), 
+                static_cast<size_t>(len),
                 static_cast<size_t>(SslSha256::DIGEST_LENGTH)));
         return 0;
     }
@@ -96,71 +96,69 @@ extern "C" {
 
 BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
 {
-        Inifile ini;
-        ini.set<cfg::debug::config>(false);
-        UdevRandom rnd;
-        CryptoContext cctx(rnd, ini);
-        cctx.set_get_hmac_key_cb(hmac_fn);
-        cctx.set_get_trace_key_cb(trace_fn);
+    Inifile ini;
+    ini.set<cfg::debug::config>(false);
+    CryptoContext cctx(ini);
+    cctx.set_get_hmac_key_cb(hmac_fn);
+    cctx.set_get_trace_key_cb(trace_fn);
 
-        char const * argv[] {
-            "decrypter.py",
-            "-i",
-                FIXTURES_PATH "/verifier/recorded/"
-                "toto@10.10.43.13,Administrateur@QA@cible,"
-                "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm",
-            "-o",
-                "decrypted.out",
-            "--verbose",
-                "10",
-        };
-        int argc = sizeof(argv)/sizeof(char*);
+    char const * argv[] {
+        "decrypter.py",
+        "-i",
+            FIXTURES_PATH "/verifier/recorded/"
+            "toto@10.10.43.13,Administrateur@QA@cible,"
+            "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm",
+        "-o",
+            "decrypted.out",
+        "--verbose",
+            "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
 
-        int res = -1;
-        try {
-            res = app_decrypter(argc, argv
-              , "ReDemPtion VERifier " VERSION ".\n"
-                "Copyright (C) Wallix 2010-2016.\n"
-                "Christophe Grosjean, Raphael Zhou."
-              , cctx);
-        } catch (const Error & e) {
-            printf("verify failed: with id=%d\n", e.id);
-        }
-        BOOST_CHECK_EQUAL(0, unlink("decrypted.out"));
-        BOOST_CHECK_EQUAL(0, res);
+    int res = -1;
+    try {
+        res = app_decrypter(argc, argv
+            , "ReDemPtion VERifier " VERSION ".\n"
+            "Copyright (C) Wallix 2010-2016.\n"
+            "Christophe Grosjean, Raphael Zhou."
+            , cctx);
+    } catch (const Error & e) {
+        printf("verify failed: with id=%d\n", e.id);
+    }
+    BOOST_CHECK_EQUAL(0, unlink("decrypted.out"));
+    BOOST_CHECK_EQUAL(0, res);
 }
 
 BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
 {
-        Inifile ini;
-        ini.set<cfg::debug::config>(false);
-        UdevRandom rnd;
-        CryptoContext cctx(rnd, ini);
-        cctx.set_get_hmac_key_cb(hmac_fn);
-        cctx.set_get_trace_key_cb(trace_fn);
+    Inifile ini;
+    ini.set<cfg::debug::config>(false);
+    CryptoContext cctx(ini);
+    cctx.set_get_hmac_key_cb(hmac_fn);
+    cctx.set_get_trace_key_cb(trace_fn);
 
-        char const * argv[] {
-            "decrypter.py",
-            "-i",
-                FIXTURES_PATH "/verifier/recorded/"
-                 "toto@10.10.43.13,Administrateur@QA@cible"
-                ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
-           "-o",
-                "decrypted.2.out",
-            "--verbose",
-                "10",
-        };
-        int argc = sizeof(argv)/sizeof(char*);
+    char const * argv[] {
+        "decrypter.py",
+        "-i",
+            FIXTURES_PATH "/verifier/recorded/"
+                "toto@10.10.43.13,Administrateur@QA@cible"
+            ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
+        "-o",
+            "decrypted.2.out",
+        "--verbose",
+            "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
 
-        int res = -1;
-        try {
-            res = app_decrypter(argc, argv
-              , "ReDemPtion VERifier " VERSION ".\n"
-                "Copyright (C) Wallix 2010-2016.\n"
-                "Christophe Grosjean, Raphael Zhou."
-              , cctx);
-        } catch (const Error & e) {
-            printf("verify failed: with id=%d\n", e.id);
-        }
-        BOOST_CHECK_EQUAL(0, res);
+    int res = -1;
+    try {
+        res = app_decrypter(argc, argv
+            , "ReDemPtion VERifier " VERSION ".\n"
+            "Copyright (C) Wallix 2010-2016.\n"
+            "Christophe Grosjean, Raphael Zhou."
+            , cctx);
+    } catch (const Error & e) {
+        printf("verify failed: with id=%d\n", e.id);
+    }
+    BOOST_CHECK_EQUAL(0, res);
 }

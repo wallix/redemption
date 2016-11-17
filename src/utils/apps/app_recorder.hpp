@@ -235,8 +235,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , bool enable_rt
                     , bool no_timestamp
                     , auth_api * authentifier
-                    , Inifile & ini, CryptoContext & cctx
-
+                    , Inifile & ini, CryptoContext & cctx, Random & gen
                     , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , unsigned png_width, unsigned png_height
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
@@ -321,6 +320,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , authentifier
                     , ini
                     , cctx
+                    , gen
                     , full_video);
 
             if (capture.capture_png) {
@@ -393,9 +393,10 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
 }   // do_record
 
 inline
-static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const timeval begin_record
-                        , int wrm_compression_algorithm_
-                        , std::string const & output_filename, Inifile & ini, uint32_t verbose) {
+static int do_recompress(
+    CryptoContext & cctx, Random & rnd, Transport & in_wrm_trans, const timeval begin_record,
+    int wrm_compression_algorithm_, std::string const & output_filename, Inifile & ini, uint32_t verbose
+) {
     FileToChunk player(&in_wrm_trans, verbose);
 
 /*
@@ -479,7 +480,7 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
         if (ini.get<cfg::globals::trace_type>() == TraceType::cryptofile) {
             run(CryptoOutMetaSequenceTransport(
                 cctx,
-                cctx.gen,
+                rnd,
                 outfile_path.c_str(),
                 ini.get<cfg::video::hash_path>().c_str(),
                 outfile_basename.c_str(),
@@ -535,7 +536,7 @@ inline int is_encrypted_file(const char * input_filename, bool & infile_is_encry
 
 inline int app_recorder(
     int argc, char const * const * argv, const char * copyright_notice,
-    std::string config_filename, Inifile & ini, CryptoContext & cctx
+    std::string config_filename, Inifile & ini, CryptoContext & cctx, Random & rnd
 ) {
     openlog("redrec", LOG_CONS | LOG_PERROR, LOG_USER);
 
@@ -1002,7 +1003,7 @@ inline int app_recorder(
                             , enable_rt
                             , no_timestamp
                             , nullptr
-                            , ini, cctx
+                            , ini, cctx, rnd
                             , file_count, order_count, clear, zoom
                             , png_width, png_height
                             , show_file_metadata, show_statistics, verbose
@@ -1013,6 +1014,7 @@ inline int app_recorder(
                 std::cout << "[B]" << std::endl;
                 result = do_recompress(
                     cctx,
+                    rnd,
                     trans,
                     begin_record,
                     wrm_compression_algorithm_,
