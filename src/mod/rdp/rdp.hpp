@@ -4096,7 +4096,7 @@ public:
             }
             break;
         // System Pointer Update (section 2.2.9.1.1.4.3)
-        
+
         case RDP_POINTER_SYSTEM:
         {
             if (this->verbose & 4){
@@ -4113,11 +4113,11 @@ public:
         // ==============================================================
 
         // The TS_POINTERPOSATTRIBUTE structure is used to indicate that
-        // the client pointer MUST be moved to the specified position 
+        // the client pointer MUST be moved to the specified position
         // relative to the top-left corner of the server's desktop ([T128]
         // section 8.14.4).
-        
-        // position (4 bytes): Point (section 2.2.9.1.1.4.1) structure 
+
+        // position (4 bytes): Point (section 2.2.9.1.1.4.1) structure
         // containing the new x-coordinates and y-coordinates of the pointer.
         case RDP_POINTER_MOVE:
             {
