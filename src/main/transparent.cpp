@@ -263,6 +263,8 @@ int main(int argc, char * argv[]) {
                                        , target_device.c_str()
                                        , "0.0.0.0"   // client ip is silenced
                                        , front.keymap.key_flags
+                                       , ini.get<cfg::font>()
+                                       , ini.get<cfg::theme>()
                                        , ini.get<cfg::debug::mod_rdp>()
                                        );
             //mod_rdp_params.enable_tls                          = true;

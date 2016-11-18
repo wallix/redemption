@@ -1184,6 +1184,8 @@ public:
                                            , this->ini.get<cfg::context::target_host>().c_str()
                                            , "0.0.0.0"   // client ip is silenced
                                            , this->front.keymap.key_flags
+                                           , this->ini.get<cfg::font>()
+                                           , this->ini.get<cfg::theme>()
                                            , this->ini.get<cfg::debug::mod_rdp>()
                                            );
                 mod_rdp_params.device_id                           = this->ini.get<cfg::globals::device_id>().c_str();

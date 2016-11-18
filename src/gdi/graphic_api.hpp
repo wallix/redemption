@@ -543,6 +543,12 @@ public:
 };
 
 
+inline gdi::GraphicApi & null_gd() {
+    static gdi::BlackoutGraphic gd;
+    return gd;
+}
+
+
 struct TextMetrics
 {
     int width = 0;
