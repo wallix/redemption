@@ -57,7 +57,7 @@ alias install :
     install-etc-ppocr
     install-share
 ;
-alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient ;
+alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient rdpheadless ; 
 alias libs    : libredrec ;
 
 alias ocr_tools : display_learning extract_text ppocr_extract_text ;
@@ -269,7 +269,7 @@ exe rdpclient
         $(EXE_DEPENDENCIES)
     ;
 
-exe rdpclientcli
+exe rdpheadless
     : $(REDEMPTION_SRC_PATH)/ftests/test_client_redemption_cli/test_client_redemption_cli.cpp
         program_options
         bitmap

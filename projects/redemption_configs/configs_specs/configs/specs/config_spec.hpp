@@ -134,7 +134,7 @@ void config_spec_definition(Writer && W)
     W.section("session_log", [&]
     {
         W.member(V, type_<bool>(), "enable_session_log", set(true));
-        W.member(A, type_<bool>(), "session_log_redirection", desc{"Log redirection in a file"}, set(false));
+        W.member(A, type_<bool>(), "session_log_redirection", desc{"Log redirection in a file"}, set(false), w);
         W.sep();
         W.member(A, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", set(KeyboardInputMaskingLevel::fully_masked));
     });
