@@ -21,7 +21,9 @@
 
 #pragma once
 
+#include "core/font.hpp"
 #include "utils/log.hpp"
+#include "utils/theme.hpp"
 #include "utils/translation.hpp"
 
 #include <string>
@@ -139,6 +141,10 @@ struct ModRDPParams {
     const char * client_execute_working_dir = "";
     const char * client_execute_arguments = "";
 
+
+    Font const & font;
+    Theme const & theme;
+
     uint32_t verbose;
     uint32_t cache_verbose = 0;
 
@@ -147,6 +153,8 @@ struct ModRDPParams {
                 , const char * target_host
                 , const char * client_address
                 , int key_flags
+                , Font const & font
+                , Theme const & theme
                 , uint32_t verbose = 0
                 )
         : target_user(target_user)
@@ -154,6 +162,8 @@ struct ModRDPParams {
         , target_host(target_host)
         , client_address(client_address)
         , key_flags(key_flags)
+        , font(font)
+        , theme(theme)
         , verbose(verbose)
     {}
 

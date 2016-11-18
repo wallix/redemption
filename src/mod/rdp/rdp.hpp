@@ -82,6 +82,7 @@
 #include "core/FSCC/FileInformation.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/rail_channel.hpp"
+#include "mod/rdp/channels/rail_session_manager.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 #include "mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp"
@@ -117,6 +118,8 @@ private:
     std::unique_ptr<VirtualChannelDataSender>     remote_programs_to_server_sender;
 
     std::unique_ptr<RemoteProgramsVirtualChannel> remote_programs_virtual_channel;
+
+    std::unique_ptr<RemoteProgramsSessionManager> remote_programs_session_manager;
 
 protected:
     FileSystemDriveManager file_system_drive_manager;
@@ -389,9 +392,15 @@ protected:
 
     Translation::language_t lang;
 
+    Font const & font;
+    Theme const & theme;
+
     const bool allow_using_multiple_monitors;
 
     bool already_upped_and_running = false;
+
+    bool input_event_disabled     = false;
+    bool graphics_update_disabled = false;
 
     static constexpr std::array<uint32_t, BmpCache::MAXIMUM_NUMBER_OF_CACHES>
     BmpCacheRev2_Cache_NumEntries()
@@ -787,6 +796,8 @@ public:
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , bogus_linux_cursor(mod_rdp_params.bogus_linux_cursor)
         , lang(mod_rdp_params.lang)
+        , font(mod_rdp_params.font)
+        , theme(mod_rdp_params.theme)
         , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
         , server_notifier(mod_rdp_params.acl,
                           mod_rdp_params.server_access_allowed_message,
@@ -1014,14 +1025,10 @@ public:
             this->session_probe_target_informations += ":";
             this->session_probe_target_informations += mod_rdp_params.auth_user;
 
+            this->real_alternate_shell = std::move(alternate_shell);
+            this->real_working_dir     = tmp_working_dir;
 
             if (this->remote_program) {
-                this->real_alternate_shell  = this->client_execute_exe_or_file;
-                this->real_alternate_shell += " ";
-                this->real_alternate_shell += this->client_execute_arguments;
-
-                this->real_working_dir = this->client_execute_working_dir;
-
                 char proxy_managed_connection_cookie[9];
                 get_proxy_managed_connection_cookie(
                     this->session_probe_target_informations.c_str(),
@@ -1042,16 +1049,13 @@ public:
                 this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
             }   // if (this->remote_program)
             else {
-                this->real_alternate_shell = std::move(alternate_shell);
-                this->real_working_dir     = tmp_working_dir;
-
                 if (mod_rdp_params.session_probe_use_clipboard_based_launcher &&
                     (mod_rdp_params.target_application && (*mod_rdp_params.target_application))) {
                     REDASSERT(!this->session_probe_use_clipboard_based_launcher);
 
                     LOG(LOG_WARNING,
                         "mod_rdp: "
-                            "Clipboard based Session Probe launcher is not compatible with application."
+                            "Clipboard based Session Probe launcher is not compatible with application. "
                             "Falled back to using AlternateShell based launcher.");
                 }
 
@@ -1137,13 +1141,20 @@ public:
                                        this->redir_info.lb_info_length);
             }
         }
+
+        if (this->remote_program) {
+            this->remote_programs_session_manager =
+                std::make_unique<RemoteProgramsSessionManager>(front, *this,
+                    this->lang, this->front_width, this->front_height,
+                    this->font, this->theme, this->verbose);
+        }
     }   // mod_rdp
 
     ~mod_rdp() override {
         if (this->enable_session_probe) {
             const bool disable_input_event     = false;
             const bool disable_graphics_update = false;
-            this->front.disable_input_event_and_graphics_update(
+            this->disable_input_event_and_graphics_update(
                 disable_input_event, disable_graphics_update);
         }
 
@@ -1385,6 +1396,8 @@ protected:
             this->client_execute_working_dir.c_str();
         remote_programs_virtual_channel_params.client_execute_arguments        =
             this->client_execute_arguments.c_str();
+        remote_programs_virtual_channel_params.rail_session_manager            =
+            this->remote_programs_session_manager.get();
 
         return remote_programs_virtual_channel_params;
     }
@@ -1512,7 +1525,8 @@ public:
     }   // configure_proxy_managed_drives
 
     void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 *) override {
-        if (UP_AND_RUNNING == this->connection_finalization_state) {
+        if ((UP_AND_RUNNING == this->connection_finalization_state) &&
+            !this->input_event_disabled) {
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
         }
     }
@@ -1532,7 +1546,8 @@ public:
     }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *) override {
-        if (UP_AND_RUNNING == this->connection_finalization_state) {
+        if ((UP_AND_RUNNING == this->connection_finalization_state) &&
+            !this->input_event_disabled) {
             this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
         }
     }
@@ -3305,7 +3320,8 @@ public:
                                         case RDP_UPDATE_ORDERS:
                                             if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_ORDERS"); }
                                             this->front.begin_update();
-                                            this->orders.process_orders(this->bpp, sdata.payload, false, drawable,this->front_width, this->front_height);
+                                            this->orders.process_orders(this->bpp, sdata.payload, false,
+                                                drawable,this->front_width, this->front_height);
                                             this->front.end_update();
                                             break;
                                         case RDP_UPDATE_BITMAP:
@@ -3518,8 +3534,21 @@ public:
         }
     }
 
-    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi & drawable_) override {
         //LOG(LOG_INFO, "mod_rdp::draw_event()");
+
+        if (this->remote_programs_session_manager) {
+            this->remote_programs_session_manager->set_drawable(&drawable_, this->bpp);
+        }
+
+        gdi::GraphicApi & drawable =
+            ( this->remote_programs_session_manager
+            ? (*this->remote_programs_session_manager)
+            : ( this->graphics_update_disabled
+              ? gdi::null_gd()
+              : drawable_
+              )
+            );
 
         if ((!this->event.waked_up_by_time
             && (!this->session_probe_virtual_channel_p
@@ -3601,7 +3630,7 @@ public:
                 if (this->enable_session_probe) {
                     const bool disable_input_event     = false;
                     const bool disable_graphics_update = false;
-                    this->front.disable_input_event_and_graphics_update(
+                    this->disable_input_event_and_graphics_update(
                         disable_input_event, disable_graphics_update);
                 }
 
@@ -3648,7 +3677,7 @@ public:
                 if (this->enable_session_probe) {
                     const bool disable_input_event     = false;
                     const bool disable_graphics_update = false;
-                    this->front.disable_input_event_and_graphics_update(
+                    this->disable_input_event_and_graphics_update(
                         disable_input_event, disable_graphics_update);
                 }
 
@@ -5299,7 +5328,7 @@ public:
         if (this->enable_session_probe) {
             const bool disable_input_event     = true;
             const bool disable_graphics_update = this->enable_session_probe_launch_mask;
-            this->front.disable_input_event_and_graphics_update(
+            this->disable_input_event_and_graphics_update(
                 disable_input_event, disable_graphics_update);
         }
     }   // process_logon_info
@@ -5338,7 +5367,7 @@ public:
             if (this->enable_session_probe) {
                 const bool disable_input_event     = true;
                 const bool disable_graphics_update = this->enable_session_probe_launch_mask;
-                this->front.disable_input_event_and_graphics_update(
+                this->disable_input_event_and_graphics_update(
                     disable_input_event, disable_graphics_update);
             }
 
@@ -5834,7 +5863,7 @@ public:
         }
     }
 
-    void send_input(int time, int message_type, int device_flags, int param1, int param2) {
+    void send_input(int time, int message_type, int device_flags, int param1, int param2) override {
         if (this->enable_fastpath_client_input_event == false) {
             this->send_input_slowpath(time, message_type, device_flags, param1, param2);
         }
@@ -6726,6 +6755,31 @@ private:
         }
     }
 
+    bool disable_input_event_and_graphics_update(bool disable_input_event,
+            bool disable_graphics_update) override {
+        bool need_full_screen_update =
+            (this->graphics_update_disabled && !disable_graphics_update);
+
+        if (this->input_event_disabled != disable_input_event) {
+            LOG(LOG_INFO, "Mod_rdp: %s input event.",
+                (disable_input_event ? "Disable" : "Enable"));
+        }
+        if (this->graphics_update_disabled != disable_graphics_update) {
+            LOG(LOG_INFO, "Mod_rdp: %s graphics update.",
+                (disable_graphics_update ? "Disable" : "Enable"));
+        }
+
+        this->input_event_disabled     = disable_input_event;
+        this->graphics_update_disabled = disable_graphics_update;
+
+        if (this->remote_programs_session_manager) {
+            this->remote_programs_session_manager->disable_graphics_update(
+                disable_graphics_update);
+        }
+
+        return need_full_screen_update;
+    }
+
     void do_enable_session_probe() {
         if (this->enable_session_probe) {
             ClipboardVirtualChannel& cvc =
@@ -6758,5 +6812,4 @@ private:
             }
         }
     }
-
 };

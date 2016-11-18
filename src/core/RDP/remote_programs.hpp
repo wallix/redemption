@@ -21,11 +21,12 @@
 
 #pragma once
 
-#include "utils/sugar/cast.hpp"
 #include "core/error.hpp"
-#include "utils/stream.hpp"
 #include "core/RDP/non_null_terminated_utf16_from_utf8.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
+#include "utils/stream.hpp"
+#include "utils/sugar/cast.hpp"
+#include "mod/rdp/channels/rail_window_id_manager.hpp"
 
 // [MS-RDPERP] - 2.2.2.1 Common Header (TS_RAIL_PDU_HEADER)
 // ========================================================
@@ -173,7 +174,7 @@ class RAILPDUHeader {
     mutable OutStream* output_stream = nullptr;
 
 public:
-    void emit_begin(OutStream & stream, uint16_t orderType) {
+    void emit_begin(OutStream & stream, uint16_t orderType) const {
         REDASSERT(this->output_stream == nullptr);
 
         this->output_stream = &stream;
@@ -184,7 +185,7 @@ public:
         this->output_stream->out_clear_bytes(2);
     }
 
-    void emit_end() {
+    void emit_end() const {
         this->output_stream->set_out_uint16_le(
             this->output_stream->get_offset() - this->offset_of_orderLength +
                 2 /* orderType(2) */,
@@ -248,7 +249,7 @@ class HandshakePDU {
     uint32_t buildNumber_ = 0;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->buildNumber_);
     }
 
@@ -375,7 +376,7 @@ class ClientInformationPDU {
     uint32_t Flags_ = 0;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Flags_);
     }
 
@@ -475,7 +476,7 @@ class HandshakeExPDU {
     uint32_t railHandshakeFlags_ = 0;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->buildNumber_);
         stream.out_uint32_le(this->railHandshakeFlags_);
     }
@@ -664,7 +665,7 @@ class ClientExecutePDU {
     std::string arguments;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->Flags_);
 
         const uint32_t offset_of_ExeOrFile  = stream.get_offset();
@@ -907,7 +908,7 @@ class ServerExecuteResultPDU {
     std::string exe_or_file;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->Flags_);
         stream.out_uint16_le(this->ExecResult_);
         stream.out_uint32_le(this->RawResult_);
@@ -1045,7 +1046,7 @@ public:
     : Flags_(Flags_)
     , color_scheme(ColorScheme_) {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Flags_);
 
         const size_t offset_of_data_length = stream.get_offset();
@@ -1269,13 +1270,15 @@ const char* get_RAIL_ClientSystemParam_name(uint32_t SystemParam) {
 }
 
 class ClientSystemParametersUpdatePDU {
-    uint32_t                                SystemParam_;
-    uint8_t                                 body_b_;
+    uint32_t                                SystemParam_ = 0;
+
+    uint8_t                                 body_b_ = 0;
+
     RDP::RAIL::Rectangle                    body_r_;
     HighContrastSystemInformationStructure  body_hcsis;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->SystemParam_);
 
         switch (this->SystemParam_) {
@@ -1498,10 +1501,10 @@ const char* get_RAIL_ServerSystemParam_name(uint32_t SystemParam) {
 
 class ServerSystemParametersUpdatePDU {
     uint32_t SystemParam_ = 0;
-    uint8_t  Body_ = 0;
+    uint8_t  Body_        = 0;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->SystemParam_);
 
         stream.out_uint8(this->Body_);
@@ -1588,11 +1591,11 @@ public:
 //  is to be activated (value = nonzero) or deactivated (value = 0).
 
 class ClientActivatePDU {
-    uint32_t WindowId_ = 0;
-    uint8_t  Enabled_  = 0;
+    mutable uint32_t WindowId_ = 0;
+            uint8_t  Enabled_  = 0;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->WindowId_);
         stream.out_uint8(this->Enabled_);
     }
@@ -1613,12 +1616,31 @@ public:
         this->Enabled_  = stream.in_uint8();
     }
 
+    static uint16_t orderType() { return TS_RAIL_ORDER_ACTIVATE; }
+
     uint32_t WindowId() const { return this->WindowId_; }
 
     uint8_t Enabled() const { return this->Enabled_; }
 
     static size_t size() {
         return 5;   // WindowId(4) + Enabled(1)
+    }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        const uint32_t server_window_id = rail_window_id_manager.get_server_window_id(this->WindowId_);
+
+        if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == server_window_id) {
+            LOG(LOG_ERR, "ClientActivatePDU::map_window_id: Failed to map window id. ClientWindowId=0x%X", this->WindowId_);
+            throw ERR_UNEXPECTED;
+        }
+
+        if (server_window_id == this->WindowId_) {
+            return false;
+        }
+
+        this->WindowId_ = server_window_id;
+
+        return true;
     }
 
 private:
@@ -1679,12 +1701,12 @@ public:
 //  coordinates.
 
 class ClientSystemMenuPDU {
-    uint32_t WindowId_ = 0;
-    int16_t  Left_     = 0;
-    int16_t  Top_      = 0;
+    mutable uint32_t WindowId_ = 0;
+            int16_t  Left_     = 0;
+            int16_t  Top_      = 0;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->WindowId_);
         stream.out_sint16_le(this->Left_);
         stream.out_sint16_le(this->Top_);
@@ -1707,6 +1729,8 @@ public:
         this->Top_      = stream.in_sint16_le();
     }
 
+    static uint16_t orderType() { return TS_RAIL_ORDER_SYSMENU; }
+
     uint32_t WindowId() const { return this->WindowId_; }
 
     int16_t Left() const { return this->Left_; }
@@ -1715,6 +1739,23 @@ public:
 
     static size_t size() {
         return 8;   // WindowId(4) + Left(2) + Top(2)
+    }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        const uint32_t server_window_id = rail_window_id_manager.get_server_window_id(this->WindowId_);
+
+        if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == server_window_id) {
+            LOG(LOG_ERR, "ClientSystemMenuPDU::map_window_id: Failed to map window id. ClientWindowId=0x%X", this->WindowId_);
+            throw ERR_UNEXPECTED;
+        }
+
+        if (server_window_id == this->WindowId_) {
+            return false;
+        }
+
+        this->WindowId_ = server_window_id;
+
+        return true;
     }
 
 private:
@@ -1825,11 +1866,11 @@ const char* get_RAIL_Command_name(uint16_t Command) {
 }
 
 class ClientSystemCommandPDU {
-    uint32_t WindowId_ = 0;
-    uint16_t Command_  = 0;
+    mutable uint32_t WindowId_ = 0;
+            uint16_t Command_  = 0;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->WindowId_);
         stream.out_uint16_le(this->Command_);
     }
@@ -1850,12 +1891,35 @@ public:
         this->Command_  = stream.in_uint16_le();
     }
 
+    static uint16_t orderType() { return TS_RAIL_ORDER_SYSCOMMAND; }
+
     uint32_t WindowId() const { return this->WindowId_; }
+
+    void WindowId(uint32_t WindowId_) { this->WindowId_ = WindowId_; }
 
     uint16_t Command() const { return this->Command_; }
 
+    void Command(uint16_t Command_) { this->Command_ = Command_; }
+
     static size_t size() {
         return 6;   // WindowId(4) + Command(2)
+    }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        const uint32_t server_window_id = rail_window_id_manager.get_server_window_id(this->WindowId_);
+
+        if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == server_window_id) {
+            LOG(LOG_ERR, "ClientSystemCommandPDU::map_window_id: Failed to map window id. ClientWindowId=0x%X", this->WindowId_);
+            throw ERR_UNEXPECTED;
+        }
+
+        if (server_window_id == this->WindowId_) {
+            return false;
+        }
+
+        this->WindowId_ = server_window_id;
+
+        return true;
     }
 
 private:
@@ -2026,12 +2090,12 @@ const char* get_RAIL_Message_name(uint32_t Message) {
 }
 
 class ClientNotifyEventPDU {
-    uint32_t WindowId_     = 0;
-    uint32_t NotifyIconId_ = 0;
-    uint32_t Message_      = 0;
+    mutable uint32_t WindowId_     = 0;
+            uint32_t NotifyIconId_ = 0;
+            uint32_t Message_      = 0;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->WindowId_);
         stream.out_uint16_le(this->NotifyIconId_);
         stream.out_uint16_le(this->Message_);
@@ -2054,6 +2118,8 @@ public:
         this->Message_      = stream.in_uint32_le();
     }
 
+    static uint16_t orderType() { return TS_RAIL_ORDER_NOTIFY_EVENT; }
+
     uint32_t WindowId() const { return this->WindowId_; }
 
     uint32_t NotifyIconId() const { return this->NotifyIconId_; }
@@ -2062,6 +2128,23 @@ public:
 
     static size_t size() {
         return 12;  // WindowId(4) + NotifyIconId(4) + Message(4)
+    }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        const uint32_t server_window_id = rail_window_id_manager.get_server_window_id(this->WindowId_);
+
+        if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == server_window_id) {
+            LOG(LOG_ERR, "ClientNotifyEventPDU::map_window_id: Failed to map window id. ClientWindowId=0x%X", this->WindowId_);
+            throw ERR_UNEXPECTED;
+        }
+
+        if (server_window_id == this->WindowId_) {
+            return false;
+        }
+
+        this->WindowId_ = server_window_id;
+
+        return true;
     }
 
 private:
@@ -2115,10 +2198,10 @@ public:
 //  associated window on the server that requires needs an Application ID.
 
 class ClientGetApplicationIDPDU {
-    uint32_t WindowId_ = 0;
+    mutable uint32_t WindowId_ = 0;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->WindowId_);
     }
 
@@ -2137,11 +2220,30 @@ public:
         this->WindowId_ = stream.in_uint32_le();
     }
 
+    static uint16_t orderType() { return TS_RAIL_ORDER_GET_APPID_REQ; }
+
     static size_t size() {
         return 4;   // WindowId(4)
     }
 
     uint32_t WindowId() const { return this->WindowId_; }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        const uint32_t server_window_id = rail_window_id_manager.get_server_window_id(this->WindowId_);
+
+        if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == server_window_id) {
+            LOG(LOG_ERR, "ClientGetApplicationIDPDU::map_window_id: Failed to map window id. ClientWindowId=0x%X", this->WindowId_);
+            throw ERR_UNEXPECTED;
+        }
+
+        if (server_window_id == this->WindowId_) {
+            return false;
+        }
+
+        this->WindowId_ = server_window_id;
+
+        return true;
+    }
 
 private:
     size_t str(char * buffer, size_t size) const {
@@ -2222,18 +2324,18 @@ public:
 //  to which the window can be resized.
 
 class ServerMinMaxInfoPDU {
-    uint32_t WindowId_       = 0;
-    uint16_t MaxWidth_       = 0;
-    uint16_t MaxHeight_      = 0;
-    uint16_t MaxPosX_        = 0;
-    uint16_t MaxPosY_        = 0;
-    uint16_t MinTrackWidth_  = 0;
-    uint16_t MinTrackHeight_ = 0;
-    uint16_t MaxTrackWidth_  = 0;
-    uint16_t MaxTrackHeight_ = 0;
+    mutable uint32_t WindowId_       = 0;
+            uint16_t MaxWidth_       = 0;
+            uint16_t MaxHeight_      = 0;
+            uint16_t MaxPosX_        = 0;
+            uint16_t MaxPosY_        = 0;
+            uint16_t MinTrackWidth_  = 0;
+            uint16_t MinTrackHeight_ = 0;
+            uint16_t MaxTrackWidth_  = 0;
+            uint16_t MaxTrackHeight_ = 0;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->WindowId_);
         stream.out_uint16_le(this->MaxWidth_);
         stream.out_uint16_le(this->MaxHeight_);
@@ -2271,6 +2373,8 @@ public:
         this->MaxTrackWidth_  = stream.in_uint16_le();
         this->MaxTrackHeight_ = stream.in_uint16_le();
     }
+
+    static uint16_t orderType() { return TS_RAIL_ORDER_MINMAXINFO; }
 
     static size_t size() {
         return 20;  // WindowId(4) + MaxWidth(2) + MaxHeight(2) +
@@ -2314,6 +2418,20 @@ public:
     uint16_t MaxTrackHeight() const { return this->MaxTrackHeight_; }
 
     void MaxTrackHeight(uint16_t MaxTrackHeight_) { this->MaxTrackHeight_ = MaxTrackHeight_; }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        const uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->WindowId_);
+
+        REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+
+        if (client_window_id == this->WindowId_) {
+            return false;
+        }
+
+        this->WindowId_ = client_window_id;
+
+        return true;
+    }
 
 private:
     inline size_t str(char * buffer, size_t size) const {
@@ -2605,14 +2723,14 @@ const char* get_RAIL_MoveSizeType_name(uint16_t MoveSizeType) {
 //  moved or resized window's top-left corner.
 
 class ServerMoveSizeStartOrEndPDU {
-    uint32_t WindowId_        = 0;
-    uint16_t IsMoveSizeStart_ = 0;
-    uint16_t MoveSizeType_    = 0;
-    uint16_t PosXOrTopLeftX_  = 0;
-    uint16_t PosYOrTopLeftY_  = 0;
+    mutable uint32_t WindowId_        = 0;
+            uint16_t IsMoveSizeStart_ = 0;
+            uint16_t MoveSizeType_    = 0;
+            uint16_t PosXOrTopLeftX_  = 0;
+            uint16_t PosYOrTopLeftY_  = 0;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->WindowId_);
         stream.out_uint16_le(this->IsMoveSizeStart_);
         stream.out_uint16_le(this->MoveSizeType_);
@@ -2642,6 +2760,8 @@ public:
         this->PosYOrTopLeftY_  = stream.in_uint16_le();
     }
 
+    static uint16_t orderType() { return TS_RAIL_ORDER_LOCALMOVESIZE; }
+
     static size_t size() {
         return 12;  // WindowId(4) + IsMoveSizeStart(2) + MoveSizeType(2) +
                     //  PosX/TopLeftX(2) + PosY/TopLeftY(2)
@@ -2666,6 +2786,20 @@ public:
     uint16_t PosYOrTopLeftY() const { return this->PosYOrTopLeftY_; }
 
     void PosYOrTopLeftY(uint16_t PosYOrTopLeftY_) { this->PosYOrTopLeftY_ = PosYOrTopLeftY_; }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        const uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->WindowId_);
+
+        REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+
+        if (client_window_id == this->WindowId_) {
+            return false;
+        }
+
+        this->WindowId_ = client_window_id;
+
+        return true;
+    }
 
 private:
     inline size_t str(char * buffer, size_t size) const {
@@ -2734,14 +2868,14 @@ public:
 //  bottom-right corner of the window's new position.
 
 class ClientWindowMovePDU {
-    uint32_t WindowId_ = 0;
-    uint16_t Left_     = 0;
-    uint16_t Top_      = 0;
-    uint16_t Right_    = 0;
-    uint16_t Bottom_   = 0;
+    mutable uint32_t WindowId_ = 0;
+            uint16_t Left_     = 0;
+            uint16_t Top_      = 0;
+            uint16_t Right_    = 0;
+            uint16_t Bottom_   = 0;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->WindowId_);
         stream.out_uint16_le(this->Left_);
         stream.out_uint16_le(this->Top_);
@@ -2769,6 +2903,8 @@ public:
         this->Bottom_   = stream.in_uint16_le();
     }
 
+    static uint16_t orderType() { return TS_RAIL_ORDER_WINDOWMOVE; }
+
     uint32_t WindowId() const { return this->WindowId_; }
 
     uint16_t Left() const { return this->Left_; }
@@ -2782,6 +2918,23 @@ public:
     static size_t size() {
         return 12;  // WindowId(4) + Left(2) + Top(2) +
                     //  Right(2) + Bottom(2)
+    }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        const uint32_t server_window_id = rail_window_id_manager.get_server_window_id(this->WindowId_);
+
+        if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == server_window_id) {
+            LOG(LOG_ERR, "ClientWindowMovePDU::map_window_id: Failed to map window id. ClientWindowId=0x%X", this->WindowId_);
+            throw ERR_UNEXPECTED;
+        }
+
+        if (server_window_id == this->WindowId_) {
+            return false;
+        }
+
+        this->WindowId_ = server_window_id;
+
+        return true;
     }
 
 private:
@@ -2848,12 +3001,12 @@ public:
 //  grouping windows.
 
 class ServerGetApplicationIDResponsePDU {
-    uint32_t WindowId_ = 0;
+    mutable uint32_t WindowId_ = 0;
 
     std::string application_id;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->WindowId_);
 
         uint8_t ApplicationId_unicode_data[512];
@@ -2889,6 +3042,8 @@ public:
             length_of_ApplicationId_utf8_string);
     }
 
+    static uint16_t orderType() { return TS_RAIL_ORDER_GET_APPID_RESP; }
+
     uint32_t WindowId() const { return this->WindowId_; }
 
     void WindowId(uint32_t WindowId_) { this->WindowId_ = WindowId_; }
@@ -2899,6 +3054,20 @@ public:
 
     static size_t size() {
         return 516; // WindowId(4) + ApplicationId(512)
+    }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        const uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->WindowId_);
+
+        REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+
+        if (client_window_id == this->WindowId_) {
+            return false;
+        }
+
+        this->WindowId_ = client_window_id;
+
+        return true;
     }
 
     size_t str(char * buffer, size_t size) const {
@@ -3026,7 +3195,7 @@ class LanguageBarInformationPDU {
     uint32_t LanguageBarStatus = 0;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->LanguageBarStatus);
     }
 
@@ -3121,20 +3290,20 @@ public:
 //  component.
 
 class GloballyUniqueIdentifier {
-    uint32_t codecGUID1;
-    uint16_t codecGUID2;
-    uint16_t codecGUID3;
-    uint8_t  codecGUID4;
-    uint8_t  codecGUID5;
-    uint8_t  codecGUID6;
-    uint8_t  codecGUID7;
-    uint8_t  codecGUID8;
-    uint8_t  codecGUID9;
-    uint8_t  codecGUID10;
-    uint8_t  codecGUID11;
+    uint32_t codecGUID1  = 0;
+    uint16_t codecGUID2  = 0;
+    uint16_t codecGUID3  = 0;
+    uint8_t  codecGUID4  = 0;
+    uint8_t  codecGUID5  = 0;
+    uint8_t  codecGUID6  = 0;
+    uint8_t  codecGUID7  = 0;
+    uint8_t  codecGUID8  = 0;
+    uint8_t  codecGUID9  = 0;
+    uint8_t  codecGUID10 = 0;
+    uint8_t  codecGUID11 = 0;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->codecGUID1);
         stream.out_uint16_le(this->codecGUID2);
         stream.out_uint16_le(this->codecGUID3);
@@ -3363,17 +3532,17 @@ enum {
 //  identifiers, see [MSFT-DIL].
 
 class LanguageProfileInformationPDU {
-    uint32_t ProfileType;
+    uint32_t ProfileType = 0;
 
-    uint16_t LanguageID;
+    uint16_t LanguageID = 0;
 
     GloballyUniqueIdentifier LanguageProfileCLSID;
     GloballyUniqueIdentifier ProfileGUID;
 
-    uint32_t KeyboardLayout;
+    uint32_t KeyboardLayout = 0;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->ProfileType);
         stream.out_uint16_le(this->LanguageID);
 
@@ -3610,13 +3779,13 @@ enum {
 };
 
 class CompartmentStatusInformationPDU {
-    uint32_t ImeState;
-    uint32_t ImeConvMode;
-    uint32_t ImeSentenceMode;
-    uint32_t KANAMode;
+    uint32_t ImeState        = 0;
+    uint32_t ImeConvMode     = 0;
+    uint32_t ImeSentenceMode = 0;
+    uint32_t KANAMode        = 0;
 
 public:
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->ImeState);
         stream.out_uint32_le(this->ImeConvMode);
         stream.out_uint32_le(this->ImeSentenceMode);
@@ -3694,11 +3863,11 @@ public:
 //  activation of RAIL windows as specified in section 3.2.5.2.9.2.
 
 class ServerZOrderSyncInformationPDU {
-    uint32_t WindowIdMarker;
+    mutable uint32_t WindowIdMarker_ = 0;
 
 public:
-    void emit(OutStream & stream) {
-        stream.out_uint32_le(this->WindowIdMarker);
+    void emit(OutStream & stream) const {
+        stream.out_uint32_le(this->WindowIdMarker_);
     }
 
     void receive(InStream & stream) {
@@ -3713,11 +3882,31 @@ public:
             }
         }
 
-        this->WindowIdMarker = stream.in_uint32_le();
+        this->WindowIdMarker_ = stream.in_uint32_le();
     }
+
+    uint32_t WindowId() const { return this->WindowIdMarker_; }
+
+    uint32_t WindowIdMarker() const { return this->WindowIdMarker_; }
+
+    static uint16_t orderType() { return TS_RAIL_ORDER_ZORDER_SYNC; }
 
     static size_t size() {
         return 4;   // WindowIdMarker(4)
+    }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        const uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->WindowIdMarker_);
+
+        REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+
+        if (client_window_id == this->WindowIdMarker_) {
+            return false;
+        }
+
+        this->WindowIdMarker_ = client_window_id;
+
+        return true;
     }
 
     size_t str(char * buffer, size_t size) const {
@@ -3727,7 +3916,7 @@ public:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowIdMarker=0x%X", this->WindowIdMarker);
+            "WindowIdMarker=0x%X", this->WindowIdMarker_);
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
@@ -3782,12 +3971,12 @@ public:
 //  +-------+---------------------------------+
 
 class WindowCloakStateChangePDU {
-    uint32_t WindowId;
-    uint8_t  Cloaked;
+    mutable uint32_t WindowId_ = 0;
+    uint8_t  Cloaked   = 0;
 
 public:
-    void emit(OutStream & stream) {
-        stream.out_uint32_le(this->WindowId);
+    void emit(OutStream & stream) const {
+        stream.out_uint32_le(this->WindowId_);
         stream.out_uint8(this->Cloaked);
     }
 
@@ -3803,12 +3992,33 @@ public:
             }
         }
 
-        this->WindowId = stream.in_uint32_le();
-        this->Cloaked  = stream.in_uint8();
+        this->WindowId_ = stream.in_uint32_le();
+        this->Cloaked   = stream.in_uint8();
     }
+
+    static uint16_t orderType() { return TS_RAIL_ORDER_CLOAK; }
 
     static size_t size() {
         return 5;   // WindowId(4) + Cloaked(1)
+    }
+
+    uint32_t WindowId() const { return this->WindowId_; }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        const uint32_t server_window_id = rail_window_id_manager.get_server_window_id(this->WindowId_);
+
+        if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == server_window_id) {
+            LOG(LOG_ERR, "WindowCloakStateChangePDU::map_window_id: Failed to map window id. ClientWindowId=0x%X", this->WindowId_);
+            throw ERR_UNEXPECTED;
+        }
+
+        if (server_window_id == this->WindowId_) {
+            return false;
+        }
+
+        this->WindowId_ = server_window_id;
+
+        return true;
     }
 
     size_t str(char * buffer, size_t size) const {
@@ -3818,7 +4028,7 @@ public:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=0x%X Cloaked=0x%X", this->WindowId, this->Cloaked);
+            "WindowId=0x%X Cloaked=0x%X", this->WindowId_, this->Cloaked);
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;

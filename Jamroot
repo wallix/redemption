@@ -40,7 +40,6 @@ explicit
     install-bin
     install-lib
     install-share
-    install-share
     install-etc
     install-etc-themes
     install-etc-ppocr
@@ -808,6 +807,7 @@ test-canonical core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp ;
 ## @{
 test-canonical mod/rdp/channels/base_channel.hpp ;
 test-canonical mod/rdp/channels/rdpdr_file_system_drive_manager.hpp ;
+test-canonical mod/rdp/channels/rail_window_id_manager.hpp ;
 test-canonical mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp ;
 test-canonical mod/rdp/channels/sespro_channel.hpp ;
 test-canonical mod/rdp/channels/sespro_clipboard_based_launcher.hpp ;
