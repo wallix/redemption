@@ -667,8 +667,6 @@ struct ssh_session_struct {
 
         /* options */
         delete this->auth_auto_state;
-        free(this->serverbanner);
-        free(this->clientbanner);
         free(this->opts.bindaddr);
         free(this->opts.username);
         free(this->opts.host);
@@ -1444,8 +1442,6 @@ struct SshServerSession : public ssh_session_struct
      * @brief Sends the "tcpip-forward" global request to ask the server to begin
      *        listening for inbound connections.
      *
-     * @param[in]  session  The ssh session to send the request.
-     *
      * @param[in]  address  The address to bind to on the server. Pass nullptr to bind
      *                      to all available addresses on all protocol families
      *                      supported by the server.
@@ -1524,8 +1520,6 @@ struct SshServerSession : public ssh_session_struct
     /**
      * @brief Sends the "cancel-tcpip-forward" global request to ask the server to
      *        cancel the tcpip-forward request.
-     *
-     * @param[in]  session  The ssh session to send the request.
      *
      * @param[in]  address  The bound address on the server.
      *
@@ -2636,6 +2630,12 @@ struct SshServerSession : public ssh_session_struct
                 this->socket->close();
                 this->session_state = SSH_SESSION_STATE_ERROR;
                 return;
+            case SSH_CHANNEL_REQ_STATE_PENDING:
+            CPP_FALLTHROUGH;
+            case SSH_CHANNEL_REQ_STATE_ACCEPTED:
+            CPP_FALLTHROUGH;
+            case SSH_CHANNEL_REQ_STATE_DENIED:
+            CPP_FALLTHROUGH;
             default:
                 ssh_set_error(error, SSH_FATAL,"Invalid state %d",this->session_state);
         }
@@ -2874,11 +2874,6 @@ struct SshServerSession : public ssh_session_struct
                 struct ssh_crypto_struct *crypto = this->next_crypto
                                                  ? this->next_crypto
                                                  : this->current_crypto;
-
-                if (crypto->secret_hash == nullptr){
-                    ssh_set_error(this->error,SSH_FATAL,"Missing secret_hash");
-                    return -1;
-                }
 
                 unsigned char hash[SHA_DIGEST_LENGTH] = {0};
                 SslSha1 sha1;
@@ -3168,11 +3163,6 @@ struct SshServerSession : public ssh_session_struct
                                                  ? this->next_crypto
                                                  : this->current_crypto;
 
-                if (crypto->secret_hash == nullptr){
-                    ssh_set_error(this->error,SSH_FATAL,"Missing secret_hash");
-                    return -1;
-                }
-
                 unsigned char hash[SHA_DIGEST_LENGTH] = {0};
                 SslSha1 sha1;
                 sha1.update(crypto->secret_hash, crypto->digest_len);
@@ -3397,10 +3387,6 @@ struct SshServerSession : public ssh_session_struct
                                                  ? this->next_crypto
                                                  : this->current_crypto;
 
-                if (crypto->secret_hash == nullptr){
-                    ssh_set_error(this->error,SSH_FATAL,"Missing secret_hash");
-                    return SSH_ERROR;
-                }
                 unsigned char hash[SHA_DIGEST_LENGTH] = {0};
                 SslSha1 sha1;
                 sha1.update(crypto->secret_hash, crypto->digest_len);
@@ -3630,14 +3616,6 @@ struct SshServerSession : public ssh_session_struct
                 struct ssh_crypto_struct *crypto = this->next_crypto
                                                  ? this->next_crypto
                                                  : this->current_crypto;
-
-                if (crypto->secret_hash == nullptr){
-                    ssh_set_error(this->error, SSH_FATAL, "Missing secret_hash");
-                    this->out_buffer->buffer_reinit();
-                    syslog(LOG_INFO, "%s --- error", __FUNCTION__);
-                    this->session_state = SSH_SESSION_STATE_ERROR;
-                    return SSH_ERROR;
-                }
 
                 unsigned char hash[SHA_DIGEST_LENGTH] = {0};
                 SslSha1 sha1;
@@ -5576,6 +5554,12 @@ struct SshServerSession : public ssh_session_struct
             CPP_FALLTHROUGH;
         case SSH_SESSION_STATE_INITIAL_KEX:
             break;
+        case SSH_SESSION_STATE_NONE:
+        CPP_FALLTHROUGH;
+        case SSH_SESSION_STATE_CONNECTING:
+        CPP_FALLTHROUGH;
+        case SSH_SESSION_STATE_SOCKET_CONNECTED
+        CPP_FALLTHROUGH;
         default:
             ssh_set_error(this->error,  SSH_FATAL,"SSH_KEXINIT received in wrong state");
             this->session_state = SSH_SESSION_STATE_ERROR;
@@ -6979,8 +6963,6 @@ struct SshClientSession : public ssh_session_struct
     /**
      * @brief Try to authenticate through the "none" method.
      *
-     * @param[in] session   The ssh session to use.
-     *
      * @returns void
      *
      * The answer will be provided later through a callback
@@ -7128,6 +7110,12 @@ struct SshClientSession : public ssh_session_struct
             }
         }
         break;
+        case SSH_CHANNEL_REQ_STATE_PENDING:
+        CPP_FALLTHROUGH;
+        case SSH_CHANNEL_REQ_STATE_ACCEPTED:
+        CPP_FALLTHROUGH;
+        case SSH_CHANNEL_REQ_STATE_DENIED:
+        CPP_FALLTHROUGH;
         default:
         break;
         }
@@ -7183,6 +7171,12 @@ struct SshClientSession : public ssh_session_struct
             }
         }
         break;
+        case SSH_CHANNEL_REQ_STATE_PENDING:
+        CPP_FALLTHROUGH;
+        case SSH_CHANNEL_REQ_STATE_ACCEPTED:
+        CPP_FALLTHROUGH;
+        case SSH_CHANNEL_REQ_STATE_DENIED:
+        CPP_FALLTHROUGH;
         default:
             break;
         }
@@ -7251,6 +7245,12 @@ struct SshClientSession : public ssh_session_struct
             return channel->channel_request(this);
         }
         break;
+        case SSH_CHANNEL_REQ_STATE_PENDING:
+        CPP_FALLTHROUGH;
+        case SSH_CHANNEL_REQ_STATE_ACCEPTED:
+        CPP_FALLTHROUGH;
+        case SSH_CHANNEL_REQ_STATE_DENIED:
+        CPP_FALLTHROUGH;
         default:
             break;
         }
