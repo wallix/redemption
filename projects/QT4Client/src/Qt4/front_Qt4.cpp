@@ -332,42 +332,32 @@ void Front_Qt::set_pointer(Pointer const & cursor) {
         const uchar * mask_data = image_mask.bits();
 
         uint8_t data[Pointer::DATA_SIZE*4] = {0x00};
+
         if (!null_pointer) {
             for (int i = 0; i < Pointer::DATA_SIZE; i += 4) {
-                if (data_data[i] == 0x00 && mask_data[i] == 0x00) {
-                    data[i  ] = 0x00;
-                    data[i+1] = 0x00;
-                    data[i+2] = 0x00;
-                    data[i+3] = 0x00;
-                    //std::cout << "black" <<  std::endl;
-                }
-                if (data_data[i] == 0x00 && mask_data[i] == 0xff) {
-                    data[i  ] = 0x00;
-                    data[i+1] = 0x00;
-                    data[i+2] = 0x00;
-                    data[i+3] = 0xFF;
-                    //std::cout << "white" <<  std::endl;
-                }
-                if (data_data[i] == 0xff && mask_data[i] == 0x00) {
-                    data[i  ] = 0xFF;
-                    data[i+1] = 0xFF;
-                    data[i+2] = 0xFF;
-                    data[i+3] = 0x00;
-                    //std::cout << "trans" <<  std::endl;
-                }
-                if (data_data[i] == 0xff && mask_data[i] == 0xff) {
-                    data[i  ] = 0xFF;
-                    data[i+1] = 0xFF;
-                    data[i+2] = 0xFF;
-                    data[i+3] = 0xFF;
-                    //std::cout << "invert" <<  std::endl;
+                uint16_t pixel((data_data[i] << 8) + mask_data[i]);
+
+                switch (pixel) {
+                    case 0x00FF:  // black
+                        data[i  ] = 0x00;
+                        data[i+1] = 0x00;
+                        data[i+2] = 0x00;
+                        data[i+3] = 0xFF;
+                        break;
+
+                    case 0xFFFF:  // white
+                        data[i  ] = 0xFF;
+                        data[i+1] = 0xFF;
+                        data[i+2] = 0xFF;
+                        data[i+3] = 0xFF;
+                        break;
+                    default: // transparent
+                        break;
                 }
             }
         }
 
-        //QRect trect(10, 10, cursor.width, cursor.height);
         QImage image(static_cast<uchar *>(data), cursor.width, cursor.height,QImage::Format_ARGB32_Premultiplied);
-        //this->_screen[0]->paintCache().drawImage(trect, image);
         this->_mouse_data.cursor_image = image;
 
     } else {
@@ -534,7 +524,7 @@ bool Front_Qt::connect() {
             ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
             ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned, std::ratio<1, 100>>(6));
             LCGRandom gen(0);
-            CryptoContext cctx(gen, ini);
+            CryptoContext cctx(ini);
             bool enable_rt(true);
             auth_api * authentifier(nullptr);
             struct timeval time;
@@ -549,6 +539,7 @@ bool Front_Qt::connect() {
                                         , authentifier
                                         , ini
                                         , cctx
+                                        , gen
                                         , false
                                         , this->_delta_time
                                         );
@@ -2820,6 +2811,12 @@ void Front_Qt::end_update() {
     //    LOG(LOG_INFO, "end_update");
     //    LOG(LOG_INFO, "========================================\n");
     //}
+    if (this->_record && !this->_replay) {
+        this->_graph_capture->end_update();
+        struct timeval time;
+        gettimeofday(&time, nullptr);
+        this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
+    }
 }
 
 
