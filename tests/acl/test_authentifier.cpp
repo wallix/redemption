@@ -15,7 +15,7 @@
 
   Product name: redemption, a FLOSS RDP proxy
   Copyright (C) Wallix 2013
-  Author(s): Christophe Grosjean, Meng Tan
+  Author(s): Christophe Grosjean, Meng Tan, Jennifer Inthavong
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -54,12 +54,13 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
     char outdata[] =
         // Time: 10011
-           "\x00\x00\x01\x85"
+           "\x00\x00\x01\xA4"
            "login\nASK\n"
            "ip_client\n!\n"
            "ip_target\n!\n"
            "target_device\nASK\n"
            "target_login\nASK\n"
+           "session_log_redirection\n!False\n"
            "bpp\n!24\n"
            "height\n!600\n"
            "width\n!800\n"
@@ -77,11 +78,9 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
            "accept_message\n!False\n"
            "display_message\n!False\n"
            "real_target_device\n!\n"
-
         // Time: 10043
            "\x00\x00\x00\x0E"
             "keepalive\nASK\n"
-
     ;
 
 //    printf("len=%x\n",
@@ -149,12 +148,13 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     char outdata[] =
         // Time 10011
-           "\x00\x00\x01\x85"
+           "\x00\x00\x01\xA4"
            "login\nASK\n"
            "ip_client\n!\n"
            "ip_target\n!\n"
            "target_device\nASK\n"
            "target_login\nASK\n"
+           "session_log_redirection\n!False\n"
            "bpp\n!24\n"
            "height\n!600\n"
            "width\n!800\n"
@@ -179,7 +179,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
            "\x00\x00\x00\x0E"
             "keepalive\nASK\n"
-
     ;
 
 //    printf("len=%x\n",
@@ -266,12 +265,13 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     char outdata[] =
         // Time 10011
-        "\x00\x00\x01\x85"
+        "\x00\x00\x01\xA4"
         "login\nASK\n"
         "ip_client\n!\n"
         "ip_target\n!\n"
         "target_device\nASK\n"
         "target_login\nASK\n"
+        "session_log_redirection\n!False\n"
         "bpp\n!24\n"
         "height\n!600\n"
         "width\n!800\n"
