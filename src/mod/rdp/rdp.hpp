@@ -1396,7 +1396,7 @@ protected:
             this->client_execute_working_dir.c_str();
         remote_programs_virtual_channel_params.client_execute_arguments        =
             this->client_execute_arguments.c_str();
-        remote_programs_virtual_channel_params.remote_programs_session_manager =
+        remote_programs_virtual_channel_params.rail_session_manager            =
             this->remote_programs_session_manager.get();
 
         return remote_programs_virtual_channel_params;

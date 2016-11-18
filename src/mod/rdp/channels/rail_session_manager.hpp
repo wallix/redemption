@@ -28,6 +28,7 @@
 #include "gdi/graphic_api.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/rdp_log.hpp"
+#include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "utils/protect_graphics.hpp"
 #include "utils/rect.hpp"
 #include "utils/theme.hpp"
@@ -35,7 +36,9 @@
 
 #include <set>
 
-class RemoteProgramsSessionManager : public gdi::GraphicBase<RemoteProgramsSessionManager> {
+class RemoteProgramsSessionManager : public gdi::GraphicBase<RemoteProgramsSessionManager>,
+    public RemoteProgramsWindowIdManager {
+
 private:
     FrontAPI & front;
     mod_api  & mod;
@@ -50,7 +53,7 @@ private:
 
     uint32_t verbose;
 
-    std::set<uint32_t> blocked_windows;
+    uint32_t blocked_server_window_id = 0x00000000;
 
     bool graphics_update_disabled = false;
 
@@ -91,8 +94,8 @@ public:
     }
 
 public:
-    bool is_window_blocked(uint32_t window_id) {
-        return (this->blocked_windows.find(window_id) != this->blocked_windows.end());
+    bool is_server_only_window(uint32_t window_id) const {
+        return (this->blocked_server_window_id == window_id);
     }
 
     void set_drawable(gdi::GraphicApi * drawable, int bpp) {
@@ -183,7 +186,8 @@ private:
 
     void draw_impl(RDP::RAIL::WindowIcon const & order) {
         if (this->drawable) {
-            if (!this->is_window_blocked(order.header.WindowId())) {
+            if (order.header.WindowId() != this->blocked_server_window_id) {
+                order.map_window_id(*this);
                 this->drawable->draw(order);
             }
             else {
@@ -194,7 +198,8 @@ private:
 
     void draw_impl(RDP::RAIL::CachedIcon const & order) {
         if (this->drawable) {
-            if (!this->is_window_blocked(order.header.WindowId())) {
+            if (order.header.WindowId() != this->blocked_server_window_id) {
+                order.map_window_id(*this);
                 this->drawable->draw(order);
             }
             else {
@@ -205,10 +210,11 @@ private:
 
     void draw_impl(RDP::RAIL::DeletedWindow const & order) {
         const uint32_t window_id         = order.header.WindowId();
-        const bool     window_is_blocked = this->is_window_blocked(window_id);
+        const bool     window_is_blocked = (window_id == this->blocked_server_window_id);
 
         if (this->drawable) {
             if (!window_is_blocked) {
+                order.map_window_id(*this);
                 this->drawable->draw(order);
             }
             else {
@@ -217,7 +223,7 @@ private:
         }
 
         if (window_is_blocked) {
-            this->blocked_windows.erase(window_id);
+            this->unregister_server_window(window_id);
 
             LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(DeletedWindow): Remove window 0x%X from blocked windows list.", window_id);
         }
@@ -226,12 +232,12 @@ private:
     void draw_impl(RDP::RAIL::NewOrExistingWindow const & order) {
         const char *   title_info        = order.TitleInfo();
         const uint32_t window_id         = order.header.WindowId();
-              bool     window_is_blocked = this->is_window_blocked(window_id);
+              bool     window_is_blocked = (window_id == this->blocked_server_window_id);
+        const bool     window_is_new     = (RDP::RAIL::WINDOW_ORDER_STATE_NEW & order.header.FieldsPresentFlags());
 
         const char session_probe_window_title[] = "SesProbe";
 
-        if (this->graphics_update_disabled &&
-            (RDP::RAIL::WINDOW_ORDER_STATE_NEW & order.header.FieldsPresentFlags())) {
+        if (this->graphics_update_disabled && window_is_new) {
             REDASSERT(!window_is_blocked);
 
             const size_t title_info_length = ::strlen(title_info);
@@ -239,11 +245,13 @@ private:
             if ((title_info_length >= sizeof(session_probe_window_title) - 1) &&
                 !::strcmp(title_info + (title_info_length - sizeof(session_probe_window_title) + 1), session_probe_window_title)) {
 
+                REDASSERT(!this->blocked_server_window_id);
+
                 {
                     RAILPDUHeader rpduh;
 
                     ClientSystemCommandPDU cscpdu;
-                    cscpdu.WindowId(window_id);
+                    cscpdu.WindowId(this->get_client_window_id_ex(window_id));
                     cscpdu.Command(SC_MINIMIZE);
 
                     StaticOutStream<1024> out_s;
@@ -267,21 +275,20 @@ private:
 
                 LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(NewOrExistingWindow): Window 0x%X is minimized.", window_id);
 
-                this->blocked_windows.insert(window_id);
-
-                REDASSERT(this->is_window_blocked(window_id));
+                this->blocked_server_window_id = window_id;
 
                 window_is_blocked = true;
 
-                LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(NewOrExistingWindow): Added window 0x%X to blocked windows list.", window_id);
+                LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(NewOrExistingWindow): Window 0x%X is blocked.", window_id);
 
-                this->splash_screen_create(window_id);
+                this->splash_screen_create();
                 this->splash_screen_draw();
             }
         }
 
         if (this->drawable) {
             if (!window_is_blocked) {
+                order.map_window_id(*this);
                 this->drawable->draw(order);
             }
             else {
@@ -290,10 +297,46 @@ private:
         }
     }
 
-    void splash_screen_create(uint32_t window_id) {
+    void draw_impl(RDP::RAIL::NewOrExistingNotificationIcons const & order) {
+        if (this->drawable) {
+            if (order.header.WindowId() != this->blocked_server_window_id) {
+                order.map_window_id(*this);
+                this->drawable->draw(order);
+            }
+            else {
+                LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(NewOrExistingNotificationIcons): Order bloacked.");
+            }
+        }
+    }
+
+    void draw_impl(RDP::RAIL::DeletedNotificationIcons const & order) {
+        if (this->drawable) {
+            if (order.header.WindowId() != this->blocked_server_window_id) {
+                order.map_window_id(*this);
+                this->drawable->draw(order);
+            }
+            else {
+                LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(DeletedNotificationIcons): Order bloacked.");
+            }
+        }
+    }
+
+    void draw_impl(RDP::RAIL::ActivelyMonitoredDesktop const & order) {
+        if (this->drawable) {
+            if (order.ActiveWindowId() != this->blocked_server_window_id) {
+                order.map_window_id(*this);
+                this->drawable->draw(order);
+            }
+            else {
+                LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(DeletedNotificationIcons): Order bloacked.");
+            }
+        }
+    }
+
+    void splash_screen_create() {
         REDASSERT(!this->splash_screen_window_id);
 
-        this->splash_screen_window_id = window_id;
+        this->splash_screen_window_id = this->register_client_window();
 
         this->protected_rect = this->splash_screen_rect;
 
@@ -341,7 +384,7 @@ private:
                 LOG(LOG_INFO, "RemoteProgramsSessionManager::splash_screen_create: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
             }
 
-            this->front.draw(order);
+            this->drawable->draw(order);
         }
     }
 
@@ -366,6 +409,8 @@ private:
 
             this->front.draw(order);
         }
+
+        this->mod.rdp_input_invalidate(this->protected_rect);
 
         this->protected_rect = Rect();
 

@@ -40,7 +40,7 @@ private:
     std::string param_client_execute_working_dir;
     std::string param_client_execute_arguments;
 
-    RemoteProgramsSessionManager * param_remote_programs_session_manager;
+    RemoteProgramsSessionManager * param_rail_session_manager;
 
     bool client_execute_pdu_sent = false;
 
@@ -52,7 +52,7 @@ public:
         const char* client_execute_working_dir;
         const char* client_execute_arguments;
 
-        RemoteProgramsSessionManager * remote_programs_session_manager;
+        RemoteProgramsSessionManager * rail_session_manager;
     };
 
     RemoteProgramsVirtualChannel(
@@ -68,13 +68,76 @@ public:
     , param_client_execute_exe_or_file(params.client_execute_exe_or_file)
     , param_client_execute_working_dir(params.client_execute_working_dir)
     , param_client_execute_arguments(params.client_execute_arguments)
-    , param_remote_programs_session_manager(params.remote_programs_session_manager) {}
+    , param_rail_session_manager(params.rail_session_manager) {}
 
 protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const
         override
     {
         return "RAIL_LIMIT";
+    }
+
+private:
+    template<class PDU>
+    bool process_client_windowing_pdu(uint32_t flags, InStream& chunk) {
+        PDU pdu;
+
+        pdu.receive(chunk);
+
+        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+            pdu.log(LOG_INFO);
+        }
+
+        if (this->param_rail_session_manager->is_client_only_window(pdu.WindowId())) {
+            return false;
+        }
+
+        if (pdu.map_window_id(*this->param_rail_session_manager)) {
+            StaticOutStream<65536> out_s;
+            RAILPDUHeader          header;
+
+            header.emit_begin(out_s, PDU::orderType());
+            pdu.emit(out_s);
+            header.emit_end();
+
+            this->send_message_to_server(out_s.get_offset(), flags, out_s.get_data(),
+                out_s.get_offset());
+
+            return false;
+        }
+
+        return true;
+    }
+
+    template<class PDU>
+    bool process_server_windowing_pdu(uint32_t flags, InStream& chunk) {
+        PDU pdu;
+
+        pdu.receive(chunk);
+
+        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+            pdu.log(LOG_INFO);
+        }
+
+        if (this->param_rail_session_manager->is_server_only_window(pdu.WindowId())) {
+            return false;
+        }
+
+        if (pdu.map_window_id(*this->param_rail_session_manager)) {
+            StaticOutStream<65536> out_s;
+            RAILPDUHeader          header;
+
+            header.emit_begin(out_s, PDU::orderType());
+            pdu.emit(out_s);
+            header.emit_end();
+
+            this->send_message_to_client(out_s.get_offset(), flags, out_s.get_data(),
+                out_s.get_offset());
+
+            return false;
+        }
+
+        return true;
     }
 
     bool process_client_activate_pdu(uint32_t total_length,
@@ -94,15 +157,7 @@ protected:
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
-        ClientActivatePDU capdu;
-
-        capdu.receive(chunk);
-
-        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-            capdu.log(LOG_INFO);
-        }
-
-        return !this->param_remote_programs_session_manager->is_window_blocked(capdu.WindowId());
+        return this->process_client_windowing_pdu<ClientActivatePDU>(flags, chunk);
     }
 
     bool process_client_compartment_status_information_pdu(uint32_t total_length,
@@ -178,15 +233,7 @@ protected:
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
-        ClientGetApplicationIDPDU cgaipdu;
-
-        cgaipdu.receive(chunk);
-
-        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-            cgaipdu.log(LOG_INFO);
-        }
-
-        return true;
+        return this->process_client_windowing_pdu<ClientGetApplicationIDPDU>(flags, chunk);
     }
 
     bool process_client_handshake_pdu(uint32_t total_length,
@@ -318,15 +365,7 @@ protected:
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
-        ClientNotifyEventPDU cnepdu;
-
-        cnepdu.receive(chunk);
-
-        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-            cnepdu.log(LOG_INFO);
-        }
-
-        return true;
+        return this->process_client_windowing_pdu<ClientNotifyEventPDU>(flags, chunk);
     }
 
     bool process_client_system_command_pdu(uint32_t total_length,
@@ -346,15 +385,7 @@ protected:
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
-        ClientSystemCommandPDU cscpdu;
-
-        cscpdu.receive(chunk);
-
-        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-            cscpdu.log(LOG_INFO);
-        }
-
-        return !this->param_remote_programs_session_manager->is_window_blocked(cscpdu.WindowId());
+        return this->process_client_windowing_pdu<ClientSystemCommandPDU>(flags, chunk);
     }
 
     bool process_client_system_parameters_update_pdu(uint32_t total_length,
@@ -439,15 +470,7 @@ protected:
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
-        ClientSystemMenuPDU csmpdu;
-
-        csmpdu.receive(chunk);
-
-        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-            csmpdu.log(LOG_INFO);
-        }
-
-        return true;
+        return this->process_client_windowing_pdu<ClientSystemMenuPDU>(flags, chunk);
     }
 
     bool process_client_window_cloak_state_change_pdu(uint32_t total_length,
@@ -475,7 +498,7 @@ protected:
             wcscpdu.log(LOG_INFO);
         }
 
-        return true;
+        return this->process_client_windowing_pdu<WindowCloakStateChangePDU>(flags, chunk);
     }
 
     bool process_client_window_move_pdu(uint32_t total_length,
@@ -495,15 +518,7 @@ protected:
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
-        ClientWindowMovePDU cwmpdu;
-
-        cwmpdu.receive(chunk);
-
-        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-            cwmpdu.log(LOG_INFO);
-        }
-
-        return true;
+        return this->process_client_windowing_pdu<ClientWindowMovePDU>(flags, chunk);
     }
 
 public:
@@ -525,7 +540,7 @@ public:
                 chunk_data, chunk_data_length);
         }
 
-        InStream chunk(chunk_data, chunk_data_length);
+        InStream  chunk(chunk_data, chunk_data_length);
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             if (!chunk.in_check_rem(2 /* orderType(2) */)) {
@@ -714,6 +729,8 @@ public:
             break;
 
             default:
+                REDASSERT(false);
+
                 if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
                     LOG(LOG_INFO,
                         "RemoteProgramsVirtualChannel::process_client_message: "
@@ -806,15 +823,7 @@ public:
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
-        ServerGetApplicationIDResponsePDU sgairpdu;
-
-        sgairpdu.receive(chunk);
-
-        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-            sgairpdu.log(LOG_INFO);
-        }
-
-        return true;
+        return this->process_server_windowing_pdu<ServerGetApplicationIDResponsePDU>(flags, chunk);
     }
 
     bool process_server_handshake_pdu(uint32_t total_length,
@@ -922,15 +931,7 @@ public:
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
-        ServerMinMaxInfoPDU smmipdu;
-
-        smmipdu.receive(chunk);
-
-        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-            smmipdu.log(LOG_INFO);
-        }
-
-        return true;
+        return this->process_server_windowing_pdu<ServerMinMaxInfoPDU>(flags, chunk);
     }
 
     bool process_server_move_size_start_or_end_pdu(uint32_t total_length,
@@ -951,15 +952,7 @@ public:
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
-        ServerMoveSizeStartOrEndPDU smssoepdu;
-
-        smssoepdu.receive(chunk);
-
-        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-            smssoepdu.log(LOG_INFO);
-        }
-
-        return true;
+        return this->process_server_windowing_pdu<ServerMoveSizeStartOrEndPDU>(flags, chunk);
     }
 
     bool process_server_system_parameters_update_pdu(uint32_t total_length,
@@ -1008,15 +1001,7 @@ public:
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
-        ServerZOrderSyncInformationPDU szosipdu;
-
-        szosipdu.receive(chunk);
-
-        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-            szosipdu.log(LOG_INFO);
-        }
-
-        return true;
+        return this->process_server_windowing_pdu<ServerZOrderSyncInformationPDU>(flags, chunk);
     }
 
     void process_server_message(uint32_t total_length,
@@ -1179,6 +1164,8 @@ public:
             break;
 
             default:
+                REDASSERT(false);
+
                 if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
                     LOG(LOG_INFO,
                         "RemoteProgramsVirtualChannel::process_server_message: "
