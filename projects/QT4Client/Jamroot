@@ -72,7 +72,8 @@ obj d3des : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 
 using qt : /usr ; #4
 
-obj front_Qt4.o : src/Qt4/front_Qt4.cpp ;
+obj front_Qt4.o : src/Qt4/front_Qt4.cpp :
+    $(EXE_DEPENDENCIES) ; 
 
 exe client_rdp_Qt4 :
     src/Qt4/front_Qt4.hpp

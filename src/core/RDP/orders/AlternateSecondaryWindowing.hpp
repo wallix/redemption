@@ -23,13 +23,14 @@
 
 #include <vector>
 
-#include "utils/sugar/cast.hpp"
-#include "utils/log.hpp"
 #include "core/error.hpp"
-#include "utils/sugar/noncopyable.hpp"
-#include "utils/stream.hpp"
 #include "core/RDP/non_null_terminated_utf16_from_utf8.hpp"
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
+#include "mod/rdp/channels/rail_window_id_manager.hpp"
+#include "utils/log.hpp"
+#include "utils/stream.hpp"
+#include "utils/sugar/cast.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
 namespace RDP {
 
@@ -499,7 +500,7 @@ public:
 class WindowInformationCommonHeader {
     mutable uint16_t OrderSize           = 0;
             uint32_t FieldsPresentFlags_ = 0;
-            uint32_t WindowId_            = 0;
+    mutable uint32_t WindowId_           = 0;
 
     mutable uint32_t   offset_of_OrderSize = 0;
     mutable OutStream* output_stream       = nullptr;
@@ -580,6 +581,20 @@ public:
     uint32_t WindowId() const { return this->WindowId_; }
 
     void WindowId(uint32_t WindowId_) { this->WindowId_ = WindowId_; }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        const uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->WindowId_);
+
+        REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+
+        if (client_window_id == this->WindowId_) {
+            return false;
+        }
+
+        this->WindowId_ = client_window_id;
+
+        return true;
+    }
 };  // WindowInformationCommonHeader
 
 // [MS-RDPERP] - 2.2.1.3.1.2.1 New or Existing Window
@@ -977,7 +992,8 @@ public:
     WindowInformationCommonHeader header;
 
 private:
-    uint32_t OwnerWindowId_ = 0;
+    mutable uint32_t OwnerWindowId_ = 0;
+
     uint32_t Style_         = 0;
     uint32_t ExtendedStyle_ = 0;
     uint8_t  ShowState_     = 0;
@@ -1735,6 +1751,28 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        bool result = false;
+
+        if (this->header.map_window_id(rail_window_id_manager)) {
+            result = true;
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
+            const uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->OwnerWindowId_);
+
+            REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+
+            if (this->OwnerWindowId_ != client_window_id) {
+                this->OwnerWindowId_ = client_window_id;
+
+                result = true;
+            }
+        }
+
+        return result;
+    }
 };  // NewOrExistingWindow
 
 // [MS-RDPERP] - 2.2.1.3.1.2.2 Window Icon
@@ -1849,6 +1887,10 @@ public:
         buffer[length] = '\0';
         LOG(level, "%s", buffer);
     }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        return this->header.map_window_id(rail_window_id_manager);
+    }
 };  // WindowIcon
 
 // [MS-RDPERP] - 2.2.1.3.1.2.3 Cached Icon
@@ -1910,8 +1952,10 @@ enum {
 //  Describes a cached icon on the client.
 
 class CachedIcon {
+public:
     WindowInformationCommonHeader header;
 
+private:
     CachedIconInfo cached_icon_info;
 
 public:
@@ -1966,6 +2010,10 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        return this->header.map_window_id(rail_window_id_manager);
     }
 };  // CachedIcon
 
@@ -2053,6 +2101,10 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        return this->header.map_window_id(rail_window_id_manager);
+    }
 };  // DeletedWindow
 
 // [MS-RDPERP] - 2.2.1.3.2.1 Common Header (TS_NOTIFYICON_ORDER_HEADER)
@@ -2099,7 +2151,7 @@ public:
 class NotificationIconInformationCommonHeader {
     mutable uint16_t OrderSize           = 0;
             uint32_t FieldsPresentFlags_ = 0;
-            uint32_t WindowId            = 0;
+    mutable uint32_t WindowId_           = 0;
             uint32_t NotifyIconId        = 0;
 
     mutable uint32_t   offset_of_OrderSize = 0;
@@ -2126,7 +2178,7 @@ public:
         stream.out_skip_bytes(2); // OrderSize(2)
 
         stream.out_uint32_le(this->FieldsPresentFlags_);
-        stream.out_uint32_le(this->WindowId);
+        stream.out_uint32_le(this->WindowId_);
         stream.out_uint32_le(this->NotifyIconId);
     }
 
@@ -2159,9 +2211,11 @@ public:
 
         this->OrderSize           = stream.in_uint16_le();
         this->FieldsPresentFlags_ = stream.in_uint32_le();
-        this->WindowId            = stream.in_uint32_le();
+        this->WindowId_           = stream.in_uint32_le();
         this->NotifyIconId        = stream.in_uint32_le();
     }
+
+    uint16_t WindowId() const { return this->WindowId_; }
 
     static size_t size() {
         return 14;   // OrderSize(2) + FieldsPresentFlags(4) + WindowId(4) + NotifyIconId(4)
@@ -2172,11 +2226,25 @@ public:
             ::snprintf(buffer, size,
                        "CommonHeader=(OrderSize=%u FieldsPresentFlags=0x%08X WindowId=0x%X NotifyIconId=0x%X)",
                        unsigned(this->OrderSize), this->FieldsPresentFlags_,
-                       this->WindowId, this->NotifyIconId);
+                       this->WindowId_, this->NotifyIconId);
         return ((length < size) ? length : size - 1);
     }
 
     uint32_t FieldsPresentFlags() const { return this->FieldsPresentFlags_; }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        const uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->WindowId_);
+
+        REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+
+        if (client_window_id == this->WindowId_) {
+            return false;
+        }
+
+        this->WindowId_ = client_window_id;
+
+        return true;
+    }
 };  // NotificationIconInformationCommonHeader
 
 // [MS-RDPERP] - 2.2.1.3.2.2.3 Notification Icon Balloon Tooltip
@@ -2538,8 +2606,10 @@ enum {
 };
 
 class NewOrExistingNotificationIcons {
+public:
     NotificationIconInformationCommonHeader header;
 
+private:
     uint32_t Version = 0;
 
     std::string tool_tip;
@@ -2742,6 +2812,10 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        return this->header.map_window_id(rail_window_id_manager);
+    }
 };  // NewOrExistingNotificationIcons
 
 // [MS-RDPERP] - 2.2.1.3.2.2.2 Deleted Notification Icons
@@ -2785,6 +2859,7 @@ public:
 //};
 
 class DeletedNotificationIcons {
+public:
     NotificationIconInformationCommonHeader header;
 
 public:
@@ -2830,6 +2905,10 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        return this->header.map_window_id(rail_window_id_manager);
     }
 };  // DeletedNotificationIcons
 
@@ -3043,10 +3122,10 @@ public:
     DesktopInformationCommonHeader header;
 
 private:
-    uint32_t ActiveWindowId_ = 0;
-    uint8_t  NumWindowIds_ = 0;
+    mutable uint32_t ActiveWindowId_ = 0;
 
-    uint32_t window_ids_[255] = { 0 };
+    mutable  uint8_t NumWindowIds_    = 0;
+    mutable uint32_t window_ids_[255] = { 0 };
 
 public:
     void emit(OutStream & stream) const {
@@ -3198,6 +3277,57 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
+        bool result = false;
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND) {
+            uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->ActiveWindowId_);
+
+            REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+
+            if (client_window_id != this->ActiveWindowId_) {
+                this->ActiveWindowId_ = client_window_id;
+
+                result = true;
+            }
+        }
+
+        if ((this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ZORDER) &&
+            this->NumWindowIds_) {
+            for (uint16_t i = 0; i < this->NumWindowIds_; ++i) {
+                uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->window_ids_[i]);
+
+                REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+
+                if (client_window_id != this->window_ids_[i]) {
+                    this->window_ids_[i] = client_window_id;
+
+                    result = true;
+                }
+            }
+
+            uint8_t invalid_window_id_count = 0;
+            for (uint16_t i = 0; i < this->NumWindowIds_; ++i) {
+                if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == this->window_ids_[i]) {
+                    if (i < this->NumWindowIds_ - 1) {
+                        this->window_ids_[i    ] = this->window_ids_[i + 1];
+                        this->window_ids_[i + 1] = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
+                    }
+
+                    invalid_window_id_count++;
+                }
+            }
+
+            if (invalid_window_id_count) {
+                REDASSERT(this->NumWindowIds_ >= invalid_window_id_count);
+
+                this->NumWindowIds_ -= invalid_window_id_count;
+            }
+        }
+
+        return result;
     }
 };  // ActivelyMonitoredDesktop
 

@@ -97,13 +97,6 @@ public:
     virtual void set_consent_ui_visible(bool) {}
     virtual void session_update(array_view_const_char message) { (void)message; }
 
-    virtual bool disable_input_event_and_graphics_update(
-            bool disable_input_event, bool disable_graphics_update) {
-        (void)disable_input_event;
-        (void)disable_graphics_update;
-        return false;
-    }
-
     ////////////////////////////////
     // RemoteApp.
     virtual void send_savesessioninfo() {}

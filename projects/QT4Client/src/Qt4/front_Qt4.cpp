@@ -308,28 +308,62 @@ void Front_Qt::writeClientInfo() {
 
 void Front_Qt::set_pointer(Pointer const & cursor) {
 
-
     QImage image_data(cursor.data, cursor.width, cursor.height, QImage::Format_RGB888);
     QImage image_mask(cursor.mask, cursor.width, cursor.height, QImage::Format_Mono);
 
+    bool null_pointer(false);
     if (cursor.mask[0x48] == 0xFF &&
         cursor.mask[0x49] == 0xFF &&
         cursor.mask[0x4A] == 0xFF &&
         cursor.mask[0x4B] == 0xFF) {
-
+        null_pointer = true;
         image_mask = image_data.convertToFormat(QImage::Format_Mono);
         image_data.invertPixels();
     }
 
     image_mask.invertPixels();
-    image_mask = image_mask.mirrored(false, true);
-    image_data = image_data.convertToFormat(QImage::Format_Mono).mirrored(false, true);
 
     if (this->_replay) {
-        this->_mouse_data.cursor_image = image_data;
-        this->_mouse_data.cusor_mask   = image_mask;
+
+        image_data = image_data.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
+        image_mask = image_mask.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
+
+        const uchar * data_data = image_data.bits();
+        const uchar * mask_data = image_mask.bits();
+
+        uint8_t data[Pointer::DATA_SIZE*4] = {0x00};
+
+        if (!null_pointer) {
+            for (int i = 0; i < Pointer::DATA_SIZE; i += 4) {
+                uint16_t pixel((data_data[i] << 8) + mask_data[i]);
+
+                switch (pixel) {
+                    case 0x00FF:  // black
+                        data[i  ] = 0x00;
+                        data[i+1] = 0x00;
+                        data[i+2] = 0x00;
+                        data[i+3] = 0xFF;
+                        break;
+
+                    case 0xFFFF:  // white
+                        data[i  ] = 0xFF;
+                        data[i+1] = 0xFF;
+                        data[i+2] = 0xFF;
+                        data[i+3] = 0xFF;
+                        break;
+                    default: // transparent
+                        break;
+                }
+            }
+        }
+
+        QImage image(static_cast<uchar *>(data), cursor.width, cursor.height,QImage::Format_ARGB32_Premultiplied);
+        this->_mouse_data.cursor_image = image;
 
     } else {
+
+        image_mask = image_mask.mirrored(false, true);
+        image_data = image_data.convertToFormat(QImage::Format_Mono).mirrored(false, true);
 
         QBitmap bitData = QBitmap::fromData(QSize(cursor.width, cursor.height), image_data.bits(), QImage::Format_Mono);
         QBitmap bitMask = QBitmap::fromData(QSize(cursor.width, cursor.height), image_mask.bits(), QImage::Format_Mono);
@@ -490,7 +524,7 @@ bool Front_Qt::connect() {
             ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
             ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned, std::ratio<1, 100>>(6));
             LCGRandom gen(0);
-            CryptoContext cctx(gen, ini);
+            CryptoContext cctx(ini);
             bool enable_rt(true);
             auth_api * authentifier(nullptr);
             struct timeval time;
@@ -505,6 +539,7 @@ bool Front_Qt::connect() {
                                         , authentifier
                                         , ini
                                         , cctx
+                                        , gen
                                         , false
                                         , this->_delta_time
                                         );
@@ -1725,6 +1760,7 @@ void Front_Qt::update_pointer_position(uint16_t xPos, uint16_t yPos) {
     if (this->_replay) {
         this->_trans_cache->fill(Qt::transparent);
         QRect nrect(xPos, yPos, this->_mouse_data.cursor_image.width(), this->_mouse_data.cursor_image.height());
+
         this->_screen[0]->paintTransCache().drawImage(nrect, this->_mouse_data.cursor_image);
     }
 }
@@ -2775,6 +2811,12 @@ void Front_Qt::end_update() {
     //    LOG(LOG_INFO, "end_update");
     //    LOG(LOG_INFO, "========================================\n");
     //}
+    if (this->_record && !this->_replay) {
+        this->_graph_capture->end_update();
+        struct timeval time;
+        gettimeofday(&time, nullptr);
+        this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
+    }
 }
 
 

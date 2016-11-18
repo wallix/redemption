@@ -259,6 +259,8 @@ class Front_Qt : public Front_Qt_API
             const timeval& /*now*/, int cursor_x, int cursor_y, bool /*ignore_frame_in_timeval*/
         ) override {
             this->front.update_pointer_position(cursor_x, cursor_y);
+            std::chrono::microseconds res(1);
+            return res;
         }
         void do_pause_capture(const timeval&) override {}
         void do_resume_capture(const timeval&) override {}
@@ -296,7 +298,6 @@ public:
 
     struct MouseData {
         QImage cursor_image;
-        QImage cusor_mask;
         uint16_t x = 0;
         uint16_t y = 0;
     } _mouse_data;

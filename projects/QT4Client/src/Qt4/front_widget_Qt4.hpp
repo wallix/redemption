@@ -85,13 +85,12 @@ public:
         , _callback(nullptr)
         , _sck(nullptr)
         , _client_sck(0)
-    {
-
-    }
+    {}
 
     ~Mod_Qt() {
         this->drop_connexion();
     }
+
 
     void drop_connexion() {
         this->_front->emptyLocalBuffer();

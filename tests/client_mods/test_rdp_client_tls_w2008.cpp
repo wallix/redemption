@@ -93,6 +93,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                                , "10.10.47.35"
                                , "192.168.1.100"
                                , 7
+                               , ini.get<cfg::font>()
+                               , ini.get<cfg::theme>()
                                , 511
                                );
     mod_rdp_params.device_id                       = "device_id";
@@ -185,6 +187,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
                                , "10.10.47.16"
                                , "10.10.43.33"
                                , 7
+                               , ini.get<cfg::font>()
+                               , ini.get<cfg::theme>()
                                , 511
                                );
     mod_rdp_params.device_id                       = "device_id";

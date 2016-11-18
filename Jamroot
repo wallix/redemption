@@ -40,7 +40,6 @@ explicit
     install-bin
     install-lib
     install-share
-    install-share
     install-etc
     install-etc-themes
     install-etc-ppocr
@@ -58,7 +57,7 @@ alias install :
     install-etc-ppocr
     install-share
 ;
-alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient ;
+alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient rdpheadless ; 
 alias libs    : libredrec ;
 
 alias ocr_tools : display_learning extract_text ppocr_extract_text ;
@@ -81,7 +80,6 @@ install install-share
 install install-etc
     : [ glob
         $(REDEMPTION_ETC_DH_GLOG)
-        $(REDEMPTION_INI_GLOB)
     ]
     :
     : <location>$(INSTALLDIR)$(ETC_PREFIX)
@@ -137,7 +135,7 @@ constant TEST_DEPENDENCIES :
 ;
 
 
-obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp ;
+obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : $(EXE_DEPENDENCIES) ;
 obj d3des : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 obj bitmap : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
 obj program_options : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
@@ -271,7 +269,7 @@ exe rdpclient
         $(EXE_DEPENDENCIES)
     ;
 
-exe rdpclientcli
+exe rdpheadless
     : $(REDEMPTION_SRC_PATH)/ftests/test_client_redemption_cli/test_client_redemption_cli.cpp
         program_options
         bitmap
@@ -808,6 +806,7 @@ test-canonical core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp ;
 ## @{
 test-canonical mod/rdp/channels/base_channel.hpp ;
 test-canonical mod/rdp/channels/rdpdr_file_system_drive_manager.hpp ;
+test-canonical mod/rdp/channels/rail_window_id_manager.hpp ;
 test-canonical mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp ;
 test-canonical mod/rdp/channels/sespro_channel.hpp ;
 test-canonical mod/rdp/channels/sespro_clipboard_based_launcher.hpp ;

@@ -103,7 +103,7 @@ void do_fd_target_event(ssh_poll_handle_fd_struct * fd_poll, int revents)
  * @brief Disconnect from a session (client or server).
  * The session can then be reused to open a new session.
  *
- * @param[in]  session  The SSH session to use.
+ * @param[in]  client_session  The SSH session to use.
  */
 void ssh_disconnect_client(SshClientSession * client_session) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
@@ -188,7 +188,7 @@ static inline void handle_ssh_packet_unimplemented_client(SshClientSession * cli
 /**
  * @brief Send a debug message
  *
- * @param[in] session          The SSH session
+ * @param[in] client_session          The SSH session
  * @param[in] message          Data to be sent
  * @param[in] always_display   Message SHOULD be displayed by the server. It
  *                             SHOULD NOT be displayed unless debugging
@@ -996,7 +996,7 @@ static inline int ssh_packet_kexinit_client(SshClientSession * client_session, s
 
 /** @internal
  * @brief launches the DH handshake state machine
- * @param session session handle
+ * @param client_session session handle
  * @returns SSH_OK or SSH_ERROR
  * @warning this function returning is no proof that DH handshake is
  * completed
@@ -3299,7 +3299,7 @@ static int decompress_buffer_client(SshClientSession * client_session,ssh_buffer
  * @brief Send a global request (needed for forward listening) and wait for the
  * result.
  *
- * @param[in]  session  The SSH session handle.
+ * @param[in]  client_session  The SSH session handle.
  *
  * @param[in]  request  The type of request (defined in RFC).
  *
@@ -3395,7 +3395,7 @@ static inline int global_request_client(SshClientSession * client_session, const
  * @brief Sends the "tcpip-forward" global request to ask the server to begin
  *        listening for inbound connections.
  *
- * @param[in]  session  The ssh session to send the request.
+ * @param[in]  client_session  The ssh session to send the request.
  *
  * @param[in]  address  The address to bind to on the server. Pass nullptr to bind
  *                      to all available addresses on all protocol families
@@ -3442,7 +3442,7 @@ inline int ssh_forward_listen_client(SshClientSession * client_session, const ch
  * @brief Sends the "cancel-tcpip-forward" global request to ask the server to
  *        cancel the tcpip-forward request.
  *
- * @param[in]  session  The ssh session to send the request.
+ * @param[in]  client_session  The ssh session to send the request.
  *
  * @param[in]  address  The bound address on the server.
  *
@@ -4113,9 +4113,8 @@ inline int ssh_packet_global_request_client(SshClientSession * client_session, s
 /** @internal
  * @handles a data received event. It then calls the handlers for the different packet types
  * or and exception handler callback.
- * @param user pointer to current ssh_session
  * @param data pointer to the data received
- * @len length of data received. It might not be enough for a complete packet
+ * @param receivedlen length of data received. It might not be enough for a complete packet
  * @returns number of bytes read and processed.
  */
 int SshClientSession::handle_received_data_client(const void *data, size_t receivedlen)
@@ -4541,15 +4540,13 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
 /**
  * @brief Add a fd to the event and assign it a callback,
  * when used in blocking mode.
- * @param event         The ssh_event
- * @param  fd           Socket that will be polled.
- * @param  events       Poll events that will be monitored for the socket. i.e.
- *                      POLLIN, POLLPRI, POLLOUT
- * @param  cb           Function to be called if any of the events are set.
- *                      The prototype of cb is:
+ * @param ctx          access to polling context
+ * @param fd           Socket that will be polled.
+ * @param pw_cb        Function to be called if any of the events are set.
+ *                     The prototype of cb is:
  *                      int (*ssh_event_callback)(socket_t fd, int revents,
  *                                                          void *userdata);
- * @param  userdata     Userdata to be passed to the callback function. nullptr if
+ * @param pw_userdata  Userdata to be passed to the callback function. nullptr if
  *                      not needed.
  *
  * @returns SSH_OK      on success
@@ -4558,7 +4555,6 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
 int ssh_event_set_fd_client(ssh_poll_ctx_struct * ctx, socket_t fd, ssh_event_callback pw_cb, void *pw_userdata) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_WARNING, "ssh_event_add_fd = %u", fd);
-
 
     if(ctx == nullptr || pw_cb == nullptr || fd == INVALID_SOCKET) {
         syslog(LOG_WARNING, "ssh_event_add_fd failed = %u", fd);
@@ -4582,7 +4578,7 @@ void ssh_event_set_session_client(ssh_poll_ctx_struct * ctx, SshClientSession * 
  * @internal
  * @brief Wait for a response of an authentication function.
  *
- * @param[in] session   The SSH session.
+ * @param[in] client_session   The SSH session.
  *
  * @returns SSH_AUTH_SUCCESS Authentication success, or pubkey accepted
  *          SSH_AUTH_PARTIAL Authentication succeeded but another mean
@@ -4729,7 +4725,7 @@ static enum ssh_auth_e ssh_userauth_get_response_client(SshClientSession * clien
  *
  * Service requests are for example: ssh-userauth, ssh-connection, etc.
  *
- * @param  session      The session to use to ask for a service request.
+ * @param  client_session      The session to use to ask for a service request.
  * @param  service      The service request.
  *
  * @return SSH_OK on success
@@ -4763,9 +4759,9 @@ static inline int ssh_send_service_request_client(SshClientSession * client_sess
  * methods are available. The server MAY return a list of methods that may
  * continue.
  *
- * @param[in] session   The SSH session.
+ * @param[in] client_session   The SSH session.
  *
- * @param[in] username  Deprecated, set to nullptr.
+ * @param[in] error  Deprecated, don't care.
  *
  * @returns             A bitfield of the fllowing values:
  *                      - SSH_AUTH_METHOD_PASSWORD
@@ -4791,7 +4787,7 @@ int ssh_userauth_list_client(SshClientSession * client_session, error_struct * e
  * is provided for querying whether authentication using the 'pubkey' would
  * be possible.
  *
- * @param[in] session     The SSH session.
+ * @param[in] client_session     The SSH session.
  *
  * @param[in] username    The username, this SHOULD be nullptr.
  *
@@ -5084,7 +5080,7 @@ ssh_auth_e ssh_userauth_try_publickey_client(SshClientSession * client_session, 
 /**
  * @brief Try to do public key authentication with ssh agent.
  *
- * @param[in]  session  The ssh session to use.
+ * @param[in]  client_session  The ssh session to use.
  *
  * @param[in]  username The username, this SHOULD be nullptr.
  *
@@ -5462,7 +5458,7 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
  * However, if you read the password in some other encoding, you MUST convert
  * the password to UTF-8.
  *
- * @param[in] session   The ssh session to use.
+ * @param[in] client_session   The ssh session to use.
  *
  * @param[in] username  The username, this SHOULD be nullptr.
  *
@@ -5700,7 +5696,7 @@ static int ssh_userauth_kbdint_send_client(SshClientSession * client_session)
 /**
  * @brief Try to authenticate through the "keyboard-interactive" method.
  *
- * @param[in]  session  The ssh session to use.
+ * @param[in]  client_session  The ssh session to use.
  *
  * @param[in]  user     The username to authenticate. You can specify nullptr if
  *                      ssh_option_set_username() has been used. You cannot try
@@ -5764,7 +5760,7 @@ int ssh_userauth_kbdint_client(SshClientSession * client_session, const char *us
  * code, this function can be used to retrieve information about the keyboard
  * interactive authentication questions sent by the remote host.
  *
- * @param[in]  session  The ssh session to use.
+ * @param[in]  client_session  The ssh session to use.
  *
  * @returns             The number of prompts.
  */
@@ -5952,7 +5948,7 @@ inline int ssh_gssapi_auth_mic_client(SshClientSession * client_session)
 /**
  * @brief Try to authenticate through the "gssapi-with-mic" method.
  *
- * @param[in]  session  The ssh session to use.
+ * @param[in]  client_session  The ssh session to use.
  *
  * @returns SSH_AUTH_ERROR:   A serious error happened\n
  *          SSH_AUTH_DENIED:  Authentication failed : use another method\n
@@ -6026,7 +6022,7 @@ int ssh_userauth_gssapi_client(SshClientSession * client_session, error_struct *
  * If you have called ssh_userauth_kbdint() and got SSH_AUTH_INFO, this
  * function returns the questions from the server.
  *
- * @param[in]  session  The ssh session to use.
+ * @param[in]  client_session  The ssh session to use.
  *
  * @param[in]  i index  The number of the ith prompt.
  *
@@ -6075,7 +6071,7 @@ int ssh_userauth_kbdint_setanswer_client(SshClientSession * client_session, unsi
  * code, this function can be used to retrieve information about the keyboard
  * interactive authentication questions sent by the remote host.
  *
- * @param[in]  session  The ssh session to use.
+ * @param[in]  client_session  The ssh session to use.
  *
  * @param[in]  i        The index number of the i'th prompt.
  *
