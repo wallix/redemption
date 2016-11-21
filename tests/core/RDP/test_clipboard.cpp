@@ -113,6 +113,62 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
     }
 
 
+    {
+        //  recv_fileList
+        uint8_t UTF16nameData[20];
+        std::string nameUTF8("abcde.txt");
+        int UTF16nameSize = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(nameUTF8.c_str()), UTF16nameData, nameUTF8.size() *2);
+        std::string nameUTF16 = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
+
+        std::string name = nameUTF16 ;
+        uint64_t size = 17 ;
+        const int cItems = 1;
+
+        const uint8_t file_list_data[] =
+            "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x64\x40\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x04\xb5\x9f\x37\xa0\xe2\xd1\x01\x00\x00\x00\x00"
+            "\x11\x00\x00\x00\x61\x00\x62\x00\x63\x00\x64\x00\x65\x00\x2e\x00\x74\x00\x78\x00"
+            "\x74\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00";
+
+        InStream in_stream_fileList_to_recv(file_list_data, 608);
+        RDPECLIP::FormatDataResponsePDU_FileList fdr_recv;
+        fdr_recv.recv(in_stream_fileList_to_recv);
+
+        BOOST_CHECK_EQUAL(fdr_recv.cItems, cItems);
+        BOOST_CHECK_EQUAL(fdr_recv.size, size);
+        BOOST_CHECK_EQUAL(std::string(fdr_recv.name.c_str(), name.size()), name);
+        BOOST_CHECK_EQUAL(fdr_recv.flags, RDPECLIP::FD_SHOWPROGRESSUI |RDPECLIP::FD_FILESIZE | RDPECLIP::FD_WRITESTIME | RDPECLIP::FD_ATTRIBUTES);
+        BOOST_CHECK_EQUAL(fdr_recv.attribute, RDPECLIP::FILE_ATTRIBUTE_ARCHIVE);
+        BOOST_CHECK_EQUAL(fdr_recv.time, RDPECLIP::TIME64_FILE_LIST);
+    }
+
 
     {
         // emit_metaFilePic
@@ -144,6 +200,46 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
 
         BOOST_CHECK_EQUAL(expected, out_data);
 
+    }
+
+
+    {
+        // recv_metaFilePic
+
+        int height=73;
+        int width=220;
+        int bpp=24;
+        int data_lenght = height * width * 3;
+        const double ARBITRARY_SCALE = 40;
+        const char metafilepic_out_data[] =
+            "\x05\x00\x01\x00\xb6\xbc\x00\x00\x08\x00\x00\x00\x60\x22\x00\x00"
+            "\x68\x0b\x00\x00\x01\x00\x09\x00\x00\x03\x55\x5e\x00\x00\x00\x00"
+            "\x3b\x5e\x00\x00\x00\x00\x04\x00\x00\x00\x03\x01\x08\x00\x05\x00"
+            "\x00\x00\x0c\x02\xb7\xff\xdc\x00\x05\x00\x00\x00\x0b\x02\x00\x00"
+            "\x00\x00\x3b\x5e\x00\x00\x41\x0b\x20\x00\xcc\x00\x49\x00\xdc\x00"
+            "\x00\x00\x00\x00\xb7\xff\xdc\x00\x00\x00\x00\x00\x28\x00\x00\x00"
+            "\xdc\x00\x00\x00\xb7\xff\xff\xff\x01\x00\x18\x00\x00\x00\x00\x00"
+            "\x34\xbc\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00";
+
+        InStream stream(metafilepic_out_data, 130);
+
+         RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr;
+         fdr.recv(stream);
+
+         BOOST_CHECK_EQUAL(fdr.data_length, data_lenght);
+         BOOST_CHECK_EQUAL(fdr.width, width);
+         BOOST_CHECK_EQUAL(fdr.height, height);
+         BOOST_CHECK_EQUAL(fdr.depth, bpp);
+         BOOST_CHECK_EQUAL(fdr.mapping_mod, RDPECLIP::MM_ANISOTROPIC);
+         BOOST_CHECK_EQUAL(fdr.mapping_mod_width, width * ARBITRARY_SCALE);
+         BOOST_CHECK_EQUAL(fdr.mapping_mod_height, height * ARBITRARY_SCALE);
+         BOOST_CHECK_EQUAL(fdr.meta_header_type, RDPECLIP::MEMORYMETAFILE);
+         BOOST_CHECK_EQUAL(fdr.meta_header_size, RDPECLIP::META_HEADER_SIZE);
+         BOOST_CHECK_EQUAL(fdr.meta_header_version, RDPECLIP::METAVERSION300);
+         BOOST_CHECK_EQUAL(fdr.meta_file_words_len, (data_lenght/2) + RDPECLIP::METAFILE_WORDS_HEADER_SIZE);
+         BOOST_CHECK_EQUAL(fdr.record_words_len, (data_lenght + RDPECLIP::META_DIBSTRETCHBLT_HEADER_SIZE)/2);
+         BOOST_CHECK_EQUAL(fdr.operation, RDPECLIP::SRCCOPY);
     }
 }
 
@@ -270,7 +366,7 @@ BOOST_AUTO_TEST_CASE(TestFormatListPDU) {
 
 BOOST_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
 
-    {   // FILECONTENTS_RANGE TEST
+    { // FILECONTENTS_RANGE emit TEST
     // inData
     uint32_t ID = 1;
     uint32_t index = 3;
@@ -292,7 +388,31 @@ BOOST_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
     BOOST_CHECK_EQUAL(expected, out_data);
     }
 
-    { // FILECONTENTS_SIZE TEST
+
+    { // FILECONTENTS_RANGE recv TEST
+    // inData
+    uint32_t ID = 1;
+    uint32_t index = 3;
+    uint32_t flag = RDPECLIP::FILECONTENTS_RANGE;
+    uint64_t size = 0x0000000000000007;
+
+    const char data[] =
+        "\x08\x00\x01\x00\x18\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
+        "\x02\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x07\x00\x00\x00";
+
+    InStream stream(data, sizeof(data)-1);
+    RDPECLIP::FileContentsRequestPDU fileContentsRequest;
+    fileContentsRequest.recv(stream);
+
+    BOOST_CHECK_EQUAL(fileContentsRequest.streamID, ID);
+    BOOST_CHECK_EQUAL(fileContentsRequest.flag, flag);
+    BOOST_CHECK_EQUAL(fileContentsRequest.lindex, index);
+    BOOST_CHECK_EQUAL(fileContentsRequest.sizeRequested, size);
+
+    }
+
+
+    { // FILECONTENTS_SIZE emit TEST
         // inData
     uint32_t ID = 1;
     uint32_t index = 3;
@@ -313,5 +433,31 @@ BOOST_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
 
     BOOST_CHECK_EQUAL(expected, out_data);
     }
+
+
+    { // FILECONTENTS_SIZE recv TEST
+    // inData
+    uint32_t ID = 1;
+    uint32_t index = 3;
+    uint32_t flag = RDPECLIP::FILECONTENTS_SIZE;
+    uint64_t size = 0x0000000000000007;
+
+    const char data[] =
+        "\x08\x00\x01\x00\x18\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
+        "\x01\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x08\x00\x00\x00";
+
+    InStream stream(data, sizeof(data)-1);
+    RDPECLIP::FileContentsRequestPDU fileContentsRequest;
+    fileContentsRequest.recv(stream);
+
+    BOOST_CHECK_EQUAL(fileContentsRequest.streamID, ID);
+    BOOST_CHECK_EQUAL(fileContentsRequest.flag, flag);
+    BOOST_CHECK_EQUAL(fileContentsRequest.lindex, index);
+    BOOST_CHECK_EQUAL(fileContentsRequest.sizeRequested, size);
+
+    }
 }
+
+
+
 

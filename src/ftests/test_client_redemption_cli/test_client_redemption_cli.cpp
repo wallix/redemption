@@ -23,7 +23,7 @@
 #include "test_client_redemption_cli.hpp"
 
 
-// bjam rdpclientcli && bin/gcc-4.9.2/release/rdpclientcli --user QA\\proxyuser --pwd $mdp --ip 10.10.46.88 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_keyboard
+// bjam rdpheadless && bin/gcc-4.9.2/release/rdpheadless --user QA\\proxyuser --pwd $mdp --ip 10.10.46.88 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_keyboard
 
 // bjam rdpclientcli && bin/gcc-4.9.2/release/rdpclientcli --user admin --pwd $mdp --ip 10.10.40.22 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_keyboard
 
@@ -334,7 +334,7 @@ int main(int argc, char** argv){
     std::cout << " SHOW_IN_PDU                 = " << bool(verbose & TestClientCLI::SHOW_IN_PDU) <<  "\n";
     std::cout <<  std::endl;
 
-    
+
 
     if (verbose & TestClientCLI::SHOW_USER_AND_TARGET_PARAMS) {
         std::cout <<  "\n";

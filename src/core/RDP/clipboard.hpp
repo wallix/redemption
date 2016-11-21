@@ -1147,6 +1147,16 @@ struct FileContentsRequestPDU : CliprdrHeader {             // Resquest RANGE
             stream.out_uint32_le(this->sizeRequested);
         }
     }
+
+    void recv(InStream & stream) {
+        CliprdrHeader::recv(stream);
+        this->streamID = stream.in_uint32_le();
+        this->lindex = stream.in_uint32_le();
+        this->flag = stream.in_uint32_le();
+        this->sizeRequested = stream.in_uint32_le();
+        this->sizeRequested = this->sizeRequested << 32;
+        this->sizeRequested += stream.in_uint32_le();
+    }
 };
 
 
@@ -1177,8 +1187,9 @@ struct FileContentsRequestPDU : CliprdrHeader {             // Resquest RANGE
     // requestedFileContentsData (variable): This field contains a variable number of bytes. If the response is to a FILECONTENTS_SIZE (0x00000001) operation, the requestedFileContentsData field holds a 64-bit, unsigned integer containing the size of the file. In the case of a FILECONTENTS_RANGE (0x00000002) operation, the requestedFileContentsData field contains a byte-stream of data extracted from the file.
 
 struct FileContentsResponse : CliprdrHeader {
-    const uint32_t streamID;
-    const uint64_t size;
+    uint32_t streamID;
+    uint64_t size;
+
 
     explicit FileContentsResponse(const uint32_t streamID, const uint64_t size, uint32_t data_size)
     : CliprdrHeader( CB_FILECONTENTS_RESPONSE, CB_RESPONSE_OK, data_size)
@@ -1199,6 +1210,10 @@ struct FileContentsResponse : CliprdrHeader {
 
 struct FileContentsResponse_Size : FileContentsResponse {
 
+    explicit FileContentsResponse_Size()
+    : FileContentsResponse()
+    {}
+
     explicit FileContentsResponse_Size(const uint32_t streamID, const uint64_t size)
     : FileContentsResponse(streamID, size, 16)
     {}
@@ -1209,9 +1224,21 @@ struct FileContentsResponse_Size : FileContentsResponse {
         stream.out_uint64_le(this->size);
         stream.out_uint32_le(0);
     }
+
+    void recv(InStream & stream) {
+        CliprdrHeader::recv(stream);
+        this->streamID = stream.in_uint32_le();
+        this->size = stream.in_uint64_le();
+    }
+
+
 };
 
 struct FileContentsResponse_Range : FileContentsResponse {
+
+    explicit FileContentsResponse_Range()
+    : FileContentsResponse()
+    {}
 
     explicit FileContentsResponse_Range(const uint32_t streamID, const uint64_t size)
     : FileContentsResponse(streamID, size, size+4)
@@ -1220,6 +1247,11 @@ struct FileContentsResponse_Range : FileContentsResponse {
     void emit(OutStream & stream) {
         CliprdrHeader::emit(stream);
         stream.out_uint32_le(this->streamID);
+    }
+
+    void recv(InStream & stream) {
+        CliprdrHeader::recv(stream);
+        this->streamID = stream.in_uint32_le();
     }
 };
 
@@ -1830,11 +1862,7 @@ enum {
 //  contents of this field MUST be one of the following types: generic, Packed
 //  Metafile Payload, or Packed Palette Payload.
 
-enum : int {
-      METAFILE_HEADERS_SIZE          = 130
-    , META_DIBSTRETCHBLT_HEADER_SIZE = 66
-    , METAFILE_WORDS_HEADER_SIZE     = 118
-};
+
 
 enum : uint32_t {
     FILE_ATTRIBUTE_READONLY  = 0x0001,
@@ -1847,6 +1875,27 @@ enum : uint32_t {
 
 enum : uint64_t {
     TIME64_FILE_LIST = 0x01d1e2a0379fb504
+};
+
+enum : uint32_t {
+    SRCCOPY = 0x00CC0020
+};
+
+enum : uint16_t {
+    PLANES_NUMBER = 0x00001
+};
+
+enum : int {
+      METAFILE_HEADERS_SIZE          = 130
+    , META_DIBSTRETCHBLT_HEADER_SIZE = 66
+    , METAFILE_WORDS_HEADER_SIZE     = (METAFILE_HEADERS_SIZE/2) -6
+    , META_HEADER_SIZE               = 9
+
+    , META_SETMAPMODE_WORDS_SIZE   = 4
+    , META_SETWINDOWEXT_WORDS_SIZE = 5
+    , META_SETWINDOWORG_WORDS_SIZE = 5
+    , BITMAPINFO_HEADER_SIZE       = 40
+
 };
 
 struct FormatDataResponsePDU : public CliprdrHeader {
@@ -1918,26 +1967,61 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
         }
     };
 
-    const std::size_t data_length;
-    const uint16_t    width;
-    const uint16_t    height;
-    const uint16_t    depth;
-    const double      ARBITRARY_SCALE;
+    std::size_t data_length;
+    uint16_t width;
+    uint16_t height;
+    uint16_t depth;
+    uint32_t mapping_mod;
+    uint32_t mapping_mod_width;
+    uint32_t mapping_mod_height;
+    uint16_t meta_header_type;
+    uint16_t meta_header_size;
+    uint16_t meta_header_version;
+    uint32_t meta_file_words_len;
+    uint32_t record_words_len;
+    uint32_t operation;
 
-    explicit FormatDataResponsePDU_MetaFilePic(const std::size_t data_length, const uint16_t width, const uint16_t height, const uint16_t depth, const double ARBITRARY_SCALE)
+
+    explicit FormatDataResponsePDU_MetaFilePic()
+      : FormatDataResponsePDU()
+      , data_length(0)
+      , width(0)
+      , height(0)
+      , depth(0)
+      , mapping_mod(0)
+      , mapping_mod_width(0)
+      , mapping_mod_height(0)
+      , meta_header_type(0)
+      , meta_header_size(0)
+      , meta_header_version(0)
+      , meta_file_words_len(0)
+      , record_words_len(0)
+      , operation(0)
+    {}
+
+    explicit FormatDataResponsePDU_MetaFilePic( const std::size_t data_length
+                                              , const uint16_t width
+                                              , const uint16_t height
+                                              , const uint16_t depth
+                                              , const double ARBITRARY_SCALE)
       : FormatDataResponsePDU(data_length + METAFILE_HEADERS_SIZE)
       , data_length(data_length)
       , width(width)
       , height(height)
       , depth(depth)
-      , ARBITRARY_SCALE(ARBITRARY_SCALE)
+      , mapping_mod(MM_ANISOTROPIC)
+      , mapping_mod_width(int(double(width) * ARBITRARY_SCALE))
+      , mapping_mod_height(int(double(height) * ARBITRARY_SCALE))
+      , meta_header_type(MEMORYMETAFILE)
+      , meta_header_size(META_HEADER_SIZE)
+      , meta_header_version(METAVERSION300)
+      , meta_file_words_len((data_length/2) + METAFILE_WORDS_HEADER_SIZE)
+      , record_words_len((data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2)
+      , operation(SRCCOPY)
     {}
 
     void emit(OutStream & stream) {
         CliprdrHeader::emit(stream);
-
-        const int largeRecordWordsSize((this->data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2);
-
 
         // 2.2.5.2.1 Packed Metafile Payload
         // 12 bytes
@@ -2011,9 +2095,9 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
 
         // metaFileData (variable): The variable sized contents of the metafile as specified in [MS-WMF] section 2.
 
-        stream.out_uint32_le(MM_ANISOTROPIC);
-        stream.out_uint32_le(int(double(this->width)  * this->ARBITRARY_SCALE));
-        stream.out_uint32_le(int(double(this->height) * this->ARBITRARY_SCALE));
+        stream.out_uint32_le(this->mapping_mod);
+        stream.out_uint32_le(this->mapping_mod_width);
+        stream.out_uint32_le(this->mapping_mod_height);
 
 
         // 3.2.1 META_HEADER Example
@@ -2056,12 +2140,12 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
         // can be created that is large enough for 2 objects.
 
         // 18 bytes
-        stream.out_uint16_le(MEMORYMETAFILE);
-        stream.out_uint16_le(9);
-        stream.out_uint16_le(METAVERSION300);
-        stream.out_uint32_le((this->data_length + METAFILE_WORDS_HEADER_SIZE)/2);
+        stream.out_uint16_le(this->meta_header_type);
+        stream.out_uint16_le(this->meta_header_size);
+        stream.out_uint16_le(this->meta_header_version);
+        stream.out_uint32_le(this->meta_file_words_len);
         stream.out_uint16_le(0);
-        stream.out_uint32_le(largeRecordWordsSize);
+        stream.out_uint32_le(this->record_words_len);
         stream.out_uint16_le(0);
 
 
@@ -2087,20 +2171,20 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
         // rdParam (variable): An optional place holder that is provided for record-specific fields.
 
         //      META_SETMAPMODE (8 bytes)
-        stream.out_uint32_le(4);
+        stream.out_uint32_le(META_SETMAPMODE_WORDS_SIZE);
         stream.out_uint16_le(META_SETMAPMODE);
-        stream.out_uint16_le(MM_ANISOTROPIC);
+        stream.out_uint16_le(this->mapping_mod);
 
 
         //      META_SETWINDOWEXT (10 bytes)
-        stream.out_uint32_le(5);
+        stream.out_uint32_le(META_SETWINDOWEXT_WORDS_SIZE);
         stream.out_uint16_le(META_SETWINDOWEXT);
         stream.out_uint16_le( - this->height);
         stream.out_uint16_le(this->width);
 
 
         //      META_SETWINDOWORG (10 bytes)
-        stream.out_uint32_le(5);
+        stream.out_uint32_le(META_SETWINDOWORG_WORDS_SIZE);
         stream.out_uint16_le(META_SETWINDOWORG);
         stream.out_uint16_le(0);
         stream.out_uint16_le(0);
@@ -2145,9 +2229,9 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
         // image content. This object MUST be specified, even if the raster operation does not require a source.
 
         // 26 bytes
-        stream.out_uint32_le(largeRecordWordsSize);
+        stream.out_uint32_le(this->record_words_len);
         stream.out_uint16_le(META_DIBSTRETCHBLT);
-        stream.out_uint32_le(0x00CC0020); // SRCCOPY
+        stream.out_uint32_le(this->operation);
         stream.out_uint16_le(this->height);
         stream.out_uint16_le(this->width);
         stream.out_uint16_le(0);
@@ -2313,10 +2397,10 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
         //           of the color table.
 
         // 40 bytes
-        stream.out_uint32_le(40);
+        stream.out_uint32_le(BITMAPINFO_HEADER_SIZE);
         stream.out_uint32_le(this->width);
         stream.out_uint32_le( - this->height);
-        stream.out_uint16_le(1);
+        stream.out_uint16_le(PLANES_NUMBER);
         stream.out_uint16_le(this->depth);
         stream.out_uint32_le(0);  // BI_RGB
         stream.out_uint32_le(this->data_length);
@@ -2324,6 +2408,91 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
         stream.out_uint32_le(0);
         stream.out_uint32_le(0);
         stream.out_uint32_le(0);
+    }
+
+    void recv(InStream & stream) {
+        CliprdrHeader::recv(stream);
+
+        // 2.2.5.2.1 Packed Metafile Payload (cliboard.hpp)
+        this->mapping_mod = stream.in_uint32_le();
+        this->mapping_mod_width = stream.in_uint32_le();
+        this->mapping_mod_height = stream.in_uint32_le();
+
+        // 3.2.1 META_HEADER Example
+        this->meta_header_type = stream.in_uint16_le();
+        this->meta_header_size = stream.in_uint16_le();
+        this->meta_header_version = stream.in_uint16_le();
+        this->meta_file_words_len = stream.in_uint32_le();
+        stream.in_skip_bytes(2);
+        this->record_words_len = stream.in_uint32_le();
+        stream.in_skip_bytes(2);
+
+        bool notEOF(true);
+        while(notEOF) {
+
+            // 2.3 WMF Records
+            int recordSize = stream.in_uint32_le();
+            int type = stream.in_uint16_le();
+
+            switch (type) {
+
+                case META_SETWINDOWEXT:
+                    REDASSERT(recordSize == META_SETWINDOWEXT_WORDS_SIZE);
+                    stream.in_skip_bytes(recordSize*2 - 6);
+                break;
+
+                case META_SETWINDOWORG:
+                    REDASSERT(recordSize == META_SETWINDOWORG_WORDS_SIZE);
+                    stream.in_skip_bytes(recordSize*2 - 6);
+                break;
+
+                case META_SETMAPMODE:
+                    REDASSERT(recordSize == META_SETMAPMODE_WORDS_SIZE);
+                    stream.in_skip_bytes(recordSize*2 - 6);
+                break;
+
+                case META_DIBSTRETCHBLT:
+                {
+                    notEOF = false;
+
+                    // 2.3.1.3.1 META_DIBSTRETCHBLT With Bitmap
+                    this->operation = stream.in_uint32_le();
+
+                    this->height = stream.in_uint16_le();
+                    this->width  = stream.in_uint16_le();
+                    stream.in_skip_bytes(12);
+
+                    // DeviceIndependentBitmap  2.2.2.9 DeviceIndependentBitmap Object
+
+                    // 2.2.2.3 BitmapInfoHeader Object+
+                    //int bitmapinfo_header_size = stream.in_uint32_le();
+                    //REDASSERT(BITMAPINFO_HEADER_SIZE == bitmapinfo_header_size);
+                    stream.in_skip_bytes(14);
+
+                    this->depth       = stream.in_uint16_le();
+                    stream.in_skip_bytes(4);
+
+                    this->data_length = stream.in_uint32_le();
+                    stream.in_skip_bytes(8);
+
+                    int skip(0);
+                    if (stream.in_uint32_le() == 0) { // if colorUsed == 0
+                        skip = 0;
+                    }
+                    stream.in_skip_bytes(4);
+
+                        // Colors (variable)
+                    stream.in_skip_bytes(skip);
+
+                        // BitmapBuffer (variable)
+                    stream.in_skip_bytes(0);
+                }
+                break;
+
+                default:
+                break;
+            }
+        }
     }
 };
 
@@ -2340,6 +2509,10 @@ struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
         }
     };
 
+    explicit FormatDataResponsePDU_Text()
+      : FormatDataResponsePDU()
+    {}
+
     explicit FormatDataResponsePDU_Text(std::size_t length)
       : FormatDataResponsePDU(length)
     {}
@@ -2347,13 +2520,20 @@ struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
     void emit(OutStream & stream) {
         CliprdrHeader::emit(stream);
     }
+
+    void recv(InStream & stream) {
+        CliprdrHeader::recv(stream);
+    }
 };
 
 struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
 
-    const int cItems;
-    const std::string name;
-    const uint64_t size;
+    int cItems;
+    std::string name;
+    uint64_t size;
+    uint32_t flags;
+    uint32_t attribute;
+    uint64_t time;
 
     // 2.2.5.2.3 Packed File List (CLIPRDR_FILELIST)
 
@@ -2374,27 +2554,34 @@ struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
 
     // fileDescriptorArray (variable): An array of File Descriptors (section 2.2.5.2.3.1). The number of elements in the array is specified by the cItems field.
 
+    explicit FormatDataResponsePDU_FileList()
+      : FormatDataResponsePDU()
+      , cItems(0)
+      , size(0)
+      , flags(0)
+      , attribute(0)
+      , time(0)
+    {}
+
     explicit FormatDataResponsePDU_FileList(const std::size_t cItems, std::string name, const uint64_t size)
       : FormatDataResponsePDU((FileDescriptor::size() * cItems) + 4)
       , cItems(cItems)
       , name(std::move(name))
       , size(size)
+      , flags(FD_SHOWPROGRESSUI |FD_FILESIZE | FD_WRITESTIME | FD_ATTRIBUTES)
+      , attribute(FILE_ATTRIBUTE_ARCHIVE)
+      , time(TIME64_FILE_LIST)
     {}
 
     void emit(OutStream & stream) {
         CliprdrHeader::emit(stream);
 
         stream.out_uint32_le(this->cItems);
-
-        stream.out_uint32_le(FD_SHOWPROGRESSUI |
-                             FD_FILESIZE       |
-                             FD_WRITESTIME     |
-                             FD_ATTRIBUTES
-                            );
+        stream.out_uint32_le(this->flags);
         stream.out_clear_bytes(32);
-        stream.out_uint32_le(FILE_ATTRIBUTE_ARCHIVE);
+        stream.out_uint32_le(this->attribute);
         stream.out_clear_bytes(16);
-        stream.out_uint64_le(TIME64_FILE_LIST);
+        stream.out_uint64_le(this->time);
         stream.out_uint32_le(this->size >> 32);
         stream.out_uint32_le(this->size);
         size_t sizeName(this->name.size());
@@ -2403,6 +2590,21 @@ struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
         }
         stream.out_copy_bytes(this->name.data(), sizeName);;
         stream.out_clear_bytes(520 - sizeName);
+    }
+
+    void recv(InStream & stream) {
+        CliprdrHeader::recv(stream);
+
+        this->cItems = stream.in_uint32_le();
+        this->flags = stream.in_uint32_le();
+        stream.in_skip_bytes(32);
+        this->attribute = stream.in_uint32_le();
+        stream.in_skip_bytes(16);
+        this->time = stream.in_uint64_le();
+        this->size = stream.in_uint32_le();
+        this->size = this->size << 32;
+        this->size += stream.in_uint32_le();
+        this->name =  std::string(reinterpret_cast<const char *>(stream.get_current()), 520);
     }
 };
 
@@ -2520,13 +2722,22 @@ public:
 // clipDataId (4 bytes): An unsigned, 32-bit integer that is used to tag File Stream data on the Shared Owner clipboard so that it can be requested in a subsequent File Contents Request PDU (section 2.2.5.3).
 
 struct LockClipboardDataPDU : public CliprdrHeader {
-    explicit LockClipboardDataPDU()
+
+    uint32_t streamDataID;
+
+    explicit LockClipboardDataPDU(uint32_t streamDataID)
     : CliprdrHeader(CB_LOCK_CLIPDATA, 0, 4)
+    , streamDataID(streamDataID)
     {}
 
-    void emit(OutStream & stream, uint32_t streamDataID) {
+    void emit(OutStream & stream) {
         CliprdrHeader::emit(stream);
         stream.out_uint32_le(streamDataID);
+    }
+
+    void recv(InStream & stream) {
+        CliprdrHeader::recv(stream);
+        streamDataID = stream.in_uint32_le();
     }
 };
 
@@ -2552,13 +2763,22 @@ struct LockClipboardDataPDU : public CliprdrHeader {
  // clipDataId (4 bytes): An unsigned, 32-bit integer that identifies the File Stream data that was locked by the Lock Clipboard Data PDU (section 2.2.4.1) and can now be released.
 
 struct UnlockClipboardDataPDU : public CliprdrHeader {
-    explicit UnlockClipboardDataPDU()
+
+    uint32_t streamDataID;
+
+    explicit UnlockClipboardDataPDU(uint32_t streamDataID)
     : CliprdrHeader(CB_UNLOCK_CLIPDATA, 0, 4)
+    , streamDataID(streamDataID)
     {}
 
-    void emit(OutStream & stream, uint32_t streamDataID) {
+    void emit(OutStream & stream) {
         CliprdrHeader::emit(stream);
         stream.out_uint32_le(streamDataID);
+    }
+
+    void recv(InStream & stream) {
+        CliprdrHeader::recv(stream);
+        streamDataID = stream.in_uint32_le();
     }
 };
 
