@@ -82,6 +82,8 @@
 #include <QtGui/QRgb>
 #include <QtGui/QBitmap>
 #include <QtGui/QColormap>
+#include <QtGui/QPainter>
+
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
@@ -90,11 +92,11 @@
 #endif
 
 
-#define USER_CONF_PATH "config/userConfig.config"
-#define CB_FILE_TEMP_PATH "clipboard_temp"
-#define REPLAY_PATH "replay"
-#define KEY_SETTING_PATH "config/keySetting.config"
-#define LOGINS_PATH "config/logins.config"
+#define USER_CONF_PATH "/config/userConfig.config"
+#define CB_FILE_TEMP_PATH "/clipboard_temp"
+#define REPLAY_PATH "/replay"
+#define KEY_SETTING_PATH "/config/keySetting.config"
+#define LOGINS_PATH "/config/logins.config"
 
 
 class Form_Qt;
@@ -530,6 +532,10 @@ public:
     QImage::Format bpp_to_QFormat(int bpp, bool alpha) override;
 
     void draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool invert, int srcx, int srcy);
+
+    void draw_RDPPatBlt(const Rect & rect, const QColor color, const QPainter::CompositionMode mode, const Qt::BrushStyle style);
+
+    void draw_RDPPatBlt(const Rect & rect, const QColor color, const QPainter::CompositionMode mode);
 
 
 

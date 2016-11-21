@@ -57,6 +57,9 @@
 #include <QtGui/QFileDialog>
 #include <QtCore/QThread>
 
+#include <QtCore/QtGlobal>
+#include <QtCore/QDebug>
+
 
 
 class Mod_Qt : public QObject
@@ -160,6 +163,8 @@ public:
                                    , targetIP
                                    , localIP
                                    , 2
+                                   , ini.get<cfg::font>()
+                                   , ini.get<cfg::theme>()
                                    , 0
                                    );
         mod_rdp_params.device_id                       = "device_id";
@@ -1544,6 +1549,8 @@ public:
             std::string path(this->_front->CB_TEMP_DIR + std::string("/") + items_list[i].name);
             std::cout <<  path <<  std::endl;
             QString qpath(path.c_str());
+
+            qDebug() << "QUrl" << QUrl::fromLocalFile(qpath);
 
             gnomeFormat.append(QUrl::fromLocalFile(qpath).toEncoded());
         }

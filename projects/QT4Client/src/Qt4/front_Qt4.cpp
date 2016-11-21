@@ -351,7 +351,8 @@ void Front_Qt::set_pointer(Pointer const & cursor) {
                         data[i+2] = 0xFF;
                         data[i+3] = 0xFF;
                         break;
-                    default: // transparent
+
+                    default:      // transparent
                         break;
                 }
             }
@@ -915,6 +916,20 @@ QImage::Format Front_Qt::bpp_to_QFormat(int bpp, bool alpha) {
 }
 
 
+void Front_Qt::draw_RDPPatBlt(const Rect & rect, const QColor color, const QPainter::CompositionMode mode, const Qt::BrushStyle style) {
+    QBrush brush(color, style);
+    this->_screen[0]->paintCache().setBrush(brush);
+    this->_screen[0]->paintCache().setCompositionMode(mode);
+    this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
+    this->_screen[0]->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
+    this->_screen[0]->paintCache().setBrush(Qt::SolidPattern);
+}
+
+void Front_Qt::draw_RDPPatBlt(const Rect & rect, const QColor color, const QPainter::CompositionMode mode) {
+
+}
+
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //-----------------------------
@@ -933,10 +948,10 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
     new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
     const Rect rect = clip.intersect(this->_info.width * this->_monitorCount, this->_info.height).intersect(cmd.rect);
 
+    QColor backColor = this->u32_to_qcolor(new_cmd24.back_color);
+    QColor foreColor = this->u32_to_qcolor(new_cmd24.fore_color);
+
     if (cmd.brush.style == 0x03 && (cmd.rop == 0xF0 || cmd.rop == 0x5A)) { // external
-        enum { BackColor, ForeColor };
-        QColor backColor = this->u32_to_qcolor(new_cmd24.back_color);
-        QColor foreColor = this->u32_to_qcolor(new_cmd24.fore_color);
 
         switch (cmd.rop) {
 
@@ -950,8 +965,8 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                     this->_screen[0]->paintCache().setBrush(brush);
                     this->_screen[0]->paintCache().setCompositionMode(QPainter::RasterOp_SourceXorDestination);
                     this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-                    this->_screen[0]->paintCache().setBrush(Qt::SolidPattern);
                     this->_screen[0]->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
+                    this->_screen[0]->paintCache().setBrush(Qt::SolidPattern);
                 }
                 break;
 
@@ -960,12 +975,13 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
             // |      | RPN: P                        |
             // +------+-------------------------------+
             case 0xF0:
-                {   this->_screen[0]->paintCache().setPen(Qt::NoPen);
-                    this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
-                    QBrush brush(foreColor, Qt::Dense4Pattern);
-                    this->_screen[0]->paintCache().setBrush(brush);
-                    this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-                    this->_screen[0]->paintCache().setBrush(Qt::SolidPattern);
+                {
+                    //this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
+                    //QBrush brush(foreColor, Qt::Dense4Pattern);
+                    //this->_screen[0]->paintCache().setBrush(brush);
+                    //this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
+                    //this->_screen[0]->paintCache().setBrush(Qt::SolidPattern);
+                    std::cout <<  "RDPPatBlt 0xF0" <<  std::endl;
                 }
                 break;
             default:
@@ -976,10 +992,6 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
     } else {
          switch (cmd.rop) {
 
-                // +------+-------------------------------+
-                // | 0x00 | ROP: 0x00000042 (BLACKNESS)   |
-                // |      | RPN: 0                        |
-                // +------+-------------------------------+
             case 0x00: // blackness
                 this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::black);
                 break;
@@ -1028,6 +1040,11 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                 // | 0xA5 | ROP: 0x00A50065               |
                 // |      | RPN: PDxn                     |
                 // +------+-------------------------------+
+            case 0xA5:
+                this->_screen[0]->paintCache().setCompositionMode(QPainter::RasterOp_NotSourceAndNotDestination);
+                this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
+                this->_screen[0]->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
+                break;
 
                 // +------+-------------------------------+
                 // | 0xAA | ROP: 0x00AA0029               |
@@ -1044,6 +1061,11 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                 // | 0xF0 | ROP: 0x00F00021 (PATCOPY)     |
                 // |      | RPN: P                        |
                 // +------+-------------------------------+
+            case 0xF0:
+                this->_screen[0]->paintCache().setPen(Qt::NoPen);
+                //this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
+                this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
+                break;
 
                 // +------+-------------------------------+
                 // | 0xF5 | ROP: 0x00F50225               |
@@ -1055,10 +1077,6 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                 // |      | RPN: DPo                      |
                 // +------+-------------------------------+
 
-                // +------+-------------------------------+
-                // | 0xFF | ROP: 0x00FF0062 (WHITENESS)   |
-                // |      | RPN: 1                        |
-                // +------+-------------------------------+
             case 0xFF: // whiteness
                 this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::white);
                 break;
@@ -1949,9 +1967,9 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             std::cout << "client >> Format List Response PDU" << std::endl;
 
 
-                            RDPECLIP::LockClipboardDataPDU lockClipboardDataPDU;
+                            RDPECLIP::LockClipboardDataPDU lockClipboardDataPDU(0);
                             StaticOutStream<32> out_stream_lock;
-                            lockClipboardDataPDU.emit(out_stream_lock, 0);
+                            lockClipboardDataPDU.emit(out_stream_lock);
                             InStream chunk_lock(out_stream_lock.get_data(), out_stream_lock.get_offset());
 
                             this->_callback->send_to_mod_channel( channel_names::cliprdr
@@ -2092,7 +2110,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                                 , file->name
                                                                                 , file->size
                                                                                 );
-
                                     fdr.emit(out_stream_first_part);
 
                                     if (this->_clipboard_qt->_cItems == 1) {
@@ -2546,9 +2563,9 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
                     this->_clipboard_qt->setClipboard_files(this->_cb_filesList.itemslist);
                     this->_clipboard_qt->_local_clipboard_stream = true;
 
-                    RDPECLIP::UnlockClipboardDataPDU unlockClipboardDataPDU;
+                    RDPECLIP::UnlockClipboardDataPDU unlockClipboardDataPDU(0);
                     StaticOutStream<32> out_stream_unlock;
-                    unlockClipboardDataPDU.emit(out_stream_unlock, 0);
+                    unlockClipboardDataPDU.emit(out_stream_unlock);
                     InStream chunk_unlock(out_stream_unlock.get_data(), out_stream_unlock.get_offset());
 
 
@@ -2733,7 +2750,7 @@ void Front_Qt::process_client_clipboard_out_data(const uint64_t total_length, Ou
 
     if (data_len > first_part_data_size ) {
 
-        const int cmpt_PDU_part(data_len / PDU_MAX_SIZE);
+        const int cmpt_PDU_part(data_len / PDU_MAX_SIZE); 
         const int remains_PDU  (data_len % PDU_MAX_SIZE);
         int data_sent(0);
 
@@ -2855,7 +2872,9 @@ int main(int argc, char** argv){
 
     // sudo bin/gcc-4.9.2/san/rdpproxy -nf
 
-    //bjam debug client_rdp_Qt4 |& sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' && bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4 -n admin -pwd $mdp -ip 10.10.40.22 -p 3389
+    //bjam debug client_rdp_Qt4 |&  bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4 -n admin -pwd $mdp -ip 10.10.40.22 -p 3389
+
+    // sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' &&
 
     QApplication app(argc, argv);
 

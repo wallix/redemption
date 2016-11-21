@@ -34,7 +34,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "system/ssl_calls.hpp"
+
 #include "system/ssl_sha256.hpp"
 
 #include "openssl_crypto.hpp"
@@ -65,7 +65,7 @@ enum {
 
 extern "C" {
     typedef int get_hmac_key_prototype(char * buffer);
-    typedef int get_trace_key_prototype(char * base, int len, char * buffer);
+    typedef int get_trace_key_prototype(char * base, int len, char * buffer, unsigned oldscheme);
 }
 
 
@@ -80,9 +80,8 @@ class CryptoContext
     bool master_key_loaded;
     bool hmac_key_loaded;
     unsigned char master_key[CRYPTO_KEY_LENGTH];
-    static_assert(cfg::crypto::key0::type().size() == CRYPTO_KEY_LENGTH, "");
-
-public:
+    public:
+    bool old_encryption_scheme;
     get_hmac_key_prototype * get_hmac_key_cb;
     get_trace_key_prototype * get_trace_key_cb;
 
@@ -110,13 +109,32 @@ public:
 
     void get_derived_key(uint8_t (& trace_key)[CRYPTO_KEY_LENGTH], const uint8_t * derivator, size_t derivator_len)
     {
+        if (this->old_encryption_scheme){
+            //LOG(LOG_INFO, "old encryption scheme derivator %.*s", static_cast<unsigned>(derivator_len), derivator);
+            if (this->get_trace_key_cb != nullptr){
+                // if we have a callback ask key
+                uint8_t tmp[SHA256_DIGEST_LENGTH];
+                this->get_trace_key_cb(
+                      reinterpret_cast<char*>(const_cast<uint8_t*>(derivator))
+                    , static_cast<int>(derivator_len)
+                    , reinterpret_cast<char*>(tmp)
+                    , this->old_encryption_scheme?1:0
+                    );
+                memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
+                return;
+            }
+        }
+        
+        //LOG(LOG_INFO, "new encryption scheme derivator %.*s", static_cast<unsigned>(derivator_len), derivator);
         if (!this->master_key_loaded){
+            //LOG(LOG_INFO, "first call, loading master key");
             if (this->get_trace_key_cb != nullptr){
                 // if we have a callback ask key
                 this->get_trace_key_cb(
                       reinterpret_cast<char*>(const_cast<uint8_t*>(derivator))
                     , static_cast<int>(derivator_len)
                     , reinterpret_cast<char*>(this->master_key)
+                    , this->old_encryption_scheme?1:0
                     );
                 this->master_key_loaded = true;
             }
@@ -148,13 +166,14 @@ public:
     }
 
     CryptoContext(const Inifile & ini)
-    : master_key_loaded(false)
-    , hmac_key_loaded(false)
-    , master_key{}
-    , get_hmac_key_cb(nullptr)
-    , get_trace_key_cb(nullptr)
-    , ini(ini)
-    , hmac_key{}
+	: master_key_loaded(false)
+	, hmac_key_loaded(false)
+	, master_key{}
+	, old_encryption_scheme(false)
+	, get_hmac_key_cb(nullptr)
+	, get_trace_key_cb(nullptr)
+	, ini(ini)
+	, hmac_key{}
     {
         memcpy(this->master_key,
             "\x01\x02\x03\x04\x05\x06\x07\x08"
