@@ -80,7 +80,6 @@ install install-share
 install install-etc
     : [ glob
         $(REDEMPTION_ETC_DH_GLOG)
-        $(REDEMPTION_INI_GLOB)
     ]
     :
     : <location>$(INSTALLDIR)$(ETC_PREFIX)
@@ -136,7 +135,7 @@ constant TEST_DEPENDENCIES :
 ;
 
 
-obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp ;
+obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : $(EXE_DEPENDENCIES) ;
 obj d3des : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 obj bitmap : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
 obj program_options : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
