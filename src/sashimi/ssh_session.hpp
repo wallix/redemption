@@ -2630,12 +2630,6 @@ struct SshServerSession : public ssh_session_struct
                 this->socket->close();
                 this->session_state = SSH_SESSION_STATE_ERROR;
                 return;
-            case SSH_CHANNEL_REQ_STATE_PENDING:
-            CPP_FALLTHROUGH;
-            case SSH_CHANNEL_REQ_STATE_ACCEPTED:
-            CPP_FALLTHROUGH;
-            case SSH_CHANNEL_REQ_STATE_DENIED:
-            CPP_FALLTHROUGH;
             default:
                 ssh_set_error(error, SSH_FATAL,"Invalid state %d",this->session_state);
         }
@@ -5558,7 +5552,7 @@ struct SshServerSession : public ssh_session_struct
         CPP_FALLTHROUGH;
         case SSH_SESSION_STATE_CONNECTING:
         CPP_FALLTHROUGH;
-        case SSH_SESSION_STATE_SOCKET_CONNECTED
+        case SSH_SESSION_STATE_SOCKET_CONNECTED:
         CPP_FALLTHROUGH;
         default:
             ssh_set_error(this->error,  SSH_FATAL,"SSH_KEXINIT received in wrong state");
