@@ -48,9 +48,9 @@ extern "C" {
         return 0;
     }
 
-    int trace_fn(char * base, int len, char * buffer);
+    int trace_fn(char * base, int len, char * buffer, unsigned oldscheme);
 
-    int trace_fn(char * base, int len, char * buffer)
+    int trace_fn(char * base, int len, char * buffer, unsigned oldscheme)
     {
         // in real uses actual trace_key is derived from base and some master key
         (void)base;

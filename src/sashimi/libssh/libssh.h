@@ -147,7 +147,10 @@ typedef int (*ssh_event_callback)(socket_t fd, int revents, void *userdata);
  * @brief SSH global request callback. All global request will go through this
  * callback.
  * @param session Current session handler
- * @param message the actual message
+ * @param type 
+ * @param want_reply 
+ * @param bind_address
+ * @param bind_port
  * @param userdata Userdata to be passed to the callback function.
  */
 typedef void (*ssh_global_request_callback) (struct ssh_session_struct * session,
@@ -207,7 +210,6 @@ typedef int (*ssh_auth_none_callback) (const char *user, void *userdata);
 
 /**
  * @brief SSH authentication callback. Tries to authenticates user with the "gssapi-with-mic" method
- * @param session Current session handler
  * @param user Username of the user (can be spoofed)
  * @param principal Authenticated principal of the user, including realm.
  * @param userdata Userdata to be passed to the callback function.
@@ -237,13 +239,11 @@ typedef int (*ssh_auth_pubkey_callback) (const char *user, struct ssh_key_struct
 
 /**
  * @brief Handles an SSH service request
- * @param session current session handler
  * @param service name of the service (e.g. "ssh-userauth") requested
  * @param userdata Userdata to be passed to the callback function.
- * @returns 0 if the request is to be allowed
- * @returns -1 if the request should not be allowed
+ * @returns 0  if the request is to be allowed
+ *          -1 if the request should not be allowed
  */
-
 typedef int (*ssh_service_request_callback) (const char *service, void *userdata);
 
 /**
@@ -661,7 +661,7 @@ typedef int (*ssh_channel_pty_request_callback) (ssh_session_struct * session,
                                             ssh_channel channel,
                                             const char *term,
                                             int width, int height,
-                                            int pxwidth, int pwheight,
+                                            int pxwidth, int pxheight,
                                             void *userdata);
 
 /**
@@ -713,7 +713,7 @@ typedef void (*ssh_channel_x11_req_callback) (ssh_session_struct * session,
 typedef int (*ssh_channel_pty_window_change_callback) (ssh_session_struct * session,
                                             ssh_channel channel,
                                             int width, int height,
-                                            int pxwidth, int pwheight,
+                                            int pxwidth, int pxheight,
                                             void *userdata);
 
 /**
@@ -813,18 +813,21 @@ struct ssh_channel_callbacks_struct {
    * command execution.
    */
   ssh_channel_exec_request_callback channel_exec_request_function;
+  
   /** This function will be called when a client requests an environment
    * variable to be set.
    */
   ssh_channel_env_request_callback channel_env_request_function;
+
   /** This function will be called when a client requests a subsystem
    * (like sftp).
-   * @brief SSH channel subsystem request from a client.
-   * @param channel the channel
-   * @param subsystem the subsystem required
-   * @param userdata Userdata to be passed to the callback function.
-   * @returns 0 if the subsystem request is accepted
-   * @returns 1 if the request is denied
+   * brief: SSH channel subsystem request from a client.
+   * param: session the current session
+   * param: channel the channel
+   * param: subsystem the subsystem required
+   * param: userdata Userdata to be passed to the callback function.
+   * returns 0 if the subsystem request is accepted
+   *          or 1 if the request is denied
   */
   int (*channel_subsystem_request_function)(ssh_session_struct * session,
                                             ssh_channel channel,

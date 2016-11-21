@@ -40,7 +40,6 @@ constant CXXFLAGS-COMMON :
 #     <cxxflags>-Wstrict-overflow=3
 #     <cxxflags>-Wstrict-overflow=4
 #     <cxxflags>-Wstrict-overflow=5
-    <cxxflags>-Wstrict-overflow=5
     <cxxflags>-Wvolatile-register-var
 #    <cxxflags>-Wdisabled-optimization
     <cxxflags>-Warray-bounds

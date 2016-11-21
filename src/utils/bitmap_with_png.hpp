@@ -96,7 +96,7 @@ inline Bitmap bitmap_from_file_impl(const char * filename)
         return Bitmap{};
     }
     if (png_sig_cmp(type1, 0, 8) == 0) {
-        LOG(LOG_INFO, "Bitmap: image file [%s] is PNG file\n", filename);
+        //LOG(LOG_INFO, "Bitmap: image file [%s] is PNG file\n", filename);
         return bitmap_from_png_without_sig(fd_.get(), filename);
     }
 

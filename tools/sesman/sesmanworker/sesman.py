@@ -152,6 +152,7 @@ class Sesman():
         self.shared[u'selector_lines_per_page'] = u'0'
         self.shared[u'real_target_device']      = MAGICASK
         self.shared[u'reporting']               = u''
+        self.shared[u'session_log_redirection'] = u'False'
 
         self._trace_type = self.engine.get_trace_type()
         self.language           = None
@@ -1223,9 +1224,11 @@ class Sesman():
             signal.signal(signal.SIGUSR2, self.check_handler)
 
             Logger().info(u"Starting Session, effective login='%s'" % self.effective_login)
+            session_log_redirection = (self.shared[u'session_log_redirection'].lower() == u'true')
             # Add connection to the observer
             session_id = self.engine.start_session(selected_target, self.pid,
-                                                   self.effective_login)
+                                                   self.effective_login, 
+                                                   has_session_log_redirection=session_log_redirection)
             if session_id is None:
                 _status, _error = False, TR(u"start_session_failed")
                 self.send_data({u'rejected': TR(u'start_session_failed')})
@@ -1548,7 +1551,6 @@ class Sesman():
                                             result=False, diag=release_reason)
                                         self.send_data({u'disconnect_reason': TR(u"pattern_kill")})
                                     elif _reporting_reason == u'SERVER_REDIRECTION':
-
                                         (redir_login, _, redir_host) = \
                                             _reporting_message.rpartition('@')
                                         update_args = {}

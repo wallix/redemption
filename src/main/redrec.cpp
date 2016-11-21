@@ -28,7 +28,7 @@ inline int get_hmac_key_prototype_fn(char * buffer) {
     return 0;
 }
 
-inline int get_trace_key_prototype_fn(char *, int, char * buffer) {
+inline int get_trace_key_prototype_fn(char *, int, char * buffer, unsigned oldscheme) {
     memcpy(buffer, g_key_str, 32);
     return 0;
 }
