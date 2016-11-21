@@ -283,10 +283,11 @@ extern "C" {
         return 0;
     }
 
-    inline int trace_fn(char * base, int len, char * buffer)
+    inline int trace_fn(char * base, int len, char * buffer, unsigned oldscheme)
     {
         (void)base;
         (void)len;
+        assert(oldscheme == 0);
         // in real uses actual trace_key is derived from base and some master key
         uint8_t trace_key[32] = {
             0x56, 0x3e, 0xb6, 0xe8, 0x15, 0x8f, 0x0e, 0xed,
@@ -797,19 +798,26 @@ extern "C" {
 ///* 0050 */ "\x30\x2d\x30\x30\x30\x30\x30\x30\x2e\x77\x72\x6d"                 //0-000000.wrm
 
 
-    inline int trace_old_fn(char * base, int len, char * buffer)
+    inline int trace_old_fn(char * base, int len, char * buffer, unsigned oldscheme)
     {
         (void)base;
         (void)len;
         // in real uses actual trace_key is derived from base and some master key
         static int i = 0;
-        uint8_t trace_key[10][32] = {
+        uint8_t old_trace_key[10][32] = {
             0x56, 0x3e, 0xb6, 0xe8, 0x15, 0x8f, 0x0e, 0xed,
             0x2e, 0x5f, 0xb6, 0xbc, 0x28, 0x93, 0xbc, 0x15,
             0x27, 0x0d, 0x7e, 0x78, 0x15, 0xfa, 0x80, 0x4a,
             0x72, 0x3e, 0xf4, 0xfb, 0x31, 0x5f, 0xf4, 0xb2
          };
-        memcpy(buffer, trace_key, 32);
+        uint8_t new_trace_key[32] = {
+            0x56, 0x3e, 0xb6, 0xe8, 0x15, 0x8f, 0x0e, 0xed,
+            0x2e, 0x5f, 0xb6, 0xbc, 0x28, 0x93, 0xbc, 0x15,
+            0x27, 0x0d, 0x7e, 0x78, 0x15, 0xfa, 0x80, 0x4a,
+            0x72, 0x3e, 0xf4, 0xfb, 0x31, 0x5f, 0xf4, 0xb2
+         };
+        memcpy(buffer, oldscheme?old_trace_key[i]:new_trace_key, 32);
+        if (oldscheme) { i++; }
         return 0;
     }
 }
