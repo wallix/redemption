@@ -245,7 +245,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
         in_wrm_trans.next();
     }
 
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, verbose);
+    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, verbose);
 
     if (show_file_metadata) {
         show_metadata(player);

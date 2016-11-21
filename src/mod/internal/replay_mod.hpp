@@ -45,7 +45,7 @@ class ReplayMod : public InternalMod
             Impl(Inifile & ini, char const * prefix, char const * extension, uint32_t debug_capture)
             : cctx(ini)
             , in_trans(&this->cctx, prefix, extension, 0, 0)
-            , reader(&this->in_trans, /*begin_capture*/{0, 0}, /*end_capture*/{0, 0}, true, debug_capture)
+            , reader(this->in_trans, /*begin_capture*/{0, 0}, /*end_capture*/{0, 0}, true, debug_capture)
             {
             }
 
