@@ -876,7 +876,7 @@ struct out_is_mismatch
 
 static inline int check_file(const std::string & filename, const MetaLine2 & metadata,
                       bool quick, bool has_checksum, bool ignore_stat_info,
-                      uint8_t * hmac_key, size_t hmac_key_len, bool update_stat_info, out_is_mismatch has_mismatch_stat)
+                      uint8_t const * hmac_key, size_t hmac_key_len, bool update_stat_info, out_is_mismatch has_mismatch_stat)
 {
     has_mismatch_stat.is_mismatch = false;
     struct stat64 sb;
@@ -892,10 +892,10 @@ static inline int check_file(const std::string & filename, const MetaLine2 & met
             return false;
         }
 
-        uint8_t hash[SHA256_DIGEST_LENGTH]={};
+        uint8_t hash[SHA256_DIGEST_LENGTH]{};
         if (file_start_hmac_sha256(filename.c_str(),
                              hmac_key, hmac_key_len,
-                             quick?QUICK_CHECK_LENGTH:0, hash) < 0){
+                             quick?QUICK_CHECK_LENGTH:0, hash) < 0) {
             std::cerr << "Error reading file \"" << filename << "\"\n" << std::endl;
             return false;
         }

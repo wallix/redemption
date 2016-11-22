@@ -34,12 +34,10 @@
 #include <unistd.h>
 #include <errno.h>
 
-
+#include <array>
+#include "utils/log.hpp"
+#include "utils/sugar/bytes_t.hpp"
 #include "system/ssl_sha256.hpp"
-
-#include "openssl_crypto.hpp"
-//#include "openssl_evp.hpp"
-#include "configs/config.hpp"
 
 enum crypto_file_state {
     CF_READY = 0, // Crypto File Reading
@@ -77,34 +75,40 @@ extern "C" {
 
 class CryptoContext
 {
-    bool master_key_loaded;
-    bool hmac_key_loaded;
-    unsigned char master_key[CRYPTO_KEY_LENGTH];
-    public:
-    bool old_encryption_scheme;
-    get_hmac_key_prototype * get_hmac_key_cb;
-    get_trace_key_prototype * get_trace_key_cb;
+    unsigned char master_key[CRYPTO_KEY_LENGTH] {};
+    unsigned char hmac_key[HMAC_KEY_LENGTH] {};
 
-    // TODO only for cfg::crypto::key0 and key1
-    const Inifile & ini;
-private:
-    unsigned char hmac_key[HMAC_KEY_LENGTH];
-    static_assert(cfg::crypto::key1::type().size() == HMAC_KEY_LENGTH, "");
+    get_hmac_key_prototype * get_hmac_key_cb = nullptr;
+    get_trace_key_prototype * get_trace_key_cb = nullptr;
+
+    bool master_key_loaded = false;
+    bool hmac_key_loaded = false;
+
+
 public:
+    bool old_encryption_scheme = false;
 
-    auto get_hmac_key() -> unsigned char (&)[HMAC_KEY_LENGTH]
+
+public:
+    auto get_hmac_key() -> unsigned char const (&)[HMAC_KEY_LENGTH]
     {
         if (!this->hmac_key_loaded){
-            if (this->get_hmac_key_cb != nullptr){
-                // if we have a callback ask key
-                this->get_hmac_key_cb(reinterpret_cast<char*>(this->hmac_key));
+            assert(this->get_hmac_key_cb);
+            if (!this->get_hmac_key_cb) {
+                LOG(LOG_ERR, "CryptoContext: get_hmac_key_cb is null");
+                throw Error(ERR_WRM_INVALID_INIT_CRYPT);
             }
-            else {
-                memcpy(this->hmac_key, ini.get<cfg::crypto::key1>().data(), sizeof(this->hmac_key));
-            }
+            // if we have a callback ask key
+            this->get_hmac_key_cb(reinterpret_cast<char*>(this->hmac_key));
             this->hmac_key_loaded = true;
         }
         return this->hmac_key;
+    }
+
+    const unsigned char * get_master_key() const
+    {
+        assert(this->master_key_loaded);
+        return this->master_key;
     }
 
     void get_derived_key(uint8_t (& trace_key)[CRYPTO_KEY_LENGTH], const uint8_t * derivator, size_t derivator_len)
@@ -124,24 +128,24 @@ public:
                 return;
             }
         }
-        
+
         //LOG(LOG_INFO, "new encryption scheme derivator %.*s", static_cast<unsigned>(derivator_len), derivator);
         if (!this->master_key_loaded){
             //LOG(LOG_INFO, "first call, loading master key");
-            if (this->get_trace_key_cb != nullptr){
-                // if we have a callback ask key
-                this->get_trace_key_cb(
-                      reinterpret_cast<char*>(const_cast<uint8_t*>(derivator))
-                    , static_cast<int>(derivator_len)
-                    , reinterpret_cast<char*>(this->master_key)
-                    , this->old_encryption_scheme?1:0
-                    );
-                this->master_key_loaded = true;
+            assert(this->get_trace_key_cb);
+            if (!this->get_trace_key_cb) {
+                LOG(LOG_ERR, "CryptoContext: get_hmac_key_cb is null");
+                throw Error(ERR_WRM_INVALID_INIT_CRYPT);
             }
-            else {
-                memcpy(this->master_key, this->ini.get<cfg::crypto::key0>().data(), sizeof(this->master_key));
-                this->master_key_loaded = true;
-            }
+
+            // if we have a callback ask key
+            this->get_trace_key_cb(
+                reinterpret_cast<char*>(const_cast<uint8_t*>(derivator))
+              , static_cast<int>(derivator_len)
+              , reinterpret_cast<char*>(this->master_key)
+              , this->old_encryption_scheme?1:0
+            );
+            this->master_key_loaded = true;
         }
 
         uint8_t tmp[SHA256_DIGEST_LENGTH];
@@ -159,35 +163,7 @@ public:
         memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
     }
 
-    void reset_mode()
-    {
-        this->master_key_loaded = false;
-        this->hmac_key_loaded = false;
-    }
-
-    CryptoContext(const Inifile & ini)
-	: master_key_loaded(false)
-	, hmac_key_loaded(false)
-	, master_key{}
-	, old_encryption_scheme(false)
-	, get_hmac_key_cb(nullptr)
-	, get_trace_key_cb(nullptr)
-	, ini(ini)
-	, hmac_key{}
-    {
-        memcpy(this->master_key,
-            "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08",
-            CRYPTO_KEY_LENGTH);
-        memcpy(this->hmac_key,
-            "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08",
-            HMAC_KEY_LENGTH);
-    }
+    CryptoContext() = default;
 
     size_t unbase64(char *buffer, size_t bufsiz, const char *txt)
     {
@@ -226,15 +202,42 @@ public:
         return nbytes;
     }
 
-    void set_master_key(const uint8_t * key)
+    class key_data : private const_bytes_array
     {
-        memcpy(this->master_key, key, sizeof(this->master_key));
+        static constexpr std::size_t key_length = 32;
+
+        static_assert(sizeof(master_key) == key_length, "");
+        static_assert(sizeof(hmac_key) == key_length, "");
+
+        friend class CryptoContext;
+
+    public:
+        using const_bytes_array::const_bytes_array;
+
+        template<class T, std::size_t array_length>
+        key_data(std::array<T, array_length> const & data) noexcept
+        : const_bytes_array(data)
+        {
+            static_assert(array_length == key_length, "");
+        }
+
+        template<class T, std::size_t array_length>
+        key_data(T const (& data)[array_length]) noexcept
+        : const_bytes_array(data)
+        {
+            static_assert(array_length == key_length, "");
+        }
+    };
+
+    void set_master_key(key_data key)
+    {
+        memcpy(this->master_key, key.data(), sizeof(this->master_key));
         this->master_key_loaded = true;
     }
 
-    void set_hmac_key(const uint8_t * key)
+    void set_hmac_key(key_data key)
     {
-        memcpy(this->hmac_key, key, sizeof(this->hmac_key));
+        memcpy(this->hmac_key, key.data(), sizeof(this->hmac_key));
         this->hmac_key_loaded = true;
     }
 
@@ -247,15 +250,4 @@ public:
     {
         this->get_trace_key_cb = get_trace_key_cb;
     }
-
-    const unsigned char * get_master_key()
-    {
-        if (not this->master_key_loaded)
-        {
-            memcpy(this->master_key, this->ini.get<cfg::crypto::key0>().data(), sizeof(this->master_key));
-            this->master_key_loaded = true;
-        }
-        return &(this->master_key[0]);
-    }
 };
-

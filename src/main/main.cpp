@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     Inifile ini;
 
     UdevRandom rnd;
-    CryptoContext cctx(ini);
+    CryptoContext cctx;
 
     return app_proxy(
         argc, argv

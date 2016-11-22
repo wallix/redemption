@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         BOOST_CHECK(true);
 
         LCGRandom gen1(0);
-        CryptoContext cctx(ini);
+        CryptoContext cctx;
 
         const bool fastpath_support = false;
         const bool mem3blt_support  = false;
@@ -362,7 +362,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         BOOST_CHECK(true);
 
         LCGRandom gen1(0);
-        CryptoContext cctx(ini);
+        CryptoContext cctx;
         const bool fastpath_support = false;
         const bool mem3blt_support  = false;
 
@@ -550,7 +550,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         BOOST_CHECK(true);
 
         LCGRandom gen1(0);
-        CryptoContext cctx(ini);
+        CryptoContext cctx;
         const bool fastpath_support = false;
         const bool mem3blt_support  = false;
 

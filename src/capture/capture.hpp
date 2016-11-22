@@ -196,8 +196,8 @@ public:
         }
 
         if (authentifier) {
-            cctx.set_master_key(ini.get<cfg::crypto::key0>().data());
-            cctx.set_hmac_key(ini.get<cfg::crypto::key1>().data());
+            cctx.set_master_key(ini.get<cfg::crypto::key0>());
+            cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
         }
 
         if (capture_drawable) {

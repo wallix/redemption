@@ -34,7 +34,7 @@ extern "C" {
         auto config_filename = CFG_PATH "/" RDPPROXY_INI;
 
         UdevRandom rnd;
-        CryptoContext cctx(ini);
+        CryptoContext cctx;
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
 

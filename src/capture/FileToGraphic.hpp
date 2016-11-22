@@ -69,10 +69,10 @@ private:
 
     CompressionInTransportWrapper compression_wrapper;
 
-public:
     Transport * trans_source;
     Transport * trans;
 
+public:
     Rect screen_rect;
 
     // Internal state of orders
@@ -205,11 +205,11 @@ public:
     bool break_privplay_qt;
     uint64_t movie_elapsed_qt;
 
-    FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time, uint32_t verbose)
+    FileToGraphic(Transport & trans, const timeval begin_capture, const timeval end_capture, bool real_time, uint32_t verbose)
         : stream(stream_buf)
-        , compression_wrapper(*trans, WrmCompressionAlgorithm::no_compression)
-        , trans_source(trans)
-        , trans(trans)
+        , compression_wrapper(trans, WrmCompressionAlgorithm::no_compression)
+        , trans_source(&trans)
+        , trans(&trans)
         , bmp_cache(nullptr)
         // variables used to read batch of orders "chunks"
         , chunk_size(0)
