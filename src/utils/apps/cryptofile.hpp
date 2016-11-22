@@ -75,16 +75,19 @@ extern "C" {
 
 class CryptoContext
 {
-    bool master_key_loaded;
-    bool hmac_key_loaded;
-    unsigned char master_key[CRYPTO_KEY_LENGTH];
-    public:
-    bool old_encryption_scheme;
-    get_hmac_key_prototype * get_hmac_key_cb;
-    get_trace_key_prototype * get_trace_key_cb;
+    unsigned char master_key[CRYPTO_KEY_LENGTH] {};
+    unsigned char hmac_key[HMAC_KEY_LENGTH] {};
 
-private:
-    unsigned char hmac_key[HMAC_KEY_LENGTH];
+    get_hmac_key_prototype * get_hmac_key_cb = nullptr;
+    get_trace_key_prototype * get_trace_key_cb = nullptr;
+
+    bool master_key_loaded = false;
+    bool hmac_key_loaded = false;
+
+
+public:
+    bool old_encryption_scheme = false;
+
 
 public:
     auto get_hmac_key() -> unsigned char const (&)[HMAC_KEY_LENGTH]
@@ -107,7 +110,6 @@ public:
         assert(this->master_key_loaded);
         return this->master_key;
     }
-
 
     void get_derived_key(uint8_t (& trace_key)[CRYPTO_KEY_LENGTH], const uint8_t * derivator, size_t derivator_len)
     {
@@ -161,34 +163,7 @@ public:
         memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
     }
 
-    void reset_mode()
-    {
-        this->master_key_loaded = false;
-        this->hmac_key_loaded = false;
-    }
-
-    CryptoContext()
-	: master_key_loaded(false)
-	, hmac_key_loaded(false)
-	, master_key{}
-	, old_encryption_scheme(false)
-	, get_hmac_key_cb(nullptr)
-	, get_trace_key_cb(nullptr)
-	, hmac_key{}
-    {
-        memcpy(this->master_key,
-            "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08",
-            CRYPTO_KEY_LENGTH);
-        memcpy(this->hmac_key,
-            "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08",
-            HMAC_KEY_LENGTH);
-    }
+    CryptoContext() = default;
 
     size_t unbase64(char *buffer, size_t bufsiz, const char *txt)
     {
