@@ -29,7 +29,6 @@ namespace gdi {
     class CaptureApi;
     class CaptureProbeApi;
     class KbdInputApi;
-    class MouseInputApi;
     class ExternalCaptureApi;
     class UpdateConfigCaptureApi;
 }
