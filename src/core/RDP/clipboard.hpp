@@ -259,7 +259,7 @@ struct CliprdrHeader {
     uint16_t msgFlags() const { return this->msgFlags_; }
     uint32_t dataLen()  const { return this->dataLen_; }
 
-protected:
+public:
     uint16_t msgType_;
     uint16_t msgFlags_;
     uint32_t dataLen_;
@@ -341,31 +341,33 @@ private:
 // capabilitySets (variable): A variable-sized array of capability sets, each
 //  conforming in structure to the CLIPRDR_CAPS_SET.
 
-struct ClipboardCapabilitiesPDU : public CliprdrHeader {
-private:
+struct ClipboardCapabilitiesPDU
+{
+    CliprdrHeader header;
+    
     uint16_t cCapabilitiesSets = 0;
 
 public:
     ClipboardCapabilitiesPDU() = default;
 
-    ClipboardCapabilitiesPDU(uint16_t cCapabilitiesSets, uint32_t length_capabilities) :
-        CliprdrHeader(CB_CLIP_CAPS,
+    ClipboardCapabilitiesPDU(uint16_t cCapabilitiesSets, uint32_t length_capabilities) 
+        : header(CB_CLIP_CAPS,
                       0,
                       4 +   // cCapabilitiesSets(2) + pad1(2)
                           length_capabilities
-                     ),
-        cCapabilitiesSets(cCapabilitiesSets)
+                     )
+        , cCapabilitiesSets(cCapabilitiesSets)
     {}
 
     void emit(OutStream & stream) {
-        CliprdrHeader::emit(stream);
+        this->header.emit(stream);
 
         stream.out_uint16_le(cCapabilitiesSets);
         stream.out_clear_bytes(2);  // pad1(2)
     }   // void emit(OutStream & stream)
 
     void recv(InStream & stream) {
-        CliprdrHeader::recv(stream);
+        this->header.recv(stream);
 
         const unsigned expected = 4;    // cCapabilitiesSets(2) + pad1(2)
         if (!stream.in_check_rem(expected)) {
@@ -639,12 +641,21 @@ public:
 //  Clipboard PDU Header MUST be set to CB_MONITOR_READY (0x0001), while the
 //  msgFlags field MUST be set to 0x0000.
 
-struct ServerMonitorReadyPDU : public CliprdrHeader {
-    ServerMonitorReadyPDU() : CliprdrHeader(CB_MONITOR_READY, 0, 0) {
+struct ServerMonitorReadyPDU
+{
+    CliprdrHeader header;
+    ServerMonitorReadyPDU() : header(CB_MONITOR_READY, 0, 0) {
     }   // ServerMonitorReadyPDU(bool response_ok)
 
-    using CliprdrHeader::emit;
-    using CliprdrHeader::recv;
+    void emit(OutStream & stream) 
+    {
+        this->header.emit(stream);
+    }
+
+    void recv(InStream & stream) 
+    {
+        this->header.recv(stream);
+    }
 
 };  // struct ServerMonitorReadyPDU
 
@@ -689,7 +700,9 @@ enum : size_t {
   , SHORT_NAME_MAX_SIZE  = 32
 };
 
-struct FormatListPDU : public CliprdrHeader {
+struct FormatListPDU
+{
+    CliprdrHeader header;
     bool contains_data_in_text_format        = false;
     bool contains_data_in_unicodetext_format = false;
 
@@ -700,21 +713,21 @@ struct FormatListPDU : public CliprdrHeader {
     FormatListPDU( uint32_t const * formatListDataIDs
                  , std::string const * formatListDataName
                  , std::size_t formatListDataSize)
-        : CliprdrHeader(CB_FORMAT_LIST, 0, 0)
+        : header(CB_FORMAT_LIST, 0, 0)
         , formatListDataIDs(formatListDataIDs)
         , formatListDataName(formatListDataName)
         , formatListDataSize(formatListDataSize)
         {}
 
     FormatListPDU()
-        : CliprdrHeader(CB_FORMAT_LIST, 0, 0)
+        : header(CB_FORMAT_LIST, 0, 0)
         , contains_data_in_text_format(false)
         , contains_data_in_unicodetext_format(false)
         {}
 
     void emit(OutStream & stream) {
-        this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
-        CliprdrHeader::emit(stream);
+        this->header.dataLen_ = 36;    /* formatId(4) + formatName(32) */
+        this->header.emit(stream);
 
         // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
         stream.out_uint32_le(CF_TEXT);
@@ -722,8 +735,8 @@ struct FormatListPDU : public CliprdrHeader {
     }
 
     void emit_ex(OutStream & stream, bool unicodetext) {
-        this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
-        CliprdrHeader::emit(stream);
+        this->header.dataLen_ = 36;    /* formatId(4) + formatName(32) */
+        this->header.emit(stream);
 
         // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
         stream.out_uint32_le(unicodetext ? CF_UNICODETEXT : CF_TEXT);
@@ -731,8 +744,8 @@ struct FormatListPDU : public CliprdrHeader {
     }
 
     void emit_long(OutStream & stream, bool unicodetext) {
-        this->dataLen_ = 6; /* formatId(4) + formatName(2) */
-        CliprdrHeader::emit(stream);
+        this->header.dataLen_ = 6; /* formatId(4) + formatName(2) */
+        this->header.emit(stream);
 
         // 1 CLIPRDR_LONG_FORMAT_NAMES structures.
         stream.out_uint32_le(unicodetext ? CF_UNICODETEXT : CF_TEXT);
@@ -749,13 +762,13 @@ struct FormatListPDU : public CliprdrHeader {
     }
 
     void emit_empty(OutStream & stream) {
-        this->dataLen_ = 0;
-        CliprdrHeader::emit(stream);
+        this->header.dataLen_ = 0;
+        this->header.emit(stream);
     }
 
     void recv(InStream & stream) {
 //        LOG(LOG_INFO, "RDPECLIP::FormatListPDU::recv");
-        CliprdrHeader::recv(stream);
+        this->header.recv(stream);
 
         // [MS-RDPECLIP] 2.2.3.1.1.1 Short Format Name (CLIPRDR_SHORT_FORMAT_NAME)
         // =======================================================================
@@ -797,7 +810,7 @@ struct FormatListPDU : public CliprdrHeader {
         const uint32_t short_format_name_structure_size = 36; /* formatId(4) + formatName(32) */
 
         // Parse PDU to find if clipboard data is available in a TEXT format.
-        for (uint32_t i = 0; i < (this->dataLen_ / short_format_name_structure_size); i++) {
+        for (uint32_t i = 0; i < (this->header.dataLen() / short_format_name_structure_size); i++) {
             if (!stream.in_check_rem(short_format_name_structure_size)) {
                 LOG( LOG_INFO
                    , "RDPECLIP::FormatListPDU truncated CLIPRDR_SHORT_FORMAT_NAME structure, need=%u remains=%zu"
@@ -842,12 +855,7 @@ struct FormatListPDU : public CliprdrHeader {
 // length: 0x24, 0x00, 0x00, 0x00,
 // flags:  0x13, 0x00, 0x00, 0x00,
 
-    // TODO: les structures CB_xxx heritent de CliprdrHeader
-    // ça ne devrait pas être le cas, elles ONT un header
-    // elles ne SONT PAS une sorte de header!
-    // Remplacer l'héritage par un champ membre
-
-        CliprdrHeader::recv(stream);
+        this->header.recv(stream);
 // msgType:  2 = CB_FORMAT_LIST | 0x02, 0x00,
 // msgFlags: 0                  | 0x00, 0x00,
 // datalen: 24 (after headers)| 0x18, 0x00, 0x00, 0x00,
@@ -864,7 +872,7 @@ struct FormatListPDU : public CliprdrHeader {
 
 // Padding ? : 0x00, 0x00, 0x00, 0x00,
 
-        InStream fns(stream.get_current(), this->dataLen());
+        InStream fns(stream.get_current(), this->header.dataLen());
         while (fns.in_remain()) {
             if (fns.in_remain() < 6){
                 // Minimal Possible remaining data: FormatId + 0 + 0
@@ -906,10 +914,11 @@ struct FormatListPDU_LongName : public FormatListPDU {
         }
 
         for (std::size_t i = 0; i < this->formatListDataSize; i++) {
-            this->dataLen_ += formatListDataName[i].size() + 4;    /* formatId(4) + formatName(variable) */
+            /* formatId(4) + formatName(variable) */
+            this->header.dataLen_ = this->header.dataLen() + formatListDataName[i].size() + 4;
         }
-        REDASSERT(this->dataLen_ <= 1024);
-        CliprdrHeader::emit(stream);
+        REDASSERT(this->header.dataLen() <= 1024);
+        this->header.emit(stream);
 
         for (std::size_t i = 0; i < this->formatListDataSize; i++) {
             stream.out_uint32_le(this->formatListDataIDs[i]);
@@ -932,8 +941,8 @@ struct FormatListPDU_ShortName : public FormatListPDU {
             this->formatListDataSize = FORMAT_LIST_MAX_SIZE;
         }
 
-        this->dataLen_ = this->formatListDataSize * (4 + SHORT_NAME_MAX_SIZE);    /* formatId(4) + formatName(32) */
-        CliprdrHeader::emit(stream);
+        this->header.dataLen_ = this->formatListDataSize * (4 + SHORT_NAME_MAX_SIZE);    /* formatId(4) + formatName(32) */
+        this->header.emit(stream);
 
         for (std::size_t i = 0; i < this->formatListDataSize; i++) {
             stream.out_uint32_le(this->formatListDataIDs[i]);
@@ -965,22 +974,30 @@ struct FormatListPDU_ShortName : public FormatListPDU {
 //  CB_RESPONSE_OK (0x0001) or CB_RESPONSE_FAIL (0x0002) flag MUST be set in
 //  the msgFlags field of the Clipboard PDU Header.
 
-struct FormatListResponsePDU : public CliprdrHeader {
+struct FormatListResponsePDU
+{
+    CliprdrHeader header;
     explicit FormatListResponsePDU(bool response_ok)
-        : CliprdrHeader( CB_FORMAT_LIST_RESPONSE
+        : header( CB_FORMAT_LIST_RESPONSE
                        , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
                        , 0) {
     }   // FormatListResponsePDU(bool response_ok)
 
-    using CliprdrHeader::emit;
-    using CliprdrHeader::recv;
+    void emit(OutStream & stream) {
+        this->header.emit(stream);
+    }
+
+    void recv(InStream & stream) 
+    {
+        this->header.recv(stream);
+    }
 };  // struct FormatListResponsePDU
 
 // [MS-RDPECLIP] 2.2.5.1 Format Data Request PDU (CLIPRDR_FORMAT_DATA_REQUEST)
 // ===========================================================================
 
 // The Format Data Request PDU is sent by the recipient of the Format List
-//  PDU. It is used to request tFormatDataResponsePDUhe data for one of the formats that was listed
+//  PDU. It is used to request the data for one of the formats that was listed
 //  in the Format List PDU.
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -1002,27 +1019,29 @@ struct FormatListResponsePDU : public CliprdrHeader {
 //  Clipboard Format ID of the clipboard data. The Clipboard Format ID MUST be
 //  one listed previously in the Format List PDU.
 
-struct FormatDataRequestPDU : public CliprdrHeader {
+struct FormatDataRequestPDU
+{
+    CliprdrHeader header;
     uint32_t requestedFormatId;
 
     FormatDataRequestPDU()
-            : CliprdrHeader(CB_FORMAT_DATA_REQUEST, 0, 4)
+            : header(CB_FORMAT_DATA_REQUEST, 0, 4)
             , requestedFormatId(0) {
     }   // FormatDataRequestPDU()
 
     explicit FormatDataRequestPDU(uint32_t requestedFormatId)
-            : CliprdrHeader(CB_FORMAT_DATA_REQUEST, 0, 4)
+            : header(CB_FORMAT_DATA_REQUEST, 0, 4)
             , requestedFormatId(requestedFormatId) {
     }   // FormatDataRequestPDU(uint32_t requestedFormatId)
 
     void emit(OutStream & stream) {
-        CliprdrHeader::emit(stream);
+        this->header.emit(stream);
 
         stream.out_uint32_le(this->requestedFormatId);
     }   // void emit(OutStream & stream)
 
     void recv(InStream & stream) {
-        CliprdrHeader::recv(stream);
+        this->header.recv(stream);
         const unsigned expected = 4;   // requestedFormatId
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_INFO
@@ -1113,7 +1132,9 @@ enum : int {
   , FILECONTENTS_SIZE_CB_REQUESTED = 0x00000008
 };
 
-struct FileContentsRequestPDU : CliprdrHeader {             // Resquest RANGE
+struct FileContentsRequestPDU     // Resquest RANGE
+{
+    CliprdrHeader header;
     int streamID;
     int flag;
     int lindex;
@@ -1123,7 +1144,7 @@ struct FileContentsRequestPDU : CliprdrHeader {             // Resquest RANGE
                                    , int flag
                                    , int lindex
                                    , uint64_t sizeRequested)
-    : CliprdrHeader( CB_FILECONTENTS_REQUEST, CB_RESPONSE_OK, 24)
+    : header( CB_FILECONTENTS_REQUEST, CB_RESPONSE_OK, 24)
     , streamID(streamID)
     , flag(flag)
     , lindex(lindex)
@@ -1131,11 +1152,11 @@ struct FileContentsRequestPDU : CliprdrHeader {             // Resquest RANGE
     {}
 
     explicit FileContentsRequestPDU(bool response_ok = false)
-    : CliprdrHeader( CB_FILECONTENTS_REQUEST, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 24)
+    : header( CB_FILECONTENTS_REQUEST, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 24)
     {}
 
     void emit(OutStream & stream) {
-        CliprdrHeader::emit(stream);
+        this->header.emit(stream);
         stream.out_uint32_le(this->streamID);
         stream.out_uint32_le(this->lindex);
         stream.out_uint32_le(this->flag);
@@ -1149,7 +1170,7 @@ struct FileContentsRequestPDU : CliprdrHeader {             // Resquest RANGE
     }
 
     void recv(InStream & stream) {
-        CliprdrHeader::recv(stream);
+        this->header.recv(stream);
         this->streamID = stream.in_uint32_le();
         this->lindex = stream.in_uint32_le();
         this->flag = stream.in_uint32_le();
@@ -1186,25 +1207,28 @@ struct FileContentsRequestPDU : CliprdrHeader {             // Resquest RANGE
 
     // requestedFileContentsData (variable): This field contains a variable number of bytes. If the response is to a FILECONTENTS_SIZE (0x00000001) operation, the requestedFileContentsData field holds a 64-bit, unsigned integer containing the size of the file. In the case of a FILECONTENTS_RANGE (0x00000002) operation, the requestedFileContentsData field contains a byte-stream of data extracted from the file.
 
-struct FileContentsResponse : CliprdrHeader {
+struct FileContentsResponse
+{
+    CliprdrHeader header;
+
     uint32_t streamID;
     uint64_t size;
 
 
     explicit FileContentsResponse(const uint32_t streamID, const uint64_t size, uint32_t data_size)
-    : CliprdrHeader( CB_FILECONTENTS_RESPONSE, CB_RESPONSE_OK, data_size)
+    : header( CB_FILECONTENTS_RESPONSE, CB_RESPONSE_OK, data_size)
     , streamID(streamID)
     , size(size)
     {}
 
     explicit FileContentsResponse(bool response_ok = false)
-    : CliprdrHeader( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 4)
+    : header( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 4)
     , streamID(0)
     , size(0)
     {}
 
     void emit(OutStream & stream) {
-        CliprdrHeader::emit(stream);
+        this->header.emit(stream);
     }
 };
 
@@ -1219,14 +1243,14 @@ struct FileContentsResponse_Size : FileContentsResponse {
     {}
 
     void emit(OutStream & stream) {
-        CliprdrHeader::emit(stream);
+        this->header.emit(stream);
         stream.out_uint32_le(this->streamID);
         stream.out_uint64_le(this->size);
         stream.out_uint32_le(0);
     }
 
     void recv(InStream & stream) {
-        CliprdrHeader::recv(stream);
+        this->header.recv(stream);
         this->streamID = stream.in_uint32_le();
         this->size = stream.in_uint64_le();
     }
@@ -1245,12 +1269,12 @@ struct FileContentsResponse_Range : FileContentsResponse {
     {}
 
     void emit(OutStream & stream) {
-        CliprdrHeader::emit(stream);
+        this->header.emit(stream);
         stream.out_uint32_le(this->streamID);
     }
 
     void recv(InStream & stream) {
-        CliprdrHeader::recv(stream);
+        this->header.recv(stream);
         this->streamID = stream.in_uint32_le();
     }
 };
@@ -1898,31 +1922,37 @@ enum : int {
 
 };
 
-struct FormatDataResponsePDU : public CliprdrHeader {
+struct FormatDataResponsePDU
+{
+    CliprdrHeader header;
+
 
     FormatDataResponsePDU()
-        : CliprdrHeader( CB_FORMAT_DATA_RESPONSE
-                       , CB_RESPONSE_FAIL
-                       , 0) {
+        : header( CB_FORMAT_DATA_RESPONSE
+                , CB_RESPONSE_FAIL
+                , 0) 
+    {
     }
 
     explicit FormatDataResponsePDU(std::size_t data_len)
-        : CliprdrHeader( CB_FORMAT_DATA_RESPONSE
-                       , CB_RESPONSE_OK
-                       , data_len) {
+        : header( CB_FORMAT_DATA_RESPONSE
+                , CB_RESPONSE_OK
+                , data_len) 
+    {
     }
 
     explicit FormatDataResponsePDU(bool response_ok)
-        : CliprdrHeader( CB_FORMAT_DATA_RESPONSE
-                       , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
-                       , 0) {
+        : header(CB_FORMAT_DATA_RESPONSE
+                , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
+                , 0) 
+    {
     }
 
     void emit(OutStream & stream, const uint8_t * data, size_t data_length) const {
-        stream.out_uint16_le(this->msgType_);
-        stream.out_uint16_le(this->msgFlags_);
+        stream.out_uint16_le(this->header.msgType());
+        stream.out_uint16_le(this->header.msgFlags());
 
-        if (this->msgFlags_ == CB_RESPONSE_OK) {
+        if (this->header.msgFlags() == CB_RESPONSE_OK) {
             stream.out_uint32_le(data_length);  // dataLen(4)
 
             if (data_length) {
@@ -1935,17 +1965,20 @@ struct FormatDataResponsePDU : public CliprdrHeader {
     }
 
     void emit_ex(OutStream & stream, size_t data_length) const {
-        stream.out_uint16_le(this->msgType_);
-        stream.out_uint16_le(this->msgFlags_);
+        stream.out_uint16_le(this->header.msgType());
+        stream.out_uint16_le(this->header.msgFlags());
 
         stream.out_uint32_le(                           // dataLen(4)
-                (this->msgFlags_ == CB_RESPONSE_OK) ?
+                (this->header.msgFlags() == CB_RESPONSE_OK) ?
                 data_length :
                 0
             );
     }
 
-    using CliprdrHeader::recv;
+    void recv(InStream & stream) {
+        this->header.recv(stream);
+    }
+
 }; // struct FormatDataResponsePDU
 
 
@@ -1971,9 +2004,13 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
     uint16_t width;
     uint16_t height;
     uint16_t depth;
+    // TODO: rename to mappingMode
     uint32_t mapping_mod;
+    // TODO: rename to xExt
     uint32_t mapping_mod_width;
+    // TODO: rename to yExt
     uint32_t mapping_mod_height;
+    
     uint16_t meta_header_type;
     uint16_t meta_header_size;
     uint16_t meta_header_version;
@@ -2021,7 +2058,7 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
     {}
 
     void emit(OutStream & stream) {
-        CliprdrHeader::emit(stream);
+        this->header.emit(stream);
 
         // 2.2.5.2.1 Packed Metafile Payload
         // 12 bytes
@@ -2241,7 +2278,7 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
         stream.out_uint16_le(0);
         stream.out_uint16_le(0);
 
-
+        // [MS-WMF]
         // DeviceIndependentBitmap  2.2.2.9 DeviceIndependentBitmap Object
 
         // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -2411,7 +2448,7 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
     }
 
     void recv(InStream & stream) {
-        CliprdrHeader::recv(stream);
+        this->header.recv(stream);
 
         // 2.2.5.2.1 Packed Metafile Payload (cliboard.hpp)
         this->mapping_mod = stream.in_uint32_le();
@@ -2437,21 +2474,25 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
             switch (type) {
 
                 case META_SETWINDOWEXT:
+//                    LOG(LOG_INFO, "META_SETWINDOWEXT");
                     REDASSERT(recordSize == META_SETWINDOWEXT_WORDS_SIZE);
                     stream.in_skip_bytes(recordSize*2 - 6);
                 break;
 
                 case META_SETWINDOWORG:
+//                    LOG(LOG_INFO, "META_SETWINDOWORG");
                     REDASSERT(recordSize == META_SETWINDOWORG_WORDS_SIZE);
                     stream.in_skip_bytes(recordSize*2 - 6);
                 break;
 
                 case META_SETMAPMODE:
+//                    LOG(LOG_INFO, "META_SETMAPMODE");
                     REDASSERT(recordSize == META_SETMAPMODE_WORDS_SIZE);
                     stream.in_skip_bytes(recordSize*2 - 6);
                 break;
 
                 case META_DIBSTRETCHBLT:
+//                    LOG(LOG_INFO, "META_DIBSTRETCHBLT");
                 {
                     notEOF = false;
 
@@ -2490,6 +2531,7 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
                 break;
 
                 default:
+                    LOG(LOG_INFO, "DEFAULT");
                 break;
             }
         }
@@ -2518,11 +2560,11 @@ struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
     {}
 
     void emit(OutStream & stream) {
-        CliprdrHeader::emit(stream);
+        this->header.emit(stream);
     }
 
     void recv(InStream & stream) {
-        CliprdrHeader::recv(stream);
+        this->header.recv(stream);
     }
 };
 
@@ -2574,7 +2616,7 @@ struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
     {}
 
     void emit(OutStream & stream) {
-        CliprdrHeader::emit(stream);
+        this->header.emit(stream);
 
         stream.out_uint32_le(this->cItems);
         stream.out_uint32_le(this->flags);
@@ -2593,7 +2635,7 @@ struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
     }
 
     void recv(InStream & stream) {
-        CliprdrHeader::recv(stream);
+        this->header.recv(stream);
 
         this->cItems = stream.in_uint32_le();
         this->flags = stream.in_uint32_le();
@@ -2721,22 +2763,24 @@ public:
 
 // clipDataId (4 bytes): An unsigned, 32-bit integer that is used to tag File Stream data on the Shared Owner clipboard so that it can be requested in a subsequent File Contents Request PDU (section 2.2.5.3).
 
-struct LockClipboardDataPDU : public CliprdrHeader {
+struct LockClipboardDataPDU
+{
+    CliprdrHeader header;
 
     uint32_t streamDataID;
 
     explicit LockClipboardDataPDU(uint32_t streamDataID)
-    : CliprdrHeader(CB_LOCK_CLIPDATA, 0, 4)
+    : header(CB_LOCK_CLIPDATA, 0, 4)
     , streamDataID(streamDataID)
     {}
 
     void emit(OutStream & stream) {
-        CliprdrHeader::emit(stream);
+        this->header.emit(stream);
         stream.out_uint32_le(streamDataID);
     }
 
     void recv(InStream & stream) {
-        CliprdrHeader::recv(stream);
+        this->header.recv(stream);
         streamDataID = stream.in_uint32_le();
     }
 };
@@ -2762,22 +2806,24 @@ struct LockClipboardDataPDU : public CliprdrHeader {
 
  // clipDataId (4 bytes): An unsigned, 32-bit integer that identifies the File Stream data that was locked by the Lock Clipboard Data PDU (section 2.2.4.1) and can now be released.
 
-struct UnlockClipboardDataPDU : public CliprdrHeader {
-
+struct UnlockClipboardDataPDU
+{
+    CliprdrHeader header;
+    
     uint32_t streamDataID;
 
     explicit UnlockClipboardDataPDU(uint32_t streamDataID)
-    : CliprdrHeader(CB_UNLOCK_CLIPDATA, 0, 4)
+    : header(CB_UNLOCK_CLIPDATA, 0, 4)
     , streamDataID(streamDataID)
     {}
 
     void emit(OutStream & stream) {
-        CliprdrHeader::emit(stream);
+        this->header.emit(stream);
         stream.out_uint32_le(streamDataID);
     }
 
     void recv(InStream & stream) {
-        CliprdrHeader::recv(stream);
+        this->header.recv(stream);
         streamDataID = stream.in_uint32_le();
     }
 };

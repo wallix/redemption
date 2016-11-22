@@ -708,8 +708,8 @@ public:
 
                 if (this->verbose) {
                     LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
-                        RDPECLIP::get_msgType_name(clip_cap_pdu.msgType()),
-                        clip_cap_pdu.msgType()
+                        RDPECLIP::get_msgType_name(clip_cap_pdu.header.msgType()),
+                        clip_cap_pdu.header.msgType()
                         );
                 }
 
@@ -732,8 +732,8 @@ public:
 
                 if (this->verbose) {
                     LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
-                        RDPECLIP::get_msgType_name(server_monitor_ready_pdu.msgType()),
-                        server_monitor_ready_pdu.msgType()
+                        RDPECLIP::get_msgType_name(server_monitor_ready_pdu.header.msgType()),
+                        server_monitor_ready_pdu.header.msgType()
                         );
                 }
 
@@ -2427,8 +2427,8 @@ private:
                     LOG( LOG_INFO
                        , "mod_vnc::clipboard_send_to_vnc: CB_FORMAT_DATA_REQUEST(%d) msgFlags=0x%02x datalen=%u requestedFormatId=%s(%u)"
                        , RDPECLIP::CB_FORMAT_DATA_REQUEST
-                       , format_data_request_pdu.msgFlags()
-                       , format_data_request_pdu.dataLen()
+                       , format_data_request_pdu.header.msgFlags()
+                       , format_data_request_pdu.header.dataLen()
                        , RDPECLIP::get_Format_name(format_data_request_pdu.requestedFormatId)
                        , format_data_request_pdu.requestedFormatId
                        );
@@ -2590,19 +2590,19 @@ private:
 
                 format_data_response_pdu.recv(chunk);
 
-                if (format_data_response_pdu.msgFlags() == RDPECLIP::CB_RESPONSE_OK) {
+                if (format_data_response_pdu.header.msgFlags() == RDPECLIP::CB_RESPONSE_OK) {
                     if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
-                        if (!chunk.in_check_rem(format_data_response_pdu.dataLen())) {
+                        if (!chunk.in_check_rem(format_data_response_pdu.header.dataLen())) {
                             LOG( LOG_ERR
                                , "mod_vnc::clipboard_send_to_vnc: truncated CB_FORMAT_DATA_RESPONSE(%d), need=%" PRIu32 " remains=%zu"
                                , RDPECLIP::CB_FORMAT_DATA_RESPONSE
-                               , format_data_response_pdu.dataLen(), chunk.in_remain());
+                               , format_data_response_pdu.header.dataLen(), chunk.in_remain());
                             throw Error(ERR_VNC);
                         }
 
                         this->to_vnc_clipboard_data.rewind();
 
-                        this->to_vnc_clipboard_data.out_copy_bytes(chunk.get_current(), format_data_response_pdu.dataLen());
+                        this->to_vnc_clipboard_data.out_copy_bytes(chunk.get_current(), format_data_response_pdu.header.dataLen());
 
                         this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_data(),
                             this->to_vnc_clipboard_data.get_offset());
@@ -2616,7 +2616,7 @@ private:
                         }
 
                         this->to_vnc_clipboard_data_size      =
-                        this->to_vnc_clipboard_data_remaining = format_data_response_pdu.dataLen();
+                        this->to_vnc_clipboard_data_remaining = format_data_response_pdu.header.dataLen();
 
                         if (this->verbose) {
                             LOG( LOG_INFO
