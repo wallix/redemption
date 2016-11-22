@@ -11,7 +11,6 @@ project configs
     : requirements
     <include>$(REDEMPTION_CONFIG_PATH)/src
     <include>$(REDEMPTION_CONFIG_PATH)/include/autogen
-    <include>$(REDEMPTION_CONFIG_PATH)/include/variant
     <include>$(REDEMPTION_CONFIG_SPECS_PATH)
     <include>$(REDEMPTION_SRC_PATH)
     <include>$(REDEMPTION_SRC_PATH)/system/$(SYSTEM_TYPE)
@@ -92,8 +91,6 @@ constant TEST_DEPENDENCIES :
     <implicit-dependency>generate_python_spec
     <implicit-dependency>generate_enum
     <include>redemption_src
-    <include>include/autogen
-    <include>include/variant
     <cxxflags>-frtti
 ;
 

@@ -124,7 +124,7 @@ public:
                 return;
             }
         }
-        
+
         //LOG(LOG_INFO, "new encryption scheme derivator %.*s", static_cast<unsigned>(derivator_len), derivator);
         if (!this->master_key_loaded){
             //LOG(LOG_INFO, "first call, loading master key");
