@@ -138,6 +138,7 @@ constant TEST_DEPENDENCIES :
 obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : $(EXE_DEPENDENCIES) ;
 obj d3des : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 obj bitmap : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
+obj do_recorder : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp ;
 obj program_options : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 
 #
@@ -179,7 +180,7 @@ exe rdpproxy
 
 lib libredrec
     :
-        $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp
+        do_recorder
         bitmap
         program_options
 
@@ -545,6 +546,15 @@ test-canonical transport/test_transport.hpp ;
 # TODO mote to transport/
 test-canonical utils/compression_transport_wrapper.hpp : <library>z <library>snappy ;
 test-canonical capture/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+
+
+test-canonical main/do_recorder.hpp :
+ <library>do_recorder 
+ <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z
+ <library>ffmpeg <library>ocr <library>ppocr_test <library>bitmap 
+ ;
+
+
 ## @}
 
 
