@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(TestAppRecorder)
     Inifile ini;
     ini.set<cfg::debug::config>(false);
     UdevRandom rnd;
-    CryptoContext cctx(ini);
+    CryptoContext cctx;
     cctx.set_get_hmac_key_cb(hmac_fn);
     cctx.set_get_trace_key_cb(trace_fn);
 

@@ -225,7 +225,7 @@ namespace transfil {
                 ::memset(key_buf, 0, blocksize);
                 if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
                     unsigned char keyhash[MD_HASH_LENGTH];
-                    if ( ! ::MD_HASH_FUNC(static_cast<unsigned char *>(cctx.get_hmac_key()), CRYPTO_KEY_LENGTH, keyhash)) {
+                    if ( ! ::MD_HASH_FUNC(cctx.get_hmac_key(), CRYPTO_KEY_LENGTH, keyhash)) {
                         LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key!\n", ::getpid());
                         return -1;
                     }
@@ -643,16 +643,6 @@ BOOST_AUTO_TEST_CASE(TestFilename)
     }
 
     {
-        Inifile ini;
-        ini.set<cfg::crypto::key0>(
-            "\x00\x01\x02\x03\x04\x05\x06\x07"
-            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-            "\x10\x11\x12\x13\x14\x15\x16\x17"
-            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-        );
-        ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
-
-
         size_t base_len = 0;
         const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
 
@@ -662,7 +652,14 @@ BOOST_AUTO_TEST_CASE(TestFilename)
             BOOST_CHECK(false);
         }
 
-        CryptoContext cctx(ini);
+        CryptoContext cctx;
+        cctx.set_master_key(cstr_array_view(
+            "\x00\x01\x02\x03\x04\x05\x06\x07"
+            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+            "\x10\x11\x12\x13\x14\x15\x16\x17"
+            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+        ));
+        cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
         InFilenameTransport in(cctx, fd, base, base_len);
         char s[5];
         char * sp = s;
@@ -692,16 +689,14 @@ BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
 
     ::unlink(filename);
 
-    Inifile ini;
-    ini.set<cfg::crypto::key0>(
+    CryptoContext cctx;
+    cctx.set_master_key(cstr_array_view(
         "\x00\x01\x02\x03\x04\x05\x06\x07"
         "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
         "\x10\x11\x12\x13\x14\x15\x16\x17"
         "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-    );
-    ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
-
-    CryptoContext cctx(ini);
+    ));
+    cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
 
     {
         LCGRandom rnd(0);

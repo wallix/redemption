@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     time_t now = 1450864840;
 
     LCGRandom gen(0);
-    CryptoContext cctx(ini);
+    CryptoContext cctx;
     const bool fastpath_support = true;
     const bool mem3blt_support  = false;
     Front front( front_trans, gen, ini, cctx, fastpath_support, mem3blt_support, now);

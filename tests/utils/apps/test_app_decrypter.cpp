@@ -90,9 +90,7 @@ inline int trace_fn(char * base, int len, char * buffer, unsigned oldscheme)
 
 BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
 {
-    Inifile ini;
-    ini.set<cfg::debug::config>(false);
-    CryptoContext cctx(ini);
+    CryptoContext cctx;
     cctx.set_get_hmac_key_cb(hmac_fn);
     cctx.set_get_trace_key_cb(trace_fn);
 
@@ -117,7 +115,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
             "Christophe Grosjean, Raphael Zhou."
             , cctx);
     } catch (const Error & e) {
-        printf("verify failed: with id=%d\n", e.id);
+        std::printf("verify failed: with id=%d\n", e.id);
     }
     BOOST_CHECK_EQUAL(0, unlink("decrypted.out"));
     BOOST_CHECK_EQUAL(0, res);
@@ -125,9 +123,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
 
 BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
 {
-    Inifile ini;
-    ini.set<cfg::debug::config>(false);
-    CryptoContext cctx(ini);
+    CryptoContext cctx;
     cctx.set_get_hmac_key_cb(hmac_fn);
     cctx.set_get_trace_key_cb(trace_fn);
 
@@ -152,7 +148,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
             "Christophe Grosjean, Raphael Zhou."
             , cctx);
     } catch (const Error & e) {
-        printf("verify failed: with id=%d\n", e.id);
+        std::printf("verify failed: with id=%d\n", e.id);
     }
     BOOST_CHECK_EQUAL(0, res);
 }
