@@ -33,12 +33,9 @@
 
 #include "main/version.hpp"
 #include "system/ssl_calls.hpp"
-#include "main/do_recorder.hpp"
+#include "main/do_recorder.cpp"
 #include "main/version.hpp"
 
-#include "utils/apps/app_verifier.hpp"
-#include "utils/apps/app_recorder.hpp"
-#include "utils/apps/app_decrypter.hpp"
 #include "configs/config.hpp"
 
 #include <fcntl.h>
@@ -62,7 +59,6 @@
 
 #include "main/version.hpp"
 #include "system/ssl_calls.hpp"
-#include "utils/apps/app_decrypter.hpp"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -93,7 +89,6 @@
 #include <fcntl.h>
 
 #include "system/ssl_calls.hpp"
-#include "utils/apps/app_verifier.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/fdbuf.hpp"
 #include "utils/sugar/local_fd.hpp"

@@ -549,7 +549,7 @@ test-canonical capture/cryptofile.hpp : <library>openssl <library>crypto <librar
 
 
 test-canonical main/do_recorder.hpp :
- <library>do_recorder 
+# <library>do_recorder 
  <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z
  <library>ffmpeg <library>ocr <library>ppocr_test <library>bitmap 
  ;
