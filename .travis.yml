@@ -49,9 +49,9 @@ matrix:
       compiler: clang
 
     # Clang 3.8
-    - os: linux
-      env: LLVM_VERSION=3.8.0
-      compiler: clang
+    #- os: linux
+      #env: LLVM_VERSION=3.8.0
+      #compiler: clang
 
 
 install:
