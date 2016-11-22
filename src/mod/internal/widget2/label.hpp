@@ -81,9 +81,9 @@ public:
             memcpy(this->buffer, text, max);
             this->buffer[max] = 0;
             if (this->auto_resize_) {
-                gdi::TextMetrics tm(this->font, this->buffer);
-                this->rect.cx = this->x_text * 2 + tm.width;
-                this->rect.cy = this->y_text * 2 + tm.height;
+                Dimension dm = this->get_optimal_dim(this->buffer, this->font, this->x_text, this->y_text);
+                this->rect.cx = dm.w;
+                this->rect.cy = dm.h;
             }
         }
     }
@@ -94,21 +94,46 @@ public:
     }
 
     void draw(const Rect& clip) override {
-        this->drawable.draw(RDPOpaqueRect(this->rect, this->bg_color), clip);
-        gdi::server_draw_text(this->drawable,
-                              this->font,
-                              this->x_text + this->dx(),
-                              this->y_text + this->dy(),
-                              this->get_text(),
-                              this->fg_color,
-                              this->bg_color,
-                              this->rect.intersect(clip)
+        this->draw(clip, this->rect, this->drawable, this->buffer,
+            this->fg_color, this->bg_color, this->font, this->x_text, this->y_text);
+    }
+
+    static void draw(Rect const& clip, Rect const& rect, gdi::GraphicApi& drawable,
+                     char const* text, uint32_t fgcolor, uint32_t bgcolor,
+                     Font const& font, int xtext, int ytext) {
+        drawable.draw(RDPOpaqueRect(rect, bgcolor), clip);
+        gdi::server_draw_text(drawable,
+                              font,
+                              xtext + rect.x,
+                              ytext + rect.y,
+                              text,
+                              fgcolor,
+                              bgcolor,
+                              rect.intersect(clip)
                               );
     }
 
     Dimension get_optimal_dim() override {
         gdi::TextMetrics tm(this->font, this->buffer);
         return Dimension(tm.width + this->x_text * 2, tm.height + this->y_text * 2);
+
+    }
+
+    static Dimension get_optimal_dim(char const* text, Font const& font, int xtext, int ytext) {
+        char buffer[buffer_size];
+
+        buffer[0] = 0;
+        if (text) {
+            const size_t remain_n = buffer_size - 1;
+            const size_t n = strlen(text);
+            const size_t max = ((remain_n >= n) ? n :
+                                ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(text), remain_n));
+            memcpy(buffer, text, max);
+            buffer[max] = 0;
+        }
+
+        gdi::TextMetrics tm(font, buffer);
+        return Dimension(tm.width + xtext * 2, tm.height + ytext * 2);
     }
 
     bool shift_text(int pos_x) {

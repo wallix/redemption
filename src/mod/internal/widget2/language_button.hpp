@@ -90,9 +90,7 @@ class LanguageButton : public WidgetFlatButton
             }
         }
 
-        this->label.set_text(this->locales[0].locale_name);
-        this->set_button_cx(this->label.rect.cx);
-        this->set_button_cy(this->label.rect.cy);
+        this->set_text(this->locales[0].locale_name);
     }
 
     void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
@@ -101,10 +99,8 @@ class LanguageButton : public WidgetFlatButton
             auto rect = this->rect;
 
             this->selected_language = (this->selected_language + 1) % this->locales.size();
-            this->label.set_text(this->locales[this->selected_language].locale_name);
+            this->set_text(this->locales[this->selected_language].locale_name);
 
-            this->set_button_cx(this->label.rect.cx);
-            this->set_button_cy(this->label.rect.cy);
             rect.cx = std::max(rect.cx, this->rect.cx);
             rect.cy = std::max(rect.cy, this->rect.cy);
             this->parent.draw(rect);
