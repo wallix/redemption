@@ -977,10 +977,10 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
             case 0xF0:
                 {
                     //this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
-                    //QBrush brush(foreColor, Qt::Dense4Pattern);
-                    //this->_screen[0]->paintCache().setBrush(brush);
-                    //this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-                    //this->_screen[0]->paintCache().setBrush(Qt::SolidPattern);
+                    QBrush brush(foreColor, Qt::Dense4Pattern);
+                    this->_screen[0]->paintCache().setBrush(brush);
+                    this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
+                    this->_screen[0]->paintCache().setBrush(Qt::SolidPattern);
                     std::cout <<  "RDPPatBlt 0xF0" <<  std::endl;
                 }
                 break;
@@ -1063,7 +1063,7 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                 // +------+-------------------------------+
             case 0xF0:
                 this->_screen[0]->paintCache().setPen(Qt::NoPen);
-                //this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
+                this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
                 this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
                 break;
 
@@ -1250,7 +1250,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
-    //std::cout << "RDPMemBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
+    std::cout << "RDPMemBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" <<  std::dec <<  std::endl;
     const Rect& drect = clip.intersect(cmd.rect);
     if (drect.isempty()){
         return ;
@@ -2750,7 +2750,7 @@ void Front_Qt::process_client_clipboard_out_data(const uint64_t total_length, Ou
 
     if (data_len > first_part_data_size ) {
 
-        const int cmpt_PDU_part(data_len / PDU_MAX_SIZE); 
+        const int cmpt_PDU_part(data_len / PDU_MAX_SIZE);
         const int remains_PDU  (data_len % PDU_MAX_SIZE);
         int data_sent(0);
 
