@@ -6,7 +6,7 @@
    redver video verifier program
 */
 
-#include "do_recorder.hpp"
+#include "main/do_recorder.hpp"
 #include "main/version.hpp"
 
 #include "utils/apps/app_verifier.hpp"

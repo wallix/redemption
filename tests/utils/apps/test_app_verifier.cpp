@@ -27,8 +27,8 @@
 #include "check_mem.hpp"
 
 
-//#define LOGPRINT
-#define LOGNULL
+#define LOGPRINT
+//#define LOGNULL
 
 #include <fstream>
 

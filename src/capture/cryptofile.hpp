@@ -93,7 +93,6 @@ public:
     auto get_hmac_key() -> unsigned char const (&)[HMAC_KEY_LENGTH]
     {
         if (!this->hmac_key_loaded){
-            assert(this->get_hmac_key_cb);
             if (!this->get_hmac_key_cb) {
                 LOG(LOG_ERR, "CryptoContext: get_hmac_key_cb is null");
                 throw Error(ERR_WRM_INVALID_INIT_CRYPT);

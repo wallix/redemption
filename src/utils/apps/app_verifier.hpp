@@ -6,6 +6,8 @@
    redrec video verifier program
 */
 
+#pragma once
+
 #include <iostream>
 
 #include <utility>
@@ -167,10 +169,12 @@ public:
         const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
 
         ::memset(this->clear_data, 0, sizeof(this->clear_data));
+
         ::memset(&this->ectx, 0, sizeof(this->ectx));
         this->clear_pos = 0;
         this->raw_size = 0;
         this->state = 0;
+
         const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
         this->MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
 
@@ -178,6 +182,7 @@ public:
         uint8_t data[40];
         size_t avail = 0;
         while (avail != 40) {
+
             ssize_t ret = ::read(this->fd, &data[avail], 40-avail);
             if (ret < 0 && errno == EINTR){
                 continue;
@@ -196,6 +201,7 @@ public:
                 this->close();
                 return -1;
             }
+
             if (avail < 4 and avail+ret >= 4){
                 const uint32_t magic = data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
                 this->encrypted = (magic == WABCRYPTOFILE_MAGIC);
@@ -258,10 +264,13 @@ public:
         const uint8_t salt[]  = { 0x39, 0x30, 0x00, 0x00, 0x31, 0xd4, 0x00, 0x00 };
         const int          nrounds = 5;
         unsigned char      key[32];
+
         unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
         cctx.get_derived_key(trace_key, base, base_len);
-        if (32 != ::EVP_BytesToKey(cipher, ::EVP_sha1(), salt,
-                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr)){
+
+        int evp_bytes_to_key_res = ::EVP_BytesToKey(cipher, ::EVP_sha1(), salt,
+                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
+        if (32 != evp_bytes_to_key_res){
             // TODO: add true error management
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
             errno = EINVAL;
@@ -931,6 +940,7 @@ static inline int check_encrypted_or_checksumed(
 
     // Let(s ifile_read autodetect encryption at opening for first file
     int encryption = 2;
+
     ifile_read_encrypted ibuf(cctx, encryption);
     if (ibuf.open(full_mwrm_filename.c_str()) < 0){
         throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
@@ -970,8 +980,7 @@ static inline int check_encrypted_or_checksumed(
     }
 
     bool has_mismatch_stat_hash = false;
-
-
+    
     /******************
     * Check mwrm file *
     ******************/
