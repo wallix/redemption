@@ -29,7 +29,7 @@
 #define LOGNULL
 // #define LOGPRINT
 
-#include "utils/apps/cryptofile.hpp"
+#include "capture/cryptofile.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestDerivationOfHmacKeyFromCryptoKey)

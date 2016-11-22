@@ -47,7 +47,7 @@
 #include "utils/sugar/local_fd.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
-#include "utils/apps/cryptofile.hpp"
+#include "capture/cryptofile.hpp"
 
 #ifdef IN_IDE_PARSER
 #define FIXTURES_PATH ""

@@ -29,7 +29,7 @@
 #include "program_options/program_options.hpp"
 #include "capture/rdp_ppocr/get_ocr_constants.hpp"
 
-#include "utils/apps/cryptofile.hpp"
+#include "capture/cryptofile.hpp"
 #include "utils/genrandom.hpp"
 
 #include "main/version.hpp"

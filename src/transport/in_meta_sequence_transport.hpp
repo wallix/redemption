@@ -37,7 +37,7 @@
 #include "utils/urandom_read.hpp"
 #include "utils/sugar/exchange.hpp"
 #include "utils/chex_to_int.hpp"
-#include "utils/apps/cryptofile.hpp"
+#include "capture/cryptofile.hpp"
 #include "transport/transport.hpp"
 
 namespace transbuf {

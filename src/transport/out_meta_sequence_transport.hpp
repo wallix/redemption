@@ -53,7 +53,7 @@
 
 #include "openssl_crypto.hpp"
 
-#include "utils/apps/cryptofile.hpp"
+#include "capture/cryptofile.hpp"
 #include "transport/transport.hpp"
 #include "transport/sequence_generator.hpp"
 

@@ -29,7 +29,7 @@
 #include "utils/urandom_read.hpp"
 #include "utils/sugar/exchange.hpp"
 
-#include "utils/apps/cryptofile.hpp"
+#include "capture/cryptofile.hpp"
 #include "transport/transport.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 

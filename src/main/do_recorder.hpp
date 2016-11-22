@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "utils/apps/cryptofile.hpp"
+#include "capture/cryptofile.hpp"
 
 extern "C" {
     __attribute__((__visibility__("default")))
