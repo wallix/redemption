@@ -23,8 +23,8 @@
 #define BOOST_TEST_MODULE TestGCC
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 
 #include "core/RDP/clipboard.hpp"
 
@@ -211,18 +211,80 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         int bpp=24;
         int data_lenght = height * width * 3;
         const double ARBITRARY_SCALE = 40;
-        const char metafilepic_out_data[] =
-            "\x05\x00\x01\x00\xb6\xbc\x00\x00\x08\x00\x00\x00\x60\x22\x00\x00"
-            "\x68\x0b\x00\x00\x01\x00\x09\x00\x00\x03\x55\x5e\x00\x00\x00\x00"
-            "\x3b\x5e\x00\x00\x00\x00\x04\x00\x00\x00\x03\x01\x08\x00\x05\x00"
-            "\x00\x00\x0c\x02\xb7\xff\xdc\x00\x05\x00\x00\x00\x0b\x02\x00\x00"
-            "\x00\x00\x3b\x5e\x00\x00\x41\x0b\x20\x00\xcc\x00\x49\x00\xdc\x00"
-            "\x00\x00\x00\x00\xb7\xff\xdc\x00\x00\x00\x00\x00\x28\x00\x00\x00"
-            "\xdc\x00\x00\x00\xb7\xff\xff\xff\x01\x00\x18\x00\x00\x00\x00\x00"
-            "\x34\xbc\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00";
+        const char metafilepic_out_data[133] =
+            // header
+            "\x05\x00" // msgType  : 5 = CB_FORMAT_DATA_RESPONSE
+            "\x01\x00" // MsgFlags : 1 = CB_RESPONSE_OK
+            "\xb6\xbc\x00\x00" // dataLen : 48310
+            
+            // 2.2.5.2.1 Packed Metafile Payload (CLIPRDR_MFPICT)
+            "\x08\x00\x00\x00" // mappingMode
+            "\x60\x22\x00\x00" // xExt
+            "\x68\x0b\x00\x00" // yExt
 
-        InStream stream(metafilepic_out_data, 130);
+            // metaFileData
+            "\x01\x00" // meta_header_type : 1 MEMORYMETAFILE
+            "\x09\x00" // meta_header_size : 9 = 18 bytes
+            "\x00\x03" // version 0x300 : WMF with DIBS
+            
+            "\x55\x5e\x00\x00" // 0X5e55 * 2 = 24149 * 2 = 48298 bytes
+            
+            "\x00\x00" // NumberOfObjects : 0 objects in metafile
+            "\x3b\x5e\x00\x00" // MaxRecord : 0x5e3b = 24123 : 24123 * 2 = 48246 bytes
+            
+            "\x00\x00" // NumberOfMembers (not used)
+            
+            // Records
+            "\x04\x00\x00\x00" // RecordSize 4 = 8 bytes
+            "\x03\x01"         // 0x0103 : META_SETMAPMODE
+            "\x08\x00"         // rdParam : record specific placeholder
+            
+            "\x05\x00\x00\x00" // RecordSize 0x5 = 5 * 2 =  10
+            "\x0c\x02"         // META_SETWINDOWEXT
+            "\xb7\xff"         // height : -73 pixels (73 pixels upside down)
+            "\xdc\x00"         // width :  220 pixels
+            
+            "\x05\x00\x00\x00" // RecordSize 0x5 = 5 * 2 =  10
+            "\x0b\x02"         // META_SETWINDOWORG
+            "\x00\x00"         // Origin y = 0
+            "\x00\x00"         // Origin x = 0
+            
+            // META_DIBSTRETCHBLT This record specifies the transfer of a block of pixels in device-independent format according to a raster operation, with possible expansion or contraction.
+            "\x3b\x5e\x00\x00" // RecordSize 0x5e3b = 24123 * 2 =  48246
+            "\x41\x0b"         // META_DIBSTRETCHBLT
+            "\x20\x00\xcc\x00" // rdParam (raster operation) : 0x00CC0020 : SRCCOPY
+            "\x49\x00"         // SrcHeight : 73
+            "\xdc\x00"         // SrcWidth : 220
+            "\x00\x00"         // YSrc : 0
+            "\x00\x00"         // XSrc : 0
+            "\xb7\xff"         // DstWidth : -73
+            "\xdc\x00"         // DstHeight : 220
+            "\x00\x00"         // YDest 0
+            "\x00\x00"         // XDest 0
+
+            // DeviceIndependentBitmap  2.2.2.9 DeviceIndependentBitmap Object
+            "\x28\x00\x00\x00" 
+            "\xdc\x00"
+            "\x00\x00"
+            "\xb7\xff"
+            "\xff\xff"
+            "\x01\x00"
+            "\x18\x00"
+            "\x00\x00"
+            "\x00\x00"
+            "\x34\xbc"
+            "\x00\x00"
+            "\x00\x00"
+            "\x00\x00"
+            "\x00\x00"
+            "\x00\x00"
+            "\x00\x00"
+            "\x00\x00"
+            "\x00\x00"
+            "\x00\x00"
+            ;
+
+        InStream stream(metafilepic_out_data, 132);
 
          RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr;
          fdr.recv(stream);
