@@ -431,7 +431,7 @@ private:
             order.Style(0x14EE0000);
             order.ExtendedStyle(0x40310);
             order.ShowState(5);
-            order.TitleInfo("Splash screen");
+            order.TitleInfo("Dialog box");
             order.ClientOffsetX(this->protected_rect.x + 6);
             order.ClientOffsetY(this->protected_rect.y + 25);
             order.WindowOffsetX(this->protected_rect.x);
@@ -450,6 +450,27 @@ private:
                 order.emit(out_s);
                 order.log(LOG_INFO);
                 LOG(LOG_INFO, "RemoteProgramsSessionManager::dialog_box_create: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
+            }
+
+            this->drawable->draw(order);
+        }
+
+        if (DialogBoxType::WAITING_SCREEN == type) {
+            RDP::RAIL::ActivelyMonitoredDesktop order;
+
+            order.header.FieldsPresentFlags(
+                    RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP |
+                    RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER
+                );
+
+            order.NumWindowIds(1);
+            order.window_ids(0, this->dialog_box_window_id);
+
+            /*if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) */{
+                StaticOutStream<256> out_s;
+                order.emit(out_s);
+                order.log(LOG_INFO);
+                LOG(LOG_INFO, "RemoteProgramsSessionManager::dialog_box_create: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
             }
 
             this->drawable->draw(order);
