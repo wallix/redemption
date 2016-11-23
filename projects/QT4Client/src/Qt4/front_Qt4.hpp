@@ -409,7 +409,7 @@ public:
 
     void send_buffer_to_clipboard();
 
-    void process_server_clipboard_indata(int flags, InStream & chunk);
+    void process_server_clipboard_indata(int flags, InStream & chunk, CB_Buffers & cb_buffers, CB_FilesList & cb_filesList, ClipBoard_Qt * clipboard_qt);
 
     void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size) override;
 

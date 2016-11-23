@@ -462,7 +462,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
+    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, 0);
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
     DrawableToFile png_recorder(out_png_trans, drawable1.impl());
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
@@ -606,7 +606,7 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
+    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, 0);
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png", groupid);
@@ -742,7 +742,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
+    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, 0);
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png", groupid);
@@ -833,7 +833,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
+    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, 0);
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid);

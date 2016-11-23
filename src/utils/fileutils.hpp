@@ -200,28 +200,6 @@ static inline bool canonical_path( const char * fullpath, char * path, size_t pa
     return true;
 }
 
-static inline void pathncpy(char * dest, const char * src, const size_t n) {
-    size_t src_len = strnlen(src, n);
-    if (src_len >= n || (src_len == 0 && n < 3)) {
-        LOG(LOG_INFO, "can't copy path, no room in dest path (available %d): %s\n", static_cast<int>(n), src);
-        throw Error(ERR_PATH_TOO_LONG);
-    }
-    if (src_len == 0){
-        memcpy(dest, "./", 3);
-    }
-    else {
-        memcpy(dest, src, src_len + 1);
-        if (src[src_len - 1] != '/') {
-            if (src_len + 1 >= n) {
-                LOG(LOG_INFO, "can't copy path, no room in dest path to add trailing slash: %s\n", src);
-                throw Error(ERR_PATH_TOO_LONG);
-            }
-            dest[src_len] = '/';
-            dest[src_len+1] = 0;
-        }
-    }
-}
-
 static inline void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t verbose = 255)
 {
     struct D {

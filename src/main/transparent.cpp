@@ -202,7 +202,7 @@ int main(int argc, char * argv[]) {
 
     UdevRandom gen;
     TimeSystem timeobj;
-    CryptoContext cctx(ini);
+    CryptoContext cctx;
     const bool fastpath_support = true;
     const bool mem3blt_support  = true;
     Front front(front_trans, gen, ini, cctx,
