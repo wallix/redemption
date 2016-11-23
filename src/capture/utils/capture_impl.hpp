@@ -52,7 +52,7 @@
 
 #include "utils/log.hpp"
 #include "transport/out_file_transport.hpp"
-#include "utils/apps/cryptofile.hpp"
+#include "capture/cryptofile.hpp"
 #include "utils/urandom_read.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/sugar/local_fd.hpp"

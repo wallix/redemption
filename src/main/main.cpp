@@ -29,7 +29,7 @@
 #include "program_options/program_options.hpp"
 #include "capture/rdp_ppocr/get_ocr_constants.hpp"
 
-#include "utils/apps/cryptofile.hpp"
+#include "capture/cryptofile.hpp"
 #include "utils/genrandom.hpp"
 
 #include "main/version.hpp"
@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     Inifile ini;
 
     UdevRandom rnd;
-    CryptoContext cctx(ini);
+    CryptoContext cctx;
 
     return app_proxy(
         argc, argv

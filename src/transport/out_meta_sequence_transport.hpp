@@ -53,7 +53,7 @@
 
 #include "openssl_crypto.hpp"
 
-#include "utils/apps/cryptofile.hpp"
+#include "capture/cryptofile.hpp"
 #include "transport/transport.hpp"
 #include "transport/sequence_generator.hpp"
 
@@ -364,11 +364,11 @@ class ochecksum_buf_ofile_buf_out
 
     HMac hmac;
     HMac quick_hmac;
-    unsigned char (&hmac_key)[MD_HASH_LENGTH];
+    unsigned char const (&hmac_key)[MD_HASH_LENGTH];
     size_t file_size = nosize;
 
 public:
-    explicit ochecksum_buf_ofile_buf_out(unsigned char (&hmac_key)[MD_HASH_LENGTH])
+    explicit ochecksum_buf_ofile_buf_out(unsigned char const (&hmac_key)[MD_HASH_LENGTH])
     : hmac_key(hmac_key)
     {}
 
@@ -457,11 +457,11 @@ class ochecksum_buf_null_buf
 
     HMac hmac;
     HMac quick_hmac;
-    unsigned char (&hmac_key)[MD_HASH_LENGTH];
+    unsigned char const (&hmac_key)[MD_HASH_LENGTH];
     size_t file_size = nosize;
 
 public:
-    explicit ochecksum_buf_null_buf(unsigned char (&hmac_key)[MD_HASH_LENGTH])
+    explicit ochecksum_buf_null_buf(unsigned char const (&hmac_key)[MD_HASH_LENGTH])
     : hmac_key(hmac_key)
     {}
 
@@ -1173,7 +1173,7 @@ namespace transfil {
                 ::memset(key_buf, 0, blocksize);
                 if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
                     unsigned char keyhash[MD_HASH_LENGTH];
-                    if ( ! ::MD_HASH_FUNC(static_cast<unsigned char *>(cctx.get_hmac_key()), CRYPTO_KEY_LENGTH, keyhash)) {
+                    if ( ! ::MD_HASH_FUNC(cctx.get_hmac_key(), CRYPTO_KEY_LENGTH, keyhash)) {
                         LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key!\n", ::getpid());
                         return -1;
                     }
@@ -1357,7 +1357,7 @@ namespace transfil {
                 ::memset(key_buf, '\0', blocksize);
                 if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
                     unsigned char keyhash[MD_HASH_LENGTH];
-                    if ( ! ::MD_HASH_FUNC(static_cast<const unsigned char *>(hmac_key), CRYPTO_KEY_LENGTH, keyhash)) {
+                    if ( ! ::MD_HASH_FUNC(hmac_key, CRYPTO_KEY_LENGTH, keyhash)) {
                         LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key\n", ::getpid());
                         return -1;
                     }
@@ -1633,7 +1633,7 @@ namespace detail
         }
 
         template<class Buf>
-        int close(Buf &, hash_type & hash, unsigned char (&)[MD_HASH_LENGTH]) {
+        int close(Buf &, hash_type & hash, unsigned char const (&)[MD_HASH_LENGTH]) {
             return this->sum_buf.close(hash);
         }
     };

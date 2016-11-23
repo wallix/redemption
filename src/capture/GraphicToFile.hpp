@@ -467,7 +467,7 @@ public:
     }
 
     /// \brief Update timestamp but send nothing, the timestamp will be sent later with the next effective event
-    virtual void timestamp(const timeval& now)
+    void timestamp(const timeval& now)
     {
         uint64_t old_timer = this->timer.tv_sec * 1000000ULL + this->timer.tv_usec;
         uint64_t current_timer = now.tv_sec * 1000000ULL + now.tv_usec;

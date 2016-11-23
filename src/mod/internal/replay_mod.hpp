@@ -42,10 +42,9 @@ class ReplayMod : public InternalMod
             InMetaSequenceTransport in_trans;
             FileToGraphic           reader;
 
-            Impl(Inifile & ini, char const * prefix, char const * extension, uint32_t debug_capture)
-            : cctx(ini)
-            , in_trans(&this->cctx, prefix, extension, 0, 0)
-            , reader(&this->in_trans, /*begin_capture*/{0, 0}, /*end_capture*/{0, 0}, true, debug_capture)
+            Impl(char const * prefix, char const * extension, uint32_t debug_capture)
+            : in_trans(&this->cctx, prefix, extension, 0, 0)
+            , reader(this->in_trans, /*begin_capture*/{0, 0}, /*end_capture*/{0, 0}, true, debug_capture)
             {
             }
 
@@ -54,8 +53,7 @@ class ReplayMod : public InternalMod
 
         void construct(char const * prefix, char const * extension, uint32_t debug_capture)
         {
-            Inifile ini;
-            this->impl = std::make_unique<Impl>(ini, prefix, extension, debug_capture);
+            this->impl = std::make_unique<Impl>(prefix, extension, debug_capture);
         }
 
         void destruct()

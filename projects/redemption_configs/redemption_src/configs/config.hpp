@@ -83,11 +83,18 @@ namespace configs {
     {};
 }
 
-#include "configs/variant/includes.hpp"
+// members
+//@{
+#include "core/font.hpp"
+#include "utils/theme.hpp"
+#include "utils/redirection_info.hpp"
+//@}
 
 #include "configs/autogen/enums.hpp"
 #include "configs/autogen/enums_func_ini.hpp"
 #include "configs/autogen/variables_configuration.hpp"
+
+#include "utils/fileutils.hpp" // file_exist
 
 class Inifile;
 
@@ -110,9 +117,43 @@ namespace configs
     template<class CfgType>
     void post_set_value(VariablesConfiguration &, CfgType const &)
     {}
-}
 
-#include "configs/variant/post_set_value.hpp"
+    inline void post_set_value(VariablesConfiguration & vars, ::cfg::internal_mod::theme const & cfg_value)
+    {
+        Theme & theme = static_cast<cfg::theme&>(vars).value;
+
+        auto & str = cfg_value.value;
+        if (static_cast<cfg::debug::config>(vars).value) {
+            LOG(LOG_INFO, "LOAD_THEME: %s", str.c_str());
+        }
+
+        // load theme
+
+        {
+            char theme_path[1024] = {};
+            snprintf(theme_path, 1024, CFG_PATH "/themes/%s/" THEME_INI, str.c_str());
+            theme_path[sizeof(theme_path) - 1] = 0;
+
+            ConfigurationLoader theme_load;
+            theme_load.cparse(theme, theme_path);
+        }
+
+        if (theme.global.logo) {
+            char logo_path[1024] = {};
+            snprintf(logo_path, 1024, CFG_PATH "/themes/%s/" LOGO_PNG, str.c_str());
+            logo_path[sizeof(logo_path) - 1] = 0;
+            if (!file_exist(logo_path)) {
+                snprintf(logo_path, 1024, CFG_PATH "/themes/%s/" LOGO_BMP, str.c_str());
+                logo_path[sizeof(logo_path) - 1] = 0;
+                if (!file_exist(logo_path)) {
+                    theme.global.logo = false;
+                    return;
+                }
+            }
+            theme.set_logo_path(logo_path);
+        }
+    }
+}
 
 
 class Inifile

@@ -59,7 +59,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <boost/algorithm/string.hpp>
 
 #include "core/RDP/pointer.hpp"
 #include "core/RDP/clipboard.hpp"

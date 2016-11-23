@@ -31,7 +31,7 @@
 #include "utils/log.hpp"
 #include "openssl_crypto.hpp"
 #include "transport/transport.hpp"
-#include "utils/apps/cryptofile.hpp"
+#include "capture/cryptofile.hpp"
 #include "utils/urandom_read.hpp"
 
 struct InFilenameTransport : public Transport

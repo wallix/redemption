@@ -14,7 +14,6 @@ rule includes ( properties * )
     ## configs @{
     incs += <include>$(REDEMPTION_CONFIG_PATH)/redemption_src ;
     incs += <include>$(REDEMPTION_CONFIG_AUTOGEN_PATH) ;
-    incs += <include>$(REDEMPTION_CONFIG_VARIANT_PATH) ;
     ## @}
 
     if $(FFMPEG_INC_PATH) != ""

@@ -14,7 +14,6 @@ src/system \
 src/transport \
 src/utils \
 projects/redemption_configs/include/autogen \
-projects/redemption_configs/include/variant \
 projects/redemption_configs/redemption_src \
 src/system/linux \
 -name '*.?pp' \

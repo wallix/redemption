@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.set<cfg::globals::movie_path>("capture");
 
         LCGRandom rnd(0);
-        CryptoContext cctx(ini);
+        CryptoContext cctx;
 
         // TODO remove this after unifying capture interface
         bool full_video = false;
@@ -220,7 +220,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         ini.set<cfg::globals::movie_path>("capture");
 
         LCGRandom rnd(0);
-        CryptoContext cctx(ini);
+        CryptoContext cctx;
 
         // TODO remove this after unifying capture interface
         bool full_video = false;
