@@ -8,78 +8,57 @@
 
 #pragma once
 
-#include "main/do_recorder.hpp"
-#include "main/version.hpp"
-
-#include "configs/config.hpp"
-
-#include <cstdio>
-
-#pragma once
-
-#include <iostream>
-
-#include <utility>
+#include <type_traits>
 #include <string>
-
-#include "main/version.hpp"
-//#include "transport/in_meta_sequence_transport.hpp"
+#include <vector>
+#include <utility>
 #include <cerrno>
+#include <cstddef>
+#include <cstdio>
+#include <cstring>
+#include <iostream>
+#include <memory>
+
+#include <unistd.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <snappy-c.h>
 #include <stdint.h>
-#include <unistd.h>
-#include <memory>
-#include <cstddef>
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "utils/fileutils.hpp"
-#include "openssl_crypto.hpp"
-#include "utils/log.hpp"
-#include "utils/urandom_read.hpp"
-#include "utils/sugar/exchange.hpp"
-
-#include "capture/cryptofile.hpp"
-#include "transport/transport.hpp"
-#include "transport/out_meta_sequence_transport.hpp"
-
 #include "system/ssl_calls.hpp"
-#include "configs/config.hpp"
 
-#include "program_options/program_options.hpp"
-#include "utils/chex_to_int.hpp"
-#include "utils/sugar/local_fd.hpp"
+#include "openssl_crypto.hpp"
+
 #include "utils/sugar/array_view.hpp"
-
-#include <signal.h>
-
-#include <iostream>
-#include <vector>
-#include <string>
-
-#include "capture/capture.hpp"
-#include "capture/FileToChunk.hpp"
-#include "capture/GraphicToFile.hpp"
-#include "transport/out_meta_sequence_transport.hpp"
-#include "transport/in_meta_sequence_transport.hpp"
-#include "utils/apps/recording_progress.hpp"
+#include "utils/sugar/exchange.hpp"
 #include "utils/sugar/iter.hpp"
-#include "program_options/program_options.hpp"
-#include "acl/auth_api.hpp"
-
-#include <type_traits>
-#include <iostream>
-#include <cstring>
-#include <string>
-#include <cerrno>
-
-#include "transport/in_filename_transport.hpp"
-#include "transport/out_file_transport.hpp"
+#include "utils/sugar/local_fd.hpp"
+#include "utils/chex_to_int.hpp"
 #include "utils/fdbuf.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/urandom_read.hpp"
+#include "utils/log.hpp"
 
+#include "configs/config.hpp"
 #include "program_options/program_options.hpp"
+
+#include "main/do_recorder.hpp"
+#include "main/version.hpp"
+
+#include "transport/in_filename_transport.hpp"
+#include "transport/in_meta_sequence_transport.hpp"
+#include "transport/out_file_transport.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
+#include "transport/transport.hpp"
+
+#include "acl/auth_api.hpp"
+#include "capture/capture.hpp"
+#include "capture/cryptofile.hpp"
+#include "capture/FileToChunk.hpp"
+#include "capture/GraphicToFile.hpp"
+#include "utils/apps/recording_progress.hpp"
 
 enum { QUICK_CHECK_LENGTH = 4096 };
 
@@ -1184,108 +1163,6 @@ static inline int check_encrypted_or_checksumed(
     return 0;
 }
 
-static inline int app_verifier(Inifile & ini, int argc, char const * const * argv, const char * copyright_notice, CryptoContext & cctx)
-{
-    openlog("verifier", LOG_CONS | LOG_PERROR, LOG_USER);
-
-    std::string hash_path      = ini.get<cfg::video::hash_path>().c_str()  ;
-    std::string mwrm_path      = ini.get<cfg::video::record_path>().c_str();
-    std::string input_filename;
-    bool        quick_check    = false;
-    bool      ignore_stat_info = false;
-    bool      update_stat_info = false;
-    uint32_t    verbose        = 0;
-
-    program_options::options_description desc({
-        {'h', "help",    "produce help message"},
-        {'v', "version", "show software version"},
-        {'q', "quick",   "quick check only"},
-        {'s', "hash-path",  &hash_path,         "hash file path"       },
-        {'m', "mwrm-path",  &mwrm_path,         "mwrm file path"       },
-        {'i', "input-file", &input_filename,    "input mwrm file name" },
-        {'S', "ignore-stat-info", "ignore stat info data mismatch" },
-        {'U', "update-stat-info", "update stat info data mismatch (only if not checksum and no encrypted)" },
-        {"verbose",         &verbose,           "more logs"            },
-    })
-    ;
-
-    auto options = program_options::parse_command_line(argc, argv, desc);
-
-    if (options.count("help") > 0) {
-        std::cout << copyright_notice;
-        std::cout << "Usage: redver [options]\n\n";
-        std::cout << desc << std::endl;
-        return 0;
-    }
-
-    if (options.count("version") > 0) {
-        std::cout << copyright_notice;
-        return 0;
-    }
-
-    if (options.count("quick") > 0) {
-        quick_check = true;
-    }
-
-    if (options.count("ignore-stat-info") > 0) {
-        ignore_stat_info = true;
-    }
-
-    if (options.count("update-stat-info") > 0) {
-        update_stat_info = true;
-    }
-
-    if (hash_path.c_str()[0] == 0) {
-        std::cerr << "Missing hash-path : use -h path\n\n";
-        return 1;
-    }
-
-    if (mwrm_path.c_str()[0] == 0) {
-        std::cerr << "Missing mwrm-path : use -m path\n\n";
-        return 1;
-    }
-
-    if (input_filename.c_str()[0] == 0) {
-        std::cerr << "Missing input mwrm file name : use -i filename\n\n";
-        return 1;
-    }
-
-    {
-        char temp_path[1024]     = {};
-        char temp_basename[1024] = {};
-        char temp_extension[256] = {};
-
-        canonical_path(input_filename.c_str(), temp_path, sizeof(temp_path), temp_basename, sizeof(temp_basename), temp_extension, sizeof(temp_extension), verbose);
-
-        if (strlen(temp_path) > 0) {
-            mwrm_path       = temp_path;
-            input_filename  = temp_basename;
-            input_filename += temp_extension;
-        }
-        if (mwrm_path.back() != '/'){
-            mwrm_path.push_back('/');
-        }
-        if (hash_path.back() != '/'){
-            hash_path.push_back('/');
-        }
-
-    }
-    std::cout << "Input file is \"" << mwrm_path << input_filename << "\".\n";
-
-    if (verbose) {
-        LOG(LOG_INFO, "hash_path=\"%s\"", hash_path.c_str());
-        LOG(LOG_INFO, "mwrm_path=\"%s\"", mwrm_path.c_str());
-        LOG(LOG_INFO, "file_name=\"%s\"", input_filename.c_str());
-    }
-
-    OpenSSL_add_all_digests();
-
-    return check_encrypted_or_checksumed(
-        input_filename, mwrm_path, hash_path,
-        quick_check, ignore_stat_info, update_stat_info, verbose, cctx
-    );
-}
-
 enum {
     USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF
 };
@@ -1768,16 +1645,14 @@ inline int is_encrypted_file(const char * input_filename, bool & infile_is_encry
     infile_is_encrypted = false;
     const int fd_test = open(input_filename, O_RDONLY);
     if (fd_test != -1) {
-        uint32_t magic_test;
-        // TODO Not portable code endianess, use byte array instead
-        ssize_t res_test = read(fd_test, &magic_test, sizeof(magic_test));
-        if ((res_test == sizeof(magic_test)) &&
-            (magic_test == WABCRYPTOFILE_MAGIC)) {
+        uint8_t data[4] = {};
+        ssize_t res_test = read(fd_test, data, 4);
+        const uint32_t magic = data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
+        if ((res_test == 4) && (magic == WABCRYPTOFILE_MAGIC)) {
             infile_is_encrypted = true;
             std::cout << "Input file is encrypted.\n";
         }
         close(fd_test);
-
         return 0;
     }
 
@@ -2073,29 +1948,8 @@ inline int app_recorder(
         }
     }
 
-    //extract_meta_data = (options.count("extract-meta-data") > 0);
-
     ini.set<cfg::video::rt_display>(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png));
 
-/*
-    {
-        char temp_path[1024]     = {};
-        char temp_basename[1024] = {};
-        char temp_extension[256] = {};
-
-        canonical_path(input_filename.c_str(), temp_path, sizeof(temp_path), temp_basename, sizeof(temp_basename), temp_extension, sizeof(temp_extension), verbose);
-
-        if (!temp_path[0]) {
-            input_filename  = ini.get<cfg::video::record_path>();
-            const size_t path_length = input_filename.length();
-            if (path_length && (input_filename[path_length - 1] != '/')) {
-                input_filename += '/';
-            }
-            input_filename += temp_basename;
-            input_filename += temp_extension;
-        }
-    }
-*/
     {
         std::string directory          ;
         std::string filename           ;
@@ -2147,24 +2001,6 @@ inline int app_recorder(
       = bool(ini.get<cfg::video::capture_flags>() & (CaptureFlags::flv | CaptureFlags::ocr))
       || full_video;
 
-/*
-    char infile_path     [1024] = "./"          ;   // default value, actual one should come from output_filename
-    char infile_basename [1024] = "redrec_input";   // default value, actual one should come from output_filename
-    char infile_extension[ 128] = ".mwrm"       ;
-
-    canonical_path( input_filename.c_str()
-                  , infile_path
-                  , sizeof(infile_path)
-                  , infile_basename
-                  , sizeof(infile_basename)
-                  , infile_extension
-                  , sizeof(infile_extension)
-                  , verbose
-                  );
-    if (verbose) {
-        std::cout << "\nInput file path: " << infile_path << infile_basename << infile_extension << std::endl;
-    }
-*/
     std::string infile_path;
     std::string infile_basename;
     std::string infile_extension;
@@ -2294,98 +2130,6 @@ inline int app_recorder(
     }
 }
 
-
-inline int app_decrypter(int argc, char const * const * argv, const char * copyright_notice, CryptoContext & cctx)
-{
-    openlog("decrypter", LOG_CONS | LOG_PERROR, LOG_USER);
-
-    std::string input_filename;
-    std::string output_filename;
-
-    uint32_t verbose = 0;
-
-    program_options::options_description desc({
-        {'h', "help",    "produce help message"},
-        {'v', "version", "show software version"},
-
-        {'o', "output-file", &output_filename, "output base filename"},
-        {'i', "input-file",  &input_filename,  "input base filename"},
-        {"verbose",          &verbose,         "more logs"}
-    });
-
-    auto options = program_options::parse_command_line(argc, argv, desc);
-
-    if (options.count("help") > 0) {
-        std::cout << copyright_notice << "\n\n";
-        std::cout << "Usage: redrec [options]\n\n";
-        std::cout << desc << std::endl;
-        return 0;
-    }
-
-    if (options.count("version") > 0) {
-        std::cout << copyright_notice << std::endl << std::endl;
-        return 0;
-    }
-
-    if (input_filename.empty()) {
-        std::cerr << "Missing input filename : use -i filename\n\n";
-        return -1;
-    }
-
-    if (output_filename.empty()) {
-        std::cerr << "Missing output filename : use -o filename\n\n";
-        return -1;
-    }
-
-    int fd  = open(input_filename.c_str(), O_RDONLY);
-    if (fd == -1) {
-        std::cerr << "can't open file " << input_filename << "\n\n";
-        return -1;
-    }
-
-    OpenSSL_add_all_digests();
-
-    size_t base_len = 0;
-    const uint8_t * base = reinterpret_cast<const uint8_t *>(
-                    basename_len(input_filename.c_str(), base_len));
-
-    InFilenameTransport in_t(cctx, fd, base, base_len);
-    if (!in_t.is_encrypted()){
-        std::cout << "Input file is unencrypted.\n\n";
-        return 0;
-    }
-
-    const int fd1 = open(output_filename.c_str(), O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
-    if (fd1 != -1) {
-        OutFileTransport out_t(fd1);
-
-        char mem[4096];
-        char *buf;
-
-        try {
-            while (1) {
-                buf = mem;
-                in_t.recv(&buf, sizeof(mem));
-                out_t.send(mem, buf-mem);
-            }
-        }
-        catch (Error const & e) {
-            if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-                std::cerr << "Exception code: " << e.id << std::endl << std::endl;
-            }
-            else {
-                out_t.send(mem, buf - mem);
-            }
-        }
-        close(fd);
-    }
-    else {
-        std::cerr << strerror(errno) << std::endl << std::endl;
-    }
-    return 0;
-}
-
-
 extern "C" {
     __attribute__((__visibility__("default")))
     int recmemcpy(char * dest, char * source, int len)
@@ -2410,15 +2154,16 @@ extern "C" {
 
         int res = -1;
 
+        const char * copyright_notice = "ReDemPtion " VERSION ".\n"
+            "Copyright (C) Wallix 2010-2016.\n"
+            "Christophe Grosjean, Jonathan Poelen, Raphael Zhou.";
+
         switch (role){
         case 0: // RECorder
             try {
                 res = app_recorder(
                     argc, argv
-                  , "ReDemPtion RECorder " VERSION ": An RDP movie converter.\n"
-                    "Copyright (C) Wallix 2010-2016.\n"
-                    "Christophe Grosjean, Jonathan Poelen and Raphael Zhou.\n"
-                    "Compatible with any WRM file format up to 4."
+                  , copyright_notice
                   , config_filename
                   , ini
                   , cctx
@@ -2430,12 +2175,104 @@ extern "C" {
         case 1: // VERifier
             ini.set<cfg::debug::config>(false);
             try {
-                res = app_verifier(ini,
-                    argc, argv
-                  , "ReDemPtion VERifier " VERSION ".\n"
-                    "Copyright (C) Wallix 2010-2016.\n"
-                    "Christophe Grosjean, Jonathan Poelen, Raphael Zhou."
-                  , cctx);
+                openlog("verifier", LOG_CONS | LOG_PERROR, LOG_USER);
+
+                std::string hash_path      = ini.get<cfg::video::hash_path>().c_str()  ;
+                std::string mwrm_path      = ini.get<cfg::video::record_path>().c_str();
+                std::string input_filename;
+                bool        quick_check    = false;
+                bool      ignore_stat_info = false;
+                bool      update_stat_info = false;
+                uint32_t    verbose        = 0;
+
+                program_options::options_description desc({
+                    {'h', "help",    "produce help message"},
+                    {'v', "version", "show software version"},
+                    {'q', "quick",   "quick check only"},
+                    {'s', "hash-path",  &hash_path,         "hash file path"       },
+                    {'m', "mwrm-path",  &mwrm_path,         "mwrm file path"       },
+                    {'i', "input-file", &input_filename,    "input mwrm file name" },
+                    {'S', "ignore-stat-info", "ignore stat info data mismatch" },
+                    {'U', "update-stat-info", "update stat info data mismatch (only if not checksum and no encrypted)" },
+                    {"verbose",         &verbose,           "more logs"            },
+                })
+                ;
+
+                auto options = program_options::parse_command_line(argc, argv, desc);
+
+                if (options.count("help") > 0) {
+                    std::cout << copyright_notice;
+                    std::cout << "Usage: redver [options]\n\n";
+                    std::cout << desc << std::endl;
+                    return 0;
+                }
+
+                if (options.count("version") > 0) {
+                    std::cout << copyright_notice;
+                    return 0;
+                }
+
+                if (options.count("quick") > 0) {
+                    quick_check = true;
+                }
+
+                if (options.count("ignore-stat-info") > 0) {
+                    ignore_stat_info = true;
+                }
+
+                if (options.count("update-stat-info") > 0) {
+                    update_stat_info = true;
+                }
+
+                if (hash_path.c_str()[0] == 0) {
+                    std::cerr << "Missing hash-path : use -h path\n\n";
+                    return 1;
+                }
+
+                if (mwrm_path.c_str()[0] == 0) {
+                    std::cerr << "Missing mwrm-path : use -m path\n\n";
+                    return 1;
+                }
+
+                if (input_filename.c_str()[0] == 0) {
+                    std::cerr << "Missing input mwrm file name : use -i filename\n\n";
+                    return 1;
+                }
+
+                {
+                    char temp_path[1024]     = {};
+                    char temp_basename[1024] = {};
+                    char temp_extension[256] = {};
+
+                    canonical_path(input_filename.c_str(), temp_path, sizeof(temp_path), temp_basename, sizeof(temp_basename), temp_extension, sizeof(temp_extension), verbose);
+
+                    if (strlen(temp_path) > 0) {
+                        mwrm_path       = temp_path;
+                        input_filename  = temp_basename;
+                        input_filename += temp_extension;
+                    }
+                    if (mwrm_path.back() != '/'){
+                        mwrm_path.push_back('/');
+                    }
+                    if (hash_path.back() != '/'){
+                        hash_path.push_back('/');
+                    }
+
+                }
+                std::cout << "Input file is \"" << mwrm_path << input_filename << "\".\n";
+
+                if (verbose) {
+                    LOG(LOG_INFO, "hash_path=\"%s\"", hash_path.c_str());
+                    LOG(LOG_INFO, "mwrm_path=\"%s\"", mwrm_path.c_str());
+                    LOG(LOG_INFO, "file_name=\"%s\"", input_filename.c_str());
+                }
+
+                OpenSSL_add_all_digests();
+
+                res = check_encrypted_or_checksumed(
+                    input_filename, mwrm_path, hash_path,
+                    quick_check, ignore_stat_info, update_stat_info, verbose, cctx
+                );                
                 std::puts(res == 0 ? "verify ok\n" : "verify failed\n");
             } catch (const Error & e) {
                 std::printf("verify failed: with id=%d\n", e.id);
@@ -2443,13 +2280,94 @@ extern "C" {
         break;
         default: // DECrypter
             try {
-                res = app_decrypter(
-                    argc, argv
-                  , "ReDemPtion DECrypter " VERSION ".\n"
-                    "Copyright (C) Wallix 2010-2016.\n"
-                    "Christophe Grosjean, Jonathan Poelen, Raphael Zhou."
-                  , cctx);
-                std::puts(res == 0 ? "decrypt ok\n" : "decrypt failed\n");
+                openlog("decrypter", LOG_CONS | LOG_PERROR, LOG_USER);
+
+                std::string input_filename;
+                std::string output_filename;
+
+                uint32_t verbose = 0;
+
+                program_options::options_description desc({
+                    {'h', "help",    "produce help message"},
+                    {'v', "version", "show software version"},
+
+                    {'o', "output-file", &output_filename, "output base filename"},
+                    {'i', "input-file",  &input_filename,  "input base filename"},
+                    {"verbose",          &verbose,         "more logs"}
+                });
+
+                auto options = program_options::parse_command_line(argc, argv, desc);
+
+                if (options.count("help") > 0) {
+                    std::cout << copyright_notice << "\n\n";
+                    std::cout << "Usage: redrec [options]\n\n";
+                    std::cout << desc << std::endl;
+                    return 0;
+                }
+
+                if (options.count("version") > 0) {
+                    std::cout << copyright_notice << std::endl << std::endl;
+                    return 0;
+                }
+
+                if (input_filename.empty()) {
+                    std::cerr << "Missing input filename : use -i filename\n\n";
+                    return -1;
+                }
+
+                if (output_filename.empty()) {
+                    std::cerr << "Missing output filename : use -o filename\n\n";
+                    return -1;
+                }
+
+                int fd  = open(input_filename.c_str(), O_RDONLY);
+                if (fd == -1) {
+                    std::cerr << "can't open file " << input_filename << "\n\n";
+                    std::puts("decrypt failed\n");
+                    return -1;
+                }
+
+                OpenSSL_add_all_digests();
+
+                size_t base_len = 0;
+                const uint8_t * base = reinterpret_cast<const uint8_t *>(
+                                basename_len(input_filename.c_str(), base_len));
+
+                InFilenameTransport in_t(cctx, fd, base, base_len);
+                if (!in_t.is_encrypted()){
+                    std::cout << "Input file is unencrypted.\n\n";
+                    return 0;
+                }
+
+                const int fd1 = open(output_filename.c_str(), O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
+                if (fd1 != -1) {
+                    OutFileTransport out_t(fd1);
+
+                    char mem[4096];
+                    char *buf;
+
+                    try {
+                        while (1) {
+                            buf = mem;
+                            in_t.recv(&buf, sizeof(mem));
+                            out_t.send(mem, buf-mem);
+                        }
+                    }
+                    catch (Error const & e) {
+                        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
+                            std::cerr << "Exception code: " << e.id << std::endl << std::endl;
+                        }
+                        else {
+                            out_t.send(mem, buf - mem);
+                        }
+                    }
+                    close(fd);
+                }
+                else {
+                    std::cerr << strerror(errno) << std::endl << std::endl;
+                }
+                std::puts("decrypt ok\n");
+                return 0;                  
             } catch (const Error & e) {
                 std::printf("decrypt failed: with id=%d\n", e.id);
             }

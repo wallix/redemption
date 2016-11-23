@@ -162,7 +162,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
 
     int res = -1;
     try {
-        res = app_decrypter(argc, argv
+        res = do_main(2, argc, argv
             , "ReDemPtion VERifier " VERSION ".\n"
             "Copyright (C) Wallix 2010-2016.\n"
             "Christophe Grosjean, Raphael Zhou."
@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
 
     int res = -1;
     try {
-        res = app_decrypter(argc, argv
+        res = do_main(2, argc, argv
             , "ReDemPtion VERifier " VERSION ".\n"
             "Copyright (C) Wallix 2010-2016.\n"
             "Christophe Grosjean, Raphael Zhou."
@@ -448,7 +448,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierFileNotFound)
     int argc = sizeof(argv)/sizeof(char*);
 
     BOOST_CHECK_EXCEPTION(
-        app_verifier(ini,
+        do_main(1, ini,
             argc, argv
           , "ReDemPtion VERifier " VERSION ".\n"
             "Copyright (C) Wallix 2010-2016.\n"
@@ -486,7 +486,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
 
     int res = -1;
     BOOST_CHECK_NO_THROW(
-        res = app_verifier(ini,
+        res = do_main(1, ini,
             argc, argv
           , "ReDemPtion VERifier " VERSION ".\n"
             "Copyright (C) Wallix 2010-2016.\n"
@@ -520,7 +520,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
 
     int res = -1;
     BOOST_CHECK_NO_THROW(
-        res = app_verifier(ini,
+        res = do_main(1, ini,
             argc, argv
           , "ReDemPtion VERifier " VERSION ".\n"
             "Copyright (C) Wallix 2010-2016.\n"
@@ -557,7 +557,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
 
     int res = -1;
     BOOST_CHECK_NO_THROW(
-        res = app_verifier(ini,
+        res = do_main(1, ini,
             argc, argv
           , "ReDemPtion VERifier " VERSION ".\n"
             "Copyright (C) Wallix 2010-2016.\n"
@@ -651,7 +651,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierUpdateData)
 
     int res = -1;
     BOOST_CHECK_NO_THROW(
-        res = app_verifier(ini,
+        res = do_main(1, ini,
             argc, argv
           , "ReDemPtion VERifier " VERSION ".\n"
             "Copyright (C) Wallix 2010-2016.\n"
@@ -702,7 +702,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
 
     int res = -1;
     BOOST_CHECK_NO_THROW(
-        res = app_verifier(ini,
+        res = do_main(1, ini,
             argc, argv
           , "ReDemPtion VERifier " VERSION ".\n"
             "Copyright (C) Wallix 2010-2016.\n"
@@ -1006,7 +1006,7 @@ BOOST_AUTO_TEST_CASE(TestAppRecorder)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    int res = app_recorder(argc, argv, "Recorder", CFG_PATH "/" RDPPROXY_INI, ini, cctx, rnd);
+    int res = do_main(0, argc, argv, "Recorder", CFG_PATH "/" RDPPROXY_INI, ini, cctx, rnd);
     BOOST_CHECK_EQUAL(0, res);
 
     const char * filename;

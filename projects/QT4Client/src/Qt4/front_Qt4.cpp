@@ -525,7 +525,7 @@ bool Front_Qt::connect() {
             ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
             ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned, std::ratio<1, 100>>(6));
             LCGRandom gen(0);
-            CryptoContext cctx(ini);
+            CryptoContext cctx;
             bool enable_rt(true);
             auth_api * authentifier(nullptr);
             struct timeval time;
@@ -822,7 +822,7 @@ void Front_Qt::draw_memblt_op(const Rect & drect, const Bitmap & bitmap) {
 
         Op op;
         for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
-             op.op(srcData[i], dstData[i]);
+             data[i] = op.op(srcData[i], dstData[i]);
         }
 
         QImage image(data.get(), mincx, 1, srcBitmap.format());
@@ -977,11 +977,10 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
             case 0xF0:
                 {
                     //this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
-                    //QBrush brush(foreColor, Qt::Dense4Pattern);
-                    //this->_screen[0]->paintCache().setBrush(brush);
-                    //this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-                    //this->_screen[0]->paintCache().setBrush(Qt::SolidPattern);
-                    std::cout <<  "RDPPatBlt 0xF0" <<  std::endl;
+                    QBrush brush(foreColor, Qt::Dense4Pattern);
+                    this->_screen[0]->paintCache().setBrush(brush);
+                    this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
+                    this->_screen[0]->paintCache().setBrush(Qt::SolidPattern);
                 }
                 break;
             default:
@@ -1063,7 +1062,7 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                 // +------+-------------------------------+
             case 0xF0:
                 this->_screen[0]->paintCache().setPen(Qt::NoPen);
-                //this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
+                this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
                 this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
                 break;
 
@@ -1250,7 +1249,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
-    //std::cout << "RDPMemBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
+    //std::cout << "RDPMemBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" <<  std::dec <<  std::endl;
     const Rect& drect = clip.intersect(cmd.rect);
     if (drect.isempty()){
         return ;
@@ -1274,7 +1273,10 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         case 0x66: this->draw_memblt_op<Op_0x66>(drect, bitmap);
             break;
 
-        case 0x99:  // nothing to change
+        case 0x99:  this->draw_memblt_op<Op_0x99>(drect, bitmap);
+            break;
+
+        case 0xAA:  // nothing to change
             break;
 
         case 0xBB: this->draw_memblt_op<Op_0xBB>(drect, bitmap);
@@ -2022,7 +2024,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             std::cout << " FAILED" <<  std::endl;
                         } else {
                             std::cout <<  std::endl;
-                            this->process_server_clipboard_indata(flags, chunk);
+                            this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList, this->_clipboard_qt);
                         }
                     }
                 break;
@@ -2251,7 +2253,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                             if(this->_requestedFormatName == this->_clipbrdFormatsList.FILEGROUPDESCRIPTORW) {
                                 this->_requestedFormatId = ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS;
-                                this->process_server_clipboard_indata(flags, chunk);
+                                this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList, this->_clipboard_qt);
                             }
                         }
                     }
@@ -2259,13 +2261,13 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                 default:
                     std::cout << "process sever next part PDU data" <<  std::endl;
-                    this->process_server_clipboard_indata(flags, chunk_series);
+                    this->process_server_clipboard_indata(flags, chunk_series, this->_cb_buffers, this->_cb_filesList, this->_clipboard_qt);
                 break;
             }
 
         } else {
             std::cout << "process sever next part PDU data" <<  std::endl;
-            this->process_server_clipboard_indata(flags, chunk_series);
+            this->process_server_clipboard_indata(flags, chunk_series, this->_cb_buffers, this->_cb_filesList, this->_clipboard_qt);
         }
 
 
@@ -2410,7 +2412,7 @@ void Front_Qt::show_in_stream(int flags, InStream & chunk, size_t length) {
     std::cout << "\"" << std::dec << std::endl;
 }
 
-void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
+void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk, CB_Buffers & cb_buffers, CB_FilesList & cb_filesList, ClipBoard_Qt * clipboard_qt) {
 
     // 3.1.5.2.2 Processing of Virtual Channel PDU
 
@@ -2455,8 +2457,8 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
 
     if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
         this->_waiting_for_data = true;
-        this->_cb_buffers.sizeTotal = chunk.in_uint32_le();
-        this->_cb_buffers.data = std::make_unique<uint8_t[]>(this->_cb_buffers.sizeTotal);
+        cb_buffers.sizeTotal = chunk.in_uint32_le();
+        cb_buffers.data = std::make_unique<uint8_t[]>(cb_buffers.sizeTotal);
     }
 
     switch (this->_requestedFormatId) {
@@ -2476,11 +2478,11 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
                 RDPECLIP::MetaFilePicDescriptor mfpd;
                 mfpd.receive(chunk);
 
-                this->_cb_buffers.pic_height = mfpd.height;
-                this->_cb_buffers.pic_width  = mfpd.width;
-                this->_cb_buffers.pic_bpp    = mfpd.bpp;
-                this->_cb_buffers.sizeTotal  = mfpd.imageSize;
-                this->_cb_buffers.data       = std::make_unique<uint8_t[]>(this->_cb_buffers.sizeTotal);
+                cb_buffers.pic_height = mfpd.height;
+                cb_buffers.pic_width  = mfpd.width;
+                cb_buffers.pic_bpp    = mfpd.bpp;
+                cb_buffers.sizeTotal  = mfpd.imageSize;
+                cb_buffers.data       = std::make_unique<uint8_t[]>(cb_buffers.sizeTotal);
             }
 
             this->send_to_clipboard_Buffer(chunk);
@@ -2493,32 +2495,32 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
         case ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                this->_cb_buffers.sizeTotal -= 4;
-                this->_cb_filesList.cItems= chunk.in_uint32_le();
-                this->_cb_filesList.lindexToRequest= 0;
-                this->_clipboard_qt->emptyBuffer();
-                this->_cb_filesList.itemslist.clear();
+                cb_buffers.sizeTotal -= 4;
+                cb_filesList.cItems= chunk.in_uint32_le();
+                cb_filesList.lindexToRequest= 0;
+                clipboard_qt->emptyBuffer();
+                cb_filesList.itemslist.clear();
             }
 
             this->send_to_clipboard_Buffer(chunk);
 
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                InStream stream(this->_cb_buffers.data.get(), this->_cb_buffers.sizeTotal);
+                InStream stream(cb_buffers.data.get(), cb_buffers.sizeTotal);
 
                 RDPECLIP::FileDescriptor fd;
 
-                for (int i = 0; i < this->_cb_filesList.cItems; i++) {
+                for (int i = 0; i < cb_filesList.cItems; i++) {
                     fd.receive(stream);
                     CB_FilesList::CB_in_Files file;
                     file.size = fd.file_size();
                     file.name = fd.fileName();
-                    this->_cb_filesList.itemslist.push_back(file);
+                    cb_filesList.itemslist.push_back(file);
                 }
 
-                RDPECLIP::FileContentsRequestPDU fileContentsRequest( this->_cb_filesList.streamIDToRequest
+                RDPECLIP::FileContentsRequestPDU fileContentsRequest( cb_filesList.streamIDToRequest
                                                                     , RDPECLIP::FILECONTENTS_RANGE
-                                                                    , this->_cb_filesList.lindexToRequest
-                                                                    , this->_cb_filesList.itemslist[this->_cb_filesList.lindexToRequest].size);
+                                                                    , cb_filesList.lindexToRequest
+                                                                    , cb_filesList.itemslist[cb_filesList.lindexToRequest].size);
                 StaticOutStream<32> out_streamRequest;
                 fileContentsRequest.emit(out_streamRequest);
                 const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
@@ -2532,7 +2534,7 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
                                                       CHANNELS::CHANNEL_FLAG_FIRST |
                                                       CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                     );
-                std::cout << "client >> File Contents Resquest PDU FILECONTENTS_RANGE streamID=" << this->_cb_filesList.streamIDToRequest << " lindex=" << this->_cb_filesList.lindexToRequest<< std::endl;
+                std::cout << "client >> File Contents Resquest PDU FILECONTENTS_RANGE streamID=" << cb_filesList.streamIDToRequest << " lindex=" << cb_filesList.lindexToRequest<< std::endl;
 
                 this->empty_buffer();
             }
@@ -2541,9 +2543,9 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
         case ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS:
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                this->_cb_buffers.sizeTotal = this->_cb_filesList.itemslist[this->_cb_filesList.lindexToRequest].size;
-                this->_cb_filesList.streamIDToRequest = chunk.in_uint32_le();
-                this->_cb_buffers.data = std::make_unique<uint8_t[]>(this->_cb_filesList.itemslist[this->_cb_filesList.lindexToRequest].size);
+                cb_buffers.sizeTotal = cb_filesList.itemslist[cb_filesList.lindexToRequest].size;
+                cb_filesList.streamIDToRequest = chunk.in_uint32_le();
+                cb_buffers.data = std::make_unique<uint8_t[]>(cb_filesList.itemslist[cb_filesList.lindexToRequest].size);
             }
 
             this->send_to_clipboard_Buffer(chunk);
@@ -2551,17 +2553,17 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                 this->_waiting_for_data = false;
 
-                 this->_clipboard_qt->write_clipboard_temp_file( this->_cb_filesList.itemslist[this->_cb_filesList.lindexToRequest].name
-                                                               , this->_cb_buffers.data.get()
-                                                               , this->_cb_filesList.itemslist[this->_cb_filesList.lindexToRequest].size
+                 clipboard_qt->write_clipboard_temp_file( cb_filesList.itemslist[cb_filesList.lindexToRequest].name
+                                                               , cb_buffers.data.get()
+                                                               , cb_filesList.itemslist[cb_filesList.lindexToRequest].size
                                                                );
-                this->_cb_filesList.lindexToRequest++;
+                cb_filesList.lindexToRequest++;
 
-                if (this->_cb_filesList.lindexToRequest>= this->_cb_filesList.cItems) {
+                if (cb_filesList.lindexToRequest>= cb_filesList.cItems) {
 
-                    this->_clipboard_qt->_local_clipboard_stream = false;
-                    this->_clipboard_qt->setClipboard_files(this->_cb_filesList.itemslist);
-                    this->_clipboard_qt->_local_clipboard_stream = true;
+                    clipboard_qt->_local_clipboard_stream = false;
+                    clipboard_qt->setClipboard_files(cb_filesList.itemslist);
+                    clipboard_qt->_local_clipboard_stream = true;
 
                     RDPECLIP::UnlockClipboardDataPDU unlockClipboardDataPDU(0);
                     StaticOutStream<32> out_stream_unlock;
@@ -2579,11 +2581,11 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
                     std::cout << "client >> Unlock Clipboard Data PDU" << std::endl;
 
                 } else {
-                    this->_cb_filesList.streamIDToRequest++;
-                    RDPECLIP::FileContentsRequestPDU fileContentsRequest( this->_cb_filesList.streamIDToRequest
+                    cb_filesList.streamIDToRequest++;
+                    RDPECLIP::FileContentsRequestPDU fileContentsRequest( cb_filesList.streamIDToRequest
                                                                         , RDPECLIP::FILECONTENTS_RANGE
-                                                                        , this->_cb_filesList.lindexToRequest
-                                                                        , this->_cb_filesList.itemslist[this->_cb_filesList.lindexToRequest].size);
+                                                                        , cb_filesList.lindexToRequest
+                                                                        , cb_filesList.itemslist[cb_filesList.lindexToRequest].size);
                     StaticOutStream<32> out_streamRequest;
                     fileContentsRequest.emit(out_streamRequest);
                     const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
@@ -2600,7 +2602,7 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
                                                           CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                         );
 
-                    std::cout << "client >> File Contents Resquest PDU FILECONTENTS_RANGE streamID=" << this->_cb_filesList.streamIDToRequest << " lindex=" << this->_cb_filesList.lindexToRequest<< std::endl;
+                    std::cout << "client >> File Contents Resquest PDU FILECONTENTS_RANGE streamID=" << cb_filesList.streamIDToRequest << " lindex=" << cb_filesList.lindexToRequest<< std::endl;
                 }
 
                 this->empty_buffer();
@@ -2750,7 +2752,7 @@ void Front_Qt::process_client_clipboard_out_data(const uint64_t total_length, Ou
 
     if (data_len > first_part_data_size ) {
 
-        const int cmpt_PDU_part(data_len / PDU_MAX_SIZE); 
+        const int cmpt_PDU_part(data_len / PDU_MAX_SIZE);
         const int remains_PDU  (data_len % PDU_MAX_SIZE);
         int data_sent(0);
 
@@ -2872,7 +2874,7 @@ int main(int argc, char** argv){
 
     // sudo bin/gcc-4.9.2/san/rdpproxy -nf
 
-    //bjam debug client_rdp_Qt4 |&  bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4 -n admin -pwd $mdp -ip 10.10.40.22 -p 3389
+    //bjam debug client_rdp_Qt4 &&  bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4 -n admin -pwd $mdp -ip 10.10.40.22 -p 3389
 
     // sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' &&
 
