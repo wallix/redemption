@@ -314,7 +314,7 @@ public:
     }
 
 public:
-    bool check(MMApi & mm, time_t now, BackEvent_t & signal) {
+    bool check(MMApi & mm, time_t now, BackEvent_t & signal, BackEvent_t & front_signal) {
         //LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u",
         //    (unsigned)now, static_cast<unsigned>(signal));
         if (signal == BACK_EVENT_STOP) {
@@ -373,7 +373,8 @@ public:
                 this->ask_acl();
             }
         }
-        else if (this->remote_answer || (signal == BACK_EVENT_RETRY_CURRENT)) {
+        else if (this->remote_answer || (signal == BACK_EVENT_RETRY_CURRENT) ||
+                 (front_signal == BACK_EVENT_NEXT)) {
             this->remote_answer = false;
             if (signal == BACK_EVENT_REFRESH) {
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
@@ -383,8 +384,9 @@ public:
                 mm.mod->get_event().signal = BACK_EVENT_NONE;
                 mm.mod->get_event().set();
             }
-            else if ((signal == BACK_EVENT_NEXT) || (signal == BACK_EVENT_RETRY_CURRENT)) {
-                if (signal == BACK_EVENT_NEXT) {
+            else if ((signal == BACK_EVENT_NEXT) || (signal == BACK_EVENT_RETRY_CURRENT) ||
+                     (front_signal == BACK_EVENT_NEXT)) {
+                if ((signal == BACK_EVENT_NEXT) || (front_signal == BACK_EVENT_NEXT)) {
                     LOG(LOG_INFO, "===========> MODULE_NEXT");
                 }
                 else {
@@ -393,7 +395,9 @@ public:
                     LOG(LOG_INFO, "===========> MODULE_RETRY_CURRENT");
                 }
 
-                int next_state = ((signal == BACK_EVENT_NEXT) ? mm.next_module() : MODULE_RDP);
+                int next_state = (((signal == BACK_EVENT_NEXT) || (front_signal == BACK_EVENT_NEXT)) ? mm.next_module() : MODULE_RDP);
+
+                front_signal = BACK_EVENT_NONE;
 
                 if (next_state == MODULE_TRANSITORY) {
                     this->remote_answer = false;

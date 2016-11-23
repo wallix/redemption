@@ -26,6 +26,7 @@
 #include "core/RDP/remote_programs.hpp"
 #include "gdi/clip_from_cmd.hpp"
 #include "gdi/graphic_api.hpp"
+#include "mod/internal/widget2/flat_button.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/rdp_log.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
@@ -53,22 +54,34 @@ private:
 
     uint32_t verbose;
 
-    uint32_t blocked_server_window_id = 0x00000000;
+    uint32_t blocked_server_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
     bool graphics_update_disabled = false;
 
-    Rect splash_screen_rect;
+    Rect dialog_box_rect;
     Rect protected_rect;
 
-    uint32_t splash_screen_window_id = 0;
+    uint32_t dialog_box_window_id  = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
     gdi::GraphicApi * drawable = nullptr;
     int               bpp      = 0;
 
+    enum DialogBoxType {
+        SPLASH_SCREEN,
+        WAITING_SCREEN,
+
+        NONE
+    } dialog_box_type = DialogBoxType::NONE;
+
+    Rect disconnect_now_button_rect;
+    bool disconnect_now_button_clicked = false;
+
+    auth_api* acl = nullptr;
+
 public:
     RemoteProgramsSessionManager(FrontAPI& front, mod_api& mod, Translation::language_t lang,
                                  uint16_t front_width, uint16_t front_height,
-                                 Font const & font, Theme const & theme,
+                                 Font const & font, Theme const & theme, auth_api* acl,
                                  uint32_t verbose)
     : front(front)
     , mod(mod)
@@ -78,7 +91,8 @@ public:
     , font(font)
     , theme(theme)
     , verbose(verbose)
-    , splash_screen_rect((front_width - 640) / 2, (front_height - 480) / 2, 640, 480) {}
+    , dialog_box_rect((front_width - 640) / 2, (front_height - 480) / 2, 640, 480)
+    , acl(acl) {}
 
     void disable_graphics_update(bool disable) {
         this->graphics_update_disabled = disable;
@@ -88,8 +102,10 @@ public:
                 "graphics_update_disabled=%s",
             (this->graphics_update_disabled ? "yes" : "no"));
 
-        if (!disable && this->splash_screen_window_id) {
-            this->splash_screen_destroy();
+        if (!disable &&
+            (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != this->dialog_box_window_id)) {
+
+            this->dialog_box_destroy();
         }
     }
 
@@ -101,6 +117,40 @@ public:
     void set_drawable(gdi::GraphicApi * drawable, int bpp) {
         this->drawable = drawable;
         this->bpp      = bpp;
+    }
+
+    void input_mouse(int device_flags, int x, int y) {
+        if (device_flags & SlowPath::PTRFLAGS_BUTTON1) {
+            this->disconnect_now_button_clicked = false;
+
+            if (device_flags & SlowPath::PTRFLAGS_DOWN) {
+                if (this->disconnect_now_button_rect.contains_pt(x, y)) {
+                    this->disconnect_now_button_clicked = true;
+                }
+            }
+
+            this->waiting_screen_draw(this->disconnect_now_button_clicked ? 1 : 0);
+
+            if (!(device_flags & SlowPath::PTRFLAGS_DOWN) &&
+                (this->disconnect_now_button_rect.contains_pt(x, y))) {
+                LOG(LOG_INFO, "RemoteApp session initiated disconnect by user");
+                if (this->acl) {
+                    this->acl->disconnect_target();
+                }
+                throw Error(ERR_DISCONNECT_BY_USER);
+            }
+        }
+    }
+
+    void input_scancode(long param1, long param2, long device_flags) {
+        (void)param2;
+        if ((28 == param1) && !(device_flags & SlowPath::KBDFLAGS_RELEASE)) {
+            LOG(LOG_INFO, "RemoteApp session initiated disconnect by user");
+            if (this->acl) {
+                this->acl->disconnect_target();
+            }
+            throw Error(ERR_DISCONNECT_BY_USER);
+        }
     }
 
 private:
@@ -226,6 +276,8 @@ private:
             this->unregister_server_window(window_id);
 
             LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(DeletedWindow): Remove window 0x%X from blocked windows list.", window_id);
+
+            this->blocked_server_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
         }
     }
 
@@ -237,6 +289,12 @@ private:
 
         const char session_probe_window_title[] = "SesProbe";
 
+        if (window_is_new &&
+            (DialogBoxType::WAITING_SCREEN == this->dialog_box_type)) {
+
+            this->dialog_box_destroy();
+        }
+
         if (this->graphics_update_disabled && window_is_new) {
             REDASSERT(!window_is_blocked);
 
@@ -245,7 +303,7 @@ private:
             if ((title_info_length >= sizeof(session_probe_window_title) - 1) &&
                 !::strcmp(title_info + (title_info_length - sizeof(session_probe_window_title) + 1), session_probe_window_title)) {
 
-                REDASSERT(!this->blocked_server_window_id);
+                REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == this->blocked_server_window_id);
 
                 {
                     RAILPDUHeader rpduh;
@@ -281,7 +339,8 @@ private:
 
                 LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(NewOrExistingWindow): Window 0x%X is blocked.", window_id);
 
-                this->splash_screen_create();
+                this->dialog_box_create(RemoteProgramsSessionManager::SPLASH_SCREEN);
+
                 this->splash_screen_draw();
             }
         }
@@ -331,14 +390,23 @@ private:
                 LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(DeletedNotificationIcons): Order bloacked.");
             }
         }
+
+        if ((RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER & order.header.FieldsPresentFlags()) &&
+            !order.NumWindowIds() &&
+            (DialogBoxType::NONE == this->dialog_box_type)) {
+
+            this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
+
+            this->waiting_screen_draw(0);
+        }
     }
 
-    void splash_screen_create() {
-        REDASSERT(!this->splash_screen_window_id);
+    void dialog_box_create(DialogBoxType type) {
+        if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != this->dialog_box_window_id) return;
 
-        this->splash_screen_window_id = this->register_client_window();
+        this->dialog_box_window_id = this->register_client_window();
 
-        this->protected_rect = this->splash_screen_rect;
+        this->protected_rect = this->dialog_box_rect;
 
         {
             RDP::RAIL::NewOrExistingWindow order;
@@ -357,7 +425,7 @@ private:
                     | RDP::RAIL::WINDOW_ORDER_FIELD_TITLE
                     | RDP::RAIL::WINDOW_ORDER_FIELD_OWNER
                 );
-            order.header.WindowId(this->splash_screen_window_id);
+            order.header.WindowId(this->dialog_box_window_id);
 
             order.OwnerWindowId(0x0);
             order.Style(0x14EE0000);
@@ -381,15 +449,19 @@ private:
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
-                LOG(LOG_INFO, "RemoteProgramsSessionManager::splash_screen_create: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
+                LOG(LOG_INFO, "RemoteProgramsSessionManager::dialog_box_create: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
             }
 
             this->drawable->draw(order);
         }
+
+        this->dialog_box_type = type;
+
+        this->disconnect_now_button_rect = Rect();
     }
 
-    void splash_screen_destroy() {
-        REDASSERT(this->splash_screen_window_id);
+    void dialog_box_destroy() {
+        REDASSERT(this->dialog_box_window_id);
 
         {
             RDP::RAIL::DeletedWindow order;
@@ -398,13 +470,13 @@ private:
                       RDP::RAIL::WINDOW_ORDER_STATE_DELETED
                     | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
                 );
-            order.header.WindowId(this->splash_screen_window_id);
+            order.header.WindowId(this->dialog_box_window_id);
 
             /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
-                LOG(LOG_INFO, "RemoteProgramsSessionManager::splash_screen_destroy: Send DeletedWindow to client: size=%zu", out_s.get_offset() - 1);
+                LOG(LOG_INFO, "RemoteProgramsSessionManager::dialog_box_destroy: Send DeletedWindow to client: size=%zu", out_s.get_offset() - 1);
             }
 
             this->front.draw(order);
@@ -414,11 +486,17 @@ private:
 
         this->protected_rect = Rect();
 
-        this->splash_screen_window_id = 0;
+        this->dialog_box_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
+
+        this->dialog_box_type = RemoteProgramsSessionManager::NONE;
+
+        this->disconnect_now_button_rect = Rect();
     }
 
     void splash_screen_draw() {
         if (!this->drawable) return;
+
+        this->drawable->begin_update();
 
         {
             RDPOpaqueRect order(this->protected_rect, 0x000000);
@@ -445,5 +523,76 @@ private:
                               color_encode(this->theme.global.bgcolor, this->bpp),
                               this->protected_rect
                               );
+
+        this->drawable->end_update();
+    }
+
+    void waiting_screen_draw(int state) {
+        if (!this->drawable) return;
+
+        this->drawable->begin_update();
+
+        {
+            RDPOpaqueRect order(this->protected_rect, 0x000000);
+
+            this->drawable->draw(order, this->protected_rect);
+        }
+
+        {
+            Rect rect = this->protected_rect.shrink(1);
+
+            RDPOpaqueRect order(rect, color_encode(this->theme.global.bgcolor, this->bpp));
+            order.log(LOG_INFO, rect);
+
+            this->drawable->draw(order, rect);
+        }
+
+        const gdi::TextMetrics tm_msg(this->font, TR("closing_remoteapp", this->lang));
+
+        const int xtext = 6;
+        const int ytext = 2;
+
+        const Dimension dim_button = WidgetFlatButton::get_optimal_dim(this->font, TR("disconnect_now", this->lang), xtext, ytext);
+
+        const uint32_t interspace = 60;
+
+        const uint32_t height = tm_msg.height + interspace + dim_button.h;
+
+        int ypos = (this->front_height - height) / 2;
+
+        gdi::server_draw_text(*this->drawable,
+                              this->font,
+                              (this->front_width - tm_msg.width) / 2,
+                              ypos,
+                              TR("closing_remoteapp", this->lang),
+                              color_encode(this->theme.global.fgcolor, this->bpp),
+                              color_encode(this->theme.global.bgcolor, this->bpp),
+                              this->protected_rect
+                              );
+
+        ypos += (tm_msg.height + interspace);
+
+        this->disconnect_now_button_rect.x  = (this->front_width - dim_button.w) / 2;
+        this->disconnect_now_button_rect.y  = ypos;
+        this->disconnect_now_button_rect.cx = dim_button.w;
+        this->disconnect_now_button_rect.cy = dim_button.h;
+
+        WidgetFlatButton::draw(this->protected_rect,
+                               this->disconnect_now_button_rect,
+                               *this->drawable,
+                               false,   // logo
+                               true,    // has_focus
+                               TR("disconnect_now", this->lang),
+                               color_encode(this->theme.global.fgcolor, this->bpp),
+                               color_encode(this->theme.global.bgcolor, this->bpp),
+                               color_encode(this->theme.global.focus_color, this->bpp),
+                               Rect(),
+                               state,
+                               this->font,
+                               xtext,
+                               ytext
+                               );
+
+        this->drawable->end_update();
     }
 };  // class RemoteProgramsSessionManager

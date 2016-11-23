@@ -1227,7 +1227,7 @@ class Sesman():
             session_log_redirection = (self.shared[u'session_log_redirection'].lower() == u'true')
             # Add connection to the observer
             session_id = self.engine.start_session(selected_target, self.pid,
-                                                   self.effective_login, 
+                                                   self.effective_login,
                                                    has_session_log_redirection=session_log_redirection)
             if session_id is None:
                 _status, _error = False, TR(u"start_session_failed")
@@ -1661,9 +1661,10 @@ class Sesman():
             if close_box and self.back_selector:
                 self.send_data({ u'module': u'close_back',
                                  u'selector' : u'False' })
-                _status, _error = self.receive_data()
-                if _status and self.shared.get(u'selector') == MAGICASK:
-                    return None, "Go back to selector"
+                while True:
+                    _status, _error = self.receive_data()
+                    if _status and self.shared.get(u'selector') == MAGICASK:
+                        return None, "Go back to selector"
             else:
                 self.send_data({u'module': u'close'})
         # Error

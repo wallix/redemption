@@ -252,7 +252,7 @@ public:
         return Dimension(tm.width + 2 * this->x_text + 4, tm.height + 2 * this->y_text + 4);
     }
 
-    Dimension get_optimal_dim(char const* text, Font const& font, int xtext, int ytext) {
+    static Dimension get_optimal_dim(Font const& font, char const* text, int xtext = 0, int ytext = 0) {
         char buffer[buffer_size];
 
         buffer[0] = 0;
