@@ -144,7 +144,8 @@ public:
                                    , now);
 
             ModuleManager mm(*this->front, this->ini, rnd, this->timeobj);
-            BackEvent_t signal = BACK_EVENT_NONE;
+            BackEvent_t signal       = BACK_EVENT_NONE;
+            BackEvent_t front_signal = BACK_EVENT_NONE;
 
             // Under conditions (if this->ini.get<cfg::video::inactivity_pause>() == true)
             PauseRecord pause_record(this->ini.get<cfg::video::inactivity_timeout>(), *this->front, mm, ini);
@@ -236,18 +237,23 @@ public:
                     try {
                         this->front->incoming(mm.get_callback(), now);
                     } catch (Error & e) {
-                        if (
-                            // Can be caused by client disconnect.
-                            (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
-                            // Can be caused by client disconnect.
-                            (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
-                            (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
-                            // Can be caused by wabwatchdog.
-                            (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
-                            LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
+                        if (ERR_DISCONNECT_BY_USER == e.id) {
+                            front_signal = BACK_EVENT_NEXT;
                         }
-                        run_session = false;
-                        continue;
+                        else {
+                            if (
+                                // Can be caused by client disconnect.
+                                (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
+                                // Can be caused by client disconnect.
+                                (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
+                                (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
+                                // Can be caused by wabwatchdog.
+                                (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
+                                LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
+                            }
+                            run_session = false;
+                            continue;
+                        }
                     } catch (...) {
                         LOG(LOG_ERR, "Proxy data processing raised unknown error");
                         run_session = false;
@@ -418,7 +424,7 @@ public:
                         }
 
                         if (this->client) {
-                            run_session = this->client->acl.check(mm, now, signal);
+                            run_session = this->client->acl.check(mm, now, signal, front_signal);
                         }
                         else if (signal == BACK_EVENT_STOP) {
                             mm.mod->get_event().reset();

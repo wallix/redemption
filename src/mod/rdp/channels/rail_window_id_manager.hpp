@@ -29,11 +29,15 @@ class RemoteProgramsWindowIdManager {
     mutable std::map<uint32_t, uint32_t> client_to_server;
     mutable std::map<uint32_t, uint32_t> server_to_client;
 
-    mutable uint32_t next_unused_client_window_id = 0x00800000;
+    mutable uint32_t next_unused_client_window_id = 0x800000;
 
 public:
     enum : uint32_t {
-        INVALID_WINDOW_ID = 0xFFFFFFF0
+        INVALID_WINDOW_ID = 0xFFFFFFF0,
+
+        RESERVED_WINDOW_ID_0 = 0x0,
+        RESERVED_WINDOW_ID_1 = 0xFFFFFFFE,
+        RESERVED_WINDOW_ID_2 = 0xFFFFFFFF
     };
 
     uint32_t get_client_window_id(uint32_t server_window_id) const {
@@ -93,8 +97,11 @@ private:
     uint32_t map_server_window(uint32_t server_window_id) const {
         REDASSERT(this->server_to_client.find(server_window_id) == this->server_to_client.end());
 
-        if (!server_window_id || (0xFFFFFFFE == server_window_id) ||
-            (0xFFFFFFFF == server_window_id)) { return server_window_id; }
+        if ((RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_0 == server_window_id) ||
+            (RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_1 == server_window_id) ||
+            (RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_2 == server_window_id)) {
+            return server_window_id;
+        }
 
         uint32_t client_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
@@ -118,10 +125,10 @@ private:
     }
 
     void increment_next_unused_client_window_id() const {
-        while (!this->next_unused_client_window_id ||
-               (0xFFFFFFFE == this->next_unused_client_window_id) ||
-               (0xFFFFFFFF == this->next_unused_client_window_id) ||
-               (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == this->next_unused_client_window_id) ||
+        while ((RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_0 == this->next_unused_client_window_id) ||
+               (RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_1 == this->next_unused_client_window_id) ||
+               (RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_2 == this->next_unused_client_window_id) ||
+               (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID    == this->next_unused_client_window_id) ||
                (this->client_to_server.find(this->next_unused_client_window_id) != this->client_to_server.end())) {
             this->next_unused_client_window_id++;
         }

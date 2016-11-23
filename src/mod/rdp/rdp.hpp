@@ -1146,7 +1146,7 @@ public:
             this->remote_programs_session_manager =
                 std::make_unique<RemoteProgramsSessionManager>(front, *this,
                     this->lang, this->front_width, this->front_height,
-                    this->font, this->theme, this->verbose);
+                    this->font, this->theme, this->acl, this->verbose);
         }
     }   // mod_rdp
 
@@ -1528,6 +1528,10 @@ public:
         if ((UP_AND_RUNNING == this->connection_finalization_state) &&
             !this->input_event_disabled) {
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
+
+            if (this->remote_programs_session_manager) {
+                this->remote_programs_session_manager->input_scancode(param1, param2, device_flags);
+            }
         }
     }
 
@@ -1549,6 +1553,10 @@ public:
         if ((UP_AND_RUNNING == this->connection_finalization_state) &&
             !this->input_event_disabled) {
             this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
+
+            if (this->remote_programs_session_manager) {
+                this->remote_programs_session_manager->input_mouse(device_flags, x, y);
+            }
         }
     }
 
