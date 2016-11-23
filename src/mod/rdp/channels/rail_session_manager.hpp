@@ -143,6 +143,7 @@ public:
     }
 
     void input_scancode(long param1, long param2, long device_flags) {
+        (void)param2;
         if ((28 == param1) && !(device_flags & SlowPath::KBDFLAGS_RELEASE)) {
             LOG(LOG_INFO, "RemoteApp session initiated disconnect by user");
             if (this->acl) {
