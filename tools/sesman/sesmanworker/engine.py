@@ -389,6 +389,7 @@ class Engine(object):
             # Transparent proxy
             if not target_context or not target_context.host:
                 target_context = TargetContext(host=real_target_device)
+                target_context.strict_transparent = True
         elif target_device:
             # This allow proxy to check if target_device is a device_name
             # or a hostname.
@@ -671,6 +672,8 @@ class Engine(object):
                                                        ';'.join(target_groups),
                                                        subprotocols,
                                                        host))
+        if target_context and target_context.strict_transparent:
+            self._filter_subnet()
 
     def _filter_rights_alt(self, target_context):
         self.rights = self.proxy_rights
@@ -761,6 +764,14 @@ class Engine(object):
                                                    group_name,
                                                    subprotocols,
                                                    host))
+        if target_context and target_context.strict_transparent:
+            self._filter_subnet()
+
+    def _filter_subnet(self):
+        # in transparent mode, targets rights are already filtered by a unique host
+        filtered_subnet = [ dit for dit in self.displaytargets if '/' not in dit.host ]
+        if filtered_subnet:
+            self.displaytargets = filtered_subnet
 
     def get_proxy_rights(self, protocols, target_device=None, check_timeframes=False,
                          target_context=None):
@@ -1440,6 +1451,7 @@ class TargetContext(object):
         self.service = service
         self.group = group
         self.show = show
+        self.strict_transparent = False
     def showname(self):
         return self.show or self.dnsname or self.host
 
