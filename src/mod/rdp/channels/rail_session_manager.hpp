@@ -78,6 +78,8 @@ private:
 
     auth_api* acl = nullptr;
 
+    bool has_previous_window = false;
+
 public:
     RemoteProgramsSessionManager(FrontAPI& front, mod_api& mod, Translation::language_t lang,
                                  uint16_t front_width, uint16_t front_height,
@@ -381,23 +383,35 @@ private:
     }
 
     void draw_impl(RDP::RAIL::ActivelyMonitoredDesktop const & order) {
+        bool has_not_window =
+            ((RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER & order.header.FieldsPresentFlags()) &&
+             !order.NumWindowIds());
+        bool has_window     = false;
+
         if (this->drawable) {
             if (order.ActiveWindowId() != this->blocked_server_window_id) {
                 order.map_window_id(*this);
                 this->drawable->draw(order);
+
+                has_window =
+                    ((RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER & order.header.FieldsPresentFlags()) &&
+                     order.NumWindowIds());
             }
             else {
                 LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(DeletedNotificationIcons): Order bloacked.");
             }
         }
 
-        if ((RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER & order.header.FieldsPresentFlags()) &&
-            !order.NumWindowIds() &&
-            (DialogBoxType::NONE == this->dialog_box_type)) {
+        if (has_not_window && (DialogBoxType::NONE == this->dialog_box_type) &&
+            this->has_previous_window) {
 
             this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
 
             this->waiting_screen_draw(0);
+        }
+
+        if (has_window) {
+            this->has_previous_window = true;
         }
     }
 
