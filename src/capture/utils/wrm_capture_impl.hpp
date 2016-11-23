@@ -168,13 +168,12 @@ public:
         ini.get<cfg::video::wrm_compression_algorithm>(), delta_time,
         GraphicToFile::SendInput::YES, GraphicToFile::debug_config_to_verbose_flags(ini)
     )
-    , nc(this->graphic_to_file, now, ini)
+    , nc(this->graphic_to_file, now, ini.get<cfg::video::frame_interval>(), ini.get<cfg::video::break_interval>())
     {}
 
     void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
         apis_register.graphic_list->push_back(this->graphic_to_file);
         apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this));
-        apis_register.update_config_capture_list.push_back(this->nc);
         apis_register.external_capture_list.push_back(this->nc);
         apis_register.capture_probe_list.push_back(this->graphic_to_file);
 

@@ -62,9 +62,6 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
 
     OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid);
-    Inifile ini;
-    ini.set<cfg::video::frame_interval>(cfg::video::frame_interval::type{10});
-    ini.set<cfg::video::break_interval>(cfg::video::break_interval::type{20});
 
     const struct ToCacheOption {
         ToCacheOption(){}
@@ -97,9 +94,8 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
         24,
         bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression, 1000
     );
-    NativeCapture wrm_recorder(graphic_to_file, player.record_now, ini);
+    NativeCapture wrm_recorder(graphic_to_file, player.record_now, cfg::video::frame_interval::type{10}, cfg::video::break_interval::type{20});
 
-    wrm_recorder.update_config(ini);
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
     player.add_consumer(&graphic_to_file, &wrm_recorder, nullptr, nullptr, &wrm_recorder);
 

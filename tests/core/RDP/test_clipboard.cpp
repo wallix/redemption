@@ -290,7 +290,7 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
 
         RDPECLIP::FormatDataResponsePDU_MetaFilePic::MetaHeader & metaHeader = fdr.metaHeader;
         BOOST_CHECK_EQUAL(metaHeader.type, RDPECLIP::MEMORYMETAFILE);
-        BOOST_CHECK_EQUAL(metaHeader.headerSize, RDPECLIP::FormatDataResponsePDU_MetaFilePic::MetaHeader::HEADER_SIZE);
+        BOOST_CHECK_EQUAL(metaHeader.headerSize, unsigned(RDPECLIP::FormatDataResponsePDU_MetaFilePic::MetaHeader::HEADER_SIZE));
         BOOST_CHECK_EQUAL(metaHeader.version, RDPECLIP::METAVERSION300);
         BOOST_CHECK_EQUAL(metaHeader.size, (data_lenght/2) + RDPECLIP::METAFILE_WORDS_HEADER_SIZE);
         BOOST_CHECK_EQUAL(metaHeader.numberOfObjects, 0);
