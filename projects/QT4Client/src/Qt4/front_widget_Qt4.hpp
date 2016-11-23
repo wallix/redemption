@@ -1737,7 +1737,7 @@ public Q_SLOTS:
                     // UTF8toUTF16_CrLf for linux install
                     this->_cliboard_data_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size);
 
-                    RDPECLIP::FormatDataResponsePDU_Text::TextEnder  ender;
+                    RDPECLIP::FormatDataResponsePDU_Text::TextEnder ender;
                     ender.emit(this->_chunk.get(), this->_cliboard_data_length);
 
                     this->_cliboard_data_length += RDPECLIP::FormatDataResponsePDU_Text::TextEnder::SIZE;
