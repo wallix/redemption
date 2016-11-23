@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "configs/config.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/caches/pointercache.hpp"
@@ -163,8 +164,10 @@ public:
         drawable.width(), drawable.height(), groupid, authentifier)
     , graphic_to_file(
         now, *this->trans_variant.trans, drawable.width(), drawable.height(), capture_bpp,
-        this->bmp_cache, this->gly_cache, this->ptr_cache,
-        this->dump_png24_api, ini, delta_time, GraphicToFile::SendInput::YES, ini.get<cfg::debug::capture>())
+        this->bmp_cache, this->gly_cache, this->ptr_cache, this->dump_png24_api,
+        ini.get<cfg::video::wrm_compression_algorithm>(), delta_time,
+        GraphicToFile::SendInput::YES, GraphicToFile::debug_config_to_verbose_flags(ini)
+    )
     , nc(this->graphic_to_file, now, ini)
     {}
 

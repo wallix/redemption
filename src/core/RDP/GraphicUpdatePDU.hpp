@@ -431,7 +431,6 @@ public:
                      , int & shareid
                      , int & encryptionLevel
                      , CryptContext & encrypt
-                     , const Inifile & ini
                      , const uint8_t bpp
                      , BmpCache & bmp_cache
                      , GlyphCache & gly_cache
@@ -443,12 +442,12 @@ public:
                      , bool fastpath_support
                      , rdp_mppc_enc * mppc_enc
                      , bool compression
-                     , uint32_t verbose
+                     , VerboseFlags verbose
                      )
         : RDPSerializer( this->buffer_stream_orders.get_data_stream()
                        , this->buffer_stream_bitmaps.get_data_stream()
                        , bpp, bmp_cache, gly_cache, pointer_cache
-                       , bitmap_cache_version, use_bitmap_comp, op2, max_bitmap_size, ini, verbose)
+                       , bitmap_cache_version, use_bitmap_comp, op2, max_bitmap_size, verbose)
         , userid(userid)
         , shareid(shareid)
         , encryptionLevel(encryptionLevel)
@@ -465,7 +464,7 @@ public:
     ~GraphicsUpdatePDU() override {}
 
     void init_orders() {
-        if (this->ini.get<cfg::debug::primary_orders>() > 3) {
+        if (this->verbose & VerboseFlags::internal_buffer) {
             LOG( LOG_INFO
                , "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u"
                , this->userid
@@ -474,7 +473,7 @@ public:
     }
 
     void init_bitmaps() {
-        if (this->ini.get<cfg::debug::primary_orders>() > 3) {
+        if (this->verbose & VerboseFlags::internal_buffer) {
             LOG( LOG_INFO
                , "GraphicsUpdatePDU::init::Initializing bitmaps batch mcs_userid=%u shareid=%u"
                , this->userid
@@ -495,7 +494,7 @@ public:
 protected:
     void flush_orders() override {
         if (this->order_count > 0){
-            if (this->ini.get<cfg::debug::primary_orders>() > 3) {
+            if (this->verbose & VerboseFlags::internal_buffer) {
                 LOG( LOG_INFO, "GraphicsUpdatePDU::flush_orders: order_count=%zu"
                    , this->order_count);
             }
@@ -513,7 +512,7 @@ protected:
 
     void flush_bitmaps() override {
         if (this->bitmap_count > 0) {
-            if (this->ini.get<cfg::debug::primary_orders>() > 3) {
+            if (this->verbose & VerboseFlags::internal_buffer) {
                 LOG( LOG_INFO
                    , "GraphicsUpdatePDU::flush_bitmaps: bitmap_count=%zu offset=%" PRIu32
                    , this->bitmap_count, this->offset_bitmap_count);
