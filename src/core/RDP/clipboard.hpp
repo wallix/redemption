@@ -344,13 +344,13 @@ private:
 struct ClipboardCapabilitiesPDU
 {
     CliprdrHeader header;
-    
+
     uint16_t cCapabilitiesSets = 0;
 
 public:
     ClipboardCapabilitiesPDU() = default;
 
-    ClipboardCapabilitiesPDU(uint16_t cCapabilitiesSets, uint32_t length_capabilities) 
+    ClipboardCapabilitiesPDU(uint16_t cCapabilitiesSets, uint32_t length_capabilities)
         : header(CB_CLIP_CAPS,
                       0,
                       4 +   // cCapabilitiesSets(2) + pad1(2)
@@ -647,12 +647,12 @@ struct ServerMonitorReadyPDU
     ServerMonitorReadyPDU() : header(CB_MONITOR_READY, 0, 0) {
     }   // ServerMonitorReadyPDU(bool response_ok)
 
-    void emit(OutStream & stream) 
+    void emit(OutStream & stream)
     {
         this->header.emit(stream);
     }
 
-    void recv(InStream & stream) 
+    void recv(InStream & stream)
     {
         this->header.recv(stream);
     }
@@ -987,7 +987,7 @@ struct FormatListResponsePDU
         this->header.emit(stream);
     }
 
-    void recv(InStream & stream) 
+    void recv(InStream & stream)
     {
         this->header.recv(stream);
     }
@@ -1930,21 +1930,21 @@ struct FormatDataResponsePDU
     FormatDataResponsePDU()
         : header( CB_FORMAT_DATA_RESPONSE
                 , CB_RESPONSE_FAIL
-                , 0) 
+                , 0)
     {
     }
 
     explicit FormatDataResponsePDU(std::size_t data_len)
         : header( CB_FORMAT_DATA_RESPONSE
                 , CB_RESPONSE_OK
-                , data_len) 
+                , data_len)
     {
     }
 
     explicit FormatDataResponsePDU(bool response_ok)
         : header(CB_FORMAT_DATA_RESPONSE
                 , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
-                , 0) 
+                , 0)
     {
     }
 
@@ -1984,299 +1984,296 @@ struct FormatDataResponsePDU
 
 struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
 
-    struct MetaFilePicEnder {
-        enum : uint32_t {
-            SIZE = 6
-          , FLAG = 0x03
+    // 2.2.5.2.1 Packed Metafile Payload
+
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // |                          mappingMode                          |
+    // +---------------------------------------------------------------+
+    // |                             xExt                              |
+    // +---------------------------------------------------------------+
+    // |                             yExt                              |
+    // +---------------------------------------------------------------+
+    // |                    metaFileData (variable)                    |
+    // +---------------------------------------------------------------+
+    // |                              ...                              |
+    // +---------------------------------------------------------------+
+
+    // mappingMode (4 bytes): An unsigned, 32-bit integer specifying the mapping mode in which the picture is drawn.
+
+    //  +----------------------------+--------------------------------------------+
+    //  | Value                      | Meaning                                    |
+    //  +----------------------------+--------------------------------------------+
+    //  | MM_TEXT                    | Each logical unit is mapped to one device  |
+    //  |                            | pixel. Positive x is to the right; positive|
+    //  | 0x00000001                 | y is down.                                 |
+    //  |                            |                                            |
+    //  +----------------------------+--------------------------------------------+
+    //  | MM_LOMETRIC                | Each logical unit is mapped to 0.1         |
+    //  |                            | millimeter. Positive x is to the right;    |
+    //  | 0x00000002                 | positive y is up.                          |
+    //  |                            |                                            |
+    //  +----------------------------+--------------------------------------------+
+    //  | MM_HIMETRIC                | Each logical unit is mapped to 0.01        |
+    //  |                            | millimeter. Positive x is to the right;    |
+    //  | 0x00000003                 | positive y is up.                          |
+    //  |                            |                                            |
+    //  +----------------------------+--------------------------------------------+
+    //  | MM_LOENGLISH               | Each logical unit is mapped to 0.01        |
+    //  |                            | inch. Positive x is to the right;          |
+    //  | 0x00000004                 | positive y is up.                          |
+    //  |                            |                                            |
+    //  +----------------------------+--------------------------------------------+
+    //  | MM_HIENGLISH               | Each logical unit is mapped to 0.001       |
+    //  |                            | inch. Positive x is to the right;          |
+    //  | 0x00000005                 | positive y is up.                          |
+    //  |                            |                                            |
+    //  +----------------------------+--------------------------------------------+
+    //  | MM_TWIPS                   | Each logical unit is mapped to 1/20 of a   |
+    //  |                            | printer's point (1/1440 of an inch), also  |
+    //  | 0x00000006                 | called a twip. Positive x is to the right; |
+    //  |                            | positive y is up.                          |                                                   //  |                            |                                            |
+    //  +----------------------------+--------------------------------------------+
+    //  | MM_ISOTROPIC               | Logical units are mapped to arbitrary units|
+    //  |                            | with equally scaled axes; one unit along   |
+    //  | 0x00000007                 | the x-axis is equal to one unit along the  |
+    //  |                            | y-axis.                                    |                                                   //  |                            |                                            |
+    //  +----------------------------+--------------------------------------------+
+    //  | MM_ANISOTROPIC             | Logical units are mapped to arbitrary units|
+    //  |                            | with arbitrarily scaled axes.              |
+    //  | 0x00000008                 |                                            |
+    //  |                            |                                            |
+    //  +----------------------------+--------------------------------------------+
+
+    // For MM_ISOTROPIC and MM_ANISOTROPIC modes, which can be scaled, the xExt and yExt fields contain an optional suggested size in MM_HIMETRIC units. For MM_ANISOTROPIC pictures, xExt and yExt SHOULD be zero when no suggested size is given. For MM_ISOTROPIC pictures, an aspect ratio MUST be supplied even when no suggested size is given. If a suggested size is given, the aspect ratio is implied by the size. To give an aspect ratio without implying a suggested size, the xExt and yExt fields are set to negative values whose ratio is the appropriate aspect ratio. The magnitude of the negative xExt and yExt values is ignored; only the ratio is used.
+
+    // xExt (4 bytes): An unsigned, 32-bit integer that specifies the width of the rectangle within which the picture is drawn, except in the MM_ISOTROPIC and MM_ANISOTROPIC modes. The coordinates are in units that correspond to the mapping mode.
+
+    // yExt (4 bytes): An unsigned, 32-bit integer that specifies the height of the rectangle within which the picture is drawn, except in the MM_ISOTROPIC and MM_ANISOTROPIC modes. The coordinates are in units that correspond to the mapping mode.
+
+    // metaFileData (variable): The variable sized contents of the metafile as specified in [MS-WMF] section 2.
+
+    uint32_t mappingMode;
+    uint32_t xExt;
+    uint32_t yExt;
+
+
+    struct MetaHeader {
+    // 3.2.1 META_HEADER Example
+
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // |             Type              |          HeaderSize           |
+    // +-------------------------------+-------------------------------+
+    // |           Version             |             Size              |
+    // +-------------------------------+-------------------------------+
+    // |             ...               |        NumberOfObjects        |
+    // +-------------------------------+-------------------------------+
+    // |                     metaFileData (variable)                   |
+    // +-------------------------------+-------------------------------+
+    // |       NumberOfMembers         |                               |
+    // +-------------------------------+-------------------------------+
+
+    // Type: 0x0001 specifies the type of metafile from the MetafileType Enumeration
+    // (section 2.1.1.18) to be a metafile stored in memory.
+
+    // HeaderSize: 0x0009 specifies the number of WORDs in this record, which is equivalent
+    // to 18 (0x0012) bytes.
+
+    // Version: 0x0300 specifies the metafile version from the MetafileVersion Enumeration
+    // (section 2.1.1.19) to be a WMF metafile that supports DIBs.
+
+    // Size: 0x00000036 specifies the number of WORDs in the entire metafile, which is
+    // equivalent to 108 (0x0000006C) bytes.
+
+    // NumberOfObjects: 0x0002 specifies the number of graphics objects that are defined in the metafile.
+
+    // MaxRecord: 0x0000000C specifies the size in WORDs of the largest record in the
+    // metafile, which is equivalent to 24 (0x00000018) bytes.
+
+    // NumberOfMembers: 0x0000 is not used.
+
+    // Note Based on the value of the NumberOfObjects field, a WMF Object Table (section 3.1.4.1)
+    // can be created that is large enough for 2 objects.
+
+        enum : uint16_t {
+            HEADER_SIZE = 9
         };
 
-        void emit(uint8_t * chunk, const size_t data_len) {
-            chunk[data_len + 1] = FLAG;
-            chunk[data_len + 2] = 0x00;
-            chunk[data_len + 3] = 0x00;
-            chunk[data_len + 4] = 0x00;
-            chunk[data_len + 5] = 0x00;
-            chunk[data_len + 6] = 0x00;
+        uint16_t type;
+        uint16_t headerSize;
+        uint16_t version;
+        uint32_t size;
+        uint16_t numberOfObjects;
+        uint32_t maxRecord;
+        uint16_t numberOfMembers;
+
+        MetaHeader(const std::size_t data_length)
+          : type(MEMORYMETAFILE)
+          , headerSize(HEADER_SIZE)
+          , version(METAVERSION300)
+          , size((data_length/2) + METAFILE_WORDS_HEADER_SIZE)
+          , numberOfObjects(0)
+          , maxRecord((data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2)
+          , numberOfMembers(0)                              // Not used
+        {}
+
+        void emit(OutStream & stream) {
+            stream.out_uint16_le(this->type);
+            stream.out_uint16_le(this->headerSize);
+            stream.out_uint16_le(this->version);
+            stream.out_uint32_le(this->size);
+            stream.out_uint16_le(this->numberOfObjects);
+            stream.out_uint32_le(this->maxRecord);
+            stream.out_uint16_le(this->numberOfMembers);
+        }
+
+        void recv(InStream & stream) {
+            this->type = stream.in_uint16_le();
+            REDASSERT(this->type == MEMORYMETAFILE);
+            this->headerSize = stream.in_uint16_le();
+            REDASSERT(this->headerSize == HEADER_SIZE);
+            this->version = stream.in_uint16_le();
+            this->size = stream.in_uint32_le();
+            REDASSERT(this->size >=  METAFILE_WORDS_HEADER_SIZE);
+            this->numberOfObjects = stream.in_uint16_le();
+            this->maxRecord = stream.in_uint32_le();
+            REDASSERT(this->maxRecord >=  META_DIBSTRETCHBLT_HEADER_SIZE);
+            this->numberOfMembers = stream.in_uint16_le();
+            REDASSERT(this->numberOfMembers == 0);
+        }
+
+    } metaHeader;
+
+
+    struct Record {
+    // 2.3 WMF Records
+
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // |                           RecordSize                          |
+    // +-------------------------------+-------------------------------+
+    // |        RecordFunction         |           rdParam             |
+    // +-------------------------------+-------------------------------+
+    // |                              ...                              |
+    // +---------------------------------------------------------------+
+
+    // RecordSize (4 bytes): A 32-bit unsigned integer that defines the number of 16-bit WORDs
+    // in the record.
+
+    // RecordFunction (2 bytes): A 16-bit unsigned integer that defines the type of this record.
+    // The low-order byte MUST match the low-order byte of one of the values in the RecordType Enumeration.
+
+    // rdParam (variable): An optional place holder that is provided for record-specific fields.
+
+        uint32_t recordSize;
+        uint16_t recordFunction;
+
+        Record(const uint32_t recordSize, const uint16_t recordFunction)
+          : recordSize(recordSize)
+          , recordFunction(recordFunction)
+        {}
+
+        void emit(OutStream & stream) {
+            stream.out_uint32_le(this->recordSize);
+            stream.out_uint16_le(this->recordFunction);
         }
     };
 
-    std::size_t data_length;
-    uint16_t width;
-    uint16_t height;
-    uint16_t depth;
-    // TODO: rename to mappingMode
-    uint32_t mapping_mod;
-    // TODO: rename to xExt
-    uint32_t mapping_mod_width;
-    // TODO: rename to yExt
-    uint32_t mapping_mod_height;
-    
-    uint16_t meta_header_type;
-    uint16_t meta_header_size;
-    uint16_t meta_header_version;
-    uint32_t meta_file_words_len;
-    uint32_t record_words_len;
-    uint32_t operation;
+    struct MetaSetMepMod : Record {
+        enum : uint32_t { SIZE = 4 };
 
+        uint16_t mappingMode;
 
-    explicit FormatDataResponsePDU_MetaFilePic()
-      : FormatDataResponsePDU()
-      , data_length(0)
-      , width(0)
-      , height(0)
-      , depth(0)
-      , mapping_mod(0)
-      , mapping_mod_width(0)
-      , mapping_mod_height(0)
-      , meta_header_type(0)
-      , meta_header_size(0)
-      , meta_header_version(0)
-      , meta_file_words_len(0)
-      , record_words_len(0)
-      , operation(0)
-    {}
+        MetaSetMepMod()
+          : Record(SIZE, META_SETMAPMODE)
+          , mappingMode(0)
+        {}
 
-    explicit FormatDataResponsePDU_MetaFilePic( const std::size_t data_length
-                                              , const uint16_t width
-                                              , const uint16_t height
-                                              , const uint16_t depth
-                                              , const double ARBITRARY_SCALE)
-      : FormatDataResponsePDU(data_length + METAFILE_HEADERS_SIZE)
-      , data_length(data_length)
-      , width(width)
-      , height(height)
-      , depth(depth)
-      , mapping_mod(MM_ANISOTROPIC)
-      , mapping_mod_width(int(double(width) * ARBITRARY_SCALE))
-      , mapping_mod_height(int(double(height) * ARBITRARY_SCALE))
-      , meta_header_type(MEMORYMETAFILE)
-      , meta_header_size(META_HEADER_SIZE)
-      , meta_header_version(METAVERSION300)
-      , meta_file_words_len((data_length/2) + METAFILE_WORDS_HEADER_SIZE)
-      , record_words_len((data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2)
-      , operation(SRCCOPY)
-    {}
+        MetaSetMepMod(const uint16_t mappingMode)
+          : Record(SIZE, META_SETMAPMODE)
+          , mappingMode(mappingMode)
+        {}
 
-    void emit(OutStream & stream) {
-        this->header.emit(stream);
+        void emit(OutStream & stream) {
+            Record::emit(stream);
+            stream.out_uint16_le(this->mappingMode);
+        }
 
-        // 2.2.5.2.1 Packed Metafile Payload
-        // 12 bytes
+        void recv(InStream & stream) {
+            this->mappingMode = stream.in_uint16_le();
+        }
+    } metaSetMepMod;
 
-        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-        // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        // |                          mappingMode                          |
-        // +---------------------------------------------------------------+
-        // |                             xExt                              |
-        // +---------------------------------------------------------------+
-        // |                             yExt                              |
-        // +---------------------------------------------------------------+
-        // |                    metaFileData (variable)                    |
-        // +---------------------------------------------------------------+
-        // |                              ...                              |
-        // +---------------------------------------------------------------+
+    struct MetaSetWindowExt : Record {
+        enum : uint32_t { SIZE = 5 };
 
-        // mappingMode (4 bytes): An unsigned, 32-bit integer specifying the mapping mode in which the picture is drawn.
+        uint32_t height;
+        uint32_t width;
 
-        //  +----------------------------+--------------------------------------------+
-        //  | Value                      | Meaning                                    |
-        //  +----------------------------+--------------------------------------------+
-        //  | MM_TEXT                    | Each logical unit is mapped to one device  |
-        //  |                            | pixel. Positive x is to the right; positive|
-        //  | 0x00000001                 | y is down.                                 |
-        //  |                            |                                            |
-        //  +----------------------------+--------------------------------------------+
-        //  | MM_LOMETRIC                | Each logical unit is mapped to 0.1         |
-        //  |                            | millimeter. Positive x is to the right;    |
-        //  | 0x00000002                 | positive y is up.                          |
-        //  |                            |                                            |
-        //  +----------------------------+--------------------------------------------+
-        //  | MM_HIMETRIC                | Each logical unit is mapped to 0.01        |
-        //  |                            | millimeter. Positive x is to the right;    |
-        //  | 0x00000003                 | positive y is up.                          |
-        //  |                            |                                            |
-        //  +----------------------------+--------------------------------------------+
-        //  | MM_LOENGLISH               | Each logical unit is mapped to 0.01        |
-        //  |                            | inch. Positive x is to the right;          |
-        //  | 0x00000004                 | positive y is up.                          |
-        //  |                            |                                            |
-        //  +----------------------------+--------------------------------------------+
-        //  | MM_HIENGLISH               | Each logical unit is mapped to 0.001       |
-        //  |                            | inch. Positive x is to the right;          |
-        //  | 0x00000005                 | positive y is up.                          |
-        //  |                            |                                            |
-        //  +----------------------------+--------------------------------------------+
-        //  | MM_TWIPS                   | Each logical unit is mapped to 1/20 of a   |
-        //  |                            | printer's point (1/1440 of an inch), also  |
-        //  | 0x00000006                 | called a twip. Positive x is to the right; |
-        //  |                            | positive y is up.                          |                                                   //  |                            |                                            |
-        //  +----------------------------+--------------------------------------------+
-        //  | MM_ISOTROPIC               | Logical units are mapped to arbitrary units|
-        //  |                            | with equally scaled axes; one unit along   |
-        //  | 0x00000007                 | the x-axis is equal to one unit along the  |
-        //  |                            | y-axis.                                    |                                                   //  |                            |                                            |
-        //  +----------------------------+--------------------------------------------+
-        //  | MM_ANISOTROPIC             | Logical units are mapped to arbitrary units|
-        //  |                            | with arbitrarily scaled axes.              |
-        //  | 0x00000008                 |                                            |
-        //  |                            |                                            |
-        //  +----------------------------+--------------------------------------------+
+        MetaSetWindowExt()
+          : Record(SIZE, META_SETWINDOWEXT)
+          , height(0)
+          , width(0)
+        {}
 
-        // For MM_ISOTROPIC and MM_ANISOTROPIC modes, which can be scaled, the xExt and yExt fields contain an optional suggested size in MM_HIMETRIC units. For MM_ANISOTROPIC pictures, xExt and yExt SHOULD be zero when no suggested size is given. For MM_ISOTROPIC pictures, an aspect ratio MUST be supplied even when no suggested size is given. If a suggested size is given, the aspect ratio is implied by the size. To give an aspect ratio without implying a suggested size, the xExt and yExt fields are set to negative values whose ratio is the appropriate aspect ratio. The magnitude of the negative xExt and yExt values is ignored; only the ratio is used.
+        MetaSetWindowExt(const uint32_t height, const uint32_t width)
+          : Record(SIZE, META_SETWINDOWEXT)
+          , height( - height)
+          , width(width)
+        {}
 
-        // xExt (4 bytes): An unsigned, 32-bit integer that specifies the width of the rectangle within which the picture is drawn, except in the MM_ISOTROPIC and MM_ANISOTROPIC modes. The coordinates are in units that correspond to the mapping mode.
+        void emit(OutStream & stream) {
+            Record::emit(stream);
+            stream.out_uint16_le(this->height);
+            stream.out_uint16_le(this->width);
+        }
 
-        // yExt (4 bytes): An unsigned, 32-bit integer that specifies the height of the rectangle within which the picture is drawn, except in the MM_ISOTROPIC and MM_ANISOTROPIC modes. The coordinates are in units that correspond to the mapping mode.
+        void recv(InStream & stream) {
+            this->height = stream.in_uint16_le();
+            this->width = stream.in_uint16_le();
+        }
 
-        // metaFileData (variable): The variable sized contents of the metafile as specified in [MS-WMF] section 2.
+    } metaSetWindowExt;
 
-        stream.out_uint32_le(this->mapping_mod);
-        stream.out_uint32_le(this->mapping_mod_width);
-        stream.out_uint32_le(this->mapping_mod_height);
+    struct MetaSetWindowOrg : Record {
+        enum : uint32_t { SIZE = 5 };
 
+        uint16_t yOrg;
+        uint16_t xOrg;
 
-        // 3.2.1 META_HEADER Example
+        MetaSetWindowOrg()
+          : Record(SIZE, META_SETWINDOWORG)
+          , yOrg(0)
+          , xOrg(0)
+        {}
 
-        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-        // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        // |             Type              |          HeaderSize           |
-        // +-------------------------------+-------------------------------+
-        // |           Version             |             Size              |
-        // +-------------------------------+-------------------------------+
-        // |             ...               |        NumberOfObjects        |
-        // +-------------------------------+-------------------------------+
-        // |                     metaFileData (variable)                   |
-        // +-------------------------------+-------------------------------+
-        // |       NumberOfMembers         |                               |
-        // +-------------------------------+-------------------------------+
+        MetaSetWindowOrg(const uint16_t yOrg, const uint16_t xOrg)
+          : Record(SIZE, META_SETWINDOWORG)
+          , yOrg(yOrg)
+          , xOrg(xOrg)
+        {}
 
-        // Type: 0x0001 specifies the type of metafile from the MetafileType Enumeration
-        // (section 2.1.1.18) to be a metafile stored in memory.
+        void emit(OutStream & stream) {
+            Record::emit(stream);
+            stream.out_uint16_le(yOrg);
+            stream.out_uint16_le(xOrg);
+        }
 
-        // HeaderSize: 0x0009 specifies the number of WORDs in this record, which is equivalent
-        // to 18 (0x0012) bytes.
+        void recv(InStream & stream) {
+            this->yOrg = stream.in_uint16_le();
+            this->xOrg = stream.in_uint16_le();
+        }
+    } metaSetWindowOrg;
 
-        // Version: 0x0300 specifies the metafile version from the MetafileVersion Enumeration
-        // (section 2.1.1.19) to be a WMF metafile that supports DIBs.
+    struct DibStretchBLT {
 
-        // Size: 0x00000036 specifies the number of WORDs in the entire metafile, which is
-        // equivalent to 108 (0x0000006C) bytes.
-
-        // NumberOfObjects: 0x0002 specifies the number of graphics objects that are defined in the metafile.
-
-        // MaxRecord: 0x0000000C specifies the size in WORDs of the largest record in the
-        // metafile, which is equivalent to 24 (0x00000018) bytes.
-
-        // NumberOfMembers: 0x0000 is not used.
-
-        // Note Based on the value of the NumberOfObjects field, a WMF Object Table (section 3.1.4.1)
-        // can be created that is large enough for 2 objects.
-
-        // 18 bytes
-        stream.out_uint16_le(this->meta_header_type);
-        stream.out_uint16_le(this->meta_header_size);
-        stream.out_uint16_le(this->meta_header_version);
-        stream.out_uint32_le(this->meta_file_words_len);
-        stream.out_uint16_le(0);
-        stream.out_uint32_le(this->record_words_len);
-        stream.out_uint16_le(0);
-
-
-        // 2.3 WMF Records
-
-        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-        // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        // |                           RecordSize                          |
-        // +-------------------------------+-------------------------------+
-        // |        RecordFunction         |           rdParam             |
-        // +-------------------------------+-------------------------------+
-        // |                              ...                              |
-        // +---------------------------------------------------------------+
-
-        // RecordSize (4 bytes): A 32-bit unsigned integer that defines the number of 16-bit WORDs
-        // in the record.
-
-        // RecordFunction (2 bytes): A 16-bit unsigned integer that defines the type of this record.
-        // The low-order byte MUST match the low-order byte of one of the values in the RecordType Enumeration.
-
-        // rdParam (variable): An optional place holder that is provided for record-specific fields.
-
-        //      META_SETMAPMODE (8 bytes)
-        stream.out_uint32_le(META_SETMAPMODE_WORDS_SIZE);
-        stream.out_uint16_le(META_SETMAPMODE);
-        stream.out_uint16_le(this->mapping_mod);
-
-
-        //      META_SETWINDOWEXT (10 bytes)
-        stream.out_uint32_le(META_SETWINDOWEXT_WORDS_SIZE);
-        stream.out_uint16_le(META_SETWINDOWEXT);
-        stream.out_uint16_le( - this->height);
-        stream.out_uint16_le(this->width);
-
-
-        //      META_SETWINDOWORG (10 bytes)
-        stream.out_uint32_le(META_SETWINDOWORG_WORDS_SIZE);
-        stream.out_uint16_le(META_SETWINDOWORG);
-        stream.out_uint16_le(0);
-        stream.out_uint16_le(0);
-
-
-        // 2.3.1.3.1 META_DIBSTRETCHBLT With Bitmap
-
-        // This section specifies the structure of the META_DIBSTRETCHBLT record when it contains an
-        // embedded device-independent bitmap (DIB).
-
-        // Fields not specified in this section are specified in the preceding META_DIBSTRETCHBLT section.
-
-        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-        // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        // |                           RecordSize                          |
-        // +-------------------------------+-------------------------------+
-        // |        RecordFunction         |           rdParam             |
-        // +-------------------------------+-------------------------------+
-        // |             ...               |          SrcHeight            |
-        // +-------------------------------+-------------------------------+
-        // |           SrcWidth            |             YSrc              |
-        // +-------------------------------+-------------------------------+
-        // |             XSrc              |         DestHeight            |
-        // +-------------------------------+-------------------------------+
-        // |          DestWidth            |             YDest             |
-        // +-------------------------------+-------------------------------+
-        // |            XDest              |      Target (variable)        |
-        // +-------------------------------+-------------------------------+
-        // |                              ...                              |
-        // +---------------------------------------------------------------+
-
-        // RecordFunction (2 bytes): A 16-bit unsigned integer that defines this WMF record type.
-        // The low-order byte MUST match the low-order byte of the RecordType enumeration (section 2.1.1.1)
-        // value META_DIBSTRETCHBLT. The high-order byte MUST contain a value equal to the number of 16-bit
-        // WORDs in the record minus the number of WORDs in the RecordSize and Target fields. That is:
-
-        //      RecordSize - (2 + (sizeof(Target)/2))
-
-        // Target (variable): A variable-sized DeviceIndependentBitmap Object (section 2.2.2.9) that defines
-        // image content. This object MUST be specified, even if the raster operation does not require a source.
-
-        // 26 bytes
-        stream.out_uint32_le(this->record_words_len);
-        stream.out_uint16_le(META_DIBSTRETCHBLT);
-        stream.out_uint32_le(this->operation);
-        stream.out_uint16_le(this->height);
-        stream.out_uint16_le(this->width);
-        stream.out_uint16_le(0);
-        stream.out_uint16_le(0);
-        stream.out_uint16_le(- this->height);
-        stream.out_uint16_le(this->width);
-        stream.out_uint16_le(0);
-        stream.out_uint16_le(0);
 
         // [MS-WMF]
         // DeviceIndependentBitmap  2.2.2.9 DeviceIndependentBitmap Object
@@ -2432,37 +2429,298 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
         //           When the array of pixels in the DIB immediately follows the BitmapInfoHeader, the DIB is a packed
         //           bitmap. In a packed bitmap, the ColorUsed value MUST be either 0x00000000 or the actual size
         //           of the color table.
+        struct BitmapInfoHeader {
+            enum : uint32_t {
+                SIZE = 40
+              , PLANES_NUMBER = 0x0001
+            };
 
-        // 40 bytes
-        stream.out_uint32_le(BITMAPINFO_HEADER_SIZE);
-        stream.out_uint32_le(this->width);
-        stream.out_uint32_le( - this->height);
-        stream.out_uint16_le(PLANES_NUMBER);
-        stream.out_uint16_le(this->depth);
-        stream.out_uint32_le(0);  // BI_RGB
-        stream.out_uint32_le(this->data_length);
-        stream.out_uint32_le(0);
-        stream.out_uint32_le(0);
-        stream.out_uint32_le(0);
-        stream.out_uint32_le(0);
+            uint32_t headerSize;
+            uint32_t height;
+            uint32_t width;
+            uint16_t planes;
+            uint16_t bitCount;
+            uint32_t compression;
+            uint32_t imageSize;
+            uint32_t xPelsPerMeter;
+            uint32_t yPelsPerMeter;
+            uint32_t colorUsed;
+            uint32_t colorImportant;
+
+            BitmapInfoHeader()
+              : headerSize(SIZE)
+              , height(0)
+              , width(0)
+              , planes(0)
+              , bitCount(0)
+              , compression(0)
+              , imageSize(0)
+              , xPelsPerMeter(0)
+              , yPelsPerMeter(0)
+              , colorUsed(0)
+              , colorImportant(0)
+            {}
+
+            BitmapInfoHeader(const std::size_t data_length, const uint16_t height, const uint16_t width, const uint16_t bitCount)
+              : headerSize(SIZE)
+              , height( - height)
+              , width(width)
+              , planes(PLANES_NUMBER)
+              , bitCount(bitCount)
+              , compression(0)
+              , imageSize(data_length)
+              , xPelsPerMeter(0)
+              , yPelsPerMeter(0)
+              , colorUsed(0)
+              , colorImportant(0)
+            {}
+
+            void emit(OutStream & stream) {
+                stream.out_uint32_le(this->headerSize);
+                stream.out_uint32_le(this->width);
+                stream.out_uint32_le(this->height);
+                stream.out_uint16_le(this->planes);
+                stream.out_uint16_le(this->bitCount);
+                stream.out_uint32_le(this->compression);
+                stream.out_uint32_le(this->imageSize);
+                stream.out_uint32_le(this->xPelsPerMeter);
+                stream.out_uint32_le(this->yPelsPerMeter);
+                stream.out_uint32_le(this->colorUsed);
+                stream.out_uint32_le(this->colorImportant);
+            }
+
+            void recv(InStream & stream) {
+                this->headerSize = stream.in_uint32_le();
+                REDASSERT(this->headerSize == SIZE);
+                this->width = stream.in_uint32_le();
+                this->height = stream.in_uint32_le();
+                this->planes = stream.in_uint16_le();
+                REDASSERT(this->planes = PLANES_NUMBER);
+                this->bitCount = stream.in_uint16_le();
+                this->compression = stream.in_uint32_le();
+                this->imageSize = stream.in_uint32_le();
+                this->xPelsPerMeter = stream.in_uint32_le();
+                this->yPelsPerMeter = stream.in_uint32_le();
+                this->colorUsed = stream.in_uint32_le();
+                this->colorImportant = stream.in_uint32_le();
+            }
+
+        } bitmapInfoHeader;
+
+
+
+        // 2.3.1.3.1 META_DIBSTRETCHBLT With Bitmap
+
+        // This section specifies the structure of the META_DIBSTRETCHBLT record when it contains an
+        // embedded device-independent bitmap (DIB).
+
+        // Fields not specified in this section are specified in the preceding META_DIBSTRETCHBLT section.
+
+        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+        // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        // |                           RecordSize                          |
+        // +-------------------------------+-------------------------------+
+        // |        RecordFunction         |           rdParam             |
+        // +-------------------------------+-------------------------------+
+        // |             ...               |          SrcHeight            |
+        // +-------------------------------+-------------------------------+
+        // |           SrcWidth            |             YSrc              |
+        // +-------------------------------+-------------------------------+
+        // |             XSrc              |         DestHeight            |
+        // +-------------------------------+-------------------------------+
+        // |          DestWidth            |             YDest             |
+        // +-------------------------------+-------------------------------+
+        // |            XDest              |      Target (variable)        |
+        // +-------------------------------+-------------------------------+
+        // |                              ...                              |
+        // +---------------------------------------------------------------+
+
+        // RecordFunction (2 bytes): A 16-bit unsigned integer that defines this WMF record type.
+        // The low-order byte MUST match the low-order byte of the RecordType enumeration (section 2.1.1.1)
+        // value META_DIBSTRETCHBLT. The high-order byte MUST contain a value equal to the number of 16-bit
+        // WORDs in the record minus the number of WORDs in the RecordSize and Target fields. That is:
+
+        //      RecordSize - (2 + (sizeof(Target)/2))
+
+        // Target (variable): A variable-sized DeviceIndependentBitmap Object (section 2.2.2.9) that defines
+        // image content. This object MUST be specified, even if the raster operation does not require a source.
+
+        uint32_t recordSize;
+        uint16_t recordFunction;
+        uint32_t rasterOperation;
+        uint16_t srcHeight;
+        uint16_t srcWidth;
+        uint16_t ySrc;
+        uint16_t xSrc;
+        uint16_t destHeight;
+        uint16_t destWidth;
+        uint16_t yDest;
+        uint16_t xDest;
+
+        DibStretchBLT()
+        : bitmapInfoHeader(0, 0, 0, 0)
+        , recordSize(0)
+        , recordFunction(META_DIBSTRETCHBLT)
+        , rasterOperation(0)
+        , srcHeight(0)
+        , srcWidth(0)
+        , ySrc(0)
+        , xSrc(0)
+        , destHeight(0)
+        , destWidth(0)
+        , yDest(0)
+        , xDest(0)
+        {}
+
+        DibStretchBLT(const std::size_t data_length, const uint16_t height, const uint16_t width, const uint16_t depth)
+        : bitmapInfoHeader(data_length, height, width, depth)
+        , recordSize((data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2)
+        , recordFunction(META_DIBSTRETCHBLT)
+        , rasterOperation(SRCCOPY)
+        , srcHeight(height)
+        , srcWidth(width)
+        , ySrc(0)
+        , xSrc(0)
+        , destHeight( - height)
+        , destWidth(width)
+        , yDest(0)
+        , xDest(0)
+        {
+            REDASSERT(this->recordSize >= META_DIBSTRETCHBLT_HEADER_SIZE/2);
+            REDASSERT( (this->srcHeight * this->srcWidth * this->bitmapInfoHeader.bitCount / 8) == int(this->bitmapInfoHeader.imageSize));
+            REDASSERT(uint16_t(this->bitmapInfoHeader.height) == this->destHeight);
+            REDASSERT(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
+        }
+
+        void emit(OutStream & stream) {
+            stream.out_uint32_le(this->recordSize);
+            stream.out_uint16_le(this->recordFunction);
+            stream.out_uint32_le(this->rasterOperation);
+            stream.out_uint16_le(this->srcHeight);
+            stream.out_uint16_le(this->srcWidth);
+            stream.out_uint16_le(this->ySrc);
+            stream.out_uint16_le(this->xSrc);
+            stream.out_uint16_le(this->destHeight);
+            stream.out_uint16_le(this->destWidth);
+            stream.out_uint16_le(this->yDest);
+            stream.out_uint16_le(this->xDest);
+
+            this->bitmapInfoHeader.emit(stream);
+        }
+
+        void recv(InStream & stream) {
+            REDASSERT(this->recordSize >= META_DIBSTRETCHBLT_HEADER_SIZE/2);
+            this->rasterOperation = stream.in_uint32_le();
+            this->srcHeight = stream.in_uint16_le();
+            this->srcWidth = stream.in_uint16_le();
+            this->ySrc = stream.in_uint16_le();
+            this->xSrc = stream.in_uint16_le();
+            this->destHeight = stream.in_uint16_le();
+            this->destWidth =  stream.in_uint16_le();
+            this->yDest =  stream.in_uint16_le();
+            this->xDest = stream.in_uint16_le();
+
+            this->bitmapInfoHeader.recv(stream);
+            REDASSERT( (this->srcHeight * this->srcWidth * this->bitmapInfoHeader.bitCount / 8) == int(this->bitmapInfoHeader.imageSize));
+            REDASSERT(uint16_t(this->bitmapInfoHeader.height) == this->destHeight);
+            REDASSERT(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
+        }
+
+    } dibStretchBLT;
+
+
+    struct MetaFilePicEnder {
+        enum : uint32_t {
+            SIZE = 6
+          , FLAG = 0x03
+        };
+
+        void emit(uint8_t * chunk, const size_t data_len) {
+            chunk[data_len + 1] = FLAG;
+            chunk[data_len + 2] = 0x00;
+            chunk[data_len + 3] = 0x00;
+            chunk[data_len + 4] = 0x00;
+            chunk[data_len + 5] = 0x00;
+            chunk[data_len + 6] = 0x00;
+        }
+    };
+
+
+
+    explicit FormatDataResponsePDU_MetaFilePic()
+      : FormatDataResponsePDU()
+      , mappingMode(0)
+      , xExt(0)
+      , yExt(0)
+      , metaHeader(0)
+      , metaSetMepMod(0)
+      , metaSetWindowExt(0, 0)
+      , metaSetWindowOrg(0, 0)
+      , dibStretchBLT(0, 0, 0, 0)
+    {}
+
+    explicit FormatDataResponsePDU_MetaFilePic( const std::size_t data_length
+                                              , const uint16_t width
+                                              , const uint16_t height
+                                              , const uint16_t depth
+                                              , const double ARBITRARY_SCALE)
+      : FormatDataResponsePDU(data_length + METAFILE_HEADERS_SIZE)
+      , mappingMode(MM_ANISOTROPIC)
+      , xExt(int(double(width) * ARBITRARY_SCALE))
+      , yExt(int(double(height) * ARBITRARY_SCALE))
+      , metaHeader(data_length)
+      , metaSetMepMod(MM_ANISOTROPIC)
+      , metaSetWindowExt(height, width)
+      , metaSetWindowOrg(0, 0)
+      , dibStretchBLT(data_length, height, width, depth)
+    {}
+
+    void emit(OutStream & stream) {
+        this->header.emit(stream);
+
+        // 2.2.5.2.1 Packed Metafile Payload
+        // 12 bytes
+        stream.out_uint32_le(this->mappingMode);
+        stream.out_uint32_le(this->xExt);
+        stream.out_uint32_le(this->yExt);
+
+        // 3.2.1 META_HEADER Example
+        // 18 bytes
+        this->metaHeader.emit(stream);
+
+        // 2.3 WMF Records
+        //      META_SETMAPMODE
+        //      8 bytes
+        this->metaSetMepMod.emit(stream);
+
+        //      META_SETWINDOWEXT
+        //      10 bytes
+        this->metaSetWindowExt.emit(stream);
+
+        //      META_SETWINDOWORG
+        //      10 bytes
+        this->metaSetWindowOrg.emit(stream);
+
+        // 2.3.1.3.1 META_DIBSTRETCHBLT With Bitmap
+        // 26 bytes
+        //       The BitmapInfoHeader
+        //       40 bytes
+        this->dibStretchBLT.emit(stream);
     }
+
 
     void recv(InStream & stream) {
         this->header.recv(stream);
 
         // 2.2.5.2.1 Packed Metafile Payload (cliboard.hpp)
-        this->mapping_mod = stream.in_uint32_le();
-        this->mapping_mod_width = stream.in_uint32_le();
-        this->mapping_mod_height = stream.in_uint32_le();
+        this->mappingMode = stream.in_uint32_le();
+        this->xExt = stream.in_uint32_le();
+        this->yExt = stream.in_uint32_le();
 
         // 3.2.1 META_HEADER Example
-        this->meta_header_type = stream.in_uint16_le();
-        this->meta_header_size = stream.in_uint16_le();
-        this->meta_header_version = stream.in_uint16_le();
-        this->meta_file_words_len = stream.in_uint32_le();
-        stream.in_skip_bytes(2);
-        this->record_words_len = stream.in_uint32_le();
-        stream.in_skip_bytes(2);
+        this->metaHeader.recv(stream);
 
         bool notEOF(true);
         while(notEOF) {
@@ -2474,65 +2732,41 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
             switch (type) {
 
                 case META_SETWINDOWEXT:
-//                    LOG(LOG_INFO, "META_SETWINDOWEXT");
+                    //LOG(LOG_INFO, "META_SETWINDOWEXT");
+                    this->metaSetWindowExt.recv(stream);
                     REDASSERT(recordSize == META_SETWINDOWEXT_WORDS_SIZE);
-                    stream.in_skip_bytes(recordSize*2 - 6);
-                break;
+                    break;
 
                 case META_SETWINDOWORG:
-//                    LOG(LOG_INFO, "META_SETWINDOWORG");
+                    //LOG(LOG_INFO, "META_SETWINDOWORG");
+                    this->metaSetWindowOrg.recv(stream);
                     REDASSERT(recordSize == META_SETWINDOWORG_WORDS_SIZE);
-                    stream.in_skip_bytes(recordSize*2 - 6);
-                break;
+                    break;
 
                 case META_SETMAPMODE:
-//                    LOG(LOG_INFO, "META_SETMAPMODE");
+                    //LOG(LOG_INFO, "META_SETMAPMODE");
+                    this->metaSetMepMod.recv(stream);
                     REDASSERT(recordSize == META_SETMAPMODE_WORDS_SIZE);
-                    stream.in_skip_bytes(recordSize*2 - 6);
-                break;
+                    REDASSERT(this->mappingMode == this->metaSetMepMod.mappingMode);
+                    break;
 
                 case META_DIBSTRETCHBLT:
-//                    LOG(LOG_INFO, "META_DIBSTRETCHBLT");
-                {
+                    //LOG(LOG_INFO, "META_DIBSTRETCHBLT");
                     notEOF = false;
 
                     // 2.3.1.3.1 META_DIBSTRETCHBLT With Bitmap
-                    this->operation = stream.in_uint32_le();
+                    this->dibStretchBLT.recordSize = recordSize;
+                    this->dibStretchBLT.recv(stream);
 
-                    this->height = stream.in_uint16_le();
-                    this->width  = stream.in_uint16_le();
-                    stream.in_skip_bytes(12);
-
-                    // DeviceIndependentBitmap  2.2.2.9 DeviceIndependentBitmap Object
-
-                    // 2.2.2.3 BitmapInfoHeader Object+
-                    //int bitmapinfo_header_size = stream.in_uint32_le();
-                    //REDASSERT(BITMAPINFO_HEADER_SIZE == bitmapinfo_header_size);
-                    stream.in_skip_bytes(14);
-
-                    this->depth       = stream.in_uint16_le();
-                    stream.in_skip_bytes(4);
-
-                    this->data_length = stream.in_uint32_le();
-                    stream.in_skip_bytes(8);
-
-                    int skip(0);
-                    if (stream.in_uint32_le() == 0) { // if colorUsed == 0
-                        skip = 0;
-                    }
-                    stream.in_skip_bytes(4);
-
-                        // Colors (variable)
-                    stream.in_skip_bytes(skip);
-
-                        // BitmapBuffer (variable)
-                    stream.in_skip_bytes(0);
-                }
-                break;
+                    REDASSERT(this->metaHeader.maxRecord == this->dibStretchBLT.recordSize);
+                    REDASSERT(this->metaSetWindowExt.height == this->dibStretchBLT.destHeight);
+                    REDASSERT(this->metaSetWindowExt.width == this->dibStretchBLT.destWidth);
+                    break;
 
                 default:
                     LOG(LOG_INFO, "DEFAULT");
-                break;
+
+                    break;
             }
         }
     }
@@ -2809,7 +3043,7 @@ struct LockClipboardDataPDU
 struct UnlockClipboardDataPDU
 {
     CliprdrHeader header;
-    
+
     uint32_t streamDataID;
 
     explicit UnlockClipboardDataPDU(uint32_t streamDataID)
