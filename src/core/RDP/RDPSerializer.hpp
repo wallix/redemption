@@ -161,8 +161,7 @@ public:
     };
 
     REDEMPTION_DEBUG_CONFIG_TO_VERBOSE_FLAGS(
-        VerboseFlags(get(typename cfg::debug::capture{}))
-     | (get(typename cfg::debug::primary_orders{})   ? VerboseFlags::primary_orders   : VerboseFlags::none)
+       (get(typename cfg::debug::primary_orders{})   ? VerboseFlags::primary_orders   : VerboseFlags::none)
      | (get(typename cfg::debug::secondary_orders{}) ? VerboseFlags::secondary_orders : VerboseFlags::none)
      | (get(typename cfg::debug::bitmap_update{})    ? VerboseFlags::bitmap_update    : VerboseFlags::none)
     )

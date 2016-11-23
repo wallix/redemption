@@ -165,8 +165,9 @@ public:
     , graphic_to_file(
         now, *this->trans_variant.trans, drawable.width(), drawable.height(), capture_bpp,
         this->bmp_cache, this->gly_cache, this->ptr_cache, this->dump_png24_api,
-        ini.get<cfg::video::wrm_compression_algorithm>(), delta_time,
-        GraphicToFile::SendInput::YES, GraphicToFile::debug_config_to_verbose_flags(ini)
+        ini.get<cfg::video::wrm_compression_algorithm>(), delta_time, GraphicToFile::SendInput::YES,
+        GraphicToFile::VerboseFlags(ini.get<cfg::debug::capture>())
+        | GraphicToFile::debug_config_to_verbose_flags(ini)
     )
     , nc(this->graphic_to_file, now, ini.get<cfg::video::frame_interval>(), ini.get<cfg::video::break_interval>())
     {}

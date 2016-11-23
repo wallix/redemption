@@ -28,7 +28,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "configs/config.hpp"
 #include "core/mainloop.hpp"
 #include "utils/log.hpp"
 #include "core/listen.hpp"

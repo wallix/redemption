@@ -180,7 +180,7 @@ private:
               , fastpath_support
               , mppc_enc
               , compression
-              , GraphicsUpdatePDU::debug_config_to_verbose_flags(ini)
+              , GraphicsUpdatePDU::VerboseFlags(verbose) | GraphicsUpdatePDU::debug_config_to_verbose_flags(ini)
             )
             , client_order_caps(client_order_caps)
             {

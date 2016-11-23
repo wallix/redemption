@@ -42,8 +42,6 @@
 #include "transport/transport.hpp"
 #include "wrm_label.hpp"
 
-#include "configs/config.hpp"
-
 
 inline void send_wrm_chunk(Transport & t, uint16_t chunktype, uint16_t data_size, uint16_t count)
 {
@@ -128,8 +126,6 @@ private:
     Transport & trans_target;
     Transport & trans;
 
-    const Inifile & ini;
-
     const uint8_t wrm_format_version;
 
     uint16_t info_version = 0;
@@ -161,17 +157,16 @@ public:
                , uint16_t info_cache_4_size
                , bool     info_cache_4_persistent
 
-               , const Inifile & ini)
+               , WrmCompressionAlgorithm wrm_compression_algorithm)
     : RDPChunkedDevice()
-    , compression_wrapper(*trans, ini.get<cfg::video::wrm_compression_algorithm>())
+    , compression_wrapper(*trans, wrm_compression_algorithm)
     , trans_target(*trans)
     , trans(this->compression_wrapper.get())
-    , ini(ini)
     , wrm_format_version(bool(this->compression_wrapper.get_algorithm()) ? 4 : 3)
     {
-        if (this->ini.get<cfg::video::wrm_compression_algorithm>() != this->compression_wrapper.get_algorithm()) {
+        if (wrm_compression_algorithm != this->compression_wrapper.get_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
-               , static_cast<unsigned>(this->ini.get<cfg::video::wrm_compression_algorithm>()));
+               , static_cast<unsigned>(wrm_compression_algorithm));
         }
 
         send_meta_chunk(

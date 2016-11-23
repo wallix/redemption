@@ -22,7 +22,6 @@
 
 #include "mod/mod_api.hpp"
 #include "widget2/screen.hpp"
-#include "configs/config.hpp"
 #include "core/front_api.hpp"
 #include "core/channel_list.hpp"
 

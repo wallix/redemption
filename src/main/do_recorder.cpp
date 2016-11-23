@@ -997,7 +997,7 @@ static inline int check_encrypted_or_checksumed(
     }
 
     bool has_mismatch_stat_hash = false;
-    
+
     /******************
     * Check mwrm file *
     ******************/
@@ -1593,7 +1593,7 @@ static int do_recompress(
                                     , player.info_cache_4_size
                                     , player.info_cache_4_persistent
 
-                                    , ini);
+                                    , ini.get<cfg::video::wrm_compression_algorithm>());
 
                 player.add_consumer(&recorder);
 
@@ -2272,7 +2272,7 @@ extern "C" {
                 res = check_encrypted_or_checksumed(
                     input_filename, mwrm_path, hash_path,
                     quick_check, ignore_stat_info, update_stat_info, verbose, cctx
-                );                
+                );
                 std::puts(res == 0 ? "verify ok\n" : "verify failed\n");
             } catch (const Error & e) {
                 std::printf("verify failed: with id=%d\n", e.id);
@@ -2367,7 +2367,7 @@ extern "C" {
                     std::cerr << strerror(errno) << std::endl << std::endl;
                 }
                 std::puts("decrypt ok\n");
-                return 0;                  
+                return 0;
             } catch (const Error & e) {
                 std::printf("decrypt failed: with id=%d\n", e.id);
             }
