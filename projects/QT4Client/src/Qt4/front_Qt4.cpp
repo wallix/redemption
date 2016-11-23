@@ -311,65 +311,39 @@ void Front_Qt::set_pointer(Pointer const & cursor) {
     QImage image_data(cursor.data, cursor.width, cursor.height, QImage::Format_RGB888);
     QImage image_mask(cursor.mask, cursor.width, cursor.height, QImage::Format_Mono);
 
-    bool null_pointer(false);
     if (cursor.mask[0x48] == 0xFF &&
         cursor.mask[0x49] == 0xFF &&
         cursor.mask[0x4A] == 0xFF &&
         cursor.mask[0x4B] == 0xFF) {
-        null_pointer = true;
-        image_mask = image_data.convertToFormat(QImage::Format_Mono);
+        image_mask = image_data.convertToFormat(QImage::Format_ARGB32_Premultiplied);
         image_data.invertPixels();
-    }
-
-    image_mask.invertPixels();
-
-    if (this->_replay) {
-
-        image_data = image_data.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
-        image_mask = image_mask.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
-
-        const uchar * data_data = image_data.bits();
-        const uchar * mask_data = image_mask.bits();
-
-        uint8_t data[Pointer::DATA_SIZE*4] = {0x00};
-
-        if (!null_pointer) {
-            for (int i = 0; i < Pointer::DATA_SIZE; i += 4) {
-                uint16_t pixel((data_data[i] << 8) + mask_data[i]);
-
-                switch (pixel) {
-                    case 0x00FF:  // black
-                        data[i  ] = 0x00;
-                        data[i+1] = 0x00;
-                        data[i+2] = 0x00;
-                        data[i+3] = 0xFF;
-                        break;
-
-                    case 0xFFFF:  // white
-                        data[i  ] = 0xFF;
-                        data[i+1] = 0xFF;
-                        data[i+2] = 0xFF;
-                        data[i+3] = 0xFF;
-                        break;
-
-                    default:      // transparent
-                        break;
-                }
-            }
-        }
-
-        QImage image(static_cast<uchar *>(data), cursor.width, cursor.height,QImage::Format_ARGB32_Premultiplied);
-        this->_mouse_data.cursor_image = image;
 
     } else {
+        image_mask.invertPixels();
+    }
+    image_data = image_data.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    image_mask = image_mask.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
 
-        image_mask = image_mask.mirrored(false, true);
-        image_data = image_data.convertToFormat(QImage::Format_Mono).mirrored(false, true);
+    const uchar * data_data = image_data.bits();
+    const uchar * mask_data = image_mask.bits();
 
-        QBitmap bitData = QBitmap::fromData(QSize(cursor.width, cursor.height), image_data.bits(), QImage::Format_Mono);
-        QBitmap bitMask = QBitmap::fromData(QSize(cursor.width, cursor.height), image_mask.bits(), QImage::Format_Mono);
+    uint8_t data[Pointer::DATA_SIZE*4];
 
-        QCursor qcursor(bitData, bitMask, cursor.x, cursor.y);
+    for (int i = 0; i < Pointer::DATA_SIZE; i += 4) {
+        data[i  ] = data_data[i+2];
+        data[i+1] = data_data[i+1];
+        data[i+2] = data_data[i  ];
+        data[i+3] = mask_data[i  ];
+    }
+
+    image_data = QImage(static_cast<uchar *>(data), cursor.width, cursor.height, QImage::Format_ARGB32_Premultiplied);
+
+    if (this->_replay) {
+        this->_mouse_data.cursor_image = image_data;
+
+    } else {
+        QPixmap map = QPixmap::fromImage(image_data);
+        QCursor qcursor(map, cursor.x, cursor.y);
         this->_screen[this->_current_screen_index]->setCursor(qcursor);
 
         if (this->_record) {
@@ -925,8 +899,10 @@ void Front_Qt::draw_RDPPatBlt(const Rect & rect, const QColor color, const QPain
     this->_screen[0]->paintCache().setBrush(Qt::SolidPattern);
 }
 
-void Front_Qt::draw_RDPPatBlt(const Rect & rect, const QColor color, const QPainter::CompositionMode mode) {
-
+void Front_Qt::draw_RDPPatBlt(const Rect & rect, const QPainter::CompositionMode mode) {
+    this->_screen[0]->paintCache().setCompositionMode(mode);
+    this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
+    this->_screen[0]->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
 }
 
 
@@ -976,8 +952,9 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
             // +------+-------------------------------+
             case 0xF0:
                 {
-                    //this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
                     QBrush brush(foreColor, Qt::Dense4Pattern);
+                    this->_screen[0]->paintCache().setPen(Qt::NoPen);
+                    this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
                     this->_screen[0]->paintCache().setBrush(brush);
                     this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
                     this->_screen[0]->paintCache().setBrush(Qt::SolidPattern);
@@ -1003,27 +980,30 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                 // | 0x0F | ROP: 0x000F0001               |
                 // |      | RPN: Pn                       |
                 // +------+-------------------------------+
-
+            case 0x0F:
+                this->draw_RDPPatBlt(rect, QPainter::RasterOp_NotSource);
+                break;
                 // +------+-------------------------------+
                 // | 0x50 | ROP: 0x00500325               |
                 // |      | RPN: PDna                     |
                 // +------+-------------------------------+
-
+            case 0x50:
+                this->draw_RDPPatBlt(rect, QPainter::RasterOp_NotSourceAndNotDestination);
+                break;
                 // +------+-------------------------------+
                 // | 0x55 | ROP: 0x00550009 (DSTINVERT)   |
                 // |      | RPN: Dn                       |
                 // +------+-------------------------------+
-            case 0x55: // inversion
-                //this->invert_color(rect);
-                break;
+            /*case 0x55:
+                this->draw_RDPPatBlt(rect, QPainter::RasterOp_NotDestination);
+
+                break;*/
                 // +------+-------------------------------+
                 // | 0x5A | ROP: 0x005A0049 (PATINVERT)   |
                 // |      | RPN: DPx                      |
                 // +------+-------------------------------+
             case 0x5A:
-                this->_screen[0]->paintCache().setCompositionMode(QPainter::RasterOp_SourceXorDestination);
-                this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-                this->_screen[0]->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
+                this->draw_RDPPatBlt(rect, QPainter::RasterOp_SourceXorDestination);
                 break;
                 // +------+-------------------------------+
                 // | 0x5F | ROP: 0x005F00E9               |
@@ -1034,17 +1014,16 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                 // | 0xA0 | ROP: 0x00A000C9               |
                 // |      | RPN: DPa                      |
                 // +------+-------------------------------+
-
+            case 0xA0:
+                this->draw_RDPPatBlt(rect, QPainter::RasterOp_SourceAndDestination);
+                break;
                 // +------+-------------------------------+
                 // | 0xA5 | ROP: 0x00A50065               |
                 // |      | RPN: PDxn                     |
                 // +------+-------------------------------+
-            case 0xA5:
-                this->_screen[0]->paintCache().setCompositionMode(QPainter::RasterOp_NotSourceAndNotDestination);
-                this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-                this->_screen[0]->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
-                break;
-
+            /*case 0xA5:
+                // this->draw_RDPPatBlt(rect, QPainter::RasterOp_NotSourceXorNotDestination);
+                break;*/
                 // +------+-------------------------------+
                 // | 0xAA | ROP: 0x00AA0029               |
                 // |      | RPN: D                        |
@@ -1055,7 +1034,9 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                 // | 0xAF | ROP: 0x00AF0229               |
                 // |      | RPN: DPno                     |
                 // +------+-------------------------------+
-
+            /*case 0xAF:
+                //this->draw_RDPPatBlt(rect, QPainter::RasterOp_NotSourceOrDestination);
+                break;*/
                 // +------+-------------------------------+
                 // | 0xF0 | ROP: 0x00F00021 (PATCOPY)     |
                 // |      | RPN: P                        |
@@ -1065,16 +1046,20 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                 this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
                 this->_screen[0]->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
                 break;
-
                 // +------+-------------------------------+
                 // | 0xF5 | ROP: 0x00F50225               |
                 // |      | RPN: PDno                     |
                 // +------+-------------------------------+
-
+            //case 0xF5:
+                //this->draw_RDPPatBlt(rect, QPainter::RasterOp_SourceOrNotDestination);
+                //break;
                 // +------+-------------------------------+
                 // | 0xFA | ROP: 0x00FA0089               |
                 // |      | RPN: DPo                      |
                 // +------+-------------------------------+
+            case 0xFA:
+                this->draw_RDPPatBlt(rect, QPainter::RasterOp_SourceOrDestination);
+                break;
 
             case 0xFF: // whiteness
                 this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::white);
@@ -1352,7 +1337,7 @@ void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bi
                     const uchar * dstData = dstBitmap.constScanLine(mincy - k);
 
                     for (size_t x = 0; x < rowsize-2; x += 3) {
-                        data[x+0] = ((dstData[x+0] ^ r) & srcData[x+0]) ^ r;
+                        data[x  ] = ((dstData[x  ] ^ r) & srcData[x  ]) ^ r;
                         data[x+1] = ((dstData[x+1] ^ g) & srcData[x+1]) ^ g;
                         data[x+2] = ((dstData[x+2] ^ b) & srcData[x+2]) ^ b;
                     }
@@ -1396,7 +1381,7 @@ void Front_Qt::draw(const RDPDestBlt & cmd, const Rect & clip) {
         case 0x00: // blackness
             this->_screen[0]->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
             break;
-        case 0x55: // inversion
+        case 0x55:                                         // inversion
             this->draw_RDPScrBlt(drect.x, drect.y, drect, true);
             break;
         case 0xAA: // change nothing
@@ -2784,7 +2769,6 @@ void Front_Qt::process_client_clipboard_out_data(const uint64_t total_length, Ou
                                                 );
         }
 
-
         // Last part
             StaticOutStream<PDU_MAX_SIZE> out_stream_last_part;
             out_stream_last_part.out_copy_bytes(data + data_sent, remains_PDU);
@@ -2797,7 +2781,6 @@ void Front_Qt::process_client_clipboard_out_data(const uint64_t total_length, Ou
                                                 , total_length
                                                 , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
-
 
     } else {
 

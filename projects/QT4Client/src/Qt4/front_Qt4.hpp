@@ -284,7 +284,8 @@ public:
     };
 
     enum : int {
-        PASTE_TEXT_CONTENT_SIZE = PDU_MAX_SIZE - PDU_HEADER_SIZE
+        PASTE_TEXT_ENDER_SIZE   = 2
+      , PASTE_TEXT_CONTENT_SIZE = PDU_MAX_SIZE - PDU_HEADER_SIZE - PASTE_TEXT_ENDER_SIZE
       , PASTE_PIC_CONTENT_SIZE  = PDU_MAX_SIZE - RDPECLIP::METAFILE_HEADERS_SIZE - PDU_HEADER_SIZE
     };
 
@@ -364,7 +365,6 @@ public:
 
     } _clipbrdFormatsList;
 
-
     struct CB_FilesList {
         struct CB_in_Files {
             int         size;
@@ -377,7 +377,6 @@ public:
         int                      lindex = 0;
 
     }  _cb_filesList;
-
 
     struct CB_Buffers {
         std::unique_ptr<uint8_t[]>  data = nullptr;
@@ -535,7 +534,7 @@ public:
 
     void draw_RDPPatBlt(const Rect & rect, const QColor color, const QPainter::CompositionMode mode, const Qt::BrushStyle style);
 
-    void draw_RDPPatBlt(const Rect & rect, const QColor color, const QPainter::CompositionMode mode);
+    void draw_RDPPatBlt(const Rect & rect, const QPainter::CompositionMode mode);
 
 
 
