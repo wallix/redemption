@@ -29,6 +29,8 @@
 #define LOGPRINT
 // #define LOGNULL
 
+#include "main/do_recorder.hpp"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -38,7 +40,6 @@
 #include <ostream>
 #include "utils/fileutils.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
-#include "main/do_recorder.hpp"
 
 
 #ifdef IN_IDE_PARSER

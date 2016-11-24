@@ -6,6 +6,8 @@
    redver video verifier program
 */
 
+#include "main/do_recorder.hpp"
+
 #include <type_traits>
 #include <string>
 #include <vector>
@@ -20,7 +22,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
-#include <snappy-c.h>
 #include <stdint.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -41,7 +42,6 @@
 #include "configs/config.hpp"
 #include "program_options/program_options.hpp"
 
-#include "main/do_recorder.hpp"
 #include "main/version.hpp"
 
 #include "transport/in_filename_transport.hpp"

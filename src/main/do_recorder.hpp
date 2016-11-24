@@ -8,10 +8,13 @@
 
 #pragma once
 
+#include <algorithm>
+#include <snappy-c.h>
 #include "capture/cryptofile.hpp"
 #include "utils/sugar/local_fd.hpp"
 #include "utils/chex_to_int.hpp"
 #include "utils/parse.hpp"
+#include "utils/fileutils.hpp"
 
 extern "C" {
     __attribute__((__visibility__("default")))
