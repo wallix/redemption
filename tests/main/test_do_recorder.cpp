@@ -141,12 +141,6 @@ extern "C" {
 
 BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
 {
-    Inifile ini;
-    ini.set<cfg::debug::config>(false);
-    CryptoContext cctx;
-    cctx.set_get_hmac_key_cb(hmac_fn);
-    cctx.set_get_trace_key_cb(trace_fn);
-
     char const * argv[] {
         "decrypter.py",
         "-i",
@@ -162,11 +156,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
 
     int res = -1;
     try {
-        res = do_main(2, argc, argv
-            , "ReDemPtion VERifier " VERSION ".\n"
-            "Copyright (C) Wallix 2010-2016.\n"
-            "Christophe Grosjean, Raphael Zhou."
-            , cctx);
+        res = do_main(2, argc, argv, hmac_fn, trace_fn);
     } catch (const Error & e) {
         printf("verify failed: with id=%d\n", e.id);
     }
@@ -176,12 +166,6 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
 
 BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
 {
-    Inifile ini;
-    ini.set<cfg::debug::config>(false);
-    CryptoContext cctx;
-    cctx.set_get_hmac_key_cb(hmac_fn);
-    cctx.set_get_trace_key_cb(trace_fn);
-
     char const * argv[] {
         "decrypter.py",
         "-i",
@@ -197,11 +181,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
 
     int res = -1;
     try {
-        res = do_main(2, argc, argv
-            , "ReDemPtion VERifier " VERSION ".\n"
-            "Copyright (C) Wallix 2010-2016.\n"
-            "Christophe Grosjean, Raphael Zhou."
-            , cctx);
+        res = do_main(2, argc, argv, hmac_fn, trace_fn);
     } catch (const Error & e) {
         printf("verify failed: with id=%d\n", e.id);
     }
@@ -428,48 +408,21 @@ bool is_except( Exception const & ) { return true; }
 
 BOOST_AUTO_TEST_CASE(TestVerifierFileNotFound)
 {
-    Inifile ini;
-    ini.set<cfg::debug::config>(false);
-    CryptoContext cctx;
-    cctx.set_get_hmac_key_cb(hmac_fn);
-    cctx.set_get_trace_key_cb(trace_fn);
-
     char const * argv[] = {
         "verifier.py",
-        "-i",
-            "asdfgfsghsdhds.mwrm",
-        "--hash-path",
-            FIXTURES_PATH "/verifier/hash",
-        "--mwrm-path",
-            FIXTURES_PATH "/verifier/recorded/bad",
-        "--verbose",
-            "10",
+        "-i", "asdfgfsghsdhds.mwrm",
+        "--hash-path", FIXTURES_PATH "/verifier/hash",
+        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/bad",
+        "--verbose", "10",
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    BOOST_CHECK_EXCEPTION(
-        do_main(1, ini,
-            argc, argv
-          , "ReDemPtion VERifier " VERSION ".\n"
-            "Copyright (C) Wallix 2010-2016.\n"
-            "Christophe Grosjean, Raphael Zhou."
-          , cctx),
-        Error,
-        [](Error const & e){
-            BOOST_CHECK_EQUAL(e.id, ERR_TRANSPORT_OPEN_FAILED);
-            return true;
-        }
-    );
+    int res = do_main(1, argc, argv, hmac_fn, trace_fn);
+    BOOST_CHECK_EQUAL(res, -1);
 }
 
 BOOST_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
 {
-    Inifile ini;
-    ini.set<cfg::debug::config>(false);
-    CryptoContext cctx;
-    cctx.set_get_hmac_key_cb(hmac_fn);
-    cctx.set_get_trace_key_cb(trace_fn);
-
     char const * argv[] = {
         "verifier.py",
         "-i",
@@ -486,24 +439,13 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
 
     int res = -1;
     BOOST_CHECK_NO_THROW(
-        res = do_main(1, ini,
-            argc, argv
-          , "ReDemPtion VERifier " VERSION ".\n"
-            "Copyright (C) Wallix 2010-2016.\n"
-            "Christophe Grosjean, Raphael Zhou."
-          , cctx)
+        res = do_main(1, argc, argv, hmac_fn, trace_fn)
     );
     BOOST_CHECK_EQUAL(1, res);
 }
 
 BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
 {
-    Inifile ini;
-    ini.set<cfg::debug::config>(false);
-    CryptoContext cctx;
-    cctx.set_get_hmac_key_cb(hmac_fn);
-    cctx.set_get_trace_key_cb(trace_fn);
-
     char const * argv[] = {
         "verifier.py",
         "-i",
@@ -520,24 +462,13 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
 
     int res = -1;
     BOOST_CHECK_NO_THROW(
-        res = do_main(1, ini,
-            argc, argv
-          , "ReDemPtion VERifier " VERSION ".\n"
-            "Copyright (C) Wallix 2010-2016.\n"
-            "Christophe Grosjean, Raphael Zhou."
-          , cctx)
+        res = do_main(1, argc, argv, hmac_fn, trace_fn)
     );
     BOOST_CHECK_EQUAL(0, res);
 }
 
 BOOST_AUTO_TEST_CASE(TestVerifierClearData)
 {
-    Inifile ini;
-    ini.set<cfg::debug::config>(false);
-    CryptoContext cctx;
-    cctx.set_get_hmac_key_cb(hmac_fn);
-    cctx.set_get_trace_key_cb(trace_fn);
-
     char const * argv[] {
         "verifier.py",
         "-i",
@@ -557,12 +488,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
 
     int res = -1;
     BOOST_CHECK_NO_THROW(
-        res = do_main(1, ini,
-            argc, argv
-          , "ReDemPtion VERifier " VERSION ".\n"
-            "Copyright (C) Wallix 2010-2016.\n"
-            "Christophe Grosjean, Raphael Zhou."
-          , cctx)
+        res = do_main(1, argc, argv, hmac_fn, trace_fn)
     );
     BOOST_CHECK_EQUAL(0, res);
 }
@@ -572,13 +498,13 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
 
 BOOST_AUTO_TEST_CASE(TestVerifierUpdateData)
 {
-    Inifile ini;
-    ini.set<cfg::debug::config>(false);
-    CryptoContext cctx;
-    LOG(LOG_INFO, "set_get_hmac_key");
-    cctx.set_get_hmac_key_cb(hmac_fn);
-    cctx.set_get_trace_key_cb(trace_fn);
-    LOG(LOG_INFO, "set_get_hmac_key done");
+//    Inifile ini;
+//    ini.set<cfg::debug::config>(false);
+//    CryptoContext cctx;
+//    LOG(LOG_INFO, "set_get_hmac_key");
+//    cctx.set_get_hmac_key_cb(hmac_fn);
+//    cctx.set_get_trace_key_cb(trace_fn);
+//    LOG(LOG_INFO, "set_get_hmac_key done");
 
 #define MWRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" \
     ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm"
@@ -651,12 +577,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierUpdateData)
 
     int res = -1;
     BOOST_CHECK_NO_THROW(
-        res = do_main(1, ini,
-            argc, argv
-          , "ReDemPtion VERifier " VERSION ".\n"
-            "Copyright (C) Wallix 2010-2016.\n"
-            "Christophe Grosjean, Raphael Zhou."
-          , cctx)
+        res = do_main(1, argc, argv, hmac_fn, trace_fn)
     );
     BOOST_CHECK_EQUAL(0, res);
 
@@ -678,12 +599,6 @@ BOOST_AUTO_TEST_CASE(TestVerifierUpdateData)
 
 BOOST_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
 {
-    Inifile ini;
-    ini.set<cfg::debug::config>(false);
-    CryptoContext cctx;
-    cctx.set_get_hmac_key_cb(hmac_fn);
-    cctx.set_get_trace_key_cb(trace_fn);
-
     char const * argv[] {
         "verifier.py",
         "-i",
@@ -702,12 +617,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
 
     int res = -1;
     BOOST_CHECK_NO_THROW(
-        res = do_main(1, ini,
-            argc, argv
-          , "ReDemPtion VERifier " VERSION ".\n"
-            "Copyright (C) Wallix 2010-2016.\n"
-            "Christophe Grosjean, Raphael Zhou."
-          , cctx)
+        res = do_main(1, argc, argv, hmac_fn, trace_fn)
     );
     BOOST_CHECK_EQUAL(1, res);
 }
@@ -817,8 +727,6 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
 BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
 {
 
-    Inifile ini;
-    ini.set<cfg::debug::config>(false);
     CryptoContext cctx;
     cctx.set_get_hmac_key_cb(hmac_fn);
     cctx.set_get_trace_key_cb(trace_fn);
@@ -984,13 +892,6 @@ inline int trace_old_fn(char * base, int len, char * buffer, unsigned oldscheme)
 
 BOOST_AUTO_TEST_CASE(TestAppRecorder)
 {
-    Inifile ini;
-    ini.set<cfg::debug::config>(false);
-    UdevRandom rnd;
-    CryptoContext cctx;
-    cctx.set_get_hmac_key_cb(hmac_fn);
-    cctx.set_get_trace_key_cb(trace_fn);
-
     char const * argv[] {
         "redrec",
         "-i",
@@ -1006,7 +907,7 @@ BOOST_AUTO_TEST_CASE(TestAppRecorder)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    int res = do_main(0, argc, argv, "Recorder", CFG_PATH "/" RDPPROXY_INI, ini, cctx, rnd);
+    int res = do_main(0, argc, argv, hmac_fn, trace_fn);
     BOOST_CHECK_EQUAL(0, res);
 
     const char * filename;

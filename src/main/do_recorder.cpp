@@ -2139,7 +2139,7 @@ extern "C" {
     }
 
     __attribute__((__visibility__("default")))
-    int do_main(int role, int argc, char** argv,
+    int do_main(int role, int argc, char const ** argv,
             get_hmac_key_prototype * hmac_fn,
             get_trace_key_prototype * trace_fn)
     {
@@ -2193,7 +2193,8 @@ extern "C" {
                     {'m', "mwrm-path",  &mwrm_path,         "mwrm file path"       },
                     {'i', "input-file", &input_filename,    "input mwrm file name" },
                     {'S', "ignore-stat-info", "ignore stat info data mismatch" },
-                    {'U', "update-stat-info", "update stat info data mismatch (only if not checksum and no encrypted)" },
+                    {'U', "update-stat-info", "update stat info data mismatch "
+                                              "(only if not checksum and no encrypted)" },
                     {"verbose",         &verbose,           "more logs"            },
                 })
                 ;

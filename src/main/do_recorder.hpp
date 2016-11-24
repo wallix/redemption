@@ -15,7 +15,7 @@ extern "C" {
     int recmemcpy(char * dest, char * source, int len);
 
     __attribute__((__visibility__("default")))
-    int do_main(int role, int argc, char ** argv,
+    int do_main(int role, int argc, char const ** argv,
             get_hmac_key_prototype * hmac_fn,
             get_trace_key_prototype * trace_fn);
 }
