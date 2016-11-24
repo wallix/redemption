@@ -36,6 +36,7 @@
 #include "utils/translation.hpp"
 
 #include <set>
+#include <string>
 
 class RemoteProgramsSessionManager : public gdi::GraphicBase<RemoteProgramsSessionManager>,
     public RemoteProgramsWindowIdManager {
@@ -80,11 +81,13 @@ private:
 
     bool has_previous_window = false;
 
+    std::string session_probe_window_title;
+
 public:
     RemoteProgramsSessionManager(FrontAPI& front, mod_api& mod, Translation::language_t lang,
                                  uint16_t front_width, uint16_t front_height,
-                                 Font const & font, Theme const & theme, auth_api* acl,
-                                 uint32_t verbose)
+                                 Font const& font, Theme const& theme, auth_api* acl,
+                                 char const* session_probe_window_title, uint32_t verbose)
     : front(front)
     , mod(mod)
     , lang(lang)
@@ -94,7 +97,8 @@ public:
     , theme(theme)
     , verbose(verbose)
     , dialog_box_rect((front_width - 640) / 2, (front_height - 480) / 2, 640, 480)
-    , acl(acl) {}
+    , acl(acl)
+    , session_probe_window_title(session_probe_window_title) {}
 
     void disable_graphics_update(bool disable) {
         this->graphics_update_disabled = disable;
@@ -289,7 +293,8 @@ private:
               bool     window_is_blocked = (window_id == this->blocked_server_window_id);
         const bool     window_is_new     = (RDP::RAIL::WINDOW_ORDER_STATE_NEW & order.header.FieldsPresentFlags());
 
-        const char session_probe_window_title[] = "SesProbe";
+        const char*  blocked_window_title        = this->session_probe_window_title.c_str();
+        const size_t blocked_window_title_length = this->session_probe_window_title.length();
 
         if (window_is_new &&
             (DialogBoxType::WAITING_SCREEN == this->dialog_box_type)) {
@@ -302,8 +307,8 @@ private:
 
             const size_t title_info_length = ::strlen(title_info);
 
-            if ((title_info_length >= sizeof(session_probe_window_title) - 1) &&
-                !::strcmp(title_info + (title_info_length - sizeof(session_probe_window_title) + 1), session_probe_window_title)) {
+            if ((title_info_length >= blocked_window_title_length) &&
+                !::strcmp(title_info + (title_info_length - blocked_window_title_length), blocked_window_title)) {
 
                 REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == this->blocked_server_window_id);
 
