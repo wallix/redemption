@@ -222,7 +222,6 @@ struct ssh_session_struct {
      *
      * @brief Verify the hmac of a packet
      *
-     * @param  session      The session to use.
      * @param  buffer       The buffer to verify the hmac from.
      * @param  mac          The mac to compare with the hmac.
      *
@@ -1141,7 +1140,7 @@ struct SshServerSession : public ssh_session_struct
                 /* First, POLLOUT is a sign we may be connected */
                 if(this->socket->state == SSH_SOCKET_CONNECTING){
                     syslog(LOG_INFO, "Received POLLOUT in connecting state");
-                syslog(LOG_INFO, "POLLOUT for write CONNECTED");
+                    syslog(LOG_INFO, "POLLOUT for write CONNECTED");
                     int r = fcntl(this->socket->fd_in, F_SETFL, 0);
                     if (r < 0) {
                         syslog(LOG_INFO, "%s -- fcntl error %s", __FUNCTION__, strerror(errno));
@@ -1151,7 +1150,6 @@ struct SshServerSession : public ssh_session_struct
                     this->socket->write_wontblock = 1;
                     this->socket->state = SSH_SOCKET_CONNECTED;
                     this->session_state = SSH_SESSION_STATE_SOCKET_CONNECTED;
-                    ret = SSH_OK;
                 }
 
                 syslog(LOG_INFO, "POLLOUT for write remain=%d except=%d wontblock=%d",
@@ -1680,7 +1678,6 @@ struct SshServerSession : public ssh_session_struct
      *
      * @param  data pointer to the beginning of header
      * @param  len size of the banner
-     * @param  user is a pointer to session
      * @returns Number of bytes processed, or zero if the banner is not complete.
      */
      // TODO: intermittent segfault here, see what happen
@@ -2626,6 +2623,12 @@ struct SshServerSession : public ssh_session_struct
             break;
             case SSH_SESSION_STATE_AUTHENTICATING:
                 break;
+            case SSH_SESSION_STATE_BANNER_RECEIVED:
+            CPP_FALLTHROUGH;
+            case SSH_SESSION_STATE_AUTHENTICATED:
+            CPP_FALLTHROUGH;
+            case SSH_SESSION_STATE_DISCONNECTED:
+            CPP_FALLTHROUGH;
             case SSH_SESSION_STATE_ERROR:
                 this->socket->close();
                 this->session_state = SSH_SESSION_STATE_ERROR;
@@ -4255,6 +4258,7 @@ struct SshServerSession : public ssh_session_struct
                 syslog(LOG_INFO, "%s error invalid peer signature ---", __FUNCTION__);
                 syslog(LOG_INFO,
                     "Received an invalid  signature from peer");
+                // TODO: shouldn't we close connection if this occurs
                 signature_state = SSH_PUBLICKEY_STATE_WRONG;
                 return;
             }
@@ -5553,6 +5557,12 @@ struct SshServerSession : public ssh_session_struct
         case SSH_SESSION_STATE_CONNECTING:
         CPP_FALLTHROUGH;
         case SSH_SESSION_STATE_SOCKET_CONNECTED:
+        CPP_FALLTHROUGH;
+        case SSH_SESSION_STATE_BANNER_RECEIVED:
+        CPP_FALLTHROUGH;
+        case SSH_SESSION_STATE_KEXINIT_RECEIVED:
+        CPP_FALLTHROUGH;
+        case SSH_SESSION_STATE_DH:
         CPP_FALLTHROUGH;
         default:
             ssh_set_error(this->error,  SSH_FATAL,"SSH_KEXINIT received in wrong state");
@@ -7110,6 +7120,8 @@ struct SshClientSession : public ssh_session_struct
         CPP_FALLTHROUGH;
         case SSH_CHANNEL_REQ_STATE_DENIED:
         CPP_FALLTHROUGH;
+        case SSH_CHANNEL_REQ_STATE_ERROR:
+        CPP_FALLTHROUGH;
         default:
         break;
         }
@@ -7170,6 +7182,8 @@ struct SshClientSession : public ssh_session_struct
         case SSH_CHANNEL_REQ_STATE_ACCEPTED:
         CPP_FALLTHROUGH;
         case SSH_CHANNEL_REQ_STATE_DENIED:
+        CPP_FALLTHROUGH;
+        case SSH_CHANNEL_REQ_STATE_ERROR:
         CPP_FALLTHROUGH;
         default:
             break;
@@ -7244,6 +7258,8 @@ struct SshClientSession : public ssh_session_struct
         case SSH_CHANNEL_REQ_STATE_ACCEPTED:
         CPP_FALLTHROUGH;
         case SSH_CHANNEL_REQ_STATE_DENIED:
+        CPP_FALLTHROUGH;
+        case SSH_CHANNEL_REQ_STATE_ERROR:
         CPP_FALLTHROUGH;
         default:
             break;

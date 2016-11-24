@@ -739,7 +739,7 @@ int channel_write_common_server(ssh_session_struct * server_session, ssh_channel
 int SshServerSession::global_request_server(const char *request, ssh_buffer_struct* buffer, int reply) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_INFO, "> GLOBAL_REQUEST %s", request);
-    int rc;
+    int rc = SSH_OK;
 
     if (this->global_req_state == SSH_CHANNEL_REQ_STATE_NONE){
         this->out_buffer->out_uint8(SSH_MSG_GLOBAL_REQUEST);
