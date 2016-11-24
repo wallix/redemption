@@ -29,6 +29,7 @@
 #include "mod/internal/widget2/flat_button.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/rdp_log.hpp"
+#include "mod/rdp/windowing_api.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "utils/protect_graphics.hpp"
 #include "utils/rect.hpp"
@@ -36,9 +37,11 @@
 #include "utils/translation.hpp"
 
 #include <set>
+#include <string>
 
 class RemoteProgramsSessionManager : public gdi::GraphicBase<RemoteProgramsSessionManager>,
-    public RemoteProgramsWindowIdManager {
+    public RemoteProgramsWindowIdManager,
+    public windowing_api {
 
 private:
     FrontAPI & front;
@@ -61,7 +64,7 @@ private:
     Rect dialog_box_rect;
     Rect protected_rect;
 
-    uint32_t dialog_box_window_id  = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
+    uint32_t dialog_box_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
     gdi::GraphicApi * drawable = nullptr;
     int               bpp      = 0;
@@ -78,11 +81,17 @@ private:
 
     auth_api* acl = nullptr;
 
+    bool has_previous_window = false;
+
+    std::string session_probe_window_title;
+
+    uint32_t auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
+
 public:
     RemoteProgramsSessionManager(FrontAPI& front, mod_api& mod, Translation::language_t lang,
                                  uint16_t front_width, uint16_t front_height,
-                                 Font const & font, Theme const & theme, auth_api* acl,
-                                 uint32_t verbose)
+                                 Font const& font, Theme const& theme, auth_api* acl,
+                                 char const* session_probe_window_title, uint32_t verbose)
     : front(front)
     , mod(mod)
     , lang(lang)
@@ -92,7 +101,8 @@ public:
     , theme(theme)
     , verbose(verbose)
     , dialog_box_rect((front_width - 640) / 2, (front_height - 480) / 2, 640, 480)
-    , acl(acl) {}
+    , acl(acl)
+    , session_probe_window_title(session_probe_window_title) {}
 
     void disable_graphics_update(bool disable) {
         this->graphics_update_disabled = disable;
@@ -102,10 +112,14 @@ public:
                 "graphics_update_disabled=%s",
             (this->graphics_update_disabled ? "yes" : "no"));
 
-        if (!disable &&
-            (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != this->dialog_box_window_id)) {
+        if (!disable) {
+            if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != this->dialog_box_window_id) {
+                this->dialog_box_destroy();
+            }
 
-            this->dialog_box_destroy();
+            if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != this->auxiliary_window_id) {
+                this->destroy_auxiliary_window();
+            }
         }
     }
 
@@ -287,7 +301,8 @@ private:
               bool     window_is_blocked = (window_id == this->blocked_server_window_id);
         const bool     window_is_new     = (RDP::RAIL::WINDOW_ORDER_STATE_NEW & order.header.FieldsPresentFlags());
 
-        const char session_probe_window_title[] = "SesProbe";
+        const char*  blocked_window_title        = this->session_probe_window_title.c_str();
+        const size_t blocked_window_title_length = this->session_probe_window_title.length();
 
         if (window_is_new &&
             (DialogBoxType::WAITING_SCREEN == this->dialog_box_type)) {
@@ -300,8 +315,8 @@ private:
 
             const size_t title_info_length = ::strlen(title_info);
 
-            if ((title_info_length >= sizeof(session_probe_window_title) - 1) &&
-                !::strcmp(title_info + (title_info_length - sizeof(session_probe_window_title) + 1), session_probe_window_title)) {
+            if ((title_info_length >= blocked_window_title_length) &&
+                !::strcmp(title_info + (title_info_length - blocked_window_title_length), blocked_window_title)) {
 
                 REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == this->blocked_server_window_id);
 
@@ -381,23 +396,35 @@ private:
     }
 
     void draw_impl(RDP::RAIL::ActivelyMonitoredDesktop const & order) {
+        bool has_not_window =
+            ((RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER & order.header.FieldsPresentFlags()) &&
+             !order.NumWindowIds());
+        bool has_window     = false;
+
         if (this->drawable) {
             if (order.ActiveWindowId() != this->blocked_server_window_id) {
                 order.map_window_id(*this);
                 this->drawable->draw(order);
+
+                has_window =
+                    ((RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER & order.header.FieldsPresentFlags()) &&
+                     order.NumWindowIds());
             }
             else {
                 LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(DeletedNotificationIcons): Order bloacked.");
             }
         }
 
-        if ((RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER & order.header.FieldsPresentFlags()) &&
-            !order.NumWindowIds() &&
-            (DialogBoxType::NONE == this->dialog_box_type)) {
+        if (has_not_window && (DialogBoxType::NONE == this->dialog_box_type) &&
+            this->has_previous_window) {
 
             this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
 
             this->waiting_screen_draw(0);
+        }
+
+        if (has_window) {
+            this->has_previous_window = true;
         }
     }
 
@@ -431,7 +458,7 @@ private:
             order.Style(0x14EE0000);
             order.ExtendedStyle(0x40310);
             order.ShowState(5);
-            order.TitleInfo("Splash screen");
+            order.TitleInfo("Dialog box");
             order.ClientOffsetX(this->protected_rect.x + 6);
             order.ClientOffsetY(this->protected_rect.y + 25);
             order.WindowOffsetX(this->protected_rect.x);
@@ -450,6 +477,27 @@ private:
                 order.emit(out_s);
                 order.log(LOG_INFO);
                 LOG(LOG_INFO, "RemoteProgramsSessionManager::dialog_box_create: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
+            }
+
+            this->drawable->draw(order);
+        }
+
+        if (DialogBoxType::WAITING_SCREEN == type) {
+            RDP::RAIL::ActivelyMonitoredDesktop order;
+
+            order.header.FieldsPresentFlags(
+                    RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP |
+                    RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER
+                );
+
+            order.NumWindowIds(1);
+            order.window_ids(0, this->dialog_box_window_id);
+
+            /*if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) */{
+                StaticOutStream<256> out_s;
+                order.emit(out_s);
+                order.log(LOG_INFO);
+                LOG(LOG_INFO, "RemoteProgramsSessionManager::dialog_box_create: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
             }
 
             this->drawable->draw(order);
@@ -594,5 +642,88 @@ private:
                                );
 
         this->drawable->end_update();
+    }
+
+    ///////////////////
+    // windowing_api
+    //
+
+public:
+    void create_auxiliary_window(Rect const& window_rect) override {
+        if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != this->auxiliary_window_id) return;
+
+        this->auxiliary_window_id = this->register_client_window();
+
+        {
+            RDP::RAIL::NewOrExistingWindow order;
+
+            order.header.FieldsPresentFlags(
+                      RDP::RAIL::WINDOW_ORDER_STATE_NEW
+                    | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTDELTA
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_SHOW
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_STYLE
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_TITLE
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_OWNER
+                );
+            order.header.WindowId(this->auxiliary_window_id);
+
+            order.OwnerWindowId(0x0);
+            order.Style(0x14EE0000);
+            order.ExtendedStyle(0x40310 | 0x8);
+            order.ShowState(5);
+            order.TitleInfo("Dialog box");
+            order.ClientOffsetX(window_rect.x + 6);
+            order.ClientOffsetY(window_rect.y + 25);
+            order.WindowOffsetX(window_rect.x);
+            order.WindowOffsetY(window_rect.y);
+            order.WindowClientDeltaX(6);
+            order.WindowClientDeltaY(25);
+            order.WindowWidth(window_rect.cx);
+            order.WindowHeight(window_rect.cy);
+            order.VisibleOffsetX(window_rect.x);
+            order.VisibleOffsetY(window_rect.y);
+            order.NumVisibilityRects(1);
+            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, window_rect.cx, window_rect.cy));
+
+            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+                StaticOutStream<1024> out_s;
+                order.emit(out_s);
+                order.log(LOG_INFO);
+                LOG(LOG_INFO, "RemoteProgramsSessionManager::dialog_box_create: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
+            }
+
+            this->drawable->draw(order);
+        }
+    }
+
+    void destroy_auxiliary_window() override {
+        if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == this->auxiliary_window_id) return;
+
+        {
+            RDP::RAIL::DeletedWindow order;
+
+            order.header.FieldsPresentFlags(
+                      RDP::RAIL::WINDOW_ORDER_STATE_DELETED
+                    | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                );
+            order.header.WindowId(this->auxiliary_window_id);
+
+            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+                StaticOutStream<1024> out_s;
+                order.emit(out_s);
+                order.log(LOG_INFO);
+                LOG(LOG_INFO, "RemoteProgramsSessionManager::destroy_auxiliary_window: Send DeletedWindow to client: size=%zu", out_s.get_offset() - 1);
+            }
+
+            this->front.draw(order);
+        }
+
+        this->auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
     }
 };  // class RemoteProgramsSessionManager

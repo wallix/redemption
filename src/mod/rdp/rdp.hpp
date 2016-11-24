@@ -1043,10 +1043,36 @@ public:
                 replace_tag(this->session_probe_arguments,
                     "${CBSPL_VAR} ", "");
 
+                uint32_t r = this->gen.rand32();
+
+                char session_probe_window_title[32];
+
+                snprintf(session_probe_window_title,
+                    sizeof(session_probe_window_title),
+                    "%X%X%X%X",
+                    ((r & 0xFF000000) >> 24),
+                    ((r & 0x00FF0000) >> 16),
+                    ((r & 0x0000FF00) >> 8),
+                      r & 0x000000FF
+                    );
+
+                param  = "TITLE ";
+                param += session_probe_window_title;
+                param += "&";
+
+                replace_tag(this->session_probe_arguments,
+                    "${TITLE_VAR} ", param.c_str());
+
                 this->client_execute_exe_or_file = this->session_probe_exe_or_file;
                 this->client_execute_arguments   = this->session_probe_arguments;
                 this->client_execute_working_dir = "%TMP%";
                 this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
+
+                this->remote_programs_session_manager =
+                    std::make_unique<RemoteProgramsSessionManager>(front, *this,
+                        this->lang, this->front_width, this->front_height,
+                        this->font, this->theme, this->acl,
+                        session_probe_window_title, this->verbose);
             }   // if (this->remote_program)
             else {
                 if (mod_rdp_params.session_probe_use_clipboard_based_launcher &&
@@ -1059,14 +1085,15 @@ public:
                             "Falled back to using AlternateShell based launcher.");
                 }
 
+                replace_tag(this->session_probe_arguments,
+                    "${TITLE_VAR} ", "");
+
                 if (this->session_probe_use_clipboard_based_launcher) {
                     replace_tag(this->session_probe_arguments,
                         "/${COOKIE_VAR} ", "");
 
                     replace_tag(this->session_probe_arguments,
                         "${CBSPL_VAR} ", "CD %TMP%&");
-
-
 
                     this->session_probe_alternate_shell  = this->session_probe_exe_or_file;
                     this->session_probe_alternate_shell += " ";
@@ -1140,13 +1167,6 @@ public:
                 this->nego.set_lb_info(this->redir_info.lb_info,
                                        this->redir_info.lb_info_length);
             }
-        }
-
-        if (this->remote_program) {
-            this->remote_programs_session_manager =
-                std::make_unique<RemoteProgramsSessionManager>(front, *this,
-                    this->lang, this->front_width, this->front_height,
-                    this->font, this->theme, this->acl, this->verbose);
         }
     }   // mod_rdp
 
@@ -1372,6 +1392,8 @@ protected:
         session_probe_virtual_channel_params.bogus_refresh_rect_ex                  =
             (this->bogus_refresh_rect && this->allow_using_multiple_monitors &&
              (this->cs_monitor.monitorCount > 1));
+        session_probe_virtual_channel_params.show_maximized                         =
+            (!this->remote_program);
 
         return session_probe_virtual_channel_params;
     }
@@ -3646,7 +3668,6 @@ public:
                     (e.id == ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT)) {
                     throw;
                 }
-
 
                 if (UP_AND_RUNNING != this->connection_finalization_state &&
                     !this->already_upped_and_running) {
@@ -6819,5 +6840,14 @@ private:
                     this->session_probe_virtual_channel_p);
             }
         }
+    }
+
+public:
+    windowing_api* get_windowing_api() const {
+        if (this->remote_programs_session_manager) {
+            return this->remote_programs_session_manager.get();
+        }
+
+        return nullptr;
     }
 };

@@ -69,6 +69,8 @@ private:
 
     const bool param_bogus_refresh_rect_ex;
 
+    const bool param_show_maximized;
+
     FrontAPI& front;
 
     mod_api& mod;
@@ -87,6 +89,8 @@ private:
     bool has_additional_launch_time = false;
 
     std::string server_message;
+
+    uint16_t other_version = 0x0100;
 
 public:
     struct Params : public BaseVirtualChannel::Params {
@@ -118,6 +122,8 @@ public:
         Translation::language_t lang;
 
         bool bogus_refresh_rect_ex;
+
+        bool show_maximized;
     };
 
     SessionProbeVirtualChannel(
@@ -156,6 +162,7 @@ public:
     , param_real_working_dir(params.real_working_dir)
     , param_lang(params.lang)
     , param_bogus_refresh_rect_ex(params.bogus_refresh_rect_ex)
+    , param_show_maximized(params.show_maximized)
     , front(front)
     , mod(mod)
     , file_system_virtual_channel(file_system_virtual_channel)
@@ -690,6 +697,15 @@ public:
                 out_s.out_copy_bytes(
                     this->param_real_alternate_shell.data(),
                     this->param_real_alternate_shell.size());
+
+                if (0x0102 <= this->other_version) {
+                    if (!this->param_show_maximized) {
+                        out_s.out_uint8('\x01');
+
+                        const char cstr[] = "Minimized";
+                        out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                    }
+                }
             }
 
             out_s.out_clear_bytes(1);   // Null-terminator.
@@ -760,12 +776,16 @@ public:
                 ::strchr(subitems, '\x01');
 
             if (subitem_separator && (subitem_separator != subitems)) {
+                uint8_t major = uint8_t(::strtoul(subitems, nullptr, 10));
+                uint8_t minor = uint8_t(::strtoul(subitem_separator + 1, nullptr, 10));
+
+                this->other_version = ((major << 8) | minor);
+
                 if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
                     LOG(LOG_INFO,
                         "SessionProbeVirtualChannel::process_server_message: "
-                            "OtherVersion=%lu.%lu",
-                        ::strtoul(subitems, nullptr, 10),
-                        ::strtoul(subitem_separator + 1, nullptr, 10));
+                            "OtherVersion=%u.%u",
+                        unsigned(major), unsigned(minor));
                 }
             }
         }
