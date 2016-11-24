@@ -3669,7 +3669,6 @@ public:
                     throw;
                 }
 
-
                 if (UP_AND_RUNNING != this->connection_finalization_state &&
                     !this->already_upped_and_running) {
                     char const * statestr = "UNKNOWN";
@@ -6841,5 +6840,14 @@ private:
                     this->session_probe_virtual_channel_p);
             }
         }
+    }
+
+public:
+    windowing_api* get_windowing_api() const {
+        if (this->remote_programs_session_manager) {
+            return this->remote_programs_session_manager.get();
+        }
+
+        return nullptr;
     }
 };

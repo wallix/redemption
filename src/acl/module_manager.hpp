@@ -31,6 +31,7 @@
 #include "mod/mod_api.hpp"
 #include "auth_api.hpp"
 #include "mod/null/null.hpp"
+#include "mod/rdp/windowing_api.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "mod/vnc/vnc.hpp"
 #include "mod/xup/xup.hpp"
@@ -344,6 +345,8 @@ private:
         bool is_disable_by_input = false;
         bool bogus_refresh_rect_ex;
 
+        windowing_api* winapi = nullptr;
+
     public:
         explicit ModOSD(ModuleManager & mm)
         : ProtectGraphics(mm.front, Rect{})
@@ -352,7 +355,7 @@ private:
 
         bool is_input_owner() const { return this->is_disable_by_input; }
 
-        void disable_osd()
+        void disable_osd(windowing_api* winapi_ = nullptr)
         {
             this->is_disable_by_input = false;
             this->mm.mod = this->mm.internal_mod;
@@ -365,10 +368,17 @@ private:
                     this->mm.front.client_info.width, this->mm.front.client_info.height);
             }
 
+            if (!winapi_) {
+                winapi_ = this->winapi;
+            }
+            if (winapi_) {
+                winapi_->destroy_auxiliary_window();
+            }
+
             this->mm.internal_mod->rdp_input_invalidate(protected_rect);
         }
 
-        void set_message(std::string message, bool is_disable_by_input)
+        void set_message(std::string message, bool is_disable_by_input, windowing_api* winapi_)
         {
             this->osd_message = std::move(message);
             this->is_disable_by_input = is_disable_by_input;
@@ -392,6 +402,11 @@ private:
             }
             this->clip = Rect(this->mm.front.client_info.width < w ? 0 : (this->mm.front.client_info.width - w) / 2, 0, w, h);
             this->set_protected_rect(this->clip);
+
+            this->winapi = winapi_;
+            if (this->winapi) {
+                winapi->create_auxiliary_window(this->clip);
+            }
         }
 
         static constexpr int padw = 16;
@@ -698,7 +713,7 @@ public:
     void clear_osd_message()
     {
         if (!this->mod_osd.get_protected_rect().isempty()) {
-            this->mod_osd.disable_osd();
+            this->mod_osd.disable_osd(this->winapi);
         }
         this->mod = this->internal_mod;
     }
@@ -706,7 +721,7 @@ public:
     void osd_message(std::string message, bool is_disable_by_input)
     {
         this->clear_osd_message();
-        this->mod_osd.set_message(std::move(message), is_disable_by_input);
+        this->mod_osd.set_message(std::move(message), is_disable_by_input, this->winapi);
         this->mod_osd.draw_osd_message();
     }
 
@@ -719,6 +734,8 @@ public:
     TimeObj & timeobj;
 
     ClientExecute client_execute;
+
+    windowing_api* winapi = nullptr;
 
     ModuleManager(Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
         : MMIni(ini)
@@ -749,7 +766,7 @@ public:
     }
 
 private:
-    void set_mod(non_null_ptr<mod_api> mod)
+    void set_mod(non_null_ptr<mod_api> mod, windowing_api* winapi = nullptr)
     {
         while (this->front.keymap.nb_char_available())
             this->front.keymap.get_char();
@@ -758,6 +775,8 @@ private:
 
         this->internal_mod = mod.get();
         this->mod = mod.get();
+
+        this->winapi = winapi;
     }
 
 public:
@@ -1302,7 +1321,7 @@ public:
                 try {
                     const char * const name = "RDP Target";
                     // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport
-                    this->set_mod(new ModWithSocket<mod_rdp>(
+                    ModWithSocket<mod_rdp>* new_mod = new ModWithSocket<mod_rdp>(
                         *this,
                         name,
                         client_sck,
@@ -1315,7 +1334,8 @@ public:
                         this->gen,
                         this->timeobj,
                         mod_rdp_params
-                    ));
+                    );
+                    this->set_mod(new_mod, (new_mod ? new_mod->get_windowing_api() : nullptr));
                 }
                 catch (...) {
                     if (acl) {
