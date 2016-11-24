@@ -55,6 +55,8 @@
 #include "gdi/kbd_input_api.hpp"
 #include "gdi/capture_probe_api.hpp"
 
+#include "utils/verbose_flags.hpp"
+
 #include "capture/utils/save_state_chunk.hpp"
 
 struct FileToGraphic
@@ -143,7 +145,6 @@ public:
     const timeval begin_capture;
     const timeval end_capture;
     uint32_t max_order_count;
-    uint32_t verbose;
 
     uint16_t info_version;
     uint16_t info_width;
@@ -205,7 +206,16 @@ public:
     bool break_privplay_qt;
     uint64_t movie_elapsed_qt;
 
-    FileToGraphic(Transport & trans, const timeval begin_capture, const timeval end_capture, bool real_time, uint32_t verbose)
+    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    {
+        none,
+        play        = 8,
+        timestamp   = 16,
+        rdp_orders  = 32,
+        probe       = 64,
+    };
+
+    FileToGraphic(Transport & trans, const timeval begin_capture, const timeval end_capture, bool real_time, VerboseFlags verbose)
         : stream(stream_buf)
         , compression_wrapper(trans, WrmCompressionAlgorithm::no_compression)
         , trans_source(&trans)
@@ -225,7 +235,6 @@ public:
         , begin_capture(begin_capture)
         , end_capture(end_capture)
         , max_order_count(0)
-        , verbose(verbose)
         , info_version(0)
         , info_width(0)
         , info_height(0)
@@ -252,6 +261,7 @@ public:
         , statistics()
         , break_privplay_qt(false)
         , movie_elapsed_qt(0)
+        , verbose(verbose)
     {
         while (this->next_order()){
             this->interpret_order();
@@ -379,7 +389,7 @@ public:
                         RDP::FrameMarker order;
 
                         order.receive(stream, header);
-                        if (this->verbose > 32){
+                        if (this->verbose & VerboseFlags::rdp_orders){
                             order.log(LOG_INFO);
                         }
                         for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -406,7 +416,7 @@ public:
                     this->statistics.CacheBitmap++;
                     RDPBmpCache cmd;
                     cmd.receive(this->stream, header, this->palette, this->info_bpp);
-                    if (this->verbose > 32){
+                    if (this->verbose & VerboseFlags::rdp_orders){
                         cmd.log(LOG_INFO);
                     }
                     this->bmp_cache->put(cmd.id, cmd.idx, cmd.bmp, cmd.key1, cmd.key2);
@@ -421,7 +431,7 @@ public:
                     this->statistics.CacheGlyph++;
                     RDPGlyphCache cmd;
                     cmd.receive(this->stream, header);
-                    if (this->verbose > 32){
+                    if (this->verbose & VerboseFlags::rdp_orders){
                         cmd.log(LOG_INFO);
                     }
                     this->gly_cache.set_glyph(
@@ -460,7 +470,7 @@ public:
                 case RDP::DESTBLT:
                     this->statistics.DstBlt++;
                     this->ssc.destblt.receive(this->stream, header);
-                    if (this->verbose > 32){
+                    if (this->verbose & VerboseFlags::rdp_orders){
                         this->ssc.destblt.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -470,7 +480,7 @@ public:
                 case RDP::MULTIDSTBLT:
                     this->statistics.MultiDstBlt++;
                     this->ssc.multidstblt.receive(this->stream, header);
-                    if (this->verbose > 32){
+                    if (this->verbose & VerboseFlags::rdp_orders){
                         this->ssc.multidstblt.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -480,7 +490,7 @@ public:
                 case RDP::MULTIOPAQUERECT:
                     this->statistics.MultiOpaqueRect++;
                     this->ssc.multiopaquerect.receive(this->stream, header);
-                    if (this->verbose > 32){
+                    if (this->verbose & VerboseFlags::rdp_orders){
                         this->ssc.multiopaquerect.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -490,7 +500,7 @@ public:
                 case RDP::MULTIPATBLT:
                     this->statistics.MultiPatBlt++;
                     this->ssc.multipatblt.receive(this->stream, header);
-                    if (this->verbose > 32){
+                    if (this->verbose & VerboseFlags::rdp_orders){
                         this->ssc.multipatblt.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -500,7 +510,7 @@ public:
                 case RDP::MULTISCRBLT:
                     this->statistics.MultiScrBlt++;
                     this->ssc.multiscrblt.receive(this->stream, header);
-                    if (this->verbose > 32){
+                    if (this->verbose & VerboseFlags::rdp_orders){
                         this->ssc.multiscrblt.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -510,7 +520,7 @@ public:
                 case RDP::PATBLT:
                     this->statistics.PatBlt++;
                     this->ssc.patblt.receive(this->stream, header);
-                    if (this->verbose > 32){
+                    if (this->verbose & VerboseFlags::rdp_orders){
                         this->ssc.patblt.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -520,7 +530,7 @@ public:
                 case RDP::SCREENBLT:
                     this->statistics.ScrBlt++;
                     this->ssc.scrblt.receive(this->stream, header);
-                    if (this->verbose > 32){
+                    if (this->verbose & VerboseFlags::rdp_orders){
                         this->ssc.scrblt.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -530,7 +540,7 @@ public:
                 case RDP::LINE:
                     this->statistics.LineTo++;
                     this->ssc.lineto.receive(this->stream, header);
-                    if (this->verbose > 32){
+                    if (this->verbose & VerboseFlags::rdp_orders){
                         this->ssc.lineto.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -540,7 +550,7 @@ public:
                 case RDP::RECT:
                     this->statistics.OpaqueRect++;
                     this->ssc.opaquerect.receive(this->stream, header);
-                    if (this->verbose > 32){
+                    if (this->verbose & VerboseFlags::rdp_orders){
                         this->ssc.opaquerect.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -551,7 +561,7 @@ public:
                     {
                         this->statistics.MemBlt++;
                         this->ssc.memblt.receive(this->stream, header);
-                        if (this->verbose > 32){
+                        if (this->verbose & VerboseFlags::rdp_orders){
                             this->ssc.memblt.log(LOG_INFO, clip);
                         }
                         const Bitmap & bmp = this->bmp_cache->get(this->ssc.memblt.cache_id, this->ssc.memblt.cache_idx);
@@ -570,7 +580,7 @@ public:
                     {
                         this->statistics.Mem3Blt++;
                         this->ssc.mem3blt.receive(this->stream, header);
-                        if (this->verbose > 32){
+                        if (this->verbose & VerboseFlags::rdp_orders){
                             this->ssc.mem3blt.log(LOG_INFO, clip);
                         }
                         const Bitmap & bmp = this->bmp_cache->get(this->ssc.mem3blt.cache_id, this->ssc.mem3blt.cache_idx);
@@ -588,7 +598,7 @@ public:
                 case RDP::POLYLINE:
                     this->statistics.Polyline++;
                     this->ssc.polyline.receive(this->stream, header);
-                    if (this->verbose > 32){
+                    if (this->verbose & VerboseFlags::rdp_orders){
                         this->ssc.polyline.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -598,7 +608,7 @@ public:
                 case RDP::ELLIPSESC:
                     this->statistics.EllipseSC++;
                     this->ssc.ellipseSC.receive(this->stream, header);
-                    if (this->verbose > 32){
+                    if (this->verbose & VerboseFlags::rdp_orders){
                         this->ssc.ellipseSC.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -641,7 +651,7 @@ public:
                         this->ignore_frame_in_timeval = true;
                     }
 
-                    if (this->verbose > 16) {
+                    if (this->verbose & VerboseFlags::timestamp) {
                         LOG( LOG_INFO, "TIMESTAMP %lu.%lu mouse (x=%" PRIu16 ", y=%" PRIu16 ")\n"
                            , static_cast<unsigned long>(this->record_now.tv_sec)
                            , static_cast<unsigned long>(this->record_now.tv_usec)
@@ -660,7 +670,7 @@ public:
                         }
                     }
 
-                    if (this->verbose > 16) {
+                    if (this->verbose & VerboseFlags::timestamp) {
                         for (auto data = input_data, end = data + input_len/4; data != end; data += 4) {
                             uint8_t         key8[6];
                             const size_t    len = UTF32toUTF8(data, 4, key8, sizeof(key8)-1);
@@ -881,7 +891,7 @@ public:
                              , (bitmap_data.flags & BITMAP_COMPRESSION)
                              );
 
-                if (this->verbose > 32){
+                if (this->verbose & VerboseFlags::rdp_orders){
                     bitmap_data.log(LOG_INFO, "         ");
                 }
 
@@ -1002,7 +1012,7 @@ public:
 
 
     void process_windowing( InStream & stream, const RDP::AltsecDrawingOrderHeader & header) {
-        if (this->verbose & 64) {
+        if (this->verbose & VerboseFlags::probe) {
             LOG(LOG_INFO, "rdp_orders::process_windowing");
         }
 
@@ -1039,7 +1049,7 @@ public:
 
     void process_window_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
                                    , uint32_t FieldsPresentFlags) {
-        if (this->verbose & 64) {
+        if (this->verbose & VerboseFlags::probe) {
             LOG(LOG_INFO, "rdp_orders::process_window_information");
         }
 
@@ -1093,7 +1103,7 @@ public:
 
     void process_notification_icon_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
                                               , uint32_t FieldsPresentFlags) {
-        if (this->verbose & 64) {
+        if (this->verbose & VerboseFlags::probe) {
             LOG(LOG_INFO, "rdp_orders::process_notification_icon_information");
         }
 
@@ -1125,7 +1135,7 @@ public:
 
     void process_desktop_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
                                     , uint32_t FieldsPresentFlags) {
-        if (this->verbose & 64) {
+        if (this->verbose & VerboseFlags::probe) {
             LOG(LOG_INFO, "rdp_orders::process_desktop_information");
         }
 
@@ -1170,7 +1180,7 @@ private:
     template<class CbUpdateProgress>
     void privplay(CbUpdateProgress update_progess, bool const & requested_to_stop) {
         while (!requested_to_stop && this->next_order()) {
-            if (this->verbose > 8) {
+            if (this->verbose & VerboseFlags::play) {
                 LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
                    , unsigned(this->record_now.tv_sec), unsigned(this->total_orders_count));
             }
@@ -1206,7 +1216,7 @@ private:
 
         if (elapsed >= this->movie_elapsed_qt) {
             if (this->next_order()) {
-                if (this->verbose > 8) {
+                if (this->verbose & VerboseFlags::play) {
                     LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
                     , unsigned(this->record_now.tv_sec), unsigned(this->total_orders_count));
                 }

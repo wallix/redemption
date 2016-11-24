@@ -98,7 +98,7 @@ class Session {
                     , client_sck
                     , ini.get<cfg::globals::authfile>().c_str()
                     , 0
-                    , ini.get<cfg::debug::auth>()
+                    , to_verbose_flags(ini.get<cfg::debug::auth>())
         )
         , acl( ini
              , activity_checker
@@ -129,7 +129,10 @@ public:
         try {
             TRANSLATIONCONF.set_ini(&ini);
 
-            SocketTransport front_trans("RDP Client", sck, "", 0, this->ini.get<cfg::debug::front>());
+            SocketTransport front_trans(
+                "RDP Client", sck, "", 0,
+                to_verbose_flags(this->ini.get<cfg::debug::front>())
+            );
             // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
             //  here instead of inside Sessionmanager
 

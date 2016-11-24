@@ -180,14 +180,13 @@ namespace detail
 }
 
 template<class Buf, class PathTraits = detail::NoCurrentPath>
-//struct OutputNextTransport
-struct RequestCleaningTransport
+struct RequestCleaningAndNextTransport
 : Transport
 {
-    RequestCleaningTransport() = default;
+    RequestCleaningAndNextTransport() = default;
 
     template<class Params>
-    explicit RequestCleaningTransport(const Params & buf_params)
+    explicit RequestCleaningAndNextTransport(const Params & buf_params)
     : buf(buf_params)
     {}
 
@@ -216,7 +215,7 @@ struct RequestCleaningTransport
         this->buffer().request_full_cleaning();
     }
 
-    ~RequestCleaningTransport() {
+    ~RequestCleaningAndNextTransport() {
         this->buf.close();
     }
 
@@ -247,7 +246,7 @@ protected:
     const Buf & buffer() const noexcept
     { return this->buf; }
 
-    typedef RequestCleaningTransport TransportType;
+    typedef RequestCleaningAndNextTransport TransportType;
 
 private:
     Buf buf;
@@ -851,18 +850,20 @@ namespace detail
     template<class HashBuf>
     int write_meta_hash(
         char const * hash_filename, char const * meta_filename,
-        HashBuf & crypto_hash, hash_type const * hash, uint32_t verbose
+        HashBuf & crypto_hash, hash_type const * hash
     ) {
         char path[1024] = {};
         char basename[1024] = {};
         char extension[256] = {};
         char filename[2048] = {};
 
-        canonical_path( meta_filename
-                      , path, sizeof(path)
-                      , basename, sizeof(basename)
-                      , extension, sizeof(extension)
-                      , verbose);
+        canonical_path(
+            meta_filename,
+            path, sizeof(path),
+            basename, sizeof(basename),
+            extension, sizeof(extension)
+        );
+
         snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
         if (crypto_hash.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
@@ -899,7 +900,6 @@ namespace detail
         time_t sec;
         MetaParams meta_buf_params;
         const char * hash_prefix;
-        uint32_t verbose;
 
         out_meta_sequence_filename_buf_param(
             time_t start_sec,
@@ -909,13 +909,11 @@ namespace detail
             const char * const filename,
             const char * const extension,
             const int groupid,
-            uint32_t verbose = 0,
             MetaParams const & meta_buf_params = MetaParams())
         : sq_params(format, prefix, filename, extension, groupid)
         , sec(start_sec)
         , meta_buf_params(meta_buf_params)
         , hash_prefix(hash_prefix)
-        , verbose(verbose)
         {}
     };
 
@@ -932,9 +930,6 @@ namespace detail
         time_t start_sec_;
         time_t stop_sec_;
 
-    protected:
-        uint32_t verbose;
-
     public:
         template<class MetaParams>
         explicit out_meta_sequence_filename_buf_impl(
@@ -946,7 +941,6 @@ namespace detail
         , hf_(params.hash_prefix, params.sq_params.filename, params.sq_params.format)
         , start_sec_(params.sec)
         , stop_sec_(params.sec)
-        , verbose(params.verbose)
         {
             if (this->meta_buf_.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
                 LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
@@ -969,7 +963,7 @@ namespace detail
                 transbuf::ofile_buf_out ofile;
                 return write_meta_hash(
                     this->hash_filename(), this->meta_filename(),
-                    ofile, nullptr, this->verbose
+                    ofile, nullptr
                 );
             }
             return err;
@@ -986,7 +980,8 @@ namespace detail
         }
 
     protected:
-        int next_meta_file(hash_type const * hash = nullptr) {
+        int next_meta_file(hash_type const * hash = nullptr)
+        {
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             const char * filename = this->rename_filename();
             if (!filename) {
@@ -1004,11 +999,13 @@ namespace detail
             return 0;
         }
 
-        char const * hash_filename() const noexcept {
+        char const * hash_filename() const noexcept
+        {
             return this->hf_.filename;
         }
 
-        char const * meta_filename() const noexcept {
+        char const * meta_filename() const noexcept
+        {
             return this->mf_.filename;
         }
 
@@ -1036,7 +1033,7 @@ namespace detail
 
 
 struct OutFilenameSequenceTransport
-: RequestCleaningTransport<
+: RequestCleaningAndNextTransport<
     detail::out_sequence_filename_buf_impl<
         detail::empty_ctor<io::posix::fdbuf>
 >>
@@ -1047,12 +1044,10 @@ struct OutFilenameSequenceTransport
         const char * const filename,
         const char * const extension,
         const int groupid,
-        auth_api * authentifier = nullptr,
-        unsigned verbose = 0)
+        auth_api * authentifier = nullptr)
     : OutFilenameSequenceTransport::TransportType(
         detail::out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
     {
-        (void)verbose;
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
@@ -1063,7 +1058,7 @@ struct OutFilenameSequenceTransport
 };
 
 struct OutFilenameSequenceSeekableTransport
-: RequestCleaningTransport<
+: RequestCleaningAndNextTransport<
     detail::out_sequence_filename_buf_impl<
         detail::empty_ctor<io::posix::fdbuf>
 >>
@@ -1074,12 +1069,10 @@ struct OutFilenameSequenceSeekableTransport
         const char * const filename,
         const char * const extension,
         const int groupid,
-        auth_api * authentifier = nullptr,
-        unsigned verbose = 0)
+        auth_api * authentifier = nullptr)
     : OutFilenameSequenceSeekableTransport::TransportType(
         detail::out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
     {
-        (void)verbose;
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
@@ -1525,9 +1518,8 @@ namespace detail
             const char * const filename,
             const char * const extension,
             const int groupid,
-            FilterParams const & filter_params = FilterParams(),
-            uint32_t verbose = 0)
-        : meta_sq_params(start_sec, format, hash_prefix, prefix, filename, extension, groupid, verbose, filter_params)
+            FilterParams const & filter_params = FilterParams())
+        : meta_sq_params(start_sec, format, hash_prefix, prefix, filename, extension, groupid, filter_params)
         , filter_params(filter_params)
         , cctx(cctx)
         {}
@@ -1588,7 +1580,7 @@ namespace detail
                 return 1;
             }
 
-            return write_meta_hash(this->hash_filename(), this->meta_filename(), hash_buf, &hash, this->verbose);
+            return write_meta_hash(this->hash_filename(), this->meta_filename(), hash_buf, &hash);
         }
 
         int next()
@@ -1721,7 +1713,7 @@ namespace transbuf {
 
 
 struct OutMetaSequenceTransport
-: RequestCleaningTransport<
+: RequestCleaningAndNextTransport<
     detail::out_meta_sequence_filename_buf_impl<
         detail::empty_ctor<io::posix::fdbuf>,
         detail::empty_ctor<transbuf::ofile_buf_out>
@@ -1738,14 +1730,11 @@ struct OutMetaSequenceTransport
         uint16_t height,
         const int groupid,
         auth_api * authentifier = nullptr,
-        unsigned verbose = 0,
         FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
     : OutMetaSequenceTransport::TransportType(detail::out_meta_sequence_filename_buf_param<>(
-        now.tv_sec, format, hash_path, path, basename, ".wrm", groupid, verbose
+        now.tv_sec, format, hash_path, path, basename, ".wrm", groupid
     ))
     {
-        this->verbose = verbose;
-
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
@@ -1765,7 +1754,7 @@ struct OutMetaSequenceTransport
 
 
 struct OutMetaSequenceTransportWithSum
-: RequestCleaningTransport<
+: RequestCleaningAndNextTransport<
     detail::out_hash_meta_sequence_filename_buf_impl<
         detail::empty_ctor<io::posix::fdbuf>,
         detail::ochecksum_filter,
@@ -1786,18 +1775,14 @@ struct OutMetaSequenceTransportWithSum
         uint16_t height,
         const int groupid,
         auth_api * authentifier = nullptr,
-        unsigned verbose = 0,
         FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
     : OutMetaSequenceTransportWithSum::TransportType(
         detail::out_hash_meta_sequence_filename_buf_param<CryptoContext&>(
             crypto_ctx,
             now.tv_sec, format, hash_path, path, basename, ".wrm", groupid,
-            crypto_ctx,
-            verbose
+            crypto_ctx
         )
     ) {
-        this->verbose = verbose;
-
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
@@ -1817,7 +1802,7 @@ struct OutMetaSequenceTransportWithSum
 
 
 struct CryptoOutMetaSequenceTransport
-: RequestCleaningTransport<
+: RequestCleaningAndNextTransport<
     detail::out_hash_meta_sequence_filename_buf_impl<
         detail::empty_ctor<io::posix::fdbuf>,
         detail::ocrypto_filter,
@@ -1839,18 +1824,14 @@ struct CryptoOutMetaSequenceTransport
         uint16_t height,
         const int groupid,
         auth_api * authentifier = nullptr,
-        unsigned verbose = 0,
         FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
     : CryptoOutMetaSequenceTransport::TransportType(
         detail::out_hash_meta_sequence_filename_buf_param<transbuf::ocrypto_filename_params>(
             crypto_ctx,
             now.tv_sec, format, hash_path, path, basename, ".wrm", groupid,
-            {crypto_ctx, rnd},
-            verbose
+            {crypto_ctx, rnd}
         )
     ) {
-        this->verbose = verbose;
-
         if (authentifier) {
             this->set_authentifier(authentifier);
         }

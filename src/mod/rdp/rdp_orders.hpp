@@ -64,7 +64,8 @@
 #include "gdi/graphic_api.hpp"
 
 /* orders */
-class rdp_orders {
+class rdp_orders
+{
     // State
     RDPOrderCommon     common;
     RDPMemBlt          memblt;
@@ -191,7 +192,7 @@ private:
         {
             OutFileTransport oft(fd);
 
-            BmpCachePersister::save_all_to_disk(*this->bmp_cache, oft, this->verbose);
+            BmpCachePersister::save_all_to_disk(*this->bmp_cache, oft, to_verbose_flags(this->verbose));
 
             ::close(fd);
 
@@ -215,7 +216,7 @@ public:
         uint16_t small_entries, uint16_t small_size, bool small_persistent,
         uint16_t medium_entries, uint16_t medium_size, bool medium_persistent,
         uint16_t big_entries, uint16_t big_size, bool big_persistent,
-        bool enable_waiting_list, uint32_t verbose)
+        bool enable_waiting_list, BmpCache::VerboseFlags verbose)
     {
         if (this->bmp_cache) {
             if (this->bmp_cache->bpp == bpp) {
@@ -253,7 +254,7 @@ public:
                 if (this->verbose & 1) {
                     LOG(LOG_INFO, "rdp_orders::create_cache_bitmap: filename=\"%s\"", filename);
                 }
-                BmpCachePersister::load_all_from_disk(*this->bmp_cache, ift, filename, this->verbose);
+                BmpCachePersister::load_all_from_disk(*this->bmp_cache, ift, filename, to_verbose_flags(this->verbose));
             }
             catch (...) {
             }

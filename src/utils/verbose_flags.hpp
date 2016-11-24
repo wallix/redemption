@@ -20,10 +20,15 @@
 
 #pragma once
 
+#include <type_traits>
+
+#include <cinttypes>
+
 template<class E>
 struct implicit_bool_flags
 {
     operator bool() const { return bool(this->flags_); }
+    operator E() const { return this->flags_; }
 
     implicit_bool_flags operator | (E y) const
     { return {this->flags_ | y}; }
@@ -36,6 +41,25 @@ struct implicit_bool_flags
 private:
     E const flags_;
 };
+
+namespace detail
+{
+    struct to_verbose_flags_
+    {
+        uint32_t verbose;
+
+        template<class E>
+        operator E () const
+        {
+            static_assert(std::is_enum<E>::value, "must be a enum type");
+            return static_cast<E>(this->verbose);
+        }
+    };
+}
+
+inline detail::to_verbose_flags_
+to_verbose_flags(uint32_t verbose)
+{ return {verbose}; }
 
 #define REDEMPTION_VERBOSE_FLAGS(visibility, verbose_member_name)   \
     enum class VerboseFlags : uint32_t;                             \
@@ -52,6 +76,7 @@ public:                                                             \
     enum class VerboseFlags : uint32_t
 
 
+// TODO temporary
 namespace detail
 {
     template<class Ini>

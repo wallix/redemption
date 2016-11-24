@@ -30,6 +30,8 @@
 
 #include "utils/sugar/strutils.hpp"
 
+#include "utils/verbose_flags.hpp"
+
 struct RdpNego
 {
     enum {
@@ -56,7 +58,7 @@ struct RdpNego
   // NLA : Network Level Authentication (TLS implicit)
   // TLS : TLS Encryption without NLA
   // RDP: Standard Legacy RDP Encryption without TLS nor NLA
-  
+
     enum
     {
         NEGO_STATE_INITIAL,
@@ -87,12 +89,18 @@ struct RdpNego
     uint8_t * current_password;
     Random & rand;
     TimeObj & timeobj;
-    const uint32_t verbose;
     char * lb_info;
+
+    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    {
+        none,
+        credssp       = 0x400,
+        negotiation = 128,
+    };
 
     RdpNego(const bool tls, Transport & socket_trans, const char * username, bool nla,
             const char * target_host, const char krb, Random & rand, TimeObj & timeobj,
-            const uint32_t verbose = 0)
+            const VerboseFlags verbose = {})
     : flags(0)
     , tls(nla || tls)
     , nla(nla)
@@ -106,8 +114,8 @@ struct RdpNego
     , current_password(nullptr)
     , rand(rand)
     , timeobj(timeobj)
-    , verbose(verbose)
     , lb_info(nullptr)
+    , verbose(verbose)
     {
         if (this->tls){
             this->enabled_protocols = RdpNego::PROTOCOL_RDP
@@ -303,7 +311,7 @@ struct RdpNego
                                    this->hostname, this->target_host,
                                    this->krb, this->restricted_admin_mode,
                                    this->rand, this->timeobj,
-                                   this->verbose);
+                                   this->verbose & VerboseFlags::credssp);
 
                 int res = 0;
                 bool fallback = false;
@@ -444,14 +452,14 @@ struct RdpNego
         char cookie[256];
         snprintf(cookie, 256, "Cookie: mstshash=%s\x0D\x0A", this->username);
         char * cookie_or_token = this->lb_info?this->lb_info:cookie;
-        if (this->verbose & 128) {
+        if (this->verbose & VerboseFlags::negotiation) {
             LOG(LOG_INFO, "Send %s:", this->lb_info?"load_balance_info":"cookie");
             hexdump_c(cookie_or_token, strlen(cookie_or_token));
         }
         uint32_t rdp_neg_requestedProtocols = X224::PROTOCOL_RDP
                 | (this->tls ? X224::PROTOCOL_TLS:0)
                 | (this->nla ? X224::PROTOCOL_HYBRID:0);
-        
+
         StaticOutStream<65536> stream;
         X224::CR_TPDU_Send(stream, cookie_or_token,
                            this->tls?(X224::RDP_NEG_REQ):(X224::RDP_NEG_NONE),

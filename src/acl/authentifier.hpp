@@ -32,6 +32,9 @@
 #include "module_manager.hpp"
 #include "front/front.hpp"
 
+#include "utils/verbose_flags.hpp"
+
+
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -151,25 +154,30 @@ class KeepAlive {
     bool wait_answer;     // true when we are waiting for a positive response
                           // false when positive response has been received and
                           // timers have been set to new timers.
-    uint32_t verbose;
     bool connected;
 
 public:
-    KeepAlive(std::chrono::seconds _grace_delay, uint32_t verbose)
-        : grace_delay(_grace_delay.count())
+    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    {
+        none,
+        state = 0x10,
+    };
+
+    KeepAlive(std::chrono::seconds grace_delay_, VerboseFlags verbose)
+        : grace_delay(grace_delay_.count())
         , timeout(0)
         , renew_time(0)
         , wait_answer(false)
-        , verbose(verbose)
         , connected(false)
+        , verbose(verbose)
     {
-        if (this->verbose & 0x10) {
+        if (this->verbose & VerboseFlags::state) {
             LOG(LOG_INFO, "KEEP ALIVE CONSTRUCTOR");
         }
     }
 
     ~KeepAlive() {
-        if (this->verbose & 0x10) {
+        if (this->verbose & VerboseFlags::state) {
             LOG(LOG_INFO, "KEEP ALIVE DESTRUCTOR");
         }
     }
@@ -180,7 +188,7 @@ public:
 
     void start(time_t now) {
         this->connected = true;
-        if (this->verbose & 0x10) {
+        if (this->verbose & VerboseFlags::state) {
             LOG(LOG_INFO, "auth::start_keep_alive");
         }
         this->timeout    = now + 2 * this->grace_delay;
@@ -209,7 +217,7 @@ public:
             if (this->wait_answer
                 && !ini.is_asked<cfg::context::keepalive>()
                 && ini.get<cfg::context::keepalive>()) {
-                if (this->verbose & 0x10) {
+                if (this->verbose & VerboseFlags::state) {
                     LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
                 }
                 this->timeout    = now + 2*this->grace_delay;
@@ -241,22 +249,26 @@ class Inactivity {
 
     ActivityChecker & checker;
 
-    uint32_t verbose;
-
 public:
-    Inactivity(ActivityChecker & checker, std::chrono::seconds timeout, time_t start, uint32_t verbose)
+    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    {
+        none,
+        state = 0x10,
+    };
+
+    Inactivity(ActivityChecker & checker, std::chrono::seconds timeout, time_t start, VerboseFlags verbose)
     : inactivity_timeout(std::max<time_t>(timeout.count(), 30))
     , last_activity_time(start)
     , checker(checker)
     , verbose(verbose)
     {
-        if (this->verbose & 0x10) {
+        if (this->verbose & VerboseFlags::state) {
             LOG(LOG_INFO, "INACTIVITY CONSTRUCTOR");
         }
     }
 
     ~Inactivity() {
-        if (this->verbose & 0x10) {
+        if (this->verbose & VerboseFlags::state) {
             LOG(LOG_INFO, "INACTIVITY DESTRUCTOR");
         }
     }
@@ -285,30 +297,35 @@ class SessionManager : public auth_api {
                               // received from acl and asked_remote_answer is
                               // set to false
 
-    uint32_t verbose;
-
     KeepAlive keepalive;
     Inactivity inactivity;
 
     mutable std::string session_type;
 
+
 public:
+    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    {
+        none,
+        state = 0x10,
+    };
+
     SessionManager(Inifile & ini, ActivityChecker & activity_checker, Transport & auth_trans, time_t acl_start_time)
         : ini(ini)
-        , acl_serial(ini, auth_trans, ini.get<cfg::debug::auth>())
+        , acl_serial(ini, auth_trans, to_verbose_flags(ini.get<cfg::debug::auth>()))
         , remote_answer(false)
-        , verbose(ini.get<cfg::debug::auth>())
-        , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), ini.get<cfg::debug::auth>())
+        , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), to_verbose_flags(ini.get<cfg::debug::auth>()))
         , inactivity(activity_checker, ini.get<cfg::globals::session_timeout>(),
-                     acl_start_time, ini.get<cfg::debug::auth>())
+                     acl_start_time, to_verbose_flags(ini.get<cfg::debug::auth>()))
+        , verbose(static_cast<VerboseFlags>(ini.get<cfg::debug::auth>()))
     {
-        if (this->verbose & 0x10) {
+        if (this->verbose & VerboseFlags::state) {
             LOG(LOG_INFO, "auth::SessionManager");
         }
     }
 
     ~SessionManager() override {
-        if (this->verbose & 0x10) {
+        if (this->verbose & VerboseFlags::state) {
             LOG(LOG_INFO, "auth::~SessionManager");
         }
     }
@@ -497,7 +514,7 @@ public:
     }
 
     void receive() {
-        if (this->verbose & 0x10) {
+        if (this->verbose & VerboseFlags::state) {
             LOG(LOG_INFO, "+++++++++++> ACL receive <++++++++++++++++");
         }
         try {
@@ -526,7 +543,7 @@ public:
     }
 
     void ask_acl() {
-        if (this->verbose & 0x10) {
+        if (this->verbose & VerboseFlags::state) {
             LOG(LOG_INFO, "Ask acl\n");
         }
         this->acl_serial.send_acl_data();

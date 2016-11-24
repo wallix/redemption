@@ -152,12 +152,14 @@ inline const char * get_module_name(int module_id) {
     return "<unknown>";
 }
 
-class MMIni : public MMApi {
+class MMIni : public MMApi
+{
 public:
+    // TASK private visibility
     Inifile & ini;
-    uint32_t verbose;
-    explicit MMIni(Inifile & _ini) : ini(_ini)
-                          , verbose(ini.get<cfg::debug::auth>())
+
+    explicit MMIni(Inifile & ini_)
+    : ini(ini_)
     {}
 
     ~MMIni() override {}
@@ -263,19 +265,14 @@ public:
             return MODULE_VNC;
         }
         else if (module_cstr == STRMODULE_INTERNAL) {
-            LOG(LOG_INFO, "===========> MODULE_INTERNAL");
             int res = MODULE_EXIT;
             auto & target = this->ini.get<cfg::context::target_host>();
             if (target == "bouncer2") {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "==========> INTERNAL bouncer2");
-                }
+                LOG(LOG_INFO, "==========> MODULE_INTERNAL bouncer2");
                 res = MODULE_INTERNAL_BOUNCER2;
             }
             else if (target == "autotest") {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "==========> INTERNAL test");
-                }
+                LOG(LOG_INFO, "==========> MODULE_INTERNAL test");
                 std::string user = this->ini.get<cfg::globals::target_user>();
                 if (user.size() < 5 || !std::equal(user.end() - 5u, user.end(), ".mwrm")) {
                     user += ".mwrm";
@@ -284,21 +281,15 @@ public:
                 res = MODULE_INTERNAL_TEST;
             }
             else if (target == "widget2_message") {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_message");
-                }
+                LOG(LOG_INFO, "==========> MODULE_INTERNAL widget2_message");
                 res = MODULE_INTERNAL_WIDGET2_MESSAGE;
             }
             else if (target == "widgettest") {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widgettest");
-                }
+                LOG(LOG_INFO, "==========> MODULE_INTERNAL widgettest");
                 res = MODULE_INTERNAL_WIDGETTEST;
             }
             else {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "==========> INTERNAL card");
-                }
+                LOG(LOG_INFO, "==========> MODULE_INTERNAL card");
                 res = MODULE_INTERNAL_CARD;
             }
             return res;
@@ -623,7 +614,7 @@ private:
         : SocketTransport( name, sck
                          , mm.ini.get<cfg::context::target_host>().c_str()
                          , mm.ini.get<cfg::context::target_port>()
-                         , verbose, error_message)
+                         , to_verbose_flags(verbose), error_message)
         , Mod(*this, std::forward<Args>(mod_args)...)
         , mm(mm)
         {
@@ -720,6 +711,12 @@ public:
 
     ClientExecute client_execute;
 
+    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    {
+        none,
+        new_mod = 0x1,
+    };
+
     ModuleManager(Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
         : MMIni(ini)
         , front(front)
@@ -728,7 +725,8 @@ public:
         , mod_transport(nullptr)
         , gen(gen)
         , timeobj(timeobj)
-        , client_execute(front, ini.get<cfg::debug::mod_internal>())
+        , client_execute(front, ini.get<cfg::debug::mod_internal>() & 1)
+        , verbose(static_cast<VerboseFlags>(ini.get<cfg::debug::auth>()))
     {
         this->no_mod.get_event().reset();
         this->mod = &this->no_mod;
@@ -776,7 +774,7 @@ public:
                 this->front.client_info.height,
                 this->ini.get<cfg::font>()
             ));
-            if (this->verbose){
+            if (this->verbose & VerboseFlags::new_mod){
                 LOG(LOG_INFO, "ModuleManager::internal module 'bouncer2_mod' ready");
             }
             break;
@@ -791,9 +789,9 @@ public:
                 this->ini.get_ref<cfg::context::auth_error_message>(),
                 this->ini.get<cfg::font>(),
                 !this->ini.get<cfg::mod_replay::on_end_of_data>(),
-                this->ini.get<cfg::debug::capture>()
+                to_verbose_flags(this->ini.get<cfg::debug::capture>())
             ));
-            if (this->verbose){
+            if (this->verbose & VerboseFlags::new_mod){
                 LOG(LOG_INFO, "ModuleManager::internal module 'test' ready");
             }
             break;
@@ -834,7 +832,7 @@ public:
                 )),
                 this->client_execute
             ));
-            if (this->verbose){
+            if (this->verbose & VerboseFlags::new_mod){
                 LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");
             }
             break;
@@ -1066,7 +1064,7 @@ public:
         case MODULE_XUP:
             {
                 const char * name = "XUP Target";
-                if (this->verbose){
+                if (this->verbose & VerboseFlags::new_mod){
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
                 }
 

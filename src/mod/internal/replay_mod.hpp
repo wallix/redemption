@@ -34,6 +34,10 @@ class ReplayMod : public InternalMod
 {
     std::string & auth_error_message;
 
+public:
+    using VerboseFlags = FileToGraphic::VerboseFlags;
+
+private:
     struct Reader
     {
         struct Impl
@@ -42,8 +46,8 @@ class ReplayMod : public InternalMod
             InMetaSequenceTransport in_trans;
             FileToGraphic           reader;
 
-            Impl(char const * prefix, char const * extension, uint32_t debug_capture)
-            : in_trans(&this->cctx, prefix, extension, 0, 0)
+            Impl(char const * prefix, char const * extension, VerboseFlags debug_capture)
+            : in_trans(&this->cctx, prefix, extension, 0)
             , reader(this->in_trans, /*begin_capture*/{0, 0}, /*end_capture*/{0, 0}, true, debug_capture)
             {
             }
@@ -51,7 +55,7 @@ class ReplayMod : public InternalMod
         };
         std::unique_ptr<Impl> impl;
 
-        void construct(char const * prefix, char const * extension, uint32_t debug_capture)
+        void construct(char const * prefix, char const * extension, VerboseFlags debug_capture)
         {
             this->impl = std::make_unique<Impl>(prefix, extension, debug_capture);
         }
@@ -76,7 +80,7 @@ public:
              , std::string & auth_error_message
              , Font const & font
              , bool wait_for_escape
-             , uint32_t debug_capture)
+             , VerboseFlags debug_capture)
     : InternalMod(front, width, height, font, Theme{})
     , auth_error_message(auth_error_message)
     , end_of_data(false)

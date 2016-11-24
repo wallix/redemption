@@ -179,7 +179,7 @@ int main(int argc, char * argv[]) {
         LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
     }
     SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
-                               , ini.get<cfg::debug::front>(), nullptr);
+                               , to_verbose_flags(ini.get<cfg::debug::front>()), nullptr);
     wait_obj front_event;
 
     // Remove existing Persistent Key List file.
@@ -254,7 +254,7 @@ int main(int argc, char * argv[]) {
 
             int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000);
             SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port
-                                     , ini.get<cfg::debug::mod_rdp>(), &ini.get_ref<cfg::context::auth_error_message>());
+                                     , to_verbose_flags(ini.get<cfg::debug::mod_rdp>()), &ini.get_ref<cfg::context::auth_error_message>());
 
             ClientInfo client_info = front.client_info;
 

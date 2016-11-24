@@ -738,7 +738,6 @@ public:
     MetaLine meta_line;
     char meta_path[2048];
     int encryption;
-    uint32_t verbose;
 
     int buf_close()
     { return this->cfb.file_close(); }
@@ -1055,9 +1054,8 @@ private:
             canonical_path( this->meta_line.filename
                           , original_path, sizeof(original_path)
                           , basename, sizeof(basename)
-                          , extension, sizeof(extension)
-                          , this->verbose);
-            snprintf(filename, sizeof(filename), "%s%s%s", this->meta_path, basename, extension);
+                          , extension, sizeof(extension));
+            std::snprintf(filename, sizeof(filename), "%s%s%s", this->meta_path, basename, extension);
 
             if (file_exist(filename)) {
                 strcpy(this->meta_line.filename, filename);
@@ -1072,14 +1070,12 @@ public:
         CryptoContext * cctx,
         const char * filename,
         const char * extension,
-        int encryption,
-        uint32_t verbose)
+        int encryption)
     : cfb(cctx, encryption)
     , buf_meta(cctx, encryption)
     , meta_header_version(1)
     , meta_header_has_checksum(false)
     , encryption(encryption)
-    , verbose(verbose)
     {
         assert(encryption ? bool(cctx) : true);
 
@@ -1124,17 +1120,8 @@ public:
         canonical_path( meta_filename
                       , this->meta_path, sizeof(this->meta_path)
                       , basename, sizeof(basename)
-                      , extension2, sizeof(extension2)
-                      , this->verbose);
-
-        this->verbose = verbose;
+                      , extension2, sizeof(extension2));
     }
-
-//    InMetaSequenceTransport(CryptoContext * cctx, const char * filename, int encryption, uint32_t verbose)
-//    : buf(filename, cctx, cctx, encryption, verbose)
-//    {
-//        this->verbose = verbose;
-//    }
 
     ~InMetaSequenceTransport(){
         this->cfb.file_close();

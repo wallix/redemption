@@ -278,7 +278,7 @@ protected:
     const ClientTimeZone client_time_zone;
     Random & gen;
     const uint32_t verbose;
-    const uint32_t cache_verbose;
+    const BmpCache::VerboseFlags cache_verbose;
 
     const bool enable_auth_channel;
 
@@ -710,7 +710,7 @@ public:
         , client_time_zone(info.client_time_zone)
         , gen(gen)
         , verbose(mod_rdp_params.verbose)
-        , cache_verbose(mod_rdp_params.cache_verbose)
+        , cache_verbose(to_verbose_flags(mod_rdp_params.cache_verbose))
         , enable_auth_channel(mod_rdp_params.alternate_shell[0] && !mod_rdp_params.ignore_auth_channel)
         , auth_channel_flags(0)
         , auth_channel_chanid(0)
@@ -718,7 +718,7 @@ public:
         , acl(mod_rdp_params.acl)
         , nego( mod_rdp_params.enable_tls, trans, mod_rdp_params.target_user
               , mod_rdp_params.enable_nla, mod_rdp_params.target_host
-              , mod_rdp_params.enable_krb, gen, timeobj, mod_rdp_params.verbose)
+              , mod_rdp_params.enable_krb, gen, timeobj, to_verbose_flags(mod_rdp_params.verbose))
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)

@@ -117,7 +117,7 @@ struct NTLMContext
     uint8_t MessageIntegrityCheck[SslMd5::DIGEST_LENGTH];
     // uint8_t NtProofStr[16];
 
-    uint32_t verbose;
+    bool verbose;
 
     explicit NTLMContext(Random & rand, TimeObj & timeobj)
         : timeobj(timeobj)
@@ -189,7 +189,7 @@ struct NTLMContext
         if (this->NTLMv2) {
             this->UseMIC = true;
         }
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Init");
         }
     }
@@ -203,7 +203,7 @@ struct NTLMContext
 
     void ntlm_generate_timestamp()
     {
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext TimeStamp");
         }
         uint8_t ZeroTimestamp[8] = {};
@@ -229,7 +229,7 @@ struct NTLMContext
     void ntlm_generate_client_challenge()
     {
         // /* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Generate Client Challenge");
         }
         this->rand.random(this->ClientChallenge, 8);
@@ -241,7 +241,7 @@ struct NTLMContext
     // server method
     void ntlm_generate_server_challenge()
     {
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Generate Server Challenge");
         }
         this->rand.random(this->ServerChallenge, 8);
@@ -257,7 +257,7 @@ struct NTLMContext
     // client method
     //void ntlm_generate_random_session_key()
     //{
-    //    if (this->verbose & 0x400) {
+    //    if (this->verbose) {
     //        LOG(LOG_INFO, "NTLMContext Generate Random Session Key");
     //    }
     //    this->rand.random(this->RandomSessionKey, 16);
@@ -265,7 +265,7 @@ struct NTLMContext
 
     // client method ??
     void ntlm_generate_exported_session_key() {
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Generate Exported Session Key");
         }
         this->rand.random(this->ExportedSessionKey, 16);
@@ -283,7 +283,7 @@ struct NTLMContext
                           const uint8_t * user,   size_t user_size,
                           const uint8_t * domain, size_t domain_size,
                           uint8_t * buff, size_t buff_size) {
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext NTOWFv2 Hash");
         }
         SslHMAC_Md5 hmac_md5(hash, hash_size);
@@ -304,7 +304,7 @@ struct NTLMContext
         // if it is so no need to use a temporary variable
         // and copy digest afterward.
         memset(buff, 0, buff_size);
-        memcpy(buff, tmp_md5, 
+        memcpy(buff, tmp_md5,
             std::min(buff_size,
             static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
     }
@@ -321,7 +321,7 @@ struct NTLMContext
                  const uint8_t * user,   size_t user_size,
                  const uint8_t * domain, size_t domain_size,
                  uint8_t * buff, size_t buff_size) {
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext NTOWFv2");
         }
         SslMd4 md4;
@@ -338,9 +338,9 @@ struct NTLMContext
         hmac_md5.update(userup, user_size);
 
         delete [] userup;
-        
+
         uint8_t tmp_md5[SslMd5::DIGEST_LENGTH] = {};
-        
+
         userup = nullptr;
         hmac_md5.update(domain, domain_size);
         hmac_md5.final(tmp_md5);
@@ -348,11 +348,11 @@ struct NTLMContext
         // if it is so no need to use a temporary variable
         // and copy digest afterward.
         memset(buff, 0, buff_size);
-        memcpy(buff, tmp_md5, 
+        memcpy(buff, tmp_md5,
             std::min(buff_size, static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
-        
-        
-        if (this->verbose & 0x400) {
+
+
+        if (this->verbose) {
             if (!buff) {
                 LOG(LOG_INFO, "NTOWFv2 error: nullptr result");
             }
@@ -377,7 +377,7 @@ struct NTLMContext
     void ntlmv2_compute_response_from_challenge(const uint8_t * pass,   size_t pass_size,
                                                 const uint8_t * user,   size_t user_size,
                                                 const uint8_t * domain, size_t domain_size) {
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Compute response from challenge");
         }
         uint8_t ResponseKeyNT[16] = {};
@@ -395,7 +395,7 @@ struct NTLMContext
         // BStream AvPairsStream;
         // this->CHALLENGE_MESSAGE.AvPairList.emit(AvPairsStream);
         size_t temp_size = 1 + 1 + 6 + 8 + 8 + 4 + AvPairsStream.size() + 4;
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Compute response: AvPairs size %zu", AvPairsStream.size());
             LOG(LOG_INFO, "NTLMContext Compute response: temp size %zu", temp_size);
         }
@@ -416,7 +416,7 @@ struct NTLMContext
         //                       Concat(ServerChallenge, temp))
 
         uint8_t NtProofStr[SslMd5::DIGEST_LENGTH] = {};
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Compute response: NtProofStr");
         }
         SslHMAC_Md5 hmac_md5resp(ResponseKeyNT, sizeof(ResponseKeyNT));
@@ -428,7 +428,7 @@ struct NTLMContext
 
         // NtChallengeResponse = Concat(NtProofStr, temp)
 
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Compute response: NtChallengeResponse");
         }
         auto & NtChallengeResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
@@ -438,19 +438,19 @@ struct NTLMContext
         NtChallengeResponse.ostream.out_copy_bytes(temp, temp_size);
         NtChallengeResponse.mark_end();
 
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "Compute response: NtChallengeResponse Ready");
         }
 
         delete [] temp;
         temp = nullptr;
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "Compute response: temp buff successfully deleted");
         }
         // LmChallengeResponse.Response = HMAC_MD5(LMOWFv2(password, user, userdomain),
         //                                         Concat(ServerChallenge, ClientChallenge))
         // LmChallengeResponse.ChallengeFromClient = ClientChallenge
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Compute response: LmChallengeResponse");
         }
         auto & LmChallengeResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
@@ -466,7 +466,7 @@ struct NTLMContext
         LmChallengeResponse.ostream.out_copy_bytes(this->ClientChallenge, 8);
         LmChallengeResponse.mark_end();
 
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Compute response: SessionBaseKey");
         }
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
@@ -492,7 +492,7 @@ struct NTLMContext
         // EncryptedRandomSessionKey = RC4K(SessionBaseKey, NONCE(16))
 
         // generate NONCE(16) exportedsessionkey
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Encrypt RandomSessionKey");
         }
         this->ntlm_generate_exported_session_key();
@@ -508,7 +508,7 @@ struct NTLMContext
     // session base key computed with Responses.
     void ntlm_decrypt_exported_session_key() {
         auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Decrypt RandomSessionKey");
         }
         memcpy(this->EncryptedRandomSessionKey, AuthEncryptedRSK.get_data(),
@@ -660,7 +660,7 @@ struct NTLMContext
 
     // server check nt response
     bool ntlm_check_nt_response_from_authenticate(const uint8_t * hash, size_t hash_size) {
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Check NtResponse");
         }
         auto & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
@@ -703,7 +703,7 @@ struct NTLMContext
 
     // Server check lm response
     bool ntlm_check_lm_response_from_authenticate(const uint8_t * hash, size_t hash_size) {
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Check LmResponse");
         }
         auto & AuthLmResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
@@ -738,7 +738,7 @@ struct NTLMContext
 
     // server compute Session Base Key
     void ntlm_compute_session_base_key(const uint8_t * hash, size_t hash_size) {
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Compute Session Base Key");
         }
         auto & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
@@ -1066,7 +1066,7 @@ struct NTLMContext
 
     // READ WRITE FUNCTIONS
     SEC_STATUS write_negotiate(PSecBuffer output_buffer) {
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Write Negotiate");
         }
         this->ntlm_client_build_negotiate();
@@ -1082,7 +1082,7 @@ struct NTLMContext
     }
 
     SEC_STATUS read_negotiate(PSecBuffer input_buffer) {
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Read Negotiate");
         }
         InStream in_stream(input_buffer->Buffer.get_data(),
@@ -1098,7 +1098,7 @@ struct NTLMContext
         return SEC_I_CONTINUE_NEEDED;
     }
     SEC_STATUS write_challenge(PSecBuffer output_buffer) {
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Write Challenge");
         }
         this->ntlm_server_build_challenge();
@@ -1114,7 +1114,7 @@ struct NTLMContext
         return SEC_I_CONTINUE_NEEDED;
     }
     SEC_STATUS read_challenge(PSecBuffer input_buffer) {
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Read Challenge");
         }
         InStream in_stream(input_buffer->Buffer.get_data(),
@@ -1127,7 +1127,7 @@ struct NTLMContext
         return SEC_I_CONTINUE_NEEDED;
     }
     SEC_STATUS write_authenticate(PSecBuffer output_buffer) {
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Write Authenticate");
         }
         SEC_WINNT_AUTH_IDENTITY & id = this->identity;
@@ -1161,7 +1161,7 @@ struct NTLMContext
         return SEC_I_COMPLETE_NEEDED;
     }
     SEC_STATUS read_authenticate(PSecBuffer input_buffer) {
-        if (this->verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Read Authenticate");
         }
         InStream in_stream(input_buffer->Buffer.get_data(), input_buffer->Buffer.size());

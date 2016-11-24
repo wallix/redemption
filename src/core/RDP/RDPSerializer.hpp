@@ -153,11 +153,11 @@ public:
     REDEMPTION_VERBOSE_FLAGS(protected, verbose)
     {
         none,
-        primary_orders      = 1,
-        secondary_orders    = 2,
-        bitmap_update       = 4,
-        internal_buffer     = 1024,
+        primary_orders      = 32,
+        secondary_orders    = 64,
+        bitmap_update       = 128,
         bmp_cache           = 512,
+        internal_buffer     = 1024,
     };
 
     REDEMPTION_DEBUG_CONFIG_TO_VERBOSE_FLAGS(

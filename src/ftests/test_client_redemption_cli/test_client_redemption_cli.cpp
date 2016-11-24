@@ -425,7 +425,7 @@ int main(int argc, char** argv){
                                                           , sck
                                                           , targetIP
                                                           , port
-                                                          , verbose
+                                                          , to_verbose_flags(verbose)
                                                           , &error_message
                                                           );
                 connection_succed = true;

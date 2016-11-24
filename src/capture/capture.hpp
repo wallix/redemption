@@ -195,6 +195,8 @@ public:
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
 
+        LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
+
         if (authentifier) {
             cctx.set_master_key(ini.get<cfg::crypto::key0>());
             cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
