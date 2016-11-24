@@ -1372,6 +1372,8 @@ protected:
         session_probe_virtual_channel_params.bogus_refresh_rect_ex                  =
             (this->bogus_refresh_rect && this->allow_using_multiple_monitors &&
              (this->cs_monitor.monitorCount > 1));
+        session_probe_virtual_channel_params.show_maximized                         =
+            (!this->remote_program);
 
         return session_probe_virtual_channel_params;
     }
