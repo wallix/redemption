@@ -24,77 +24,21 @@
 #define BOOST_TEST_MODULE TestDoRecorder
 #include "system/redemption_unit_tests.hpp"
 
+#include <check_mem.hpp>
+
 #define LOGPRINT
 // #define LOGNULL
 
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
-
-#include <iostream>
-
-#include "main/version.hpp"
-#include "system/ssl_calls.hpp"
-#include "main/do_recorder.cpp"
-#include "main/version.hpp"
-
-#include "configs/config.hpp"
-
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <algorithm>
-#include <unistd.h>
-#include "utils/genrandom.hpp"
-
-#include <new>
-
-#include "utils/fdbuf.hpp"
-#include "transport/out_meta_sequence_transport.hpp"
-#include "transport/in_meta_sequence_transport.hpp"
-#include "capture/cryptofile.hpp"
-
-#include "utils/log.hpp"
-#include <fcntl.h>
-
-#include <iostream>
-
-#include "main/version.hpp"
-#include "system/ssl_calls.hpp"
-
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <algorithm>
-#include <unistd.h>
-#include "utils/genrandom.hpp"
-
-#include <new>
-
-
-#include "utils/fdbuf.hpp"
-#include "transport/out_meta_sequence_transport.hpp"
-#include "transport/in_meta_sequence_transport.hpp"
-#include "capture/cryptofile.hpp"
-
-#include "check_mem.hpp"
-
 
 #include <fstream>
-
-#include <algorithm>
-#include <new>
-
-#include <cstdio>
-#include <cstdint>
-
-#include <fcntl.h>
-
-#include "system/ssl_calls.hpp"
-#include "utils/genrandom.hpp"
-#include "utils/fdbuf.hpp"
-#include "utils/sugar/local_fd.hpp"
+#include <iostream>
+#include <ostream>
+#include "utils/fileutils.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
-#include "transport/in_meta_sequence_transport.hpp"
-#include "capture/cryptofile.hpp"
+#include "main/do_recorder.hpp"
 
 
 #ifdef IN_IDE_PARSER
