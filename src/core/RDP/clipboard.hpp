@@ -2904,6 +2904,9 @@ public:
     {}
 
     void receive(InStream & chunk) {
+        // Header
+        chunk.in_skip_bytes(8);
+
         // 2.2.5.2.1 Packed Metafile Payload (cliboard.hpp)
         chunk.in_skip_bytes(12);
 
@@ -2920,15 +2923,15 @@ public:
             switch (type) {
 
                 case META_SETWINDOWEXT:
-                    chunk.in_skip_bytes(size - 6);
+                    chunk.in_skip_bytes(4);
                 break;
 
                 case META_SETWINDOWORG:
-                    chunk.in_skip_bytes(size - 6);
+                    chunk.in_skip_bytes(4);
                 break;
 
                 case META_SETMAPMODE:
-                    chunk.in_skip_bytes(size - 6);
+                    chunk.in_skip_bytes(2);
                 break;
 
                 case META_DIBSTRETCHBLT:
@@ -2952,6 +2955,7 @@ public:
                     chunk.in_skip_bytes(4);
 
                     this->imageSize   = chunk.in_uint32_le();
+                    REDASSERT(this->imageSize == ((this->bpp/8) * this->height * this->width));
                     chunk.in_skip_bytes(8);
 
                     int skip(0);
