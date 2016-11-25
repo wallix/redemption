@@ -134,6 +134,10 @@ public:
     }
 
     void input_mouse(int device_flags, int x, int y) {
+        if (DialogBoxType::WAITING_SCREEN != this->dialog_box_type) {
+            return;
+        }
+
         if (device_flags & SlowPath::PTRFLAGS_BUTTON1) {
             this->disconnect_now_button_clicked = false;
 
@@ -157,6 +161,10 @@ public:
     }
 
     void input_scancode(long param1, long param2, long device_flags) {
+        if (DialogBoxType::WAITING_SCREEN != this->dialog_box_type) {
+            return;
+        }
+
         (void)param2;
         if ((28 == param1) && !(device_flags & SlowPath::KBDFLAGS_RELEASE)) {
             LOG(LOG_INFO, "RemoteApp session initiated disconnect by user");
@@ -538,7 +546,8 @@ private:
 
         this->dialog_box_type = RemoteProgramsSessionManager::NONE;
 
-        this->disconnect_now_button_rect = Rect();
+        this->disconnect_now_button_rect    = Rect();
+        this->disconnect_now_button_clicked = false;
     }
 
     void splash_screen_draw() {
