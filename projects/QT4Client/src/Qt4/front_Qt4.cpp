@@ -138,8 +138,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
 
     CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
                                       , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                        GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                        GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                        GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
                                       , PDU_MAX_SIZE+1
                                       };
     this->_cl.push_back(channel_rdpdr);
@@ -2254,10 +2253,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                     case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
                     {
                         {
-                        LOG(LOG_INFO, "SERVER >> RDPDR: PAKID_CORE_SERVER_ANNOUNCE");
+                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: PAKID_CORE_SERVER_ANNOUNCE");
 
                         uint16_t versionMajor(chunk.in_uint16_le()); // 0x0001
-                        uint16_t versionMinor(chunk.in_uint16_le()); // 0x0002
+                        uint16_t versionMinor(0x0006);            // chunk.in_uint16_le()
                         uint32_t clientId(chunk.in_uint32_le());
 
                         StaticOutStream<32> stream;
@@ -2272,17 +2271,14 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         int total_length(stream.get_offset());
                         InStream chunk_to_send(stream.get_data(), stream.get_offset());
 
-                        //this->show_out_stream(CHANNELS::CHANNEL_FLAG_LAST |CHANNELS::CHANNEL_FLAG_FIRST, stream, total_length);
-
                         this->_callback->send_to_mod_channel( channel_names::rdpdr
                                                             , chunk_to_send
                                                             , total_length
                                                             , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                              CHANNELS::CHANNEL_FLAG_FIRST |
-                                                              CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                              CHANNELS::CHANNEL_FLAG_FIRST
                                                             );
 
-                        LOG(LOG_INFO, "CLIENT >> RDPDR: PAKID_CORE_CLIENTID_CONFIRM");
+                        LOG(LOG_INFO, "CLIENT >> RDPDR Channel: PAKID_CORE_CLIENTID_CONFIRM");
                         }
 
                         {
@@ -2301,31 +2297,29 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         int total_length(stream.get_offset());
                         InStream chunk_to_send(stream.get_data(), stream.get_offset());
 
-                        //this->show_out_stream(CHANNELS::CHANNEL_FLAG_LAST |CHANNELS::CHANNEL_FLAG_FIRST, stream, total_length);
-
                         this->_callback->send_to_mod_channel( channel_names::rdpdr
                                                             , chunk_to_send
                                                             , total_length
                                                             , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                              CHANNELS::CHANNEL_FLAG_FIRST |
-                                                              CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                              CHANNELS::CHANNEL_FLAG_FIRST
                                                             );
 
-                        LOG(LOG_INFO, "CLIENT >> RDPDR: PAKID_CORE_CLIENT_NAME");
+                        LOG(LOG_INFO, "CLIENT >> RDPDR Channel: PAKID_CORE_CLIENT_NAME");
                         }
-
                     }
                     break;
 
                     case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
-                        LOG(LOG_INFO, "SERVER >> RDPDR: PAKID_CORE_SERVER_CAPABILITY");
+                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: PAKID_CORE_SERVER_CAPABILITY");
+
+
                         break;
 
                     case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
-                        LOG(LOG_INFO, "SERVER >> RDPDR: PAKID_CORE_CLIENTID_CONFIRM");
+                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: PAKID_CORE_CLIENTID_CONFIRM");
                         break;
 
-                    default: LOG(LOG_INFO, "SERVER >> RDPDR: DEFAULT RDPDR_CTYP_CORE unknow packetId = %x", packetId);
+                    default: LOG(LOG_INFO, "SERVER >> RDPDR Channel: DEFAULT RDPDR_CTYP_CORE unknow packetId = %x", packetId);
                         break;
                 }
 
@@ -2347,12 +2341,12 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 void Front_Qt::show_out_stream(int flags, OutStream & chunk, size_t length) {
     uint8_t * data = chunk.get_data();
 
-    std::cout <<  std::hex << "flag=0x" << flags << " total_length=" << std::dec << int(length) <<  std::hex <<  std::endl;
-    std::cout << "\"";
+    std::cout <<  std::hex << "                      flag=0x" << flags << " total_length=" << std::dec << int(length) <<  std::hex <<  std::endl;
+    std::cout << "                      \"";
     for (size_t i = 0; i < length; i++) {
         int byte(data[i]);
         if ((i % 16) == 0 && i != 0) {
-            std::cout << "\"" << std::endl << "\"";
+            std::cout << "\"" << std::endl << "                      \"";
         }
 
         std::cout << "\\x";
@@ -2365,12 +2359,12 @@ void Front_Qt::show_out_stream(int flags, OutStream & chunk, size_t length) {
 }
 
 void Front_Qt::show_in_stream(int flags, InStream & chunk, size_t length) {
-    std::cout <<  std::hex << "flag=0x" << flags << " total_length=" << std::dec << int(length) <<  std::hex <<  std::endl;
-    std::cout << "\"";
+    std::cout <<  std::hex << "                    flag=0x" << flags << " total_length=" << std::dec << int(length) <<  std::hex <<  std::endl;
+    std::cout << "                        \"";
     for (size_t i = 0; i < length; i++) {
         int byte(chunk.in_uint8());
         if ((i % 16) == 0 && i != 0) {
-            std::cout << "\"" << std::endl << "\"";
+            std::cout << "\"" << std::endl << "                      \"";
         }
 
         std::cout << "\\x";
