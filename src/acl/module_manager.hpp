@@ -767,6 +767,8 @@ private:
         while (this->front.keymap.nb_kevent_available())
             this->front.keymap.get_kevent();
 
+        this->clear_osd_message();
+
         this->internal_mod = mod.get();
         this->mod = mod.get();
 
