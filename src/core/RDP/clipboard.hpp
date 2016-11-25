@@ -2889,7 +2889,6 @@ class MetaFilePicDescriptor
 
 public:
     int recordSize;
-    int type;
     int height;
     int width;
     int bpp;
@@ -2898,7 +2897,6 @@ public:
 
     MetaFilePicDescriptor() :
       recordSize(0)
-    , type(0)
     , height(0)
     , width(0)
     , bpp(0)
@@ -2906,6 +2904,9 @@ public:
     {}
 
     void receive(InStream & chunk) {
+        // Header
+        chunk.in_skip_bytes(8);
+
         // 2.2.5.2.1 Packed Metafile Payload (cliboard.hpp)
         chunk.in_skip_bytes(12);
 
@@ -2916,26 +2917,27 @@ public:
         while(notEOF) {
 
             // 2.3 WMF Records
-            this->recordSize = chunk.in_uint32_le() * 2;
-            this->type = chunk.in_uint16_le();
+            int size = chunk.in_uint32_le() * 2;
+            int type = chunk.in_uint16_le();
 
             switch (type) {
 
                 case META_SETWINDOWEXT:
-                    chunk.in_skip_bytes(recordSize - 6);
+                    chunk.in_skip_bytes(4);
                 break;
 
                 case META_SETWINDOWORG:
-                    chunk.in_skip_bytes(recordSize - 6);
+                    chunk.in_skip_bytes(4);
                 break;
 
                 case META_SETMAPMODE:
-                    chunk.in_skip_bytes(recordSize - 6);
+                    chunk.in_skip_bytes(2);
                 break;
 
                 case META_DIBSTRETCHBLT:
                 {
                     notEOF = false;
+                    this->recordSize = size;
 
                     // 2.3.1.3.1 META_DIBSTRETCHBLT With Bitmap
                     chunk.in_skip_bytes(4);
@@ -2953,6 +2955,7 @@ public:
                     chunk.in_skip_bytes(4);
 
                     this->imageSize   = chunk.in_uint32_le();
+                    REDASSERT(this->imageSize == ((this->bpp/8) * this->height * this->width));
                     chunk.in_skip_bytes(8);
 
                     int skip(0);
@@ -2969,8 +2972,8 @@ public:
                 }
                 break;
 
-                default: LOG(LOG_INFO, "DEFAULT: unknow record type=%x size=%d octets", this->type, this->recordSize);
-                         chunk.in_skip_bytes(recordSize - 6);
+                default: LOG(LOG_INFO, "DEFAULT: unknow record type=%x size=%d octets", type, size);
+                         //chunk.in_skip_bytes(recordSize - 6);
 
                 break;
             }
