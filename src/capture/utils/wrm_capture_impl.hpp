@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "configs/config.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/caches/pointercache.hpp"
@@ -163,15 +164,17 @@ public:
         drawable.width(), drawable.height(), groupid, authentifier)
     , graphic_to_file(
         now, *this->trans_variant.trans, drawable.width(), drawable.height(), capture_bpp,
-        this->bmp_cache, this->gly_cache, this->ptr_cache,
-        this->dump_png24_api, ini, delta_time, GraphicToFile::SendInput::YES, ini.get<cfg::debug::capture>())
-    , nc(this->graphic_to_file, now, ini)
+        this->bmp_cache, this->gly_cache, this->ptr_cache, this->dump_png24_api,
+        ini.get<cfg::video::wrm_compression_algorithm>(), delta_time, GraphicToFile::SendInput::YES,
+        GraphicToFile::VerboseFlags(ini.get<cfg::debug::capture>())
+        | GraphicToFile::debug_config_to_verbose_flags(ini)
+    )
+    , nc(this->graphic_to_file, now, ini.get<cfg::video::frame_interval>(), ini.get<cfg::video::break_interval>())
     {}
 
     void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
         apis_register.graphic_list->push_back(this->graphic_to_file);
         apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this));
-        apis_register.update_config_capture_list.push_back(this->nc);
         apis_register.external_capture_list.push_back(this->nc);
         apis_register.capture_probe_list.push_back(this->graphic_to_file);
 

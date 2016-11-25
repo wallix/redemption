@@ -23,7 +23,6 @@
 
 #include "utils/colors.hpp"
 #include "utils/compression_transport_wrapper.hpp"
-#include "configs/config.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/RDPSerializer.hpp"
 #include "core/RDP/share.hpp"
@@ -127,8 +126,6 @@ private:
     Transport & trans_target;
     Transport & trans;
 
-    const Inifile & ini;
-
     const uint8_t wrm_format_version;
 
     uint16_t info_version = 0;
@@ -160,17 +157,16 @@ public:
                , uint16_t info_cache_4_size
                , bool     info_cache_4_persistent
 
-               , const Inifile & ini)
+               , WrmCompressionAlgorithm wrm_compression_algorithm)
     : RDPChunkedDevice()
-    , compression_wrapper(*trans, ini.get<cfg::video::wrm_compression_algorithm>())
+    , compression_wrapper(*trans, wrm_compression_algorithm)
     , trans_target(*trans)
     , trans(this->compression_wrapper.get())
-    , ini(ini)
     , wrm_format_version(bool(this->compression_wrapper.get_algorithm()) ? 4 : 3)
     {
-        if (this->ini.get<cfg::video::wrm_compression_algorithm>() != this->compression_wrapper.get_algorithm()) {
+        if (wrm_compression_algorithm != this->compression_wrapper.get_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
-               , static_cast<unsigned>(this->ini.get<cfg::video::wrm_compression_algorithm>()));
+               , static_cast<unsigned>(wrm_compression_algorithm));
         }
 
         send_meta_chunk(
@@ -406,11 +402,7 @@ class GraphicToFile
     // Extractor
     OutStream keyboard_buffer_32;
 
-    const Inifile & ini;
-
     const uint8_t wrm_format_version;
-
-    //const uint32_t verbose;
 
 public:
     enum class SendInput { NO, YES };
@@ -424,13 +416,13 @@ public:
                 , GlyphCache & gly_cache
                 , PointerCache & ptr_cache
                 , gdi::DumpPng24Api & dump_png24
-                , const Inifile & ini
+                , WrmCompressionAlgorithm wrm_compression_algorithm
                 , const int dela_time
                 , SendInput send_input = SendInput::NO
-                , uint32_t verbose = 0)
+                , VerboseFlags verbose = VerboseFlags::none)
     : RDPSerializer( this->buffer_stream_orders, this->buffer_stream_bitmaps, capture_bpp
-                   , bmp_cache, gly_cache, ptr_cache, 0, 1, 1, 32 * 1024, ini)
-    , compression_wrapper(trans, ini.get<cfg::video::wrm_compression_algorithm>())
+                   , bmp_cache, gly_cache, ptr_cache, 0, 1, 1, 32 * 1024, verbose)
+    , compression_wrapper(trans, wrm_compression_algorithm)
     , trans_target(trans)
     , trans(this->compression_wrapper.get())
     , dela_time(dela_time)
@@ -443,15 +435,11 @@ public:
     , send_input(send_input == SendInput::YES)
     , dump_png24_api(dump_png24)
     , keyboard_buffer_32(keyboard_buffer_32_buf)
-    , ini(ini)
     , wrm_format_version(bool(this->compression_wrapper.get_algorithm()) ? 4 : 3)
-    //, verbose(verbose)
     {
-        (void)verbose;
-
-        if (this->ini.get<cfg::video::wrm_compression_algorithm>() != this->compression_wrapper.get_algorithm()) {
+        if (wrm_compression_algorithm != this->compression_wrapper.get_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
-               , static_cast<unsigned>(this->ini.get<cfg::video::wrm_compression_algorithm>()));
+               , static_cast<unsigned>(wrm_compression_algorithm));
         }
 
         last_sent_timer.tv_sec = 0;

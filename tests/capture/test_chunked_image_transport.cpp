@@ -82,8 +82,6 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
     try {
         Rect scr(0, 0, 20, 10);
         CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
-        Inifile ini;
-        ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
         BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                            BmpCache::CacheOption(600, 256, false),
                            BmpCache::CacheOption(300, 1024, false),
@@ -92,7 +90,7 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
         GlyphCache gly_cache;
         RDPDrawable drawable(scr.cx, scr.cy, 24);
         DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
-        GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, ini, 1000);
+        GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, WrmCompressionAlgorithm::no_compression, 1000);
         drawable.draw(RDPOpaqueRect(scr, RED), scr);
         consumer.draw(RDPOpaqueRect(scr, RED), scr);
         drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
@@ -162,8 +160,6 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
 
     Rect scr(0, 0, 20, 10);
     CheckTransport trans(expected, sizeof(expected)-1, 511);
-    Inifile ini;
-    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
@@ -172,7 +168,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
     DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
-    GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, ini, 1000);
+    GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, WrmCompressionAlgorithm::no_compression, 1000);
     drawable.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
@@ -253,8 +249,6 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
 
     Rect scr(0, 0, 20, 10);
     CheckTransport trans(expected, sizeof(expected)-1, 511);
-    Inifile ini;
-    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
@@ -263,7 +257,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
     DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
-    GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, ini, 1000);
+    GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, WrmCompressionAlgorithm::no_compression, 1000);
     drawable.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);

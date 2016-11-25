@@ -30,7 +30,6 @@
 class NativeCapture
 : public gdi::CaptureApi
 , public gdi::ExternalCaptureApi
-, public gdi::UpdateConfigCaptureApi
 {
     timeval start_native_capture;
     uint64_t inter_frame_interval_native_capture;
@@ -41,35 +40,25 @@ class NativeCapture
     GraphicToFile & recorder;
     uint64_t time_to_wait;
 
-
 public:
-    NativeCapture( GraphicToFile & recorder, const timeval & now, const Inifile & ini)
+    NativeCapture(
+        GraphicToFile & recorder,
+        const timeval & now,
+        std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval,
+        std::chrono::seconds break_interval
+    )
     : start_native_capture(now)
+    , inter_frame_interval_native_capture(
+        std::chrono::duration_cast<std::chrono::microseconds>(frame_interval).count())
     , start_break_capture(now)
+    , inter_frame_interval_start_break_capture(
+        std::chrono::duration_cast<std::chrono::microseconds>(break_interval).count())
     , recorder(recorder)
     , time_to_wait(0)
-    {
-        this->update_config(ini);
-    }
+    {}
 
     ~NativeCapture() override {
         this->recorder.sync();
-    }
-
-    void update_config(const Inifile & ini) override
-    {
-        using std::chrono::duration_cast;
-        using std::chrono::microseconds;
-
-        {
-            auto const interval = ini.get<cfg::video::frame_interval>();
-            this->inter_frame_interval_native_capture = duration_cast<microseconds>(interval).count();
-        }
-
-        {
-            auto const interval = ini.get<cfg::video::break_interval>();
-            this->inter_frame_interval_start_break_capture = duration_cast<microseconds>(interval).count();
-        }
     }
 
     // toggles externally genareted breakpoint.

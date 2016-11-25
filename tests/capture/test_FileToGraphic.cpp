@@ -53,11 +53,6 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, 0);
 
-    Inifile ini;
-    ini.set<cfg::debug::primary_orders>(0);
-    ini.set<cfg::debug::secondary_orders>(0);
-    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
-
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid);
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
@@ -67,8 +62,6 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
 
     OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid);
-    ini.set<cfg::video::frame_interval>(cfg::video::frame_interval::type{10});
-    ini.set<cfg::video::break_interval>(cfg::video::break_interval::type{20});
 
     const struct ToCacheOption {
         ToCacheOption(){}
@@ -99,11 +92,10 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
         player.screen_rect.cx,
         player.screen_rect.cy,
         24,
-        bmp_cache, gly_cache, ptr_cache, dump_png, ini, 1000
+        bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression, 1000
     );
-    NativeCapture wrm_recorder(graphic_to_file, player.record_now, ini);
+    NativeCapture wrm_recorder(graphic_to_file, player.record_now, std::chrono::seconds{1}, std::chrono::seconds{20});
 
-    wrm_recorder.update_config(ini);
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
     player.add_consumer(&graphic_to_file, &wrm_recorder, nullptr, nullptr, &wrm_recorder);
 

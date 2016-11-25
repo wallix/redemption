@@ -50,10 +50,10 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
 
     FakeFront front(info, 0);
 
-    Inifile ini;
+    Font font;
 
     BOOST_CHECK(true);
-    TestCardMod mod(front, info.width, info.height, ini.get<cfg::font>());
+    TestCardMod mod(front, info.width, info.height, font);
     BOOST_CHECK(true);
     try{
         mod.draw_event(time(nullptr), front);

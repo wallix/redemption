@@ -211,7 +211,12 @@ public:
         friend class CryptoContext;
 
     public:
-        using const_bytes_array::const_bytes_array;
+        template<class T>
+        key_data(T const & bytes32) noexcept
+        : const_bytes_array(bytes32)
+        {
+            assert(this->size() == key_length);
+        }
 
         template<class T, std::size_t array_length>
         key_data(std::array<T, array_length> const & data) noexcept
@@ -228,13 +233,13 @@ public:
         }
     };
 
-    void set_master_key(key_data key)
+    void set_master_key(key_data key) noexcept
     {
         memcpy(this->master_key, key.data(), sizeof(this->master_key));
         this->master_key_loaded = true;
     }
 
-    void set_hmac_key(key_data key)
+    void set_hmac_key(key_data key) noexcept
     {
         memcpy(this->hmac_key, key.data(), sizeof(this->hmac_key));
         this->hmac_key_loaded = true;

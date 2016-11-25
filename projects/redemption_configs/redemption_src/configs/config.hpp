@@ -162,6 +162,9 @@ public:
     using authid_t = ::authid_t;
     using parse_error = configs::parse_error;
 
+    // TODO temporary
+    using debug_section_type = cfg::debug;
+
 
     explicit Inifile()
     {

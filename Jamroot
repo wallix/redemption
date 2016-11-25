@@ -548,11 +548,11 @@ test-canonical utils/compression_transport_wrapper.hpp : <library>z <library>sna
 test-canonical capture/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 
 
-#test-canonical main/do_recorder.hpp :
-## <library>do_recorder 
-# <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z
-# <library>ffmpeg <library>ocr <library>ppocr_test <library>bitmap 
-# ;
+test-canonical main/do_recorder.hpp :
+ <library>do_recorder 
+ <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z
+ <library>ffmpeg <library>ocr <library>ppocr_test <library>bitmap 
+ ;
 
 
 ## @}
