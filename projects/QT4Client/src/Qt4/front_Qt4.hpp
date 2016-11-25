@@ -21,7 +21,6 @@
 
 #pragma once
 
-//#define LOGPRINT
 
 #ifndef Q_MOC_RUN
 #include <stdio.h>
@@ -284,8 +283,7 @@ public:
     };
 
     enum : int {
-        PASTE_TEXT_ENDER_SIZE   = 2
-      , PASTE_TEXT_CONTENT_SIZE = PDU_MAX_SIZE - PDU_HEADER_SIZE - PASTE_TEXT_ENDER_SIZE
+        PASTE_TEXT_CONTENT_SIZE = PDU_MAX_SIZE
       , PASTE_PIC_CONTENT_SIZE  = PDU_MAX_SIZE - RDPECLIP::METAFILE_HEADERS_SIZE - PDU_HEADER_SIZE
     };
 

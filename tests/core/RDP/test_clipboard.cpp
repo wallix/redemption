@@ -333,7 +333,6 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         BOOST_CHECK_EQUAL(bitmapInfoHeader.yPelsPerMeter, 0);
         BOOST_CHECK_EQUAL(bitmapInfoHeader.colorUsed, 0);
         BOOST_CHECK_EQUAL(bitmapInfoHeader.colorImportant, 0);
-
     }
 }
 

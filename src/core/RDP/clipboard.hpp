@@ -2631,7 +2631,7 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
     } dibStretchBLT;
 
 
-    struct MetaFilePicEnder {
+    struct Ender {
         enum : uint32_t {
             SIZE = 6
           , FLAG = 0x03
@@ -2668,7 +2668,7 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
                                               , const double ARBITRARY_SCALE)
       : FormatDataResponsePDU(data_length + METAFILE_HEADERS_SIZE)
       , mappingMode(MM_ANISOTROPIC)
-      , xExt(int(double(width) * ARBITRARY_SCALE))
+      , xExt(int(double(width ) * ARBITRARY_SCALE))
       , yExt(int(double(height) * ARBITRARY_SCALE))
       , metaHeader(data_length)
       , metaSetMepMod(MM_ANISOTROPIC)
@@ -2764,8 +2764,8 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
                     break;
 
                 default:
-                    LOG(LOG_INFO, "DEFAULT");
-
+                    LOG(LOG_INFO, "DEFAULT: unknow record type=%x size=%d octets", type, recordSize*2);
+                    stream.in_skip_bytes((recordSize*2) - 6);
                     break;
             }
         }
@@ -2774,7 +2774,7 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
 
 struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
 
-    struct TextEnder {
+    struct Ender {
         enum : uint32_t {
             SIZE = 2
         };
@@ -2916,21 +2916,21 @@ public:
         while(notEOF) {
 
             // 2.3 WMF Records
-            this->recordSize = chunk.in_uint32_le();
+            this->recordSize = chunk.in_uint32_le() * 2;
             this->type = chunk.in_uint16_le();
 
             switch (type) {
 
                 case META_SETWINDOWEXT:
-                    chunk.in_skip_bytes(recordSize*2 - 6);
+                    chunk.in_skip_bytes(recordSize - 6);
                 break;
 
                 case META_SETWINDOWORG:
-                    chunk.in_skip_bytes(recordSize*2 - 6);
+                    chunk.in_skip_bytes(recordSize - 6);
                 break;
 
                 case META_SETMAPMODE:
-                    chunk.in_skip_bytes(recordSize*2 - 6);
+                    chunk.in_skip_bytes(recordSize - 6);
                 break;
 
                 case META_DIBSTRETCHBLT:
@@ -2969,7 +2969,9 @@ public:
                 }
                 break;
 
-                default:
+                default: LOG(LOG_INFO, "DEFAULT: unknow record type=%x size=%d octets", this->type, this->recordSize);
+                         chunk.in_skip_bytes(recordSize - 6);
+
                 break;
             }
         }
