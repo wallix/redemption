@@ -154,8 +154,8 @@ public:
 
         this->img.rect.x = left + (this->cx() - this->img.cx()) / 2;
         this->img.rect.y = top + (3*(height - total_height) / 2 - this->img.cy()) / 2 + total_height;
-        if (this->img.rect.y + this->img.cy() > height) {
-            this->img.rect.y = 0;
+        if (this->img.rect.y + this->img.cy() > top + height) {
+            this->img.rect.y = top;
         }
 
         if (!has_challenge)
@@ -220,6 +220,9 @@ public:
 
         this->img.rect.x = left + (this->cx() - this->img.cx()) / 2;
         this->img.rect.y = top + (3*(height - total_height) / 2 - this->img.cy()) / 2 + total_height;
+        if (this->img.rect.y + this->img.cy() > top + height) {
+            this->img.rect.y = top;
+        }
 
         if (this->challenge && this->extra_button) {
             extra_button->set_button_x(left + 60);

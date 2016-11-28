@@ -221,6 +221,9 @@ protected:
 
     int  use_rdp5;
 
+    uint16_t cbAutoReconnectCookie = 0;
+    uint8_t  autoReconnectCookie[28] = { 0 };
+
     int  keylayout;
 
     uint8_t   lic_layer_license_key[16];
@@ -692,6 +695,7 @@ public:
             mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
           )
         , use_rdp5(1)
+        , cbAutoReconnectCookie(info.cbAutoReconnectCookie)
         , keylayout(info.keylayout)
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
                 , mod_rdp_params.persist_bitmap_cache_on_disk, mod_rdp_params.verbose)
@@ -834,6 +838,10 @@ public:
         }
 
         this->beginning = timeobj.get_time().tv_sec;
+
+        if (this->cbAutoReconnectCookie) {
+            ::memcpy(this->autoReconnectCookie, info.autoReconnectCookie, sizeof(this->autoReconnectCookie));
+        }
 
         if (this->bogus_linux_cursor == BogusLinuxCursor::smart) {
             GeneralCaps general_caps;
@@ -994,6 +1002,8 @@ public:
             }
         }
 
+        char session_probe_window_title[32] = { 0 };
+
         if (this->verbose & RDPVerboseFlags::basic_trace) {
             LOG(LOG_INFO, "enable_session_probe=%s",
                 (this->enable_session_probe ? "yes" : "no"));
@@ -1047,8 +1057,6 @@ public:
 
                 uint32_t r = this->gen.rand32();
 
-                char session_probe_window_title[32];
-
                 snprintf(session_probe_window_title,
                     sizeof(session_probe_window_title),
                     "%X%X%X%X",
@@ -1069,12 +1077,6 @@ public:
                 this->client_execute_arguments   = this->session_probe_arguments;
                 this->client_execute_working_dir = "%TMP%";
                 this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
-
-                this->remote_programs_session_manager =
-                    std::make_unique<RemoteProgramsSessionManager>(front, *this,
-                        this->lang, this->front_width, this->front_height,
-                        this->font, this->theme, this->acl,
-                        session_probe_window_title, this->verbose);
             }   // if (this->remote_program)
             else {
                 if (mod_rdp_params.session_probe_use_clipboard_based_launcher &&
@@ -1169,6 +1171,14 @@ public:
                 this->nego.set_lb_info(this->redir_info.lb_info,
                                        this->redir_info.lb_info_length);
             }
+        }
+
+        if (remote_program) {
+            this->remote_programs_session_manager =
+                std::make_unique<RemoteProgramsSessionManager>(front, *this,
+                    this->lang, this->front_width, this->front_height,
+                    this->font, this->theme, this->acl,
+                    session_probe_window_title, this->verbose);
         }
     }   // mod_rdp
 
@@ -5418,7 +5428,12 @@ public:
             if (lie.FieldsPresent & RDP::LOGON_EX_AUTORECONNECTCOOKIE) {
                 LOG(LOG_INFO, "process save session info : Auto-reconnect cookie");
 
-                RDP::ServerAutoReconnectPacket_Recv sarp(lif.payload);
+                RDP::ServerAutoReconnectPacket auto_reconnect;
+
+                auto_reconnect.receive(lif.payload);
+                auto_reconnect.log(LOG_INFO);
+
+                this->front.send_auto_reconnect_packet(auto_reconnect);
             }
             if (lie.FieldsPresent & RDP::LOGON_EX_LOGONERRORS) {
                 LOG(LOG_INFO, "process save session info : Logon Errors Info");
@@ -6579,6 +6594,14 @@ private:
                              , this->clientAddr
                              );
         infoPacket.extendedInfoPacket.clientTimeZone = this->client_time_zone;
+
+        if (this->cbAutoReconnectCookie) {
+            infoPacket.extendedInfoPacket.cbAutoReconnectLen =
+                this->cbAutoReconnectCookie;
+            ::memcpy(infoPacket.extendedInfoPacket.autoReconnectCookie, this->autoReconnectCookie,
+                sizeof(infoPacket.extendedInfoPacket.autoReconnectCookie));
+        }
+
         this->send_data_request(
             GCC::MCS_GLOBAL_CHANNEL,
             [this, &infoPacket](StreamSize<1024>, OutStream & stream) {
