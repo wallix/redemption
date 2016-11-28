@@ -26,6 +26,7 @@
 
 #include "gdi/graphic_api.hpp"
 
+#include "core/RDP/autoreconnect.hpp"
 #include "core/wait_obj.hpp"
 #include "utils/sugar/array_view.hpp"
 
@@ -100,6 +101,10 @@ public:
     ////////////////////////////////
     // RemoteApp.
     virtual void send_savesessioninfo() {}
+
+    virtual void send_auto_reconnect_packet(RDP::ServerAutoReconnectPacket const & auto_reconnect) {
+        (void)auto_reconnect;
+    }
 
     /// \return  -1 is an error
     virtual int get_keylayout() const { return -1; }

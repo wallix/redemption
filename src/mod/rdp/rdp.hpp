@@ -992,6 +992,8 @@ public:
             }
         }
 
+        char session_probe_window_title[32] = { 0 };
+
         if (this->verbose & 1) {
             LOG(LOG_INFO, "enable_session_probe=%s",
                 (this->enable_session_probe ? "yes" : "no"));
@@ -1045,8 +1047,6 @@ public:
 
                 uint32_t r = this->gen.rand32();
 
-                char session_probe_window_title[32];
-
                 snprintf(session_probe_window_title,
                     sizeof(session_probe_window_title),
                     "%X%X%X%X",
@@ -1067,12 +1067,6 @@ public:
                 this->client_execute_arguments   = this->session_probe_arguments;
                 this->client_execute_working_dir = "%TMP%";
                 this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
-
-                this->remote_programs_session_manager =
-                    std::make_unique<RemoteProgramsSessionManager>(front, *this,
-                        this->lang, this->front_width, this->front_height,
-                        this->font, this->theme, this->acl,
-                        session_probe_window_title, this->verbose);
             }   // if (this->remote_program)
             else {
                 if (mod_rdp_params.session_probe_use_clipboard_based_launcher &&
@@ -1167,6 +1161,14 @@ public:
                 this->nego.set_lb_info(this->redir_info.lb_info,
                                        this->redir_info.lb_info_length);
             }
+        }
+
+        if (remote_program) {
+            this->remote_programs_session_manager =
+                std::make_unique<RemoteProgramsSessionManager>(front, *this,
+                    this->lang, this->front_width, this->front_height,
+                    this->font, this->theme, this->acl,
+                    session_probe_window_title, this->verbose);
         }
     }   // mod_rdp
 
@@ -5416,7 +5418,12 @@ public:
             if (lie.FieldsPresent & RDP::LOGON_EX_AUTORECONNECTCOOKIE) {
                 LOG(LOG_INFO, "process save session info : Auto-reconnect cookie");
 
-                RDP::ServerAutoReconnectPacket_Recv sarp(lif.payload);
+                RDP::ServerAutoReconnectPacket auto_reconnect;
+
+                auto_reconnect.receive(lif.payload);
+                auto_reconnect.log(LOG_INFO);
+
+                this->front.send_auto_reconnect_packet(auto_reconnect);
             }
             if (lie.FieldsPresent & RDP::LOGON_EX_LOGONERRORS) {
                 LOG(LOG_INFO, "process save session info : Logon Errors Info");

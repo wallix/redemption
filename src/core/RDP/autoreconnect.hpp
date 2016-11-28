@@ -111,5 +111,78 @@ struct ServerAutoReconnectPacket_Recv {
     }
 };  // ServerAutoReconnectPacket_Recv
 
+struct ServerAutoReconnectPacket {
+    uint32_t Version;
+    uint32_t LogonId;
+    uint8_t  ArcRandomBits[16];
+
+public:
+    void emit(OutStream & stream) const {
+        // The length in bytes of the Server Auto-Reconnect packet.
+        stream.out_uint32_le(0x0000001C);
+
+        stream.out_uint32_le(this->Version);
+        stream.out_uint32_le(this->LogonId);
+
+        stream.out_copy_bytes(this->ArcRandomBits, sizeof(this->ArcRandomBits));
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 4 +   // cbLen(4)
+                                      4 +   // Version(4)
+                                      4 +   // LogonId(4)
+                                      16;   // ArcRandomBits(16)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Server Auto-Reconnect Packet (data): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+        }
+
+        // The length in bytes of the Server Auto-Reconnect packet.
+        REDASSERT(0x0000001C == stream.in_uint32_le());
+
+        this->Version = stream.in_uint32_le();
+        this->LogonId = stream.in_uint32_le();
+
+        stream.in_copy_bytes(this->ArcRandomBits, sizeof(this->ArcRandomBits));
+    }
+
+    static size_t size() {
+        // The length in bytes of the Server Auto-Reconnect packet.
+        return 0x0000001C;
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "ServerAutoReconnectPacket: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length, " Version=%u",
+            this->Version);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length, " LogonId=%u",
+            this->LogonId);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+public:
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+        hexdump(this->ArcRandomBits, sizeof(this->ArcRandomBits));
+    }
+};
+
 }   // namespace RDP
 

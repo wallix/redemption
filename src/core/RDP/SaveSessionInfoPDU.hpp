@@ -583,7 +583,27 @@ struct LogonInfoExtended_Recv {
     , FieldsPresent(stream.in_uint32_le())
     , payload(stream.get_current(), stream.in_remain())
     {
+        //LOG(LOG_INFO, "LogonInfoExtended: Length=%u", this->Length);
         stream.in_skip_bytes(this->payload.get_capacity());
+    }
+};
+
+struct LogonInfoExtended_Send {
+    LogonInfoExtended_Send(OutStream & stream, uint32_t FieldsPresent)
+    {
+        REDASSERT((FieldsPresent == RDP::LOGON_EX_AUTORECONNECTCOOKIE) ||
+            (FieldsPresent == RDP::LOGON_EX_LOGONERRORS));
+
+        uint32_t Length = 10 /* Length(2) + FieldsPresent(2) + cbFieldData(4) */;
+        if (FieldsPresent & RDP::LOGON_EX_AUTORECONNECTCOOKIE) {
+            Length += 28;    // Length in bytes of the Server Auto-Reconnect Packet
+        }
+        if (FieldsPresent & RDP::LOGON_EX_LOGONERRORS) {
+            Length += 8;     // Length in bytes of the TS_LOGON_ERRORS_INFO structure
+        }
+
+        stream.out_uint16_le(Length);
+        stream.out_uint32_le(FieldsPresent);
     }
 };
 
