@@ -191,9 +191,9 @@ protected:
 
 struct GeneratorTransport : public InputTransportDynarray
 {
-    GeneratorTransport(const void * data, size_t len, uint32_t verbose = 0)
+    GeneratorTransport(const void * data, size_t len, bool verbose = false)
+    : verbose(verbose)
     {
-        (void)verbose;
         if (this->buffer().open(len, data)) {
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
@@ -201,12 +201,15 @@ struct GeneratorTransport : public InputTransportDynarray
 
     void do_send(const uint8_t * const buffer, size_t len) override {
         LOG(LOG_INFO, "do_send %zu bytes", len);
-        if (verbose > 127){
+        if (this->verbose){
             LOG(LOG_INFO, "Sending on target (-1) %zu bytes", len);
             hexdump_c(buffer, len);
             LOG(LOG_INFO, "Sent dumped on target (-1) %zu bytes", len);
         }
     }
+
+private:
+    bool verbose;
 };
 
 
@@ -223,7 +226,7 @@ class CheckTransport
     };
 
 public:
-    CheckTransport(const char * data, size_t len, uint32_t verbose = 0)
+    CheckTransport(const char * data, size_t len, bool verbose = false)
     : data(new(std::nothrow) uint8_t[len])
     , len(len)
     , current(0)
@@ -306,7 +309,7 @@ public:
     TestTransport(
         const char * outdata, size_t outlen,
         const char * indata, size_t inlen,
-        uint32_t verbose = 0)
+        bool verbose = false)
     : check(indata, inlen, verbose)
     , gen(outdata, outlen, verbose)
     , public_key_length(0)

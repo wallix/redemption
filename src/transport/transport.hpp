@@ -53,8 +53,6 @@ protected:
 
     auth_api * authentifier;
 
-    uint32_t verbose;
-
 public:
     Transport()
     : total_received(0)
@@ -64,7 +62,6 @@ public:
     , last_quantum_sent(0)
     , status(true)
     , authentifier(get_null_authentifier())
-    , verbose(0)
     {}
 
     virtual ~Transport()

@@ -80,11 +80,11 @@ class SessionProbeClipboardBasedLauncher : public SessionProbeLauncher {
 
     unsigned int copy_paste_loop_counter = 0;
 
-    uint32_t verbose;
+    const implicit_bool_flags<RDPVerboseFlags> verbose;
 
 public:
     SessionProbeClipboardBasedLauncher(mod_api& mod,
-        const std::string& alternate_shell, uint32_t verbose)
+        const std::string& alternate_shell, RDPVerboseFlags verbose)
     : mod(mod)
     , alternate_shell(alternate_shell)
     , verbose(verbose) {}
@@ -98,7 +98,7 @@ public:
     }
 
     bool on_clipboard_initialize() override {
-        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+        if (this->verbose & RDPVerboseFlags::sesprobe_launcher) {
             LOG(LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> on_clipboard_initialize");
         }
@@ -135,7 +135,7 @@ public:
     }
 
     bool on_drive_access() override {
-        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+        if (this->verbose & RDPVerboseFlags::sesprobe_launcher) {
             LOG(LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> on_drive_access");
         }
@@ -156,7 +156,7 @@ public:
     }
 
     bool on_drive_redirection_initialize() override {
-        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+        if (this->verbose & RDPVerboseFlags::sesprobe_launcher) {
             LOG(LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> on_drive_redirection_initialize");
         }
@@ -167,7 +167,7 @@ public:
     }
 
     bool on_event() override {
-        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+        if (this->verbose & RDPVerboseFlags::sesprobe_launcher) {
             LOG(LOG_INFO, "SessionProbeClipboardBasedLauncher :=> on_event - %d",
                 static_cast<int>(this->state));
         }
@@ -436,7 +436,7 @@ public:
 
             case State::START:
                 if (!this->clipboard_initialized) {
-                    if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+                    if (this->verbose & RDPVerboseFlags::sesprobe_launcher) {
                         LOG(LOG_INFO,
                             "SessionProbeClipboardBasedLauncher :=> launcher managed cliprdr initialization");
                     }
@@ -515,7 +515,7 @@ public:
         (void)offset;
         (void)length;
 
-        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+        if (this->verbose & RDPVerboseFlags::sesprobe_launcher) {
             LOG(LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> on_image_read");
         }
@@ -534,7 +534,7 @@ public:
     }
 
     bool on_server_format_data_request() override {
-        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+        if (this->verbose & RDPVerboseFlags::sesprobe_launcher) {
             LOG(LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> on_server_format_data_request");
         }
@@ -571,7 +571,7 @@ public:
     }
 
     bool on_server_format_list_response() override {
-        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+        if (this->verbose & RDPVerboseFlags::sesprobe_launcher) {
             LOG(LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> on_server_format_list_response");
         }
@@ -649,7 +649,7 @@ public:
     }
 
     void stop(bool bLaunchSuccessful) override {
-        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+        if (this->verbose & RDPVerboseFlags::sesprobe_launcher) {
             LOG(LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> stop");
         }

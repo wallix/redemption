@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
     now.tv_sec = 1352304810;
     now.tv_usec = 0;
     const int groupid = 0;
-    OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid, nullptr, 0,
+    OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid, nullptr,
                                        FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
     wrm_trans.send("AAAAX", 5);
     wrm_trans.send("BBBBX", 5);

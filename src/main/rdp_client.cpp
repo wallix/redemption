@@ -45,21 +45,21 @@ namespace po = program_options;
 
 class ClientFront : public FrontAPI
 {
-public:
-    uint32_t verbose;
+    bool verbose;
     ClientInfo &info;
     uint8_t                     mod_bpp;
     BGRPalette                  mod_palette;
     RDPDrawable gd;
     CHANNELS::ChannelDefArray   cl;
 
+public:
     bool can_be_start_capture(auth_api*) override { return false; }
     bool can_be_pause_capture() override { return false; }
     bool can_be_resume_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
 
     void flush() {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "flush()");
             LOG(LOG_INFO, "========================================\n");
@@ -67,7 +67,7 @@ public:
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
@@ -79,7 +79,7 @@ public:
     }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
@@ -89,7 +89,7 @@ public:
     }
 
     void draw(const RDPDestBlt & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
@@ -99,7 +99,7 @@ public:
     }
 
     void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
@@ -109,7 +109,7 @@ public:
     }
 
     void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
@@ -119,7 +119,7 @@ public:
     }
 
     void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
@@ -129,7 +129,7 @@ public:
     }
 
     void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
@@ -139,7 +139,7 @@ public:
     }
 
     void draw(const RDPPatBlt & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
@@ -152,7 +152,7 @@ public:
     }
 
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
@@ -162,7 +162,7 @@ public:
     }
 
     void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
@@ -172,7 +172,7 @@ public:
     }
 
     void draw(const RDPLineTo & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
@@ -185,7 +185,7 @@ public:
     }
 
     void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
@@ -198,7 +198,7 @@ public:
     }
 
     void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
@@ -210,7 +210,7 @@ public:
     }
 
     void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
@@ -223,7 +223,7 @@ public:
     }
 
     void draw(const RDPPolyline & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
@@ -235,7 +235,7 @@ public:
     }
 
     void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
@@ -247,7 +247,7 @@ public:
     }
 
     void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
@@ -260,7 +260,7 @@ public:
     }
 
     void draw(const RDPColCache   & cmd) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
@@ -268,7 +268,7 @@ public:
     }
 
     void draw(const RDPBrushCache & cmd) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
@@ -276,7 +276,7 @@ public:
     }
 
     void draw(const RDP::FrameMarker & order) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             order.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
@@ -286,7 +286,7 @@ public:
     }
 
     void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             order.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
@@ -296,7 +296,7 @@ public:
     }
 
     void draw(const RDP::RAIL::WindowIcon & order) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             order.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
@@ -306,7 +306,7 @@ public:
     }
 
     void draw(const RDP::RAIL::CachedIcon & order) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             order.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
@@ -316,7 +316,7 @@ public:
     }
 
     void draw(const RDP::RAIL::DeletedWindow & order) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             order.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
@@ -326,7 +326,7 @@ public:
     }
 
     void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             order.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
@@ -336,7 +336,7 @@ public:
     }
 
     void draw(const RDP::RAIL::DeletedNotificationIcons & order) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             order.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
@@ -346,7 +346,7 @@ public:
     }
 
     void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             order.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
@@ -356,7 +356,7 @@ public:
     }
 
     void draw(const RDP::RAIL::NonMonitoredDesktop & order) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             order.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
@@ -366,7 +366,7 @@ public:
     }
 
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             bitmap_data.log(LOG_INFO, "ClientFront");
             LOG(LOG_INFO, "========================================\n");
@@ -377,7 +377,7 @@ public:
     }
 
     void set_palette(const BGRPalette&) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "set_palette()");
             LOG(LOG_INFO, "========================================\n");
@@ -387,7 +387,7 @@ public:
     int server_resize(int width, int height, int bpp) override {
         this->mod_bpp = bpp;
         this->info.bpp = bpp;
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
             LOG(LOG_INFO, "========================================\n");
@@ -396,7 +396,7 @@ public:
     }
 
     void set_pointer(const Pointer & cursor) override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "server_set_pointer");
             LOG(LOG_INFO, "========================================\n");
@@ -406,7 +406,7 @@ public:
     }
 
     void begin_update() override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "begin_update");
             LOG(LOG_INFO, "========================================\n");
@@ -414,7 +414,7 @@ public:
     }
 
     void end_update() override {
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "end_update");
             LOG(LOG_INFO, "========================================\n");
@@ -432,22 +432,24 @@ public:
         (void)length;
         (void)chunk_size;
         (void)flags;
-        if (this->verbose > 10) {
+        if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "send_to_channel");
             LOG(LOG_INFO, "========================================\n");
         }
     }
 
-    int getVerbose() { return this->verbose; }
-
-    ClientFront(ClientInfo & info, uint32_t verbose)
-    : FrontAPI(false, false), verbose(verbose), info(info), mod_bpp(info.bpp), mod_palette(BGRPalette::no_init()), gd(info.width, info.height, 24) {
+    ClientFront(ClientInfo & info, bool verbose)
+    : FrontAPI(false, false)
+    , verbose(verbose)
+    , info(info)
+    , mod_bpp(info.bpp)
+    , mod_palette(BGRPalette::no_init())
+    , gd(info.width, info.height, 24)
+    {
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
         }
-
-        this->verbose = verbose;
 
         SSL_library_init();
     }
@@ -499,7 +501,7 @@ int main(int argc, char** argv)
 
 
     Inifile ini;
-    ClientFront front(client_info, verbose);
+    ClientFront front(client_info, verbose > 10);
     ModRDPParams mod_rdp_params( username.c_str()
                                , password.c_str()
                                , target_device.c_str()
@@ -507,7 +509,7 @@ int main(int argc, char** argv)
                                , /*front.keymap.key_flags*/ 0
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
-                               , verbose);
+                               , to_verbose_flags(verbose));
 
     if (verbose > 128) {
         mod_rdp_params.log();
@@ -515,7 +517,7 @@ int main(int argc, char** argv)
 
     /* SocketTransport mod_trans */
     int client_sck = ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms);
-    SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port, verbose, nullptr);
+    SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port, to_verbose_flags(verbose), nullptr);
 
 
     wait_obj front_event;

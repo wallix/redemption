@@ -153,18 +153,13 @@ public:
     REDEMPTION_VERBOSE_FLAGS(protected, verbose)
     {
         none,
-        primary_orders      = 1,
-        secondary_orders    = 2,
-        bitmap_update       = 4,
-        internal_buffer     = 1024,
+        pointer             = 4,
+        primary_orders      = 32,
+        secondary_orders    = 64,
+        bitmap_update       = 128,
         bmp_cache           = 512,
+        internal_buffer     = 1024,
     };
-
-    REDEMPTION_DEBUG_CONFIG_TO_VERBOSE_FLAGS(
-       (get(typename cfg::debug::primary_orders{})   ? VerboseFlags::primary_orders   : VerboseFlags::none)
-     | (get(typename cfg::debug::secondary_orders{}) ? VerboseFlags::secondary_orders : VerboseFlags::none)
-     | (get(typename cfg::debug::bitmap_update{})    ? VerboseFlags::bitmap_update    : VerboseFlags::none)
-    )
 
     RDPSerializer( OutStream & stream_orders
                  , OutStream & stream_bitmaps
@@ -470,7 +465,7 @@ public:
                 if (has_delta_byte) {
                     const uint16_t delta = get_delta(new_cmd, i);
 
-                    if (this->verbose & VerboseFlags::primary_orders & 0x80) {
+                    if (this->verbose & VerboseFlags::primary_orders) {
                         LOG(LOG_INFO,
                             "RDPSerializer::draw(RDPGlyphIndex, ...): "
                                 "Experimental support of "
@@ -490,7 +485,7 @@ public:
                 if (has_delta_byte) {
                     const uint16_t delta = get_delta(new_cmd, i);
 
-                    if (this->verbose & VerboseFlags::primary_orders & 0x80) {
+                    if (this->verbose & VerboseFlags::primary_orders) {
                         LOG(LOG_INFO,
                             "RDPSerializer::draw(RDPGlyphIndex, ...): "
                                 "Experimental support of "
@@ -502,7 +497,7 @@ public:
                     }
                 }
 
-                if (this->verbose & VerboseFlags::primary_orders & 0x80) {
+                if (this->verbose & VerboseFlags::primary_orders) {
                     LOG(LOG_INFO,
                         "RDPSerializer::draw(RDPGlyphIndex, ...): "
                             "Experimental support of USE (0xFE) operation byte in "
@@ -517,7 +512,7 @@ public:
                 const uint8_t fragment_index = new_cmd.data[i++];
                 const uint8_t fragment_size  = new_cmd.data[i++];
 
-                if (this->verbose & VerboseFlags::primary_orders & 0x80) {
+                if (this->verbose & VerboseFlags::primary_orders) {
                     LOG(LOG_INFO,
                         "RDPSerializer::draw(RDPGlyphIndex, ...): "
                             "Experimental support of ADD (0xFF) operation byte in "

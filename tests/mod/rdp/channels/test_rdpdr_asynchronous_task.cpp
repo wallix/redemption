@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
     RdpdrDriveReadTask rdpdr_drive_read_task(transport.get(), fd,
         DeviceId, CompletionId, number_of_bytes_to_read, 1024 * 32,
-        test_to_server_sender, verbose);
+        test_to_server_sender, to_verbose_flags(verbose));
 
     bool run_task = true;
 
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
         buf,
         p-buf,
         test_to_server_sender,
-        verbose);
+        to_verbose_flags(verbose));
 
     bool run_task = true;
 

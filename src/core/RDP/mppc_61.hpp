@@ -581,7 +581,7 @@ class rdp_mppc_61_enc : public rdp_mppc_enc {
     MatchFinder match_finder;
 
 public:
-    explicit rdp_mppc_61_enc(uint32_t verbose = 0)
+    explicit rdp_mppc_61_enc(bool verbose = 0)
         : rdp_mppc_enc(verbose)
         , historyBuffer{0}
         , historyOffset(0)
@@ -596,7 +596,7 @@ public:
 
 private:
     void compress_61(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size) {
-        if (this->verbose & 512) {
+        if (this->verbose) {
             LOG(LOG_INFO, "compress_61: uncompressed_data_size=%" PRIu16 " historyOffset=%" PRIu32,
                 uncompressed_data_size, this->historyOffset);
         }
@@ -622,7 +622,7 @@ private:
         }
 
         if (this->level_1_compr_flags_hold & L1_PACKET_AT_FRONT) {
-            if (this->verbose & 512) {
+            if (this->verbose) {
                 LOG(LOG_INFO, "level_1_compr_flags_hold & L1_PACKET_AT_FRONT");
             }
             this->historyOffset = 0;
@@ -739,7 +739,7 @@ private:
             this->level_1_compr_flags_hold = 0;
         }
 
-        if (this->verbose & 512) {
+        if (this->verbose) {
             LOG(LOG_INFO, "Level1ComprFlags=0x%02X Level2ComprFlags=0x%02X",
                 static_cast<unsigned>(this->Level1ComprFlags),
                 static_cast<unsigned>(this->Level2ComprFlags));

@@ -124,13 +124,14 @@ class ClientExecute
 
     Bitmap wallix_icon_min;
 
-    uint32_t verbose;
+    bool verbose;
 
 public:
-    ClientExecute(FrontAPI & front, uint32_t verbose)
-    : wallix_icon_min(bitmap_from_file(SHARE_PATH "/wallix-icon-min.png"))
-    , verbose(verbose) {
-        this->front_ = &front;
+    ClientExecute(FrontAPI & front, bool verbose)
+    : front_(&front)
+    , wallix_icon_min(bitmap_from_file(SHARE_PATH "/wallix-icon-min.png"))
+    , verbose(verbose)
+    {
     }   // ClientExecute
 
     Rect adjust_rect(Rect rect) {
@@ -448,7 +449,7 @@ public:
                     this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NORTHEAST;
                 }
                 else if (this->title_bar_rect.contains_pt(xPos, yPos) && !this->maximized) {
-                    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    if (this->verbose) {
                         LOG(LOG_INFO, "ClientExecute::input_mouse: Mouse button 1 pressed on title bar");
                     }
 
@@ -553,7 +554,7 @@ public:
                         const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                                     | CHANNELS::CHANNEL_FLAG_LAST;
 
-                        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                        if (this->verbose) {
                             {
                                 const bool send              = true;
                                 const bool from_or_to_client = true;
@@ -609,7 +610,7 @@ public:
                         const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                                     | CHANNELS::CHANNEL_FLAG_LAST;
 
-                        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                        if (this->verbose) {
                             {
                                 const bool send              = true;
                                 const bool from_or_to_client = true;
@@ -811,7 +812,7 @@ public:
                     order.NumVisibilityRects(1);
                     order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
-                    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    if (this->verbose) {
                         StaticOutStream<1024> out_s;
                         order.emit(out_s);
                         order.log(LOG_INFO);
@@ -1020,7 +1021,7 @@ public:
                     order.Style(0x34EE0000);
                     order.ExtendedStyle(0x40310);
 
-                    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    if (this->verbose) {
                         StaticOutStream<1024> out_s;
                         order.emit(out_s);
                         order.log(LOG_INFO);
@@ -1080,7 +1081,7 @@ public:
             else if ((MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button) &&
                      !this->maximized) {
                 if (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button) {
-                    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    if (this->verbose) {
                         LOG(LOG_INFO, "ClientExecute::input_mouse: Mouse button 1 released from title bar");
                     }
 
@@ -1120,7 +1121,7 @@ public:
                         order.VisibleOffsetX(this->window_rect.x);
                         order.VisibleOffsetY(this->window_rect.y);
 
-                        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                        if (this->verbose) {
                             StaticOutStream<1024> out_s;
                             order.emit(out_s);
                             order.log(LOG_INFO);
@@ -1167,7 +1168,7 @@ public:
                     const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                                 | CHANNELS::CHANNEL_FLAG_LAST;
 
-                    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    if (this->verbose) {
                         {
                             const bool send              = true;
                             const bool from_or_to_client = true;
@@ -1239,7 +1240,7 @@ public:
                     order.VisibleOffsetX(this->window_rect.x);
                     order.VisibleOffsetY(this->window_rect.y);
 
-                    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    if (this->verbose) {
                         StaticOutStream<1024> out_s;
                         order.emit(out_s);
                         order.log(LOG_INFO);
@@ -1314,7 +1315,7 @@ public:
                 order.Style(0x16CF0000);
                 order.ExtendedStyle(0x110);
 
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     StaticOutStream<1024> out_s;
                     order.emit(out_s);
                     order.log(LOG_INFO);
@@ -1383,7 +1384,7 @@ public:
                 order.Style(0x17CF0000);
                 order.ExtendedStyle(0x110);
 
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     StaticOutStream<1024> out_s;
                     order.emit(out_s);
                     order.log(LOG_INFO);
@@ -1438,7 +1439,7 @@ public:
             const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                         | CHANNELS::CHANNEL_FLAG_LAST;
 
-            if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            if (this->verbose) {
                 {
                     const bool send              = true;
                     const bool from_or_to_client = true;
@@ -1470,7 +1471,7 @@ public:
             const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                         | CHANNELS::CHANNEL_FLAG_LAST;
 
-            if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            if (this->verbose) {
                 {
                     const bool send              = true;
                     const bool from_or_to_client = true;
@@ -1502,7 +1503,7 @@ public:
             const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                         | CHANNELS::CHANNEL_FLAG_LAST;
 
-            if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            if (this->verbose) {
                 {
                     const bool send              = true;
                     const bool from_or_to_client = true;
@@ -1534,7 +1535,7 @@ public:
                 );
             order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
 
-            if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            if (this->verbose) {
                 StaticOutStream<256> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
@@ -1572,7 +1573,7 @@ protected:
 
         capdu.receive(chunk);
 
-        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+        if (this->verbose) {
             capdu.log(LOG_INFO);
         }
 
@@ -1588,7 +1589,7 @@ protected:
 
                 order.ActiveWindowId(0xFFFFFFFF);
 
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     StaticOutStream<256> out_s;
                     order.emit(out_s);
                     order.log(LOG_INFO);
@@ -1609,7 +1610,7 @@ protected:
                 order.NumWindowIds(1);
                 order.window_ids(0, INTERNAL_MODULE_WINDOW_ID);
 
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     StaticOutStream<256> out_s;
                     order.emit(out_s);
                     order.log(LOG_INFO);
@@ -1643,7 +1644,7 @@ protected:
 
         cepdu.receive(chunk);
 
-        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+        if (this->verbose) {
             cepdu.log(LOG_INFO);
         }
 
@@ -1675,7 +1676,7 @@ protected:
 
         cgaipdu.receive(chunk);
 
-        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+        if (this->verbose) {
             cgaipdu.log(LOG_INFO);
         }
 
@@ -1696,7 +1697,7 @@ protected:
             const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                         | CHANNELS::CHANNEL_FLAG_LAST;
 
-            if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            if (this->verbose) {
                 {
                     const bool send              = true;
                     const bool from_or_to_client = true;
@@ -1738,7 +1739,7 @@ protected:
 
         hspdu.receive(chunk);
 
-        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+        if (this->verbose) {
             hspdu.log(LOG_INFO);
         }
     }   // process_client_handshake_pdu
@@ -1766,7 +1767,7 @@ protected:
 
         cipdu.receive(chunk);
 
-        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+        if (this->verbose) {
             cipdu.log(LOG_INFO);
         }
     }   // process_client_information_pdu
@@ -1792,7 +1793,7 @@ protected:
 
         cscpdu.receive(chunk);
 
-        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+        if (this->verbose) {
             cscpdu.log(LOG_INFO);
         }
 
@@ -1809,7 +1810,7 @@ protected:
 
                         order.ActiveWindowId(0xFFFFFFFF);
 
-                        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                        if (this->verbose) {
                             StaticOutStream<256> out_s;
                             order.emit(out_s);
                             order.log(LOG_INFO);
@@ -1854,7 +1855,7 @@ protected:
                         order.Style(0x34EE0000);
                         order.ExtendedStyle(0x40310);
 
-                        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                        if (this->verbose) {
                             StaticOutStream<1024> out_s;
                             order.emit(out_s);
                             order.log(LOG_INFO);
@@ -1911,7 +1912,7 @@ protected:
                     order.NumVisibilityRects(1);
                     order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
-                    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    if (this->verbose) {
                         StaticOutStream<1024> out_s;
                         order.emit(out_s);
                         order.log(LOG_INFO);
@@ -1955,7 +1956,7 @@ protected:
 
         cspupdu.receive(chunk);
 
-        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+        if (this->verbose) {
             cspupdu.log(LOG_INFO);
         }
 
@@ -1967,7 +1968,7 @@ protected:
             this->work_area_rect.cx = body_r.Right() - body_r.Left();
             this->work_area_rect.cy = body_r.Bottom() - body_r.Top();
 
-            if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            if (this->verbose) {
                 LOG(LOG_INFO, "WorkAreaRect: (%u, %u, %u, %u)",
                     this->work_area_rect.x, this->work_area_rect.y,
                     this->work_area_rect.cx, this->work_area_rect.cy);
@@ -1987,7 +1988,7 @@ protected:
                 order.ActiveWindowId(0xFFFFFFFF);
                 order.NumWindowIds(0);
 
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     StaticOutStream<256> out_s;
                     order.emit(out_s);
                     order.log(LOG_INFO);
@@ -2005,7 +2006,7 @@ protected:
                         RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ARC_COMPLETED
                     );
 
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     StaticOutStream<256> out_s;
                     order.emit(out_s);
                     order.log(LOG_INFO);
@@ -2026,7 +2027,7 @@ protected:
                 order.ActiveWindowId(INTERNAL_MODULE_WINDOW_ID);
                 order.NumWindowIds(0);
 
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     StaticOutStream<256> out_s;
                     order.emit(out_s);
                     order.log(LOG_INFO);
@@ -2047,7 +2048,7 @@ protected:
                 order.NumWindowIds(1);
                 order.window_ids(0, INTERNAL_MODULE_WINDOW_ID);
 
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     StaticOutStream<256> out_s;
                     order.emit(out_s);
                     order.log(LOG_INFO);
@@ -2094,7 +2095,7 @@ protected:
                 order.NumVisibilityRects(1);
                 order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     StaticOutStream<1024> out_s;
                     order.emit(out_s);
                     order.log(LOG_INFO);
@@ -2266,7 +2267,7 @@ protected:
                     };
                 order.icon_info.BitsColor(BitsColor, sizeof(BitsColor));
 
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     StaticOutStream<8192> out_s;
                     order.emit(out_s);
                     order.log(LOG_INFO);
@@ -2280,7 +2281,7 @@ protected:
                         | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
                     );
 
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     StaticOutStream<8192> out_s;
                     order.emit(out_s);
                     order.log(LOG_INFO);
@@ -2306,7 +2307,7 @@ protected:
             this->task_bar_rect.cx = body_r.Right() - body_r.Left();
             this->task_bar_rect.cy = body_r.Bottom() - body_r.Top();
 
-            if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            if (this->verbose) {
                 LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: TaskBarRect(%u, %u, %u, %u)",
                     this->task_bar_rect.x, this->task_bar_rect.y,
                     this->task_bar_rect.cx, this->task_bar_rect.cy);
@@ -2315,7 +2316,7 @@ protected:
         else if (cspupdu.SystemParam() == SPI_SETDRAGFULLWINDOWS) {
             this->full_window_drag_enabled =
                 (cspupdu.body_b() != 0);
-            if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            if (this->verbose) {
                 LOG(LOG_INFO,
                     "ClientExecute::process_client_system_parameters_update_pdu: Full Window Drag is %s",
                     (this->full_window_drag_enabled ? "enabled" : "disabled"));
@@ -2344,7 +2345,7 @@ protected:
 
         cwmpdu.receive(chunk);
 
-        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+        if (this->verbose) {
             cwmpdu.log(LOG_INFO);
         }
 
@@ -2384,7 +2385,7 @@ protected:
                 order.VisibleOffsetX(this->window_rect.x);
                 order.VisibleOffsetY(this->window_rect.y);
 
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     StaticOutStream<1024> out_s;
                     order.emit(out_s);
                     order.log(LOG_INFO);
@@ -2429,7 +2430,7 @@ protected:
                 const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                             | CHANNELS::CHANNEL_FLAG_LAST;
 
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     {
                         const bool send              = true;
                         const bool from_or_to_client = true;
@@ -2465,14 +2466,14 @@ protected:
 
 public:
     void send_to_mod_rail_channel(size_t length, InStream & chunk, uint32_t flags) {
-        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+        if (this->verbose) {
             LOG(LOG_INFO,
                 "ClientExecute::send_to_mod_rail_channel: "
                     "total_length=%zu flags=0x%08X chunk_data_length=%zu",
                 length, flags, chunk.get_capacity());
         }
 
-        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+        if (this->verbose) {
             const bool send              = false;
             const bool from_or_to_client = true;
             ::msgdump_c(send, from_or_to_client, length, flags,
@@ -2494,7 +2495,7 @@ public:
         switch (this->client_order_type)
         {
             case TS_RAIL_ORDER_ACTIVATE:
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     LOG(LOG_INFO,
                         "ClientExecute::send_to_mod_rail_channel: "
                             "Client Activate PDU");
@@ -2505,7 +2506,7 @@ public:
             break;
 
             case TS_RAIL_ORDER_CLIENTSTATUS:
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     LOG(LOG_INFO,
                         "ClientExecute::send_to_mod_rail_channel: "
                             "Client Information PDU");
@@ -2516,7 +2517,7 @@ public:
             break;
 
             //case TS_RAIL_ORDER_COMPARTMENTINFO:
-            //    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            //    if (this->verbose) {
             //        LOG(LOG_INFO,
             //            "ClientExecute::send_to_mod_rail_channel: "
             //                "Client Compartment Status Information PDU");
@@ -2527,7 +2528,7 @@ public:
             //break;
 
             //case TS_RAIL_ORDER_CLOAK:
-            //    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            //    if (this->verbose) {
             //        LOG(LOG_INFO,
             //            "ClientExecute::send_to_mod_rail_channel: "
             //                "Client Window Cloak State Change PDU");
@@ -2538,7 +2539,7 @@ public:
             //break;
 
             case TS_RAIL_ORDER_EXEC:
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     LOG(LOG_INFO,
                         "ClientExecute::send_to_mod_rail_channel: "
                             "Client Execute PDU");
@@ -2549,7 +2550,7 @@ public:
             break;
 
             case TS_RAIL_ORDER_GET_APPID_REQ:
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     LOG(LOG_INFO,
                         "ClientExecute::send_to_mod_rail_channel: "
                             "Client Get Application ID PDU");
@@ -2560,7 +2561,7 @@ public:
             break;
 
             case TS_RAIL_ORDER_HANDSHAKE:
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     LOG(LOG_INFO,
                         "ClientExecute::send_to_mod_rail_channel: "
                             "Client Handshake PDU");
@@ -2571,7 +2572,7 @@ public:
             break;
 
             //case TS_RAIL_ORDER_LANGBARINFO:
-            //    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            //    if (this->verbose) {
             //        LOG(LOG_INFO,
             //            "ClientExecute::send_to_mod_rail_channel: "
             //                "Client Language Bar Information PDU");
@@ -2582,7 +2583,7 @@ public:
             //break;
 
             //case TS_RAIL_ORDER_LANGUAGEIMEINFO:
-            //    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            //    if (this->verbose) {
             //        LOG(LOG_INFO,
             //            "ClientExecute::send_to_mod_rail_channel: "
             //                "Client Language Profile Information PDU");
@@ -2593,7 +2594,7 @@ public:
             //break;
 
             //case TS_RAIL_ORDER_NOTIFY_EVENT:
-            //    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            //    if (this->verbose) {
             //        LOG(LOG_INFO,
             //            "ClientExecute::send_to_mod_rail_channel: "
             //                "Client Notify Event PDU");
@@ -2604,7 +2605,7 @@ public:
             //break;
 
             case TS_RAIL_ORDER_SYSCOMMAND:
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     LOG(LOG_INFO,
                         "ClientExecute::send_to_mod_rail_channel: "
                             "Client System Command PDU");
@@ -2615,7 +2616,7 @@ public:
             break;
 
             case TS_RAIL_ORDER_SYSPARAM:
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     LOG(LOG_INFO,
                         "ClientExecute::send_to_mod_rail_channel: "
                             "Client System Parameters Update PDU");
@@ -2626,7 +2627,7 @@ public:
             break;
 
             //case TS_RAIL_ORDER_SYSMENU:
-            //    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            //    if (this->verbose) {
             //        LOG(LOG_INFO,
             //            "ClientExecute::send_to_mod_rail_channel: "
             //                "Client System Menu PDU");
@@ -2637,7 +2638,7 @@ public:
             //break;
 
             case TS_RAIL_ORDER_WINDOWMOVE:
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     LOG(LOG_INFO,
                         "ClientExecute::send_to_mod_rail_channel: "
                             "Client Window Move PDU");
@@ -2648,7 +2649,7 @@ public:
             break;
 
             default:
-                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                if (this->verbose) {
                     LOG(LOG_INFO,
                         "ClientExecute::send_to_mod_rail_channel: "
                             "Delivering unprocessed messages %s(%u) to server.",

@@ -454,7 +454,7 @@ static inline int check_encrypted_or_checksumed(
 
         if (detail::write_meta_hash(
             full_hash_path_tmp.c_str(), full_mwrm_filename.c_str(),
-            hash_file_cp, nullptr, verbose
+            hash_file_cp, nullptr
         )) {
             return 1;
         }
@@ -553,7 +553,7 @@ inline void remove_file(
 }
 
 inline
-static void raise_error(std::string const & output_filename, int code, const char * message, uint32_t verbose) {
+static void raise_error(std::string const & output_filename, int code, const char * message) {
     if (!output_filename.length()) {
         return;
     }
@@ -572,7 +572,6 @@ static void raise_error(std::string const & output_filename, int code, const cha
                   , sizeof(outfile_basename)
                   , outfile_extension
                   , sizeof(outfile_extension)
-                  , verbose
                   );
 
     char progress_filename[4096];
@@ -683,7 +682,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
         in_wrm_trans.next();
     }
 
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, verbose);
+    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(verbose));
 
     if (show_file_metadata) {
         show_metadata(player);
@@ -712,7 +711,6 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                       , sizeof(outfile_basename)
                       , outfile_extension
                       , sizeof(outfile_extension)
-                      , verbose
                       );
 
         if (verbose) {
@@ -812,7 +810,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
         }
 
         if (!return_code && program_requested_to_shutdown) {
-            clear_files_flv_meta_png(outfile_path, outfile_basename, verbose);
+            clear_files_flv_meta_png(outfile_path, outfile_basename);
         }
     }
     else {
@@ -836,7 +834,7 @@ static int do_recompress(
     CryptoContext & cctx, Random & rnd, Transport & in_wrm_trans, const timeval begin_record,
     int wrm_compression_algorithm_, std::string const & output_filename, Inifile & ini, uint32_t verbose
 ) {
-    FileToChunk player(&in_wrm_trans, verbose);
+    FileToChunk player(&in_wrm_trans, to_verbose_flags(verbose));
 
 /*
     char outfile_path     [1024] = PNG_PATH "/"   ; // default value, actual one should come from output_filename
@@ -850,7 +848,6 @@ static int do_recompress(
                   , sizeof(outfile_basename)
                   , outfile_extension
                   , sizeof(outfile_extension)
-                  , verbose
                   );
 */
     std::string outfile_path;
@@ -1350,7 +1347,8 @@ inline int app_recorder(
         InMetaSequenceTransport in_wrm_trans_tmp(
             &cctx,
             infile_prefix,
-            infile_extension.c_str(), infile_is_encrypted?1:0, 0);
+            infile_extension.c_str(),
+            infile_is_encrypted?1:0);
         file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
     }
     catch (const Error & e) {
@@ -1361,7 +1359,7 @@ inline int app_recorder(
             std::cerr << "Error: " << e.errmsg() << std::endl;
         }
         const bool msg_with_error_id = false;
-        raise_error(output_filename, e.id, e.errmsg(msg_with_error_id), verbose);
+        raise_error(output_filename, e.id, e.errmsg(msg_with_error_id));
         return -1;
     };
 
@@ -1369,7 +1367,7 @@ inline int app_recorder(
         InMetaSequenceTransport trans(
             &cctx, infile_prefix,
             infile_extension.c_str(),
-            infile_is_encrypted?1:0, 0
+            infile_is_encrypted?1:0
         );
 
         timeval begin_capture = {0, 0};
@@ -1421,14 +1419,15 @@ inline int app_recorder(
         }
         catch (const Error & e) {
             const bool msg_with_error_id = false;
-            raise_error(output_filename, e.id, e.errmsg(msg_with_error_id), verbose);
+            raise_error(output_filename, e.id, e.errmsg(msg_with_error_id));
         }
 
         if (!result && remove_input_file) {
             InMetaSequenceTransport in_wrm_trans_tmp(
                 &cctx,
                 infile_prefix,
-                infile_extension.c_str(), infile_is_encrypted?1:0, 0);
+                infile_extension.c_str(),
+                infile_is_encrypted?1:0);
 
             remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>().c_str(), infile_path.c_str()
                         , infile_basename.c_str(), infile_extension.c_str()
@@ -1556,7 +1555,7 @@ extern "C" {
                     char temp_basename[1024] = {};
                     char temp_extension[256] = {};
 
-                    canonical_path(input_filename.c_str(), temp_path, sizeof(temp_path), temp_basename, sizeof(temp_basename), temp_extension, sizeof(temp_extension), verbose);
+                    canonical_path(input_filename.c_str(), temp_path, sizeof(temp_path), temp_basename, sizeof(temp_basename), temp_extension, sizeof(temp_extension));
 
                     if (strlen(temp_path) > 0) {
                         mwrm_path       = temp_path;

@@ -91,6 +91,9 @@ struct ClientInfo {
 
     ClientTimeZone client_time_zone;
 
+    uint16_t cbAutoReconnectCookie = 0;
+    uint8_t  autoReconnectCookie[28] = { 0 };
+
     GlyphCache::number_of_entries_t number_of_entries_in_glyph_cache = { {
           NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
         , NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
@@ -170,6 +173,12 @@ struct ClientInfo {
         snprintf(this->working_dir,     sizeof(this->working_dir),     "%s", infoPacket.WorkingDir    );
 
         this->client_time_zone = infoPacket.extendedInfoPacket.clientTimeZone;
+
+        if (infoPacket.extendedInfoPacket.cbAutoReconnectLen) {
+            this->cbAutoReconnectCookie = infoPacket.extendedInfoPacket.cbAutoReconnectLen;
+
+            ::memcpy(this->autoReconnectCookie, infoPacket.extendedInfoPacket.autoReconnectCookie, sizeof(this->autoReconnectCookie));
+        }
     }
 };
 

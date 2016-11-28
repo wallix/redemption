@@ -496,7 +496,7 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
     /**
      * Initialize rdp_mppc_50_enc structure
      */
-    explicit rdp_mppc_50_enc(uint32_t verbose = 0)
+    explicit rdp_mppc_50_enc(bool verbose = 0)
         : rdp_mppc_enc(verbose)
         , historyBuffer{0}
         , outputBuffer(this->outputBufferPlus + 64)  /* contains compressed data */
@@ -731,7 +731,7 @@ private:
 
                 this->hash_tab_mgr.reset();
 
-                if (this->verbose & 512) {
+                if (this->verbose) {
                     LOG(LOG_INFO, "Unable to undo changes made in hash table.");
                 }
             }

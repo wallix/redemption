@@ -138,8 +138,6 @@ class video_recorder
     static const unsigned frame_key_limit = 100;
     unsigned frame_key = frame_key_limit;
 
-    uint32_t verbose;
-
 public:
     //typedef int(*read_packet_t)(void *io_params, uint8_t *buf, int buf_size);
     typedef int(*write_packet_fn_t)(void *io_params, uint8_t *buf, int buf_size);
@@ -151,7 +149,7 @@ public:
         int /*imageSize*/, const uint8_t* bmp_data, int bitrate,
         int frame_rate, int qscale, const char * codec_id,
         const int target_width, const int target_height,
-        uint32_t verbose
+        int log_level
     )
     : original_height(height)
     , video_outbuf_size(target_width * target_height * 3 * 5)
@@ -159,7 +157,6 @@ public:
     , video_frame_prepared(false)
     , has_external_caller(false)
     , duration_frame(std::max(1000ull / frame_rate, 1ull))
-    , verbose(verbose)
     {
         /* initialize libavcodec, and register all codecs and formats */
         av_register_all();
@@ -395,7 +392,7 @@ public:
         this->pkt.data = this->video_outbuf.get();
         this->pkt.size = this->video_outbuf_size;
 
-        av_log_set_level(this->verbose);
+        av_log_set_level(log_level);
     }
 
     ~video_recorder() {

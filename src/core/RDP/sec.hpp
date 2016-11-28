@@ -744,14 +744,12 @@ enum {
     class SecSpecialPacket_Recv
     {
         public:
-        uint32_t verbose;
         uint32_t flags;
 
         InStream payload;
 
         SecSpecialPacket_Recv(InStream & stream, CryptContext & crypt, uint32_t encryptionLevel)
-            : verbose(0)
-            , flags([&stream](){
+            : flags([&stream](){
                 const unsigned need = 4; /* flags(4) */
                 if (!stream.in_check_rem(need)){
                     LOG(LOG_ERR, "flags expected: need=%u remains=%zu", need, stream.in_remain());
@@ -774,15 +772,15 @@ enum {
 
                     // TODO we should check signature
                     stream.in_skip_bytes(8); /* signature */
-                    if (this->verbose >= 0x200){
-                        LOG(LOG_INFO, "Receiving encrypted TPDU");
-                        hexdump_c(stream.get_current(), stream.in_remain());
-                    }
+                    //if (this->verbose >= 0x200){
+                    //    LOG(LOG_INFO, "Receiving encrypted TPDU");
+                    //    hexdump_c(stream.get_current(), stream.in_remain());
+                    //}
                     crypt.decrypt(const_cast<uint8_t*>(stream.get_current()), stream.in_remain());
-                    if (this->verbose >= 0x80){
-                        LOG(LOG_INFO, "Decrypted %zu bytes", stream.in_remain());
-                        hexdump_c(stream.get_current(), stream.in_remain());
-                    }
+                    //if (this->verbose >= 0x80){
+                    //    LOG(LOG_INFO, "Decrypted %zu bytes", stream.in_remain());
+                    //    hexdump_c(stream.get_current(), stream.in_remain());
+                    //}
                 }
                 return InStream(stream.get_current(), stream.in_remain());
             }())
@@ -796,12 +794,10 @@ enum {
     class Sec_Recv
     {
         public:
-        uint32_t verbose;
         uint32_t flags;
         InStream payload;
         Sec_Recv(InStream & stream, CryptContext & crypt, uint32_t encryptionLevel)
-            : verbose(0)
-            , flags([&stream, this, encryptionLevel, &crypt](){
+            : flags([&stream, this, encryptionLevel, &crypt](){
                 uint32_t flags = 0;
                 if (encryptionLevel){
                     const unsigned need = 4; /* flags(4) */
@@ -823,15 +819,15 @@ enum {
 
                         // TODO shouldn't we check signature ?
                         stream.in_skip_bytes(8); /* signature */
-                        if (this->verbose >= 0x200){
-                            LOG(LOG_INFO, "Receiving encrypted TPDU");
-                            hexdump_c(stream.get_current(), stream.in_remain());
-                        }
+                        //if (this->verbose >= 0x200){
+                        //    LOG(LOG_INFO, "Receiving encrypted TPDU");
+                        //    hexdump_c(stream.get_current(), stream.in_remain());
+                        //}
                         crypt.decrypt(const_cast<uint8_t *>(stream.get_current()), stream.in_remain());
-                        if (this->verbose >= 0x80){
-                            LOG(LOG_INFO, "Decrypted %zu bytes", stream.get_capacity());
-                            hexdump_c(stream.get_current(), stream.in_remain());
-                        }
+                        //if (this->verbose >= 0x80){
+                        //    LOG(LOG_INFO, "Decrypted %zu bytes", stream.get_capacity());
+                        //    hexdump_c(stream.get_current(), stream.in_remain());
+                        //}
                     }
                 }
                 return flags;

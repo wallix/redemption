@@ -553,7 +553,7 @@ BOOST_AUTO_TEST_CASE(TestRecursiveCreateDirectory)
 
     BOOST_CHECK_EQUAL(false, file_exist(tmpdirname));
 
-    recursive_create_directory(tmpdirname, 0777, getgid(), 255);
+    recursive_create_directory(tmpdirname, 0777, getgid());
 
     BOOST_CHECK_EQUAL(true, file_exist(tmpdirname));
 
@@ -580,7 +580,7 @@ BOOST_AUTO_TEST_CASE(TestRecursiveCreateDirectoryTrailingSlash)
 
     BOOST_CHECK_EQUAL(false, file_exist(tmpdirname));
 
-    recursive_create_directory(tmpdirname, 0777, getgid(), 255);
+    recursive_create_directory(tmpdirname, 0777, getgid());
 
     BOOST_CHECK_EQUAL(true, file_exist(tmpdirname));
 

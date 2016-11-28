@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, 0);
+    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid);

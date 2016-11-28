@@ -33,7 +33,6 @@
 
 #include <string>
 
-#include "utils/fileutils.hpp"
 #include "utils/log.hpp"
 #include "core/error.hpp"
 
@@ -118,7 +117,7 @@ void MakePath(std::string & fullpath, const char * directory,
 
 static inline bool canonical_path( const char * fullpath, char * path, size_t path_len
                                  , char * basename, size_t basename_len, char * extension
-                                 , size_t extension_len, uint32_t verbose = 255)
+                                 , size_t extension_len)
 {
     const char * end_of_path = strrchr(fullpath, '/');
     if (end_of_path){
@@ -127,9 +126,7 @@ static inline bool canonical_path( const char * fullpath, char * path, size_t pa
             path[end_of_path + 1 - fullpath] = 0;
         }
         else {
-            if (verbose >= 255) {
-                LOG(LOG_ERR, "canonical_path : Path too long for the buffer\n");
-            }
+            LOG(LOG_ERR, "canonical_path : Path too long for the buffer\n");
             return false;
         }
         const char * start_of_extension = strrchr(end_of_path + 1, '.');
@@ -142,9 +139,7 @@ static inline bool canonical_path( const char * fullpath, char * path, size_t pa
                     basename[start_of_extension - end_of_path - 1] = 0;
                 }
                 else {
-                    if (verbose >= 255) {
-                        LOG(LOG_ERR, "canonical_path : basename too long for the buffer\n");
-                    }
+                    LOG(LOG_ERR, "canonical_path : basename too long for the buffer\n");
                     return false;
                 }
             }
@@ -174,9 +169,7 @@ static inline bool canonical_path( const char * fullpath, char * path, size_t pa
                     basename[start_of_extension - fullpath] = 0;
                 }
                 else {
-                    if (verbose >= 255) {
-                        LOG(LOG_ERR, "canonical_path : basename too long for the buffer\n");
-                    }
+                    LOG(LOG_ERR, "canonical_path : basename too long for the buffer\n");
                     return false;
                 }
             }
@@ -194,13 +187,10 @@ static inline bool canonical_path( const char * fullpath, char * path, size_t pa
             }
         }
     }
-    if (verbose >= 255) {
-        LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
-    }
     return true;
 }
 
-static inline void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t verbose = 255)
+static inline void clear_files_flv_meta_png(const char * path, const char * prefix)
 {
     struct D {
         DIR * d;
@@ -220,21 +210,15 @@ static inline void clear_files_flv_meta_png(const char * path, const char * pref
 
 /*
         if (file_len < 4000){
-            if (verbose >= 255) {
-                LOG(LOG_WARNING, "File name length is in normal range (%u), using static buffer", static_cast<unsigned>(file_len));
-            }
+            LOG(LOG_WARNING, "File name length is in normal range (%u), using static buffer", static_cast<unsigned>(file_len));
             file_len = 4000;
         }
         else {
-            if (verbose >= 255) {
-                LOG(LOG_WARNING, "Max file name too large (%u), using dynamic buffer", static_cast<unsigned>(file_len));
-            }
+            LOG(LOG_WARNING, "Max file name too large (%u), using dynamic buffer", static_cast<unsigned>(file_len));
 
             char * buffer = (char*)malloc(file_len + path_len + 1);
             if (!buffer){
-                if (verbose >= 255) {
-                    LOG(LOG_WARNING, "Memory allocation failed for file name buffer, using static buffer");
-                }
+                LOG(LOG_WARNING, "Memory allocation failed for file name buffer, using static buffer");
                 buffer = static_buffer;
                 file_len = 4000;
             }
@@ -286,9 +270,7 @@ static inline void clear_files_flv_meta_png(const char * path, const char * pref
 
             struct stat st;
             if (stat(buffer, &st) < 0){
-                if (verbose >= 255) {
-                    LOG(LOG_WARNING, "Failed to read file %s [%d: %s]", buffer, errno, strerror(errno));
-                }
+                LOG(LOG_WARNING, "Failed to read file %s [%d: %s]", buffer, errno, strerror(errno));
                 continue;
             }
             if (unlink(buffer) < 0){
@@ -301,7 +283,7 @@ static inline void clear_files_flv_meta_png(const char * path, const char * pref
     }
 }
 
-static inline int _internal_make_directory(const char *directory, mode_t mode, const int groupid, uint32_t verbose) {
+static inline int _internal_make_directory(const char *directory, mode_t mode, const int groupid) {
     struct stat st;
     int status = 0;
 
@@ -310,24 +292,18 @@ static inline int _internal_make_directory(const char *directory, mode_t mode, c
             /* Directory does not exist. */
             if ((mkdir(directory, mode) != 0) && (errno != EEXIST)) {
                 status = -1;
-                if (verbose >= 255) {
-                    LOG(LOG_ERR, "failed to create directory %s : %s [%d]", directory, strerror(errno), errno);
-                }
+                LOG(LOG_ERR, "failed to create directory %s : %s [%d]", directory, strerror(errno), errno);
             }
             if (groupid >= 0) {
                 if (chown(directory, static_cast<uid_t>(-1), groupid) < 0){
-                    if (verbose >= 255) {
-                        LOG(LOG_ERR, "can't set directory %s group to %d : %s [%d]", directory, groupid, strerror(errno), errno);
-                    }
+                    LOG(LOG_ERR, "can't set directory %s group to %d : %s [%d]", directory, groupid, strerror(errno), errno);
                 }
             }
 
         }
         else if (!S_ISDIR(st.st_mode)) {
             errno = ENOTDIR;
-            if (verbose >= 255) {
-                LOG(LOG_ERR, "expecting directory name, got filename, for %s", directory);
-            }
+            LOG(LOG_ERR, "expecting directory name, got filename, for %s", directory);
             status = -1;
         }
     }
@@ -335,7 +311,7 @@ static inline int _internal_make_directory(const char *directory, mode_t mode, c
 }
 
 
-static inline int recursive_create_directory(const char *directory, mode_t mode, const int groupid, uint32_t verbose = 255)
+static inline int recursive_create_directory(const char *directory, mode_t mode, const int groupid)
 {
     char * pTemp;
     char * pSearch;
@@ -355,12 +331,12 @@ static inline int recursive_create_directory(const char *directory, mode_t mode,
         }
 
         pSearch[0] = 0;
-        status = _internal_make_directory(copy_directory, mode, groupid, verbose);
+        status = _internal_make_directory(copy_directory, mode, groupid);
         *pSearch = '/';
     }
 
     if (status == 0) {
-        status = _internal_make_directory(directory, mode, groupid, verbose);
+        status = _internal_make_directory(directory, mode, groupid);
     }
 
     free(copy_directory);

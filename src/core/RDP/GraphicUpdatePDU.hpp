@@ -706,7 +706,7 @@ protected:
     }
 
     void send_pointer(int cache_idx, const Pointer & cursor) override {
-        if (this->verbose & 4) {
+        if (this->verbose & VerboseFlags::pointer) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer(cache_idx=%u x=%u y=%u)",
                 cache_idx, cursor.x, cursor.y);
         }
@@ -719,7 +719,7 @@ protected:
                             , this->encrypt, this->userid, SERVER_UPDATE_POINTER_COLOR
                             , 0, stream, this->verbose);
 
-        if (this->verbose & 4) {
+        if (this->verbose & VerboseFlags::pointer) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer done");
         }
     }   // void send_pointer(int cache_idx, const Pointer & cursor)
@@ -756,7 +756,7 @@ protected:
 //      New Pointer Update (section 2.2.9.1.1.4.5).
 
     void set_pointer(int cache_idx) override {
-        if (this->verbose & 4) {
+        if (this->verbose & VerboseFlags::pointer) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer(cache_idx=%u)", cache_idx);
         }
 
@@ -768,7 +768,7 @@ protected:
                             , this->encrypt, this->userid, SERVER_UPDATE_POINTER_CACHED
                             , 0, stream, this->verbose);
 
-        if (this->verbose & 4) {
+        if (this->verbose & VerboseFlags::pointer) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer done");
         }
     }   // void set_pointer(int cache_idx)
@@ -777,7 +777,7 @@ public:
     using RDPSerializer::set_pointer;
 
     void update_pointer_position(uint16_t xPos, uint16_t yPos) {
-        if (this->verbose & 4) {
+        if (this->verbose & VerboseFlags::pointer) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::update_pointer_position(xPos=%u, yPos=%u)", xPos, yPos);
         }
 
@@ -790,7 +790,7 @@ public:
                             , this->encrypt, this->userid, SERVER_UPDATE_POINTER_POSITION
                             , 0, stream, this->verbose);
 
-        if (this->verbose & 4) {
+        if (this->verbose & VerboseFlags::pointer) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::update_pointer_position done");
         }
     }

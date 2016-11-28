@@ -462,14 +462,14 @@ class RDPBmpCache {
     bool     do_not_cache;
     uint32_t key1;
     uint32_t key2;
-    uint32_t verbose;
+    bool verbose;
 
-    RDPBmpCache(const Bitmap & bmp, int id, int idx, bool persistent, bool do_not_cache, int verbose = 0)
+    RDPBmpCache(const Bitmap & bmp, int id, int idx, bool persistent, bool do_not_cache, bool verbose = false)
         : id(id), idx(idx), bmp(bmp), persistent(persistent), do_not_cache(do_not_cache),
           key1(0), key2(0), verbose(verbose) {
     }
 
-    explicit RDPBmpCache(int verbose = 0)
+    explicit RDPBmpCache(bool verbose = false)
         : id(0), idx(0), persistent(false), do_not_cache(false), key1(0), key2(0), verbose(verbose) {
     }
 
@@ -794,11 +794,11 @@ class RDPBmpCache {
             uint32_t * Key2 = Key1 + 1;
             stream.out_uint32_le(*Key1);
             stream.out_uint32_le(*Key2);
-            if (this->verbose & 512) {
-                LOG(LOG_INFO, "id=%u Key1=%08X Key2=%08X", this->id, *Key1, *Key2);
-                LOG(LOG_INFO, "Persistent key");
-                hexdump_d(sig.sig_8, 8);
-            }
+            //if (this->verbose & 512) {
+            //    LOG(LOG_INFO, "id=%u Key1=%08X Key2=%08X", this->id, *Key1, *Key2);
+            //    LOG(LOG_INFO, "Persistent key");
+            //    hexdump_d(sig.sig_8, 8);
+            //}
         }
 
         stream.out_2BUE(this->bmp.cx());
@@ -848,11 +848,11 @@ class RDPBmpCache {
             uint32_t * Key2 = Key1 + 1;
             stream.out_uint32_le(*Key1);
             stream.out_uint32_le(*Key2);
-            if (this->verbose & 512) {
-                LOG(LOG_INFO, "Key1=%08X Key2=%08X", *Key1, *Key2);
-                LOG(LOG_INFO, "Persistent key");
-                hexdump_d(sig.sig_8, 8);
-            }
+            //if (this->verbose & 512) {
+            //    LOG(LOG_INFO, "Key1=%08X Key2=%08X", *Key1, *Key2);
+            //    LOG(LOG_INFO, "Persistent key");
+            //    hexdump_d(sig.sig_8, 8);
+            //}
         }
 
         // key1 and key1 are not here because flags is not set
@@ -993,16 +993,16 @@ class RDPBmpCache {
         //LOG(LOG_INFO, "RDPBmpCache::receive_raw_v2: cache_id=%u cacheIndex=%u", this->id, this->idx);
 
         const uint8_t * bitmapDataStream = stream.in_uint8p(bitmapLength);
-        if (this->verbose & 0x8000) {
-            LOG(LOG_INFO,
-                "RDPBmpCache::receive_raw_v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
-                session_color_depth, bpp, bitmapWidth, bitmapHeight, bitmapLength);
-            LOG(LOG_INFO, "Palette");
-            hexdump_d(palette.data(), palette.data_size());
-            LOG(LOG_INFO, "Bitmap");
-            hexdump_d(bitmapDataStream, bitmapLength);
-            LOG(LOG_INFO, "");
-        }
+        //if (this->verbose & 0x8000) {
+        //    LOG(LOG_INFO,
+        //        "RDPBmpCache::receive_raw_v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+        //        session_color_depth, bpp, bitmapWidth, bitmapHeight, bitmapLength);
+        //    LOG(LOG_INFO, "Palette");
+        //    hexdump_d(palette.data(), palette.data_size());
+        //    LOG(LOG_INFO, "Bitmap");
+        //    hexdump_d(bitmapDataStream, bitmapLength);
+        //    LOG(LOG_INFO, "");
+        //}
         this->bmp = Bitmap(session_color_depth, bpp, &palette, bitmapWidth, bitmapHeight,
             bitmapDataStream, bitmapLength, false);
 
@@ -1077,16 +1077,16 @@ class RDPBmpCache {
 
         // TODO some error may occur inside bitmap (memory allocation  file load  decompression) we should catch thrown exception and emit some explicit log if that occurs (anyway that will lead to end of connection  as we can't do much to repair such problems).
         const uint8_t * buf = stream.in_uint8p(bufsize);
-        if (this->verbose & 0x8000) {
-            LOG(LOG_INFO,
-                "Uncompressed bitmap v1: session_bpp=%u bpp=%u width=%u height=%u size=%u",
-                session_color_depth, bpp, width, height, bufsize);
-            LOG(LOG_INFO, "Palette");
-            hexdump_d(palette.data(), palette.data_size());
-            LOG(LOG_INFO, "Bitmap");
-            hexdump_d(buf, bufsize);
-            LOG(LOG_INFO, "");
-        }
+        //if (this->verbose & 0x8000) {
+        //    LOG(LOG_INFO,
+        //        "Uncompressed bitmap v1: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+        //        session_color_depth, bpp, width, height, bufsize);
+        //    LOG(LOG_INFO, "Palette");
+        //    hexdump_d(palette.data(), palette.data_size());
+        //    LOG(LOG_INFO, "Bitmap");
+        //    hexdump_d(buf, bufsize);
+        //    LOG(LOG_INFO, "");
+        //}
         this->bmp = Bitmap(session_color_depth, bpp, &palette, width, height, buf, bufsize);
 
         if (bufsize != this->bmp.bmp_size()){
@@ -1147,16 +1147,16 @@ class RDPBmpCache {
 
         if (cbr2_flags & CBR2_NO_BITMAP_COMPRESSION_HDR) {
             const uint8_t * bitmapDataStream = stream.in_uint8p(bitmapLength);
-            if (this->verbose & 0x8000) {
-                LOG(LOG_INFO,
-                    "CRDPBmpCache::receive_compressed_v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
-                    session_color_depth, bpp, bitmapWidth, bitmapHeight, bitmapLength);
-                LOG(LOG_INFO, "Palette");
-                hexdump_d(palette.data(), palette.data_size());
-                LOG(LOG_INFO, "Bitmap");
-                hexdump_d(bitmapDataStream, bitmapLength);
-                LOG(LOG_INFO, "");
-            }
+            //if (this->verbose & 0x8000) {
+            //    LOG(LOG_INFO,
+            //        "CRDPBmpCache::receive_compressed_v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+            //        session_color_depth, bpp, bitmapWidth, bitmapHeight, bitmapLength);
+            //    LOG(LOG_INFO, "Palette");
+            //    hexdump_d(palette.data(), palette.data_size());
+            //    LOG(LOG_INFO, "Bitmap");
+            //    hexdump_d(bitmapDataStream, bitmapLength);
+            //    LOG(LOG_INFO, "");
+            //}
             this->bmp = Bitmap(session_color_depth, bpp, &palette, bitmapWidth, bitmapHeight,
                 bitmapDataStream, bitmapLength, true);
         }
@@ -1169,16 +1169,16 @@ class RDPBmpCache {
 
             const uint8_t * bitmapDataStream = stream.in_uint8p(cbCompMainBodySize);
 
-            if (this->verbose & 0x8000) {
-                LOG(LOG_INFO,
-                    "RDPBmpCache::receive_compressed_v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
-                    session_color_depth, bpp, bitmapWidth, bitmapWidth, cbCompMainBodySize);
-                LOG(LOG_INFO, "Palette");
-                hexdump_d(palette.data(), palette.data_size());
-                LOG(LOG_INFO, "Bitmap");
-                hexdump_d(bitmapDataStream, cbCompMainBodySize);
-                LOG(LOG_INFO, "");
-            }
+            //if (this->verbose & 0x8000) {
+            //    LOG(LOG_INFO,
+            //        "RDPBmpCache::receive_compressed_v2: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+            //        session_color_depth, bpp, bitmapWidth, bitmapWidth, cbCompMainBodySize);
+            //    LOG(LOG_INFO, "Palette");
+            //    hexdump_d(palette.data(), palette.data_size());
+            //    LOG(LOG_INFO, "Bitmap");
+            //    hexdump_d(bitmapDataStream, cbCompMainBodySize);
+            //    LOG(LOG_INFO, "");
+            //}
             this->bmp = Bitmap(session_color_depth, bpp, &palette, bitmapWidth, bitmapHeight,
                 bitmapDataStream, cbCompMainBodySize, true);
             if (cbScanWidth != (this->bmp.bmp_size() / this->bmp.cy())){
@@ -1208,16 +1208,16 @@ class RDPBmpCache {
 
         if (flags & NO_BITMAP_COMPRESSION_HDR) {
             const uint8_t* data = stream.in_uint8p(bufsize);
-            if (this->verbose & 0x8000) {
-                LOG(LOG_INFO,
-                    "Compressed bitmap: session_bpp=%u bpp=%u width=%u height=%u size=%u",
-                    session_color_depth, bpp, width, height, bufsize);
-                LOG(LOG_INFO, "Palette");
-                hexdump_d(palette.data(), palette.data_size());
-                LOG(LOG_INFO, "Bitmap");
-                hexdump_d(data, bufsize);
-                LOG(LOG_INFO, "");
-            }
+            //if (this->verbose & 0x8000) {
+            //    LOG(LOG_INFO,
+            //        "Compressed bitmap: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+            //        session_color_depth, bpp, width, height, bufsize);
+            //    LOG(LOG_INFO, "Palette");
+            //    hexdump_d(palette.data(), palette.data_size());
+            //    LOG(LOG_INFO, "Bitmap");
+            //    hexdump_d(data, bufsize);
+            //    LOG(LOG_INFO, "");
+            //}
             this->bmp = Bitmap(session_color_depth, bpp, &palette, width, height, data, bufsize, true);
         }
         else {
@@ -1227,16 +1227,16 @@ class RDPBmpCache {
             uint16_t final_size = stream.in_uint16_le(); // size of bitmap after decompression
             const uint8_t* data = stream.in_uint8p(size);
 
-            if (this->verbose & 0x8000) {
-                LOG(LOG_INFO,
-                    "Compressed bitmap v1: session_bpp=%u bpp=%u width=%u height=%u size=%u",
-                    session_color_depth, bpp, width, height, size);
-                LOG(LOG_INFO, "Palette");
-                hexdump_d(palette.data(), palette.data_size());
-                LOG(LOG_INFO, "Bitmap");
-                hexdump_d(data, size);
-                LOG(LOG_INFO, "");
-            }
+            //if (this->verbose & 0x8000) {
+            //    LOG(LOG_INFO,
+            //        "Compressed bitmap v1: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+            //        session_color_depth, bpp, width, height, size);
+            //    LOG(LOG_INFO, "Palette");
+            //    hexdump_d(palette.data(), palette.data_size());
+            //    LOG(LOG_INFO, "Bitmap");
+            //    hexdump_d(data, size);
+            //    LOG(LOG_INFO, "");
+            //}
             this->bmp = Bitmap(session_color_depth, bpp, &palette, width, height, data, size, true);
             if (row_size != (this->bmp.bmp_size() / this->bmp.cy())){
                 LOG(LOG_WARNING, "broadcasted row_size should be the same as line size computed from cx, bpp and alignment rules");

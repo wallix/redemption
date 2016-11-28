@@ -50,8 +50,6 @@ public:
 
     bool meta_ok;
 
-    uint32_t verbose;
-
     uint16_t info_version;
     uint16_t info_width;
     uint16_t info_height;
@@ -75,7 +73,13 @@ public:
     bool     info_cache_4_persistent;
     WrmCompressionAlgorithm info_compression_algorithm;
 
-    FileToChunk(Transport * trans, uint32_t verbose)
+    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    {
+        none,
+        end_of_transport = 1,
+    };
+
+    FileToChunk(Transport * trans, VerboseFlags verbose)
         : stream(this->stream_buf)
         , compression_wrapper(*trans, WrmCompressionAlgorithm::no_compression)
         , trans_source(trans)
@@ -87,7 +91,6 @@ public:
         , nbconsumers(0)
         , consumers()
         , meta_ok(false)
-        , verbose(verbose)
         , info_version(0)
         , info_width(0)
         , info_height(0)
@@ -110,6 +113,7 @@ public:
         , info_cache_4_size(0)
         , info_cache_4_persistent(false)
         , info_compression_algorithm(WrmCompressionAlgorithm::no_compression)
+        , verbose(verbose)
     {
         while (this->next_chunk()) {
             this->interpret_chunk();
@@ -154,7 +158,7 @@ public:
             }
 
             if (this->verbose) {
-                LOG(LOG_INFO,"receive error %u : end of transport", e.id);
+                LOG(LOG_INFO, "receive error %u : end of transport", e.id);
             }
             // receive error, end of transport
             return false;
