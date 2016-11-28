@@ -159,7 +159,7 @@ private:
         else {
             this->drawable.begin_update();
             subrect4_t rects = subrect4(drect, this->protected_rect);
-            auto e = std::remove_if(rects.begin(), rects.end(), [](const Rect & rect) { return !rect.isempty(); });
+            auto e = std::remove_if(rects.begin(), rects.end(), [](const Rect & rect) { return rect.isempty(); });
             auto av = make_array_view(rects.begin(), e);
             this->refresh_rects(av);
             this->drawable.end_update();

@@ -102,7 +102,7 @@ struct Rect {
     // Rect constructor ensures that any empty rect will be (0, 0, 0, 0)
     // hence testing cx or cy is enough
     bool isempty() const {
-        return this->cx == 0;
+        return (this->cx == 0) || (this->cy == 0);
     }
 
     int getCenteredX() const {
