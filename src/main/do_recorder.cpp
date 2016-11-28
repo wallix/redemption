@@ -1008,6 +1008,7 @@ inline int app_recorder(
     std::string wrm_encryption;
     std::string png_geometry;
     std::string hash_path;
+    std::string video_codec;
 
     program_options::options_description desc({
         {'h', "help", "produce help message"},
@@ -1056,6 +1057,8 @@ inline int app_recorder(
         {'q', "flv-quality", &flv_quality, "flv quality (high, medium, low)"},
 
         {"ocr-version", &ocr_version, "version 1 or 2"},
+
+        {"video-codec", &video_codec, "ffmpeg video codec id (flv, mp4, etc)"},
     });
 
     auto options = program_options::parse_command_line(argc, argv, desc);
@@ -1254,6 +1257,10 @@ inline int app_recorder(
             std::cerr << "Unknown video quality" << std::endl;
             return 1;
         }
+    }
+
+    if (options.count("video-codec") > 0) {
+        ini.set<cfg::globals::codec_id>(video_codec);
     }
 
     ini.set<cfg::video::rt_display>(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png));
