@@ -33,7 +33,7 @@ inline int get_trace_key_prototype_fn(char *, int, char * buffer, unsigned oldsc
     return 0;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, const char** argv) {
     // TODO: see other todo below, command line arguments should also be simplified
     if (argc < 3 || !(is_sep(argv[2]) || (!is_sep(argv[2]) && argc > 4 && is_sep(argv[4])))) {
         usage(argv[0]);
@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
     }
 
     auto const len = strlen(argv[0]);
-    memcpy(argv[arg_consumed] + 2 - len, argv[0], len);
+    memcpy(const_cast<char*>(argv[arg_consumed] + 2 - len), const_cast<char*>(argv[0]), len);
     argv[arg_consumed] = argv[arg_consumed] - len;
     return do_main(
         role,
