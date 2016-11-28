@@ -1661,6 +1661,12 @@ struct SshServerSession : public ssh_session_struct
             }
         }
         break;
+        case SSH_CHANNEL_REQ_STATE_PENDING:
+        CPP_FALLTHROUGH;
+        case SSH_CHANNEL_REQ_STATE_ACCEPTED:
+        CPP_FALLTHROUGH;
+        case SSH_CHANNEL_REQ_STATE_DENIED:
+        CPP_FALLTHROUGH;
         default:
             break;
         }
@@ -1676,8 +1682,9 @@ struct SshServerSession : public ssh_session_struct
      * @brief Gets the banner from socket and saves it in session.
      * Updates the session state
      *
-     * @param  data pointer to the beginning of header
+     * @param  buffer pointer to the beginning of header
      * @param  len size of the banner
+     * @param  error structure to fill in case of error
      * @returns Number of bytes processed, or zero if the banner is not complete.
      */
      // TODO: intermittent segfault here, see what happen
@@ -5563,6 +5570,12 @@ struct SshServerSession : public ssh_session_struct
         case SSH_SESSION_STATE_KEXINIT_RECEIVED:
         CPP_FALLTHROUGH;
         case SSH_SESSION_STATE_DH:
+        CPP_FALLTHROUGH;
+        case SSH_SESSION_STATE_AUTHENTICATING:
+        CPP_FALLTHROUGH;
+        case SSH_SESSION_STATE_ERROR:
+        CPP_FALLTHROUGH;
+        case SSH_SESSION_STATE_DISCONNECTED:
         CPP_FALLTHROUGH;
         default:
             ssh_set_error(this->error,  SSH_FATAL,"SSH_KEXINIT received in wrong state");

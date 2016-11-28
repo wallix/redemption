@@ -1169,8 +1169,6 @@ int sftp_packet_write(sftp_session_struct* sftp, uint8_t type, ssh_buffer_struct
  *
  * @param[in]  count    The count of bytes to be read.
  *
- * @param[in]  is_stderr A boolean value to mark reading from the stderr flow.
- *
  * @return              The number of bytes read, 0 on end of file or SSH_ERROR
  *                      on error. In nonblocking mode it Can return 0 if no data
  *                      is available or SSH_AGAIN.
