@@ -418,3 +418,17 @@ BOOST_AUTO_TEST_CASE(TestRect)
         BOOST_CHECK_EQUAL(true, r.has_intersection(15, 15));
     }
 }
+
+/*
+BOOST_AUTO_TEST_CASE(TestRect2)
+{
+    Rect r1(10, 10, 20, 20);
+    Rect r2(15, 15, 0, 0);
+
+    BOOST_CHECK_EQUAL(false, r1.has_intersection(r2));
+    BOOST_CHECK_EQUAL(false, r2.has_intersection(r1));
+
+    BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), r1.intersect(r2));
+    BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), r2.intersect(r1));
+}
+*/

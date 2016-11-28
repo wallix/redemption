@@ -208,7 +208,7 @@ public:
             return false;
         }
 
-        std::cout << "Early negociations start.." <<  std::endl;
+       LOG(LOG_INFO, "Early negociations start..");
         if (this->_callback != nullptr) {
             while (!this->_callback->is_up_and_running()) {
                 try {
@@ -1364,7 +1364,7 @@ private:
     }
 
 
-private Q_SLOTS:
+public Q_SLOTS:
     void playPressed() {
         if (this->_running) {
             this->_running = false;
@@ -1622,11 +1622,11 @@ public Q_SLOTS:
 
                 this->_cliboard_data_length = this->_bufferImage->byteCount();
 
-                this->_chunk = std::make_unique<uint8_t[]>(this->_cliboard_data_length + RDPECLIP::FormatDataResponsePDU_MetaFilePic::MetaFilePicEnder::SIZE);
+                this->_chunk = std::make_unique<uint8_t[]>(this->_cliboard_data_length + RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender::SIZE);
                 for (int i  = 0; i < this->_bufferImage->byteCount(); i++) {
                     this->_chunk[i] = this->_bufferImage->bits()[i];
                 }
-                RDPECLIP::FormatDataResponsePDU_MetaFilePic::MetaFilePicEnder ender;
+                RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender ender;
                 ender.emit(this->_chunk.get(), this->_cliboard_data_length);
 
                 this->send_FormatListPDU();
@@ -1734,13 +1734,14 @@ public Q_SLOTS:
                     size_t size( ( (str.length() + cmptCR*2) * 4) + 2 );
 
                     this->_chunk = std::make_unique<uint8_t[]>(size);
+
                     // UTF8toUTF16_CrLf for linux install
                     this->_cliboard_data_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size);
 
-                    RDPECLIP::FormatDataResponsePDU_Text::TextEnder ender;
+                    RDPECLIP::FormatDataResponsePDU_Text::Ender ender;
                     ender.emit(this->_chunk.get(), this->_cliboard_data_length);
 
-                    this->_cliboard_data_length += RDPECLIP::FormatDataResponsePDU_Text::TextEnder::SIZE;
+                    this->_cliboard_data_length += RDPECLIP::FormatDataResponsePDU_Text::Ender::SIZE;
 
                     this->send_FormatListPDU();
             //==========================================================================

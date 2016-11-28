@@ -20,7 +20,8 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 
-//#define LOGPRINT
+#define LOGPRINT
+#include "utils/log.hpp"
 
 #include <string>
 #include <unistd.h>
@@ -137,8 +138,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
 
     CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
                                       , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                        GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                        GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                        GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
                                       , PDU_MAX_SIZE+1
                                       };
     this->_cl.push_back(channel_rdpdr);
@@ -150,8 +150,8 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
     this->_qtRDPKeymap.setKeyboardLayout(this->_info.keylayout);
     this->_keymap.init_layout(this->_info.keylayout);
 
-    std::cout << "cs_monitor count negociated. MonitorCount=" << this->_monitorCount << std::endl;
-                    std::cout << "width=" <<  this->_info.width <<  " " << "height=" << this->_info.height <<  std::endl;
+    /*std::cout << "cs_monitor count negociated. MonitorCount=" << this->_monitorCount << std::endl;
+                    std::cout << "width=" <<  this->_info.width <<  " " << "height=" << this->_info.height <<  std::endl;*/
 
     if (commandIsValid == Front_Qt::COMMAND_VALID) {
         this->connect();
@@ -321,6 +321,7 @@ void Front_Qt::set_pointer(Pointer const & cursor) {
     } else {
         image_mask.invertPixels();
     }
+
     image_data = image_data.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
     image_mask = image_mask.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
 
@@ -386,9 +387,7 @@ void Front_Qt::dropScreen() {
     for (auto screen : this->_screen) {
         if (screen != nullptr) {
             screen->disConnection();
-            std::cout << "disconnected screen" << std::endl;
             screen->close();
-            std::cout << "closed screen" << std::endl;
             screen = nullptr;
         }
     }
@@ -960,8 +959,7 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                     this->_screen[0]->paintCache().setBrush(Qt::SolidPattern);
                 }
                 break;
-            default:
-                std::cout << "RDPPatBlt brush_style = 03 " << static_cast<int>(cmd.rop) << std::endl;
+            default: LOG(LOG_INFO, "RDPPatBlt brush_style = 0x03 rop = %x", cmd.rop);
                 break;
         }
 
@@ -1064,8 +1062,7 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
             case 0xFF: // whiteness
                 this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::white);
                 break;
-            default:
-                std::cout << "RDPPatBlt " << int(cmd.rop) << std::endl;
+            default: LOG(LOG_INFO, "RDPPatBlt rop = %x", cmd.rop);
                 break;
         }
     }
@@ -1215,7 +1212,7 @@ void Front_Qt::draw(const RDPScrBlt & cmd, const Rect & clip) {
         case 0xFF:
             this->_screen[0]->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
             break;
-        default: std::cout << "RDPScrBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
+        default: LOG(LOG_INFO, "DEFAULT: RDPScrBlt rop = %x", cmd.rop);
             break;
     }
 
@@ -1279,7 +1276,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         case 0xFF: this->_screen[0]->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
             break;
 
-        default: std::cout << "RDPMemBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
+        default: LOG(LOG_INFO, "DEFAULT: RDPMemBlt rop = %x", cmd.rop);
             break;
     }
 
@@ -1353,7 +1350,7 @@ void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bi
             }
         break;
 
-        default: std::cout << "RDPMem3Blt (" << std::hex << int(cmd.rop) << ")" << std::endl;
+        default: LOG(LOG_INFO, "DEFAULT: RDPMem3Blt rop = %x", cmd.rop);
         break;
     }
 
@@ -1389,7 +1386,7 @@ void Front_Qt::draw(const RDPDestBlt & cmd, const Rect & clip) {
         case 0xFF: // whiteness
             this->_screen[0]->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
             break;
-        default: std::cout << "RDPDestBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
+        default: LOG(LOG_INFO, "DEFAULT: RDPDestBlt rop = %x", cmd.rop);
             break;
     }
 
@@ -1408,7 +1405,7 @@ void Front_Qt::draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "RDPMultiDstBlt" << std::endl;
+    LOG(LOG_INFO, "DEFAULT: RDPMultiDstBlt");
 }
 
 void Front_Qt::draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
@@ -1418,7 +1415,7 @@ void Front_Qt::draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "RDPMultiOpaqueRect" << std::endl;
+    LOG(LOG_INFO, "DEFAULT: RDPMultiOpaqueRect");
 }
 
 void Front_Qt::draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
@@ -1428,7 +1425,7 @@ void Front_Qt::draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "RDPMultiPatBlt" << std::endl;
+    LOG(LOG_INFO, "DEFAULT: RDPMultiPatBlt");
 }
 
 void Front_Qt::draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
@@ -1438,7 +1435,7 @@ void Front_Qt::draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "RDPMultiScrBlt" << std::endl;
+    LOG(LOG_INFO, "DEFAULT: RDPMultiScrBlt");
 }
 
 void Front_Qt::draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) {
@@ -1536,7 +1533,7 @@ void Front_Qt::draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCac
                 }
             }
         } else {
-            std::cout << "RDPGlyphIndex " << gly_cache.glyphs << std::endl;
+            LOG(LOG_INFO, "DEFAULT: RDPGlyphIndex glyph_cache");
         }
     }
     //this->draw_VariableBytes(cmd.data, cmd.data_len, has_delta_bytes,
@@ -1557,7 +1554,7 @@ void Front_Qt::draw(const RDPPolygonSC & cmd, const Rect & clip) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "RDPPolygonSC" << std::endl;
+    LOG(LOG_INFO, "DEFAULT: RDPPolygonSC");
 
     /*RDPPolygonSC new_cmd24 = cmd;
     new_cmd24.BrushColor  = color_decode_opaquerect(cmd.BrushColor,  this->mod_bpp, this->mod_palette);*/
@@ -1571,7 +1568,7 @@ void Front_Qt::draw(const RDPPolygonCB & cmd, const Rect & clip) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "RDPPolygonCB" << std::endl;
+    LOG(LOG_INFO, "DEFAULT: RDPPolygonCB");
 
     /*RDPPolygonCB new_cmd24 = cmd;
     new_cmd24.foreColor  = color_decode_opaquerect(cmd.foreColor,  this->mod_bpp, this->mod_palette);
@@ -1586,8 +1583,7 @@ void Front_Qt::draw(const RDPPolyline & cmd, const Rect & clip) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "RDPPolyline" << std::endl;
-
+    LOG(LOG_INFO, "DEFAULT: RDPPolyline");
     /*RDPPolyline new_cmd24 = cmd;
     new_cmd24.PenColor  = color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette);*/
     //this->gd.draw(new_cmd24, clip);
@@ -1600,7 +1596,7 @@ void Front_Qt::draw(const RDPEllipseSC & cmd, const Rect & clip) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "RDPEllipseSC" << std::endl;
+    LOG(LOG_INFO, "DEFAULT: RDPEllipseSC");
 
     /*RDPEllipseSC new_cmd24 = cmd;
     new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);*/
@@ -1614,7 +1610,7 @@ void Front_Qt::draw(const RDPEllipseCB & cmd, const Rect & clip) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "RDPEllipseCB" << std::endl;
+    LOG(LOG_INFO, "DEFAULT: RDPEllipseCB");
 /*
     RDPEllipseCB new_cmd24 = cmd;
     new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
@@ -1636,7 +1632,7 @@ void Front_Qt::draw(const RDP::FrameMarker & order) {
         this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
     }
 
-    std::cout << "FrameMarker" << std::endl;
+    LOG(LOG_INFO, "DEFAULT: FrameMarker");
     //this->gd.draw(order);
 }
 
@@ -1647,7 +1643,7 @@ void Front_Qt::draw(const RDP::RAIL::NewOrExistingWindow & order) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "NewOrExistingWindow" << std::endl;
+    LOG(LOG_INFO, "DEFAULT: NewOrExistingWindow");
     //this->gd.draw(order);
 }
 
@@ -1658,7 +1654,7 @@ void Front_Qt::draw(const RDP::RAIL::WindowIcon & order) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "WindowIcon" << std::endl;
+    LOG(LOG_INFO, "DEFAULT: WindowIcon");
     //this->gd.draw(order);
 }
 
@@ -1669,8 +1665,7 @@ void Front_Qt::draw(const RDP::RAIL::CachedIcon & order) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-        std::cout << "CachedIcon" << std::endl;
-
+    LOG(LOG_INFO, "DEFAULT: CachedIcon");
     //this->gd.draw(order);
 }
 
@@ -1681,7 +1676,7 @@ void Front_Qt::draw(const RDP::RAIL::DeletedWindow & order) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "DeletedWindow" << std::endl;
+    LOG(LOG_INFO, "DEFAULT: DeletedWindow");
 
     //this->gd.draw(order);
 }
@@ -1693,7 +1688,7 @@ void Front_Qt::draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "NewOrExistingNotificationIcons" << std::endl;
+    LOG(LOG_INFO, "DEFAULT: NewOrExistingNotificationIcons");
     //this->gd.draw(order);
 }
 
@@ -1704,7 +1699,7 @@ void Front_Qt::draw(const RDP::RAIL::DeletedNotificationIcons & order) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "DeletedNotificationIcons" << std::endl;
+    LOG(LOG_INFO, "DEFAULT: DeletedNotificationIcons");
     //this->gd.draw(order);
 }
 
@@ -1715,7 +1710,7 @@ void Front_Qt::draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "ActivelyMonitoredDesktop" << std::endl;
+    LOG(LOG_INFO, "DEFAULT: ActivelyMonitoredDesktop");
     //this->gd.draw(order);
 }
 
@@ -1726,15 +1721,16 @@ void Front_Qt::draw(const RDP::RAIL::NonMonitoredDesktop & order) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "NonMonitoredDesktop" << std::endl;
+    LOG(LOG_INFO, "DEFAULT: NonMonitoredDesktop");
     //this->gd.draw(order);
 }
 
 void Front_Qt::draw(const RDPColCache   & cmd) {
-    std::cout <<  "RDPColCache " << cmd.cacheIndex << std::endl;
+    LOG(LOG_INFO, "DEFAULT: RDPColCache cacheIndex = %d", cmd.cacheIndex);
 }
 
-void Front_Qt::draw(const RDPBrushCache & ) {
+void Front_Qt::draw(const RDPBrushCache & brush) {
+    LOG(LOG_INFO, "DEFAULT: RDPBrushCache cacheIndex = %d", brush.cacheIndex);
 }
 
 
@@ -1793,8 +1789,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
     if (!strcmp(channel.name, channel_names::cliprdr)) {
         //std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-        std::cout << std::dec;
-
         if (!chunk.in_check_rem(2  /*msgType(2)*/ )) {
             LOG(LOG_ERR,
                 "ClipboardVirtualChannel::process_client_message: "
@@ -1813,7 +1807,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             "ClipboardVirtualChannel::process_client_message: "
                                 "Clipboard Capabilities PDU");
                     }
-                    std::cout << "server >> Clipboard Capabilities PDU" << std::endl;
+                    LOG(LOG_INFO, "SERVER >> CB Channel: Clipboard Capabilities PDU");
                 break;
 
                 case RDPECLIP::CB_MONITOR_READY:
@@ -1822,7 +1816,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             "ClipboardVirtualChannel::process_server_message: "
                                 "Monitor Ready PDU");
                     }
-                    std::cout << "server >> Monitor Ready PDU" << std::endl;
+                    LOG(LOG_INFO, "SERVER >> CB Channel: Monitor Ready PDU");
 
                     {
                         RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1, RDPECLIP::GeneralCapabilitySet::size());
@@ -1840,12 +1834,12 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                             , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST
                                                               |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                             );
-                        std::cout << "client >> Clipboard Capabilities PDU" << std::endl;
+                        LOG(LOG_INFO, "CLIENT >> CB Channel: Clipboard Capabilities PDU");
 
                         this->_monitorCount = this->_info.cs_monitor.monitorCount;
 
-                        std::cout << "cs_monitor count negociated. MonitorCount=" << this->_monitorCount << std::endl;
-                        std::cout << "width=" <<  this->_info.width <<  " " << "height=" << this->_info.height <<  std::endl;
+                        /*std::cout << "cs_monitor count negociated. MonitorCount=" << this->_monitorCount << std::endl;
+                        std::cout << "width=" <<  this->_info.width <<  " " << "height=" << this->_info.height <<  std::endl;*/
 
                         //this->_info.width  = (this->_width * this->_monitorCount);
 
@@ -1874,11 +1868,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 "Format List Response PDU");
                     }
 
-                    std::cout << "server >> Format List Response PDU";
                     if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
-                        std::cout << " FAILED" <<  std::endl;
+                        LOG(LOG_INFO, "SERVER >> CB Channel: Format List Response PDU FAILED");
                     } else {
-                        std::cout <<  std::endl;
+                        LOG(LOG_INFO, "SERVER >> CB Channel: Format List Response PDU");
                     }
 
                 break;
@@ -1891,17 +1884,15 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                     }
 
                     {
-                        std::cout << "server >> Format List PDU";
+
                         if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
-                            std::cout << " FAILED" <<  std::endl;
+                            LOG(LOG_INFO, "SERVER >> CB Channel: Format List PDU FAILED");
                         } else {
-                            std::cout <<  std::endl;
+                            LOG(LOG_INFO, "SERVER >> CB Channel: Format List PDU");
 
                             int formatAvailable = chunk.in_uint32_le();
 
                             bool isSharedFormat = false;
-
-                            std::cout << " Format ID nb = " << formatAvailable << ", Requested Format = \"" << this->_requestedFormatName << "\"" << std::endl;
 
                             while (formatAvailable > 0) {
                                 uint32_t formatID = chunk.in_uint32_le();
@@ -1925,7 +1916,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     if (this->_clipbrdFormatsList.IDs[j] == formatID) {
                                         this->_requestedFormatId = formatID;
                                         isSharedFormat = true;
-                                        std::cout <<  " pick!";
                                         formatAvailable = 0;
                                     }
                                 }
@@ -1933,11 +1923,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 if (this->_requestedFormatName == this->_clipbrdFormatsList.FILEGROUPDESCRIPTORW && !isSharedFormat) {
                                     this->_requestedFormatId = formatID;
                                     isSharedFormat = true;
-                                    std::cout <<  " pick!";
                                     formatAvailable = 0;
                                 }
-
-                                std::cout << std::endl;
                             }
 
                             RDPECLIP::FormatListResponsePDU formatListResponsePDU(true);
@@ -1951,7 +1938,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                 , CHANNELS::CHANNEL_FLAG_LAST  |
                                                                   CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                                 );
-                            std::cout << "client >> Format List Response PDU" << std::endl;
+                            LOG(LOG_INFO, "CLIENT >> CB Channel: Format List Response PDU");
 
 
                             RDPECLIP::LockClipboardDataPDU lockClipboardDataPDU(0);
@@ -1965,7 +1952,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                 , CHANNELS::CHANNEL_FLAG_LAST  |
                                                                   CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                                 );
-                            std::cout << "client >> Lock Clipboard Data PDU" << std::endl;
+                            LOG(LOG_INFO, "CLIENT >> CB Channel: Lock Clipboard Data PDU");
 
 
                             RDPECLIP::FormatDataRequestPDU formatDataRequestPDU(this->_requestedFormatId);
@@ -1979,17 +1966,17 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                 , CHANNELS::CHANNEL_FLAG_LAST  |
                                                                   CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                                 );
-                            std::cout << "client >> Format Data Request PDU" << std::endl;
+                            LOG(LOG_INFO, "CLIENT >> CB Channel: Format Data Request PDU");
                         }
                     }
                 break;
 
                 case RDPECLIP::CB_LOCK_CLIPDATA:
-                    std::cout << "server >> Lock Clipboard Data PDU" << std::endl;
+                    LOG(LOG_INFO, "SERVER >> CB Channel: Lock Clipboard Data PDU");
                 break;
 
                 case RDPECLIP::CB_UNLOCK_CLIPDATA:
-                    std::cout << "server >> Unlock Clipboard Data PDU" << std::endl;
+                    LOG(LOG_INFO, "SERVER >> CB Channel: Unlock Clipboard Data PDU");
                 break;
 
                 case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
@@ -2004,11 +1991,11 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                     }
 
                     if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                        std::cout << "server >> Format Data Response PDU";
+
                         if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
-                            std::cout << " FAILED" <<  std::endl;
+                            LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Response PDU FAILED");
                         } else {
-                            std::cout <<  std::endl;
+                            LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Response PDU");
                             this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList, this->_clipboard_qt);
                         }
                     }
@@ -2023,11 +2010,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 "Format Data Request PDU");
                     }
 
-                    std::cout << "server >> Format Data Request PDU";
                     if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
-                        std::cout << " FAILED" <<  std::endl;
+                        LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Request PDU FAILED");
                     } else {
-                        std::cout <<  std::endl;
+                        LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Request PDU");
 
                         chunk.in_skip_bytes(4);
                         int first_part_data_size(0);
@@ -2036,7 +2022,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                         if (this->_clipboard_qt->_bufferTypeID == chunk.in_uint32_le()) {
 
-                            std::cout << "client >> Format Data Response PDU" << std::endl;
+                            LOG(LOG_INFO, "CLIENT >> CB Channel: Format Data Response PDU");
 
                             switch(this->_clipboard_qt->_bufferTypeID) {
 
@@ -2059,7 +2045,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                            , out_stream_first_part
                                                                            , first_part_data_size
                                                                            , this->_clipboard_qt->_chunk.get()
-                                                                           , total_length +      RDPECLIP::FormatDataResponsePDU_MetaFilePic::MetaFilePicEnder::SIZE
+                                                                           , total_length + RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender::SIZE
                                                                            );
                                 }
                                 break;
@@ -2068,21 +2054,22 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 case RDPECLIP::CF_UNICODETEXT:
                                 {
                                     first_part_data_size = this->_clipboard_qt->_cliboard_data_length;
-                                    if (first_part_data_size > PASTE_TEXT_CONTENT_SIZE) {
+                                    if (first_part_data_size > PASTE_TEXT_CONTENT_SIZE ) {
                                         first_part_data_size = PASTE_TEXT_CONTENT_SIZE;
                                     }
-                                    total_length += 2;
 
                                     RDPECLIP::FormatDataResponsePDU_Text fdr(this->_clipboard_qt->_cliboard_data_length);
 
                                     fdr.emit(out_stream_first_part);
 
+
+
                                     this->process_client_clipboard_out_data( total_length
-                                                                          , out_stream_first_part
-                                                                          , first_part_data_size
-                                                                          , this->_clipboard_qt->_chunk.get()
-                                                                          , total_length
-                                                                          );
+                                                                           , out_stream_first_part
+                                                                           , first_part_data_size
+                                                                           , this->_clipboard_qt->_chunk.get()
+                                                                           , this->_clipboard_qt->_cliboard_data_length
+                                                                           );
                                 }
                                 break;
 
@@ -2115,7 +2102,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                         );
                                     data_sent += first_part_data_size + RDPECLIP::FileDescriptor::size();
 
-                                    std::cout << "client >> Data PDU  " << data_sent << " / " << total_length << std::endl;
+                                    LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%d", data_sent, total_length);
 
                                     RDPECLIP::FileDescriptor fd;
                                     for (int i = 1; i < this->_clipboard_qt->_cItems; i++) {
@@ -2152,13 +2139,12 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                             , flag_next
                                                                             );
                                         data_sent += RDPECLIP::FileDescriptor::size();
-                                        std::cout << "client >> Data PDU  " << data_sent << " / " << total_length << std::endl;
+                                        LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%d", data_sent, total_length);
                                     }
                                 }
                                 break;
 
-                                default:
-                                    std::cout <<  "unknow buffer format ID " << int(this->_clipboard_qt->_bufferTypeID) << std::endl;
+                                default: LOG(LOG_INFO, "SERVER >> CB Channel: unknow CB format ID %x", this->_clipboard_qt->_bufferTypeID);
                                 break;
                             }
                         }
@@ -2167,10 +2153,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                 break;
 
                 case RDPECLIP::CB_FILECONTENTS_REQUEST:
-                    std::cout << "server >> File Contents Resquest PDU";
                     if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
-                        std::cout << " FAILED" <<  std::endl;
+                        LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Resquest PDU FAIL");
                     } else {
+                        LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Resquest PDU");
 
                         chunk.in_skip_bytes(4);                 // data_len
                         int streamID(chunk.in_uint32_le());
@@ -2180,7 +2166,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                             case RDPECLIP::FILECONTENTS_SIZE :
                             {
-                                std::cout << " SIZE streamID=" << streamID << " lindex=" << lindex <<  std::endl;
                                 StaticOutStream<32> out_stream;
                                 RDPECLIP::FileContentsResponse_Size fileSize( streamID
                                                                             , this->_clipboard_qt->_items_list[lindex]->size);
@@ -2194,13 +2179,12 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                       CHANNELS::CHANNEL_FLAG_FIRST |  CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                                     );
 
-                                std::cout << "client >> File Contents Response PDU SIZE streamID=" << streamID << " lindex=" << lindex << std::endl;
+                                LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Response PDU SIZE");
                             }
                             break;
 
                             case RDPECLIP::FILECONTENTS_RANGE :
                             {
-                                std::cout << " RANGE streamID=" << streamID << " lindex=" << lindex <<  std::endl;
                                 StaticOutStream<PDU_MAX_SIZE> out_stream_first_part;
                                 RDPECLIP::FileContentsResponse_Range fileRange( streamID
                                                                               , this->_clipboard_qt->_items_list[lindex]->size);
@@ -2213,7 +2197,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 }
                                 fileRange.emit(out_stream_first_part);
 
-                                std::cout << "client >> File Contents Response PDU RANGE streamID=" << streamID << " lindex=" << lindex << std::endl;
+                                LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Response PDU RANGE");
 
                                 this->process_client_clipboard_out_data( total_length
                                                                       , out_stream_first_part
@@ -2230,11 +2214,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                 case RDPECLIP::CB_FILECONTENTS_RESPONSE:
                     if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                        std::cout << "server >> File Contents Response PDU";
                         if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
-                            std::cout << " FAILED" <<  std::endl;
+                            LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Response PDU FAILED");
                         } else {
-                            std::cout <<  std::endl;
+                            LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Response PDU");
 
                             if(this->_requestedFormatName == this->_clipbrdFormatsList.FILEGROUPDESCRIPTORW) {
                                 this->_requestedFormatId = ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS;
@@ -2245,13 +2228,13 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                 break;
 
                 default:
-                    std::cout << "process sever next part PDU data" <<  std::endl;
+                    LOG(LOG_INFO, "Process sever next part PDU data");
                     this->process_server_clipboard_indata(flags, chunk_series, this->_cb_buffers, this->_cb_filesList, this->_clipboard_qt);
                 break;
             }
 
         } else {
-            std::cout << "process sever next part PDU data" <<  std::endl;
+            LOG(LOG_INFO, "Process sever next part PDU data");
             this->process_server_clipboard_indata(flags, chunk_series, this->_cb_buffers, this->_cb_filesList, this->_clipboard_qt);
         }
 
@@ -2270,10 +2253,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                     case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
                     {
                         {
-                        std::cout << "server >> PAKID_CORE_SERVER_ANNOUNCE" <<  std::endl;
+                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: PAKID_CORE_SERVER_ANNOUNCE");
 
-                        uint16_t versionMajor(0x0001);      //chunk.in_uint16_le());
-                        uint16_t versionMinor(0x0002);      //chunk.in_uint16_le());
+                        uint16_t versionMajor(chunk.in_uint16_le()); // 0x0001
+                        uint16_t versionMinor(0x0006);            // chunk.in_uint16_le()
                         uint32_t clientId(chunk.in_uint32_le());
 
                         StaticOutStream<32> stream;
@@ -2288,16 +2271,14 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         int total_length(stream.get_offset());
                         InStream chunk_to_send(stream.get_data(), stream.get_offset());
 
-                        //this->show_out_stream(CHANNELS::CHANNEL_FLAG_LAST |CHANNELS::CHANNEL_FLAG_FIRST, stream, total_length);
-
                         this->_callback->send_to_mod_channel( channel_names::rdpdr
                                                             , chunk_to_send
                                                             , total_length
                                                             , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                              CHANNELS::CHANNEL_FLAG_FIRST |
-                                                              CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                              CHANNELS::CHANNEL_FLAG_FIRST
                                                             );
-                        std::cout << "client >> PAKID_CORE_CLIENTID_CONFIRM" << std::endl;
+
+                        LOG(LOG_INFO, "CLIENT >> RDPDR Channel: PAKID_CORE_CLIENTID_CONFIRM");
                         }
 
                         {
@@ -2310,48 +2291,46 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         gethostname(username, LOGIN_NAME_MAX);
                         std::string str_username(username);
 
-                        rdpdr::ClientNameRequest clientNameRequest(username);
+                        rdpdr::ClientNameRequest clientNameRequest(username, 0x00000001);
                         clientNameRequest.emit(stream);
 
                         int total_length(stream.get_offset());
                         InStream chunk_to_send(stream.get_data(), stream.get_offset());
 
-                        //this->show_out_stream(CHANNELS::CHANNEL_FLAG_LAST |CHANNELS::CHANNEL_FLAG_FIRST, stream, total_length);
-
                         this->_callback->send_to_mod_channel( channel_names::rdpdr
                                                             , chunk_to_send
                                                             , total_length
                                                             , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                              CHANNELS::CHANNEL_FLAG_FIRST |
-                                                              CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                              CHANNELS::CHANNEL_FLAG_FIRST
                                                             );
 
-                        std::cout << "client >> PAKID_CORE_CLIENT_NAME" <<  std::endl;
+                        LOG(LOG_INFO, "CLIENT >> RDPDR Channel: PAKID_CORE_CLIENT_NAME");
                         }
-
                     }
                     break;
 
                     case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
-                        std::cout << "server >> PAKID_CORE_SERVER_CAPABILITY" << std::endl;
-                    break;
+                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: PAKID_CORE_SERVER_CAPABILITY");
+
+
+                        break;
 
                     case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
-                        std::cout << "server >> PAKID_CORE_CLIENTID_CONFIRM" <<  std::endl;
-                    break;
+                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: PAKID_CORE_CLIENTID_CONFIRM");
+                        break;
 
-                    default: std::cout << "server >> Default RDPDR_CTYP_CORE" <<  std::endl;
+                    default: LOG(LOG_INFO, "SERVER >> RDPDR Channel: DEFAULT RDPDR_CTYP_CORE unknow packetId = %x", packetId);
                         break;
                 }
 
             break;
 
             case rdpdr::Component::RDPDR_CTYP_PRT:
-                std::cout <<  "server >> RDPDR_CTYP_PRT" <<  std::endl;
-            break;
+                LOG(LOG_INFO, "SERVER >> RDPDR: RDPDR_CTYP_PRT");
+                break;
 
-            default: std::cout << "server >> Default RDPDR" <<  std::endl;
-            break;
+            default: LOG(LOG_INFO, "SERVER >> RDPDR: DEFAULT RDPDR unknow component = %x", component);
+                break;
         }
 
 
@@ -2362,12 +2341,12 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 void Front_Qt::show_out_stream(int flags, OutStream & chunk, size_t length) {
     uint8_t * data = chunk.get_data();
 
-    std::cout <<  std::hex << "flag=0x" << flags << " total_length=" << std::dec << int(length) <<  std::hex <<  std::endl;
-    std::cout << "\"";
+    std::cout <<  std::hex << "                      flag=0x" << flags << " total_length=" << std::dec << int(length) <<  std::hex <<  std::endl;
+    std::cout << "                      \"";
     for (size_t i = 0; i < length; i++) {
         int byte(data[i]);
         if ((i % 16) == 0 && i != 0) {
-            std::cout << "\"" << std::endl << "\"";
+            std::cout << "\"" << std::endl << "                      \"";
         }
 
         std::cout << "\\x";
@@ -2380,12 +2359,12 @@ void Front_Qt::show_out_stream(int flags, OutStream & chunk, size_t length) {
 }
 
 void Front_Qt::show_in_stream(int flags, InStream & chunk, size_t length) {
-    std::cout <<  std::hex << "flag=0x" << flags << " total_length=" << std::dec << int(length) <<  std::hex <<  std::endl;
-    std::cout << "\"";
+    std::cout <<  std::hex << "                    flag=0x" << flags << " total_length=" << std::dec << int(length) <<  std::hex <<  std::endl;
+    std::cout << "                        \"";
     for (size_t i = 0; i < length; i++) {
         int byte(chunk.in_uint8());
         if ((i % 16) == 0 && i != 0) {
-            std::cout << "\"" << std::endl << "\"";
+            std::cout << "\"" << std::endl << "                      \"";
         }
 
         std::cout << "\\x";
@@ -2519,7 +2498,8 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk, CB_B
                                                       CHANNELS::CHANNEL_FLAG_FIRST |
                                                       CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                     );
-                std::cout << "client >> File Contents Resquest PDU FILECONTENTS_RANGE streamID=" << cb_filesList.streamIDToRequest << " lindex=" << cb_filesList.lindexToRequest<< std::endl;
+
+                LOG(LOG_INFO, "CLIENT >> CB channel: File Contents Resquest PDU FILECONTENTS_RANGE");
 
                 this->empty_buffer();
             }
@@ -2539,9 +2519,9 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk, CB_B
                 this->_waiting_for_data = false;
 
                  clipboard_qt->write_clipboard_temp_file( cb_filesList.itemslist[cb_filesList.lindexToRequest].name
-                                                               , cb_buffers.data.get()
-                                                               , cb_filesList.itemslist[cb_filesList.lindexToRequest].size
-                                                               );
+                                                        , cb_buffers.data.get()
+                                                        , cb_filesList.itemslist[cb_filesList.lindexToRequest].size
+                                                        );
                 cb_filesList.lindexToRequest++;
 
                 if (cb_filesList.lindexToRequest>= cb_filesList.cItems) {
@@ -2563,14 +2543,14 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk, CB_B
                                                         , CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                           CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                         );
-                    std::cout << "client >> Unlock Clipboard Data PDU" << std::endl;
+                    LOG(LOG_INFO, "CLIENT >> CB channel: Unlock Clipboard Data PDU");
 
                 } else {
                     cb_filesList.streamIDToRequest++;
                     RDPECLIP::FileContentsRequestPDU fileContentsRequest( cb_filesList.streamIDToRequest
                                                                         , RDPECLIP::FILECONTENTS_RANGE
                                                                         , cb_filesList.lindexToRequest
-                                                                        , cb_filesList.itemslist[cb_filesList.lindexToRequest].size);
+                                                                        ,   cb_filesList.itemslist[cb_filesList.lindexToRequest].size);
                     StaticOutStream<32> out_streamRequest;
                     fileContentsRequest.emit(out_streamRequest);
                     const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
@@ -2587,7 +2567,7 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk, CB_B
                                                           CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                         );
 
-                    std::cout << "client >> File Contents Resquest PDU FILECONTENTS_RANGE streamID=" << cb_filesList.streamIDToRequest << " lindex=" << cb_filesList.lindexToRequest<< std::endl;
+                    LOG(LOG_INFO, "CLIENT >> CB channel: File Contents Resquest PDU FILECONTENTS_RANGE");
                 }
 
                 this->empty_buffer();
@@ -2603,8 +2583,7 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk, CB_B
                 }
 
             }  else {
-
-                std::cout << " Format not recognized (" << static_cast<int>(this->_requestedFormatId) << ")" <<  std::endl;
+                LOG(LOG_INFO, "SERVER >> CB channel: unknow CB Format = %x", this->_requestedFormatId);
             }
 
         break;
@@ -2684,7 +2663,7 @@ void Front_Qt::send_FormatListPDU(uint32_t const * formatIDs, std::string const 
                                           CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                         );
 
-    std::cout << "client >> Format List PDU" << std::endl;
+    LOG(LOG_INFO, "CLIENT >> CB channel: Format List PDU");
 }
 
 
@@ -2835,7 +2814,7 @@ void Front_Qt::call_Draw() {
         } catch (const Error &) {
             this->dropScreen();
             const std::string errorMsg("Error: connexion to [" + this->_targetIP +  "] is closed.");
-            std::cout << errorMsg << std::endl;
+            std::cout << errorMsg <<  std::endl;
             std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
 
             this->disconnect(labelErrorMsg);
@@ -2863,7 +2842,8 @@ int main(int argc, char** argv){
 
     QApplication app(argc, argv);
 
-    int verbose = MODRDP_LOGLEVEL_CLIPRDR | MODRDP_LOGLEVEL_CLIPRDR_DUMP;                    //0x04000000 | 0x40000000;
+    //0x04000000 | 0x40000000;
+    int verbose = 0;                                        //MODRDP_LOGLEVEL_CLIPRDR | MODRDP_LOGLEVEL_CLIPRDR_DUMP;
 
     Front_Qt front(argv, argc, verbose);
 

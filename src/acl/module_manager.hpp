@@ -31,6 +31,7 @@
 #include "mod/mod_api.hpp"
 #include "auth_api.hpp"
 #include "mod/null/null.hpp"
+#include "mod/rdp/windowing_api.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "mod/vnc/vnc.hpp"
 #include "mod/xup/xup.hpp"
@@ -356,6 +357,10 @@ private:
                     this->mm.front.client_info.width, this->mm.front.client_info.height);
             }
 
+            if (this->mm.winapi) {
+                this->mm.winapi->destroy_auxiliary_window();
+            }
+
             this->mm.internal_mod->rdp_input_invalidate(protected_rect);
         }
 
@@ -383,6 +388,10 @@ private:
             }
             this->clip = Rect(this->mm.front.client_info.width < w ? 0 : (this->mm.front.client_info.width - w) / 2, 0, w, h);
             this->set_protected_rect(this->clip);
+
+            if (this->mm.winapi) {
+                this->mm.winapi->create_auxiliary_window(this->clip);
+            }
         }
 
         static constexpr int padw = 16;
@@ -717,6 +726,8 @@ public:
         new_mod = 0x1,
     };
 
+    windowing_api* winapi = nullptr;
+
     ModuleManager(Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
         : MMIni(ini)
         , front(front)
@@ -747,15 +758,19 @@ public:
     }
 
 private:
-    void set_mod(non_null_ptr<mod_api> mod)
+    void set_mod(non_null_ptr<mod_api> mod, windowing_api* winapi = nullptr)
     {
         while (this->front.keymap.nb_char_available())
             this->front.keymap.get_char();
         while (this->front.keymap.nb_kevent_available())
             this->front.keymap.get_kevent();
 
+        this->clear_osd_message();
+
         this->internal_mod = mod.get();
         this->mod = mod.get();
+
+        this->winapi = winapi;
     }
 
 public:
@@ -1300,7 +1315,7 @@ public:
                 try {
                     const char * const name = "RDP Target";
                     // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport
-                    this->set_mod(new ModWithSocket<mod_rdp>(
+                    ModWithSocket<mod_rdp>* new_mod = new ModWithSocket<mod_rdp>(
                         *this,
                         name,
                         client_sck,
@@ -1313,7 +1328,8 @@ public:
                         this->gen,
                         this->timeobj,
                         mod_rdp_params
-                    ));
+                    );
+                    this->set_mod(new_mod, (new_mod ? new_mod->get_windowing_api() : nullptr));
                 }
                 catch (...) {
                     if (acl) {

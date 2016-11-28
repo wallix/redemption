@@ -10,7 +10,6 @@ include $(JAM_INCLUDE_PATH)/defines.jam ;
 include $(JAM_INCLUDE_PATH)/includes.jam ;
 
 constant SHELL_PWD : [ SHELL "echo -n $PWD" ] ;
-echo $(SHELL_PWD) ;
 
 constant MAIN_PATH : [ setvar MAIN_PATH : $(SHELL_PWD) ] ;
 
