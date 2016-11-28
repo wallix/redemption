@@ -54,6 +54,7 @@
 extern "C" {
     inline int hmac_fn(char * buffer)
     {
+        // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
         uint8_t hmac_key[SslSha256::DIGEST_LENGTH] = {
             0xe3, 0x8d, 0xa1, 0x5e, 0x50, 0x1e, 0x4f, 0x6a,
             0x01, 0xef, 0xde, 0x6c, 0xd9, 0xb3, 0x3a, 0x3f,
@@ -69,6 +70,7 @@ extern "C" {
         (void)base;
         (void)len;
         (void)oldscheme;
+        // 563EB6E8158F0EED2E5FB6BC2893BC15270D7E7815FA804A723EF4FB315FF4B2
         uint8_t trace_key[SslSha256::DIGEST_LENGTH] = {
             0x56, 0x3e, 0xb6, 0xe8, 0x15, 0x8f, 0x0e, 0xed,
             0x2e, 0x5f, 0xb6, 0xbc, 0x28, 0x93, 0xbc, 0x15,
