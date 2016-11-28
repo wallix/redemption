@@ -169,8 +169,8 @@ public:
             ?(height - (bbloc_h + 10))
             :(height/2 + cbloc_h/2 + bottom_height/2);
         this->img.set_xy(left + (width - this->img.rect.cx) / 2, top + y_bbloc);
-        if (this->img.rect.y + this->img.cy() > height) {
-            this->img.rect.y = 0;
+        if (this->img.rect.y + this->img.cy() > top + height) {
+            this->img.rect.y = top;
         }
         this->version_label.set_xy(left + (width - this->version_label.rect.cx) / 2,
                                    top + y_bbloc + this->img.rect.cy + 10);
@@ -264,6 +264,9 @@ public:
             ?(height - (bbloc_h + 10))
             :(height/2 + cbloc_h/2 + bottom_height/2);
         this->img.set_xy(left + (width - this->img.rect.cx) / 2, top + y_bbloc);
+        if (this->img.rect.y + this->img.cy() > top + height) {
+            this->img.rect.y = top;
+        }
         this->version_label.set_xy(left + (width - this->version_label.rect.cx) / 2,
                                    top + y_bbloc + this->img.rect.cy + 10);
 
