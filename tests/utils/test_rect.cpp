@@ -419,6 +419,7 @@ BOOST_AUTO_TEST_CASE(TestRect)
     }
 }
 
+/*
 BOOST_AUTO_TEST_CASE(TestRect2)
 {
     Rect r1(10, 10, 20, 20);
@@ -430,3 +431,4 @@ BOOST_AUTO_TEST_CASE(TestRect2)
     BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), r1.intersect(r2));
     BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), r2.intersect(r1));
 }
+*/
