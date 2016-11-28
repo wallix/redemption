@@ -106,13 +106,13 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
                     511 // verbose
                    );
 
-    int verbose = MODRDP_LOGLEVEL_CLIPRDR | MODRDP_LOGLEVEL_CLIPRDR_DUMP;
+    int verbose = static_cast<int>(RDPVerboseFlags::cliprdr | RDPVerboseFlags::cliprdr_dump);
 
     ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
     clipboard_virtual_channel_params.authentifier              = nullptr;
     clipboard_virtual_channel_params.exchanged_data_limit      = 0;
-    clipboard_virtual_channel_params.verbose                   = verbose;
+    clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
 
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
     clipboard_virtual_channel_params.clipboard_up_authorized   = true;
@@ -214,13 +214,13 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
                     511 // verbose
                    );
 
-    int verbose = MODRDP_LOGLEVEL_CLIPRDR | MODRDP_LOGLEVEL_CLIPRDR_DUMP;
+    int verbose = static_cast<int>(RDPVerboseFlags::cliprdr | RDPVerboseFlags::cliprdr_dump);
 
     ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
     clipboard_virtual_channel_params.authentifier              = nullptr;
     clipboard_virtual_channel_params.exchanged_data_limit      = 0;
-    clipboard_virtual_channel_params.verbose                   = verbose;
+    clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
 
     clipboard_virtual_channel_params.clipboard_down_authorized = false;
     clipboard_virtual_channel_params.clipboard_up_authorized   = true;
@@ -322,13 +322,13 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
                     511 // verbose
                    );
 
-    int verbose = MODRDP_LOGLEVEL_CLIPRDR | MODRDP_LOGLEVEL_CLIPRDR_DUMP;
+    int verbose = static_cast<int>(RDPVerboseFlags::cliprdr | RDPVerboseFlags::cliprdr_dump);
 
     ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
     clipboard_virtual_channel_params.authentifier              = nullptr;
     clipboard_virtual_channel_params.exchanged_data_limit      = 0;
-    clipboard_virtual_channel_params.verbose                   = verbose;
+    clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
 
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
     clipboard_virtual_channel_params.clipboard_up_authorized   = false;
@@ -430,13 +430,13 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
                     511 // verbose
                    );
 
-    int verbose = MODRDP_LOGLEVEL_CLIPRDR | MODRDP_LOGLEVEL_CLIPRDR_DUMP;
+    int verbose = static_cast<int>(RDPVerboseFlags::cliprdr | RDPVerboseFlags::cliprdr_dump);
 
     ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
     clipboard_virtual_channel_params.authentifier              = nullptr;
     clipboard_virtual_channel_params.exchanged_data_limit      = 0;
-    clipboard_virtual_channel_params.verbose                   = verbose;
+    clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
 
     clipboard_virtual_channel_params.clipboard_down_authorized = false;
     clipboard_virtual_channel_params.clipboard_up_authorized   = false;
@@ -543,13 +543,13 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
                     511 // verbose
                    );
 
-    int verbose = MODRDP_LOGLEVEL_CLIPRDR | MODRDP_LOGLEVEL_CLIPRDR_DUMP;
+    int verbose = static_cast<int>(RDPVerboseFlags::cliprdr | RDPVerboseFlags::cliprdr_dump);
 
     ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
     clipboard_virtual_channel_params.authentifier              = nullptr;
     clipboard_virtual_channel_params.exchanged_data_limit      = 0;
-    clipboard_virtual_channel_params.verbose                   = verbose;
+    clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
 
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
     clipboard_virtual_channel_params.clipboard_up_authorized   = true;

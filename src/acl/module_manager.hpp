@@ -1184,7 +1184,7 @@ public:
                                            , this->front.keymap.key_flags
                                            , this->ini.get<cfg::font>()
                                            , this->ini.get<cfg::theme>()
-                                           , this->ini.get<cfg::debug::mod_rdp>()
+                                           , to_verbose_flags(this->ini.get<cfg::debug::mod_rdp>())
                                            );
                 mod_rdp_params.device_id                           = this->ini.get<cfg::globals::device_id>().c_str();
 
@@ -1267,7 +1267,7 @@ public:
                 mod_rdp_params.enable_cache_waiting_list           = this->ini.get<cfg::mod_rdp::cache_waiting_list>();
                 mod_rdp_params.persist_bitmap_cache_on_disk        = this->ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>();
                 mod_rdp_params.password_printing_mode              = this->ini.get<cfg::debug::password>();
-                mod_rdp_params.cache_verbose                       = this->ini.get<cfg::debug::cache>();
+                mod_rdp_params.cache_verbose                       = to_verbose_flags(this->ini.get<cfg::debug::cache>());
 
                 mod_rdp_params.extra_orders                        = this->ini.get<cfg::mod_rdp::extra_orders>().c_str();
 

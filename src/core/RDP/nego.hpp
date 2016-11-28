@@ -94,7 +94,7 @@ struct RdpNego
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
-        credssp       = 0x400,
+        credssp     = 0x400,
         negotiation = 128,
     };
 

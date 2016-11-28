@@ -38,6 +38,15 @@ struct implicit_bool_flags
 
     implicit_bool_flags(E flags) : flags_(flags) {}
 
+#ifdef __clang__
+private:
+    template<class T> implicit_bool_flags operator | (T const &) const;
+    template<class T> implicit_bool_flags operator & (T const &) const;
+#else
+    template<class T> implicit_bool_flags operator | (T const &) const = delete;
+    template<class T> implicit_bool_flags operator & (T const &) const = delete;
+#endif
+
 private:
     E const flags_;
 };
@@ -76,38 +85,12 @@ public:                                                             \
     enum class VerboseFlags : uint32_t
 
 
-// TODO temporary
-namespace detail
-{
-    template<class Ini>
-    struct ini_get_debug_fn
-    {
-        Ini const & ini;
-
-        template<class T>
-        uint32_t operator()(T) const
-        {
-            return {this->ini.template get<T>()};
-        }
-    };
-}
-
-#ifdef IN_IDE_PARSER
-# define REDEMPTION_DEBUG_CONFIG_TO_VERBOSE_FLAGS(extractor)               \
-    static VerboseFlags debug_config_to_verbose_flags(Inifile const & ini) \
-    {                                                                      \
-        ::detail::ini_get_debug_fn<Inifile> get;                           \
-        return VerboseFlags(extractor);                                    \
-    }
-#else
-# define REDEMPTION_DEBUG_CONFIG_TO_VERBOSE_FLAGS(extractor)               \
-    template<class Inifile>                                                \
-    static VerboseFlags debug_config_to_verbose_flags(Inifile const & ini) \
-    {                                                                      \
-        struct cfg {                                                       \
-            using debug = typename Inifile::debug_section_type;            \
-        };                                                                 \
-        ::detail::ini_get_debug_fn<Inifile> get{ini};                      \
-        return VerboseFlags(extractor);                                    \
-    }
-#endif
+#define REDEMPTION_VERBOSE_FLAGS_DEF(enum_name)            \
+    enum class enum_name : uint32_t;                       \
+                                                           \
+    inline enum_name operator | (enum_name x, enum_name y) \
+    { return enum_name(uint32_t(x) | uint32_t(y)); }       \
+    inline enum_name operator & (enum_name x, enum_name y) \
+    { return enum_name(uint32_t(x) & uint32_t(y)); }       \
+                                                           \
+    enum class enum_name : uint32_t

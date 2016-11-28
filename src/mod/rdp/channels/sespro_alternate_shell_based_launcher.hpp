@@ -34,11 +34,12 @@ private:
 
     bool stopped = false;
 
-    uint32_t verbose;
+    const implicit_bool_flags<RDPVerboseFlags> verbose;
 
 public:
-    explicit SessionProbeAlternateShellBasedLauncher(uint32_t verbose)
-    : verbose(verbose) {}
+    explicit SessionProbeAlternateShellBasedLauncher(RDPVerboseFlags verbose)
+    : verbose(verbose)
+    {}
 
     wait_obj* get_event() override { return nullptr; }
 
@@ -47,7 +48,7 @@ public:
     bool on_clipboard_monitor_ready() override { return false; }
 
     bool on_drive_access() override {
-        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+        if (this->verbose & RDPVerboseFlags::sesprobe_launcher) {
             LOG(LOG_INFO,
                 "SessionProbeAlternateShellBasedLauncher :=> on_drive_access");
         }
@@ -64,7 +65,7 @@ public:
     }
 
     bool on_drive_redirection_initialize() override {
-        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+        if (this->verbose & RDPVerboseFlags::sesprobe_launcher) {
             LOG(LOG_INFO,
                 "SessionProbeAlternateShellBasedLauncher :=> on_drive_redirection_initialize");
         }
@@ -80,7 +81,7 @@ public:
         (void)offset;
         (void)length;
 
-        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+        if (this->verbose & RDPVerboseFlags::sesprobe_launcher) {
             LOG(LOG_INFO,
                 "SessionProbeAlternateShellBasedLauncher :=> on_image_read");
         }
@@ -118,7 +119,7 @@ public:
     }
 
     void stop(bool bLaunchSuccessful) override {
-        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+        if (this->verbose & RDPVerboseFlags::sesprobe_launcher) {
             LOG(LOG_INFO,
                 "SessionProbeAlternateShellBasedLauncher :=> stop");
         }

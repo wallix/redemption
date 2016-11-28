@@ -133,7 +133,7 @@ int main(int argc, char** argv){
                                , 2
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
-                               , 0
+                               , to_verbose_flags(0)
                                );
 
     mod_rdp_params.device_id = "device_id";
@@ -395,7 +395,7 @@ int main(int argc, char** argv){
     mod_rdp_params.allow_channels                  = &allow_channels;
     //mod_rdp_params.allow_using_multiple_monitors   = true;
     mod_rdp_params.bogus_refresh_rect              = true;
-    mod_rdp_params.verbose = MODRDP_LOGLEVEL_CLIPRDR;
+    mod_rdp_params.verbose = RDPVerboseFlags::cliprdr;
     //======================================================================
 
 

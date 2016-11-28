@@ -35,21 +35,19 @@ class BaseVirtualChannel
 
 protected:
     auth_api*      authentifier;
+    implicit_bool_flags<RDPVerboseFlags> verbose;
 
 private:
     const data_size_type exchanged_data_limit;
           data_size_type exchanged_data                        = 0;
           bool           exchanged_data_limit_reached_reported = false;
 
-protected:
-    const uint32_t verbose;
-
 public:
     struct Params
     {
         auth_api*       authentifier;
         data_size_type  exchanged_data_limit;
-        uint32_t        verbose;
+        RDPVerboseFlags verbose;
     };
 
 protected:
@@ -60,8 +58,9 @@ protected:
     : to_client_sender(to_client_sender_)
     , to_server_sender(to_server_sender_)
     , authentifier(params.authentifier)
+    , verbose(params.verbose)
     , exchanged_data_limit(params.exchanged_data_limit)
-    , verbose(params.verbose) {}
+    {}
 
 public:
     virtual ~BaseVirtualChannel() = default;

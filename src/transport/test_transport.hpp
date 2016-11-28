@@ -191,7 +191,7 @@ protected:
 
 struct GeneratorTransport : public InputTransportDynarray
 {
-    GeneratorTransport(const void * data, size_t len, uint32_t verbose = 0)
+    GeneratorTransport(const void * data, size_t len, bool verbose = false)
     : verbose(verbose)
     {
         if (this->buffer().open(len, data)) {
@@ -209,7 +209,7 @@ struct GeneratorTransport : public InputTransportDynarray
     }
 
 private:
-    uint32_t verbose;
+    bool verbose;
 };
 
 
@@ -226,7 +226,7 @@ class CheckTransport
     };
 
 public:
-    CheckTransport(const char * data, size_t len, uint32_t verbose = 0)
+    CheckTransport(const char * data, size_t len, bool verbose = false)
     : data(new(std::nothrow) uint8_t[len])
     , len(len)
     , current(0)
@@ -309,7 +309,7 @@ public:
     TestTransport(
         const char * outdata, size_t outlen,
         const char * indata, size_t inlen,
-        uint32_t verbose = 0)
+        bool verbose = false)
     : check(indata, inlen, verbose)
     , gen(outdata, outlen, verbose)
     , public_key_length(0)

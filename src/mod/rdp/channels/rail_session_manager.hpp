@@ -52,7 +52,7 @@ private:
     Font  const & font;
     Theme const & theme;
 
-    uint32_t verbose;
+    const implicit_bool_flags<RDPVerboseFlags> verbose;
 
     uint32_t blocked_server_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
@@ -82,7 +82,7 @@ public:
     RemoteProgramsSessionManager(FrontAPI& front, mod_api& mod, Translation::language_t lang,
                                  uint16_t front_width, uint16_t front_height,
                                  Font const & font, Theme const & theme, auth_api* acl,
-                                 uint32_t verbose)
+                                 RDPVerboseFlags verbose)
     : front(front)
     , mod(mod)
     , lang(lang)

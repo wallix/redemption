@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
                                    , 2
                                    , ini.get<cfg::font>()
                                    , ini.get<cfg::theme>()
-                                   , 0
+                                   , to_verbose_flags(0)
                                    );
         mod_rdp_params.device_id                       = "device_id";
         mod_rdp_params.enable_tls                      = false;
@@ -246,7 +246,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         //mod_rdp_params.certificate_change_action       = 0;
         //mod_rdp_params.extra_orders                    = "";
         mod_rdp_params.server_redirection_support        = true;
-        mod_rdp_params.verbose = verbose;
+        mod_rdp_params.verbose = to_verbose_flags(verbose);
 
         // To always get the same client random, in tests
         LCGRandom gen2(0);
@@ -414,7 +414,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
                                    , 2
                                    , ini.get<cfg::font>()
                                    , ini.get<cfg::theme>()
-                                   , 0
+                                   , to_verbose_flags(0)
                                    );
         mod_rdp_params.device_id                       = "device_id";
         mod_rdp_params.enable_tls                      = false;
@@ -432,7 +432,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         //mod_rdp_params.certificate_change_action       = 0;
         //mod_rdp_params.extra_orders                    = "";
         mod_rdp_params.server_redirection_support        = true;
-        mod_rdp_params.verbose = verbose;
+        mod_rdp_params.verbose = to_verbose_flags(verbose);
 
         // To always get the same client random, in tests
         LCGRandom gen2(0);
@@ -671,7 +671,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         //mod_rdp_params.certificate_change_action       = 0;
         //mod_rdp_params.extra_orders                    = "";
         mod_rdp_params.server_redirection_support        = true;
-        mod_rdp_params.verbose = verbose;
+        mod_rdp_params.verbose = to_verbose_flags(verbose);
 
         // To always get the same client random, in tests
         LCGRandom gen2(0);

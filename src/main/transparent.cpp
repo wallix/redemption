@@ -265,7 +265,7 @@ int main(int argc, char * argv[]) {
                                        , front.keymap.key_flags
                                        , ini.get<cfg::font>()
                                        , ini.get<cfg::theme>()
-                                       , ini.get<cfg::debug::mod_rdp>()
+                                       , to_verbose_flags(ini.get<cfg::debug::mod_rdp>())
                                        );
             //mod_rdp_params.enable_tls                          = true;
             mod_rdp_params.enable_nla                          = ini.get<cfg::mod_rdp::enable_nla>();
@@ -288,7 +288,7 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.enable_persistent_disk_bitmap_cache = ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>();
             mod_rdp_params.enable_cache_waiting_list           = ini.get<cfg::mod_rdp::cache_waiting_list>();
             mod_rdp_params.password_printing_mode              = ini.get<cfg::debug::password>();
-            mod_rdp_params.cache_verbose                       = ini.get<cfg::debug::cache>();
+            mod_rdp_params.cache_verbose                       = to_verbose_flags(ini.get<cfg::debug::cache>());
 
             mod_rdp_params.allow_channels                      = &(ini.get<cfg::mod_rdp::allow_channels>());
             mod_rdp_params.deny_channels                       = &(ini.get<cfg::mod_rdp::deny_channels>());

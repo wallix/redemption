@@ -277,7 +277,7 @@ public:
 
         params.authentifier = nullptr;
         params.exchanged_data_limit = ~decltype(params.exchanged_data_limit){};
-        params.verbose = 0xfffffff;
+        params.verbose = to_verbose_flags(0xfffffff);
 
         params.clipboard_down_authorized = true;
         params.clipboard_up_authorized = true;

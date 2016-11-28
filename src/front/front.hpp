@@ -139,6 +139,7 @@ public:
         basic_trace2    = 1 << 1,
         basic_trace3    = 1 << 2,
         basic_trace4    = 1 << 3,
+        basic_trace5    = 1 << 5,
         graphic         = 1 << 6,
         channel         = 1 << 7,
         global_channel  = 1 << 13,
@@ -349,6 +350,8 @@ private:
                 ? RDPSerializer::VerboseFlags::bmp_cache        : RDPSerializer::VerboseFlags::none)
             | (bool(verbose & VerboseFlags::internal_buffer)
                 ? RDPSerializer::VerboseFlags::internal_buffer  : RDPSerializer::VerboseFlags::none)
+            | (bool(verbose & VerboseFlags::basic_trace4)
+                ? RDPSerializer::VerboseFlags::pointer          : RDPSerializer::VerboseFlags::none)
             )
         )
         {}
@@ -2997,7 +3000,7 @@ private:
         stream.in_skip_bytes(2); /* pad */
 
         for (int n = 0; n < numberCapabilities; n++) {
-            if (this->verbose & 32) {
+            if (this->verbose & VerboseFlags::basic_trace5) {
                 LOG(LOG_INFO, "Front::capability %u / %u", n, numberCapabilities );
             }
             if (stream.get_current() + 4 > theoricCapabilitiesEnd) {
