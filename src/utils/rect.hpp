@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include "utils/log.hpp"
+
 #include <utility>
 #include <iosfwd>
 #include <cstdint>
@@ -73,7 +75,7 @@ struct Rect {
 
     bool has_intersection(int16_t x, int16_t y) const
     {
-        return this->cx
+        return this->cx && this->cy
             && (x >= this->x && x < this->right())
             && (y >= this->y && y < this->bottom());
     }
@@ -136,6 +138,8 @@ struct Rect {
     }
 
     Rect shrink(uint16_t margin) const {
+        REDASSERT((this->cx >= margin * 2) &&
+                  (this->cy >= margin * 2));
         return Rect(this->x + margin, this->y + margin,
                     static_cast<uint16_t>(this->cx - margin * 2),
                     static_cast<uint16_t>(this->cy - margin * 2));
@@ -174,7 +178,7 @@ struct Rect {
 
     bool has_intersection(const Rect & in) const
     {
-        return (this->cx
+        return (this->cx && this->cx && !in.isempty()
         && ((in.x >= this->x && in.x < this->right()) || (this->x >= in.x && this->x < in.right()))
         && ((in.y >= this->y && in.y < this->bottom()) || (this->y >= in.y && this->y < in.bottom()))
         );
