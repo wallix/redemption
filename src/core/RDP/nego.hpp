@@ -117,6 +117,7 @@ struct RdpNego
     , lb_info(nullptr)
     , verbose(verbose)
     {
+
         if (this->tls){
             this->enabled_protocols = RdpNego::PROTOCOL_RDP
                                     | RdpNego::PROTOCOL_TLS;
@@ -127,6 +128,12 @@ struct RdpNego
         else {
             this->enabled_protocols = RdpNego::PROTOCOL_RDP;
         }
+
+        LOG(LOG_INFO, "RdpNego: TLS=%s NLA=%s",
+            ((this->enabled_protocols & RdpNego::PROTOCOL_TLS) ? "Enabled" : "Disabled"),
+            ((this->enabled_protocols & RdpNego::PROTOCOL_NLA) ? "Enabled" : "Disabled")
+            );
+
         strncpy(this->username, username, 127);
         this->username[127] = 0;
 

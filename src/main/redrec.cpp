@@ -8,10 +8,6 @@ inline void usage(char const * prog) {
     std::cerr << prog << ": Usage {redrec|redver|reddec} [hex-hmac_key hex-key] -- mode-args\n";
 }
 
-inline bool is_sep(char const * s) {
-    return s[0] == '-' && s[1] == '-' && !s[2];
-}
-
 static char const * g_hmac_key_str = nullptr;
 static char const * g_key_str = nullptr;
 // Made these globals as g_hmac, etc, because otherwiser compiler
@@ -29,76 +25,43 @@ inline int get_hmac_key_prototype_fn(char * buffer) {
 }
 
 inline int get_trace_key_prototype_fn(char *, int, char * buffer, unsigned oldscheme) {
+    (void)oldscheme;
     memcpy(buffer, g_key_str, 32);
     return 0;
 }
 
+// ./bin/gcc-5.4.0/release/redrec redver E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE 563EB6E8158F0EED2E5FB6BC2893BC15270D7E7815FA804A723EF4FB315FF4B2 -i ./tests/fixtures/verifier/recorded/toto@10.10.43.13,Administrateur@QA@cible,20160218-183009,wab-5-0-0.yourdomain,7335.mwrm -m ./tests/fixtures/verifier/recorded/ -s ./tests/fixtures/verifier/hash/ --verbose 10
+
 int main(int argc, const char** argv) {
     // TODO: see other todo below, command line arguments should also be simplified
-    if (argc < 3 || !(is_sep(argv[2]) || (!is_sep(argv[2]) && argc > 4 && is_sep(argv[4])))) {
-        usage(argv[0]);
-        return 1;
-    }
-
-    int role;
-    {
-        std::string const mode = argv[1];
-        if (mode == "redrec") {
-            role = 0;
-        }
-        else if (mode == "redver") {
-            role = 1;
-        }
-        else if (mode == "reddec") {
-            role = 2;
-        }
-        else {
-            std::cerr << "Unrecognize mode " << argv[1] << "\n";
-            usage(argv[0]);
-            return 2;
-        }
-    }
-
-    unsigned arg_consumed = 2;
     g_hmac_key_str = hmac_key_str;
     g_key_str = key_str;
 
-    if (!is_sep(argv[2])) {
-        if (strlen(argv[2]) != 64 || strlen(argv[3]) != 64) {
-            std::cerr << "hmac_key or key len is not 64\n";
-        }
+    // first arg=redrec,redver,reddec
 
-        // TODO: reading hex string should be some kind of primitive
-        // isn't it already so ?
-
-        auto ka = argv + 2;
-        for (auto a : {hmac_key_str, key_str}) {
-            auto k = *ka;
-            for (unsigned i = 0; i < 32; ++i) {
-                auto char_to_hex = [](char c){
+    auto ka = argv + 1;
+    for (auto a : {hmac_key_str, key_str}) {
+        auto k = *ka;
+        for (unsigned i = 0; i < 32; ++i) {
+            auto char_to_hex = [](char c){
                 auto in = [&c](char left, char right) { return left <= c && c <= right; };
                 return
                     in('0', '9') ? c-'0'
                     : in('a', 'f') ? c-'a'
                     : in('A', 'F') ? c-'A'
                     : -1;
-                };
-                unsigned const c1 = char_to_hex(k[i*2]);
-                unsigned const c2 = char_to_hex(k[i*2+1]);
-                a[i] = static_cast<char>(c1 << 4 | c2);
-            }
-            ++ka;
+            };
+            unsigned const c1 = char_to_hex(k[i*2]);
+            unsigned const c2 = char_to_hex(k[i*2+1]);
+            a[i] = static_cast<char>(c1 << 4 | c2);
         }
-        arg_consumed += 2;
+        ++ka;
     }
 
-    auto const len = strlen(argv[0]);
-    memcpy(const_cast<char*>(argv[arg_consumed] + 2 - len), const_cast<char*>(argv[0]), len);
-    argv[arg_consumed] = argv[arg_consumed] - len;
     return do_main(
-        role,
-        argc - arg_consumed,
-        argv + arg_consumed,
+        1,
+        argc - 3, 
+        argv + 3,
         get_hmac_key_prototype_fn,
         get_trace_key_prototype_fn
     );
