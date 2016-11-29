@@ -90,6 +90,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
 {
     char const * argv[] {
         "decrypter.py",
+        "reddec",
         "-i",
             FIXTURES_PATH "/verifier/recorded/"
             "toto@10.10.43.13,Administrateur@QA@cible,"
@@ -103,7 +104,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
 
     int res = -1;
     try {
-        res = do_main(2, argc, argv, hmac_fn, trace_fn);
+        res = do_main(argc, argv, hmac_fn, trace_fn);
     } catch (const Error & e) {
         printf("verify failed: with id=%d\n", e.id);
     }
@@ -115,6 +116,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
 {
     char const * argv[] {
         "decrypter.py",
+        "reddec",
         "-i",
             FIXTURES_PATH "/verifier/recorded/"
                 "toto@10.10.43.13,Administrateur@QA@cible"
@@ -128,7 +130,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
 
     int res = -1;
     try {
-        res = do_main(2, argc, argv, hmac_fn, trace_fn);
+        res = do_main(argc, argv, hmac_fn, trace_fn);
     } catch (const Error & e) {
         printf("verify failed: with id=%d\n", e.id);
     }
@@ -357,6 +359,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierFileNotFound)
 {
     char const * argv[] = {
         "verifier.py",
+        "redver",
         "-i", "asdfgfsghsdhds.mwrm",
         "--hash-path", FIXTURES_PATH "/verifier/hash",
         "--mwrm-path", FIXTURES_PATH "/verifier/recorded/bad",
@@ -364,7 +367,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierFileNotFound)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    int res = do_main(1, argc, argv, hmac_fn, trace_fn);
+    int res = do_main(argc, argv, hmac_fn, trace_fn);
     BOOST_CHECK_EQUAL(res, -1);
 }
 
@@ -372,6 +375,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
 {
     char const * argv[] = {
         "verifier.py",
+        "redver",
         "-i",
             "toto@10.10.43.13,Administrateur@QA@cible,"
             "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm",
@@ -386,7 +390,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
 
     int res = -1;
     BOOST_CHECK_NO_THROW(
-        res = do_main(1, argc, argv, hmac_fn, trace_fn)
+        res = do_main(argc, argv, hmac_fn, trace_fn)
     );
     BOOST_CHECK_EQUAL(1, res);
 }
@@ -395,6 +399,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
 {
     char const * argv[] = {
         "verifier.py",
+        "redver",
         "-i",
             "toto@10.10.43.13,Administrateur@QA@cible,"
             "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm",
@@ -409,7 +414,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
 
     int res = -1;
     BOOST_CHECK_NO_THROW(
-        res = do_main(1, argc, argv, hmac_fn, trace_fn)
+        res = do_main(argc, argv, hmac_fn, trace_fn)
     );
     BOOST_CHECK_EQUAL(0, res);
 }
@@ -418,6 +423,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
 {
     char const * argv[] {
         "verifier.py",
+        "redver",
         "-i",
             "toto@10.10.43.13,Administrateur@QA@cible"
             ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
@@ -435,7 +441,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
 
     int res = -1;
     BOOST_CHECK_NO_THROW(
-        res = do_main(1, argc, argv, hmac_fn, trace_fn)
+        res = do_main(argc, argv, hmac_fn, trace_fn)
     );
     BOOST_CHECK_EQUAL(0, res);
 }
@@ -510,6 +516,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierUpdateData)
 
     char const * argv[] {
         "verifier.py",
+        "redver",
         "-i",
             MWRM_FILENAME,
         "--hash-path",
@@ -524,7 +531,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierUpdateData)
 
     int res = -1;
     BOOST_CHECK_NO_THROW(
-        res = do_main(1, argc, argv, hmac_fn, trace_fn)
+        res = do_main(argc, argv, hmac_fn, trace_fn)
     );
     BOOST_CHECK_EQUAL(0, res);
 
@@ -548,6 +555,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
 {
     char const * argv[] {
         "verifier.py",
+        "redver",
         "-i",
             "toto@10.10.43.13,Administrateur@QA@cible"
             ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
@@ -564,7 +572,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
 
     int res = -1;
     BOOST_CHECK_NO_THROW(
-        res = do_main(1, argc, argv, hmac_fn, trace_fn)
+        res = do_main(argc, argv, hmac_fn, trace_fn)
     );
     BOOST_CHECK_EQUAL(1, res);
 }
@@ -810,6 +818,7 @@ inline int trace_old_fn(char * base, int len, char * buffer, unsigned oldscheme)
 
 //    char const * argv[] {
 //        "verifier.py",
+//        "redver",
 //        "-i",
 //        "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
 //            "-192304,wab-4-2-4.yourdomain,5560.mwrm",
@@ -840,6 +849,7 @@ inline int trace_old_fn(char * base, int len, char * buffer, unsigned oldscheme)
 BOOST_AUTO_TEST_CASE(TestAppRecorder)
 {
     char const * argv[] {
+        "recorder.py",
         "redrec",
         "-i",
             FIXTURES_PATH "/verifier/recorded/"
@@ -854,7 +864,7 @@ BOOST_AUTO_TEST_CASE(TestAppRecorder)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    int res = do_main(0, argc, argv, hmac_fn, trace_fn);
+    int res = do_main(argc, argv, hmac_fn, trace_fn);
     BOOST_CHECK_EQUAL(0, res);
 
     const char * filename;
