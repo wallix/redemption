@@ -155,10 +155,10 @@ inline const char * get_module_name(int module_id) {
 
 class MMIni : public MMApi
 {
-public:
-    // TASK private visibility
+protected:
     Inifile & ini;
 
+public:
     explicit MMIni(Inifile & ini_)
     : ini(ini_)
     {}

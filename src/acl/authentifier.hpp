@@ -40,36 +40,36 @@
 #include <string>
 #include <time.h>
 
-#  define LOG_SESSION(normal_log, session_log, session_type, type, session_id,   \
-        ip_client, ip_target, user, device, service, account, priority, format,  \
-        ...                                                                      \
-    )                                                                            \
-    LOGCHECK__REDEMPTION__INTERNAL((                                             \
-        LOG_FORMAT_CHECK(format, __VA_ARGS__),                                   \
-        LOGSYSLOG__REDEMPTION__SESSION__INTERNAL(                                \
-            normal_log,                                                          \
-            session_log,                                                         \
-            session_type, type, session_id, ip_client, ip_target,                \
-            user, device, service, account, priority,                            \
-            "%s (%d/%d) -- type='%s'%s" format,                                  \
-            "[%s Session] "                                                      \
-                "type='%s' "                                                     \
-                "session_id='%s' "                                               \
-                "client_ip='%s' "                                                \
-                "target_ip='%s' "                                                \
-                "user='%s' "                                                     \
-                "device='%s' "                                                   \
-                "service='%s' "                                                  \
-                "account='%s'%s"                                                 \
-                format,                                                          \
-            ((*format) ? " " : ""),                                              \
-            __VA_ARGS__                                                          \
-        ), 1)                                                                    \
+#define LOG_SESSION(normal_log, session_log, session_type, type, session_id,    \
+        ip_client, ip_target, user, device, service, account, priority, format, \
+        ...                                                                     \
+    )                                                                           \
+    LOGCHECK__REDEMPTION__INTERNAL((                                            \
+        LOG_FORMAT_CHECK(format, __VA_ARGS__),                                  \
+        LOGSYSLOG_REDEMPTION_SESSION_INTERNAL(                                  \
+            normal_log,                                                         \
+            session_log,                                                        \
+            session_type, type, session_id, ip_client, ip_target,               \
+            user, device, service, account, priority,                           \
+            "%s (%d/%d) -- type='%s'%s" format,                                 \
+            "[%s Session] "                                                     \
+                "type='%s' "                                                    \
+                "session_id='%s' "                                              \
+                "client_ip='%s' "                                               \
+                "target_ip='%s' "                                               \
+                "user='%s' "                                                    \
+                "device='%s' "                                                  \
+                "service='%s' "                                                 \
+                "account='%s'%s"                                                \
+                format,                                                         \
+            ((*format) ? " " : ""),                                             \
+            __VA_ARGS__                                                         \
+        ), 1)                                                                   \
     )
 
 namespace {
     template<class... Ts>
-    void LOGSYSLOG__REDEMPTION__SESSION__INTERNAL(
+    void LOGSYSLOG_REDEMPTION_SESSION_INTERNAL(
         bool normal_log,
         bool session_log,
 
@@ -88,20 +88,44 @@ namespace {
         const char *format2,
         Ts const & ... args
     ) {
-        #ifdef __GNUG__
+#if defined(LOGNULL)
+        (void)normal_log;
+        (void)session_log;
+        (void)session_type;
+        (void)type;
+        (void)session_id;
+        (void)ip_client;
+        (void)ip_target;
+        (void)user;
+        (void)device;
+        (void)service;
+        (void)account;
+        (void)priority;
+        (void)format_with_pid;
+        (void)format2;
+        (void)std::initializer_list<int>{(void(args), 1)...};
+#else
+        # ifdef __GNUG__
             #pragma GCC diagnostic push
             #pragma GCC diagnostic ignored "-Wformat-nonliteral"
         #endif
+
+        # if defined(LOGPRINT) || defined(IN_IDE_PARSER)
+        (void)priority;
+        #  define LOGSYSLOG_REDEMPTION_SESSION_INTERNAL_PRINTF printf
+        # else
+        #  define LOGSYSLOG_REDEMPTION_SESSION_INTERNAL_PRINTF(...) syslog(priority, __VA_ARGS__)
+        # endif
         if (normal_log) {
-            syslog(
-                priority, format_with_pid,
+            LOGSYSLOG_REDEMPTION_SESSION_INTERNAL_PRINTF(
+                format_with_pid,
                 prioritynames[priority], getpid(), getpid(),
                 type, args...
             );
         }
         if (session_log) {
-            syslog(
-                priority, format2,
+            LOGSYSLOG_REDEMPTION_SESSION_INTERNAL_PRINTF(
+                format2,
                 session_type,
                 type,
                 session_id,
@@ -114,35 +138,12 @@ namespace {
                 args...
              );
         }
+        # undef LOGSYSLOG_REDEMPTION_SESSION_INTERNAL_PRINTF
+
         #ifdef __GNUG__
             #pragma GCC diagnostic pop
         #endif
-    }
-
-    inline void LOGNULL__REDEMPTION__SESSION__INTERNAL(
-        bool normal_log,
-        bool session_log,
-        char const * session_type,
-        char const * type,
-        char const * session_id,
-        char const * ip_client,
-        char const * ip_target,
-        char const * user,
-        char const * device,
-        char const * service,
-        char const * account
-    ) {
-        (void)normal_log;
-        (void)session_log;
-        (void)session_type;
-        (void)type;
-        (void)session_id;
-        (void)ip_client;
-        (void)ip_target;
-        (void)user;
-        (void)device;
-        (void)service;
-        (void)account;
+#endif
     }
 }
 
