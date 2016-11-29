@@ -24,7 +24,7 @@
 #include "utils/verbose_flags.hpp"
 
 
-REDEMPTION_VERBOSE_FLAGS_DEF(RDPVerboseFlags)
+REDEMPTION_VERBOSE_FLAGS_DEF(RDPVerbose)
 {
     none,
 

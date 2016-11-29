@@ -164,7 +164,7 @@ public:
         state = 0x10,
     };
 
-    KeepAlive(std::chrono::seconds grace_delay_, VerboseFlags verbose)
+    KeepAlive(std::chrono::seconds grace_delay_, Verbose verbose)
         : grace_delay(grace_delay_.count())
         , timeout(0)
         , renew_time(0)
@@ -172,13 +172,13 @@ public:
         , connected(false)
         , verbose(verbose)
     {
-        if (this->verbose & VerboseFlags::state) {
+        if (this->verbose & Verbose::state) {
             LOG(LOG_INFO, "KEEP ALIVE CONSTRUCTOR");
         }
     }
 
     ~KeepAlive() {
-        if (this->verbose & VerboseFlags::state) {
+        if (this->verbose & Verbose::state) {
             LOG(LOG_INFO, "KEEP ALIVE DESTRUCTOR");
         }
     }
@@ -189,7 +189,7 @@ public:
 
     void start(time_t now) {
         this->connected = true;
-        if (this->verbose & VerboseFlags::state) {
+        if (this->verbose & Verbose::state) {
             LOG(LOG_INFO, "auth::start_keep_alive");
         }
         this->timeout    = now + 2 * this->grace_delay;
@@ -218,7 +218,7 @@ public:
             if (this->wait_answer
                 && !ini.is_asked<cfg::context::keepalive>()
                 && ini.get<cfg::context::keepalive>()) {
-                if (this->verbose & VerboseFlags::state) {
+                if (this->verbose & Verbose::state) {
                     LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
                 }
                 this->timeout    = now + 2*this->grace_delay;
@@ -257,19 +257,19 @@ public:
         state = 0x10,
     };
 
-    Inactivity(ActivityChecker & checker, std::chrono::seconds timeout, time_t start, VerboseFlags verbose)
+    Inactivity(ActivityChecker & checker, std::chrono::seconds timeout, time_t start, Verbose verbose)
     : inactivity_timeout(std::max<time_t>(timeout.count(), 30))
     , last_activity_time(start)
     , checker(checker)
     , verbose(verbose)
     {
-        if (this->verbose & VerboseFlags::state) {
+        if (this->verbose & Verbose::state) {
             LOG(LOG_INFO, "INACTIVITY CONSTRUCTOR");
         }
     }
 
     ~Inactivity() {
-        if (this->verbose & VerboseFlags::state) {
+        if (this->verbose & Verbose::state) {
             LOG(LOG_INFO, "INACTIVITY DESTRUCTOR");
         }
     }
@@ -318,15 +318,15 @@ public:
         , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), to_verbose_flags(ini.get<cfg::debug::auth>()))
         , inactivity(activity_checker, ini.get<cfg::globals::session_timeout>(),
                      acl_start_time, to_verbose_flags(ini.get<cfg::debug::auth>()))
-        , verbose(static_cast<VerboseFlags>(ini.get<cfg::debug::auth>()))
+        , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
     {
-        if (this->verbose & VerboseFlags::state) {
+        if (this->verbose & Verbose::state) {
             LOG(LOG_INFO, "auth::SessionManager");
         }
     }
 
     ~SessionManager() override {
-        if (this->verbose & VerboseFlags::state) {
+        if (this->verbose & Verbose::state) {
             LOG(LOG_INFO, "auth::~SessionManager");
         }
     }
@@ -515,7 +515,7 @@ public:
     }
 
     void receive() {
-        if (this->verbose & VerboseFlags::state) {
+        if (this->verbose & Verbose::state) {
             LOG(LOG_INFO, "+++++++++++> ACL receive <++++++++++++++++");
         }
         try {
@@ -544,7 +544,7 @@ public:
     }
 
     void ask_acl() {
-        if (this->verbose & VerboseFlags::state) {
+        if (this->verbose & Verbose::state) {
             LOG(LOG_INFO, "Ask acl\n");
         }
         this->acl_serial.send_acl_data();

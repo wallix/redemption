@@ -168,11 +168,11 @@ public:
         ini.get<cfg::video::wrm_compression_algorithm>(), delta_time, GraphicToFile::SendInput::YES,
         to_verbose_flags(ini.get<cfg::debug::capture>())
         | (ini.get<cfg::debug::primary_orders>()
-            ? GraphicToFile::VerboseFlags::primary_orders   : GraphicToFile::VerboseFlags::none)
+            ? GraphicToFile::Verbose::primary_orders   : GraphicToFile::Verbose::none)
         | (ini.get<cfg::debug::secondary_orders>()
-            ? GraphicToFile::VerboseFlags::secondary_orders : GraphicToFile::VerboseFlags::none)
+            ? GraphicToFile::Verbose::secondary_orders : GraphicToFile::Verbose::none)
         | (ini.get<cfg::debug::bitmap_update>()
-            ? GraphicToFile::VerboseFlags::bitmap_update    : GraphicToFile::VerboseFlags::none)
+            ? GraphicToFile::Verbose::bitmap_update    : GraphicToFile::Verbose::none)
     )
     , nc(this->graphic_to_file, now, ini.get<cfg::video::frame_interval>(), ini.get<cfg::video::break_interval>())
     {}

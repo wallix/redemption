@@ -42,7 +42,7 @@ class ReplayMod : public InternalMod
     bool wait_for_escape;
 
 public:
-    using VerboseFlags = FileToGraphic::VerboseFlags;
+    using Verbose = FileToGraphic::Verbose;
 
 private:
     struct TemporaryCtxPath
@@ -86,7 +86,7 @@ private:
              , std::string & auth_error_message
              , Font const & font
              , bool wait_for_escape
-             , VerboseFlags debug_capture)
+             , Verbose debug_capture)
     : InternalMod(front, width, height, font, Theme{})
     , auth_error_message(auth_error_message)
     , in_trans(&this->cctx, path.prefix, path.extension, 0)
@@ -128,7 +128,7 @@ public:
              , std::string & auth_error_message
              , Font const & font
              , bool wait_for_escape
-             , VerboseFlags debug_capture)
+             , Verbose debug_capture)
     : ReplayMod(
         front, TemporaryCtxPath(replay_path, movie),
         width, height, auth_error_message,

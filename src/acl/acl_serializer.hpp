@@ -56,14 +56,14 @@ public:
     };
 
 public:
-    AclSerializer(Inifile & ini, Transport & auth_trans, VerboseFlags verbose)
+    AclSerializer(Inifile & ini, Transport & auth_trans, Verbose verbose)
         : ini(ini)
         , auth_trans(auth_trans)
         , session_id{}
         , verbose(verbose)
     {
         std::snprintf(this->session_id, sizeof(this->session_id), "%d", getpid());
-        if (this->verbose & VerboseFlags::state){
+        if (this->verbose & Verbose::state){
             LOG(LOG_INFO, "auth::AclSerializer");
         }
     }
@@ -71,7 +71,7 @@ public:
     ~AclSerializer()
     {
         this->auth_trans.disconnect();
-        if (this->verbose & VerboseFlags::state){
+        if (this->verbose & Verbose::state){
             LOG(LOG_INFO, "auth::~AclSerializer");
         }
         char session_file[256];
@@ -92,10 +92,10 @@ private:
         char * e;
 
         Transport & trans;
-        const implicit_bool_flags<VerboseFlags> verbose;
+        const implicit_bool_flags<Verbose> verbose;
 
     public:
-        Reader(Transport & trans, VerboseFlags verbose)
+        Reader(Transport & trans, Verbose verbose)
         : trans(trans)
         , verbose(verbose)
         {
@@ -231,7 +231,7 @@ private:
             this->e = this->buf;
             this->trans.recv(&e, buf_sz);
 
-            if (this->verbose & VerboseFlags::buffer){
+            if (this->verbose & Verbose::buffer){
                 if (this->has_next_buffer){
                     LOG(LOG_INFO, "ACL SERIALIZER : multi buffer (receive)");
                 }
@@ -245,11 +245,11 @@ public:
     {
         Reader reader(this->auth_trans, this->verbose);
 
-        while (auto key = reader.key(this->verbose & VerboseFlags::variable)) {
+        while (auto key = reader.key(this->verbose & Verbose::variable)) {
             auto authid = authid_from_string(key);
             if (auto field = this->ini.get_acl_field(authid)) {
                 if (reader.is_set_value()) {
-                    if (field.set(reader.get_val()) && (this->verbose & VerboseFlags::variable)) {
+                    if (field.set(reader.get_val()) && (this->verbose & Verbose::variable)) {
                         const char * val         = field.c_str();
                         const char * display_val = val;
                         if (cfg::crypto::key0::index() == authid ||
@@ -267,7 +267,7 @@ public:
                 }
                 else if (reader.consume_ask()) {
                     field.ask();
-                    if (this->verbose & VerboseFlags::variable) {
+                    if (this->verbose & Verbose::variable) {
                         LOG(LOG_INFO, "receiving ASK '%s'", key);
                     }
                 }
@@ -298,7 +298,7 @@ public:
             std::snprintf(this->session_id, sizeof(this->session_id), "%s",
                           this->ini.get<cfg::context::session_id>().c_str());
         }
-        if (this->verbose & VerboseFlags::buffer){
+        if (this->verbose & Verbose::buffer){
             LOG(LOG_INFO, "SESSION_ID = %s", this->ini.get<cfg::context::session_id>().c_str());
         }
     }
@@ -317,10 +317,10 @@ private:
 
         Buffer buf;
         Transport & trans;
-        const implicit_bool_flags<VerboseFlags> verbose;
+        const implicit_bool_flags<Verbose> verbose;
 
     public:
-        Buffers(Transport & trans, VerboseFlags verbose)
+        Buffers(Transport & trans, Verbose verbose)
         : trans(trans)
         , verbose(verbose)
         {}
@@ -345,7 +345,7 @@ private:
         }
 
         void send_buffer() {
-            if (this->verbose & VerboseFlags::buffer){
+            if (this->verbose & Verbose::buffer){
                 LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %d", this->buf.sz - HEADER_SIZE);
             }
             OutStream stream(this->buf.data, HEADER_SIZE);
@@ -359,7 +359,7 @@ private:
     private:
         enum { MULTIBUF = 1 };
         void new_buffer() {
-            if (this->verbose & VerboseFlags::buffer){
+            if (this->verbose & Verbose::buffer){
                 LOG(LOG_INFO, "ACL SERIALIZER : multi buffer (send)");
             }
             this->buf.flags |= MULTIBUF;
@@ -369,7 +369,7 @@ private:
 
 public:
     void send_acl_data() {
-        if (this->verbose & VerboseFlags::variable){
+        if (this->verbose & Verbose::variable){
             LOG(LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %zu", this->ini.changed_field_size());
         }
         if (this->ini.changed_field_size()) {
@@ -384,7 +384,7 @@ public:
                     buffers.push('\n');
                     if (field.is_asked()) {
                         buffers.push("ASK\n");
-                        if (this->verbose & VerboseFlags::variable) {
+                        if (this->verbose & Verbose::variable) {
                             LOG(LOG_INFO, "sending %s=ASK", key);
                         }
                     }
@@ -398,7 +398,7 @@ public:
                          || (strncasecmp("target_password", key, 15) == 0)) {
                             display_val = get_printable_password(val, password_printing_mode);
                         }
-                        if (this->verbose & VerboseFlags::variable) {
+                        if (this->verbose & Verbose::variable) {
                             LOG(LOG_INFO, "sending %s=%s", key, display_val);
                         }
                     }
