@@ -1011,10 +1011,10 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
                 }
 
                 if (b->in_remain() != 0) {
-                    delete b;
                     LOG(LOG_INFO, "Signature has remaining bytes in inner "
                                 "sigblob: %lu",
                                 b->in_remain());
+                    delete b;
                     ssh_signature_free(sig);
                     return nullptr;
                 }
