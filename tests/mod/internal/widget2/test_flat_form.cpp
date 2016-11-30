@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
     FlatForm form(drawable.gd, 0, 0, 600, 150, parent, notifier, 0, font, colors, Translation::EN, flag);
     // ask to widget to redraw at it's current position
     form.move_xy(70, 70);
-    form.rdp_input_invalidate(form.rect);
+    form.rdp_input_invalidate(form.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "ticket_form.png");
 

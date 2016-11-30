@@ -116,7 +116,7 @@ public:
                         Font const & font, Theme const & theme, Translation::language_t lang)
         : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier)
         , bg_color(theme.global.bgcolor)
-        , less_than_800(this->rect.cx < 800)
+        , less_than_800(width < 800)
         , device_label(drawable, TEXT_MARGIN, VERTICAL_MARGIN, *this, nullptr, device_name,
                        true, -10, theme.global.fgcolor, theme.global.bgcolor, font)
         , target_group_label(drawable, 0, 0, *this, nullptr, TR("authorization", lang), true,
@@ -209,8 +209,8 @@ public:
 
         if (extra_button) {
             this->add_widget(extra_button);
-            extra_button->set_button_x(left + 60);
-            extra_button->set_button_y(top + height - 60);
+            extra_button->set_dx(left + 60);
+            extra_button->set_dy(top + height - 60);
         }
 
         this->rearrange();
@@ -221,24 +221,24 @@ public:
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
-        this->rect.x  = left;
-        this->rect.y  = top;
-        this->rect.cx = width;
-        this->rect.cy = height;
+        this->set_dx(left);
+        this->set_dy(top);
+        this->set_cx(width);
+        this->set_cy(height);
 
         this->left = left;
         this->top  = top;
 
-        this->device_label.rect.x = left + TEXT_MARGIN;
-        this->device_label.rect.y = top + VERTICAL_MARGIN;
+        this->device_label.set_dx(left + TEXT_MARGIN);
+        this->device_label.set_dy(top + VERTICAL_MARGIN);
 
-        this->less_than_800 = (this->rect.cx < 800);
+        this->less_than_800 = (this->cx() < 800);
 
-        this->selector_lines.rect.cx = width - (this->less_than_800 ? 0 : 30);
+        this->selector_lines.set_cx(width - (this->less_than_800 ? 0 : 30));
 
         if (this->extra_button) {
-            this->extra_button->set_button_x(left + 60);
-            this->extra_button->set_button_y(top + height - 60);
+            this->extra_button->set_dx(left + 60);
+            this->extra_button->set_dy(top + height - 60);
         }
 
         this->rearrange();
@@ -271,8 +271,8 @@ public:
 
         {
             // filter button position
-            this->apply.set_button_y(this->top + VERTICAL_MARGIN);
-            this->apply.set_button_x(this->left + this->cx() - (this->apply.cx() + TEXT_MARGIN));
+            this->apply.set_dy(this->top + VERTICAL_MARGIN);
+            this->apply.set_dx(this->left + this->cx() - (this->apply.cx() + TEXT_MARGIN));
         }
 
         {
@@ -282,78 +282,78 @@ public:
             uint16_t filters_y = labels_y + this->target_group_label.cy()
                 + FILTER_SEPARATOR;
             // target group
-            this->target_group_label.rect.cx = columns_width[IDX_TARGETGROUP] +
-                this->selector_lines.border * 2;
-            this->target_group_label.rect.x = this->left + offset;
-            this->target_group_label.rect.y = labels_y;
-            this->filter_target_group.set_edit_x(this->target_group_label.dx());
-            this->filter_target_group.set_edit_cx(this->target_group_label.cx() -
-                                                  FILTER_SEPARATOR);
-            this->filter_target_group.set_edit_y(filters_y);
-            offset += this->target_group_label.rect.cx;
+            this->target_group_label.set_cx(columns_width[IDX_TARGETGROUP] +
+                this->selector_lines.border * 2);
+            this->target_group_label.set_dx(this->left + offset);
+            this->target_group_label.set_dy(labels_y);
+            this->filter_target_group.set_dx(this->target_group_label.dx());
+            this->filter_target_group.set_cx(this->target_group_label.cx() -
+                FILTER_SEPARATOR);
+            this->filter_target_group.set_dy(filters_y);
+            offset += this->target_group_label.cx();
 
             // target
-            this->target_label.rect.cx = columns_width[IDX_TARGET] +
-                this->selector_lines.border * 2;
-            this->target_label.rect.x = this->left + offset;
-            this->target_label.rect.y = labels_y;
-            this->filter_target.set_edit_x(this->target_label.dx());
-            this->filter_target.set_edit_cx(this->target_label.cx() - FILTER_SEPARATOR);
-            this->filter_target.set_edit_y(filters_y);
-            offset += this->target_label.rect.cx;
+            this->target_label.set_cx(columns_width[IDX_TARGET] +
+                this->selector_lines.border * 2);
+            this->target_label.set_dx(this->left + offset);
+            this->target_label.set_dy(labels_y);
+            this->filter_target.set_dx(this->target_label.dx());
+            this->filter_target.set_cx(this->target_label.cx() - FILTER_SEPARATOR);
+            this->filter_target.set_dy(filters_y);
+            offset += this->target_label.cx();
 
             // protocol
-            this->protocol_label.rect.cx = columns_width[IDX_PROTOCOL] +
-                this->selector_lines.border * 2;
-            this->protocol_label.rect.x = this->left + offset;
-            this->protocol_label.rect.y = labels_y;
-            this->filter_protocol.set_edit_x(this->protocol_label.dx());
-            this->filter_protocol.set_edit_cx(this->protocol_label.cx());
-            this->filter_protocol.set_edit_y(filters_y);
-            offset += this->protocol_label.rect.cx;
+            this->protocol_label.set_cx(columns_width[IDX_PROTOCOL] +
+                this->selector_lines.border * 2);
+            this->protocol_label.set_dx(this->left + offset);
+            this->protocol_label.set_dy(labels_y);
+            this->filter_protocol.set_dx(this->protocol_label.dx());
+            this->filter_protocol.set_cx(this->protocol_label.cx());
+            this->filter_protocol.set_dy(filters_y);
+            offset += this->protocol_label.cx();
 
             (void)offset;
         }
         {
             // selector list position
-            this->selector_lines.rect.x = this->left + (this->less_than_800 ? 0 : HORIZONTAL_MARGIN);
-            this->selector_lines.rect.y = this->filter_target_group.ly() + FILTER_SEPARATOR;
+            this->selector_lines.set_dx(this->left + (this->less_than_800 ? 0 : HORIZONTAL_MARGIN));
+            this->selector_lines.set_dy(this->filter_target_group.ly() + FILTER_SEPARATOR);
         }
         {
             // Navigation buttons
             uint16_t nav_bottom_y = this->cy() - (this->connect.cy() + VERTICAL_MARGIN);
-            this->connect.set_button_y(this->top + nav_bottom_y);
-            this->logout.set_button_y(this->top + nav_bottom_y);
+            this->connect.set_dy(this->top + nav_bottom_y);
+            this->logout.set_dy(this->top + nav_bottom_y);
 
             uint16_t nav_top_y = this->connect.dy() - (this->last_page.cy() + VERTICAL_MARGIN);
-            this->last_page.set_button_y(nav_top_y);
-            this->next_page.set_button_y(nav_top_y);
-            this->number_page.rect.y = nav_top_y + (this->next_page.cy() - this->number_page.cy()) / 2;
-            this->current_page.set_edit_y(nav_top_y + (this->next_page.cy() - this->current_page.cy()) / 2);
-            this->prev_page.set_button_y(nav_top_y);
-            this->first_page.set_button_y(nav_top_y);
+            this->last_page.set_dy(nav_top_y);
+            this->next_page.set_dy(nav_top_y);
+            this->number_page.set_dy(nav_top_y + (this->next_page.cy() - this->number_page.cy()) / 2);
+            this->current_page.set_dy(nav_top_y + (this->next_page.cy() - this->current_page.cy()) / 2);
+            this->prev_page.set_dy(nav_top_y);
+            this->first_page.set_dy(nav_top_y);
 
             uint16_t nav_offset_x = this->cx() - (this->last_page.cx() + TEXT_MARGIN);
-            this->last_page.set_button_x(this->left + nav_offset_x);
+            this->last_page.set_dx(this->left + nav_offset_x);
 
             nav_offset_x -= (this->next_page.cx() + NAV_SEPARATOR);
-            this->next_page.set_button_x(this->left + nav_offset_x);
+            this->next_page.set_dx(this->left + nav_offset_x);
 
             nav_offset_x -= (this->number_page.cx() + NAV_SEPARATOR);
-            this->number_page.rect.x = this->left + nav_offset_x;
+            this->number_page.set_dx(this->left + nav_offset_x);
 
             nav_offset_x -= this->current_page.cx();
-            this->current_page.set_edit_x(this->left + nav_offset_x);
+            this->current_page.set_dx(this->left + nav_offset_x);
 
             nav_offset_x -= (this->prev_page.cx() + NAV_SEPARATOR);
-            this->prev_page.set_button_x(this->left + nav_offset_x);
+            this->prev_page.set_dx(this->left + nav_offset_x);
 
             nav_offset_x -= (this->first_page.cx() + NAV_SEPARATOR);
-            this->first_page.set_button_x(this->left + nav_offset_x);
+            this->first_page.set_dx(this->left + nav_offset_x);
 
             int nav_w = this->last_page.lx() - this->first_page.dx();
-            this->connect.set_button_x(this->last_page.lx() - nav_w/4 - this->connect.cx()/2);
-            this->logout.set_button_x(this->first_page.dx() + nav_w/4 - this->logout.cx()/2);
+            this->connect.set_dx(this->last_page.lx() - nav_w/4 - this->connect.cx()/2);
+            this->logout.set_dx(this->first_page.dx() + nav_w/4 - this->logout.cx()/2);
         }
     }
 
@@ -414,7 +414,7 @@ public:
     void show_tooltip(Widget2 * widget, const char * text, int x, int y,
                       Rect const & preferred_display_rect, int iter) override {
         WidgetParent::show_tooltip(widget, text, x, y,
-            (preferred_display_rect.isempty() ? this->rect : preferred_display_rect),
+            (preferred_display_rect.isempty() ? this->get_rect() : preferred_display_rect),
             iter);
     }
 };

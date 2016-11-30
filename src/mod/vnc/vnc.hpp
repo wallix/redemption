@@ -641,7 +641,7 @@ public:
 
             this->challenge.set_widget_focus(&this->challenge.password_edit, Widget2::focus_reason_tabkey);
 
-            this->screen.refresh(this->screen.rect);
+            this->screen.refresh(this->screen.get_rect());
 
             this->state = WAIT_PASSWORD;
             break;
@@ -689,7 +689,7 @@ public:
                     this->server_use_long_format_names?RDPECLIP::CB_USE_LONG_FORMAT_NAMES:0);
 
                 if (this->verbose) {
-                    LOG(LOG_INFO, "Server use %s format name", 
+                    LOG(LOG_INFO, "Server use %s format name",
                         (this->server_use_long_format_names ? "long" : "short"));
                 }
 
@@ -2261,10 +2261,10 @@ private:
 
         switch (msgType) {
             case RDPECLIP::CB_FORMAT_LIST: {
-                // Client notify that a copy operation have occured. 
+                // Client notify that a copy operation have occured.
                 // Two operations should be done :
                 //  - Always: send a RDP acknowledge (CB_FORMAT_LIST_RESPONSE)
-                //  - Only if clipboard content formats list include "UNICODETEXT: 
+                //  - Only if clipboard content formats list include "UNICODETEXT:
                 // send a request for it in that format
                 RDPECLIP::FormatListPDU format_list_pdu;
 
@@ -2304,8 +2304,8 @@ private:
 
                 const uint64_t MINIMUM_TIMEVAL = 250000LL;
 
-                if (this->enable_clipboard_up 
-                && (format_list_pdu.contains_data_in_text_format 
+                if (this->enable_clipboard_up
+                && (format_list_pdu.contains_data_in_text_format
                  || format_list_pdu.contains_data_in_unicodetext_format)) {
                     if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
                         this->clipboard_requested_format_id =
@@ -2363,9 +2363,9 @@ private:
 
                             this->clipboard_requesting_for_data_is_delayed = true;
                         }
-                        else if (this->bogus_clipboard_infinite_loop 
-                            != VncBogusClipboardInfiniteLoop::duplicated 
-                        && (this->clipboard_general_capability_flags 
+                        else if (this->bogus_clipboard_infinite_loop
+                            != VncBogusClipboardInfiniteLoop::duplicated
+                        && (this->clipboard_general_capability_flags
                             & RDPECLIP::CB_ALL_GENERAL_CAPABILITY_FLAGS)) {
                             if (this->verbose) {
                                 LOG( LOG_INFO
@@ -2715,7 +2715,7 @@ private:
                         this->client_use_long_format_names = true;
                     }
                     if (this->verbose) {
-                        LOG(LOG_INFO, "Client use %s format name", 
+                        LOG(LOG_INFO, "Client use %s format name",
                             (this->client_use_long_format_names ? "long" : "short"));
                     }
 

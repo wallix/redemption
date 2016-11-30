@@ -61,7 +61,11 @@ public:
     Widget2 & parent;
     gdi::GraphicApi & drawable;
     NotifyApi * notifier;
+
+private:
     Rect rect;
+
+public:
     int group_id;
     int tab_flag;
     int focus_flag;
@@ -189,16 +193,16 @@ public:
         return nullptr;
     }
 
-    virtual void set_xy(int16_t x, int16_t y)
+    void set_xy(int16_t x, int16_t y)
     {
-        this->rect.x = x;
-        this->rect.y = y;
+        this->set_dx(x);
+        this->set_dy(y);
     }
 
-    virtual void set_wh(int16_t w, int16_t h)
+    void set_wh(int16_t w, int16_t h)
     {
-        this->rect.cx = w;
-        this->rect.cy = h;
+        this->set_cx(w);
+        this->set_cy(h);
     }
 
     virtual void set_color(uint32_t bg_color, uint32_t fg_color) {
@@ -240,10 +244,18 @@ public:
         return this->rect.x;
     }
 
+    virtual void set_dx(int16_t x) {
+        this->rect.x = x;
+    }
+
     ///Return y position in it's screen
     int16_t dy() const
     {
         return this->rect.y;
+    }
+
+    virtual void set_dy(int16_t y) {
+        this->rect.y = y;
     }
 
     ///Return width
@@ -252,10 +264,18 @@ public:
         return this->rect.cx;
     }
 
+    virtual void set_cx(uint16_t cx) {
+        this->rect.cx = cx;
+    }
+
     ///Return height
     uint16_t cy() const
     {
         return this->rect.cy;
+    }
+
+    virtual void set_cy(uint16_t cy) {
+        this->rect.cy = cy;
     }
 
     ///Return dx()+cx()
@@ -290,6 +310,10 @@ public:
     int16_t py() const
     {
         return this->dy() - this->parent.dy();
+    }
+
+    Rect const&  get_rect() const {
+        return this->rect;
     }
 };
 

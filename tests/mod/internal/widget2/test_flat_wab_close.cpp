@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose)
                                     false, font, Theme(), Translation::EN);
 
         // ask to widget to redraw at it's current position
-        flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
+        flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
         // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close.png");
     } catch (Error & e) {
@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
             "adipiscing et arcu.",
             nullptr, nullptr, false, font, Theme(), Translation::EN);
 
-        flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
+        flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
     }
     catch(Error & e) {
         LOG(LOG_INFO, "error.id=%d", e.id);
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose3)
                                     nullptr, nullptr, false, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at it's current position
-    flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
+    flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close3.png");
 
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip)
                                     nullptr, nullptr, false, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    flat_wab_close.rdp_input_invalidate(flat_wab_close.rect.offset(20,0));
+    flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect().offset(20,0));
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close7.png");
 
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     flat_wab_close.refresh_timeleft(183);
 
     // ask to widget to redraw at it's current position
-    flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
+    flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close-exit1.png");
 
@@ -241,7 +241,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     }
 
     flat_wab_close.refresh_timeleft(49);
-    flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
+    flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close-exit2.png");
     if (!check_sig(drawable.gd.impl(), message,

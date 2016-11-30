@@ -59,18 +59,18 @@ public:
                 : nullptr)
         , use_label_(use_title)
     {
-        this->button.set_button_x(this->editbox->lx() - 1);
-        this->editbox->set_edit_cy(this->button.cy());
-        this->rect.cy = this->editbox->cy();
-        this->rect.cx = this->button.lx() - this->rect.x;
+        this->button.set_dx(this->editbox->lx() - 1);
+        this->editbox->set_cy(this->button.cy());
+        this->set_cy(this->editbox->cy());
+        this->set_cx(this->button.lx() - this->dx());
         this->set_xy(x, y);
         this->editbox->draw_border_focus = false;
 
         if (this->label) {
-            this->label->rect.cx = this->editbox->rect.cx - 1;
-            this->label->rect.cy = this->editbox->rect.cy - 1;
-            ++this->label->rect.x;
-            ++this->label->rect.y;
+            this->label->set_cx(this->editbox->cx() - 1);
+            this->label->set_cy(this->editbox->cy() - 1);
+            this->label->set_dx(this->label->dx() + 1);
+            this->label->set_dy(this->label->dy() + 1);
         }
     }
 
@@ -99,38 +99,24 @@ public:
         return this->editbox->get_text();
     }
 
-    virtual void set_edit_x(int x)
-    {
-        this->rect.x = x;
-        this->editbox->set_edit_x(x);
-        this->button.set_button_x(this->editbox->lx() - 1);
+    void set_dx(int16_t x) override {
+        Widget2::set_dx(x);
+        this->editbox->set_dx(x);
+        this->button.set_dx(this->editbox->lx() - 1);
 
         if (this->label) {
-            this->label->rect.x = x + 1;
+            this->label->set_dx(x + 1);
         }
     }
 
-    virtual void set_edit_y(int y)
-    {
-        this->rect.y = y;
-        this->editbox->set_edit_y(y);
-        this->button.set_button_y(y);
+    void set_dy(int16_t y) override {
+        Widget2::set_dy(y);
+        this->editbox->set_dy(y);
+        this->button.set_dy(y);
 
         if (this->label) {
-            this->label->rect.y = y + 1;
+            this->label->set_dy(y + 1);
         }
-    }
-
-    // virtual void set_edit_cx(int w)
-    // {
-    //     this->rect.cx = w;
-    //     this->editbox->set_edit_cx(w - this->button.cx());
-    //     this->button.set_button_x(this->editbox->lx());
-    // }
-
-    void set_xy(int16_t x, int16_t y) override {
-        this->set_edit_x(x);
-        this->set_edit_y(y);
     }
 
     void draw(const Rect& clip) override {
@@ -146,7 +132,7 @@ public:
             this->draw_border(clip, this->button.focus_color);
         }
         else {
-            this->drawable.draw(RDPOpaqueRect(clip.intersect(this->button.rect),
+            this->drawable.draw(RDPOpaqueRect(clip.intersect(this->button.get_rect()),
                                               this->button.fg_color), clip);
         }
     }
@@ -155,19 +141,19 @@ public:
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy(), this->cx() - 1, 1
-        )), color), this->rect);
+        )), color), this->get_rect());
         //left
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + 1, 1, this->cy() - 2
-        )), color), this->rect);
+        )), color), this->get_rect());
         //right
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
-        )), color), this->rect);
+        )), color), this->get_rect());
         //bottom
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
-        )), color), this->rect);
+        )), color), this->get_rect());
     }
     void focus(int reason) override {
         this->editbox->focus(reason);
@@ -191,13 +177,13 @@ public:
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
         if (x > this->editbox->lx()) {
             this->button.rdp_input_mouse(device_flags, x, y, keymap);
-            this->refresh(this->button.rect);
+            this->refresh(this->button.get_rect());
         }
         else {
             if ((device_flags == MOUSE_FLAG_BUTTON1)
                 && this->button.state) {
                 this->button.state = 0;
-                this->refresh(this->button.rect);
+                this->refresh(this->button.get_rect());
             }
             this->editbox->rdp_input_mouse(device_flags, x, y, keymap);
         }
@@ -216,7 +202,7 @@ public:
             (widget == this->editbox) &&
             this->label && this->use_label_) {
             if (this->editbox->num_chars == 1) {
-                this->editbox->draw(this->rect);
+                this->editbox->draw(this->get_rect());
             }
         }
         if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {

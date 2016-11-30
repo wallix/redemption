@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(TestPaste)
     auto edit_paste = [&](const char * s, const char * sig, int linenum){
         keymap.push_kevent(Keymap2::KEVENT_PASTE);
         copy_paste.paste(edit);
-        edit.rdp_input_invalidate(edit.rect);
+        edit.rdp_input_invalidate(edit.get_rect());
         //front.dump_png("/tmp/test_copy_paste_");
         BOOST_CHECK_EQUAL(s, edit.get_text());
         char message[1024];

@@ -82,8 +82,8 @@ public:
             this->buffer[max] = 0;
             if (this->auto_resize_) {
                 Dimension dm = this->get_optimal_dim(this->buffer, this->font, this->x_text, this->y_text);
-                this->rect.cx = dm.w;
-                this->rect.cy = dm.h;
+                this->set_cx(dm.w);
+                this->set_cy(dm.h);
             }
         }
     }
@@ -94,7 +94,7 @@ public:
     }
 
     void draw(const Rect& clip) override {
-        this->draw(clip, this->rect, this->drawable, this->buffer,
+        this->draw(clip, this->get_rect(), this->drawable, this->buffer,
             this->fg_color, this->bg_color, this->font, this->x_text, this->y_text);
     }
 
@@ -160,7 +160,7 @@ public:
             if (device_flags == MOUSE_FLAG_MOVE) {
                 // TODO: tm.height unused ?
                 gdi::TextMetrics tm(this->font, this->buffer);
-                if (tm.width > this->rect.cx) {
+                if (tm.width > this->cx()) {
                     this->show_tooltip(this, this->buffer, x, y, Rect(0, 0, 0, 0));
                 }
             }
@@ -169,8 +169,8 @@ public:
 
     void auto_resize() {
         gdi::TextMetrics tm(this->font, this->buffer);
-        this->rect.cx = this->x_text * 2 + tm.width;
-        this->rect.cy = this->y_text * 2 + tm.height;
+        this->set_cx(this->x_text * 2 + tm.width);
+        this->set_cy(this->y_text * 2 + tm.height);
     }
 };
 

@@ -101,7 +101,7 @@ public:
             this->login.set_widget_focus(&this->login.password_edit, Widget2::focus_reason_tabkey);
         }
 
-        this->screen.refresh(this->screen.rect);
+        this->screen.refresh(this->screen.get_rect());
     }
 
     ~FlatLoginMod() override {

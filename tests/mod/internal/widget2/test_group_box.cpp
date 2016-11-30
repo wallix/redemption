@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
     }
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN,
-                            wbutton.rect.x + 1, wbutton.rect.y + 1,
+                            wbutton.dx() + 1, wbutton.dy() + 1,
                             nullptr);
 
     // ask to widget to redraw at it's current position
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
     }
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN,
-                            wbutton.rect.x + 1, wbutton.rect.y + 1,
+                            wbutton.dx() + 1, wbutton.dy() + 1,
                             nullptr);
 
     // ask to widget to redraw at it's current position

@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
     selector.rearrange();
 
     // ask to widget to redraw at it's current position
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector1.png");
 
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
     selector.selector_lines.set_selection(1);
 
     // ask to widget to redraw at it's current position
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector2.png");
 
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
     selector.rearrange();
 
     // ask to widget to redraw at it's current position
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-resize1.png");
 
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
     selector.selector_lines.set_selection(1);
 
     // ask to widget to redraw at it's current position
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-resize2.png");
 
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat2)
     WidgetSelectorFlat2 selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at it's current position
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector3.png");
 
@@ -276,7 +276,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
                                             selector.selector_lines.dy() + 40,
                                             nullptr);
 
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector6-1.png");
 
@@ -295,7 +295,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector6-2.png");
 
@@ -310,7 +310,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     keymap.push_kevent(Keymap2::KEVENT_END);
     selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
 
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector6-3.png");
 
@@ -325,7 +325,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
     selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
 
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector6-4.png");
 
@@ -340,7 +340,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
     selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
 
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector6-5.png");
 
@@ -355,7 +355,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     keymap.push_kevent(Keymap2::KEVENT_HOME);
     selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
 
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector6-6.png");
 
@@ -417,7 +417,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
                              curx, cury,
                              nullptr);
 
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-1.png");
 
@@ -436,7 +436,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-2.png");
 
@@ -450,7 +450,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-3.png");
 
@@ -465,7 +465,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-4.png");
 
@@ -479,7 +479,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     keymap.push_kevent(Keymap2::KEVENT_END);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-5.png");
 
@@ -493,7 +493,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-6.png");
 
@@ -507,7 +507,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-7.png");
 
@@ -523,7 +523,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-8.png");
 
@@ -549,7 +549,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
-    selector.rdp_input_invalidate(selector.rect);
+    selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-9.png");
 
