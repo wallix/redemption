@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
     //                      text_approb, 0, colors, true);
 
     // ask to widget to redraw at it's current position
-    flat_dialog.rdp_input_invalidate(flat_dialog.rect);
+    flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
 
 //    drawable.save_to_png(OUTPUT_FILE_PATH "flat_wait.png");
 

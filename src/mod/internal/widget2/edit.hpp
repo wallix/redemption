@@ -85,13 +85,13 @@ public:
         // TODO: tm.width unused ?
         gdi::TextMetrics tm(this->font, "Édp");
         this->h_text = tm.height;
-        this->rect.cy = this->h_text + this->label.y_text * 2;
-        this->label.rect.cx = this->rect.cx;
-        this->label.rect.cy = this->rect.cy;
-        this->label.rect.x +=1;
-        this->label.rect.y += 1;
-        this->rect.cx += 2;
-        this->rect.cy += 2;
+        this->set_cy(this->h_text + this->label.y_text * 2);
+        this->label.set_cx(this->cx());
+        this->label.set_cy(this->cy());
+        this->label.set_dx(this->label.dx() + 1);
+        this->label.set_dy(this->label.dy() + 1);
+        this->set_cx(this->cx() + 2);
+        this->set_cy(this->cy() + 2);
         this->h_text -= 1;
 
         this->pointer_flag = Pointer::POINTER_EDIT;
@@ -117,10 +117,10 @@ public:
             this->w_text = tm.width;
             this->h_text = tm.height;
             if (this->label.auto_resize_) {
-                this->rect.cx = this->label.x_text * 2 + this->w_text;
-                this->rect.cy = this->label.y_text * 2 + this->h_text;
+                this->set_cx(this->label.x_text * 2 + this->w_text);
+                this->set_cy(this->label.y_text * 2 + this->h_text);
                 if (this->buffer_size == 1) {
-                    this->rect.cx -= 2;
+                    this->set_cx(this->cx() - 2);
                 }
             }
             this->num_chars = UTF8Len(byte_ptr_cast(this->label.buffer));
@@ -155,10 +155,10 @@ public:
             this->w_text = tm.width;
             this->h_text = tm.height;
             if (this->label.auto_resize_) {
-                this->rect.cx = this->label.x_text * 2 + this->w_text;
-                this->rect.cy = this->label.y_text * 2 + this->h_text;
+                this->set_cx(this->label.x_text * 2 + this->w_text);
+                this->set_cy(this->label.y_text * 2 + this->h_text);
                 if (this->buffer_size == 1) {
-                    this->rect.cx -= 2;
+                    this->set_cx(this->cx() - 2);
                 }
             }
             const size_t tmp_num_chars = this->num_chars;
@@ -189,33 +189,50 @@ public:
         return this->label.get_text();
     }
 
+    void set_dx(int16_t x) override {
+        Widget2::set_dx(x);
+        this->label.set_dx(x + 1);
+    }
+
     virtual void set_edit_x(int x)
     {
-        this->rect.x = x;
-        this->label.rect.x = x + 1;
+        this->set_dx(int16_t(x));
+    }
+
+    void set_dy(int16_t y) override {
+        Widget2::set_dy(y);
+        this->label.set_dy(y + 1);
     }
 
     virtual void set_edit_y(int y)
     {
-        this->rect.y = y;
-        this->label.rect.y = y + 1;
+        this->set_dy(int16_t(y));
+    }
+
+    void set_cx(uint16_t cx) override
+    {
+        Widget2::set_cx(cx);
+        this->label.set_cx(cx - 2);
     }
 
     virtual void set_edit_cx(int w)
     {
-        this->rect.cx = w;
-        this->label.rect.cx = w - 2;
+        this->set_cx(w);
+    }
+
+    void set_cy(uint16_t cy) override {
+        Widget2::set_cy(cy);
+        this->label.set_cy(cy - 2);
     }
 
     virtual void set_edit_cy(int h)
     {
-        this->rect.cy = h;
-        this->label.rect.cy = h - 2;
+        this->set_cy(h);
     }
 
     void set_xy(int16_t x, int16_t y) override {
-        this->set_edit_x(x);
-        this->set_edit_y(y);
+        this->set_dx(x);
+        this->set_dy(y);
     }
 
     void draw(const Rect& clip) override {
@@ -236,19 +253,19 @@ public:
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy(), this->cx() - 1, 1
-        )), color), this->rect);
+        )), color), this->get_rect());
         //left
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + 1, 1, this->cy() - 2
-        )), color), this->rect);
+        )), color), this->get_rect());
         //right
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
-        )), color), this->rect);
+        )), color), this->get_rect());
         //bottom
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
-        )), color), this->rect);
+        )), color), this->get_rect());
     }
 
     virtual Rect get_cursor_rect() const
@@ -267,7 +284,7 @@ public:
     void draw_cursor(const Rect& clip)
     {
         if (!clip.isempty()) {
-            this->drawable.draw(RDPOpaqueRect(clip, this->cursor_color), this->rect);
+            this->drawable.draw(RDPOpaqueRect(clip, this->cursor_color), this->get_rect());
         }
     }
 
@@ -324,7 +341,7 @@ public:
         this->drawable.begin_update();
         if (this->drawall) {
             this->drawall = false;
-            this->draw(this->rect);
+            this->draw(this->get_rect());
         }
         else {
             this->label.draw(old_cursor);
@@ -608,7 +625,7 @@ public:
                     this->send_notify(NOTIFY_CUT);
                     {
                         this->drawable.begin_update();
-                        this->label.draw(this->label.rect);
+                        this->label.draw(this->label.get_rect());
                         this->draw_cursor(this->get_cursor_rect());
                         this->drawable.end_update();
                     }

@@ -45,7 +45,7 @@ public:
             RDPOpaqueRect(
                 clip,
                 this->color
-            ), this->rect
+            ), this->get_rect()
         );
     }
 };

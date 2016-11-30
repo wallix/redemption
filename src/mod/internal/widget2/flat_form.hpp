@@ -138,35 +138,35 @@ enum {
         int labelmaxwidth = std::max(this->comment_label.cx(),
                                      std::max(this->ticket_label.cx(),
                                               this->duration_label.cx()));
-        this->warning_msg.rect.x = left + labelmaxwidth + 20;
-        this->comment_edit.set_edit_x(left + labelmaxwidth + 20);
-        this->ticket_edit.set_edit_x(left + labelmaxwidth + 20);
-        this->duration_edit.set_edit_x(left + labelmaxwidth + 20);
-        this->comment_edit.set_edit_cx(width - labelmaxwidth - 20);
-        this->ticket_edit.set_edit_cx(width - labelmaxwidth - 20);
-        this->duration_edit.set_edit_cx((width - labelmaxwidth - 20) -
-                                        this->duration_format.cx() - 20);
-        this->duration_format.rect.x = labelmaxwidth + 20;
+        this->warning_msg.set_dx(left + labelmaxwidth + 20);
+        this->comment_edit.set_dx(left + labelmaxwidth + 20);
+        this->ticket_edit.set_dx(left + labelmaxwidth + 20);
+        this->duration_edit.set_dx(left + labelmaxwidth + 20);
+        this->comment_edit.set_cx(width - labelmaxwidth - 20);
+        this->ticket_edit.set_cx(width - labelmaxwidth - 20);
+        this->duration_edit.set_cx((width - labelmaxwidth - 20) -
+                                    this->duration_format.cx() - 20);
+        this->duration_format.set_dx(labelmaxwidth + 20);
         if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
             this->add_widget(&this->notes);
-            this->notes.rect.x = left + labelmaxwidth + 20;
+            this->notes.set_dx(left + labelmaxwidth + 20);
         }
 
         int y = 20;
         if (this->flags & DURATION_DISPLAY) {
             this->duration_label.set_xy(this->duration_label.dx(), top + y);
-            this->duration_edit.set_edit_y(top + y);
+            this->duration_edit.set_dy(top + y);
             this->duration_format.set_xy(this->duration_edit.lx() + 10, top + y + 2);
             y += 30;
         }
         if (this->flags & TICKET_DISPLAY) {
             this->ticket_label.set_xy(this->ticket_label.dx(), top + y);
-            this->ticket_edit.set_edit_y(top + y);
+            this->ticket_edit.set_dy(top + y);
             y += 30;
         }
         if (this->flags & COMMENT_DISPLAY) {
             this->comment_label.set_xy(this->comment_label.dx(), top + y);
-            this->comment_edit.set_edit_y(top + y);
+            this->comment_edit.set_dy(top + y);
             y += 30;
         }
 
@@ -175,8 +175,8 @@ enum {
         }
 
         this->add_widget(&this->confirm);
-        this->confirm.set_button_x(left + width - this->confirm.cx());
-        this->confirm.set_button_y(top + y + 10);
+        this->confirm.set_dx(left + width - this->confirm.cx());
+        this->confirm.set_dy(top + y + 10);
     }
 
     ~FlatForm() override {
@@ -184,51 +184,51 @@ enum {
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
-        this->rect.x  = left;
-        this->rect.y  = top;
-        this->rect.cx = width;
-        this->rect.cy = height;
+        this->set_dx(left);
+        this->set_dy(top);
+        this->set_cx(width);
+        this->set_cy(height);
 
-        this->comment_label.rect.x = left;
-        this->comment_label.rect.y = top + 10;
+        this->comment_label.set_dx(left);
+        this->comment_label.set_dy(top + 10);
 
-        this->warning_msg.rect.x = left + 10;
-        this->warning_msg.rect.y = top;
+        this->warning_msg.set_dx(left + 10);
+        this->warning_msg.set_dy(top);
 
-        this->comment_edit.rect.x = this->comment_label.lx() + 20;
-        this->comment_edit.rect.y = 10;
+        this->comment_edit.set_dx(this->comment_label.lx() + 20);
+        this->comment_edit.set_dy(10);
 
         int labelmaxwidth = std::max(this->comment_label.cx(),
                                      std::max(this->ticket_label.cx(),
                                               this->duration_label.cx()));
-        this->warning_msg.rect.x = left + labelmaxwidth + 20;
-        this->comment_edit.set_edit_x(left + labelmaxwidth + 20);
-        this->ticket_edit.set_edit_x(left + labelmaxwidth + 20);
-        this->duration_edit.set_edit_x(left + labelmaxwidth + 20);
-        this->comment_edit.set_edit_cx(width - labelmaxwidth - 20);
-        this->ticket_edit.set_edit_cx(width - labelmaxwidth - 20);
-        this->duration_edit.set_edit_cx((width - labelmaxwidth - 20) -
-                                        this->duration_format.cx() - 20);
-        this->duration_format.rect.x = labelmaxwidth + 20;
+        this->warning_msg.set_dx(left + labelmaxwidth + 20);
+        this->comment_edit.set_dx(left + labelmaxwidth + 20);
+        this->ticket_edit.set_dx(left + labelmaxwidth + 20);
+        this->duration_edit.set_dx(left + labelmaxwidth + 20);
+        this->comment_edit.set_cx(width - labelmaxwidth - 20);
+        this->ticket_edit.set_cx(width - labelmaxwidth - 20);
+        this->duration_edit.set_cx((width - labelmaxwidth - 20) -
+                                   this->duration_format.cx() - 20);
+        this->duration_format.set_dx(labelmaxwidth + 20);
         if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
-            this->notes.rect.x = left + labelmaxwidth + 20;
+            this->notes.set_dx(left + labelmaxwidth + 20);
         }
 
         int y = 20;
         if (this->flags & DURATION_DISPLAY) {
             this->duration_label.set_xy(this->duration_label.dx(), top + y);
-            this->duration_edit.set_edit_y(top + y);
+            this->duration_edit.set_dy(top + y);
             this->duration_format.set_xy(this->duration_edit.lx() + 10, top + y + 2);
             y += 30;
         }
         if (this->flags & TICKET_DISPLAY) {
             this->ticket_label.set_xy(this->ticket_label.dx(), top + y);
-            this->ticket_edit.set_edit_y(top + y);
+            this->ticket_edit.set_dy(top + y);
             y += 30;
         }
         if (this->flags & COMMENT_DISPLAY) {
             this->comment_label.set_xy(this->comment_label.dx(), top + y);
-            this->comment_edit.set_edit_y(top + y);
+            this->comment_edit.set_dy(top + y);
             y += 30;
         }
 
@@ -236,17 +236,17 @@ enum {
             this->notes.set_xy(this->notes.dx(), top + y);
         }
 
-        this->confirm.set_button_x(left + width - this->confirm.cx());
-        this->confirm.set_button_y(top + y + 10);
+        this->confirm.set_dx(left + width - this->confirm.cx());
+        this->confirm.set_dy(top + y + 10);
     }
 
     void move_xy(int16_t x, int16_t y) {
-        this->rect.x += x;
-        this->rect.y += y;
+        this->set_dx(this->dx() + x);
+        this->set_dy(this->dy() + y);
         this->WidgetParent::move_xy(x,y);
     }
     void set_xy(int16_t x, int16_t y) override {
-        this->move_xy(x - this->rect.x, y - this->rect.y);
+        this->move_xy(x - this->dx(), y - this->dy());
     }
 
     void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
@@ -324,7 +324,7 @@ enum {
             (this->duration_edit.num_chars == 0)) {
             this->set_warning_buffer(this->field_duration, this->generic_warning);
             this->set_widget_focus(&this->duration_edit, focus_reason_mousebutton1);
-            this->draw(this->rect);
+            this->draw(this->get_rect());
             return;
         }
         if (((this->flags & DURATION_DISPLAY) == DURATION_DISPLAY) &&
@@ -340,7 +340,7 @@ enum {
                     this->set_warning_buffer(this->field_duration, this->toohigh_warning);
                 }
                 this->set_widget_focus(&this->duration_edit, focus_reason_mousebutton1);
-                this->draw(this->rect);
+                this->draw(this->get_rect());
                 return;
             }
         }
@@ -349,7 +349,7 @@ enum {
             (this->ticket_edit.num_chars == 0)) {
             this->set_warning_buffer(this->field_ticket, this->generic_warning);
             this->set_widget_focus(&this->ticket_edit, focus_reason_mousebutton1);
-            this->draw(this->rect);
+            this->draw(this->get_rect());
             return;
         }
         if (((this->flags & COMMENT_DISPLAY) == COMMENT_DISPLAY) &&
@@ -357,7 +357,7 @@ enum {
             (this->comment_edit.num_chars == 0)) {
             this->set_warning_buffer(this->field_comment, this->generic_warning);
             this->set_widget_focus(&this->comment_edit, focus_reason_mousebutton1);
-            this->draw(this->rect);
+            this->draw(this->get_rect());
             return;
         }
 

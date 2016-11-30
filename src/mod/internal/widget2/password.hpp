@@ -49,16 +49,13 @@ public:
         gdi::TextMetrics tm(font, "*");
         this->w_char = tm.width;
         this->h_char = tm.height;
-        this->rect.cy = (this->masked_text.y_text) * 2 + this->h_char;
-        this->masked_text.rect.cx = this->rect.cx;
-        this->masked_text.rect.cy = this->rect.cy;
-        this->masked_text.rect.x += 1;
-        this->masked_text.rect.y += 1;
-        this->rect.cy += 2;
+        this->set_cy((this->masked_text.y_text) * 2 + this->h_char);
+        this->masked_text.set_cx(this->cx());
+        this->masked_text.set_cy(this->cy());
+        this->masked_text.set_dx(this->masked_text.dx() + 1);
+        this->masked_text.set_dy(this->masked_text.dy() + 1);
+        this->set_cy(this->cy() + 2);
         this->h_char -= 1;
-    }
-
-    ~WidgetPassword() override {
     }
 
     void set_masked_text() {
@@ -70,29 +67,45 @@ public:
         this->masked_text.set_text(buff);
     }
 
+    void set_dx(int16_t x) override {
+        WidgetEdit::set_dx(x);
+        this->masked_text.set_dx(x + 1);
+    }
+
     void set_edit_x(int x) override {
-        WidgetEdit::set_edit_x(x);
-        this->masked_text.rect.x = x + 1;
+        this->set_dx(int16_t(x));
+    }
+
+    void set_dy(int16_t y) override {
+        WidgetEdit::set_dy(y);
+        this->masked_text.set_dy(y + 1);
     }
 
     void set_edit_y(int y) override {
-        WidgetEdit::set_edit_y(y);
-        this->masked_text.rect.y = y + 1;
+        this->set_dy(int16_t(y));
+    }
+
+    void set_cx(uint16_t cx) override {
+        WidgetEdit::set_cx(cx);
+        this->masked_text.set_cx(cx - 2);
     }
 
     void set_edit_cx(int w) override {
-        WidgetEdit::set_edit_cx(w);
-        this->masked_text.rect.cx = w - 2;
+        this->set_cx(w);
+    }
+
+    void set_cy(uint16_t cy) override {
+        WidgetEdit::set_cy(cy);
+        this->masked_text.set_cy(cy - 2);
     }
 
     void set_edit_cy(int h) override {
-        WidgetEdit::set_edit_cy(h);
-        this->masked_text.rect.cy = h - 2;
+        this->set_cy(h);
     }
 
     void set_xy(int16_t x, int16_t y) override {
-        this->set_edit_x(x);
-        this->set_edit_y(y);
+        this->set_dx(x);
+        this->set_dy(y);
     }
 
     void set_text(const char * text) override {
@@ -103,7 +116,7 @@ public:
     void insert_text(const char* text) override {
         WidgetEdit::insert_text(text);
         this->set_masked_text();
-        this->refresh(this->rect);
+        this->refresh(this->get_rect());
     }
 
     //const char * show_text() {
@@ -200,7 +213,7 @@ public:
             case Keymap2::KEVENT_HOME:
                 this->masked_text.shift_text(this->edit_pos * this->w_char);
 
-                this->refresh(this->rect);
+                this->refresh(this->get_rect());
                 break;
             default:
                 break;

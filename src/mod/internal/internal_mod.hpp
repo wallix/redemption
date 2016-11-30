@@ -59,7 +59,7 @@ public:
 
     const Rect & get_screen_rect() const
     {
-        return this->screen.rect;
+        return this->screen.get_rect();
     }
 
     void send_to_front_channel(const char * const mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size,

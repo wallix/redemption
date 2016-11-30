@@ -144,42 +144,42 @@ public:
 
         // Center bloc positionning
         // Device, Login and Password boxes
-        int margin_w = std::max<int>(this->device_label.rect.cx,
-                                     this->login_label.rect.cx);
+        int margin_w = std::max<int>(this->device_label.cx(),
+                                     this->login_label.cx());
         margin_w = std::max<int>(margin_w,
-                                 this->password_label.rect.cx);
+                                 this->password_label.cx());
 
-        int cbloc_w = std::max<int>(this->caption_label.rect.cx,
-                                    margin_w + device_show->rect.cx + 20);
+        int cbloc_w = std::max<int>(this->caption_label.cx(),
+                                    margin_w + device_show->cx() + 20);
         cbloc_w = std::max<int>(cbloc_w,
-                                margin_w + login_show->rect.cx + 20);
+                                margin_w + login_show->cx() + 20);
         cbloc_w = std::max<int>(cbloc_w,
-                                margin_w + this->password_edit.rect.cx + 20);
+                                margin_w + this->password_edit.cx() + 20);
 
         if (ask_device) {
             cbloc_w = std::max<int>(cbloc_w,
-                                    margin_w + this->device.rect.cx + 20);
+                                    margin_w + this->device.cx() + 20);
         }
 
         int extra_h = 0;
         if (password_show) {
-            extra_h += std::max(this->password_label.rect.cy,
-                                this->password_edit.rect.cy) + 20;
+            extra_h += std::max(this->password_label.cy(),
+                                this->password_edit.cy()) + 20;
         }
         if (ask_device) {
-            extra_h += this->device.rect.cy + 30;
+            extra_h += this->device.cy() + 30;
         }
-        int cbloc_h = this->caption_label.rect.cy + 20 + 30 +
-            this->device_label.rect.cy + 30 +
-            this->login_label.rect.cy + 30 +
+        int cbloc_h = this->caption_label.cy() + 20 + 30 +
+            this->device_label.cy() + 30 +
+            this->login_label.cy() + 30 +
             extra_h;
 
         int x_cbloc = (width  - cbloc_w) / 2;
         int y_cbloc = (height - cbloc_h) / 3;
 
         int y = y_cbloc;
-        this->caption_label.set_xy(left + (width - this->caption_label.rect.cx) / 2, top + y);
-        this->separator.rect.cx = cbloc_w;
+        this->caption_label.set_xy(left + (width - this->caption_label.cx()) / 2, top + y);
+        this->separator.set_cx(cbloc_w);
 
         y = this->caption_label.ly() + 20;
         this->separator.set_xy(left + x_cbloc, y);
@@ -198,14 +198,14 @@ public:
         this->password_label.set_xy(left + x_cbloc, y);
         this->password_edit.set_xy(left + x_cbloc + margin_w + 20, y);
 
-        this->password_label.rect.y += (this->password_edit.cy() - this->password_label.cy()) / 2;
-        this->login_label.rect.y += (login_show->cy() - this->login_label.cy()) / 2;
-        this->device_label.rect.y += (device_show->cy() - this->login_label.cy()) / 2;
+        this->password_label.set_dy(this->password_label.dy() + (this->password_edit.cy() - this->password_label.cy()) / 2);
+        this->login_label.set_dy(this->login_label.dy() + (login_show->cy() - this->login_label.cy()) / 2);
+        this->device_label.set_dy(this->device_label.dy() + (device_show->cy() - this->login_label.cy()) / 2);
 
         if (extra_button) {
            this->add_widget(extra_button);
-           extra_button->set_button_x(left + 60);
-           extra_button->set_button_y(top + height - 60);
+           extra_button->set_dx(left + 60);
+           extra_button->set_dy(top + height - 60);
         }
     }
 
@@ -214,10 +214,10 @@ public:
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
-        this->rect.x  = left;
-        this->rect.y  = top;
-        this->rect.cx = width;
-        this->rect.cy = height;
+        this->set_dx(left);
+        this->set_dy(top);
+        this->set_cx(width);
+        this->set_cy(height);
 
 
         Widget2 * device_show = &this->device;
@@ -235,42 +235,42 @@ public:
 
         // Center bloc positionning
         // Device, Login and Password boxes
-        int margin_w = std::max<int>(this->device_label.rect.cx,
-                                     this->login_label.rect.cx);
+        int margin_w = std::max<int>(this->device_label.cx(),
+                                     this->login_label.cx());
         margin_w = std::max<int>(margin_w,
-                                 this->password_label.rect.cx);
+                                 this->password_label.cx());
 
-        int cbloc_w = std::max<int>(this->caption_label.rect.cx,
-                                    margin_w + device_show->rect.cx + 20);
+        int cbloc_w = std::max<int>(this->caption_label.cx(),
+                                    margin_w + device_show->cx() + 20);
         cbloc_w = std::max<int>(cbloc_w,
-                                margin_w + login_show->rect.cx + 20);
+                                margin_w + login_show->cx() + 20);
         cbloc_w = std::max<int>(cbloc_w,
-                                margin_w + this->password_edit.rect.cx + 20);
+                                margin_w + this->password_edit.cx() + 20);
 
         if (this->ask_device) {
             cbloc_w = std::max<int>(cbloc_w,
-                                    margin_w + this->device.rect.cx + 20);
+                                    margin_w + this->device.cx() + 20);
         }
 
         int extra_h = 0;
         if (password_show) {
-            extra_h += std::max(this->password_label.rect.cy,
-                                this->password_edit.rect.cy) + 20;
+            extra_h += std::max(this->password_label.cy(),
+                                this->password_edit.cy()) + 20;
         }
         if (this->ask_device) {
-            extra_h += this->device.rect.cy + 30;
+            extra_h += this->device.cy() + 30;
         }
-        int cbloc_h = this->caption_label.rect.cy + 20 + 30 +
-            this->device_label.rect.cy + 30 +
-            this->login_label.rect.cy + 30 +
+        int cbloc_h = this->caption_label.cy() + 20 + 30 +
+            this->device_label.cy() + 30 +
+            this->login_label.cy() + 30 +
             extra_h;
 
         int x_cbloc = (width  - cbloc_w) / 2;
         int y_cbloc = (height - cbloc_h) / 3;
 
         int y = y_cbloc;
-        this->caption_label.set_xy(left + (width - this->caption_label.rect.cx) / 2, top + y);
-        this->separator.rect.cx = cbloc_w;
+        this->caption_label.set_xy(left + (width - this->caption_label.cx()) / 2, top + y);
+        this->separator.set_cx(cbloc_w);
 
         y = this->caption_label.ly() + 20;
         this->separator.set_xy(left + x_cbloc, y);
@@ -289,13 +289,13 @@ public:
         this->password_label.set_xy(left + x_cbloc, y);
         this->password_edit.set_xy(left + x_cbloc + margin_w + 20, y);
 
-        this->password_label.rect.y += (this->password_edit.cy() - this->password_label.cy()) / 2;
-        this->login_label.rect.y += (login_show->cy() - this->login_label.cy()) / 2;
-        this->device_label.rect.y += (device_show->cy() - this->login_label.cy()) / 2;
+        this->password_label.set_dy(this->password_label.dy() + (this->password_edit.cy() - this->password_label.cy()) / 2);
+        this->login_label.set_dy(this->login_label.dy() + (login_show->cy() - this->login_label.cy()) / 2);
+        this->device_label.set_dy(this->device_label.dy() + (device_show->cy() - this->login_label.cy()) / 2);
 
         if (this->extra_button) {
-           this->extra_button->set_button_x(left + 60);
-           this->extra_button->set_button_y(top + height - 60);
+           this->extra_button->set_dx(left + 60);
+           this->extra_button->set_dy(top + height - 60);
         }
     }
 

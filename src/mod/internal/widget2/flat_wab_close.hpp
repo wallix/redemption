@@ -125,11 +125,11 @@ public:
         this->timeleft_label.set_text(label);
 
         int const back_width = this->back ? this->back->cx() + 10 : 0;
-        this->cancel.set_button_x(left + (this->cx() - (this->cancel.cx() + back_width)) / 2);
-        this->connection_closed_label.rect.x = left + (this->cx() - this->connection_closed_label.cx()) / 2;
+        this->cancel.set_dx(left + (this->cx() - (this->cancel.cx() + back_width)) / 2);
+        this->connection_closed_label.set_dx(left + (this->cx() - this->connection_closed_label.cx()) / 2);
 
-        this->separator.rect.x = left + (this->cx() - 600) / 2;
-        this->separator.rect.cx = 600;
+        this->separator.set_dx(left + (this->cx() - 600) / 2);
+        this->separator.set_cx(600);
 
         this->add_widget(&this->connection_closed_label);
         this->add_widget(&this->cancel);
@@ -148,10 +148,10 @@ public:
 
         int y = this->dy() + 10 - top;
 
-        this->connection_closed_label.rect.y = top + y;
+        this->connection_closed_label.set_dy(top + y);
         y += this->connection_closed_label.cy();
 
-        this->separator.rect.y = top + y + 3;
+        this->separator.set_dy(top + y + 3);
         y += 30;
 
         if (username && *username) {
@@ -160,53 +160,52 @@ public:
             this->add_widget(&this->target_label);
             this->add_widget(&this->target_label_value);
 
-            this->username_label_value.rect.x = this->username_label.dx() + px;
-            this->target_label_value.rect.x = this->username_label.dx() + px;
+            this->username_label_value.set_dx(this->username_label.dx() + px);
+            this->target_label_value.set_dx(this->username_label.dx() + px);
 
-            this->username_label.rect.y = top + y;
-            this->username_label_value.rect.y = top + y;
+            this->username_label.set_dy(top + y);
+            this->username_label_value.set_dy(top + y);
             y += this->username_label.cy() + 20;
-            this->target_label.rect.y = top + y;
-            this->target_label_value.rect.y = top + y;
+            this->target_label.set_dy(top + y);
+            this->target_label_value.set_dy(top + y);
             y += this->target_label.cy() + 20;
         }
-        this->diagnostic.rect.y = top + y;
+        this->diagnostic.set_dy(top + y);
         if (this->diagnostic.cx() > this->cx() - (px + 10)) {
             y += this->diagnostic.cy() + 10;
-            this->diagnostic_lines.rect.y = top + y;
+            this->diagnostic_lines.set_dy(top + y);
             y += this->diagnostic_lines.cy() + 20;
         }
         else {
-            this->diagnostic_lines.rect.y = top + y;
+            this->diagnostic_lines.set_dy(top + y);
             y += std::max(this->diagnostic_lines.cy(), this->diagnostic.cy()) + 20;
-            this->diagnostic_lines.rect.x = this->username_label.dx() + px;
+            this->diagnostic_lines.set_dx(this->username_label.dx() + px);
         }
 
         if (showtimer) {
             this->add_widget(&this->timeleft_label);
             this->add_widget(&this->timeleft_value);
-            this->timeleft_label.rect.y = top + y;
-            this->timeleft_value.rect.y = top + y;
-            this->timeleft_value.rect.x =
-                this->username_label.dx() + px;
+            this->timeleft_label.set_dy(top + y);
+            this->timeleft_value.set_dy(top + y);
+            this->timeleft_value.set_dx(this->username_label.dx() + px);
             y += this->timeleft_label.cy() + 20;
         }
 
         if (this->back) {
             this->add_widget(this->back);
-            this->back->set_button_x(this->cancel.dx() + this->cancel.cx() + 10);
-            this->back->set_button_y(top + y);
+            this->back->set_dx(this->cancel.dx() + this->cancel.cx() + 10);
+            this->back->set_dy(top + y);
         }
 
-        this->cancel.set_button_y(top + y);
+        this->cancel.set_dy(top + y);
         y += this->cancel.cy();
 
         this->move_xy(0, (height - y) / 2);
 
-        this->img.rect.x = left + (this->cx() - this->img.cx()) / 2;
-        this->img.rect.y = top + (3*(height - y) / 2 - this->img.cy()) / 2 + y;
-        if (this->img.rect.y + this->img.cy() > top + height) {
-            this->img.rect.y = top;
+        this->img.set_dx(left + (this->cx() - this->img.cx()) / 2);
+        this->img.set_dy(top + (3*(height - y) / 2 - this->img.cy()) / 2 + y);
+        if (this->img.dy() + this->img.cy() > top + height) {
+            this->img.set_dy(top);
         }
 
         this->set_widget_focus(&this->cancel, focus_reason_tabkey);
@@ -218,21 +217,21 @@ public:
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
-        this->rect.x  = left;
-        this->rect.y  = top;
-        this->rect.cx = width;
-        this->rect.cy = height;
+        this->set_dx(left);
+        this->set_dy(top);
+        this->set_cx(width);
+        this->set_cy(height);
 
-        this->username_label.rect.x = left + (width - 600) / 2;
-        this->target_label.rect.x = left + (width - 600) / 2;
-        this->diagnostic.rect.x = left + (width - 600) / 2;
-        this->timeleft_label.rect.x = left + (width - 600) / 2;
+        this->username_label.set_dx(left + (width - 600) / 2);
+        this->target_label.set_dx(left + (width - 600) / 2);
+        this->diagnostic.set_dx(left + (width - 600) / 2);
+        this->timeleft_label.set_dx(left + (width - 600) / 2);
 
         int const back_width = this->back ? this->back->cx() + 10 : 0;
         this->cancel.set_button_x(left + (this->cx() - (this->cancel.cx() + back_width)) / 2);
-        this->connection_closed_label.rect.x = left + (this->cx() - this->connection_closed_label.cx()) / 2;
+        this->connection_closed_label.set_dx(left + (this->cx() - this->connection_closed_label.cx()) / 2);
 
-        this->separator.rect.x = left + (this->cx() - 600) / 2;
+        this->separator.set_dx(left + (this->cx() - 600) / 2);
 
         uint16_t px = this->diagnostic.cx() + 10;
         if (this->username_label_value.buffer[0]) {
@@ -245,40 +244,39 @@ public:
 
         int y = this->dy() + 10 - top;
 
-        this->connection_closed_label.rect.y = top + y;
+        this->connection_closed_label.set_dy(top + y);
         y += this->connection_closed_label.cy();
 
-        this->separator.rect.y = top + y + 3;
+        this->separator.set_dy(top + y + 3);
         y += 30;
 
         if (this->username_label_value.buffer[0]) {
-            this->username_label_value.rect.x = this->username_label.dx() + px;
-            this->target_label_value.rect.x = this->username_label.dx() + px;
+            this->username_label_value.set_dx(this->username_label.dx() + px);
+            this->target_label_value.set_dx(this->username_label.dx() + px);
 
-            this->username_label.rect.y = top + y;
-            this->username_label_value.rect.y = top + y;
+            this->username_label.set_dy(top + y);
+            this->username_label_value.set_dy(top + y);
             y += this->username_label.cy() + 20;
-            this->target_label.rect.y = top + y;
-            this->target_label_value.rect.y = top + y;
+            this->target_label.set_dy(top + y);
+            this->target_label_value.set_dy(top + y);
             y += this->target_label.cy() + 20;
         }
-        this->diagnostic.rect.y = top + y;
+        this->diagnostic.set_dy(top + y);
         if (this->diagnostic.cx() > this->cx() - (px + 10)) {
             y += this->diagnostic.cy() + 10;
-            this->diagnostic_lines.rect.y = top + y;
+            this->diagnostic_lines.set_dy(top + y);
             y += this->diagnostic_lines.cy() + 20;
         }
         else {
-            this->diagnostic_lines.rect.y = top + y;
+            this->diagnostic_lines.set_dy(top + y);
             y += std::max(this->diagnostic_lines.cy(), this->diagnostic.cy()) + 20;
-            this->diagnostic_lines.rect.x = this->username_label.dx() + px;
+            this->diagnostic_lines.set_dx(this->username_label.dx() + px);
         }
 
         if (this->showtimer) {
-            this->timeleft_label.rect.y = top + y;
-            this->timeleft_value.rect.y = top + y;
-            this->timeleft_value.rect.x =
-                this->username_label.dx() + px;
+            this->timeleft_label.set_dy(top + y);
+            this->timeleft_value.set_dy(top + y);
+            this->timeleft_value.set_dx(this->username_label.dx() + px);
             y += this->timeleft_label.cy() + 20;
         }
 
@@ -292,10 +290,10 @@ public:
 
         this->move_xy(0, (height - y) / 2);
 
-        this->img.rect.x = left + (this->cx() - this->img.cx()) / 2;
-        this->img.rect.y = top + (3*(height - y) / 2 - this->img.cy()) / 2 + y;
-        if (this->img.rect.y + this->img.cy() > top + height) {
-            this->img.rect.y = top;
+        this->img.set_dx(left + (this->cx() - this->img.cx()) / 2);
+        this->img.set_dy(top + (3*(height - y) / 2 - this->img.cy()) / 2 + y);
+        if (this->img.dy() + this->img.cy() > top + height) {
+            this->img.set_dy(top);
         }
     }
 
@@ -318,12 +316,12 @@ public:
                      TR("before_closing", this->lang)
                      );
 
-            Rect old = this->timeleft_value.rect;
+            Rect old = this->timeleft_value.get_rect();
             this->drawable.begin_update();
             this->timeleft_value.set_text(nullptr);
             this->draw(old);
             this->timeleft_value.set_text(buff);
-            this->draw(this->timeleft_value.rect);
+            this->draw(this->timeleft_value.get_rect());
             this->drawable.end_update();
 
             this->prev_time = tl;

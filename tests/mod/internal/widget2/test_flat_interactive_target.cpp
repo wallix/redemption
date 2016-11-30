@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
                                           "Host", "in 192.168.16.0/24 subnet", "Login",
                                           "user1", "Password", font, extra_button);
         // ask to widget to redraw at it's current position
-        interactive.rdp_input_invalidate(interactive.rect);
+        interactive.rdp_input_invalidate(interactive.get_rect());
 
         // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target.png");
 
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
                                           "Host", "in 192.168.16.0/24 subnet", "Login",
                                           "user1", "Password", font, extra_button);
         // ask to widget to redraw at it's current position
-        interactive.rdp_input_invalidate(interactive.rect);
+        interactive.rdp_input_invalidate(interactive.get_rect());
 
         // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target-1.png");
 
@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
                                           "Host", "machinetruc", "Login", "user1",
                                           "Password", font, extra_button);
         // ask to widget to redraw at it's current position
-        interactive.rdp_input_invalidate(interactive.rect);
+        interactive.rdp_input_invalidate(interactive.get_rect());
 
         // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target-2.png");
 
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
                                           "Host", "machinetruc", "Login", "user1",
                                           "Password", font, extra_button);
         // ask to widget to redraw at it's current position
-        interactive.rdp_input_invalidate(interactive.rect);
+        interactive.rdp_input_invalidate(interactive.get_rect());
 
         // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target-3.png");
 
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
                                           "Host", "in 192.168.16.0/24 subnet", "Login",
                                           "user1", "Password", font, extra_button);
         // ask to widget to redraw at it's current position
-        interactive.rdp_input_invalidate(interactive.rect);
+        interactive.rdp_input_invalidate(interactive.get_rect());
 
         // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target-4.png");
 

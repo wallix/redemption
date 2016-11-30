@@ -96,13 +96,13 @@ class LanguageButton : public WidgetFlatButton
     void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
         (void)widget;
         if (event == NOTIFY_SUBMIT || event == MOUSE_FLAG_BUTTON1) {
-            auto rect = this->rect;
+            Rect rect = this->get_rect();
 
             this->selected_language = (this->selected_language + 1) % this->locales.size();
             this->set_text(this->locales[this->selected_language].locale_name);
 
-            rect.cx = std::max(rect.cx, this->rect.cx);
-            rect.cy = std::max(rect.cy, this->rect.cy);
+            rect.cx = std::max(rect.cx, this->cx());
+            rect.cy = std::max(rect.cy, this->cy());
             this->parent.draw(rect);
 
             front.set_keylayout(this->locales[this->selected_language].LCID);

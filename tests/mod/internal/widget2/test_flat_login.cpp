@@ -48,9 +48,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
                          Translator{}, Theme{});
 
     // ask to widget to redraw at it's current position
-    flat_login.rdp_input_invalidate(flat_login.rect);
+    flat_login.rdp_input_invalidate(flat_login.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login.png");
+    drawable.save_to_png( "flat_login.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
