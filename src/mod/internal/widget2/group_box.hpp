@@ -108,14 +108,13 @@ public:
     int get_bg_color() const override {
         return this->bg_color;
     }
+
     void move_xy(int16_t x, int16_t y) {
         this->set_dx(this->dx() + x);
         this->set_dy(this->dy() + y);
         this->WidgetParent::move_xy(x,y);
     }
-    void set_xy(int16_t x, int16_t y) override {
-        this->move_xy(x - this->dx(), y - this->dy());
-    }
+
     const char * get_text() const {
         return this->buffer;
     }

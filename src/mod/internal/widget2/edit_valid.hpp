@@ -109,11 +109,6 @@ public:
         }
     }
 
-    virtual void set_edit_x(int x)
-    {
-        this->set_dx(int16_t(x));
-    }
-
     void set_dy(int16_t y) override {
         Widget2::set_dy(y);
         this->editbox->set_dy(y);
@@ -123,18 +118,6 @@ public:
             this->label->set_dy(y + 1);
         }
     }
-
-    virtual void set_edit_y(int y)
-    {
-        this->set_dy(int16_t(y));
-    }
-
-    // virtual void set_edit_cx(int w)
-    // {
-    //     this->rect.cx = w;
-    //     this->editbox->set_edit_cx(w - this->button.cx());
-    //     this->button.set_button_x(this->editbox->lx());
-    // }
 
     void draw(const Rect& clip) override {
         this->editbox->draw(clip);

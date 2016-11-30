@@ -245,9 +245,6 @@ enum {
         this->set_dy(this->dy() + y);
         this->WidgetParent::move_xy(x,y);
     }
-    void set_xy(int16_t x, int16_t y) override {
-        this->move_xy(x - this->dx(), y - this->dy());
-    }
 
     void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
         if ((widget->group_id == this->confirm.group_id) &&

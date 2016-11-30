@@ -72,17 +72,9 @@ public:
         this->masked_text.set_dx(x + 1);
     }
 
-    void set_edit_x(int x) override {
-        this->set_dx(int16_t(x));
-    }
-
     void set_dy(int16_t y) override {
         WidgetEdit::set_dy(y);
         this->masked_text.set_dy(y + 1);
-    }
-
-    void set_edit_y(int y) override {
-        this->set_dy(int16_t(y));
     }
 
     void set_cx(uint16_t cx) override {
@@ -90,22 +82,9 @@ public:
         this->masked_text.set_cx(cx - 2);
     }
 
-    void set_edit_cx(int w) override {
-        this->set_cx(w);
-    }
-
     void set_cy(uint16_t cy) override {
         WidgetEdit::set_cy(cy);
         this->masked_text.set_cy(cy - 2);
-    }
-
-    void set_edit_cy(int h) override {
-        this->set_cy(h);
-    }
-
-    void set_xy(int16_t x, int16_t y) override {
-        this->set_dx(x);
-        this->set_dy(y);
     }
 
     void set_text(const char * text) override {

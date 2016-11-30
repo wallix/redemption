@@ -206,10 +206,14 @@ public:
 
     virtual ~WidgetVScrollBar() {}
 
-    virtual void set_xy(int16_t x, int16_t y) {
+    void set_dx(int16_t x) override {
         this->scroll.x = x + 1;
+        Widget2::set_dx(x);
+    }
+
+    void set_dy(int16_t y) override {
         this->scroll.y = y + 1;
-        Widget2::set_xy(x, y);
+        Widget2::set_dy(y);
     }
 
     void set_frame(WidgetFrame * wframe) {
@@ -389,10 +393,14 @@ public:
 
     virtual ~WidgetHScrollBar() {}
 
-    virtual void set_xy(int16_t x, int16_t y) {
+    void set_dx(int16_t x) override {
         this->scroll.x = x + 1;
+        Widget2::set_dx(x);
+    }
+
+    void set_dy(int16_t y) override {
         this->scroll.y = y + 1;
-        Widget2::set_xy(x, y);
+        Widget2::set_dy(y);
     }
 
     void set_frame(WidgetFrame * wframe) {

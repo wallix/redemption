@@ -85,19 +85,9 @@ public:
         this->label_rect.x = x + 1;
     }
 
-    void set_button_x(int x)
-    {
-        this->set_dx(int16_t(x));
-    }
-
     void set_dy(int16_t y) override {
         Widget2::set_dy(y);
         this->label_rect.y = y + 1;
-    }
-
-    void set_button_y(int y)
-    {
-        this->set_dy(int16_t(y));
     }
 
     void set_cx(uint16_t cx) override {
@@ -105,19 +95,9 @@ public:
         this->label_rect.cx = cx - 3;
     }
 
-    void set_button_cx(int w)
-    {
-        this->set_cx(uint16_t(w));
-    }
-
     void set_cy(uint16_t cy) override {
         Widget2::set_cy(cy);
         this->label_rect.cy = cy - 3;
-    }
-
-    void set_button_cy(int h)
-    {
-        this->set_cy(uint16_t(h));
     }
 
     void set_text(char const* text) {

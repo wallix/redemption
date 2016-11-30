@@ -228,7 +228,7 @@ public:
         this->timeleft_label.set_dx(left + (width - 600) / 2);
 
         int const back_width = this->back ? this->back->cx() + 10 : 0;
-        this->cancel.set_button_x(left + (this->cx() - (this->cancel.cx() + back_width)) / 2);
+        this->cancel.set_dx(left + (this->cx() - (this->cancel.cx() + back_width)) / 2);
         this->connection_closed_label.set_dx(left + (this->cx() - this->connection_closed_label.cx()) / 2);
 
         this->separator.set_dx(left + (this->cx() - 600) / 2);
@@ -281,11 +281,11 @@ public:
         }
 
         if (this->back) {
-            this->back->set_button_x(this->cancel.dx() + this->cancel.cx() + 10);
-            this->back->set_button_y(top + y);
+            this->back->set_dx(this->cancel.dx() + this->cancel.cx() + 10);
+            this->back->set_dy(top + y);
         }
 
-        this->cancel.set_button_y(top + y);
+        this->cancel.set_dy(top + y);
         y += this->cancel.cy();
 
         this->move_xy(0, (height - y) / 2);

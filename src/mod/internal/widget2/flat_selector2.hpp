@@ -209,8 +209,8 @@ public:
 
         if (extra_button) {
             this->add_widget(extra_button);
-            extra_button->set_button_x(left + 60);
-            extra_button->set_button_y(top + height - 60);
+            extra_button->set_dx(left + 60);
+            extra_button->set_dy(top + height - 60);
         }
 
         this->rearrange();

@@ -193,13 +193,13 @@ public:
         return nullptr;
     }
 
-    virtual void set_xy(int16_t x, int16_t y)
+    void set_xy(int16_t x, int16_t y)
     {
         this->set_dx(x);
         this->set_dy(y);
     }
 
-    virtual void set_wh(int16_t w, int16_t h)
+    void set_wh(int16_t w, int16_t h)
     {
         this->set_cx(w);
         this->set_cy(h);

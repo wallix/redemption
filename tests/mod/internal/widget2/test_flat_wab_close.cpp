@@ -260,7 +260,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     BOOST_CHECK(notifier.sender == &flat_wab_close);
     BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
 
-    drawable.save_to_png("flat_wab_close-exit3.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close-exit3.png");
     if (!check_sig(drawable.gd.impl(), message,
         "\x1f\x14\x7d\x66\x26\x2b\x6d\x5d\x3c\x73\x13\x8a\x1f\x2e\x7f\x1a\xe8\x9b\x73\xaa"
     )){

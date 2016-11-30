@@ -103,11 +103,11 @@ public:
         this->groupbox.add_widget(&this->goselector);
         this->groupbox.add_widget(&this->exit);
 
-        this->exit.set_button_x(left + width - 40 - this->exit.cx());
-        this->goselector.set_button_x(this->exit.dx() - (this->goselector.cx() + 10));
+        this->exit.set_dx(left + width - 40 - this->exit.cx());
+        this->goselector.set_dx(this->exit.dx() - (this->goselector.cx() + 10));
 
-        this->goselector.set_button_y(y);
-        this->exit.set_button_y(y);
+        this->goselector.set_dy(y);
+        this->exit.set_dy(y);
 
         y += this->goselector.cy() + 20;
         this->groupbox.set_cy(y - top);
@@ -116,8 +116,8 @@ public:
 
         if (extra_button) {
             this->add_widget(extra_button);
-            extra_button->set_button_x(left + 60);
-            extra_button->set_button_y(top + height - 60);
+            extra_button->set_dx(left + 60);
+            extra_button->set_dy(top + height - 60);
         }
     }
 
@@ -156,19 +156,19 @@ public:
             y = this->form.ly() + 10;
         }
 
-        this->exit.set_button_x(left + width - 40 - this->exit.cx());
-        this->goselector.set_button_x(this->exit.dx() - (this->goselector.cx() + 10));
+        this->exit.set_dx(left + width - 40 - this->exit.cx());
+        this->goselector.set_dx(this->exit.dx() - (this->goselector.cx() + 10));
 
-        this->goselector.set_button_y(y);
-        this->exit.set_button_y(y);
+        this->goselector.set_dy(y);
+        this->exit.set_dy(y);
 
         y += this->goselector.cy() + 20;
         this->groupbox.set_cy(y - top);
         this->groupbox.move_xy(0, (height - (y - top)) / 2);
 
         if (this->extra_button) {
-            this->extra_button->set_button_x(left + 60);
-            this->extra_button->set_button_y(top + height - 60);
+            this->extra_button->set_dx(left + 60);
+            this->extra_button->set_dy(top + height - 60);
         }
     }
 

@@ -194,19 +194,9 @@ public:
         this->label.set_dx(x + 1);
     }
 
-    virtual void set_edit_x(int x)
-    {
-        this->set_dx(int16_t(x));
-    }
-
     void set_dy(int16_t y) override {
         Widget2::set_dy(y);
         this->label.set_dy(y + 1);
-    }
-
-    virtual void set_edit_y(int y)
-    {
-        this->set_dy(int16_t(y));
     }
 
     void set_cx(uint16_t cx) override
@@ -215,24 +205,9 @@ public:
         this->label.set_cx(cx - 2);
     }
 
-    virtual void set_edit_cx(int w)
-    {
-        this->set_cx(w);
-    }
-
     void set_cy(uint16_t cy) override {
         Widget2::set_cy(cy);
         this->label.set_cy(cy - 2);
-    }
-
-    virtual void set_edit_cy(int h)
-    {
-        this->set_cy(h);
-    }
-
-    void set_xy(int16_t x, int16_t y) override {
-        this->set_dx(x);
-        this->set_dy(y);
     }
 
     void draw(const Rect& clip) override {

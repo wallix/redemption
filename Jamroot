@@ -752,6 +752,7 @@ test-canonical core/RDP/slowpath.hpp ;
 test-canonical core/RDP/x224.hpp ;
 ## @}
 
+test-run test_word_identification : utils/test_word_identification.cpp ;
 
 ## Gcc
 ## @{
