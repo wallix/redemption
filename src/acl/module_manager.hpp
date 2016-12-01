@@ -155,10 +155,10 @@ inline const char * get_module_name(int module_id) {
 
 class MMIni : public MMApi
 {
-public:
-    // TASK private visibility
+protected:
     Inifile & ini;
 
+public:
     explicit MMIni(Inifile & ini_)
     : ini(ini_)
     {}
@@ -737,7 +737,7 @@ public:
         , gen(gen)
         , timeobj(timeobj)
         , client_execute(front, ini.get<cfg::debug::mod_internal>() & 1)
-        , verbose(static_cast<VerboseFlags>(ini.get<cfg::debug::auth>()))
+        , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
     {
         this->no_mod.get_event().reset();
         this->mod = &this->no_mod;
@@ -789,7 +789,7 @@ public:
                 this->front.client_info.height,
                 this->ini.get<cfg::font>()
             ));
-            if (this->verbose & VerboseFlags::new_mod){
+            if (this->verbose & Verbose::new_mod){
                 LOG(LOG_INFO, "ModuleManager::internal module 'bouncer2_mod' ready");
             }
             break;
@@ -806,7 +806,7 @@ public:
                 !this->ini.get<cfg::mod_replay::on_end_of_data>(),
                 to_verbose_flags(this->ini.get<cfg::debug::capture>())
             ));
-            if (this->verbose & VerboseFlags::new_mod){
+            if (this->verbose & Verbose::new_mod){
                 LOG(LOG_INFO, "ModuleManager::internal module 'test' ready");
             }
             break;
@@ -847,7 +847,7 @@ public:
                 )),
                 this->client_execute
             ));
-            if (this->verbose & VerboseFlags::new_mod){
+            if (this->verbose & Verbose::new_mod){
                 LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");
             }
             break;
@@ -1079,7 +1079,7 @@ public:
         case MODULE_XUP:
             {
                 const char * name = "XUP Target";
-                if (this->verbose & VerboseFlags::new_mod){
+                if (this->verbose & Verbose::new_mod){
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
                 }
 

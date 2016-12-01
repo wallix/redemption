@@ -64,7 +64,7 @@ public:
     };
 
     SocketTransport( const char * name, int sck, const char *ip_address, int port
-                   , VerboseFlags verbose, std::string * error_message = nullptr)
+                   , Verbose verbose, std::string * error_message = nullptr)
     : sck(sck)
     , sck_closed(0)
     , name(name)
@@ -236,7 +236,7 @@ public:
     }
 
     void do_recv(uint8_t ** pbuffer, size_t len) override {
-        if (this->verbose & VerboseFlags::dump){
+        if (this->verbose & Verbose::dump){
             LOG(LOG_INFO, "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
         }
 
@@ -253,7 +253,7 @@ public:
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
 
-        if (this->verbose & VerboseFlags::dump){
+        if (this->verbose & Verbose::dump){
             LOG(LOG_INFO, "Recv done on %s (%d) %zu bytes", this->name, this->sck, len);
             hexdump_c(start, len);
             LOG(LOG_INFO, "Dump done on %s (%d) %zu bytes", this->name, this->sck, len);
@@ -266,7 +266,7 @@ public:
     void do_send(const uint8_t * const buffer, size_t len) override {
         if (len == 0) { return; }
 
-        if (this->verbose & VerboseFlags::dump){
+        if (this->verbose & Verbose::dump){
             LOG(LOG_INFO, "Sending on %s (%d) %zu bytes", this->name, this->sck, len);
             hexdump_c(buffer, len);
             LOG(LOG_INFO, "Sent dumped on %s (%d) %zu bytes", this->name, this->sck, len);

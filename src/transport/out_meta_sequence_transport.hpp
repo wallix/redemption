@@ -653,7 +653,7 @@ namespace detail
             hash_string_len + 1 +
             2
         ];
-        ssize_t len = sprintf(
+        ssize_t len = std::sprintf(
             mes,
             " %lld %llu %lld %lld %llu %lld %lld %lld",
             ll(stat.st_size),
@@ -666,7 +666,7 @@ namespace detail
             ll(stat.st_ctim.tv_sec)
         );
         if (write_time) {
-            len += sprintf(
+            len += std::sprintf(
                 mes + len,
                 " %lld %lld",
                 ll(start_sec),

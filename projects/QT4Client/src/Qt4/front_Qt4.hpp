@@ -402,7 +402,7 @@ public:
 
     virtual void update_pointer_position(uint16_t xPos, uint16_t yPos) override;
 
-    virtual int server_resize(int width, int height, int bpp) override;
+    virtual ResizeResult server_resize(int width, int height, int bpp) override;
 
     void send_buffer_to_clipboard();
 

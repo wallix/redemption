@@ -399,6 +399,14 @@ public:
         // write last frame : we must ensure writing at least one frame to avoid empty movies
         encoding_video_frame();
 
+        if (bool(this->video_st->codec->flags & AVFMT_NOTIMESTAMPS)) {
+            auto const frame_rate = 1000u / this->duration_frame.count();
+            int const loop = frame_rate - this->frame_key % frame_rate;
+            for (int i = 0; i < loop; ++i) {
+                encoding_video_frame();
+            }
+        }
+
         /* write the trailer, if any.  the trailer must be written
          * before you close the CodecContexts open when you wrote the
          * header; otherwise write_trailer may try to use memory that
