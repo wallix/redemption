@@ -206,20 +206,20 @@ public:
 
     virtual ~WidgetVScrollBar() {}
 
-    void set_dx(int16_t x) override {
+    void set_x(int16_t x) override {
         this->scroll.x = x + 1;
-        Widget2::set_dx(x);
+        Widget2::set_x(x);
     }
 
-    void set_dy(int16_t y) override {
+    void set_y(int16_t y) override {
         this->scroll.y = y + 1;
-        Widget2::set_dy(y);
+        Widget2::set_y(y);
     }
 
     void set_frame(WidgetFrame * wframe) {
         if (wframe) {
             this->frame = wframe;
-            this->set_xy(this->frame->lx(), this->frame->dy());
+            this->set_xy(this->frame->lx(), this->frame->y());
             this->rect.cy = this->frame->cy();
             this->bar_height = this->rect.cy - 2;
             this->set_scroll_height();
@@ -277,13 +277,13 @@ public:
     int16_t move_scroll(int16_t my) {
         int16_t new_y_pos = this->scroll.y + my;
         int16_t res = 0;
-        if ((new_y_pos > this->dy()) && (new_y_pos + this->scroll.cy < this->ly())) {
+        if ((new_y_pos > this->y()) && (new_y_pos + this->scroll.cy < this->ly())) {
             this->scroll.y = new_y_pos;
             res = my;
         }
-        else if ((new_y_pos <= this->dy()) && (this->scroll.y != this->dy() + 1)) {
-            res = this->dy() + 1 - this->scroll.y;
-            this->scroll.y = this->dy() + 1;
+        else if ((new_y_pos <= this->y()) && (this->scroll.y != this->y() + 1)) {
+            res = this->y() + 1 - this->scroll.y;
+            this->scroll.y = this->y() + 1;
         }
         else if ((new_y_pos + this->scroll.cy >= this->ly()) &&
                  (this->scroll.y + this->scroll.cy + 1 != this->ly())) {
@@ -393,20 +393,20 @@ public:
 
     virtual ~WidgetHScrollBar() {}
 
-    void set_dx(int16_t x) override {
+    void set_x(int16_t x) override {
         this->scroll.x = x + 1;
-        Widget2::set_dx(x);
+        Widget2::set_x(x);
     }
 
-    void set_dy(int16_t y) override {
+    void set_y(int16_t y) override {
         this->scroll.y = y + 1;
-        Widget2::set_dy(y);
+        Widget2::set_y(y);
     }
 
     void set_frame(WidgetFrame * wframe) {
         if (wframe) {
             this->frame = wframe;
-            this->set_xy(this->frame->dx(), this->frame->ly());
+            this->set_xy(this->frame->x(), this->frame->ly());
             this->rect.cx = this->frame->cx();
             this->bar_width = this->rect.cx - 2;
             this->set_scroll_width();
@@ -464,13 +464,13 @@ public:
     int16_t move_scroll(int16_t mx) {
         int16_t new_x_pos = this->scroll.x + mx;
         int16_t res = 0;
-        if ((new_x_pos > this->dx()) && (new_x_pos + this->scroll.cx < this->lx())) {
+        if ((new_x_pos > this->x()) && (new_x_pos + this->scroll.cx < this->lx())) {
             this->scroll.x = new_x_pos;
             res = mx;
         }
-        else if ((new_x_pos <= this->dx()) && (this->scroll.x >= this->dx() + 1)) {
-            res = this->dx() + 1 - this->scroll.x;
-            this->scroll.x = this->dx() + 1;
+        else if ((new_x_pos <= this->x()) && (this->scroll.x >= this->x() + 1)) {
+            res = this->x() + 1 - this->scroll.x;
+            this->scroll.x = this->x() + 1;
         }
         else if ((new_x_pos + this->scroll.cx >= this->lx()) &&
                  (this->scroll.x + this->scroll.cx + 1 <= this->lx())) {

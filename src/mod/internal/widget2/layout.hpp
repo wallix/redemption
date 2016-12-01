@@ -46,22 +46,22 @@ struct WidgetLayout : public Widget2 {
         }
     }
 
-    void set_dx(int16_t x) override {
+    void set_x(int16_t x) override {
         for (size_t i = 0, max = this->nb_items; i < max; ++i) {
             Widget2 * w = this->items[i];
-            uint16_t dx = w->dx() - this->dx();
-            this->items[i]->set_dx(x + dx);
+            uint16_t dx = w->x() - this->x();
+            this->items[i]->set_x(x + dx);
         }
-        Widget2::set_dx(x);
+        Widget2::set_x(x);
     }
 
-    void set_dy(int16_t y) override {
+    void set_y(int16_t y) override {
         for (size_t i = 0, max = this->nb_items; i < max; ++i) {
             Widget2 * w = this->items[i];
-            uint16_t dy = w->dy() - this->dy;
-            this->items[i]->set_dy(y + dy);
+            uint16_t dy = w->y() - this->dy;
+            this->items[i]->set_y(y + dy);
         }
-        Widget2::set_dy(y);
+        Widget2::set_y(y);
     }
 
     virtual Widget2 * widget_at_pos(int16_t x, int16_t y)

@@ -51,8 +51,8 @@ public:
                 0,
                 Rect(mx, my, clip.cx, clip.cy),
                 0xCC,
-                mx - this->dx(),
-                my - this->dy(),
+                mx - this->x(),
+                my - this->y(),
                 0
             ),
             this->get_rect(),

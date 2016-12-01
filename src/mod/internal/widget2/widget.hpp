@@ -79,11 +79,22 @@ public:
     : parent(parent)
     , drawable(drawable)
     , notifier(notifier)
-    , rect(Rect(rect.x + ((&parent != this) ? parent.dx() : 0),
-                rect.y + ((&parent != this) ? parent.dy() : 0),
-                rect.cx,
-                rect.cy
-                ))
+    , rect(rect.x + ((&parent != this) ? parent.x() : 0),
+           rect.y + ((&parent != this) ? parent.y() : 0),
+           rect.cx,
+           rect.cy
+           )
+    , group_id(group_id)
+    , tab_flag(NORMAL_TAB)
+    , focus_flag(NORMAL_FOCUS)
+    , pointer_flag(Pointer::POINTER_NORMAL)
+    , has_focus(false)
+    , notify_value(0) {}
+
+    Widget2(gdi::GraphicApi & drawable, Widget2 & parent, NotifyApi * notifier, int group_id = 0)
+    : parent(parent)
+    , drawable(drawable)
+    , notifier(notifier)
     , group_id(group_id)
     , tab_flag(NORMAL_TAB)
     , focus_flag(NORMAL_FOCUS)
@@ -195,8 +206,8 @@ public:
 
     void set_xy(int16_t x, int16_t y)
     {
-        this->set_dx(x);
-        this->set_dy(y);
+        this->set_x(x);
+        this->set_y(y);
     }
 
     void set_wh(int16_t w, int16_t h)
@@ -239,22 +250,22 @@ public:
     }
 
     ///Return x position in it's screen
-    int16_t dx() const
+    int16_t x() const
     {
         return this->rect.x;
     }
 
-    virtual void set_dx(int16_t x) {
+    virtual void set_x(int16_t x) {
         this->rect.x = x;
     }
 
     ///Return y position in it's screen
-    int16_t dy() const
+    int16_t y() const
     {
         return this->rect.y;
     }
 
-    virtual void set_dy(int16_t y) {
+    virtual void set_y(int16_t y) {
         this->rect.y = y;
     }
 
@@ -278,13 +289,13 @@ public:
         this->rect.cy = cy;
     }
 
-    ///Return dx()+cx()
+    ///Return x()+cx()
     int16_t lx() const
     {
         return this->rect.x + this->rect.cx;
     }
 
-    ///Return dy()+cy()
+    ///Return y()+cy()
     int16_t ly() const
     {
         return this->rect.y + this->rect.cy;
@@ -303,13 +314,13 @@ public:
     ///Return x position in it's parent
     int16_t px() const
     {
-        return this->dx() - this->parent.dx();
+        return this->x() - this->parent.x();
     }
 
     ///Return y position in it's parent
     int16_t py() const
     {
-        return this->dy() - this->parent.dy();
+        return this->y() - this->parent.y();
     }
 
     Rect const&  get_rect() const {

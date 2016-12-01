@@ -61,8 +61,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
 
     parent.set_widget_focus(&wedit, Widget2::focus_reason_tabkey);
     // ask to widget to redraw at it's current position
-    wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
-                                    0 + wedit.dy(),
+    wedit.rdp_input_invalidate(Rect(0 + wedit.x(),
+                                    0 + wedit.y(),
                                     wedit.cx(),
                                     wedit.cy()));
 
@@ -118,8 +118,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
                           wedit.centerx(), wedit.centery(), nullptr);
 
     // ask to widget to redraw at it's current position
-    wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
-                                    0 + wedit.dy(),
+    wedit.rdp_input_invalidate(Rect(0 + wedit.x(),
+                                    0 + wedit.y(),
                                     wedit.cx(),
                                     wedit.cy()));
 
@@ -133,8 +133,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
 
     wedit.set_text("Ylajali");
 
-    wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
-                                    0 + wedit.dy(),
+    wedit.rdp_input_invalidate(Rect(0 + wedit.x(),
+                                    0 + wedit.y(),
                                     wedit.cx(),
                                     wedit.cy()));
 

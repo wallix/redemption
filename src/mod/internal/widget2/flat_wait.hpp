@@ -88,11 +88,11 @@ public:
         // int starty = (height - total_height) / 2;
         const int starty = 20;
         int y = starty;
-        this->dialog.set_dx(left + 30); // dialog has 10 margin.
+        this->dialog.set_x(left + 30); // dialog has 10 margin.
         // this->dialog.rect.x = (this->cx() - total_width) / 2;
-        this->dialog.set_dy(top + y + 10);
+        this->dialog.set_y(top + y + 10);
 
-        y = this->dialog.dy() + this->dialog.cy() + 20;
+        y = this->dialog.y() + this->dialog.cy() + 20;
 
         if (showform) {
             this->groupbox.add_widget(&this->form);
@@ -103,11 +103,11 @@ public:
         this->groupbox.add_widget(&this->goselector);
         this->groupbox.add_widget(&this->exit);
 
-        this->exit.set_dx(left + width - 40 - this->exit.cx());
-        this->goselector.set_dx(this->exit.dx() - (this->goselector.cx() + 10));
+        this->exit.set_x(left + width - 40 - this->exit.cx());
+        this->goselector.set_x(this->exit.x() - (this->goselector.cx() + 10));
 
-        this->goselector.set_dy(y);
-        this->exit.set_dy(y);
+        this->goselector.set_y(y);
+        this->exit.set_y(y);
 
         y += this->goselector.cy() + 20;
         this->groupbox.set_cy(y - top);
@@ -116,8 +116,8 @@ public:
 
         if (extra_button) {
             this->add_widget(extra_button);
-            extra_button->set_dx(left + 60);
-            extra_button->set_dy(top + height - 60);
+            extra_button->set_x(left + 60);
+            extra_button->set_y(top + height - 60);
         }
     }
 
@@ -126,49 +126,49 @@ public:
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
-        this->set_dx(left);
-        this->set_dy(top);
+        this->set_x(left);
+        this->set_y(top);
         this->set_cx(width);
         this->set_cy(height);
 
-        this->groupbox.set_dx(left);
-        this->groupbox.set_dy(top);
+        this->groupbox.set_x(left);
+        this->groupbox.set_y(top);
         this->groupbox.set_cx(width);
         this->groupbox.set_cy(height);
 
-        this->dialog.set_dx(left);
-        this->dialog.set_dy(top);
+        this->dialog.set_x(left);
+        this->dialog.set_y(top);
 
-        this->form.set_dx(left);
-        this->form.set_dy(top);
+        this->form.set_x(left);
+        this->form.set_y(top);
         this->form.set_cx(width - 80);
 
         const int starty = 20;
         int y = starty;
-        this->dialog.set_dx(left + 30); // dialog has 10 margin.
+        this->dialog.set_x(left + 30); // dialog has 10 margin.
         // this->dialog.rect.x = (this->cx() - total_width) / 2;
-        this->dialog.set_dy(top + y + 10);
+        this->dialog.set_y(top + y + 10);
 
-        y = this->dialog.dy() + this->dialog.cy() + 20;
+        y = this->dialog.y() + this->dialog.cy() + 20;
 
         if (this->hasform) {
             this->form.move_size_widget(left + 40, y, this->form.cx(), this->form.cy());
             y = this->form.ly() + 10;
         }
 
-        this->exit.set_dx(left + width - 40 - this->exit.cx());
-        this->goselector.set_dx(this->exit.dx() - (this->goselector.cx() + 10));
+        this->exit.set_x(left + width - 40 - this->exit.cx());
+        this->goselector.set_x(this->exit.x() - (this->goselector.cx() + 10));
 
-        this->goselector.set_dy(y);
-        this->exit.set_dy(y);
+        this->goselector.set_y(y);
+        this->exit.set_y(y);
 
         y += this->goselector.cy() + 20;
         this->groupbox.set_cy(y - top);
         this->groupbox.move_xy(0, (height - (y - top)) / 2);
 
         if (this->extra_button) {
-            this->extra_button->set_dx(left + 60);
-            this->extra_button->set_dy(top + height - 60);
+            this->extra_button->set_x(left + 60);
+            this->extra_button->set_y(top + height - 60);
         }
     }
 

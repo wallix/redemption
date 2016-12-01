@@ -59,18 +59,18 @@ public:
                 : nullptr)
         , use_label_(use_title)
     {
-        this->button.set_dx(this->editbox->lx() - 1);
+        this->button.set_x(this->editbox->lx() - 1);
         this->editbox->set_cy(this->button.cy());
         this->set_cy(this->editbox->cy());
-        this->set_cx(this->button.lx() - this->dx());
+        this->set_cx(this->button.lx() - this->x());
         this->set_xy(x, y);
         this->editbox->draw_border_focus = false;
 
         if (this->label) {
             this->label->set_cx(this->editbox->cx() - 1);
             this->label->set_cy(this->editbox->cy() - 1);
-            this->label->set_dx(this->label->dx() + 1);
-            this->label->set_dy(this->label->dy() + 1);
+            this->label->set_x(this->label->x() + 1);
+            this->label->set_y(this->label->y() + 1);
         }
     }
 
@@ -99,23 +99,23 @@ public:
         return this->editbox->get_text();
     }
 
-    void set_dx(int16_t x) override {
-        Widget2::set_dx(x);
-        this->editbox->set_dx(x);
-        this->button.set_dx(this->editbox->lx() - 1);
+    void set_x(int16_t x) override {
+        Widget2::set_x(x);
+        this->editbox->set_x(x);
+        this->button.set_x(this->editbox->lx() - 1);
 
         if (this->label) {
-            this->label->set_dx(x + 1);
+            this->label->set_x(x + 1);
         }
     }
 
-    void set_dy(int16_t y) override {
-        Widget2::set_dy(y);
-        this->editbox->set_dy(y);
-        this->button.set_dy(y);
+    void set_y(int16_t y) override {
+        Widget2::set_y(y);
+        this->editbox->set_y(y);
+        this->button.set_y(y);
 
         if (this->label) {
-            this->label->set_dy(y + 1);
+            this->label->set_y(y + 1);
         }
     }
 
@@ -140,19 +140,19 @@ public:
     {
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx(), this->dy(), this->cx() - 1, 1
+            this->x(), this->y(), this->cx() - 1, 1
         )), color), this->get_rect());
         //left
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx(), this->dy() + 1, 1, this->cy() - 2
+            this->x(), this->y() + 1, 1, this->cy() - 2
         )), color), this->get_rect());
         //right
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
+            this->x() + this->cx() - 1, this->y(), 1, this->cy()
         )), color), this->get_rect());
         //bottom
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
+            this->x(), this->y() + this->cy() - 1, this->cx(), 1
         )), color), this->get_rect());
     }
     void focus(int reason) override {

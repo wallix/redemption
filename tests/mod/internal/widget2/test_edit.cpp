@@ -56,8 +56,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
                      fg_color, bg_color, bg_color, font, edit_pos, xtext, ytext);
 
     // ask to widget to redraw at it's current position
-    wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
-                                    0 + wedit.dx(),
+    wedit.rdp_input_invalidate(Rect(0 + wedit.x(),
+                                    0 + wedit.x(),
                                     wedit.cx(),
                                     wedit.cy()));
 
@@ -90,8 +90,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     WidgetEdit wedit(drawable.gd, x, y, cx, parent, notifier, "test2", id, fg_color, bg_color, 0, font);
 
     // ask to widget to redraw at it's current position
-    wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
-                                    0 + wedit.dy(),
+    wedit.rdp_input_invalidate(Rect(0 + wedit.x(),
+                                    0 + wedit.y(),
                                     wedit.cx(),
                                     wedit.cy()));
 
@@ -124,8 +124,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     WidgetEdit wedit(drawable.gd, x, y, cx, parent, notifier, "test3", id, fg_color, bg_color, 0, font);
 
     // ask to widget to redraw at it's current position
-    wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
-                                    0 + wedit.dy(),
+    wedit.rdp_input_invalidate(Rect(0 + wedit.x(),
+                                    0 + wedit.y(),
                                     wedit.cx(),
                                     wedit.cy()));
 
@@ -158,8 +158,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit4)
     WidgetEdit wedit(drawable.gd, x, y, cx, parent, notifier, "test4", id, fg_color, bg_color, 0, font);
 
     // ask to widget to redraw at it's current position
-    wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
-                                    0 + wedit.dy(),
+    wedit.rdp_input_invalidate(Rect(0 + wedit.x(),
+                                    0 + wedit.y(),
                                     wedit.cx(),
                                     wedit.cy()));
 
@@ -192,8 +192,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit5)
     WidgetEdit wedit(drawable.gd, x, y, cx, parent, notifier, "test5", id, fg_color, bg_color, 0, font);
 
     // ask to widget to redraw at it's current position
-    wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
-                                    0 + wedit.dy(),
+    wedit.rdp_input_invalidate(Rect(0 + wedit.x(),
+                                    0 + wedit.y(),
                                     wedit.cx(),
                                     wedit.cy()));
 
@@ -226,8 +226,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit6)
     WidgetEdit wedit(drawable.gd, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0, font);
 
     // ask to widget to redraw at it's current position
-    wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
-                                    0 + wedit.dy(),
+    wedit.rdp_input_invalidate(Rect(0 + wedit.x(),
+                                    0 + wedit.y(),
                                     wedit.cx(),
                                     wedit.cy()));
 
@@ -260,8 +260,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip)
     WidgetEdit wedit(drawable.gd, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0, font);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    wedit.rdp_input_invalidate(Rect(20 + wedit.dx(),
-                                    0 + wedit.dy(),
+    wedit.rdp_input_invalidate(Rect(20 + wedit.x(),
+                                    0 + wedit.y(),
                                     wedit.cx(),
                                     wedit.cy()));
 
@@ -294,8 +294,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
     WidgetEdit wedit(drawable.gd, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0, font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    wedit.rdp_input_invalidate(Rect(20 + wedit.dx(),
-                                    5 + wedit.dy(),
+    wedit.rdp_input_invalidate(Rect(20 + wedit.x(),
+                                    5 + wedit.y(),
                                     30,
                                     10));
 

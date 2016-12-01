@@ -193,8 +193,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip)
     WidgetSelectorFlat2 selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    selector.rdp_input_invalidate(Rect(20 + selector.dx(),
-                                      0 + selector.dy(),
+    selector.rdp_input_invalidate(Rect(20 + selector.x(),
+                                      0 + selector.y(),
                                       selector.cx(),
                                       selector.cy()));
 
@@ -225,8 +225,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip2)
     WidgetSelectorFlat2 selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    selector.rdp_input_invalidate(Rect(20 + selector.dx(),
-                                      5 + selector.dy(),
+    selector.rdp_input_invalidate(Rect(20 + selector.x(),
+                                      5 + selector.y(),
                                       30,
                                       10));
 
@@ -272,8 +272,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     selector.rearrange();
 
     selector.selector_lines.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                                            selector.selector_lines.dx() + 20,
-                                            selector.selector_lines.dy() + 40,
+                                            selector.selector_lines.x() + 20,
+                                            selector.selector_lines.y() + 40,
                                             nullptr);
 
     selector.rdp_input_invalidate(selector.get_rect());
