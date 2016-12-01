@@ -388,7 +388,7 @@ public:
             do {
                 Widget2 * w = this->impl->get(iter_w_current);
                 REDASSERT(w);
-                w->set_xy(x + w->dx(), y + w->dy());
+                w->set_xy(x + w->x(), y + w->y());
 
                 iter_w_current = this->impl->get_next(iter_w_current);
             }

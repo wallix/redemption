@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
 
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                            wbutton1.dx(), wbutton1.dy(), &keymap);
+                            wbutton1.x(), wbutton1.y(), &keymap);
     BOOST_CHECK(notifier1.sender == &wbutton1);
     BOOST_CHECK(notifier2.sender == nullptr);
     BOOST_CHECK(notifier3.sender == &wbutton3);
@@ -218,7 +218,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     }
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                            wbutton2.dx(), wbutton2.dy(), &keymap);
+                            wbutton2.x(), wbutton2.y(), &keymap);
     BOOST_CHECK(notifier1.sender == nullptr);
     BOOST_CHECK(notifier2.sender == nullptr);
     BOOST_CHECK(notifier3.sender == nullptr);
@@ -251,7 +251,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     }
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                            wbutton4.dx(), wbutton4.dy(), &keymap);
+                            wbutton4.x(), wbutton4.y(), &keymap);
     BOOST_CHECK(notifier1.sender == nullptr);
     BOOST_CHECK(notifier2.sender == &wbutton2);
     BOOST_CHECK(notifier3.sender == nullptr);
@@ -270,7 +270,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     }
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                            wbutton4.dx(), wbutton4.dy(), &keymap);
+                            wbutton4.x(), wbutton4.y(), &keymap);
     BOOST_CHECK(notifier1.sender == nullptr);
     BOOST_CHECK(notifier2.sender == nullptr);
     BOOST_CHECK(notifier3.sender == nullptr);

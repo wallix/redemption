@@ -384,7 +384,7 @@ public:
         }
     }
 
-    int server_resize(int width, int height, int bpp) override {
+    ResizeResult server_resize(int width, int height, int bpp) override {
         this->mod_bpp = bpp;
         this->info.bpp = bpp;
         if (this->verbose) {
@@ -392,7 +392,7 @@ public:
             LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
             LOG(LOG_INFO, "========================================\n");
         }
-        return 1;
+        return ResizeResult::done;
     }
 
     void set_pointer(const Pointer & cursor) override {

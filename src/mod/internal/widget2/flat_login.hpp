@@ -153,12 +153,12 @@ public:
         this->login_edit.set_xy(left + x_cbloc + labels_w + 10, top + y_cbloc);
         this->password_edit.set_xy(left + x_cbloc + labels_w + 10, top + height / 2);
 
-        this->login_label.set_dy(this->login_label.dy() + (this->login_edit.cy() - this->login_label.cy()) / 2);
-        this->password_label.set_dy(this->password_label.dy() + (this->password_edit.cy() - this->password_label.cy()) / 2);
+        this->login_label.set_y(this->login_label.y() + (this->login_edit.cy() - this->login_label.cy()) / 2);
+        this->password_label.set_y(this->password_label.y() + (this->password_edit.cy() - this->password_label.cy()) / 2);
 
 
-        this->error_message_label.set_dx(this->login_edit.dx());
-        this->error_message_label.set_dy(this->login_edit.dy() - 22);
+        this->error_message_label.set_x(this->login_edit.x());
+        this->error_message_label.set_y(this->login_edit.y() - 22);
         this->error_message_label.set_cx(this->login_edit.cx());
 
         // Bottom bloc positioning
@@ -169,20 +169,20 @@ public:
             ?(height - (bbloc_h + 10))
             :(height/2 + cbloc_h/2 + bottom_height/2);
         this->img.set_xy(left + (width - this->img.cx()) / 2, top + y_bbloc);
-        if (this->img.dy() + this->img.cy() > top + height) {
-            this->img.set_dy(top);
+        if (this->img.y() + this->img.cy() > top + height) {
+            this->img.set_y(top);
         }
         this->version_label.set_xy(left + (width - this->version_label.cx()) / 2,
                                    top + y_bbloc + this->img.cy() + 10);
 
         this->helpicon.tab_flag = IGNORE_TAB;
         this->helpicon.focus_flag = IGNORE_FOCUS;
-        this->helpicon.set_dx(left + width - 60);
-        this->helpicon.set_dy(top + height - 60);
+        this->helpicon.set_x(left + width - 60);
+        this->helpicon.set_y(top + height - 60);
 
         if (extra_button) {
-            extra_button->set_dx(left + 60);
-            extra_button->set_dy(top + height - 60);
+            extra_button->set_x(left + 60);
+            extra_button->set_y(top + height - 60);
         }
 
         // this->add_widget(&this->frame);
@@ -200,8 +200,8 @@ public:
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
-        this->set_dx(left);
-        this->set_dy(top);
+        this->set_x(left);
+        this->set_y(top);
         this->set_cx(width);
         this->set_cy(height);
 
@@ -248,12 +248,12 @@ public:
         this->login_edit.set_xy(left + x_cbloc + labels_w + 10, top + y_cbloc);
         this->password_edit.set_xy(left + x_cbloc + labels_w + 10, top + height / 2);
 
-        this->login_label.set_dy(this->login_label.dy() + (this->login_edit.cy() - this->login_label.cy()) / 2);
-        this->password_label.set_dy(this->password_label.dy() + (this->password_edit.cy() - this->password_label.cy()) / 2);
+        this->login_label.set_y(this->login_label.y() + (this->login_edit.cy() - this->login_label.cy()) / 2);
+        this->password_label.set_y(this->password_label.y() + (this->password_edit.cy() - this->password_label.cy()) / 2);
 
 
-        this->error_message_label.set_dx(this->login_edit.dx());
-        this->error_message_label.set_dy(this->login_edit.dy() - 22);
+        this->error_message_label.set_x(this->login_edit.x());
+        this->error_message_label.set_y(this->login_edit.y() - 22);
         this->error_message_label.set_cx(this->login_edit.cx());
 
         // Bottom bloc positioning
@@ -264,18 +264,18 @@ public:
             ?(height - (bbloc_h + 10))
             :(height/2 + cbloc_h/2 + bottom_height/2);
         this->img.set_xy(left + (width - this->img.cx()) / 2, top + y_bbloc);
-        if (this->img.dy() + this->img.cy() > top + height) {
-            this->img.set_dy(top);
+        if (this->img.y() + this->img.cy() > top + height) {
+            this->img.set_y(top);
         }
         this->version_label.set_xy(left + (width - this->version_label.cx()) / 2,
                                    top + y_bbloc + this->img.cy() + 10);
 
-        this->helpicon.set_dx(left + width - 60);
-        this->helpicon.set_dy(top + height - 60);
+        this->helpicon.set_x(left + width - 60);
+        this->helpicon.set_y(top + height - 60);
 
         if (this->extra_button) {
-            this->extra_button->set_dx(left + 60);
-            this->extra_button->set_dy(top + height - 60);
+            this->extra_button->set_x(left + 60);
+            this->extra_button->set_y(top + height - 60);
         }
     }
 

@@ -56,8 +56,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword)
                      fg_color, bg_color, 0x000000, font, password_pos, xtext, ytext);
 
     // ask to widget to redraw at it's current position
-    wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
-                                    0 + wpassword.dx(),
+    wpassword.rdp_input_invalidate(Rect(0 + wpassword.x(),
+                                    0 + wpassword.x(),
                                     wpassword.cx(),
                                     wpassword.cy()));
 
@@ -91,8 +91,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword2)
     WidgetPassword wpassword(drawable.gd, x, y, cx, parent, notifier, "test2", id, fg_color, bg_color, 0x000000, font, 0);
 
     // ask to widget to redraw at it's current position
-    wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
-                                    0 + wpassword.dy(),
+    wpassword.rdp_input_invalidate(Rect(0 + wpassword.x(),
+                                    0 + wpassword.y(),
                                     wpassword.cx(),
                                     wpassword.cy()));
 
@@ -126,8 +126,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword3)
     WidgetPassword wpassword(drawable.gd, x, y, cx, parent, notifier, "test3", id, fg_color, bg_color, 0x000000, font, 0);
 
     // ask to widget to redraw at it's current position
-    wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
-                                    0 + wpassword.dy(),
+    wpassword.rdp_input_invalidate(Rect(0 + wpassword.x(),
+                                    0 + wpassword.y(),
                                     wpassword.cx(),
                                     wpassword.cy()));
 
@@ -161,8 +161,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword4)
     WidgetPassword wpassword(drawable.gd, x, y, cx, parent, notifier, "test4", id, fg_color, bg_color, 0x000000, font, 0);
 
     // ask to widget to redraw at it's current position
-    wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
-                                    0 + wpassword.dy(),
+    wpassword.rdp_input_invalidate(Rect(0 + wpassword.x(),
+                                    0 + wpassword.y(),
                                     wpassword.cx(),
                                     wpassword.cy()));
 
@@ -196,8 +196,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword5)
     WidgetPassword wpassword(drawable.gd, x, y, cx, parent, notifier, "test5", id, fg_color, bg_color, 0x000000, font, 0);
 
     // ask to widget to redraw at it's current position
-    wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
-                                    0 + wpassword.dy(),
+    wpassword.rdp_input_invalidate(Rect(0 + wpassword.x(),
+                                    0 + wpassword.y(),
                                     wpassword.cx(),
                                     wpassword.cy()));
 
@@ -231,8 +231,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword6)
     WidgetPassword wpassword(drawable.gd, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0x000000, font, 0);
 
     // ask to widget to redraw at it's current position
-    wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
-                                    0 + wpassword.dy(),
+    wpassword.rdp_input_invalidate(Rect(0 + wpassword.x(),
+                                    0 + wpassword.y(),
                                     wpassword.cx(),
                                     wpassword.cy()));
 
@@ -266,8 +266,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip)
     WidgetPassword wpassword(drawable.gd, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0x000000, font, 0);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    wpassword.rdp_input_invalidate(Rect(20 + wpassword.dx(),
-                                    0 + wpassword.dy(),
+    wpassword.rdp_input_invalidate(Rect(20 + wpassword.x(),
+                                    0 + wpassword.y(),
                                     wpassword.cx(),
                                     wpassword.cy()));
 
@@ -301,8 +301,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
     WidgetPassword wpassword(drawable.gd, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0x000000, font, 0);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    wpassword.rdp_input_invalidate(Rect(20 + wpassword.dx(),
-                                    5 + wpassword.dy(),
+    wpassword.rdp_input_invalidate(Rect(20 + wpassword.x(),
+                                    5 + wpassword.y(),
                                     30,
                                     10));
 

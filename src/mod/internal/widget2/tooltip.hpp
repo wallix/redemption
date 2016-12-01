@@ -72,29 +72,29 @@ public:
     }
 
     void set_tooltip_xy(int x, int y) {
-        this->set_dx(x);
-        this->set_dy(y);
-        this->desc.set_dx(x + w_border);
-        this->desc.set_dy(y + h_border);
+        this->set_x(x);
+        this->set_y(y);
+        this->desc.set_x(x + w_border);
+        this->desc.set_y(y + h_border);
     }
 
     void draw_border(const Rect& clip)
     {
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx(), this->dy(), this->cx() - 1, 1
+            this->x(), this->y(), this->cx() - 1, 1
         )), this->border_color), this->get_rect());
         //left
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx(), this->dy() + 1, 1, this->cy() - 2
+            this->x(), this->y() + 1, 1, this->cy() - 2
         )), this->border_color), this->get_rect());
         //right
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
+            this->x() + this->cx() - 1, this->y(), 1, this->cy()
         )), this->border_color), this->get_rect());
         //bottom
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx(), this->dy() + this->cy() - 1, this->cx() - 1, 1
+            this->x(), this->y() + this->cy() - 1, this->cx() - 1, 1
         )), this->border_color), this->get_rect());
     }
 };

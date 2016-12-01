@@ -79,7 +79,7 @@ public:
         end_of_transport = 1,
     };
 
-    FileToChunk(Transport * trans, VerboseFlags verbose)
+    FileToChunk(Transport * trans, Verbose verbose)
         : stream(this->stream_buf)
         , compression_wrapper(*trans, WrmCompressionAlgorithm::no_compression)
         , trans_source(trans)

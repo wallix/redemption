@@ -106,8 +106,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     wgrid.set_selection(2);
 
     // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
-                                    0 + wgrid.dy(),
+    wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),
+                                    0 + wgrid.y(),
                                     wgrid.cx(),
                                     wgrid.cy()));
 
@@ -124,8 +124,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     wgrid.set_selection(4);
 
     // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
-                                    0 + wgrid.dy(),
+    wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),
+                                    0 + wgrid.y(),
                                     wgrid.cx(),
                                     wgrid.cy()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "grid2.png");
@@ -137,14 +137,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     }
 
 
-    uint16_t mouse_x = wgrid.dx() + 50;
-    uint16_t mouse_y = widgetTable[5]->dy();
+    uint16_t mouse_x = wgrid.x() + 50;
+    uint16_t mouse_y = widgetTable[5]->y();
 
     wgrid.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, mouse_x, mouse_y, nullptr);
     wgrid.rdp_input_mouse(MOUSE_FLAG_BUTTON1, mouse_x, mouse_y, nullptr);
     // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
-                                    0 + wgrid.dy(),
+    wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),
+                                    0 + wgrid.y(),
                                     wgrid.cx(),
                                     wgrid.cy()));
     //drawable.draw(RDPOpaqueRect(Rect(mouse_x, mouse_y, 2, 2), PINK), wgrid.rect);
@@ -170,8 +170,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     wgrid.rdp_input_scancode(0,0,0,0, &keymap);
 
     // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
-                                    0 + wgrid.dy(),
+    wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),
+                                    0 + wgrid.y(),
                                     wgrid.cx(),
                                     wgrid.cy()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "grid4.png");
@@ -207,8 +207,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test2", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -239,8 +239,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test3", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -271,8 +271,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test4", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -303,8 +303,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test5", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -335,8 +335,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -367,8 +367,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    wlabel.rdp_input_invalidate(Rect(20 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(20 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -399,8 +399,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    wlabel.rdp_input_invalidate(Rect(20 + wlabel.dx(),
-                                     5 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(20 + wlabel.x(),
+                                     5 + wlabel.y(),
                                      30,
                                      10));
 

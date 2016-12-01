@@ -119,18 +119,18 @@ public:
     }
 
     void draw(const Rect& clip) override {
-        int dy = this->dy() + this->y_text;
+        int dy = this->y() + this->y_text;
         this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->get_rect());
         for (line_t * line = this->lines; line->str; ++line) {
             dy += this->y_text;
             gdi::server_draw_text(this->drawable
                                  , this->font
-                                 , this->x_text + this->dx()
+                                 , this->x_text + this->x()
                                  , dy
                                  , line->str
                                  , this->fg_color
                                  , this->bg_color
-                                 , clip.intersect(Rect(this->dx()
+                                 , clip.intersect(Rect(this->x()
                                  , dy
                                  , this->cx()
                                  , this->cy_text))

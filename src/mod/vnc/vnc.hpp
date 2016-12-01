@@ -1217,7 +1217,7 @@ public:
                 }
 
                 switch (this->front.server_resize(this->width, this->height, this->bpp)){
-                case 0:
+                case FrontAPI::ResizeResult::no_need:
                     if (this->verbose) {
                         LOG(LOG_INFO, "no resizing needed");
                     }
@@ -1226,7 +1226,7 @@ public:
                     this->event.object_and_time = true;
                     this->event.set();
                     break;
-                case 1:
+                case FrontAPI::ResizeResult::done:
                     if (this->verbose) {
                         LOG(LOG_INFO, "resizing done");
                     }
@@ -1239,7 +1239,7 @@ public:
 
                     this->is_first_membelt = true;
                     break;
-                case -1:
+                case FrontAPI::ResizeResult::fail:
                     // resizing failed
                     // thow an Error ?
                     LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");

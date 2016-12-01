@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
                                , 2
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
-                               , RDPVerboseFlags{}
+                               , RDPVerbose{}
                                );
     mod_rdp_params.device_id                       = "device_id";
     mod_rdp_params.enable_tls                      = false;

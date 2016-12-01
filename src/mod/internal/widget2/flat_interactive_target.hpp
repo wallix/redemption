@@ -181,31 +181,31 @@ public:
         this->caption_label.set_xy(left + (width - this->caption_label.cx()) / 2, top + y);
         this->separator.set_cx(cbloc_w);
 
-        y = this->caption_label.ly() + 20;
+        y = this->caption_label.bottom() + 20;
         this->separator.set_xy(left + x_cbloc, y);
 
-        y = this->separator.ly() + 20;
+        y = this->separator.bottom() + 20;
         this->device_label.set_xy(left + x_cbloc, y);
         device_show->set_xy(left + x_cbloc + margin_w + 20, y);
-        y = device_show->ly() + 20;
+        y = device_show->bottom() + 20;
         if (ask_device) {
             this->device.set_xy(left + x_cbloc + margin_w + 20, y - 10);
-            y = this->device.ly() + 20;
+            y = this->device.bottom() + 20;
         }
         this->login_label.set_xy(left + x_cbloc, y);
         login_show->set_xy(left + x_cbloc + margin_w + 20, y);
-        y = login_show->ly() + 20;
+        y = login_show->bottom() + 20;
         this->password_label.set_xy(left + x_cbloc, y);
         this->password_edit.set_xy(left + x_cbloc + margin_w + 20, y);
 
-        this->password_label.set_dy(this->password_label.dy() + (this->password_edit.cy() - this->password_label.cy()) / 2);
-        this->login_label.set_dy(this->login_label.dy() + (login_show->cy() - this->login_label.cy()) / 2);
-        this->device_label.set_dy(this->device_label.dy() + (device_show->cy() - this->login_label.cy()) / 2);
+        this->password_label.set_y(this->password_label.y() + (this->password_edit.cy() - this->password_label.cy()) / 2);
+        this->login_label.set_y(this->login_label.y() + (login_show->cy() - this->login_label.cy()) / 2);
+        this->device_label.set_y(this->device_label.y() + (device_show->cy() - this->login_label.cy()) / 2);
 
         if (extra_button) {
            this->add_widget(extra_button);
-           extra_button->set_dx(left + 60);
-           extra_button->set_dy(top + height - 60);
+           extra_button->set_x(left + 60);
+           extra_button->set_y(top + height - 60);
         }
     }
 
@@ -214,8 +214,8 @@ public:
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
-        this->set_dx(left);
-        this->set_dy(top);
+        this->set_x(left);
+        this->set_y(top);
         this->set_cx(width);
         this->set_cy(height);
 
@@ -272,30 +272,30 @@ public:
         this->caption_label.set_xy(left + (width - this->caption_label.cx()) / 2, top + y);
         this->separator.set_cx(cbloc_w);
 
-        y = this->caption_label.ly() + 20;
+        y = this->caption_label.bottom() + 20;
         this->separator.set_xy(left + x_cbloc, y);
 
-        y = this->separator.ly() + 20;
+        y = this->separator.bottom() + 20;
         this->device_label.set_xy(left + x_cbloc, y);
         device_show->set_xy(left + x_cbloc + margin_w + 20, y);
-        y = device_show->ly() + 20;
+        y = device_show->bottom() + 20;
         if (this->ask_device) {
             this->device.set_xy(left + x_cbloc + margin_w + 20, y - 10);
-            y = this->device.ly() + 20;
+            y = this->device.bottom() + 20;
         }
         this->login_label.set_xy(left + x_cbloc, y);
         login_show->set_xy(left + x_cbloc + margin_w + 20, y);
-        y = login_show->ly() + 20;
+        y = login_show->bottom() + 20;
         this->password_label.set_xy(left + x_cbloc, y);
         this->password_edit.set_xy(left + x_cbloc + margin_w + 20, y);
 
-        this->password_label.set_dy(this->password_label.dy() + (this->password_edit.cy() - this->password_label.cy()) / 2);
-        this->login_label.set_dy(this->login_label.dy() + (login_show->cy() - this->login_label.cy()) / 2);
-        this->device_label.set_dy(this->device_label.dy() + (device_show->cy() - this->login_label.cy()) / 2);
+        this->password_label.set_y(this->password_label.y() + (this->password_edit.cy() - this->password_label.cy()) / 2);
+        this->login_label.set_y(this->login_label.y() + (login_show->cy() - this->login_label.cy()) / 2);
+        this->device_label.set_y(this->device_label.y() + (device_show->cy() - this->login_label.cy()) / 2);
 
         if (this->extra_button) {
-           this->extra_button->set_dx(left + 60);
-           this->extra_button->set_dy(top + height - 60);
+           this->extra_button->set_x(left + 60);
+           this->extra_button->set_y(top + height - 60);
         }
     }
 

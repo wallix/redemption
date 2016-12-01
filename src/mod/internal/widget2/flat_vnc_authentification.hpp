@@ -88,7 +88,7 @@ public:
         this->password_edit.set_xy(x_cbloc + this->password_label.cx() + 10,
             y_cbloc + this->message_label.cy() + 20);
 
-        this->password_label.set_dy(this->password_label.dy() + (this->password_edit.cy() - this->password_label.cy()) / 2);
+        this->password_label.set_y(this->password_label.y() + (this->password_edit.cy() - this->password_label.cy()) / 2);
 
         int bottom_height = (height - cbloc_h) / 2;
         int bbloc_h = this->img.cy()/* + 10 + this->version_label.rect.cy*/;
@@ -96,8 +96,8 @@ public:
             ?(height - (bbloc_h + 10))
             :(height/2 + cbloc_h/2 + bottom_height/2);
         this->img.set_xy((width - this->img.cx()) / 2, y_bbloc);
-        if (this->img.dy() + this->img.cy() > height) {
-            this->img.set_dy(0);
+        if (this->img.y() + this->img.cy() > height) {
+            this->img.set_y(0);
         }
     }
 

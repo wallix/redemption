@@ -12,13 +12,13 @@ lib dl : : <name>dl <link>shared ;
 lib python2 : : <name>$(PYTHON_VER) <link>shared ;
 lib bz2 : : <name>bz2 <link>shared ;
 
-## ffmpg {
+## ffmpeg {
 if $(FFMPEG_LIB_PATH) = "" {
-    lib avcodec  : : <link>shared <name>avcodec ;
-    lib avformat : : <link>shared <name>avformat ;
-    lib avutil   : : <link>shared <name>avutil ;
-    lib swscale  : : <link>shared <name>swscale ;
-    lib x264 : : <link>shared <name>x264 ;
+    lib avcodec  : : <link>$(FFMPEG_LINK_MODE) <name>avcodec ;
+    lib avformat : : <link>$(FFMPEG_LINK_MODE) <name>avformat ;
+    lib avutil   : : <link>$(FFMPEG_LINK_MODE) <name>avutil ;
+    lib swscale  : : <link>$(FFMPEG_LINK_MODE) <name>swscale ;
+    lib x264     : : <link>$(FFMPEG_LINK_MODE) <name>x264 ;
 }
 else {
     # echo ffmpeg library path: $(FFMPEG_LIB_PATH) ;

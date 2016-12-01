@@ -80,8 +80,8 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
 
 
     // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
-                                    0 + wgrid.dy(),
+    wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),
+                                    0 + wgrid.y(),
                                     wgrid.cx(),
                                     wgrid.cy()));
 
@@ -95,8 +95,8 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
 
     wgrid.has_focus = true;
     // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
-                                    0 + wgrid.dy(),
+    wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),
+                                    0 + wgrid.y(),
                                     wgrid.cx(),
                                     wgrid.cy()));
 

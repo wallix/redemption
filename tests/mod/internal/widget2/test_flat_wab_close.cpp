@@ -185,8 +185,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
                                     nullptr, nullptr, false, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    flat_wab_close.rdp_input_invalidate(Rect(20 + flat_wab_close.dx(),
-                                               5 + flat_wab_close.dy(),
+    flat_wab_close.rdp_input_invalidate(Rect(20 + flat_wab_close.x(),
+                                               5 + flat_wab_close.y(),
                                                30,
                                                10));
 
@@ -251,11 +251,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     }
 
     flat_wab_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                                   flat_wab_close.cancel.centerx(),
-                                   flat_wab_close.cancel.centery(), nullptr);
+                                   flat_wab_close.cancel.x() + 2,
+                                   flat_wab_close.cancel.y() + 2, nullptr);
     flat_wab_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                                   flat_wab_close.cancel.centerx(),
-                                   flat_wab_close.cancel.centery(), nullptr);
+                                   flat_wab_close.cancel.x() + 2,
+                                   flat_wab_close.cancel.y() + 2, nullptr);
 
     BOOST_CHECK(notifier.sender == &flat_wab_close);
     BOOST_CHECK(notifier.event == NOTIFY_CANCEL);

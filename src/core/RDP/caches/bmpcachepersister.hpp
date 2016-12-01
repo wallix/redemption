@@ -96,7 +96,7 @@ public:
     };
 
     // Preloads bitmap from file to be used later with Client Persistent Key List PDUs.
-    BmpCachePersister(BmpCache & bmp_cache, Transport & t, const char * filename, VerboseFlags verbose)
+    BmpCachePersister(BmpCache & bmp_cache, Transport & t, const char * filename, Verbose verbose)
     : bmp_cache(bmp_cache)
     , verbose(verbose)
     {
@@ -142,7 +142,7 @@ private:
         t.recv(&end, 2);
 
         uint16_t bitmap_count = stream.in_uint16_le();
-        if (this->verbose & VerboseFlags::from_disk) {
+        if (this->verbose & Verbose::from_disk) {
             LOG(LOG_INFO, "BmpCachePersister::preload_from_disk: bitmap_count=%u", bitmap_count);
         }
 
@@ -178,7 +178,7 @@ private:
             if (bmp_cache.get_cache(cache_id).persistent()) {
                 map_key key(sig);
 
-                if (this->verbose & VerboseFlags::bmp_info) {
+                if (this->verbose & Verbose::bmp_info) {
                     LOG( LOG_INFO
                        , "BmpCachePersister::preload_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
                        , key.str().c_str(), original_bpp, cx, cy, bmp_size);
@@ -226,7 +226,7 @@ public:
 
             container_type::iterator it = this->bmp_map[cache_id].find(key);
             if (it != this->bmp_map[cache_id].end()) {
-                if (this->verbose & VerboseFlags::bmp_info) {
+                if (this->verbose & Verbose::bmp_info) {
                     LOG(LOG_INFO, "BmpCachePersister: bitmap found. key=\"%s\"", key.str().c_str());
                 }
 
@@ -236,7 +236,7 @@ public:
 
                 this->bmp_map[cache_id].erase(it);
             }
-            else if (this->verbose & VerboseFlags::bmp_info) {
+            else if (this->verbose & Verbose::bmp_info) {
                 LOG(LOG_WARNING, "BmpCachePersister: bitmap not found!!! key=\"%s\"", key.str().c_str());
             }
         }
@@ -244,7 +244,7 @@ public:
 
     // Loads bitmap from file to be placed immediately into the cache.
     static void load_all_from_disk( BmpCache & bmp_cache, Transport & t, const char * filename
-                                  , VerboseFlags verbose) {
+                                  , Verbose verbose) {
         uint8_t buf[16];
         InStream stream(buf);
 
@@ -281,14 +281,14 @@ public:
 
 private:
     static void load_from_disk( BmpCache & bmp_cache, Transport & t
-                              , uint8_t cache_id, VerboseFlags verbose) {
+                              , uint8_t cache_id, Verbose verbose) {
         uint8_t buf[65536];
         InStream stream(buf);
         auto end = buf;
         t.recv(&end, 2);
 
         uint16_t bitmap_count = stream.in_uint16_le();
-        if (bool(verbose & VerboseFlags::from_disk)) {
+        if (bool(verbose & Verbose::from_disk)) {
             LOG(LOG_INFO, "BmpCachePersister::load_from_disk: bitmap_count=%u", bitmap_count);
         }
 
@@ -325,7 +325,7 @@ private:
             t.recv(&end, bmp_size);
 
             if (bmp_cache.get_cache(cache_id).persistent() && (i < bmp_cache.get_cache(cache_id).size())) {
-                if (bool(verbose & VerboseFlags::bmp_info)) {
+                if (bool(verbose & Verbose::bmp_info)) {
                     map_key key(sig.sig_8);
                     LOG( LOG_INFO
                         , "BmpCachePersister::load_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
@@ -344,8 +344,8 @@ private:
 
 public:
     // Saves content of cache to file.
-    static void save_all_to_disk(const BmpCache & bmp_cache, Transport & t, VerboseFlags verbose) {
-        if (bool(verbose & VerboseFlags::from_disk)) {
+    static void save_all_to_disk(const BmpCache & bmp_cache, Transport & t, Verbose verbose) {
+        if (bool(verbose & Verbose::from_disk)) {
             bmp_cache.log();
         }
 
@@ -362,7 +362,7 @@ public:
     }
 
 private:
-    static void save_to_disk(const BmpCache & bmp_cache, uint8_t cache_id, Transport & t, VerboseFlags verbose) {
+    static void save_to_disk(const BmpCache & bmp_cache, uint8_t cache_id, Transport & t, Verbose verbose) {
         uint16_t bitmap_count = 0;
         BmpCache::cache_ const & cache = bmp_cache.get_cache(cache_id);
 
@@ -413,7 +413,7 @@ private:
 
                 map_key key(sig);
 
-                if (bool(verbose & VerboseFlags::bmp_info)) {
+                if (bool(verbose & Verbose::bmp_info)) {
                     LOG( LOG_INFO
                        , "BmpCachePersister::save_to_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
                        , key.str().c_str(), bmp.bpp(), bmp.cx(), bmp.cy(), bmp_size);

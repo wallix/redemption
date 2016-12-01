@@ -46,7 +46,7 @@ class RdpdrDriveReadTask : public AsynchronousTask {
 
     VirtualChannelDataSender & to_server_sender;
 
-    const implicit_bool_flags<RDPVerboseFlags> verbose;
+    const implicit_bool_flags<RDPVerbose> verbose;
 
 public:
     RdpdrDriveReadTask(InFileSeekableTransport * transport,
@@ -56,7 +56,7 @@ public:
                        uint32_t number_of_bytes_to_read,
                        off64_t Offset,
                        VirtualChannelDataSender & to_server_sender,
-                       RDPVerboseFlags verbose)
+                       RDPVerbose verbose)
     : AsynchronousTask()
     , transport(transport)
     , file_descriptor(file_descriptor)
@@ -99,7 +99,7 @@ public:
                     CompletionId,
                     0x00000000 /* STATUS_SUCCESS */
                 );
-            if (this->verbose & RDPVerboseFlags::asynchronous_task) {
+            if (this->verbose & RDPVerbose::asynchronous_task) {
                 LOG(LOG_INFO, "RdpdrDriveReadTask::run");
                 device_io_response.log(LOG_INFO);
             }
@@ -107,7 +107,7 @@ public:
 
             out_stream.out_uint32_le(this->total_number_of_bytes_to_read);  // length(4)
 
-            if (this->verbose & RDPVerboseFlags::asynchronous_task) {
+            if (this->verbose & RDPVerbose::asynchronous_task) {
                 LOG(LOG_INFO, "RdpdrDriveReadTask::run: Length=%u",
                     this->remaining_number_of_bytes_to_read);
             }
@@ -124,7 +124,7 @@ public:
         const uint32_t number_of_bytes_to_read =
             std::min<uint32_t>(out_stream.tailroom(), this->remaining_number_of_bytes_to_read);
 
-        if (this->verbose & RDPVerboseFlags::asynchronous_task) {
+        if (this->verbose & RDPVerbose::asynchronous_task) {
             LOG(LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesToRead=%u",
                 number_of_bytes_to_read);
         }
@@ -150,7 +150,7 @@ public:
 
         const uint32_t number_of_bytes_read = out_stream.get_current() - saved_out_stream_p;
 
-        if (this->verbose & RDPVerboseFlags::asynchronous_task) {
+        if (this->verbose & RDPVerbose::asynchronous_task) {
             LOG(LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesRead=%u",
                 number_of_bytes_read);
         }
@@ -184,7 +184,7 @@ public:
                                  const uint8_t * data,
                                  size_t data_length,
                                  VirtualChannelDataSender & to_server_sender,
-                                 RDPVerboseFlags verbose)
+                                 RDPVerbose verbose)
     : flags(flags)
     , data(std::make_unique<uint8_t[]>(data_length))
     , data_length(data_length)
@@ -251,7 +251,7 @@ public:
                                const uint8_t * chunked_data,
                                size_t chunked_data_length,
                                VirtualChannelDataSender & to_server_sender,
-                               RDPVerboseFlags verbose)
+                               RDPVerbose verbose)
     : total_length(total_length)
     , flags(flags)
     , chunked_data(std::make_unique<uint8_t[]>(chunked_data_length))
