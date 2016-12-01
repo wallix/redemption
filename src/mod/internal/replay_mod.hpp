@@ -105,8 +105,8 @@ private:
             this->front_width  = this->reader.info_width;
             this->front_height = this->reader.info_height;
 
-            this->screen.rect.cx = this->reader.info_width;
-            this->screen.rect.cy = this->reader.info_height;
+            this->screen.set_cx(this->reader.info_width);
+            this->screen.set_cy(this->reader.info_height);
 
             break;
         case -1:

@@ -584,8 +584,11 @@ public:
 
         if (log_redir) {
             std::string filename = std::string("/var/wab/recorded/rdp/")
-                                   + this->ini.get<cfg::context::session_id>()
-                                   + std::string("_traces.log");
+                    +  this->ini.get<cfg::globals::auth_user>() + std::string("@")
+                    +  this->ini.get<cfg::context::target_host>() + std::string(",")
+                    +  this->ini.get<cfg::globals::target_user>() + std::string("@")
+                    +  this->ini.get<cfg::globals::target_device>()
+                    +  std::string(".log");
             std::ofstream log_file(filename, std::fstream::out | std::fstream::app);
 
             if(log_file.bad()) {
@@ -610,7 +613,6 @@ public:
                 log_file << (extra ? extra : "") << "\n" << std::endl;
                 log_file.close();
             }
-
         }
 
         /* Log to syslog */

@@ -45,16 +45,25 @@ struct WidgetLayout : public Widget2 {
             w->refresh(clip.intersect(this->rect));
         }
     }
-    virtual void set_xy(int16_t x, int16_t y) {
+
+    void set_dx(int16_t x) override {
         for (size_t i = 0, max = this->nb_items; i < max; ++i) {
             Widget2 * w = this->items[i];
-            uint16_t dx = w->rect.x - this->rect.x;
-            uint16_t dy = w->rect.y - this->rect.y;
-            this->items[i]->set_xy(x + dx, y + dy);
+            uint16_t dx = w->dx() - this->dx();
+            this->items[i]->set_dx(x + dx);
         }
-        this->rect.x = x;
-        this->rect.y = y;
+        Widget2::set_dx(x);
     }
+
+    void set_dy(int16_t y) override {
+        for (size_t i = 0, max = this->nb_items; i < max; ++i) {
+            Widget2 * w = this->items[i];
+            uint16_t dy = w->dy() - this->dy;
+            this->items[i]->set_dy(y + dy);
+        }
+        Widget2::set_dy(y);
+    }
+
     virtual Widget2 * widget_at_pos(int16_t x, int16_t y)
     {
         Widget2 * ret = 0;

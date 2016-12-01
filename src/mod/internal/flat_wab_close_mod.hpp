@@ -112,7 +112,7 @@ public:
         this->close_widget.set_widget_focus(&this->close_widget.cancel, Widget2::focus_reason_tabkey);
         this->screen.set_widget_focus(&this->close_widget, Widget2::focus_reason_tabkey);
 
-        this->screen.refresh(this->screen.rect);
+        this->screen.refresh(this->screen.get_rect());
     }
 
     ~FlatWabCloseMod() override {

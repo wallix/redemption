@@ -48,8 +48,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage)
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
                                      0 + wimage.dy(),
-                                     wimage.rect.cx,
-                                     wimage.rect.cy));
+                                     wimage.cx(),
+                                     wimage.cy()));
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "image.png");
 
@@ -77,8 +77,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage2)
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
                                      0 + wimage.dy(),
-                                     wimage.rect.cx,
-                                     wimage.rect.cy));
+                                     wimage.cx(),
+                                     wimage.cy()));
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "image2.png");
 
@@ -106,8 +106,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage3)
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
                                      0 + wimage.dy(),
-                                     wimage.rect.cx,
-                                     wimage.rect.cy));
+                                     wimage.cx(),
+                                     wimage.cy()));
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "image3.png");
 
@@ -135,8 +135,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage4)
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
                                      0 + wimage.dy(),
-                                     wimage.rect.cx,
-                                     wimage.rect.cy));
+                                     wimage.cx(),
+                                     wimage.cy()));
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "image4.png");
 
@@ -164,8 +164,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage5)
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
                                      0 + wimage.dy(),
-                                     wimage.rect.cx,
-                                     wimage.rect.cy));
+                                     wimage.cx(),
+                                     wimage.cy()));
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "image5.png");
 
@@ -193,8 +193,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
                                      0 + wimage.dy(),
-                                     wimage.rect.cx,
-                                     wimage.rect.cy));
+                                     wimage.cx(),
+                                     wimage.cy()));
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "image6.png");
 

@@ -90,7 +90,7 @@ public:
             this->challenge.set_widget_focus(&this->challenge.password_edit,
                                              Widget2::focus_reason_tabkey);
         }
-        this->screen.refresh(this->screen.rect);
+        this->screen.refresh(this->screen.get_rect());
     }
 
     ~InteractiveTargetMod() override {

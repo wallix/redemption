@@ -46,7 +46,7 @@ public:
 
     void draw(const Rect& clip) override
     {
-        this->drawable.draw(RDPOpaqueRect(clip, color), this->rect);
+        this->drawable.draw(RDPOpaqueRect(clip, color), this->get_rect());
         this->WidgetComposite::draw(clip);
     }
 };

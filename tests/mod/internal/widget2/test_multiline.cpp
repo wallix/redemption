@@ -385,7 +385,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
                                auto_resize, id, fg_color, bg_color, font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    wmultiline.rdp_input_invalidate(wmultiline.rect);
+    wmultiline.rdp_input_invalidate(wmultiline.get_rect());
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline9.png");
 

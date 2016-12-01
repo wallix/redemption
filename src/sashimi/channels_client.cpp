@@ -3315,7 +3315,6 @@ static int decompress_buffer_client(SshClientSession * client_session,ssh_buffer
 static inline int global_request_client(SshClientSession * client_session, const char *request, ssh_buffer_struct* buffer, int reply) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_INFO, "> GLOBAL_REQUEST %s", request);
-    int rc;
 
     if (client_session->global_req_state == SSH_CHANNEL_REQ_STATE_NONE){
         client_session->out_buffer->out_uint8(SSH_MSG_GLOBAL_REQUEST);
@@ -3344,10 +3343,8 @@ static inline int global_request_client(SshClientSession * client_session, const
         return SSH_ERROR;
     }
 
-    rc = SSH_OK;
     while(1){
         if (client_session->global_req_state != SSH_CHANNEL_REQ_STATE_PENDING){
-            rc = SSH_OK;
             break;
         }
 
@@ -3360,23 +3357,22 @@ static inline int global_request_client(SshClientSession * client_session, const
         }
 
         if (!(client_session->flags&SSH_SESSION_FLAG_BLOCKING)){
-            rc = (client_session->global_req_state != SSH_CHANNEL_REQ_STATE_PENDING)
-                ? SSH_OK : SSH_AGAIN;
             break;
         }
     }
 
+    int rc = SSH_OK;
     switch(client_session->global_req_state){
     case SSH_CHANNEL_REQ_STATE_ACCEPTED:
         syslog(LOG_INFO, "Global request %s success",request);
-        rc=SSH_OK;
+        rc = SSH_OK;
         break;
     case SSH_CHANNEL_REQ_STATE_DENIED:
         syslog(LOG_INFO,
                 "Global request %s failed", request);
         ssh_set_error(client_session->error, SSH_REQUEST_DENIED,
                       "Global request %s failed", request);
-        rc=SSH_ERROR;
+        rc = SSH_ERROR;
         break;
     case SSH_CHANNEL_REQ_STATE_ERROR:
     case SSH_CHANNEL_REQ_STATE_NONE:

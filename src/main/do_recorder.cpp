@@ -38,7 +38,7 @@
 #include "utils/fileutils.hpp"
 #include "utils/urandom_read.hpp"
 #include "utils/log.hpp"
-
+#include "utils/word_identification.hpp"
 #include "configs/config.hpp"
 #include "program_options/program_options.hpp"
 
@@ -1456,10 +1456,30 @@ extern "C" {
     }
 
     __attribute__((__visibility__("default")))
-    int do_main(int role, int argc, char const ** argv,
+    int do_main(int argc, char const ** argv,
             get_hmac_key_prototype * hmac_fn,
             get_trace_key_prototype * trace_fn)
     {
+    
+        int arg_used = 0;
+
+
+          int command = 0;        
+//        int command = ends_with(argv[arg_used], {"recorder.py", "verifier.py", "decoder.py"});
+//        if (command){
+//            command = command - 1;
+//        }
+//        // default command is redrec;
+
+        if (argc > arg_used){
+            command = in(argv[arg_used+1], {"redrec", "redver", "reddec"});
+            if (command){
+                command = command - 1;
+                arg_used++;
+            }
+            // default command is previous one;
+        }
+
         Inifile ini;
         ini.set<cfg::debug::config>(false);
         auto config_filename = CFG_PATH "/" RDPPROXY_INI;
@@ -1469,13 +1489,55 @@ extern "C" {
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
 
+        uint8_t tmp[32] = {};
+        for (auto a : {0, 1}) {
+            if (argc < arg_used + 1){
+                break;
+            }
+            auto k = argv[arg_used+1];
+            if (strlen(k) != 64){
+                break;
+            }
+            int c1 = -1;
+            int c2 = -1;
+            for (unsigned i = 0; i < 32; ++i) {
+                auto char_to_hex = [](char c){
+                    auto in = [&c](char left, char right) { return left <= c && c <= right; };
+                    return
+                        in('0', '9') ? c-'0'
+                        : in('a', 'f') ? 10 + c-'a'
+                        : in('A', 'F') ? 10 + c-'A'
+                        : -1;
+                };
+                c1 = char_to_hex(k[i*2]);
+                c2 = char_to_hex(k[i*2+1]);
+                if (c1 == -1 or c2 == -1){
+                    break;
+                }
+                tmp[i] = c1 << 4 | c2;
+            }
+            // if any character not an hexa digit, ignore option
+            if (c1 == -1 or c2 == -1){
+                break;
+            }
+            if (a == 0){
+                cctx.set_hmac_key(tmp);
+            }
+            else {
+                cctx.set_master_key(tmp);
+            }
+            arg_used++;
+        }
+
+        argv += arg_used;
+        argc -= arg_used;
         int res = -1;
 
         const char * copyright_notice = "ReDemPtion " VERSION ".\n"
             "Copyright (C) Wallix 2010-2016.\n"
             "Christophe Grosjean, Jonathan Poelen, Raphael Zhou.";
 
-        switch (role){
+        switch (command){
         case 0: // RECorder
             try {
                 res = app_recorder(

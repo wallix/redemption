@@ -347,7 +347,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
     WidgetFlatButton wbutton(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id,
                              fg_color, bg_color, fc_color, font, xtext, ytext);
 
-    wbutton.rdp_input_invalidate(wbutton.rect);
+    wbutton.rdp_input_invalidate(wbutton.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "button9.png");
 
@@ -360,7 +360,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
 
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, nullptr);
-    wbutton.rdp_input_invalidate(wbutton.rect);
+    wbutton.rdp_input_invalidate(wbutton.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "button10.png");
 
@@ -372,7 +372,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
 
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 15, 15, nullptr);
-    wbutton.rdp_input_invalidate(wbutton.rect);
+    wbutton.rdp_input_invalidate(wbutton.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "button11.png");
 
@@ -562,7 +562,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
     WidgetFlatButton wbutton(drawable.gd, x, y, parent, notifier, "test7", auto_resize, id,
                              fg_color, bg_color, fc_color, font, xtext, ytext);
 
-    wbutton.rdp_input_invalidate(wbutton.rect);
+    wbutton.rdp_input_invalidate(wbutton.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "button14.png");
 
@@ -576,7 +576,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 
     wbutton.focus(Widget2::focus_reason_tabkey);
 
-    wbutton.rdp_input_invalidate(wbutton.rect);
+    wbutton.rdp_input_invalidate(wbutton.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "button15.png");
 
@@ -590,7 +590,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 
     wbutton.blur();
 
-    wbutton.rdp_input_invalidate(wbutton.rect);
+    wbutton.rdp_input_invalidate(wbutton.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "button16.png");
 
@@ -603,7 +603,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 
     wbutton.focus(Widget2::focus_reason_tabkey);
 
-    wbutton.rdp_input_invalidate(wbutton.rect);
+    wbutton.rdp_input_invalidate(wbutton.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "button17.png");
 
