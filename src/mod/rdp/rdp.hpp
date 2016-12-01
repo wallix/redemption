@@ -3242,7 +3242,7 @@ public:
                                         this->transparent_recorder->server_resize(this->front_width,
                                             this->front_height, this->bpp);
                                     }
-                                    if (-1 == this->front.server_resize(this->front_width, this->front_height, this->bpp)){
+                                    if (FrontAPI::ResizeResult::fail == this->front.server_resize(this->front_width, this->front_height, this->bpp)){
                                         LOG(LOG_ERR, "Resize not available on older clients,"
                                             " change client resolution to match server resolution");
                                         throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);

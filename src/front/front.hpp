@@ -799,8 +799,9 @@ public:
         return this->trans.get_total_sent();
     }
 
-    int server_resize(int width, int height, int bpp) override {
-        uint32_t res = 0;
+    ResizeResult server_resize(int width, int height, int bpp) override
+    {
+        ResizeResult res = ResizeResult::no_need;
 
         this->mod_bpp = bpp;
 
@@ -830,7 +831,7 @@ public:
             if (client_info.build <= 419) {
                 LOG(LOG_WARNING, "Resizing is not available on older RDP clients");
                 // resizing needed but not available
-                res = -1;
+                res = ResizeResult::fail;
             }
             else {
                 LOG(LOG_INFO, "Resizing client to : %d x %d x %d", width, height, this->client_info.bpp);
@@ -864,7 +865,7 @@ public:
 
                 LOG(LOG_INFO, "Front::server_resize::ACTIVATED (resize)");
                 state = ACTIVATE_AND_PROCESS_DATA;
-                res = 1;
+                res = ResizeResult::done;
             }
         }
 

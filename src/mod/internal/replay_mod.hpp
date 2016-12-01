@@ -97,10 +97,10 @@ private:
         switch (this->front.server_resize( this->reader.info_width
                                          , this->reader.info_height
                                          , this->reader.info_bpp)) {
-        case 0:
+        case FrontAPI::ResizeResult::no_need:
             // no resizing needed
             break;
-        case 1:
+        case FrontAPI::ResizeResult::done:
             // resizing done
             this->front_width  = this->reader.info_width;
             this->front_height = this->reader.info_height;
@@ -109,7 +109,7 @@ private:
             this->screen.set_cy(this->reader.info_height);
 
             break;
-        case -1:
+        case FrontAPI::ResizeResult::fail:
             // resizing failed
             // thow an Error ?
             LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");

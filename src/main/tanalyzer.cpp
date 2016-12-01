@@ -147,9 +147,9 @@ public:
             channel.name, channel.chanid, length, chunk_size, flags);
     }
 
-    int server_resize(int width, int height, int bpp) override {
+    ResizeResult server_resize(int width, int height, int bpp) override {
         LOG(LOG_INFO, "server_resize: width=%u height=%u bpp=%u", width, height, bpp);
-        return 1;
+        return ResizeResult::done;
     }
 
     void send_data_indication_ex(uint16_t channelId, uint8_t const * data, std::size_t data_size) override {

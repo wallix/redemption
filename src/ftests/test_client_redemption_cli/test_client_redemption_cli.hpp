@@ -367,14 +367,14 @@ public:
         }
     }
 
-    virtual int server_resize(int width, int height, int bpp) override {
+    virtual ResizeResult server_resize(int width, int height, int bpp) override {
         //std::cout << "server_resize width=" << width << " height=" << height << " bpp=" << bpp << std::endl;
         this->mod_bpp = bpp;
         this->_info.bpp = bpp;
         this->_info.width = width;
         this->_info.height = height;
 
-        return 1;
+        return ResizeResult::done;
     }
 
     void printClpbrdPDUExchange(std::string str, uint16_t valid) {
