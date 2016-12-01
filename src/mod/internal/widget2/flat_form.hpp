@@ -87,17 +87,17 @@ enum {
                       theme.global.error_color, theme.global.bgcolor, font)
         , comment_label(drawable, 0, 10, *this, nullptr, TR("comment", lang), true,
                         group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-        , comment_edit(drawable, this->comment_label.lx() + 20, 10, 300, *this, this,
+        , comment_edit(drawable, this->comment_label.right() + 20, 10, 300, *this, this,
                        nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                        theme.edit.focus_color, font, -1, 1, 1)
         , ticket_label(drawable, 0, 40, *this, nullptr, TR("ticket", lang), true,
                        group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-        , ticket_edit(drawable, this->ticket_label.lx() + 20, 40, 300, *this, this,
+        , ticket_edit(drawable, this->ticket_label.right() + 20, 40, 300, *this, this,
                       nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                       theme.edit.focus_color, font, -1, 1, 1)
         , duration_label(drawable, 0, 70, *this, nullptr, TR("duration", lang), true,
                          group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-        , duration_edit(drawable, this->duration_label.lx() + 20, 70, 300, *this, this,
+        , duration_edit(drawable, this->duration_label.right() + 20, 70, 300, *this, this,
                         nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                         theme.edit.focus_color, font, -1, 1, 1)
         , duration_format(drawable, 0, 100, *this, nullptr, TR("note_duration_format", lang),
@@ -156,7 +156,7 @@ enum {
         if (this->flags & DURATION_DISPLAY) {
             this->duration_label.set_xy(this->duration_label.x(), top + y);
             this->duration_edit.set_y(top + y);
-            this->duration_format.set_xy(this->duration_edit.lx() + 10, top + y + 2);
+            this->duration_format.set_xy(this->duration_edit.right() + 10, top + y + 2);
             y += 30;
         }
         if (this->flags & TICKET_DISPLAY) {
@@ -195,7 +195,7 @@ enum {
         this->warning_msg.set_x(left + 10);
         this->warning_msg.set_y(top);
 
-        this->comment_edit.set_x(this->comment_label.lx() + 20);
+        this->comment_edit.set_x(this->comment_label.right() + 20);
         this->comment_edit.set_y(10);
 
         int labelmaxwidth = std::max(this->comment_label.cx(),
@@ -218,7 +218,7 @@ enum {
         if (this->flags & DURATION_DISPLAY) {
             this->duration_label.set_xy(this->duration_label.x(), top + y);
             this->duration_edit.set_y(top + y);
-            this->duration_format.set_xy(this->duration_edit.lx() + 10, top + y + 2);
+            this->duration_format.set_xy(this->duration_edit.right() + 10, top + y + 2);
             y += 30;
         }
         if (this->flags & TICKET_DISPLAY) {

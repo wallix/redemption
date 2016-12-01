@@ -251,11 +251,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     }
 
     flat_wab_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                                   flat_wab_close.cancel.centerx(),
-                                   flat_wab_close.cancel.centery(), nullptr);
+                                   flat_wab_close.cancel.x() + 2,
+                                   flat_wab_close.cancel.y() + 2, nullptr);
     flat_wab_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                                   flat_wab_close.cancel.centerx(),
-                                   flat_wab_close.cancel.centery(), nullptr);
+                                   flat_wab_close.cancel.x() + 2,
+                                   flat_wab_close.cancel.y() + 2, nullptr);
 
     BOOST_CHECK(notifier.sender == &flat_wab_close);
     BOOST_CHECK(notifier.event == NOTIFY_CANCEL);

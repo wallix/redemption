@@ -408,8 +408,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     selector.rearrange();
     selector.selector_lines.set_selection(0);
 
-    curx = selector.filter_target_group.centerx();
-    cury = selector.filter_target_group.centery();
+    curx = selector.filter_target_group.x() + 2;
+    cury = selector.filter_target_group.y() + 2;
     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                              curx, cury,
                              nullptr);
@@ -594,8 +594,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 //     selector.selector_lines.set_selection(0);
 
-//     curx = selector.filter_device.centerx();
-//     cury = selector.filter_device.centery();
+//     curx = selector.filter_device.x() + 2;
+//     cury = selector.filter_device.y() + 2;
 //     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
 //                              curx, cury,
 //                              nullptr);
@@ -739,8 +739,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 //     selector.selector_lines.set_selection(0);
 
-//     curx = selector.filter_device.centerx();
-//     cury = selector.filter_device.centery();
+//     curx = selector.filter_device.x() + 2;
+//     cury = selector.filter_device.y() + 2;
 //     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
 //                              curx, cury,
 //                              nullptr);
@@ -888,8 +888,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 //     selector.selector_lines.set_selection(0);
 
-//     curx = selector.filter_device.centerx();
-//     cury = selector.filter_device.centery();
+//     curx = selector.filter_device.x() + 2;
+//     cury = selector.filter_device.y() + 2;
 //     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
 //                              curx, cury,
 //                              nullptr);
@@ -1215,8 +1215,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     notifier.event = 0;
 //     notifier.sender = 0;
 //     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-//                              selector.connect.centerx(),
-//                              selector.connect.centery(),
+//                              selector.connect.x() + 2,
+//                              selector.connect.y() + 2,
 //                              nullptr);
 //     BOOST_CHECK_EQUAL(notifier.event, 0);
 //     BOOST_CHECK(notifier.sender == 0);
@@ -1224,8 +1224,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     notifier.event = 0;
 //     notifier.sender = 0;
 //     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-//                              selector.connect.centerx(),
-//                              selector.connect.centery(),
+//                              selector.connect.x() + 2,
+//                              selector.connect.y() + 2,
 //                              nullptr);
 //     BOOST_CHECK_EQUAL(notifier.event, 0);
 //     BOOST_CHECK(notifier.sender == 0);

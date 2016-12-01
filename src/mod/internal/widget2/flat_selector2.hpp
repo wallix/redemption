@@ -278,7 +278,7 @@ public:
         {
             // labels and filters position
             uint16_t offset = this->less_than_800 ? 0 : HORIZONTAL_MARGIN;
-            uint16_t labels_y = this->device_label.ly() + HORIZONTAL_MARGIN;
+            uint16_t labels_y = this->device_label.bottom() + HORIZONTAL_MARGIN;
             uint16_t filters_y = labels_y + this->target_group_label.cy()
                 + FILTER_SEPARATOR;
             // target group
@@ -317,7 +317,7 @@ public:
         {
             // selector list position
             this->selector_lines.set_x(this->left + (this->less_than_800 ? 0 : HORIZONTAL_MARGIN));
-            this->selector_lines.set_y(this->filter_target_group.ly() + FILTER_SEPARATOR);
+            this->selector_lines.set_y(this->filter_target_group.bottom() + FILTER_SEPARATOR);
         }
         {
             // Navigation buttons
@@ -351,8 +351,8 @@ public:
             nav_offset_x -= (this->first_page.cx() + NAV_SEPARATOR);
             this->first_page.set_x(this->left + nav_offset_x);
 
-            int nav_w = this->last_page.lx() - this->first_page.x();
-            this->connect.set_x(this->last_page.lx() - nav_w/4 - this->connect.cx()/2);
+            int nav_w = this->last_page.right() - this->first_page.x();
+            this->connect.set_x(this->last_page.right() - nav_w/4 - this->connect.cx()/2);
             this->logout.set_x(this->first_page.x() + nav_w/4 - this->logout.cx()/2);
         }
     }

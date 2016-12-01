@@ -219,7 +219,7 @@ public:
     void set_frame(WidgetFrame * wframe) {
         if (wframe) {
             this->frame = wframe;
-            this->set_xy(this->frame->lx(), this->frame->y());
+            this->set_xy(this->frame->right(), this->frame->y());
             this->rect.cy = this->frame->cy();
             this->bar_height = this->rect.cy - 2;
             this->set_scroll_height();
@@ -277,7 +277,7 @@ public:
     int16_t move_scroll(int16_t my) {
         int16_t new_y_pos = this->scroll.y + my;
         int16_t res = 0;
-        if ((new_y_pos > this->y()) && (new_y_pos + this->scroll.cy < this->ly())) {
+        if ((new_y_pos > this->y()) && (new_y_pos + this->scroll.cy < this->bottom())) {
             this->scroll.y = new_y_pos;
             res = my;
         }
@@ -285,10 +285,10 @@ public:
             res = this->y() + 1 - this->scroll.y;
             this->scroll.y = this->y() + 1;
         }
-        else if ((new_y_pos + this->scroll.cy >= this->ly()) &&
-                 (this->scroll.y + this->scroll.cy + 1 != this->ly())) {
-            res = this->ly() - this->scroll.cy - 1 - this->scroll.y;
-            this->scroll.y = this->ly() - this->scroll.cy - 1;
+        else if ((new_y_pos + this->scroll.cy >= this->bottom()) &&
+                 (this->scroll.y + this->scroll.cy + 1 != this->bottom())) {
+            res = this->bottom() - this->scroll.cy - 1 - this->scroll.y;
+            this->scroll.y = this->bottom() - this->scroll.cy - 1;
         }
         return res;
     }
@@ -406,7 +406,7 @@ public:
     void set_frame(WidgetFrame * wframe) {
         if (wframe) {
             this->frame = wframe;
-            this->set_xy(this->frame->x(), this->frame->ly());
+            this->set_xy(this->frame->x(), this->frame->bottom());
             this->rect.cx = this->frame->cx();
             this->bar_width = this->rect.cx - 2;
             this->set_scroll_width();
@@ -464,7 +464,7 @@ public:
     int16_t move_scroll(int16_t mx) {
         int16_t new_x_pos = this->scroll.x + mx;
         int16_t res = 0;
-        if ((new_x_pos > this->x()) && (new_x_pos + this->scroll.cx < this->lx())) {
+        if ((new_x_pos > this->x()) && (new_x_pos + this->scroll.cx < this->right())) {
             this->scroll.x = new_x_pos;
             res = mx;
         }
@@ -472,10 +472,10 @@ public:
             res = this->x() + 1 - this->scroll.x;
             this->scroll.x = this->x() + 1;
         }
-        else if ((new_x_pos + this->scroll.cx >= this->lx()) &&
-                 (this->scroll.x + this->scroll.cx + 1 <= this->lx())) {
-            res = this->lx() - this->scroll.cx - 1 - this->scroll.x;
-            this->scroll.x = this->lx() - this->scroll.cx - 1;
+        else if ((new_x_pos + this->scroll.cx >= this->right()) &&
+                 (this->scroll.x + this->scroll.cx + 1 <= this->right())) {
+            res = this->right() - this->scroll.cx - 1 - this->scroll.x;
+            this->scroll.x = this->right() - this->scroll.cx - 1;
         }
         return res;
     }

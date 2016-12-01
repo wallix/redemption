@@ -59,10 +59,10 @@ public:
                 : nullptr)
         , use_label_(use_title)
     {
-        this->button.set_x(this->editbox->lx() - 1);
+        this->button.set_x(this->editbox->right() - 1);
         this->editbox->set_cy(this->button.cy());
         this->set_cy(this->editbox->cy());
-        this->set_cx(this->button.lx() - this->x());
+        this->set_cx(this->button.right() - this->x());
         this->set_xy(x, y);
         this->editbox->draw_border_focus = false;
 
@@ -102,7 +102,7 @@ public:
     void set_x(int16_t x) override {
         Widget2::set_x(x);
         this->editbox->set_x(x);
-        this->button.set_x(this->editbox->lx() - 1);
+        this->button.set_x(this->editbox->right() - 1);
 
         if (this->label) {
             this->label->set_x(x + 1);
@@ -168,14 +168,14 @@ public:
         // TODO y is not used: suspicious
         (void)y;
         Widget2 * w = this->editbox;
-        if (x > this->editbox->lx()) {
+        if (x > this->editbox->right()) {
             w = &this->button;
         }
         return w;
     }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
-        if (x > this->editbox->lx()) {
+        if (x > this->editbox->right()) {
             this->button.rdp_input_mouse(device_flags, x, y, keymap);
             this->refresh(this->button.get_rect());
         }

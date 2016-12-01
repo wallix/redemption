@@ -97,7 +97,7 @@ public:
         if (showform) {
             this->groupbox.add_widget(&this->form);
             this->form.move_xy(40, y - top);
-            y = this->form.ly() + 10;
+            y = this->form.bottom() + 10;
         }
 
         this->groupbox.add_widget(&this->goselector);
@@ -153,7 +153,7 @@ public:
 
         if (this->hasform) {
             this->form.move_size_widget(left + 40, y, this->form.cx(), this->form.cy());
-            y = this->form.ly() + 10;
+            y = this->form.bottom() + 10;
         }
 
         this->exit.set_x(left + width - 40 - this->exit.cx());

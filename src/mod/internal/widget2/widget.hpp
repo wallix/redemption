@@ -290,37 +290,15 @@ public:
     }
 
     ///Return x()+cx()
-    int16_t lx() const
+    int16_t right() const
     {
-        return this->rect.x + this->rect.cx;
+        return this->rect.right();
     }
 
     ///Return y()+cy()
-    int16_t ly() const
+    int16_t bottom() const
     {
-        return this->rect.y + this->rect.cy;
-    }
-
-    int16_t centerx() const
-    {
-        return this->rect.x + this->rect.cx / 2;
-    }
-
-    int16_t centery() const
-    {
-        return this->rect.y + this->rect.cy / 2;
-    }
-
-    ///Return x position in it's parent
-    int16_t px() const
-    {
-        return this->x() - this->parent.x();
-    }
-
-    ///Return y position in it's parent
-    int16_t py() const
-    {
-        return this->y() - this->parent.y();
+        return this->rect.bottom();
     }
 
     Rect const&  get_rect() const {

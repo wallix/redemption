@@ -130,7 +130,7 @@ public:
     virtual void add_elem(const char * text) {
         if (this->size == AUTOSIZE)
             return;
-        WidgetRadioButton * radio = new WidgetRadioButton(drawable, this->lx() + 10,
+        WidgetRadioButton * radio = new WidgetRadioButton(drawable, this->right() + 10,
                                                           this->y(),this->parent,
                                                           this, text, true, 0,
                                                           this->fgcolor, this->bgcolor);
