@@ -34,11 +34,15 @@
 #include "sashimi/libcrypto.hpp"
 
 #include "cxx/attributes.hpp"
+#include "cxx/diagnostic.hpp"
 
 #include <gssapi/gssapi.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdint.h>
+
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
 
 struct ssh_session_struct {
     struct error_struct error;
@@ -1662,11 +1666,9 @@ struct SshServerSession : public ssh_session_struct
         }
         break;
         case SSH_CHANNEL_REQ_STATE_PENDING:
-        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_CHANNEL_REQ_STATE_ACCEPTED:
-        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_CHANNEL_REQ_STATE_DENIED:
-        REDEMPTION_CXX_FALLTHROUGH;
+        case SSH_CHANNEL_REQ_STATE_ERROR:
         default:
             break;
         }
@@ -7559,6 +7561,8 @@ struct SshClientSession : public ssh_session_struct
     }
 
 };
+
+REDEMPTION_DIAGNOSTIC_POP
 
 
 // SshServerSession public methods

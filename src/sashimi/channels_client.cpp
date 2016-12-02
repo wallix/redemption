@@ -40,9 +40,8 @@ void do_fd_target_event(ssh_poll_handle_fd_struct * fd_poll, int revents)
 }
 
 
-
-
-
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
 
 
 // ==================================== SSH_MSG_DISCONNECT ================================
@@ -7260,3 +7259,4 @@ int SshClientSession::ssh_channel_write_stderr_client(ssh_channel channel, const
     return static_cast<int>(origlen - len);
 }
 
+REDEMPTION_DIAGNOSTIC_POP

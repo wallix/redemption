@@ -588,6 +588,7 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
         syslog(LOG_INFO, "%s ECDSA OK", __FUNCTION__);
         return SSH_OK;
     }
+    case SSH_KEYTYPE_UNKNOWN:
     default:
         syslog(LOG_INFO, "%s Unknown key type found!", __FUNCTION__);
         break;

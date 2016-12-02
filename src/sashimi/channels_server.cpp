@@ -23,6 +23,9 @@
 
 #include "sashimi/channels.hpp"
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+
 // ================================= SSH_MSG_SERVICE_ACCEPT =================================
 
 /**
@@ -1000,3 +1003,4 @@ int SshServerSession::ssh_channel_open_reverse_forward_server(ssh_channel channe
     return err;
 }
 
+REDEMPTION_DIAGNOSTIC_POP
