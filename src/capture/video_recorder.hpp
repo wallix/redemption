@@ -221,10 +221,8 @@ public:
         this->video_st->codec->flags |= CODEC_FLAG_QSCALE;
         this->video_st->codec->global_quality = FF_QP2LAMBDA * qscale;
 
-#ifdef __GNUC__
-# pragma GCC diagnostic push
-# pragma GCC diagnostic ignored "-Wswitch-enum"
-#endif
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
         switch (this->video_st->codec->codec_id){
             case AV_CODEC_ID_H264:
                 //this->video_st->codec->coder_type = FF_CODER_TYPE_AC;
@@ -259,10 +257,7 @@ public:
             default:
             break;
         }
-
-#ifdef __GNUC__
-# pragma GCC diagnostic pop
-#endif
+        REDEMPTION_DIAGNOSTIC_POP
 
         // some formats want stream headers to be separate
         if(this->oc->oformat->flags & AVFMT_GLOBALHEADER){

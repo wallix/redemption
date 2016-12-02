@@ -172,7 +172,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
         break;
         case SSH_OPTIONS_FD:
             opts.fd = INVALID_SOCKET;
-            CPP_FALLTHROUGH;
+            REDEMPTION_CXX_FALLTHROUGH;
         default:
             ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
             return -1;

@@ -35,7 +35,7 @@
 #include "sashimi/pki.hpp"
 #include "sashimi/buffer.hpp"
 
-#include "utils/sugar/compiler_attributes.hpp"
+#include "cxx/attributes.hpp"
 
 /*
  * All implementations MUST be able to process packets with an
@@ -577,7 +577,7 @@ struct ssh_agent_struct {
             switch (res){
             default:
                 pos += res;
-                CPP_FALLTHROUGH;
+                REDEMPTION_CXX_FALLTHROUGH;
             case SSH_AGAIN:
                 break;
             case SSH_ERROR:
@@ -592,7 +592,7 @@ struct ssh_agent_struct {
             switch (res){
             default:
                 pos += res;
-                CPP_FALLTHROUGH;
+                REDEMPTION_CXX_FALLTHROUGH;
             case SSH_AGAIN:
                 break;
             case SSH_ERROR:

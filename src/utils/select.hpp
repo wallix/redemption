@@ -24,10 +24,10 @@
 #pragma once
 
 #include <sys/select.h>
+#include "cxx/diagnostic.hpp"
 
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
 inline void io_fd_zero(fd_set & rfds)
 {
     FD_ZERO(&rfds);
@@ -42,4 +42,4 @@ inline int io_fd_isset(int const fd, fd_set const & rfds)
 {
     return FD_ISSET(fd, &rfds);
 }
-#pragma GCC diagnostic pop
+REDEMPTION_DIAGNOSTIC_POP

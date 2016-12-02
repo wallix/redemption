@@ -249,11 +249,10 @@ public:
         ::time(&this->beginning);
 
         memset(&zstrm, 0, sizeof(zstrm));
-// TODO -Wold-style-cast is ignored
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
         if (inflateInit(&this->zstrm) != Z_OK)
-#pragma GCC diagnostic pop
+        REDEMPTION_DIAGNOSTIC_POP
         {
             LOG(LOG_ERR, "vnc zlib initialization failed");
 
@@ -264,8 +263,8 @@ public:
         // Initial state of keys (at least lock keys) is copied from Keymap2
         keymapSym.key_flags = key_flags;
 
-        snprintf(this->username, sizeof(this->username), "%s", username);
-        snprintf(this->password, sizeof(this->password), "%s", password);
+        std::snprintf(this->username, sizeof(this->username), "%s", username);
+        std::snprintf(this->password, sizeof(this->password), "%s", password);
 
         LOG(LOG_INFO, "Creation of new mod 'VNC' done");
     } // Constructor

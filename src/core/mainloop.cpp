@@ -91,9 +91,8 @@ void init_signals(void)
     sigaddset(&sa.sa_mask, SIGUSR1);
     sigaddset(&sa.sa_mask, SIGUSR2);
 
-// TODO -Wold-style-cast is ignored
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
     sa.sa_handler = SIG_IGN;
     sigaction(SIGSEGV, &sa, nullptr);
 
@@ -123,7 +122,7 @@ void init_signals(void)
 
     sa.sa_handler = SIG_IGN;
     sigaction(SIGUSR2, &sa, nullptr);
-#pragma GCC diagnostic pop
+REDEMPTION_DIAGNOSTIC_POP
 }
 
 }
@@ -247,11 +246,10 @@ void redemption_main_loop(Inifile & ini, CryptoContext & cctx, Random & rnd, uns
     SessionServer ss(cctx, rnd, uid, gid, std::move(config_filename), ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
     //    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
     uint32_t s_addr = inet_addr(ini.get<cfg::globals::listen_address>().c_str());
-// TODO -Wold-style-cast is ignored
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }
-#pragma GCC diagnostic pop
+    REDEMPTION_DIAGNOSTIC_POP
     int port = ini.get<cfg::globals::port>();
     Listen listener( ss
                      , s_addr

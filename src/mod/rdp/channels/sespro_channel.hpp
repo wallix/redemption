@@ -527,7 +527,7 @@ public:
 
                 {
                     char cstr[128];
-                    snprintf(cstr, sizeof(cstr), "%u", ::getpid());
+                    std::snprintf(cstr, sizeof(cstr), "%u", ::getpid());
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
 
@@ -596,7 +596,7 @@ public:
 
                 {
                     char cstr[128];
-                    snprintf(cstr, sizeof(cstr), "%u",
+                    std::snprintf(cstr, sizeof(cstr), "%u",
                         disconnect_session_limit);
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
@@ -627,7 +627,7 @@ public:
 
                 {
                     char cstr[128];
-                    snprintf(cstr, sizeof(cstr), "%" PRId64,
+                    std::snprintf(cstr, sizeof(cstr), "%" PRId64,
                         this->param_session_probe_idle_session_limit.count());
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
@@ -828,14 +828,14 @@ public:
                 {
                     const int error_code = (result ? 0 : -1);
                     char cstr[128];
-                    snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
+                    std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
                         rule_index, error_code);
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
 
                 if (result) {
                     char cstr[1024];
-                    snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01" "%s" "\x01" "%s",
+                    std::snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01" "%s" "\x01" "%s",
                         type, host_address_or_subnet.c_str(), port_range.c_str());
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
@@ -889,14 +889,14 @@ public:
                 {
                     const int error_code = (result ? 0 : -1);
                     char cstr[128];
-                    snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
+                    std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
                         rule_index, error_code);
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
 
                 if (result) {
                     char cstr[1024];
-                    snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01" "%s",
+                    std::snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01" "%s",
                         type, pattern.c_str());
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
@@ -1027,17 +1027,13 @@ public:
                         if (deny) {
                             char message[4096];
 
-#ifdef __GNUG__
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
-# endif
-                            snprintf(message, sizeof(message),
+                            REDEMPTION_DIAGNOSTIC_PUSH
+                            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+                            std::snprintf(message, sizeof(message),
                                 TR("process_interrupted_security_policies",
                                    this->param_lang),
                                 parameters[1].c_str());
-#ifdef __GNUG__
-    #pragma GCC diagnostic pop
-# endif
+                            REDEMPTION_DIAGNOSTIC_POP
 
                             std::string string_message = message;
                             this->mod.display_osd_message(string_message);
@@ -1085,17 +1081,13 @@ public:
                                 else {
                                     char message[4096];
 
-#ifdef __GNUG__
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
-# endif
-                                    snprintf(message, sizeof(message),
+                                    REDEMPTION_DIAGNOSTIC_PUSH
+                                    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+                                    std::snprintf(message, sizeof(message),
                                         TR("process_interrupted_security_policies",
                                            this->param_lang),
                                         parameters[1].c_str());
-#ifdef __GNUG__
-    #pragma GCC diagnostic pop
-# endif
+                                    REDEMPTION_DIAGNOSTIC_POP
 
                                     std::string string_message = message;
                                     this->mod.display_osd_message(string_message);
@@ -1140,17 +1132,14 @@ public:
                                 else {
                                     char message[4096];
 
-#ifdef __GNUG__
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
-# endif
-                                    snprintf(message, sizeof(message),
-                                        TR("process_interrupted_security_policies",
-                                           this->param_lang),
-                                        parameters[1].c_str());
-#ifdef __GNUG__
-    #pragma GCC diagnostic pop
-# endif
+
+                                    REDEMPTION_DIAGNOSTIC_PUSH
+                                    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+                                    std::snprintf(message, sizeof(message),
+                                                TR("process_interrupted_security_policies",
+                                                this->param_lang),
+                                                parameters[1].c_str());
+                                    REDEMPTION_DIAGNOSTIC_POP
 
                                     std::string string_message = message;
                                     this->mod.display_osd_message(string_message);

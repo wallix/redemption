@@ -33,8 +33,8 @@
 #include <memory>
 
 // TODO -Wold-style-cast is ignored
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
 
 extern "C" {
     inline int openssl_print_fp(const char *str, size_t len, void * error_message)
@@ -1223,3 +1223,5 @@ struct TLSContext
     }
 
 };
+
+REDEMPTION_DIAGNOSTIC_POP

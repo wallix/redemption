@@ -25,8 +25,8 @@
 #include "core/RDP/nla/sspi.hpp"
 #include "core/RDP/nla/kerberos/credentials.hpp"
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
 
 namespace {
     const char* KERBEROS_PACKAGE_NAME = "KERBEROS";
@@ -669,5 +669,4 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable
 
 };
 
-#pragma GCC diagnostic pop
-
+REDEMPTION_DIAGNOSTIC_POP

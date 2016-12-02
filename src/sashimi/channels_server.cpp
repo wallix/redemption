@@ -23,6 +23,9 @@
 
 #include "sashimi/channels.hpp"
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+
 // ================================= SSH_MSG_SERVICE_ACCEPT =================================
 
 /**
@@ -63,7 +66,7 @@ int SshServerSession::ssh_channel_open_auth_agent_server(ssh_channel channel){
 
         this->packet_send();
 
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
     // Beware, this is fallthrough behavior to opening
     // But maybe we should have some error if we call open and channel is already opening
     // instead of accepting it.
@@ -1000,3 +1003,4 @@ int SshServerSession::ssh_channel_open_reverse_forward_server(ssh_channel channe
     return err;
 }
 
+REDEMPTION_DIAGNOSTIC_POP

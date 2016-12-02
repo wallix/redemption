@@ -359,5 +359,3 @@ private:
     }
 
 };
-
-#pragma GCC diagnostic pop

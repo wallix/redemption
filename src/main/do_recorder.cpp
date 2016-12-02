@@ -1465,11 +1465,11 @@ extern "C" {
             get_hmac_key_prototype * hmac_fn,
             get_trace_key_prototype * trace_fn)
     {
-    
+
         int arg_used = 0;
 
 
-          int command = 0;        
+          int command = 0;
 //        int command = ends_with(argv[arg_used], {"recorder.py", "verifier.py", "decoder.py"});
 //        if (command){
 //            command = command - 1;
