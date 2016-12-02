@@ -270,17 +270,13 @@ struct ssh_channel_struct {
      * @brief Open a channel by sending a SSH_OPEN_CHANNEL message and
      *        wait for the reply.
      *
-     * @param[in]  channel  The current channel.
-     *
-     * @param[in]  type_c   A C string describing the kind of channel (e.g. "exec").
+     * @param[in]  channel_type_c   A C string describing the kind of channel (e.g. "exec").
      *
      * @param[in]  window   The receiving window of the channel. The window is the
      *                      maximum size of data that can stay in buffers and
      *                      network.
      *
      * @param[in]  maxpacket The maximum packet size allowed (like MTU).
-     *
-     * @param[in]  payload   The buffer containing additional payload for the query.
      */
     // TODO: I'm not sure constructor should be different of open ?
     // Well, maybe if channel is opened from the remote side when receiving a message
