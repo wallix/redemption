@@ -33,7 +33,7 @@
 #include "sashimi/pki.hpp"
 #include "sashimi/libcrypto.hpp"
 
-#include "utils/sugar/compiler_attributes.hpp"
+#include "cxx/attributes.hpp"
 
 #include <gssapi/gssapi.h>
 #include <fcntl.h>
@@ -1662,11 +1662,11 @@ struct SshServerSession : public ssh_session_struct
         }
         break;
         case SSH_CHANNEL_REQ_STATE_PENDING:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_CHANNEL_REQ_STATE_ACCEPTED:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_CHANNEL_REQ_STATE_DENIED:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         default:
             break;
         }
@@ -1835,7 +1835,7 @@ struct SshServerSession : public ssh_session_struct
                 }
 
                 this->packet_state = PACKET_STATE_SIZEREAD;
-                CPP_FALLTHROUGH;
+                REDEMPTION_CXX_FALLTHROUGH;
             case PACKET_STATE_SIZEREAD:
                 syslog(LOG_INFO, "%s --- [F]", __PRETTY_FUNCTION__);
 
@@ -2631,11 +2631,11 @@ struct SshServerSession : public ssh_session_struct
             case SSH_SESSION_STATE_AUTHENTICATING:
                 break;
             case SSH_SESSION_STATE_BANNER_RECEIVED:
-            CPP_FALLTHROUGH;
+            REDEMPTION_CXX_FALLTHROUGH;
             case SSH_SESSION_STATE_AUTHENTICATED:
-            CPP_FALLTHROUGH;
+            REDEMPTION_CXX_FALLTHROUGH;
             case SSH_SESSION_STATE_DISCONNECTED:
-            CPP_FALLTHROUGH;
+            REDEMPTION_CXX_FALLTHROUGH;
             case SSH_SESSION_STATE_ERROR:
                 this->socket->close();
                 this->session_state = SSH_SESSION_STATE_ERROR;
@@ -3850,7 +3850,7 @@ struct SshServerSession : public ssh_session_struct
                     this->current_crypto->do_compress_in=1;
                 }
             }
-            CPP_FALLTHROUGH;
+            REDEMPTION_CXX_FALLTHROUGH;
         default:
             ssh_auth_reply_denied_server(this);
         }
@@ -5556,27 +5556,27 @@ struct SshServerSession : public ssh_session_struct
         switch (this->session_state){
         case SSH_SESSION_STATE_AUTHENTICATED:
             syslog(LOG_WARNING, "Other side initiating key re-exchange");
-            CPP_FALLTHROUGH;
+            REDEMPTION_CXX_FALLTHROUGH;
         case SSH_SESSION_STATE_INITIAL_KEX:
             break;
         case SSH_SESSION_STATE_NONE:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_SESSION_STATE_CONNECTING:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_SESSION_STATE_SOCKET_CONNECTED:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_SESSION_STATE_BANNER_RECEIVED:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_SESSION_STATE_KEXINIT_RECEIVED:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_SESSION_STATE_DH:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_SESSION_STATE_AUTHENTICATING:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_SESSION_STATE_ERROR:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_SESSION_STATE_DISCONNECTED:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         default:
             ssh_set_error(this->error,  SSH_FATAL,"SSH_KEXINIT received in wrong state");
             this->session_state = SSH_SESSION_STATE_ERROR;
@@ -6023,7 +6023,7 @@ struct SshServerSession : public ssh_session_struct
         break;
         case REQUEST_STRING_CHANNEL_OPEN_UNKNOWN:
             syslog(LOG_INFO, "%s --- REQUEST_CHANNEL_OPEN_UNKNOWN", __FUNCTION__);
-            CPP_FALLTHROUGH;
+            REDEMPTION_CXX_FALLTHROUGH;
         default:
         break;
         }
@@ -7128,13 +7128,13 @@ struct SshClientSession : public ssh_session_struct
         }
         break;
         case SSH_CHANNEL_REQ_STATE_PENDING:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_CHANNEL_REQ_STATE_ACCEPTED:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_CHANNEL_REQ_STATE_DENIED:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_CHANNEL_REQ_STATE_ERROR:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         default:
         break;
         }
@@ -7191,13 +7191,13 @@ struct SshClientSession : public ssh_session_struct
         }
         break;
         case SSH_CHANNEL_REQ_STATE_PENDING:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_CHANNEL_REQ_STATE_ACCEPTED:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_CHANNEL_REQ_STATE_DENIED:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_CHANNEL_REQ_STATE_ERROR:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         default:
             break;
         }
@@ -7267,13 +7267,13 @@ struct SshClientSession : public ssh_session_struct
         }
         break;
         case SSH_CHANNEL_REQ_STATE_PENDING:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_CHANNEL_REQ_STATE_ACCEPTED:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_CHANNEL_REQ_STATE_DENIED:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         case SSH_CHANNEL_REQ_STATE_ERROR:
-        CPP_FALLTHROUGH;
+        REDEMPTION_CXX_FALLTHROUGH;
         default:
             break;
         }

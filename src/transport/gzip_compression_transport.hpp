@@ -33,10 +33,6 @@ static const size_t GZIP_COMPRESSION_TRANSPORT_BUFFER_LENGTH = 1024 * 64;
 * GZipCompressionInTransport
 */
 
-// TODO -Wold-style-cast is ignored
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-
 class GZipCompressionInTransport : public Transport
 {
     Transport & source_transport;
@@ -63,7 +59,10 @@ public:
     //, verbose(verbose)
     {
         (void)verbose;
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
         int const ret = ::inflateInit(&this->compression_stream);
+        REDEMPTION_DIAGNOSTIC_POP
         if (ret != Z_OK) {
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
@@ -112,7 +111,10 @@ private:
 
                         ::memset(&this->compression_stream, 0, sizeof(this->compression_stream));
 
+                        REDEMPTION_DIAGNOSTIC_PUSH
+                        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
                         int ret = ::inflateInit(&this->compression_stream);
+                        REDEMPTION_DIAGNOSTIC_POP
                         (void)ret;
                     }
 
@@ -189,7 +191,10 @@ public:
     , compressed_data_length(0)
     {
         (void)verbose;
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
         int const ret = ::deflateInit(&this->compression_stream, Z_DEFAULT_COMPRESSION);
+        REDEMPTION_DIAGNOSTIC_POP
         if (ret != Z_OK) {
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
@@ -347,8 +352,11 @@ public:
 
         ::memset(&this->compression_stream, 0, sizeof(this->compression_stream));
 
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
         int ret = ::deflateInit(&this->compression_stream, Z_DEFAULT_COMPRESSION);
         (void)ret;
+        REDEMPTION_DIAGNOSTIC_POP
 
         this->reset_compressor = true;
 
@@ -384,6 +392,3 @@ public:
         this->target_transport.timestamp(now);
     }
 };  // class GZipCompressionOutTransport
-
-#pragma GCC diagnostic pop
-

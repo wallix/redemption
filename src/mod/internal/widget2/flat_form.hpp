@@ -269,10 +269,10 @@ enum {
         }
     }
     void set_warning_buffer(const char * field, const char * format) {
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wformat-nonliteral"
-        sprintf(this->warning_buffer, format, field);
-        #pragma GCC diagnostic pop
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+        std::sprintf(this->warning_buffer, format, field);
+        REDEMPTION_DIAGNOSTIC_POP
         this->warning_msg.set_text(this->warning_buffer);
     }
 

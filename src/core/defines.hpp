@@ -24,7 +24,7 @@
 #include "utils/log.hpp"
 
 // TODO move SHARE_PATH to configuration (still used in front, checkfiles, session, transparent, some internal mods)
-#if !defined(SHARE_PATH)
+#if !defined(SHARE_PATH) || defined(IN_IDE_PARSER)
 #define SHARE_PATH "/usr/local/share/rdpproxy"
 #endif
 

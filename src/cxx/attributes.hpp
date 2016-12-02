@@ -21,7 +21,7 @@
 #pragma once
 
 #ifdef __clang__
-# define CPP_FALLTHROUGH [[clang::fallthrough]]
+# define REDEMPTION_CXX_FALLTHROUGH [[clang::fallthrough]]
 #else
-# define CPP_FALLTHROUGH void(0)
+# define REDEMPTION_CXX_FALLTHROUGH void(0)
 #endif
