@@ -67,8 +67,8 @@ public:
     , logo(logo)
     , font(font)
     {
-        this->label_rect.x  = this->dx() + 1;
-        this->label_rect.y  = this->dy() + 1;
+        this->label_rect.x  = this->x() + 1;
+        this->label_rect.y  = this->y() + 1;
         this->label_rect.cx = 1;
         this->label_rect.cy = 1;
 
@@ -80,13 +80,13 @@ public:
 
     ~WidgetFlatButton() override {}
 
-    void set_dx(int16_t x) override {
-        Widget2::set_dx(x);
+    void set_x(int16_t x) override {
+        Widget2::set_x(x);
         this->label_rect.x = x + 1;
     }
 
-    void set_dy(int16_t y) override {
-        Widget2::set_dy(y);
+    void set_y(int16_t y) override {
+        Widget2::set_y(y);
         this->label_rect.y = y + 1;
     }
 

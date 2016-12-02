@@ -147,13 +147,13 @@ public:
             fg_color = (odd ? this->fg_color_1 : this->fg_color_2);
         }
 
-        uint16_t y = this->dy();
+        uint16_t y = this->y();
         for (uint16_t r_index = 0, r_count = std::min<uint16_t>(row_index, this->nb_rows);
              r_index < r_count; r_index++) {
             y += this->row_height[r_index] + this->border * 2;
         }
 
-        uint16_t x = this->dx();
+        uint16_t x = this->x();
         Rect rectRow(x, y, this->cx(), this->row_height[row_index] + this->border * 2);
         this->drawable.draw(RDPOpaqueRect(rectRow, bg_color), clip);
 
@@ -314,9 +314,9 @@ public:
 
     void rdp_input_mouse(int device_flags, int mouse_x, int mouse_y, Keymap2 * keymap) override {
         if (device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
-            uint16_t y = this->dy();
+            uint16_t y = this->y();
             for (uint16_t row_index = 0; row_index < this->nb_rows; row_index++) {
-                uint16_t x = this->dx();
+                uint16_t x = this->x();
                 Rect rectRow(x, y, this->cx(), this->row_height[row_index] + this->border * 2);
 
                 if (rectRow.contains_pt(mouse_x, mouse_y)) {

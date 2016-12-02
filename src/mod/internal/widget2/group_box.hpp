@@ -70,18 +70,18 @@ public:
 
         auto gcy = this->cy() - tm1.height / 2 - border;
         auto gcx = this->cx() - border * 2 + 1;
-        auto px = this->dx() + border - 1;
+        auto px = this->x() + border - 1;
 
         auto wlabel = text_margin * 2 + tm2.width;
-        auto y = this->dy() + tm1.height / 2;
+        auto y = this->y() + tm1.height / 2;
 
 
         // Top Line and Label
         auto rect1 = Rect(px, y, text_indentation - text_margin - border + 2, 1);
         this->drawable.draw(RDPOpaqueRect(rect1, this->fg_color), clip);
         gdi::server_draw_text(this->drawable, this->font
-                           , this->dx() + text_indentation
-                           , this->dy()
+                           , this->x() + text_indentation
+                           , this->y()
                            , this->buffer
                            , this->fg_color
                            , this->bg_color
@@ -110,8 +110,8 @@ public:
     }
 
     void move_xy(int16_t x, int16_t y) {
-        this->set_dx(this->dx() + x);
-        this->set_dy(this->dy() + y);
+        this->set_x(this->x() + x);
+        this->set_y(this->y() + y);
         this->WidgetParent::move_xy(x,y);
     }
 

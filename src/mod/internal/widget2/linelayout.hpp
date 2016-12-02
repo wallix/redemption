@@ -40,7 +40,7 @@ struct WidgetLineLayout : public WidgetLayout {
         size_t index = origin;
         int pos_x = this->rect.x;
         if (index > 0) {
-            pos_x = this->items[index - 1]->lx();
+            pos_x = this->items[index - 1]->right();
         }
         for (; index < this->nb_items; index++) {
             Widget2 * w = this->items[index];

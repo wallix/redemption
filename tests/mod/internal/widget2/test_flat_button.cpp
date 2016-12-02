@@ -89,8 +89,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton2)
                              fg_color, bg_color, fc_color, font);
 
     // ask to widget to redraw at it's current position
-    wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
-                                      0 + wbutton.dy(),
+    wbutton.rdp_input_invalidate(Rect(0 + wbutton.x(),
+                                      0 + wbutton.y(),
                                       wbutton.cx(),
                                       wbutton.cy()));
 
@@ -126,8 +126,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton3)
                              fg_color, bg_color, fc_color, font);
 
     // ask to widget to redraw at it's current position
-    wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
-                                      0 + wbutton.dy(),
+    wbutton.rdp_input_invalidate(Rect(0 + wbutton.x(),
+                                      0 + wbutton.y(),
                                       wbutton.cx(),
                                       wbutton.cy()));
 
@@ -163,8 +163,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton4)
                              fg_color, bg_color, fc_color, font);
 
     // ask to widget to redraw at it's current position
-    wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
-                                      0 + wbutton.dy(),
+    wbutton.rdp_input_invalidate(Rect(0 + wbutton.x(),
+                                      0 + wbutton.y(),
                                       wbutton.cx(),
                                       wbutton.cy()));
 
@@ -200,8 +200,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton5)
                              fg_color, bg_color, fc_color, font);
 
     // ask to widget to redraw at it's current position
-    wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
-                                      0 + wbutton.dy(),
+    wbutton.rdp_input_invalidate(Rect(0 + wbutton.x(),
+                                      0 + wbutton.y(),
                                       wbutton.cx(),
                                       wbutton.cy()));
 
@@ -237,8 +237,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton6)
                              fg_color, bg_color, fc_color, font);
 
     // ask to widget to redraw at it's current position
-    wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
-                                      0 + wbutton.dy(),
+    wbutton.rdp_input_invalidate(Rect(0 + wbutton.x(),
+                                      0 + wbutton.y(),
                                       wbutton.cx(),
                                       wbutton.cy()));
 
@@ -274,8 +274,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip)
                              fg_color, bg_color, fc_color, font);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    wbutton.rdp_input_invalidate(Rect(20 + wbutton.dx(),
-                                      0 + wbutton.dy(),
+    wbutton.rdp_input_invalidate(Rect(20 + wbutton.x(),
+                                      0 + wbutton.y(),
                                       wbutton.cx(),
                                       wbutton.cy()));
 
@@ -311,8 +311,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip2)
                              fg_color, bg_color, fc_color, font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    wbutton.rdp_input_invalidate(Rect(20 + wbutton.dx(),
-                                      5 + wbutton.dy(),
+    wbutton.rdp_input_invalidate(Rect(20 + wbutton.x(),
+                                      5 + wbutton.y(),
                                       30,
                                       10));
 

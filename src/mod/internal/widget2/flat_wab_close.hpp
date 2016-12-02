@@ -125,10 +125,10 @@ public:
         this->timeleft_label.set_text(label);
 
         int const back_width = this->back ? this->back->cx() + 10 : 0;
-        this->cancel.set_dx(left + (this->cx() - (this->cancel.cx() + back_width)) / 2);
-        this->connection_closed_label.set_dx(left + (this->cx() - this->connection_closed_label.cx()) / 2);
+        this->cancel.set_x(left + (this->cx() - (this->cancel.cx() + back_width)) / 2);
+        this->connection_closed_label.set_x(left + (this->cx() - this->connection_closed_label.cx()) / 2);
 
-        this->separator.set_dx(left + (this->cx() - 600) / 2);
+        this->separator.set_x(left + (this->cx() - 600) / 2);
         this->separator.set_cx(600);
 
         this->add_widget(&this->connection_closed_label);
@@ -146,12 +146,12 @@ public:
             px = std::max<uint16_t>(this->timeleft_label.cx() + 10, px);
         }
 
-        int y = this->dy() + 10 - top;
+        int y = this->y() + 10 - top;
 
-        this->connection_closed_label.set_dy(top + y);
+        this->connection_closed_label.set_y(top + y);
         y += this->connection_closed_label.cy();
 
-        this->separator.set_dy(top + y + 3);
+        this->separator.set_y(top + y + 3);
         y += 30;
 
         if (username && *username) {
@@ -160,52 +160,52 @@ public:
             this->add_widget(&this->target_label);
             this->add_widget(&this->target_label_value);
 
-            this->username_label_value.set_dx(this->username_label.dx() + px);
-            this->target_label_value.set_dx(this->username_label.dx() + px);
+            this->username_label_value.set_x(this->username_label.x() + px);
+            this->target_label_value.set_x(this->username_label.x() + px);
 
-            this->username_label.set_dy(top + y);
-            this->username_label_value.set_dy(top + y);
+            this->username_label.set_y(top + y);
+            this->username_label_value.set_y(top + y);
             y += this->username_label.cy() + 20;
-            this->target_label.set_dy(top + y);
-            this->target_label_value.set_dy(top + y);
+            this->target_label.set_y(top + y);
+            this->target_label_value.set_y(top + y);
             y += this->target_label.cy() + 20;
         }
-        this->diagnostic.set_dy(top + y);
+        this->diagnostic.set_y(top + y);
         if (this->diagnostic.cx() > this->cx() - (px + 10)) {
             y += this->diagnostic.cy() + 10;
-            this->diagnostic_lines.set_dy(top + y);
+            this->diagnostic_lines.set_y(top + y);
             y += this->diagnostic_lines.cy() + 20;
         }
         else {
-            this->diagnostic_lines.set_dy(top + y);
+            this->diagnostic_lines.set_y(top + y);
             y += std::max(this->diagnostic_lines.cy(), this->diagnostic.cy()) + 20;
-            this->diagnostic_lines.set_dx(this->username_label.dx() + px);
+            this->diagnostic_lines.set_x(this->username_label.x() + px);
         }
 
         if (showtimer) {
             this->add_widget(&this->timeleft_label);
             this->add_widget(&this->timeleft_value);
-            this->timeleft_label.set_dy(top + y);
-            this->timeleft_value.set_dy(top + y);
-            this->timeleft_value.set_dx(this->username_label.dx() + px);
+            this->timeleft_label.set_y(top + y);
+            this->timeleft_value.set_y(top + y);
+            this->timeleft_value.set_x(this->username_label.x() + px);
             y += this->timeleft_label.cy() + 20;
         }
 
         if (this->back) {
             this->add_widget(this->back);
-            this->back->set_dx(this->cancel.dx() + this->cancel.cx() + 10);
-            this->back->set_dy(top + y);
+            this->back->set_x(this->cancel.x() + this->cancel.cx() + 10);
+            this->back->set_y(top + y);
         }
 
-        this->cancel.set_dy(top + y);
+        this->cancel.set_y(top + y);
         y += this->cancel.cy();
 
         this->move_xy(0, (height - y) / 2);
 
-        this->img.set_dx(left + (this->cx() - this->img.cx()) / 2);
-        this->img.set_dy(top + (3*(height - y) / 2 - this->img.cy()) / 2 + y);
-        if (this->img.dy() + this->img.cy() > top + height) {
-            this->img.set_dy(top);
+        this->img.set_x(left + (this->cx() - this->img.cx()) / 2);
+        this->img.set_y(top + (3*(height - y) / 2 - this->img.cy()) / 2 + y);
+        if (this->img.y() + this->img.cy() > top + height) {
+            this->img.set_y(top);
         }
 
         this->set_widget_focus(&this->cancel, focus_reason_tabkey);
@@ -217,21 +217,21 @@ public:
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
-        this->set_dx(left);
-        this->set_dy(top);
+        this->set_x(left);
+        this->set_y(top);
         this->set_cx(width);
         this->set_cy(height);
 
-        this->username_label.set_dx(left + (width - 600) / 2);
-        this->target_label.set_dx(left + (width - 600) / 2);
-        this->diagnostic.set_dx(left + (width - 600) / 2);
-        this->timeleft_label.set_dx(left + (width - 600) / 2);
+        this->username_label.set_x(left + (width - 600) / 2);
+        this->target_label.set_x(left + (width - 600) / 2);
+        this->diagnostic.set_x(left + (width - 600) / 2);
+        this->timeleft_label.set_x(left + (width - 600) / 2);
 
         int const back_width = this->back ? this->back->cx() + 10 : 0;
-        this->cancel.set_dx(left + (this->cx() - (this->cancel.cx() + back_width)) / 2);
-        this->connection_closed_label.set_dx(left + (this->cx() - this->connection_closed_label.cx()) / 2);
+        this->cancel.set_x(left + (this->cx() - (this->cancel.cx() + back_width)) / 2);
+        this->connection_closed_label.set_x(left + (this->cx() - this->connection_closed_label.cx()) / 2);
 
-        this->separator.set_dx(left + (this->cx() - 600) / 2);
+        this->separator.set_x(left + (this->cx() - 600) / 2);
 
         uint16_t px = this->diagnostic.cx() + 10;
         if (this->username_label_value.buffer[0]) {
@@ -242,58 +242,58 @@ public:
             px = std::max<uint16_t>(this->timeleft_label.cx() + 10, px);
         }
 
-        int y = this->dy() + 10 - top;
+        int y = this->y() + 10 - top;
 
-        this->connection_closed_label.set_dy(top + y);
+        this->connection_closed_label.set_y(top + y);
         y += this->connection_closed_label.cy();
 
-        this->separator.set_dy(top + y + 3);
+        this->separator.set_y(top + y + 3);
         y += 30;
 
         if (this->username_label_value.buffer[0]) {
-            this->username_label_value.set_dx(this->username_label.dx() + px);
-            this->target_label_value.set_dx(this->username_label.dx() + px);
+            this->username_label_value.set_x(this->username_label.x() + px);
+            this->target_label_value.set_x(this->username_label.x() + px);
 
-            this->username_label.set_dy(top + y);
-            this->username_label_value.set_dy(top + y);
+            this->username_label.set_y(top + y);
+            this->username_label_value.set_y(top + y);
             y += this->username_label.cy() + 20;
-            this->target_label.set_dy(top + y);
-            this->target_label_value.set_dy(top + y);
+            this->target_label.set_y(top + y);
+            this->target_label_value.set_y(top + y);
             y += this->target_label.cy() + 20;
         }
-        this->diagnostic.set_dy(top + y);
+        this->diagnostic.set_y(top + y);
         if (this->diagnostic.cx() > this->cx() - (px + 10)) {
             y += this->diagnostic.cy() + 10;
-            this->diagnostic_lines.set_dy(top + y);
+            this->diagnostic_lines.set_y(top + y);
             y += this->diagnostic_lines.cy() + 20;
         }
         else {
-            this->diagnostic_lines.set_dy(top + y);
+            this->diagnostic_lines.set_y(top + y);
             y += std::max(this->diagnostic_lines.cy(), this->diagnostic.cy()) + 20;
-            this->diagnostic_lines.set_dx(this->username_label.dx() + px);
+            this->diagnostic_lines.set_x(this->username_label.x() + px);
         }
 
         if (this->showtimer) {
-            this->timeleft_label.set_dy(top + y);
-            this->timeleft_value.set_dy(top + y);
-            this->timeleft_value.set_dx(this->username_label.dx() + px);
+            this->timeleft_label.set_y(top + y);
+            this->timeleft_value.set_y(top + y);
+            this->timeleft_value.set_x(this->username_label.x() + px);
             y += this->timeleft_label.cy() + 20;
         }
 
         if (this->back) {
-            this->back->set_dx(this->cancel.dx() + this->cancel.cx() + 10);
-            this->back->set_dy(top + y);
+            this->back->set_x(this->cancel.x() + this->cancel.cx() + 10);
+            this->back->set_y(top + y);
         }
 
-        this->cancel.set_dy(top + y);
+        this->cancel.set_y(top + y);
         y += this->cancel.cy();
 
         this->move_xy(0, (height - y) / 2);
 
-        this->img.set_dx(left + (this->cx() - this->img.cx()) / 2);
-        this->img.set_dy(top + (3*(height - y) / 2 - this->img.cy()) / 2 + y);
-        if (this->img.dy() + this->img.cy() > top + height) {
-            this->img.set_dy(top);
+        this->img.set_x(left + (this->cx() - this->img.cx()) / 2);
+        this->img.set_y(top + (3*(height - y) / 2 - this->img.cy()) / 2 + y);
+        if (this->img.y() + this->img.cy() > top + height) {
+            this->img.set_y(top);
         }
     }
 
