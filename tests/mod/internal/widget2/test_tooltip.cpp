@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     }
 
     rdp_input_mouse(MOUSE_FLAG_MOVE,
-                    label.x() + 2, label.y() + 2,
+                    label.x() + label.cx() / 2, label.y() + label.cy() / 2,
                     nullptr, &parent, &label, "Test tooltip description");
     parent.rdp_input_invalidate(parent.get_rect());
 
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     }
 
     rdp_input_mouse(MOUSE_FLAG_MOVE,
-                    label2.x() + 2, label2.y() + 2,
+                    label2.x() + label2.cx() / 2, label2.y() + label2.cy() / 2,
                     nullptr, &parent, &label2,
                     "Test tooltip<br>"
                     "description in<br>"

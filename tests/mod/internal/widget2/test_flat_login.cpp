@@ -183,7 +183,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     }
 
     flat_login.rdp_input_mouse(MOUSE_FLAG_MOVE,
-                               flat_login.helpicon.x() + 2, flat_login.helpicon.y() + 2, nullptr);
+                               flat_login.helpicon.x() + flat_login.helpicon.cx() / 2,
+                               flat_login.helpicon.y() + flat_login.helpicon.cy() / 2, nullptr);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
 
