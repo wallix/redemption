@@ -833,13 +833,13 @@ inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldsc
 }
 
 
-BOOST_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
+BOOST_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted)
 {
     // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
 
 
     char const * argv[] {
-        "verifier.py", "reddec",
+        "decrypter.py", "reddec",
         "-i", FIXTURES_PATH "/verifier/recorded/" "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
             "-192304,wab-4-2-4.yourdomain,5560.mwrm",
 //        "--hash-path", FIXTURES_PATH "/verifier/hash/",

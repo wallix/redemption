@@ -1688,6 +1688,7 @@ extern "C" {
             try {
                 openlog("decrypter", LOG_CONS | LOG_PERROR, LOG_USER);
 
+                LOG(LOG_INFO, "decrypter!");
                 std::string input_filename;
                 std::string output_filename;
 
@@ -1735,8 +1736,26 @@ extern "C" {
 
                 OpenSSL_add_all_digests();
 
+                if (!is_file_encrypted(input_filename)){
+                    std::puts("File is not encrypted\n");
+                    return 0;
+                }
+
+                // find if new old old encryption scheme
+                {
+                    ifile_read_encrypted in_test(cctx, 1);
+                    in_test.open(input_filename.c_str());
+                    char mem[4096];
+                    ssize_t res = in_test.read(mem, sizeof(mem));
+                    in_test.close();
+                    if (res < 0){
+                        cctx.old_encryption_scheme = 1;
+                    }
+                }
+
                 ifile_read_encrypted in_t(cctx, 1);
 
+                ssize_t res = -1;
                 const int fd1 = open(output_filename.c_str(), O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
 
                 if (fd1 != -1) {
@@ -1747,26 +1766,33 @@ extern "C" {
                     try {
                         in_t.open(input_filename.c_str());
                         while (1) {
-                            ssize_t res = in_t.read(mem, sizeof(mem));
+                            res = in_t.read(mem, sizeof(mem));
                             if (res == 0){
                                 break;
                             }
                             if (res < 0){
-                                LOG(LOG_INFO, "recv failed");
+                                break;
                             }
                             out_t.send(mem, res);
                         }
                     }
                     catch (Error const & e) {
                         LOG(LOG_INFO, "Exited on exception");
+                        res = -1;
                     }
                     close(fd);
                 }
                 else {
                     std::cerr << strerror(errno) << std::endl << std::endl;
                 }
-                std::puts("decrypt ok\n");
-                return 0;
+                if (res == 0){
+                    std::puts("decrypt ok\n");
+                    return 0;
+                }
+                else {
+                    std::puts("decrypt failed\n");
+                    return -1;
+                }
             } catch (const Error & e) {
                 std::printf("decrypt failed: with id=%d\n", e.id);
             }
