@@ -2973,7 +2973,7 @@ public:
                 break;
 
                 default: LOG(LOG_INFO, "DEFAULT: unknow record type=%x size=%d octets", type, size);
-                         //chunk.in_skip_bytes(recordSize - 6);
+                         chunk.in_skip_bytes(size - 6);
 
                 break;
             }

@@ -55,3 +55,4 @@ REDEMPTION_VERBOSE_FLAGS_DEF(RDPVerboseFlags)
     cliprdr_dump        = 0x40000000,
     rdpdr_dump          = 0x80000000,
 };
+
