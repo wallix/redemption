@@ -1197,9 +1197,10 @@ class Sesman():
         ### START_SESSION ###
         #####################
         extra_info = self.engine.get_target_extra_info()
+        user = mdecode(self.engine.get_username()) if self.engine.get_username() \
+               else self.shared.get(u'login')
         _status, _error = self.check_video_recording(
-            extra_info.is_recorded,
-            mdecode(self.engine.get_username()) if self.engine.get_username() else self.shared.get(u'login'))
+            extra_info.is_recorded, user)
 
         if not _status:
             self.send_data({u'rejected': _error})
@@ -1232,7 +1233,7 @@ class Sesman():
                 session_log_file_path =  u".log"
             # Add connection to the observer
             session_id = self.engine.start_session(selected_target, self.pid,
-                                               self.effective_login, 
+                                               self.effective_login,
                                                session_log_file_path=session_log_file_path)
             if session_id is None:
                 _status, _error = False, TR(u"start_session_failed")
