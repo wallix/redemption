@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog)
                            extra_button, colors, font);
 
     // ask to widget to redraw at it's current position
-    flat_dialog.rdp_input_invalidate(flat_dialog.rect);
+    flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog1.png");
 
@@ -91,8 +91,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog2)
                            extra_button, colors, font);
 
     // ask to widget to redraw at it's current position
-    flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
-                                      0 + flat_dialog.dy(),
+    flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.x(),
+                                      0 + flat_dialog.y(),
                                       flat_dialog.cx(),
                                       flat_dialog.cy()));
 
@@ -129,8 +129,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog3)
                            extra_button, colors, font);
 
     // ask to widget to redraw at it's current position
-    flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
-                                      0 + flat_dialog.dy(),
+    flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.x(),
+                                      0 + flat_dialog.y(),
                                       flat_dialog.cx(),
                                       flat_dialog.cy()));
 
@@ -167,8 +167,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog4)
                            extra_button, colors, font);
 
     // ask to widget to redraw at it's current position
-    flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
-                                      0 + flat_dialog.dy(),
+    flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.x(),
+                                      0 + flat_dialog.y(),
                                       flat_dialog.cx(),
                                       flat_dialog.cy()));
 
@@ -205,8 +205,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog5)
                            extra_button, colors, font);
 
     // ask to widget to redraw at it's current position
-    flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
-                                      0 + flat_dialog.dy(),
+    flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.x(),
+                                      0 + flat_dialog.y(),
                                       flat_dialog.cx(),
                                       flat_dialog.cy()));
 
@@ -243,8 +243,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog6)
                            extra_button, colors, font);
 
     // ask to widget to redraw at it's current position
-    flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
-                                      0 + flat_dialog.dy(),
+    flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.x(),
+                                      0 + flat_dialog.y(),
                                       flat_dialog.cx(),
                                       flat_dialog.cy()));
 
@@ -281,8 +281,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip)
                            extra_button, colors, font);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    flat_dialog.rdp_input_invalidate(Rect(20 + flat_dialog.dx(),
-                                      0 + flat_dialog.dy(),
+    flat_dialog.rdp_input_invalidate(Rect(20 + flat_dialog.x(),
+                                      0 + flat_dialog.y(),
                                       flat_dialog.cx(),
                                       flat_dialog.cy()));
 
@@ -319,8 +319,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip2)
                            extra_button, colors, font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    flat_dialog.rdp_input_invalidate(Rect(20 + flat_dialog.dx(),
-                                      5 + flat_dialog.dy(),
+    flat_dialog.rdp_input_invalidate(Rect(20 + flat_dialog.x(),
+                                      5 + flat_dialog.y(),
                                       30,
                                       10));
 
@@ -368,15 +368,15 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     BOOST_CHECK(notifier.sender == &flat_dialog);
     BOOST_CHECK(notifier.event == 0);
 
-    unsigned x = flat_dialog.ok.rect.x + flat_dialog.ok.rect.cx / 2 ;
-    unsigned y = flat_dialog.ok.rect.y + flat_dialog.ok.rect.cy / 2 ;
+    unsigned x = flat_dialog.ok.x() + flat_dialog.ok.cx() / 2 ;
+    unsigned y = flat_dialog.ok.y() + flat_dialog.ok.cy() / 2 ;
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, nullptr);
     // flat_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, nullptr);
 //    BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.sender == &flat_dialog);
     BOOST_CHECK(notifier.event == 0);
 
-    flat_dialog.rdp_input_invalidate(flat_dialog.rect);
+    flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-clic-1-button-ok.png");
 
     char message[1024];
@@ -390,13 +390,13 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
     // flat_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-    //                                  flat_dialog.ok.dx(), flat_dialog.ok.dy(), nullptr);
+    //                                  flat_dialog.ok.x(), flat_dialog.ok.y(), nullptr);
     BOOST_CHECK(notifier.sender == &flat_dialog);
     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
     notifier.sender = nullptr;
     notifier.event = 0;
 
-    flat_dialog.rdp_input_invalidate(flat_dialog.rect);
+    flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-clic-2-button-ok.png");
 
 
@@ -407,8 +407,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     }
 
 
-    x = flat_dialog.cancel->rect.x + flat_dialog.cancel->rect.cx / 2 ;
-    y = flat_dialog.cancel->rect.y + flat_dialog.cancel->rect.cy / 2 ;
+    x = flat_dialog.cancel->x() + flat_dialog.cancel->cx() / 2 ;
+    y = flat_dialog.cancel->y() + flat_dialog.cancel->cy() / 2 ;
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, nullptr);
     // flat_dialog.cancel->rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, nullptr);
 //    BOOST_CHECK(notifier.sender == 0);
@@ -416,7 +416,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     BOOST_CHECK(notifier.event == 0);
 
 
-    flat_dialog.rdp_input_invalidate(flat_dialog.rect);
+    flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-clic-3-button-cancel.png");
 
 
@@ -493,7 +493,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
     BOOST_CHECK(notifier.sender == &flat_dialog);
     BOOST_CHECK(notifier.event == 0);
 
-    flat_dialog.rdp_input_invalidate(flat_dialog.rect);
+    flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-challenge-1.png");
 
     char message[1024];

@@ -105,16 +105,17 @@ public:
     }
 
     void preparing_video_frame() {
-        const_cast<Drawable&>(this->drawable).trace_mouse();
+        auto & drawable = const_cast<Drawable&>(this->drawable);
+        drawable.trace_mouse();
         if (!this->no_timestamp) {
             time_t rawtime = this->start_video_capture.tv_sec;
             tm tm_result;
             localtime_r(&rawtime, &tm_result);
-            const_cast<Drawable&>(this->drawable).trace_timestamp(tm_result);
+            drawable.trace_timestamp(tm_result);
         }
         this->recorder->preparing_video_frame(true);
-        if (!this->no_timestamp) { const_cast<Drawable&>(this->drawable).clear_timestamp(); }
-        const_cast<Drawable&>(this->drawable).clear_mouse();
+        if (!this->no_timestamp) { drawable.clear_timestamp(); }
+        drawable.clear_mouse();
     }
 
     void encoding_video_frame() {

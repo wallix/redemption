@@ -38,7 +38,7 @@ struct WidgetColumnLayout : public WidgetLayout {
         size_t index = origin;
         int pos_y = this->rect.y;
         if (index > 0) {
-            pos_y = this->items[index - 1]->ly();
+            pos_y = this->items[index - 1]->bottom();
         }
         for (; index < this->nb_items; index++) {
             Widget2 * w = this->items[index];

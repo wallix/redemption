@@ -67,41 +67,37 @@ public:
     , logo(logo)
     , font(font)
     {
-        this->label_rect.x  = this->rect.x + 1;
-        this->label_rect.y  = this->rect.y + 1;
+        this->label_rect.x  = this->x() + 1;
+        this->label_rect.y  = this->y() + 1;
         this->label_rect.cx = 1;
         this->label_rect.cy = 1;
 
         this->set_text(text);
 
-        this->rect.cx = this->label_rect.cx + 3;
-        this->rect.cy = this->label_rect.cy + 3;
+        this->set_cx(this->label_rect.cx + 3);
+        this->set_cy(this->label_rect.cy + 3);
     }
 
     ~WidgetFlatButton() override {}
 
-    void set_button_x(int x)
-    {
-        this->rect.x = x;
+    void set_x(int16_t x) override {
+        Widget2::set_x(x);
         this->label_rect.x = x + 1;
     }
 
-    void set_button_y(int y)
-    {
-        this->rect.y = y;
+    void set_y(int16_t y) override {
+        Widget2::set_y(y);
         this->label_rect.y = y + 1;
     }
 
-    void set_button_cx(int w)
-    {
-        this->rect.cx = w;
-        this->label_rect.cx = w - 3;
+    void set_cx(uint16_t cx) override {
+        Widget2::set_cx(cx);
+        this->label_rect.cx = cx - 3;
     }
 
-    void set_button_cy(int h)
-    {
-        this->rect.cy = h;
-        this->label_rect.cy = h - 3;
+    void set_cy(uint16_t cy) override {
+        Widget2::set_cy(cy);
+        this->label_rect.cy = cy - 3;
     }
 
     void set_text(char const* text) {
@@ -119,20 +115,15 @@ public:
                 this->label_rect.cx = dm.w;
                 this->label_rect.cy = dm.h;
 
-                this->rect.cx = this->label_rect.cx + 3;
-                this->rect.cy = this->label_rect.cy + 3;
+                this->set_cx(this->label_rect.cx + 3);
+                this->set_cy(this->label_rect.cy + 3);
             }
         }
     }
 
-    void set_xy(int16_t x, int16_t y) override {
-        this->set_button_x(x);
-        this->set_button_y(y);
-    }
-
     void draw(const Rect& clip) override
     {
-        this->draw(clip, this->rect, this->drawable, this->logo, this->has_focus,
+        this->draw(clip, this->get_rect(), this->drawable, this->logo, this->has_focus,
             this->buffer, this->fg_color, this->bg_color, this->focus_color,
             this->label_rect, this->state, this->font, this->x_text, this->y_text);
     }
@@ -208,7 +199,7 @@ public:
     void swap_border_color()
     {
         this->drawable.begin_update();
-        this->draw(this->rect);
+        this->draw(this->get_rect());
         this->drawable.end_update();
     }
 
@@ -220,7 +211,7 @@ public:
         else if (device_flags == MOUSE_FLAG_BUTTON1 && this->state & 1) {
             this->state &= ~1;
             this->swap_border_color();
-            if (this->rect.contains_pt(x, y)) {
+            if (this->get_rect().contains_pt(x, y)) {
                 this->send_notify(this->event);
             }
         }

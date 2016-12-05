@@ -44,8 +44,8 @@ public:
     {
         this->tab_flag = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;
-        this->rect.cx = this->desc.rect.cx + 2*w_border;
-        this->rect.cy = this->desc.rect.cy + 2*h_border;
+        this->set_cx(this->desc.cx() + 2 * w_border);
+        this->set_cy(this->desc.cy() + 2 * h_border);
     }
 
     ~WidgetTooltip() override {
@@ -54,48 +54,48 @@ public:
     void set_text(const char * text)
     {
         this->desc.set_text(text);
-        this->rect.cx = this->desc.rect.cx + 2*w_border;
-        this->rect.cy = this->desc.rect.cy + 2*h_border;
+        this->set_cx(this->desc.cx() + 2 * w_border);
+        this->set_cy(this->desc.cy() + 2 * h_border);
     }
 
     void draw(const Rect& clip) override {
-        this->drawable.draw(RDPOpaqueRect(this->rect, desc.bg_color), clip);
+        this->drawable.draw(RDPOpaqueRect(this->get_rect(), desc.bg_color), clip);
         this->desc.draw(clip);
         this->draw_border(clip);
     }
 
     int get_tooltip_cx() {
-        return this->rect.cx;
+        return this->cx();
     }
     int get_tooltip_cy() {
-        return this->rect.cy;
+        return this->cy();
     }
 
     void set_tooltip_xy(int x, int y) {
-        this->rect.x = x;
-        this->rect.y = y;
-        this->desc.rect.x = x + w_border;
-        this->desc.rect.y = y + h_border;
+        this->set_x(x);
+        this->set_y(y);
+        this->desc.set_x(x + w_border);
+        this->desc.set_y(y + h_border);
     }
 
     void draw_border(const Rect& clip)
     {
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx(), this->dy(), this->cx() - 1, 1
-        )), this->border_color), this->rect);
+            this->x(), this->y(), this->cx() - 1, 1
+        )), this->border_color), this->get_rect());
         //left
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx(), this->dy() + 1, 1, this->cy() - 2
-        )), this->border_color), this->rect);
+            this->x(), this->y() + 1, 1, this->cy() - 2
+        )), this->border_color), this->get_rect());
         //right
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
-        )), this->border_color), this->rect);
+            this->x() + this->cx() - 1, this->y(), 1, this->cy()
+        )), this->border_color), this->get_rect());
         //bottom
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx(), this->dy() + this->cy() - 1, this->cx() - 1, 1
-        )), this->border_color), this->rect);
+            this->x(), this->y() + this->cy() - 1, this->cx() - 1, 1
+        )), this->border_color), this->get_rect());
     }
 };
 

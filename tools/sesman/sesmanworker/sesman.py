@@ -1224,15 +1224,16 @@ class Sesman():
             signal.signal(signal.SIGUSR2, self.check_handler)
 
             Logger().info(u"Starting Session, effective login='%s'" % self.effective_login)
+            session_log_file_path = None
             if self.shared[u'session_log_redirection'].lower() == u'true':
                 session_log_file_path =  u"/var/wab/rdp/recorded/"
                 session_log_file_path += u"%s@%s," % (user, self.shared.get(u'ip_client'))
                 session_log_file_path += u"%s@%s," % (self.shared.get(u'target_login'), self.shared.get(u'target_device'))
                 session_log_file_path =  u".log"
-                # Add connection to the observer
-                session_id = self.engine.start_session(selected_target, self.pid,
-                                                   self.effective_login, 
-                                                   session_log_file_path=session_log_file_path)
+            # Add connection to the observer
+            session_id = self.engine.start_session(selected_target, self.pid,
+                                               self.effective_login, 
+                                               session_log_file_path=session_log_file_path)
             if session_id is None:
                 _status, _error = False, TR(u"start_session_failed")
                 self.send_data({u'rejected': TR(u'start_session_failed')})

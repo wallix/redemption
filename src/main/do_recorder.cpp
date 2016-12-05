@@ -269,7 +269,9 @@ static inline int check_encrypted_or_checksumed(
     // Let(s ifile_read autodetect encryption at opening for first file
     int encryption = 2;
 
+//    cctx.old_encryption_scheme = true;
     ifile_read_encrypted ibuf(cctx, encryption);
+    
     if (ibuf.open(full_mwrm_filename.c_str()) < 0){
         throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
     }
@@ -289,6 +291,7 @@ static inline int check_encrypted_or_checksumed(
     /*****************
     * Load file hash *
     *****************/
+    LOG(LOG_INFO, "Load file hash");
     MetaLine2 hash_line = {{}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {}, {}};
 
     std::string const full_hash_path = hash_path + input_filename;
@@ -312,6 +315,7 @@ static inline int check_encrypted_or_checksumed(
     /******************
     * Check mwrm file *
     ******************/
+    LOG(LOG_INFO, "Check mwrm file");
     if (!check_file(
         full_mwrm_filename, hash_line, quick_check, reader.header.has_checksum,
         ignore_stat_info, cctx.get_hmac_key(), 32,
@@ -370,6 +374,7 @@ static inline int check_encrypted_or_checksumed(
     /*******************
     * Rewite stat info *
     ********************/
+    LOG(LOG_INFO, "Rewrite state info");
     struct local_auto_remove
     {
         char const * filename;
@@ -1460,11 +1465,11 @@ extern "C" {
             get_hmac_key_prototype * hmac_fn,
             get_trace_key_prototype * trace_fn)
     {
-    
+
         int arg_used = 0;
 
 
-          int command = 0;        
+          int command = 0;
 //        int command = ends_with(argv[arg_used], {"recorder.py", "verifier.py", "decoder.py"});
 //        if (command){
 //            command = command - 1;

@@ -61,7 +61,11 @@ public:
     Widget2 & parent;
     gdi::GraphicApi & drawable;
     NotifyApi * notifier;
+
+private:
     Rect rect;
+
+public:
     int group_id;
     int tab_flag;
     int focus_flag;
@@ -75,11 +79,22 @@ public:
     : parent(parent)
     , drawable(drawable)
     , notifier(notifier)
-    , rect(Rect(rect.x + ((&parent != this) ? parent.dx() : 0),
-                rect.y + ((&parent != this) ? parent.dy() : 0),
-                rect.cx,
-                rect.cy
-                ))
+    , rect(rect.x + ((&parent != this) ? parent.x() : 0),
+           rect.y + ((&parent != this) ? parent.y() : 0),
+           rect.cx,
+           rect.cy
+           )
+    , group_id(group_id)
+    , tab_flag(NORMAL_TAB)
+    , focus_flag(NORMAL_FOCUS)
+    , pointer_flag(Pointer::POINTER_NORMAL)
+    , has_focus(false)
+    , notify_value(0) {}
+
+    Widget2(gdi::GraphicApi & drawable, Widget2 & parent, NotifyApi * notifier, int group_id = 0)
+    : parent(parent)
+    , drawable(drawable)
+    , notifier(notifier)
     , group_id(group_id)
     , tab_flag(NORMAL_TAB)
     , focus_flag(NORMAL_FOCUS)
@@ -189,16 +204,16 @@ public:
         return nullptr;
     }
 
-    virtual void set_xy(int16_t x, int16_t y)
+    void set_xy(int16_t x, int16_t y)
     {
-        this->rect.x = x;
-        this->rect.y = y;
+        this->set_x(x);
+        this->set_y(y);
     }
 
-    virtual void set_wh(int16_t w, int16_t h)
+    void set_wh(int16_t w, int16_t h)
     {
-        this->rect.cx = w;
-        this->rect.cy = h;
+        this->set_cx(w);
+        this->set_cy(h);
     }
 
     virtual void set_color(uint32_t bg_color, uint32_t fg_color) {
@@ -235,15 +250,23 @@ public:
     }
 
     ///Return x position in it's screen
-    int16_t dx() const
+    int16_t x() const
     {
         return this->rect.x;
     }
 
+    virtual void set_x(int16_t x) {
+        this->rect.x = x;
+    }
+
     ///Return y position in it's screen
-    int16_t dy() const
+    int16_t y() const
     {
         return this->rect.y;
+    }
+
+    virtual void set_y(int16_t y) {
+        this->rect.y = y;
     }
 
     ///Return width
@@ -252,44 +275,34 @@ public:
         return this->rect.cx;
     }
 
+    virtual void set_cx(uint16_t cx) {
+        this->rect.cx = cx;
+    }
+
     ///Return height
     uint16_t cy() const
     {
         return this->rect.cy;
     }
 
-    ///Return dx()+cx()
-    int16_t lx() const
-    {
-        return this->rect.x + this->rect.cx;
+    virtual void set_cy(uint16_t cy) {
+        this->rect.cy = cy;
     }
 
-    ///Return dy()+cy()
-    int16_t ly() const
+    ///Return x()+cx()
+    int16_t right() const
     {
-        return this->rect.y + this->rect.cy;
+        return this->rect.right();
     }
 
-    int16_t centerx() const
+    ///Return y()+cy()
+    int16_t bottom() const
     {
-        return this->rect.x + this->rect.cx / 2;
+        return this->rect.bottom();
     }
 
-    int16_t centery() const
-    {
-        return this->rect.y + this->rect.cy / 2;
-    }
-
-    ///Return x position in it's parent
-    int16_t px() const
-    {
-        return this->dx() - this->parent.dx();
-    }
-
-    ///Return y position in it's parent
-    int16_t py() const
-    {
-        return this->dy() - this->parent.dy();
+    Rect const&  get_rect() const {
+        return this->rect;
     }
 };
 

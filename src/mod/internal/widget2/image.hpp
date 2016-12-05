@@ -37,8 +37,8 @@ public:
         this->tab_flag = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;
 
-        this->rect.cx = this->bmp.cx();
-        this->rect.cy = this->bmp.cy();
+        this->set_cx(this->bmp.cx());
+        this->set_cy(this->bmp.cy());
     }
 
     ~WidgetImage() override {}
@@ -51,11 +51,11 @@ public:
                 0,
                 Rect(mx, my, clip.cx, clip.cy),
                 0xCC,
-                mx - this->dx(),
-                my - this->dy(),
+                mx - this->x(),
+                my - this->y(),
                 0
             ),
-            this->rect,
+            this->get_rect(),
             this->bmp
         );
     }

@@ -63,16 +63,16 @@ public:
         this->tab_flag = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;
 
-        this->rect.cx = 0;
-        this->rect.cy = 0;
+        this->set_cx(0);
+        this->set_cy(0);
         this->set_text(text);
     }
-    
+
     void set_text(const char * text)
     {
         if (this->auto_resize) {
-            this->rect.cx = 0;
-            this->rect.cy = 0;
+            this->set_cx(0);
+            this->set_cy(0);
         }
 
         const char * str = nullptr;
@@ -93,11 +93,11 @@ public:
                 this->cy_text = tm.height;
             }
             if (this->auto_resize) {
-                if (line->cx > this->rect.cx){
-                    this->rect.cx = line->cx;
+                if (line->cx > this->cx()){
+                    this->set_cx(line->cx);
                 }
-                if (tm.height > this->rect.cy){
-                    this->rect.cy = tm.height;
+                if (tm.height > this->cy()){
+                    this->set_cy(tm.height);
                 }
             }
             ++line;
@@ -106,8 +106,8 @@ public:
         line->str = nullptr;
 
         if (this->auto_resize) {
-            this->rect.cx += this->x_text * 2;
-            this->rect.cy = (this->rect.cy + this->y_text * 2) * (line - &this->lines[0]);
+            this->set_cx(this->cx() + this->x_text * 2);
+            this->set_cy((this->cy() + this->y_text * 2) * (line - &this->lines[0]));
         }
     }
 
@@ -119,18 +119,18 @@ public:
     }
 
     void draw(const Rect& clip) override {
-        int dy = this->dy() + this->y_text;
-        this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
+        int dy = this->y() + this->y_text;
+        this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->get_rect());
         for (line_t * line = this->lines; line->str; ++line) {
             dy += this->y_text;
             gdi::server_draw_text(this->drawable
                                  , this->font
-                                 , this->x_text + this->dx()
+                                 , this->x_text + this->x()
                                  , dy
                                  , line->str
                                  , this->fg_color
                                  , this->bg_color
-                                 , clip.intersect(Rect(this->dx()
+                                 , clip.intersect(Rect(this->x()
                                  , dy
                                  , this->cx()
                                  , this->cy_text))

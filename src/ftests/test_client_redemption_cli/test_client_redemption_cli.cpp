@@ -395,7 +395,7 @@ int main(int argc, char** argv){
     mod_rdp_params.allow_channels                  = &allow_channels;
     //mod_rdp_params.allow_using_multiple_monitors   = true;
     mod_rdp_params.bogus_refresh_rect              = true;
-    mod_rdp_params.verbose = RDPVerboseFlags::cliprdr;
+    mod_rdp_params.verbose = RDPVerbose::cliprdr;
     //======================================================================
 
 

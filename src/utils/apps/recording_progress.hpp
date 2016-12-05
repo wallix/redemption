@@ -22,7 +22,13 @@
 
 #include <iostream>
 
-class UpdateProgressData : noncopyable {
+// format:
+// start: 0 -1
+// normal: $time_percentage $time_remaining
+// done: 100 0
+// error: -1 $error ($error_code)
+class UpdateProgressData : noncopyable
+{
     int fd;
 
     const time_t start_record;

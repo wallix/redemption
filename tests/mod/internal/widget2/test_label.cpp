@@ -59,8 +59,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test1", auto_resize, id, fg_color, bg_color, font, xtext, ytext);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -93,8 +93,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test2", auto_resize, id, fg_color, bg_color, font);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -127,8 +127,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test3", auto_resize, id, fg_color, bg_color, font);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -161,8 +161,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test4", auto_resize, id, fg_color, bg_color, font);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -195,8 +195,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test5", auto_resize, id, fg_color, bg_color, font);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -229,8 +229,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, font);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -263,8 +263,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, font);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    wlabel.rdp_input_invalidate(Rect(20 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(20 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -297,8 +297,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    wlabel.rdp_input_invalidate(Rect(20 + wlabel.dx(),
-                                     5 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(20 + wlabel.x(),
+                                     5 + wlabel.y(),
                                      30,
                                      10));
 
@@ -448,8 +448,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelMax)
     BOOST_CHECK_EQUAL(0, memcmp(wlabel.get_text(), text, sizeof(text) - 3));
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 

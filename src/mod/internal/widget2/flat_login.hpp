@@ -126,8 +126,8 @@ public:
             this->labels_added = true;
         }
         else {
-            this->password_label.rect.cx = 0;
-            this->login_label.rect.cx = 0;
+            this->password_label.set_cx(0);
+            this->login_label.set_cx(0);
         }
         this->add_widget(&this->version_label);
 
@@ -139,50 +139,50 @@ public:
 
         // Center bloc positionning
         // Login and Password boxes
-        int cbloc_w = std::max(this->password_label.rect.cx + this->password_edit.rect.cx + 10,
-                               this->login_label.rect.cx + this->login_edit.rect.cx + 10);
-        int cbloc_h = std::max(this->password_label.rect.cy + this->login_label.rect.cy + 20,
-                               this->password_edit.rect.cy + this->login_edit.rect.cy + 20);
+        int cbloc_w = std::max(this->password_label.cx() + this->password_edit.cx() + 10,
+                               this->login_label.cx() + this->login_edit.cx() + 10);
+        int cbloc_h = std::max(this->password_label.cy() + this->login_label.cy() + 20,
+                               this->password_edit.cy() + this->login_edit.cy() + 20);
 
         int x_cbloc = (width  - cbloc_w) / 2;
         int y_cbloc = (height - cbloc_h) / 2;
 
         this->login_label.set_xy(left + x_cbloc, top + y_cbloc);
         this->password_label.set_xy(left + x_cbloc, top + height / 2);
-        int labels_w = std::max(this->password_label.rect.cx, this->login_label.rect.cx);
+        int labels_w = std::max(this->password_label.cx(), this->login_label.cx());
         this->login_edit.set_xy(left + x_cbloc + labels_w + 10, top + y_cbloc);
         this->password_edit.set_xy(left + x_cbloc + labels_w + 10, top + height / 2);
 
-        this->login_label.rect.y += (this->login_edit.cy() - this->login_label.cy()) / 2;
-        this->password_label.rect.y += (this->password_edit.cy() - this->password_label.cy()) / 2;
+        this->login_label.set_y(this->login_label.y() + (this->login_edit.cy() - this->login_label.cy()) / 2);
+        this->password_label.set_y(this->password_label.y() + (this->password_edit.cy() - this->password_label.cy()) / 2);
 
 
-        this->error_message_label.rect.x  = this->login_edit.rect.x;
-        this->error_message_label.rect.y  = this->login_edit.rect.y - 22;
-        this->error_message_label.rect.cx = this->login_edit.rect.cx;
+        this->error_message_label.set_x(this->login_edit.x());
+        this->error_message_label.set_y(this->login_edit.y() - 22);
+        this->error_message_label.set_cx(this->login_edit.cx());
 
         // Bottom bloc positioning
         // Logo and Version
         int bottom_height = (height - cbloc_h) / 2;
-        int bbloc_h = this->img.rect.cy + 10 + this->version_label.rect.cy;
+        int bbloc_h = this->img.cy() + 10 + this->version_label.cy();
         int y_bbloc = ((bbloc_h + 10) > (bottom_height / 2))
             ?(height - (bbloc_h + 10))
             :(height/2 + cbloc_h/2 + bottom_height/2);
-        this->img.set_xy(left + (width - this->img.rect.cx) / 2, top + y_bbloc);
-        if (this->img.rect.y + this->img.cy() > top + height) {
-            this->img.rect.y = top;
+        this->img.set_xy(left + (width - this->img.cx()) / 2, top + y_bbloc);
+        if (this->img.y() + this->img.cy() > top + height) {
+            this->img.set_y(top);
         }
-        this->version_label.set_xy(left + (width - this->version_label.rect.cx) / 2,
-                                   top + y_bbloc + this->img.rect.cy + 10);
+        this->version_label.set_xy(left + (width - this->version_label.cx()) / 2,
+                                   top + y_bbloc + this->img.cy() + 10);
 
         this->helpicon.tab_flag = IGNORE_TAB;
         this->helpicon.focus_flag = IGNORE_FOCUS;
-        this->helpicon.set_button_x(left + width - 60);
-        this->helpicon.set_button_y(top + height - 60);
+        this->helpicon.set_x(left + width - 60);
+        this->helpicon.set_y(top + height - 60);
 
         if (extra_button) {
-            extra_button->set_button_x(left + 60);
-            extra_button->set_button_y(top + height - 60);
+            extra_button->set_x(left + 60);
+            extra_button->set_y(top + height - 60);
         }
 
         // this->add_widget(&this->frame);
@@ -200,16 +200,16 @@ public:
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
-        this->rect.x  = left;
-        this->rect.y  = top;
-        this->rect.cx = width;
-        this->rect.cy = height;
+        this->set_x(left);
+        this->set_y(top);
+        this->set_cx(width);
+        this->set_cy(height);
 
         this->password_edit.use_title(width < 640);
-        this->password_edit.rect.cx = ((width >= 420) ? 400 : width - 20);
+        this->password_edit.set_cx(((width >= 420) ? 400 : width - 20));
 
         this->login_edit.use_title(width < 640);
-        this->login_edit.rect.cx = ((width >= 420) ? 400 : width - 20);
+        this->login_edit.set_cx(((width >= 420) ? 400 : width - 20));
 
         if (width > 640) {
             if (!this->labels_added) {
@@ -230,52 +230,52 @@ public:
                 this->labels_added = false;
             }
 
-            this->login_label.rect.cx    = 0;
-            this->password_label.rect.cx = 0;
+            this->login_label.set_cx(0);
+            this->password_label.set_cx(0);
         }
 
-        int cbloc_w = std::max(this->password_label.rect.cx + this->password_edit.rect.cx + 10,
-                               this->login_label.rect.cx + this->login_edit.rect.cx + 10);
-        int cbloc_h = std::max(this->password_label.rect.cy + this->login_label.rect.cy + 20,
-                               this->password_edit.rect.cy + this->login_edit.rect.cy + 20);
+        int cbloc_w = std::max(this->password_label.cx() + this->password_edit.cx() + 10,
+                               this->login_label.cx() + this->login_edit.cx() + 10);
+        int cbloc_h = std::max(this->password_label.cy() + this->login_label.cy() + 20,
+                               this->password_edit.cy() + this->login_edit.cy() + 20);
 
         int x_cbloc = (width  - cbloc_w) / 2;
         int y_cbloc = (height - cbloc_h) / 2;
 
         this->login_label.set_xy(left + x_cbloc, top + y_cbloc);
         this->password_label.set_xy(left + x_cbloc, top + height / 2);
-        int labels_w = std::max(this->password_label.rect.cx, this->login_label.rect.cx);
+        int labels_w = std::max(this->password_label.cx(), this->login_label.cx());
         this->login_edit.set_xy(left + x_cbloc + labels_w + 10, top + y_cbloc);
         this->password_edit.set_xy(left + x_cbloc + labels_w + 10, top + height / 2);
 
-        this->login_label.rect.y += (this->login_edit.cy() - this->login_label.cy()) / 2;
-        this->password_label.rect.y += (this->password_edit.cy() - this->password_label.cy()) / 2;
+        this->login_label.set_y(this->login_label.y() + (this->login_edit.cy() - this->login_label.cy()) / 2);
+        this->password_label.set_y(this->password_label.y() + (this->password_edit.cy() - this->password_label.cy()) / 2);
 
 
-        this->error_message_label.rect.x  = this->login_edit.rect.x;
-        this->error_message_label.rect.y  = this->login_edit.rect.y - 22;
-        this->error_message_label.rect.cx = this->login_edit.rect.cx;
+        this->error_message_label.set_x(this->login_edit.x());
+        this->error_message_label.set_y(this->login_edit.y() - 22);
+        this->error_message_label.set_cx(this->login_edit.cx());
 
         // Bottom bloc positioning
         // Logo and Version
         int bottom_height = (height - cbloc_h) / 2;
-        int bbloc_h = this->img.rect.cy + 10 + this->version_label.rect.cy;
+        int bbloc_h = this->img.cy() + 10 + this->version_label.cy();
         int y_bbloc = ((bbloc_h + 10) > (bottom_height / 2))
             ?(height - (bbloc_h + 10))
             :(height/2 + cbloc_h/2 + bottom_height/2);
-        this->img.set_xy(left + (width - this->img.rect.cx) / 2, top + y_bbloc);
-        if (this->img.rect.y + this->img.cy() > top + height) {
-            this->img.rect.y = top;
+        this->img.set_xy(left + (width - this->img.cx()) / 2, top + y_bbloc);
+        if (this->img.y() + this->img.cy() > top + height) {
+            this->img.set_y(top);
         }
-        this->version_label.set_xy(left + (width - this->version_label.rect.cx) / 2,
-                                   top + y_bbloc + this->img.rect.cy + 10);
+        this->version_label.set_xy(left + (width - this->version_label.cx()) / 2,
+                                   top + y_bbloc + this->img.cy() + 10);
 
-        this->helpicon.set_button_x(left + width - 60);
-        this->helpicon.set_button_y(top + height - 60);
+        this->helpicon.set_x(left + width - 60);
+        this->helpicon.set_y(top + height - 60);
 
         if (this->extra_button) {
-            this->extra_button->set_button_x(left + 60);
-            this->extra_button->set_button_y(top + height - 60);
+            this->extra_button->set_x(left + 60);
+            this->extra_button->set_y(top + height - 60);
         }
     }
 
@@ -314,7 +314,7 @@ public:
         if (device_flags == MOUSE_FLAG_MOVE) {
             Widget2 * wid = this->widget_at_pos(x, y);
             if (wid == &this->helpicon) {
-                this->show_tooltip(wid, this->tr("help_message"), x, y, this->rect);
+                this->show_tooltip(wid, this->tr("help_message"), x, y, this->get_rect());
             }
         }
 

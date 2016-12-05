@@ -170,7 +170,7 @@ public:
           params.outbound_connection_monitoring_rules)
     , process_monitor_rules(params.process_monitoring_rules)
     {
-        if (this->verbose & RDPVerboseFlags::sesprobe) {
+        if (this->verbose & RDPVerbose::sesprobe) {
             LOG(LOG_INFO,
                 "SessionProbeVirtualChannel::SessionProbeVirtualChannel: "
                     "timeout=%" PRId64 " fallback_timeout=%" PRId64
@@ -190,7 +190,7 @@ public:
     {
         if ((this->session_probe_effective_launch_timeout.count() > 0) &&
             !this->session_probe_ready) {
-            if (this->verbose & RDPVerboseFlags::sesprobe) {
+            if (this->verbose & RDPVerbose::sesprobe) {
                 LOG(LOG_INFO, "SessionProbeVirtualChannel::start_launch_timeout_timer");
             }
 
@@ -234,7 +234,7 @@ public:
         if (!this->session_probe_ready) {
             this->has_additional_launch_time = true;
 
-            if (this->verbose & RDPVerboseFlags::sesprobe) {
+            if (this->verbose & RDPVerbose::sesprobe) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::give_additional_launch_time");
             }
@@ -283,7 +283,7 @@ public:
             if (this->param_session_probe_on_launch_failure ==
                 SessionProbeOnLaunchFailure::ignore_and_continue) {
                 if (need_full_screen_update) {
-                    if (this->verbose & RDPVerboseFlags::sesprobe) {
+                    if (this->verbose & RDPVerbose::sesprobe) {
                         LOG(LOG_INFO,
                             "SessionProbeVirtualChannel::process_event: "
                                 "Force full screen update. Rect=(0, 0, %u, %u)",
@@ -349,7 +349,7 @@ public:
                         out_s.get_data(), out_s.get_offset());
                 }
 
-                if (this->verbose & RDPVerboseFlags::sesprobe_repetitive) {
+                if (this->verbose & RDPVerbose::sesprobe_repetitive) {
                     LOG(LOG_INFO,
                         "SessionProbeVirtualChannel::process_event: "
                             "Session Probe keep alive requested");
@@ -369,14 +369,14 @@ public:
     {
         (void)out_asynchronous_task;
 
-        if (this->verbose & RDPVerboseFlags::sesprobe) {
+        if (this->verbose & RDPVerbose::sesprobe) {
             LOG(LOG_INFO,
                 "SessionProbeVirtualChannel::process_server_message: "
                     "total_length=%u flags=0x%08X chunk_data_length=%u",
                 total_length, flags, chunk_data_length);
         }
 
-        if (this->verbose & RDPVerboseFlags::sesprobe_dump) {
+        if (this->verbose & RDPVerbose::sesprobe_dump) {
             const bool send              = false;
             const bool from_or_to_client = false;
             ::msgdump_c(send, from_or_to_client, total_length, flags,
@@ -400,7 +400,7 @@ public:
         while (this->server_message.back() == '\0') {
             this->server_message.pop_back();
         }
-        if (this->verbose & RDPVerboseFlags::sesprobe) {
+        if (this->verbose & RDPVerbose::sesprobe) {
             LOG(LOG_INFO,
                 "SessionProbeVirtualChannel::process_server_message: \"%s\"",
                 this->server_message.c_str());
@@ -418,7 +418,7 @@ public:
         const char version[]   = "Version=";
 
         if (!this->server_message.compare(request_hello)) {
-            if (this->verbose & RDPVerboseFlags::sesprobe) {
+            if (this->verbose & RDPVerbose::sesprobe) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
                         "Session Probe is ready.");
@@ -437,7 +437,7 @@ public:
             const bool disable_graphics_update = false;
             if (this->mod.disable_input_event_and_graphics_update(
                     disable_input_event, disable_graphics_update)) {
-                if (this->verbose & RDPVerboseFlags::sesprobe) {
+                if (this->verbose & RDPVerbose::sesprobe) {
                     LOG(LOG_INFO,
                         "SessionProbeVirtualChannel::process_server_message: "
                             "Force full screen update. Rect=(0, 0, %u, %u)",
@@ -480,7 +480,7 @@ public:
                         out_s.get_data(), out_s.get_offset());
                 }
 
-                if (this->verbose & RDPVerboseFlags::sesprobe_repetitive) {
+                if (this->verbose & RDPVerbose::sesprobe_repetitive) {
                     LOG(LOG_INFO,
                         "SessionProbeVirtualChannel::process_event: "
                             "Session Probe keep alive requested");
@@ -527,7 +527,7 @@ public:
 
                 {
                     char cstr[128];
-                    snprintf(cstr, sizeof(cstr), "%u", ::getpid());
+                    std::snprintf(cstr, sizeof(cstr), "%u", ::getpid());
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
 
@@ -596,7 +596,7 @@ public:
 
                 {
                     char cstr[128];
-                    snprintf(cstr, sizeof(cstr), "%u",
+                    std::snprintf(cstr, sizeof(cstr), "%u",
                         disconnect_session_limit);
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
@@ -627,7 +627,7 @@ public:
 
                 {
                     char cstr[128];
-                    snprintf(cstr, sizeof(cstr), "%" PRId64,
+                    std::snprintf(cstr, sizeof(cstr), "%" PRId64,
                         this->param_session_probe_idle_session_limit.count());
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
@@ -721,7 +721,7 @@ public:
         }
         else if (!this->server_message.compare(
                      "Request=Disconnection-Reconnection")) {
-            if (this->verbose & RDPVerboseFlags::sesprobe) {
+            if (this->verbose & RDPVerbose::sesprobe) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
                         "Disconnection-Reconnection required.");
@@ -759,7 +759,7 @@ public:
             const char * session_probe_pid =
                 (this->server_message.c_str() + sizeof(ExtraInfo) - 1);
 
-            if (this->verbose & RDPVerboseFlags::sesprobe) {
+            if (this->verbose & RDPVerbose::sesprobe) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
                         "SessionProbePID=%s",
@@ -781,7 +781,7 @@ public:
 
                 this->other_version = ((major << 8) | minor);
 
-                if (this->verbose & RDPVerboseFlags::sesprobe) {
+                if (this->verbose & RDPVerbose::sesprobe) {
                     LOG(LOG_INFO,
                         "SessionProbeVirtualChannel::process_server_message: "
                             "OtherVersion=%u.%u",
@@ -828,14 +828,14 @@ public:
                 {
                     const int error_code = (result ? 0 : -1);
                     char cstr[128];
-                    snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
+                    std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
                         rule_index, error_code);
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
 
                 if (result) {
                     char cstr[1024];
-                    snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01" "%s" "\x01" "%s",
+                    std::snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01" "%s" "\x01" "%s",
                         type, host_address_or_subnet.c_str(), port_range.c_str());
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
@@ -889,14 +889,14 @@ public:
                 {
                     const int error_code = (result ? 0 : -1);
                     char cstr[128];
-                    snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
+                    std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
                         rule_index, error_code);
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
 
                 if (result) {
                     char cstr[1024];
-                    snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01" "%s",
+                    std::snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01" "%s",
                         type, pattern.c_str());
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
@@ -914,7 +914,7 @@ public:
             }
         }
         else if (!this->server_message.compare("KeepAlive=OK")) {
-            if (this->verbose & RDPVerboseFlags::sesprobe_repetitive) {
+            if (this->verbose & RDPVerbose::sesprobe_repetitive) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
                         "Recevied Keep-Alive from Session Probe.");
@@ -923,7 +923,7 @@ public:
         }
         else if (!this->server_message.compare("SESSION_ENDING_IN_PROGRESS")) {
             this->authentifier->log4(
-                (this->verbose & RDPVerboseFlags::sesprobe),
+                (this->verbose & RDPVerbose::sesprobe),
                 "SESSION_ENDING_IN_PROGRESS");
 
             this->session_probe_ending_in_progress = true;
@@ -959,7 +959,7 @@ public:
                 if (!order.compare("PASSWORD_TEXT_BOX_GET_FOCUS")) {
                     std::string info("status='" + parameters[0] + "'");
                     this->authentifier->log4(
-                        (this->verbose & RDPVerboseFlags::sesprobe),
+                        (this->verbose & RDPVerbose::sesprobe),
                         order.c_str(), info.c_str());
 
                     if (parameters.size() == 1) {
@@ -973,7 +973,7 @@ public:
                 else if (!order.compare("UAC_PROMPT_BECOME_VISIBLE")) {
                     std::string info("status='" + parameters[0] + "'");
                     this->authentifier->log4
-                        ((this->verbose & RDPVerboseFlags::sesprobe),
+                        ((this->verbose & RDPVerbose::sesprobe),
                         order.c_str(), info.c_str());
 
                     if (parameters.size() == 1) {
@@ -990,7 +990,7 @@ public:
                             "identifier='" + parameters[0] +
                             "' display_name='" + parameters[1] + "'");
                         this->authentifier->log4(
-                            (this->verbose & RDPVerboseFlags::sesprobe),
+                            (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
 
                         this->front.set_keylayout(
@@ -1005,7 +1005,7 @@ public:
                     if (parameters.size() == 1) {
                         std::string info("command_line='" + parameters[0] + "'");
                         this->authentifier->log4(
-                            (this->verbose & RDPVerboseFlags::sesprobe),
+                            (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
                     }
                     else {
@@ -1021,23 +1021,19 @@ public:
                             "rule='" + parameters[0] +
                             "' application_name='" + parameters[1]);
                         this->authentifier->log4(
-                            (this->verbose & RDPVerboseFlags::sesprobe),
+                            (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
 
                         if (deny) {
                             char message[4096];
 
-#ifdef __GNUG__
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
-# endif
-                            snprintf(message, sizeof(message),
+                            REDEMPTION_DIAGNOSTIC_PUSH
+                            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+                            std::snprintf(message, sizeof(message),
                                 TR("process_interrupted_security_policies",
                                    this->param_lang),
                                 parameters[1].c_str());
-#ifdef __GNUG__
-    #pragma GCC diagnostic pop
-# endif
+                            REDEMPTION_DIAGNOSTIC_POP
 
                             std::string string_message = message;
                             this->mod.display_osd_message(string_message);
@@ -1072,7 +1068,7 @@ public:
                                 "' dst_addr='" + parameters[3] +
                                 "' dst_port='" + parameters[4] + "'");
                             this->authentifier->log4(
-                                (this->verbose & RDPVerboseFlags::sesprobe),
+                                (this->verbose & RDPVerbose::sesprobe),
                                 order.c_str(), info.c_str());
 
                             if (deny) {
@@ -1085,17 +1081,13 @@ public:
                                 else {
                                     char message[4096];
 
-#ifdef __GNUG__
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
-# endif
-                                    snprintf(message, sizeof(message),
+                                    REDEMPTION_DIAGNOSTIC_PUSH
+                                    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+                                    std::snprintf(message, sizeof(message),
                                         TR("process_interrupted_security_policies",
                                            this->param_lang),
                                         parameters[1].c_str());
-#ifdef __GNUG__
-    #pragma GCC diagnostic pop
-# endif
+                                    REDEMPTION_DIAGNOSTIC_POP
 
                                     std::string string_message = message;
                                     this->mod.display_osd_message(string_message);
@@ -1127,7 +1119,7 @@ public:
                                 "' app_name='" + parameters[1] +
                                 "' app_cmd_line='" + parameters[2] + "'");
                             this->authentifier->log4(
-                                (this->verbose & RDPVerboseFlags::sesprobe),
+                                (this->verbose & RDPVerbose::sesprobe),
                                 order.c_str(), info.c_str());
 
                             if (deny) {
@@ -1140,17 +1132,14 @@ public:
                                 else {
                                     char message[4096];
 
-#ifdef __GNUG__
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
-# endif
-                                    snprintf(message, sizeof(message),
-                                        TR("process_interrupted_security_policies",
-                                           this->param_lang),
-                                        parameters[1].c_str());
-#ifdef __GNUG__
-    #pragma GCC diagnostic pop
-# endif
+
+                                    REDEMPTION_DIAGNOSTIC_PUSH
+                                    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+                                    std::snprintf(message, sizeof(message),
+                                                TR("process_interrupted_security_policies",
+                                                this->param_lang),
+                                                parameters[1].c_str());
+                                    REDEMPTION_DIAGNOSTIC_POP
 
                                     std::string string_message = message;
                                     this->mod.display_osd_message(string_message);
@@ -1167,7 +1156,7 @@ public:
                         std::string info(
                             "source='Probe' window='" + parameters[0] + "'");
                         this->authentifier->log4(
-                            (this->verbose & RDPVerboseFlags::sesprobe),
+                            (this->verbose & RDPVerbose::sesprobe),
                             "TITLE_BAR", info.c_str());
                     }
                     else {
@@ -1180,7 +1169,7 @@ public:
                             "windows='" + parameters[0] +
                             "' button='" + parameters[1] + "'");
                         this->authentifier->log4(
-                            (this->verbose & RDPVerboseFlags::sesprobe),
+                            (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
                     }
                     else {
@@ -1193,7 +1182,7 @@ public:
                             "windows='" + parameters[0] +
                             "' edit='" + parameters[1] + "'");
                         this->authentifier->log4(
-                            (this->verbose & RDPVerboseFlags::sesprobe),
+                            (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
                     }
                     else {

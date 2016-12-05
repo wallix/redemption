@@ -147,8 +147,8 @@ struct ModRDPParams {
     Font const & font;
     Theme const & theme;
 
-    RDPVerboseFlags verbose;
-    BmpCache::VerboseFlags cache_verbose = BmpCache::VerboseFlags::none;
+    RDPVerbose verbose;
+    BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
     ModRDPParams( const char * target_user
                 , const char * target_password
@@ -157,7 +157,7 @@ struct ModRDPParams {
                 , int key_flags
                 , Font const & font
                 , Theme const & theme
-                , RDPVerboseFlags verbose
+                , RDPVerbose verbose
                 )
         : target_user(target_user)
         , target_password(target_password)

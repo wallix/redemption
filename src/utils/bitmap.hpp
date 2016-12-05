@@ -41,7 +41,8 @@
 #include "utils/stream.hpp"
 #include "utils/rect.hpp"
 #include "utils/bitmap_data_allocator.hpp"
-#include "utils/sugar/compiler_attributes.hpp"
+
+#include "cxx/attributes.hpp"
 
 #include "utils/sugar/array_view.hpp"
 #include "system/ssl_sha1.hpp"
@@ -708,7 +709,7 @@ private:
                         mask = 1;
                         fom_mask = input[0]; input++;
                     }
-                    CPP_FALLTHROUGH;
+                    REDEMPTION_CXX_FALLTHROUGH;
                 case SPECIAL_FGBG_1:
                 case SPECIAL_FGBG_2:
                     if (mask & fom_mask){

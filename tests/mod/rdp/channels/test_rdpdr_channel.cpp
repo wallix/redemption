@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
                     511 // verbose
                    );
 
-    RDPVerboseFlags verbose = RDPVerboseFlags::rdpdr | RDPVerboseFlags::rdpdr_dump;
+    RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     FileSystemVirtualChannel::Params file_system_virtual_channel_params;
 
@@ -231,7 +231,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
                     511 // verbose
                    );
 
-    RDPVerboseFlags verbose = RDPVerboseFlags::rdpdr | RDPVerboseFlags::rdpdr_dump;
+    RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     FileSystemVirtualChannel::Params file_system_virtual_channel_params;
 
@@ -355,7 +355,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
                     511 // verbose
                    );
 
-    RDPVerboseFlags verbose = RDPVerboseFlags::rdpdr | RDPVerboseFlags::rdpdr_dump;
+    RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     FileSystemVirtualChannel::Params file_system_virtual_channel_params;
 
@@ -479,7 +479,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
                     511 // verbose
                    );
 
-    RDPVerboseFlags verbose = RDPVerboseFlags::rdpdr | RDPVerboseFlags::rdpdr_dump;
+    RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     FileSystemVirtualChannel::Params file_system_virtual_channel_params;
 
@@ -603,7 +603,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
                     511 // verbose
                    );
 
-    RDPVerboseFlags verbose = RDPVerboseFlags::rdpdr | RDPVerboseFlags::rdpdr_dump;
+    RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     FileSystemVirtualChannel::Params file_system_virtual_channel_params;
 
@@ -727,7 +727,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
                     511 // verbose
                    );
 
-    RDPVerboseFlags verbose = RDPVerboseFlags::rdpdr | RDPVerboseFlags::rdpdr_dump;
+    RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     FileSystemVirtualChannel::Params file_system_virtual_channel_params;
 
@@ -853,7 +853,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
                     511 // verbose
                    );
 
-    RDPVerboseFlags verbose = RDPVerboseFlags::rdpdr | RDPVerboseFlags::rdpdr_dump;
+    RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     FileSystemVirtualChannel::Params file_system_virtual_channel_params;
 
