@@ -26,7 +26,7 @@
 #include "edit.hpp"
 #include "keyboard/keymap2.hpp"
 #include "gdi/graphic_api.hpp"
-#include "utils/sugar/compiler_attributes.hpp"
+#include "cxx/attributes.hpp"
 
 class WidgetPassword : public WidgetEdit {
 public:
@@ -183,7 +183,7 @@ public:
             case Keymap2::KEVENT_DELETE:
             case Keymap2::KEVENT_KEY:
                 this->set_masked_text();
-                CPP_FALLTHROUGH;
+                REDEMPTION_CXX_FALLTHROUGH;
             case Keymap2::KEVENT_LEFT_ARROW:
             case Keymap2::KEVENT_UP_ARROW:
             case Keymap2::KEVENT_RIGHT_ARROW:

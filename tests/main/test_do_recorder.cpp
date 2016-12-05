@@ -727,7 +727,7 @@ BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
     BOOST_CHECK(!reader.read_meta_file(meta_line));
 }
 
-inline int hmac_old_fn(char * buffer)
+inline int hmac_2016_fn(char * buffer)
 {
 
     uint8_t hmac_key[32] = {
@@ -787,12 +787,14 @@ inline int hmac_old_fn(char * buffer)
 //derivator=['0x63', '0x67', '0x72', '0x6f', '0x73', '0x6a', '0x65', '0x61', '0x6e', '0x40', '0x31', '0x30', '0x2e', '0x31', '0x30', '0x2e', '0x34', '0x33', '0x2e', '0x31', '0x33', '0x2c', '0x70', '0x72', '0x6f', '0x78', '0x79', '0x75', '0x73', '0x65', '0x72', '0x40', '0x6c', '0x6f', '0x63', '0x61', '0x6c', '0x40', '0x77', '0x69', '0x6e', '0x32', '0x30', '0x30', '0x38', '0x2c', '0x32', '0x30', '0x31', '0x36', '0x31', '0x30', '0x32', '0x35', '0x2d', '0x32', '0x31', '0x33', '0x31', '0x35', '0x33', '0x2c', '0x77', '0x61', '0x62', '0x2d', '0x34', '0x2d', '0x32', '0x2d', '0x34', '0x2e', '0x79', '0x6f', '0x75', '0x72', '0x64', '0x6f', '0x6d', '0x61', '0x69', '0x6e', '0x2c', '0x33', '0x32', '0x34', '0x33', '0x2e', '0x6d', '0x77', '0x72', '0x6d']
 //key=['0x63', '0xfc', '0x3a', '0xa', '0x32', '0x36', '0x41', '0x8a', '0x7f', '0xaa', '0x8d', '0x88', '0xbb', '0x33', '0x73', '0x34', '0x6a', '0xdb', '0xa9', '0x42', '0x96', '0xbb', '0xcd', '0x6', '0xbe', '0xf8', '0xc4', '0x7', '0x8b', '0xa', '0x80', '0xc4']
 
-inline int trace_old_fn(char * base, int len, char * buffer, unsigned oldscheme)
+inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldscheme)
 {
+    static int i = 0;
+    LOG(LOG_INFO, "trace_20161025_fn(%*s,%d,oldscheme=%d)->\n i=%d", len, base, len, oldscheme, i );
+
     (void)base;
     (void)len;
     // in real uses actual trace_key is derived from base and some master key
-    static int i = 0;
     uint8_t old_trace_key[10][32] = {
     // cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm
     {
@@ -821,10 +823,11 @@ inline int trace_old_fn(char * base, int len, char * buffer, unsigned oldscheme)
         0x8f, 0x17, 0x01, 0xd8, 0x87, 0xd7, 0xa1, 0x1b,
         0x40, 0x02, 0x68, 0x8d, 0xe4, 0x22, 0x2c, 0x42,
         0xe1, 0x30, 0x8e, 0x37, 0xfa, 0x2c, 0xfa, 0xef,
-        0xe, 0x40, 0x87, 0xf1, 0x57, 0x94, 0x42, 0x96
+        0x0e, 0x40, 0x87, 0xf1, 0x57, 0x94, 0x42, 0x96
     };
         
     memcpy(buffer, oldscheme?old_trace_key[i]:new_trace_key, 32);
+    hexdump_d(buffer, 32);
     if (oldscheme) { i++; }
     return 0;
 }
@@ -832,39 +835,22 @@ inline int trace_old_fn(char * base, int len, char * buffer, unsigned oldscheme)
 
 //BOOST_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
 //{
-//    Inifile ini;
-//    ini.set<cfg::debug::config>(false);
-//    UdevRandom rnd;
-//    CryptoContext cctx;
-//    cctx.set_get_hmac_key_cb(hmac_old_fn);
-//    cctx.set_get_trace_key_cb(trace_old_fn);
+//    // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
+
 
 //    char const * argv[] {
-//        "verifier.py",
-//        "redver",
-//        "-i",
-//        "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
+//        "verifier.py", "redver",
+//        "-i", "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
 //            "-192304,wab-4-2-4.yourdomain,5560.mwrm",
-//        "--hash-path",
-//            FIXTURES_PATH "/verifier/hash/",
-//        "--mwrm-path",
-//            FIXTURES_PATH "/verifier/recorded/",
-//        "--verbose",
-//            "10",
+//        "--hash-path", FIXTURES_PATH "/verifier/hash/",
+//        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+//        "--verbose", "10",
 //    };
 //    int argc = sizeof(argv)/sizeof(char*);
 
 //    BOOST_CHECK_EQUAL(true, true);
 
-//    int res = -1;
-//    BOOST_CHECK_NO_THROW(
-//        res = app_verifier(ini,
-//            argc, argv
-//          , "ReDemPtion VERifier " VERSION ".\n"
-//            "Copyright (C) Wallix 2010-2016.\n"
-//            "Christophe Grosjean, Raphael Zhou."
-//          , cctx)
-//    );
+//    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
 //    BOOST_CHECK_EQUAL(1, res);
 //}
 

@@ -105,10 +105,8 @@ namespace {
         (void)format2;
         (void)std::initializer_list<int>{(void(args), 1)...};
 #else
-        # ifdef __GNUG__
-            #pragma GCC diagnostic push
-            #pragma GCC diagnostic ignored "-Wformat-nonliteral"
-        #endif
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
 
         # if defined(LOGPRINT) || defined(IN_IDE_PARSER)
         (void)priority;
@@ -140,9 +138,7 @@ namespace {
         }
         # undef LOGSYSLOG_REDEMPTION_SESSION_INTERNAL_PRINTF
 
-        #ifdef __GNUG__
-            #pragma GCC diagnostic pop
-        #endif
+        REDEMPTION_DIAGNOSTIC_POP
 #endif
     }
 }

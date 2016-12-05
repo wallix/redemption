@@ -92,7 +92,6 @@
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/splitter.hpp"
-#include "utils/sugar/compiler_attributes.hpp"
 #include "utils/timeout.hpp"
 
 #include <cstdlib>
