@@ -833,6 +833,29 @@ inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldsc
 }
 
 
+BOOST_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
+{
+    // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
+
+
+    char const * argv[] {
+        "verifier.py", "reddec",
+        "-i", FIXTURES_PATH "/verifier/recorded/" "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
+            "-192304,wab-4-2-4.yourdomain,5560.mwrm",
+//        "--hash-path", FIXTURES_PATH "/verifier/hash/",
+//        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "-o", "/tmp/out.txt",
+        "--verbose", "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    BOOST_CHECK_EQUAL(true, true);
+
+    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    BOOST_CHECK_EQUAL(0, res);
+}
+
+
 //BOOST_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
 //{
 //    // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10

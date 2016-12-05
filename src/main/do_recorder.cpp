@@ -18,17 +18,20 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
-
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdint.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-
-#include "system/ssl_calls.hpp"
-
+#include <snappy-c.h>
+#include <stdint.h>
+#include <unistd.h>
 #include "openssl_crypto.hpp"
+
+#include "utils/log.hpp"
+#include "transport/transport.hpp"
+#include "system/ssl_calls.hpp"
 
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/exchange.hpp"
@@ -37,14 +40,12 @@
 #include "utils/fdbuf.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/urandom_read.hpp"
-#include "utils/log.hpp"
 #include "utils/word_identification.hpp"
 #include "configs/config.hpp"
 #include "program_options/program_options.hpp"
 
 #include "main/version.hpp"
 
-#include "transport/in_filename_transport.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "transport/out_file_transport.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
@@ -56,9 +57,6 @@
 #include "capture/FileToChunk.hpp"
 #include "capture/GraphicToFile.hpp"
 #include "utils/apps/recording_progress.hpp"
-
-
-
 
 
 struct HashHeader {
@@ -1737,37 +1735,30 @@ extern "C" {
 
                 OpenSSL_add_all_digests();
 
-                size_t base_len = 0;
-                const uint8_t * base = reinterpret_cast<const uint8_t *>(
-                                basename_len(input_filename.c_str(), base_len));
-
-                InFilenameTransport in_t(cctx, fd, base, base_len);
-                if (!in_t.is_encrypted()){
-                    std::cout << "Input file is unencrypted.\n\n";
-                    return 0;
-                }
+                ifile_read_encrypted in_t(cctx, 1);
 
                 const int fd1 = open(output_filename.c_str(), O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
+
                 if (fd1 != -1) {
                     OutFileTransport out_t(fd1);
 
                     char mem[4096];
-                    char *buf;
 
                     try {
+                        in_t.open(input_filename.c_str());
                         while (1) {
-                            buf = mem;
-                            in_t.recv(&buf, sizeof(mem));
-                            out_t.send(mem, buf-mem);
+                            ssize_t res = in_t.read(mem, sizeof(mem));
+                            if (res == 0){
+                                break;
+                            }
+                            if (res < 0){
+                                LOG(LOG_INFO, "recv failed");
+                            }
+                            out_t.send(mem, res);
                         }
                     }
                     catch (Error const & e) {
-                        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-                            std::cerr << "Exception code: " << e.id << std::endl << std::endl;
-                        }
-                        else {
-                            out_t.send(mem, buf - mem);
-                        }
+                        LOG(LOG_INFO, "Exited on exception");
                     }
                     close(fd);
                 }
