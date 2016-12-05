@@ -237,10 +237,11 @@ private:
 };
 
 
-#include "utils/sugar/compiler_attributes.hpp"
 #include "utils/sugar/local_fd.hpp"
 #include "utils/stream.hpp"
 #include "utils/log.hpp"
+
+#include "cxx/attributes.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -406,7 +407,7 @@ inline void Font::load_from_file(char const * file_path)
                             " of glyph %zu (expected %u, got %zu)",
                             file_path, index, datasize, stream.in_remain()
                         );
-                        CPP_FALLTHROUGH;
+                        REDEMPTION_CXX_FALLTHROUGH;
                     case Read::eof:
                         item.data.reset();
                         return ;

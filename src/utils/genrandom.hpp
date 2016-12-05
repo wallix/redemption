@@ -30,7 +30,7 @@
 #include <cstdint>
 
 #include "utils/log.hpp"
-#include "utils/sugar/compiler_attributes.hpp"
+#include "cxx/attributes.hpp"
 
 
 class Random
@@ -91,9 +91,9 @@ public:
         if (size % 4) {
             uint32_t r{this->rand32()};
             switch (size % 4) {
-                case 3: *p++ = r >> 0; CPP_FALLTHROUGH;
-                case 2: *p++ = r >> 8; CPP_FALLTHROUGH;
-                case 1: *p++ = r >> 16; CPP_FALLTHROUGH;
+                case 3: *p++ = r >> 0; REDEMPTION_CXX_FALLTHROUGH;
+                case 2: *p++ = r >> 8; REDEMPTION_CXX_FALLTHROUGH;
+                case 1: *p++ = r >> 16; REDEMPTION_CXX_FALLTHROUGH;
                 default:;
             }
         }*/

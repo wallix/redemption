@@ -48,8 +48,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect)
     WidgetRect wrect(drawable.gd, Rect(0,0,800,600), parent, notifier, id, color);
 
     // ask to widget to redraw at it's current position
-    wrect.rdp_input_invalidate(Rect(0 + wrect.dx(),
-                                    0 + wrect.dy(),
+    wrect.rdp_input_invalidate(Rect(0 + wrect.x(),
+                                    0 + wrect.y(),
                                     wrect.cx(),
                                     wrect.cy()));
 
@@ -79,8 +79,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
     WidgetRect wrect(drawable.gd, Rect(-100,-100,200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at it's current position
-    wrect.rdp_input_invalidate(Rect(0 + wrect.dx(),
-                                    0 + wrect.dy(),
+    wrect.rdp_input_invalidate(Rect(0 + wrect.x(),
+                                    0 + wrect.y(),
                                     wrect.cx(),
                                     wrect.cy()));
 
@@ -110,8 +110,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
     WidgetRect wrect(drawable.gd, Rect(-100,500,200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at it's current position
-    wrect.rdp_input_invalidate(Rect(0 + wrect.dx(),
-                                    0 + wrect.dy(),
+    wrect.rdp_input_invalidate(Rect(0 + wrect.x(),
+                                    0 + wrect.y(),
                                     wrect.cx(),
                                     wrect.cy()));
 
@@ -141,8 +141,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
     WidgetRect wrect(drawable.gd, Rect(700,500,200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at it's current position
-    wrect.rdp_input_invalidate(Rect(0 + wrect.dx(),
-                                    0 + wrect.dy(),
+    wrect.rdp_input_invalidate(Rect(0 + wrect.x(),
+                                    0 + wrect.y(),
                                     wrect.cx(),
                                     wrect.cy()));
 
@@ -172,8 +172,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
     WidgetRect wrect(drawable.gd, Rect(700,-100,200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at it's current position
-    wrect.rdp_input_invalidate(Rect(0 + wrect.dx(),
-                                    0 + wrect.dy(),
+    wrect.rdp_input_invalidate(Rect(0 + wrect.x(),
+                                    0 + wrect.y(),
                                     wrect.cx(),
                                     wrect.cy()));
 
@@ -203,8 +203,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
     WidgetRect wrect(drawable.gd, Rect(300, 200,200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at it's current position
-    wrect.rdp_input_invalidate(Rect(0 + wrect.dx(),
-                                    0 + wrect.dy(),
+    wrect.rdp_input_invalidate(Rect(0 + wrect.x(),
+                                    0 + wrect.y(),
                                     wrect.cx(),
                                     wrect.cy()));
 
@@ -234,8 +234,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip)
     WidgetRect wrect(drawable.gd, Rect(300,200, 200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at position 400,300 and of size 100x100. After clip the size is of 100x50
-    wrect.rdp_input_invalidate(Rect(150 + wrect.dx(),
-                                    100 + wrect.dy(),
+    wrect.rdp_input_invalidate(Rect(150 + wrect.x(),
+                                    100 + wrect.y(),
                                     100,
                                     100));
 
@@ -265,8 +265,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
     WidgetRect wrect(drawable.gd, Rect(700,-100,200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at position 720,20 and of size 50x50
-    wrect.rdp_input_invalidate(Rect(20 + wrect.dx(),
-                                    120 + wrect.dy(),
+    wrect.rdp_input_invalidate(Rect(20 + wrect.x(),
+                                    120 + wrect.y(),
                                     50,
                                     50));
 

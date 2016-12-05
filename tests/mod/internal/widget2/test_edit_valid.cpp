@@ -61,8 +61,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
 
     parent.set_widget_focus(&wedit, Widget2::focus_reason_tabkey);
     // ask to widget to redraw at it's current position
-    wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
-                                    0 + wedit.dy(),
+    wedit.rdp_input_invalidate(Rect(0 + wedit.x(),
+                                    0 + wedit.y(),
                                     wedit.cx(),
                                     wedit.cy()));
 
@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
 
     parent.add_widget(&wedit);
     // ask to widget to redraw at it's current position
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid2.png");
 
@@ -113,13 +113,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     }
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit.centerx(), wedit.centery(), nullptr);
+                          wedit.x() + 2, wedit.y() + 2, nullptr);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit.centerx(), wedit.centery(), nullptr);
+                          wedit.x() + 2, wedit.y() + 2, nullptr);
 
     // ask to widget to redraw at it's current position
-    wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
-                                    0 + wedit.dy(),
+    wedit.rdp_input_invalidate(Rect(0 + wedit.x(),
+                                    0 + wedit.y(),
                                     wedit.cx(),
                                     wedit.cy()));
 
@@ -133,8 +133,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
 
     wedit.set_text("Ylajali");
 
-    wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
-                                    0 + wedit.dy(),
+    wedit.rdp_input_invalidate(Rect(0 + wedit.x(),
+                                    0 + wedit.y(),
                                     wedit.cx(),
                                     wedit.cy()));
 
@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
 
     wedit.set_xy(192,242);
 
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid5.png");
 
@@ -186,7 +186,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     parent.add_widget(&wedit1);
     parent.add_widget(&wedit2);
     // ask to widget to redraw at it's current position
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid6.png");
 
@@ -198,11 +198,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     }
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit1.centerx(), wedit1.centery(), nullptr);
+                          wedit1.x() + 50, wedit1.y() + 3, nullptr);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit1.centerx(), wedit1.centery(), nullptr);
+                          wedit1.x() + 50, wedit1.y() + 3, nullptr);
 
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid7.png");
 
@@ -224,7 +224,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid8.png");
 
@@ -238,7 +238,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid9.png");
 
@@ -273,7 +273,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     parent.add_widget(&wedit1);
     parent.add_widget(&wedit2);
     // ask to widget to redraw at it's current position
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel1.png");
 
@@ -285,11 +285,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     }
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit1.centerx(), wedit1.centery(), nullptr);
+                          wedit1.x() + 50, wedit1.y() + 2, nullptr);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit1.centerx(), wedit1.centery(), nullptr);
+                          wedit1.x() + 50, wedit1.y() + 2, nullptr);
 
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel2.png");
 
@@ -311,7 +311,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel3.png");
 
@@ -325,7 +325,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel4.png");
 
@@ -338,7 +338,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel5.png");
 
@@ -397,7 +397,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     parent.add_widget(&wedit1);
     parent.add_widget(&wedit2);
     // ask to widget to redraw at it's current position
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass1.png");
 
@@ -409,11 +409,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     }
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit1.centerx(), wedit1.centery(), nullptr);
+                          wedit1.x() + 50, wedit1.y() + 2, nullptr);
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit1.centerx(), wedit1.centery(), nullptr);
+                          wedit1.x() + 50, wedit1.y() + 2, nullptr);
 
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass2.png");
 
@@ -435,7 +435,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass3.png");
 
@@ -449,7 +449,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass4.png");
 
@@ -462,7 +462,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass5.png");
 
@@ -546,8 +546,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     parent.set_widget_focus(&wedit, Widget2::focus_reason_tabkey);
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit.lx() - 5, wedit.centery(), nullptr);
-    parent.rdp_input_invalidate(parent.rect);
+                          wedit.right() - 5, wedit.y() + 2, nullptr);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush1.png");
 
@@ -561,8 +561,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
 
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit.lx() - 5, wedit.centery(), nullptr);
-    parent.rdp_input_invalidate(parent.rect);
+                          wedit.right() - 5, wedit.y() + 2, nullptr);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush2.png");
 
@@ -578,8 +578,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     notifier.sender = nullptr;
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit.lx() - 5, wedit.centery(), nullptr);
-    parent.rdp_input_invalidate(parent.rect);
+                          wedit.right() - 5, wedit.y() + 2, nullptr);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush3.png");
 
@@ -591,8 +591,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
 
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit.centerx(), wedit.centery(), nullptr);
-    parent.rdp_input_invalidate(parent.rect);
+                          wedit.x() + 2, wedit.y() + 2, nullptr);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush4.png");
 
@@ -609,8 +609,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     notifier.sender = nullptr;
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit.lx() - 5, wedit.centery(), nullptr);
-    parent.rdp_input_invalidate(parent.rect);
+                          wedit.right() - 5, wedit.y() + 2, nullptr);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush5.png");
 
@@ -622,7 +622,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                           0, 0, nullptr);
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush6.png");
 
@@ -644,7 +644,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush7.png");
 

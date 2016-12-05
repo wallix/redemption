@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
                          Translator{}, Theme{});
 
     // ask to widget to redraw at it's current position
-    flat_login.rdp_input_invalidate(flat_login.rect);
+    flat_login.rdp_input_invalidate(flat_login.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login.png");
 
@@ -75,8 +75,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
                          Translator{}, Theme{});
 
     // ask to widget to redraw at it's current position
-    flat_login.rdp_input_invalidate(Rect(0 + flat_login.dx(),
-                                      0 + flat_login.dy(),
+    flat_login.rdp_input_invalidate(Rect(0 + flat_login.x(),
+                                      0 + flat_login.y(),
                                       flat_login.cx(),
                                       flat_login.cy()));
 
@@ -129,8 +129,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
 
     // ask to widget to redraw at it's current position
-    flat_login.rdp_input_invalidate(Rect(0 + flat_login.dx(),
-                                      0 + flat_login.dy(),
+    flat_login.rdp_input_invalidate(Rect(0 + flat_login.x(),
+                                      0 + flat_login.y(),
                                       flat_login.cx(),
                                       flat_login.cy()));
 
@@ -168,8 +168,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
                          Translator{}, Theme{});
 
     // ask to widget to redraw at it's current position
-    flat_login.rdp_input_invalidate(Rect(0 + flat_login.dx(),
-                                      0 + flat_login.dy(),
+    flat_login.rdp_input_invalidate(Rect(0 + flat_login.x(),
+                                      0 + flat_login.y(),
                                       flat_login.cx(),
                                       flat_login.cy()));
 
@@ -183,7 +183,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     }
 
     flat_login.rdp_input_mouse(MOUSE_FLAG_MOVE,
-                               flat_login.helpicon.centerx(), flat_login.helpicon.centery(), nullptr);
+                               flat_login.helpicon.x() + flat_login.helpicon.cx() / 2,
+                               flat_login.helpicon.y() + flat_login.helpicon.cy() / 2, nullptr);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
 
@@ -210,8 +211,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
                          Translator{}, Theme{});
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    flat_login.rdp_input_invalidate(Rect(20 + flat_login.dx(),
-                                      0 + flat_login.dy(),
+    flat_login.rdp_input_invalidate(Rect(20 + flat_login.x(),
+                                      0 + flat_login.y(),
                                       flat_login.cx(),
                                       flat_login.cy()));
 
@@ -241,8 +242,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip2)
                          Translator{}, Theme{});
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    flat_login.rdp_input_invalidate(Rect(20 + flat_login.dx(),
-                                      5 + flat_login.dy(),
+    flat_login.rdp_input_invalidate(Rect(20 + flat_login.x(),
+                                      5 + flat_login.y(),
                                       30,
                                       10));
 

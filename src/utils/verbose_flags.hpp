@@ -71,18 +71,18 @@ to_verbose_flags(uint32_t verbose)
 { return {verbose}; }
 
 #define REDEMPTION_VERBOSE_FLAGS(visibility, verbose_member_name)   \
-    enum class VerboseFlags : uint32_t;                             \
+    enum class Verbose : uint32_t;                             \
                                                                     \
-    friend VerboseFlags operator | (VerboseFlags x, VerboseFlags y) \
-    { return VerboseFlags(uint32_t(x) | uint32_t(y)); }             \
-    friend VerboseFlags operator & (VerboseFlags x, VerboseFlags y) \
-    { return VerboseFlags(uint32_t(x) & uint32_t(y)); }             \
+    friend Verbose operator | (Verbose x, Verbose y) \
+    { return Verbose(uint32_t(x) | uint32_t(y)); }             \
+    friend Verbose operator & (Verbose x, Verbose y) \
+    { return Verbose(uint32_t(x) & uint32_t(y)); }             \
                                                                     \
 visibility:                                                         \
-    implicit_bool_flags<VerboseFlags> const verbose_member_name;    \
+    implicit_bool_flags<Verbose> const verbose_member_name;    \
                                                                     \
 public:                                                             \
-    enum class VerboseFlags : uint32_t
+    enum class Verbose : uint32_t
 
 
 #define REDEMPTION_VERBOSE_FLAGS_DEF(enum_name)            \

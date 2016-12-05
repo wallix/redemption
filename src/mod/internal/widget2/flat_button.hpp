@@ -67,41 +67,68 @@ public:
     , logo(logo)
     , font(font)
     {
-        this->label_rect.x  = this->rect.x + 1;
-        this->label_rect.y  = this->rect.y + 1;
+        this->label_rect.x  = this->x() + 1;
+        this->label_rect.y  = this->y() + 1;
         this->label_rect.cx = 1;
         this->label_rect.cy = 1;
 
         this->set_text(text);
 
-        this->rect.cx = this->label_rect.cx + 3;
-        this->rect.cy = this->label_rect.cy + 3;
+        this->set_cx(this->label_rect.cx + 3);
+        this->set_cy(this->label_rect.cy + 3);
+    }
+
+    WidgetFlatButton(gdi::GraphicApi & drawable, /*int16_t x, int16_t y, */Widget2& parent,
+                     NotifyApi* notifier, const char * text/*, bool auto_resize*/,
+                     int group_id, int fgcolor, int bgcolor,
+                     int focuscolor, Font const & font, int xtext = 0, int ytext = 0,
+                     bool logo = false /*, notify_event_t notify_event = NOTIFY_SUBMIT*/)
+    : Widget2(drawable, /*Rect(x,y,1,1), */parent, notifier, group_id)
+    , auto_resize_(false)
+    , x_text(xtext)
+    , y_text(ytext)
+    , state(0)
+    , event(NOTIFY_SUBMIT)
+    , fg_color(fgcolor)
+    , bg_color(bgcolor)
+    , focus_color(focuscolor)
+    , logo(logo)
+    , font(font)
+    {
+/*
+        this->label_rect.x  = this->x() + 1;
+        this->label_rect.y  = this->y() + 1;
+        this->label_rect.cx = 1;
+        this->label_rect.cy = 1;
+*/
+        this->set_text(text);
+
+/*
+        this->set_cx(this->label_rect.cx + 3);
+        this->set_cy(this->label_rect.cy + 3);
+*/
     }
 
     ~WidgetFlatButton() override {}
 
-    void set_button_x(int x)
-    {
-        this->rect.x = x;
+    void set_x(int16_t x) override {
+        Widget2::set_x(x);
         this->label_rect.x = x + 1;
     }
 
-    void set_button_y(int y)
-    {
-        this->rect.y = y;
+    void set_y(int16_t y) override {
+        Widget2::set_y(y);
         this->label_rect.y = y + 1;
     }
 
-    void set_button_cx(int w)
-    {
-        this->rect.cx = w;
-        this->label_rect.cx = w - 3;
+    void set_cx(uint16_t cx) override {
+        Widget2::set_cx(cx);
+        this->label_rect.cx = cx - 3;
     }
 
-    void set_button_cy(int h)
-    {
-        this->rect.cy = h;
-        this->label_rect.cy = h - 3;
+    void set_cy(uint16_t cy) override {
+        Widget2::set_cy(cy);
+        this->label_rect.cy = cy - 3;
     }
 
     void set_text(char const* text) {
@@ -114,25 +141,20 @@ public:
             memcpy(this->buffer, text, max);
             this->buffer[max] = 0;
             if (this->auto_resize_) {
-                Dimension dm = WidgetLabel::get_optimal_dim(this->buffer, this->font, this->x_text, this->y_text);
+                Dimension dm = WidgetLabel::get_optimal_dim(this->font, this->buffer, this->x_text, this->y_text);
 
                 this->label_rect.cx = dm.w;
                 this->label_rect.cy = dm.h;
 
-                this->rect.cx = this->label_rect.cx + 3;
-                this->rect.cy = this->label_rect.cy + 3;
+                this->set_cx(this->label_rect.cx + 3);
+                this->set_cy(this->label_rect.cy + 3);
             }
         }
     }
 
-    void set_xy(int16_t x, int16_t y) override {
-        this->set_button_x(x);
-        this->set_button_y(y);
-    }
-
     void draw(const Rect& clip) override
     {
-        this->draw(clip, this->rect, this->drawable, this->logo, this->has_focus,
+        this->draw(clip, this->get_rect(), this->drawable, this->logo, this->has_focus,
             this->buffer, this->fg_color, this->bg_color, this->focus_color,
             this->label_rect, this->state, this->font, this->x_text, this->y_text);
     }
@@ -208,7 +230,7 @@ public:
     void swap_border_color()
     {
         this->drawable.begin_update();
-        this->draw(this->rect);
+        this->draw(this->get_rect());
         this->drawable.end_update();
     }
 
@@ -220,7 +242,7 @@ public:
         else if (device_flags == MOUSE_FLAG_BUTTON1 && this->state & 1) {
             this->state &= ~1;
             this->swap_border_color();
-            if (this->rect.contains_pt(x, y)) {
+            if (this->get_rect().contains_pt(x, y)) {
                 this->send_notify(this->event);
             }
         }
@@ -248,8 +270,10 @@ public:
     }
 
     Dimension get_optimal_dim() override {
-        gdi::TextMetrics tm(this->font, this->buffer);
-        return Dimension(tm.width + 2 * this->x_text + 4, tm.height + 2 * this->y_text + 4);
+//        gdi::TextMetrics tm(this->font, this->buffer);
+//        return Dimension(tm.width + 2 * this->x_text + 3, tm.height + 2 * this->y_text + 3);
+        Dimension dm = WidgetLabel::get_optimal_dim(this->font, this->buffer, this->x_text, this->y_text);
+        return Dimension(dm.w + 3, dm.h + 3);
     }
 
     static Dimension get_optimal_dim(Font const& font, char const* text, int xtext = 0, int ytext = 0) {
@@ -265,7 +289,9 @@ public:
             buffer[max] = 0;
         }
 
-        gdi::TextMetrics tm(font, buffer);
-        return Dimension(tm.width + 2 * xtext + 4, tm.height + 2 * ytext + 4);
+//        gdi::TextMetrics tm(font, buffer);
+//        return Dimension(tm.width + 2 * xtext + 3, tm.height + 2 * ytext + 3);
+        Dimension dm = WidgetLabel::get_optimal_dim(font, buffer, xtext, ytext);
+        return Dimension(dm.w + 3, dm.h + 3);
     }
 };

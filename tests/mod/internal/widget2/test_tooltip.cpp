@@ -110,9 +110,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     }
 
     rdp_input_mouse(MOUSE_FLAG_MOVE,
-                    label.centerx(), label.centery(),
+                    label.x() + label.cx() / 2, label.y() + label.cy() / 2,
                     nullptr, &parent, &label, "Test tooltip description");
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen2.png");
 
@@ -123,13 +123,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     }
 
     rdp_input_mouse(MOUSE_FLAG_MOVE,
-                    label2.centerx(), label2.centery(),
+                    label2.x() + label2.cx() / 2, label2.y() + label2.cy() / 2,
                     nullptr, &parent, &label2,
                     "Test tooltip<br>"
                     "description in<br>"
                     "multilines !");
 
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen3.png");
 
@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     parent.tooltip->set_text("Test tooltip<br>"
                              "Text modification<br>"
                              "text has been changed !");
-    parent.rdp_input_invalidate(parent.rect);
+    parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen4.png");
 

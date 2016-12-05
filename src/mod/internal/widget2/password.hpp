@@ -26,7 +26,7 @@
 #include "edit.hpp"
 #include "keyboard/keymap2.hpp"
 #include "gdi/graphic_api.hpp"
-#include "utils/sugar/compiler_attributes.hpp"
+#include "cxx/attributes.hpp"
 
 class WidgetPassword : public WidgetEdit {
 public:
@@ -49,16 +49,13 @@ public:
         gdi::TextMetrics tm(font, "*");
         this->w_char = tm.width;
         this->h_char = tm.height;
-        this->rect.cy = (this->masked_text.y_text) * 2 + this->h_char;
-        this->masked_text.rect.cx = this->rect.cx;
-        this->masked_text.rect.cy = this->rect.cy;
-        this->masked_text.rect.x += 1;
-        this->masked_text.rect.y += 1;
-        this->rect.cy += 2;
+        this->set_cy((this->masked_text.y_text) * 2 + this->h_char);
+        this->masked_text.set_cx(this->cx());
+        this->masked_text.set_cy(this->cy());
+        this->masked_text.set_x(this->masked_text.x() + 1);
+        this->masked_text.set_y(this->masked_text.y() + 1);
+        this->set_cy(this->cy() + 2);
         this->h_char -= 1;
-    }
-
-    ~WidgetPassword() override {
     }
 
     void set_masked_text() {
@@ -70,29 +67,24 @@ public:
         this->masked_text.set_text(buff);
     }
 
-    void set_edit_x(int x) override {
-        WidgetEdit::set_edit_x(x);
-        this->masked_text.rect.x = x + 1;
+    void set_x(int16_t x) override {
+        WidgetEdit::set_x(x);
+        this->masked_text.set_x(x + 1);
     }
 
-    void set_edit_y(int y) override {
-        WidgetEdit::set_edit_y(y);
-        this->masked_text.rect.y = y + 1;
+    void set_y(int16_t y) override {
+        WidgetEdit::set_y(y);
+        this->masked_text.set_y(y + 1);
     }
 
-    void set_edit_cx(int w) override {
-        WidgetEdit::set_edit_cx(w);
-        this->masked_text.rect.cx = w - 2;
+    void set_cx(uint16_t cx) override {
+        WidgetEdit::set_cx(cx);
+        this->masked_text.set_cx(cx - 2);
     }
 
-    void set_edit_cy(int h) override {
-        WidgetEdit::set_edit_cy(h);
-        this->masked_text.rect.cy = h - 2;
-    }
-
-    void set_xy(int16_t x, int16_t y) override {
-        this->set_edit_x(x);
-        this->set_edit_y(y);
+    void set_cy(uint16_t cy) override {
+        WidgetEdit::set_cy(cy);
+        this->masked_text.set_cy(cy - 2);
     }
 
     void set_text(const char * text) override {
@@ -103,7 +95,7 @@ public:
     void insert_text(const char* text) override {
         WidgetEdit::insert_text(text);
         this->set_masked_text();
-        this->refresh(this->rect);
+        this->refresh(this->get_rect());
     }
 
     //const char * show_text() {
@@ -132,8 +124,8 @@ public:
 
 
     Rect get_cursor_rect() const override {
-        return Rect(this->masked_text.x_text + this->edit_pos * this->w_char + this->dx() + 2,
-                    this->masked_text.y_text + this->masked_text.dy(),
+        return Rect(this->masked_text.x_text + this->edit_pos * this->w_char + this->x() + 2,
+                    this->masked_text.y_text + this->masked_text.y(),
                     1,
                     this->h_char);
     }
@@ -142,11 +134,11 @@ public:
         if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
             Rect old_cursor_rect = this->get_cursor_rect();
             size_t e = this->edit_pos;
-            if (x <= this->dx() + this->masked_text.x_text + this->w_char/2) {
+            if (x <= this->x() + this->masked_text.x_text + this->w_char/2) {
                 this->edit_pos = 0;
                 this->edit_buffer_pos = 0;
             }
-            else if (x >= int(this->dx() + this->masked_text.x_text + this->w_char * this->num_chars)) {
+            else if (x >= int(this->x() + this->masked_text.x_text + this->w_char * this->num_chars)) {
                 if (this->edit_pos < this->num_chars) {
                     this->edit_pos = this->num_chars;
                     this->edit_buffer_pos = this->buffer_size;
@@ -169,7 +161,7 @@ public:
                  // |   (x - dx - x_text)
                  // |
 
-                this->edit_pos = std::min<size_t>((x - this->dx() - this->masked_text.x_text - this->w_char/2) / this->w_char, this->num_chars-1);
+                this->edit_pos = std::min<size_t>((x - this->x() - this->masked_text.x_text - this->w_char/2) / this->w_char, this->num_chars-1);
                 this->edit_buffer_pos = UTF8GetPos(reinterpret_cast<uint8_t*>(&this->label.buffer[0]), this->edit_pos);
             }
             if (e != this->edit_pos) {
@@ -191,7 +183,7 @@ public:
             case Keymap2::KEVENT_DELETE:
             case Keymap2::KEVENT_KEY:
                 this->set_masked_text();
-                CPP_FALLTHROUGH;
+                REDEMPTION_CXX_FALLTHROUGH;
             case Keymap2::KEVENT_LEFT_ARROW:
             case Keymap2::KEVENT_UP_ARROW:
             case Keymap2::KEVENT_RIGHT_ARROW:
@@ -200,7 +192,7 @@ public:
             case Keymap2::KEVENT_HOME:
                 this->masked_text.shift_text(this->edit_pos * this->w_char);
 
-                this->refresh(this->rect);
+                this->refresh(this->get_rect());
                 break;
             default:
                 break;

@@ -100,7 +100,7 @@ struct RdpNego
 
     RdpNego(const bool tls, Transport & socket_trans, const char * username, bool nla,
             const char * target_host, const char krb, Random & rand, TimeObj & timeobj,
-            const VerboseFlags verbose = {})
+            const Verbose verbose = {})
     : flags(0)
     , tls(nla || tls)
     , nla(nla)
@@ -318,7 +318,7 @@ struct RdpNego
                                    this->hostname, this->target_host,
                                    this->krb, this->restricted_admin_mode,
                                    this->rand, this->timeobj,
-                                   this->verbose & VerboseFlags::credssp);
+                                   this->verbose & Verbose::credssp);
 
                 int res = 0;
                 bool fallback = false;
@@ -459,7 +459,7 @@ struct RdpNego
         char cookie[256];
         snprintf(cookie, 256, "Cookie: mstshash=%s\x0D\x0A", this->username);
         char * cookie_or_token = this->lb_info?this->lb_info:cookie;
-        if (this->verbose & VerboseFlags::negotiation) {
+        if (this->verbose & Verbose::negotiation) {
             LOG(LOG_INFO, "Send %s:", this->lb_info?"load_balance_info":"cookie");
             hexdump_c(cookie_or_token, strlen(cookie_or_token));
         }

@@ -46,7 +46,7 @@ public:
 
     void draw(const Rect& clip) override
     {
-        this->drawable.draw(RDPOpaqueRect(clip, color), this->rect);
+        this->drawable.draw(RDPOpaqueRect(clip, color), this->get_rect());
         this->WidgetComposite::draw(clip);
     }
 };
@@ -85,8 +85,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     }
 
     // ask to widget to redraw at position 150,500 and of size 800x600
-    wcomposite.rdp_input_invalidate(Rect(150 + wcomposite.dx(),
-                                         150 + wcomposite.dy(),
+    wcomposite.rdp_input_invalidate(Rect(150 + wcomposite.x(),
+                                         150 + wcomposite.y(),
                                          wcomposite.cx(),
                                          wcomposite.cy()));
 
@@ -100,8 +100,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     }
 
     // ask to widget to redraw at position 0,500 and of size 100x100
-    wcomposite.rdp_input_invalidate(Rect(0 + wcomposite.dx(),
-                                         500 + wcomposite.dy(),
+    wcomposite.rdp_input_invalidate(Rect(0 + wcomposite.x(),
+                                         500 + wcomposite.y(),
                                          100,
                                          100));
 
@@ -114,8 +114,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     }
 
     // ask to widget to redraw at it's current position
-    wcomposite.rdp_input_invalidate(Rect(0 + wcomposite.dx(),
-                                         0 + wcomposite.dy(),
+    wcomposite.rdp_input_invalidate(Rect(0 + wcomposite.x(),
+                                         0 + wcomposite.y(),
                                          wcomposite.cx(),
                                          wcomposite.cy()));
 

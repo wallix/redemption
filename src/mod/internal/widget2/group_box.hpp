@@ -57,7 +57,7 @@ public:
     }
 
     void draw(const Rect & clip) override {
-        Rect rect_intersect = clip.intersect(this->rect);
+        Rect rect_intersect = clip.intersect(this->get_rect());
         WidgetParent::draw_inner_free(rect_intersect, this->bg_color);
 
         // Box.
@@ -68,20 +68,20 @@ public:
         gdi::TextMetrics tm1(this->font, "bp");
         gdi::TextMetrics tm2(this->font, this->buffer);
 
-        auto gcy = this->rect.cy - tm1.height / 2 - border;
-        auto gcx = this->rect.cx - border * 2 + 1;
-        auto px = this->rect.x + border - 1;
+        auto gcy = this->cy() - tm1.height / 2 - border;
+        auto gcx = this->cx() - border * 2 + 1;
+        auto px = this->x() + border - 1;
 
         auto wlabel = text_margin * 2 + tm2.width;
-        auto y = this->rect.y + tm1.height / 2;
+        auto y = this->y() + tm1.height / 2;
 
 
         // Top Line and Label
         auto rect1 = Rect(px, y, text_indentation - text_margin - border + 2, 1);
         this->drawable.draw(RDPOpaqueRect(rect1, this->fg_color), clip);
         gdi::server_draw_text(this->drawable, this->font
-                           , this->rect.x + text_indentation
-                           , this->rect.y
+                           , this->x() + text_indentation
+                           , this->y()
                            , this->buffer
                            , this->fg_color
                            , this->bg_color
@@ -108,14 +108,13 @@ public:
     int get_bg_color() const override {
         return this->bg_color;
     }
+
     void move_xy(int16_t x, int16_t y) {
-        this->rect.x += x;
-        this->rect.y += y;
+        this->set_x(this->x() + x);
+        this->set_y(this->y() + y);
         this->WidgetParent::move_xy(x,y);
     }
-    void set_xy(int16_t x, int16_t y) override {
-        this->move_xy(x - this->rect.x, y - this->rect.y);
-    }
+
     const char * get_text() const {
         return this->buffer;
     }

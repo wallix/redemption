@@ -147,14 +147,14 @@ public:
             fg_color = (odd ? this->fg_color_1 : this->fg_color_2);
         }
 
-        uint16_t y = this->rect.y;
+        uint16_t y = this->y();
         for (uint16_t r_index = 0, r_count = std::min<uint16_t>(row_index, this->nb_rows);
              r_index < r_count; r_index++) {
             y += this->row_height[r_index] + this->border * 2;
         }
 
-        uint16_t x = this->rect.x;
-        Rect rectRow(x, y, this->rect.cx, this->row_height[row_index] + this->border * 2);
+        uint16_t x = this->x();
+        Rect rectRow(x, y, this->cx(), this->row_height[row_index] + this->border * 2);
         this->drawable.draw(RDPOpaqueRect(rectRow, bg_color), clip);
 
         x += this->border;
@@ -248,7 +248,7 @@ public:
                 if (this->widgets[column_index][row_index]) {
                     empty_row = false;
 
-                    if (this->widgets[column_index][row_index]->rect.contains_pt(x, y)) {
+                    if (this->widgets[column_index][row_index]->get_rect().contains_pt(x, y)) {
                         return this->widgets[column_index][row_index];
                     }
                 }
@@ -278,10 +278,10 @@ public:
 
             this->drawable.begin_update();
             if (previous_selection_y < this->nb_rows) {
-                this->draw_row(previous_selection_y, this->rect);
+                this->draw_row(previous_selection_y, this->get_rect());
             }
             if (this->selection_y < this->nb_rows) {
-                this->draw_row(this->selection_y, this->rect);
+                this->draw_row(this->selection_y, this->get_rect());
             }
             this->drawable.end_update();
         }
@@ -290,7 +290,7 @@ public:
     void refresh_selected() {
         if (this->selection_y < this->nb_rows) {
             this->drawable.begin_update();
-            this->draw_row(this->selection_y, this->rect);
+            this->draw_row(this->selection_y, this->get_rect());
             this->drawable.end_update();
         }
     }
@@ -314,10 +314,10 @@ public:
 
     void rdp_input_mouse(int device_flags, int mouse_x, int mouse_y, Keymap2 * keymap) override {
         if (device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
-            uint16_t y = this->rect.y;
+            uint16_t y = this->y();
             for (uint16_t row_index = 0; row_index < this->nb_rows; row_index++) {
-                uint16_t x = this->rect.x;
-                Rect rectRow(x, y, this->rect.cx, this->row_height[row_index] + this->border * 2);
+                uint16_t x = this->x();
+                Rect rectRow(x, y, this->cx(), this->row_height[row_index] + this->border * 2);
 
                 if (rectRow.contains_pt(mouse_x, mouse_y)) {
                     if (row_index != this->selection_y) {
@@ -419,7 +419,7 @@ void compute_format(WidgetGrid & grid, ColumnWidthStrategy * column_width_strate
     // TODO Optiomize this
     uint16_t unsatisfied_column_count = 0;
     // min
-    uint16_t unused_width = static_cast<int16_t>(grid.rect.cx - grid.border * 2 * grid.nb_columns);
+    uint16_t unused_width = static_cast<int16_t>(grid.cx() - grid.border * 2 * grid.nb_columns);
     for (uint16_t column_index = 0; column_index < grid.nb_columns; column_index++) {
         column_width[column_index] = column_width_strategies[column_index].min;
         unused_width -= static_cast<int16_t>(column_width_strategies[column_index].min);
@@ -482,7 +482,7 @@ void apply_format(WidgetGrid & grid, uint16_t * row_height, uint16_t * column_wi
         grid.set_row_height(row_index, row_height[row_index]);
         height += row_height[row_index] + grid.border * 2;
     }
-    grid.rect.cy = height;
+    grid.set_cy(height);
     for (uint16_t column_index = 0; column_index < grid.nb_columns; column_index++) {
         grid.set_column_width(column_index, column_width[column_index]);
     }

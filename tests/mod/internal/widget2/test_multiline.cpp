@@ -64,8 +64,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
                                auto_resize, id, fg_color, bg_color, font, xtext, ytext);
 
     // ask to widget to redraw at it's current position
-    wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.dx(),
-                                         0 + wmultiline.dy(),
+    wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.x(),
+                                         0 + wmultiline.y(),
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
@@ -104,8 +104,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
                                auto_resize, id, fg_color, bg_color, font);
 
     // ask to widget to redraw at it's current position
-    wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.dx(),
-                                         0 + wmultiline.dy(),
+    wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.x(),
+                                         0 + wmultiline.y(),
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
@@ -144,8 +144,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
                                auto_resize, id, fg_color, bg_color, font);
 
     // ask to widget to redraw at it's current position
-    wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.dx(),
-                                         0 + wmultiline.dy(),
+    wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.x(),
+                                         0 + wmultiline.y(),
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
@@ -184,8 +184,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
                                auto_resize, id, fg_color, bg_color, font);
 
     // ask to widget to redraw at it's current position
-    wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.dx(),
-                                         0 + wmultiline.dy(),
+    wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.x(),
+                                         0 + wmultiline.y(),
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
@@ -224,8 +224,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
                                auto_resize, id, fg_color, bg_color, font);
 
     // ask to widget to redraw at it's current position
-    wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.dx(),
-                                         0 + wmultiline.dy(),
+    wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.x(),
+                                         0 + wmultiline.y(),
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
@@ -264,8 +264,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
                                auto_resize, id, fg_color, bg_color, font);
 
     // ask to widget to redraw at it's current position
-    wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.dx(),
-                                         0 + wmultiline.dy(),
+    wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.x(),
+                                         0 + wmultiline.y(),
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
@@ -304,8 +304,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
                                auto_resize, id, fg_color, bg_color, font);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    wmultiline.rdp_input_invalidate(Rect(20 + wmultiline.dx(),
-                                         0 + wmultiline.dy(),
+    wmultiline.rdp_input_invalidate(Rect(20 + wmultiline.x(),
+                                         0 + wmultiline.y(),
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
@@ -344,8 +344,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
                                auto_resize, id, fg_color, bg_color, font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    wmultiline.rdp_input_invalidate(Rect(20 + wmultiline.dx(),
-                                         5 + wmultiline.dy(),
+    wmultiline.rdp_input_invalidate(Rect(20 + wmultiline.x(),
+                                         5 + wmultiline.y(),
                                          30,
                                          10));
 
@@ -385,7 +385,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
                                auto_resize, id, fg_color, bg_color, font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    wmultiline.rdp_input_invalidate(wmultiline.rect);
+    wmultiline.rdp_input_invalidate(wmultiline.get_rect());
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline9.png");
 

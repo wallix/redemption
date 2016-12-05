@@ -35,7 +35,7 @@ class BaseVirtualChannel
 
 protected:
     auth_api*      authentifier;
-    implicit_bool_flags<RDPVerboseFlags> verbose;
+    implicit_bool_flags<RDPVerbose> verbose;
 
 private:
     const data_size_type exchanged_data_limit;
@@ -47,7 +47,7 @@ public:
     {
         auth_api*       authentifier;
         data_size_type  exchanged_data_limit;
-        RDPVerboseFlags verbose;
+        RDPVerbose verbose;
     };
 
 protected:

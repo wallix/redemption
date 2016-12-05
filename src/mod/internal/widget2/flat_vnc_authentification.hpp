@@ -74,30 +74,30 @@ public:
 
         // Center bloc positionning
         // Login and Password boxes
-        int cbloc_w = std::max<int>(this->message_label.rect.cx,
-            this->password_label.rect.cx + this->password_edit.rect.cx + 10);
-        int cbloc_h = this->message_label.rect.cy +
-            std::max(this->password_label.rect.cy, this->password_edit.rect.cy) + 20;
+        int cbloc_w = std::max<int>(this->message_label.cx(),
+            this->password_label.cx() + this->password_edit.cx() + 10);
+        int cbloc_h = this->message_label.cy() +
+            std::max(this->password_label.cy(), this->password_edit.cy()) + 20;
 
         int x_cbloc = (width  - cbloc_w) / 2;
         int y_cbloc = (height - cbloc_h) / 3;
 
-        this->message_label.set_xy((width  - this->message_label.rect.cx) / 2, y_cbloc);
+        this->message_label.set_xy((width  - this->message_label.cx()) / 2, y_cbloc);
 
-        this->password_label.set_xy(x_cbloc, y_cbloc + this->message_label.rect.cy + 20);
-        this->password_edit.set_xy(x_cbloc + this->password_label.rect.cx + 10,
-            y_cbloc + this->message_label.rect.cy + 20);
+        this->password_label.set_xy(x_cbloc, y_cbloc + this->message_label.cy() + 20);
+        this->password_edit.set_xy(x_cbloc + this->password_label.cx() + 10,
+            y_cbloc + this->message_label.cy() + 20);
 
-        this->password_label.rect.y += (this->password_edit.cy() - this->password_label.cy()) / 2;
+        this->password_label.set_y(this->password_label.y() + (this->password_edit.cy() - this->password_label.cy()) / 2);
 
         int bottom_height = (height - cbloc_h) / 2;
-        int bbloc_h = this->img.rect.cy/* + 10 + this->version_label.rect.cy*/;
+        int bbloc_h = this->img.cy()/* + 10 + this->version_label.rect.cy*/;
         int y_bbloc = ((bbloc_h + 10) > (bottom_height / 2))
             ?(height - (bbloc_h + 10))
             :(height/2 + cbloc_h/2 + bottom_height/2);
-        this->img.set_xy((width - this->img.rect.cx) / 2, y_bbloc);
-        if (this->img.rect.y + this->img.cy() > height) {
-            this->img.rect.y = 0;
+        this->img.set_xy((width - this->img.cx()) / 2, y_bbloc);
+        if (this->img.y() + this->img.cy() > height) {
+            this->img.set_y(0);
         }
     }
 

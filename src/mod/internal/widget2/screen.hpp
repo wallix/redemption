@@ -70,15 +70,15 @@ public:
         if (text == nullptr) {
             if (this->tooltip) {
                 this->remove_widget(this->tooltip);
-                this->refresh(this->tooltip->rect);
+                this->refresh(this->tooltip->get_rect());
                 delete this->tooltip;
                 this->tooltip = nullptr;
             }
         }
         else if (this->tooltip == nullptr) {
-            Rect display_rect = this->rect;
+            Rect display_rect = this->get_rect();
             if (!preferred_display_rect.isempty()) {
-                display_rect = this->rect.intersect(preferred_display_rect);
+                display_rect = this->get_rect().intersect(preferred_display_rect);
             }
 
             this->tooltip = new WidgetTooltip(this->drawable,
@@ -97,7 +97,7 @@ public:
             this->tooltip->set_tooltip_xy(posx, posy);
 
             this->add_widget(this->tooltip);
-            this->refresh(this->tooltip->rect);
+            this->refresh(this->tooltip->get_rect());
         }
     }
 

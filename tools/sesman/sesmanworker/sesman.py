@@ -1197,9 +1197,10 @@ class Sesman():
         ### START_SESSION ###
         #####################
         extra_info = self.engine.get_target_extra_info()
+        user = mdecode(self.engine.get_username()) if self.engine.get_username() \
+               else self.shared.get(u'login')
         _status, _error = self.check_video_recording(
-            extra_info.is_recorded,
-            mdecode(self.engine.get_username()) if self.engine.get_username() else self.shared.get(u'login'))
+            extra_info.is_recorded, user)
 
         if not _status:
             self.send_data({u'rejected': _error})
@@ -1224,11 +1225,16 @@ class Sesman():
             signal.signal(signal.SIGUSR2, self.check_handler)
 
             Logger().info(u"Starting Session, effective login='%s'" % self.effective_login)
-            session_log_redirection = (self.shared[u'session_log_redirection'].lower() == u'true')
+            session_log_file_path = None
+            if self.shared[u'session_log_redirection'].lower() == u'true':
+                session_log_file_path =  u"/var/wab/rdp/recorded/"
+                session_log_file_path += u"%s@%s," % (user, self.shared.get(u'ip_client'))
+                session_log_file_path += u"%s@%s," % (self.shared.get(u'target_login'), self.shared.get(u'target_device'))
+                session_log_file_path =  u".log"
             # Add connection to the observer
             session_id = self.engine.start_session(selected_target, self.pid,
-                                                   self.effective_login,
-                                                   has_session_log_redirection=session_log_redirection)
+                                               self.effective_login,
+                                               session_log_file_path=session_log_file_path)
             if session_id is None:
                 _status, _error = False, TR(u"start_session_failed")
                 self.send_data({u'rejected': TR(u'start_session_failed')})
@@ -1303,44 +1309,7 @@ class Sesman():
                 if physical_proto_info.protocol == u'RDP':
                     kv[u'proxy_opt'] = ",".join(physical_proto_info.subprotocols)
 
-                    connectionpolicy_kv = {}
-
-                    #Logger().info(u"%s" % conn_opts)
-
-                    rdp_section = conn_opts.get('rdp')
-                    if rdp_section is not None:
-                        connectionpolicy_kv[u'use_client_provided_alternate_shell'] = rdp_section.get('use_client_provided_alternate_shell')
-
-                    session_probe_section = conn_opts.get('session_probe')
-                    if session_probe_section is not None:
-                        connectionpolicy_kv[u'session_probe']                         = session_probe_section.get('enable_session_probe')
-                        connectionpolicy_kv[u'session_probe_use_smart_launcher']      = session_probe_section.get('use_smart_launcher')
-                        connectionpolicy_kv[u'enable_session_probe_launch_mask']      = session_probe_section.get('enable_launch_mask')
-                        connectionpolicy_kv[u'session_probe_on_launch_failure']       = session_probe_section.get('on_launch_failure')
-                        connectionpolicy_kv[u'session_probe_launch_timeout']          = session_probe_section.get('launch_timeout')
-                        connectionpolicy_kv[u'session_probe_launch_fallback_timeout'] = session_probe_section.get('launch_fallback_timeout')
-                        connectionpolicy_kv[u'session_probe_start_launch_timeout_timer_only_after_logon'] = session_probe_section.get('start_launch_timeout_timer_only_after_logon')
-                        connectionpolicy_kv[u'session_probe_keepalive_timeout']       = session_probe_section.get('keepalive_timeout')
-                        connectionpolicy_kv[u'session_probe_on_keepalive_timeout_disconnect_user']        = session_probe_section.get('on_keepalive_timeout_disconnect_user')
-                        connectionpolicy_kv[u'session_probe_end_disconnected_session']= session_probe_section.get('end_disconnected_session')
-
-                        connectionpolicy_kv[u'session_probe_disconnected_application_limit']              = session_probe_section.get('disconnected_application_limit')
-                        connectionpolicy_kv[u'session_probe_disconnected_session_limit']                  = session_probe_section.get('disconnected_session_limit')
-                        connectionpolicy_kv[u'session_probe_idle_session_limit']      = session_probe_section.get('idle_session_limit')
-
-                        connectionpolicy_kv[u'outbound_connection_blocking_rules']    = session_probe_section.get('outbound_connection_blocking_rules')
-                        connectionpolicy_kv[u'session_probe_process_monitoring_rules']= session_probe_section.get('process_monitoring_rules')
-
-                    server_cert_section = conn_opts.get('server_cert')
-                    if server_cert_section is not None:
-                        connectionpolicy_kv[u'server_cert_store']             = server_cert_section.get('server_cert_store')
-                        connectionpolicy_kv[u'server_cert_check']             = server_cert_section.get('server_cert_check')
-                        connectionpolicy_kv[u'server_access_allowed_message'] = server_cert_section.get('server_access_allowed_message')
-                        connectionpolicy_kv[u'server_cert_create_message']    = server_cert_section.get('server_cert_create_message')
-                        connectionpolicy_kv[u'server_cert_success_message']   = server_cert_section.get('server_cert_success_message')
-                        connectionpolicy_kv[u'server_cert_failure_message']   = server_cert_section.get('server_cert_failure_message')
-                        connectionpolicy_kv[u'server_cert_error_message']     = server_cert_section.get('server_cert_error_message')
-
+                    connectionpolicy_kv = self.fetch_connectionpolicy(conn_opts)
                     kv.update({k:v for (k, v) in connectionpolicy_kv.items() if v is not None})
 
                 kv[u'disable_tsk_switch_shortcuts'] = u'no'
@@ -1735,6 +1704,51 @@ class Sesman():
         else:
             Logger().info(
                 u"Unexpected reporting reason: \"%s\" \"%s\" \"%s\"" % (reason, target, message))
+
+    def fetch_connectionpolicy(self, conn_opts):
+        cp_spec = {
+            'rdp': {
+                u'use_client_provided_alternate_shell': 'use_client_provided_alternate_shell'
+                },
+            'session_probe': {
+                u'session_probe' : 'enable_session_probe',
+                u'session_probe_use_smart_launcher' : 'use_smart_launcher',
+                u'enable_session_probe_launch_mask' : 'enable_launch_mask',
+                u'session_probe_on_launch_failure' : 'on_launch_failure',
+                u'session_probe_launch_timeout' : 'launch_timeout',
+                u'session_probe_launch_fallback_timeout' : 'launch_fallback_timeout',
+                u'session_probe_start_launch_timeout_timer_only_after_logon' : 'start_launch_timeout_timer_only_after_logon',
+                u'session_probe_keepalive_timeout' : 'keepalive_timeout',
+                u'session_probe_on_keepalive_timeout_disconnect_user' : 'on_keepalive_timeout_disconnect_user',
+                u'session_probe_end_disconnected_session' : 'end_disconnected_session',
+                u'session_probe_disconnected_application_limit' : 'disconnected_application_limit',
+                u'session_probe_disconnected_session_limit' : 'disconnected_session_limit',
+                u'session_probe_idle_session_limit' : 'idle_session_limit',
+                u'outbound_connection_blocking_rules' : 'outbound_connection_blocking_rules',
+                u'session_probe_process_monitoring_rules' : 'process_monitoring_rules'
+                },
+            'server_cert': {
+                u'server_cert_store' : 'server_cert_store',
+                u'server_cert_check' : 'server_cert_check',
+                u'server_access_allowed_message' : 'server_access_allowed_message',
+                u'server_cert_create_message' : 'server_cert_create_message',
+                u'server_cert_success_message' : 'server_cert_success_message',
+                u'server_cert_failure_message' : 'server_cert_failure_message',
+                u'server_cert_error_message' : 'server_cert_error_message'
+            }
+        }
+
+        connectionpolicy_kv = {}
+
+        #Logger().info(u"%s" % conn_opts)
+
+        for (section, matches) in cp_spec.items():
+            section_values = conn_opts.get(section)
+            if section_values is not None:
+                for (config_key, cp_key) in matches.items():
+                    connectionpolicy_kv[config_key] = section_values.get(cp_key)
+
+        return connectionpolicy_kv
 
     def kill_handler(self, signum, frame):
         # Logger().info("KILL_HANDLER = %s" % signum)

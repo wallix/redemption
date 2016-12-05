@@ -184,7 +184,7 @@ private:
 
                 general_caps.recv(chunk, f);
 
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_clipboard_capabilities_pdu: "
                             "General Capability Set");
@@ -208,7 +208,7 @@ private:
         (void)chunk;
 
         if (!this->param_clipboard_file_authorized) {
-            if (this->verbose & RDPVerboseFlags::cliprdr) {
+            if (this->verbose & RDPVerbose::cliprdr) {
                 LOG(LOG_INFO,
                     "ClipboardVirtualChannel::process_client_file_contents_request_pdu: "
                         "Requesting the contents of server file is denied.");
@@ -228,7 +228,7 @@ private:
         (void)flags;
 
         if (!this->param_clipboard_down_authorized) {
-            if (this->verbose & RDPVerboseFlags::cliprdr) {
+            if (this->verbose & RDPVerbose::cliprdr) {
                 LOG(LOG_INFO,
                     "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
                         "Serveur to client Clipboard operation is not allowed.");
@@ -256,7 +256,7 @@ private:
 
         this->requestedFormatId = chunk.in_uint32_le();
 
-        if (this->verbose & RDPVerboseFlags::cliprdr) {
+        if (this->verbose & RDPVerbose::cliprdr) {
             LOG(LOG_INFO,
                 "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
                     "requestedFormatId=%s(%u)",
@@ -409,7 +409,7 @@ private:
                     this->file_descriptor_stream.get_offset()
                 );
                 fd.receive(in_stream);
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     fd.log(LOG_INFO);
                 }
 
@@ -452,7 +452,7 @@ private:
                 //    hexdump(chunk_p_, chunk.get_current() - chunk_p_);
                 //}
 
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     fd.log(LOG_INFO);
                 }
 
@@ -563,7 +563,7 @@ private:
 
         if (!this->client_use_long_format_names ||
             !this->server_use_long_format_names) {
-            if (this->verbose & RDPVerboseFlags::cliprdr) {
+            if (this->verbose & RDPVerbose::cliprdr) {
                 LOG(LOG_INFO,
                     "ClipboardVirtualChannel::process_client_format_list_pdu: "
                         "Short Format Name%s variant of Format List PDU is used "
@@ -601,7 +601,7 @@ private:
                     chunk.get_current(), format_name_length, utf8_string,
                     size_of_utf8_string);
 
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_format_list_pdu: "
                             "formatId=%s(%d) wszFormatName=\"%s\"",
@@ -625,7 +625,7 @@ private:
             }
         }
         else {
-            if (this->verbose & RDPVerboseFlags::cliprdr) {
+            if (this->verbose & RDPVerbose::cliprdr) {
                 LOG(LOG_INFO,
                     "ClipboardVirtualChannel::process_client_format_list_pdu: "
                         "Long Format Name variant of Format List PDU is used "
@@ -665,7 +665,7 @@ private:
                     chunk.get_current(), adjusted_format_name_length,
                     utf8_string, size_of_utf8_string);
 
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_format_list_pdu: "
                             "formatId=%s(%d) wszFormatName=\"%s\"",
@@ -695,14 +695,14 @@ public:
         uint32_t flags, const uint8_t* chunk_data,
         uint32_t chunk_data_length) override
     {
-        if (this->verbose & RDPVerboseFlags::cliprdr) {
+        if (this->verbose & RDPVerbose::cliprdr) {
             LOG(LOG_INFO,
                 "ClipboardVirtualChannel::process_client_message: "
                     "total_length=%u flags=0x%08X chunk_data_length=%u",
                 total_length, flags, chunk_data_length);
         }
 
-        if (this->verbose & RDPVerboseFlags::cliprdr_dump) {
+        if (this->verbose & RDPVerbose::cliprdr_dump) {
             const bool send              = false;
             const bool from_or_to_client = true;
             ::msgdump_c(send, from_or_to_client, total_length, flags,
@@ -728,7 +728,7 @@ public:
         switch (this->client_message_type)
         {
             case RDPECLIP::CB_CLIP_CAPS:
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_message: "
                             "Clipboard Capabilities PDU");
@@ -740,7 +740,7 @@ public:
             break;
 
             case RDPECLIP::CB_FORMAT_LIST:
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_message: "
                             "Format List PDU");
@@ -752,7 +752,7 @@ public:
             break;
 
             case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_message: "
                             "Format Data Request PDU");
@@ -764,7 +764,7 @@ public:
             break;
 
             case RDPECLIP::CB_FILECONTENTS_REQUEST:
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_message: "
                             "File Contents Request PDU");
@@ -776,7 +776,7 @@ public:
             break;
 
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_message: "
                             "Format Data Response PDU");
@@ -793,7 +793,7 @@ public:
             break;
 
             case RDPECLIP::CB_FILECONTENTS_RESPONSE:
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_message: "
                             "File Contents Response PDU");
@@ -805,7 +805,7 @@ public:
             break;
 
             default:
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_message: "
                             "Delivering unprocessed messages %s(%u) to server.",
@@ -842,7 +842,7 @@ public:
 
                 general_caps.recv(chunk, f);
 
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_clipboard_capabilities_pdu: "
                             "General Capability Set");
@@ -870,7 +870,7 @@ public:
         (void)chunk;
 
         if (!this->param_clipboard_file_authorized) {
-            if (this->verbose & RDPVerboseFlags::cliprdr) {
+            if (this->verbose & RDPVerbose::cliprdr) {
                 LOG(LOG_INFO,
                     "ClipboardVirtualChannel::process_server_file_contents_request_pdu: "
                         "Requesting the contents of client file is denied.");
@@ -903,7 +903,7 @@ public:
         }
 
         if (!this->param_clipboard_up_authorized) {
-            if (this->verbose & RDPVerboseFlags::cliprdr) {
+            if (this->verbose & RDPVerbose::cliprdr) {
                 LOG(LOG_INFO,
                     "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
                         "Client to server Clipboard operation is not allowed.");
@@ -915,7 +915,7 @@ public:
             return false;
         }
 
-        if (this->verbose & RDPVerboseFlags::cliprdr) {
+        if (this->verbose & RDPVerbose::cliprdr) {
             LOG(LOG_INFO,
                 "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
                     "requestedFormatId=%s(%u)",
@@ -1044,7 +1044,7 @@ public:
                     this->file_descriptor_stream.get_offset()
                 );
                 fd.receive(in_stream);
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     fd.log(LOG_INFO);
                 }
 
@@ -1078,7 +1078,7 @@ public:
                 RDPECLIP::FileDescriptor fd;
 
                 fd.receive(chunk);
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     fd.log(LOG_INFO);
                 }
 
@@ -1148,7 +1148,7 @@ public:
 
         if (!this->client_use_long_format_names ||
             !this->server_use_long_format_names) {
-            if (this->verbose & RDPVerboseFlags::cliprdr) {
+            if (this->verbose & RDPVerbose::cliprdr) {
                 LOG(LOG_INFO,
                     "ClipboardVirtualChannel::process_server_format_list_pdu: "
                         "Short Format Name%s variant of Format List PDU is used "
@@ -1174,7 +1174,7 @@ public:
                     chunk.get_current(), format_name_length, utf8_string,
                     size_of_utf8_string);
 
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_format_list_pdu: "
                             "formatId=%s(%d) wszFormatName=\"%s\"",
@@ -1198,7 +1198,7 @@ public:
             }
         }
         else {
-            if (this->verbose & RDPVerboseFlags::cliprdr) {
+            if (this->verbose & RDPVerbose::cliprdr) {
                 LOG(LOG_INFO,
                     "ClipboardVirtualChannel::process_server_format_list_pdu: "
                         "Long Format Name variant of Format List PDU is used "
@@ -1226,7 +1226,7 @@ public:
                     chunk.get_current(), adjusted_format_name_length,
                     utf8_string, size_of_utf8_string);
 
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_format_list_pdu: "
                             "formatId=%s(%d) wszFormatName=\"%s\"",
@@ -1329,14 +1329,14 @@ public:
     {
         (void)out_asynchronous_task;
 
-        if (this->verbose & RDPVerboseFlags::cliprdr) {
+        if (this->verbose & RDPVerbose::cliprdr) {
             LOG(LOG_INFO,
                 "ClipboardVirtualChannel::process_server_message: "
                     "total_length=%u flags=0x%08X chunk_data_length=%u",
                 total_length, flags, chunk_data_length);
         }
 
-        if (this->verbose & RDPVerboseFlags::cliprdr_dump) {
+        if (this->verbose & RDPVerbose::cliprdr_dump) {
             const bool send              = false;
             const bool from_or_to_client = false;
             ::msgdump_c(send, from_or_to_client, total_length, flags,
@@ -1362,7 +1362,7 @@ public:
         switch (this->server_message_type)
         {
             case RDPECLIP::CB_CLIP_CAPS:
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_message: "
                             "Clipboard Capabilities PDU");
@@ -1374,7 +1374,7 @@ public:
             break;
 
             case RDPECLIP::CB_FILECONTENTS_REQUEST:
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_message: "
                             "File Contents Request PDU");
@@ -1386,7 +1386,7 @@ public:
             break;
 
             case RDPECLIP::CB_FILECONTENTS_RESPONSE:
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_message: "
                             "File Contents Response PDU");
@@ -1398,7 +1398,7 @@ public:
             break;
 
             case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_message: "
                             "Format Data Request PDU");
@@ -1410,7 +1410,7 @@ public:
             break;
 
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_message: "
                             "Format Data Response PDU");
@@ -1427,7 +1427,7 @@ public:
             break;
 
             case RDPECLIP::CB_FORMAT_LIST:
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_message: "
                             "Format List PDU");
@@ -1439,7 +1439,7 @@ public:
             break;
 
             case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_message: "
                             "Format List Response PDU");
@@ -1458,7 +1458,7 @@ public:
             break;
 
             case RDPECLIP::CB_MONITOR_READY:
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_message: "
                             "Monitor Ready PDU");
@@ -1470,7 +1470,7 @@ public:
             break;
 
             default:
-                if (this->verbose & RDPVerboseFlags::cliprdr) {
+                if (this->verbose & RDPVerbose::cliprdr) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_message: "
                             "Delivering unprocessed messages %s(%u) to client.",
@@ -1498,13 +1498,13 @@ public:
             return;
         }
 
-        if (this->verbose & RDPVerboseFlags::cliprdr) {
+        if (this->verbose & RDPVerbose::cliprdr) {
             LOG(LOG_INFO,
                 "ClipboardVirtualChannel::empty_client_clipboard");
         }
 
         // Format List PDU.
-        if (this->verbose & RDPVerboseFlags::cliprdr) {
+        if (this->verbose & RDPVerbose::cliprdr) {
             LOG(LOG_INFO,
                 "ClipboardVirtualChannel::empty_client_clipboard: "
                     "client_format_list_pdu_length=%zu client_format_list_pdu_flags=0x%X",

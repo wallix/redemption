@@ -100,28 +100,28 @@ public:
         const int total_width = std::max(this->dialog.cx(), this->title.cx());
         int total_height = this->title.cy() + this->dialog.cy() + this->ok.cy() + 20;
         int y = 0;
-        this->title.rect.x = left + (this->cx() - this->title.cx()) / 2;
+        this->title.set_x(left + (this->cx() - this->title.cx()) / 2);
         // this->title.rect.cx = total_width;
-        this->separator.rect.x = left + (this->cx() - total_width) / 2;
-        this->separator.rect.cx = total_width;
+        this->separator.set_x(left + (this->cx() - total_width) / 2);
+        this->separator.set_cx(total_width);
         y = this->title.cy();
-        this->separator.rect.y = top + y + 3;
-        this->dialog.rect.x = this->separator.rect.x;
-        this->dialog.rect.y = top + y + 10;
+        this->separator.set_y(top + y + 3);
+        this->dialog.set_x(this->separator.x());
+        this->dialog.set_y(top + y + 10);
 
-        y = this->dialog.dy() + this->dialog.cy() + 10;
+        y = this->dialog.y() + this->dialog.cy() + 10;
 
         if (has_challenge) {
             if (CHALLENGE_ECHO == has_challenge) {
                 this->challenge = new WidgetEdit(this->drawable,
-                                                 this->separator.rect.x - left + 10, y - top,
+                                                 this->separator.x() - left + 10, y - top,
                                                  total_width - 20, *this, this, nullptr, -13,
                                                  theme.edit.fgcolor,
                                                  theme.edit.bgcolor,
                                                  theme.edit.focus_color, font, -1u, 1, 1);
             } else {
                 this->challenge = new WidgetPassword(this->drawable,
-                                                     this->separator.rect.x - left + 10,
+                                                     this->separator.x() - left + 10,
                                                      y - top, total_width - 20, *this, this, nullptr,
                                                      -13, theme.edit.fgcolor,
                                                      theme.edit.bgcolor,
@@ -140,22 +140,22 @@ public:
         if (this->cancel) {
             this->add_widget(this->cancel);
 
-            this->cancel->set_button_x(this->dialog.dx() + this->dialog.cx() - (this->cancel->cx() + 10));
-            this->ok.set_button_x(this->cancel->dx() - (this->ok.cx() + 10));
+            this->cancel->set_x(this->dialog.x() + this->dialog.cx() - (this->cancel->cx() + 10));
+            this->ok.set_x(this->cancel->x() - (this->ok.cx() + 10));
 
-            this->ok.set_button_y(y);
-            this->cancel->set_button_y(y);
+            this->ok.set_y(y);
+            this->cancel->set_y(y);
         }
         else {
-            this->ok.set_button_x(this->dialog.dx() + this->dialog.cx() - (this->ok.cx() + 10));
-            this->ok.set_button_y(y);
+            this->ok.set_x(this->dialog.x() + this->dialog.cx() - (this->ok.cx() + 10));
+            this->ok.set_y(y);
         }
         this->move_xy(0, (height - total_height) / 2);
 
-        this->img.rect.x = left + (this->cx() - this->img.cx()) / 2;
-        this->img.rect.y = top + (3*(height - total_height) / 2 - this->img.cy()) / 2 + total_height;
-        if (this->img.rect.y + this->img.cy() > top + height) {
-            this->img.rect.y = top;
+        this->img.set_x(left + (this->cx() - this->img.cx()) / 2);
+        this->img.set_y(top + (3*(height - total_height) / 2 - this->img.cy()) / 2 + total_height);
+        if (this->img.y() + this->img.cy() > top + height) {
+            this->img.set_y(top);
         }
 
         if (!has_challenge)
@@ -164,8 +164,8 @@ public:
             if (extra_button) {
                 this->add_widget(extra_button);
 
-                extra_button->set_button_x(left + 60);
-                extra_button->set_button_y(top + height - 60);
+                extra_button->set_x(left + 60);
+                extra_button->set_y(top + height - 60);
             }
         }
     }
@@ -177,28 +177,28 @@ public:
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
-        this->rect.x  = left;
-        this->rect.y  = top;
-        this->rect.cx = width;
-        this->rect.cy = height;
+        this->set_x(left);
+        this->set_y(top);
+        this->set_cx(width);
+        this->set_cy(height);
 
-        this->title.rect.y = top;
+        this->title.set_y(top);
 
         const int total_width = std::max(this->dialog.cx(), this->title.cx());
         int total_height = this->title.cy() + this->dialog.cy() + this->ok.cy() + 20;
         int y = 0;
-        this->title.rect.x = left + (this->cx() - this->title.cx()) / 2;
-        this->separator.rect.x = left + (this->cx() - total_width) / 2;
+        this->title.set_x(left + (this->cx() - this->title.cx()) / 2);
+        this->separator.set_x(left + (this->cx() - total_width) / 2);
         y = this->title.cy();
-        this->separator.rect.y = top + y + 3;
-        this->dialog.rect.x = this->separator.rect.x;
-        this->dialog.rect.y = top + y + 10;
+        this->separator.set_y(top + y + 3);
+        this->dialog.set_x(this->separator.x());
+        this->dialog.set_y(top + y + 10);
 
-        y = this->dialog.dy() + this->dialog.cy() + 10;
+        y = this->dialog.y() + this->dialog.cy() + 10;
 
         if (this->challenge) {
-            this->challenge->rect.x = this->separator.rect.x + 10;
-            this->challenge->rect.y = y;
+            this->challenge->set_x(this->separator.x() + 10);
+            this->challenge->set_y(y);
             total_height += this->challenge->cy() + 10;
             y += this->challenge->cy() + 10;
         }
@@ -206,27 +206,27 @@ public:
         y += 5;
 
         if (this->cancel) {
-            this->cancel->set_button_x(this->dialog.dx() + this->dialog.cx() - (this->cancel->cx() + 10));
-            this->ok.set_button_x(this->cancel->dx() - (this->ok.cx() + 10));
+            this->cancel->set_x(this->dialog.x() + this->dialog.cx() - (this->cancel->cx() + 10));
+            this->ok.set_x(this->cancel->x() - (this->ok.cx() + 10));
 
-            this->ok.set_button_y(y);
-            this->cancel->set_button_y(y);
+            this->ok.set_y(y);
+            this->cancel->set_y(y);
         }
         else {
-            this->ok.set_button_x(this->dialog.dx() + this->dialog.cx() - (this->ok.cx() + 10));
-            this->ok.set_button_y(y);
+            this->ok.set_x(this->dialog.x() + this->dialog.cx() - (this->ok.cx() + 10));
+            this->ok.set_y(y);
         }
         this->move_xy(0, (height - total_height) / 2);
 
-        this->img.rect.x = left + (this->cx() - this->img.cx()) / 2;
-        this->img.rect.y = top + (3*(height - total_height) / 2 - this->img.cy()) / 2 + total_height;
-        if (this->img.rect.y + this->img.cy() > top + height) {
-            this->img.rect.y = top;
+        this->img.set_x(left + (this->cx() - this->img.cx()) / 2);
+        this->img.set_y(top + (3*(height - total_height) / 2 - this->img.cy()) / 2 + total_height);
+        if (this->img.y() + this->img.cy() > top + height) {
+            this->img.set_y(top);
         }
 
         if (this->challenge && this->extra_button) {
-            extra_button->set_button_x(left + 60);
-            extra_button->set_button_y(top + height - 60);
+            extra_button->set_x(left + 60);
+            extra_button->set_y(top + height - 60);
         }
     }
 

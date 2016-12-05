@@ -249,11 +249,10 @@ public:
         ::time(&this->beginning);
 
         memset(&zstrm, 0, sizeof(zstrm));
-// TODO -Wold-style-cast is ignored
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
         if (inflateInit(&this->zstrm) != Z_OK)
-#pragma GCC diagnostic pop
+        REDEMPTION_DIAGNOSTIC_POP
         {
             LOG(LOG_ERR, "vnc zlib initialization failed");
 
@@ -264,8 +263,8 @@ public:
         // Initial state of keys (at least lock keys) is copied from Keymap2
         keymapSym.key_flags = key_flags;
 
-        snprintf(this->username, sizeof(this->username), "%s", username);
-        snprintf(this->password, sizeof(this->password), "%s", password);
+        std::snprintf(this->username, sizeof(this->username), "%s", username);
+        std::snprintf(this->password, sizeof(this->password), "%s", password);
 
         LOG(LOG_INFO, "Creation of new mod 'VNC' done");
     } // Constructor
@@ -641,7 +640,7 @@ public:
 
             this->challenge.set_widget_focus(&this->challenge.password_edit, Widget2::focus_reason_tabkey);
 
-            this->screen.refresh(this->screen.rect);
+            this->screen.refresh(this->screen.get_rect());
 
             this->state = WAIT_PASSWORD;
             break;
@@ -689,7 +688,7 @@ public:
                     this->server_use_long_format_names?RDPECLIP::CB_USE_LONG_FORMAT_NAMES:0);
 
                 if (this->verbose) {
-                    LOG(LOG_INFO, "Server use %s format name", 
+                    LOG(LOG_INFO, "Server use %s format name",
                         (this->server_use_long_format_names ? "long" : "short"));
                 }
 
@@ -1217,7 +1216,7 @@ public:
                 }
 
                 switch (this->front.server_resize(this->width, this->height, this->bpp)){
-                case 0:
+                case FrontAPI::ResizeResult::no_need:
                     if (this->verbose) {
                         LOG(LOG_INFO, "no resizing needed");
                     }
@@ -1226,7 +1225,7 @@ public:
                     this->event.object_and_time = true;
                     this->event.set();
                     break;
-                case 1:
+                case FrontAPI::ResizeResult::done:
                     if (this->verbose) {
                         LOG(LOG_INFO, "resizing done");
                     }
@@ -1239,7 +1238,7 @@ public:
 
                     this->is_first_membelt = true;
                     break;
-                case -1:
+                case FrontAPI::ResizeResult::fail:
                     // resizing failed
                     // thow an Error ?
                     LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
@@ -2261,10 +2260,10 @@ private:
 
         switch (msgType) {
             case RDPECLIP::CB_FORMAT_LIST: {
-                // Client notify that a copy operation have occured. 
+                // Client notify that a copy operation have occured.
                 // Two operations should be done :
                 //  - Always: send a RDP acknowledge (CB_FORMAT_LIST_RESPONSE)
-                //  - Only if clipboard content formats list include "UNICODETEXT: 
+                //  - Only if clipboard content formats list include "UNICODETEXT:
                 // send a request for it in that format
                 RDPECLIP::FormatListPDU format_list_pdu;
 
@@ -2304,8 +2303,8 @@ private:
 
                 const uint64_t MINIMUM_TIMEVAL = 250000LL;
 
-                if (this->enable_clipboard_up 
-                && (format_list_pdu.contains_data_in_text_format 
+                if (this->enable_clipboard_up
+                && (format_list_pdu.contains_data_in_text_format
                  || format_list_pdu.contains_data_in_unicodetext_format)) {
                     if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
                         this->clipboard_requested_format_id =
@@ -2363,9 +2362,9 @@ private:
 
                             this->clipboard_requesting_for_data_is_delayed = true;
                         }
-                        else if (this->bogus_clipboard_infinite_loop 
-                            != VncBogusClipboardInfiniteLoop::duplicated 
-                        && (this->clipboard_general_capability_flags 
+                        else if (this->bogus_clipboard_infinite_loop
+                            != VncBogusClipboardInfiniteLoop::duplicated
+                        && (this->clipboard_general_capability_flags
                             & RDPECLIP::CB_ALL_GENERAL_CAPABILITY_FLAGS)) {
                             if (this->verbose) {
                                 LOG( LOG_INFO
@@ -2715,7 +2714,7 @@ private:
                         this->client_use_long_format_names = true;
                     }
                     if (this->verbose) {
-                        LOG(LOG_INFO, "Client use %s format name", 
+                        LOG(LOG_INFO, "Client use %s format name",
                             (this->client_use_long_format_names ? "long" : "short"));
                     }
 

@@ -1763,8 +1763,13 @@ void Front_Qt::draw(const RDPBrushCache & brush) {
 // Serveur non drawing exchange
 //------------------------------
 
+<<<<<<< HEAD
 int Front_Qt::server_resize(int width, int height, int bpp) {
     if (this->verbose & RDPVerboseFlags::graphics) {
+=======
+Front_Qt::ResizeResult Front_Qt::server_resize(int width, int height, int bpp) {
+    if (this->verbose > 10) {
+>>>>>>> fcf6e3b0766910c7bf9b1bc42e90a4e6eed9ca27
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
         LOG(LOG_INFO, "========================================\n");
@@ -1775,7 +1780,7 @@ int Front_Qt::server_resize(int width, int height, int bpp) {
     this->_info.width = width;
     this->_info.height = height;
 
-    return 1;
+    return ResizeResult::done;
 }
 
 void Front_Qt::update_pointer_position(uint16_t xPos, uint16_t yPos) {

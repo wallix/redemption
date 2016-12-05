@@ -22,14 +22,13 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXXXXXXXXX
+#define BOOST_TEST_MODULE TestArray
 #include "system/redemption_unit_tests.hpp"
 
 
 #define LOGNULL
 //#define LOGPRINT
 
-//#include "path/to/file.hpp"
 #include "utils/array.hpp"
 
 
@@ -38,7 +37,6 @@ BOOST_AUTO_TEST_CASE(Test_Array)
 {
     BOOST_CHECK(true);
     bool test_equal(false);
-
 
     Array array_0;
     test_equal = false;

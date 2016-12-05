@@ -29,7 +29,7 @@ class WidgetTestMod : public InternalMod, public NotifyApi {
 public:
     WidgetTestMod(FrontAPI & front, uint16_t width, uint16_t height, Font const & font, Theme const & theme)
     : InternalMod(front, width, height, font, theme) {
-        this->screen.refresh(this->screen.rect);
+        this->screen.refresh(this->screen.get_rect());
     }
 
     ~WidgetTestMod() override {

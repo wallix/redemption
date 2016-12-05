@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
 
     WidgetScreen wscreen(drawable.gd, drawable.gd.width(), drawable.gd.height(), font, nullptr, Theme{});
 
-    wscreen.refresh(wscreen.rect);
+    wscreen.refresh(wscreen.get_rect());
     wscreen.tab_flag = Widget2::NORMAL_TAB;
     Notify notifier1;
     Notify notifier2;
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
 
     wscreen.set_widget_focus(&wbutton2, Widget2::focus_reason_tabkey);
 
-    wscreen.refresh(wscreen.rect);
+    wscreen.refresh(wscreen.get_rect());
 
     char message[1024];
 
@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
 
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                            wbutton1.dx(), wbutton1.dy(), &keymap);
+                            wbutton1.x(), wbutton1.y(), &keymap);
     BOOST_CHECK(notifier1.sender == &wbutton1);
     BOOST_CHECK(notifier2.sender == nullptr);
     BOOST_CHECK(notifier3.sender == &wbutton3);
@@ -218,7 +218,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     }
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                            wbutton2.dx(), wbutton2.dy(), &keymap);
+                            wbutton2.x(), wbutton2.y(), &keymap);
     BOOST_CHECK(notifier1.sender == nullptr);
     BOOST_CHECK(notifier2.sender == nullptr);
     BOOST_CHECK(notifier3.sender == nullptr);
@@ -251,7 +251,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     }
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                            wbutton4.dx(), wbutton4.dy(), &keymap);
+                            wbutton4.x(), wbutton4.y(), &keymap);
     BOOST_CHECK(notifier1.sender == nullptr);
     BOOST_CHECK(notifier2.sender == &wbutton2);
     BOOST_CHECK(notifier3.sender == nullptr);
@@ -270,7 +270,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     }
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                            wbutton4.dx(), wbutton4.dy(), &keymap);
+                            wbutton4.x(), wbutton4.y(), &keymap);
     BOOST_CHECK(notifier1.sender == nullptr);
     BOOST_CHECK(notifier2.sender == nullptr);
     BOOST_CHECK(notifier3.sender == nullptr);
@@ -285,7 +285,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
 
     wscreen.show_tooltip(nullptr, "tooltip test", 30, 35, Rect(0, 0, 0, 0));
 
-    wscreen.rdp_input_invalidate(wscreen.rect);
+    wscreen.rdp_input_invalidate(wscreen.get_rect());
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen12.png");
     if (!check_sig(drawable.gd.impl(), message,
         "\x10\x0e\x20\x6a\x1d\xdf\xbe\xab\x1b\x3f\x63\x14\xb7\xdf\x18\xc7\x73\x6f\xf1\x88"
@@ -294,7 +294,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     }
 
     wscreen.show_tooltip(nullptr, nullptr, 30, 35, Rect(0, 0, 0, 0));
-    wscreen.rdp_input_invalidate(wscreen.rect);
+    wscreen.rdp_input_invalidate(wscreen.get_rect());
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen13.png");
     if (!check_sig(drawable.gd.impl(), message,
         "\xf7\x36\x47\x38\xf5\x14\xdf\xb1\x2a\x5e\x5c\x3c\x0a\x8d\x7f\x7e\x5f\x7e\xf6\xb3"

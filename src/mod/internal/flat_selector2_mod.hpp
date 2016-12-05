@@ -107,7 +107,7 @@ public:
         this->screen.add_widget(&this->selector);
         this->screen.set_widget_focus(&this->selector, Widget2::focus_reason_tabkey);
 
-        uint16_t available_height = (this->selector.first_page.dy() - 10) - this->selector.selector_lines.dy();
+        uint16_t available_height = (this->selector.first_page.y() - 10) - this->selector.selector_lines.y();
         gdi::TextMetrics tm(this->vars.get<cfg::font>(), "Édp");
         uint16_t line_height = tm.height + 2 * (
                                 this->selector.selector_lines.border
@@ -116,7 +116,7 @@ public:
         this->selector_lines_per_page_saved = available_height / line_height;
         this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
         this->ask_page();
-        this->selector.refresh(this->selector.rect);
+        this->selector.refresh(this->selector.get_rect());
     }
 
     ~FlatSelector2Mod() override {
@@ -239,10 +239,10 @@ public:
 
         this->refresh_device();
 
-        this->selector.refresh(this->selector.rect);
+        this->selector.refresh(this->selector.get_rect());
 
-        this->selector.current_page.refresh(this->selector.current_page.rect);
-        this->selector.number_page.refresh(this->selector.number_page.rect);
+        this->selector.current_page.refresh(this->selector.current_page.get_rect());
+        this->selector.number_page.refresh(this->selector.number_page.get_rect());
         this->event.reset();
     }
 
@@ -370,7 +370,7 @@ public:
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
         this->selector.move_size_widget(left, top, width + 1, height + 1);
 
-        uint16_t available_height = (this->selector.first_page.dy() - 10) - this->selector.selector_lines.dy();
+        uint16_t available_height = (this->selector.first_page.y() - 10) - this->selector.selector_lines.y();
         gdi::TextMetrics tm(this->vars.get<cfg::font>(), "Édp");
         uint16_t line_height = tm.height + 2 * (
                                 this->selector.selector_lines.border
@@ -382,7 +382,7 @@ public:
 
             this->vars.set_acl<cfg::context::selector_lines_per_page>(available_height / line_height);
             this->ask_page();
-            this->selector.refresh(this->selector.rect);
+            this->selector.refresh(this->selector.get_rect());
         }
     }
 };

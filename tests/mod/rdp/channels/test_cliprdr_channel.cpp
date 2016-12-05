@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
                     511 // verbose
                    );
 
-    int verbose = static_cast<int>(RDPVerboseFlags::cliprdr | RDPVerboseFlags::cliprdr_dump);
+    int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
     ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
@@ -214,7 +214,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
                     511 // verbose
                    );
 
-    int verbose = static_cast<int>(RDPVerboseFlags::cliprdr | RDPVerboseFlags::cliprdr_dump);
+    int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
     ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
@@ -322,7 +322,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
                     511 // verbose
                    );
 
-    int verbose = static_cast<int>(RDPVerboseFlags::cliprdr | RDPVerboseFlags::cliprdr_dump);
+    int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
     ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
@@ -430,7 +430,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
                     511 // verbose
                    );
 
-    int verbose = static_cast<int>(RDPVerboseFlags::cliprdr | RDPVerboseFlags::cliprdr_dump);
+    int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
     ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
@@ -543,7 +543,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
                     511 // verbose
                    );
 
-    int verbose = static_cast<int>(RDPVerboseFlags::cliprdr | RDPVerboseFlags::cliprdr_dump);
+    int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
     ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 

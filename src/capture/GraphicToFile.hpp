@@ -35,7 +35,7 @@
 #include "RDPChunkedDevice.hpp"
 #include "utils/compression_transport_wrapper.hpp"
 
-#include "utils/sugar/compiler_attributes.hpp"
+#include "cxx/attributes.hpp"
 #include "capture/utils/save_state_chunk.hpp"
 
 #include "utils/stream.hpp"
@@ -313,7 +313,7 @@ public:
                 stream.in_timeval_from_uint64le_usec(record_now);
                 this->trans_target.timestamp(record_now);
             }
-            CPP_FALLTHROUGH;
+            REDEMPTION_CXX_FALLTHROUGH;
         default:
             {
                 send_wrm_chunk(this->trans, chunk_type, stream.get_capacity(), chunk_count);
@@ -419,7 +419,7 @@ public:
                 , WrmCompressionAlgorithm wrm_compression_algorithm
                 , const int dela_time
                 , SendInput send_input = SendInput::NO
-                , VerboseFlags verbose = VerboseFlags::none)
+                , Verbose verbose = Verbose::none)
     : RDPSerializer( this->buffer_stream_orders, this->buffer_stream_bitmaps, capture_bpp
                    , bmp_cache, gly_cache, ptr_cache, 0, 1, 1, 32 * 1024, verbose)
     , compression_wrapper(trans, wrm_compression_algorithm)

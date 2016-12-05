@@ -42,7 +42,7 @@ public:
     , dancing_rect(0,0,100,100)
     {
         this->front.begin_update();
-        this->front.draw(RDPOpaqueRect(this->screen.rect, 0x00FF00), this->screen.rect);
+        this->front.draw(RDPOpaqueRect(this->screen.get_rect(), 0x00FF00), this->screen.get_rect());
         this->front.end_update();
 
         // Using µsec set
@@ -123,10 +123,10 @@ public:
 
         drawable.begin_update();
         // Drawing the RECT
-        drawable.draw(RDPOpaqueRect(this->dancing_rect, 0x0000FF), this->screen.rect);
+        drawable.draw(RDPOpaqueRect(this->dancing_rect, 0x0000FF), this->screen.get_rect());
 
         // And erase
-        this->wipe(oldrect, this->dancing_rect, 0x00FF00, this->screen.rect);
+        this->wipe(oldrect, this->dancing_rect, 0x00FF00, this->screen.get_rect());
         drawable.end_update();
 
         // Final with setting next idle time
