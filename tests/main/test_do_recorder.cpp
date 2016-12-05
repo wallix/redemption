@@ -790,7 +790,7 @@ inline int hmac_2016_fn(char * buffer)
 inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldscheme)
 {
     static int i = 0;
-    LOG(LOG_INFO, "trace_20161025_fn(%*s,%d,oldscheme=%d)->\n i=%d", len, base, len, oldscheme, i );
+    LOG(LOG_INFO, "\n\ntrace_20161025_fn(%*s,%d,oldscheme=%d)->\n i=%d", len, base, len, oldscheme, i );
 
     (void)base;
     (void)len;

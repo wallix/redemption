@@ -72,11 +72,16 @@ inline void load_hash(
     unsigned int infile_version, bool infile_is_checksumed,
     CryptoContext & cctx, bool infile_is_encrypted, int verbose
 ) {
+    LOG(LOG_INFO, "trying load_hash");
+
     ifile_read_encrypted in_hash_fb(cctx, infile_is_encrypted);
 
     if (in_hash_fb.open(full_hash_path.c_str()) < 0) {
+        LOG(LOG_INFO, "Open load_hash failed");
         throw Error(ERR_TRANSPORT_OPEN_FAILED);
     }
+
+    LOG(LOG_INFO, "reading header from hash file");
 
     char buffer[8192]{};
     ssize_t len;
@@ -271,11 +276,15 @@ static inline int check_encrypted_or_checksumed(
 
 //    cctx.old_encryption_scheme = true;
     ifile_read_encrypted ibuf(cctx, encryption);
+
+    LOG(LOG_INFO, "ibuf.open");
     
     if (ibuf.open(full_mwrm_filename.c_str()) < 0){
+        LOG(LOG_INFO, "ibuf.open error");
         throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
     }
 
+    LOG(LOG_INFO, "ibuf.open encryption");
     // now force encryption for sub files
     bool infile_is_encrypted = ibuf.encrypted;
 
@@ -321,9 +330,13 @@ static inline int check_encrypted_or_checksumed(
         ignore_stat_info, cctx.get_hmac_key(), 32,
         update_stat_info, out_is_mismatch{has_mismatch_stat_hash}
     )){
+        LOG(LOG_INFO, "Not Check file");
         if (!has_mismatch_stat_hash) {
             return 1;
         }
+    }
+    else {
+        LOG(LOG_INFO, "Check file");
     }
 
     struct MetaLine2CtxForRewriteStat
@@ -338,11 +351,18 @@ static inline int check_encrypted_or_checksumed(
 
     MetaLine2 meta_line_wrm;
 
+    LOG(LOG_INFO, "reader.read_meta_file %s ", meta_line_wrm.filename);
+
     while (reader.read_meta_file(meta_line_wrm)) {
+    
+        
         size_t tmp_wrm_filename_len = 0;
         const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
         std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
         std::string const full_part_filename = mwrm_path + meta_line_wrm_filename;
+
+        LOG(LOG_INFO, "checking part %s", full_part_filename.c_str());
+
 
         bool has_mismatch_stat_mwrm = false;
         if (!check_file(
@@ -350,6 +370,7 @@ static inline int check_encrypted_or_checksumed(
             ignore_stat_info, cctx.get_hmac_key(), 32,
             update_stat_info, out_is_mismatch{has_mismatch_stat_mwrm})
         ){
+            LOG(LOG_INFO, "not check_file");
             if (has_mismatch_stat_mwrm) {
                 wrm_stat_is_ok = false;
             }
@@ -357,6 +378,8 @@ static inline int check_encrypted_or_checksumed(
                 return 1;
             }
         }
+
+        LOG(LOG_INFO, "check_file");
 
         if (update_stat_info) {
             meta_line_ctx_list.push_back({
