@@ -34,11 +34,19 @@ public:
     : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
     , bmp(bitmap_from_file(filename))
     {
-        this->tab_flag = IGNORE_TAB;
+        this->tab_flag   = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;
 
         this->set_cx(this->bmp.cx());
         this->set_cy(this->bmp.cy());
+    }
+
+    WidgetImage(gdi::GraphicApi & drawable, /*int x, int y, */const char * filename, Widget2 & parent, NotifyApi* notifier, int group_id = 0)
+    : Widget2(drawable, /*Rect(x,y,1,1), */parent, notifier, group_id)
+    , bmp(bitmap_from_file(filename))
+    {
+        this->tab_flag   = IGNORE_TAB;
+        this->focus_flag = IGNORE_FOCUS;
     }
 
     ~WidgetImage() override {}
@@ -59,5 +67,8 @@ public:
             this->bmp
         );
     }
-};
 
+    Dimension get_optimal_dim() override {
+        return Dimension(this->bmp.cx(), this->bmp.cy());
+    }
+};

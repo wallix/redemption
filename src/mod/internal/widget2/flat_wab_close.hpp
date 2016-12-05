@@ -38,25 +38,28 @@
 class FlatWabClose : public WidgetParent
 {
 public:
-    int bg_color;
-
-    WidgetImage img;
-    WidgetLabel username_label;
-    WidgetLabel username_label_value;
-    WidgetLabel target_label;
-    WidgetLabel target_label_value;
-    WidgetLabel connection_closed_label;
-    WidgetFlatButton cancel;
-    WidgetFlatButton * back;
-    WidgetLabel diagnostic;
-    WidgetMultiLine diagnostic_lines;
-    WidgetLabel timeleft_label;
-    WidgetLabel timeleft_value;
-    WidgetRect separator;
-
     CompositeArray composite_array;
 
+    WidgetLabel        connection_closed_label;
+    WidgetRect         separator;
+
+    WidgetLabel        username_label;
+    WidgetLabel        username_value;
+    WidgetLabel        target_label;
+    WidgetLabel        target_value;
+    WidgetLabel        diagnostic_label;
+    WidgetMultiLine    diagnostic_value;
+    WidgetLabel        timeleft_label;
+    WidgetLabel        timeleft_value;
+
+    WidgetFlatButton   cancel;
+    WidgetFlatButton * back;
+
+    WidgetImage        img;
+
 private:
+    int bg_color;
+
     long prev_time;
 
     Translation::language_t lang;
@@ -71,41 +74,40 @@ public:
                  bool showtimer, Font const & font, Theme const & theme,
                  Translation::language_t lang, bool back_selector = false)
     : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier)
-    , bg_color(theme.global.bgcolor)
-    // , img(drawable, 0, 0, theme.global.logo_path, *this, nullptr, -10)
-    , img(drawable, 0, 0,
-          theme.global.logo ? theme.global.logo_path :
-          SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
-    , username_label(drawable, (width - 600) / 2, 0, *this, nullptr, "Username:", true, -11,
-                     theme.global.fgcolor, theme.global.bgcolor, font)
-    , username_label_value(drawable, 0, 0, *this, nullptr, username, true, -11,
-                           theme.global.fgcolor, theme.global.bgcolor, font)
-    , target_label(drawable, (width - 600) / 2, 0, *this, nullptr, "Target:", true, -12,
-                   theme.global.fgcolor, theme.global.bgcolor, font)
-    , target_label_value(drawable, 0, 0, *this, nullptr, target, true, -12,
-                         theme.global.fgcolor, theme.global.bgcolor, font)
-    , connection_closed_label(drawable, 0, 0, *this, nullptr, TR("connection_closed", lang),
-                              true, -13, theme.global.fgcolor,
+    , connection_closed_label(drawable, /*0, 0, */*this, nullptr, TR("connection_closed", lang),
+                              /*true, */-13, theme.global.fgcolor,
                               theme.global.bgcolor, font)
-    , cancel(drawable, 0, 0, *this, this, TR("close", lang), true, -14,
+    , separator(drawable, Rect(0, 0, /*width, 2*/0, 0), *this, this, -12,
+                theme.global.separator_color)
+    , username_label(drawable/*, (width - 600) / 2, 0*/, *this, nullptr, "Username:"/*, true*/, -11,
+                     theme.global.fgcolor, theme.global.bgcolor, font)
+    , username_value(drawable/*, 0, 0*/, *this, nullptr, username/*, true*/, -11,
+                           theme.global.fgcolor, theme.global.bgcolor, font)
+    , target_label(drawable, /*(width - 600) / 2, 0, */*this, nullptr, "Target:", /*true, */-12,
+                   theme.global.fgcolor, theme.global.bgcolor, font)
+    , target_value(drawable, /*0, 0, */*this, nullptr, target, /*true, */-12,
+                         theme.global.fgcolor, theme.global.bgcolor, font)
+    , diagnostic_label(drawable, /*(width - 600) / 2, 0, */*this, nullptr, "Diagnostic:"/*, true*/, -15,
+                 theme.global.fgcolor, theme.global.bgcolor, font)
+    , diagnostic_value(drawable, /*0, 0, */*this, nullptr, diagnostic_text/*, true*/, -16,
+                       theme.global.fgcolor, theme.global.bgcolor, font)
+    , timeleft_label(drawable, /*(width - 600) / 2, 0, */*this, nullptr, "Time left:", /*true, */-12,
+                     theme.global.fgcolor, theme.global.bgcolor, font)
+    , timeleft_value(drawable, /*0, 0, */*this, nullptr, nullptr, /*true, */-12,
+                     theme.global.fgcolor, theme.global.bgcolor, font)
+    , cancel(drawable, /*0, 0, */*this, this, TR("close", lang), /*true, */-14,
              theme.global.fgcolor, theme.global.bgcolor,
              theme.global.focus_color, font, 6, 2)
-    , back(back_selector ? new WidgetFlatButton(drawable, 0, 0, *this, this,
-                                                TR("back_selector", lang), true, -14,
+    , back(back_selector ? new WidgetFlatButton(drawable, /*0, 0, */*this, this,
+                                                TR("back_selector", lang), /*true, */-14,
                                                 theme.global.fgcolor,
                                                 theme.global.bgcolor,
                                                 theme.global.focus_color, font,
                                                 6, 2) : nullptr)
-    , diagnostic(drawable, (width - 600) / 2, 0, *this, nullptr, "Diagnostic:", true, -15,
-                 theme.global.fgcolor, theme.global.bgcolor, font)
-    , diagnostic_lines(drawable, 0, 0, *this, nullptr, diagnostic_text, true, -16,
-                       theme.global.fgcolor, theme.global.bgcolor, font)
-    , timeleft_label(drawable, (width - 600) / 2, 0, *this, nullptr, "Time left:", true, -12,
-                     theme.global.fgcolor, theme.global.bgcolor, font)
-    , timeleft_value(drawable, 0, 0, *this, nullptr, nullptr, true, -12,
-                     theme.global.fgcolor, theme.global.bgcolor, font)
-    , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
-                theme.global.separator_color)
+    , img(drawable, /*0, 0,*/
+          theme.global.logo ? theme.global.logo_path :
+          SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
+    , bg_color(theme.global.bgcolor)
     , prev_time(0)
     , lang(lang)
     , showtimer(showtimer)
@@ -120,93 +122,102 @@ public:
         snprintf(label, sizeof(label), "%s:", TR("target", lang));
         this->target_label.set_text(label);
         snprintf(label, sizeof(label), "%s:", TR("diagnostic", lang));
-        this->diagnostic.set_text(label);
+        this->diagnostic_label.set_text(label);
         snprintf(label, sizeof(label), "%s:", TR("timeleft", lang));
         this->timeleft_label.set_text(label);
 
-        int const back_width = this->back ? this->back->cx() + 10 : 0;
-        this->cancel.set_x(left + (this->cx() - (this->cancel.cx() + back_width)) / 2);
-        this->connection_closed_label.set_x(left + (this->cx() - this->connection_closed_label.cx()) / 2);
+//        Dimension dim = this->username_label.get_optimal_dim();
+//        this->username_label.set_wh(dim);
+//        this->username_label.set_x((width - 600) / 2);
 
-        this->separator.set_x(left + (this->cx() - 600) / 2);
-        this->separator.set_cx(600);
+//        dim = this->cancel.get_optimal_dim();
+//        this->cancel.set_wh(dim);
+
+//        int const back_width = this->back ? this->back->cx() + 10 : 0;
+//        this->cancel.set_x(left + (this->cx() - (this->cancel.cx() + back_width)) / 2);
+//        this->connection_closed_label.set_x(left + (this->cx() - this->connection_closed_label.cx()) / 2);
+
+//        this->separator.set_x(left + (this->cx() - 600) / 2);
+//        this->separator.set_cx(600);
 
         this->add_widget(&this->connection_closed_label);
         this->add_widget(&this->cancel);
-        this->add_widget(&this->diagnostic);
-        this->add_widget(&this->diagnostic_lines);
+        this->add_widget(&this->diagnostic_label);
+        this->add_widget(&this->diagnostic_value);
         this->add_widget(&this->separator);
 
-        uint16_t px = this->diagnostic.cx() + 10;
-        if (username && *username) {
-            px = std::max<uint16_t>(this->username_label.cx() + 10, px);
-            px = std::max<uint16_t>(this->target_label.cx() + 10, px);
-        }
-        if (showtimer) {
-            px = std::max<uint16_t>(this->timeleft_label.cx() + 10, px);
-        }
+//        uint16_t px = this->diagnostic_label.cx() + 10;
+//        if (username && *username) {
+//            px = std::max<uint16_t>(this->username_label.cx() + 10, px);
+//            px = std::max<uint16_t>(this->target_label.cx() + 10, px);
+//        }
+//        if (showtimer) {
+//            px = std::max<uint16_t>(this->timeleft_label.cx() + 10, px);
+//        }
 
-        int y = this->y() + 10 - top;
+//        int y = this->y() + 10 - top;
 
-        this->connection_closed_label.set_y(top + y);
-        y += this->connection_closed_label.cy();
+//        this->connection_closed_label.set_y(top + y);
+//        y += this->connection_closed_label.cy();
 
-        this->separator.set_y(top + y + 3);
-        y += 30;
+//        this->separator.set_y(top + y + 3);
+//        y += 30;
 
         if (username && *username) {
             this->add_widget(&this->username_label);
-            this->add_widget(&this->username_label_value);
+            this->add_widget(&this->username_value);
             this->add_widget(&this->target_label);
-            this->add_widget(&this->target_label_value);
+            this->add_widget(&this->target_value);
 
-            this->username_label_value.set_x(this->username_label.x() + px);
-            this->target_label_value.set_x(this->username_label.x() + px);
+//            this->username_value.set_x(this->username_label.x() + px);
+//            this->target_value.set_x(this->username_label.x() + px);
 
-            this->username_label.set_y(top + y);
-            this->username_label_value.set_y(top + y);
-            y += this->username_label.cy() + 20;
-            this->target_label.set_y(top + y);
-            this->target_label_value.set_y(top + y);
-            y += this->target_label.cy() + 20;
+//            this->username_label.set_y(top + y);
+//            this->username_value.set_y(top + y);
+//            y += this->username_label.cy() + 20;
+//            this->target_label.set_y(top + y);
+//            this->target_value.set_y(top + y);
+//            y += this->target_label.cy() + 20;
         }
-        this->diagnostic.set_y(top + y);
-        if (this->diagnostic.cx() > this->cx() - (px + 10)) {
-            y += this->diagnostic.cy() + 10;
-            this->diagnostic_lines.set_y(top + y);
-            y += this->diagnostic_lines.cy() + 20;
-        }
-        else {
-            this->diagnostic_lines.set_y(top + y);
-            y += std::max(this->diagnostic_lines.cy(), this->diagnostic.cy()) + 20;
-            this->diagnostic_lines.set_x(this->username_label.x() + px);
-        }
+//        this->diagnostic_label.set_y(top + y);
+//        if (this->diagnostic_label.cx() > this->cx() - (px + 10)) {
+//            y += this->diagnostic_label.cy() + 10;
+//            this->diagnostic_value.set_y(top + y);
+//            y += this->diagnostic_value.cy() + 20;
+//        }
+//        else {
+//            this->diagnostic_value.set_y(top + y);
+//            y += std::max(this->diagnostic_value.cy(), this->diagnostic_label.cy()) + 20;
+//            this->diagnostic_value.set_x(this->username_label.x() + px);
+//        }
 
         if (showtimer) {
             this->add_widget(&this->timeleft_label);
             this->add_widget(&this->timeleft_value);
-            this->timeleft_label.set_y(top + y);
-            this->timeleft_value.set_y(top + y);
-            this->timeleft_value.set_x(this->username_label.x() + px);
-            y += this->timeleft_label.cy() + 20;
+//            this->timeleft_label.set_y(top + y);
+//            this->timeleft_value.set_y(top + y);
+//            this->timeleft_value.set_x(this->username_label.x() + px);
+//            y += this->timeleft_label.cy() + 20;
         }
 
         if (this->back) {
             this->add_widget(this->back);
-            this->back->set_x(this->cancel.x() + this->cancel.cx() + 10);
-            this->back->set_y(top + y);
+//            this->back->set_x(this->cancel.x() + this->cancel.cx() + 10);
+//            this->back->set_y(top + y);
         }
 
-        this->cancel.set_y(top + y);
-        y += this->cancel.cy();
+//        this->cancel.set_y(top + y);
+//        y += this->cancel.cy();
 
-        this->move_xy(0, (height - y) / 2);
+//        this->move_xy(0, (height - y) / 2);
 
-        this->img.set_x(left + (this->cx() - this->img.cx()) / 2);
-        this->img.set_y(top + (3*(height - y) / 2 - this->img.cy()) / 2 + y);
-        if (this->img.y() + this->img.cy() > top + height) {
-            this->img.set_y(top);
-        }
+//        this->img.set_x(left + (this->cx() - this->img.cx()) / 2);
+//        this->img.set_y(top + (3*(height - y) / 2 - this->img.cy()) / 2 + y);
+//        if (this->img.y() + this->img.cy() > top + height) {
+//            this->img.set_y(top);
+//        }
+
+        this->move_size_widget(left, top, width, height);
 
         this->set_widget_focus(&this->cancel, focus_reason_tabkey);
     }
@@ -217,81 +228,119 @@ public:
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
-        this->set_x(left);
-        this->set_y(top);
-        this->set_cx(width);
-        this->set_cy(height);
+        this->set_wh(width, height);
+        this->set_xy(left, top);
 
-        this->username_label.set_x(left + (width - 600) / 2);
-        this->target_label.set_x(left + (width - 600) / 2);
-        this->diagnostic.set_x(left + (width - 600) / 2);
-        this->timeleft_label.set_x(left + (width - 600) / 2);
+        int16_t y = 10;
 
-        int const back_width = this->back ? this->back->cx() + 10 : 0;
-        this->cancel.set_x(left + (this->cx() - (this->cancel.cx() + back_width)) / 2);
-        this->connection_closed_label.set_x(left + (this->cx() - this->connection_closed_label.cx()) / 2);
-
-        this->separator.set_x(left + (this->cx() - 600) / 2);
-
-        uint16_t px = this->diagnostic.cx() + 10;
-        if (this->username_label_value.buffer[0]) {
-            px = std::max<uint16_t>(this->username_label.cx() + 10, px);
-            px = std::max<uint16_t>(this->target_label.cx() + 10, px);
-        }
-        if (showtimer) {
-            px = std::max<uint16_t>(this->timeleft_label.cx() + 10, px);
-        }
-
-        int y = this->y() + 10 - top;
-
-        this->connection_closed_label.set_y(top + y);
+        Dimension dim = this->connection_closed_label.get_optimal_dim();
+        this->connection_closed_label.set_wh(dim);
+        this->connection_closed_label.set_xy(
+            left + (this->cx() - this->connection_closed_label.cx()) / 2, top + y);
         y += this->connection_closed_label.cy();
 
-        this->separator.set_y(top + y + 3);
+        this->separator.set_wh(600, 2);
+        this->separator.set_xy(left + (this->cx() - 600) / 2, top + y + 3);
         y += 30;
 
-        if (this->username_label_value.buffer[0]) {
-            this->username_label_value.set_x(this->username_label.x() + px);
-            this->target_label_value.set_x(this->username_label.x() + px);
+        uint16_t x = 0;
 
+        if (this->username_value.buffer[0]) {
+            dim = this->username_label.get_optimal_dim();
+            this->username_label.set_wh(dim);
+            this->username_label.set_x(left + (width - 600) / 2);
+            x = std::max<uint16_t>(this->username_label.cx(), x);
+
+            dim = this->target_label.get_optimal_dim();
+            this->target_label.set_wh(dim);
+            this->target_label.set_x(left + (width - 600) / 2);
+            x = std::max<uint16_t>(this->target_label.cx(), x);
+        }
+
+        dim = this->diagnostic_label.get_optimal_dim();
+        this->diagnostic_label.set_wh(dim);
+        this->diagnostic_label.set_x(left + (width - 600) / 2);
+        x = std::max<uint16_t>(this->diagnostic_label.cx(), x);
+
+        if (this->showtimer) {
+            dim = this->timeleft_label.get_optimal_dim();
+            this->timeleft_label.set_wh(dim);
+            this->timeleft_label.set_x(left + (width - 600) / 2);
+            x = std::max<uint16_t>(this->timeleft_label.cx(), x);
+        }
+
+        x += this->diagnostic_label.x() + 10;
+
+        if (this->username_value.buffer[0]) {
             this->username_label.set_y(top + y);
-            this->username_label_value.set_y(top + y);
+
+            dim = this->username_value.get_optimal_dim();
+            this->username_value.set_wh(dim);
+            this->username_value.set_xy(x, top + y);
+
             y += this->username_label.cy() + 20;
+
             this->target_label.set_y(top + y);
-            this->target_label_value.set_y(top + y);
+
+            dim = this->target_value.get_optimal_dim();
+            this->target_value.set_wh(dim);
+            this->target_value.set_xy(x, top + y);
+
             y += this->target_label.cy() + 20;
         }
-        this->diagnostic.set_y(top + y);
-        if (this->diagnostic.cx() > this->cx() - (px + 10)) {
-            y += this->diagnostic.cy() + 10;
-            this->diagnostic_lines.set_y(top + y);
-            y += this->diagnostic_lines.cy() + 20;
+
+        this->diagnostic_label.set_y(top + y);
+
+        dim = this->diagnostic_value.get_optimal_dim();
+        this->diagnostic_value.set_wh(dim);
+
+        if (this->diagnostic_label.cx() > this->cx() - (x + 10)) {
+            y += this->diagnostic_label.cy() + 10;
+
+            this->diagnostic_value.set_y(top + y);
+            y += this->diagnostic_value.cy() + 20;
         }
         else {
-            this->diagnostic_lines.set_y(top + y);
-            y += std::max(this->diagnostic_lines.cy(), this->diagnostic.cy()) + 20;
-            this->diagnostic_lines.set_x(this->username_label.x() + px);
+            this->diagnostic_value.set_xy(x, top + y);
+            y += std::max(this->diagnostic_value.cy(), this->diagnostic_label.cy()) + 20;
         }
 
         if (this->showtimer) {
             this->timeleft_label.set_y(top + y);
-            this->timeleft_value.set_y(top + y);
-            this->timeleft_value.set_x(this->username_label.x() + px);
+
+            dim = this->timeleft_value.get_optimal_dim();
+            this->timeleft_value.set_wh(dim);
+            this->timeleft_value.set_xy(x, top + y);
+
             y += this->timeleft_label.cy() + 20;
         }
 
+        dim = this->cancel.get_optimal_dim();
+        this->cancel.set_wh(dim);
+
         if (this->back) {
-            this->back->set_x(this->cancel.x() + this->cancel.cx() + 10);
-            this->back->set_y(top + y);
+            dim = this->back->get_optimal_dim();
+            this->back->set_wh(dim);
         }
 
-        this->cancel.set_y(top + y);
+        int const back_width = this->back ? this->back->cx() + 10 : 0;
+
+        this->cancel.set_xy(left + (this->cx() - (this->cancel.cx() + back_width)) / 2,
+                            top + y);
+
+        if (this->back) {
+            this->back->set_xy(this->cancel.x() + this->cancel.cx() + 10, top + y);
+        }
+
         y += this->cancel.cy();
 
         this->move_xy(0, (height - y) / 2);
 
-        this->img.set_x(left + (this->cx() - this->img.cx()) / 2);
-        this->img.set_y(top + (3*(height - y) / 2 - this->img.cy()) / 2 + y);
+        dim = this->img.get_optimal_dim();
+        this->img.set_wh(dim);
+
+        this->img.set_xy(left + (this->cx() - this->img.cx()) / 2,
+                         top + (3*(height - y) / 2 - this->img.cy()) / 2 + y);
         if (this->img.y() + this->img.cy() > top + height) {
             this->img.set_y(top);
         }
@@ -321,6 +370,10 @@ public:
             this->timeleft_value.set_text(nullptr);
             this->draw(old);
             this->timeleft_value.set_text(buff);
+
+            Dimension dim = this->timeleft_value.get_optimal_dim();
+            this->timeleft_value.set_wh(dim);
+
             this->draw(this->timeleft_value.get_rect());
             this->drawable.end_update();
 

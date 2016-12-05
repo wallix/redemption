@@ -25,6 +25,7 @@
 #include "mod/internal/widget2/widget.hpp"
 #include "utils/sugar/cast.hpp"
 #include "gdi/graphic_api.hpp"
+#include "utils/log.hpp"
 
 class WidgetLabel : public Widget2
 {
@@ -67,6 +68,27 @@ public:
         this->set_text(text);
     }
 
+    WidgetLabel(gdi::GraphicApi & drawable/*, int16_t x, int16_t y*/, Widget2& parent,
+                NotifyApi* notifier, const char * text/*, bool auto_resize_*/,
+                int group_id, uint32_t fgcolor, uint32_t bgcolor, Font const & font,
+                int xtext = 0, int ytext = 0)
+    : Widget2(drawable, Rect(0,0,0,0), parent, notifier, group_id)
+    , initial_x_text(xtext)
+    , x_text(xtext)
+    , y_text(ytext)
+    , bg_color(bgcolor)
+    , fg_color(fgcolor)
+    , auto_resize_(false)
+    , tool(false)
+    , w_border(x_text)
+    , h_border(y_text)
+    , font(font)
+    {
+        this->tab_flag = IGNORE_TAB;
+        this->focus_flag = IGNORE_FOCUS;
+        this->set_text(text);
+    }
+
     ~WidgetLabel() override {
     }
 
@@ -81,7 +103,7 @@ public:
             memcpy(this->buffer, text, max);
             this->buffer[max] = 0;
             if (this->auto_resize_) {
-                Dimension dm = this->get_optimal_dim(this->buffer, this->font, this->x_text, this->y_text);
+                Dimension dm = this->get_optimal_dim();
                 this->set_cx(dm.w);
                 this->set_cy(dm.h);
             }
@@ -116,10 +138,9 @@ public:
     Dimension get_optimal_dim() override {
         gdi::TextMetrics tm(this->font, this->buffer);
         return Dimension(tm.width + this->x_text * 2, tm.height + this->y_text * 2);
-
     }
 
-    static Dimension get_optimal_dim(char const* text, Font const& font, int xtext, int ytext) {
+    static Dimension get_optimal_dim(Font const& font, char const* text, int xtext, int ytext) {
         char buffer[buffer_size];
 
         buffer[0] = 0;

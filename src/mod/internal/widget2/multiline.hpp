@@ -51,7 +51,7 @@ public:
                     bool auto_resize, int group_id,
                     int fgcolor, int bgcolor, Font const & font,
                     int xtext = 0, int ytext = 0)
-    : Widget2(drawable, Rect(x, y, 1, 1), parent, notifier, group_id)
+    : Widget2(drawable, Rect(x, y, /*1, 1*/0, 0), parent, notifier, group_id)
     , x_text(xtext)
     , y_text(ytext)
     , cy_text(0)
@@ -60,11 +60,31 @@ public:
     , fg_color(fgcolor)
     , font(font)
     {
-        this->tab_flag = IGNORE_TAB;
+        this->tab_flag   = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;
 
-        this->set_cx(0);
-        this->set_cy(0);
+        //this->set_cx(0);
+        //this->set_cy(0);
+        this->set_text(text);
+    }
+
+    WidgetMultiLine(gdi::GraphicApi & drawable, /*int16_t x, int16_t y, */Widget2& parent,
+                    NotifyApi* notifier, const char * text,
+                    /*bool auto_resize, */int group_id,
+                    int fgcolor, int bgcolor, Font const & font,
+                    int xtext = 0, int ytext = 0)
+    : Widget2(drawable, /*Rect(x, y, 1, 1), */parent, notifier, group_id)
+    , x_text(xtext)
+    , y_text(ytext)
+    , cy_text(0)
+    , auto_resize(false)
+    , bg_color(bgcolor)
+    , fg_color(fgcolor)
+    , font(font)
+    {
+        this->tab_flag   = IGNORE_TAB;
+        this->focus_flag = IGNORE_FOCUS;
+
         this->set_text(text);
     }
 
@@ -108,6 +128,9 @@ public:
         if (this->auto_resize) {
             this->set_cx(this->cx() + this->x_text * 2);
             this->set_cy((this->cy() + this->y_text * 2) * (line - &this->lines[0]));
+
+            Dimension dm = this->get_optimal_dim();
+            REDASSERT((dm.w == this->cx()) && (dm.h == this->cy()));
         }
     }
 
@@ -137,6 +160,23 @@ public:
             );
             dy += this->y_text + this->cy_text;
         }
+    }
+
+    Dimension get_optimal_dim() override {
+        uint16_t max_line_width  = 0;
+        uint16_t max_line_height = 0;
+        line_t * line = this->lines;
+        for (; line->str; ++line) {
+            gdi::TextMetrics tm(this->font, line->str);
+            if (max_line_width < tm.width){
+                max_line_width = tm.width;
+            }
+            if (max_line_height < tm.height){
+                max_line_height = tm.height;
+            }
+        }
+        return Dimension(max_line_width + this->x_text * 2,
+            (max_line_height + this->y_text * 2) * (line - &this->lines[0]));
     }
 };
 
