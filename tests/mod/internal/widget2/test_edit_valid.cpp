@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\xc0\x77\x32\x6a\x03\x5e\x6f\x3d\xfa\x34\x18\xa0\xe7\x97\x83\xd7\x96\x70\xd5\x52"
+        "\xb4\x9e\xa4\x1f\x87\x5f\x0a\xfa\x47\x18\xd5\x1d\x17\x6f\x89\x8e\x3f\xc4\x6f\x8e"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x2a\x1c\x5d\x40\x6e\xc7\x3f\xc2\x30\x97\x88\xa5\xcd\xd5\x31\x11\x54\x06\x26\xda"
+        "\x60\x94\x19\x4b\xa3\xfe\xdd\x62\x2c\xc3\xc6\x26\xc4\xcd\x5e\x4d\x05\xac\xc0\x14"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalid3.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x7a\x6e\x2f\x6d\x30\x13\x07\x9a\xbf\x10\x34\x86\x46\x5b\xfa\x06\x24\xb7\x27\x64"
+        "\x13\x90\x5f\xd9\x12\x95\x7d\x04\x69\x21\xde\x98\xe7\x20\xef\x2a\x6c\x8a\x51\xeb"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid4.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xab\xac\x98\xab\x2b\x95\x45\xba\x6f\xca\x90\xe4\xcf\xb1\xa0\xc3\x09\x31\x95\x38"
+        "\x22\x15\x45\xcd\x67\xf9\x21\xa2\xfe\x61\xb7\x03\xa8\xd8\x4d\xf6\x45\x31\xc3\xda"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid5.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xd8\x14\x04\xa4\x77\xa3\xac\xba\x2d\x0d\x72\x38\x30\xb8\xae\x23\xd6\x52\xa8\x1b"
+        "\xa4\xce\x24\xc2\x41\x18\x23\xdf\xe0\x0d\xb0\xc7\x0d\xc9\x9c\x6e\xe5\x55\x25\x9f"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -192,7 +192,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x13\x13\xfd\xe8\x88\x3b\xe4\x70\x83\xa3\x33\x9c\x29\x8d\xa1\x3d\x99\x86\xec\x02"
+        "\xa6\xfd\x3c\xc6\x72\xc7\x63\xca\x36\x35\x96\xfb\x04\xac\xef\x4c\x35\x12\x8a\xcb"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -207,7 +207,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid7.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xb5\xca\x90\xc6\xf3\xbf\x06\xeb\xcf\x2c\x4a\xb4\x96\x4e\x73\x73\xf7\x8c\x27\xa2"
+        "\x06\x38\xa7\x92\x81\x06\xa9\xb6\x22\xfc\xee\x21\x97\xcd\x9a\xd8\x77\xd0\xae\x0f"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -229,7 +229,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid8.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x67\x75\xa4\xf3\x00\xf6\xc6\x9e\xbd\x5a\x91\x86\xc5\xbf\xcf\x80\xe5\xd4\x3b\x66"
+        "\xc1\xb2\x96\xdf\x74\xff\x2f\xca\x45\x98\x9b\xcf\xf9\xc7\xdc\x05\xc2\x2a\x90\x21"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -243,7 +243,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid9.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x13\xdd\x25\x21\x19\x12\x87\x84\xc8\xcb\x8d\xd9\xf0\x0e\x11\x0f\xac\xd8\x75\xcb"
+        "\xe1\x31\x6a\x10\x0d\x6e\x28\xeb\xb0\xdc\xcb\x65\x53\x3e\x06\x0c\x68\x43\x55\x92"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -279,7 +279,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x2c\x99\x06\x6e\xa5\xab\x44\x10\x0c\xd3\xbb\x21\xdb\x5e\x6e\x47\xc0\x9f\x70\x1a"
+        "\x93\x01\xd5\xc3\xfa\xd9\x53\x44\x90\xc4\x44\xbb\xa2\xe3\x46\x7e\x9d\xae\xcd\xf3"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -294,7 +294,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel2.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x50\x43\x95\xbc\xc5\xe6\x62\x0e\xec\xa4\x92\x92\x3d\x87\x75\x79\xb2\xc3\x39\xe2"
+        "\x24\x4c\x36\x82\x87\x20\x16\x5c\xbf\xd0\xe9\xf0\x7f\xc9\xe3\x28\x23\x8d\x89\x32"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -316,7 +316,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel3.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x67\x06\xdd\x70\x44\x34\x56\x58\x9b\x55\x30\xc4\x9d\x66\x84\xc7\x40\x5d\x00\xe4"
+        "\x32\x4e\xec\xfc\x6b\xa2\xcf\xda\xd6\x97\xce\x55\xc8\x94\x6a\xfa\xf0\x4a\x19\xda"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -330,7 +330,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel4.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x13\xdd\x25\x21\x19\x12\x87\x84\xc8\xcb\x8d\xd9\xf0\x0e\x11\x0f\xac\xd8\x75\xcb"
+        "\xe1\x31\x6a\x10\x0d\x6e\x28\xeb\xb0\xdc\xcb\x65\x53\x3e\x06\x0c\x68\x43\x55\x92"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -343,7 +343,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel5.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x44\x8c\x4a\x65\xe8\x5b\x8c\x6c\x8d\x5b\x5f\x7c\x02\x2c\x04\x7b\xa6\x05\x04\x49"
+        "\x88\x07\x91\xc7\x4f\xc2\xde\x75\x8b\xbb\xe9\x28\x04\x5e\xdd\x71\x37\x39\xc4\xdf"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -357,7 +357,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel6.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x9b\x5d\xe4\xd6\xea\x23\xa7\x2d\xb5\xfb\xd3\x1e\xfd\x65\x81\xb3\xd8\x35\x47\x6e"
+        "\x04\x06\xeb\x97\xe3\xd4\x55\x5c\xb7\x51\x03\x79\x61\x79\xae\x1f\xd3\x74\xd2\x87"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -368,7 +368,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel7.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x50\x43\x95\xbc\xc5\xe6\x62\x0e\xec\xa4\x92\x92\x3d\x87\x75\x79\xb2\xc3\x39\xe2"
+        "\x24\x4c\x36\x82\x87\x20\x16\x5c\xbf\xd0\xe9\xf0\x7f\xc9\xe3\x28\x23\x8d\x89\x32"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -403,7 +403,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\xde\xd5\x80\xe8\xe6\x95\x0e\x6e\xfe\x64\xd0\xa6\x08\x7e\x80\x01\x2c\x49\x26\xc3"
+        "\x15\xab\x61\x8e\x93\x7c\xbc\xac\x7c\x7e\x1a\x09\x19\xd1\x76\x04\xc0\xde\x6e\x62"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -418,7 +418,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass2.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x08\x40\xeb\x47\xbe\x25\x55\xec\x37\xe3\xcf\x36\xe0\x37\xab\x35\xde\x1f\xb2\x6f"
+        "\x31\x23\x5c\x2a\x80\xa9\x54\xb7\x3e\x06\x84\x79\xae\x3b\x6a\xff\xf3\x59\x65\xfc"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -440,7 +440,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass3.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x34\xfc\x1b\x0c\xc9\x7b\x3d\x02\xa3\xda\x48\x6c\x83\x27\xb8\x8f\xb0\x07\x99\xbe"
+        "\x3e\x9e\x78\xcc\x28\xcd\x88\x6e\xa3\x8f\xe1\x1b\x61\x23\xa9\x8b\xb7\x1a\x5e\xc5"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -454,7 +454,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass4.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x79\x2b\x00\xd2\x15\xd5\x0d\x06\xdb\x71\x61\x3a\xd0\xb0\x74\x67\xf6\xbe\x2a\x5d"
+        "\x56\xb3\xd8\x8d\xf3\xd3\x49\x13\x76\x13\x3b\x30\xdc\x67\xd2\x0f\xc9\xa0\x1d\x3a"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -467,7 +467,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass5.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xb2\xb0\xb0\x8f\x5a\x8d\x4f\x1e\x1d\x2d\xf0\xd7\x6e\xed\xf3\x11\x59\xc7\x17\x3a"
+        "\x3a\x8b\x6e\x21\x1d\x52\xcb\xb6\x92\x3d\xbc\x74\xa7\x06\xce\x5c\x15\xbb\x67\x81"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -481,7 +481,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass6.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xab\x47\xb4\xc7\x64\x28\x11\x01\xcd\x6d\xac\x8e\xec\x16\x8a\xaf\xe1\x68\xde\x25"
+        "\x42\xad\x80\xa8\x65\x6c\x59\x66\x31\x70\x31\xae\xc2\x94\xd9\xa2\xd9\xff\x28\x7e"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -492,7 +492,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     //drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass7.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x08\x40\xeb\x47\xbe\x25\x55\xec\x37\xe3\xcf\x36\xe0\x37\xab\x35\xde\x1f\xb2\x6f"
+        "\x31\x23\x5c\x2a\x80\xa9\x54\xb7\x3e\x06\x84\x79\xae\x3b\x6a\xff\xf3\x59\x65\xfc"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -554,7 +554,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xff\xd9\x32\x1d\x74\x81\x1e\xc5\x23\xcf\x2c\xe6\xc1\x6c\x71\x90\x63\xd3\xb4\x97"
+        "\x2d\x0e\x3b\x69\x9f\x39\x04\xe3\xf4\xb2\xc0\xda\x71\xcc\xa7\x32\xac\x46\xdf\xf4"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -567,7 +567,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush2.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xf9\x9b\x1a\xa4\x81\xf3\x5a\xad\x58\x76\xb9\x7e\xda\x1f\xde\xa8\x3d\xb9\x1e\x78"
+        "\x15\x6a\x56\x04\x2e\xe2\x27\xaf\xfd\xcc\x24\x2d\x81\x23\x0b\x06\x74\xba\xbb\xbb"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -584,7 +584,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush3.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xff\xd9\x32\x1d\x74\x81\x1e\xc5\x23\xcf\x2c\xe6\xc1\x6c\x71\x90\x63\xd3\xb4\x97"
+        "\x2d\x0e\x3b\x69\x9f\x39\x04\xe3\xf4\xb2\xc0\xda\x71\xcc\xa7\x32\xac\x46\xdf\xf4"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -597,7 +597,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush4.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xf9\x9b\x1a\xa4\x81\xf3\x5a\xad\x58\x76\xb9\x7e\xda\x1f\xde\xa8\x3d\xb9\x1e\x78"
+        "\x15\x6a\x56\x04\x2e\xe2\x27\xaf\xfd\xcc\x24\x2d\x81\x23\x0b\x06\x74\xba\xbb\xbb"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -615,7 +615,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush5.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xff\xd9\x32\x1d\x74\x81\x1e\xc5\x23\xcf\x2c\xe6\xc1\x6c\x71\x90\x63\xd3\xb4\x97"
+        "\x2d\x0e\x3b\x69\x9f\x39\x04\xe3\xf4\xb2\xc0\xda\x71\xcc\xa7\x32\xac\x46\xdf\xf4"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -627,7 +627,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush6.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xf9\x9b\x1a\xa4\x81\xf3\x5a\xad\x58\x76\xb9\x7e\xda\x1f\xde\xa8\x3d\xb9\x1e\x78"
+        "\x15\x6a\x56\x04\x2e\xe2\x27\xaf\xfd\xcc\x24\x2d\x81\x23\x0b\x06\x74\xba\xbb\xbb"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -649,7 +649,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush7.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xf9\x9b\x1a\xa4\x81\xf3\x5a\xad\x58\x76\xb9\x7e\xda\x1f\xde\xa8\x3d\xb9\x1e\x78"
+        "\x15\x6a\x56\x04\x2e\xe2\x27\xaf\xfd\xcc\x24\x2d\x81\x23\x0b\x06\x74\xba\xbb\xbb"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }

@@ -136,7 +136,7 @@ public:
     }
 
     Dimension get_optimal_dim() override {
-        gdi::TextMetrics tm(this->font, this->buffer);
+        gdi::TextMetrics tm(this->font, (this->buffer[0] ? this->buffer : "Édp"));
         return Dimension(tm.width + this->x_text * 2, tm.height + this->y_text * 2);
     }
 
@@ -153,7 +153,7 @@ public:
             buffer[max] = 0;
         }
 
-        gdi::TextMetrics tm(font, buffer);
+        gdi::TextMetrics tm(font, (buffer[0] ? buffer : "Édp"));
         return Dimension(tm.width + xtext * 2, tm.height + ytext * 2);
     }
 

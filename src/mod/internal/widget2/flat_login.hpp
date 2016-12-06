@@ -76,17 +76,17 @@ public:
               Font const & font, Translator tr, Theme const & theme)
         : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier)
         , bg_color(theme.global.bgcolor)
-        , password_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
+        , password_edit(drawable, /*0, 0, (width >= 420) ? 400 : width - 20, */*this, this,
                         password, -14, theme.edit.fgcolor,
                         theme.edit.bgcolor, theme.edit.focus_color,
                         font, label_text_password, (width <= 640),
                         -1u, 1, 1, true)
         , login_label(drawable, 0, 0, *this, nullptr, label_text_login, true, -11,
                       theme.global.fgcolor, theme.global.bgcolor, font)
-        , login_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
+        , login_edit(drawable, /*0, 0, (width >= 420) ? 400 : width - 20, */*this, this,
                      login, -12, theme.edit.fgcolor, theme.edit.bgcolor,
                      theme.edit.focus_color, font,
-                      label_text_login, (width <= 640), -1u, 1, 1, false)
+                     label_text_login, (width <= 640), -1u, 1, 1, false)
         // , img(drawable, 0, 0, theme.global.logo_path, *this, nullptr, -10)
         , img(drawable, 0, 0,
               theme.global.logo ? theme.global.logo_path :
@@ -114,6 +114,12 @@ public:
         , extra_button(extra_button)
     {
         this->impl = &composite_array;
+
+        Dimension dim = this->login_edit.get_optimal_dim();
+        this->login_edit.set_wh((width >= 420) ? 400 : width - 20, dim.h);
+
+        dim = this->password_edit.get_optimal_dim();
+        this->password_edit.set_wh((width >= 420) ? 400 : width - 20, dim.h);
 
         this->add_widget(&this->img);
         this->add_widget(&this->helpicon);
