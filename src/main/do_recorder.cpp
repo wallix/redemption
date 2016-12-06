@@ -1310,6 +1310,7 @@ inline int app_recorder(
     std::cout << "Input file is \"" << input_filename << "\".\n";
 
     bool infile_is_encrypted;
+//    switch (encryption_type(input_filename.c_str(), cctx())
     if (is_encrypted_file(input_filename.c_str(), infile_is_encrypted) == -1) {
         std::cerr << "Input file is absent.\n";
         return 1;
@@ -1736,21 +1737,9 @@ extern "C" {
 
                 OpenSSL_add_all_digests();
 
-                if (!is_file_encrypted(input_filename)){
+                if (0 == encryption_type(input_filename, cctx)){
                     std::puts("File is not encrypted\n");
                     return 0;
-                }
-
-                // find if new old old encryption scheme
-                {
-                    ifile_read_encrypted in_test(cctx, 1);
-                    in_test.open(input_filename.c_str());
-                    char mem[4096];
-                    ssize_t res = in_test.read(mem, sizeof(mem));
-                    in_test.close();
-                    if (res < 0){
-                        cctx.old_encryption_scheme = 1;
-                    }
                 }
 
                 ifile_read_encrypted in_t(cctx, 1);
