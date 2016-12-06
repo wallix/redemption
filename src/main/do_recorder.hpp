@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <snappy-c.h>
+#include <iostream>
 #include "capture/cryptofile.hpp"
 #include "utils/sugar/local_fd.hpp"
 #include "utils/chex_to_int.hpp"
@@ -27,6 +28,51 @@ extern "C" {
 }
 
 enum { QUICK_CHECK_LENGTH = 4096 };
+
+
+
+static inline int is_file_encrypted(const std::string & full_filename)
+{
+    uint8_t tmp_buf[4] ={};
+    int fd = open(full_filename.c_str(), O_RDONLY);
+    if (fd == -1){
+        std::cerr << "Input file missing.\n";
+        return -1;
+    }
+    struct fdbuf
+    {
+        int fd;
+        explicit fdbuf(int fd) noexcept : fd(fd){}
+        ~fdbuf() {::close(this->fd);}
+    } file(fd);
+
+    const size_t len = sizeof(tmp_buf);
+    size_t remaining_len = len;
+    while (remaining_len) {
+        ssize_t ret = ::read(fd, &tmp_buf[len - remaining_len], remaining_len);
+        if (ret < 0){
+            if (ret == 0){
+                std::cerr << "Input file truncated\n";
+                return -1;
+            }
+            if (errno == EINTR){
+                continue;
+            }
+            // Error should still be there next time we try to read
+            std::cerr << "Input file error\n";
+            return -1;
+        }
+        // We must exit loop or we will enter infinite loop
+        remaining_len -= ret;
+    }
+
+    const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+    if (magic == WABCRYPTOFILE_MAGIC) {
+        std::cout << "Input file is encrypted.\n";
+        return 1;
+    }
+    return 0;
+}
 
 // Compute HmacSha256
 // up to check_size or end of file whicherver happens first
@@ -709,4 +755,58 @@ public:
         return -1;
     }
 };
+
+static inline int encryption_type(const std::string & full_filename, CryptoContext & cctx)
+{
+    uint8_t tmp_buf[4] ={};
+    int fd = open(full_filename.c_str(), O_RDONLY);
+    if (fd == -1){
+        std::cerr << "Input file missing.\n";
+        return -1;
+    }
+
+    {
+        struct fdbuf
+        {
+            int fd;
+            explicit fdbuf(int fd) noexcept : fd(fd){}
+            ~fdbuf() {::close(this->fd);}
+        } file(fd);
+
+        const size_t len = sizeof(tmp_buf);
+        size_t remaining_len = len;
+        while (remaining_len) {
+            ssize_t ret = ::read(fd, &tmp_buf[len - remaining_len], remaining_len);
+            if (ret < 0){
+                if (ret == 0){
+                    std::cerr << "Input file truncated\n";
+                    return -1;
+                }
+                if (errno == EINTR){
+                    continue;
+                }
+                // Error should still be there next time we try to read
+                std::cerr << "Input file error\n";
+                return -1;
+            }
+            // We must exit loop or we will enter infinite loop
+            remaining_len -= ret;
+        }
+    }
+
+    const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+    if (magic == WABCRYPTOFILE_MAGIC) {
+        ifile_read_encrypted in_test(cctx, 1);
+        in_test.open(full_filename.c_str());
+        char mem[4096];
+        ssize_t res = in_test.read(mem, sizeof(mem));
+        if (res < 0){
+            cctx.old_encryption_scheme = 1;
+            return 1;
+        }
+        return 2;
+    }
+    return 0;
+}
+
 

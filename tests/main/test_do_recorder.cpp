@@ -790,7 +790,7 @@ inline int hmac_2016_fn(char * buffer)
 inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldscheme)
 {
     static int i = 0;
-    LOG(LOG_INFO, "trace_20161025_fn(%*s,%d,oldscheme=%d)->\n i=%d", len, base, len, oldscheme, i );
+    LOG(LOG_INFO, "\n\ntrace_20161025_fn(%*s,%d,oldscheme=%d)->\n i=%d", len, base, len, oldscheme, i );
 
     (void)base;
     (void)len;
@@ -830,6 +830,29 @@ inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldsc
     hexdump_d(buffer, 32);
     if (oldscheme) { i++; }
     return 0;
+}
+
+
+BOOST_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted)
+{
+    // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
+
+
+    char const * argv[] {
+        "decrypter.py", "reddec",
+        "-i", FIXTURES_PATH "/verifier/recorded/" "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
+            "-192304,wab-4-2-4.yourdomain,5560.mwrm",
+//        "--hash-path", FIXTURES_PATH "/verifier/hash/",
+//        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "-o", "/tmp/out.txt",
+        "--verbose", "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    BOOST_CHECK_EQUAL(true, true);
+
+    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    BOOST_CHECK_EQUAL(0, res);
 }
 
 
