@@ -114,6 +114,9 @@
 "#_advanced\n"
 "#session_log_redirection = 0\n\n"
 
+"#_advanced\n"
+"#log_path = \n\n"
+
 "#   0: keyboard input are not masked\n"
 "#   1: only passwords are masked\n"
 "#   2: passwords and unidentified texts are masked\n"

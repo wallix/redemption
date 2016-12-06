@@ -53,7 +53,7 @@ def rvalue(value):
         return u''
     return value
 
-DEBUG = True
+DEBUG = False
 def mdecode(item):
     if not item:
         return ""
@@ -130,6 +130,7 @@ class Sesman():
         self.proxy_conx  = conn
         self.addr        = addr
         self.full_path   = None
+        self.full_log_path = None
 
         self.engine = engine.Engine()
 
@@ -201,6 +202,7 @@ class Sesman():
             u"forcemodule": False,
             u"message": u'',
             u"rec_path": u'',
+            u"session_log_path": u'',
             u"is_rec": False,
             u"selector_number_of_pages": 1,
             u"proxy_opt": u'',
@@ -866,6 +868,7 @@ class Sesman():
               u'is_rec'         : u'False'
             , u'rec_path'       : u""
             , u'trace_type'     : u"0"
+            , u'module': u'transitory'
         }
 
         try:
@@ -936,6 +939,57 @@ class Sesman():
                                        ["NO", "YES"][_status]))
                     else:
                         self.send_data(data_to_send)
+
+        except Exception, e:
+            if DEBUG:
+                import traceback
+                Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+            _status, _error = False, TR(u"Connection closed by client")
+
+        return _status, _error
+
+    def check_session_log_redirection(self, logRedirected, user):
+        Logger().info(u"Checking session log redirection")
+
+        _status, _error = True, u''
+        data_to_send = {
+            u'session_log_path' : u'',
+            u'module': u'transitory'
+        }
+
+        try:
+            self.full_log_path = u""
+            session_log_path = u""
+            if logRedirected:
+                try:
+                    os.stat(RECORD_PATH)
+                except OSError:
+                    try:
+                        os.mkdir(RECORD_PATH)
+                    except Exception:
+                        Logger().info(u"Failed creating recording path (%s)" % RECORD_PATH)
+                        self.send_data({u'rejected': TR(u'error_getting_record_path')})
+                        _status, _error = False, TR(u'error_getting_record_path %s') % RECORD_PATH
+                if _status:
+                    # Naming convention : {username}@{userip},{account}@{devicename},YYYYMMDD-HHMMSS,{wabhostname},{uid}
+                    # NB :  backslashes are replaced by pipes for IE compatibility
+                    random.seed(self.pid)
+
+                    #keeping code synchronized with wabengine/src/common/data.py
+                    session_log_path =  u"%s@%s," % (user, self.shared.get(u'ip_client'))
+                    session_log_path += u"%s@%s," % (self.shared.get(u'target_login'), self.shared.get(u'target_device'))
+                    session_log_path += u"%s," % (strftime("%Y%m%d-%H%M%S"))
+                    session_log_path += u"%s," % gethostname()
+                    session_log_path += u"%s" % random.randint(1000, 9999)
+                    # remove all "dangerous" characters in filename
+                    import re
+                    session_log_path = re.sub(r'[^-A-Za-z0-9_@,.]', u"", session_log_path)
+
+                    Logger().info(u"Session log will be redirected to %s" % session_log_path)
+
+                    self.full_log_path = RECORD_PATH + session_log_path + u".log"
+                    data_to_send[u'session_log_path'] = u"%s" % self.full_log_path
+                    self.send_data(data_to_send)
 
         except Exception, e:
             if DEBUG:
@@ -1197,16 +1251,19 @@ class Sesman():
         ### START_SESSION ###
         #####################
         extra_info = self.engine.get_target_extra_info()
-        user = mdecode(self.engine.get_username()) if self.engine.get_username() \
-               else self.shared.get(u'login')
         _status, _error = self.check_video_recording(
-            extra_info.is_recorded, user)
+            extra_info.is_recorded,
+            mdecode(self.engine.get_username()) if self.engine.get_username() else self.shared.get(u'login'))
+        if not _status:
+            self.send_data({u'rejected': _error})
 
+        _status, _error = self.check_session_log_redirection(
+            self.shared[u'session_log_redirection'].lower() == u'true',
+            mdecode(self.engine.get_username()) if self.engine.get_username() else self.shared.get(u'login'))
         if not _status:
             self.send_data({u'rejected': _error})
 
         Logger().info(u"Fetching protocol")
-
         kv = {}
         if _status:
             target_login_info = self.engine.get_target_login_info(selected_target)
@@ -1225,16 +1282,11 @@ class Sesman():
             signal.signal(signal.SIGUSR2, self.check_handler)
 
             Logger().info(u"Starting Session, effective login='%s'" % self.effective_login)
-            session_log_file_path = None
-            if self.shared[u'session_log_redirection'].lower() == u'true':
-                session_log_file_path =  u"/var/wab/rdp/recorded/"
-                session_log_file_path += u"%s@%s," % (user, self.shared.get(u'ip_client'))
-                session_log_file_path += u"%s@%s," % (self.shared.get(u'target_login'), self.shared.get(u'target_device'))
-                session_log_file_path =  u".log"
+
             # Add connection to the observer
             session_id = self.engine.start_session(selected_target, self.pid,
-                                               self.effective_login,
-                                               session_log_file_path=session_log_file_path)
+                                               self.effective_login, 
+                                               session_log_path=self.full_log_path)
             if session_id is None:
                 _status, _error = False, TR(u"start_session_failed")
                 self.send_data({u'rejected': TR(u'start_session_failed')})
