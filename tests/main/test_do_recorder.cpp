@@ -28,6 +28,7 @@
 
 #define LOGPRINT
 // #define LOGNULL
+#include "utils/log.hpp"
 
 #include "main/do_recorder.hpp"
 
@@ -36,6 +37,7 @@
 #include <fcntl.h>
 
 #include <fstream>
+#include <sstream>
 #include <iostream>
 #include <ostream>
 #include "utils/fileutils.hpp"
@@ -88,6 +90,7 @@ extern "C" {
 
 BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
 {
+   LOG(LOG_INFO, "=================== TestDecrypterEncryptedData =============");
     char const * argv[] {
         "decrypter.py",
         "reddec",
@@ -114,6 +117,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
 
 BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
 {
+   LOG(LOG_INFO, "=================== TestDecrypterClearData =============");
     char const * argv[] {
         "decrypter.py",
         "reddec",
@@ -140,6 +144,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
 
 BOOST_AUTO_TEST_CASE(TestReverseIterators)
 {
+   LOG(LOG_INFO, "=================== TestReverseIterators =============");
 
     // Show how to extract filename even if it contains spaces
     // the idea is that the final fields are fixed, henceforth
@@ -176,6 +181,7 @@ BOOST_AUTO_TEST_CASE(TestReverseIterators)
 
 BOOST_AUTO_TEST_CASE(TestLineReader)
 {
+   LOG(LOG_INFO, "=================== TestLineReader =============");
     char const * filename = "/tmp/test_app_verifier_s.txt";
 
     std::ofstream(filename) <<
@@ -231,6 +237,7 @@ BOOST_AUTO_TEST_CASE(TestLineReader)
 
 BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 {
+   LOG(LOG_INFO, "=================== TestVerifierCheckFileHash =============");
     const std::string test_mwrm_path = "./";
     const std::string test_file_name = "TestCheckFileHash";
 
@@ -357,6 +364,7 @@ bool is_except( Exception const & ) { return true; }
 
 BOOST_AUTO_TEST_CASE(TestVerifierFileNotFound)
 {
+   LOG(LOG_INFO, "=================== TestVerifierFileNotFound =============");
     char const * argv[] = {
         "verifier.py",
         "redver",
@@ -373,6 +381,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierFileNotFound)
 
 BOOST_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
 {
+   LOG(LOG_INFO, "=================== TestVerifierEncryptedDataFailure =============");
     char const * argv[] = {
         "verifier.py",
         "redver",
@@ -397,6 +406,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
 
 BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
 {
+   LOG(LOG_INFO, "=================== TestVerifierEncryptedData =============");
     char const * argv[] = {
         "verifier.py",
         "redver",
@@ -421,6 +431,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
 
 BOOST_AUTO_TEST_CASE(TestVerifierClearData)
 {
+   LOG(LOG_INFO, "=================== TestVerifierClearData =============");
     char const * argv[] {
         "verifier.py",
         "redver",
@@ -446,11 +457,10 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
     BOOST_CHECK_EQUAL(0, res);
 }
 
-#include <fstream>
-#include <sstream>
 
 BOOST_AUTO_TEST_CASE(TestVerifierUpdateData)
 {
+    LOG(LOG_INFO, "=================== TestVerifierUpdateData =============");
 //    Inifile ini;
 //    ini.set<cfg::debug::config>(false);
 //    CryptoContext cctx;
@@ -553,6 +563,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierUpdateData)
 
 BOOST_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
 {
+    LOG(LOG_INFO, "=================== TestVerifierClearDataStatFailed =============");
     char const * argv[] {
         "verifier.py",
         "redver",
@@ -579,11 +590,12 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
 
 BOOST_AUTO_TEST_CASE(ReadClearHeaderV2)
 {
+    LOG(LOG_INFO, "=================== ReadClearHeaderV2 =============");
     ifile_read fd;
     fd.open(FIXTURES_PATH "/verifier/recorded/v2_nochecksum_nocrypt.mwrm");
     MwrmReader reader(fd);
 
-    reader.read_meta_headers();
+    reader.read_meta_headers(false);
     BOOST_CHECK(reader.header.version == 2);
     BOOST_CHECK(!reader.header.has_checksum);
 
@@ -607,11 +619,12 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV2)
 
 BOOST_AUTO_TEST_CASE(ReadClearHeaderV1)
 {
+    LOG(LOG_INFO, "=================== (ReadClearHeaderV1 =============");
     ifile_read fd;
     fd.open(FIXTURES_PATH "/verifier/recorded/v1_nochecksum_nocrypt.mwrm");
     MwrmReader reader(fd);
 
-    reader.read_meta_headers();
+    reader.read_meta_headers(false);
     BOOST_CHECK(reader.header.version == 1);
     BOOST_CHECK(!reader.header.has_checksum);
 
@@ -645,11 +658,12 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV1)
 
 BOOST_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
 {
+    LOG(LOG_INFO, "=================== ReadClearHeaderV2Checksum =============");
     ifile_read fd;
     fd.open(FIXTURES_PATH "/sample_v2_checksum.mwrm");
     MwrmReader reader(fd);
 
-    reader.read_meta_headers();
+    reader.read_meta_headers(false);
     BOOST_CHECK(reader.header.version == 2);
     BOOST_CHECK(reader.header.has_checksum);
 
@@ -677,10 +691,9 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
                         32));
 }
 
-#include "utils/log.hpp"
-
 BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
 {
+    LOG(LOG_INFO, "=================== ReadEncryptedHeaderV2Checksum =============");
 
     CryptoContext cctx;
     cctx.set_get_hmac_key_cb(hmac_fn);
@@ -694,7 +707,7 @@ BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
 
     MwrmReader reader(fd);
 
-    reader.read_meta_headers();
+    reader.read_meta_headers(true);
     BOOST_CHECK(reader.header.version == 2);
     BOOST_CHECK(reader.header.has_checksum);
 
@@ -739,53 +752,6 @@ inline int hmac_2016_fn(char * buffer)
     memcpy(buffer, hmac_key, 32);
     return 0;
 }
-
-//get_trace_key_cb:::::(new scheme)
-///* 0000 */ "\x08\x00\x10\x00\xf0\xff\x01\x00\x08\x00\x00\x00\x00\x00\x00\x00"
-///* 0010 */ "\x00\x00\x00\x7f\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x7f\x00"
-//derivator used:::::(new scheme)
-///* 0000 */ "\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x40\x31\x30\x2e\x31\x30\x2e" //cgrosjean@10.10.
-///* 0010 */ "\x34\x33\x2e\x31\x33\x2c\x70\x72\x6f\x78\x79\x75\x73\x65\x72\x40" //43.13,proxyuser@
-///* 0020 */ "\x77\x69\x6e\x32\x30\x30\x38\x2c\x32\x30\x31\x36\x31\x30\x32\x35" //win2008,20161025
-///* 0030 */ "\x2d\x31\x39\x32\x33\x30\x34\x2c\x77\x61\x62\x2d\x34\x2d\x32\x2d" //-192304,wab-4-2-
-///* 0040 */ "\x34\x2e\x79\x6f\x75\x72\x64\x6f\x6d\x61\x69\x6e\x2c\x35\x35\x36" //4.yourdomain,556
-///* 0050 */ "\x30\x2e\x6d\x77\x72\x6d"                                         //0.mwrm
-//Nov 16 18:26:31 wab-4-2-4 redrec: ERR (29540/29540) -- [CRYPTO_ERROR][29540]: Could not finish decryption!
-//get_trace_key_cb:::::(old scheme)
-///* 0000 */ "\xa8\x6e\x1c\x63\xe1\xa6\xfd\xed\x2f\x73\x17\xca\x97\xad\x48\x07" //.n.c..../s....H.
-///* 0010 */ "\x99\xf5\xcf\x84\xad\x9f\x4a\x16\x66\x38\x09\xb7\x74\xe0\x58\x34" //......J.f8..t.X4
-//derivator used:::::(old scheme)
-///* 0000 */ "\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x40\x31\x30\x2e\x31\x30\x2e" //cgrosjean@10.10.
-///* 0010 */ "\x34\x33\x2e\x31\x33\x2c\x70\x72\x6f\x78\x79\x75\x73\x65\x72\x40" //43.13,proxyuser@
-///* 0020 */ "\x77\x69\x6e\x32\x30\x30\x38\x2c\x32\x30\x31\x36\x31\x30\x32\x35" //win2008,20161025
-///* 0030 */ "\x2d\x31\x39\x32\x33\x30\x34\x2c\x77\x61\x62\x2d\x34\x2d\x32\x2d" //-192304,wab-4-2-
-///* 0040 */ "\x34\x2e\x79\x6f\x75\x72\x64\x6f\x6d\x61\x69\x6e\x2c\x35\x35\x36" //4.yourdomain,556
-///* 0050 */ "\x30\x2e\x6d\x77\x72\x6d"                                         //0.mwrm
-//get_trace_key_cb:::::(old scheme)
-///* 0000 */ "\xa8\x6e\x1c\x63\xe1\xa6\xfd\xed\x2f\x73\x17\xca\x97\xad\x48\x07" //.n.c..../s....H.
-///* 0010 */ "\x99\xf5\xcf\x84\xad\x9f\x4a\x16\x66\x38\x09\xb7\x74\xe0\x58\x34" //......J.f8..t.X4
-//derivator used:::::(old scheme)
-///* 0000 */ "\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x40\x31\x30\x2e\x31\x30\x2e" //cgrosjean@10.10.
-///* 0010 */ "\x34\x33\x2e\x31\x33\x2c\x70\x72\x6f\x78\x79\x75\x73\x65\x72\x40" //43.13,proxyuser@
-///* 0020 */ "\x77\x69\x6e\x32\x30\x30\x38\x2c\x32\x30\x31\x36\x31\x30\x32\x35" //win2008,20161025
-///* 0030 */ "\x2d\x31\x39\x32\x33\x30\x34\x2c\x77\x61\x62\x2d\x34\x2d\x32\x2d" //-192304,wab-4-2-
-///* 0040 */ "\x34\x2e\x79\x6f\x75\x72\x64\x6f\x6d\x61\x69\x6e\x2c\x35\x35\x36" //4.yourdomain,556
-///* 0050 */ "\x30\x2e\x6d\x77\x72\x6d"                                         //0.mwrm
-//get_trace_key_cb:::::(old scheme)
-///* 0000 */ "\xfc\x06\xf3\x0f\xc8\x3d\x16\x9f\xa1\x64\xb8\xca\x0f\xf3\x85\xf0" //.....=...d......
-///* 0010 */ "\x22\x09\xaf\xfc\x0c\xe0\x76\x13\x46\x62\xff\x55\xcb\x41\x87\x6a" //".....v.Fb.U.A.j
-//derivator used:::::(old scheme)
-///* 0000 */ "\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x40\x31\x30\x2e\x31\x30\x2e" //cgrosjean@10.10.
-///* 0010 */ "\x34\x33\x2e\x31\x33\x2c\x70\x72\x6f\x78\x79\x75\x73\x65\x72\x40" //43.13,proxyuser@
-///* 0020 */ "\x77\x69\x6e\x32\x30\x30\x38\x2c\x32\x30\x31\x36\x31\x30\x32\x35" //win2008,20161025
-///* 0030 */ "\x2d\x31\x39\x32\x33\x30\x34\x2c\x77\x61\x62\x2d\x34\x2d\x32\x2d" //-192304,wab-4-2-
-///* 0040 */ "\x34\x2e\x79\x6f\x75\x72\x64\x6f\x6d\x61\x69\x6e\x2c\x35\x35\x36" //4.yourdomain,556
-///* 0050 */ "\x30\x2d\x30\x30\x30\x30\x30\x30\x2e\x77\x72\x6d"                 //0-000000.wrm
-
-//(cgrosjean@10.10.43.13,proxyuser@local@win2008,20161025-213153,wab-4-2-4.yourdomain,3243.mwrm,92,0)
-//base=['0x63', '0x67', '0x72', '0x6f', '0x73', '0x6a', '0x65', '0x61', '0x6e', '0x40', '0x31', '0x30', '0x2e', '0x31', '0x30', '0x2e', '0x34', '0x33', '0x2e', '0x31', '0x33', '0x2c', '0x70', '0x72', '0x6f', '0x78', '0x79', '0x75', '0x73', '0x65', '0x72', '0x40', '0x6c', '0x6f', '0x63', '0x61', '0x6c', '0x40', '0x77', '0x69', '0x6e', '0x32', '0x30', '0x30', '0x38', '0x2c', '0x32', '0x30', '0x31', '0x36', '0x31', '0x30', '0x32', '0x35', '0x2d', '0x32', '0x31', '0x33', '0x31', '0x35', '0x33', '0x2c', '0x77', '0x61', '0x62', '0x2d', '0x34', '0x2d', '0x32', '0x2d', '0x34', '0x2e', '0x79', '0x6f', '0x75', '0x72', '0x64', '0x6f', '0x6d', '0x61', '0x69', '0x6e', '0x2c', '0x33', '0x32', '0x34', '0x33', '0x2e', '0x6d', '0x77', '0x72', '0x6d']
-//derivator=['0x63', '0x67', '0x72', '0x6f', '0x73', '0x6a', '0x65', '0x61', '0x6e', '0x40', '0x31', '0x30', '0x2e', '0x31', '0x30', '0x2e', '0x34', '0x33', '0x2e', '0x31', '0x33', '0x2c', '0x70', '0x72', '0x6f', '0x78', '0x79', '0x75', '0x73', '0x65', '0x72', '0x40', '0x6c', '0x6f', '0x63', '0x61', '0x6c', '0x40', '0x77', '0x69', '0x6e', '0x32', '0x30', '0x30', '0x38', '0x2c', '0x32', '0x30', '0x31', '0x36', '0x31', '0x30', '0x32', '0x35', '0x2d', '0x32', '0x31', '0x33', '0x31', '0x35', '0x33', '0x2c', '0x77', '0x61', '0x62', '0x2d', '0x34', '0x2d', '0x32', '0x2d', '0x34', '0x2e', '0x79', '0x6f', '0x75', '0x72', '0x64', '0x6f', '0x6d', '0x61', '0x69', '0x6e', '0x2c', '0x33', '0x32', '0x34', '0x33', '0x2e', '0x6d', '0x77', '0x72', '0x6d']
-//key=['0x63', '0xfc', '0x3a', '0xa', '0x32', '0x36', '0x41', '0x8a', '0x7f', '0xaa', '0x8d', '0x88', '0xbb', '0x33', '0x73', '0x34', '0x6a', '0xdb', '0xa9', '0x42', '0x96', '0xbb', '0xcd', '0x6', '0xbe', '0xf8', '0xc4', '0x7', '0x8b', '0xa', '0x80', '0xc4']
 
 inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldscheme)
 {
@@ -857,6 +823,7 @@ inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldsc
 
 BOOST_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted)
 {
+    LOG(LOG_INFO, "=================== TestDecrypterMigratedEncrypted =============");
     // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
 
 
@@ -877,32 +844,57 @@ BOOST_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted)
     BOOST_CHECK_EQUAL(0, res);
 }
 
+BOOST_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted2)
+{
+    LOG(LOG_INFO, "=================== TestDecrypterMigratedEncrypted =============");
+    // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
 
-//BOOST_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
-//{
-//    // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
 
-
-//    char const * argv[] {
-//        "verifier.py", "redver",
-//        "-i", "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
-//            "-192304,wab-4-2-4.yourdomain,5560.mwrm",
+    char const * argv[] {
+        "decrypter.py", "reddec",
+        "-i", FIXTURES_PATH "/verifier/recorded/" "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
+            "-192304,wab-4-2-4.yourdomain,5560.mwrm",
 //        "--hash-path", FIXTURES_PATH "/verifier/hash/",
 //        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
-//        "--verbose", "10",
-//    };
-//    int argc = sizeof(argv)/sizeof(char*);
+        "-o", "/tmp/out2.txt",
+        "--verbose", "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
 
-//    BOOST_CHECK_EQUAL(true, true);
+    BOOST_CHECK_EQUAL(true, true);
 
-//    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
-//    BOOST_CHECK_EQUAL(1, res);
-//}
+    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    BOOST_CHECK_EQUAL(0, res);
+}
+
+
+BOOST_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
+{
+    LOG(LOG_INFO, "=================== TestVerifierMigratedEncrypted =============");
+    // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
+
+
+    char const * argv[] {
+        "verifier.py", "redver",
+        "-i", "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
+            "-192304,wab-4-2-4.yourdomain,5560.mwrm",
+        "--hash-path", FIXTURES_PATH "/verifier/hash/",
+        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "--verbose", "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    BOOST_CHECK_EQUAL(true, true);
+
+    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    BOOST_CHECK_EQUAL(1, res);
+}
 
 
 BOOST_AUTO_TEST_CASE(TestAppRecorder)
 {
-    char const * argv[] {
+   LOG(LOG_INFO, "=================== TestAppRecorder =============");
+     char const * argv[] {
         "recorder.py",
         "redrec",
         "-i",
