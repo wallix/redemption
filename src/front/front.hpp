@@ -3564,6 +3564,8 @@ private:
 
         auto_reconnect.emit(stream.get_data_stream());
 
+        stream.get_data_stream().out_clear_bytes(570);  // Pad(570)
+
         const uint32_t log_condition = (128 | 1);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_SAVE_SESSION_INFO
