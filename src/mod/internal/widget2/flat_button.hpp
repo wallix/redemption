@@ -78,12 +78,12 @@ public:
         this->set_cy(this->label_rect.cy + 3);
     }
 
-    WidgetFlatButton(gdi::GraphicApi & drawable, /*int16_t x, int16_t y, */Widget2& parent,
-                     NotifyApi* notifier, const char * text/*, bool auto_resize*/,
+    WidgetFlatButton(gdi::GraphicApi & drawable, Widget2& parent,
+                     NotifyApi* notifier, const char * text,
                      int group_id, int fgcolor, int bgcolor,
                      int focuscolor, Font const & font, int xtext = 0, int ytext = 0,
                      bool logo = false /*, notify_event_t notify_event = NOTIFY_SUBMIT*/)
-    : Widget2(drawable, /*Rect(x,y,1,1), */parent, notifier, group_id)
+    : Widget2(drawable, parent, notifier, group_id)
     , auto_resize_(false)
     , x_text(xtext)
     , y_text(ytext)
@@ -95,18 +95,7 @@ public:
     , logo(logo)
     , font(font)
     {
-/*
-        this->label_rect.x  = this->x() + 1;
-        this->label_rect.y  = this->y() + 1;
-        this->label_rect.cx = 1;
-        this->label_rect.cy = 1;
-*/
         this->set_text(text);
-
-/*
-        this->set_cx(this->label_rect.cx + 3);
-        this->set_cy(this->label_rect.cy + 3);
-*/
     }
 
     ~WidgetFlatButton() override {}
@@ -270,8 +259,6 @@ public:
     }
 
     Dimension get_optimal_dim() override {
-//        gdi::TextMetrics tm(this->font, this->buffer);
-//        return Dimension(tm.width + 2 * this->x_text + 3, tm.height + 2 * this->y_text + 3);
         Dimension dm = WidgetLabel::get_optimal_dim(this->font, this->buffer, this->x_text, this->y_text);
         return Dimension(dm.w + 3, dm.h + 3);
     }
@@ -289,8 +276,6 @@ public:
             buffer[max] = 0;
         }
 
-//        gdi::TextMetrics tm(font, buffer);
-//        return Dimension(tm.width + 2 * xtext + 3, tm.height + 2 * ytext + 3);
         Dimension dm = WidgetLabel::get_optimal_dim(font, buffer, xtext, ytext);
         return Dimension(dm.w + 3, dm.h + 3);
     }

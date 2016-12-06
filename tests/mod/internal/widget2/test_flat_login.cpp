@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x9c\xd2\x4b\x03\x86\x61\x50\xe1\x51\x3f\xcf\x6f\x34\x73\x71\x6f\x20\x40\x60\x81"
+        "\x73\x06\xd3\xec\xcb\x2d\x0f\xa0\x49\x54\x28\x37\x41\xc0\xec\xfe\xc1\x84\xaf\x22"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -75,16 +75,16 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
                          Translator{}, Theme{});
 
     // ask to widget to redraw at it's current position
-    flat_login.rdp_input_invalidate(Rect(0 + flat_login.x(),
-                                      0 + flat_login.y(),
-                                      flat_login.cx(),
-                                      flat_login.cy()));
+    flat_login.rdp_input_invalidate(Rect(flat_login.x(),
+                                         flat_login.y(),
+                                         flat_login.cx(),
+                                         flat_login.cy()));
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x04\x87\x3f\xf6\x80\xa6\x9c\x08\xb5\x29\x02\x6a\xda\xbc\xcf\x69\x32\x5e\x9f\x73"
+        "\xf5\x5f\xf5\xac\xc4\x58\xaf\x57\xf3\x65\x74\x87\x4a\xca\xc5\x15\x21\xfa\xe5\xc1"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -129,16 +129,16 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
 
     // ask to widget to redraw at it's current position
-    flat_login.rdp_input_invalidate(Rect(0 + flat_login.x(),
-                                      0 + flat_login.y(),
-                                      flat_login.cx(),
-                                      flat_login.cy()));
+    flat_login.rdp_input_invalidate(Rect(flat_login.x(),
+                                         flat_login.y(),
+                                         flat_login.cx(),
+                                         flat_login.cy()));
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\xf5\xc0\x0e\x8e\x21\xcf\x97\xbf\x74\xaf\x9e\xfe\x8c\xf3\xaa\x03\x46\xd0\x4f\x8a"
+        "\x20\x89\x04\x84\xa4\xcb\xda\xcd\x6a\x66\xcf\x7f\x67\x2f\xe5\x37\x5a\x06\xb4\xe5"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -168,16 +168,16 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
                          Translator{}, Theme{});
 
     // ask to widget to redraw at it's current position
-    flat_login.rdp_input_invalidate(Rect(0 + flat_login.x(),
-                                      0 + flat_login.y(),
-                                      flat_login.cx(),
-                                      flat_login.cy()));
+    flat_login.rdp_input_invalidate(Rect(flat_login.x(),
+                                         flat_login.y(),
+                                         flat_login.cx(),
+                                         flat_login.cy()));
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help1.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\xc6\xdc\xe5\xc0\x76\x61\xdb\xc0\x7d\x75\xd3\xd5\xea\x89\x9d\xac\x14\x01\x61\x00"
+        "\x3d\x63\x79\x1a\x33\x17\xfb\x8e\x95\xb9\x8c\x51\xf5\x29\xf6\x93\x10\xcb\xb2\xd1"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xfa\xec\x2e\x07\x1b\x9d\xd5\x86\xbd\xcb\x6d\xad\x6f\x11\xeb\x1a\xbd\x05\x30\xdc"
+        "\x5e\x0a\x72\x8c\xd5\x37\x45\x1d\xdc\x71\xcd\xf7\x7d\xfa\x49\x39\xf7\x1c\x8e\xa9"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -212,15 +212,15 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.x(),
-                                      0 + flat_login.y(),
-                                      flat_login.cx(),
-                                      flat_login.cy()));
+                                         flat_login.y(),
+                                         flat_login.cx(),
+                                         flat_login.cy()));
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x16\x8c\x6e\x95\xa5\x76\xf8\xbc\x50\x4b\xff\xf2\x12\x9a\xda\x1a\xe7\x03\xf2\x74"
+        "\x1e\x84\xb1\x73\x54\x63\xe5\xea\x5f\x73\x56\x37\x24\xa3\x77\x65\x74\x07\xc7\x6b"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -243,9 +243,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip2)
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.x(),
-                                      5 + flat_login.y(),
-                                      30,
-                                      10));
+                                         5 + flat_login.y(),
+                                         30,
+                                         10));
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login8.png");
 
