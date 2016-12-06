@@ -287,7 +287,7 @@ static inline int check_encrypted_or_checksumed(
     bool infile_is_encrypted = ibuf.encrypted;
 
     MwrmReader reader(ibuf);
-    reader.read_meta_headers();
+    reader.read_meta_headers(ibuf.encrypted);
 
     // if we have version 1 header, ignore stat info
     ignore_stat_info |= (reader.header.version == 1);
@@ -347,10 +347,10 @@ static inline int check_encrypted_or_checksumed(
     std::vector<MetaLine2CtxForRewriteStat> meta_line_ctx_list;
     bool wrm_stat_is_ok = true;
 
+
     MetaLine2 meta_line_wrm;
 
-    LOG(LOG_INFO, "reader.read_meta_file %s ", meta_line_wrm.filename);
-
+    LOG(LOG_INFO, "looking for parts files");
     while (reader.read_meta_file(meta_line_wrm)) {
     
         
@@ -1581,6 +1581,7 @@ extern "C" {
         case 1: // VERifier
             ini.set<cfg::debug::config>(false);
             try {
+                LOG(LOG_INFO, "VERIFIER [1]");
                 openlog("verifier", LOG_CONS | LOG_PERROR, LOG_USER);
 
                 std::string hash_path      = ini.get<cfg::video::hash_path>().c_str()  ;
@@ -1590,6 +1591,8 @@ extern "C" {
                 bool      ignore_stat_info = false;
                 bool      update_stat_info = false;
                 uint32_t    verbose        = 0;
+
+                LOG(LOG_INFO, "VERIFIER [2]");
 
                 program_options::options_description desc({
                     {'h', "help",    "produce help message"},
@@ -1668,11 +1671,16 @@ extern "C" {
                 }
                 std::cout << "Input file is \"" << mwrm_path << input_filename << "\".\n";
 
+                std::string full_path = mwrm_path + input_filename;
+
                 if (verbose) {
                     LOG(LOG_INFO, "hash_path=\"%s\"", hash_path.c_str());
                     LOG(LOG_INFO, "mwrm_path=\"%s\"", mwrm_path.c_str());
                     LOG(LOG_INFO, "file_name=\"%s\"", input_filename.c_str());
+                    LOG(LOG_INFO, "full_path=\"%s\"", full_path.c_str());
                 }
+
+                encryption_type(full_path, cctx);
 
                 OpenSSL_add_all_digests();
 
