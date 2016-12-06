@@ -189,9 +189,8 @@ public:
     }
 
     void auto_resize() {
-        gdi::TextMetrics tm(this->font, this->buffer);
-        this->set_cx(this->x_text * 2 + tm.width);
-        this->set_cy(this->y_text * 2 + tm.height);
+        Dimension dim = this->get_optimal_dim();
+        this->set_wh(dim);
     }
 };
 
