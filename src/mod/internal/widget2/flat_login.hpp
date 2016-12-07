@@ -145,12 +145,10 @@ public:
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
-        this->set_x(left);
-        this->set_y(top);
-        this->set_cx(width);
-        this->set_cy(height);
+        this->set_xy(left, top);
+        this->set_wh(width, height);
 
-        Dimension dim(0, 0);
+        Dimension dim;
 
         if (width > 640) {
             if (!this->labels_added) {
