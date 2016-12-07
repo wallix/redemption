@@ -199,6 +199,20 @@ inline static const char * get_msgType_name(uint16_t msgType) {
 // |                  | ASCII 8.                                               |
 // +------------------+--------------------------------------------------------+
 
+enum {
+      CB_RESPONSE_OK   = 0x0001
+    , CB_RESPONSE_FAIL = 0x0002
+    , CB_ASCII_NAMES   = 0x0004
+};
+
+inline static const char * get_msgFlag_name(uint16_t msgFlag) {
+    switch (msgFlag) {
+        case CB_RESPONSE_OK:   return "CB_RESPONSE_OK";
+        case CB_RESPONSE_FAIL: return "CB_RESPONSE_FAIL";
+    }
+
+    return "<unknown>";
+}
 
 // Short Format Name
 enum {
@@ -213,11 +227,7 @@ inline static const char * get_format_short_name(uint16_t formatID) {
     return "<unknown>";
 }
 
-enum {
-      CB_RESPONSE_OK   = 0x0001
-    , CB_RESPONSE_FAIL = 0x0002
-    , CB_ASCII_NAMES   = 0x0004
-};
+
 
 // dataLen (4 bytes): An unsigned, 32-bit integer that specifies the size, in
 //  bytes, of the data which follows the Clipboard PDU Header.
@@ -295,6 +305,14 @@ public:
         this->msgFlags_ = stream.in_uint16_le();
         this->dataLen_  = stream.in_uint32_le();
     }
+
+    void log() {
+        LOG(LOG_INFO, "CliprdrHeader");
+        LOG(LOG_INFO, "     - MsgType  = 0x%x (%s)", this->msgType_, get_msgType_name(this->msgType_));
+        LOG(LOG_INFO, "     - MsgFlags = 0x%x (%s)", this->msgFlags_, get_msgFlag_name(this->msgFlags_));
+        LOG(LOG_INFO, "     - DataLen  = %d Byte(s)", this->dataLen_);
+    }
+
 
 private:
     CliprdrHeader(CliprdrHeader const &);
@@ -644,6 +662,7 @@ public:
 struct ServerMonitorReadyPDU
 {
     CliprdrHeader header;
+
     ServerMonitorReadyPDU() : header(CB_MONITOR_READY, 0, 0) {
     }   // ServerMonitorReadyPDU(bool response_ok)
 
@@ -655,6 +674,10 @@ struct ServerMonitorReadyPDU
     void recv(InStream & stream)
     {
         this->header.recv(stream);
+    }
+
+    void log() {
+        this->header.log();
     }
 
 };  // struct ServerMonitorReadyPDU
@@ -710,6 +733,7 @@ struct FormatListPDU
     std::string const * formatListDataName;
     std::size_t         formatListDataSize;
 
+
     FormatListPDU( uint32_t const * formatListDataIDs
                  , std::string const * formatListDataName
                  , std::size_t formatListDataSize)
@@ -732,6 +756,11 @@ struct FormatListPDU
         // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
         stream.out_uint32_le(CF_TEXT);
         stream.out_clear_bytes(SHORT_NAME_MAX_SIZE); // formatName(32)
+    }
+
+    void log() {
+        this->header.log();
+
     }
 
     void emit_ex(OutStream & stream, bool unicodetext) {
@@ -926,6 +955,12 @@ struct FormatListPDU_LongName : public FormatListPDU {
             stream.out_copy_bytes(currentStr.data(), currentStr.size());
         }
     }
+
+    void log() {
+        this->header.log();
+
+    }
+
 };
 
 struct FormatListPDU_ShortName : public FormatListPDU {
@@ -952,6 +987,12 @@ struct FormatListPDU_ShortName : public FormatListPDU {
             stream.out_clear_bytes(SHORT_NAME_MAX_SIZE - currentStr.size()); // formatName(32)
         }
     }
+
+    void log() {
+        this->header.log();
+
+    }
+
 };
 
 // [MS-RDPECLIP] 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
@@ -991,6 +1032,12 @@ struct FormatListResponsePDU
     {
         this->header.recv(stream);
     }
+
+    void log() {
+        this->header.log();
+
+    }
+
 };  // struct FormatListResponsePDU
 
 // [MS-RDPECLIP] 2.2.5.1 Format Data Request PDU (CLIPRDR_FORMAT_DATA_REQUEST)
@@ -1052,6 +1099,12 @@ struct FormatDataRequestPDU
 
         this->requestedFormatId = stream.in_uint32_le();
     }
+
+    void log() {
+        this->header.log();
+
+    }
+
 };  // struct FormatDataRequestPDU
 
 
@@ -1178,6 +1231,12 @@ struct FileContentsRequestPDU     // Resquest RANGE
         this->sizeRequested = this->sizeRequested << 32;
         this->sizeRequested += stream.in_uint32_le();
     }
+
+    void log() {
+        this->header.log();
+
+    }
+
 };
 
 
@@ -1230,6 +1289,12 @@ struct FileContentsResponse
     void emit(OutStream & stream) {
         this->header.emit(stream);
     }
+
+    void log() {
+        this->header.log();
+
+    }
+
 };
 
 struct FileContentsResponse_Size : FileContentsResponse {
@@ -1255,6 +1320,11 @@ struct FileContentsResponse_Size : FileContentsResponse {
         this->size = stream.in_uint64_le();
     }
 
+    void log() {
+        this->header.log();
+
+    }
+
 
 };
 
@@ -1277,6 +1347,12 @@ struct FileContentsResponse_Range : FileContentsResponse {
         this->header.recv(stream);
         this->streamID = stream.in_uint32_le();
     }
+
+    void log() {
+        this->header.log();
+
+    }
+
 };
 
 
@@ -1979,6 +2055,12 @@ struct FormatDataResponsePDU
         this->header.recv(stream);
     }
 
+    void log() {
+        this->header.log();
+
+    }
+
+
 }; // struct FormatDataResponsePDU
 
 
@@ -2647,7 +2729,10 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
         }
     };
 
+    void log() {
+        this->header.log();
 
+    }
 
     explicit FormatDataResponsePDU_MetaFilePic()
       : FormatDataResponsePDU()
@@ -2800,6 +2885,12 @@ struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
     void recv(InStream & stream) {
         this->header.recv(stream);
     }
+
+    void log() {
+        this->header.log();
+
+    }
+
 };
 
 struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
@@ -2810,6 +2901,12 @@ struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
     uint32_t flags;
     uint32_t attribute;
     uint64_t time;
+
+    void log() {
+        this->header.log();
+
+    }
+
 
     // 2.2.5.2.3 Packed File List (CLIPRDR_FILELIST)
 
@@ -3008,6 +3105,9 @@ struct LockClipboardDataPDU
 
     uint32_t streamDataID;
 
+    explicit LockClipboardDataPDU(): header(CB_UNLOCK_CLIPDATA, CB_RESPONSE_FAIL, 4)
+    {}
+
     explicit LockClipboardDataPDU(uint32_t streamDataID)
     : header(CB_LOCK_CLIPDATA, 0, 4)
     , streamDataID(streamDataID)
@@ -3022,6 +3122,12 @@ struct LockClipboardDataPDU
         this->header.recv(stream);
         streamDataID = stream.in_uint32_le();
     }
+
+    void log() {
+        this->header.log();
+
+    }
+
 };
 
 
@@ -3051,6 +3157,9 @@ struct UnlockClipboardDataPDU
 
     uint32_t streamDataID;
 
+    explicit UnlockClipboardDataPDU(): header(CB_UNLOCK_CLIPDATA, CB_RESPONSE_FAIL, 4)
+    {}
+
     explicit UnlockClipboardDataPDU(uint32_t streamDataID)
     : header(CB_UNLOCK_CLIPDATA, 0, 4)
     , streamDataID(streamDataID)
@@ -3065,6 +3174,12 @@ struct UnlockClipboardDataPDU
         this->header.recv(stream);
         streamDataID = stream.in_uint32_le();
     }
+
+    void log() {
+        this->header.log();
+
+    }
+
 };
 
 

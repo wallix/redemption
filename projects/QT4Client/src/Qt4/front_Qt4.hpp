@@ -150,7 +150,7 @@ public:
         MAX_MONITOR_COUNT = GCC::UserData::CSMonitor::MAX_MONITOR_COUNT / 4
     };
 
-    implicit_bool_flags<RDPVerboseFlags>   verbose;
+    implicit_bool_flags<RDPVerbose>   verbose;
     ClientInfo        _info;
     int               _width;
     int               _height;
@@ -187,7 +187,7 @@ public:
 
     Front_Qt_API( bool param1
                 , bool param2
-                , RDPVerboseFlags verbose)
+                , RDPVerbose verbose)
     : FrontAPI(param1, param2)
     , verbose(verbose)
     , _info()
@@ -632,7 +632,7 @@ public:
     //      CONSTRUCTOR
     //------------------------
 
-    Front_Qt(char* argv[], int argc, RDPVerboseFlags verbose);
+    Front_Qt(char* argv[], int argc, RDPVerbose verbose);
 
     ~Front_Qt();
 

@@ -147,14 +147,14 @@ protected:
             const uint8_t* chunk_data, uint32_t chunk_data_length)
                 override
         {
-<<<<<<< HEAD
+            if ( (this->verbose & RDPVerbose::cliprdr_dump) && !strcmp(this->channel.name, channel_names::cliprdr) ) {
+                const bool send              = true;
+                const bool from_or_to_client = true;
+                ::msgdump_c(send, from_or_to_client, total_length, flags,
+                    chunk_data, chunk_data_length);
+            }
 
-            if ( ((this->verbose & RDPVerboseFlags::cliprdr_dump) && !strcmp(this->channel.name, channel_names::cliprdr)) ||
-                ((this->verbose & RDPVerboseFlags::rdpdr_dump) && !strcmp(this->channel.name, channel_names::rdpdr)) ) {
-=======
-            if ((this->verbose & RDPVerbose::cliprdr_dump) ||
-                (this->verbose & RDPVerbose::rdpdr_dump)) {
->>>>>>> fcf6e3b0766910c7bf9b1bc42e90a4e6eed9ca27
+            if ( (this->verbose & RDPVerbose::rdpdr_dump) && !strcmp(this->channel.name, channel_names::rdpdr) ){
                 const bool send              = true;
                 const bool from_or_to_client = true;
                 ::msgdump_c(send, from_or_to_client, total_length, flags,
@@ -206,13 +206,8 @@ protected:
                 flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
             }
 
-<<<<<<< HEAD
-            if ( ((this->verbose & RDPVerboseFlags::cliprdr_dump) && !strcmp(this->channel_name, channel_names::cliprdr) ) ||
-                ((this->verbose & RDPVerboseFlags::rdpdr_dump) && !strcmp(this->channel_name, channel_names::rdpdr)) ) {
-=======
-            if ((this->verbose & RDPVerbose::cliprdr_dump) ||
-                (this->verbose & RDPVerbose::rdpdr_dump)) {
->>>>>>> fcf6e3b0766910c7bf9b1bc42e90a4e6eed9ca27
+            if ( ((this->verbose & RDPVerbose::cliprdr_dump) && !strcmp(this->channel_name, channel_names::cliprdr) ) ||
+                ((this->verbose & RDPVerbose::rdpdr_dump) && !strcmp(this->channel_name, channel_names::rdpdr)) ) {
                 const bool send              = true;
                 const bool from_or_to_client = false;
                 ::msgdump_c(send, from_or_to_client, total_length, flags,
@@ -1721,17 +1716,20 @@ private:
             !this->file_system_drive_manager.HasManagedDrive()) {
 
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                if ((this->verbose & RDPVerboseFlags::rdpdr) || (this->verbose & RDPVerboseFlags::rdpdr_dump)) {
+                if ((this->verbose & RDPVerbose::rdpdr) || (this->verbose & RDPVerbose::rdpdr_dump)) {
+                    
                     LOG(LOG_INFO,
                         "mod_rdp::send_to_mod_rdpdr_channel: recv from Client, "
                             "send Chunked Virtual Channel Data transparently.");
                 }
 
-                if ((this->verbose & RDPVerboseFlags::rdpdr_dump) && (flags & CHANNELS::CHANNEL_FLAG_LAST)) {
+                if ((this->verbose & RDPVerbose::rdpdr_dump) && (flags & CHANNELS::CHANNEL_FLAG_LAST)) {
                     const bool send              = false;
                     const bool from_or_to_client = false;
                     ::msgdump_c(send, from_or_to_client, chunk.get_offset(), flags,
                     chunk.get_data(), length);
+
+                    rdpdr::streamLog(chunk);
                 }
             }
 
@@ -6808,18 +6806,21 @@ private:
             !this->file_system_drive_manager.HasManagedDrive()) {
 
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                if ((this->verbose & RDPVerboseFlags::rdpdr) || (this->verbose & RDPVerboseFlags::rdpdr_dump)) {
+                if ((this->verbose & RDPVerbose::rdpdr) || (this->verbose & RDPVerbose::rdpdr_dump)) {
+
                     LOG(LOG_INFO,
                         "mod_rdp::process_rdpdr_event: sending to Client, "
                             "send Chunked Virtual Channel Data transparently.");
                 }
 
-                if ((this->verbose & RDPVerboseFlags::rdpdr_dump) && (flags & CHANNELS::CHANNEL_FLAG_LAST)) {
+                if (this->verbose & RDPVerbose::rdpdr_dump) {
                     const bool send              = false;
                     const bool from_or_to_client = false;
 
                     ::msgdump_c(send, from_or_to_client, length, flags,
                         stream.get_data()+8, chunk_size);
+
+                    rdpdr::streamLog(stream);
                 }
             }
 

@@ -21,8 +21,6 @@
 
 #pragma once
 
-//#define LOGPRINT
-
 #include "transport/socket_transport.hpp"
 #include "mod/rdp/rdp.hpp"
 
