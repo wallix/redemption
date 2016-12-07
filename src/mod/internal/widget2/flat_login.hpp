@@ -39,8 +39,6 @@
 class FlatLogin : public WidgetParent
 {
 public:
-    int bg_color;
-
     WidgetLabel      error_message_label;
     WidgetLabel      login_label;
     WidgetEditValid  login_edit;
@@ -64,6 +62,8 @@ private:
 
     WidgetFlatButton * extra_button;
 
+    int bg_color;
+
 public:
     FlatLogin(gdi::GraphicApi & drawable,
               int16_t left, int16_t top, uint16_t width, uint16_t height, Widget2 & parent,
@@ -75,7 +75,6 @@ public:
               WidgetFlatButton * extra_button,
               Font const & font, Translator tr, Theme const & theme)
         : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier)
-        , bg_color(theme.global.bgcolor)
         , error_message_label(drawable, *this, nullptr, label_error_message, -15,
                         theme.global.error_color, theme.global.bgcolor,
                         font)
@@ -111,10 +110,12 @@ public:
         //        this->theme.selector_line1.bgcolor, this->theme.selector_focus.bgcolor, -17)
         , tr(tr)
         , extra_button(extra_button)
+        , bg_color(theme.global.bgcolor)
     {
         this->impl = &composite_array;
 
         this->add_widget(&this->img);
+
         this->add_widget(&this->helpicon);
         this->add_widget(&this->login_edit);
         this->add_widget(&this->password_edit);
@@ -144,12 +145,10 @@ public:
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
-        this->set_x(left);
-        this->set_y(top);
-        this->set_cx(width);
-        this->set_cy(height);
+        this->set_xy(left, top);
+        this->set_wh(width, height);
 
-        Dimension dim(0, 0);
+        Dimension dim;
 
         if (width > 640) {
             if (!this->labels_added) {
