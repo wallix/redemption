@@ -15,10 +15,8 @@ rule setvar ( env : default )
     }
 }
 
-constant ARCH : [ SHELL "lscpu | perl -ne 'if (/^Architecture.*(x86_64|i386|i686)/) {print $1};'" ] ;
-# constant ARCH : [ SHELL "lscpu | perl -ane 'my %h = map { $F[0], $F[1] } <>; print $h{q{Architecture:}}'" ] ;
-constant PYTHON_VER : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6}) { if (-e q{/usr/include/}.$x.q{/Python.h}){ print $x; last;}};'" ] ;
-constant PYTHON_INCLUDE : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6}) { if (-e q{/usr/include/}.$x.q{/Python.h}){ print q{/usr/include/}.$x; last;}};'" ] ;
+constant ARCH : [ SHELL "uname -m" ] ;
+# constant ARCH : [ SHELL "lscpu | perl -ne 'if (/^Architecture.*(x86_64|i386|i686)/) {print $1};'" ] ;
 
 constant INSTALLDIR : [ setvar DESTDIR : "" ] ;
 constant PREFIX : [ setvar PREFIX : /usr/local ] ;
