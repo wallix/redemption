@@ -579,10 +579,10 @@ public:
         const bool log_redir = this->ini.get<cfg::session_log::session_log_redirection>();
 
         if (log_redir) {
-            std::string filename = this->ini.get<cfg::session_log::log_path>().c_str();
-            std::ofstream log_file(filename, std::fstream::out | std::fstream::app);
+            std::string const & filename = this->ini.get<cfg::session_log::log_path>();
+            std::ofstream log_file(filename, std::ios::app);
 
-            if(log_file.bad()) {
+            if(!log_file.is_open()) {
                 LOG(LOG_INFO, "auth::bad SIEM log file creation");
             }
             else {
@@ -614,7 +614,7 @@ public:
                    , type
                    , this->ini.get<cfg::context::session_id>().c_str()
                    , this->ini.get<cfg::globals::host>().c_str()
-                   , (isdigit(*this->ini.get<cfg::context::target_host>().c_str()) ?
+                   , (isdigit(this->ini.get<cfg::context::target_host>()[0]) ?
                       this->ini.get<cfg::context::target_host>().c_str() :
                       this->ini.get<cfg::context::ip_target>().c_str())
                    , this->ini.get<cfg::globals::auth_user>().c_str()
