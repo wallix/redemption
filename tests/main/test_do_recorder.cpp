@@ -765,6 +765,19 @@ inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldsc
         unsigned scheme;
         uint8_t derived_key[32];
     } keys[] = {
+
+
+        {
+            "cgrosjean@10.10.43.13,proxyuser@local@win2008,20161201-163203,wab-4-2-4.yourdomain,1046.mwrm",
+            0,
+            {
+
+                0xdc, 0x55, 0x98, 0xe3, 0x7f, 0x90, 0xa5, 0x94,
+                0x60, 0x89, 0x1f, 0x95, 0x81, 0x00, 0xf8, 0xaf,
+                0x73, 0xe1, 0x3d, 0x22, 0xe3, 0x6c, 0x40, 0x59,
+                0x93, 0x5, 0xab, 0xf6, 0x16, 0xd2, 0x3a, 0xdb'
+            }
+        },
         {
             "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm",
             0,
