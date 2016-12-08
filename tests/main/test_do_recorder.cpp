@@ -755,7 +755,7 @@ inline int hmac_2016_fn(char * buffer)
 
 inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldscheme)
 {
-    LOG(LOG_INFO, "\n\ntrace_20161025_fn(%*s,%d,oldscheme=%d)->\n", len, base, len, oldscheme);
+//    LOG(LOG_INFO, "\n\ntrace_20161025_fn(%*s,%d,oldscheme=%d)->\n", len, base, len, oldscheme);
 
     (void)base;
     (void)len;
@@ -829,13 +829,12 @@ inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldsc
                 LOG(LOG_INFO, "new key (derived master to use as master)");
             }
             memcpy(buffer, k.derived_key, 32);
-            hexdump_d(buffer, 32);
+//            hexdump_d(buffer, 32);
             return 0;
         }
     }
     memset(buffer, 0, 32);
     LOG(LOG_INFO, "key not found for base=%*s", len, base);
-    exit(-1);
     hexdump_d(buffer, 32);
     return 0;
 }
@@ -953,15 +952,75 @@ BOOST_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
 // "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-134039,wab-4-2-4.yourdomain,4714.mwrm".
 // verify as 1
 
+BOOST_AUTO_TEST_CASE(TestVerifier4714)
+{
+    LOG(LOG_INFO, "=================== TestVerifier4714 =============");
+
+    char const * argv[] {
+        "verifier.py", "redver",
+        "-i", "cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-134039,wab-4-2-4.yourdomain,4714.mwrm",
+        "--hash-path", FIXTURES_PATH "/verifier/hash/",
+        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "--verbose", "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    BOOST_CHECK_EQUAL(true, true);
+
+    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    BOOST_CHECK_EQUAL(-1, res);
+}
+
+
 //python -O /opt/wab/bin/verifier.py -i cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-164758,wab-4-2-4.yourdomain,7192.mwrm
 //Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-164758,wab-4-2-4.yourdomain,7192.mwrm".
 //Input file is unencrypted (no hash).
 //verify ok (1)
 
+BOOST_AUTO_TEST_CASE(TestVerifier7192)
+{
+    LOG(LOG_INFO, "=================== TestVerifier7192 =============");
+
+    char const * argv[] {
+        "verifier.py", "redver",
+        "-i", "cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-164758,wab-4-2-4.yourdomain,7192.mwrm",
+        "--hash-path", FIXTURES_PATH "/verifier/hash/",
+        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "--verbose", "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    BOOST_CHECK_EQUAL(true, true);
+
+    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    BOOST_CHECK_EQUAL(0, res);
+}
+
+
 //python -O /opt/wab/bin/verifier.py -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-165619,wab-4-2-4.yourdomain,2510.mwrm
 //Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@win2008,20161025-165619,wab-4-2-4.yourdomain,2510.mwrm".
 //Input file is unencrypted (no hash).
 //verify ok (1)
+
+BOOST_AUTO_TEST_CASE(TestVerifier2510)
+{
+    LOG(LOG_INFO, "=================== TestVerifier2510 =============");
+
+    char const * argv[] {
+        "verifier.py", "redver",
+        "-i", "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-165619,wab-4-2-4.yourdomain,2510.mwrm",
+        "--hash-path", FIXTURES_PATH "/verifier/hash/",
+        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "--verbose", "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    BOOST_CHECK_EQUAL(true, true);
+
+    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    BOOST_CHECK_EQUAL(0, res);
+}
+
 
 //python -O /opt/wab/bin/verifier.py -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-181703,wab-4-2-4.yourdomain,6759.mwrm
 //Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@win2008,20161025-181703,wab-4-2-4.yourdomain,6759.mwrm".

@@ -70,16 +70,12 @@ inline void load_hash(
     unsigned int infile_version, bool infile_is_checksumed,
     CryptoContext & cctx, bool infile_is_encrypted, int verbose
 ) {
-    LOG(LOG_INFO, "trying load_hash");
-
     ifile_read_encrypted in_hash_fb(cctx, infile_is_encrypted);
 
     if (in_hash_fb.open(full_hash_path.c_str()) < 0) {
         LOG(LOG_INFO, "Open load_hash failed");
         throw Error(ERR_TRANSPORT_OPEN_FAILED);
     }
-
-    LOG(LOG_INFO, "reading header from hash file");
 
     char buffer[8192]{};
     ssize_t len;
@@ -275,14 +271,11 @@ static inline int check_encrypted_or_checksumed(
 //    cctx.old_encryption_scheme = true;
     ifile_read_encrypted ibuf(cctx, encryption);
 
-    LOG(LOG_INFO, "ibuf.open");
-    
     if (ibuf.open(full_mwrm_filename.c_str()) < 0){
         LOG(LOG_INFO, "ibuf.open error");
         throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
     }
 
-    LOG(LOG_INFO, "ibuf.open encryption");
     // now force encryption for sub files
     bool infile_is_encrypted = ibuf.encrypted;
 
@@ -322,19 +315,16 @@ static inline int check_encrypted_or_checksumed(
     /******************
     * Check mwrm file *
     ******************/
-    LOG(LOG_INFO, "Check mwrm file");
     if (!check_file(
         full_mwrm_filename, hash_line, quick_check, reader.header.has_checksum,
         ignore_stat_info, cctx.get_hmac_key(), 32,
         update_stat_info, out_is_mismatch{has_mismatch_stat_hash}
     )){
-        LOG(LOG_INFO, "Not Check file");
         if (!has_mismatch_stat_hash) {
             return 1;
         }
     }
     else {
-        LOG(LOG_INFO, "Check file");
     }
 
     struct MetaLine2CtxForRewriteStat
@@ -350,16 +340,13 @@ static inline int check_encrypted_or_checksumed(
 
     MetaLine2 meta_line_wrm;
 
-    LOG(LOG_INFO, "looking for parts files");
     while (reader.read_meta_file(meta_line_wrm)) {
-    
-        
         size_t tmp_wrm_filename_len = 0;
         const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
         std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
         std::string const full_part_filename = mwrm_path + meta_line_wrm_filename;
 
-        LOG(LOG_INFO, "checking part %s", full_part_filename.c_str());
+//        LOG(LOG_INFO, "checking part %s", full_part_filename.c_str());
 
 
         bool has_mismatch_stat_mwrm = false;
@@ -368,7 +355,6 @@ static inline int check_encrypted_or_checksumed(
             ignore_stat_info, cctx.get_hmac_key(), 32,
             update_stat_info, out_is_mismatch{has_mismatch_stat_mwrm})
         ){
-            LOG(LOG_INFO, "not check_file");
             if (has_mismatch_stat_mwrm) {
                 wrm_stat_is_ok = false;
             }
@@ -376,8 +362,6 @@ static inline int check_encrypted_or_checksumed(
                 return 1;
             }
         }
-
-        LOG(LOG_INFO, "check_file");
 
         if (update_stat_info) {
             meta_line_ctx_list.push_back({
@@ -395,7 +379,6 @@ static inline int check_encrypted_or_checksumed(
     /*******************
     * Rewite stat info *
     ********************/
-    LOG(LOG_INFO, "Rewrite state info");
     struct local_auto_remove
     {
         char const * filename;
@@ -993,6 +976,135 @@ inline int is_encrypted_file(const char * input_filename, bool & infile_is_encry
     return -1;
 }
 
+inline int replay(std::string & infile_path, std::string & infile_basename, std::string & infile_extension,
+                  std::string & output_filename,
+                  uint32_t begin_cap,
+                  uint32_t end_cap,
+                  unsigned png_width,
+                  unsigned png_height,
+                  int capture_bpp,
+                  bool const enable_rt,
+                  bool const no_timestamp,
+                  bool infile_is_encrypted,
+                  uint32_t    order_count,
+                  bool show_file_metadata,
+                  bool show_statistics,
+                  uint32_t clear,
+                  unsigned zoom,
+                  bool full_video,
+                  bool remove_input_file,
+                  int wrm_compression_algorithm_,
+                  Inifile & ini, CryptoContext & cctx, Random & rnd,
+                  uint32_t verbose) 
+{
+
+    char infile_prefix[4096];
+    std::snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), infile_basename.c_str());
+
+    timeval  begin_record = { 0, 0 };
+    timeval  end_record   = { 0, 0 };
+    unsigned file_count   = 0;
+    try {
+        InMetaSequenceTransport in_wrm_trans_tmp(
+            &cctx,
+            infile_prefix,
+            infile_extension.c_str(),
+            infile_is_encrypted?1:0);
+        file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
+    }
+    catch (const Error & e) {
+        if (e.id == static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)) {
+            std::cerr << "Asked time not found in mwrm file\n";
+        }
+        else {
+            std::cerr << "Error: " << e.errmsg() << std::endl;
+        }
+        const bool msg_with_error_id = false;
+        raise_error(output_filename, e.id, e.errmsg(msg_with_error_id));
+        return -1;
+    };
+
+    {
+        InMetaSequenceTransport trans(
+            &cctx, infile_prefix,
+            infile_extension.c_str(),
+            infile_is_encrypted?1:0
+        );
+
+        timeval begin_capture = {0, 0};
+        timeval end_capture = {0, 0};
+
+        bool const force_record
+          = bool(ini.get<cfg::video::capture_flags>() 
+            & (CaptureFlags::flv | CaptureFlags::ocr))
+          || full_video;
+
+        int result = -1;
+        try {
+            bool test = (
+                force_record
+                || bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png)
+    //             || ini.get<cfg::video::wrm_color_depth_selection_strategy>() != USE_ORIGINAL_COLOR_DEPTH
+                || capture_bpp != static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)
+                || show_file_metadata
+                || show_statistics
+                || file_count > 1
+                || order_count
+                || begin_cap != begin_record.tv_sec
+                || end_cap != begin_cap);
+
+            if (test){
+                result = do_record(trans
+                            , begin_record, end_record
+                            , begin_capture, end_capture
+                            , output_filename, capture_bpp
+                            , wrm_compression_algorithm_
+                            , enable_rt
+                            , no_timestamp
+                            , nullptr
+                            , ini, cctx, rnd
+                            , file_count, order_count, clear, zoom
+                            , png_width, png_height
+                            , show_file_metadata, show_statistics, verbose
+                            , full_video
+                            );
+            }
+            else {
+                std::cout << "[B]" << std::endl;
+                result = do_recompress(
+                    cctx,
+                    rnd,
+                    trans,
+                    begin_record,
+                    wrm_compression_algorithm_,
+                    output_filename,
+                    ini,
+                    verbose);
+            }
+        }
+        catch (const Error & e) {
+            const bool msg_with_error_id = false;
+            raise_error(output_filename, e.id, e.errmsg(msg_with_error_id));
+        }
+
+        if (!result && remove_input_file) {
+            InMetaSequenceTransport in_wrm_trans_tmp(
+                &cctx,
+                infile_prefix,
+                infile_extension.c_str(),
+                infile_is_encrypted?1:0);
+
+            remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>().c_str(), infile_path.c_str()
+                        , infile_basename.c_str(), infile_extension.c_str()
+                        , infile_is_encrypted);
+        }
+
+        std::cout << std::endl;
+
+        return result;
+    }
+    return -1;
+}
 
 inline int app_recorder(
     int argc, char const * const * argv, const char * copyright_notice,
@@ -1021,8 +1133,6 @@ inline int app_recorder(
     uint32_t    wrm_break_interval = 86400;
     uint32_t    order_count        = 0;
     unsigned    zoom               = 100;
-    bool        show_file_metadata = false;
-    bool        show_statistics    = false;
     bool        auto_output_file   = false;
     bool        remove_input_file  = false;
     uint32_t    flv_break_interval = 10*60;
@@ -1106,8 +1216,8 @@ inline int app_recorder(
         return 1;
     }
 
-    show_file_metadata = (options.count("meta"             ) > 0);
-    show_statistics    = (options.count("statistics"       ) > 0);
+    bool show_file_metadata = (options.count("meta"             ) > 0);
+    bool show_statistics    = (options.count("statistics"       ) > 0);
     auto_output_file   = (options.count("auto-output-file" ) > 0);
     remove_input_file  = (options.count("remove-input-file") > 0);
 
@@ -1179,29 +1289,16 @@ inline int app_recorder(
         wrm_compression_algorithm_ = static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
     }
 
-    int capture_bpp = 16;
+    
 
-    if (options.count("color-depth") > 0) {
-             if (wrm_color_depth == "16") {
-//            ini.set<cfg::video::wrm_color_depth_selection_strategy>(16);
-            capture_bpp = 16;
-        }
-        else if (wrm_color_depth == "24") {
-//            ini.set<cfg::video::wrm_color_depth_selection_strategy>(24);
-            capture_bpp = 24;
-        }
-        else if (wrm_color_depth == "original") {
-//            ini.set<cfg::video::wrm_color_depth_selection_strategy>(USE_ORIGINAL_COLOR_DEPTH);
-            capture_bpp = static_cast<int>(USE_ORIGINAL_COLOR_DEPTH);
-        }
-        else {
-            std::cerr << "Unknown wrm color depth\n\n";
-            return 1;
-        }
-    }
-    else {
-//        ini.set<cfg::video::wrm_color_depth_selection_strategy>(USE_ORIGINAL_COLOR_DEPTH);
-        capture_bpp = static_cast<int>(USE_ORIGINAL_COLOR_DEPTH);
+    int capture_bpp = options.count("color-depth")<=0 ? static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)
+                    : (wrm_color_depth == "16") ? 16
+                    : (wrm_color_depth == "24") ? 24
+                    : (wrm_color_depth == "original") ? static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)
+                    : 0;
+    if (!capture_bpp){
+        std::cerr << "Unknown wrm color depth\n\n";
+        return 1;
     }
 
     ini.set<cfg::video::png_limit>(png_limit);
@@ -1339,17 +1436,12 @@ inline int app_recorder(
         OpenSSL_add_all_digests();
     }
 
-    bool const force_record
-      = bool(ini.get<cfg::video::capture_flags>() & (CaptureFlags::flv | CaptureFlags::ocr))
-      || full_video;
 
     std::string infile_path;
     std::string infile_basename;
     std::string infile_extension;
     ParsePath(input_filename.c_str(), infile_path, infile_basename, infile_extension);
 
-    char infile_prefix[4096];
-    std::snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), infile_basename.c_str());
 
     if (auto_output_file) {
         output_filename =  infile_path;
@@ -1374,105 +1466,29 @@ inline int app_recorder(
     // TODO also check if it contains any wrm at all and at wich one we should start depending on input time
     // TODO if start and stop time are outside wrm, users should also be warned
 
-    timeval  begin_record = { 0, 0 };
-    timeval  end_record   = { 0, 0 };
-    unsigned file_count   = 0;
-    try {
-        InMetaSequenceTransport in_wrm_trans_tmp(
-            &cctx,
-            infile_prefix,
-            infile_extension.c_str(),
-            infile_is_encrypted?1:0);
-        file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
-    }
-    catch (const Error & e) {
-        if (e.id == static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)) {
-            std::cerr << "Asked time not found in mwrm file\n";
-        }
-        else {
-            std::cerr << "Error: " << e.errmsg() << std::endl;
-        }
-        const bool msg_with_error_id = false;
-        raise_error(output_filename, e.id, e.errmsg(msg_with_error_id));
-        return -1;
-    };
+    return replay(infile_path, infile_basename, infile_extension, 
+                  output_filename,
+                  begin_cap,
+                  end_cap,
+                  png_width,
+                  png_height,
+                  capture_bpp,
+                  enable_rt,
+                  no_timestamp,
+                  infile_is_encrypted,
+                  order_count,
+                  show_file_metadata,
+                  show_statistics,
+                  clear,
+                  zoom,
+                  full_video,
+                  remove_input_file,
+                  wrm_compression_algorithm_,
+                  ini, cctx, rnd,
+                  verbose);
 
-    {
-        InMetaSequenceTransport trans(
-            &cctx, infile_prefix,
-            infile_extension.c_str(),
-            infile_is_encrypted?1:0
-        );
-
-        timeval begin_capture = {0, 0};
-        timeval end_capture = {0, 0};
-
-        int result = -1;
-        try {
-            bool test = (
-                force_record
-                || bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png)
-    //             || ini.get<cfg::video::wrm_color_depth_selection_strategy>() != USE_ORIGINAL_COLOR_DEPTH
-                || capture_bpp != static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)
-                || show_file_metadata
-                || show_statistics
-                || file_count > 1
-                || order_count
-                || begin_cap != begin_record.tv_sec
-                || end_cap != begin_cap);
-
-            if (test){
-                std::cout << "[A]" << std::endl;
-                result = do_record(trans
-                            , begin_record, end_record
-                            , begin_capture, end_capture
-                            , output_filename, capture_bpp
-                            , wrm_compression_algorithm_
-                            , enable_rt
-                            , no_timestamp
-                            , nullptr
-                            , ini, cctx, rnd
-                            , file_count, order_count, clear, zoom
-                            , png_width, png_height
-                            , show_file_metadata, show_statistics, verbose
-                            , full_video
-                            );
-            }
-            else {
-                std::cout << "[B]" << std::endl;
-                result = do_recompress(
-                    cctx,
-                    rnd,
-                    trans,
-                    begin_record,
-                    wrm_compression_algorithm_,
-                    output_filename,
-                    ini,
-                    verbose);
-            }
-        }
-        catch (const Error & e) {
-            const bool msg_with_error_id = false;
-            raise_error(output_filename, e.id, e.errmsg(msg_with_error_id));
-        }
-
-        if (!result && remove_input_file) {
-            InMetaSequenceTransport in_wrm_trans_tmp(
-                &cctx,
-                infile_prefix,
-                infile_extension.c_str(),
-                infile_is_encrypted?1:0);
-
-            remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>().c_str(), infile_path.c_str()
-                        , infile_basename.c_str(), infile_extension.c_str()
-                        , infile_is_encrypted);
-        }
-
-        std::cout << std::endl;
-
-        return result;
-    }
 }
+
 
 extern "C" {
     __attribute__((__visibility__("default")))
