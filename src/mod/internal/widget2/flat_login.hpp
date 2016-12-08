@@ -39,16 +39,17 @@
 class FlatLogin : public WidgetParent
 {
 public:
-    WidgetLabel      error_message_label;
-    WidgetLabel      login_label;
-    WidgetEditValid  login_edit;
-    WidgetLabel      password_label;
-    WidgetEditValid  password_edit;
-    WidgetImage      img;
-    WidgetLabel      version_label;
-    WidgetFlatButton helpicon;
-
     CompositeArray composite_array;
+
+    WidgetLabel        error_message_label;
+    WidgetLabel        login_label;
+    WidgetEditValid    login_edit;
+    WidgetLabel        password_label;
+    WidgetEditValid    password_edit;
+    WidgetImage        img;
+    WidgetLabel        version_label;
+    WidgetFlatButton   helpicon;
+    WidgetFlatButton * extra_button;
 
 private:
     Translator tr;
@@ -59,8 +60,6 @@ private:
     // WidgetHScrollBar hbar;
 
     bool labels_added = false;
-
-    WidgetFlatButton * extra_button;
 
     int bg_color;
 
@@ -101,6 +100,7 @@ public:
         , helpicon(drawable, 0, 0, *this, nullptr, "?", true, -16,
                    theme.global.fgcolor, theme.global.bgcolor,
                    theme.global.focus_color, font, 6, 2)
+        , extra_button(extra_button)
         // , frame(drawable, Rect((width - 300) / 2, 10, 300, 250), parent, notifier, -17)
         // , wimage(drawable, 0, 0, SHARE_PATH "/Philips_PM5544_640.bmp",
         //          parent, notifier, -17)
@@ -109,7 +109,6 @@ public:
         // , hbar(drawable, parent, notifier, this->theme.selector_selected.bgcolor,
         //        this->theme.selector_line1.bgcolor, this->theme.selector_focus.bgcolor, -17)
         , tr(tr)
-        , extra_button(extra_button)
         , bg_color(theme.global.bgcolor)
     {
         this->impl = &composite_array;

@@ -52,10 +52,9 @@ public:
     WidgetFlatButton   ok;
     WidgetFlatButton * cancel;
     WidgetImage        img;
+    WidgetFlatButton * extra_button;
 
     Font const & font;
-
-    WidgetFlatButton * extra_button;
 
     int bg_color;
 
@@ -86,8 +85,8 @@ public:
         , img(drawable,
               theme.global.logo ? theme.global.logo_path :
               SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -8)
-        , font(font)
         , extra_button(extra_button)
+        , font(font)
         , bg_color(theme.global.bgcolor)
     {
         this->impl = &composite_array;
