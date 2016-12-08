@@ -1106,7 +1106,107 @@ inline int replay(std::string & infile_path, std::string & infile_basename, std:
     return -1;
 }
 
+struct RecorderParams {
+    std::string output_filename;
+    std::string input_filename;
+    uint32_t begin_cap = 0;
+    uint32_t end_cap = 0;
+    order_count;
+    png_limit;
+    png_interval;
+    wrm_frame_interval;
+    wrm_break_interval;
+    clear;
+    verbose;
+    zoom;
+    unsigned png_width  = 0;
+    unsigned png_height = 0;
+    wrm_compression_algorithm;
+    wrm_color_depth;
+    wrm_encryption;
+    config_filename;
+    hash_path;
+    flv_break_interval;
+    flv_quality;
+    ocr_version;
+    video_codec;
+};
 
+void parse_command_line_options(int argc, char ** argv, struct RecorderParams & recorder)
+{
+    std::string png_geometry;
+
+    program_options::options_description desc({
+        {'h', "help", "produce help message"},
+        {'v', "version", "show software version"},
+        {'o', "output-file", &recorder.output_filename, "output base filename"},
+        {'i', "input-file", &recorder.input_filename, "input base filename"},
+
+        {'b', "begin", &recorder.begin_cap, "begin capture time (in seconds), default=none"},
+        {'e', "end", &recorder.end_cap, "end capture time (in seconds), default=none"},
+        {"count", &recorder.order_count, "Number of orders to execute before stopping, default=0 execute all orders"},
+
+        {'l', "png_limit", &recorder.png_limit, "maximum number of png files to create (remove older), default=10, 0 will disable png capture"},
+        {'n', "png_interval", &recorder.png_interval, "time interval between png captures, default=60 seconds"},
+
+        {'r', "frameinterval", &recorder.wrm_frame_interval, "time between consecutive capture frames (in 100/th of seconds), default=100 one frame per second"},
+
+        {'k', "breakinterval", &recorder.wrm_break_interval, "number of seconds between splitting wrm files in seconds(default, one wrm every day)"},
+
+        {'p', "png", "enable png capture"},
+        {'w', "wrm", "enable wrm capture"},
+        {'t', "ocr", "enable ocr title bar detection"},
+        {'f', "flv", "enable flv capture"},
+        {'u', "full", "create full video"},
+        {'c', "chunk", "chunk splitting on title bar change detection"},
+
+        {"clear", &recorder.clear, "clear old capture files with same prefix (default on)"},
+        {"verbose", &recorder.verbose, "more logs"},
+        {"zoom", &recorder.zoom, "scaling factor for png capture (default 100%)"},
+        {'g', "png-geometry", &png_geometry, "png capture geometry (Ex. 160x120)"},
+        {'m', "meta", "show file metadata"},
+        {'s', "statistics", "show statistics"},
+
+        {'z', "compression", &recorder.wrm_compression_algorithm, "wrm compression algorithm (default=original, none, gzip, snappy)"},
+        {'d', "color-depth", &recorder.wrm_color_depth,           "wrm color depth (default=original, 16, 24)"},
+        {'y', "encryption",  &recorder.wrm_encryption,            "wrm encryption (default=original, enable, disable)"},
+
+        {"auto-output-file",  "append suffix to input base filename to generate output base filename automatically"},
+        {"remove-input-file", "remove input file"},
+
+        {"config-file", &recorder.config_filename, "used an another ini file"},
+
+        {"hash-path", &recorder.hash_path, "output hash dirname (if empty, use hash_path of ini)"},
+
+        {'a', "flvbreakinterval", &recorder.flv_break_interval, "number of seconds between splitting flv files (by default, one flv every 10 minutes)"},
+
+        {'q', "flv-quality", &recorder.flv_quality, "flv quality (high, medium, low)"},
+
+        {"ocr-version", &recorder.ocr_version, "version 1 or 2"},
+
+        {"video-codec", &recorder.video_codec, "ffmpeg video codec id (flv, mp4, etc)"},
+    });
+
+    auto options = program_options::parse_command_line(argc, argv, desc);
+
+    if (options.count("png-geometry") > 0) {
+        const char * png_geometry_c = png_geometry.c_str();
+        const char * separator      = strchr(png_geometry_c, 'x');
+        int          png_w          = atoi(png_geometry_c);
+        int          png_h          = 0;
+        if (separator) {
+            png_h = atoi(separator + 1);
+        }
+        if (!png_w || !png_h) {
+            std::cerr << "Invalide png geometry\n\n";
+            return 1;
+        }
+        png_width  = png_w;
+        png_height = png_h;
+        std::cout << "png-geometry: " << png_width << "x" << png_height << std::endl;
+    }
+
+}
 
 extern "C" {
     __attribute__((__visibility__("default")))
@@ -1204,19 +1304,14 @@ extern "C" {
 
             init_signals();
 
-            unsigned png_width  = 0;
-            unsigned png_height = 0;
 
-            std::string input_filename;
-            std::string output_filename;
+            RecorderParams rp;
 
             bool const enable_rt = false;
             bool const no_timestamp = false;
 
             uint32_t    verbose            = 0;
             uint32_t    clear              = 1; // default on
-            uint32_t    begin_cap          = 0;
-            uint32_t    end_cap            = 0;
             uint32_t    png_limit          = 10;
             uint32_t    png_interval       = 60;
             uint32_t    wrm_frame_interval = 100;
@@ -1232,62 +1327,9 @@ extern "C" {
             std::string wrm_compression_algorithm;  // output compression algorithm.
             std::string wrm_color_depth;
             std::string wrm_encryption;
-            std::string png_geometry;
             std::string hash_path;
             std::string video_codec;
 
-            program_options::options_description desc({
-                {'h', "help", "produce help message"},
-                {'v', "version", "show software version"},
-                {'o', "output-file", &output_filename, "output base filename"},
-                {'i', "input-file", &input_filename, "input base filename"},
-
-                {'b', "begin", &begin_cap, "begin capture time (in seconds), default=none"},
-                {'e', "end", &end_cap, "end capture time (in seconds), default=none"},
-                {"count", &order_count, "Number of orders to execute before stopping, default=0 execute all orders"},
-
-                {'l', "png_limit", &png_limit, "maximum number of png files to create (remove older), default=10, 0 will disable png capture"},
-                {'n', "png_interval", &png_interval, "time interval between png captures, default=60 seconds"},
-
-                {'r', "frameinterval", &wrm_frame_interval, "time between consecutive capture frames (in 100/th of seconds), default=100 one frame per second"},
-
-                {'k', "breakinterval", &wrm_break_interval, "number of seconds between splitting wrm files in seconds(default, one wrm every day)"},
-
-                {'p', "png", "enable png capture"},
-                {'w', "wrm", "enable wrm capture"},
-                {'t', "ocr", "enable ocr title bar detection"},
-                {'f', "flv", "enable flv capture"},
-                {'u', "full", "create full video"},
-                {'c', "chunk", "chunk splitting on title bar change detection"},
-
-                {"clear", &clear, "clear old capture files with same prefix (default on)"},
-                {"verbose", &verbose, "more logs"},
-                {"zoom", &zoom, "scaling factor for png capture (default 100%)"},
-                {'g', "png-geometry", &png_geometry, "png capture geometry (Ex. 160x120)"},
-                {'m', "meta", "show file metadata"},
-                {'s', "statistics", "show statistics"},
-
-                {'z', "compression", &wrm_compression_algorithm, "wrm compression algorithm (default=original, none, gzip, snappy)"},
-                {'d', "color-depth", &wrm_color_depth,           "wrm color depth (default=original, 16, 24)"},
-                {'y', "encryption",  &wrm_encryption,            "wrm encryption (default=original, enable, disable)"},
-
-                {"auto-output-file",  "append suffix to input base filename to generate output base filename automatically"},
-                {"remove-input-file", "remove input file"},
-
-                {"config-file", &config_filename, "used an another ini file"},
-
-                {"hash-path", &hash_path, "output hash dirname (if empty, use hash_path of ini)"},
-
-                {'a', "flvbreakinterval", &flv_break_interval, "number of seconds between splitting flv files (by default, one flv every 10 minutes)"},
-
-                {'q', "flv-quality", &flv_quality, "flv quality (high, medium, low)"},
-
-                {"ocr-version", &ocr_version, "version 1 or 2"},
-
-                {"video-codec", &video_codec, "ffmpeg video codec id (flv, mp4, etc)"},
-            });
-
-            auto options = program_options::parse_command_line(argc, argv, desc);
 
             if (options.count("help") > 0) {
                 std::cout << copyright_notice;
@@ -1301,7 +1343,7 @@ extern "C" {
                 return 0;
             }
 
-            if (input_filename.empty()) {
+            if (rp.input_filename.empty()) {
                 std::cerr << "Missing input filename : use -i filename\n\n";
                 return 1;
             }
@@ -1311,12 +1353,12 @@ extern "C" {
             auto_output_file   = (options.count("auto-output-file" ) > 0);
             remove_input_file  = (options.count("remove-input-file") > 0);
 
-            if (!show_file_metadata && !show_statistics && !auto_output_file && output_filename.empty()) {
+            if (!show_file_metadata && !show_statistics && !auto_output_file && rp.output_filename.empty()) {
                 std::cerr << "Missing output filename : use -o filename\n\n";
                 return 1;
             }
 
-            if (!output_filename.empty() && auto_output_file) {
+            if (!rp.output_filename.empty() && auto_output_file) {
                 std::cerr << "Conflicting options : --output-file and --auto-output-file\n\n";
                 return 1;
             }
@@ -1326,22 +1368,6 @@ extern "C" {
                 return 1;
             }
 
-            if (options.count("png-geometry") > 0) {
-                const char * png_geometry_c = png_geometry.c_str();
-                const char * separator      = strchr(png_geometry_c, 'x');
-                int          png_w          = atoi(png_geometry_c);
-                int          png_h          = 0;
-                if (separator) {
-                    png_h = atoi(separator + 1);
-                }
-                if (!png_w || !png_h) {
-                    std::cerr << "Invalide png geometry\n\n";
-                    return 1;
-                }
-                png_width  = png_w;
-                png_height = png_h;
-                std::cout << "png-geometry: " << png_width << "x" << png_height << std::endl;
-            }
 
             { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), config_filename.c_str()); }
 
@@ -1451,7 +1477,7 @@ extern "C" {
 
             bool const full_video = (options.count("full") > 0);
 
-            if (output_filename.length() && (!full_video && !bool(ini.get<cfg::video::capture_flags>()))) {
+            if (rp.output_filename.length() && (!full_video && !bool(ini.get<cfg::video::capture_flags>()))) {
                 std::cerr << "Missing target format : need --png, --ocr, --flv, --full, --wrm or --chunk" << std::endl;
                 return 1;
             }
@@ -1483,22 +1509,22 @@ extern "C" {
                 std::string filename           ;
                 std::string extension = ".mwrm";
 
-                ParsePath(input_filename.c_str(), directory, filename, extension);
+                ParsePath(rp.input_filename.c_str(), directory, filename, extension);
                 if (!directory.size()) {
-                    if (file_exist(input_filename.c_str())) {
+                    if (file_exist(rp.input_filename.c_str())) {
                         directory = "./";
                     }
                     else {
                         directory = ini.get<cfg::video::record_path>().c_str();
                     }
                 }
-                MakePath(input_filename, directory.c_str(), filename.c_str(), extension.c_str());
+                MakePath(rp.input_filename, directory.c_str(), filename.c_str(), extension.c_str());
             }
-            std::cout << "Input file is \"" << input_filename << "\".\n";
+            std::cout << "Input file is \"" << rp.input_filename << "\".\n";
 
             bool infile_is_encrypted;
-        //    switch (encryption_type(input_filename.c_str(), cctx())
-            if (is_encrypted_file(input_filename.c_str(), infile_is_encrypted) == -1) {
+        //    switch (encryption_type(rp.input_filename.c_str(), cctx())
+            if (is_encrypted_file(rp.input_filename.c_str(), infile_is_encrypted) == -1) {
                 std::cerr << "Input file is absent.\n";
                 return 1;
             }
@@ -1529,25 +1555,25 @@ extern "C" {
             std::string infile_path;
             std::string infile_basename;
             std::string infile_extension;
-            ParsePath(input_filename.c_str(), infile_path, infile_basename, infile_extension);
+            ParsePath(rp.input_filename.c_str(), infile_path, infile_basename, infile_extension);
 
 
             if (auto_output_file) {
-                output_filename =  infile_path;
-                output_filename += infile_basename;
-                output_filename += "-redrec";
-                output_filename += infile_extension;
+                rp.output_filename =  infile_path;
+                rp.output_filename += infile_basename;
+                rp.output_filename += "-redrec";
+                rp.output_filename += infile_extension;
 
-                std::cout << "\nOutput file is \"" << output_filename << "\" (autogenerated)." << std::endl;
+                std::cout << "\nOutput file is \"" << rp.output_filename << "\" (autogenerated)." << std::endl;
             }
-            else if (output_filename.size()) {
-                std::string directory = PNG_PATH "/"; // default value, actual one should come from output_filename
+            else if (rp.output_filename.size()) {
+                std::string directory = PNG_PATH "/"; // default value, actual one should come from rp.output_filename
                 std::string filename                ;
                 std::string extension = ".mwrm"     ;
 
-                ParsePath(output_filename.c_str(), directory, filename, extension);
-                MakePath(output_filename, directory.c_str(), filename.c_str(), extension.c_str());
-                std::cout << "Output file is \"" << output_filename << "\".\n";
+                ParsePath(rp.output_filename.c_str(), directory, filename, extension);
+                MakePath(rp.output_filename, directory.c_str(), filename.c_str(), extension.c_str());
+                std::cout << "Output file is \"" << rp.output_filename << "\".\n";
             }
 
             // TODO before continuing to work with input file, check if it's mwrm or wrm and use right object in both cases
@@ -1556,11 +1582,11 @@ extern "C" {
             // TODO if start and stop time are outside wrm, users should also be warned
 
             res = replay(infile_path, infile_basename, infile_extension, 
-                          output_filename,
-                          begin_cap,
-                          end_cap,
-                          png_width,
-                          png_height,
+                          rp.output_filename,
+                          rp.begin_cap,
+                          rp.end_cap,
+                          rp.png_width,
+                          rp.png_height,
                           capture_bpp,
                           enable_rt,
                           no_timestamp,
