@@ -1106,388 +1106,6 @@ inline int replay(std::string & infile_path, std::string & infile_basename, std:
     return -1;
 }
 
-inline int app_recorder(
-    int argc, char const * const * argv, const char * copyright_notice,
-    std::string config_filename, Inifile & ini, CryptoContext & cctx, Random & rnd
-) {
-    openlog("redrec", LOG_CONS | LOG_PERROR, LOG_USER);
-
-    init_signals();
-
-    unsigned png_width  = 0;
-    unsigned png_height = 0;
-
-    std::string input_filename;
-    std::string output_filename;
-
-    bool const enable_rt = false;
-    bool const no_timestamp = false;
-
-    uint32_t    verbose            = 0;
-    uint32_t    clear              = 1; // default on
-    uint32_t    begin_cap          = 0;
-    uint32_t    end_cap            = 0;
-    uint32_t    png_limit          = 10;
-    uint32_t    png_interval       = 60;
-    uint32_t    wrm_frame_interval = 100;
-    uint32_t    wrm_break_interval = 86400;
-    uint32_t    order_count        = 0;
-    unsigned    zoom               = 100;
-    bool        auto_output_file   = false;
-    bool        remove_input_file  = false;
-    uint32_t    flv_break_interval = 10*60;
-    std::string flv_quality;
-    unsigned    ocr_version = -1u;
-
-    std::string wrm_compression_algorithm;  // output compression algorithm.
-    std::string wrm_color_depth;
-    std::string wrm_encryption;
-    std::string png_geometry;
-    std::string hash_path;
-    std::string video_codec;
-
-    program_options::options_description desc({
-        {'h', "help", "produce help message"},
-        {'v', "version", "show software version"},
-        {'o', "output-file", &output_filename, "output base filename"},
-        {'i', "input-file", &input_filename, "input base filename"},
-
-        {'b', "begin", &begin_cap, "begin capture time (in seconds), default=none"},
-        {'e', "end", &end_cap, "end capture time (in seconds), default=none"},
-        {"count", &order_count, "Number of orders to execute before stopping, default=0 execute all orders"},
-
-        {'l', "png_limit", &png_limit, "maximum number of png files to create (remove older), default=10, 0 will disable png capture"},
-        {'n', "png_interval", &png_interval, "time interval between png captures, default=60 seconds"},
-
-        {'r', "frameinterval", &wrm_frame_interval, "time between consecutive capture frames (in 100/th of seconds), default=100 one frame per second"},
-
-        {'k', "breakinterval", &wrm_break_interval, "number of seconds between splitting wrm files in seconds(default, one wrm every day)"},
-
-        {'p', "png", "enable png capture"},
-        {'w', "wrm", "enable wrm capture"},
-        {'t', "ocr", "enable ocr title bar detection"},
-        {'f', "flv", "enable flv capture"},
-        {'u', "full", "create full video"},
-        {'c', "chunk", "chunk splitting on title bar change detection"},
-
-        {"clear", &clear, "clear old capture files with same prefix (default on)"},
-        {"verbose", &verbose, "more logs"},
-        {"zoom", &zoom, "scaling factor for png capture (default 100%)"},
-        {'g', "png-geometry", &png_geometry, "png capture geometry (Ex. 160x120)"},
-        {'m', "meta", "show file metadata"},
-        {'s', "statistics", "show statistics"},
-
-        {'z', "compression", &wrm_compression_algorithm, "wrm compression algorithm (default=original, none, gzip, snappy)"},
-        {'d', "color-depth", &wrm_color_depth,           "wrm color depth (default=original, 16, 24)"},
-        {'y', "encryption",  &wrm_encryption,            "wrm encryption (default=original, enable, disable)"},
-
-        {"auto-output-file",  "append suffix to input base filename to generate output base filename automatically"},
-        {"remove-input-file", "remove input file"},
-
-        {"config-file", &config_filename, "used an another ini file"},
-
-        {"hash-path", &hash_path, "output hash dirname (if empty, use hash_path of ini)"},
-
-        {'a', "flvbreakinterval", &flv_break_interval, "number of seconds between splitting flv files (by default, one flv every 10 minutes)"},
-
-        {'q', "flv-quality", &flv_quality, "flv quality (high, medium, low)"},
-
-        {"ocr-version", &ocr_version, "version 1 or 2"},
-
-        {"video-codec", &video_codec, "ffmpeg video codec id (flv, mp4, etc)"},
-    });
-
-    auto options = program_options::parse_command_line(argc, argv, desc);
-
-    if (options.count("help") > 0) {
-        std::cout << copyright_notice;
-        std::cout << "\n\nUsage: redrec [options]\n\n";
-        std::cout << desc << "\n\n";
-        return 0;
-    }
-
-    if (options.count("version") > 0) {
-        std::cout << copyright_notice << std::endl << std::endl;
-        return 0;
-    }
-
-    if (input_filename.empty()) {
-        std::cerr << "Missing input filename : use -i filename\n\n";
-        return 1;
-    }
-
-    bool show_file_metadata = (options.count("meta"             ) > 0);
-    bool show_statistics    = (options.count("statistics"       ) > 0);
-    auto_output_file   = (options.count("auto-output-file" ) > 0);
-    remove_input_file  = (options.count("remove-input-file") > 0);
-
-    if (!show_file_metadata && !show_statistics && !auto_output_file && output_filename.empty()) {
-        std::cerr << "Missing output filename : use -o filename\n\n";
-        return 1;
-    }
-
-    if (!output_filename.empty() && auto_output_file) {
-        std::cerr << "Conflicting options : --output-file and --auto-output-file\n\n";
-        return 1;
-    }
-
-    if ((options.count("zoom") > 0) & (options.count("png-geometry") > 0)) {
-        std::cerr << "Conflicting options : --zoom and --png-geometry\n\n";
-        return 1;
-    }
-
-    if (options.count("png-geometry") > 0) {
-        const char * png_geometry_c = png_geometry.c_str();
-        const char * separator      = strchr(png_geometry_c, 'x');
-        int          png_w          = atoi(png_geometry_c);
-        int          png_h          = 0;
-        if (separator) {
-            png_h = atoi(separator + 1);
-        }
-        if (!png_w || !png_h) {
-            std::cerr << "Invalide png geometry\n\n";
-            return 1;
-        }
-        png_width  = png_w;
-        png_height = png_h;
-        std::cout << "png-geometry: " << png_width << "x" << png_height << std::endl;
-    }
-
-    { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), config_filename.c_str()); }
-
-    if (!hash_path.empty()) {
-        hash_path += '/';
-        ini.set<cfg::video::hash_path>(hash_path);
-    }
-
-    int wrm_compression_algorithm_;
-
-    if (options.count("compression") > 0) {
-             if (wrm_compression_algorithm == "none") {
-//            ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
-            wrm_compression_algorithm_ = static_cast<int>(WrmCompressionAlgorithm::no_compression);
-        }
-        else if (wrm_compression_algorithm == "gzip") {
-//            ini.set<cfg::video::wrm_compression_algorithm>(1);
-            wrm_compression_algorithm_ = static_cast<int>(WrmCompressionAlgorithm::gzip);
-        }
-        else if (wrm_compression_algorithm == "snappy") {
-//            ini.set<cfg::video::wrm_compression_algorithm>(2);
-            wrm_compression_algorithm_ = static_cast<int>(WrmCompressionAlgorithm::snappy);
-        }
-        else if (wrm_compression_algorithm == "original") {
-//            ini.set<cfg::video::wrm_compression_algorithm>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
-            wrm_compression_algorithm_ = static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
-        }
-        else {
-            std::cerr << "Unknown wrm compression algorithm\n\n";
-            return 1;
-        }
-    }
-    else {
-//        ini.set<cfg::video::wrm_compression_algorithm>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
-        wrm_compression_algorithm_ = static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
-    }
-
-    
-
-    int capture_bpp = options.count("color-depth")<=0 ? static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)
-                    : (wrm_color_depth == "16") ? 16
-                    : (wrm_color_depth == "24") ? 24
-                    : (wrm_color_depth == "original") ? static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)
-                    : 0;
-    if (!capture_bpp){
-        std::cerr << "Unknown wrm color depth\n\n";
-        return 1;
-    }
-
-    ini.set<cfg::video::png_limit>(png_limit);
-    ini.set<cfg::video::png_interval>(std::chrono::seconds{png_interval});
-    ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned int, std::centi>{wrm_frame_interval});
-    ini.set<cfg::video::break_interval>(std::chrono::seconds{wrm_break_interval});
-    ini.get_ref<cfg::video::capture_flags>() &= ~(CaptureFlags::wrm | CaptureFlags::png);
-    if (options.count("wrm") > 0) {
-        ini.get_ref<cfg::video::capture_flags>() |= CaptureFlags::wrm;
-    }
-    if (options.count("png") > 0) {
-        ini.get_ref<cfg::video::capture_flags>() |= CaptureFlags::png;
-    }
-
-    ini.set<cfg::globals::capture_chunk>(options.count("chunk") > 0);
-
-    ini.set<cfg::video::flv_break_interval>(std::chrono::seconds{flv_break_interval});
-
-    if (ini.get<cfg::globals::capture_chunk>()) {
-        ini.get_ref<cfg::video::capture_flags>()
-            |= CaptureFlags::flv
-            |  CaptureFlags::ocr
-            |  CaptureFlags::png;
-
-        ini.get_ref<cfg::video::disable_keyboard_log>() &= ~KeyboardLogFlags::meta;
-
-        ini.set<cfg::video::flv_break_interval>(std::chrono::minutes{10});
-        ini.set<cfg::video::png_interval>(std::chrono::minutes{1});
-        ini.set<cfg::video::png_limit>(0xFFFF);
-        ini.set<cfg::ocr::interval>(std::chrono::seconds{1});
-    }
-    else {
-        auto set_flag = [&](char const * opt, CaptureFlags f) {
-            if (options.count(opt) > 0) {
-                ini.get_ref<cfg::video::capture_flags>() |= f;
-            }
-            else {
-                ini.get_ref<cfg::video::capture_flags>() &= ~f;
-            }
-        };
-        set_flag("flv", CaptureFlags::flv);
-        set_flag("ocr", CaptureFlags::ocr);
-    }
-
-    if (options.count("ocr-version")) {
-        ini.set<cfg::ocr::version>(ocr_version == 2 ? OcrVersion::v2 : OcrVersion::v1);
-    }
-
-    //if (options.count("extract-meta-data") &&
-    //    (options.count("png") || options.count("flv") || options.count("wrm") || options.count("chunk"))) {
-    //    std::cerr << "Option --extract-meta-data is not compatible with options --png, --flv, --wrm or --chunk" << std::endl;
-    //    return 1;
-    //}
-
-    // TODO("extract-meta-data should be independant capture type")
-    ////if (options.count("extract-meta-data") && !options.count("ocr")) {
-    //    std::cerr << "Option --extract-meta-data should be used with option --ocr" << std::endl;
-    //    return 1;
-    //}
-
-    bool const full_video = (options.count("full") > 0);
-
-    if (output_filename.length() && (!full_video && !bool(ini.get<cfg::video::capture_flags>()))) {
-        std::cerr << "Missing target format : need --png, --ocr, --flv, --full, --wrm or --chunk" << std::endl;
-        return 1;
-    }
-
-    if (options.count("flv-quality") > 0) {
-            if (0 == strcmp(flv_quality.c_str(), "high")) {
-            ini.set<cfg::globals::video_quality>(Level::high);
-        }
-        else if (0 == strcmp(flv_quality.c_str(), "low")) {
-            ini.set<cfg::globals::video_quality>(Level::low);
-        }
-        else  if (0 == strcmp(flv_quality.c_str(), "medium")) {
-            ini.set<cfg::globals::video_quality>(Level::medium);
-        }
-        else {
-            std::cerr << "Unknown video quality" << std::endl;
-            return 1;
-        }
-    }
-
-    if (options.count("video-codec") > 0) {
-        ini.set<cfg::globals::codec_id>(video_codec);
-    }
-
-    ini.set<cfg::video::rt_display>(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png));
-
-    {
-        std::string directory          ;
-        std::string filename           ;
-        std::string extension = ".mwrm";
-
-        ParsePath(input_filename.c_str(), directory, filename, extension);
-        if (!directory.size()) {
-            if (file_exist(input_filename.c_str())) {
-                directory = "./";
-            }
-            else {
-                directory = ini.get<cfg::video::record_path>().c_str();
-            }
-        }
-        MakePath(input_filename, directory.c_str(), filename.c_str(), extension.c_str());
-    }
-    std::cout << "Input file is \"" << input_filename << "\".\n";
-
-    bool infile_is_encrypted;
-//    switch (encryption_type(input_filename.c_str(), cctx())
-    if (is_encrypted_file(input_filename.c_str(), infile_is_encrypted) == -1) {
-        std::cerr << "Input file is absent.\n";
-        return 1;
-    }
-
-    if (options.count("encryption") > 0) {
-             if (0 == strcmp(wrm_encryption.c_str(), "enable")) {
-            ini.set<cfg::globals::trace_type>(TraceType::cryptofile);
-        }
-        else if (0 == strcmp(wrm_encryption.c_str(), "disable")) {
-            ini.set<cfg::globals::trace_type>(TraceType::localfile);
-        }
-        else if (0 == strcmp(wrm_encryption.c_str(), "original")) {
-            ini.set<cfg::globals::trace_type>(infile_is_encrypted ? TraceType::cryptofile : TraceType::localfile);
-        }
-        else {
-            std::cerr << "Unknown wrm encryption parameter\n\n";
-            return 1;
-        }
-    }
-    else {
-        ini.set<cfg::globals::trace_type>(infile_is_encrypted ? TraceType::cryptofile : TraceType::localfile);
-    }
-
-    if (infile_is_encrypted || (ini.get<cfg::globals::trace_type>() == TraceType::cryptofile)) {
-        OpenSSL_add_all_digests();
-    }
-
-
-    std::string infile_path;
-    std::string infile_basename;
-    std::string infile_extension;
-    ParsePath(input_filename.c_str(), infile_path, infile_basename, infile_extension);
-
-
-    if (auto_output_file) {
-        output_filename =  infile_path;
-        output_filename += infile_basename;
-        output_filename += "-redrec";
-        output_filename += infile_extension;
-
-        std::cout << "\nOutput file is \"" << output_filename << "\" (autogenerated)." << std::endl;
-    }
-    else if (output_filename.size()) {
-        std::string directory = PNG_PATH "/"; // default value, actual one should come from output_filename
-        std::string filename                ;
-        std::string extension = ".mwrm"     ;
-
-        ParsePath(output_filename.c_str(), directory, filename, extension);
-        MakePath(output_filename, directory.c_str(), filename.c_str(), extension.c_str());
-        std::cout << "Output file is \"" << output_filename << "\".\n";
-    }
-
-    // TODO before continuing to work with input file, check if it's mwrm or wrm and use right object in both cases
-
-    // TODO also check if it contains any wrm at all and at wich one we should start depending on input time
-    // TODO if start and stop time are outside wrm, users should also be warned
-
-    return replay(infile_path, infile_basename, infile_extension, 
-                  output_filename,
-                  begin_cap,
-                  end_cap,
-                  png_width,
-                  png_height,
-                  capture_bpp,
-                  enable_rt,
-                  no_timestamp,
-                  infile_is_encrypted,
-                  order_count,
-                  show_file_metadata,
-                  show_statistics,
-                  clear,
-                  zoom,
-                  full_video,
-                  remove_input_file,
-                  wrm_compression_algorithm_,
-                  ini, cctx, rnd,
-                  verbose);
-
-}
 
 
 extern "C" {
@@ -1525,7 +1143,7 @@ extern "C" {
 
         Inifile ini;
         ini.set<cfg::debug::config>(false);
-        auto config_filename = CFG_PATH "/" RDPPROXY_INI;
+        auto config_filename = std::string(CFG_PATH "/" RDPPROXY_INI);
 
         UdevRandom rnd;
         CryptoContext cctx;
@@ -1582,14 +1200,382 @@ extern "C" {
 
         switch (command){
         case 0: // RECorder
-            try {
-                res = app_recorder(
-                    argc, argv
-                  , copyright_notice
-                  , config_filename
-                  , ini
-                  , cctx
-                  , rnd);
+        try {
+
+            init_signals();
+
+            unsigned png_width  = 0;
+            unsigned png_height = 0;
+
+            std::string input_filename;
+            std::string output_filename;
+
+            bool const enable_rt = false;
+            bool const no_timestamp = false;
+
+            uint32_t    verbose            = 0;
+            uint32_t    clear              = 1; // default on
+            uint32_t    begin_cap          = 0;
+            uint32_t    end_cap            = 0;
+            uint32_t    png_limit          = 10;
+            uint32_t    png_interval       = 60;
+            uint32_t    wrm_frame_interval = 100;
+            uint32_t    wrm_break_interval = 86400;
+            uint32_t    order_count        = 0;
+            unsigned    zoom               = 100;
+            bool        auto_output_file   = false;
+            bool        remove_input_file  = false;
+            uint32_t    flv_break_interval = 10*60;
+            std::string flv_quality;
+            unsigned    ocr_version = -1u;
+
+            std::string wrm_compression_algorithm;  // output compression algorithm.
+            std::string wrm_color_depth;
+            std::string wrm_encryption;
+            std::string png_geometry;
+            std::string hash_path;
+            std::string video_codec;
+
+            program_options::options_description desc({
+                {'h', "help", "produce help message"},
+                {'v', "version", "show software version"},
+                {'o', "output-file", &output_filename, "output base filename"},
+                {'i', "input-file", &input_filename, "input base filename"},
+
+                {'b', "begin", &begin_cap, "begin capture time (in seconds), default=none"},
+                {'e', "end", &end_cap, "end capture time (in seconds), default=none"},
+                {"count", &order_count, "Number of orders to execute before stopping, default=0 execute all orders"},
+
+                {'l', "png_limit", &png_limit, "maximum number of png files to create (remove older), default=10, 0 will disable png capture"},
+                {'n', "png_interval", &png_interval, "time interval between png captures, default=60 seconds"},
+
+                {'r', "frameinterval", &wrm_frame_interval, "time between consecutive capture frames (in 100/th of seconds), default=100 one frame per second"},
+
+                {'k', "breakinterval", &wrm_break_interval, "number of seconds between splitting wrm files in seconds(default, one wrm every day)"},
+
+                {'p', "png", "enable png capture"},
+                {'w', "wrm", "enable wrm capture"},
+                {'t', "ocr", "enable ocr title bar detection"},
+                {'f', "flv", "enable flv capture"},
+                {'u', "full", "create full video"},
+                {'c', "chunk", "chunk splitting on title bar change detection"},
+
+                {"clear", &clear, "clear old capture files with same prefix (default on)"},
+                {"verbose", &verbose, "more logs"},
+                {"zoom", &zoom, "scaling factor for png capture (default 100%)"},
+                {'g', "png-geometry", &png_geometry, "png capture geometry (Ex. 160x120)"},
+                {'m', "meta", "show file metadata"},
+                {'s', "statistics", "show statistics"},
+
+                {'z', "compression", &wrm_compression_algorithm, "wrm compression algorithm (default=original, none, gzip, snappy)"},
+                {'d', "color-depth", &wrm_color_depth,           "wrm color depth (default=original, 16, 24)"},
+                {'y', "encryption",  &wrm_encryption,            "wrm encryption (default=original, enable, disable)"},
+
+                {"auto-output-file",  "append suffix to input base filename to generate output base filename automatically"},
+                {"remove-input-file", "remove input file"},
+
+                {"config-file", &config_filename, "used an another ini file"},
+
+                {"hash-path", &hash_path, "output hash dirname (if empty, use hash_path of ini)"},
+
+                {'a', "flvbreakinterval", &flv_break_interval, "number of seconds between splitting flv files (by default, one flv every 10 minutes)"},
+
+                {'q', "flv-quality", &flv_quality, "flv quality (high, medium, low)"},
+
+                {"ocr-version", &ocr_version, "version 1 or 2"},
+
+                {"video-codec", &video_codec, "ffmpeg video codec id (flv, mp4, etc)"},
+            });
+
+            auto options = program_options::parse_command_line(argc, argv, desc);
+
+            if (options.count("help") > 0) {
+                std::cout << copyright_notice;
+                std::cout << "\n\nUsage: redrec [options]\n\n";
+                std::cout << desc << "\n\n";
+                return 0;
+            }
+
+            if (options.count("version") > 0) {
+                std::cout << copyright_notice << std::endl << std::endl;
+                return 0;
+            }
+
+            if (input_filename.empty()) {
+                std::cerr << "Missing input filename : use -i filename\n\n";
+                return 1;
+            }
+
+            bool show_file_metadata = (options.count("meta"             ) > 0);
+            bool show_statistics    = (options.count("statistics"       ) > 0);
+            auto_output_file   = (options.count("auto-output-file" ) > 0);
+            remove_input_file  = (options.count("remove-input-file") > 0);
+
+            if (!show_file_metadata && !show_statistics && !auto_output_file && output_filename.empty()) {
+                std::cerr << "Missing output filename : use -o filename\n\n";
+                return 1;
+            }
+
+            if (!output_filename.empty() && auto_output_file) {
+                std::cerr << "Conflicting options : --output-file and --auto-output-file\n\n";
+                return 1;
+            }
+
+            if ((options.count("zoom") > 0) & (options.count("png-geometry") > 0)) {
+                std::cerr << "Conflicting options : --zoom and --png-geometry\n\n";
+                return 1;
+            }
+
+            if (options.count("png-geometry") > 0) {
+                const char * png_geometry_c = png_geometry.c_str();
+                const char * separator      = strchr(png_geometry_c, 'x');
+                int          png_w          = atoi(png_geometry_c);
+                int          png_h          = 0;
+                if (separator) {
+                    png_h = atoi(separator + 1);
+                }
+                if (!png_w || !png_h) {
+                    std::cerr << "Invalide png geometry\n\n";
+                    return 1;
+                }
+                png_width  = png_w;
+                png_height = png_h;
+                std::cout << "png-geometry: " << png_width << "x" << png_height << std::endl;
+            }
+
+            { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), config_filename.c_str()); }
+
+            if (!hash_path.empty()) {
+                hash_path += '/';
+                ini.set<cfg::video::hash_path>(hash_path);
+            }
+
+            int wrm_compression_algorithm_;
+
+            if (options.count("compression") > 0) {
+                     if (wrm_compression_algorithm == "none") {
+        //            ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
+                    wrm_compression_algorithm_ = static_cast<int>(WrmCompressionAlgorithm::no_compression);
+                }
+                else if (wrm_compression_algorithm == "gzip") {
+        //            ini.set<cfg::video::wrm_compression_algorithm>(1);
+                    wrm_compression_algorithm_ = static_cast<int>(WrmCompressionAlgorithm::gzip);
+                }
+                else if (wrm_compression_algorithm == "snappy") {
+        //            ini.set<cfg::video::wrm_compression_algorithm>(2);
+                    wrm_compression_algorithm_ = static_cast<int>(WrmCompressionAlgorithm::snappy);
+                }
+                else if (wrm_compression_algorithm == "original") {
+        //            ini.set<cfg::video::wrm_compression_algorithm>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
+                    wrm_compression_algorithm_ = static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
+                }
+                else {
+                    std::cerr << "Unknown wrm compression algorithm\n\n";
+                    return 1;
+                }
+            }
+            else {
+        //        ini.set<cfg::video::wrm_compression_algorithm>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
+                wrm_compression_algorithm_ = static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
+            }
+
+            
+
+            int capture_bpp = options.count("color-depth")<=0 ? static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)
+                            : (wrm_color_depth == "16") ? 16
+                            : (wrm_color_depth == "24") ? 24
+                            : (wrm_color_depth == "original") ? static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)
+                            : 0;
+            if (!capture_bpp){
+                std::cerr << "Unknown wrm color depth\n\n";
+                return 1;
+            }
+
+            ini.set<cfg::video::png_limit>(png_limit);
+            ini.set<cfg::video::png_interval>(std::chrono::seconds{png_interval});
+            ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned int, std::centi>{wrm_frame_interval});
+            ini.set<cfg::video::break_interval>(std::chrono::seconds{wrm_break_interval});
+            ini.get_ref<cfg::video::capture_flags>() &= ~(CaptureFlags::wrm | CaptureFlags::png);
+            if (options.count("wrm") > 0) {
+                ini.get_ref<cfg::video::capture_flags>() |= CaptureFlags::wrm;
+            }
+            if (options.count("png") > 0) {
+                ini.get_ref<cfg::video::capture_flags>() |= CaptureFlags::png;
+            }
+
+            ini.set<cfg::globals::capture_chunk>(options.count("chunk") > 0);
+
+            ini.set<cfg::video::flv_break_interval>(std::chrono::seconds{flv_break_interval});
+
+            if (ini.get<cfg::globals::capture_chunk>()) {
+                ini.get_ref<cfg::video::capture_flags>()
+                    |= CaptureFlags::flv
+                    |  CaptureFlags::ocr
+                    |  CaptureFlags::png;
+
+                ini.get_ref<cfg::video::disable_keyboard_log>() &= ~KeyboardLogFlags::meta;
+
+                ini.set<cfg::video::flv_break_interval>(std::chrono::minutes{10});
+                ini.set<cfg::video::png_interval>(std::chrono::minutes{1});
+                ini.set<cfg::video::png_limit>(0xFFFF);
+                ini.set<cfg::ocr::interval>(std::chrono::seconds{1});
+            }
+            else {
+                auto set_flag = [&](char const * opt, CaptureFlags f) {
+                    if (options.count(opt) > 0) {
+                        ini.get_ref<cfg::video::capture_flags>() |= f;
+                    }
+                    else {
+                        ini.get_ref<cfg::video::capture_flags>() &= ~f;
+                    }
+                };
+                set_flag("flv", CaptureFlags::flv);
+                set_flag("ocr", CaptureFlags::ocr);
+            }
+
+            if (options.count("ocr-version")) {
+                ini.set<cfg::ocr::version>(ocr_version == 2 ? OcrVersion::v2 : OcrVersion::v1);
+            }
+
+            //if (options.count("extract-meta-data") &&
+            //    (options.count("png") || options.count("flv") || options.count("wrm") || options.count("chunk"))) {
+            //    std::cerr << "Option --extract-meta-data is not compatible with options --png, --flv, --wrm or --chunk" << std::endl;
+            //    return 1;
+            //}
+
+            // TODO("extract-meta-data should be independant capture type")
+            ////if (options.count("extract-meta-data") && !options.count("ocr")) {
+            //    std::cerr << "Option --extract-meta-data should be used with option --ocr" << std::endl;
+            //    return 1;
+            //}
+
+            bool const full_video = (options.count("full") > 0);
+
+            if (output_filename.length() && (!full_video && !bool(ini.get<cfg::video::capture_flags>()))) {
+                std::cerr << "Missing target format : need --png, --ocr, --flv, --full, --wrm or --chunk" << std::endl;
+                return 1;
+            }
+
+            if (options.count("flv-quality") > 0) {
+                    if (0 == strcmp(flv_quality.c_str(), "high")) {
+                    ini.set<cfg::globals::video_quality>(Level::high);
+                }
+                else if (0 == strcmp(flv_quality.c_str(), "low")) {
+                    ini.set<cfg::globals::video_quality>(Level::low);
+                }
+                else  if (0 == strcmp(flv_quality.c_str(), "medium")) {
+                    ini.set<cfg::globals::video_quality>(Level::medium);
+                }
+                else {
+                    std::cerr << "Unknown video quality" << std::endl;
+                    return 1;
+                }
+            }
+
+            if (options.count("video-codec") > 0) {
+                ini.set<cfg::globals::codec_id>(video_codec);
+            }
+
+            ini.set<cfg::video::rt_display>(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png));
+
+            {
+                std::string directory          ;
+                std::string filename           ;
+                std::string extension = ".mwrm";
+
+                ParsePath(input_filename.c_str(), directory, filename, extension);
+                if (!directory.size()) {
+                    if (file_exist(input_filename.c_str())) {
+                        directory = "./";
+                    }
+                    else {
+                        directory = ini.get<cfg::video::record_path>().c_str();
+                    }
+                }
+                MakePath(input_filename, directory.c_str(), filename.c_str(), extension.c_str());
+            }
+            std::cout << "Input file is \"" << input_filename << "\".\n";
+
+            bool infile_is_encrypted;
+        //    switch (encryption_type(input_filename.c_str(), cctx())
+            if (is_encrypted_file(input_filename.c_str(), infile_is_encrypted) == -1) {
+                std::cerr << "Input file is absent.\n";
+                return 1;
+            }
+
+            if (options.count("encryption") > 0) {
+                     if (0 == strcmp(wrm_encryption.c_str(), "enable")) {
+                    ini.set<cfg::globals::trace_type>(TraceType::cryptofile);
+                }
+                else if (0 == strcmp(wrm_encryption.c_str(), "disable")) {
+                    ini.set<cfg::globals::trace_type>(TraceType::localfile);
+                }
+                else if (0 == strcmp(wrm_encryption.c_str(), "original")) {
+                    ini.set<cfg::globals::trace_type>(infile_is_encrypted ? TraceType::cryptofile : TraceType::localfile);
+                }
+                else {
+                    std::cerr << "Unknown wrm encryption parameter\n\n";
+                    return 1;
+                }
+            }
+            else {
+                ini.set<cfg::globals::trace_type>(infile_is_encrypted ? TraceType::cryptofile : TraceType::localfile);
+            }
+
+            if (infile_is_encrypted || (ini.get<cfg::globals::trace_type>() == TraceType::cryptofile)) {
+                OpenSSL_add_all_digests();
+            }
+
+            std::string infile_path;
+            std::string infile_basename;
+            std::string infile_extension;
+            ParsePath(input_filename.c_str(), infile_path, infile_basename, infile_extension);
+
+
+            if (auto_output_file) {
+                output_filename =  infile_path;
+                output_filename += infile_basename;
+                output_filename += "-redrec";
+                output_filename += infile_extension;
+
+                std::cout << "\nOutput file is \"" << output_filename << "\" (autogenerated)." << std::endl;
+            }
+            else if (output_filename.size()) {
+                std::string directory = PNG_PATH "/"; // default value, actual one should come from output_filename
+                std::string filename                ;
+                std::string extension = ".mwrm"     ;
+
+                ParsePath(output_filename.c_str(), directory, filename, extension);
+                MakePath(output_filename, directory.c_str(), filename.c_str(), extension.c_str());
+                std::cout << "Output file is \"" << output_filename << "\".\n";
+            }
+
+            // TODO before continuing to work with input file, check if it's mwrm or wrm and use right object in both cases
+
+            // TODO also check if it contains any wrm at all and at wich one we should start depending on input time
+            // TODO if start and stop time are outside wrm, users should also be warned
+
+            res = replay(infile_path, infile_basename, infile_extension, 
+                          output_filename,
+                          begin_cap,
+                          end_cap,
+                          png_width,
+                          png_height,
+                          capture_bpp,
+                          enable_rt,
+                          no_timestamp,
+                          infile_is_encrypted,
+                          order_count,
+                          show_file_metadata,
+                          show_statistics,
+                          clear,
+                          zoom,
+                          full_video,
+                          remove_input_file,
+                          wrm_compression_algorithm_,
+                          ini, cctx, rnd,
+                          verbose);
+                  
             } catch (const Error & e) {
                 std::printf("decrypt failed: with id=%d\n", e.id);
             }
@@ -1597,9 +1583,6 @@ extern "C" {
         case 1: // VERifier
             ini.set<cfg::debug::config>(false);
             try {
-                LOG(LOG_INFO, "VERIFIER [1]");
-                openlog("verifier", LOG_CONS | LOG_PERROR, LOG_USER);
-
                 std::string hash_path      = ini.get<cfg::video::hash_path>().c_str()  ;
                 std::string mwrm_path      = ini.get<cfg::video::record_path>().c_str();
                 std::string input_filename;
@@ -1607,8 +1590,6 @@ extern "C" {
                 bool      ignore_stat_info = false;
                 bool      update_stat_info = false;
                 uint32_t    verbose        = 0;
-
-                LOG(LOG_INFO, "VERIFIER [2]");
 
                 program_options::options_description desc({
                     {'h', "help",    "produce help message"},
@@ -1623,7 +1604,6 @@ extern "C" {
                     {"verbose",         &verbose,           "more logs"            },
                 })
                 ;
-
                 auto options = program_options::parse_command_line(argc, argv, desc);
 
                 if (options.count("help") > 0) {
@@ -1711,9 +1691,6 @@ extern "C" {
         break;
         default: // DECrypter
             try {
-                openlog("decrypter", LOG_CONS | LOG_PERROR, LOG_USER);
-
-                LOG(LOG_INFO, "decrypter!");
                 std::string input_filename;
                 std::string output_filename;
 
