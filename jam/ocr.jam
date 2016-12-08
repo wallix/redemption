@@ -54,7 +54,11 @@ alias ppocr :
     $(REDEMPTION_SRC_PATH)/capture/rdp_ppocr/get_ocr_constants.cpp
 ;
 
-lib ppocr_static : ppocr/<linkflags>-Wl,-Bsymbolic,<cxxflags>-fvisibility=hidden : <link>static ;
+lib ppocr_static
+: ppocr/<linkflags>-Wl,-Bsymbolic,<cxxflags>-fvisibility=hidden,<define>CFG_PATH='\"$(ETC_PREFIX)\"'
+: <link>static ;
 
-lib ppocr_test : ppocr/<cxxflags>-frtti,<linkflags>-fvisibility=default : <link>static ;
+lib ppocr_test
+: ppocr/<cxxflags>-frtti,<linkflags>-fvisibility=default,<define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
+: <link>static ;
 ## } ppocr
