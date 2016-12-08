@@ -37,7 +37,7 @@
 
 
 
-Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
+Front_Qt::Front_Qt(char* argv[], int argc, RDPVerbose verbose)
     : Front_Qt_API(false, false, verbose)
     , snapshoter(*this)
     , mod_bpp(24)
@@ -55,7 +55,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
 
         params.authentifier = nullptr;
         params.exchanged_data_limit = ~decltype(params.exchanged_data_limit){};
-        params.verbose = 0xfffffff;
+        params.verbose = to_verbose_flags(0xfffffff);
 
         params.clipboard_down_authorized = true;
         params.clipboard_up_authorized = true;
@@ -75,6 +75,22 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
     , _cb_filesList()
     , _cb_buffers()
 {
+    this->fileSystemData.drives[0].name[0] = 'R';
+    this->fileSystemData.drives[0].name[1] = 'D';
+    this->fileSystemData.drives[0].name[2] = 'P';
+    this->fileSystemData.drives[0].name[3] = ' ';
+    this->fileSystemData.drives[0].name[4] = 'C';
+    this->fileSystemData.drives[0].name[5] = ':';
+    this->fileSystemData.drives[0].ID = 3;
+
+    this->fileSystemData.drives[1].name[0] = 'R';
+    this->fileSystemData.drives[1].name[1] = 'D';
+    this->fileSystemData.drives[1].name[2] = 'P';
+    this->fileSystemData.drives[1].name[3] = ' ';
+    this->fileSystemData.drives[1].name[4] = 'D';
+    this->fileSystemData.drives[1].name[5] = ':';
+    this->fileSystemData.drives[1].ID = 4;
+
     // Windows and socket contrainer
     this->_mod_qt = new Mod_Qt(this, this->_form);
     this->_form = new Form_Qt(this);
@@ -98,10 +114,10 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
         if (       word == "-n") {
             this->_userName = arg;
             commandIsValid += NAME_GOTTEN;
-        } else if (word == "-pwd") {
+        } else if (word == "-w") {
             this->_pwd = arg;
             commandIsValid += PWD_GOTTEN;
-        } else if (word == "-ip") {
+        } else if (word == "-i") {
             this->_targetIP = arg;
             commandIsValid += IP_GOTTEN;
         } else if (word == "-p") {
@@ -162,10 +178,10 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
             std::cout << "-n [user_name] ";
         }
         if (!(commandIsValid & Front_Qt::PWD_GOTTEN)) {
-            std::cout << "-pwd [password] ";
+            std::cout << "-w [password] ";
         }
         if (!(commandIsValid & Front_Qt::IP_GOTTEN)) {
-            std::cout << "-ip [ip_serveur] ";
+            std::cout << "-i [ip_serveur] ";
         }
         if (!(commandIsValid & Front_Qt::PORT_GOTTEN)) {
             std::cout << "-p [port] ";
@@ -394,6 +410,11 @@ void Front_Qt::dropScreen() {
 }
 
 void Front_Qt::closeFromScreen(int screen_index) {
+
+    if (this->fileSystemData.drives_created) {
+        this->removeDriveDevice(fileSystemData.drives, fileSystemData.drivesCount);
+    }
+
     for (auto screen : this->_screen) {
         if (screen != nullptr) {
             if (screen->_screen_index != screen_index) {
@@ -557,22 +578,25 @@ void Front_Qt::delete_replay_mod() {
 }
 
 void Front_Qt::load_replay_mod(std::string const & movie_name) {
-    this->_replay_mod.reset(new ReplayMod(
-        *this
-      , (this->REPLAY_DIR + "/").c_str()
-      , movie_name.c_str()
-      , 0
-      , 0
-      , this->_error
-      , this->_font
-      , true
-      , 0
-    ));
+    this->_replay_mod.reset(new ReplayMod( *this
+                                         , (this->REPLAY_DIR + "/").c_str()
+                                         , movie_name.c_str()
+                                         , 0
+                                         , 0
+                                         , this->_error
+                                         , this->_font
+                                         , true
+                                         , to_verbose_flags(0)
+                                         ));
     this->_replay_mod->add_consumer(nullptr, &this->snapshoter, nullptr, nullptr, nullptr);
 }
 
 
 void Front_Qt::disconnect(std::string const & error) {
+
+    if (this->fileSystemData.drives_created) {
+        this->removeDriveDevice(fileSystemData.drives, fileSystemData.drivesCount);
+    }
 
     if (this->_mod_qt != nullptr) {
         this->_mod_qt->drop_connexion();
@@ -888,7 +912,6 @@ QImage::Format Front_Qt::bpp_to_QFormat(int bpp, bool alpha) {
     return format;
 }
 
-
 void Front_Qt::draw_RDPPatBlt(const Rect & rect, const QColor color, const QPainter::CompositionMode mode, const Qt::BrushStyle style) {
     QBrush brush(color, style);
     this->_screen[0]->paintCache().setBrush(brush);
@@ -912,7 +935,7 @@ void Front_Qt::draw_RDPPatBlt(const Rect & rect, const QPainter::CompositionMode
 //-----------------------------
 
 void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
@@ -959,7 +982,7 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                     this->_screen[0]->paintCache().setBrush(Qt::SolidPattern);
                 }
                 break;
-            default: LOG(LOG_INFO, "RDPPatBlt brush_style = 0x03 rop = %x", cmd.rop);
+            default: LOG(LOG_WARNING, "RDPPatBlt brush_style = 0x03 rop = %x", cmd.rop);
                 break;
         }
 
@@ -1062,7 +1085,7 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
             case 0xFF: // whiteness
                 this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::white);
                 break;
-            default: LOG(LOG_INFO, "RDPPatBlt rop = %x", cmd.rop);
+            default: LOG(LOG_WARNING, "RDPPatBlt rop = %x", cmd.rop);
                 break;
         }
     }
@@ -1077,7 +1100,7 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
 
 
 void Front_Qt::draw(const RDPOpaqueRect & cmd, const Rect & clip) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
@@ -1100,7 +1123,7 @@ void Front_Qt::draw(const RDPOpaqueRect & cmd, const Rect & clip) {
 
 
 void Front_Qt::draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         bitmap_data.log(LOG_INFO, "FakeFront");
         LOG(LOG_INFO, "========================================\n");
@@ -1154,7 +1177,7 @@ void Front_Qt::draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
 
 
 void Front_Qt::draw(const RDPLineTo & cmd, const Rect & clip) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
@@ -1179,7 +1202,7 @@ void Front_Qt::draw(const RDPLineTo & cmd, const Rect & clip) {
 
 
 void Front_Qt::draw(const RDPScrBlt & cmd, const Rect & clip) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
@@ -1212,7 +1235,7 @@ void Front_Qt::draw(const RDPScrBlt & cmd, const Rect & clip) {
         case 0xFF:
             this->_screen[0]->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
             break;
-        default: LOG(LOG_INFO, "DEFAULT: RDPScrBlt rop = %x", cmd.rop);
+        default: LOG(LOG_WARNING, "DEFAULT: RDPScrBlt rop = %x", cmd.rop);
             break;
     }
 
@@ -1226,7 +1249,7 @@ void Front_Qt::draw(const RDPScrBlt & cmd, const Rect & clip) {
 
 
 void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
@@ -1276,7 +1299,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         case 0xFF: this->_screen[0]->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
             break;
 
-        default: LOG(LOG_INFO, "DEFAULT: RDPMemBlt rop = %x", cmd.rop);
+        default: LOG(LOG_WARNING, "DEFAULT: RDPMemBlt rop = %x", cmd.rop);
             break;
     }
 
@@ -1290,7 +1313,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
 
 
 void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
@@ -1350,7 +1373,7 @@ void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bi
             }
         break;
 
-        default: LOG(LOG_INFO, "DEFAULT: RDPMem3Blt rop = %x", cmd.rop);
+        default: LOG(LOG_WARNING, "DEFAULT: RDPMem3Blt rop = %x", cmd.rop);
         break;
     }
 
@@ -1364,7 +1387,7 @@ void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bi
 
 
 void Front_Qt::draw(const RDPDestBlt & cmd, const Rect & clip) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
@@ -1386,7 +1409,7 @@ void Front_Qt::draw(const RDPDestBlt & cmd, const Rect & clip) {
         case 0xFF: // whiteness
             this->_screen[0]->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
             break;
-        default: LOG(LOG_INFO, "DEFAULT: RDPDestBlt rop = %x", cmd.rop);
+        default: LOG(LOG_WARNING, "DEFAULT: RDPDestBlt rop = %x", cmd.rop);
             break;
     }
 
@@ -1399,47 +1422,47 @@ void Front_Qt::draw(const RDPDestBlt & cmd, const Rect & clip) {
 }
 
 void Front_Qt::draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
 
-    LOG(LOG_INFO, "DEFAULT: RDPMultiDstBlt");
+    LOG(LOG_WARNING, "DEFAULT: RDPMultiDstBlt");
 }
 
 void Front_Qt::draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
 
-    LOG(LOG_INFO, "DEFAULT: RDPMultiOpaqueRect");
+    LOG(LOG_WARNING, "DEFAULT: RDPMultiOpaqueRect");
 }
 
 void Front_Qt::draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
 
-    LOG(LOG_INFO, "DEFAULT: RDPMultiPatBlt");
+    LOG(LOG_WARNING, "DEFAULT: RDPMultiPatBlt");
 }
 
 void Front_Qt::draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
 
-    LOG(LOG_INFO, "DEFAULT: RDPMultiScrBlt");
+    LOG(LOG_WARNING, "DEFAULT: RDPMultiScrBlt");
 }
 
 void Front_Qt::draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
@@ -1533,7 +1556,7 @@ void Front_Qt::draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCac
                 }
             }
         } else {
-            LOG(LOG_INFO, "DEFAULT: RDPGlyphIndex glyph_cache");
+            LOG(LOG_WARNING, "DEFAULT: RDPGlyphIndex glyph_cache");
         }
     }
     //this->draw_VariableBytes(cmd.data, cmd.data_len, has_delta_bytes,
@@ -1548,13 +1571,13 @@ void Front_Qt::draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCac
 }
 
 void Front_Qt::draw(const RDPPolygonSC & cmd, const Rect & clip) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
 
-    LOG(LOG_INFO, "DEFAULT: RDPPolygonSC");
+    LOG(LOG_WARNING, "DEFAULT: RDPPolygonSC");
 
     /*RDPPolygonSC new_cmd24 = cmd;
     new_cmd24.BrushColor  = color_decode_opaquerect(cmd.BrushColor,  this->mod_bpp, this->mod_palette);*/
@@ -1562,13 +1585,13 @@ void Front_Qt::draw(const RDPPolygonSC & cmd, const Rect & clip) {
 }
 
 void Front_Qt::draw(const RDPPolygonCB & cmd, const Rect & clip) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
 
-    LOG(LOG_INFO, "DEFAULT: RDPPolygonCB");
+    LOG(LOG_WARNING, "DEFAULT: RDPPolygonCB");
 
     /*RDPPolygonCB new_cmd24 = cmd;
     new_cmd24.foreColor  = color_decode_opaquerect(cmd.foreColor,  this->mod_bpp, this->mod_palette);
@@ -1577,26 +1600,26 @@ void Front_Qt::draw(const RDPPolygonCB & cmd, const Rect & clip) {
 }
 
 void Front_Qt::draw(const RDPPolyline & cmd, const Rect & clip) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
 
-    LOG(LOG_INFO, "DEFAULT: RDPPolyline");
+    LOG(LOG_WARNING, "DEFAULT: RDPPolyline");
     /*RDPPolyline new_cmd24 = cmd;
     new_cmd24.PenColor  = color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette);*/
     //this->gd.draw(new_cmd24, clip);
 }
 
 void Front_Qt::draw(const RDPEllipseSC & cmd, const Rect & clip) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
 
-    LOG(LOG_INFO, "DEFAULT: RDPEllipseSC");
+    LOG(LOG_WARNING, "DEFAULT: RDPEllipseSC");
 
     /*RDPEllipseSC new_cmd24 = cmd;
     new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);*/
@@ -1604,13 +1627,13 @@ void Front_Qt::draw(const RDPEllipseSC & cmd, const Rect & clip) {
 }
 
 void Front_Qt::draw(const RDPEllipseCB & cmd, const Rect & clip) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
 
-    LOG(LOG_INFO, "DEFAULT: RDPEllipseCB");
+    LOG(LOG_WARNING, "DEFAULT: RDPEllipseCB");
 /*
     RDPEllipseCB new_cmd24 = cmd;
     new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
@@ -1619,7 +1642,7 @@ void Front_Qt::draw(const RDPEllipseCB & cmd, const Rect & clip) {
 }
 
 void Front_Qt::draw(const RDP::FrameMarker & order) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         order.log(LOG_INFO);
         LOG(LOG_INFO, "========================================\n");
@@ -1637,29 +1660,29 @@ void Front_Qt::draw(const RDP::FrameMarker & order) {
 }
 
 void Front_Qt::draw(const RDP::RAIL::NewOrExistingWindow & order) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         order.log(LOG_INFO);
         LOG(LOG_INFO, "========================================\n");
     }
 
-    LOG(LOG_INFO, "DEFAULT: NewOrExistingWindow");
+    LOG(LOG_WARNING, "DEFAULT: NewOrExistingWindow");
     //this->gd.draw(order);
 }
 
 void Front_Qt::draw(const RDP::RAIL::WindowIcon & order) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         order.log(LOG_INFO);
         LOG(LOG_INFO, "========================================\n");
     }
 
-    LOG(LOG_INFO, "DEFAULT: WindowIcon");
+    LOG(LOG_WARNING, "DEFAULT: WindowIcon");
     //this->gd.draw(order);
 }
 
 void Front_Qt::draw(const RDP::RAIL::CachedIcon & order) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         order.log(LOG_INFO);
         LOG(LOG_INFO, "========================================\n");
@@ -1670,7 +1693,7 @@ void Front_Qt::draw(const RDP::RAIL::CachedIcon & order) {
 }
 
 void Front_Qt::draw(const RDP::RAIL::DeletedWindow & order) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         order.log(LOG_INFO);
         LOG(LOG_INFO, "========================================\n");
@@ -1682,18 +1705,18 @@ void Front_Qt::draw(const RDP::RAIL::DeletedWindow & order) {
 }
 
 void Front_Qt::draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         order.log(LOG_INFO);
         LOG(LOG_INFO, "========================================\n");
     }
 
-    LOG(LOG_INFO, "DEFAULT: NewOrExistingNotificationIcons");
+    LOG(LOG_WARNING, "DEFAULT: NewOrExistingNotificationIcons");
     //this->gd.draw(order);
 }
 
 void Front_Qt::draw(const RDP::RAIL::DeletedNotificationIcons & order) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         order.log(LOG_INFO);
         LOG(LOG_INFO, "========================================\n");
@@ -1704,7 +1727,7 @@ void Front_Qt::draw(const RDP::RAIL::DeletedNotificationIcons & order) {
 }
 
 void Front_Qt::draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         order.log(LOG_INFO);
         LOG(LOG_INFO, "========================================\n");
@@ -1715,22 +1738,22 @@ void Front_Qt::draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) {
 }
 
 void Front_Qt::draw(const RDP::RAIL::NonMonitoredDesktop & order) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         order.log(LOG_INFO);
         LOG(LOG_INFO, "========================================\n");
     }
 
-    LOG(LOG_INFO, "DEFAULT: NonMonitoredDesktop");
+    LOG(LOG_WARNING, "DEFAULT: NonMonitoredDesktop");
     //this->gd.draw(order);
 }
 
 void Front_Qt::draw(const RDPColCache   & cmd) {
-    LOG(LOG_INFO, "DEFAULT: RDPColCache cacheIndex = %d", cmd.cacheIndex);
+    LOG(LOG_WARNING, "DEFAULT: RDPColCache cacheIndex = %d", cmd.cacheIndex);
 }
 
 void Front_Qt::draw(const RDPBrushCache & brush) {
-    LOG(LOG_INFO, "DEFAULT: RDPBrushCache cacheIndex = %d", brush.cacheIndex);
+    LOG(LOG_WARNING, "DEFAULT: RDPBrushCache cacheIndex = %d", brush.cacheIndex);
 }
 
 
@@ -1740,8 +1763,8 @@ void Front_Qt::draw(const RDPBrushCache & brush) {
 // Serveur non drawing exchange
 //------------------------------
 
-Front_Qt::ResizeResult Front_Qt::server_resize(int width, int height, int bpp) {
-    if (this->verbose > 10) {
+FrontAPI::ResizeResult Front_Qt::server_resize(int width, int height, int bpp) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
         LOG(LOG_INFO, "========================================\n");
@@ -1771,7 +1794,7 @@ const CHANNELS::ChannelDefArray & Front_Qt::get_channel_list(void) const {
 }
 
 void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t , size_t chunk_size, int flags) {
-    if (this->verbose > 10) {
+    if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         LOG(LOG_INFO, "send_to_channel");
         LOG(LOG_INFO, "========================================\n");
@@ -1802,21 +1825,15 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
        if (!this->_waiting_for_data) {
             switch (server_message_type) {
                 case RDPECLIP::CB_CLIP_CAPS:
-                    if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
-                        LOG(LOG_INFO,
-                            "ClipboardVirtualChannel::process_client_message: "
-                                "Clipboard Capabilities PDU");
+                    if (this->verbose & RDPVerbose::cliprdr) {
+                        LOG(LOG_INFO, "SERVER >> CB Channel: Clipboard Capabilities PDU");
                     }
-                    LOG(LOG_INFO, "SERVER >> CB Channel: Clipboard Capabilities PDU");
                 break;
 
                 case RDPECLIP::CB_MONITOR_READY:
-                    if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
-                        LOG(LOG_INFO,
-                            "ClipboardVirtualChannel::process_server_message: "
-                                "Monitor Ready PDU");
+                    if (this->verbose & RDPVerbose::cliprdr) {
+                        LOG(LOG_INFO, "SERVER >> CB Channel: Monitor Ready PDU");
                     }
-                    LOG(LOG_INFO, "SERVER >> CB Channel: Monitor Ready PDU");
 
                     {
                         RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1, RDPECLIP::GeneralCapabilitySet::size());
@@ -1834,7 +1851,9 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                             , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST
                                                               |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                             );
-                        LOG(LOG_INFO, "CLIENT >> CB Channel: Clipboard Capabilities PDU");
+                        if (this->verbose & RDPVerbose::cliprdr) {
+                            LOG(LOG_INFO, "CLIENT >> CB Channel: Clipboard Capabilities PDU");
+                        }
 
                         this->_monitorCount = this->_info.cs_monitor.monitorCount;
 
@@ -1862,33 +1881,24 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                 break;
 
                 case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
-                    if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
-                        LOG(LOG_INFO,
-                            "ClipboardVirtualChannel::process_server_message: "
-                                "Format List Response PDU");
-                    }
-
                     if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
                         LOG(LOG_INFO, "SERVER >> CB Channel: Format List Response PDU FAILED");
                     } else {
-                        LOG(LOG_INFO, "SERVER >> CB Channel: Format List Response PDU");
+                        if (this->verbose & RDPVerbose::cliprdr) {
+                            LOG(LOG_INFO, "SERVER >> CB Channel: Format List Response PDU");
+                        }
                     }
 
                 break;
 
                 case RDPECLIP::CB_FORMAT_LIST:
-                    if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
-                        LOG(LOG_INFO,
-                            "ClipboardVirtualChannel::process_server_message: "
-                                "Format List PDU");
-                    }
-
                     {
-
                         if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
                             LOG(LOG_INFO, "SERVER >> CB Channel: Format List PDU FAILED");
                         } else {
-                            LOG(LOG_INFO, "SERVER >> CB Channel: Format List PDU");
+                            if (this->verbose & RDPVerbose::cliprdr) {
+                                LOG(LOG_INFO, "SERVER >> CB Channel: Format List PDU");
+                            }
 
                             int formatAvailable = chunk.in_uint32_le();
 
@@ -1938,7 +1948,9 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                 , CHANNELS::CHANNEL_FLAG_LAST  |
                                                                   CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                                 );
-                            LOG(LOG_INFO, "CLIENT >> CB Channel: Format List Response PDU");
+                            if (this->verbose & RDPVerbose::cliprdr) {
+                                LOG(LOG_INFO, "CLIENT >> CB Channel: Format List Response PDU");
+                            }
 
 
                             RDPECLIP::LockClipboardDataPDU lockClipboardDataPDU(0);
@@ -1952,8 +1964,9 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                 , CHANNELS::CHANNEL_FLAG_LAST  |
                                                                   CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                                 );
-                            LOG(LOG_INFO, "CLIENT >> CB Channel: Lock Clipboard Data PDU");
-
+                            if (this->verbose & RDPVerbose::cliprdr) {
+                                LOG(LOG_INFO, "CLIENT >> CB Channel: Lock Clipboard Data PDU");
+                            }
 
                             RDPECLIP::FormatDataRequestPDU formatDataRequestPDU(this->_requestedFormatId);
                             StaticOutStream<256> out_streamRequest;
@@ -1966,26 +1979,26 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                 , CHANNELS::CHANNEL_FLAG_LAST  |
                                                                   CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                                 );
-                            LOG(LOG_INFO, "CLIENT >> CB Channel: Format Data Request PDU");
+                            if (this->verbose & RDPVerbose::cliprdr) {
+                                LOG(LOG_INFO, "CLIENT >> CB Channel: Format Data Request PDU");
+                            }
                         }
                     }
                 break;
 
                 case RDPECLIP::CB_LOCK_CLIPDATA:
-                    LOG(LOG_INFO, "SERVER >> CB Channel: Lock Clipboard Data PDU");
+                    if (this->verbose & RDPVerbose::cliprdr) {
+                        LOG(LOG_INFO, "SERVER >> CB Channel: Lock Clipboard Data PDU");
+                    }
                 break;
 
                 case RDPECLIP::CB_UNLOCK_CLIPDATA:
-                    LOG(LOG_INFO, "SERVER >> CB Channel: Unlock Clipboard Data PDU");
+                    if (this->verbose & RDPVerbose::cliprdr) {
+                        LOG(LOG_INFO, "SERVER >> CB Channel: Unlock Clipboard Data PDU");
+                    }
                 break;
 
                 case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-                    if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
-                        LOG(LOG_INFO,
-                            "ClipboardVirtualChannel::process_server_message: "
-                                "Format Data Response PDU");
-                    }
-
                     if(this->_requestedFormatName == this->_clipbrdFormatsList.FILEGROUPDESCRIPTORW) {
                         this->_requestedFormatId = ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
                     }
@@ -1995,7 +2008,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
                             LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Response PDU FAILED");
                         } else {
-                            LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Response PDU");
+                            if (this->verbose & RDPVerbose::cliprdr) {
+                                LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Response PDU");
+                            }
+
                             this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList, this->_clipboard_qt);
                         }
                     }
@@ -2003,17 +2019,12 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                 case RDPECLIP::CB_FORMAT_DATA_REQUEST:
                 {
-
-                    if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
-                        LOG(LOG_INFO,
-                            "ClipboardVirtualChannel::process_server_message: "
-                                "Format Data Request PDU");
-                    }
-
                     if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
                         LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Request PDU FAILED");
                     } else {
-                        LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Request PDU");
+                        if (this->verbose & RDPVerbose::cliprdr) {
+                            LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Request PDU");
+                        }
 
                         chunk.in_skip_bytes(4);
                         int first_part_data_size(0);
@@ -2022,7 +2033,9 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                         if (this->_clipboard_qt->_bufferTypeID == chunk.in_uint32_le()) {
 
-                            LOG(LOG_INFO, "CLIENT >> CB Channel: Format Data Response PDU");
+                            if (this->verbose & RDPVerbose::cliprdr) {
+                                LOG(LOG_INFO, "CLIENT >> CB Channel: Format Data Response PDU");
+                            }
 
                             switch(this->_clipboard_qt->_bufferTypeID) {
 
@@ -2101,8 +2114,9 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                         , flag_first
                                                                         );
                                     data_sent += first_part_data_size + RDPECLIP::FileDescriptor::size();
-
-                                    LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%d", data_sent, total_length);
+                                    if (this->verbose & RDPVerbose::cliprdr) {
+                                        LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%d", data_sent, total_length);
+                                    }
 
                                     RDPECLIP::FileDescriptor fd;
                                     for (int i = 1; i < this->_clipboard_qt->_cItems; i++) {
@@ -2139,12 +2153,14 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                             , flag_next
                                                                             );
                                         data_sent += RDPECLIP::FileDescriptor::size();
-                                        LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%d", data_sent, total_length);
+                                        if (this->verbose & RDPVerbose::cliprdr) {
+                                            LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%d", data_sent, total_length);
+                                        }
                                     }
                                 }
                                 break;
 
-                                default: LOG(LOG_INFO, "SERVER >> CB Channel: unknow CB format ID %x", this->_clipboard_qt->_bufferTypeID);
+                                default: LOG(LOG_WARNING, "SERVER >> CB Channel: unknow CB format ID %x", this->_clipboard_qt->_bufferTypeID);
                                 break;
                             }
                         }
@@ -2156,7 +2172,9 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                     if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
                         LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Resquest PDU FAIL");
                     } else {
-                        LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Resquest PDU");
+                        if (this->verbose & RDPVerbose::cliprdr) {
+                            LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Resquest PDU");
+                        }
 
                         chunk.in_skip_bytes(4);                 // data_len
                         int streamID(chunk.in_uint32_le());
@@ -2179,7 +2197,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                       CHANNELS::CHANNEL_FLAG_FIRST |  CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                                     );
 
-                                LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Response PDU SIZE");
+                                if (this->verbose & RDPVerbose::cliprdr) {
+                                    LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Response PDU SIZE");
+                                }
+
                             }
                             break;
 
@@ -2197,7 +2218,9 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 }
                                 fileRange.emit(out_stream_first_part);
 
-                                LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Response PDU RANGE");
+                                if (this->verbose & RDPVerbose::cliprdr) {
+                                    LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Response PDU RANGE");
+                                }
 
                                 this->process_client_clipboard_out_data( total_length
                                                                       , out_stream_first_part
@@ -2217,7 +2240,9 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
                             LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Response PDU FAILED");
                         } else {
-                            LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Response PDU");
+                            if (this->verbose & RDPVerbose::cliprdr) {
+                                LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Response PDU");
+                            }
 
                             if(this->_requestedFormatName == this->_clipbrdFormatsList.FILEGROUPDESCRIPTORW) {
                                 this->_requestedFormatId = ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS;
@@ -2228,13 +2253,17 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                 break;
 
                 default:
-                    LOG(LOG_INFO, "Process sever next part PDU data");
+                    if (this->verbose & RDPVerbose::cliprdr) {
+                        LOG(LOG_INFO, "Process sever next part PDU data");
+                    }
                     this->process_server_clipboard_indata(flags, chunk_series, this->_cb_buffers, this->_cb_filesList, this->_clipboard_qt);
                 break;
             }
 
         } else {
-            LOG(LOG_INFO, "Process sever next part PDU data");
+            if (this->verbose & RDPVerbose::cliprdr) {
+                LOG(LOG_INFO, "Process sever next part PDU data");
+            }
             this->process_server_clipboard_indata(flags, chunk_series, this->_cb_buffers, this->_cb_filesList, this->_clipboard_qt);
         }
 
@@ -2245,19 +2274,18 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
         uint16_t packetId  = chunk.in_uint16_le();
 
         switch (component) {
-            case rdpdr::Component::RDPDR_CTYP_CORE:
 
-                //std::cout <<  "server >> RDPDR_CTYP_CORE" <<  std::endl;
+            case rdpdr::Component::RDPDR_CTYP_CORE:
 
                 switch (packetId) {
                     case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
-                    {
                         {
-                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: PAKID_CORE_SERVER_ANNOUNCE");
+                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Announce Request");
+                        this->show_in_stream(0, chunk_series, chunk_size);
 
-                        uint16_t versionMajor(chunk.in_uint16_le()); // 0x0001
-                        uint16_t versionMinor(0x0006);            // chunk.in_uint16_le()
-                        uint32_t clientId(chunk.in_uint32_le());
+                        this->fileSystemData.versionMajor = chunk.in_uint16_le();      // 0x0001
+                        this->fileSystemData.versionMinor = chunk.in_uint16_le();      //  0x000C
+                        this->fileSystemData.clientID = chunk.in_uint32_le();
 
                         StaticOutStream<32> stream;
 
@@ -2265,7 +2293,9 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                         , rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM);
                         sharedHeader.emit(stream);
 
-                        rdpdr::ClientAnnounceReply clientAnnounceReply(versionMajor, versionMinor, clientId);
+                        rdpdr::ClientAnnounceReply clientAnnounceReply( this->fileSystemData.versionMajor
+                                                                      , this->fileSystemData.versionMinor
+                                                                      , this->fileSystemData.clientID);
                         clientAnnounceReply.emit(stream);
 
                         int total_length(stream.get_offset());
@@ -2278,7 +2308,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                               CHANNELS::CHANNEL_FLAG_FIRST
                                                             );
 
-                        LOG(LOG_INFO, "CLIENT >> RDPDR Channel: PAKID_CORE_CLIENTID_CONFIRM");
+                        LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Announce Reply");
+                        this->show_out_stream(0, stream, total_length);
                         }
 
                         {
@@ -2304,32 +2335,546 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                               CHANNELS::CHANNEL_FLAG_FIRST
                                                             );
 
-                        LOG(LOG_INFO, "CLIENT >> RDPDR Channel: PAKID_CORE_CLIENT_NAME");
+                        LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Name Request");
+                        this->show_out_stream(0, stream, total_length);
                         }
-                    }
                     break;
 
                     case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
-                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: PAKID_CORE_SERVER_CAPABILITY");
 
+                        {
+                        uint16_t capa  = chunk.in_uint16_le();
+                        chunk.in_skip_bytes(2);
+                        bool driveEnable = false;
+                        for (int i = 0; i < capa; i++) {
+                            uint16_t type = chunk.in_uint16_le();
+                            uint16_t size = chunk.in_uint16_le() - 4;
+                            chunk.in_skip_bytes(size);
+                            this->fileSystemData.fileSystemCapacity[type] = true;
+                            if (type == 0x4) {
+                                driveEnable = true;
+                            }
+                        }
+
+                        if (driveEnable) {
+                            LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Core Capability Request - Drive Capability Enable");
+                            this->show_in_stream(0, chunk_series, chunk_size);
+                        } else {
+                            LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Core Capability Request - Drive Not Allowed");
+                            this->show_in_stream(0, chunk_series, chunk_size);
+                        }
+                        }
 
                         break;
 
                     case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
-                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: PAKID_CORE_CLIENTID_CONFIRM");
+                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Client ID Confirm");
+                        this->show_in_stream(0, chunk_series, chunk_size);
+                        {
+                        StaticOutStream<1024> out_stream;
+                        rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
+                                                        , rdpdr::PacketId::PAKID_CORE_CLIENT_CAPABILITY);
+                        sharedHeader.emit(out_stream);
+
+                        out_stream.out_uint16_le(5);    // 5 capabilities.
+                        out_stream.out_clear_bytes(2);  // Padding(2)
+
+                        rdpdr::GeneralCapabilitySet gcs();
+
+                        // General capability set
+                        const uint32_t general_capability_version = rdpdr::GENERAL_CAPABILITY_VERSION_02;
+                        out_stream.out_uint16_le(rdpdr::CAP_GENERAL_TYPE);
+                        out_stream.out_uint16_le(36 + 8);
+                                /*rdpdr::GeneralCapabilitySet::size(
+                                    general_capability_version) +
+                                8   // CapabilityType(2) + CapabilityLength(2) +
+                                    //     Version(4)
+                            );*/
+                        out_stream.out_uint32_le(general_capability_version);
+
+                        rdpdr::GeneralCapabilitySet general_capability_set(
+                                0x2,        // osType
+                                0x50001,    // osVersion
+                                0x1,        // protocolMajorVersion
+                                0x0002,        // protocolMinorVersion -
+                                            //     RDP Client 6.0 and 6.1
+                                0xFF00,     // ioCode1
+                                0x0,        // ioCode2
+                                0x7,        // extendedPDU -
+                                            //     RDPDR_DEVICE_REMOVE_PDUS(1) |
+                                            //     RDPDR_CLIENT_DISPLAY_NAME_PDU(2) |
+                                            //     RDPDR_USER_LOGGEDON_PDU(4)
+                                0x1,        // extraFlags1
+                                0x0,        // extraFlags2
+                                0           // SpecialTypeDeviceCap
+                            );
+
+                        general_capability_set.emit(out_stream, general_capability_version);
+
+                        rdpdr::CapabilityHeader ch1(rdpdr::CAP_PRINTER_TYPE, 8, rdpdr::PRINT_CAPABILITY_VERSION_01);
+                        ch1.emit(out_stream);
+
+                        rdpdr::CapabilityHeader ch2(rdpdr::CAP_PORT_TYPE, 8, rdpdr::PRINT_CAPABILITY_VERSION_01);
+                        ch2.emit(out_stream);
+
+                        rdpdr::CapabilityHeader ch3(rdpdr::CAP_DRIVE_TYPE, 8, rdpdr::PRINT_CAPABILITY_VERSION_01);
+                        ch3.emit(out_stream);
+
+                        rdpdr::CapabilityHeader ch4(rdpdr::CAP_SMARTCARD_TYPE, 8, rdpdr::PRINT_CAPABILITY_VERSION_01);
+                        ch4.emit(out_stream);
+
+                        int total_length(out_stream.get_offset());
+                        InStream chunk_to_send(out_stream.get_data(), total_length);
+
+                        this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                            , chunk_to_send
+                                                            , total_length
+                                                            , CHANNELS::CHANNEL_FLAG_LAST |
+                                                              CHANNELS::CHANNEL_FLAG_FIRST
+                                                            );
+
+                        LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Core Capability Response");
+                        this->show_out_stream(0, out_stream, total_length);
+                        }
+
+                        {
+                        StaticOutStream<128> out_stream;
+                        rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
+                                                        , rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE);
+                        sharedHeader.emit(out_stream);
+
+                        out_stream.out_uint32_le(this->fileSystemData.drivesCount);
+
+                        for (size_t i = 0; i < this->fileSystemData.drivesCount; i++) {
+                            out_stream.out_uint32_le(rdpdr::RDPDR_DTYP_FILESYSTEM);
+                            out_stream.out_uint32_le(this->fileSystemData.drives[i].ID);
+                            out_stream.out_copy_bytes(this->fileSystemData.drives[i].name, 8);
+                            out_stream.out_uint32_le(0);
+                        }
+
+                        int total_length(out_stream.get_offset());
+                        InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                        this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                            , chunk_to_send
+                                                            , total_length
+                                                            , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                              CHANNELS::CHANNEL_FLAG_FIRST
+                                                            );
+
+                        LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Device List Announce Request");
+                        this->show_out_stream(0, out_stream, total_length);
+                        }
                         break;
 
-                    default: LOG(LOG_INFO, "SERVER >> RDPDR Channel: DEFAULT RDPDR_CTYP_CORE unknow packetId = %x", packetId);
+                    case rdpdr::PAKID_CORE_DEVICE_REPLY:
+                        {
+                        int deviceID = chunk.in_uint32_le();
+                        int resultCod = chunk.in_uint32_le();
+                        this->fileSystemData.drives[deviceID - 3].status = resultCod;
+                        if (resultCod == 0) {
+                            this->fileSystemData.drives_created = true;
+                        } else {
+                            this->fileSystemData.drives_created = false;
+                        }
+                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Device Announce Response ID=%x Hres=%x", deviceID, resultCod);
+                        this->show_in_stream(0, chunk_series, chunk_size);
+                        }
+                        break;
+
+                    case rdpdr::PAKID_CORE_USER_LOGGEDON:
+                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server User Logged On");
+                        this->show_in_stream(0, chunk_series, chunk_size);
+                        break;
+
+                    case rdpdr::PAKID_CORE_DEVICE_IOREQUEST:
+                        {
+                        int DeviceID = chunk.in_uint32_le();
+                        int Field = chunk.in_uint32_le();
+                        int CompletionId = chunk.in_uint32_le();
+                        int MajorFunction = chunk.in_uint32_le();
+                        int MinorFunction = chunk.in_uint32_le();
+
+                        switch (MajorFunction) {
+                            case rdpdr::IRP_MJ_CREATE:
+                                LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Create Request");
+                                this->show_in_stream(0, chunk_series, chunk_size);
+                                {
+                                int DesiredAccess = chunk.in_uint32_le();
+                                int AllocationSize = chunk.in_uint64_le();
+                                int FileAttributes = chunk.in_uint32_le();
+                                int SharedAccess = chunk.in_uint32_le();
+                                int CreateDisposition = chunk.in_uint32_le();
+                                int CreateOptions = chunk.in_uint32_le();
+                                int PathLength = chunk.in_uint32_le();
+
+                                LOG(LOG_INFO, "          Device = %d", DeviceID);
+                                LOG(LOG_INFO, "          Field  = %d", Field);
+                                LOG(LOG_INFO, "          CompletionId  = %d", CompletionId);
+                                LOG(LOG_INFO, "          MajorFunction = %x", MajorFunction);
+                                LOG(LOG_INFO, "          MinorFunction = %x", MinorFunction);
+
+                                LOG(LOG_INFO, "          DesiredAccess = %x", DesiredAccess);
+                                LOG(LOG_INFO, "          AllocationSize  = %d", AllocationSize);
+                                LOG(LOG_INFO, "          FileAttributes  = %x", FileAttributes);
+                                LOG(LOG_INFO, "          SharedAccess = %x", SharedAccess);
+                                LOG(LOG_INFO, "          CreateDisposition = %x", CreateDisposition);
+                                LOG(LOG_INFO, "          CreateOptions = %x", CreateOptions);
+                                LOG(LOG_INFO, "          PathLength = %x", PathLength);
+
+                                StaticOutStream<128> out_stream;
+                                rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
+                                                                , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
+                                sharedHeader.emit(out_stream);
+
+                                out_stream.out_uint32_le(DeviceID);
+                                out_stream.out_uint32_le(CompletionId);
+                                out_stream.out_uint32_le(0);
+                                out_stream.out_uint32_le(Field);
+                                out_stream.out_uint8(rdpdr::FILE_SUPERSEDED);
+
+                                int total_length(out_stream.get_offset());
+                                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                                this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                                    , chunk_to_send
+                                                                    , total_length
+                                                                    , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                                      CHANNELS::CHANNEL_FLAG_FIRST
+                                                                    );
+
+                                LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Create Response");
+                                this->show_out_stream(0, out_stream, total_length);
+                                }
+                                break;
+
+                            case rdpdr::IRP_MJ_QUERY_INFORMATION:
+                                {
+                                int FsInformationClass = chunk.in_uint32_le();
+                                int Length = chunk.in_uint32_le();
+                                chunk.in_skip_bytes(24);
+
+                                switch (FsInformationClass) {
+                                    case rdpdr::FileBasicInformation:
+                                        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Basic Query Information Request");
+                                        this->show_in_stream(0, chunk_series, chunk_size);
+
+                                        LOG(LOG_INFO, "          Device = %d", DeviceID);
+                                        LOG(LOG_INFO, "          Field  = %d", Field);
+                                        LOG(LOG_INFO, "          CompletionId  = %d", CompletionId);
+                                        LOG(LOG_INFO, "          MajorFunction = %x", MajorFunction);
+                                        LOG(LOG_INFO, "          MinorFunction = %x", MinorFunction);
+                                        LOG(LOG_INFO, "          FsInformationClass = %d", FsInformationClass);
+                                        LOG(LOG_INFO, "          Length  = %d", Length);
+                                        {
+                                        StaticOutStream<128> out_stream;
+                                        rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
+                                                                        , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
+                                        sharedHeader.emit(out_stream);
+
+                                        out_stream.out_uint32_le(DeviceID);
+                                        out_stream.out_uint32_le(CompletionId);
+                                        out_stream.out_uint32_le(0);
+                                        out_stream.out_uint32_le(36); // 40 - 4
+                                        out_stream.out_uint64_le(0); // CreationTime
+                                        out_stream.out_uint64_le(0); // LastAccessTime
+                                        out_stream.out_uint64_le(0); // LastWriteTime
+                                        out_stream.out_uint64_le(0); // FileAttributes
+                                        out_stream.out_uint32_le(0); // FileAttributes
+                                        //out_stream.out_uint32_le(0); // Reserved
+
+                                        int total_length(out_stream.get_offset());
+                                        InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                                        this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                                            , chunk_to_send
+                                                                            , total_length
+                                                                            , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                                              CHANNELS::CHANNEL_FLAG_FIRST
+                                                                            );
+                                        LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Basic Query Information Response");
+                                        this->show_out_stream(0, out_stream, total_length);
+                                        }
+                                        break;
+
+                                    case rdpdr::FileStandardInformation:
+                                        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Standard Information Request");
+                                        this->show_in_stream(0, chunk_series, chunk_size);
+                                        LOG(LOG_INFO, "          Device = %d", DeviceID);
+                                        LOG(LOG_INFO, "          Field  = %d", Field);
+                                        LOG(LOG_INFO, "          CompletionId  = %d", CompletionId);
+                                        LOG(LOG_INFO, "          MajorFunction = %x", MajorFunction);
+                                        LOG(LOG_INFO, "          MinorFunction = %x", MinorFunction);
+                                        LOG(LOG_INFO, "          FsInformationClass = %d", FsInformationClass);
+                                        LOG(LOG_INFO, "          Length  = %d", Length);
+                                        {
+                                        StaticOutStream<128> out_stream;
+                                        rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
+                                                                        , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
+                                        sharedHeader.emit(out_stream);
+
+                                        out_stream.out_uint32_le(DeviceID);
+                                        out_stream.out_uint32_le(CompletionId);
+                                        out_stream.out_uint32_le(0);
+                                        out_stream.out_uint32_le(22); // 24-2
+                                        out_stream.out_uint64_le(0); // AllocationSize
+                                        out_stream.out_uint64_le(0); // EndOfFile
+                                        out_stream.out_uint32_le(0); // NumberOfLinks
+                                        out_stream.out_uint8(0); // DeletePending
+                                        out_stream.out_uint8(0); // Directory
+                                        //out_stream.out_uint16_le(0); // Reserved
+
+
+                                        int total_length(out_stream.get_offset());
+                                        InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                                        this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                                            , chunk_to_send
+                                                                            , total_length
+                                                                            , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                                              CHANNELS::CHANNEL_FLAG_FIRST
+                                                                            );
+                                        LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Standard Information Response");
+                                        this->show_out_stream(0, out_stream, total_length);
+                                        }
+                                        break;
+
+                                    default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT: Device I/O Request             unknow FsInformationClass = %x",       FsInformationClass);
+                                        this->show_in_stream(0, chunk_series, chunk_size);
+                                        break;
+                                }
+                                }
+                                break;
+
+                            case rdpdr::IRP_MJ_CLOSE:
+                                LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Close Request");
+                                this->show_in_stream(0, chunk_series, chunk_size);
+                                LOG(LOG_INFO, "          Device = %d", DeviceID);
+                                LOG(LOG_INFO, "          Field  = %d", Field);
+                                LOG(LOG_INFO, "          CompletionId  = %d", CompletionId);
+                                LOG(LOG_INFO, "          MajorFunction = %x", MajorFunction);
+                                LOG(LOG_INFO, "          MinorFunction = %x", MinorFunction);
+                                {
+                                int DesiredAccess = chunk.in_uint32_le();
+                                int AllocationSize = chunk.in_uint64_le();
+                                int FileAttributes = chunk.in_uint32_le();
+                                int SharedAccess = chunk.in_uint32_le();
+                                int CreateDisposition = chunk.in_uint32_le();
+                                int CreateOptions = chunk.in_uint32_le();
+                                int PathLength = chunk.in_uint32_le();
+
+                                LOG(LOG_INFO, "          DesiredAccess = %x", DesiredAccess);
+                                LOG(LOG_INFO, "          AllocationSize  = %d", AllocationSize);
+                                LOG(LOG_INFO, "          FileAttributes  = %x", FileAttributes);
+                                LOG(LOG_INFO, "          SharedAccess = %x", SharedAccess);
+                                LOG(LOG_INFO, "          CreateDisposition = %x", CreateDisposition);
+                                LOG(LOG_INFO, "          CreateOptions = %x", CreateOptions);
+                                LOG(LOG_INFO, "          PathLength = %x", PathLength);
+
+                                StaticOutStream<128> out_stream;
+                                rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
+                                                                , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
+                                sharedHeader.emit(out_stream);
+
+                                out_stream.out_uint32_le(DeviceID);
+                                out_stream.out_uint32_le(CompletionId);
+                                out_stream.out_uint32_le(0);
+                                out_stream.out_uint32_le(Field);
+                                out_stream.out_uint8(rdpdr::FILE_SUPERSEDED);
+
+                                int total_length(out_stream.get_offset());
+                                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                                this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                                    , chunk_to_send
+                                                                    , total_length
+                                                                    , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                                      CHANNELS::CHANNEL_FLAG_FIRST
+                                                                    );
+
+                                LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Close Response");
+                                this->show_out_stream(0, out_stream, total_length);
+                                }
+                                break;
+
+                            case rdpdr::IRP_MJ_READ:
+                                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Read Request");
+                                this->show_in_stream(0, chunk_series, chunk_size);
+                                LOG(LOG_INFO, "          Device = %d", DeviceID);
+                                LOG(LOG_INFO, "          Field  = %d", Field);
+                                LOG(LOG_INFO, "          CompletionId  = %d", CompletionId);
+                                LOG(LOG_INFO, "          MajorFunction = %x", MajorFunction);
+                                LOG(LOG_INFO, "          MinorFunction = %x", MinorFunction);
+                                {
+                                int Length = chunk.in_uint32_le();
+                                uint64_t Offset = chunk.in_uint64_le();
+
+                                LOG(LOG_INFO, "          Length = %x", Length);
+                                LOG(LOG_INFO, "          Offset = %x", Offset);
+
+                                StaticOutStream<128> out_stream;
+                                rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
+                                                                , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
+                                sharedHeader.emit(out_stream);
+
+                                out_stream.out_uint32_le(DeviceID);
+                                out_stream.out_uint32_le(CompletionId);
+                                out_stream.out_uint32_le(0);
+                                out_stream.out_uint32_le(0);
+
+                                int total_length(out_stream.get_offset());
+                                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                                this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                                    , chunk_to_send
+                                                                    , total_length
+                                                                    , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                                      CHANNELS::CHANNEL_FLAG_FIRST
+                                                                    );
+
+                                LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Read Response");
+                                this->show_out_stream(0, out_stream, total_length);
+                                }
+                                break;
+
+                            case rdpdr::IRP_MJ_DIRECTORY_CONTROL:
+
+                                switch (MinorFunction) {
+
+                                    case rdpdr::IRP_MN_QUERY_DIRECTORY:
+                                        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Directory Request");
+                                        this->show_in_stream(0, chunk_series, chunk_size);
+                                        LOG(LOG_INFO, "          Device = %d", DeviceID);
+                                        LOG(LOG_INFO, "          Field  = %d", Field);
+                                        LOG(LOG_INFO, "          CompletionId  = %d", CompletionId);
+                                        LOG(LOG_INFO, "          MajorFunction = %x", MajorFunction);
+                                        LOG(LOG_INFO, "          MinorFunction = %x", MinorFunction);
+
+                                        {
+                                        int FsInformationClass = chunk.in_uint32_le();
+                                        uint8_t InitialQuery = chunk.in_uint8();
+                                        int PathLength = chunk.in_uint32_le();
+
+                                        LOG(LOG_INFO, "          FsInformationClass = %x", FsInformationClass);
+                                        LOG(LOG_INFO, "          InitialQuery = %x", InitialQuery);
+                                        LOG(LOG_INFO, "          PathLength = %d", PathLength);
+
+                                        StaticOutStream<256> out_stream;
+                                        rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
+                                                                        , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
+                                        sharedHeader.emit(out_stream);
+
+                                        std::string dir_name("RDP C:");
+
+                                        out_stream.out_uint32_le(DeviceID);
+                                        out_stream.out_uint32_le(CompletionId);
+                                        out_stream.out_uint32_le(0); //STATUS_NO_MORE_FILES 0x80000006
+
+                                        out_stream.out_uint32_le(94+6);
+
+                                        out_stream.out_uint32_le(94+6);
+
+                                        out_stream.out_uint64_le(0);
+                                        out_stream.out_uint64_le(0);
+                                        out_stream.out_uint64_le(0);
+                                        out_stream.out_uint64_le(0);
+
+                                        out_stream.out_uint64_le(0);
+                                        out_stream.out_uint64_le(0);
+
+                                        out_stream.out_uint32_le(RDPECLIP::FILE_ATTRIBUTE_DIRECTORY);
+                                        out_stream.out_uint32_le(6);
+                                        out_stream.out_uint32_le(0);
+
+                                        out_stream.out_uint8(6);
+                                        out_stream.out_uint8(0);
+
+                                        out_stream.out_copy_bytes(dir_name.data(), 24);
+                                        out_stream.out_copy_bytes(dir_name.data(), 6);
+
+                                        int total_length(out_stream.get_offset());
+                                        InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                                        this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                                            , chunk_to_send
+                                                                            , total_length
+                                                                            , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                                              CHANNELS::CHANNEL_FLAG_FIRST
+                                                                            );
+
+
+                                        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query directory Response");
+                                        this->show_out_stream(0, out_stream, total_length);
+                                        }
+                                        break;
+
+                                    case rdpdr::IRP_MN_NOTIFY_CHANGE_DIRECTORY:
+                                        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Notify Change Directory Request");
+                                        this->show_in_stream(0, chunk_series, chunk_size);
+                                        LOG(LOG_INFO, "          Device = %d", DeviceID);
+                                        LOG(LOG_INFO, "          Field  = %d", Field);
+                                        LOG(LOG_INFO, "          CompletionId  = %d", CompletionId);
+                                        LOG(LOG_INFO, "          MajorFunction = %x", MajorFunction);
+                                        LOG(LOG_INFO, "          MinorFunction = %x", MinorFunction);
+                                        {
+                                        int WatchTree = chunk.in_uint8();
+                                        int CompletionFilter = chunk.in_uint32_le();
+
+                                        LOG(LOG_INFO, "          WatchTree = %d", WatchTree);
+                                        LOG(LOG_INFO, "          CompletionFilter = %d", CompletionFilter);
+
+                                        /*StaticOutStream<128> out_stream;
+                                        rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
+                                                                        , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
+                                        sharedHeader.emit(out_stream);
+
+                                        out_stream.out_uint32_le(DeviceID);
+                                        out_stream.out_uint32_le(CompletionId);
+                                        out_stream.out_uint32_le(0);
+                                        out_stream.out_uint32_le(0); // Buffer Length
+                                        out_stream.out_uint16_le(9); // StructureSize
+                                        out_stream.out_uint16_le(28); // OutputBufferOffset
+                                        out_stream.out_uint32_le(0); // OutputBufferLength
+
+                                        int total_length(out_stream.get_offset());
+                                        InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                                        this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                                            , chunk_to_send
+                                                                            , total_length
+                                                                            , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                                              CHANNELS::CHANNEL_FLAG_FIRST
+                                                                            );
+                                        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Notify Change Directory Response");
+                                        this->show_out_stream(0, out_stream, total_length);*/
+                                        break;
+                                        }
+                                        break;
+
+                                    default: break;
+                                }
+
+                                break;
+
+                            default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT: Device I/O Request unknow MajorFunction = %x",       MajorFunction);
+                                this->show_in_stream(0, chunk_series, chunk_size);
+                                break;
+                        }
+
+                        } break;
+
+                    default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT RDPDR_CTYP_CORE unknow packetId = %x",       packetId);
+                        this->show_in_stream(0, chunk_series, chunk_size);
                         break;
                 }
 
-            break;
-
             case rdpdr::Component::RDPDR_CTYP_PRT:
-                LOG(LOG_INFO, "SERVER >> RDPDR: RDPDR_CTYP_PRT");
+                //LOG(LOG_INFO, "SERVER >> RDPDR: RDPDR_CTYP_PRT");
+                //this->show_in_stream(0, chunk_series, chunk_size);
                 break;
 
-            default: LOG(LOG_INFO, "SERVER >> RDPDR: DEFAULT RDPDR unknow component = %x", component);
+            default: LOG(LOG_WARNING, "SERVER >> RDPDR: DEFAULT RDPDR unknow component = %x", component);
+                this->show_in_stream(0, chunk_series, chunk_size);
                 break;
         }
 
@@ -2339,41 +2884,13 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
 
 void Front_Qt::show_out_stream(int flags, OutStream & chunk, size_t length) {
-    uint8_t * data = chunk.get_data();
-
-    std::cout <<  std::hex << "                      flag=0x" << flags << " total_length=" << std::dec << int(length) <<  std::hex <<  std::endl;
-    std::cout << "                      \"";
-    for (size_t i = 0; i < length; i++) {
-        int byte(data[i]);
-        if ((i % 16) == 0 && i != 0) {
-            std::cout << "\"" << std::endl << "                      \"";
-        }
-
-        std::cout << "\\x";
-        if (byte < 0x10) {
-            std::cout << "0";
-        }
-        std::cout  <<  byte;
-    }
-    std::cout << "\"" << std::dec << std::endl;
+    ::msgdump_c(false, false, length, flags,
+                        chunk.get_data(), length);
 }
 
 void Front_Qt::show_in_stream(int flags, InStream & chunk, size_t length) {
-    std::cout <<  std::hex << "                    flag=0x" << flags << " total_length=" << std::dec << int(length) <<  std::hex <<  std::endl;
-    std::cout << "                        \"";
-    for (size_t i = 0; i < length; i++) {
-        int byte(chunk.in_uint8());
-        if ((i % 16) == 0 && i != 0) {
-            std::cout << "\"" << std::endl << "                      \"";
-        }
-
-        std::cout << "\\x";
-        if (byte < 0x10) {
-            std::cout << "0";
-        }
-        std::cout  <<  byte;
-    }
-    std::cout << "\"" << std::dec << std::endl;
+    ::msgdump_c(false, false, length, flags,
+                        chunk.get_data(), length);
 }
 
 void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk, CB_Buffers & cb_buffers, CB_FilesList & cb_filesList, ClipBoard_Qt * clipboard_qt) {
@@ -2498,8 +3015,9 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk, CB_B
                                                       CHANNELS::CHANNEL_FLAG_FIRST |
                                                       CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                     );
-
-                LOG(LOG_INFO, "CLIENT >> CB channel: File Contents Resquest PDU FILECONTENTS_RANGE");
+                if (this->verbose & RDPVerbose::cliprdr) {
+                    LOG(LOG_INFO, "CLIENT >> CB channel: File Contents Resquest PDU FILECONTENTS_RANGE");
+                }
 
                 this->empty_buffer();
             }
@@ -2543,7 +3061,9 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk, CB_B
                                                         , CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                           CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                         );
-                    LOG(LOG_INFO, "CLIENT >> CB channel: Unlock Clipboard Data PDU");
+                    if (this->verbose & RDPVerbose::cliprdr) {
+                        LOG(LOG_INFO, "CLIENT >> CB channel: Unlock Clipboard Data PDU");
+                    }
 
                 } else {
                     cb_filesList.streamIDToRequest++;
@@ -2566,8 +3086,9 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk, CB_B
                                                           CHANNELS::CHANNEL_FLAG_FIRST |
                                                           CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                         );
-
-                    LOG(LOG_INFO, "CLIENT >> CB channel: File Contents Resquest PDU FILECONTENTS_RANGE");
+                    if (this->verbose & RDPVerbose::cliprdr) {
+                        LOG(LOG_INFO, "CLIENT >> CB channel: File Contents Resquest PDU FILECONTENTS_RANGE");
+                    }
                 }
 
                 this->empty_buffer();
@@ -2583,11 +3104,36 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk, CB_B
                 }
 
             }  else {
-                LOG(LOG_INFO, "SERVER >> CB channel: unknow CB Format = %x", this->_requestedFormatId);
+                LOG(LOG_WARNING, "SERVER >> CB channel: unknow CB Format = %x", this->_requestedFormatId);
             }
 
         break;
     }
+}
+
+void Front_Qt::removeDriveDevice(const FileSystemData::DeviceData * devices, const size_t deviceCount) {
+    StaticOutStream<1024> out_stream;
+
+    rdpdr::SharedHeader sharedHeader( rdpdr::RDPDR_CTYP_CORE
+                                    , rdpdr::PAKID_CORE_DEVICELIST_REMOVE);
+    sharedHeader.emit(out_stream);
+    out_stream.out_uint32_le(deviceCount);
+    for (size_t i = 0; i < deviceCount; i++) {
+        out_stream.out_uint32_le(devices[i].ID);
+    }
+
+    int total_length(out_stream.get_offset());
+    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+    this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                        , chunk_to_send
+                                        , total_length
+                                        , CHANNELS::CHANNEL_FLAG_LAST  |
+                                          CHANNELS::CHANNEL_FLAG_FIRST
+                                        );
+    //if (this->verbose & RDPVerbose::rdpdr) {
+        LOG(LOG_INFO, "CLIENT >> RDPDR: Client Drive Device List Remove");
+    //}
 }
 
 void Front_Qt::send_to_clipboard_Buffer(InStream & chunk) {
@@ -2662,8 +3208,9 @@ void Front_Qt::send_FormatListPDU(uint32_t const * formatIDs, std::string const 
                                         , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |
                                           CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                         );
-
-    LOG(LOG_INFO, "CLIENT >> CB channel: Format List PDU");
+    if (this->verbose & RDPVerbose::cliprdr) {
+        LOG(LOG_INFO, "CLIENT >> CB channel: Format List PDU");
+    }
 }
 
 
@@ -2776,7 +3323,7 @@ void Front_Qt::process_client_clipboard_out_data(const uint64_t total_length, Ou
 }
 
 void Front_Qt::begin_update() {
-    //if (this->verbose > 10) {
+    //if (this->verbose & RDPVerbose::graphics) {
     //    LOG(LOG_INFO, "--------- FRONT ------------------------");
     //    LOG(LOG_INFO, "begin_update");
     //    LOG(LOG_INFO, "========================================\n");
@@ -2787,7 +3334,7 @@ void Front_Qt::end_update() {
     for (size_t i = 0; i < this->_info.cs_monitor.monitorCount; i++) {
         this->_screen[i]->update_view();
     }
-    //if (this->verbose > 10) {
+    //if (this->verbose & RDPVerbose::graphics) {
     //    LOG(LOG_INFO, "--------- FRONT ------------------------");
     //    LOG(LOG_INFO, "end_update");
     //    LOG(LOG_INFO, "========================================\n");
@@ -2836,14 +3383,13 @@ int main(int argc, char** argv){
 
     // sudo bin/gcc-4.9.2/san/rdpproxy -nf
 
-    //bjam debug client_rdp_Qt4 &&  bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4 -n admin -pwd $mdp -ip 10.10.40.22 -p 3389
+    //bjam debug client_rdp_Qt4 && bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4 -n admin -w $mdp -i 10.10.40.22 -p 3389
 
     // sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' &&
 
     QApplication app(argc, argv);
 
-    //0x04000000 | 0x40000000;
-    int verbose = 0;                                        //MODRDP_LOGLEVEL_CLIPRDR | MODRDP_LOGLEVEL_CLIPRDR_DUMP;
+    RDPVerbose verbose = to_verbose_flags(0);
 
     Front_Qt front(argv, argc, verbose);
 

@@ -22,6 +22,7 @@
 #pragma once
 
 #include <cinttypes>
+#include <inttypes.h>
 
 #include "utils/sugar/cast.hpp"
 #include "core/error.hpp"
@@ -160,7 +161,7 @@ struct SharedHeader {
         this->packet_id = static_cast<PacketId>(stream.in_uint16_le());
     }
 
-    static const char * get_Component_name(Component component) {
+    static const char * get_Component_name(uint16_t component) {
         switch (component) {
             case Component::RDPDR_CTYP_CORE: return "RDPDR_CTYP_CORE";
             case Component::RDPDR_CTYP_PRT:  return "RDPDR_CTYP_PRT";
@@ -169,7 +170,7 @@ struct SharedHeader {
         return "<unknown>";
     }
 
-    static const char * get_PacketId_name(PacketId packet_id) {
+    static const char * get_PacketId_name(uint16_t packet_id) {
         switch (packet_id) {
             case PacketId::PAKID_CORE_SERVER_ANNOUNCE:     return "PAKID_CORE_SERVER_ANNOUNCE";
             case PacketId::PAKID_CORE_CLIENTID_CONFIRM:    return "PAKID_CORE_CLIENTID_CONFIRM";
@@ -210,6 +211,12 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Shared Header:");
+        LOG(LOG_INFO, "          * Component = 0x%04x (2 bytes): %s", this->component, get_Component_name(this->component));
+        LOG(LOG_INFO, "          * Packet_id = 0x%04x (2 bytes): %s", this->packet_id, get_PacketId_name(this->packet_id));
     }
 };
 
@@ -260,6 +267,7 @@ enum class CapabilityType : uint16_t {
 //  | 0x0005             |                                                   |
 //  +--------------------+---------------------------------------------------+
 
+
 enum {
       CAP_GENERAL_TYPE   = 0x0001
     , CAP_PRINTER_TYPE   = 0x0002
@@ -267,6 +275,18 @@ enum {
     , CAP_DRIVE_TYPE     = 0x0004
     , CAP_SMARTCARD_TYPE = 0x0005
 };
+
+static const char * get_CapabilityType_name(uint16_t capabilityType) {
+    switch (capabilityType) {
+        case CAP_GENERAL_TYPE:   return "CAP_GENERAL_TYPE";
+        case CAP_PRINTER_TYPE:   return "CAP_PRINTER_TYPE";
+        case CAP_PORT_TYPE:      return "CAP_PORT_TYPE";
+        case CAP_DRIVE_TYPE:     return "CAP_DRIVE_TYPE";
+        case CAP_SMARTCARD_TYPE: return "CAP_SMARTCARD_TYPE";
+    }
+
+    return "<unknown>";
+}
 
 // CapabilityLength (2 bytes): A 16-bit unsigned integer that specifies that
 //  size, in bytes, of the capability message, this header included.
@@ -316,6 +336,15 @@ enum {
     , GENERAL_CAPABILITY_VERSION_02 = 0x00000002
 };
 
+static const char * get_CapabilityVersion_name(uint16_t version) {
+    switch (version) {
+        case GENERAL_CAPABILITY_VERSION_01: return "GENERAL_CAPABILITY_VERSION_01";
+        case GENERAL_CAPABILITY_VERSION_02: return "GENERAL_CAPABILITY_VERSION_02";
+    }
+
+    return "<unknown>";
+}
+
 enum {
       PRINT_CAPABILITY_VERSION_01 = 0x00000001
 };
@@ -332,6 +361,129 @@ enum {
 enum {
       SMARTCARD_CAPABILITY_VERSION_0 = 0x00000001
 };
+
+
+struct CapabilityHeader {
+
+    uint16_t CapabilityType;
+    uint16_t CapabilityLength;
+    uint32_t Version;
+
+    CapabilityHeader()
+      : CapabilityType(0)
+      , CapabilityLength(0)
+      , Version(0)
+    {}
+
+    CapabilityHeader( uint16_t CapabilityType
+                    , uint16_t CapabilityLength
+                    , uint32_t Version)
+    : CapabilityType(CapabilityType)
+    , CapabilityLength(CapabilityLength)
+    , Version(Version)
+    {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint16_le(this->CapabilityType);
+        stream.out_uint16_le(this->CapabilityLength);
+        stream.out_uint32_le(this->Version);
+    }
+
+    void receive(InStream & stream) {
+        this->CapabilityType =  stream.in_uint16_le();
+        this->CapabilityLength =  stream.in_uint16_le();
+        this->Version =  stream.in_uint32_le();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "Capability Header:");
+        LOG(LOG_INFO, "     * CapabilityType   = 0x%04x (2 bytes): %s", this->CapabilityType, get_CapabilityType_name(this->CapabilityType));
+        LOG(LOG_INFO, "     * CapabilityLength = %d (2 bytes)", this->CapabilityLength);
+        LOG(LOG_INFO, "     * Version          = 0x%08x (4 bytes): %s", this->Version, get_CapabilityVersion_name(this->Version));
+    }
+};
+
+
+// [MS-RDPEFS] - 2.2.3.2 Client Drive Device List Remove
+//  (DR_DEVICELIST_REMOVE)
+// =====================================================
+
+// The client removes a list of already-announced devices from the server.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Header                            |
+// +---------------------------------------------------------------+
+// |                          DeviceCount                          |
+// +---------------------------------------------------------------+
+// |                      DeviceIds (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// Header (4 bytes): An RDPDR_HEADER header. The Component field MUST be set
+//  to RDPDR_CTYP_CORE, and the PacketId field MUST be set to
+//  PAKID_CORE_DEVICELIST_REMOVE.
+
+// DeviceCount (4 bytes): A 32-bit unsigned integer that specifies the number
+//  of entries in the DeviceIds field.
+
+// DeviceIds (variable): A variable-length array of 32-bit unsigned integers
+//  that specifies device IDs. The IDs specified in this array match the IDs
+//  specified in the Client Device List Announce (section 2.2.3.1) packet.
+
+//  Note The client can send the DR_DEVICELIST_REMOVE message for devices
+//   that are removed after a session is connected. The server can accept the
+//   DR_DEVICE_REMOVE message for any removed device, including file system
+//   and port devices. The server can also accept reused DeviceIds of devices
+//   that have been removed, providing the implementation uses the
+//   DR_DEVICE_REMOVE message to do so.
+
+struct ClientDriveDeviceListRemove {
+
+    uint32_t DeviceCount;
+    uint32_t DeviceIds[1592] = { 0 };
+
+    ClientDriveDeviceListRemove( uint32_t DeviceCount
+                               , uint32_t * DeviceIds)
+    : DeviceCount(DeviceCount)
+    {
+        //REDASSERT(this->DeviceCount > 1592);
+        for (uint32_t i = 0; i < DeviceCount; i++) {
+            this->DeviceIds[i] = DeviceIds[i];
+        }
+    }
+
+    ClientDriveDeviceListRemove() = default;
+
+    void emit(OutStream & stream) {
+        //REDASSERT(DeviceCount <= 1592);
+        stream.out_uint32_le(DeviceCount);
+        for (uint32_t i = 0; i < DeviceCount; i++) {
+            stream.out_uint32_le(DeviceIds[i]);
+        }
+    }
+
+    void receive(InStream & stream) {
+        this->DeviceCount = stream.in_uint32_le();
+        //REDASSERT(DeviceCount <= 1592);
+        for (uint32_t i = 0; i < this->DeviceCount; i++) {
+            this->DeviceIds[i] = stream.in_uint32_le();
+        }
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Client Drive Device List Remove:");
+        LOG(LOG_INFO, "          * DeviceCount = %d (4 bytes)", this->DeviceCount);
+        for (uint32_t i = 0; i < this->DeviceCount; i++) {
+            LOG(LOG_INFO, "          * DeviceIds   = 0x%08x (4 bytes)", this->DeviceIds[i]);
+        }
+    }
+
+};
+
 
 // [MS-RDPEFS] - 2.2.1.3 Device Announce Header (DEVICE_ANNOUNCE)
 // ==============================================================
@@ -539,7 +691,19 @@ public:
             hexdump(this->device_data.p, this->device_data.sz);
         }
     }
+
+    void log() {
+        LOG(LOG_INFO, "     Device Announce:");
+        LOG(LOG_INFO, "          * DeviceType       = 0x%08x (4 bytes): %s", this->DeviceType_, get_DeviceType_name(this->DeviceType_));
+        LOG(LOG_INFO, "          * DeviceId         = 0x%08x (4 bytes)", this->DeviceId_);
+        std::string DeviceName(reinterpret_cast<char *>(this->PreferredDosName_), 8);
+        LOG(LOG_INFO, "          * DeviceName       = \"%s\"", DeviceName.c_str());
+        LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->device_data.sz));
+        std::string DeviceData(reinterpret_cast<const char *>(this->device_data.p), this->device_data.sz);
+        LOG(LOG_INFO, "          * DeviceData       = \"%s\"", DeviceData.c_str());
+    }
 };  // DeviceAnnounceHeader
+
 
 // [MS-RDPEFS] - 2.2.1.4 Device I/O Request (DR_DEVICE_IOREQUEST)
 // ==============================================================
@@ -633,6 +797,24 @@ enum {
     , IRP_MJ_LOCK_CONTROL             = 0x00000011
 };
 
+    static const char * get_MajorFunction_name(uint32_t MajorFunction) {
+        switch (MajorFunction) {
+            case IRP_MJ_CREATE:                   return "IRP_MJ_CREATE";
+            case IRP_MJ_CLOSE:                    return "IRP_MJ_CLOSE";
+            case IRP_MJ_READ:                     return "IRP_MJ_READ";
+            case IRP_MJ_WRITE:                    return "IRP_MJ_WRITE";
+            case IRP_MJ_DEVICE_CONTROL:           return "IRP_MJ_DEVICE_CONTROL";
+            case IRP_MJ_QUERY_VOLUME_INFORMATION: return "IRP_MJ_QUERY_VOLUME_INFORMATION";
+            case IRP_MJ_SET_VOLUME_INFORMATION:   return "IRP_MJ_SET_VOLUME_INFORMATION";
+            case IRP_MJ_QUERY_INFORMATION:        return "IRP_MJ_QUERY_INFORMATION";
+            case IRP_MJ_SET_INFORMATION:          return "IRP_MJ_SET_INFORMATION";
+            case IRP_MJ_DIRECTORY_CONTROL:        return "IRP_MJ_DIRECTORY_CONTROL";
+            case IRP_MJ_LOCK_CONTROL:             return "IRP_MJ_LOCK_CONTROL";
+        }
+
+        return "<unknown>";
+    }
+
 // MinorFunction (4 bytes): A 32-bit unsigned integer. This field is valid
 //  only when the MajorFunction field is set to IRP_MJ_DIRECTORY_CONTROL. If
 //  the MajorFunction field is set to another value, the MinorFunction field
@@ -654,6 +836,16 @@ enum {
     , IRP_MN_NOTIFY_CHANGE_DIRECTORY = 0x00000002
 };
 
+static const char * get_MinorFunction_name(uint32_t MinorFunction) {
+    switch (MinorFunction)
+    {
+        case IRP_MN_QUERY_DIRECTORY:         return "IRP_MN_QUERY_DIRECTORY";
+        case IRP_MN_NOTIFY_CHANGE_DIRECTORY: return "IRP_MN_NOTIFY_CHANGE_DIRECTORY";
+    }
+
+    return "<unknown>";
+}
+
 class DeviceIORequest {
     uint32_t DeviceId_      = 0;
     uint32_t FileId_        = 0;
@@ -662,6 +854,25 @@ class DeviceIORequest {
     uint32_t MinorFunction_ = 0;
 
 public:
+
+    DeviceIORequest()
+      : DeviceId_(0)
+      , FileId_(0)
+      , CompletionId_(0)
+      , MajorFunction_(0)
+      , MinorFunction_(0) {}
+
+    DeviceIORequest( uint32_t DeviceId_
+                   , uint32_t FileId_
+                   , uint32_t CompletionId_
+                   , uint32_t MajorFunction_
+                   , uint32_t MinorFunction_)
+      : DeviceId_(DeviceId_)
+      , FileId_(FileId_)
+      , CompletionId_(CompletionId_)
+      , MajorFunction_(MajorFunction_)
+      , MinorFunction_(MinorFunction_) {}
+
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceId_);
         stream.out_uint32_le(this->FileId_);
@@ -700,34 +911,6 @@ public:
 
     uint32_t MinorFunction() const { return this->MinorFunction_; }
 
-    static const char * get_MajorFunction_name(uint32_t MajorFunction) {
-        switch (MajorFunction)
-        {
-            case IRP_MJ_CREATE:                   return "IRP_MJ_CREATE";
-            case IRP_MJ_CLOSE:                    return "IRP_MJ_CLOSE";
-            case IRP_MJ_READ:                     return "IRP_MJ_READ";
-            case IRP_MJ_WRITE:                    return "IRP_MJ_WRITE";
-            case IRP_MJ_DEVICE_CONTROL:           return "IRP_MJ_DEVICE_CONTROL";
-            case IRP_MJ_QUERY_VOLUME_INFORMATION: return "IRP_MJ_QUERY_VOLUME_INFORMATION";
-            case IRP_MJ_SET_VOLUME_INFORMATION:   return "IRP_MJ_SET_VOLUME_INFORMATION";
-            case IRP_MJ_QUERY_INFORMATION:        return "IRP_MJ_QUERY_INFORMATION";
-            case IRP_MJ_SET_INFORMATION:          return "IRP_MJ_SET_INFORMATION";
-            case IRP_MJ_DIRECTORY_CONTROL:        return "IRP_MJ_DIRECTORY_CONTROL";
-            case IRP_MJ_LOCK_CONTROL:             return "IRP_MJ_LOCK_CONTROL";
-        }
-
-        return "<unknown>";
-    }
-
-    static const char * get_MinorFunction_name(uint32_t MinorFunction) {
-        switch (MinorFunction)
-        {
-            case IRP_MN_QUERY_DIRECTORY:         return "IRP_MN_QUERY_DIRECTORY";
-            case IRP_MN_NOTIFY_CHANGE_DIRECTORY: return "IRP_MN_NOTIFY_CHANGE_DIRECTORY";
-        }
-
-        return "<unknown>";
-    }
 
 private:
     size_t str(char * buffer, size_t size) const {
@@ -735,8 +918,8 @@ private:
             "DeviceIORequest: "
                 "DeviceId=%u FileId=%u CompletionId=%u MajorFunction=%s(0x%X) MinorFunction=%s(0x%X)",
             this->DeviceId_, this->FileId_, this->CompletionId_,
-            this->get_MajorFunction_name(this->MajorFunction_), this->MajorFunction_,
-            this->get_MinorFunction_name(this->MinorFunction_), this->MinorFunction_);
+            get_MajorFunction_name(this->MajorFunction_), this->MajorFunction_,
+            get_MinorFunction_name(this->MinorFunction_), this->MinorFunction_);
         return ((length < size) ? length : size - 1);
     }
 
@@ -747,7 +930,39 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    void log() {
+        LOG(LOG_INFO, "     Device I\\O Request:");
+        LOG(LOG_INFO, "          * DeviceId      = %08x (4 bytes)", this->DeviceId_);
+        LOG(LOG_INFO, "          * FileId        = %08x (4 bytes)", this->FileId_);
+        LOG(LOG_INFO, "          * CompletionId  = %08x (4 bytes)", this->CompletionId_);
+        LOG(LOG_INFO, "          * MajorFunction = %08x (4 bytes): %s", this->MajorFunction_, get_MajorFunction_name(this->MajorFunction_));
+        LOG(LOG_INFO, "          * MinorFunction = %08x (4 bytes): %s", this->MinorFunction_, get_MinorFunction_name(this->MinorFunction_));
+    }
 };
+
+
+// [MS-RDPEFS] - 2.2.3.3.1 Server Create Drive Request (DR_DRIVE_CREATE_REQ)
+// =========================================================================
+
+// The server opens or creates a file on a redirected file system device.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                 DeviceCreateRequest (variable)                |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceCreateRequest (variable): A DR_CREATE_REQ header. The PathLength and
+//  Path fields contain the file name of the file to be created. The file
+//  name does not contain a drive letter, which means that the drive is
+//  specified by the DeviceId field of the request. The DeviceId is
+//  associated with a drive letter when the device is announced in the
+//  DR_DEVICELIST_ANNOUNCE (section 2.2.3.1) message. The drive letter is
+//  contained in the PreferredDosName field.
 
 // [MS-RDPEFS] - 2.2.1.4.1 Device Create Request (DR_CREATE_REQ)
 // =============================================================
@@ -940,6 +1155,7 @@ private:
         return ((length < size) ? length : size - 1);
     }
 
+
 public:
     void log(int level) const {
         char buffer[2048];
@@ -947,6 +1163,19 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    void log() {
+        LOG(LOG_INFO, "     Device Create Request:");
+        LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes)", this->DesiredAccess_);
+        LOG(LOG_INFO, "          * AllocationSize    = 0x%" PRIx64 " (8 bytes)", this->AllocationSize);
+        LOG(LOG_INFO, "          * FileAttributes    = 0x%08x (4 bytes)", this->FileAttributes);
+        LOG(LOG_INFO, "          * SharedAccess      = 0x%08x (4 bytes)", int(this->SharedAccess));
+        LOG(LOG_INFO, "          * CreateDisposition = 0x%08x (4 bytes)", int(this->CreateDisposition_));
+        LOG(LOG_INFO, "          * CreateOptions     = 0x%08x (4 bytes)", int(this->CreateOptions_));
+        LOG(LOG_INFO, "          * PathLength        = 0x%08x (4 bytes)", int(this->path.size()));
+        LOG(LOG_INFO, "          * Path              = \"%s\"", this->path.c_str());
+    }
+
 };  // DeviceCreateRequest
 
 // [MS-RDPEFS] - 2.2.1.4.2 Device Close Request (DR_CLOSE_REQ)
@@ -995,40 +1224,48 @@ public:
 // Padding (32 bytes): An array of 32 bytes. Reserved. This field can be set
 //  to any value, and MUST be ignored on receipt.
 
-// class DeviceCloseRequest {
-//     void emit(OutStream & stream) const {
-//         stream.out_clear_bytes(32); // Padding(32)
-//     }
-//
-//     void receive(InStream & stream) {
-//         {
-//             const unsigned expected = 32;  // Padding(32)
-//
-//             if (!stream.in_check_rem(expected)) {
-//                 LOG(LOG_ERR,
-//                     "Truncated DeviceCloseRequest: expected=%u remains=%zu",
-//                     expected, stream.in_remain());
-//                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
-//             }
-//         }
-//
-//         stream.in_skip_bytes(32);   // Padding(32)
-//     }
-//
-// private:
-//     size_t str(char * buffer, size_t size) const {
-//         size_t length = ::snprintf(buffer, size, "DeviceCloseRequest:");
-//         return ((length < size) ? length : size - 1);
-//     }
-//
-// public:
-//     void log(int level) const {
-//         char buffer[2048];
-//         this->str(buffer, sizeof(buffer));
-//         buffer[sizeof(buffer) - 1] = 0;
-//         LOG(level, "%s", buffer);
-//     }
-// };
+
+class DeviceCloseRequest : public DeviceCreateRequest{
+
+public:
+    void emit(OutStream & stream) const {
+        stream.out_clear_bytes(32); // Padding(32)
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 32;  // Padding(32)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated DeviceCloseRequest: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        stream.in_skip_bytes(32);   // Padding(32)
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size, "DeviceCloseRequest:");
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Device Close Request:");
+        LOG(LOG_INFO, "          * Padding - (32 bytes) NOT USED");
+    }
+};
 
 // [MS-RDPEFS] - 2.2.1.4.3 Device Read Request (DR_READ_REQ)
 // =========================================================
@@ -1087,9 +1324,18 @@ class DeviceReadRequest {
     uint64_t Offset_ = 0LLU;
 
 public:
+    DeviceReadRequest() = default;
+
+    DeviceReadRequest( uint32_t Length
+                     , uint64_t Offset)
+      : Length_(Length)
+      , Offset_(Offset)
+    {}
+
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Length_);
         stream.out_uint64_le(this->Offset_);
+        stream.out_clear_bytes(20);
     }
 
     void receive(InStream & stream) {
@@ -1106,6 +1352,7 @@ public:
 
         this->Length_ = stream.in_uint32_le();
         this->Offset_ = stream.in_uint64_le();
+        stream.in_skip_bytes(20);
     }
 
     uint32_t Length() const { return this->Length_; }
@@ -1127,7 +1374,16 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    void log() {
+        LOG(LOG_INFO, "     Device Read Request:");
+        LOG(LOG_INFO, "          * Length = 0x%08x (4 bytes)", this->Length_);
+        LOG(LOG_INFO, "          * Offset = 0x%" PRIx64 " (8 bytes)", this->Offset_);
+        LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
+    }
 };
+
+
 
 // [MS-RDPEFS] - 2.2.1.4.4 Device Write Request (DR_WRITE_REQ)
 // ===========================================================
@@ -1188,6 +1444,49 @@ public:
 // WriteData (variable): A variable-length array of bytes, where the length
 //  is specified by the Length field in this packet. This array contains data
 //  to be written on the target device.
+
+struct DeviceWriteRequest {
+
+    uint32_t  Length = 0;
+    uint64_t  Offset = 0;
+    uint8_t const * WriteData;
+
+    DeviceWriteRequest() = default;
+
+    DeviceWriteRequest( uint32_t Length
+                      , uint64_t Offset
+                      , uint8_t const * WriteData)
+    : Length(Length)
+    , Offset(Offset)
+    , WriteData(WriteData)
+    {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->Length);
+        stream.out_uint64_le(this->Offset);
+        stream.out_clear_bytes(20);
+        stream.out_copy_bytes(this->WriteData, this->Length);
+    }
+
+    void receive(InStream & stream) {
+        this->Length = stream.in_uint32_le();
+        this->Offset = stream.in_uint64_le();
+        stream.in_skip_bytes(20);
+        this->WriteData = stream.get_data();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Device Write Request:");
+        LOG(LOG_INFO, "          * Length = 0x%08x (4 bytes)", int(this->Length));
+        LOG(LOG_INFO, "          * Offset = 0x%" PRIx64 " (8 bytes)", this->Offset);
+        LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
+        LOG(LOG_INFO, "          * WriteData: array size = Length: %d byte(s)", int(this->Length));
+        hexdump_c(this->WriteData,  this->Length);
+
+    }
+};
+
+
 
 // [MS-RDPEFS] - 2.2.1.4.5 Device Control Request (DR_CONTROL_REQ)
 // ===============================================================
@@ -1433,6 +1732,13 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Device I\\O Response:");
+        LOG(LOG_INFO, "          * DeviceId_    = 0x%08x (4 bytes)", this->DeviceId_);
+        LOG(LOG_INFO, "          * CompletionId = 0x%08x (4 bytes)", this->CompletionId_);
+        LOG(LOG_INFO, "          * IoStatus     = 0x%08x (4 bytes)", this->IoStatus_);
     }
 };
 
@@ -1764,6 +2070,12 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    void log() {
+        LOG(LOG_INFO, "     Server Device Announce Response:");
+        LOG(LOG_INFO, "          * DeviceId_  = 0x%08x (4 bytes)", this->DeviceId_);
+        LOG(LOG_INFO, "          * ResultCode = 0x%08x (4 bytes)", this->ResultCode_);
+    }
 };
 
 // [MS-RDPEFS] - 2.2.2.2 Server Announce Request
@@ -1844,6 +2156,13 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Server Announce Request:");
+        LOG(LOG_INFO, "          * VersionMajor = 0x%04X (2 bytes) ", this->VersionMajor);
+        LOG(LOG_INFO, "          * VersionMinor = 0x%04X (2 bytes) ", this->VersionMinor_);
+        LOG(LOG_INFO, "          * ClientId     = 0x%08X (4 bytes) ", this->ClientId_);
     }
 };
 
@@ -1942,6 +2261,13 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Client Announce Reply:");
+        LOG(LOG_INFO, "          * VersionMajor = 0x%04x (2 bytes)", this->VersionMajor);
+        LOG(LOG_INFO, "          * VersionMinor = 0x%04x (2 bytes)", this->VersionMinor);
+        LOG(LOG_INFO, "          * ClientId     = 0x%08x (4 bytes)", this->ClientId);
     }
 };
 
@@ -2113,6 +2439,15 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    void log() {
+        LOG(LOG_INFO, "     Client Name Request:");
+        LOG(LOG_INFO, "          * UnicodeFlag     = 0x%08x (4 bytes)", this->UnicodeFlag);
+        LOG(LOG_INFO, "          * CodePage        = 0x%08x (4 bytes)", this->CodePage);
+        LOG(LOG_INFO, "          * ComputerNameLen = 0x%08x (4 bytes)", int(this->computer_name.size()));
+        LOG(LOG_INFO, "          * UnicodeFlag     = \"%s\"", this->computer_name.c_str());
+    }
+
 };  // ClientNameRequest
 
 // [MS-RDPEFS] - 2.2.2.7.1 General Capability Set (GENERAL_CAPS_SET)
@@ -2434,64 +2769,31 @@ public:
 //  There is no alignment padding between individual DEVICE_ANNOUNCE
 //  structures. They are ordered sequentially within this packet.
 
-// [MS-RDPEFS] - 2.2.3.2 Client Drive Device List Remove
-//  (DR_DEVICELIST_REMOVE)
-// =====================================================
+struct ClientDeviceListAnnounceRequest {
 
-// The client removes a list of already-announced devices from the server.
+    uint32_t DeviceCount = 0;
 
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// |                             Header                            |
-// +---------------------------------------------------------------+
-// |                          DeviceCount                          |
-// +---------------------------------------------------------------+
-// |                      DeviceIds (variable)                     |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
+    ClientDeviceListAnnounceRequest() = default;
 
-// Header (4 bytes): An RDPDR_HEADER header. The Component field MUST be set
-//  to RDPDR_CTYP_CORE, and the PacketId field MUST be set to
-//  PAKID_CORE_DEVICELIST_REMOVE.
+    ClientDeviceListAnnounceRequest(uint32_t DeviceCount) : DeviceCount(DeviceCount)
+    {}
 
-// DeviceCount (4 bytes): A 32-bit unsigned integer that specifies the number
-//  of entries in the DeviceIds field.
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->DeviceCount);
+    }
 
-// DeviceIds (variable): A variable-length array of 32-bit unsigned integers
-//  that specifies device IDs. The IDs specified in this array match the IDs
-//  specified in the Client Device List Announce (section 2.2.3.1) packet.
+    void receive(InStream & stream) {
+        this->DeviceCount = stream.in_uint32_le();
+    }
 
-//  Note The client can send the DR_DEVICELIST_REMOVE message for devices
-//   that are removed after a session is connected. The server can accept the
-//   DR_DEVICE_REMOVE message for any removed device, including file system
-//   and port devices. The server can also accept reused DeviceIds of devices
-//   that have been removed, providing the implementation uses the
-//   DR_DEVICE_REMOVE message to do so.
+    void log() {
+        LOG(LOG_INFO, "     Client Device List Announce Request:");
+        LOG(LOG_INFO, "          * DeviceCount = 0x%08x (4 bytes)", this->DeviceCount);
+    }
 
-// [MS-RDPEFS] - 2.2.3.3.1 Server Create Drive Request (DR_DRIVE_CREATE_REQ)
-// =========================================================================
+};
 
-// The server opens or creates a file on a redirected file system device.
 
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// |                 DeviceCreateRequest (variable)                |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-
-// DeviceCreateRequest (variable): A DR_CREATE_REQ header. The PathLength and
-//  Path fields contain the file name of the file to be created. The file
-//  name does not contain a drive letter, which means that the drive is
-//  specified by the DeviceId field of the request. The DeviceId is
-//  associated with a drive letter when the device is announced in the
-//  DR_DEVICELIST_ANNOUNCE (section 2.2.3.1) message. The drive letter is
-//  contained in the PreferredDosName field.
 
 // [MS-RDPEFS] - 2.2.3.3.4 Server Drive Write Request (DR_DRIVE_WRITE_REQ)
 // =======================================================================
@@ -2601,6 +2903,8 @@ enum {
 //  a complete list of these structures, see [MS-FSCC] section 2.4. The "File
 //  information class" table defines all the possible values for the
 //  FsInformationClass field.
+
+
 
 class ServerDriveQueryInformationRequest {
     uint32_t FsInformationClass_ = 0;
@@ -3557,6 +3861,237 @@ public:
 //  allow the client minor flexibility in determining the overall packet
 //  length. This field is unused, and can be set to any value. If present,
 //  this field MUST be ignored on receipt.
+
+
+    static void streamLog(InStream & stream) {
+        InStream s = stream.clone();
+
+        SharedHeader sharedHeader;
+        sharedHeader.receive(s);
+        sharedHeader.log();
+
+        switch (sharedHeader.component) {
+
+            case Component::RDPDR_CTYP_CORE:
+                switch (sharedHeader.packet_id) {
+
+                    case PacketId::PAKID_CORE_SERVER_ANNOUNCE:
+                        {
+                            ServerAnnounceRequest sar;
+                            sar.receive(s);
+                            sar.log();
+                        }
+                        break;
+
+                    case PacketId::PAKID_CORE_CLIENTID_CONFIRM:
+                        {
+                            ClientAnnounceReply car;
+                            car.receive(s);
+                            car.log();
+                        }
+                        break;
+
+                    case PacketId::PAKID_CORE_CLIENT_NAME:
+                        {
+                            ClientNameRequest cnr;
+                            cnr.receive(s);
+                            cnr.log();
+                        }
+                        break;
+
+                    case PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE:
+                        {
+                            ClientDeviceListAnnounceRequest cdar;
+                            cdar.receive(s);
+                            cdar.log();
+                            for (uint32_t i = 0; i < cdar.DeviceCount; i++) {
+                                DeviceAnnounceHeader dah;
+                                dah.receive(s);
+                                dah.log();
+                            }
+                        }
+                        break;
+
+                    case PacketId::PAKID_CORE_DEVICE_REPLY:
+                        {
+                            ServerDeviceAnnounceResponse sdar;
+                            sdar.receive(s);
+                            sdar.log();
+                        }
+                        break;
+
+                    case PacketId::PAKID_CORE_DEVICE_IOREQUEST:
+                        {
+                            DeviceIORequest dior;
+                            dior.receive(s);
+                            dior.log();
+
+                            switch (dior.MajorFunction()) {
+                                case IRP_MJ_CREATE:
+                                    {
+                                        DeviceCreateRequest dcf;
+                                        dcf.receive(s);
+                                        dcf.log();
+                                    }
+                                    break;
+                                case IRP_MJ_CLOSE:
+                                    {
+                                        DeviceCloseRequest dcf;
+                                        dcf.receive(s);
+                                        dcf.log();
+                                    }
+                                    break;
+                                case IRP_MJ_READ:
+                                    {
+                                        DeviceReadRequest drr;
+                                        drr.receive(s);
+                                        drr.log();
+                                    }
+                                    break;
+                                case IRP_MJ_WRITE:
+                                    {
+                                        DeviceWriteRequest dwr;
+                                        dwr.receive(s);
+                                        dwr.log();
+                                    }
+                                    break;
+                                case IRP_MJ_DEVICE_CONTROL:
+                                    {
+                                        LOG(LOG_INFO, "     Device I/O Device Control Request:");
+                                    }
+                                    break;
+                                case IRP_MJ_QUERY_VOLUME_INFORMATION:
+                                    {
+                                        LOG(LOG_INFO, "     Device I/O Query Volume Information Request:");
+                                    }
+                                    break;
+                                case IRP_MJ_SET_VOLUME_INFORMATION:
+                                    {
+                                        LOG(LOG_INFO, "     Device I/O Set Volume Information Request:");
+                                    }
+                                    break;
+                                case IRP_MJ_QUERY_INFORMATION:
+                                    {
+                                        LOG(LOG_INFO, "     Device I/O Query Information Request:");
+                                    }
+                                    break;
+                                case IRP_MJ_SET_INFORMATION:
+                                    {
+                                        LOG(LOG_INFO, "     Device I/O Set Information Request:");
+                                    }
+                                    break;
+                                case IRP_MJ_DIRECTORY_CONTROL:
+                                    {
+                                        LOG(LOG_INFO, "     Device I/O Directory Control Request:");
+                                    }
+                                    break;
+                                case IRP_MJ_LOCK_CONTROL:
+                                    {
+                                        LOG(LOG_INFO, "     Device I/O Lock Request:");
+                                    }
+                                    break;
+                            }
+                        }
+                        break;
+
+                    case PacketId::PAKID_CORE_DEVICE_IOCOMPLETION:
+                        {
+                            DeviceIOResponse dior;
+                            dior.receive(s);
+                            dior.log();
+                        }
+                        break;
+
+                    case PacketId::PAKID_CORE_SERVER_CAPABILITY:
+                        {
+                            LOG(LOG_INFO, "     Client Core Capability Request:");
+                            /*uint16_t numCapabilities(s.in_uint16_le());
+                            s.in_skip_bytes(2);
+                                LOG(LOG_INFO, "     * numCapabilities  = 0x%02x (2 bytes)", numCapabilities);
+                            for (uint16_t i = 0; i < numCapabilities; i++) {
+                                InStream s_serie = s.clone();
+                                uint16_t CapabilityType = s_serie.in_uint16_le();
+                                switch (CapabilityType) {
+                                    case CAP_GENERAL_TYPE:
+                                        {
+                                            GeneralCapabilitySet gcs;
+                                            gcs.receive(s, GENERAL_CAPABILITY_VERSION_01);
+                                            gcs.log(0);
+                                        }
+                                        break;
+                                    case CAP_PRINTER_TYPE:
+                                    case CAP_PORT_TYPE:
+                                    case CAP_DRIVE_TYPE:
+                                    case CAP_SMARTCARD_TYPE:
+                                        {
+                                            CapabilityHeader ch;
+                                            ch.receive(s);
+                                            ch.log();
+                                        }
+                                        break;
+                                }
+                            }*/
+
+                        }
+                        break;
+
+                    case PacketId::PAKID_CORE_CLIENT_CAPABILITY:
+                        {
+                            LOG(LOG_INFO, "     Client Core Capability Request:");
+                            /*uint16_t numCapabilities(s.in_uint16_le());
+                            s.in_skip_bytes(2);
+                                LOG(LOG_INFO, "     * numCapabilities  = 0x%02x (2 bytes)", numCapabilities);
+                            for (uint16_t i = 0; i < numCapabilities; i++) {
+                                InStream s_serie = s.clone();
+                                uint16_t CapabilityType = s_serie.in_uint16_le();
+                                switch (CapabilityType) {
+                                    case CAP_GENERAL_TYPE:
+                                        {
+                                            GeneralCapabilitySet gcs;
+                                            gcs.receive(s, GENERAL_CAPABILITY_VERSION_01);
+                                            gcs.log(0);
+                                            break;
+                                        }
+                                    case CAP_PRINTER_TYPE:
+                                    case CAP_PORT_TYPE:
+                                    case CAP_DRIVE_TYPE:
+                                    case CAP_SMARTCARD_TYPE:
+                                        {
+                                            CapabilityHeader ch;
+                                            ch.receive(s);
+                                            ch.log();
+                                            break;
+                                        }
+                                }
+                            }*/
+                        }
+                        break;
+
+                    case PacketId::PAKID_CORE_DEVICELIST_REMOVE:
+                        {
+                            ClientDriveDeviceListRemove cdlr;
+                            cdlr.receive(s);
+                            cdlr.log();
+                        }
+                        break;
+
+                    case PacketId::PAKID_PRN_CACHE_DATA:
+                        break;
+
+                    case PacketId::PAKID_CORE_USER_LOGGEDON:
+                        LOG(LOG_INFO, "     Server User Logged On");
+                        break;
+
+                    case PacketId::PAKID_PRN_USING_XPS:
+                        break;
+                }
+                break;
+
+            case Component::RDPDR_CTYP_PRT:
+                break;
+        }
+
+    }
 
 }   // namespace rdpdr
 
