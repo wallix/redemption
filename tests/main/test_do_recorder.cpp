@@ -28,6 +28,7 @@
 
 #define LOGPRINT
 // #define LOGNULL
+#include "utils/log.hpp"
 
 #include "main/do_recorder.hpp"
 
@@ -36,6 +37,7 @@
 #include <fcntl.h>
 
 #include <fstream>
+#include <sstream>
 #include <iostream>
 #include <ostream>
 #include "utils/fileutils.hpp"
@@ -88,6 +90,7 @@ extern "C" {
 
 BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
 {
+   LOG(LOG_INFO, "=================== TestDecrypterEncryptedData =============");
     char const * argv[] {
         "decrypter.py",
         "reddec",
@@ -114,6 +117,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
 
 BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
 {
+   LOG(LOG_INFO, "=================== TestDecrypterClearData =============");
     char const * argv[] {
         "decrypter.py",
         "reddec",
@@ -140,6 +144,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
 
 BOOST_AUTO_TEST_CASE(TestReverseIterators)
 {
+   LOG(LOG_INFO, "=================== TestReverseIterators =============");
 
     // Show how to extract filename even if it contains spaces
     // the idea is that the final fields are fixed, henceforth
@@ -176,6 +181,7 @@ BOOST_AUTO_TEST_CASE(TestReverseIterators)
 
 BOOST_AUTO_TEST_CASE(TestLineReader)
 {
+   LOG(LOG_INFO, "=================== TestLineReader =============");
     char const * filename = "/tmp/test_app_verifier_s.txt";
 
     std::ofstream(filename) <<
@@ -231,6 +237,7 @@ BOOST_AUTO_TEST_CASE(TestLineReader)
 
 BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 {
+   LOG(LOG_INFO, "=================== TestVerifierCheckFileHash =============");
     const std::string test_mwrm_path = "./";
     const std::string test_file_name = "TestCheckFileHash";
 
@@ -357,6 +364,7 @@ bool is_except( Exception const & ) { return true; }
 
 BOOST_AUTO_TEST_CASE(TestVerifierFileNotFound)
 {
+   LOG(LOG_INFO, "=================== TestVerifierFileNotFound =============");
     char const * argv[] = {
         "verifier.py",
         "redver",
@@ -373,6 +381,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierFileNotFound)
 
 BOOST_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
 {
+   LOG(LOG_INFO, "=================== TestVerifierEncryptedDataFailure =============");
     char const * argv[] = {
         "verifier.py",
         "redver",
@@ -397,6 +406,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
 
 BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
 {
+   LOG(LOG_INFO, "=================== TestVerifierEncryptedData =============");
     char const * argv[] = {
         "verifier.py",
         "redver",
@@ -421,6 +431,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
 
 BOOST_AUTO_TEST_CASE(TestVerifierClearData)
 {
+   LOG(LOG_INFO, "=================== TestVerifierClearData =============");
     char const * argv[] {
         "verifier.py",
         "redver",
@@ -446,11 +457,10 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
     BOOST_CHECK_EQUAL(0, res);
 }
 
-#include <fstream>
-#include <sstream>
 
 BOOST_AUTO_TEST_CASE(TestVerifierUpdateData)
 {
+    LOG(LOG_INFO, "=================== TestVerifierUpdateData =============");
 //    Inifile ini;
 //    ini.set<cfg::debug::config>(false);
 //    CryptoContext cctx;
@@ -553,6 +563,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierUpdateData)
 
 BOOST_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
 {
+    LOG(LOG_INFO, "=================== TestVerifierClearDataStatFailed =============");
     char const * argv[] {
         "verifier.py",
         "redver",
@@ -579,11 +590,12 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
 
 BOOST_AUTO_TEST_CASE(ReadClearHeaderV2)
 {
+    LOG(LOG_INFO, "=================== ReadClearHeaderV2 =============");
     ifile_read fd;
     fd.open(FIXTURES_PATH "/verifier/recorded/v2_nochecksum_nocrypt.mwrm");
     MwrmReader reader(fd);
 
-    reader.read_meta_headers();
+    reader.read_meta_headers(false);
     BOOST_CHECK(reader.header.version == 2);
     BOOST_CHECK(!reader.header.has_checksum);
 
@@ -607,11 +619,12 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV2)
 
 BOOST_AUTO_TEST_CASE(ReadClearHeaderV1)
 {
+    LOG(LOG_INFO, "=================== (ReadClearHeaderV1 =============");
     ifile_read fd;
     fd.open(FIXTURES_PATH "/verifier/recorded/v1_nochecksum_nocrypt.mwrm");
     MwrmReader reader(fd);
 
-    reader.read_meta_headers();
+    reader.read_meta_headers(false);
     BOOST_CHECK(reader.header.version == 1);
     BOOST_CHECK(!reader.header.has_checksum);
 
@@ -645,11 +658,12 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV1)
 
 BOOST_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
 {
+    LOG(LOG_INFO, "=================== ReadClearHeaderV2Checksum =============");
     ifile_read fd;
     fd.open(FIXTURES_PATH "/sample_v2_checksum.mwrm");
     MwrmReader reader(fd);
 
-    reader.read_meta_headers();
+    reader.read_meta_headers(false);
     BOOST_CHECK(reader.header.version == 2);
     BOOST_CHECK(reader.header.has_checksum);
 
@@ -677,10 +691,9 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
                         32));
 }
 
-#include "utils/log.hpp"
-
 BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
 {
+    LOG(LOG_INFO, "=================== ReadEncryptedHeaderV2Checksum =============");
 
     CryptoContext cctx;
     cctx.set_get_hmac_key_cb(hmac_fn);
@@ -694,7 +707,7 @@ BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
 
     MwrmReader reader(fd);
 
-    reader.read_meta_headers();
+    reader.read_meta_headers(true);
     BOOST_CHECK(reader.header.version == 2);
     BOOST_CHECK(reader.header.has_checksum);
 
@@ -740,124 +753,513 @@ inline int hmac_2016_fn(char * buffer)
     return 0;
 }
 
-//get_trace_key_cb:::::(new scheme)
-///* 0000 */ "\x08\x00\x10\x00\xf0\xff\x01\x00\x08\x00\x00\x00\x00\x00\x00\x00"
-///* 0010 */ "\x00\x00\x00\x7f\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x7f\x00"
-//derivator used:::::(new scheme)
-///* 0000 */ "\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x40\x31\x30\x2e\x31\x30\x2e" //cgrosjean@10.10.
-///* 0010 */ "\x34\x33\x2e\x31\x33\x2c\x70\x72\x6f\x78\x79\x75\x73\x65\x72\x40" //43.13,proxyuser@
-///* 0020 */ "\x77\x69\x6e\x32\x30\x30\x38\x2c\x32\x30\x31\x36\x31\x30\x32\x35" //win2008,20161025
-///* 0030 */ "\x2d\x31\x39\x32\x33\x30\x34\x2c\x77\x61\x62\x2d\x34\x2d\x32\x2d" //-192304,wab-4-2-
-///* 0040 */ "\x34\x2e\x79\x6f\x75\x72\x64\x6f\x6d\x61\x69\x6e\x2c\x35\x35\x36" //4.yourdomain,556
-///* 0050 */ "\x30\x2e\x6d\x77\x72\x6d"                                         //0.mwrm
-//Nov 16 18:26:31 wab-4-2-4 redrec: ERR (29540/29540) -- [CRYPTO_ERROR][29540]: Could not finish decryption!
-//get_trace_key_cb:::::(old scheme)
-///* 0000 */ "\xa8\x6e\x1c\x63\xe1\xa6\xfd\xed\x2f\x73\x17\xca\x97\xad\x48\x07" //.n.c..../s....H.
-///* 0010 */ "\x99\xf5\xcf\x84\xad\x9f\x4a\x16\x66\x38\x09\xb7\x74\xe0\x58\x34" //......J.f8..t.X4
-//derivator used:::::(old scheme)
-///* 0000 */ "\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x40\x31\x30\x2e\x31\x30\x2e" //cgrosjean@10.10.
-///* 0010 */ "\x34\x33\x2e\x31\x33\x2c\x70\x72\x6f\x78\x79\x75\x73\x65\x72\x40" //43.13,proxyuser@
-///* 0020 */ "\x77\x69\x6e\x32\x30\x30\x38\x2c\x32\x30\x31\x36\x31\x30\x32\x35" //win2008,20161025
-///* 0030 */ "\x2d\x31\x39\x32\x33\x30\x34\x2c\x77\x61\x62\x2d\x34\x2d\x32\x2d" //-192304,wab-4-2-
-///* 0040 */ "\x34\x2e\x79\x6f\x75\x72\x64\x6f\x6d\x61\x69\x6e\x2c\x35\x35\x36" //4.yourdomain,556
-///* 0050 */ "\x30\x2e\x6d\x77\x72\x6d"                                         //0.mwrm
-//get_trace_key_cb:::::(old scheme)
-///* 0000 */ "\xa8\x6e\x1c\x63\xe1\xa6\xfd\xed\x2f\x73\x17\xca\x97\xad\x48\x07" //.n.c..../s....H.
-///* 0010 */ "\x99\xf5\xcf\x84\xad\x9f\x4a\x16\x66\x38\x09\xb7\x74\xe0\x58\x34" //......J.f8..t.X4
-//derivator used:::::(old scheme)
-///* 0000 */ "\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x40\x31\x30\x2e\x31\x30\x2e" //cgrosjean@10.10.
-///* 0010 */ "\x34\x33\x2e\x31\x33\x2c\x70\x72\x6f\x78\x79\x75\x73\x65\x72\x40" //43.13,proxyuser@
-///* 0020 */ "\x77\x69\x6e\x32\x30\x30\x38\x2c\x32\x30\x31\x36\x31\x30\x32\x35" //win2008,20161025
-///* 0030 */ "\x2d\x31\x39\x32\x33\x30\x34\x2c\x77\x61\x62\x2d\x34\x2d\x32\x2d" //-192304,wab-4-2-
-///* 0040 */ "\x34\x2e\x79\x6f\x75\x72\x64\x6f\x6d\x61\x69\x6e\x2c\x35\x35\x36" //4.yourdomain,556
-///* 0050 */ "\x30\x2e\x6d\x77\x72\x6d"                                         //0.mwrm
-//get_trace_key_cb:::::(old scheme)
-///* 0000 */ "\xfc\x06\xf3\x0f\xc8\x3d\x16\x9f\xa1\x64\xb8\xca\x0f\xf3\x85\xf0" //.....=...d......
-///* 0010 */ "\x22\x09\xaf\xfc\x0c\xe0\x76\x13\x46\x62\xff\x55\xcb\x41\x87\x6a" //".....v.Fb.U.A.j
-//derivator used:::::(old scheme)
-///* 0000 */ "\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x40\x31\x30\x2e\x31\x30\x2e" //cgrosjean@10.10.
-///* 0010 */ "\x34\x33\x2e\x31\x33\x2c\x70\x72\x6f\x78\x79\x75\x73\x65\x72\x40" //43.13,proxyuser@
-///* 0020 */ "\x77\x69\x6e\x32\x30\x30\x38\x2c\x32\x30\x31\x36\x31\x30\x32\x35" //win2008,20161025
-///* 0030 */ "\x2d\x31\x39\x32\x33\x30\x34\x2c\x77\x61\x62\x2d\x34\x2d\x32\x2d" //-192304,wab-4-2-
-///* 0040 */ "\x34\x2e\x79\x6f\x75\x72\x64\x6f\x6d\x61\x69\x6e\x2c\x35\x35\x36" //4.yourdomain,556
-///* 0050 */ "\x30\x2d\x30\x30\x30\x30\x30\x30\x2e\x77\x72\x6d"                 //0-000000.wrm
-
-//(cgrosjean@10.10.43.13,proxyuser@local@win2008,20161025-213153,wab-4-2-4.yourdomain,3243.mwrm,92,0)
-//base=['0x63', '0x67', '0x72', '0x6f', '0x73', '0x6a', '0x65', '0x61', '0x6e', '0x40', '0x31', '0x30', '0x2e', '0x31', '0x30', '0x2e', '0x34', '0x33', '0x2e', '0x31', '0x33', '0x2c', '0x70', '0x72', '0x6f', '0x78', '0x79', '0x75', '0x73', '0x65', '0x72', '0x40', '0x6c', '0x6f', '0x63', '0x61', '0x6c', '0x40', '0x77', '0x69', '0x6e', '0x32', '0x30', '0x30', '0x38', '0x2c', '0x32', '0x30', '0x31', '0x36', '0x31', '0x30', '0x32', '0x35', '0x2d', '0x32', '0x31', '0x33', '0x31', '0x35', '0x33', '0x2c', '0x77', '0x61', '0x62', '0x2d', '0x34', '0x2d', '0x32', '0x2d', '0x34', '0x2e', '0x79', '0x6f', '0x75', '0x72', '0x64', '0x6f', '0x6d', '0x61', '0x69', '0x6e', '0x2c', '0x33', '0x32', '0x34', '0x33', '0x2e', '0x6d', '0x77', '0x72', '0x6d']
-//derivator=['0x63', '0x67', '0x72', '0x6f', '0x73', '0x6a', '0x65', '0x61', '0x6e', '0x40', '0x31', '0x30', '0x2e', '0x31', '0x30', '0x2e', '0x34', '0x33', '0x2e', '0x31', '0x33', '0x2c', '0x70', '0x72', '0x6f', '0x78', '0x79', '0x75', '0x73', '0x65', '0x72', '0x40', '0x6c', '0x6f', '0x63', '0x61', '0x6c', '0x40', '0x77', '0x69', '0x6e', '0x32', '0x30', '0x30', '0x38', '0x2c', '0x32', '0x30', '0x31', '0x36', '0x31', '0x30', '0x32', '0x35', '0x2d', '0x32', '0x31', '0x33', '0x31', '0x35', '0x33', '0x2c', '0x77', '0x61', '0x62', '0x2d', '0x34', '0x2d', '0x32', '0x2d', '0x34', '0x2e', '0x79', '0x6f', '0x75', '0x72', '0x64', '0x6f', '0x6d', '0x61', '0x69', '0x6e', '0x2c', '0x33', '0x32', '0x34', '0x33', '0x2e', '0x6d', '0x77', '0x72', '0x6d']
-//key=['0x63', '0xfc', '0x3a', '0xa', '0x32', '0x36', '0x41', '0x8a', '0x7f', '0xaa', '0x8d', '0x88', '0xbb', '0x33', '0x73', '0x34', '0x6a', '0xdb', '0xa9', '0x42', '0x96', '0xbb', '0xcd', '0x6', '0xbe', '0xf8', '0xc4', '0x7', '0x8b', '0xa', '0x80', '0xc4']
-
 inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldscheme)
 {
-    static int i = 0;
-    LOG(LOG_INFO, "trace_20161025_fn(%*s,%d,oldscheme=%d)->\n i=%d", len, base, len, oldscheme, i );
+    LOG(LOG_INFO, "\n\ntrace_20161025_fn(%*s,%d,oldscheme=%d)->\n", len, base, len, oldscheme);
 
     (void)base;
     (void)len;
-    // in real uses actual trace_key is derived from base and some master key
-    uint8_t old_trace_key[10][32] = {
-    // cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm
-    {
-        0xa8, 0x6e, 0x1c, 0x63, 0xe1, 0xa6, 0xfd, 0xed,
-        0x2f, 0x73, 0x17, 0xca, 0x97, 0xad, 0x48, 0x07,
-        0x99, 0xf5, 0xcf, 0x84, 0xad, 0x9f, 0x4a, 0x16,
-        0x66, 0x38, 0x09, 0xb7, 0x74, 0xe0, 0x58, 0x34
-    },
-    // cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm
-    {
-        0xa8, 0x6e, 0x1c, 0x63, 0xe1, 0xa6, 0xfd, 0xed,
-        0x2f, 0x73, 0x17, 0xca, 0x97, 0xad, 0x48, 0x07,
-        0x99, 0xf5, 0xcf, 0x84, 0xad, 0x9f, 0x4a, 0x16,
-        0x66, 0x38, 0x09, 0xb7, 0x74, 0xe0, 0x58, 0x34
-    },
-    // cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560-000000.wrm
-    {
-        0xfc, 0x06, 0xf3, 0x0f, 0xc8, 0x3d, 0x16, 0x9f,
-        0xa1, 0x64, 0xb8, 0xca, 0x0f, 0xf3, 0x85, 0xf0,
-        0x22, 0x09, 0xaf, 0xfc, 0x0c, 0xe0, 0x76, 0x13,
-        0x46, 0x62, 0xff, 0x55, 0xcb, 0x41, 0x87, 0x6a
-    }};
-
-    // cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm
-    uint8_t new_trace_key[32] = {
-        0x8f, 0x17, 0x01, 0xd8, 0x87, 0xd7, 0xa1, 0x1b,
-        0x40, 0x02, 0x68, 0x8d, 0xe4, 0x22, 0x2c, 0x42,
-        0xe1, 0x30, 0x8e, 0x37, 0xfa, 0x2c, 0xfa, 0xef,
-        0x0e, 0x40, 0x87, 0xf1, 0x57, 0x94, 0x42, 0x96
+    
+    struct {
+        std::string base;
+        unsigned scheme;
+        uint8_t derived_key[32];
+    } keys[] = {
+        {
+            "cgrosjean@10.10.43.13,proxyuser@local@win2008,20161025-213153,wab-4-2-4.yourdomain,3243.mwrm",
+            0,
+            {
+                0x63, 0xfc, 0x3a, 0x0a, 0x32, 0x36, 0x41, 0x8a,
+                0x7f, 0xaa, 0x8d, 0x88, 0xbb, 0x33, 0x73, 0x34,
+                0x6a, 0xdb, 0xa9, 0x42, 0x96, 0xbb, 0xcd, 0x06,
+                0xbe, 0xf8, 0xc4, 0x07, 0x8b, 0x0a, 0x80, 0xc4
+            }
+        },
+        {
+            "cgrosjean@10.10.43.13,proxyuser@local@win2008,20161201-163203,wab-4-2-4.yourdomain,1046.mwrm",
+            0,
+            {
+                0xdc, 0x55, 0x98, 0xe3, 0x7f, 0x90, 0xa5, 0x94,
+                0x60, 0x89, 0x1f, 0x95, 0x81, 0x00, 0xf8, 0xaf,
+                0x73, 0xe1, 0x3d, 0x22, 0xe3, 0x6c, 0x40, 0x59,
+                0x93, 0x05, 0xab, 0xf6, 0x16, 0xd2, 0x3a, 0xdb
+            }
+        },
+        {
+            "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm",
+            0,
+            {
+                0x8f, 0x17, 0x01, 0xd8, 0x87, 0xd7, 0xa1, 0x1b,
+                0x40, 0x02, 0x68, 0x8d, 0xe4, 0x22, 0x2c, 0x42,
+                0xe1, 0x30, 0x8e, 0x37, 0xfa, 0x2c, 0xfa, 0xef,
+                0x0e, 0x40, 0x87, 0xf1, 0x57, 0x94, 0x42, 0x96
+            }
+        },
+        {
+            "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm",
+            1,
+            {
+                0xa8, 0x6e, 0x1c, 0x63, 0xe1, 0xa6, 0xfd, 0xed,
+                0x2f, 0x73, 0x17, 0xca, 0x97, 0xad, 0x48, 0x07,
+                0x99, 0xf5, 0xcf, 0x84, 0xad, 0x9f, 0x4a, 0x16,
+                0x66, 0x38, 0x09, 0xb7, 0x74, 0xe0, 0x58, 0x34
+            },
+        },
+        {
+            "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560-000000.wrm",
+            1,
+            {
+                0xfc, 0x06, 0xf3, 0x0f, 0xc8, 0x3d, 0x16, 0x9f,
+                0xa1, 0x64, 0xb8, 0xca, 0x0f, 0xf3, 0x85, 0xf0,
+                0x22, 0x09, 0xaf, 0xfc, 0x0c, 0xe0, 0x76, 0x13,
+                0x46, 0x62, 0xff, 0x55, 0xcb, 0x41, 0x87, 0x6a
+            }
+        }
     };
-        
-    memcpy(buffer, oldscheme?old_trace_key[i]:new_trace_key, 32);
+
+    for (auto & k: keys){
+        if ((k.scheme == oldscheme)
+        && (k.base.length() == static_cast<size_t>(len))
+        && (strncmp(k.base.c_str(), base, static_cast<size_t>(len)) == 0))
+        {
+            if (oldscheme){
+                LOG(LOG_INFO, "old key (derived from main master)");
+            }
+            else {
+                LOG(LOG_INFO, "new key (derived master to use as master)");
+            }
+            memcpy(buffer, k.derived_key, 32);
+            hexdump_d(buffer, 32);
+            return 0;
+        }
+    }
+    memset(buffer, 0, 32);
+    LOG(LOG_INFO, "key not found for base=%*s", len, base);
+    exit(-1);
     hexdump_d(buffer, 32);
-    if (oldscheme) { i++; }
     return 0;
 }
 
 
-//BOOST_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
-//{
-//    // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
 
-
-//    char const * argv[] {
-//        "verifier.py", "redver",
-//        "-i", "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
-//            "-192304,wab-4-2-4.yourdomain,5560.mwrm",
+BOOST_AUTO_TEST_CASE(TestDecrypterEncrypted)
+{
+    LOG(LOG_INFO, "=================== TestDecrypterEncrypted =============");
+    char const * argv[] {
+        "decrypter.py", "reddec",
+        "-i", FIXTURES_PATH "/verifier/recorded/" 
+        "cgrosjean@10.10.43.13,proxyuser@local@win2008,20161025-213153,wab-4-2-4.yourdomain,3243.mwrm",
 //        "--hash-path", FIXTURES_PATH "/verifier/hash/",
 //        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
-//        "--verbose", "10",
-//    };
-//    int argc = sizeof(argv)/sizeof(char*);
+        "-o", "/tmp/out0.txt",
+        "--verbose", "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
 
-//    BOOST_CHECK_EQUAL(true, true);
+    BOOST_CHECK_EQUAL(true, true);
 
-//    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
-//    BOOST_CHECK_EQUAL(1, res);
-//}
+    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    BOOST_CHECK_EQUAL(0, res);
+}
 
+BOOST_AUTO_TEST_CASE(TestDecrypterEncrypted1)
+{
+    LOG(LOG_INFO, "=================== TestDecrypterEncrypted1 =============");
+
+    char const * argv[] {
+        "decrypter.py", "reddec",
+        "-i", FIXTURES_PATH "/verifier/recorded/" 
+        "cgrosjean@10.10.43.13,proxyuser@local@win2008,20161201-163203,wab-4-2-4.yourdomain,1046.mwrm",
+        "-o", "/tmp/out8.txt",
+        "--verbose", "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    BOOST_CHECK_EQUAL(true, true);
+
+    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    BOOST_CHECK_EQUAL(0, res);
+}
+
+BOOST_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted)
+{
+    LOG(LOG_INFO, "=================== TestDecrypterMigratedEncrypted =============");
+    // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
+
+
+    char const * argv[] {
+        "decrypter.py", "reddec",
+        "-i", FIXTURES_PATH "/verifier/recorded/" "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
+            "-192304,wab-4-2-4.yourdomain,5560.mwrm",
+//        "--hash-path", FIXTURES_PATH "/verifier/hash/",
+//        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "-o", "/tmp/out.txt",
+        "--verbose", "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    BOOST_CHECK_EQUAL(true, true);
+
+    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    BOOST_CHECK_EQUAL(0, res);
+}
+
+BOOST_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted2)
+{
+    LOG(LOG_INFO, "=================== TestDecrypterMigratedEncrypted =============");
+    // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
+
+
+    char const * argv[] {
+        "decrypter.py", "reddec",
+        "-i", FIXTURES_PATH "/verifier/recorded/" "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
+            "-192304,wab-4-2-4.yourdomain,5560.mwrm",
+//        "--hash-path", FIXTURES_PATH "/verifier/hash/",
+//        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "-o", "/tmp/out2.txt",
+        "--verbose", "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    BOOST_CHECK_EQUAL(true, true);
+
+    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    BOOST_CHECK_EQUAL(0, res);
+}
+
+
+BOOST_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
+{
+    LOG(LOG_INFO, "=================== TestVerifierMigratedEncrypted =============");
+    // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
+
+
+    char const * argv[] {
+        "verifier.py", "redver",
+        "-i", "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
+            "-192304,wab-4-2-4.yourdomain,5560.mwrm",
+        "--hash-path", FIXTURES_PATH "/verifier/hash/",
+        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "--verbose", "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    BOOST_CHECK_EQUAL(true, true);
+
+    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    BOOST_CHECK_EQUAL(1, res);
+}
+
+// "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-134039,wab-4-2-4.yourdomain,4714.mwrm".
+// verify as 1
+
+//python -O /opt/wab/bin/verifier.py -i cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-164758,wab-4-2-4.yourdomain,7192.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-164758,wab-4-2-4.yourdomain,7192.mwrm".
+//Input file is unencrypted (no hash).
+//verify ok (1)
+
+//python -O /opt/wab/bin/verifier.py -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-165619,wab-4-2-4.yourdomain,2510.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@win2008,20161025-165619,wab-4-2-4.yourdomain,2510.mwrm".
+//Input file is unencrypted (no hash).
+//verify ok (1)
+
+//python -O /opt/wab/bin/verifier.py -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-181703,wab-4-2-4.yourdomain,6759.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@win2008,20161025-181703,wab-4-2-4.yourdomain,6759.mwrm".
+//Input file is unencrypted (no hash).
+//verify ok (1)
+
+//python -O /opt/wab/bin/verifier.py -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-184533,wab-4-2-4.yourdomain,1359.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@win2008,20161025-184533,wab-4-2-4.yourdomain,1359.mwrm".
+//Input file is unencrypted (no hash).
+//verify ok (1)
+
+//python -O /opt/wab/bin/verifier.py -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-191724,wab-4-2-4.yourdomain,6734.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@win2008,20161025-191724,wab-4-2-4.yourdomain,6734.mwrm".
+//Input file is unencrypted (no hash).
+//verify ok (1)
+
+//python -O /opt/wab/bin/verifier.py -i /var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-191826,wab-4-2-4.yourdomain,9485.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-191826,wab-4-2-4.yourdomain,9485.mwrm".
+//Input file is unencrypted (no hash).
+//verify ok (1)
+
+//python -O /opt/wab/bin/verifier.py -i /var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-191826,wab-4-2-4.yourdomain,9485.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-191826,wab-4-2-4.yourdomain,9485.mwrm".
+//Input file is unencrypted (no hash).
+//verify ok (1)
+
+//python -O /opt/wab/bin/verifier.py -i /var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm".
+//Input file is encrypted.
+//verifier: -- get_trace_key_cb:::::(new scheme)
+//verifier: -- /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x50\xaf\x99\x03\x00\x00\x00\x00" //........P.......
+//verifier: -- /* 0010 */ "\x80\x9a\x8a\x68\x77\x6f\x00\x00\xd6\xd6\x63\x68\x77\x6f\x00\x00" //...hwo....chwo..
+//verifier: -- derivator used:::::(new scheme)
+//verifier: -- /* 0000 */ "\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x40\x31\x30\x2e\x31\x30\x2e" //cgrosjean@10.10.
+//verifier: -- /* 0010 */ "\x34\x33\x2e\x31\x33\x2c\x70\x72\x6f\x78\x79\x75\x73\x65\x72\x40" //43.13,proxyuser@
+//verifier: -- /* 0020 */ "\x77\x69\x6e\x32\x30\x30\x38\x2c\x32\x30\x31\x36\x31\x30\x32\x35" //win2008,20161025
+//verifier: -- /* 0030 */ "\x2d\x31\x39\x32\x33\x30\x34\x2c\x77\x61\x62\x2d\x34\x2d\x32\x2d" //-192304,wab-4-2-
+//verifier: -- /* 0040 */ "\x34\x2e\x79\x6f\x75\x72\x64\x6f\x6d\x61\x69\x6e\x2c\x35\x35\x36" //4.yourdomain,556
+//verifier: -- /* 0050 */ "\x30\x2e\x6d\x77\x72\x6d"                                         //0.mwrm
+//verifier: ERR (16506/16506) -- [CRYPTO_ERROR][16506]: Could not finish decryption!
+//verifier: -- get_trace_key_cb:::::(old scheme)
+//verifier: -- /* 0000 */ "\xa8\x6e\x1c\x63\xe1\xa6\xfd\xed\x2f\x73\x17\xca\x97\xad\x48\x07" //.n.c..../s....H.
+//verifier: -- /* 0010 */ "\x99\xf5\xcf\x84\xad\x9f\x4a\x16\x66\x38\x09\xb7\x74\xe0\x58\x34" //......J.f8..t.X4
+//verifier: -- derivator used:::::(old scheme)
+//verifier: -- /* 0000 */ "\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x40\x31\x30\x2e\x31\x30\x2e" //cgrosjean@10.10.
+//verifier: -- /* 0010 */ "\x34\x33\x2e\x31\x33\x2c\x70\x72\x6f\x78\x79\x75\x73\x65\x72\x40" //43.13,proxyuser@
+//verifier: -- /* 0020 */ "\x77\x69\x6e\x32\x30\x30\x38\x2c\x32\x30\x31\x36\x31\x30\x32\x35" //win2008,20161025
+//verifier: -- /* 0030 */ "\x2d\x31\x39\x32\x33\x30\x34\x2c\x77\x61\x62\x2d\x34\x2d\x32\x2d" //-192304,wab-4-2-
+//verifier: -- /* 0040 */ "\x34\x2e\x79\x6f\x75\x72\x64\x6f\x6d\x61\x69\x6e\x2c\x35\x35\x36" //4.yourdomain,556
+//verifier: -- /* 0050 */ "\x30\x2e\x6d\x77\x72\x6d"                                         //0.mwrm
+//hash file path: "/var/wab/hash/cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm".
+//verifier: -- get_trace_key_cb:::::(old scheme)
+//verifier: -- /* 0000 */ "\xa8\x6e\x1c\x63\xe1\xa6\xfd\xed\x2f\x73\x17\xca\x97\xad\x48\x07" //.n.c..../s....H.
+//verifier: -- /* 0010 */ "\x99\xf5\xcf\x84\xad\x9f\x4a\x16\x66\x38\x09\xb7\x74\xe0\x58\x34" //......J.f8..t.X4
+//verifier: -- derivator used:::::(old scheme)
+//verifier: -- /* 0000 */ "\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x40\x31\x30\x2e\x31\x30\x2e" //cgrosjean@10.10.
+//verifier: -- /* 0010 */ "\x34\x33\x2e\x31\x33\x2c\x70\x72\x6f\x78\x79\x75\x73\x65\x72\x40" //43.13,proxyuser@
+//verifier: -- /* 0020 */ "\x77\x69\x6e\x32\x30\x30\x38\x2c\x32\x30\x31\x36\x31\x30\x32\x35" //win2008,20161025
+//verifier: -- /* 0030 */ "\x2d\x31\x39\x32\x33\x30\x34\x2c\x77\x61\x62\x2d\x34\x2d\x32\x2d" //-192304,wab-4-2-
+//verifier: -- /* 0040 */ "\x34\x2e\x79\x6f\x75\x72\x64\x6f\x6d\x61\x69\x6e\x2c\x35\x35\x36" //4.yourdomain,556
+//verifier: -- /* 0050 */ "\x30\x2e\x6d\x77\x72\x6d"                                         //0.mwrm
+//verifier: -- get_hmac_key_cb:::::
+//verifier: -- /* 0000 */ "\x56\xdd\xb2\x92\x47\xbe\x4b\x89\x1f\x12\x62\x39\x0f\x10\xb9\x8e" //V...G.K...b9....
+//verifier: -- /* 0010 */ "\xac\xff\xbc\x8a\x8f\x71\xfb\x21\x07\x7d\xef\x9c\xb3\x5f\xf9\x7b" //.....q.!.}..._.{
+//verifier: -- get_trace_key_cb:::::(old scheme)
+//verifier: -- /* 0000 */ "\xa8\x6e\x1c\x63\xe1\xa6\xfd\xed\x2f\x73\x17\xca\x97\xad\x48\x07" //.n.c..../s....H.
+//verifier: -- /* 0010 */ "\x99\xf5\xcf\x84\xad\x9f\x4a\x16\x66\x38\x09\xb7\x74\xe0\x58\x34" //......J.f8..t.X4
+//verifier: -- derivator used:::::(old scheme)
+//verifier: -- /* 0000 */ "\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x40\x31\x30\x2e\x31\x30\x2e" //cgrosjean@10.10.
+//verifier: -- /* 0010 */ "\x34\x33\x2e\x31\x33\x2c\x70\x72\x6f\x78\x79\x75\x73\x65\x72\x40" //43.13,proxyuser@
+//verifier: -- /* 0020 */ "\x77\x69\x6e\x32\x30\x30\x38\x2c\x32\x30\x31\x36\x31\x30\x32\x35" //win2008,20161025
+//verifier: -- /* 0030 */ "\x2d\x31\x39\x32\x33\x30\x34\x2c\x77\x61\x62\x2d\x34\x2d\x32\x2d" //-192304,wab-4-2-
+//verifier: -- /* 0040 */ "\x34\x2e\x79\x6f\x75\x72\x64\x6f\x6d\x61\x69\x6e\x2c\x35\x35\x36" //4.yourdomain,556
+//verifier: -- /* 0050 */ "\x30\x2e\x6d\x77\x72\x6d"                                         //0.mwrm
+//No error detected during the data verification.
+
+//verify ok (4)
+
+
+//tests/fixtures/verifier/recorded/cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-164758,wab-4-2-4.yourdomain,7192.mwrm
+//tests/fixtures/verifier/recorded/cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-191826,wab-4-2-4.yourdomain,9485.mwrm
+//tests/fixtures/verifier/recorded/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161025-213153,wab-4-2-4.yourdomain,3243.mwrm
+//tests/fixtures/verifier/recorded/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161026-132131,wab-4-2-4.yourdomain,9904.mwrm
+//tests/fixtures/verifier/recorded/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161201-163203,wab-4-2-4.yourdomain,1046.mwrm
+//tests/fixtures/verifier/recorded/cgrosjean@10.10.43.13,proxyuser@win2008,20161025-165619,wab-4-2-4.yourdomain,2510.mwrm
+//tests/fixtures/verifier/recorded/cgrosjean@10.10.43.13,proxyuser@win2008,20161025-181703,wab-4-2-4.yourdomain,6759.mwrm
+//tests/fixtures/verifier/recorded/cgrosjean@10.10.43.13,proxyuser@win2008,20161025-184533,wab-4-2-4.yourdomain,1359.mwrm
+//tests/fixtures/verifier/recorded/cgrosjean@10.10.43.13,proxyuser@win2008,20161025-191724,wab-4-2-4.yourdomain,6734.mwrm
+//tests/fixtures/verifier/recorded/cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm
+//tests/fixtures/verifier/recorded/toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,wab-5-0-0.yourdomain,7681.mwrm
+//tests/fixtures/verifier/recorded/toto@10.10.43.13,Administrateur@QA@cible,20160218-183009,wab-5-0-0.yourdomain,7335.mwrm
+//tests/fixtures/verifier/recorded/v1_nochecksum_nocrypt.mwrm
+//tests/fixtures/verifier/recorded/v2_nochecksum_nocrypt.mwrm
+
+//python -O /opt/wab/bin/verifier.py -i /var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161025-213153,wab-4-2-4.yourdomain,3243.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161025-213153,wab-4-2-4.yourdomain,3243.mwrm".
+//Input file is encrypted.
+//verifier: -- get_trace_key_cb:::::(new scheme)
+//verifier: -- /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00\xd0\xd3\x71\x01\x00\x00\x00\x00" //..........q.....
+//verifier: -- /* 0010 */ "\x80\xea\x97\x41\xfa\x72\x00\x00\xd6\x26\x71\x41\xfa\x72\x00\x00" //...A.r...&qA.r..
+//verifier: -- derivator used:::::(new scheme)
+//verifier: -- /* 0000 */ "\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x40\x31\x30\x2e\x31\x30\x2e" //cgrosjean@10.10.
+//verifier: -- /* 0010 */ "\x34\x33\x2e\x31\x33\x2c\x70\x72\x6f\x78\x79\x75\x73\x65\x72\x40" //43.13,proxyuser@
+//verifier: -- /* 0020 */ "\x6c\x6f\x63\x61\x6c\x40\x77\x69\x6e\x32\x30\x30\x38\x2c\x32\x30" //local@win2008,20
+//verifier: -- /* 0030 */ "\x31\x36\x31\x30\x32\x35\x2d\x32\x31\x33\x31\x35\x33\x2c\x77\x61" //161025-213153,wa
+//verifier: -- /* 0040 */ "\x62\x2d\x34\x2d\x32\x2d\x34\x2e\x79\x6f\x75\x72\x64\x6f\x6d\x61" //b-4-2-4.yourdoma
+//verifier: -- /* 0050 */ "\x69\x6e\x2c\x33\x32\x34\x33\x2e\x6d\x77\x72\x6d"                 //in,3243.mwrm
+//hash file path: "/var/wab/hash/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161025-213153,wab-4-2-4.yourdomain,3243.mwrm".
+//verifier: -- get_hmac_key_cb:::::
+//verifier: -- /* 0000 */ "\x56\xdd\xb2\x92\x47\xbe\x4b\x89\x1f\x12\x62\x39\x0f\x10\xb9\x8e" //V...G.K...b9....
+//verifier: -- /* 0010 */ "\xac\xff\xbc\x8a\x8f\x71\xfb\x21\x07\x7d\xef\x9c\xb3\x5f\xf9\x7b" //.....q.!.}..._.{
+//No error detected during the data verification.
+
+//verify ok (4)
+
+//python -O /opt/wab/bin/verifier.py -i /var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026-131957,wab-4-2-4.yourdomain,1914.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026-131957,wab-4-2-4.yourdomain,1914.mwrm".
+//Input file is unencrypted.
+//hash file path: "/var/wab/hash/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026-131957,wab-4-2-4.yourdomain,1914.mwrm".
+//verifier: -- get_hmac_key_cb:::::
+//verifier: -- /* 0000 */ "\x56\xdd\xb2\x92\x47\xbe\x4b\x89\x1f\x12\x62\x39\x0f\x10\xb9\x8e" //V...G.K...b9....
+//verifier: -- /* 0010 */ "\xac\xff\xbc\x8a\x8f\x71\xfb\x21\x07\x7d\xef\x9c\xb3\x5f\xf9\x7b" //.....q.!.}..._.{
+//No error detected during the data verification.
+
+//verify ok (4)
+
+//python -O /opt/wab/bin/verifier.py -i /var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161026-132131,wab-4-2-4.yourdomain,9904.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161026-132131,wab-4-2-4.yourdomain,9904.mwrm".
+//Input file is unencrypted.
+//Input file don't include checksum
+//hash file path: "/var/wab/hash/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161026-132131,wab-4-2-4.yourdomain,9904.mwrm".
+//verifier: -- get_hmac_key_cb:::::
+//verifier: -- /* 0000 */ "\x56\xdd\xb2\x92\x47\xbe\x4b\x89\x1f\x12\x62\x39\x0f\x10\xb9\x8e" //V...G.K...b9....
+//verifier: -- /* 0010 */ "\xac\xff\xbc\x8a\x8f\x71\xfb\x21\x07\x7d\xef\x9c\xb3\x5f\xf9\x7b" //.....q.!.}..._.{
+//File "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161026-132131,wab-4-2-4.yourdomain,9904.mwrm" is invalid!
+
+//verify failed
+
+//python -O /opt/wab/bin/verifier.py -i /var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161115-160802,wab-4-2-4.yourdomain,9484.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161115-160802,wab-4-2-4.yourdomain,9484.mwrm".
+//Input file is unencrypted.
+//Input file don't include checksum
+//hash file path: "/var/wab/hash/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161115-160802,wab-4-2-4.yourdomain,9484.mwrm".
+//verifier: -- get_hmac_key_cb:::::
+//verifier: -- /* 0000 */ "\x56\xdd\xb2\x92\x47\xbe\x4b\x89\x1f\x12\x62\x39\x0f\x10\xb9\x8e" //V...G.K...b9....
+//verifier: -- /* 0010 */ "\xac\xff\xbc\x8a\x8f\x71\xfb\x21\x07\x7d\xef\x9c\xb3\x5f\xf9\x7b" //.....q.!.}..._.{
+//No error detected during the data verification.
+
+//verify ok (3)
+
+//python -O /opt/wab/bin/verifier.py -i /var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161115-160933,wab-4-2-4.yourdomain,5749.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161115-160933,wab-4-2-4.yourdomain,5749.mwrm".
+//Input file is unencrypted.
+//Input file don't include checksum
+//hash file path: "/var/wab/hash/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161115-160933,wab-4-2-4.yourdomain,5749.mwrm".
+//verifier: -- get_hmac_key_cb:::::
+//verifier: -- /* 0000 */ "\x56\xdd\xb2\x92\x47\xbe\x4b\x89\x1f\x12\x62\x39\x0f\x10\xb9\x8e" //V...G.K...b9....
+//verifier: -- /* 0010 */ "\xac\xff\xbc\x8a\x8f\x71\xfb\x21\x07\x7d\xef\x9c\xb3\x5f\xf9\x7b" //.....q.!.}..._.{
+//No error detected during the data verification.
+
+//verify ok (3)
+
+//python -O /opt/wab/bin/verifier.py -i /var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161115-161031,wab-4-2-4.yourdomain,1101.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161115-161031,wab-4-2-4.yourdomain,1101.mwrm".
+//Input file is unencrypted.
+//Input file don't include checksum
+//hash file path: "/var/wab/hash/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161115-161031,wab-4-2-4.yourdomain,1101.mwrm".
+//verifier: -- get_hmac_key_cb:::::
+//verifier: -- /* 0000 */ "\x56\xdd\xb2\x92\x47\xbe\x4b\x89\x1f\x12\x62\x39\x0f\x10\xb9\x8e" //V...G.K...b9....
+//verifier: -- /* 0010 */ "\xac\xff\xbc\x8a\x8f\x71\xfb\x21\x07\x7d\xef\x9c\xb3\x5f\xf9\x7b" //.....q.!.}..._.{
+//No error detected during the data verification.
+
+//verify ok (3)
+
+//python -O /opt/wab/bin/verifier.py -i /var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161115-161323,wab-4-2-4.yourdomain,7569.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161115-161323,wab-4-2-4.yourdomain,7569.mwrm".
+//Input file is unencrypted.
+//Input file don't include checksum
+//hash file path: "/var/wab/hash/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161115-161323,wab-4-2-4.yourdomain,7569.mwrm".
+//verifier: -- get_hmac_key_cb:::::
+//verifier: -- /* 0000 */ "\x56\xdd\xb2\x92\x47\xbe\x4b\x89\x1f\x12\x62\x39\x0f\x10\xb9\x8e" //V...G.K...b9....
+//verifier: -- /* 0010 */ "\xac\xff\xbc\x8a\x8f\x71\xfb\x21\x07\x7d\xef\x9c\xb3\x5f\xf9\x7b" //.....q.!.}..._.{
+//No error detected during the data verification.
+
+//verify ok (3)
+
+// python -O /opt/wab/bin/verifier.py -i /var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161115-161654,wab-4-2-4.yourdomain,6669.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161115-161654,wab-4-2-4.yourdomain,6669.mwrm".
+//Input file is unencrypted.
+//Input file don't include checksum
+//hash file path: "/var/wab/hash/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161115-161654,wab-4-2-4.yourdomain,6669.mwrm".
+//verifier: -- get_hmac_key_cb:::::
+//verifier: -- /* 0000 */ "\x56\xdd\xb2\x92\x47\xbe\x4b\x89\x1f\x12\x62\x39\x0f\x10\xb9\x8e" //V...G.K...b9....
+//verifier: -- /* 0010 */ "\xac\xff\xbc\x8a\x8f\x71\xfb\x21\x07\x7d\xef\x9c\xb3\x5f\xf9\x7b" //.....q.!.}..._.{
+//No error detected during the data verification.
+
+//verify ok (3)
+
+// python -O /opt/wab/bin/verifier.py -i /var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161115-163245,wab-4-2-4.yourdomain,7749.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161115-163245,wab-4-2-4.yourdomain,7749.mwrm".
+//Input file is unencrypted.
+//Input file don't include checksum
+//hash file path: "/var/wab/hash/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161115-163245,wab-4-2-4.yourdomain,7749.mwrm".
+//verifier: INFO -- get_hmac_key_cb:::::
+//verifier: INFO -- /* 0000 */ "\x56\xdd\xb2\x92\x47\xbe\x4b\x89\x1f\x12\x62\x39\x0f\x10\xb9\x8e" //V...G.K...b9....
+//verifier: INFO -- /* 0010 */ "\xac\xff\xbc\x8a\x8f\x71\xfb\x21\x07\x7d\xef\x9c\xb3\x5f\xf9\x7b" //.....q.!.}..._.{
+//No error detected during the data verification.
+
+//verify ok (3)
+
+//python -O /opt/wab/bin/verifier.py -i /var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161201-155259,wab-4-2-4.yourdomain,8299.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161201-155259,wab-4-2-4.yourdomain,8299.mwrm".
+//Input file is unencrypted.
+//Input file don't include checksum
+//hash file path: "/var/wab/hash/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161201-155259,wab-4-2-4.yourdomain,8299.mwrm".
+//verifier: -- get_hmac_key_cb:::::
+//verifier: -- /* 0000 */ "\x56\xdd\xb2\x92\x47\xbe\x4b\x89\x1f\x12\x62\x39\x0f\x10\xb9\x8e" //V...G.K...b9....
+//verifier: -- /* 0010 */ "\xac\xff\xbc\x8a\x8f\x71\xfb\x21\x07\x7d\xef\x9c\xb3\x5f\xf9\x7b" //.....q.!.}..._.{
+//No error detected during the data verification.
+
+//verify ok (3)
+
+//python -O /opt/wab/bin/verifier.py -i /var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161201-163203,wab-4-2-4.yourdomain,1046.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161201-163203,wab-4-2-4.yourdomain,1046.mwrm".
+//Input file is encrypted.
+//verifier: -- get_trace_key_cb:::::(new scheme)
+//verifier: -- /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00\xd0\xda\xa8\x03\x00\x00\x00\x00" //................
+//verifier: -- /* 0010 */ "\x80\x5a\xa5\xbe\x80\x77\x00\x00\xd6\x96\x7e\xbe\x80\x77\x00\x00" //.Z...w....~..w..
+//verifier: -- derivator used:::::(new scheme)
+//verifier: -- /* 0000 */ "\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x40\x31\x30\x2e\x31\x30\x2e" //cgrosjean@10.10.
+//verifier: -- /* 0010 */ "\x34\x33\x2e\x31\x33\x2c\x70\x72\x6f\x78\x79\x75\x73\x65\x72\x40" //43.13,proxyuser@
+//verifier: -- /* 0020 */ "\x6c\x6f\x63\x61\x6c\x40\x77\x69\x6e\x32\x30\x30\x38\x2c\x32\x30" //local@win2008,20
+//verifier: -- /* 0030 */ "\x31\x36\x31\x32\x30\x31\x2d\x31\x36\x33\x32\x30\x33\x2c\x77\x61" //161201-163203,wa
+//verifier: -- /* 0040 */ "\x62\x2d\x34\x2d\x32\x2d\x34\x2e\x79\x6f\x75\x72\x64\x6f\x6d\x61" //b-4-2-4.yourdoma
+//verifier: -- /* 0050 */ "\x69\x6e\x2c\x31\x30\x34\x36\x2e\x6d\x77\x72\x6d"                 //in,1046.mwrm
+//hash file path: "/var/wab/hash/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161201-163203,wab-4-2-4.yourdomain,1046.mwrm".
+//verifier: -- get_hmac_key_cb:::::
+//verifier: -- /* 0000 */ "\x56\xdd\xb2\x92\x47\xbe\x4b\x89\x1f\x12\x62\x39\x0f\x10\xb9\x8e" //V...G.K...b9....
+//verifier: -- /* 0010 */ "\xac\xff\xbc\x8a\x8f\x71\xfb\x21\x07\x7d\xef\x9c\xb3\x5f\xf9\x7b" //.....q.!.}..._.{
+//No error detected during the data verification.
+
+//verify ok (4)
+
+BOOST_AUTO_TEST_CASE(TestVerifier1914MigratedNocryptHasChecksum)
+{
+    LOG(LOG_INFO, "=================== TestVerifier1914MigratedNocryptHasChecksum =============");
+
+    char const * argv[] {
+        "verifier.py", "redver",
+        "-i", "cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026-131957,wab-4-2-4.yourdomain,1914.mwrm",
+        "--hash-path", FIXTURES_PATH "/verifier/hash/",
+        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "--verbose", "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    BOOST_CHECK_EQUAL(true, true);
+
+    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    BOOST_CHECK_EQUAL(0, res);
+}
+
+// cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026-132156,wab-4-2-4.yourdomain,9904.mwrm
+//python -O /opt/wab/bin/verifier.py -i /var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026-132156,wab-4-2-4.yourdomain,9904.mwrm
+//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026-132156,wab-4-2-4.yourdomain,9904.mwrm".
+//Input file is unencrypted.
+//Input file don't include checksum
+//hash file path: "/var/wab/hash/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026-132156,wab-4-2-4.yourdomain,9904.mwrm".
+//verifier: -- get_hmac_key_cb:::::
+//verifier: -- /* 0000 */ "\x56\xdd\xb2\x92\x47\xbe\x4b\x89\x1f\x12\x62\x39\x0f\x10\xb9\x8e" //V...G.K...b9....
+//verifier: -- /* 0010 */ "\xac\xff\xbc\x8a\x8f\x71\xfb\x21\x07\x7d\xef\x9c\xb3\x5f\xf9\x7b" //.....q.!.}..._.{
+//File "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026-132156,wab-4-2-4.yourdomain,9904.mwrm" is invalid!
+
+//verify failed
+
+BOOST_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
+{
+    LOG(LOG_INFO, "=================== TestVerifier9904NocryptNochecksumStatinfo =============");
+
+    char const * argv[] {
+        "verifier.py", "redver",
+        "-i", "cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026-132156,wab-4-2-4.yourdomain,9904.mwrm",
+        "--hash-path", FIXTURES_PATH "/verifier/hash/",
+        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "--verbose", "10",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    BOOST_CHECK_EQUAL(true, true);
+
+    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    BOOST_CHECK_EQUAL(1, res);
+}
 
 BOOST_AUTO_TEST_CASE(TestAppRecorder)
 {
-    char const * argv[] {
+   LOG(LOG_INFO, "=================== TestAppRecorder =============");
+     char const * argv[] {
         "recorder.py",
         "redrec",
         "-i",

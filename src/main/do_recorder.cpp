@@ -18,17 +18,20 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
-
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdint.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-
-#include "system/ssl_calls.hpp"
-
+#include <snappy-c.h>
+#include <stdint.h>
+#include <unistd.h>
 #include "openssl_crypto.hpp"
+
+#include "utils/log.hpp"
+#include "transport/transport.hpp"
+#include "system/ssl_calls.hpp"
 
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/exchange.hpp"
@@ -37,14 +40,12 @@
 #include "utils/fdbuf.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/urandom_read.hpp"
-#include "utils/log.hpp"
 #include "utils/word_identification.hpp"
 #include "configs/config.hpp"
 #include "program_options/program_options.hpp"
 
 #include "main/version.hpp"
 
-#include "transport/in_filename_transport.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "transport/out_file_transport.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
@@ -58,9 +59,6 @@
 #include "utils/apps/recording_progress.hpp"
 
 
-
-
-
 struct HashHeader {
     unsigned version;
 };
@@ -72,11 +70,16 @@ inline void load_hash(
     unsigned int infile_version, bool infile_is_checksumed,
     CryptoContext & cctx, bool infile_is_encrypted, int verbose
 ) {
+    LOG(LOG_INFO, "trying load_hash");
+
     ifile_read_encrypted in_hash_fb(cctx, infile_is_encrypted);
 
     if (in_hash_fb.open(full_hash_path.c_str()) < 0) {
+        LOG(LOG_INFO, "Open load_hash failed");
         throw Error(ERR_TRANSPORT_OPEN_FAILED);
     }
+
+    LOG(LOG_INFO, "reading header from hash file");
 
     char buffer[8192]{};
     ssize_t len;
@@ -271,16 +274,20 @@ static inline int check_encrypted_or_checksumed(
 
 //    cctx.old_encryption_scheme = true;
     ifile_read_encrypted ibuf(cctx, encryption);
+
+    LOG(LOG_INFO, "ibuf.open");
     
     if (ibuf.open(full_mwrm_filename.c_str()) < 0){
+        LOG(LOG_INFO, "ibuf.open error");
         throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
     }
 
+    LOG(LOG_INFO, "ibuf.open encryption");
     // now force encryption for sub files
     bool infile_is_encrypted = ibuf.encrypted;
 
     MwrmReader reader(ibuf);
-    reader.read_meta_headers();
+    reader.read_meta_headers(ibuf.encrypted);
 
     // if we have version 1 header, ignore stat info
     ignore_stat_info |= (reader.header.version == 1);
@@ -321,9 +328,13 @@ static inline int check_encrypted_or_checksumed(
         ignore_stat_info, cctx.get_hmac_key(), 32,
         update_stat_info, out_is_mismatch{has_mismatch_stat_hash}
     )){
+        LOG(LOG_INFO, "Not Check file");
         if (!has_mismatch_stat_hash) {
             return 1;
         }
+    }
+    else {
+        LOG(LOG_INFO, "Check file");
     }
 
     struct MetaLine2CtxForRewriteStat
@@ -336,13 +347,20 @@ static inline int check_encrypted_or_checksumed(
     std::vector<MetaLine2CtxForRewriteStat> meta_line_ctx_list;
     bool wrm_stat_is_ok = true;
 
+
     MetaLine2 meta_line_wrm;
 
+    LOG(LOG_INFO, "looking for parts files");
     while (reader.read_meta_file(meta_line_wrm)) {
+    
+        
         size_t tmp_wrm_filename_len = 0;
         const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
         std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
         std::string const full_part_filename = mwrm_path + meta_line_wrm_filename;
+
+        LOG(LOG_INFO, "checking part %s", full_part_filename.c_str());
+
 
         bool has_mismatch_stat_mwrm = false;
         if (!check_file(
@@ -350,6 +368,7 @@ static inline int check_encrypted_or_checksumed(
             ignore_stat_info, cctx.get_hmac_key(), 32,
             update_stat_info, out_is_mismatch{has_mismatch_stat_mwrm})
         ){
+            LOG(LOG_INFO, "not check_file");
             if (has_mismatch_stat_mwrm) {
                 wrm_stat_is_ok = false;
             }
@@ -357,6 +376,8 @@ static inline int check_encrypted_or_checksumed(
                 return 1;
             }
         }
+
+        LOG(LOG_INFO, "check_file");
 
         if (update_stat_info) {
             meta_line_ctx_list.push_back({
@@ -1289,6 +1310,7 @@ inline int app_recorder(
     std::cout << "Input file is \"" << input_filename << "\".\n";
 
     bool infile_is_encrypted;
+//    switch (encryption_type(input_filename.c_str(), cctx())
     if (is_encrypted_file(input_filename.c_str(), infile_is_encrypted) == -1) {
         std::cerr << "Input file is absent.\n";
         return 1;
@@ -1559,6 +1581,7 @@ extern "C" {
         case 1: // VERifier
             ini.set<cfg::debug::config>(false);
             try {
+                LOG(LOG_INFO, "VERIFIER [1]");
                 openlog("verifier", LOG_CONS | LOG_PERROR, LOG_USER);
 
                 std::string hash_path      = ini.get<cfg::video::hash_path>().c_str()  ;
@@ -1568,6 +1591,8 @@ extern "C" {
                 bool      ignore_stat_info = false;
                 bool      update_stat_info = false;
                 uint32_t    verbose        = 0;
+
+                LOG(LOG_INFO, "VERIFIER [2]");
 
                 program_options::options_description desc({
                     {'h', "help",    "produce help message"},
@@ -1646,11 +1671,16 @@ extern "C" {
                 }
                 std::cout << "Input file is \"" << mwrm_path << input_filename << "\".\n";
 
+                std::string full_path = mwrm_path + input_filename;
+
                 if (verbose) {
                     LOG(LOG_INFO, "hash_path=\"%s\"", hash_path.c_str());
                     LOG(LOG_INFO, "mwrm_path=\"%s\"", mwrm_path.c_str());
                     LOG(LOG_INFO, "file_name=\"%s\"", input_filename.c_str());
+                    LOG(LOG_INFO, "full_path=\"%s\"", full_path.c_str());
                 }
+
+                encryption_type(full_path, cctx);
 
                 OpenSSL_add_all_digests();
 
@@ -1667,6 +1697,7 @@ extern "C" {
             try {
                 openlog("decrypter", LOG_CONS | LOG_PERROR, LOG_USER);
 
+                LOG(LOG_INFO, "decrypter!");
                 std::string input_filename;
                 std::string output_filename;
 
@@ -1714,45 +1745,51 @@ extern "C" {
 
                 OpenSSL_add_all_digests();
 
-                size_t base_len = 0;
-                const uint8_t * base = reinterpret_cast<const uint8_t *>(
-                                basename_len(input_filename.c_str(), base_len));
-
-                InFilenameTransport in_t(cctx, fd, base, base_len);
-                if (!in_t.is_encrypted()){
-                    std::cout << "Input file is unencrypted.\n\n";
+                if (0 == encryption_type(input_filename, cctx)){
+                    std::puts("File is not encrypted\n");
                     return 0;
                 }
 
+                ifile_read_encrypted in_t(cctx, 1);
+
+                ssize_t res = -1;
                 const int fd1 = open(output_filename.c_str(), O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
+
                 if (fd1 != -1) {
                     OutFileTransport out_t(fd1);
 
                     char mem[4096];
-                    char *buf;
 
                     try {
+                        in_t.open(input_filename.c_str());
                         while (1) {
-                            buf = mem;
-                            in_t.recv(&buf, sizeof(mem));
-                            out_t.send(mem, buf-mem);
+                            res = in_t.read(mem, sizeof(mem));
+                            if (res == 0){
+                                break;
+                            }
+                            if (res < 0){
+                                break;
+                            }
+                            out_t.send(mem, res);
                         }
                     }
                     catch (Error const & e) {
-                        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-                            std::cerr << "Exception code: " << e.id << std::endl << std::endl;
-                        }
-                        else {
-                            out_t.send(mem, buf - mem);
-                        }
+                        LOG(LOG_INFO, "Exited on exception");
+                        res = -1;
                     }
                     close(fd);
                 }
                 else {
                     std::cerr << strerror(errno) << std::endl << std::endl;
                 }
-                std::puts("decrypt ok\n");
-                return 0;
+                if (res == 0){
+                    std::puts("decrypt ok\n");
+                    return 0;
+                }
+                else {
+                    std::puts("decrypt failed\n");
+                    return -1;
+                }
             } catch (const Error & e) {
                 std::printf("decrypt failed: with id=%d\n", e.id);
             }

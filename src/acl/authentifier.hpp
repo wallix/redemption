@@ -579,12 +579,7 @@ public:
         const bool log_redir = this->ini.get<cfg::session_log::session_log_redirection>();
 
         if (log_redir) {
-            std::string filename = std::string("/var/wab/recorded/rdp/")
-                    +  this->ini.get<cfg::globals::auth_user>() + std::string("@")
-                    +  this->ini.get<cfg::context::target_host>() + std::string(",")
-                    +  this->ini.get<cfg::globals::target_user>() + std::string("@")
-                    +  this->ini.get<cfg::globals::target_device>()
-                    +  std::string(".log");
+            std::string filename = this->ini.get<cfg::session_log::log_path>().c_str();
             std::ofstream log_file(filename, std::fstream::out | std::fstream::app);
 
             if(log_file.bad()) {
@@ -606,7 +601,7 @@ public:
                 log_file << "device=" << this->ini.get<cfg::globals::target_device>() << " " ;
                 log_file << "service=" << this->ini.get<cfg::context::target_service>() << " " ;
                 log_file << "account=" << this->ini.get<cfg::globals::target_user>() << " " ;
-                log_file << (extra ? extra : "") << "\n" << std::endl;
+                log_file << (extra ? extra : "") << std::endl;
                 log_file.close();
             }
         }

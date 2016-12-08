@@ -271,6 +271,11 @@ struct Dimension {
     uint16_t w;
     uint16_t h;
 
+    Dimension()
+        : w(0)
+        , h(0)
+    {}
+
     Dimension(uint16_t w, uint16_t h)
         : w(w)
         , h(h)

@@ -74,37 +74,37 @@ public:
                  bool showtimer, Font const & font, Theme const & theme,
                  Translation::language_t lang, bool back_selector = false)
     : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier)
-    , connection_closed_label(drawable, /*0, 0, */*this, nullptr, TR("connection_closed", lang),
-                              /*true, */-13, theme.global.fgcolor,
+    , connection_closed_label(drawable, *this, nullptr, TR("connection_closed", lang),
+                              -13, theme.global.fgcolor,
                               theme.global.bgcolor, font)
-    , separator(drawable, Rect(0, 0, /*width, 2*/0, 0), *this, this, -12,
+    , separator(drawable, Rect(0, 0, 0, 0), *this, this, -12,
                 theme.global.separator_color)
-    , username_label(drawable/*, (width - 600) / 2, 0*/, *this, nullptr, "Username:"/*, true*/, -11,
+    , username_label(drawable, *this, nullptr, "Username:", -11,
                      theme.global.fgcolor, theme.global.bgcolor, font)
-    , username_value(drawable/*, 0, 0*/, *this, nullptr, username/*, true*/, -11,
-                           theme.global.fgcolor, theme.global.bgcolor, font)
-    , target_label(drawable, /*(width - 600) / 2, 0, */*this, nullptr, "Target:", /*true, */-12,
+    , username_value(drawable, *this, nullptr, username, -11,
+                     theme.global.fgcolor, theme.global.bgcolor, font)
+    , target_label(drawable, *this, nullptr, "Target:", -12,
                    theme.global.fgcolor, theme.global.bgcolor, font)
-    , target_value(drawable, /*0, 0, */*this, nullptr, target, /*true, */-12,
-                         theme.global.fgcolor, theme.global.bgcolor, font)
-    , diagnostic_label(drawable, /*(width - 600) / 2, 0, */*this, nullptr, "Diagnostic:"/*, true*/, -15,
-                 theme.global.fgcolor, theme.global.bgcolor, font)
-    , diagnostic_value(drawable, /*0, 0, */*this, nullptr, diagnostic_text/*, true*/, -16,
+    , target_value(drawable, *this, nullptr, target, -12,
+                   theme.global.fgcolor, theme.global.bgcolor, font)
+    , diagnostic_label(drawable, *this, nullptr, "Diagnostic:", -15,
                        theme.global.fgcolor, theme.global.bgcolor, font)
-    , timeleft_label(drawable, /*(width - 600) / 2, 0, */*this, nullptr, "Time left:", /*true, */-12,
+    , diagnostic_value(drawable, *this, nullptr, diagnostic_text, -16,
+                       theme.global.fgcolor, theme.global.bgcolor, font)
+    , timeleft_label(drawable, *this, nullptr, "Time left:", -12,
                      theme.global.fgcolor, theme.global.bgcolor, font)
-    , timeleft_value(drawable, /*0, 0, */*this, nullptr, nullptr, /*true, */-12,
+    , timeleft_value(drawable, *this, nullptr, nullptr, -12,
                      theme.global.fgcolor, theme.global.bgcolor, font)
-    , cancel(drawable, /*0, 0, */*this, this, TR("close", lang), /*true, */-14,
+    , cancel(drawable, *this, this, TR("close", lang), -14,
              theme.global.fgcolor, theme.global.bgcolor,
              theme.global.focus_color, font, 6, 2)
-    , back(back_selector ? new WidgetFlatButton(drawable, /*0, 0, */*this, this,
-                                                TR("back_selector", lang), /*true, */-14,
+    , back(back_selector ? new WidgetFlatButton(drawable, *this, this,
+                                                TR("back_selector", lang), -14,
                                                 theme.global.fgcolor,
                                                 theme.global.bgcolor,
                                                 theme.global.focus_color, font,
                                                 6, 2) : nullptr)
-    , img(drawable, /*0, 0,*/
+    , img(drawable,
           theme.global.logo ? theme.global.logo_path :
           SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
     , bg_color(theme.global.bgcolor)
@@ -126,96 +126,29 @@ public:
         snprintf(label, sizeof(label), "%s:", TR("timeleft", lang));
         this->timeleft_label.set_text(label);
 
-//        Dimension dim = this->username_label.get_optimal_dim();
-//        this->username_label.set_wh(dim);
-//        this->username_label.set_x((width - 600) / 2);
-
-//        dim = this->cancel.get_optimal_dim();
-//        this->cancel.set_wh(dim);
-
-//        int const back_width = this->back ? this->back->cx() + 10 : 0;
-//        this->cancel.set_x(left + (this->cx() - (this->cancel.cx() + back_width)) / 2);
-//        this->connection_closed_label.set_x(left + (this->cx() - this->connection_closed_label.cx()) / 2);
-
-//        this->separator.set_x(left + (this->cx() - 600) / 2);
-//        this->separator.set_cx(600);
-
         this->add_widget(&this->connection_closed_label);
-        this->add_widget(&this->cancel);
-        this->add_widget(&this->diagnostic_label);
-        this->add_widget(&this->diagnostic_value);
         this->add_widget(&this->separator);
-
-//        uint16_t px = this->diagnostic_label.cx() + 10;
-//        if (username && *username) {
-//            px = std::max<uint16_t>(this->username_label.cx() + 10, px);
-//            px = std::max<uint16_t>(this->target_label.cx() + 10, px);
-//        }
-//        if (showtimer) {
-//            px = std::max<uint16_t>(this->timeleft_label.cx() + 10, px);
-//        }
-
-//        int y = this->y() + 10 - top;
-
-//        this->connection_closed_label.set_y(top + y);
-//        y += this->connection_closed_label.cy();
-
-//        this->separator.set_y(top + y + 3);
-//        y += 30;
 
         if (username && *username) {
             this->add_widget(&this->username_label);
             this->add_widget(&this->username_value);
             this->add_widget(&this->target_label);
             this->add_widget(&this->target_value);
-
-//            this->username_value.set_x(this->username_label.x() + px);
-//            this->target_value.set_x(this->username_label.x() + px);
-
-//            this->username_label.set_y(top + y);
-//            this->username_value.set_y(top + y);
-//            y += this->username_label.cy() + 20;
-//            this->target_label.set_y(top + y);
-//            this->target_value.set_y(top + y);
-//            y += this->target_label.cy() + 20;
         }
-//        this->diagnostic_label.set_y(top + y);
-//        if (this->diagnostic_label.cx() > this->cx() - (px + 10)) {
-//            y += this->diagnostic_label.cy() + 10;
-//            this->diagnostic_value.set_y(top + y);
-//            y += this->diagnostic_value.cy() + 20;
-//        }
-//        else {
-//            this->diagnostic_value.set_y(top + y);
-//            y += std::max(this->diagnostic_value.cy(), this->diagnostic_label.cy()) + 20;
-//            this->diagnostic_value.set_x(this->username_label.x() + px);
-//        }
+
+        this->add_widget(&this->diagnostic_label);
+        this->add_widget(&this->diagnostic_value);
 
         if (showtimer) {
             this->add_widget(&this->timeleft_label);
             this->add_widget(&this->timeleft_value);
-//            this->timeleft_label.set_y(top + y);
-//            this->timeleft_value.set_y(top + y);
-//            this->timeleft_value.set_x(this->username_label.x() + px);
-//            y += this->timeleft_label.cy() + 20;
         }
+
+        this->add_widget(&this->cancel);
 
         if (this->back) {
             this->add_widget(this->back);
-//            this->back->set_x(this->cancel.x() + this->cancel.cx() + 10);
-//            this->back->set_y(top + y);
         }
-
-//        this->cancel.set_y(top + y);
-//        y += this->cancel.cy();
-
-//        this->move_xy(0, (height - y) / 2);
-
-//        this->img.set_x(left + (this->cx() - this->img.cx()) / 2);
-//        this->img.set_y(top + (3*(height - y) / 2 - this->img.cy()) / 2 + y);
-//        if (this->img.y() + this->img.cy() > top + height) {
-//            this->img.set_y(top);
-//        }
 
         this->move_size_widget(left, top, width, height);
 

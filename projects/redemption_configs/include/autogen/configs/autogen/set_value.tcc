@@ -386,6 +386,18 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 static_cast<cfg::session_log::session_log_redirection&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "log_path")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::session_log::log_path&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::session_log::log_path&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "keyboard_input_masking_level")) {
             ::configs::parse_and_log(
                 context, key,

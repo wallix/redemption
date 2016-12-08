@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <snappy-c.h>
+#include <iostream>
 #include "capture/cryptofile.hpp"
 #include "utils/sugar/local_fd.hpp"
 #include "utils/chex_to_int.hpp"
@@ -27,6 +28,51 @@ extern "C" {
 }
 
 enum { QUICK_CHECK_LENGTH = 4096 };
+
+
+
+static inline int is_file_encrypted(const std::string & full_filename)
+{
+    uint8_t tmp_buf[4] ={};
+    int fd = open(full_filename.c_str(), O_RDONLY);
+    if (fd == -1){
+        std::cerr << "Input file missing.\n";
+        return -1;
+    }
+    struct fdbuf
+    {
+        int fd;
+        explicit fdbuf(int fd) noexcept : fd(fd){}
+        ~fdbuf() {::close(this->fd);}
+    } file(fd);
+
+    const size_t len = sizeof(tmp_buf);
+    size_t remaining_len = len;
+    while (remaining_len) {
+        ssize_t ret = ::read(fd, &tmp_buf[len - remaining_len], remaining_len);
+        if (ret < 0){
+            if (ret == 0){
+                std::cerr << "Input file truncated\n";
+                return -1;
+            }
+            if (errno == EINTR){
+                continue;
+            }
+            // Error should still be there next time we try to read
+            std::cerr << "Input file error\n";
+            return -1;
+        }
+        // We must exit loop or we will enter infinite loop
+        remaining_len -= ret;
+    }
+
+    const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+    if (magic == WABCRYPTOFILE_MAGIC) {
+        std::cout << "Input file is encrypted.\n";
+        return 1;
+    }
+    return 0;
+}
 
 // Compute HmacSha256
 // up to check_size or end of file whicherver happens first
@@ -286,7 +332,7 @@ public:
     : line_reader(ibuf)
     {}
 
-    void read_meta_headers()
+    void read_meta_headers(bool encrypted)
     {
         auto next_line = [this]{
             if (!this->line_reader.next_line()) {
@@ -300,22 +346,31 @@ public:
             next_line(); // checksum or nochecksum
         }
         this->header.has_checksum
-          = (this->header.version > 1)
-         && (this->line_reader.get_buf()[0] == 'c');
+          = encrypted 
+          || ((this->header.version > 1) && (this->line_reader.get_buf()[0] == 'c'));
         // else v1
+        LOG(LOG_INFO, "Reading blank");
         next_line(); // blank
+        LOG(LOG_INFO, "in line buffer '%s'", this->line_reader.get_buf().begin());
+        LOG(LOG_INFO, "Reading blank");
         next_line(); // blank
+        LOG(LOG_INFO, "in line buffer '%s'", this->line_reader.get_buf().begin());
     }
 
     /// \return false if end of file
     bool read_meta_file(MetaLine2 & meta_line)
     {
+        LOG(LOG_INFO, "read_meta_file %s", this->line_reader.get_buf().begin());
+
         if (!this->line_reader.next_line()) {
             return false;
         }
+        LOG(LOG_INFO, "read_meta_file: after reading line %s", this->line_reader.get_buf().begin());
 
         auto cur = this->line_reader.get_buf().begin();
         auto eol = this->line_reader.get_buf().end();
+
+        LOG(LOG_INFO, "read_meta_file [1]");
 
         // Line format "filename
         // [st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime]
@@ -329,6 +384,7 @@ public:
         using reverse_iterator = std::reverse_iterator<char*>;
         reverse_iterator first(cur);
         reverse_iterator space(eol);
+        LOG(LOG_INFO, "read_meta_file [2] has_checksum=%d", header.has_checksum);
         for(int i = 0; i < ((header.version==1)?2:10) + 2*header.has_checksum; ++i){
             space = std::find(space, first, ' ');
             ++space;
@@ -338,10 +394,15 @@ public:
             reinterpret_cast<uint8_t*>(meta_line.filename),
             path_len, cur, eol, ERR_TRANSPORT_READ_FAILED
         );
+
         ++cur;
         meta_line.filename[path_len] = 0;
 
+        LOG(LOG_INFO, "read_meta_file [3] filename='%s' %*s", meta_line.filename, static_cast<int>(eol-cur), cur);
+
         if (this->header.version == 1){
+            LOG(LOG_INFO, "read_meta_file [4]");
+
             meta_line.size = 0;
             meta_line.mode = 0;
             meta_line.uid = 0;
@@ -352,6 +413,8 @@ public:
             meta_line.ctime = 0;
         }
         else{ // v2
+            LOG(LOG_INFO, "read_meta_file [5] %*s", static_cast<int>(eol-cur), cur);
+
             meta_line.size = get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
             meta_line.mode = get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
             meta_line.uid = get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
@@ -362,9 +425,13 @@ public:
             meta_line.ctime = get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
         }
 
+        LOG(LOG_INFO, "read_meta_file [6] %*s", static_cast<int>(eol-cur), cur);
+
         meta_line.start_time = get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
         meta_line.stop_time = get_ll(cur, eol, this->header.has_checksum?' ':'\n',
                                             ERR_TRANSPORT_READ_FAILED);
+
+        LOG(LOG_INFO, "read_meta_file [7] %*s", static_cast<int>(eol-cur), cur);
         if (header.has_checksum){
             // HASH1 + space
             in_hex256(meta_line.hash1, MD_HASH_LENGTH, cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
@@ -376,7 +443,9 @@ public:
             memset(meta_line.hash2, 0, sizeof(meta_line.hash2));
         }
 
+        LOG(LOG_INFO, "read_meta_file [8] %*s", static_cast<int>(eol-cur), cur);
         // TODO: check the whole line has been consumed (or it's an error)
+        LOG(LOG_INFO, "read_meta_file: done %s", this->line_reader.get_buf().begin());        
         return true;
     }
 };
@@ -709,4 +778,58 @@ public:
         return -1;
     }
 };
+
+static inline int encryption_type(const std::string & full_filename, CryptoContext & cctx)
+{
+    uint8_t tmp_buf[4] ={};
+    int fd = open(full_filename.c_str(), O_RDONLY);
+    if (fd == -1){
+        std::cerr << "Input file missing.\n";
+        return -1;
+    }
+
+    {
+        struct fdbuf
+        {
+            int fd;
+            explicit fdbuf(int fd) noexcept : fd(fd){}
+            ~fdbuf() {::close(this->fd);}
+        } file(fd);
+
+        const size_t len = sizeof(tmp_buf);
+        size_t remaining_len = len;
+        while (remaining_len) {
+            ssize_t ret = ::read(fd, &tmp_buf[len - remaining_len], remaining_len);
+            if (ret < 0){
+                if (ret == 0){
+                    std::cerr << "Input file truncated\n";
+                    return -1;
+                }
+                if (errno == EINTR){
+                    continue;
+                }
+                // Error should still be there next time we try to read
+                std::cerr << "Input file error\n";
+                return -1;
+            }
+            // We must exit loop or we will enter infinite loop
+            remaining_len -= ret;
+        }
+    }
+
+    const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+    if (magic == WABCRYPTOFILE_MAGIC) {
+        ifile_read_encrypted in_test(cctx, 1);
+        in_test.open(full_filename.c_str());
+        char mem[4096];
+        ssize_t res = in_test.read(mem, sizeof(mem));
+        if (res < 0){
+            cctx.old_encryption_scheme = 1;
+            return 1;
+        }
+        return 2;
+    }
+    return 0;
+}
+
 

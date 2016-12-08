@@ -46,12 +46,12 @@ public:
                     // TODO re-enable
                     int /*xtext*/ = 0, int /*ytext*/ = 0, bool pass = false)
         : Widget2(drawable, Rect(0, 0, cx, 1), parent, notifier, group_id)
-        , button(drawable, 0, 0, *this, this, "\xe2\x9e\x9c", true,
+        , button(drawable, *this, this, "\xe2\x9e\x9c",
                  group_id, bgcolor, focus_color, focus_color, font, 6, 2)
-        , editbox(pass ? new WidgetPassword(drawable, 0, 0, cx - this->button.cx(), *this,
+        , editbox(pass ? new WidgetPassword(drawable, *this,
                                             this, text, group_id, fgcolor, bgcolor,
                                             focus_color, font, edit_position, 1, 2)
-                  : new WidgetEdit(drawable, 0, 0, cx - this->button.cx(), *this, this,
+                  : new WidgetEdit(drawable, *this, this,
                                    text, group_id, fgcolor, bgcolor, focus_color, font,
                                    edit_position, 1, 2))
         , label(title ? new WidgetLabel(drawable, 0, 0, *this, nullptr, title, true,
@@ -59,19 +59,42 @@ public:
                 : nullptr)
         , use_label_(use_title)
     {
-        this->button.set_x(this->editbox->right() - 1);
-        this->editbox->set_cy(this->button.cy());
-        this->set_cy(this->editbox->cy());
-        this->set_cx(this->button.right() - this->x());
-        this->set_xy(x, y);
-        this->editbox->draw_border_focus = false;
+        Dimension dim = get_optimal_dim();
+        this->set_wh(cx, dim.h);
 
-        if (this->label) {
-            this->label->set_cx(this->editbox->cx() - 1);
-            this->label->set_cy(this->editbox->cy() - 1);
-            this->label->set_x(this->label->x() + 1);
-            this->label->set_y(this->label->y() + 1);
-        }
+        this->set_xy(x, y);
+
+        this->editbox->draw_border_focus = false;
+    }
+
+    WidgetEditValid(gdi::GraphicApi & drawable,
+                    Widget2 & parent, NotifyApi* notifier, const char * text,
+                    int group_id, int fgcolor, int bgcolor,
+                    int focus_color, Font const & font,
+                    const char * title, bool use_title, std::size_t edit_position = -1,
+                    // TODO re-enable
+                    int /*xtext*/ = 0, int /*ytext*/ = 0, bool pass = false)
+        : Widget2(drawable, parent, notifier, group_id)
+        , button(drawable, *this, this, "\xe2\x9e\x9c",
+                 group_id, bgcolor, focus_color, focus_color, font, 6, 2)
+        , editbox(pass ? new WidgetPassword(drawable, *this,
+                                            this, text, group_id, fgcolor, bgcolor,
+                                            focus_color, font, edit_position, 1, 2)
+                  : new WidgetEdit(drawable, *this, this,
+                                   text, group_id, fgcolor, bgcolor, focus_color, font,
+                                   edit_position, 1, 2))
+        , label(title ? new WidgetLabel(drawable, *this, nullptr, title,
+                                        group_id, MEDIUM_GREY, bgcolor, font, 1, 2)
+                : nullptr)
+        , use_label_(use_title)
+    {
+        this->editbox->draw_border_focus = false;
+    }
+
+    Dimension get_optimal_dim() override {
+        Dimension dim = this->button.get_optimal_dim();
+
+        return dim;
     }
 
     ~WidgetEditValid() override {
@@ -102,7 +125,7 @@ public:
     void set_x(int16_t x) override {
         Widget2::set_x(x);
         this->editbox->set_x(x);
-        this->button.set_x(this->editbox->right() - 1);
+        this->button.set_x(this->editbox->right());
 
         if (this->label) {
             this->label->set_x(x + 1);
@@ -116,6 +139,31 @@ public:
 
         if (this->label) {
             this->label->set_y(y + 1);
+        }
+    }
+
+    void set_cx(uint16_t cx) override {
+        Widget2::set_cx(cx);
+
+        Dimension dim = this->button.get_optimal_dim();
+        this->button.set_cx(dim.w);
+
+        this->editbox->set_cx(cx - this->button.cx());
+
+        this->button.set_x(this->editbox->right());
+
+        if (this->label) {
+            this->label->set_cx(this->editbox->cx() - 2);
+        }
+    }
+
+    void set_cy(uint16_t cy) override {
+        Widget2::set_cy(cy);
+        this->editbox->set_cy(cy);
+        this->button.set_cy(cy);
+
+        if (this->label) {
+            this->label->set_cy(this->editbox->cy() - 2);
         }
     }
 
@@ -203,6 +251,9 @@ public:
             this->label && this->use_label_) {
             if (this->editbox->num_chars == 1) {
                 this->editbox->draw(this->get_rect());
+                if (this->has_focus) {
+                    this->draw_border(this->get_rect(), this->button.focus_color);
+                }
             }
         }
         if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {

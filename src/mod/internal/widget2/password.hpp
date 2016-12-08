@@ -58,6 +58,32 @@ public:
         this->h_char -= 1;
     }
 
+    WidgetPassword(gdi::GraphicApi & drawable,
+                   Widget2& parent, NotifyApi* notifier, const char * text,
+                   int group_id, int fgcolor, int bgcolor, int focus_color, Font const & font,
+                   std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
+        : WidgetEdit(drawable, parent, notifier, text,
+                     group_id, fgcolor, bgcolor, focus_color, font, edit_position, xtext, ytext)
+        , masked_text(drawable, *this, nullptr, text, 0, fgcolor, bgcolor, font,
+                      xtext, ytext)
+    {
+        this->set_masked_text();
+
+        gdi::TextMetrics tm(font, "*");
+        this->w_char = tm.width;
+        this->h_char = tm.height;
+        this->h_char -= 1;
+    }
+
+    Dimension get_optimal_dim() override {
+        Dimension dim = this->masked_text.get_optimal_dim();
+
+        dim.w += 2;
+        dim.h += 2;
+
+        return dim;
+    }
+
     void set_masked_text() {
         char buff[WidgetLabel::buffer_size];
         for (size_t n = 0; n < this->num_chars; ++n) {
@@ -109,11 +135,13 @@ public:
             if (this->draw_border_focus) {
                 this->draw_border(clip, this->focus_color);
             }
+            else {
+                this->draw_border(clip, this->label.bg_color);
+            }
         }
         else {
             this->draw_border(clip, this->label.bg_color);
         }
-
     }
     void update_draw_cursor(Rect old_cursor) override {
         this->drawable.begin_update();
@@ -172,7 +200,6 @@ public:
         }
     }
 
-
     void rdp_input_scancode(long int param1, long int param2, long int param3,
                                     long int param4, Keymap2* keymap) override {
         if (keymap->nb_kevent_available() > 0){
@@ -199,6 +226,4 @@ public:
             }
         }
     }
-
 };
-
