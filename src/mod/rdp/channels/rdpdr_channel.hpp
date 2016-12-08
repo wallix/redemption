@@ -1476,7 +1476,7 @@ public:
                     "FileId=%u MajorFunction=%s(0x%08X) extra_data=0x%X "
                     "file_path=\"%s\"",
                 FileId,
-                rdpdr::DeviceIORequest::get_MajorFunction_name(MajorFunction),
+                rdpdr::get_MajorFunction_name(MajorFunction),
                 MajorFunction, extra_data, file_path.c_str());
         }
 
@@ -1761,7 +1761,7 @@ public:
                         "FileSystemVirtualChannel::process_client_drive_io_response: "
                             "Undecoded Drive I/O Response - "
                             "MajorFunction=%s(0x%08X)",
-                        rdpdr::DeviceIORequest::get_MajorFunction_name(
+                        rdpdr::get_MajorFunction_name(
                             this->server_device_io_request.MajorFunction()),
                         this->server_device_io_request.MajorFunction());
                 }
@@ -2438,10 +2438,10 @@ public:
                             "Undecoded Drive I/O Request - "
                             "MajorFunction=%s(0x%08X) "
                             "MinorFunction=%s(0x%08X)",
-                        rdpdr::DeviceIORequest::get_MajorFunction_name(
+                        rdpdr::get_MajorFunction_name(
                             this->server_device_io_request.MajorFunction()),
                         this->server_device_io_request.MajorFunction(),
-                        rdpdr::DeviceIORequest::get_MinorFunction_name(
+                        rdpdr::get_MinorFunction_name(
                             this->server_device_io_request.MinorFunction()),
                         this->server_device_io_request.MinorFunction());
                 }

@@ -22,6 +22,7 @@
 #pragma once
 
 #include <cinttypes>
+#include <inttypes.h>
 
 #include "utils/sugar/cast.hpp"
 #include "core/error.hpp"
@@ -403,8 +404,9 @@ struct CapabilityHeader {
 };
 
 
-
-// 2.2.3.2 Client Drive Device List Remove (DR_DEVICELIST_REMOVE)
+// [MS-RDPEFS] - 2.2.3.2 Client Drive Device List Remove
+//  (DR_DEVICELIST_REMOVE)
+// =====================================================
 
 // The client removes a list of already-announced devices from the server.
 
@@ -421,13 +423,23 @@ struct CapabilityHeader {
 // |                              ...                              |
 // +---------------------------------------------------------------+
 
-// Header (4 bytes): An RDPDR_HEADER header. The Component field MUST be set to RDPDR_CTYP_CORE, and the PacketId field MUST be set to PAKID_CORE_DEVICELIST_REMOVE.
+// Header (4 bytes): An RDPDR_HEADER header. The Component field MUST be set
+//  to RDPDR_CTYP_CORE, and the PacketId field MUST be set to
+//  PAKID_CORE_DEVICELIST_REMOVE.
 
-// DeviceCount (4 bytes): A 32-bit unsigned integer that specifies the number of entries in the DeviceIds field.
+// DeviceCount (4 bytes): A 32-bit unsigned integer that specifies the number
+//  of entries in the DeviceIds field.
 
-// DeviceIds (variable): A variable-length array of 32-bit unsigned integers that specifies device IDs. The IDs specified in this array match the IDs specified in the Client Device List Announce (section 2.2.3.1) packet.
+// DeviceIds (variable): A variable-length array of 32-bit unsigned integers
+//  that specifies device IDs. The IDs specified in this array match the IDs
+//  specified in the Client Device List Announce (section 2.2.3.1) packet.
 
-//     Note The client can send the DR_DEVICELIST_REMOVE message for devices that are removed after a session is //          connected. The server can accept the DR_DEVICE_REMOVE message for any removed device, including file system and port devices. The server can also accept reused DeviceIds of devices that have been removed, providing the implementation uses the DR_DEVICE_REMOVE message to do so.
+//  Note The client can send the DR_DEVICELIST_REMOVE message for devices
+//   that are removed after a session is connected. The server can accept the
+//   DR_DEVICE_REMOVE message for any removed device, including file system
+//   and port devices. The server can also accept reused DeviceIds of devices
+//   that have been removed, providing the implementation uses the
+//   DR_DEVICE_REMOVE message to do so.
 
 struct ClientDriveDeviceListRemove {
 
@@ -438,7 +450,7 @@ struct ClientDriveDeviceListRemove {
                                , uint32_t * DeviceIds)
     : DeviceCount(DeviceCount)
     {
-        REDASSERT(this->DeviceCount > 1592);
+        //REDASSERT(this->DeviceCount > 1592);
         for (uint32_t i = 0; i < DeviceCount; i++) {
             this->DeviceIds[i] = DeviceIds[i];
         }
@@ -447,7 +459,7 @@ struct ClientDriveDeviceListRemove {
     ClientDriveDeviceListRemove() = default;
 
     void emit(OutStream & stream) {
-        REDASSERT(DeviceCount <= 1592);
+        //REDASSERT(DeviceCount <= 1592);
         stream.out_uint32_le(DeviceCount);
         for (uint32_t i = 0; i < DeviceCount; i++) {
             stream.out_uint32_le(DeviceIds[i]);
@@ -456,7 +468,7 @@ struct ClientDriveDeviceListRemove {
 
     void receive(InStream & stream) {
         this->DeviceCount = stream.in_uint32_le();
-        REDASSERT(DeviceCount <= 1592);
+        //REDASSERT(DeviceCount <= 1592);
         for (uint32_t i = 0; i < this->DeviceCount; i++) {
             this->DeviceIds[i] = stream.in_uint32_le();
         }
@@ -824,6 +836,16 @@ enum {
     , IRP_MN_NOTIFY_CHANGE_DIRECTORY = 0x00000002
 };
 
+static const char * get_MinorFunction_name(uint32_t MinorFunction) {
+    switch (MinorFunction)
+    {
+        case IRP_MN_QUERY_DIRECTORY:         return "IRP_MN_QUERY_DIRECTORY";
+        case IRP_MN_NOTIFY_CHANGE_DIRECTORY: return "IRP_MN_NOTIFY_CHANGE_DIRECTORY";
+    }
+
+    return "<unknown>";
+}
+
 class DeviceIORequest {
     uint32_t DeviceId_      = 0;
     uint32_t FileId_        = 0;
@@ -889,34 +911,6 @@ public:
 
     uint32_t MinorFunction() const { return this->MinorFunction_; }
 
-    static const char * get_MajorFunction_name(uint32_t MajorFunction) {
-        switch (MajorFunction)
-        {
-            case IRP_MJ_CREATE:                   return "IRP_MJ_CREATE";
-            case IRP_MJ_CLOSE:                    return "IRP_MJ_CLOSE";
-            case IRP_MJ_READ:                     return "IRP_MJ_READ";
-            case IRP_MJ_WRITE:                    return "IRP_MJ_WRITE";
-            case IRP_MJ_DEVICE_CONTROL:           return "IRP_MJ_DEVICE_CONTROL";
-            case IRP_MJ_QUERY_VOLUME_INFORMATION: return "IRP_MJ_QUERY_VOLUME_INFORMATION";
-            case IRP_MJ_SET_VOLUME_INFORMATION:   return "IRP_MJ_SET_VOLUME_INFORMATION";
-            case IRP_MJ_QUERY_INFORMATION:        return "IRP_MJ_QUERY_INFORMATION";
-            case IRP_MJ_SET_INFORMATION:          return "IRP_MJ_SET_INFORMATION";
-            case IRP_MJ_DIRECTORY_CONTROL:        return "IRP_MJ_DIRECTORY_CONTROL";
-            case IRP_MJ_LOCK_CONTROL:             return "IRP_MJ_LOCK_CONTROL";
-        }
-
-        return "<unknown>";
-    }
-
-    static const char * get_MinorFunction_name(uint32_t MinorFunction) {
-        switch (MinorFunction)
-        {
-            case IRP_MN_QUERY_DIRECTORY:         return "IRP_MN_QUERY_DIRECTORY";
-            case IRP_MN_NOTIFY_CHANGE_DIRECTORY: return "IRP_MN_NOTIFY_CHANGE_DIRECTORY";
-        }
-
-        return "<unknown>";
-    }
 
 private:
     size_t str(char * buffer, size_t size) const {
@@ -924,8 +918,8 @@ private:
             "DeviceIORequest: "
                 "DeviceId=%u FileId=%u CompletionId=%u MajorFunction=%s(0x%X) MinorFunction=%s(0x%X)",
             this->DeviceId_, this->FileId_, this->CompletionId_,
-            this->get_MajorFunction_name(this->MajorFunction_), this->MajorFunction_,
-            this->get_MinorFunction_name(this->MinorFunction_), this->MinorFunction_);
+            get_MajorFunction_name(this->MajorFunction_), this->MajorFunction_,
+            get_MinorFunction_name(this->MinorFunction_), this->MinorFunction_);
         return ((length < size) ? length : size - 1);
     }
 
@@ -946,6 +940,29 @@ public:
         LOG(LOG_INFO, "          * MinorFunction = %08x (4 bytes): %s", this->MinorFunction_, get_MinorFunction_name(this->MinorFunction_));
     }
 };
+
+
+// [MS-RDPEFS] - 2.2.3.3.1 Server Create Drive Request (DR_DRIVE_CREATE_REQ)
+// =========================================================================
+
+// The server opens or creates a file on a redirected file system device.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                 DeviceCreateRequest (variable)                |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceCreateRequest (variable): A DR_CREATE_REQ header. The PathLength and
+//  Path fields contain the file name of the file to be created. The file
+//  name does not contain a drive letter, which means that the drive is
+//  specified by the DeviceId field of the request. The DeviceId is
+//  associated with a drive letter when the device is announced in the
+//  DR_DEVICELIST_ANNOUNCE (section 2.2.3.1) message. The drive letter is
+//  contained in the PreferredDosName field.
 
 // [MS-RDPEFS] - 2.2.1.4.1 Device Create Request (DR_CREATE_REQ)
 // =============================================================
@@ -1150,12 +1167,12 @@ public:
     void log() {
         LOG(LOG_INFO, "     Device Create Request:");
         LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes)", this->DesiredAccess_);
-        LOG(LOG_INFO, "          * AllocationSize    = 0x%016x (8 bytes)", this->AllocationSize);
+        LOG(LOG_INFO, "          * AllocationSize    = 0x%" PRIx64 " (8 bytes)", this->AllocationSize);
         LOG(LOG_INFO, "          * FileAttributes    = 0x%08x (4 bytes)", this->FileAttributes);
-        LOG(LOG_INFO, "          * SharedAccess      = 0x%08x (4 bytes)", this->SharedAccess);
-        LOG(LOG_INFO, "          * CreateDisposition = 0x%08x (4 bytes)", this->CreateDisposition_);
-        LOG(LOG_INFO, "          * CreateOptions     = 0x%08x (4 bytes)", this->CreateOptions_);
-        LOG(LOG_INFO, "          * PathLength        = 0x%08x (4 bytes)", this->path.size());
+        LOG(LOG_INFO, "          * SharedAccess      = 0x%08x (4 bytes)", int(this->SharedAccess));
+        LOG(LOG_INFO, "          * CreateDisposition = 0x%08x (4 bytes)", int(this->CreateDisposition_));
+        LOG(LOG_INFO, "          * CreateOptions     = 0x%08x (4 bytes)", int(this->CreateOptions_));
+        LOG(LOG_INFO, "          * PathLength        = 0x%08x (4 bytes)", int(this->path.size()));
         LOG(LOG_INFO, "          * Path              = \"%s\"", this->path.c_str());
     }
 
@@ -1207,40 +1224,48 @@ public:
 // Padding (32 bytes): An array of 32 bytes. Reserved. This field can be set
 //  to any value, and MUST be ignored on receipt.
 
-// class DeviceCloseRequest {
-//     void emit(OutStream & stream) const {
-//         stream.out_clear_bytes(32); // Padding(32)
-//     }
-//
-//     void receive(InStream & stream) {
-//         {
-//             const unsigned expected = 32;  // Padding(32)
-//
-//             if (!stream.in_check_rem(expected)) {
-//                 LOG(LOG_ERR,
-//                     "Truncated DeviceCloseRequest: expected=%u remains=%zu",
-//                     expected, stream.in_remain());
-//                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
-//             }
-//         }
-//
-//         stream.in_skip_bytes(32);   // Padding(32)
-//     }
-//
-// private:
-//     size_t str(char * buffer, size_t size) const {
-//         size_t length = ::snprintf(buffer, size, "DeviceCloseRequest:");
-//         return ((length < size) ? length : size - 1);
-//     }
-//
-// public:
-//     void log(int level) const {
-//         char buffer[2048];
-//         this->str(buffer, sizeof(buffer));
-//         buffer[sizeof(buffer) - 1] = 0;
-//         LOG(level, "%s", buffer);
-//     }
-// };
+
+class DeviceCloseRequest : public DeviceCreateRequest{
+
+public:
+    void emit(OutStream & stream) const {
+        stream.out_clear_bytes(32); // Padding(32)
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 32;  // Padding(32)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated DeviceCloseRequest: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        stream.in_skip_bytes(32);   // Padding(32)
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size, "DeviceCloseRequest:");
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Device Close Request:");
+        LOG(LOG_INFO, "          * Padding - (32 bytes) NOT USED");
+    }
+};
 
 // [MS-RDPEFS] - 2.2.1.4.3 Device Read Request (DR_READ_REQ)
 // =========================================================
@@ -1299,9 +1324,18 @@ class DeviceReadRequest {
     uint64_t Offset_ = 0LLU;
 
 public:
+    DeviceReadRequest() = default;
+
+    DeviceReadRequest( uint32_t Length
+                     , uint64_t Offset)
+      : Length_(Length)
+      , Offset_(Offset)
+    {}
+
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Length_);
         stream.out_uint64_le(this->Offset_);
+        stream.out_clear_bytes(20);
     }
 
     void receive(InStream & stream) {
@@ -1318,6 +1352,7 @@ public:
 
         this->Length_ = stream.in_uint32_le();
         this->Offset_ = stream.in_uint64_le();
+        stream.in_skip_bytes(20);
     }
 
     uint32_t Length() const { return this->Length_; }
@@ -1339,7 +1374,16 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    void log() {
+        LOG(LOG_INFO, "     Device Read Request:");
+        LOG(LOG_INFO, "          * Length = 0x%08x (4 bytes)", this->Length_);
+        LOG(LOG_INFO, "          * Offset = 0x%" PRIx64 " (8 bytes)", this->Offset_);
+        LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
+    }
 };
+
+
 
 // [MS-RDPEFS] - 2.2.1.4.4 Device Write Request (DR_WRITE_REQ)
 // ===========================================================
@@ -1400,6 +1444,49 @@ public:
 // WriteData (variable): A variable-length array of bytes, where the length
 //  is specified by the Length field in this packet. This array contains data
 //  to be written on the target device.
+
+struct DeviceWriteRequest {
+
+    uint32_t  Length = 0;
+    uint64_t  Offset = 0;
+    uint8_t const * WriteData;
+
+    DeviceWriteRequest() = default;
+
+    DeviceWriteRequest( uint32_t Length
+                      , uint64_t Offset
+                      , uint8_t const * WriteData)
+    : Length(Length)
+    , Offset(Offset)
+    , WriteData(WriteData)
+    {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->Length);
+        stream.out_uint64_le(this->Offset);
+        stream.out_clear_bytes(20);
+        stream.out_copy_bytes(this->WriteData, this->Length);
+    }
+
+    void receive(InStream & stream) {
+        this->Length = stream.in_uint32_le();
+        this->Offset = stream.in_uint64_le();
+        stream.in_skip_bytes(20);
+        this->WriteData = stream.get_data();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Device Write Request:");
+        LOG(LOG_INFO, "          * Length = 0x%08x (4 bytes)", int(this->Length));
+        LOG(LOG_INFO, "          * Offset = 0x%" PRIx64 " (8 bytes)", this->Offset);
+        LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
+        LOG(LOG_INFO, "          * WriteData: array size = Length: %d byte(s)", int(this->Length));
+        hexdump_c(this->WriteData,  this->Length);
+
+    }
+};
+
+
 
 // [MS-RDPEFS] - 2.2.1.4.5 Device Control Request (DR_CONTROL_REQ)
 // ===============================================================
@@ -2682,64 +2769,31 @@ public:
 //  There is no alignment padding between individual DEVICE_ANNOUNCE
 //  structures. They are ordered sequentially within this packet.
 
-// [MS-RDPEFS] - 2.2.3.2 Client Drive Device List Remove
-//  (DR_DEVICELIST_REMOVE)
-// =====================================================
+struct ClientDeviceListAnnounceRequest {
 
-// The client removes a list of already-announced devices from the server.
+    uint32_t DeviceCount = 0;
 
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// |                             Header                            |
-// +---------------------------------------------------------------+
-// |                          DeviceCount                          |
-// +---------------------------------------------------------------+
-// |                      DeviceIds (variable)                     |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
+    ClientDeviceListAnnounceRequest() = default;
 
-// Header (4 bytes): An RDPDR_HEADER header. The Component field MUST be set
-//  to RDPDR_CTYP_CORE, and the PacketId field MUST be set to
-//  PAKID_CORE_DEVICELIST_REMOVE.
+    ClientDeviceListAnnounceRequest(uint32_t DeviceCount) : DeviceCount(DeviceCount)
+    {}
 
-// DeviceCount (4 bytes): A 32-bit unsigned integer that specifies the number
-//  of entries in the DeviceIds field.
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->DeviceCount);
+    }
 
-// DeviceIds (variable): A variable-length array of 32-bit unsigned integers
-//  that specifies device IDs. The IDs specified in this array match the IDs
-//  specified in the Client Device List Announce (section 2.2.3.1) packet.
+    void receive(InStream & stream) {
+        this->DeviceCount = stream.in_uint32_le();
+    }
 
-//  Note The client can send the DR_DEVICELIST_REMOVE message for devices
-//   that are removed after a session is connected. The server can accept the
-//   DR_DEVICE_REMOVE message for any removed device, including file system
-//   and port devices. The server can also accept reused DeviceIds of devices
-//   that have been removed, providing the implementation uses the
-//   DR_DEVICE_REMOVE message to do so.
+    void log() {
+        LOG(LOG_INFO, "     Client Device List Announce Request:");
+        LOG(LOG_INFO, "          * DeviceCount = 0x%08x (4 bytes)", this->DeviceCount);
+    }
 
-// [MS-RDPEFS] - 2.2.3.3.1 Server Create Drive Request (DR_DRIVE_CREATE_REQ)
-// =========================================================================
+};
 
-// The server opens or creates a file on a redirected file system device.
 
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// |                 DeviceCreateRequest (variable)                |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-
-// DeviceCreateRequest (variable): A DR_CREATE_REQ header. The PathLength and
-//  Path fields contain the file name of the file to be created. The file
-//  name does not contain a drive letter, which means that the drive is
-//  specified by the DeviceId field of the request. The DeviceId is
-//  associated with a drive letter when the device is announced in the
-//  DR_DEVICELIST_ANNOUNCE (section 2.2.3.1) message. The drive letter is
-//  contained in the PreferredDosName field.
 
 // [MS-RDPEFS] - 2.2.3.3.4 Server Drive Write Request (DR_DRIVE_WRITE_REQ)
 // =======================================================================
@@ -2849,6 +2903,8 @@ enum {
 //  a complete list of these structures, see [MS-FSCC] section 2.4. The "File
 //  information class" table defines all the possible values for the
 //  FsInformationClass field.
+
+
 
 class ServerDriveQueryInformationRequest {
     uint32_t FsInformationClass_ = 0;
@@ -3845,10 +3901,10 @@ public:
 
                     case PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE:
                         {
-                            uint32_t DeviceCount(s.in_uint32_le());
-                            LOG(LOG_INFO, "     Client Device List Announce Request:");
-                            LOG(LOG_INFO, "          * DeviceCount = 0x%04x (4 bytes)", DeviceCount);
-                            for (uint32_t i = 0; i < DeviceCount; i++) {
+                            ClientDeviceListAnnounceRequest cdar;
+                            cdar.receive(s);
+                            cdar.log();
+                            for (uint32_t i = 0; i < cdar.DeviceCount; i++) {
                                 DeviceAnnounceHeader dah;
                                 dah.receive(s);
                                 dah.log();
@@ -3880,19 +3936,23 @@ public:
                                     break;
                                 case IRP_MJ_CLOSE:
                                     {
-                                        DeviceCreateRequest dcf;
+                                        DeviceCloseRequest dcf;
                                         dcf.receive(s);
                                         dcf.log();
                                     }
                                     break;
                                 case IRP_MJ_READ:
                                     {
-                                        LOG(LOG_INFO, "     Device I/O Read Request:");
+                                        DeviceReadRequest drr;
+                                        drr.receive(s);
+                                        drr.log();
                                     }
                                     break;
                                 case IRP_MJ_WRITE:
                                     {
-                                        LOG(LOG_INFO, "     Device I/O Write Request:");
+                                        DeviceWriteRequest dwr;
+                                        dwr.receive(s);
+                                        dwr.log();
                                     }
                                     break;
                                 case IRP_MJ_DEVICE_CONTROL:

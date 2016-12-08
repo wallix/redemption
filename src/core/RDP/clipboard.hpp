@@ -2018,7 +2018,7 @@ struct FormatDataResponsePDU
     }
 
     explicit FormatDataResponsePDU(bool response_ok)
-        : header(CB_FORMAT_DATA_RESPONSE
+        : header( CB_FORMAT_DATA_RESPONSE
                 , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
                 , 0)
     {
@@ -2849,7 +2849,7 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
                     break;
 
                 default:
-                    LOG(LOG_INFO, "DEFAULT: unknow record type=%x size=%d octets", type, recordSize*2);
+                    LOG(LOG_WARNING, "DEFAULT: unknow record type=%x size=%d octets", type, recordSize*2);
                     stream.in_skip_bytes((recordSize*2) - 6);
                     break;
             }
