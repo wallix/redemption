@@ -609,7 +609,7 @@ private:
         const int xtext = 6;
         const int ytext = 2;
 
-        const Dimension dim_button = WidgetFlatButton::get_optimal_dim(this->font, TR("disconnect_now", this->lang), xtext, ytext);
+        const Dimension dim_button = WidgetFlatButton::get_optimal_dim(2, this->font, TR("disconnect_now", this->lang), xtext, ytext);
 
         const uint32_t interspace = 60;
 
@@ -645,6 +645,7 @@ private:
                                color_encode(this->theme.global.focus_color, this->bpp),
                                Rect(),
                                state,
+                               2,
                                this->font,
                                xtext,
                                ytext

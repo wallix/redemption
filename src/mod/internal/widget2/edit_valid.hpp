@@ -47,7 +47,7 @@ public:
                     int /*xtext*/ = 0, int /*ytext*/ = 0, bool pass = false)
         : Widget2(drawable, Rect(0, 0, cx, 1), parent, notifier, group_id)
         , button(drawable, *this, this, "\xe2\x9e\x9c",
-                 group_id, bgcolor, focus_color, focus_color, font, 6, 2)
+                 group_id, bgcolor, focus_color, focus_color, 2, font, 6, 2)
         , editbox(pass ? new WidgetPassword(drawable, *this,
                                             this, text, group_id, fgcolor, bgcolor,
                                             focus_color, font, edit_position, 1, 2)
@@ -76,7 +76,7 @@ public:
                     int /*xtext*/ = 0, int /*ytext*/ = 0, bool pass = false)
         : Widget2(drawable, parent, notifier, group_id)
         , button(drawable, *this, this, "\xe2\x9e\x9c",
-                 group_id, bgcolor, focus_color, focus_color, font, 6, 2)
+                 group_id, bgcolor, focus_color, focus_color, 2, font, 6, 2)
         , editbox(pass ? new WidgetPassword(drawable, *this,
                                             this, text, group_id, fgcolor, bgcolor,
                                             focus_color, font, edit_position, 1, 2)

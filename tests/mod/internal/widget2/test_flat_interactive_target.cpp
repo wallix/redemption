@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 
         char message[1024];
         if (!check_sig(drawable.gd.impl(), message,
-            "\xb5\xce\x4e\xca\x2d\x3d\x41\x54\x51\x9d\x8a\x62\x4e\x1a\x6d\x31\xa0\x98\x31\x0c"
+            "\xe3\x32\x46\xa4\xf6\xf0\xa4\xd5\x82\x5d\x57\x40\x33\x0e\x53\x00\xe5\x84\xc3\x4d"
         )){
             BOOST_CHECK_MESSAGE(false, message);
         }
