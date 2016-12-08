@@ -614,3 +614,99 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
+
+BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonLite)
+{
+    TestDraw drawable(800, 600);
+
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    // WidgetFlatButton is a button widget at position 0,0 in it's parent context
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    NotifyApi * notifier = nullptr;
+    int fg_color = RED;
+    int bg_color = YELLOW;
+    int fc_color = WINBLUE;
+    int id = 0;
+    int xtext = 4;
+    int ytext = 1;
+
+    WidgetFlatButton wbutton(drawable.gd, parent, notifier, "test1", id,
+                             fg_color, bg_color, fc_color, 1, font, xtext, ytext);
+
+    Dimension dim = wbutton.get_optimal_dim();
+    wbutton.set_wh(dim);
+    wbutton.set_xy(0, 0);
+
+    // ask to widget to redraw at it's current position
+    wbutton.rdp_input_invalidate(Rect(wbutton.x(), wbutton.y(), wbutton.cx(), wbutton.cy()));
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "button_lite.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.impl(), message,
+        "\x3f\xd2\x5c\x22\x14\x65\xf3\x99\x36\x92\x27\x3a\x2f\xdb\x1e\xa0\x58\x8d\x27\xc3"
+    )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, wbutton.x() + 2, wbutton.y() + 2, nullptr);
+
+    wbutton.rdp_input_invalidate(Rect(wbutton.x(), wbutton.y(), wbutton.cx(), wbutton.cy()));
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "button_lite_down.png");
+
+    if (!check_sig(drawable.gd.impl(), message,
+        "\xa6\x89\x9a\xee\xc7\x4b\xc7\x94\x78\x7c\xea\xdf\xc3\x5d\xa8\x90\x2c\xf8\x85\x4d"
+    )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonStrong)
+{
+    TestDraw drawable(800, 600);
+
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    // WidgetFlatButton is a button widget at position 0,0 in it's parent context
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    NotifyApi * notifier = nullptr;
+    int fg_color = RED;
+    int bg_color = YELLOW;
+    int fc_color = WINBLUE;
+    int id = 0;
+    int xtext = 4;
+    int ytext = 1;
+
+    WidgetFlatButton wbutton(drawable.gd, parent, notifier, "test1", id,
+                             fg_color, bg_color, fc_color, 5, font, xtext, ytext);
+
+    Dimension dim = wbutton.get_optimal_dim();
+    wbutton.set_wh(dim);
+    wbutton.set_xy(0, 0);
+
+    // ask to widget to redraw at it's current position
+    wbutton.rdp_input_invalidate(Rect(wbutton.x(), wbutton.y(), wbutton.cx(), wbutton.cy()));
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "button_lite.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.impl(), message,
+        "\xbe\x7c\xda\x16\x34\x50\x8e\xca\x69\x60\xcb\xe0\xef\xa3\xef\x1b\xb0\xf1\x19\xc8"
+    )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, wbutton.x() + 2, wbutton.y() + 2, nullptr);
+
+    wbutton.rdp_input_invalidate(Rect(wbutton.x(), wbutton.y(), wbutton.cx(), wbutton.cy()));
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "button_lite_down.png");
+
+    if (!check_sig(drawable.gd.impl(), message,
+        "\x36\x7c\x2c\x57\xcd\x28\x47\xe4\x9c\x7d\x77\x5e\x15\xe5\x43\xa3\x04\xe9\x2d\x36"
+    )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}

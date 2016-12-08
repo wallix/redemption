@@ -75,12 +75,12 @@ public:
         , challenge(nullptr)
         , ok(drawable, *this, this, ok_text ? ok_text : "Ok", -12,
              theme.global.fgcolor, theme.global.bgcolor,
-             theme.global.focus_color, font, 6, 2)
+             theme.global.focus_color, 2, font, 6, 2)
         , cancel(cancel_text ? new WidgetFlatButton(drawable, *this, this,
                                                     cancel_text, -11,
                                                     theme.global.fgcolor,
                                                     theme.global.bgcolor,
-                                                    theme.global.focus_color, font,
+                                                    theme.global.focus_color, 2, font,
                                                     6, 2) : nullptr)
         , img(drawable,
               theme.global.logo ? theme.global.logo_path :

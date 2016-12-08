@@ -99,7 +99,7 @@ public:
         , notes(drawable, *this, nullptr, TR("note_required", lang),
                 group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , confirm(drawable, *this, this, TR("confirm", lang), group_id,
-                  theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font,
+                  theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
                   6, 2)
         , flags(flags)
         , generic_warning(TR("%s field_required", lang))

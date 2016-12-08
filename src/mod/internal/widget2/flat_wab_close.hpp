@@ -97,12 +97,12 @@ public:
                      theme.global.fgcolor, theme.global.bgcolor, font)
     , cancel(drawable, *this, this, TR("close", lang), -14,
              theme.global.fgcolor, theme.global.bgcolor,
-             theme.global.focus_color, font, 6, 2)
+             theme.global.focus_color, 2, font, 6, 2)
     , back(back_selector ? new WidgetFlatButton(drawable, *this, this,
                                                 TR("back_selector", lang), -14,
                                                 theme.global.fgcolor,
                                                 theme.global.bgcolor,
-                                                theme.global.focus_color, font,
+                                                theme.global.focus_color, 2, font,
                                                 6, 2) : nullptr)
     , img(drawable,
           theme.global.logo ? theme.global.logo_path :
