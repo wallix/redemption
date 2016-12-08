@@ -46,28 +46,15 @@ class Capture final
 
     using Kbd = KbdCaptureImpl;
 
-    using Video = VideoCaptureImpl;
+    using Video = SequencedVideoCaptureImpl;
+
+    using FullVideo = FullVideoCaptureImpl;
 
     using Meta = MetaCaptureImpl;
 
     using Title = TitleCaptureImpl;
 
     const bool is_replay_mod;
-
-    struct VideoImageCapture
-    {
-        OutFilenameSequenceTransport trans;
-        ImageCapture ic;
-
-        VideoImageCapture(
-            const timeval & now, Drawable & drawable,
-            const char * path, const char * basename, int groupid)
-        : trans(
-            FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-            path, basename, ".png", groupid, nullptr)
-        , ic(now, drawable, this->trans, std::chrono::seconds{})
-        {}
-    };
 
     // Title changed
     //@{
@@ -84,7 +71,7 @@ class Capture final
 
             TitleChangedFunction(F func) : func(func) {}
 
-            void title_changed(timeval const & now, string_view title) override
+            void notify_title_changed(timeval const & now, string_view title) override
             {
                 this->func(now, title);
             }
@@ -96,10 +83,10 @@ class Capture final
             this->list.push_back(std::make_unique<TitleChangedFunction<Func>>(func));
         }
 
-        void title_changed(timeval const & now, string_view title) override
+        void notify_title_changed(timeval const & now, string_view title) override
         {
             for (auto & notifier : this->list) {
-                notifier->title_changed(now, title);
+                notifier->notify_title_changed(now, title);
             }
         }
     } title_changed;
@@ -107,20 +94,20 @@ class Capture final
 
     // Next video
     //@{
-    struct NextVideoFunctions : NextVideoApi
+    struct NextVideoFunctions : NotifyNextVideo
     {
-        std::vector<std::unique_ptr<NextVideoApi>> list;
+        std::vector<std::unique_ptr<NotifyNextVideo>> list;
 
         template<class F>
-        struct NextVideoFunction : NextVideoApi
+        struct NextVideoFunction : NotifyNextVideo
         {
             F func;
 
             NextVideoFunction(F func) : func(func) {}
 
-            void next_video(const timeval& now) override
+            void notify_next_video(const timeval& now, NotifyNextVideo::reason reason) override
             {
-                this->func(now);
+                this->func(now, reason);
             }
         };
 
@@ -130,17 +117,13 @@ class Capture final
             this->list.push_back(std::make_unique<NextVideoFunction<Func>>(func));
         }
 
-        void next_video(timeval const & now) override
+        void notify_next_video(timeval const & now, NotifyNextVideo::reason reason) override
         {
             for (auto & notifier : this->list) {
-                notifier->next_video(now);
+                notifier->notify_next_video(now, reason);
             }
         }
-    };
-
-    NextVideoFunctions first_next_video_list;
-    NextVideoFunctions next_video_list;
-    NextVideoFunctions force_next_video_list;
+    } next_video;
     //@}
 
 // TODO
@@ -159,11 +142,10 @@ private:
     std::unique_ptr<Static> psc;
     std::unique_ptr<Kbd> pkc;
     std::unique_ptr<Video> pvc;
-    std::unique_ptr<Video> pvc_full;
+    std::unique_ptr<FullVideo> pvc_full;
     std::unique_ptr<Meta> pmc;
     std::unique_ptr<Title> ptc;
-    std::unique_ptr<PatternsChecker> ppattern;
-    std::unique_ptr<VideoImageCapture> pivc;
+    std::unique_ptr<PatternsChecker> patterns_checker;
 
     CaptureApisImpl::Capture capture_api;
     CaptureApisImpl::KbdInput kbd_input_api;
@@ -292,13 +274,6 @@ public:
                         record_tmp_path, basename, groupid, ini
                     ));
                 }
-                if (!clear_png) {
-                    this->pivc.reset(new VideoImageCapture(
-                        now, this->gd->impl(),
-                        record_tmp_path, basename, groupid
-                    ));
-                }
-
             }
 
             if (this->capture_wrm) {
@@ -329,48 +304,35 @@ public:
                 if (ini.get<cfg::globals::capture_chunk>()) {
                     if (this->pmc) {
                         auto & session_meta = this->pmc->get_session_meta();
-                        this->force_next_video_list.push([&session_meta](const timeval& now){
-                            session_meta.send_line(now.tv_sec, cstr_array_view("(break)"));
+                        this->next_video.push([&session_meta](const timeval& now, NotifyNextVideo::reason reason){
+                            if (reason == NotifyNextVideo::reason::sequenced) {
+                                session_meta.send_line(now.tv_sec, cstr_array_view("(break)"));
+                            }
                         });
-                    }
-                    if (this->pivc) {
-                        auto & img = this->pivc->ic;
-                        auto lbd = [&img](const timeval& now){
-                            img.breakpoint(now);
-                        };
-                        this->first_next_video_list.push(lbd);
-                        this->next_video_list.push(lbd);
-                        this->force_next_video_list.push(lbd);
                     }
                 }
                 this->pvc.reset(new Video(
-                    now, record_path, basename, groupid, authentifier,
-                    no_timestamp, this->gd->impl(),
+                    now, record_path, basename, groupid, no_timestamp, this->gd->impl(),
                     video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini),
                     std::chrono::seconds(ini.get<cfg::video::flv_break_interval>()),
-                    this->first_next_video_list.list.empty() ? nullptr : &this->first_next_video_list,
-                    this->next_video_list.list.empty() ? nullptr : &this->next_video_list,
-                    this->force_next_video_list.list.empty() ? nullptr : &this->force_next_video_list
+                    this->next_video
                 ));
             }
 
             if (this->capture_flv_full) {
-                this->pvc_full.reset(new Video(
-                    now, record_path, basename, groupid, authentifier,
-                    no_timestamp, this->gd->impl(),
-                    video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini),
-                    std::chrono::seconds(0),
-                    nullptr, nullptr, nullptr
+                this->pvc_full.reset(new FullVideo(
+                    now, record_path, basename, groupid, no_timestamp, this->gd->impl(),
+                    video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini)
                 ));
             }
 
             if (this->capture_pattern_checker) {
-                this->ppattern.reset(new PatternsChecker(
+                this->patterns_checker.reset(new PatternsChecker(
                     *authentifier,
                     ini.get<cfg::context::pattern_kill>().c_str(),
                     ini.get<cfg::context::pattern_notify>().c_str())
                 );
-                auto & pattern_checker = *this->ppattern.get();
+                auto & pattern_checker = *this->patterns_checker.get();
                 if (pattern_checker.contains_pattern()) {
                     this->title_changed.push([&pattern_checker](timeval const &, string_view title){
                         pattern_checker(title);
@@ -577,8 +539,8 @@ public:
         if (this->psc) {
             this->psc->zoom(percent);
         }
-        if (this->pivc) {
-            this->pivc->ic.zoom(percent);
+        if (this->pvc) {
+            this->pvc->image_zoom(percent);
         }
     }
 };

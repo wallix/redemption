@@ -99,4 +99,3 @@ private:
         this->start_capture = now;
     }
 };
-
