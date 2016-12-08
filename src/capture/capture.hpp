@@ -69,10 +69,85 @@ class Capture final
         {}
     };
 
+    // Title changed
+    //@{
+    using string_view = array_view_const_char;
+
+    struct TitleChangedFunctions : NotifyTitleChanged
+    {
+        std::vector<std::unique_ptr<NotifyTitleChanged>> list;
+
+        template<class F>
+        struct TitleChangedFunction : NotifyTitleChanged
+        {
+            F func;
+
+            TitleChangedFunction(F func) : func(func) {}
+
+            void title_changed(timeval const & now, string_view title) override
+            {
+                this->func(now, title);
+            }
+        };
+
+        template<class Func>
+        void push(Func func)
+        {
+            this->list.push_back(std::make_unique<TitleChangedFunction<Func>>(func));
+        }
+
+        void title_changed(timeval const & now, string_view title) override
+        {
+            for (auto & notifier : this->list) {
+                notifier->title_changed(now, title);
+            }
+        }
+    } title_changed;
+    //@}
+
+    // Next video
+    //@{
+    struct NextVideoFunctions : NextVideoApi
+    {
+        std::vector<std::unique_ptr<NextVideoApi>> list;
+
+        template<class F>
+        struct NextVideoFunction : NextVideoApi
+        {
+            F func;
+
+            NextVideoFunction(F func) : func(func) {}
+
+            void next_video(const timeval& now) override
+            {
+                this->func(now);
+            }
+        };
+
+        template<class Func>
+        void push(Func func)
+        {
+            this->list.push_back(std::make_unique<NextVideoFunction<Func>>(func));
+        }
+
+        void next_video(timeval const & now) override
+        {
+            for (auto & notifier : this->list) {
+                notifier->next_video(now);
+            }
+        }
+    };
+
+    NextVideoFunctions first_next_video_list;
+    NextVideoFunctions next_video_list;
+    NextVideoFunctions force_next_video_list;
+    //@}
+
 // TODO
 public:
     const bool capture_wrm;
     const bool capture_png;
+    const bool capture_pattern_checker;
     const bool capture_ocr;
     const bool capture_flv;
     const bool capture_flv_full; // capturewab only
@@ -87,6 +162,7 @@ private:
     std::unique_ptr<Video> pvc_full;
     std::unique_ptr<Meta> pmc;
     std::unique_ptr<Title> ptc;
+    std::unique_ptr<PatternsChecker> ppattern;
     std::unique_ptr<VideoImageCapture> pivc;
 
     CaptureApisImpl::Capture capture_api;
@@ -130,9 +206,10 @@ public:
     , capture_wrm(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::wrm))
     , capture_png(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png)
                   && (!authentifier || ini.get<cfg::video::png_limit>() > 0))
-    , capture_ocr(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::ocr)
-                 || ::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-                 || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()))
+    , capture_pattern_checker(authentifier && (
+        ::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+     || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())))
+    , capture_ocr(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::ocr) || this->capture_pattern_checker)
     , capture_flv(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::flv))
     // capture wab only
     , capture_flv_full(full_video)
@@ -153,12 +230,13 @@ public:
         ;
 
         if (ini.get<cfg::debug::capture>()) {
-            LOG(LOG_INFO, "Enable capture:  wrm=%d  png=%d  kbd=%d  flv=%d  flv_full=%d  ocr=%d  meta=%d",
+            LOG(LOG_INFO, "Enable capture:  wrm=%d  png=%d  kbd=%d  flv=%d  flv_full=%d  pattern=%d  ocr=%d  meta=%d",
                 this->capture_wrm ? 1 : 0,
                 this->capture_png ? 1 : 0,
                 enable_kbd ? 1 : 0,
                 this->capture_flv ? 1 : 0,
                 this->capture_flv_full ? 1 : 0,
+                this->capture_pattern_checker ? 1 : 0,
                 this->capture_ocr ? (ini.get<cfg::ocr::version>() == OcrVersion::v2 ? 2 : 1) : 0,
                 this->capture_meta
             );
@@ -248,16 +326,31 @@ public:
             }
 
             if (this->capture_flv) {
+                if (ini.get<cfg::globals::capture_chunk>()) {
+                    if (this->pmc) {
+                        auto & session_meta = this->pmc->get_session_meta();
+                        this->force_next_video_list.push([&session_meta](const timeval& now){
+                            session_meta.send_line(now.tv_sec, cstr_array_view("(break)"));
+                        });
+                    }
+                    if (this->pivc) {
+                        auto & img = this->pivc->ic;
+                        auto lbd = [&img](const timeval& now){
+                            img.breakpoint(now);
+                        };
+                        this->first_next_video_list.push(lbd);
+                        this->next_video_list.push(lbd);
+                        this->force_next_video_list.push(lbd);
+                    }
+                }
                 this->pvc.reset(new Video(
                     now, record_path, basename, groupid, authentifier,
                     no_timestamp, this->gd->impl(),
                     video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini),
                     std::chrono::seconds(ini.get<cfg::video::flv_break_interval>()),
-                    ini.get<cfg::globals::capture_chunk>()
-                    ? Video::SynchronizerNext{
-                        this->pmc ? &this->pmc->get_session_meta() : nullptr,
-                        this->pivc ? &this->pivc->ic : nullptr}
-                    : Video::SynchronizerNext{nullptr, nullptr}
+                    this->first_next_video_list.list.empty() ? nullptr : &this->first_next_video_list,
+                    this->next_video_list.list.empty() ? nullptr : &this->next_video_list,
+                    this->force_next_video_list.list.empty() ? nullptr : &this->force_next_video_list
                 ));
             }
 
@@ -267,17 +360,50 @@ public:
                     no_timestamp, this->gd->impl(),
                     video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini),
                     std::chrono::seconds(0),
-                    Video::SynchronizerNext{nullptr, nullptr}
+                    nullptr, nullptr, nullptr
                 ));
             }
 
+            if (this->capture_pattern_checker) {
+                this->ppattern.reset(new PatternsChecker(
+                    *authentifier,
+                    ini.get<cfg::context::pattern_kill>().c_str(),
+                    ini.get<cfg::context::pattern_notify>().c_str())
+                );
+                auto & pattern_checker = *this->ppattern.get();
+                if (pattern_checker.contains_pattern()) {
+                    this->title_changed.push([&pattern_checker](timeval const &, string_view title){
+                        pattern_checker(title);
+                    });
+                }
+                else {
+                    LOG(LOG_WARNING, "Disable pattern_checker");
+                }
+            }
+
             if (this->capture_ocr) {
-                this->ptc.reset(new Title(
-                    now, authentifier, this->gd->impl(),
-                    this->pmc ? &this->pmc->get_session_meta() : nullptr,
-                    this->pvc.get(),
-                    ini
-                ));
+                if (this->pmc) {
+                    auto & session_meta = this->pmc->get_session_meta();
+                    this->title_changed.push([&session_meta](timeval const & now, string_view title){
+                        session_meta.title_changed(now.tv_sec, title);
+                    });
+                }
+                if (this->pvc) {
+                    auto & video = *this->pvc.get();
+                    this->title_changed.push([&video](timeval const & now, string_view){
+                        video.next_video(now);
+                    });
+                }
+
+                if (!this->title_changed.list.empty()) {
+                    this->ptc.reset(new Title(
+                        now, authentifier, this->gd->impl(), ini,
+                        this->title_changed
+                    ));
+                }
+                else {
+                    LOG(LOG_INFO, "Disable title_extractor");
+                }
             }
         }
 
@@ -360,7 +486,7 @@ public:
         }
     }
 
-    bool kbd_input(const timeval& now, uint32_t uchar) override {
+    bool kbd_input(timeval const & now, uint32_t uchar) override {
         return this->kbd_input_api.kbd_input(now, uchar);
     }
 
@@ -388,7 +514,7 @@ public:
 
 protected:
     std::chrono::microseconds do_snapshot(
-        const timeval& now,
+        timeval const & now,
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
     ) override {
@@ -434,7 +560,7 @@ public:
         this->external_capture_api.external_breakpoint();
     }
 
-    void external_time(const timeval& now) override {
+    void external_time(timeval const & now) override {
         this->external_capture_api.external_time(now);
     }
 
