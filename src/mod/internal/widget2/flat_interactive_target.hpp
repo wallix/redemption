@@ -75,27 +75,27 @@ public:
                           Font const & font,
                           WidgetFlatButton * extra_button)
         : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier)
-        , caption_label(drawable, 0, 0, *this, nullptr, caption, true, -13,
+        , caption_label(drawable, *this, nullptr, caption, -13,
                         theme.global.fgcolor, theme.global.bgcolor, font)
         , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
                     theme.global.separator_color)
-        , device_label(drawable, 0, 0, *this, nullptr, text_device, true, -13,
+        , device_label(drawable, *this, nullptr, text_device, -13,
                       theme.global.fgcolor, theme.global.bgcolor, font)
-        , device(drawable, 0, 0, *this, nullptr, device_str, true, -13,
+        , device(drawable, *this, nullptr, device_str, -13,
                  theme.global.fgcolor, theme.global.bgcolor, font)
-        , device_edit(drawable, /*0, 0, 400, */*this, this, nullptr, -14,
+        , device_edit(drawable, *this, this, nullptr, -14,
                       theme.edit.fgcolor, theme.edit.bgcolor,
                       theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1)
-        , login_label(drawable, 0, 0, *this, nullptr, text_login, true, -13,
+        , login_label(drawable, *this, nullptr, text_login, -13,
                       theme.global.fgcolor, theme.global.bgcolor, font)
-        , login(drawable, 0, 0, *this, nullptr, login_str, true, -13,
+        , login(drawable, *this, nullptr, login_str, -13,
                 theme.global.fgcolor, theme.global.bgcolor, font)
-        , login_edit(drawable, /*0, 0, 400, */*this, this, nullptr, -14,
+        , login_edit(drawable, *this, this, nullptr, -14,
                      theme.edit.fgcolor, theme.edit.bgcolor,
                      theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1)
-        , password_label(drawable, 0, 0, *this, nullptr, text_password, true, -13,
+        , password_label(drawable, *this, nullptr, text_password, -13,
                          theme.global.fgcolor, theme.global.bgcolor, font)
-        , password_edit(drawable, /*0, 0, 400, */*this, this, nullptr, -14,
+        , password_edit(drawable, *this, this, nullptr, -14,
                         theme.edit.fgcolor, theme.edit.bgcolor,
                         theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1, true)
         , extra_button(extra_button)
@@ -144,70 +144,8 @@ public:
             this->add_widget(password_show);
         }
 
-        // Center bloc positionning
-        // Device, Login and Password boxes
-//        int margin_w = std::max<int>(this->device_label.cx(),
-//                                     this->login_label.cx());
-//        margin_w = std::max<int>(margin_w,
-//                                 this->password_label.cx());
-
-//        int cbloc_w = std::max<int>(this->caption_label.cx(),
-//                                    margin_w + device_show->cx() + 20);
-//        cbloc_w = std::max<int>(cbloc_w,
-//                                margin_w + login_show->cx() + 20);
-//        cbloc_w = std::max<int>(cbloc_w,
-//                                margin_w + this->password_edit.cx() + 20);
-
-//        if (ask_device) {
-//            cbloc_w = std::max<int>(cbloc_w,
-//                                    margin_w + this->device.cx() + 20);
-//        }
-
-//        int extra_h = 0;
-//        if (password_show) {
-//            extra_h += std::max(this->password_label.cy(),
-//                                this->password_edit.cy()) + 20;
-//        }
-//        if (ask_device) {
-//            extra_h += this->device.cy() + 30;
-//        }
-//        int cbloc_h = this->caption_label.cy() + 20 + 30 +
-//            this->device_label.cy() + 30 +
-//            this->login_label.cy() + 30 +
-//            extra_h;
-
-//        int x_cbloc = (width  - cbloc_w) / 2;
-//        int y_cbloc = (height - cbloc_h) / 3;
-
-//        int y = y_cbloc;
-//        this->caption_label.set_xy(left + (width - this->caption_label.cx()) / 2, top + y);
-//        this->separator.set_cx(cbloc_w);
-
-//        y = this->caption_label.bottom() + 20;
-//        this->separator.set_xy(left + x_cbloc, y);
-
-//        y = this->separator.bottom() + 20;
-//        this->device_label.set_xy(left + x_cbloc, y);
-//        device_show->set_xy(left + x_cbloc + margin_w + 20, y);
-//        y = device_show->bottom() + 20;
-//        if (ask_device) {
-//            this->device.set_xy(left + x_cbloc + margin_w + 20, y - 10);
-//            y = this->device.bottom() + 20;
-//        }
-//        this->login_label.set_xy(left + x_cbloc, y);
-//        login_show->set_xy(left + x_cbloc + margin_w + 20, y);
-//        y = login_show->bottom() + 20;
-//        this->password_label.set_xy(left + x_cbloc, y);
-//        this->password_edit.set_xy(left + x_cbloc + margin_w + 20, y);
-
-//        this->password_label.set_y(this->password_label.y() + (this->password_edit.cy() - this->password_label.cy()) / 2);
-//        this->login_label.set_y(this->login_label.y() + (login_show->cy() - this->login_label.cy()) / 2);
-//        this->device_label.set_y(this->device_label.y() + (device_show->cy() - this->login_label.cy()) / 2);
-
         if (extra_button) {
            this->add_widget(extra_button);
-//           extra_button->set_x(left + 60);
-//           extra_button->set_y(top + height - 60);
         }
 
         this->move_size_widget(left, top, width, height);
@@ -240,18 +178,25 @@ public:
             this->login_edit.set_wh(400, dim.h);
             login_show = &this->login_edit;
         }
-//        Widget2 * password_show = nullptr;
         if (this->ask_password) {
             dim = this->password_edit.get_optimal_dim();
             this->password_edit.set_wh(400, dim.h);
-//            password_show = &this->password_edit;
         }
+
+        dim = this->device_label.get_optimal_dim();
+        this->device_label.set_wh(dim);
+
+        dim = this->login_label.get_optimal_dim();
+        this->login_label.set_wh(dim);
 
         // Center bloc positionning
         // Device, Login and Password boxes
         int margin_w = std::max<int>(this->device_label.cx(),
                                      this->login_label.cx());
         if (this->ask_password) {
+            dim = this->password_label.get_optimal_dim();
+            this->password_label.set_wh(dim);
+
             margin_w = std::max<int>(margin_w,
                                      this->password_label.cx());
         }
@@ -269,13 +214,6 @@ public:
                                     margin_w + this->password_edit.cx() + 20);
         }
 
-//        int extra_h = 0;
-//        if (this->ask_password) {
-//            extra_h += std::max(this->password_label.cy(), this->password_edit.cy()) + 20;
-//        }
-//        if (this->ask_device) {
-//            extra_h += this->device.cy() + 30;
-//        }
         const int cbloc_h =
             this->caption_label.cy() + 20 + 30 +
             this->device_label.cy() + 30 +

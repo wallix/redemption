@@ -148,6 +148,80 @@ public:
         this->move_size_widget(left, top, width, height);
     }
 
+    FlatForm(gdi::GraphicApi& drawable,
+             Widget2 & parent, NotifyApi* notifier, int group_id,
+             Font const & font, Theme const & theme, Translation::language_t lang,
+             int flags = 0)
+        : WidgetParent(drawable, parent, notifier, group_id)
+        , warning_msg(drawable, *this, nullptr, "", group_id,
+                      theme.global.error_color, theme.global.bgcolor, font)
+        , duration_label(drawable, *this, nullptr, TR("duration", lang),
+                         group_id, theme.global.fgcolor, theme.global.bgcolor, font)
+        , duration_edit(drawable, *this, this,
+                        nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
+                        theme.edit.focus_color, font, -1, 1, 1)
+        , duration_format(drawable, *this, nullptr, TR("note_duration_format", lang),
+                          group_id, theme.global.fgcolor, theme.global.bgcolor, font)
+        , ticket_label(drawable, *this, nullptr, TR("ticket", lang),
+                       group_id, theme.global.fgcolor, theme.global.bgcolor, font)
+        , ticket_edit(drawable, *this, this,
+                      nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
+                      theme.edit.focus_color, font, -1, 1, 1)
+        , comment_label(drawable, *this, nullptr, TR("comment", lang),
+                        group_id, theme.global.fgcolor, theme.global.bgcolor, font)
+        , comment_edit(drawable, *this, this,
+                       nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
+                       theme.edit.focus_color, font, -1, 1, 1)
+        , notes(drawable, *this, nullptr, TR("note_required", lang),
+                group_id, theme.global.fgcolor, theme.global.bgcolor, font)
+        , confirm(drawable, *this, this, TR("confirm", lang), group_id,
+                  theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
+                  6, 2)
+        , flags(flags)
+        , generic_warning(TR("%s field_required", lang))
+        , format_warning(TR("%s invalid_format", lang))
+        , toohigh_warning(TR("%s toohigh_duration", lang))
+        , field_comment(TR("comment", lang))
+        , field_ticket(TR("ticket", lang))
+        , field_duration(TR("duration", lang))
+        , warning_buffer()
+    {
+        this->set_bg_color(theme.global.bgcolor);
+
+        this->impl = &composite_array;
+
+        this->add_widget(&this->warning_msg);
+
+        if (this->flags & DURATION_DISPLAY) {
+            this->add_widget(&this->duration_label);
+            this->add_widget(&this->duration_edit);
+            this->add_widget(&this->duration_format);
+        }
+        if (this->flags & TICKET_DISPLAY) {
+            this->add_widget(&this->ticket_label);
+            this->add_widget(&this->ticket_edit);
+        }
+        if (this->flags & COMMENT_DISPLAY) {
+            this->add_widget(&this->comment_label);
+            this->add_widget(&this->comment_edit);
+        }
+        if (this->flags & DURATION_MANDATORY) {
+            this->duration_label.set_text(TR("duration_r", lang));
+        }
+        if (this->flags & TICKET_MANDATORY) {
+            this->ticket_label.set_text(TR("ticket_r", lang));
+        }
+        if (this->flags & COMMENT_MANDATORY) {
+            this->comment_label.set_text(TR("comment_r", lang));
+        }
+
+        if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
+            this->add_widget(&this->notes);
+        }
+
+        this->add_widget(&this->confirm);
+    }
+
     ~FlatForm() override {
         this->clear();
     }

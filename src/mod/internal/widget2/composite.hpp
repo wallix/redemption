@@ -172,6 +172,14 @@ public:
         , impl(nullptr)
         , current_focus(nullptr) {}
 
+    WidgetParent(gdi::GraphicApi & drawable, Widget2 & parent,
+                 NotifyApi * notifier, int group_id = 0)
+        : Widget2(drawable, parent, notifier, group_id)
+        , pressed(nullptr)
+        , bg_color(BLACK)
+        , impl(nullptr)
+        , current_focus(nullptr) {}
+
     ~WidgetParent() override {}
 
     void set_widget_focus(Widget2 * new_focused, int reason) {
