@@ -387,7 +387,7 @@ class GraphicToFile
     StaticOutStream<65536> buffer_stream_orders;
     StaticOutStream<65536> buffer_stream_bitmaps;
 
-    const int dela_time;
+    const int delta_time;
     timeval last_sent_timer;
     timeval timer;
     const uint16_t width;
@@ -417,7 +417,7 @@ public:
                 , PointerCache & ptr_cache
                 , gdi::DumpPng24Api & dump_png24
                 , WrmCompressionAlgorithm wrm_compression_algorithm
-                , const int dela_time
+                , const int delta_time
                 , SendInput send_input = SendInput::NO
                 , Verbose verbose = Verbose::none)
     : RDPSerializer( this->buffer_stream_orders, this->buffer_stream_bitmaps, capture_bpp
@@ -425,7 +425,7 @@ public:
     , compression_wrapper(trans, wrm_compression_algorithm)
     , trans_target(trans)
     , trans(this->compression_wrapper.get())
-    , dela_time(dela_time)
+    , delta_time(delta_time)
     , last_sent_timer()
     , timer(now)
     , width(width)
@@ -547,15 +547,6 @@ public:
 
             payload.out_uint8(ignore_time_interval ? 1 : 0);
 
-/*
-            for (uint32_t i = 0, c = keyboard_buffer_32.size() / sizeof(uint32_t);
-                 i < c; i++) {
-                LOG(LOG_INFO, "send_timestamp_chunk: '%c'(0x%X)",
-                    (keyboard_buffer_32.data[i]<128)?(char)keyboard_buffer_32.data[i]:'?',
-                    keyboard_buffer_32.data[i]);
-            }
-*/
-
             payload.out_copy_bytes(keyboard_buffer_32.get_data(), keyboard_buffer_32.get_offset());
             keyboard_buffer_32 = OutStream(keyboard_buffer_32_buf);
         }
@@ -643,7 +634,7 @@ protected:
         if (sec > 0) {
             return true;
         }
-        if ( (sec == 0) && (usec > this->dela_time) ) {
+        if ( (sec == 0) && (usec > this->delta_time) ) {
             return true;
         }
 
