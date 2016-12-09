@@ -2268,6 +2268,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
         }
 
 
+
     } else if (!strcmp(channel.name, channel_names::rdpdr)) {
 
         uint16_t component = chunk.in_uint16_le();
@@ -2338,7 +2339,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Name Request");
                         this->show_out_stream(0, stream, total_length);
                         }
-                    break;
+                        break;
 
                     case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
 
@@ -2434,7 +2435,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                             );
 
                         LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Core Capability Response");
-                        this->show_out_stream(0, out_stream, total_length);
                         }
 
                         {
@@ -2463,7 +2463,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                             );
 
                         LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Device List Announce Request");
-                        this->show_out_stream(0, out_stream, total_length);
                         }
                         break;
 
@@ -2478,110 +2477,68 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             this->fileSystemData.drives_created = false;
                         }
                         LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Device Announce Response ID=%x Hres=%x", deviceID, resultCod);
-                        this->show_in_stream(0, chunk_series, chunk_size);
                         }
                         break;
 
                     case rdpdr::PAKID_CORE_USER_LOGGEDON:
                         LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server User Logged On");
-                        this->show_in_stream(0, chunk_series, chunk_size);
                         break;
 
                     case rdpdr::PAKID_CORE_DEVICE_IOREQUEST:
                         {
-                        int DeviceID = chunk.in_uint32_le();
-                        int Field = chunk.in_uint32_le();
-                        int CompletionId = chunk.in_uint32_le();
-                        int MajorFunction = chunk.in_uint32_le();
-                        int MinorFunction = chunk.in_uint32_le();
+                        rdpdr::DeviceIORequest deviceIORequest;
+                        deviceIORequest.receive(chunk);
 
-                        switch (MajorFunction) {
+                        StaticOutStream<256> out_stream;
+                        rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
+                                                        , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
+                        sharedHeader.emit(out_stream);
+
+                        rdpdr::DeviceIOResponse deviceIOResponse( deviceIORequest.DeviceId()
+                                                                , deviceIORequest.CompletionId()
+                                                                , 0);
+                        deviceIOResponse.emit(out_stream);
+
+                        switch (deviceIORequest.MajorFunction()) {
+
                             case rdpdr::IRP_MJ_CREATE:
                                 LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Create Request");
-                                this->show_in_stream(0, chunk_series, chunk_size);
                                 {
-                                int DesiredAccess = chunk.in_uint32_le();
-                                int AllocationSize = chunk.in_uint64_le();
-                                int FileAttributes = chunk.in_uint32_le();
-                                int SharedAccess = chunk.in_uint32_le();
-                                int CreateDisposition = chunk.in_uint32_le();
-                                int CreateOptions = chunk.in_uint32_le();
-                                int PathLength = chunk.in_uint32_le();
+                                rdpdr::DeviceCreateResponse deviceCreateResponse( deviceIORequest.FileId()
+                                                                                , rdpdr::FILE_SUPERSEDED);
+                                deviceCreateResponse.emit(out_stream);
 
-                                LOG(LOG_INFO, "          Device = %d", DeviceID);
-                                LOG(LOG_INFO, "          Field  = %d", Field);
-                                LOG(LOG_INFO, "          CompletionId  = %d", CompletionId);
-                                LOG(LOG_INFO, "          MajorFunction = %x", MajorFunction);
-                                LOG(LOG_INFO, "          MinorFunction = %x", MinorFunction);
-
-                                LOG(LOG_INFO, "          DesiredAccess = %x", DesiredAccess);
-                                LOG(LOG_INFO, "          AllocationSize  = %d", AllocationSize);
-                                LOG(LOG_INFO, "          FileAttributes  = %x", FileAttributes);
-                                LOG(LOG_INFO, "          SharedAccess = %x", SharedAccess);
-                                LOG(LOG_INFO, "          CreateDisposition = %x", CreateDisposition);
-                                LOG(LOG_INFO, "          CreateOptions = %x", CreateOptions);
-                                LOG(LOG_INFO, "          PathLength = %x", PathLength);
-
-                                StaticOutStream<128> out_stream;
-                                rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
-                                                                , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
-                                sharedHeader.emit(out_stream);
-
-                                out_stream.out_uint32_le(DeviceID);
-                                out_stream.out_uint32_le(CompletionId);
-                                out_stream.out_uint32_le(0);
-                                out_stream.out_uint32_le(Field);
-                                out_stream.out_uint8(rdpdr::FILE_SUPERSEDED);
-
-                                int total_length(out_stream.get_offset());
                                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
                                 this->_callback->send_to_mod_channel( channel_names::rdpdr
                                                                     , chunk_to_send
-                                                                    , total_length
+                                                                    , out_stream.get_offset()
                                                                     , CHANNELS::CHANNEL_FLAG_LAST  |
                                                                       CHANNELS::CHANNEL_FLAG_FIRST
                                                                     );
-
                                 LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Create Response");
-                                this->show_out_stream(0, out_stream, total_length);
                                 }
                                 break;
 
                             case rdpdr::IRP_MJ_QUERY_INFORMATION:
                                 {
-                                int FsInformationClass = chunk.in_uint32_le();
-                                int Length = chunk.in_uint32_le();
-                                chunk.in_skip_bytes(24);
+                                rdpdr::ServerDriveQueryInformationRequest sdqir;
+                                sdqir.receive(chunk);
 
-                                switch (FsInformationClass) {
+                                switch (sdqir.FsInformationClass()) {
+
                                     case rdpdr::FileBasicInformation:
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Basic Query Information Request");
-                                        this->show_in_stream(0, chunk_series, chunk_size);
-
-                                        LOG(LOG_INFO, "          Device = %d", DeviceID);
-                                        LOG(LOG_INFO, "          Field  = %d", Field);
-                                        LOG(LOG_INFO, "          CompletionId  = %d", CompletionId);
-                                        LOG(LOG_INFO, "          MajorFunction = %x", MajorFunction);
-                                        LOG(LOG_INFO, "          MinorFunction = %x", MinorFunction);
-                                        LOG(LOG_INFO, "          FsInformationClass = %d", FsInformationClass);
-                                        LOG(LOG_INFO, "          Length  = %d", Length);
                                         {
-                                        StaticOutStream<128> out_stream;
-                                        rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
-                                                                        , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
-                                        sharedHeader.emit(out_stream);
 
-                                        out_stream.out_uint32_le(DeviceID);
-                                        out_stream.out_uint32_le(CompletionId);
-                                        out_stream.out_uint32_le(0);
-                                        out_stream.out_uint32_le(36); // 40 - 4
-                                        out_stream.out_uint64_le(0); // CreationTime
-                                        out_stream.out_uint64_le(0); // LastAccessTime
-                                        out_stream.out_uint64_le(0); // LastWriteTime
-                                        out_stream.out_uint64_le(0); // FileAttributes
-                                        out_stream.out_uint32_le(0); // FileAttributes
-                                        //out_stream.out_uint32_le(0); // Reserved
+                                        out_stream.out_uint32_le(fscc::FileBasicInformation::size());
+
+                                        fscc::FileBasicInformation fileBasicInformation(0, 0, 0, 0,
+                                                    fscc::FILE_ATTRIBUTE_DIRECTORY
+                                          );
+                                        fileBasicInformation.emit(out_stream);
+                                        //DIR * dir;
+                                        //int fd = ::dirfd(dir);
 
                                         int total_length(out_stream.get_offset());
                                         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
@@ -2593,29 +2550,13 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                               CHANNELS::CHANNEL_FLAG_FIRST
                                                                             );
                                         LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Basic Query Information Response");
-                                        this->show_out_stream(0, out_stream, total_length);
                                         }
                                         break;
 
                                     case rdpdr::FileStandardInformation:
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Standard Information Request");
-                                        this->show_in_stream(0, chunk_series, chunk_size);
-                                        LOG(LOG_INFO, "          Device = %d", DeviceID);
-                                        LOG(LOG_INFO, "          Field  = %d", Field);
-                                        LOG(LOG_INFO, "          CompletionId  = %d", CompletionId);
-                                        LOG(LOG_INFO, "          MajorFunction = %x", MajorFunction);
-                                        LOG(LOG_INFO, "          MinorFunction = %x", MinorFunction);
-                                        LOG(LOG_INFO, "          FsInformationClass = %d", FsInformationClass);
-                                        LOG(LOG_INFO, "          Length  = %d", Length);
                                         {
-                                        StaticOutStream<128> out_stream;
-                                        rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
-                                                                        , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
-                                        sharedHeader.emit(out_stream);
 
-                                        out_stream.out_uint32_le(DeviceID);
-                                        out_stream.out_uint32_le(CompletionId);
-                                        out_stream.out_uint32_le(0);
                                         out_stream.out_uint32_le(22); // 24-2
                                         out_stream.out_uint64_le(0); // AllocationSize
                                         out_stream.out_uint64_le(0); // EndOfFile
@@ -2623,7 +2564,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         out_stream.out_uint8(0); // DeletePending
                                         out_stream.out_uint8(0); // Directory
                                         //out_stream.out_uint16_le(0); // Reserved
-
 
                                         int total_length(out_stream.get_offset());
                                         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
@@ -2635,12 +2575,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                               CHANNELS::CHANNEL_FLAG_FIRST
                                                                             );
                                         LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Standard Information Response");
-                                        this->show_out_stream(0, out_stream, total_length);
                                         }
                                         break;
 
-                                    default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT: Device I/O Request             unknow FsInformationClass = %x",       FsInformationClass);
-                                        this->show_in_stream(0, chunk_series, chunk_size);
+                                    default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT: Device I/O Request             unknow FsInformationClass = %x",       sdqir.FsInformationClass());
                                         break;
                                 }
                                 }
@@ -2648,12 +2586,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                             case rdpdr::IRP_MJ_CLOSE:
                                 LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Close Request");
-                                this->show_in_stream(0, chunk_series, chunk_size);
-                                LOG(LOG_INFO, "          Device = %d", DeviceID);
-                                LOG(LOG_INFO, "          Field  = %d", Field);
-                                LOG(LOG_INFO, "          CompletionId  = %d", CompletionId);
-                                LOG(LOG_INFO, "          MajorFunction = %x", MajorFunction);
-                                LOG(LOG_INFO, "          MinorFunction = %x", MinorFunction);
                                 {
                                 int DesiredAccess = chunk.in_uint32_le();
                                 int AllocationSize = chunk.in_uint64_le();
@@ -2663,23 +2595,9 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 int CreateOptions = chunk.in_uint32_le();
                                 int PathLength = chunk.in_uint32_le();
 
-                                LOG(LOG_INFO, "          DesiredAccess = %x", DesiredAccess);
-                                LOG(LOG_INFO, "          AllocationSize  = %d", AllocationSize);
-                                LOG(LOG_INFO, "          FileAttributes  = %x", FileAttributes);
-                                LOG(LOG_INFO, "          SharedAccess = %x", SharedAccess);
-                                LOG(LOG_INFO, "          CreateDisposition = %x", CreateDisposition);
-                                LOG(LOG_INFO, "          CreateOptions = %x", CreateOptions);
-                                LOG(LOG_INFO, "          PathLength = %x", PathLength);
 
-                                StaticOutStream<128> out_stream;
-                                rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
-                                                                , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
-                                sharedHeader.emit(out_stream);
 
-                                out_stream.out_uint32_le(DeviceID);
-                                out_stream.out_uint32_le(CompletionId);
-                                out_stream.out_uint32_le(0);
-                                out_stream.out_uint32_le(Field);
+                                out_stream.out_uint32_le(deviceIORequest.FileId());
                                 out_stream.out_uint8(rdpdr::FILE_SUPERSEDED);
 
                                 int total_length(out_stream.get_offset());
@@ -2693,18 +2611,11 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                     );
 
                                 LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Close Response");
-                                this->show_out_stream(0, out_stream, total_length);
                                 }
                                 break;
 
                             case rdpdr::IRP_MJ_READ:
                                 LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Read Request");
-                                this->show_in_stream(0, chunk_series, chunk_size);
-                                LOG(LOG_INFO, "          Device = %d", DeviceID);
-                                LOG(LOG_INFO, "          Field  = %d", Field);
-                                LOG(LOG_INFO, "          CompletionId  = %d", CompletionId);
-                                LOG(LOG_INFO, "          MajorFunction = %x", MajorFunction);
-                                LOG(LOG_INFO, "          MinorFunction = %x", MinorFunction);
                                 {
                                 int Length = chunk.in_uint32_le();
                                 uint64_t Offset = chunk.in_uint64_le();
@@ -2712,14 +2623,11 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 LOG(LOG_INFO, "          Length = %x", Length);
                                 LOG(LOG_INFO, "          Offset = %x", Offset);
 
-                                StaticOutStream<128> out_stream;
+                                //StaticOutStream<128> out_stream;
                                 rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
                                                                 , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
                                 sharedHeader.emit(out_stream);
 
-                                out_stream.out_uint32_le(DeviceID);
-                                out_stream.out_uint32_le(CompletionId);
-                                out_stream.out_uint32_le(0);
                                 out_stream.out_uint32_le(0);
 
                                 int total_length(out_stream.get_offset());
@@ -2733,23 +2641,15 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                     );
 
                                 LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Read Response");
-                                this->show_out_stream(0, out_stream, total_length);
                                 }
                                 break;
 
                             case rdpdr::IRP_MJ_DIRECTORY_CONTROL:
 
-                                switch (MinorFunction) {
+                                switch (deviceIORequest.MinorFunction()) {
 
                                     case rdpdr::IRP_MN_QUERY_DIRECTORY:
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Directory Request");
-                                        this->show_in_stream(0, chunk_series, chunk_size);
-                                        LOG(LOG_INFO, "          Device = %d", DeviceID);
-                                        LOG(LOG_INFO, "          Field  = %d", Field);
-                                        LOG(LOG_INFO, "          CompletionId  = %d", CompletionId);
-                                        LOG(LOG_INFO, "          MajorFunction = %x", MajorFunction);
-                                        LOG(LOG_INFO, "          MinorFunction = %x", MinorFunction);
-
                                         {
                                         int FsInformationClass = chunk.in_uint32_le();
                                         uint8_t InitialQuery = chunk.in_uint8();
@@ -2766,9 +2666,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                         std::string dir_name("RDP C:");
 
-                                        out_stream.out_uint32_le(DeviceID);
-                                        out_stream.out_uint32_le(CompletionId);
-                                        out_stream.out_uint32_le(0); //STATUS_NO_MORE_FILES 0x80000006
+         //STATUS_NO_MORE_FILES 0x80000006
 
                                         out_stream.out_uint32_le(94+6);
 
@@ -2804,24 +2702,14 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
 
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query directory Response");
-                                        this->show_out_stream(0, out_stream, total_length);
                                         }
                                         break;
 
                                     case rdpdr::IRP_MN_NOTIFY_CHANGE_DIRECTORY:
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Notify Change Directory Request");
-                                        this->show_in_stream(0, chunk_series, chunk_size);
-                                        LOG(LOG_INFO, "          Device = %d", DeviceID);
-                                        LOG(LOG_INFO, "          Field  = %d", Field);
-                                        LOG(LOG_INFO, "          CompletionId  = %d", CompletionId);
-                                        LOG(LOG_INFO, "          MajorFunction = %x", MajorFunction);
-                                        LOG(LOG_INFO, "          MinorFunction = %x", MinorFunction);
                                         {
                                         int WatchTree = chunk.in_uint8();
                                         int CompletionFilter = chunk.in_uint32_le();
-
-                                        LOG(LOG_INFO, "          WatchTree = %d", WatchTree);
-                                        LOG(LOG_INFO, "          CompletionFilter = %d", CompletionFilter);
 
                                         /*StaticOutStream<128> out_stream;
                                         rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
@@ -2856,15 +2744,13 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                 break;
 
-                            default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT: Device I/O Request unknow MajorFunction = %x",       MajorFunction);
-                                this->show_in_stream(0, chunk_series, chunk_size);
+                            default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT: Device I/O Request unknow MajorFunction = %x",       deviceIORequest.MajorFunction());
                                 break;
                         }
 
                         } break;
 
                     default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT RDPDR_CTYP_CORE unknow packetId = %x",       packetId);
-                        this->show_in_stream(0, chunk_series, chunk_size);
                         break;
                 }
 
@@ -2874,7 +2760,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                 break;
 
             default: LOG(LOG_WARNING, "SERVER >> RDPDR: DEFAULT RDPDR unknow component = %x", component);
-                this->show_in_stream(0, chunk_series, chunk_size);
                 break;
         }
 
@@ -3380,6 +3265,8 @@ int main(int argc, char** argv){
     // sudo python ./sesman/sesmanlink/WABRDPAuthentifier
 
     // sudo nano /etc/rdpproxy/rdpproxy.ini
+
+    // bjam san -j4 rdpproxy
 
     // sudo bin/gcc-4.9.2/san/rdpproxy -nf
 

@@ -22,6 +22,7 @@
 #pragma once
 
 #include <cinttypes>
+#include <inttypes.h>
 
 #include "core/error.hpp"
 
@@ -351,6 +352,12 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    void log() {
+        LOG(LOG_INFO, "     File Attribute Tag Information:");
+        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes)", this->FileAttributes);
+        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes)", this->ReparseTag);
+    }
 };
 
 
@@ -521,6 +528,15 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Basic Information:");
+        LOG(LOG_INFO, "          * CreationTime   = %" PRIx64 " (8 bytes)", this->CreationTime);
+        LOG(LOG_INFO, "          * LastAccessTime = %" PRIx64 " (8 bytes)", this->LastAccessTime_);
+        LOG(LOG_INFO, "          * LastWriteTime  = %" PRIx64 " (8 bytes)", this->LastWriteTime_);
+        LOG(LOG_INFO, "          * ChangeTime     = %" PRIx64 " (8 bytes)", this->ChangeTime);
+        LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes)", this->FileAttributes_);
     }
 };  // FileBasicInformation
 
@@ -1569,6 +1585,15 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Standard Information:");
+        LOG(LOG_INFO, "          * AllocationSize = %" PRIx64 " (8 bytes)", this->AllocationSize);
+        LOG(LOG_INFO, "          * EndOfFile      = %" PRIx64 " (8 bytes)", this->EndOfFile);
+        LOG(LOG_INFO, "          * NumberOfLinks  = 0x%08x (4 bytes)", this->NumberOfLinks);
+        LOG(LOG_INFO, "          * DeletePending  = 0x%02x (1 byte)", this->DeletePending);
+        LOG(LOG_INFO, "          * Directory      = 0x%02x (1 byte)", this->Directory);
     }
 };  // FileStandardInformation
 

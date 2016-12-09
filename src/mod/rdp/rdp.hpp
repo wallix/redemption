@@ -426,6 +426,8 @@ protected:
 
         wait_obj & asynchronous_task_event;
 
+
+
         RDPVerbose verbose;
 
     public:
@@ -680,6 +682,9 @@ protected:
 
     time_t beginning;
     bool   session_disconnection_logged = false;
+
+    int rdpdr_last_major_function = -1;
+    int rdpdr_last_fs_information_class = -1;
 
 public:
     using Verbose = RDPVerbose;
@@ -1717,7 +1722,7 @@ private:
 
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                 if ((this->verbose & RDPVerbose::rdpdr) || (this->verbose & RDPVerbose::rdpdr_dump)) {
-                    
+
                     LOG(LOG_INFO,
                         "mod_rdp::send_to_mod_rdpdr_channel: recv from Client, "
                             "send Chunked Virtual Channel Data transparently.");
@@ -1729,7 +1734,7 @@ private:
                     ::msgdump_c(send, from_or_to_client, chunk.get_offset(), flags,
                     chunk.get_data(), length);
 
-                    rdpdr::streamLog(chunk);
+                    rdpdr::streamLog(chunk, this->rdpdr_last_major_function, this->rdpdr_last_fs_information_class);
                 }
             }
 
@@ -6820,7 +6825,7 @@ private:
                     ::msgdump_c(send, from_or_to_client, length, flags,
                         stream.get_data()+8, chunk_size);
 
-                    rdpdr::streamLog(stream);
+                    rdpdr::streamLog(stream, this->rdpdr_last_major_function, this->rdpdr_last_fs_information_class);
                 }
             }
 
