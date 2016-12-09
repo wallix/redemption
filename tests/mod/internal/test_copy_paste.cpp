@@ -151,10 +151,16 @@ BOOST_AUTO_TEST_CASE(TestPaste)
     auto edit_paste = [&](const char * s, const char * sig, int linenum){
         keymap.push_kevent(Keymap2::KEVENT_PASTE);
         copy_paste.paste(edit);
-        edit.rdp_input_invalidate(edit.get_rect());
-        //front.dump_png("/tmp/test_copy_paste_");
         BOOST_CHECK_EQUAL(s, edit.get_text());
+
+        edit.rdp_input_invalidate(edit.get_rect());
+
+        char filename[1024];
+        sprintf(filename, "test_copy_paste_%d.png", linenum);
+        // mod.save_to_png(OUTPUT_FILE_PATH filename);
+
         char message[1024];
+
         if (!check_sig(mod.gd.impl(), message, sig)){
             sprintf(message+strlen(message), "(%d)", linenum);
             BOOST_CHECK_MESSAGE(false, message);
