@@ -60,70 +60,50 @@ class Capture final
     //@{
     using string_view = array_view_const_char;
 
-    struct TitleChangedFunctions : NotifyTitleChanged
+    struct TitleChangedFunctions final : NotifyTitleChanged
     {
-        std::vector<std::unique_ptr<NotifyTitleChanged>> list;
+        Capture & capture;
 
-        template<class F>
-        struct TitleChangedFunction : NotifyTitleChanged
-        {
-            F func;
-
-            TitleChangedFunction(F func) : func(func) {}
-
-            void notify_title_changed(timeval const & now, string_view title) override
-            {
-                this->func(now, title);
-            }
-        };
-
-        template<class Func>
-        void push(Func func)
-        {
-            this->list.push_back(std::make_unique<TitleChangedFunction<Func>>(func));
-        }
+        TitleChangedFunctions(Capture & capture) : capture(capture) {}
 
         void notify_title_changed(timeval const & now, string_view title) override
         {
-            for (auto & notifier : this->list) {
-                notifier->notify_title_changed(now, title);
+            if (this->capture.patterns_checker) {
+                this->capture.patterns_checker->operator()(title);
+            }
+            if (this->capture.pmc) {
+                this->capture.pmc->get_session_meta().title_changed(now.tv_sec, title);
+            }
+            if (this->capture.pvc) {
+                this->capture.pvc->next_video(now);
             }
         }
-    } title_changed;
+
+        bool has_notifier()
+        {
+            return this->capture.patterns_checker || this->capture.pmc || this->capture.pvc;
+        }
+    } notifier_title_changed{*this};
     //@}
 
     // Next video
     //@{
-    struct NextVideoFunctions : NotifyNextVideo
+    struct NotifyMetaIfNextVideo final : NotifyNextVideo
     {
-        std::vector<std::unique_ptr<NotifyNextVideo>> list;
+        SessionMeta * session_meta = nullptr;
 
-        template<class F>
-        struct NextVideoFunction : NotifyNextVideo
+        void notify_next_video(const timeval& now, NotifyNextVideo::reason reason) override
         {
-            F func;
-
-            NextVideoFunction(F func) : func(func) {}
-
-            void notify_next_video(const timeval& now, NotifyNextVideo::reason reason) override
-            {
-                this->func(now, reason);
-            }
-        };
-
-        template<class Func>
-        void push(Func func)
-        {
-            this->list.push_back(std::make_unique<NextVideoFunction<Func>>(func));
-        }
-
-        void notify_next_video(timeval const & now, NotifyNextVideo::reason reason) override
-        {
-            for (auto & notifier : this->list) {
-                notifier->notify_next_video(now, reason);
+            assert(this->session_meta);
+            if (reason == NotifyNextVideo::reason::sequenced) {
+                this->session_meta->send_line(now.tv_sec, cstr_array_view("(break)"));
             }
         }
-    } next_video;
+    } notifier_next_video;
+    struct NullNotifyNextVideo final : NotifyNextVideo
+    {
+        void notify_next_video(const timeval&, NotifyNextVideo::reason) override {}
+    } null_notifier_next_video;
     //@}
 
 // TODO
@@ -301,21 +281,15 @@ public:
             }
 
             if (this->capture_flv) {
-                if (ini.get<cfg::globals::capture_chunk>()) {
-                    if (this->pmc) {
-                        auto & session_meta = this->pmc->get_session_meta();
-                        this->next_video.push([&session_meta](const timeval& now, NotifyNextVideo::reason reason){
-                            if (reason == NotifyNextVideo::reason::sequenced) {
-                                session_meta.send_line(now.tv_sec, cstr_array_view("(break)"));
-                            }
-                        });
-                    }
+                std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
+                if (ini.get<cfg::globals::capture_chunk>() && this->pmc) {
+                    this->notifier_next_video.session_meta = &this->pmc->get_session_meta();
+                    notifier = this->notifier_next_video;
                 }
                 this->pvc.reset(new Video(
                     now, record_path, basename, groupid, no_timestamp, this->gd->impl(),
                     video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini),
-                    std::chrono::seconds(ini.get<cfg::video::flv_break_interval>()),
-                    this->next_video
+                    std::chrono::seconds(ini.get<cfg::video::flv_break_interval>()), notifier
                 ));
             }
 
@@ -332,35 +306,17 @@ public:
                     ini.get<cfg::context::pattern_kill>().c_str(),
                     ini.get<cfg::context::pattern_notify>().c_str())
                 );
-                auto & pattern_checker = *this->patterns_checker.get();
-                if (pattern_checker.contains_pattern()) {
-                    this->title_changed.push([&pattern_checker](timeval const &, string_view title){
-                        pattern_checker(title);
-                    });
-                }
-                else {
+                if (!this->patterns_checker->contains_pattern()) {
                     LOG(LOG_WARNING, "Disable pattern_checker");
+                    this->patterns_checker.reset();
                 }
             }
 
             if (this->capture_ocr) {
-                if (this->pmc) {
-                    auto & session_meta = this->pmc->get_session_meta();
-                    this->title_changed.push([&session_meta](timeval const & now, string_view title){
-                        session_meta.title_changed(now.tv_sec, title);
-                    });
-                }
-                if (this->pvc) {
-                    auto & video = *this->pvc.get();
-                    this->title_changed.push([&video](timeval const & now, string_view){
-                        video.next_video(now);
-                    });
-                }
-
-                if (!this->title_changed.list.empty()) {
+                if (this->notifier_title_changed.has_notifier()) {
                     this->ptc.reset(new Title(
                         now, authentifier, this->gd->impl(), ini,
-                        this->title_changed
+                        this->notifier_title_changed
                     ));
                 }
                 else {
