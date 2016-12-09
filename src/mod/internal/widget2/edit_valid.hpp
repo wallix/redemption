@@ -56,14 +56,19 @@ public:
                   : new WidgetEdit(drawable, *this, this,
                                    text, group_id, fgcolor, bgcolor, focus_color, font,
                                    edit_position, 1, 2))
-        , label(title ? new WidgetLabel(drawable, 0, 0, *this, nullptr, title, true,
+        , label(title ? new WidgetLabel(drawable, *this, nullptr, title,
                                         group_id, MEDIUM_GREY, bgcolor, font, 1, 2)
                 : nullptr)
         , use_label_(use_title)
         , border_none_color(border_none_color)
     {
-        Dimension dim = get_optimal_dim();
+        Dimension dim = this->get_optimal_dim();
         this->set_wh(cx, dim.h);
+
+        if (this->label) {
+            dim = this->label->get_optimal_dim();
+            this->label->set_wh(dim);
+        }
 
         this->set_xy(x, y);
 

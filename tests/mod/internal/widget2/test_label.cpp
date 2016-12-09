@@ -46,7 +46,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = 0;
     int16_t y = 0;
     int xtext = 4;
@@ -56,11 +55,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
      * I believe users of this widget may wish to control text position and behavior inside rectangle
      * ie: text may be centered, aligned left, aligned right, or even upside down, etc
      * these possibilities (and others) are supported in RDPGlyphIndex */
-    WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test1", auto_resize, id, fg_color, bg_color, font, xtext, ytext);
+    WidgetLabel wlabel(drawable.gd, parent, notifier, "test1", id, fg_color, bg_color, font, xtext, ytext);
+
+    Dimension dim = wlabel.get_optimal_dim();
+    wlabel.set_wh(dim);
+    wlabel.set_xy(x, y);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
-                                     0 + wlabel.y(),
+    wlabel.rdp_input_invalidate(Rect(wlabel.x(),
+                                     wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -86,15 +89,18 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = 10;
     int16_t y = 100;
 
-    WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test2", auto_resize, id, fg_color, bg_color, font);
+    WidgetLabel wlabel(drawable.gd, parent, notifier, "test2", id, fg_color, bg_color, font);
+
+    Dimension dim = wlabel.get_optimal_dim();
+    wlabel.set_wh(dim);
+    wlabel.set_xy(x, y);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
-                                     0 + wlabel.y(),
+    wlabel.rdp_input_invalidate(Rect(wlabel.x(),
+                                     wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -120,15 +126,18 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = -10;
     int16_t y = 500;
 
-    WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test3", auto_resize, id, fg_color, bg_color, font);
+    WidgetLabel wlabel(drawable.gd, parent, notifier, "test3", id, fg_color, bg_color, font);
+
+    Dimension dim = wlabel.get_optimal_dim();
+    wlabel.set_wh(dim);
+    wlabel.set_xy(x, y);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
-                                     0 + wlabel.y(),
+    wlabel.rdp_input_invalidate(Rect(wlabel.x(),
+                                     wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -154,15 +163,18 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = 770;
     int16_t y = 500;
 
-    WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test4", auto_resize, id, fg_color, bg_color, font);
+    WidgetLabel wlabel(drawable.gd, parent, notifier, "test4", id, fg_color, bg_color, font);
+
+    Dimension dim = wlabel.get_optimal_dim();
+    wlabel.set_wh(dim);
+    wlabel.set_xy(x, y);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
-                                     0 + wlabel.y(),
+    wlabel.rdp_input_invalidate(Rect(wlabel.x(),
+                                     wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -188,15 +200,18 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = -20;
     int16_t y = -7;
 
-    WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test5", auto_resize, id, fg_color, bg_color, font);
+    WidgetLabel wlabel(drawable.gd, parent, notifier, "test5", id, fg_color, bg_color, font);
+
+    Dimension dim = wlabel.get_optimal_dim();
+    wlabel.set_wh(dim);
+    wlabel.set_xy(x, y);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
-                                     0 + wlabel.y(),
+    wlabel.rdp_input_invalidate(Rect(wlabel.x(),
+                                     wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -222,15 +237,18 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, font);
+    WidgetLabel wlabel(drawable.gd, parent, notifier, "test6", id, fg_color, bg_color, font);
+
+    Dimension dim = wlabel.get_optimal_dim();
+    wlabel.set_wh(dim);
+    wlabel.set_xy(x, y);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
-                                     0 + wlabel.y(),
+    wlabel.rdp_input_invalidate(Rect(wlabel.x(),
+                                     wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -256,15 +274,18 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, font);
+    WidgetLabel wlabel(drawable.gd, parent, notifier, "test6", id, fg_color, bg_color, font);
+
+    Dimension dim = wlabel.get_optimal_dim();
+    wlabel.set_wh(dim);
+    wlabel.set_xy(x, y);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wlabel.rdp_input_invalidate(Rect(20 + wlabel.x(),
-                                     0 + wlabel.y(),
+                                     wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -290,11 +311,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, font);
+    WidgetLabel wlabel(drawable.gd, parent, notifier, "test6", id, fg_color, bg_color, font);
+
+    Dimension dim = wlabel.get_optimal_dim();
+    wlabel.set_wh(dim);
+    wlabel.set_xy(x, y);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wlabel.rdp_input_invalidate(Rect(20 + wlabel.x(),
@@ -336,13 +360,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
 
     Widget2& parent = widget_for_receive_event;
     NotifyApi * notifier = nullptr;
-    bool auto_resize = false;
     int16_t x = 0;
     int16_t y = 0;
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "", auto_resize, 0, BLACK, WHITE, font);
+    WidgetLabel wlabel(drawable.gd, parent, notifier, "", 0, BLACK, WHITE, font);
+    Dimension dim = wlabel.get_optimal_dim();
+    wlabel.set_wh(dim);
+    wlabel.set_xy(x, y);
 
     wlabel.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 0, 0, nullptr);
     BOOST_CHECK(widget_for_receive_event.sender == nullptr);
@@ -372,18 +398,41 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
 
     WidgetComposite wcomposite(drawable.gd, Rect(0,0,800,600), parent, notifier);
 
-    WidgetLabel wlabel1(drawable.gd, 0,0, wcomposite, notifier,
-                        "abababab", true, 0, YELLOW, BLACK, font);
-    WidgetLabel wlabel2(drawable.gd, 0,100, wcomposite, notifier,
-                        "ggghdgh", true, 0, WHITE, BLUE, font);
-    WidgetLabel wlabel3(drawable.gd, 100,100, wcomposite, notifier,
-                        "lldlslql", true, 0, BLUE, RED, font);
-    WidgetLabel wlabel4(drawable.gd, 300,300, wcomposite, notifier,
-                        "LLLLMLLM", true, 0, PINK, DARK_GREEN, font);
-    WidgetLabel wlabel5(drawable.gd, 700,-10, wcomposite, notifier,
-                        "dsdsdjdjs", true, 0, LIGHT_GREEN, DARK_BLUE, font);
-    WidgetLabel wlabel6(drawable.gd, -10,550, wcomposite, notifier,
-                        "xxwwp", true, 0, ANTHRACITE, PALE_GREEN, font);
+    WidgetLabel wlabel1(drawable.gd, wcomposite, notifier,
+                        "abababab", 0, YELLOW, BLACK, font);
+    Dimension dim = wlabel1.get_optimal_dim();
+    wlabel1.set_wh(dim);
+    wlabel1.set_xy(0, 0);
+
+    WidgetLabel wlabel2(drawable.gd, wcomposite, notifier,
+                        "ggghdgh", 0, WHITE, BLUE, font);
+    dim = wlabel2.get_optimal_dim();
+    wlabel2.set_wh(dim);
+    wlabel2.set_xy(0, 100);
+
+    WidgetLabel wlabel3(drawable.gd, wcomposite, notifier,
+                        "lldlslql", 0, BLUE, RED, font);
+    dim = wlabel3.get_optimal_dim();
+    wlabel3.set_wh(dim);
+    wlabel3.set_xy(100, 100);
+
+    WidgetLabel wlabel4(drawable.gd, wcomposite, notifier,
+                        "LLLLMLLM", 0, PINK, DARK_GREEN, font);
+    dim = wlabel4.get_optimal_dim();
+    wlabel4.set_wh(dim);
+    wlabel4.set_xy(300, 300);
+
+    WidgetLabel wlabel5(drawable.gd, wcomposite, notifier,
+                        "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE, font);
+    dim = wlabel5.get_optimal_dim();
+    wlabel5.set_wh(dim);
+    wlabel5.set_xy(700, -10);
+
+    WidgetLabel wlabel6(drawable.gd, wcomposite, notifier,
+                        "xxwwp", 0, ANTHRACITE, PALE_GREEN, font);
+    dim = wlabel6.get_optimal_dim();
+    wlabel6.set_wh(dim);
+    wlabel6.set_xy(-10, 550);
 
     wcomposite.add_widget(&wlabel1);
     wcomposite.add_widget(&wlabel2);
@@ -433,7 +482,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelMax)
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = 10;
     int16_t y = 100;
 
@@ -442,8 +490,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelMax)
                   "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
                   "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà";
 
-    WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, text,
-        auto_resize, id, fg_color, bg_color, font);
+    WidgetLabel wlabel(drawable.gd, parent, notifier, text,
+        id, fg_color, bg_color, font);
+    Dimension dim = wlabel.get_optimal_dim();
+    wlabel.set_wh(dim);
+    wlabel.set_xy(x, y);
+
 
     BOOST_CHECK_EQUAL(0, memcmp(wlabel.get_text(), text, sizeof(text) - 3));
 

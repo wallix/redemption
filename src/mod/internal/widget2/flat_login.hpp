@@ -91,15 +91,15 @@ public:
                         theme.edit.bgcolor, theme.edit.focus_color, theme.global.bgcolor,
                         font, label_text_password, (width <= 640),
                         -1u, 1, 1, true)
-        , img(drawable, 0, 0,
+        , img(drawable,
               theme.global.logo ? theme.global.logo_path :
               SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
-        , version_label(drawable, 0, 0, *this, nullptr, caption, true, -15,
+        , version_label(drawable, *this, nullptr, caption, -15,
                         theme.global.fgcolor, theme.global.bgcolor,
                         font)
-        , helpicon(drawable, 0, 0, *this, nullptr, "?", true, -16,
+        , helpicon(drawable, *this, nullptr, "?", -16,
                    theme.global.fgcolor, theme.global.bgcolor,
-                   theme.global.focus_color, font, 6, 2)
+                   theme.global.focus_color, 2, font, 6, 2)
         , extra_button(extra_button)
         // , frame(drawable, Rect((width - 300) / 2, 10, 300, 250), parent, notifier, -17)
         // , wimage(drawable, 0, 0, SHARE_PATH "/Philips_PM5544_640.bmp",
@@ -207,6 +207,12 @@ public:
         dim = this->error_message_label.get_optimal_dim();
         this->error_message_label.set_wh(this->login_edit.cx(), dim.h);
 
+        dim = this->version_label.get_optimal_dim();
+        this->version_label.set_wh(dim);
+
+        dim = this->img.get_optimal_dim();
+        this->img.set_wh(dim);
+
         // Bottom bloc positioning
         // Logo and Version
         const int bottom_height = (height - cbloc_h) / 2;
@@ -222,6 +228,8 @@ public:
         this->version_label.set_xy(left + (width - this->version_label.cx()) / 2,
                                    top + y_bbloc + this->img.cy() + 10);
 
+        dim = this->helpicon.get_optimal_dim();
+        this->helpicon.set_wh(dim);
         this->helpicon.set_xy(left + width - 60, top + height - 60);
 
         if (this->extra_button) {

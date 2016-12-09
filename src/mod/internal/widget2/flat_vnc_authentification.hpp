@@ -51,21 +51,26 @@ public:
                             Theme const & theme, const char * label_text_message,
                             const char * label_text_password, Font const & font)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , message_label(drawable, 0, 0, *this, nullptr, label_text_message, true, -13,
+        , message_label(drawable, *this, nullptr, label_text_message, -13,
                         theme.global.fgcolor, theme.global.bgcolor, font)
-        , password_label(drawable, 0, 0, *this, nullptr, label_text_password, true, -13,
+        , password_label(drawable, *this, nullptr, label_text_password, -13,
                          theme.global.fgcolor, theme.global.bgcolor, font)
-        , password_edit(drawable, /*0, 0, 400, */*this, this, password, -14,
+        , password_edit(drawable, *this, this, password, -14,
                         theme.edit.fgcolor, theme.edit.bgcolor,
                         theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1, true)
-        // , img(drawable, 0, 0, theme.global.logo_path, *this, nullptr, -10)
-        , img(drawable, 0, 0,
+        , img(drawable,
               theme.global.logo ? theme.global.logo_path :
               SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
         , fgcolor(theme.global.fgcolor)
         , bgcolor(theme.global.bgcolor)
     {
         this->impl = &composite_array;
+
+        Dimension dim = this->message_label.get_optimal_dim();
+        this->message_label.set_wh(dim);
+
+        dim = this->password_label.get_optimal_dim();
+        this->password_label.set_wh(dim);
 
         this->add_widget(&this->img);
         this->add_widget(&this->message_label);
@@ -89,6 +94,9 @@ public:
             y_cbloc + this->message_label.cy() + 20 - this->password_edit.get_border_height());
 
         this->password_label.set_y(this->password_label.y() + (this->password_edit.cy() - this->password_label.cy()) / 2);
+
+        dim = this->img.get_optimal_dim();
+        this->img.set_wh(dim);
 
         int bottom_height = (height - cbloc_h) / 2;
         int bbloc_h = this->img.cy()/* + 10 + this->version_label.rect.cy*/;
