@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 
         char message[1024];
         if (!check_sig(drawable.gd.impl(), message,
-            "\x3a\x52\x44\x57\x26\xe9\x5d\x16\xbe\x43\x52\xd1\x9d\x6b\x71\x9e\x1c\xa0\xb7\x79"
+            "\xaa\xa8\x12\x8e\xa4\x6b\xfc\xaf\xc8\x0b\xdc\xe0\xf7\x99\x87\xf6\x7e\x58\x19\x45"
         )){
             BOOST_CHECK_MESSAGE(false, message);
         }
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 
         char message[1024];
         if (!check_sig(drawable.gd.impl(), message,
-            "\xe3\x32\x46\xa4\xf6\xf0\xa4\xd5\x82\x5d\x57\x40\x33\x0e\x53\x00\xe5\x84\xc3\x4d"
+            "\xe9\x5b\xae\xe5\xec\x96\xcb\x00\xd1\x5a\x21\x25\xc0\xa7\xb9\xf4\xbd\x20\x99\xdc"
         )){
             BOOST_CHECK_MESSAGE(false, message);
         }
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 
         char message[1024];
         if (!check_sig(drawable.gd.impl(), message,
-            "\x58\xdd\x6d\x5e\x91\xd1\x45\x81\x08\x35\x05\x89\x05\xce\x70\xff\xf0\x26\xfb\xf8"
+            "\xcb\xcc\x5c\x60\x2a\x42\x5d\x88\x35\x7b\x58\x25\x80\x46\x5c\x7f\x88\x67\x3b\x28"
        )){
             BOOST_CHECK_MESSAGE(false, message);
         }
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 
         char message[1024];
         if (!check_sig(drawable.gd.impl(), message,
-            "\x85\xdd\x9e\x08\x09\xcd\xe4\x3f\x4c\xcc\xff\x9f\x88\xe3\x51\xdf\x2f\x4c\xbd\x1f"
+            "\xf8\xdc\xd6\x82\x09\x02\xb1\x0b\xcd\x61\x49\x28\x90\x41\xa8\xd6\x8f\xad\xd0\x21"
        )){
             BOOST_CHECK_MESSAGE(false, message);
         }
@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 
         char message[1024];
         if (!check_sig(drawable.gd.impl(), message,
-            "\xb7\xb4\x21\x96\x88\xd7\xae\xd2\x34\x16\x73\xb0\x9d\xfb\x7f\xbc\x9e\x4d\xd8\x65"
+            "\xca\x85\x6d\x9d\xb1\x80\xb8\xd2\xe9\x59\x88\xb6\xa0\x95\x20\xaf\xff\x96\xef\xd9"
                        )){
             BOOST_CHECK_MESSAGE(false, message);
         }

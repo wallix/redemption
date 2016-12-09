@@ -81,14 +81,14 @@ public:
                       theme.global.fgcolor, theme.global.bgcolor, font)
         , login_edit(drawable, *this, this,
                      login, -12, theme.edit.fgcolor, theme.edit.bgcolor,
-                     theme.edit.focus_color, font,
+                     theme.edit.focus_color, theme.global.bgcolor, font,
                      label_text_login, (width <= 640), -1u, 1, 1, false)
         , password_label(drawable, *this, nullptr, label_text_password, -13,
                          theme.global.fgcolor, theme.global.bgcolor,
                          font)
         , password_edit(drawable, *this, this,
                         password, -14, theme.edit.fgcolor,
-                        theme.edit.bgcolor, theme.edit.focus_color,
+                        theme.edit.bgcolor, theme.edit.focus_color, theme.global.bgcolor,
                         font, label_text_password, (width <= 640),
                         -1u, 1, 1, true)
         , img(drawable, 0, 0,
@@ -199,8 +199,8 @@ public:
 
         const int labels_w = std::max(this->password_label.cx(), this->login_label.cx());
 
-        this->login_edit.set_xy(left + cbloc_x + labels_w + 10, top + cbloc_y);
-        this->password_edit.set_xy(left + cbloc_x + labels_w + 10, top + height / 2);
+        this->login_edit.set_xy(left + cbloc_x + labels_w + 10, top + cbloc_y - this->login_edit.get_border_height());
+        this->password_edit.set_xy(left + cbloc_x + labels_w + 10, top + height / 2 - this->password_edit.get_border_height());
 
         this->error_message_label.set_xy(this->login_edit.x(),
                                          this->login_edit.y() - 22);

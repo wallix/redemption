@@ -55,9 +55,9 @@ public:
                         theme.global.fgcolor, theme.global.bgcolor, font)
         , password_label(drawable, 0, 0, *this, nullptr, label_text_password, true, -13,
                          theme.global.fgcolor, theme.global.bgcolor, font)
-        , password_edit(drawable, 0, 0, 400, *this, this, password, -14,
+        , password_edit(drawable, /*0, 0, 400, */*this, this, password, -14,
                         theme.edit.fgcolor, theme.edit.bgcolor,
-                        theme.edit.focus_color, font, nullptr, false, -1u, 1, 1, true)
+                        theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1, true)
         // , img(drawable, 0, 0, theme.global.logo_path, *this, nullptr, -10)
         , img(drawable, 0, 0,
               theme.global.logo ? theme.global.logo_path :
@@ -86,7 +86,7 @@ public:
 
         this->password_label.set_xy(x_cbloc, y_cbloc + this->message_label.cy() + 20);
         this->password_edit.set_xy(x_cbloc + this->password_label.cx() + 10,
-            y_cbloc + this->message_label.cy() + 20);
+            y_cbloc + this->message_label.cy() + 20 - this->password_edit.get_border_height());
 
         this->password_label.set_y(this->password_label.y() + (this->password_edit.cy() - this->password_label.cy()) / 2);
 

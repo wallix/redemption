@@ -83,21 +83,21 @@ public:
                       theme.global.fgcolor, theme.global.bgcolor, font)
         , device(drawable, 0, 0, *this, nullptr, device_str, true, -13,
                  theme.global.fgcolor, theme.global.bgcolor, font)
-        , device_edit(drawable, 0, 0, 400, *this, this, nullptr, -14,
+        , device_edit(drawable, /*0, 0, 400, */*this, this, nullptr, -14,
                       theme.edit.fgcolor, theme.edit.bgcolor,
-                      theme.edit.focus_color, font, nullptr, false, -1u, 1, 1)
+                      theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1)
         , login_label(drawable, 0, 0, *this, nullptr, text_login, true, -13,
                       theme.global.fgcolor, theme.global.bgcolor, font)
         , login(drawable, 0, 0, *this, nullptr, login_str, true, -13,
                 theme.global.fgcolor, theme.global.bgcolor, font)
-        , login_edit(drawable, 0, 0, 400, *this, this, nullptr, -14,
+        , login_edit(drawable, /*0, 0, 400, */*this, this, nullptr, -14,
                      theme.edit.fgcolor, theme.edit.bgcolor,
-                     theme.edit.focus_color, font, nullptr, false, -1u, 1, 1)
+                     theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1)
         , password_label(drawable, 0, 0, *this, nullptr, text_password, true, -13,
                          theme.global.fgcolor, theme.global.bgcolor, font)
-        , password_edit(drawable, 0, 0, 400, *this, this, nullptr, -14,
+        , password_edit(drawable, /*0, 0, 400, */*this, this, nullptr, -14,
                         theme.edit.fgcolor, theme.edit.bgcolor,
-                        theme.edit.focus_color, font, nullptr, false, -1u, 1, 1, true)
+                        theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1, true)
         , extra_button(extra_button)
         , last_interactive((ask_login || ask_password)?&this->password_edit:&this->device_edit)
         , fgcolor(theme.global.fgcolor)
@@ -298,7 +298,7 @@ public:
         y = this->separator.bottom() + 20;
 
         this->device_label.set_xy(left + x_cbloc, y);
-        device_show->set_xy(left + x_cbloc + margin_w + 20, y);
+        device_show->set_xy(left + x_cbloc + margin_w + 20, y - (this->ask_device ? this->device_edit.get_border_height() : 0));
 
         y = device_show->bottom() + 20;
 
@@ -309,16 +309,20 @@ public:
         }
 
         this->login_label.set_xy(left + x_cbloc, y);
-        login_show->set_xy(left + x_cbloc + margin_w + 20, y);
+        login_show->set_xy(left + x_cbloc + margin_w + 20, y - (this->ask_login ? this->login_edit.get_border_height() : 0));
 
         y = login_show->bottom() + 20;
 
-        this->password_label.set_xy(left + x_cbloc, y);
-        this->password_edit.set_xy(left + x_cbloc + margin_w + 20, y);
+        if (this->ask_password) {
+            this->password_label.set_xy(left + x_cbloc, y);
+            this->password_edit.set_xy(left + x_cbloc + margin_w + 20, y - this->password_edit.get_border_height());
+        }
 
-        this->password_label.set_y(this->password_label.y() + (this->password_edit.cy() - this->password_label.cy()) / 2);
+        this->device_label.set_y(this->device_label.y() + (device_show->cy() - this->device_label.cy()) / 2);
         this->login_label.set_y(this->login_label.y() + (login_show->cy() - this->login_label.cy()) / 2);
-        this->device_label.set_y(this->device_label.y() + (device_show->cy() - this->login_label.cy()) / 2);
+        if (this->ask_password) {
+            this->password_label.set_y(this->password_label.y() + (this->password_edit.cy() - this->password_label.cy()) / 2);
+        }
 
         if (this->extra_button) {
            this->extra_button->set_x(left + 60);
