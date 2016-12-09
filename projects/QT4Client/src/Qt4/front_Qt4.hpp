@@ -63,6 +63,7 @@
 #include "mod/rdp/rdp_log.hpp"
 #include "core/RDP/pointer.hpp"
 #include "core/RDP/clipboard.hpp"
+#include "core/FSCC/FileInformation.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/front_api.hpp"

@@ -177,11 +177,23 @@ namespace smb2 {
 //  |                   | always creates a new file.                           |
 //  +-------------------+------------------------------------------------------+
 
-enum {
+enum : uint32_t {
       FILE_SHARE_READ   = 0x00000001
     , FILE_SHARE_WRITE  = 0x00000002
     , FILE_SHARE_DELETE = 0x00000004
 };
+
+static const char * get_ShareAccess_name(uint32_t shareAccess) {
+    switch (shareAccess) {
+        case FILE_SHARE_READ:   return "FILE_SHARE_READ";
+        case FILE_SHARE_WRITE:  return "FILE_SHARE_WRITE";
+        case FILE_SHARE_DELETE: return "FILE_SHARE_DELETE";
+
+    }
+
+    return "<unknown>";
+}
+
 
 // CreateDisposition (4 bytes): Defines the action the server MUST take if
 //  the file that is specified in the name field already exists. For opening
@@ -224,6 +236,19 @@ enum {
     , FILE_OVERWRITE    = 0x00000004
     , FILE_OVERWRITE_IF = 0x00000005
 };
+
+static const char * get_CreateDisposition_name(uint32_t createDisposition) {
+    switch (createDisposition) {
+        case FILE_SUPERSEDE:    return "FILE_SUPERSEDE";
+        case FILE_OPEN:         return "FILE_OPEN";
+        case FILE_CREATE:       return "FILE_CREATE";
+        case FILE_OPEN_IF:      return "FILE_OPEN_IF";
+        case FILE_OVERWRITE:    return "FILE_OVERWRITE";
+        case FILE_OVERWRITE_IF: return "FILE_OVERWRITE_IF";
+    }
+
+    return "<unknown>";
+}
 
 // CreateOptions (4 bytes): Specifies the options to be applied when creating
 //  or opening the file. Combinations of the bit positions listed below are
@@ -406,6 +431,33 @@ enum {
     , FILE_OPEN_NO_RECALL            = 0x00400000
     , FILE_OPEN_FOR_FREE_SPACE_QUERY = 0x00800000
 };
+
+static const char * get_CreateOptions_name(uint32_t createOptions) {
+    switch (createOptions) {
+        case FILE_DIRECTORY_FILE:            return "FILE_DIRECTORY_FILE";
+        case FILE_WRITE_THROUGH:             return "FILE_WRITE_THROUGH";
+        case FILE_SEQUENTIAL_ONLY:           return "FILE_SEQUENTIAL_ONLY";
+        case FILE_NO_INTERMEDIATE_BUFFERING: return "FILE_NO_INTERMEDIATE_BUFFERING";
+        case FILE_SYNCHRONOUS_IO_ALERT:      return "FILE_SYNCHRONOUS_IO_ALERT";
+        case FILE_SYNCHRONOUS_IO_NONALERT:   return "FILE_SYNCHRONOUS_IO_NONALERT";
+        case FILE_NON_DIRECTORY_FILE:        return "FILE_NON_DIRECTORY_FILE";
+        case FILE_COMPLETE_IF_OPLOCKED:      return "FILE_COMPLETE_IF_OPLOCKED";
+        case FILE_NO_EA_KNOWLEDGE:           return "FILE_NO_EA_KNOWLEDGE";
+        case FILE_RANDOM_ACCESS:             return "FILE_RANDOM_ACCESS";
+        case FILE_DELETE_ON_CLOSE:           return "FILE_DELETE_ON_CLOSE";
+        case FILE_OPEN_BY_FILE_ID:           return "FILE_OPEN_BY_FILE_ID";
+        case FILE_OPEN_FOR_BACKUP_INTENT:    return "FILE_OPEN_FOR_BACKUP_INTENT";
+        case FILE_NO_COMPRESSION:            return "FILE_NO_COMPRESSION";
+        case FILE_OPEN_REMOTE_INSTANCE:      return "FILE_OPEN_REMOTE_INSTANCE";
+        case FILE_OPEN_REQUIRING_OPLOCK:     return "FILE_OPEN_REQUIRING_OPLOCK";
+        case FILE_RESERVE_OPFILTER:          return "FILE_RESERVE_OPFILTER";
+        case FILE_OPEN_REPARSE_POINT:        return "FILE_OPEN_REPARSE_POINT";
+        case FILE_OPEN_NO_RECALL:            return "FILE_OPEN_NO_RECALL";
+        case FILE_OPEN_FOR_FREE_SPACE_QUERY: return "FILE_OPEN_FOR_FREE_SPACE_QUERY";
+    }
+
+    return "<unknown>";
+}
 
 // NameOffset (2 bytes): The offset, in bytes, from the beginning of the SMB2
 //  header to the 8-byte aligned file name. If SMB2_FLAGS_DFS_OPERATIONS is
