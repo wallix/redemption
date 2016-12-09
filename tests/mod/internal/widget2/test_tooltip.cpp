@@ -90,10 +90,17 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
 
-    WidgetLabel label(drawable.gd, x, y, parent, &parent, "TOOLTIPTEST",
-                      true, 0, BLACK, WHITE, font);
-    WidgetLabel label2(drawable.gd, x + 50, y + 90, parent, &parent, "TOOLTIPTESTMULTI",
-                      true, 0, BLACK, WHITE, font);
+    WidgetLabel label(drawable.gd, parent, &parent, "TOOLTIPTEST",
+                      0, BLACK, WHITE, font);
+    Dimension dim = label.get_optimal_dim();
+    label.set_wh(dim);
+    label.set_xy(x, y);
+
+    WidgetLabel label2(drawable.gd, parent, &parent, "TOOLTIPTESTMULTI",
+                      0, BLACK, WHITE, font);
+    dim = label2.get_optimal_dim();
+    label2.set_wh(dim);
+    label2.set_xy(x + 50, y + 90);
 
     parent.add_widget(&label);
     parent.add_widget(&label2);

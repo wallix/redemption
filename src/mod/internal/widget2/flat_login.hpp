@@ -39,16 +39,17 @@
 class FlatLogin : public WidgetParent
 {
 public:
-    WidgetLabel      error_message_label;
-    WidgetLabel      login_label;
-    WidgetEditValid  login_edit;
-    WidgetLabel      password_label;
-    WidgetEditValid  password_edit;
-    WidgetImage      img;
-    WidgetLabel      version_label;
-    WidgetFlatButton helpicon;
-
     CompositeArray composite_array;
+
+    WidgetLabel        error_message_label;
+    WidgetLabel        login_label;
+    WidgetEditValid    login_edit;
+    WidgetLabel        password_label;
+    WidgetEditValid    password_edit;
+    WidgetImage        img;
+    WidgetLabel        version_label;
+    WidgetFlatButton   helpicon;
+    WidgetFlatButton * extra_button;
 
 private:
     Translator tr;
@@ -59,8 +60,6 @@ private:
     // WidgetHScrollBar hbar;
 
     bool labels_added = false;
-
-    WidgetFlatButton * extra_button;
 
     int bg_color;
 
@@ -82,25 +81,26 @@ public:
                       theme.global.fgcolor, theme.global.bgcolor, font)
         , login_edit(drawable, *this, this,
                      login, -12, theme.edit.fgcolor, theme.edit.bgcolor,
-                     theme.edit.focus_color, font,
+                     theme.edit.focus_color, theme.global.bgcolor, font,
                      label_text_login, (width <= 640), -1u, 1, 1, false)
         , password_label(drawable, *this, nullptr, label_text_password, -13,
                          theme.global.fgcolor, theme.global.bgcolor,
                          font)
         , password_edit(drawable, *this, this,
                         password, -14, theme.edit.fgcolor,
-                        theme.edit.bgcolor, theme.edit.focus_color,
+                        theme.edit.bgcolor, theme.edit.focus_color, theme.global.bgcolor,
                         font, label_text_password, (width <= 640),
                         -1u, 1, 1, true)
-        , img(drawable, 0, 0,
+        , img(drawable,
               theme.global.logo ? theme.global.logo_path :
               SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
-        , version_label(drawable, 0, 0, *this, nullptr, caption, true, -15,
+        , version_label(drawable, *this, nullptr, caption, -15,
                         theme.global.fgcolor, theme.global.bgcolor,
                         font)
-        , helpicon(drawable, 0, 0, *this, nullptr, "?", true, -16,
+        , helpicon(drawable, *this, nullptr, "?", -16,
                    theme.global.fgcolor, theme.global.bgcolor,
-                   theme.global.focus_color, font, 6, 2)
+                   theme.global.focus_color, 2, font, 6, 2)
+        , extra_button(extra_button)
         // , frame(drawable, Rect((width - 300) / 2, 10, 300, 250), parent, notifier, -17)
         // , wimage(drawable, 0, 0, SHARE_PATH "/Philips_PM5544_640.bmp",
         //          parent, notifier, -17)
@@ -109,7 +109,6 @@ public:
         // , hbar(drawable, parent, notifier, this->theme.selector_selected.bgcolor,
         //        this->theme.selector_line1.bgcolor, this->theme.selector_focus.bgcolor, -17)
         , tr(tr)
-        , extra_button(extra_button)
         , bg_color(theme.global.bgcolor)
     {
         this->impl = &composite_array;
@@ -200,13 +199,19 @@ public:
 
         const int labels_w = std::max(this->password_label.cx(), this->login_label.cx());
 
-        this->login_edit.set_xy(left + cbloc_x + labels_w + 10, top + cbloc_y);
-        this->password_edit.set_xy(left + cbloc_x + labels_w + 10, top + height / 2);
+        this->login_edit.set_xy(left + cbloc_x + labels_w + 10, top + cbloc_y - this->login_edit.get_border_height());
+        this->password_edit.set_xy(left + cbloc_x + labels_w + 10, top + height / 2 - this->password_edit.get_border_height());
 
         this->error_message_label.set_xy(this->login_edit.x(),
                                          this->login_edit.y() - 22);
         dim = this->error_message_label.get_optimal_dim();
         this->error_message_label.set_wh(this->login_edit.cx(), dim.h);
+
+        dim = this->version_label.get_optimal_dim();
+        this->version_label.set_wh(dim);
+
+        dim = this->img.get_optimal_dim();
+        this->img.set_wh(dim);
 
         // Bottom bloc positioning
         // Logo and Version
@@ -223,6 +228,8 @@ public:
         this->version_label.set_xy(left + (width - this->version_label.cx()) / 2,
                                    top + y_bbloc + this->img.cy() + 10);
 
+        dim = this->helpicon.get_optimal_dim();
+        this->helpicon.set_wh(dim);
         this->helpicon.set_xy(left + width - 60, top + height - 60);
 
         if (this->extra_button) {

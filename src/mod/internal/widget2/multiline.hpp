@@ -128,9 +128,6 @@ public:
         if (this->auto_resize) {
             this->set_cx(this->cx() + this->x_text * 2);
             this->set_cy((this->cy() + this->y_text * 2) * (line - &this->lines[0]));
-
-            Dimension dm = this->get_optimal_dim();
-            REDASSERT((dm.w == this->cx()) && (dm.h == this->cy()));
         }
     }
 
