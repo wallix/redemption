@@ -297,6 +297,7 @@ public:
         return this->bg_color;
     }
 
+private:
     void rearrange() {
         gdi::TextMetrics tm1(this->font, this->target_group_label.get_text());
         int target_group_min_width = tm1.width + 5;
@@ -406,6 +407,7 @@ public:
         }
     }
 
+public:
     void ask_for_connection() {
         if (this->notifier) {
             this->notifier->notify(&this->connect, NOTIFY_SUBMIT);

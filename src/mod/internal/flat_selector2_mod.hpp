@@ -296,7 +296,11 @@ private:
             this->selector.selector_lines.set_selection(0);
             this->selector.set_widget_focus(&this->selector.selector_lines, Widget2::focus_reason_tabkey);
         }
-        this->selector.rearrange();
+        this->selector.move_size_widget(
+            this->selector.x(),
+            this->selector.y(),
+            this->selector.cx(),
+            this->selector.cy());
     }
 
 public:

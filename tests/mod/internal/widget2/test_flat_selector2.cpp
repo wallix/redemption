@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
 
     selector.selector_lines.set_selection(0);
 
-    selector.rearrange();
+    selector.move_size_widget(selector.x(), selector.y(), selector.cx(), selector.cy());
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
@@ -120,7 +120,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
                         "RDP");
 
     selector.selector_lines.set_selection(0);
-    selector.rearrange();
+
+    selector.move_size_widget(selector.x(), selector.y(), selector.cx(), selector.cy());
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
@@ -269,7 +270,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     selector.set_widget_focus(&selector.selector_lines, Widget2::focus_reason_tabkey);
     selector.selector_lines.set_selection(0);
 
-    selector.rearrange();
+    selector.move_size_widget(selector.x(), selector.y(), selector.cx(), selector.cy());
 
     selector.selector_lines.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                                             selector.selector_lines.x() + 20,
@@ -405,7 +406,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     int curx = 0;
     int cury = 0;
-    selector.rearrange();
+
+    selector.move_size_widget(selector.x(), selector.y(), selector.cx(), selector.cy());
+
     selector.selector_lines.set_selection(0);
 
     curx = selector.filter_target_group.x() + 2;
