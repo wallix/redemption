@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
 //    drawable.save_to_png(OUTPUT_FILE_PATH "number_edit-e1.png");
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x42\xfc\x5a\xf5\x42\x03\xb5\x65\x5d\x91\x56\x78\x50\x89\xfe\x8a\x21\x14\x9e\x55"
+        "\xb4\x77\xd9\x77\x1b\xbc\x9e\x63\x5d\x99\x6e\x22\xef\x69\xea\x87\xfa\x16\x52\x5c"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
 //    drawable.save_to_png(OUTPUT_FILE_PATH "number_edit-e2-1.png");
     if (!check_sig(drawable.gd.impl(), message,
-        "\x42\xfc\x5a\xf5\x42\x03\xb5\x65\x5d\x91\x56\x78\x50\x89\xfe\x8a\x21\x14\x9e\x55"
+        "\xb4\x77\xd9\x77\x1b\xbc\x9e\x63\x5d\x99\x6e\x22\xef\x69\xea\x87\xfa\x16\x52\x5c"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
 //    drawable.save_to_png(OUTPUT_FILE_PATH "number_edit-e2-2.png");
     if (!check_sig(drawable.gd.impl(), message,
-        "\x95\x97\x61\x74\x73\xb9\x2a\x51\x3d\x98\xaa\x3c\x2b\x74\x8f\x28\x31\x9c\xc5\x60"
+        "\xff\xd0\xe8\xbf\x21\x94\xdb\x15\x15\x32\x17\x1d\x89\x4d\x79\xae\xda\x97\xf7\x92"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
