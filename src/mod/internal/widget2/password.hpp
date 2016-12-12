@@ -35,29 +35,6 @@ public:
     int w_char;
     int h_char;
 
-    WidgetPassword(gdi::GraphicApi & drawable, int16_t x, int16_t y, uint16_t cx,
-                   Widget2& parent, NotifyApi* notifier, const char * text,
-                   int group_id, int fgcolor, int bgcolor, int focus_color, Font const & font,
-                   std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
-        : WidgetEdit(drawable, x, y, cx, parent, notifier, text,
-                     group_id, fgcolor, bgcolor, focus_color, font, edit_position, xtext, ytext)
-        , masked_text(drawable, *this, nullptr, text, 0 , fgcolor, bgcolor, font,
-                      xtext, ytext)
-    {
-        this->set_masked_text();
-
-        gdi::TextMetrics tm(font, "*");
-        this->w_char = tm.width;
-        this->h_char = tm.height;
-        this->set_cy((this->masked_text.y_text) * 2 + this->h_char);
-        this->masked_text.set_cx(this->cx());
-        this->masked_text.set_cy(this->cy());
-        this->masked_text.set_x(this->masked_text.x() + 1);
-        this->masked_text.set_y(this->masked_text.y() + 1);
-        this->set_cy(this->cy() + 2);
-        this->h_char -= 1;
-    }
-
     WidgetPassword(gdi::GraphicApi & drawable,
                    Widget2& parent, NotifyApi* notifier, const char * text,
                    int group_id, int fgcolor, int bgcolor, int focus_color, Font const & font,

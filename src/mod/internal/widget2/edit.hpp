@@ -44,59 +44,6 @@ public:
     bool draw_border_focus;
     Font const & font;
 
-    WidgetEdit(gdi::GraphicApi & drawable, int16_t x, int16_t y, uint16_t cx,
-               Widget2 & parent, NotifyApi* notifier, const char * text,
-               int group_id, int fgcolor, int bgcolor, int focus_color, Font const & font,
-               std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
-    : Widget2(drawable, Rect(x,y,cx,1), parent, notifier, group_id)
-    , label(drawable, *this, nullptr, text, 0, fgcolor, bgcolor, font, xtext, ytext)
-    , w_text(0)
-    , h_text(0)
-    , cursor_color(0x888888)
-    // , cursor_color(fgcolor)
-    , focus_color(focus_color)
-    , drawall(false)
-    , draw_border_focus(true)
-    , font(font)
-    {
-        if (text) {
-            this->buffer_size = strlen(text);
-            this->num_chars = UTF8Len(byte_ptr_cast(this->label.buffer));
-            this->edit_pos = std::min(this->num_chars, edit_position);
-            this->edit_buffer_pos = UTF8GetPos(reinterpret_cast<uint8_t *>(this->label.buffer), this->edit_pos);
-            this->cursor_px_pos = 0;
-            char c = this->label.buffer[this->edit_buffer_pos];
-            this->label.buffer[this->edit_buffer_pos] = 0;
-            gdi::TextMetrics tm1(this->font, this->label.buffer);
-            this->w_text = tm1.width;
-            this->cursor_px_pos = this->w_text;
-            this->label.buffer[this->edit_buffer_pos] = c;
-            // TODO: tm.height unused ?
-            gdi::TextMetrics tm2(this->font, &this->label.buffer[this->edit_buffer_pos]);
-            this->w_text += tm2.width;
-        } else {
-            this->buffer_size = 0;
-            this->num_chars = 0;
-            this->edit_buffer_pos = 0;
-            this->edit_pos = 0;
-            this->cursor_px_pos = 0;
-        }
-
-        // TODO: tm.width unused ?
-        gdi::TextMetrics tm(this->font, "Édp");
-        this->h_text = tm.height;
-        this->set_cy(this->h_text + this->label.y_text * 2);
-        this->label.set_cx(this->cx());
-        this->label.set_cy(this->cy());
-        this->label.set_x(this->label.x() + 1);
-        this->label.set_y(this->label.y() + 1);
-        this->set_cx(this->cx() + 2);
-        this->set_cy(this->cy() + 2);
-        this->h_text -= 1;
-
-        this->pointer_flag = Pointer::POINTER_EDIT;
-    }
-
     WidgetEdit(gdi::GraphicApi & drawable,
                Widget2 & parent, NotifyApi* notifier, const char * text,
                int group_id, int fgcolor, int bgcolor, int focus_color, Font const & font,
