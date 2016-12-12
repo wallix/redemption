@@ -1386,26 +1386,6 @@ int parse_command_line_options(int argc, char const ** argv, struct RecorderPara
         return 1;
     }
 
-
-//        {
-//            std::string directory          ;
-//            std::string filename           ;
-//            std::string extension = ".mwrm";
-
-//            ParsePath(rp.input_filename.c_str(), directory, filename, extension);
-//            if (!directory.size()) {
-//                if (file_exist(rp.input_filename.c_str())) {
-//                    directory = "./";
-//                }
-//                else {
-//                    directory = ini.get<cfg::video::record_path>().c_str();
-//                }
-//            }
-//            MakePath(rp.input_filename, directory.c_str(), filename.c_str(), extension.c_str());
-//        }
-//        std::cout << "Input file is \"" << rp.input_filename << "\".\n";
-
-
     // Input path rule is as follow:
     // -----------------------------
     //  default serach directory for mwrm is given in config file
