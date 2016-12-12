@@ -40,41 +40,6 @@ public:
 
     int border_none_color;
 
-    WidgetEditValid(gdi::GraphicApi & drawable, int16_t x, int16_t y, uint16_t cx,
-                    Widget2 & parent, NotifyApi* notifier, const char * text,
-                    int group_id, int fgcolor, int bgcolor,
-                    int focus_color, int border_none_color, Font const & font,
-                    const char * title, bool use_title, std::size_t edit_position = -1,
-                    // TODO re-enable
-                    int /*xtext*/ = 0, int /*ytext*/ = 0, bool pass = false)
-        : Widget2(drawable, Rect(0, 0, cx, 1), parent, notifier, group_id)
-        , button(drawable, *this, this, "\xe2\x9e\x9c",
-                 group_id, bgcolor, focus_color, focus_color, 1, font, 6, 2)
-        , editbox(pass ? new WidgetPassword(drawable, *this,
-                                            this, text, group_id, fgcolor, bgcolor,
-                                            focus_color, font, edit_position, 1, 2)
-                  : new WidgetEdit(drawable, *this, this,
-                                   text, group_id, fgcolor, bgcolor, focus_color, font,
-                                   edit_position, 1, 2))
-        , label(title ? new WidgetLabel(drawable, *this, nullptr, title,
-                                        group_id, MEDIUM_GREY, bgcolor, font, 1, 2)
-                : nullptr)
-        , use_label_(use_title)
-        , border_none_color(border_none_color)
-    {
-        Dimension dim = this->get_optimal_dim();
-        this->set_wh(cx, dim.h);
-
-        if (this->label) {
-            dim = this->label->get_optimal_dim();
-            this->label->set_wh(dim);
-        }
-
-        this->set_xy(x, y);
-
-        this->editbox->draw_border_focus = false;
-    }
-
     WidgetEditValid(gdi::GraphicApi & drawable,
                     Widget2 & parent, NotifyApi* notifier, const char * text,
                     int group_id, int fgcolor, int bgcolor,
