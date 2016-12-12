@@ -1,3 +1,5 @@
+#pragma once
+
 #include <boost/test/auto_unit_test.hpp>
 
 // fixed link error (API changed)
@@ -7,4 +9,8 @@ namespace boost { namespace unit_test { namespace ut_detail {
         return ( name[0] == '&' ? std::string(name.begin()+1, name.size()-1) : std::string(name.begin(), name.size() ));
     }
 }}}
+#endif
+
+#ifdef IN_IDE_PARSER
+# define FIXTURES_PATH "./tests/fixtures"
 #endif

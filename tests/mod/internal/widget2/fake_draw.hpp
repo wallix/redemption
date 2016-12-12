@@ -27,10 +27,6 @@
 #include "mod/mod_api.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 
-#ifdef IN_IDE_PARSER
-#define FIXTURES_PATH
-#endif
-
 struct TestDraw : mod_api
 {
     RDPDrawable gd;

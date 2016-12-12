@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
     std::vector<OcrTitle> out_titles;
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/m-21288-2.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/m-21288-2.bmp");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -79,14 +79,14 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
     }
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/w7mediacentercapture.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/w7mediacentercapture.bmp");
         extractor.extract_titles(drawable, out_titles);
 
         BOOST_CHECK_EQUAL(out_titles.size(), 0);
     }
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/win2008capture2.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture2.bmp");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
     }
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/win2008capture4.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture4.bmp");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
     }
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/win2008capture.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture.bmp");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
     }
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/win2008capture3.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture3.bmp");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
     }
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/win2008capture5.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture5.bmp");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
     }
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/win2008capture6.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture6.bmp");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
     }
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/win2008capture9.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture9.bmp");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -201,7 +201,7 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
     }
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/win2008capture10.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture10.bmp");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE(Test2008R2)
     std::vector<OcrTitle> out_titles;
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/win2008R2_server_manager.png");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2008R2_server_manager.png");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -258,7 +258,7 @@ BOOST_AUTO_TEST_CASE(TestNewOCR2)
     }
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/win2008capture10.png");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture10.png");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE(TestNewOCR2)
     }
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/"
+        draw_bitmap(drawable, FIXTURES_PATH "/"
                               "rdp@192.168.10.254,qaadministrateur@win2k3dc_rdp,20121128-114532,"
                               "wab2-3-1-0.yourdomain,8575-001616-000000.png");
         extractor.extract_titles(drawable, out_titles);
@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_CASE(TestNewOCR3)
     std::vector<OcrTitle> out_titles;
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/win2002capture1.png");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2002capture1.png");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -330,7 +330,7 @@ BOOST_AUTO_TEST_CASE(TestNewOCR4)
     std::vector<OcrTitle> out_titles;
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/capture1.png");
+        draw_bitmap(drawable, FIXTURES_PATH "/capture1.png");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -346,7 +346,7 @@ BOOST_AUTO_TEST_CASE(TestNewOCR4)
     }
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/capture2.png");
+        draw_bitmap(drawable, FIXTURES_PATH "/capture2.png");
         extractor.reset_titlebar_color_id();
         extractor.extract_titles(drawable, out_titles);
 
@@ -374,7 +374,7 @@ BOOST_AUTO_TEST_CASE(TestNewOCRWin2012)
     std::vector<OcrTitle> out_titles;
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/win2012capture2.png");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2012capture2.png");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -390,7 +390,7 @@ BOOST_AUTO_TEST_CASE(TestNewOCRWin2012)
     }
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/win2012capture3.png");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2012capture3.png");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -417,7 +417,7 @@ BOOST_AUTO_TEST_CASE(TestNewOCRWin2012_VNC)
     std::vector<OcrTitle> out_titles;
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/win2012_vnc_t9209.png");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2012_vnc_t9209.png");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -444,7 +444,7 @@ BOOST_AUTO_TEST_CASE(TestNewOCRWin2012Standard)
     std::vector<OcrTitle> out_titles;
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/w2012s_Gestionnaire_de_serveur.png");
+        draw_bitmap(drawable, FIXTURES_PATH "/w2012s_Gestionnaire_de_serveur.png");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -460,7 +460,7 @@ BOOST_AUTO_TEST_CASE(TestNewOCRWin2012Standard)
     }
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/w2012s_Gestionnaire_des_taches.png");
+        draw_bitmap(drawable, FIXTURES_PATH "/w2012s_Gestionnaire_des_taches.png");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -476,7 +476,7 @@ BOOST_AUTO_TEST_CASE(TestNewOCRWin2012Standard)
     }
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/w2012s_Panneau_de_configuration.png");
+        draw_bitmap(drawable, FIXTURES_PATH "/w2012s_Panneau_de_configuration.png");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -504,7 +504,7 @@ BOOST_AUTO_TEST_CASE(TestOCRBug)
     std::vector<OcrTitle> out_titles;
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/badocr.png");
+        draw_bitmap(drawable, FIXTURES_PATH "/badocr.png");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -530,7 +530,7 @@ BOOST_AUTO_TEST_CASE(TestNewOCRRussian)
     std::vector<OcrTitle> out_titles;
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/win_unknow_russian.png");
+        draw_bitmap(drawable, FIXTURES_PATH "/win_unknow_russian.png");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
@@ -546,7 +546,7 @@ BOOST_AUTO_TEST_CASE(TestNewOCRRussian)
     }
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/win_unknow_russian2.png");
+        draw_bitmap(drawable, FIXTURES_PATH "/win_unknow_russian2.png");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(

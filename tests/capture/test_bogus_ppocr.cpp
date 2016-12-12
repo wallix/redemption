@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(TestNewOCR4)
     std::vector<OcrTitle> out_titles;
 
     {
-        draw_bitmap(drawable, "./tests/fixtures/win2012capture1.png");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2012capture1.png");
         extractor.extract_titles(drawable, out_titles);
 
         auto expected = make_array(
