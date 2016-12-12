@@ -94,8 +94,7 @@ public:
         record_path, basename, ("." + video_param.codec).c_str(), groupid)
     , vc(now, this->trans, drawable, no_timestamp, std::move(video_param))
     {
-        const char * const path = this->trans.seqgen()->get(this->trans.get_seqno());
-        ::unlink(path);
+        ::unlink((std::string(record_path) + basename + "." + video_param.codec).c_str());
     }
 
     void attach_apis(ApisRegister & apis_register, const Inifile &) {
@@ -278,7 +277,7 @@ public:
     , ic_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_path, basename, ".png", groupid)
     , ic(this->ic_trans, drawable)
     , video_sequencer(
-        now, video_interval <= std::chrono::microseconds(0) ? video_interval : std::chrono::microseconds::max(),
+        now, video_interval > std::chrono::microseconds(0) ? video_interval : std::chrono::microseconds::max(),
         VideoSequencerAction{*this})
     , first_image(now, *this)
     , next_video_notifier(next_video_notifier)

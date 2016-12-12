@@ -289,7 +289,7 @@ public:
                 this->pvc.reset(new Video(
                     now, record_path, basename, groupid, no_timestamp, this->gd->impl(),
                     video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini),
-                    std::chrono::seconds(ini.get<cfg::video::flv_break_interval>()), notifier
+                    ini.get<cfg::video::flv_break_interval>(), notifier
                 ));
             }
 
