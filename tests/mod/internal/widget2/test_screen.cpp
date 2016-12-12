@@ -62,14 +62,29 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     Notify notifier3;
     Notify notifier4;
 
-    WidgetFlatButton wbutton1(drawable.gd, 0, 0, wscreen, &notifier1, "button 1",
-                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, font);
-    WidgetFlatButton wbutton2(drawable.gd, 0, 30, wscreen, &notifier2, "button 2",
-                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, font);
-    WidgetFlatButton wbutton3(drawable.gd, 100, 0, wscreen, &notifier3, "button 3",
-                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, font);
-    WidgetFlatButton wbutton4(drawable.gd, 100, 30, wscreen, &notifier4, "button 4",
-                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, font);
+    WidgetFlatButton wbutton1(drawable.gd, wscreen, &notifier1, "button 1",
+                              0, WHITE, DARK_BLUE_BIS, WINBLUE, 2, font);
+    Dimension dim = wbutton1.get_optimal_dim();
+    wbutton1.set_wh(dim);
+    wbutton1.set_xy(0, 0);
+
+    WidgetFlatButton wbutton2(drawable.gd, wscreen, &notifier2, "button 2",
+                              0, WHITE, DARK_BLUE_BIS, WINBLUE, 2, font);
+    dim = wbutton2.get_optimal_dim();
+    wbutton2.set_wh(dim);
+    wbutton2.set_xy(0, 30);
+
+    WidgetFlatButton wbutton3(drawable.gd, wscreen, &notifier3, "button 3",
+                              0, WHITE, DARK_BLUE_BIS, WINBLUE, 2, font);
+    dim = wbutton3.get_optimal_dim();
+    wbutton3.set_wh(dim);
+    wbutton3.set_xy(100, 0);
+
+    WidgetFlatButton wbutton4(drawable.gd, wscreen, &notifier4, "button 4",
+                              0, WHITE, DARK_BLUE_BIS, WINBLUE, 2, font);
+    dim = wbutton4.get_optimal_dim();
+    wbutton4.set_wh(dim);
+    wbutton4.set_xy(100, 30);
 
     wscreen.add_widget(&wbutton1);
     wscreen.add_widget(&wbutton2);

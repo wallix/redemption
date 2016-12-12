@@ -48,8 +48,8 @@ class LanguageButton : public WidgetFlatButton
             Font const & font,
             Theme const & theme
         )
-        : WidgetFlatButton(drawable, 0, 0, *this, this, nullptr, true, -1,
-                           theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font, 7, 7)
+        : WidgetFlatButton(drawable, *this, this, nullptr, -1,
+                           theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font, 7, 7)
         , front(front)
         , parent(parent)
     {
@@ -91,6 +91,9 @@ class LanguageButton : public WidgetFlatButton
         }
 
         this->set_text(this->locales[0].locale_name);
+
+        Dimension dim = this->get_optimal_dim();
+        this->set_wh(dim);
     }
 
     void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
@@ -100,6 +103,9 @@ class LanguageButton : public WidgetFlatButton
 
             this->selected_language = (this->selected_language + 1) % this->locales.size();
             this->set_text(this->locales[this->selected_language].locale_name);
+
+            Dimension dim = this->get_optimal_dim();
+            this->set_wh(dim);
 
             rect.cx = std::max(rect.cx, this->cx());
             rect.cy = std::max(rect.cy, this->cy());
