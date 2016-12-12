@@ -1325,12 +1325,12 @@ BOOST_AUTO_TEST_CASE(TestAppRecorder)
             FIXTURES_PATH "/verifier/recorded/"
             "toto@10.10.43.13,Administrateur@QA@cible"
             ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
+        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/", 
         "-o",
             "/tmp/recorder.1.flva",
         "--flv",
         "--full",
-        "--flvbreakinterval",
-            "500",
+        "--flvbreakinterval", "500",
     };
     int argc = sizeof(argv)/sizeof(char*);
 
