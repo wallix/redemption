@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
                                        , wgroupbox.cy()
                                        ));
 
-//    drawable.save_to_png(OUTPUT_FILE_PATH "group_box_0.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "group_box_2.png");
 
     char message[1024];
     if (!check_sig( drawable.gd.impl(), message,
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
                                        , wgroupbox.cy()
                                        ));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "group_box_1.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "group_box_3.png");
 
     if (!check_sig( drawable.gd.impl(), message,
         "\x20\x96\x42\x3e\xfa\xff\x1a\x98\x75\x2a\x5c\x0a\x41\x6d\xe8\xa1\x66\x4e\x93\xe3"
