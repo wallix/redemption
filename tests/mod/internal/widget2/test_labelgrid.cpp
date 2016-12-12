@@ -47,18 +47,18 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
     int id = 0;
     int16_t x = 10;
     int16_t y = 10;
-    // int xtext = 4;
-    // int ytext = 1;
 
     const uint16_t line_number   = 5;
     const uint16_t column_number = 4;
     const uint16_t grid_border   = 2;
 
-    WidgetLabelGrid wgrid(drawable.gd, Rect(x, y, 640, 480), parent, notifier,
+    WidgetLabelGrid wgrid(drawable.gd, parent, notifier,
                           line_number, column_number,
                           PALE_BLUE, BLACK, LIGHT_BLUE, BLACK,
                           WINBLUE, WHITE, MEDIUM_BLUE, WHITE, font,
                           grid_border, id);
+    wgrid.set_wh(640, 480);
+    wgrid.set_xy(x, y);
 
     const char * texts0[] = { "target_group", "target", "protocol", "timeframe" };
     wgrid.add_line(texts0);

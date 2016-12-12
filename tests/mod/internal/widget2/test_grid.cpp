@@ -59,9 +59,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
      * I believe users of this widget may wish to control text position and behavior inside rectangle
      * ie: text may be centered, aligned left, aligned right, or even upside down, etc
      * these possibilities (and others) are supported in RDPGlyphIndex */
-    WidgetGrid wgrid(drawable.gd, Rect(x, y, 640, 480), parent, notifier, line_number, column_number,
+    WidgetGrid wgrid(drawable.gd, parent, notifier, line_number, column_number,
         PALE_BLUE, BLACK, LIGHT_BLUE, BLACK, WINBLUE, WHITE, MEDIUM_BLUE, WHITE,
         grid_border, id);
+    wgrid.set_wh(640, 480);
+    wgrid.set_xy(x, y);
 
     Widget2  * widgetTable[128] = { nullptr };
     uint16_t   widget_count     = 0;
