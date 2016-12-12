@@ -13,4 +13,5 @@ namespace boost { namespace unit_test { namespace ut_detail {
 
 #ifdef IN_IDE_PARSER
 # define FIXTURES_PATH "./tests/fixtures"
+# define CFG_PATH "./sys/etc/rdpproxy"
 #endif

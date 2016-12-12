@@ -443,6 +443,7 @@ test-canonical acl/mm_api.hpp ;
 ## Ocr
 ## {
 test-run test_ocr : capture/test_ocr.cpp : : <library>bitmap <library>png <library>ocr <library>ppocr_test ;
+test-run test_ppocr : capture/test_ocr.cpp : : <library>bitmap <library>png <library>ocr <library>ppocr_test ;
 test-run test_bogus_ocr : capture/test_bogus_ocr.cpp : : <library>bitmap <library>png <library>ocr ;
 test-run test_bogus_ppocr : capture/test_bogus_ppocr.cpp : : <library>bitmap <library>png <library>ocr <library>ppocr_test ;
 test-canonical capture/ocr/locale/latin_to_cyrillic.hpp : <library>ocr ;

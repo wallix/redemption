@@ -49,7 +49,7 @@ namespace {
         drawable.draw_bitmap({0, 0, drawable.width(), drawable.height()}, bmp);
     }
 
-    auto & ocr_constants = rdp_ppocr::get_ocr_constants("sys/etc/rdpproxy/ppocr.latin-cyrillic");
+    auto & ocr_constants = rdp_ppocr::get_ocr_constants(CFG_PATH "/ppocr.latin-cyrillic");
 }
 
 BOOST_AUTO_TEST_CASE(TestPPOCR1)
