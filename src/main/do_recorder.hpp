@@ -349,28 +349,24 @@ public:
           = encrypted 
           || ((this->header.version > 1) && (this->line_reader.get_buf()[0] == 'c'));
         // else v1
-        LOG(LOG_INFO, "Reading blank");
         next_line(); // blank
-        LOG(LOG_INFO, "in line buffer '%s'", this->line_reader.get_buf().begin());
-        LOG(LOG_INFO, "Reading blank");
         next_line(); // blank
-        LOG(LOG_INFO, "in line buffer '%s'", this->line_reader.get_buf().begin());
     }
 
     /// \return false if end of file
     bool read_meta_file(MetaLine2 & meta_line)
     {
-        LOG(LOG_INFO, "read_meta_file %s", this->line_reader.get_buf().begin());
+//        LOG(LOG_INFO, "read_meta_file %s", this->line_reader.get_buf().begin());
 
         if (!this->line_reader.next_line()) {
             return false;
         }
-        LOG(LOG_INFO, "read_meta_file: after reading line %s", this->line_reader.get_buf().begin());
+//        LOG(LOG_INFO, "read_meta_file: after reading line %s", this->line_reader.get_buf().begin());
 
         auto cur = this->line_reader.get_buf().begin();
         auto eol = this->line_reader.get_buf().end();
 
-        LOG(LOG_INFO, "read_meta_file [1]");
+//        LOG(LOG_INFO, "read_meta_file [1]");
 
         // Line format "filename
         // [st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime]
@@ -384,7 +380,7 @@ public:
         using reverse_iterator = std::reverse_iterator<char*>;
         reverse_iterator first(cur);
         reverse_iterator space(eol);
-        LOG(LOG_INFO, "read_meta_file [2] has_checksum=%d", header.has_checksum);
+//        LOG(LOG_INFO, "read_meta_file [2] has_checksum=%d", header.has_checksum);
         for(int i = 0; i < ((header.version==1)?2:10) + 2*header.has_checksum; ++i){
             space = std::find(space, first, ' ');
             ++space;
@@ -398,10 +394,10 @@ public:
         ++cur;
         meta_line.filename[path_len] = 0;
 
-        LOG(LOG_INFO, "read_meta_file [3] filename='%s' %*s", meta_line.filename, static_cast<int>(eol-cur), cur);
+//        LOG(LOG_INFO, "read_meta_file [3] filename='%s' %*s", meta_line.filename, static_cast<int>(eol-cur), cur);
 
         if (this->header.version == 1){
-            LOG(LOG_INFO, "read_meta_file [4]");
+//            LOG(LOG_INFO, "read_meta_file [4]");
 
             meta_line.size = 0;
             meta_line.mode = 0;
@@ -413,7 +409,7 @@ public:
             meta_line.ctime = 0;
         }
         else{ // v2
-            LOG(LOG_INFO, "read_meta_file [5] %*s", static_cast<int>(eol-cur), cur);
+//            LOG(LOG_INFO, "read_meta_file [5] %*s", static_cast<int>(eol-cur), cur);
 
             meta_line.size = get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
             meta_line.mode = get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
@@ -425,13 +421,13 @@ public:
             meta_line.ctime = get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
         }
 
-        LOG(LOG_INFO, "read_meta_file [6] %*s", static_cast<int>(eol-cur), cur);
+//        LOG(LOG_INFO, "read_meta_file [6] %*s", static_cast<int>(eol-cur), cur);
 
         meta_line.start_time = get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
         meta_line.stop_time = get_ll(cur, eol, this->header.has_checksum?' ':'\n',
                                             ERR_TRANSPORT_READ_FAILED);
 
-        LOG(LOG_INFO, "read_meta_file [7] %*s", static_cast<int>(eol-cur), cur);
+//        LOG(LOG_INFO, "read_meta_file [7] %*s", static_cast<int>(eol-cur), cur);
         if (header.has_checksum){
             // HASH1 + space
             in_hex256(meta_line.hash1, MD_HASH_LENGTH, cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
@@ -443,9 +439,9 @@ public:
             memset(meta_line.hash2, 0, sizeof(meta_line.hash2));
         }
 
-        LOG(LOG_INFO, "read_meta_file [8] %*s", static_cast<int>(eol-cur), cur);
+//        LOG(LOG_INFO, "read_meta_file [8] %*s", static_cast<int>(eol-cur), cur);
         // TODO: check the whole line has been consumed (or it's an error)
-        LOG(LOG_INFO, "read_meta_file: done %s", this->line_reader.get_buf().begin());        
+//        LOG(LOG_INFO, "read_meta_file: done %s", this->line_reader.get_buf().begin());        
         return true;
     }
 };

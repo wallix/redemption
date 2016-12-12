@@ -2189,7 +2189,7 @@ public:
                     "FileSystemDriveManager::ProcessDeviceIORequest: "
                         "Undecoded Device I/O Request - "
                         "MajorFunction=%s(0x%X)",
-                    rdpdr::DeviceIORequest::get_MajorFunction_name(
+                    rdpdr::get_MajorFunction_name(
                         device_io_request.MajorFunction()),
                     device_io_request.MajorFunction());
                 REDASSERT(false);

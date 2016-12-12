@@ -21,8 +21,6 @@
 
 #pragma once
 
-//#define LOGPRINT
-
 #include "transport/socket_transport.hpp"
 #include "mod/rdp/rdp.hpp"
 
@@ -129,7 +127,7 @@ public:
                                                 , this->_client_sck
                                                 , targetIP
                                                 , this->_front->_port
-                                                , this->_front->verbose
+                                                , to_verbose_flags(0)
                                                 , &error_message
                                                 );
                 std::cout << "Connected to [" << targetIP <<  "]." << std::endl;
@@ -165,7 +163,7 @@ public:
                                    , 2
                                    , ini.get<cfg::font>()
                                    , ini.get<cfg::theme>()
-                                   , 0
+                                   , to_verbose_flags(0)
                                    );
         mod_rdp_params.device_id                       = "device_id";
         mod_rdp_params.enable_tls                      = this->_modRDPParamsData.enable_tls;
@@ -180,7 +178,7 @@ public:
         mod_rdp_params.allow_channels                  = &allow_channels;
         //mod_rdp_params.allow_using_multiple_monitors   = true;
         //mod_rdp_params.bogus_refresh_rect              = true;
-        mod_rdp_params.verbose = 0;                      //MODRDP_LOGLEVEL_CLIPRDR | 16;
+        mod_rdp_params.verbose = to_verbose_flags(0);                      //MODRDP_LOGLEVEL_CLIPRDR | 16;
 
         LCGRandom gen(0); // To always get the same client random, in tests
 
@@ -208,7 +206,6 @@ public:
             return false;
         }
 
-       LOG(LOG_INFO, "Early negociations start..");
         if (this->_callback != nullptr) {
             while (!this->_callback->is_up_and_running()) {
                 try {

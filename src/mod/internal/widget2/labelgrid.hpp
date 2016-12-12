@@ -75,11 +75,15 @@ struct WidgetLabelGrid : public WidgetGrid {
         REDASSERT(this->nb_rows <= GRID_NB_ROWS_MAX);
         for (int i = 0; i < this->nb_columns; i++) {
             bool odd = this->nb_rows & 1;
-            WidgetLabel * label = new WidgetLabel(this->drawable, 0, 0, *this, this,
-                                              entries[i], true, this->group_id,
+            WidgetLabel * label = new WidgetLabel(this->drawable, *this, this,
+                                              entries[i], this->group_id,
                                               odd ? this->fg_color_1 : this->fg_color_2,
                                               odd ? this->bg_color_1 : this->bg_color_2,
                                               this->font, x_padding_label, y_padding_label);
+
+            Dimension dim = label->get_optimal_dim();
+            label->set_wh(dim);
+
             label->tool = true;
             this->set_widget(this->nb_rows, i, label);
             this->toDelete[i][this->nb_rows] = true;

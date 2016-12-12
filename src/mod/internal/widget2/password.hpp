@@ -41,7 +41,7 @@ public:
                    std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
         : WidgetEdit(drawable, x, y, cx, parent, notifier, text,
                      group_id, fgcolor, bgcolor, focus_color, font, edit_position, xtext, ytext)
-        , masked_text(drawable, 0, 0, *this, nullptr, text, false, 0 , fgcolor, bgcolor, font,
+        , masked_text(drawable, *this, nullptr, text, 0 , fgcolor, bgcolor, font,
                       xtext, ytext)
     {
         this->set_masked_text();

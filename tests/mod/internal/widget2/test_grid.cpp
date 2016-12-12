@@ -48,11 +48,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = 10;
     int16_t y = 10;
-    // int xtext = 4;
-    // int ytext = 1;
 
     const uint16_t line_number   = 5;
     const uint16_t column_number = 4;
@@ -66,13 +63,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
         PALE_BLUE, BLACK, LIGHT_BLUE, BLACK, WINBLUE, WHITE, MEDIUM_BLUE, WHITE,
         grid_border, id);
 
-/*
-    wgrid.set_sizing_strategy(0, 50, 150);
-    wgrid.set_sizing_strategy(1, 150, 800);
-    wgrid.set_sizing_strategy(2, 50, 150);
-    wgrid.set_sizing_strategy(3, 50, 100);
-*/
-
     Widget2  * widgetTable[128] = { nullptr };
     uint16_t   widget_count     = 0;
 
@@ -81,13 +71,17 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
             char text[256];
             snprintf(text, sizeof(text), "Label %ux%u", unsigned(line_index), unsigned(column_index));
             if ((line_index == 2) && (column_index == 3)) {
-                widgetTable[widget_count] = new WidgetFlatButton(drawable.gd, 0, 0, wgrid, notifier,
-                                                            text, auto_resize, id, WHITE, MEDIUM_BLUE, LIGHT_BLUE, font, 2, 2);
+                widgetTable[widget_count] = new WidgetFlatButton(drawable.gd, wgrid, notifier,
+                                                            text, id, WHITE, MEDIUM_BLUE, LIGHT_BLUE, 2, font, 2, 2);
             }
             else {
-                widgetTable[widget_count] = new WidgetLabel(drawable.gd, 0, 0, wgrid, notifier,
-                                                            text, auto_resize, id, fg_color, bg_color, font);
+                widgetTable[widget_count] = new WidgetLabel(drawable.gd, wgrid, notifier,
+                                                            text, id, fg_color, bg_color, font);
             }
+
+            Dimension dim = widgetTable[widget_count]->get_optimal_dim();
+            widgetTable[widget_count]->set_wh(dim);
+
             wgrid.set_widget(line_index, column_index, widgetTable[widget_count]);
             widget_count++;
         }
@@ -106,8 +100,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     wgrid.set_selection(2);
 
     // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),
-                                    0 + wgrid.y(),
+    wgrid.rdp_input_invalidate(Rect(wgrid.x(),
+                                    wgrid.y(),
                                     wgrid.cx(),
                                     wgrid.cy()));
 

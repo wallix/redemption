@@ -60,8 +60,10 @@
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 
+#include "mod/rdp/rdp_log.hpp"
 #include "core/RDP/pointer.hpp"
 #include "core/RDP/clipboard.hpp"
+#include "core/FSCC/FileInformation.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/front_api.hpp"
@@ -149,7 +151,7 @@ public:
         MAX_MONITOR_COUNT = GCC::UserData::CSMonitor::MAX_MONITOR_COUNT / 4
     };
 
-    uint32_t          verbose;
+    implicit_bool_flags<RDPVerbose>   verbose;
     ClientInfo        _info;
     int               _width;
     int               _height;
@@ -186,9 +188,9 @@ public:
 
     Front_Qt_API( bool param1
                 , bool param2
-                , int verb)
+                , RDPVerbose verbose)
     : FrontAPI(param1, param2)
-    , verbose(verb)
+    , verbose(verbose)
     , _info()
     , _port(0)
     , _callback(nullptr)
@@ -386,6 +388,29 @@ public:
 
     } _cb_buffers;
 
+    struct FileSystemData {
+
+        struct DeviceData {
+            char name[8] = {0};
+            uint32_t ID = 0;
+            uint32_t status = -1;
+            uint32_t field = 0;
+        };
+
+        uint32_t clientID = 0;
+        uint16_t versionMajor = 0;
+        uint16_t versionMinor = 0;
+
+        bool drives_created = false;
+
+        bool fileSystemCapacity[5] = { false };
+
+        const size_t drivesCount = 2;
+
+        DeviceData drives[2];
+
+    } fileSystemData;
+
 
 
     bool setClientInfo() override;
@@ -435,6 +460,8 @@ public:
     void load_replay_mod(std::string const & movie_name) override;
 
     void delete_replay_mod() override;
+
+    void removeDriveDevice(const FileSystemData::DeviceData *, const size_t);
 
 
 
@@ -606,7 +633,7 @@ public:
     //      CONSTRUCTOR
     //------------------------
 
-    Front_Qt(char* argv[], int argc, uint32_t verbose);
+    Front_Qt(char* argv[], int argc, RDPVerbose verbose);
 
     ~Front_Qt();
 
