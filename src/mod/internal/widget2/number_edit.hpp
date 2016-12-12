@@ -26,18 +26,6 @@
 class WidgetNumberEdit : public WidgetEdit
 {
 public:
-    WidgetNumberEdit(gdi::GraphicApi & drawable, int16_t x, int16_t y, uint16_t cx, Widget2 & parent,
-                     NotifyApi* notifier, const char* text, int group_id,
-                     int fgcolor, int bgcolor, int focus_color, Font const & font, size_t edit_position = -1,
-                     int xtext = 0, int ytext = 0)
-    : WidgetEdit(drawable, parent, notifier, text, group_id, fgcolor, bgcolor,
-                 focus_color, font, edit_position, xtext, ytext)
-    {
-        Dimension dim = this->get_optimal_dim();
-        this->set_wh(cx, dim.h);
-        this->set_xy(x, y);
-    }
-
     WidgetNumberEdit(gdi::GraphicApi & drawable, Widget2 & parent,
                      NotifyApi* notifier, const char* text, int group_id,
                      int fgcolor, int bgcolor, int focus_color, Font const & font, size_t edit_position = -1,

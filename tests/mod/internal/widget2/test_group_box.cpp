@@ -55,8 +55,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
      * I believe users of this widget may wish to control text position and behavior inside rectangle
      * ie: text may be centered, aligned left, aligned right, or even upside down, etc
      * these possibilities (and others) are supported in RDPGlyphIndex */
-    WidgetGroupBox wgroupbox( drawable.gd, x, y, cx, cy, parent, notifier, "Group 1"
+    WidgetGroupBox wgroupbox( drawable.gd, parent, notifier, "Group 1"
                             , fg_color, bg_color, font);
+    wgroupbox.set_wh(cx, cy);
+    wgroupbox.set_xy(x, y);
 
     int  focuscolor  = LIGHT_YELLOW;
     int  xtext       = 4;
@@ -133,8 +135,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
      * I believe users of this widget may wish to control text position and behavior inside rectangle
      * ie: text may be centered, aligned left, aligned right, or even upside down, etc
      * these possibilities (and others) are supported in RDPGlyphIndex */
-    WidgetGroupBox wgroupbox( drawable.gd, x, y, cx, cy, parent, notifier, text
+    WidgetGroupBox wgroupbox( drawable.gd, parent, notifier, text
                             , fg_color, bg_color, font);
+    wgroupbox.set_wh(cx, cy);
+    wgroupbox.set_xy(x, y);
 
     BOOST_CHECK_EQUAL(0, memcmp(wgroupbox.get_text(), text, sizeof(text) - 3));
 
