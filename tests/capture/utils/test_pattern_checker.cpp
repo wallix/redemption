@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(TestPattern)
                 this->message = message;
             }
         } authentifier;
-        PatternsChecker checker(&authentifier, i ? ".de." : nullptr, i ? nullptr : ".de.");
+        PatternsChecker checker(authentifier, i ? ".de." : nullptr, i ? nullptr : ".de.");
 
         auto const reason = i ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY";
 

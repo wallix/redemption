@@ -85,6 +85,10 @@ public:
                                   NamedRegexArray & regexes_filter_ref, int verbose,
                                   bool is_capturing = false)
     {
+        if (!filters_list || !*filters_list) {
+            return ;
+        }
+
         char * tmp_filters = new(std::nothrow) char[strlen(filters_list) + 1];
         if (!tmp_filters) {
             return ; // insufficient memory

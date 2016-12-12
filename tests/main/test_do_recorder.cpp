@@ -759,7 +759,7 @@ inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldsc
 
     (void)base;
     (void)len;
-    
+
     struct {
         std::string base;
         unsigned scheme;
