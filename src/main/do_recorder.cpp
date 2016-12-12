@@ -1171,10 +1171,13 @@ struct RecorderParams {
 
 };
 
+int parse_command_line_options(int argc, char const ** argv, struct RecorderParams & recorder, uint32_t & verbose);
+
 int parse_command_line_options(int argc, char ** argv, struct RecorderParams & recorder, uint32_t & verbose)
 {
     std::string png_geometry;
     std::string wrm_compression_algorithm;  // output compression algorithm.
+    std::string color_depth;
 
     program_options::options_description desc({
         {'h', "help", "produce help message"},
@@ -1207,8 +1210,8 @@ int parse_command_line_options(int argc, char ** argv, struct RecorderParams & r
         {'m', "meta", "show file metadata"},
         {'s', "statistics", "show statistics"},
 
-        {'z', "compression", &recorder.wrm_compression_algorithm, "wrm compression algorithm (default=original, none, gzip, snappy)"},
-        {'d', "color-depth", &recorder.wrm_color_depth,           "wrm color depth (default=original, 16, 24)"},
+        {'z', "compression", &wrm_compression_algorithm, "wrm compression algorithm (default=original, none, gzip, snappy)"},
+        {'d', "color-depth", color_depth,           "wrm color depth (default=original, 16, 24)"},
         {'y', "encryption",  &recorder.wrm_encryption,            "wrm encryption (default=original, enable, disable)"},
 
         {"auto-output-file",  "append suffix to input base filename to generate output base filename automatically"},
@@ -1229,6 +1232,9 @@ int parse_command_line_options(int argc, char ** argv, struct RecorderParams & r
 
     auto options = program_options::parse_command_line(argc, argv, desc);
 
+    const char * copyright_notice = "ReDemPtion " VERSION ".\n"
+        "Copyright (C) Wallix 2010-2016.\n"
+        "Christophe Grosjean, Jonathan Poelen, Raphael Zhou.";
 
     if (options.count("help") > 0) {
         std::cout << copyright_notice;
@@ -1244,9 +1250,9 @@ int parse_command_line_options(int argc, char ** argv, struct RecorderParams & r
 
     recorder.chunk = options.count("chunk") > 0;
     recorder.capture_flags = ((options.count("wrm") > 0)              ?CaptureFlags::wrm:CaptureFlags::none)
-                           | (((rp.chunk)||(options.count("png") > 0))?CaptureFlags::png:CaptureFlags::none)
-                           | (((rp.chunk)||(options.count("flv") > 0))?CaptureFlags::flv:CaptureFlags::none)
-                           | (((rp.chunk)||(options.count("ocr") > 0))?CaptureFlags::ocr:CaptureFlags::none);
+                           | (((recorder.chunk)||(options.count("png") > 0))?CaptureFlags::png:CaptureFlags::none)
+                           | (((recorder.chunk)||(options.count("flv") > 0))?CaptureFlags::flv:CaptureFlags::none)
+                           | (((recorder.chunk)||(options.count("ocr") > 0))?CaptureFlags::ocr:CaptureFlags::none);
 
     if (options.count("flv-quality") > 0) {
             if (0 == strcmp(recorder.flv_quality.c_str(), "high")) {
@@ -1298,7 +1304,7 @@ int parse_command_line_options(int argc, char ** argv, struct RecorderParams & r
         }
         recorder.png_width  = png_w;
         recorder.png_height = png_h;
-        std::cout << "png-geometry: " << png_width << "x" << png_height << std::endl;
+        std::cout << "png-geometry: " << recorder.png_width << "x" << recorder.png_height << std::endl;
     }
     
     recorder.video_codec = "flv";
@@ -1322,20 +1328,20 @@ int parse_command_line_options(int argc, char ** argv, struct RecorderParams & r
         }
     }
 
-    if (is_encrypted_file(rp.input_filename.c_str(), infile_is_encrypted) == -1) {
+    if (is_encrypted_file(recorder.input_filename.c_str(), recorder.infile_is_encrypted) == -1) {
         std::cerr << "Input file is missing.\n";
         return -1;
     }
 
     if (options.count("encryption") > 0) {
          if (0 == strcmp(recorder.wrm_encryption.c_str(), "enable")) {
-            rp.encryption_type = TraceType::cryptofile;
+            recorder.encryption_type = TraceType::cryptofile;
         }
         else if (0 == strcmp(recorder.wrm_encryption.c_str(), "disable")) {
-            rp.encryption_type = TraceType::localfile;
+            recorder.encryption_type = TraceType::localfile;
         }
         else if (0 == strcmp(recorder.wrm_encryption.c_str(), "original")) {
-            rp.encryption_type = infile_is_encrypted ? TraceType::cryptofile : TraceType::localfile;
+            recorder.encryption_type = recorder.infile_is_encrypted ? TraceType::cryptofile : TraceType::localfile;
         }
         else {
             std::cerr << "Unknown wrm encryption parameter\n\n";
@@ -1451,7 +1457,7 @@ extern "C" {
 
             RecorderParams rp;
             
-            if (parse_command_line_options(argc, argv, &rp, verbose) < 0){
+            if (parse_command_line_options(argc, argv, rp, verbose) < 0){
                 // parsing error
                 return -1;
             }
@@ -1478,9 +1484,9 @@ extern "C" {
 
             { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), config_filename.c_str()); }
 
-            if (!hash_path.empty()) {
-                hash_path += '/';
-                ini.set<cfg::video::hash_path>(hash_path);
+            if (!rp.hash_path.empty()) {
+                rp.hash_path += '/';
+                ini.set<cfg::video::hash_path>(rp.hash_path);
             }
 
 
@@ -1569,7 +1575,7 @@ extern "C" {
                           rp.png_interval,
                           rp.wrm_color_depth,
                           rp.wrm_frame_interval,
-                          rp.wrm_break_interval
+                          rp.wrm_break_interval,
                           false, // enable_rt
                           false, // no_timestamp,
                           rp.infile_is_encrypted,
