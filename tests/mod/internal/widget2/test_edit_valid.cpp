@@ -49,15 +49,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;
-    // int xtext = 1;
-    // int ytext = 1;
-    // size_t edit_pos = -1;
     int xtext = 4;
     int ytext = 1;
     size_t edit_pos = 2;
 
-    WidgetEditValid wedit(drawable.gd, x, y, cx, parent, notifier, "test1", id,
+    WidgetEditValid wedit(drawable.gd, parent, notifier, "test1", id,
                           fg_color, bg_color, ANTHRACITE, bg_color, font, nullptr, false, edit_pos, xtext, ytext);
+    Dimension dim = wedit.get_optimal_dim();
+    wedit.set_wh(cx, dim.h);
+    wedit.set_xy(x, y);
 
     parent.set_widget_focus(&wedit, Widget2::focus_reason_tabkey);
     // ask to widget to redraw at it's current position
@@ -96,8 +96,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     int ytext = 1;
     size_t edit_pos = -1;
 
-    WidgetEditValid wedit(drawable.gd, x, y, cx, parent, notifier, nullptr, id,
+    WidgetEditValid wedit(drawable.gd, parent, notifier, nullptr, id,
                           fg_color, bg_color, ANTHRACITE, bg_color, font, nullptr, false, edit_pos, xtext, ytext);
+    Dimension dim = wedit.get_optimal_dim();
+    wedit.set_wh(cx, dim.h);
+    wedit.set_xy(x, y);
 
     parent.add_widget(&wedit);
     // ask to widget to redraw at it's current position
@@ -179,9 +182,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
 
     parent.tab_flag = Widget2::NORMAL_TAB;
 
-    WidgetEditValid wedit1(drawable.gd, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, bg_color, font, nullptr, false, 0);
+    WidgetEditValid wedit1(drawable.gd, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, bg_color, font, nullptr, false, 0);
+    Dimension dim = wedit1.get_optimal_dim();
+    wedit1.set_wh(150, dim.h);
+    wedit1.set_xy(54, 105);
 
-    WidgetEditValid wedit2(drawable.gd, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, DARK_BLUE, font, nullptr, false, 0);
+    WidgetEditValid wedit2(drawable.gd, parent, notifier, "", id, WHITE, DARK_BLUE, RED, DARK_BLUE, font, nullptr, false, 0);
+    dim = wedit2.get_optimal_dim();
+    wedit2.set_wh(200, dim.h);
+    wedit2.set_xy(400, 354);
 
     parent.add_widget(&wedit1);
     parent.add_widget(&wedit2);
@@ -266,9 +275,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
 
     parent.tab_flag = Widget2::NORMAL_TAB;
 
-    WidgetEditValid wedit1(drawable.gd, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, bg_color, font, "edition1", true, 0, 0, 0, false);
+    WidgetEditValid wedit1(drawable.gd, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, bg_color, font, "edition1", true, 0, 0, 0, false);
+    Dimension dim = wedit1.get_optimal_dim();
+    wedit1.set_wh(150, dim.h);
+    wedit1.set_xy(54, 105);
 
-    WidgetEditValid wedit2(drawable.gd, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, DARK_BLUE, font, "edition2", true, 0, 0, 0, false);
+    WidgetEditValid wedit2(drawable.gd, parent, notifier, "", id, WHITE, DARK_BLUE, RED, DARK_BLUE, font, "edition2", true, 0, 0, 0, false);
+    dim = wedit2.get_optimal_dim();
+    wedit2.set_wh(200, dim.h);
+    wedit2.set_xy(400, 354);
 
     parent.add_widget(&wedit1);
     parent.add_widget(&wedit2);
@@ -390,9 +405,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 
     parent.tab_flag = Widget2::NORMAL_TAB;
 
-    WidgetEditValid wedit1(drawable.gd, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, bg_color, font, "edition1", true, 0, 0, 0, true);
+    WidgetEditValid wedit1(drawable.gd, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, bg_color, font, "edition1", true, 0, 0, 0, true);
+    Dimension dim = wedit1.get_optimal_dim();
+    wedit1.set_wh(150, dim.h);
+    wedit1.set_xy(54, 105);
 
-    WidgetEditValid wedit2(drawable.gd, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, DARK_BLUE, font, "edition2", true, 0, 0, 0, true);
+    WidgetEditValid wedit2(drawable.gd, parent, notifier, "", id, WHITE, DARK_BLUE, RED, DARK_BLUE, font, "edition2", true, 0, 0, 0, true);
+    dim = wedit2.get_optimal_dim();
+    wedit2.set_wh(200, dim.h);
+    wedit2.set_xy(400, 354);
 
     parent.add_widget(&wedit1);
     parent.add_widget(&wedit2);
@@ -540,7 +561,10 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetEditValid wedit(drawable.gd, x, y, cx, parent, &notifier, "abcdef", 0, BLACK, WHITE, DARK_BLUE, WHITE, font, nullptr, false);
+    WidgetEditValid wedit(drawable.gd, parent, &notifier, "abcdef", 0, BLACK, WHITE, DARK_BLUE, WHITE, font, nullptr, false);
+    Dimension dim = wedit.get_optimal_dim();
+    wedit.set_wh(cx, dim.h);
+    wedit.set_xy(x, y);
 
     parent.add_widget(&wedit);
     parent.set_widget_focus(&wedit, Widget2::focus_reason_tabkey);

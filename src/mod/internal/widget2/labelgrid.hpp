@@ -34,14 +34,14 @@ struct WidgetLabelGrid : public WidgetGrid {
 
     Font const & font;
 
-    WidgetLabelGrid(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetLabelGrid(gdi::GraphicApi & drawable, Widget2 & parent,
                NotifyApi * notifier, uint16_t nb_lines, uint16_t nb_columns,
                uint32_t bg_color_1, uint32_t fg_color_1,
                uint32_t bg_color_2, uint32_t fg_color_2,
                uint32_t bg_color_focus, uint32_t fg_color_focus,
                uint32_t bg_color_selection, uint32_t fg_color_selection,
                Font const & font, uint16_t border = 0, int group_id = 0)
-        : WidgetGrid(drawable, rect, parent, notifier, nb_lines, nb_columns,
+        : WidgetGrid(drawable, parent, notifier, nb_lines, nb_columns,
                      bg_color_1, fg_color_1, bg_color_2, fg_color_2,
                      bg_color_focus, fg_color_focus,
                      bg_color_selection, fg_color_selection, border, group_id)

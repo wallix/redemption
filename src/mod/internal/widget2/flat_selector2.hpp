@@ -129,7 +129,7 @@ public:
         , protocol_label(drawable, *this, nullptr, TR("protocol", lang), -10,
                          theme.selector_label.fgcolor,
                          theme.selector_label.bgcolor, font, 5)
-        , selector_lines(drawable, Rect(0, 0, width - (this->less_than_800 ? 0 : 30), 1),
+        , selector_lines(drawable,
                          *this, this, 0, 3,
                          theme.selector_line1.bgcolor,
                          theme.selector_line1.fgcolor,

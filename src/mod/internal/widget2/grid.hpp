@@ -83,14 +83,14 @@ protected:
     } click_interval;
 
 public:
-    WidgetGrid(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetGrid(gdi::GraphicApi & drawable, Widget2 & parent,
                NotifyApi * notifier, uint16_t nb_rows, uint16_t nb_columns,
                uint32_t bg_color_1, uint32_t fg_color_1,
                uint32_t bg_color_2, uint32_t fg_color_2,
                uint32_t bg_color_focus, uint32_t fg_color_focus,
                uint32_t bg_color_selection, uint32_t fg_color_selection,
                uint16_t border = 0, int group_id = 0)
-        : Widget2(drawable, rect, parent, notifier, group_id)
+        : Widget2(drawable, parent, notifier, group_id)
         , widgets()
         , meta_data()
         , nb_rows(nb_rows)
