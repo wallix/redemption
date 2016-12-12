@@ -977,7 +977,10 @@ inline int is_encrypted_file(const char * input_filename, bool & infile_is_encry
 }
 
 inline int replay(std::string & infile_path, std::string & infile_basename, std::string & infile_extension,
+                  std::string & hash_path,
                   CaptureFlags & capture_flags,
+                  bool chunk,
+                  unsigned ocr_version,
                   std::string & output_filename,
                   uint32_t begin_cap,
                   uint32_t end_cap,
@@ -1000,17 +1003,27 @@ inline int replay(std::string & infile_path, std::string & infile_basename, std:
                   std::string & video_codec,
                   bool remove_input_file,
                   int wrm_compression_algorithm_,
+                  uint32_t flv_break_interval,
+                  TraceType encryption_type,
                   Inifile & ini, CryptoContext & cctx, Random & rnd,
                   uint32_t verbose) 
 {
 
     char infile_prefix[4096];
     std::snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), infile_basename.c_str());
+    ini.set<cfg::video::hash_path>(hash_path);
+
+
     ini.set<cfg::video::png_limit>(png_limit);
     ini.set<cfg::video::png_interval>(std::chrono::seconds{png_interval});
     ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned int, std::centi>{wrm_frame_interval});
     ini.set<cfg::video::break_interval>(std::chrono::seconds{wrm_break_interval});
     ini.set<cfg::globals::codec_id>(video_codec);
+    ini.set<cfg::video::flv_break_interval>(std::chrono::seconds{flv_break_interval});
+    ini.set<cfg::globals::trace_type>(encryption_type);
+    ini.set<cfg::video::capture_flags>(capture_flags);
+    ini.set<cfg::globals::capture_chunk>(chunk);
+    ini.set<cfg::ocr::version>(ocr_version == 2 ? OcrVersion::v2 : OcrVersion::v1);
 
 
     timeval  begin_record = { 0, 0 };
@@ -1484,27 +1497,14 @@ extern "C" {
 
             { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), config_filename.c_str()); }
 
-            if (!rp.hash_path.empty()) {
-                rp.hash_path += '/';
-                ini.set<cfg::video::hash_path>(rp.hash_path);
-            }
-
-
-
-            ini.set<cfg::video::flv_break_interval>(std::chrono::seconds{rp.flv_break_interval});
-
-
             if (rp.chunk) {
                 ini.get_ref<cfg::video::disable_keyboard_log>() &= ~KeyboardLogFlags::meta;
-                ini.set<cfg::video::flv_break_interval>(std::chrono::minutes{10});
+                rp.flv_break_interval = 60*10; // 10 minutes
                 rp.png_interval = 1;
                 rp.png_limit = 0xFFFF;
                 ini.set<cfg::ocr::interval>(std::chrono::seconds{1});
             }
-            ini.set<cfg::video::capture_flags>(rp.capture_flags);
-            ini.set<cfg::globals::capture_chunk>(rp.chunk);
-            ini.set<cfg::ocr::version>(rp.ocr_version == 2 ? OcrVersion::v2 : OcrVersion::v1);
-
+            
             if (rp.output_filename.length() 
             && !rp.full_video
             && !bool(rp.capture_flags)) {
@@ -1533,9 +1533,6 @@ extern "C" {
             }
             std::cout << "Input file is \"" << rp.input_filename << "\".\n";
 
-
-            ini.set<cfg::globals::trace_type>(rp.encryption_type);
-
             std::string infile_path;
             std::string infile_basename;
             std::string infile_extension;
@@ -1559,13 +1556,20 @@ extern "C" {
                 std::cout << "Output file is \"" << rp.output_filename << "\".\n";
             }
 
+            if (!rp.hash_path.empty()) {
+                rp.hash_path += '/';
+            }
+
             // TODO before continuing to work with input file, check if it's mwrm or wrm and use right object in both cases
 
             // TODO also check if it contains any wrm at all and at wich one we should start depending on input time
             // TODO if start and stop time are outside wrm, users should also be warned
 
-            res = replay(infile_path, infile_basename, infile_extension, 
+            res = replay(infile_path, infile_basename, infile_extension,
+                          rp.hash_path,
                           rp.capture_flags,
+                          rp.chunk,
+                          rp.ocr_version,
                           rp.output_filename,
                           rp.begin_cap,
                           rp.end_cap,
@@ -1588,6 +1592,8 @@ extern "C" {
                           rp.video_codec,
                           rp.remove_input_file,
                           rp.wrm_compression_algorithm_,
+                          rp.flv_break_interval,
+                          rp.encryption_type,
                           ini, cctx, rnd,
                           verbose);
                   
