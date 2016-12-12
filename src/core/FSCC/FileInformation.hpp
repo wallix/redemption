@@ -258,6 +258,31 @@ enum {
 //  |                             | for the specified information class.       |
 //  +-----------------------------+--------------------------------------------+
 
+struct FileAllocationInformation {
+
+    uint64_t AllocationSize = 0;
+
+    FileAllocationInformation() = default;
+
+    FileAllocationInformation(uint64_t AllocationSize)
+    : AllocationSize(AllocationSize)
+    {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint64_le(this->AllocationSize);
+    }
+
+    void receive(InStream & stream) {
+        this->AllocationSize = stream.in_uint64_le();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Allocation Information:");
+        LOG(LOG_INFO, "          * VolumeCreationTime = %" PRIu64 " (8 bytes)", this->AllocationSize);
+    }
+};
+
+
 // [MS-FSCC] - 2.4.6 FileAttributeTagInformation
 // =============================================
 
@@ -880,6 +905,8 @@ public:
     }
 };  // FileBothDirectoryInformation
 
+
+
 // [MS-FSCC] - 2.4.11 FileDispositionInformation
 // =============================================
 
@@ -915,6 +942,33 @@ public:
 //  | 0xC0000004                  | does not match the length that is required |
 //  |                             | for the specified information class.       |
 //  +-----------------------------+--------------------------------------------+
+
+struct FileDispositionInformation {
+
+    uint8_t DeletePending = 0;
+
+    FileDispositionInformation() = default;
+
+    FileDispositionInformation( uint64_t DeletePending)
+      : DeletePending(DeletePending)
+      {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint8(this->DeletePending);
+    }
+
+    void receive(InStream & stream) {
+        this->DeletePending = stream.in_uint8();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Disposition Information:");
+        LOG(LOG_INFO, "          * DeletePending = %02x (1 byte)", this->DeletePending);
+    }
+};
+
+
+
 
 // [MS-FSCC] - 2.4.13 FileEndOfFileInformation
 // ===========================================
@@ -962,6 +1016,90 @@ public:
 //  | 0xC0000004                  | does not match the length that is required |
 //  |                             | for the specified information class.       |
 //  +-----------------------------+--------------------------------------------+
+
+struct FileEndOfFileInformation {
+
+    uint64_t EndOfFile = 0;
+
+    FileEndOfFileInformation() = default;
+
+    FileEndOfFileInformation( uint64_t EndOfFile)
+      : EndOfFile(EndOfFile)
+      {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint64_le(this->EndOfFile);
+    }
+
+    void receive(InStream & stream) {
+        this->EndOfFile = stream.in_uint64_le();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File EndOfFile Information:");
+        LOG(LOG_INFO, "          * EndOfFile = %" PRIx64 " (8 bytes)", this->EndOfFile);
+    }
+};
+
+
+
+// 2.5.5 FileFsLabelInformation
+
+// This information class is used locally to set the label for a file system volume.
+
+// A FILE_FS_LABEL_INFORMATION data element, defined as follows, is provided by the caller.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                       VolumeLabelLength                       |
+// +---------------------------------------------------------------+
+// |                     VolumeLabel (variable)                    |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// VolumeLabelLength (4 bytes): A 32-bit unsigned integer that contains the length, in bytes, including the trailing null, if present, of the name for the volume.<150>
+
+// VolumeLabel (variable): A variable-length Unicode field containing the name of the volume. The content of this field can be a null-terminated string, or it can be a string padded with the space character to be VolumeLabelLength bytes long.
+
+// This operation returns a status code, as specified in [MS-ERREF] section 2.3. The status code returned directly by the function that processes this file information class MUST be STATUS_SUCCESS or one of the following.
+
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_INFO_LENGTH_MISMATCH | The specified information record length    |
+//  | 0xC0000004                  | does not match the length that is required |
+//  |                             | for the specified information class.       |
+//  +-----------------------------+--------------------------------------------+
+
+struct FileFsLabelInformation {
+
+    std::string VolumeLabel;
+
+    FileFsLabelInformation() = default;
+
+    FileFsLabelInformation(std::string VolumeLabel)
+      : VolumeLabel(VolumeLabel)
+      {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->VolumeLabel.size());
+        stream.out_copy_bytes(this->VolumeLabel.data(), this->VolumeLabel.size());
+    }
+
+    void receive(InStream & stream) {
+        size_t size = stream.in_uint32_le();
+        this->VolumeLabel = std::string(reinterpret_cast<const char *>(stream.get_current()), size);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Fs Label Information:");
+        LOG(LOG_INFO, "          * VolumeLabelLength = %d (4 bytes)", int(this->VolumeLabel.size()));
+        LOG(LOG_INFO, "          * VolumeLabel       = \"%s\"", this->VolumeLabel.c_str());
+    }
+
+};
+
 
 // [MS-FSCC] - 2.4.14 FileFullDirectoryInformation
 // ===============================================
@@ -1448,6 +1586,85 @@ public:
 //  |                              | class.                                    |
 //  +------------------------------+-------------------------------------------+
 
+//  2.4.34.2 FileRenameInformation for SMB2
+
+//  This information class is used to rename a file from within the SMB2 Protocol [MS-SMB2].
+
+//  A FILE_RENAME_INFORMATION_TYPE_2 data element, defined as follows, is provided by the client.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |ReplaceIfExists|                    Reserved                   |
+// +---------------+-----------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         RootDirectory                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         FileNameLength                        |
+// +---------------------------------------------------------------+
+// |                       FileName (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+//  ReplaceIfExists (1 byte):  A Boolean (section 2.1.8) value. Set to TRUE to indicate that if a file with the given name already exists, it SHOULD be replaced with the given file. Set to FALSE to indicate that the rename operation MUST fail if a file with the given name already exists.
+
+//  Reserved (7 bytes): Reserved area for alignment. This field can contain any value and MUST be ignored.
+
+//  RootDirectory (8 bytes): A 64-bit unsigned integer that contains the file handle for the directory to which the new name of the file is relative. For network operations, this value MUST always be zero.
+
+//  FileNameLength (4 bytes):  A 32-bit unsigned integer that specifies the length, in bytes, of the file name contained within the FileName field.
+
+//  FileName (variable):  A sequence of Unicode characters containing the new name of the file. When working with this field, use FileNameLength to determine the length of the file name rather than assuming the presence of a trailing null delimiter. If the RootDirectory field is zero, this member MUST specify a full pathname to be assigned to the file. For network operations, this pathname is relative to the root of the share. If the RootDirectory field is not zero, this field MUST specify a pathname, relative to RootDirectory, for the new name of the file.
+
+struct FileRenameInformation {
+
+    uint8_t ReplaceIfExists = 0;
+    uint64_t RootDirectory = 0;
+    std::string FileName;
+
+    FileRenameInformation() = default;
+
+    FileRenameInformation( uint8_t ReplaceIfExists
+                         , uint64_t RootDirectory
+                         , std::string FileName)
+      : ReplaceIfExists(ReplaceIfExists)
+      , RootDirectory(RootDirectory)
+      , FileName(FileName)
+      {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint8(this->ReplaceIfExists);
+        stream.out_clear_bytes(7);
+        stream.out_uint64_le(this->RootDirectory);
+        stream.out_uint32_le(this->FileName.size());
+        stream.out_copy_bytes(reinterpret_cast<const uint8_t *>(this->FileName.data()), this->FileName.size());
+    }
+
+    void receive(InStream & stream) {
+        this->ReplaceIfExists = stream.in_uint8();
+        stream.in_skip_bytes(7);
+        this->RootDirectory = stream.in_uint64_le();
+        size_t size = stream.in_uint32_le();
+        this->FileName = std::string(reinterpret_cast<const char *>(stream.get_current()), size);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Rename Information:");
+        LOG(LOG_INFO, "          * ReplaceIfExists = %02x (1 byte)", this->ReplaceIfExists);
+        LOG(LOG_INFO, "          * Padding - (7 byte) NOT USED");
+        LOG(LOG_INFO, "          * RootDirectory   = %" PRIx64 " (8 bytes)", this->RootDirectory);
+        LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->FileName.size()));
+        LOG(LOG_INFO, "          * VolumeLabel     = \"%s\"", this->FileName.c_str());
+    }
+};
+
+
+
 // [MS-FSCC] - 2.4.38 FileStandardInformation
 // ==========================================
 
@@ -1732,6 +1949,8 @@ enum {
     , FILE_SUPPORT_INTEGRITY_STREAMS    = 0x04000000
 };
 
+
+
 // MaximumComponentNameLength (4 bytes): A 32-bit signed integer that
 //  contains the maximum file name component length, in bytes, supported by
 //  the specified file system. The value of this field MUST be greater than
@@ -1863,12 +2082,49 @@ private:
         return ((length < size) ? length : size - 1);
     }
 
+    static const char * get_FileSystemAttributes_name(uint32_t FileSystemAttribute) {
+        switch (FileSystemAttribute) {
+            case FILE_SUPPORTS_USN_JOURNAL:         return "FILE_SUPPORTS_USN_JOURNAL";
+            case FILE_SUPPORTS_OPEN_BY_FILE_ID:     return "FILE_SUPPORTS_OPEN_BY_FILE_ID";
+            case FILE_SUPPORTS_EXTENDED_ATTRIBUTES: return "FILE_SUPPORTS_EXTENDED_ATTRIBUTES";
+            case FILE_SUPPORTS_HARD_LINKS:          return "FILE_SUPPORTS_HARD_LINKS";
+            case FILE_SUPPORTS_TRANSACTIONS:        return "FILE_SUPPORTS_TRANSACTIONS";
+            case FILE_SEQUENTIAL_WRITE_ONCE:        return "FILE_SEQUENTIAL_WRITE_ONCE";
+            case FILE_READ_ONLY_VOLUME:             return "FILE_READ_ONLY_VOLUME";
+            case FILE_NAMED_STREAMS:                return "FILE_NAMED_STREAMS";
+            case FILE_SUPPORTS_ENCRYPTION:          return "FILE_SUPPORTS_ENCRYPTION";
+            case FILE_SUPPORTS_OBJECT_IDS:          return "FILE_SUPPORTS_OBJECT_IDS";
+            case FILE_VOLUME_IS_COMPRESSED:         return "FILE_VOLUME_IS_COMPRESSED";
+            case FILE_SUPPORTS_REMOTE_STORAGE:      return "FILE_SUPPORTS_REMOTE_STORAGE";
+            case FILE_SUPPORTS_REPARSE_POINTS:      return "FILE_SUPPORTS_REPARSE_POINTS";
+            case FILE_SUPPORTS_SPARSE_FILES:        return "FILE_SUPPORTS_SPARSE_FILES";
+            case FILE_VOLUME_QUOTAS:                return "FILE_VOLUME_QUOTAS";
+            case FILE_FILE_COMPRESSION:             return "FILE_FILE_COMPRESSION";
+            case FILE_PERSISTENT_ACLS:              return "FILE_PERSISTENT_ACLS";
+            case FILE_UNICODE_ON_DISK:              return "FILE_UNICODE_ON_DISK";
+            case FILE_CASE_PRESERVED_NAMES:         return "FILE_CASE_PRESERVED_NAMES";
+            case FILE_CASE_SENSITIVE_SEARCH:        return "FILE_CASE_SENSITIVE_SEARCH";
+            case FILE_SUPPORT_INTEGRITY_STREAMS:    return "FILE_SUPPORT_INTEGRITY_STREAMS";
+        }
+
+        return "<unknown>";
+    }
+
+
 public:
     inline void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Fs Attribute Information:");
+        LOG(LOG_INFO, "          * FileSystemAttributes = %08x (4 bytes): %s", this->FileSystemAttributes_, get_FileSystemAttributes_name(this->FileSystemAttributes_));
+        LOG(LOG_INFO, "          * MaximumComponentNameLength = %d (4 bytes)", int(this->MaximumComponentNameLength));
+        LOG(LOG_INFO, "          * FileSystemNameLength = %d (4 bytes)", int(this->file_system_name.size()));
+        LOG(LOG_INFO, "          * FileSystemName = \"%s\"", this->file_system_name.c_str());
     }
 };  // FileFsAttributeInformation
 
@@ -2012,6 +2268,15 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    void log() {
+        LOG(LOG_INFO, "     File Fs Full Size Information:");
+        LOG(LOG_INFO, "          * TotalAllocationUnits = %" PRIx64 " (8 bytes)", this->TotalAllocationUnits);
+        LOG(LOG_INFO, "          * CallerAvailableAllocationUnits = %" PRIx64 " (8 bytes)", this->CallerAvailableAllocationUnits);
+        LOG(LOG_INFO, "          * ActualAvailableAllocationUnits = %" PRIx64 " (8 bytes)", this->ActualAvailableAllocationUnits);
+        LOG(LOG_INFO, "          * SectorsPerAllocationUnit = %d (4 bytes)", int(SectorsPerAllocationUnit));
+        LOG(LOG_INFO, "          * BytesPerSector = %d (4 bytes)", int(BytesPerSector));
+    }
 };
 
 // [MS-FSCC] - 2.5.8 FileFsSizeInformation
@@ -2136,6 +2401,14 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Fs Size Information:");
+        LOG(LOG_INFO, "          * TotalAllocationUnits     = %" PRIx64 " (8 bytes)", this->TotalAllocationUnits);
+        LOG(LOG_INFO, "          * AvailableAllocationUnits = %" PRIx64 " (8 bytes)", this->AvailableAllocationUnits);
+        LOG(LOG_INFO, "          * SectorsPerAllocationUnit = %08x (4 byte)", this->SectorsPerAllocationUnit);
+        LOG(LOG_INFO, "          * BytesPerSector           = %d (4 bytes)", int(this->BytesPerSector));
     }
 };
 
@@ -2326,6 +2599,16 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Fs Volume Information:");
+        LOG(LOG_INFO, "          * VolumeCreationTime = %" PRIx64 " (8 bytes)", this->VolumeCreationTime);
+        LOG(LOG_INFO, "          * VolumeSerialNumber = %08x (4 bytes)", this->VolumeSerialNumber);
+        LOG(LOG_INFO, "          * VolumeLabelLength  = %d (4 bytes)", int(this->volume_label.size()));
+        LOG(LOG_INFO, "          * SupportsObjects    = %02x (1 byte)", this->SupportsObjects);
+        LOG(LOG_INFO, "          * Padding - (1 byte) NOT USED");
+        LOG(LOG_INFO, "          * VolumeLabel        = \"%s\"", this->volume_label.c_str());
     }
 };  // FileFsVolumeInformation
 
@@ -2519,6 +2802,12 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Fs Device Information:");
+        LOG(LOG_INFO, "          * DeviceType = %08x (4 bytes): %s", this->DeviceType, this->get_DeviceType_name(this->DeviceType));
+        LOG(LOG_INFO, "          * Characteristics = %08x (4 bytes)", this->Characteristics);
     }
 };
 

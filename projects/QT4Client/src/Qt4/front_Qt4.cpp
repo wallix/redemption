@@ -3254,8 +3254,61 @@ void Front_Qt::call_Draw() {
     }
 }
 
+/*
+void log() {
+        LOG(LOG_INFO, "     File Fs Volume Information:");
+        LOG(LOG_INFO, "          * VolumeCreationTime = %" PRIx64 " (8 bytes)", this->VolumeCreationTime);
+        LOG(LOG_INFO, "          * VolumeSerialNumber = %08x (4 bytes)", this->VolumeSerialNumber);
+        LOG(LOG_INFO, "          * VolumeLabelLength = %d (4 bytes)", int(this->volume_label.size()));
+        LOG(LOG_INFO, "          * SupportsObjects = %02x (1 byte)", this->SupportsObjects);
+        LOG(LOG_INFO, "          * Padding - (1 byte) NOT USED");
+        LOG(LOG_INFO, "          * VolumeLabel = \"%s\"", this->volume_label.c_str());
+    }
 
+    static const char * get_PacketId_name(uint16_t packet_id) {
+        switch (packet_id) {
+            case PacketId::PAKID_CORE_SERVER_ANNOUNCE:     return "PAKID_CORE_SERVER_ANNOUNCE";
+            case PacketId::PAKID_CORE_CLIENTID_CONFIRM:    return "PAKID_CORE_CLIENTID_CONFIRM";
+            case PacketId::PAKID_CORE_CLIENT_NAME:         return "PAKID_CORE_CLIENT_NAME";
+            case PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE: return "PAKID_CORE_DEVICELIST_ANNOUNCE";
+            case PacketId::PAKID_CORE_DEVICE_REPLY:        return "PAKID_CORE_DEVICE_REPLY";
+            case PacketId::PAKID_CORE_DEVICE_IOREQUEST:    return "PAKID_CORE_DEVICE_IOREQUEST";
+            case PacketId::PAKID_CORE_DEVICE_IOCOMPLETION: return "PAKID_CORE_DEVICE_IOCOMPLETION";
+            case PacketId::PAKID_CORE_SERVER_CAPABILITY:   return "PAKID_CORE_SERVER_CAPABILITY";
+            case PacketId::PAKID_CORE_CLIENT_CAPABILITY:   return "PAKID_CORE_CLIENT_CAPABILITY";
+            case PacketId::PAKID_CORE_DEVICELIST_REMOVE:   return "PAKID_CORE_DEVICELIST_REMOVE";
+            case PacketId::PAKID_PRN_CACHE_DATA:           return "PAKID_PRN_CACHE_DATA";
+            case PacketId::PAKID_CORE_USER_LOGGEDON:       return "PAKID_CORE_USER_LOGGEDON";
+            case PacketId::PAKID_PRN_USING_XPS:            return "PAKID_PRN_USING_XPS";
+        }
 
+        return "<unknown>";
+    }
+
+    struct FileDispositionInformation {
+
+    uint8_t DeletePending = 0;
+
+    FileDispositionInformation() = default;
+
+    FileDispositionInformation( uint64_t DeletePending)
+      : DeletePending(DeletePending)
+      {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint8(this->DeletePending);
+    }
+
+    void receive(InStream & stream) {
+        this->DeletePending = stream.in_uint8();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Disposition Information:");
+        LOG(LOG_INFO, "          * DeletePending = %02x (1 byte)", this->DeletePending);
+    }
+};
+*/
 ///////////////////////////////
 // APPLICATION
 int main(int argc, char** argv){
