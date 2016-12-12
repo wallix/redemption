@@ -81,9 +81,9 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
 //        "800 600\n",
 //        "0\n",
 //        "\n",
-//        "./tests/fixtures/sample0.wrm 1352304810 1352304870\n",
-//        "./tests/fixtures/sample1.wrm 1352304870 1352304930\n",
-//        "./tests/fixtures/sample2.wrm 1352304930 1352304990\n",
+//        FIXTURES_PATH "/sample0.wrm 1352304810 1352304870\n",
+//        FIXTURES_PATH "/sample1.wrm 1352304870 1352304930\n",
+//        FIXTURES_PATH "/sample2.wrm 1352304930 1352304990\n",
 
     // This is what we are actually testing, chaining of several files content
     {
@@ -146,9 +146,9 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
 //        "800 600\n",
 //        "0\n",
 //        "\n",
-//        "./tests/fixtures/sample0.wrm 1352304810 1352304870\n",
-//        "./tests/fixtures/sample1.wrm 1352304870 1352304930\n",
-//        "./tests/fixtures/sample2.wrm 1352304930 1352304990\n",
+//        FIXTURES_PATH "/sample0.wrm 1352304810 1352304870\n",
+//        FIXTURES_PATH "/sample1.wrm 1352304870 1352304930\n",
+//        FIXTURES_PATH "/sample2.wrm 1352304930 1352304990\n",
 
     // This is what we are actually testing, chaining of several files content
     try {

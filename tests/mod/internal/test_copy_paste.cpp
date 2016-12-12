@@ -144,17 +144,26 @@ BOOST_AUTO_TEST_CASE(TestPaste)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     WidgetScreen parent(mod.gd, info.width, info.height, font, nullptr, Theme{});
-    WidgetEdit edit(mod.gd, 0, 0, 120, parent, &notifier, "", 0, PINK, ORANGE, RED, font);
+    WidgetEdit edit(mod.gd, parent, &notifier, "", 0, PINK, ORANGE, RED, font);
+    Dimension dim = edit.get_optimal_dim();
+    edit.set_wh(120, dim.h);
+    edit.set_xy(0, 0);
 
     BOOST_REQUIRE(copy_paste.ready(front));
 
     auto edit_paste = [&](const char * s, const char * sig, int linenum){
         keymap.push_kevent(Keymap2::KEVENT_PASTE);
         copy_paste.paste(edit);
-        edit.rdp_input_invalidate(edit.get_rect());
-        //front.dump_png("/tmp/test_copy_paste_");
         BOOST_CHECK_EQUAL(s, edit.get_text());
+
+        edit.rdp_input_invalidate(edit.get_rect());
+
+        char filename[1024];
+        sprintf(filename, "test_copy_paste_%d.png", linenum);
+        // mod.save_to_png(OUTPUT_FILE_PATH filename);
+
         char message[1024];
+
         if (!check_sig(mod.gd.impl(), message, sig)){
             sprintf(message+strlen(message), "(%d)", linenum);
             BOOST_CHECK_MESSAGE(false, message);

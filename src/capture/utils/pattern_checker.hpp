@@ -27,30 +27,26 @@
 #include "acl/auth_api.hpp"
 
 
-class PatternsChecker
+class PatternsChecker : noncopyable
 {
     utils::MatchFinder::NamedRegexArray regexes_filter_kill;
     utils::MatchFinder::NamedRegexArray regexes_filter_notify;
-    auth_api * authentifier;
+    auth_api & authentifier;
 
 public:
     PatternsChecker(
-        auth_api * authentifier,
+        auth_api & authentifier,
         const char * const filters_kill,
         const char * const filters_notify,
         int verbose = 0
     )
     : authentifier(authentifier)
     {
-        if (this->authentifier && filters_kill) {
-            utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
-                filters_kill, this->regexes_filter_kill, verbose);
-        }
+        utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
+            filters_kill, this->regexes_filter_kill, verbose);
 
-        if (this->authentifier && filters_notify) {
-            utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
-                filters_notify, this->regexes_filter_notify, verbose);
-        }
+        utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
+            filters_notify, this->regexes_filter_notify, verbose);
     }
 
     bool contains_pattern() const {
@@ -70,7 +66,7 @@ private:
             utils::MatchFinder::NamedRegexArray::iterator last = regexes_filter.end();
             for (; first != last; ++first) {
                 if (first->regex.search(str)) {
-                    utils::MatchFinder::report(*this->authentifier,
+                    utils::MatchFinder::report(this->authentifier,
                         &regexes_filter == &this->regexes_filter_kill, // pattern_kill = FINDPATTERN_KILL
                         utils::MatchFinder::ConfigureRegexes::OCR,
                         first->name.c_str(), str);

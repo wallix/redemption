@@ -1169,11 +1169,11 @@ public:
     void play(CbUpdateProgress update_progess, bool const & requested_to_stop) {
         time_t last_sent_record_now = 0;
         this->privplay([&](time_t record_now) {
-                if (last_sent_record_now != record_now) {
-                    update_progess(record_now);
-                    last_sent_record_now = record_now;
-                }
-            }, requested_to_stop);
+            if (last_sent_record_now != record_now) {
+                update_progess(record_now);
+                last_sent_record_now = record_now;
+            }
+        }, requested_to_stop);
     }
 
 private:

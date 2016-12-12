@@ -45,7 +45,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
     int fg_color = BLUE;
     int bg_color = CYAN;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = 0;
     int16_t y = 0;
     int xtext = 4;
@@ -55,17 +54,21 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
      * I believe users of this widget may wish to control text position and behavior inside rectangle
      * ie: text may be centered, aligned left, aligned right, or even upside down, etc
      * these possibilities (and others) are supported in RDPGlyphIndex */
-    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, fg_color, bg_color, font, xtext, ytext);
+                               id, fg_color, bg_color, font, xtext, ytext);
+    Dimension dim = wmultiline.get_optimal_dim();
+    wmultiline.set_wh(dim);
+    wmultiline.set_xy(x, y);
+
 
     // ask to widget to redraw at it's current position
-    wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.x(),
-                                         0 + wmultiline.y(),
+    wmultiline.rdp_input_invalidate(Rect(wmultiline.x(),
+                                         wmultiline.y(),
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
@@ -91,21 +94,23 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
     int fg_color = BLUE;
     int bg_color = CYAN;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = 10;
     int16_t y = 100;
 
-    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, fg_color, bg_color, font);
+                               id, fg_color, bg_color, font);
+    Dimension dim = wmultiline.get_optimal_dim();
+    wmultiline.set_wh(dim);
+    wmultiline.set_xy(x, y);
 
     // ask to widget to redraw at it's current position
-    wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.x(),
-                                         0 + wmultiline.y(),
+    wmultiline.rdp_input_invalidate(Rect(wmultiline.x(),
+                                         wmultiline.y(),
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
@@ -131,21 +136,23 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
     int fg_color = BLUE;
     int bg_color = CYAN;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = -10;
     int16_t y = 500;
 
-    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, fg_color, bg_color, font);
+                               id, fg_color, bg_color, font);
+    Dimension dim = wmultiline.get_optimal_dim();
+    wmultiline.set_wh(dim);
+    wmultiline.set_xy(x, y);
 
     // ask to widget to redraw at it's current position
-    wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.x(),
-                                         0 + wmultiline.y(),
+    wmultiline.rdp_input_invalidate(Rect(wmultiline.x(),
+                                         wmultiline.y(),
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
@@ -171,21 +178,23 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
     int fg_color = BLUE;
     int bg_color = CYAN;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = 770;
     int16_t y = 500;
 
-    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, fg_color, bg_color, font);
+                               id, fg_color, bg_color, font);
+    Dimension dim = wmultiline.get_optimal_dim();
+    wmultiline.set_wh(dim);
+    wmultiline.set_xy(x, y);
 
     // ask to widget to redraw at it's current position
-    wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.x(),
-                                         0 + wmultiline.y(),
+    wmultiline.rdp_input_invalidate(Rect(wmultiline.x(),
+                                         wmultiline.y(),
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
@@ -211,21 +220,23 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
     int fg_color = BLUE;
     int bg_color = CYAN;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = -20;
     int16_t y = -7;
 
-    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, fg_color, bg_color, font);
+                               id, fg_color, bg_color, font);
+    Dimension dim = wmultiline.get_optimal_dim();
+    wmultiline.set_wh(dim);
+    wmultiline.set_xy(x, y);
 
     // ask to widget to redraw at it's current position
-    wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.x(),
-                                         0 + wmultiline.y(),
+    wmultiline.rdp_input_invalidate(Rect(wmultiline.x(),
+                                         wmultiline.y(),
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
@@ -251,21 +262,23 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
     int fg_color = BLUE;
     int bg_color = CYAN;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, fg_color, bg_color, font);
+                               id, fg_color, bg_color, font);
+    Dimension dim = wmultiline.get_optimal_dim();
+    wmultiline.set_wh(dim);
+    wmultiline.set_xy(x, y);
 
     // ask to widget to redraw at it's current position
-    wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.x(),
-                                         0 + wmultiline.y(),
+    wmultiline.rdp_input_invalidate(Rect(wmultiline.x(),
+                                         wmultiline.y(),
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
@@ -291,21 +304,23 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
     int fg_color = BLUE;
     int bg_color = CYAN;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, fg_color, bg_color, font);
+                               id, fg_color, bg_color, font);
+    Dimension dim = wmultiline.get_optimal_dim();
+    wmultiline.set_wh(dim);
+    wmultiline.set_xy(x, y);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wmultiline.rdp_input_invalidate(Rect(20 + wmultiline.x(),
-                                         0 + wmultiline.y(),
+                                         wmultiline.y(),
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
@@ -331,17 +346,19 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
     int fg_color = BLUE;
     int bg_color = CYAN;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, fg_color, bg_color, font);
+                               id, fg_color, bg_color, font);
+    Dimension dim = wmultiline.get_optimal_dim();
+    wmultiline.set_wh(dim);
+    wmultiline.set_xy(x, y);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wmultiline.rdp_input_invalidate(Rect(20 + wmultiline.x(),
@@ -371,18 +388,20 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
     int fg_color = BLUE;
     int bg_color = CYAN;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, parent, notifier,
                                "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                                "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                                "Nam non magna sit amet dui vestibulum feugiat.<br>"
                                "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                                "Nam lacinia purus luctus ante congue facilisis.<br>"
                                "Donec sodales mauris luctus ante ultrices blandit.",
-                               auto_resize, id, fg_color, bg_color, font);
+                               id, fg_color, bg_color, font);
+    Dimension dim = wmultiline.get_optimal_dim();
+    wmultiline.set_wh(dim);
+    wmultiline.set_xy(x, y);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wmultiline.rdp_input_invalidate(wmultiline.get_rect());

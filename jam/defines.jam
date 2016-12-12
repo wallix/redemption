@@ -15,10 +15,8 @@ rule setvar ( env : default )
     }
 }
 
-constant ARCH : [ SHELL "lscpu | perl -ne 'if (/^Architecture.*(x86_64|i386|i686)/) {print $1};'" ] ;
-# constant ARCH : [ SHELL "lscpu | perl -ane 'my %h = map { $F[0], $F[1] } <>; print $h{q{Architecture:}}'" ] ;
-constant PYTHON_VER : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6}) { if (-e q{/usr/include/}.$x.q{/Python.h}){ print $x; last;}};'" ] ;
-constant PYTHON_INCLUDE : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6}) { if (-e q{/usr/include/}.$x.q{/Python.h}){ print q{/usr/include/}.$x; last;}};'" ] ;
+constant ARCH : [ SHELL "uname -m" ] ;
+# constant ARCH : [ SHELL "lscpu | perl -ne 'if (/^Architecture.*(x86_64|i386|i686)/) {print $1};'" ] ;
 
 constant INSTALLDIR : [ setvar DESTDIR : "" ] ;
 constant PREFIX : [ setvar PREFIX : /usr/local ] ;
@@ -32,6 +30,7 @@ constant CERT_PREFIX : [ setvar CERT_PREFIX : /etc/rdpproxy/cert ] ;
 constant HASH_PATH : [ setvar HASH_PATH : /var/rdpproxy/hash ] ;
 constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : /var/lib/redemption/cache ] ;
 constant DRIVE_REDIRECTION_PATH : [ setvar DRIVE_REDIRECTION_PATH : /var/rdpproxy/drive_redirection ] ;
+constant PID_PATH : [ setvar PID_PATH : /var/run ] ;
 
 constant COVERAGE_PREFIX : [ setvar COVERAGE_PREFIX : "" ] ;
 
@@ -49,10 +48,7 @@ rule defines ( properties * )
     defs += <define>CERTIF_PATH='\"$(CERT_PREFIX)\"' ;
     defs += <define>PERSISTENT_PATH='\"$(PERSISTENT_PATH)\"' ;
     defs += <define>DRIVE_REDIRECTION_PATH='\"$(DRIVE_REDIRECTION_PATH)\"' ;
-    if [ os.environ VERBOSE ]
-    {
-        defs += <define>VERBOSE ;
-    }
+    defs += <define>PID_PATH='\"$(PID_PATH)\"' ;
     return $(defs) ;
 }
 

@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "capture/rdp_ppocr/get_ocr_constants.hpp"
 #include "title_extractor_api.hpp"
 #include "ocr_titles_extractor.hpp"
 #include "ppocr_titles_extractor.hpp"

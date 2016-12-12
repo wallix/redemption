@@ -25,6 +25,7 @@
 #include <snappy-c.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <time.h> // localtime_r
 #include <memory>
 
 #include "transport/out_meta_sequence_transport.hpp"
@@ -33,7 +34,6 @@
 #include "capture/sequencer.hpp"
 #include "capture/video_capture.hpp"
 #include "capture/utils/video_params_from_ini.hpp"
-#include "capture/rdp_ppocr/get_ocr_constants.hpp"
 #include "utils/pattutils.hpp"
 // end private extension
 
@@ -57,7 +57,69 @@
 #include "utils/fileutils.hpp"
 #include "utils/sugar/local_fd.hpp"
 
-class VideoCaptureImpl
+struct PreparingWhenFrameMarkerEnd final : gdi::CaptureApi
+{
+    PreparingWhenFrameMarkerEnd(VideoCapture & vc)
+    : vc(vc)
+    {}
+
+private:
+    VideoCapture & vc;
+
+    std::chrono::microseconds do_snapshot(
+        const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
+    ) override {
+        vc.preparing_video_frame();
+        return std::chrono::microseconds{};
+    }
+};
+
+class FullVideoCaptureImpl
+{
+    OutFilenameSequenceSeekableTransport trans;
+    VideoCapture vc;
+    PreparingWhenFrameMarkerEnd preparing_vc{vc};
+
+public:
+    FullVideoCaptureImpl(
+        const timeval & now,
+        const char * const record_path,
+        const char * const basename,
+        const int groupid,
+        bool no_timestamp,
+        const Drawable & drawable,
+        VideoParams video_param)
+    : trans(
+        FilenameGenerator::PATH_FILE_EXTENSION,
+        record_path, basename, ("." + video_param.codec).c_str(), groupid)
+    , vc(now, this->trans, drawable, no_timestamp, std::move(video_param))
+    {
+        ::unlink((std::string(record_path) + basename + "." + video_param.codec).c_str());
+    }
+
+    void attach_apis(ApisRegister & apis_register, const Inifile &) {
+        apis_register.capture_list.push_back(this->vc);
+        apis_register.graphic_snapshot_list->push_back(this->preparing_vc);
+    }
+
+    void encoding_video_frame() {
+        this->vc.encoding_video_frame();
+    }
+
+    void request_full_cleaning() {
+        this->trans.request_full_cleaning();
+    }
+};
+
+
+struct NotifyNextVideo : private noncopyable
+{
+    enum class reason { sequenced, external };
+    virtual void notify_next_video(const timeval& now, reason) = 0;
+    virtual ~NotifyNextVideo() = default;
+};
+
+class SequencedVideoCaptureImpl
 {
     class VideoTransport final : public OutFilenameSequenceSeekableTransport
     {
@@ -65,13 +127,12 @@ class VideoCaptureImpl
 
     public:
         VideoTransport(
-            FilenameGenerator::Format format,
             const char * const record_path,
             const char * const basename,
             const char * const suffix,
             const int groupid
         )
-        : transport_base(format, record_path, basename, suffix, groupid)
+        : transport_base(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_path, basename, suffix, groupid)
         {
             this->remove_current_path();
         }
@@ -91,132 +152,146 @@ class VideoCaptureImpl
         }
     };
 
-public:
-    struct SynchronizerNext
+    struct ImageToFile : private DrawableToFile
     {
-        SessionMeta * meta;
-        ImageCapture * image;
+        using DrawableToFile::DrawableToFile;
+        using DrawableToFile::zoom;
+        using DrawableToFile::logical_frame_ended;
+
+        bool has_first_img = false;
+
+        void breakpoint_image(const timeval& now)
+        {
+            tm ptm;
+            localtime_r(&now.tv_sec, &ptm);
+            //const_cast<Drawable&>(this->drawable).trace_mouse();
+            const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
+            this->flush();
+            const_cast<Drawable&>(this->drawable).clear_timestamp();
+            //const_cast<Drawable&>(this->drawable).clear_mouse();
+            this->has_first_img = true;
+            this->trans.next();
+        }
     };
 
-private:
     struct VideoSequencerAction
     {
-        VideoCaptureImpl & impl;
+        SequencedVideoCaptureImpl & impl;
 
         void operator()(const timeval& now) const {
-            this->impl.vc.next_video();
-            if (this->impl.synchronizer_next.meta) {
-                this->impl.synchronizer_next.meta->send_line(now.tv_sec, cstr_array_view("(break)"));
-            }
-            if (this->impl.synchronizer_next.image) {
-                this->impl.synchronizer_next.image->breakpoint(now);
-            }
+            this->impl.next_video_impl(now, NotifyNextVideo::reason::sequenced);
         }
     };
 
     using VideoSequencer = SequencerCapture<VideoSequencerAction>;
 
+    // first next_video is ignored
     struct FirstImage : gdi::CaptureApi
     {
-        using capture_list_t = std::vector <std::reference_wrapper <gdi::CaptureApi > >;
+        using capture_list_t = std::vector<std::reference_wrapper<gdi::CaptureApi>>;
 
-        VideoSequencer & video_sequencer;
-        ImageCapture * image;
+        SequencedVideoCaptureImpl & impl;
         ApiRegisterElement<gdi::CaptureApi> cap_elem;
         ApiRegisterElement<gdi::CaptureApi> gcap_elem;
 
-        FirstImage(VideoSequencer & video_sequencer, ImageCapture * image)
-        : video_sequencer(video_sequencer)
-        , image(image)
+        using seconds = std::chrono::seconds;
+        using microseconds = std::chrono::microseconds;
+
+        const timeval start_capture;
+
+        FirstImage(timeval const & now, SequencedVideoCaptureImpl & impl)
+        : impl(impl)
+        , start_capture(now)
         {}
-
-        std::chrono::microseconds do_snapshot(const timeval& now, int, int, bool) override {
-            this->image->breakpoint(now);
-            assert(this->cap_elem == *this);
-            assert(this->gcap_elem == *this);
-            this->cap_elem = this->video_sequencer;
-            this->gcap_elem = this->video_sequencer;
-            return {};
-        }
-
-        void do_resume_capture(const timeval& now) override { this->video_sequencer.resume_capture(now); }
-        void do_pause_capture(const timeval& now) override { this->video_sequencer.pause_capture(now); }
-    };
-
-    struct PreparingWhenFrameMarkerEnd : gdi::CaptureApi
-    {
-        PreparingWhenFrameMarkerEnd(VideoCapture & vc)
-        : vc(vc)
-        {}
-
-    private:
-        VideoCapture & vc;
 
         std::chrono::microseconds do_snapshot(
-            const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
+            const timeval& now, int x, int y, bool ignore_frame_in_timeval
         ) override {
-            vc.preparing_video_frame();
-            return std::chrono::microseconds{};
+            microseconds ret;
+
+            auto const duration = microseconds(difftimeval(now, this->start_capture));
+            auto const interval = microseconds(seconds(3))/2;
+            if (duration >= interval) {
+                auto video_interval = this->impl.video_sequencer.get_interval();
+                if (this->impl.ic.logical_frame_ended() || duration > seconds(2) || duration >= video_interval) {
+                    this->impl.ic.breakpoint_image(now);
+                    assert(this->cap_elem == *this);
+                    assert(this->gcap_elem == *this);
+                    this->cap_elem = this->impl.video_sequencer;
+                    this->gcap_elem = this->impl.video_sequencer;
+
+                    ret = video_interval;
+                }
+                else {
+                    ret = interval / 3;
+                }
+            }
+            else {
+                ret = microseconds(interval - duration);
+            }
+
+            return std::min(ret, this->impl.video_sequencer.snapshot(now, x, y, ignore_frame_in_timeval));
         }
+
+        void do_resume_capture(const timeval& now) override { this->impl.video_sequencer.resume_capture(now); }
+        void do_pause_capture(const timeval& now) override { this->impl.video_sequencer.pause_capture(now); }
     };
 
-    VideoTransport trans;
+    VideoTransport vc_trans;
     VideoCapture vc;
     PreparingWhenFrameMarkerEnd preparing_vc{vc};
-    SynchronizerNext synchronizer_next;
+
+    OutFilenameSequenceTransport ic_trans;
+    ImageToFile ic;
+
     VideoSequencer video_sequencer;
     FirstImage first_image;
-    bool enable_preparing_video;
+
+    NotifyNextVideo & next_video_notifier;
+
+    void next_video_impl(const timeval& now, NotifyNextVideo::reason reason) {
+        this->video_sequencer.reset_now(now);
+        if (!this->ic.has_first_img) {
+            this->ic.breakpoint_image(now);
+            this->first_image.cap_elem = this->video_sequencer;
+            this->first_image.gcap_elem = this->video_sequencer;
+        }
+        this->vc.next_video();
+        this->ic.breakpoint_image(now);
+        this->next_video_notifier.notify_next_video(now, reason);
+    }
 
 public:
-    VideoCaptureImpl(
+    SequencedVideoCaptureImpl(
         const timeval & now,
         const char * const record_path,
         const char * const basename,
         const int groupid,
-        auth_api * authentifier,
         bool no_timestamp,
         const Drawable & drawable,
         VideoParams video_param,
         std::chrono::microseconds video_interval,
-        SynchronizerNext video_synchronizer_next)
-    : trans(
-        video_interval.count()
-            ? FilenameGenerator::PATH_FILE_COUNT_EXTENSION
-            : FilenameGenerator::PATH_FILE_EXTENSION,
-        record_path, basename, ("." + video_param.codec).c_str(), groupid)
-    , vc(now, this->trans, drawable, no_timestamp, std::move(video_param))
-    , synchronizer_next(video_synchronizer_next)
-    , video_sequencer(now, video_interval, VideoSequencerAction{*this})
-    , first_image(this->video_sequencer, this->synchronizer_next.image)
-    , enable_preparing_video(!authentifier)
+        NotifyNextVideo & next_video_notifier)
+    : vc_trans(record_path, basename, ("." + video_param.codec).c_str(), groupid)
+    , vc(now, this->vc_trans, drawable, no_timestamp, std::move(video_param))
+    , ic_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_path, basename, ".png", groupid)
+    , ic(this->ic_trans, drawable)
+    , video_sequencer(
+        now, video_interval > std::chrono::microseconds(0) ? video_interval : std::chrono::microseconds::max(),
+        VideoSequencerAction{*this})
+    , first_image(now, *this)
+    , next_video_notifier(next_video_notifier)
     {}
 
     void attach_apis(ApisRegister & apis_register, const Inifile &) {
         apis_register.capture_list.push_back(this->vc);
-        apis_register.graphic_snapshot_list->push_back(
-            this->enable_preparing_video
-          ? static_cast<gdi::CaptureApi&>(this->preparing_vc)
-          : static_cast<gdi::CaptureApi&>(this->vc)
-        );
-        if (this->video_sequencer.get_interval().count()) {
-            if (this->synchronizer_next.image) {
-                this->first_image.cap_elem = {apis_register.capture_list, this->first_image};
-                this->first_image.gcap_elem = {*apis_register.graphic_snapshot_list, this->first_image};
-            }
-            else {
-                apis_register.capture_list.push_back(this->video_sequencer);
-                apis_register.graphic_snapshot_list->push_back(this->video_sequencer);
-            }
-        }
+        apis_register.graphic_snapshot_list->push_back(this->preparing_vc);
+        this->first_image.cap_elem = {apis_register.capture_list, this->first_image};
+        this->first_image.gcap_elem = {*apis_register.graphic_snapshot_list, this->first_image};
     }
 
     void next_video(const timeval& now) {
-        this->video_sequencer.reset_now(now);
-        this->vc.next_video();
-        if (this->synchronizer_next.image) {
-            this->synchronizer_next.image->breakpoint(now);
-        }
+        this->next_video_impl(now, NotifyNextVideo::reason::external);
     }
 
     void encoding_video_frame() {
@@ -224,7 +299,12 @@ public:
     }
 
     void request_full_cleaning() {
-        this->trans.request_full_cleaning();
+        this->vc_trans.request_full_cleaning();
+        this->ic_trans.request_full_cleaning();
+    }
+
+    void image_zoom(unsigned percent) {
+        this->ic.zoom(percent);
     }
 };
 
@@ -280,6 +360,12 @@ public:
 };
 
 
+struct NotifyTitleChanged : private noncopyable
+{
+    virtual void notify_title_changed(const timeval & now, array_view_const_char title) = 0;
+    virtual ~NotifyTitleChanged() = default;
+};
+
 class TitleCaptureImpl final : gdi::CaptureApi, gdi::CaptureProbeApi
 {
     OcrTitleExtractorBuilder ocr_title_extractor_builder;
@@ -290,19 +376,15 @@ class TitleCaptureImpl final : gdi::CaptureApi, gdi::CaptureProbeApi
     timeval  last_ocr;
     std::chrono::microseconds usec_ocr_interval;
 
-    PatternsChecker pattern_checker;
-
-    SessionMeta * session_meta;
-    VideoCaptureImpl * video;
+    NotifyTitleChanged & notify_title_changed;
 
 public:
     TitleCaptureImpl(
         const timeval & now,
         auth_api * authentifier,
         const Drawable & drawable,
-        SessionMeta * session_meta,
-        VideoCaptureImpl * video,
-        const Inifile & ini)
+        const Inifile & ini,
+        NotifyTitleChanged & notify_title_changed)
     : ocr_title_extractor_builder(
         drawable, authentifier != nullptr,
         ini.get<cfg::ocr::version>(),
@@ -311,18 +393,12 @@ public:
         ini.get<cfg::ocr::max_unrecog_char_rate>())
     , title_extractor(this->ocr_title_extractor_builder.get_title_extractor())
     , last_ocr(now)
-    , usec_ocr_interval(ini.get<cfg::ocr::interval>() * 10000L)
-    , pattern_checker(
-        authentifier,
-        ini.get<cfg::context::pattern_kill>().c_str(),
-        ini.get<cfg::context::pattern_notify>().c_str())
-    , session_meta(session_meta)
-    , video(video)
+    , usec_ocr_interval(ini.get<cfg::ocr::interval>())
+    , notify_title_changed(notify_title_changed)
     {
     }
 
     void attach_apis(ApisRegister & apis_register, const Inifile & /*ini*/) {
-        // TODO this->session_meta || this->video || this->pattern_checker.contains_pattern() ?
         apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this));
         apis_register.capture_probe_list.push_back(static_cast<gdi::CaptureProbeApi&>(*this));
     }
@@ -333,19 +409,16 @@ private:
     ) override {
         std::chrono::microseconds const diff {difftimeval(now, this->last_ocr)};
 
+        using std::chrono::milliseconds;
+        using std::chrono::duration_cast;
+
         if (diff >= this->usec_ocr_interval) {
             this->last_ocr = now;
 
             auto title = this->title_extractor.get().extract_title();
 
             if (title.data()/* && title.size()*/) {
-                if (this->session_meta) {
-                    this->session_meta->title_changed(now.tv_sec, title);
-                }
-                if (this->video) {
-                    this->video->next_video(now);
-                }
-                this->pattern_checker(title);
+                notify_title_changed.notify_title_changed(now, title);
             }
 
             return this->usec_ocr_interval;

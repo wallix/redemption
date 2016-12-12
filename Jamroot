@@ -57,7 +57,7 @@ alias install :
     install-etc-ppocr
     install-share
 ;
-alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient rdpheadless ; 
+alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient rdpheadless ;
 alias libs    : libredrec ;
 
 alias ocr_tools : display_learning extract_text ppocr_extract_text ;
@@ -138,7 +138,7 @@ constant TEST_DEPENDENCIES :
 obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : $(EXE_DEPENDENCIES) ;
 obj d3des : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 obj bitmap : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
-obj do_recorder : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp ;
+obj do_recorder : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(EXE_DEPENDENCIES) ;
 obj program_options : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 
 #
@@ -443,6 +443,7 @@ test-canonical acl/mm_api.hpp ;
 ## Ocr
 ## {
 test-run test_ocr : capture/test_ocr.cpp : : <library>bitmap <library>png <library>ocr <library>ppocr_test ;
+test-run test_ppocr : capture/test_ocr.cpp : : <library>bitmap <library>png <library>ocr <library>ppocr_test ;
 test-run test_bogus_ocr : capture/test_bogus_ocr.cpp : : <library>bitmap <library>png <library>ocr ;
 test-run test_bogus_ppocr : capture/test_bogus_ppocr.cpp : : <library>bitmap <library>png <library>ocr <library>ppocr_test ;
 test-canonical capture/ocr/locale/latin_to_cyrillic.hpp : <library>ocr ;
@@ -546,11 +547,11 @@ test-canonical utils/compression_transport_wrapper.hpp : <library>z <library>sna
 test-canonical capture/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 
 
+obj do_recorder_test : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(TEST_DEPENDENCIES) ;
 test-canonical main/do_recorder.hpp :
- <library>do_recorder 
- <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z
- <library>ffmpeg <library>ocr <library>ppocr_test <library>bitmap 
- ;
+    <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z
+    <library>do_recorder_test <library>ffmpeg <library>ocr <library>ppocr_test <library>bitmap
+;
 
 
 ## @}
