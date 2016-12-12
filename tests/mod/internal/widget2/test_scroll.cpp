@@ -32,10 +32,6 @@
 #include "check_sig.hpp"
 #include "fake_draw.hpp"
 
-#ifndef FIXTURES_PATH
-#define FIXTURES_PATH
-#endif
-
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "./"
 

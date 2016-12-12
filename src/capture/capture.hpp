@@ -46,7 +46,9 @@ class Capture final
 
     using Kbd = KbdCaptureImpl;
 
-    using Video = VideoCaptureImpl;
+    using Video = SequencedVideoCaptureImpl;
+
+    using FullVideo = FullVideoCaptureImpl;
 
     using Meta = MetaCaptureImpl;
 
@@ -54,25 +56,61 @@ class Capture final
 
     const bool is_replay_mod;
 
-    struct VideoImageCapture
-    {
-        OutFilenameSequenceTransport trans;
-        ImageCapture ic;
+    // Title changed
+    //@{
+    using string_view = array_view_const_char;
 
-        VideoImageCapture(
-            const timeval & now, Drawable & drawable,
-            const char * path, const char * basename, int groupid)
-        : trans(
-            FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-            path, basename, ".png", groupid, nullptr)
-        , ic(now, drawable, this->trans, std::chrono::seconds{})
-        {}
-    };
+    struct TitleChangedFunctions final : NotifyTitleChanged
+    {
+        Capture & capture;
+
+        TitleChangedFunctions(Capture & capture) : capture(capture) {}
+
+        void notify_title_changed(timeval const & now, string_view title) override
+        {
+            if (this->capture.patterns_checker) {
+                this->capture.patterns_checker->operator()(title);
+            }
+            if (this->capture.pmc) {
+                this->capture.pmc->get_session_meta().title_changed(now.tv_sec, title);
+            }
+            if (this->capture.pvc) {
+                this->capture.pvc->next_video(now);
+            }
+        }
+
+        bool has_notifier()
+        {
+            return this->capture.patterns_checker || this->capture.pmc || this->capture.pvc;
+        }
+    } notifier_title_changed{*this};
+    //@}
+
+    // Next video
+    //@{
+    struct NotifyMetaIfNextVideo final : NotifyNextVideo
+    {
+        SessionMeta * session_meta = nullptr;
+
+        void notify_next_video(const timeval& now, NotifyNextVideo::reason reason) override
+        {
+            assert(this->session_meta);
+            if (reason == NotifyNextVideo::reason::sequenced) {
+                this->session_meta->send_line(now.tv_sec, cstr_array_view("(break)"));
+            }
+        }
+    } notifier_next_video;
+    struct NullNotifyNextVideo final : NotifyNextVideo
+    {
+        void notify_next_video(const timeval&, NotifyNextVideo::reason) override {}
+    } null_notifier_next_video;
+    //@}
 
 // TODO
 public:
     const bool capture_wrm;
     const bool capture_png;
+    const bool capture_pattern_checker;
     const bool capture_ocr;
     const bool capture_flv;
     const bool capture_flv_full; // capturewab only
@@ -84,10 +122,10 @@ private:
     std::unique_ptr<Static> psc;
     std::unique_ptr<Kbd> pkc;
     std::unique_ptr<Video> pvc;
-    std::unique_ptr<Video> pvc_full;
+    std::unique_ptr<FullVideo> pvc_full;
     std::unique_ptr<Meta> pmc;
     std::unique_ptr<Title> ptc;
-    std::unique_ptr<VideoImageCapture> pivc;
+    std::unique_ptr<PatternsChecker> patterns_checker;
 
     CaptureApisImpl::Capture capture_api;
     CaptureApisImpl::KbdInput kbd_input_api;
@@ -130,9 +168,10 @@ public:
     , capture_wrm(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::wrm))
     , capture_png(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png)
                   && (!authentifier || ini.get<cfg::video::png_limit>() > 0))
-    , capture_ocr(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::ocr)
-                 || ::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-                 || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()))
+    , capture_pattern_checker(authentifier && (
+        ::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+     || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())))
+    , capture_ocr(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::ocr) || this->capture_pattern_checker)
     , capture_flv(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::flv))
     // capture wab only
     , capture_flv_full(full_video)
@@ -153,12 +192,13 @@ public:
         ;
 
         if (ini.get<cfg::debug::capture>()) {
-            LOG(LOG_INFO, "Enable capture:  wrm=%d  png=%d  kbd=%d  flv=%d  flv_full=%d  ocr=%d  meta=%d",
+            LOG(LOG_INFO, "Enable capture:  wrm=%d  png=%d  kbd=%d  flv=%d  flv_full=%d  pattern=%d  ocr=%d  meta=%d",
                 this->capture_wrm ? 1 : 0,
                 this->capture_png ? 1 : 0,
                 enable_kbd ? 1 : 0,
                 this->capture_flv ? 1 : 0,
                 this->capture_flv_full ? 1 : 0,
+                this->capture_pattern_checker ? 1 : 0,
                 this->capture_ocr ? (ini.get<cfg::ocr::version>() == OcrVersion::v2 ? 2 : 1) : 0,
                 this->capture_meta
             );
@@ -214,13 +254,6 @@ public:
                         record_tmp_path, basename, groupid, ini
                     ));
                 }
-                if (!clear_png) {
-                    this->pivc.reset(new VideoImageCapture(
-                        now, this->gd->impl(),
-                        record_tmp_path, basename, groupid
-                    ));
-                }
-
             }
 
             if (this->capture_wrm) {
@@ -248,36 +281,47 @@ public:
             }
 
             if (this->capture_flv) {
+                std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
+                if (ini.get<cfg::globals::capture_chunk>() && this->pmc) {
+                    this->notifier_next_video.session_meta = &this->pmc->get_session_meta();
+                    notifier = this->notifier_next_video;
+                }
                 this->pvc.reset(new Video(
-                    now, record_path, basename, groupid, authentifier,
-                    no_timestamp, this->gd->impl(),
+                    now, record_path, basename, groupid, no_timestamp, this->gd->impl(),
                     video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini),
-                    std::chrono::seconds(ini.get<cfg::video::flv_break_interval>()),
-                    ini.get<cfg::globals::capture_chunk>()
-                    ? Video::SynchronizerNext{
-                        this->pmc ? &this->pmc->get_session_meta() : nullptr,
-                        this->pivc ? &this->pivc->ic : nullptr}
-                    : Video::SynchronizerNext{nullptr, nullptr}
+                    ini.get<cfg::video::flv_break_interval>(), notifier
                 ));
             }
 
             if (this->capture_flv_full) {
-                this->pvc_full.reset(new Video(
-                    now, record_path, basename, groupid, authentifier,
-                    no_timestamp, this->gd->impl(),
-                    video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini),
-                    std::chrono::seconds(0),
-                    Video::SynchronizerNext{nullptr, nullptr}
+                this->pvc_full.reset(new FullVideo(
+                    now, record_path, basename, groupid, no_timestamp, this->gd->impl(),
+                    video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini)
                 ));
             }
 
+            if (this->capture_pattern_checker) {
+                this->patterns_checker.reset(new PatternsChecker(
+                    *authentifier,
+                    ini.get<cfg::context::pattern_kill>().c_str(),
+                    ini.get<cfg::context::pattern_notify>().c_str())
+                );
+                if (!this->patterns_checker->contains_pattern()) {
+                    LOG(LOG_WARNING, "Disable pattern_checker");
+                    this->patterns_checker.reset();
+                }
+            }
+
             if (this->capture_ocr) {
-                this->ptc.reset(new Title(
-                    now, authentifier, this->gd->impl(),
-                    this->pmc ? &this->pmc->get_session_meta() : nullptr,
-                    this->pvc.get(),
-                    ini
-                ));
+                if (this->notifier_title_changed.has_notifier()) {
+                    this->ptc.reset(new Title(
+                        now, authentifier, this->gd->impl(), ini,
+                        this->notifier_title_changed
+                    ));
+                }
+                else {
+                    LOG(LOG_INFO, "Disable title_extractor");
+                }
             }
         }
 
@@ -360,7 +404,7 @@ public:
         }
     }
 
-    bool kbd_input(const timeval& now, uint32_t uchar) override {
+    bool kbd_input(timeval const & now, uint32_t uchar) override {
         return this->kbd_input_api.kbd_input(now, uchar);
     }
 
@@ -388,7 +432,7 @@ public:
 
 protected:
     std::chrono::microseconds do_snapshot(
-        const timeval& now,
+        timeval const & now,
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
     ) override {
@@ -434,7 +478,7 @@ public:
         this->external_capture_api.external_breakpoint();
     }
 
-    void external_time(const timeval& now) override {
+    void external_time(timeval const & now) override {
         this->external_capture_api.external_time(now);
     }
 
@@ -451,8 +495,8 @@ public:
         if (this->psc) {
             this->psc->zoom(percent);
         }
-        if (this->pivc) {
-            this->pivc->ic.zoom(percent);
+        if (this->pvc) {
+            this->pvc->image_zoom(percent);
         }
     }
 };

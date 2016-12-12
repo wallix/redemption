@@ -26,8 +26,8 @@
 
 #include <check_mem.hpp>
 
-#define LOGPRINT
-// #define LOGNULL
+//#define LOGPRINT
+#define LOGNULL
 #include "utils/log.hpp"
 
 #include "main/do_recorder.hpp"
@@ -42,11 +42,6 @@
 #include <ostream>
 #include "utils/fileutils.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
-
-
-#ifdef IN_IDE_PARSER
-#define FIXTURES_PATH ""
-#endif
 
 #ifdef HASH_LEN
 #undef HASH_LEN
@@ -601,10 +596,10 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV2)
 
     MetaLine2 meta_line;
     BOOST_CHECK(reader.read_meta_file(meta_line));
-    BOOST_CHECK(0 == strcmp(meta_line.filename,
+    BOOST_CHECK_EQUAL(meta_line.filename,
                         "/var/wab/recorded/rdp/"
                         "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
-                        "wab-5-0-0.yourdomain,7681-000000.wrm"));
+                        "wab-5-0-0.yourdomain,7681-000000.wrm");
     BOOST_CHECK_EQUAL(meta_line.size, 181826);
     BOOST_CHECK_EQUAL(meta_line.mode, 33056);
     BOOST_CHECK_EQUAL(meta_line.uid, 1001);
@@ -630,10 +625,10 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV1)
 
     MetaLine2 meta_line;
     reader.read_meta_file(meta_line);
-    BOOST_CHECK(0 == strcmp(meta_line.filename,
+    BOOST_CHECK_EQUAL(meta_line.filename,
                         "/var/wab/recorded/rdp/"
                         "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
-                        "wab-5-0-0.yourdomain,7681-000000.wrm"));
+                        "wab-5-0-0.yourdomain,7681-000000.wrm");
     BOOST_CHECK_EQUAL(meta_line.size, 0);
     BOOST_CHECK_EQUAL(meta_line.mode, 0);
     BOOST_CHECK_EQUAL(meta_line.uid, 0);
@@ -670,7 +665,7 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
     MetaLine2 meta_line;
     reader.read_meta_file(meta_line);
     BOOST_CHECK(true);
-    BOOST_CHECK(0 == strcmp(meta_line.filename, "./tests/fixtures/sample0.wrm"));
+    BOOST_CHECK_EQUAL(meta_line.filename, "./tests/fixtures/sample0.wrm");
     BOOST_CHECK_EQUAL(meta_line.size, 1);
     BOOST_CHECK_EQUAL(meta_line.mode, 2);
     BOOST_CHECK_EQUAL(meta_line.uid, 3);
@@ -759,7 +754,7 @@ inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldsc
 
     (void)base;
     (void)len;
-    
+
     struct {
         std::string base;
         unsigned scheme;
@@ -846,7 +841,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncrypted)
     LOG(LOG_INFO, "=================== TestDecrypterEncrypted =============");
     char const * argv[] {
         "decrypter.py", "reddec",
-        "-i", FIXTURES_PATH "/verifier/recorded/" 
+        "-i", FIXTURES_PATH "/verifier/recorded/"
         "cgrosjean@10.10.43.13,proxyuser@local@win2008,20161025-213153,wab-4-2-4.yourdomain,3243.mwrm",
 //        "--hash-path", FIXTURES_PATH "/verifier/hash/",
 //        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
@@ -867,7 +862,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncrypted1)
 
     char const * argv[] {
         "decrypter.py", "reddec",
-        "-i", FIXTURES_PATH "/verifier/recorded/" 
+        "-i", FIXTURES_PATH "/verifier/recorded/"
         "cgrosjean@10.10.43.13,proxyuser@local@win2008,20161201-163203,wab-4-2-4.yourdomain,1046.mwrm",
         "-o", "/tmp/out8.txt",
         "--verbose", "10",

@@ -46,34 +46,12 @@ public:
     Font const & font;
 
 public:
-    WidgetMultiLine(gdi::GraphicApi & drawable, int16_t x, int16_t y, Widget2& parent,
+    WidgetMultiLine(gdi::GraphicApi & drawable, Widget2& parent,
                     NotifyApi* notifier, const char * text,
-                    bool auto_resize, int group_id,
+                    int group_id,
                     int fgcolor, int bgcolor, Font const & font,
                     int xtext = 0, int ytext = 0)
-    : Widget2(drawable, Rect(x, y, /*1, 1*/0, 0), parent, notifier, group_id)
-    , x_text(xtext)
-    , y_text(ytext)
-    , cy_text(0)
-    , auto_resize(auto_resize)
-    , bg_color(bgcolor)
-    , fg_color(fgcolor)
-    , font(font)
-    {
-        this->tab_flag   = IGNORE_TAB;
-        this->focus_flag = IGNORE_FOCUS;
-
-        //this->set_cx(0);
-        //this->set_cy(0);
-        this->set_text(text);
-    }
-
-    WidgetMultiLine(gdi::GraphicApi & drawable, /*int16_t x, int16_t y, */Widget2& parent,
-                    NotifyApi* notifier, const char * text,
-                    /*bool auto_resize, */int group_id,
-                    int fgcolor, int bgcolor, Font const & font,
-                    int xtext = 0, int ytext = 0)
-    : Widget2(drawable, /*Rect(x, y, 1, 1), */parent, notifier, group_id)
+    : Widget2(drawable, parent, notifier, group_id)
     , x_text(xtext)
     , y_text(ytext)
     , cy_text(0)

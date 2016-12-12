@@ -138,9 +138,6 @@ class PatternSearcher
 
 public:
     PatternSearcher(utils::MatchFinder::ConfigureRegexes conf_regex, char const * filters, int verbose = 0) {
-        if (!filters) {
-            return ;
-        }
         utils::MatchFinder::configure_regexes(conf_regex, filters, this->regexes_filter, verbose, true);
         auto const count_regex = this->regexes_filter.size();
         if (count_regex) {

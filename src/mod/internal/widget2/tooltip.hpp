@@ -33,27 +33,37 @@ class WidgetTooltip : public Widget2
     WidgetMultiLine desc;
     int border_color;
 public:
-    WidgetTooltip(gdi::GraphicApi & drawable, int16_t x, int16_t y, Widget2 & parent,
+    WidgetTooltip(gdi::GraphicApi & drawable, Widget2 & parent,
                   NotifyApi* notifier, const char * text,
                   int fgcolor, int bgcolor, int border_color, Font const & font)
-        : Widget2(drawable, Rect(x, y, 100, 100), parent, notifier, 0)
+        : Widget2(drawable, parent, notifier, 0)
         , w_border(10)
         , h_border(10)
-        , desc(drawable, w_border, h_border, *this, this, text, true, 0, fgcolor, bgcolor, font, 0, 0)
+        , desc(drawable, *this, this, text, 0, fgcolor, bgcolor, font, 0, 0)
         , border_color(border_color)
     {
-        this->tab_flag = IGNORE_TAB;
+        this->tab_flag   = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;
-        this->set_cx(this->desc.cx() + 2 * w_border);
-        this->set_cy(this->desc.cy() + 2 * h_border);
     }
 
     ~WidgetTooltip() override {
     }
 
+    Dimension get_optimal_dim() override {
+        Dimension dim = this->desc.get_optimal_dim();
+
+        dim.w += 2 * this->w_border;
+        dim.h += 2 * this->h_border;
+
+        return dim;
+    }
+
     void set_text(const char * text)
     {
         this->desc.set_text(text);
+        Dimension dim = this->desc.get_optimal_dim();
+        this->desc.set_wh(dim);
+
         this->set_cx(this->desc.cx() + 2 * w_border);
         this->set_cy(this->desc.cy() + 2 * h_border);
     }
@@ -64,18 +74,24 @@ public:
         this->draw_border(clip);
     }
 
-    int get_tooltip_cx() {
-        return this->cx();
-    }
-    int get_tooltip_cy() {
-        return this->cy();
+    void set_x(int16_t x) override {
+        Widget2::set_x(x);
+        this->desc.set_x(x + w_border);
     }
 
-    void set_tooltip_xy(int x, int y) {
-        this->set_x(x);
-        this->set_y(y);
-        this->desc.set_x(x + w_border);
+    void set_y(int16_t y) override {
+        Widget2::set_y(y);
         this->desc.set_y(y + h_border);
+    }
+
+    void set_cx(uint16_t cx) override {
+        Widget2::set_cx(cx);
+        this->desc.set_cx(cx -  2 * w_border);
+    }
+
+    void set_cy(uint16_t cy) override {
+        Widget2::set_cy(cy);
+        this->desc.set_cy(cy - 2 * h_border);
     }
 
     void draw_border(const Rect& clip)

@@ -35,10 +35,6 @@
 
 #include <cinttypes>
 
-#ifndef FIXTURES_PATH
-#define FIXTURES_PATH
-#endif
-
 BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 {
     {

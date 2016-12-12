@@ -51,7 +51,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltip)
     int16_t y = 10;
     const char * tooltiptext = "testémq";
 
-    WidgetTooltip wtooltip(drawable.gd, x, y, parent, notifier, tooltiptext, fg_color, bg_color, border_color, font);
+    WidgetTooltip wtooltip(drawable.gd, parent, notifier, tooltiptext, fg_color, bg_color, border_color, font);
+    Dimension dim = wtooltip.get_optimal_dim();
+    wtooltip.set_wh(dim);
+    wtooltip.set_xy(x, y);
 
     // ask to widget to redraw
     wtooltip.rdp_input_invalidate(Rect(0, 0, 100, 100));
