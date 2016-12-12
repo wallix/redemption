@@ -1173,7 +1173,7 @@ struct RecorderParams {
 
 int parse_command_line_options(int argc, char const ** argv, struct RecorderParams & recorder, uint32_t & verbose);
 
-int parse_command_line_options(int argc, char ** argv, struct RecorderParams & recorder, uint32_t & verbose)
+int parse_command_line_options(int argc, char const ** argv, struct RecorderParams & recorder, uint32_t & verbose)
 {
     std::string png_geometry;
     std::string wrm_compression_algorithm;  // output compression algorithm.
@@ -1211,13 +1211,13 @@ int parse_command_line_options(int argc, char ** argv, struct RecorderParams & r
         {'s', "statistics", "show statistics"},
 
         {'z', "compression", &wrm_compression_algorithm, "wrm compression algorithm (default=original, none, gzip, snappy)"},
-        {'d', "color-depth", color_depth,           "wrm color depth (default=original, 16, 24)"},
+        {'d', "color-depth", &color_depth,           "wrm color depth (default=original, 16, 24)"},
         {'y', "encryption",  &recorder.wrm_encryption,            "wrm encryption (default=original, enable, disable)"},
 
         {"auto-output-file",  "append suffix to input base filename to generate output base filename automatically"},
         {"remove-input-file", "remove input file"},
 
-        {"config-file", &recorder.config_filename, "used an another ini file"},
+        {"config-file", &recorder.config_filename, "used another ini file"},
 
         {"hash-path", &recorder.hash_path, "output hash dirname (if empty, use hash_path of ini)"},
 
