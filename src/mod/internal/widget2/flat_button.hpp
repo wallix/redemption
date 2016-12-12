@@ -52,35 +52,6 @@ public:
 
     Rect label_rect;
 
-    WidgetFlatButton(gdi::GraphicApi & drawable, int16_t x, int16_t y, Widget2& parent,
-                     NotifyApi* notifier, const char * text, bool auto_resize,
-                     int group_id, int fgcolor, int bgcolor,
-                     int focuscolor, Font const & font, int xtext = 0, int ytext = 0,
-                     bool logo = false /*, notify_event_t notify_event = NOTIFY_SUBMIT*/)
-    : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
-    , auto_resize_(auto_resize)
-    , x_text(xtext)
-    , y_text(ytext)
-    , border_width(2)
-    , state(0)
-    , event(NOTIFY_SUBMIT)
-    , fg_color(fgcolor)
-    , bg_color(bgcolor)
-    , focus_color(focuscolor)
-    , logo(logo)
-    , font(font)
-    {
-        this->label_rect.x  = this->x() + (border_width - 1);
-        this->label_rect.y  = this->y() + (border_width - 1);
-        this->label_rect.cx = 1;
-        this->label_rect.cy = 1;
-
-        this->set_text(text);
-
-        this->set_cx(this->label_rect.cx + (border_width * 2 - 1));
-        this->set_cy(this->label_rect.cy + (border_width * 2 - 1));
-    }
-
     WidgetFlatButton(gdi::GraphicApi & drawable, Widget2& parent,
                      NotifyApi* notifier, const char * text,
                      int group_id, int fgcolor, int bgcolor,

@@ -58,13 +58,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
     WidgetGroupBox wgroupbox( drawable.gd, x, y, cx, cy, parent, notifier, "Group 1"
                             , fg_color, bg_color, font);
 
-    bool auto_resize = true;
     int  focuscolor  = LIGHT_YELLOW;
     int  xtext       = 4;
     int  ytext       = 1;
-    WidgetFlatButton wbutton(drawable.gd, 10, 20, wgroupbox, notifier, "Button 1",
-                             auto_resize, group_id, fg_color, bg_color, focuscolor, font,
+    WidgetFlatButton wbutton(drawable.gd, wgroupbox, notifier, "Button 1",
+                             group_id, fg_color, bg_color, focuscolor, 2, font,
                              xtext, ytext);
+    Dimension dim = wbutton.get_optimal_dim();
+    wbutton.set_wh(dim);
+    wbutton.set_xy(x + 10, y + 20);
 
     wgroupbox.add_widget(&wbutton);
 
@@ -136,13 +138,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
 
     BOOST_CHECK_EQUAL(0, memcmp(wgroupbox.get_text(), text, sizeof(text) - 3));
 
-    bool auto_resize = true;
     int  focuscolor  = LIGHT_YELLOW;
     int  xtext       = 4;
     int  ytext       = 1;
-    WidgetFlatButton wbutton(drawable.gd, 10, 20, wgroupbox, notifier, "Button 1",
-                             auto_resize, group_id, fg_color, bg_color, focuscolor, font,
+    WidgetFlatButton wbutton(drawable.gd, wgroupbox, notifier, "Button 1",
+                             group_id, fg_color, bg_color, focuscolor, 2, font,
                              xtext, ytext);
+    Dimension dim = wbutton.get_optimal_dim();
+    wbutton.set_wh(dim);
+    wbutton.set_xy(x + 10, y + 20);
 
     wgroupbox.add_widget(&wbutton);
 
