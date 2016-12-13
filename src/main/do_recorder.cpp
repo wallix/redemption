@@ -1006,7 +1006,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   uint32_t flv_break_interval,
                   TraceType encryption_type,
                   Inifile & ini, CryptoContext & cctx, Random & rnd,
-                  uint32_t verbose) 
+                  uint32_t verbose)
 {
 
     char infile_prefix[4096];
@@ -1141,7 +1141,7 @@ struct RecorderParams {
 
     // input restrictions
     // ==================
-    // "begin capture time (in seconds), either absolute or relative to video start 
+    // "begin capture time (in seconds), either absolute or relative to video start
     // (negative number means relative to video end), default=from start"
     uint32_t begin_cap = 0;
     // "end capture time (in seconds), either absolute or relative to video start,
@@ -1208,7 +1208,7 @@ int parse_command_line_options(int argc, char const ** argv, struct RecorderPara
         {'o', "output-file", &recorder.output_filename, "output base filename"},
         {'i', "input-file", &recorder.input_filename, "input base filename"},
 
-        {'S', "hash-path",  &recorder.hash_path,         "hash file path"       },
+        {'S', "hash-path",  &recorder.hash_path, "output hash dirname (if empty, use hash_path of ini)"},
         {'M', "mwrm-path",  &recorder.mwrm_path,         "mwrm file path"       },
 
         // verifier options
@@ -1249,8 +1249,6 @@ int parse_command_line_options(int argc, char const ** argv, struct RecorderPara
         {"remove-input-file", "remove input file"},
 
         {"config-file", &recorder.config_filename, "used another ini file"},
-
-        {"hash-path", &recorder.hash_path, "output hash dirname (if empty, use hash_path of ini)"},
 
         {'a', "flvbreakinterval", &recorder.flv_break_interval, "number of seconds between splitting flv files (by default, one flv every 10 minutes)"},
 
@@ -1326,7 +1324,7 @@ int parse_command_line_options(int argc, char const ** argv, struct RecorderPara
         }
     }
 
-    if ((options.count("zoom") > 0) 
+    if ((options.count("zoom") > 0)
     && (options.count("png-geometry") > 0)) {
         std::cerr << "Conflicting options : --zoom and --png-geometry\n\n";
         return -1;
@@ -1348,7 +1346,7 @@ int parse_command_line_options(int argc, char const ** argv, struct RecorderPara
         recorder.png_height = png_h;
         std::cout << "png-geometry: " << recorder.png_width << "x" << recorder.png_height << std::endl;
     }
-    
+
     recorder.video_codec = "flv";
 
     if (options.count("compression") > 0) {
@@ -1610,9 +1608,9 @@ extern "C" {
                 return -1;
             }
 
-            if (!rp.show_file_metadata 
-            && !rp.show_statistics 
-            && !rp.auto_output_file 
+            if (!rp.show_file_metadata
+            && !rp.show_statistics
+            && !rp.auto_output_file
             && rp.output_filename.empty()) {
                 std::cerr << "Missing output filename : use -o filename\n\n";
                 return -1;
@@ -1627,8 +1625,8 @@ extern "C" {
                 rp.png_limit = 0xFFFF;
                 ini.set<cfg::ocr::interval>(std::chrono::seconds{1});
             }
-            
-            if (rp.output_filename.length() 
+
+            if (rp.output_filename.length()
             && !rp.full_video
             && !bool(rp.capture_flags)) {
                 std::cerr << "Missing target format : need --png, --ocr, --flv, --full, --wrm or --chunk" << std::endl;
@@ -1675,7 +1673,7 @@ extern "C" {
                           rp.encryption_type,
                           ini, cctx, rnd,
                           verbose);
-                  
+
             } catch (const Error & e) {
                 std::printf("decrypt failed: with id=%d\n", e.id);
             }
