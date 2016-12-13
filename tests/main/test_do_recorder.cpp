@@ -26,8 +26,8 @@
 
 #include <check_mem.hpp>
 
-//#define LOGPRINT
-#define LOGNULL
+#define LOGPRINT
+//#define LOGNULL
 #include "utils/log.hpp"
 
 #include "main/do_recorder.hpp"
@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
             "toto@10.10.43.13,Administrateur@QA@cible,"
             "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm",
         "-o",
-            "decrypted.out",
+            "./decrypted.out",
         "--verbose",
             "10",
     };
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
     } catch (const Error & e) {
         printf("verify failed: with id=%d\n", e.id);
     }
-    BOOST_CHECK_EQUAL(0, unlink("decrypted.out"));
+    BOOST_CHECK_EQUAL(0, unlink("./decrypted.out"));
     BOOST_CHECK_EQUAL(0, res);
 }
 

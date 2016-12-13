@@ -60,7 +60,7 @@ public:
              WidgetFlatButton * extra_button,
              Font const & font, Theme const & theme, Translation::language_t lang,
              bool showform = false, int required = FlatForm::NONE)
-        : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier, group_id)
+        : WidgetParent(drawable, parent, notifier, group_id)
         , groupbox(drawable, *this, nullptr, caption,
                    theme.global.fgcolor, theme.global.bgcolor, font)
         , dialog(drawable, this->groupbox, nullptr, text, -10,

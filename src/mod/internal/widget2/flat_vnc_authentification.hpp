@@ -50,7 +50,7 @@ public:
                             Widget2 & parent, NotifyApi* notifier, const char * password,
                             Theme const & theme, const char * label_text_message,
                             const char * label_text_password, Font const & font)
-        : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
+        : WidgetParent(drawable, parent, notifier)
         , message_label(drawable, *this, nullptr, label_text_message, -13,
                         theme.global.fgcolor, theme.global.bgcolor, font)
         , password_label(drawable, *this, nullptr, label_text_password, -13,
@@ -64,6 +64,9 @@ public:
         , fgcolor(theme.global.fgcolor)
         , bgcolor(theme.global.bgcolor)
     {
+        this->set_xy(0, 0);
+        this->set_wh(width, height);
+
         this->impl = &composite_array;
 
         Dimension dim = this->message_label.get_optimal_dim();

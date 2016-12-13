@@ -43,9 +43,9 @@ public:
 
     Font const & font;
 
-    WidgetScreen(gdi::GraphicApi & drawable, uint16_t width, uint16_t height, Font const & font,
+    WidgetScreen(gdi::GraphicApi & drawable, Font const & font,
                  NotifyApi * notifier, Theme const & theme)
-        : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
+        : WidgetParent(drawable, *this, notifier)
         , theme(theme)
         , tooltip(nullptr)
         , current_over(nullptr)
@@ -56,6 +56,8 @@ public:
         this->impl = &composite_array;
 
         this->tab_flag = IGNORE_TAB;
+
+        this->set_xy(0, 0);
     }
 
     ~WidgetScreen() override {

@@ -41,7 +41,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltip)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
@@ -91,7 +92,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     WidgetLabel label(drawable.gd, parent, &parent, "TOOLTIPTEST",
                       0, BLACK, WHITE, font);

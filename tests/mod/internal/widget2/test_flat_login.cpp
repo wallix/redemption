@@ -39,7 +39,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     WidgetFlatButton * extra_button = nullptr;
 
@@ -67,7 +69,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
 
     FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, notifier, "test2",
@@ -110,7 +114,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, &notifier, "test3",
                          nullptr, nullptr, "Login", "Password", "", extra_button, font,
@@ -159,7 +164,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     WidgetFlatButton * extra_button = nullptr;
 
@@ -202,7 +209,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     WidgetFlatButton * extra_button = nullptr;
 
@@ -233,7 +242,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     WidgetFlatButton * extra_button = nullptr;
 
@@ -264,7 +275,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     struct Notify : NotifyApi {
         Widget2* sender = nullptr;
         notify_event_t event = 0;

@@ -74,23 +74,6 @@ public:
     int notify_value;
 
 public:
-    Widget2(gdi::GraphicApi & drawable,
-            const Rect& rect, Widget2 & parent, NotifyApi * notifier, int group_id = 0)
-    : parent(parent)
-    , drawable(drawable)
-    , notifier(notifier)
-    , rect(rect.x + ((&parent != this) ? parent.x() : 0),
-           rect.y + ((&parent != this) ? parent.y() : 0),
-           rect.cx,
-           rect.cy
-           )
-    , group_id(group_id)
-    , tab_flag(NORMAL_TAB)
-    , focus_flag(NORMAL_FOCUS)
-    , pointer_flag(Pointer::POINTER_NORMAL)
-    , has_focus(false)
-    , notify_value(0) {}
-
     Widget2(gdi::GraphicApi & drawable, Widget2 & parent, NotifyApi * notifier, int group_id = 0)
     : parent(parent)
     , drawable(drawable)

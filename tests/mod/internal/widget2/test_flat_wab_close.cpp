@@ -40,7 +40,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatWabClose is a flat_wab_close widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
 
     try {
@@ -73,7 +75,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
 
     try {
@@ -121,7 +125,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose3)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
 
     FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
@@ -149,7 +155,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
 
     FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
@@ -177,7 +185,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
 
     FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
@@ -219,7 +229,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
 
     FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, &notifier,
                                 "abc<br>def", "tartempion", "caufield",

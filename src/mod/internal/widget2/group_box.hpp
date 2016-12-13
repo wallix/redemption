@@ -39,19 +39,6 @@ public:
     Font const & font;
 
 public:
-    WidgetGroupBox( gdi::GraphicApi & drawable, int16_t x, int16_t y
-                  , uint16_t cx, uint16_t cy, Widget2 & parent
-                  , NotifyApi * notifier, const char * text
-                  , int fgcolor, int bgcolor, Font const & font)
-    : WidgetParent(drawable, Rect(x, y, cx, cy), parent, notifier)
-    , bg_color(bgcolor)
-    , fg_color(fgcolor)
-    , font(font) {
-        this->impl = &composite_array;
-
-        this->set_text(text);
-    }
-
     WidgetGroupBox( gdi::GraphicApi & drawable, Widget2 & parent
                   , NotifyApi * notifier, const char * text
                   , int fgcolor, int bgcolor, Font const & font)
