@@ -529,16 +529,16 @@ inline unsigned get_file_count(
 
 inline void remove_file(
     InMetaSequenceTransport & in_wrm_trans, const char * hash_path, const char * infile_path
-  , const char * infile_basename, const char * infile_extension, bool is_encrypted
+  , const char * input_filename, const char * infile_extension, bool is_encrypted
 ) {
     std::vector<std::string> files;
 
     char infile_fullpath[2048];
     if (is_encrypted) {
-        std::snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", hash_path, infile_basename, infile_extension);
+        std::snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", hash_path, input_filename, infile_extension);
         files.push_back(infile_fullpath);
     }
-    std::snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", infile_path, infile_basename, infile_extension);
+    std::snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", infile_path, input_filename, infile_extension);
     files.push_back(infile_fullpath);
 
     try {
@@ -976,7 +976,7 @@ inline int is_encrypted_file(const char * input_filename, bool & infile_is_encry
     return -1;
 }
 
-inline int replay(std::string & infile_path, std::string & infile_basename, std::string & infile_extension,
+inline int replay(std::string & infile_path, std::string & input_basename, std::string & infile_extension,
                   std::string & hash_path,
                   CaptureFlags & capture_flags,
                   bool chunk,
@@ -1010,7 +1010,7 @@ inline int replay(std::string & infile_path, std::string & infile_basename, std:
 {
 
     char infile_prefix[4096];
-    std::snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), infile_basename.c_str());
+    std::snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), input_basename.c_str());
     ini.set<cfg::video::hash_path>(hash_path);
 
 
@@ -1116,7 +1116,7 @@ inline int replay(std::string & infile_path, std::string & infile_basename, std:
                 infile_is_encrypted?1:0);
 
             remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>().c_str(), infile_path.c_str()
-                        , infile_basename.c_str(), infile_extension.c_str()
+                        , input_basename.c_str(), infile_extension.c_str()
                         , infile_is_encrypted);
         }
 
@@ -1129,8 +1129,12 @@ inline int replay(std::string & infile_path, std::string & infile_basename, std:
 
 struct RecorderParams {
     std::string input_filename;
+    std::string input_basename;
+    std::string infile_extension;
     std::string config_filename;
+    std::string mwrm_path;
     std::string hash_path;
+    std::string full_path;
 
     bool show_file_metadata = false;
     bool show_statistics    = false;
@@ -1182,6 +1186,12 @@ struct RecorderParams {
     bool infile_is_encrypted = 0;
     bool chunk = false;
 
+    // verifier options
+    bool        quick_check    = false;
+    bool      ignore_stat_info = false;
+    bool      update_stat_info = false;
+
+
 };
 
 int parse_command_line_options(int argc, char const ** argv, struct RecorderParams & recorder, uint32_t & verbose);
@@ -1197,6 +1207,15 @@ int parse_command_line_options(int argc, char const ** argv, struct RecorderPara
         {'v', "version", "show software version"},
         {'o', "output-file", &recorder.output_filename, "output base filename"},
         {'i', "input-file", &recorder.input_filename, "input base filename"},
+
+        {'S', "hash-path",  &recorder.hash_path,         "hash file path"       },
+        {'M', "mwrm-path",  &recorder.mwrm_path,         "mwrm file path"       },
+
+        // verifier options
+        {'Q', "quick",   "quick check only"},
+        {'S', "ignore-stat-info", "ignore stat info data mismatch" },
+        {'U', "update-stat-info", "update stat info data mismatch "
+                                  "(only if not checksum and no encrypted)" },
 
         {'b', "begin", &recorder.begin_cap, "begin capture time (in seconds), default=none"},
         {'e', "end", &recorder.end_cap, "end capture time (in seconds), default=none"},
@@ -1227,7 +1246,6 @@ int parse_command_line_options(int argc, char const ** argv, struct RecorderPara
         {'d', "color-depth", &color_depth,           "wrm color depth (default=original, 16, 24)"},
         {'y', "encryption",  &recorder.wrm_encryption,            "wrm encryption (default=original, enable, disable)"},
 
-        {"auto-output-file",  "append suffix to input base filename to generate output base filename automatically"},
         {"remove-input-file", "remove input file"},
 
         {"config-file", &recorder.config_filename, "used another ini file"},
@@ -1261,6 +1279,18 @@ int parse_command_line_options(int argc, char const ** argv, struct RecorderPara
         return -1;
     }
 
+    if (options.count("quick") > 0) {
+        recorder.quick_check = true;
+    }
+
+    if (options.count("ignore-stat-info") > 0) {
+        recorder.ignore_stat_info = true;
+    }
+
+    if (options.count("update-stat-info") > 0) {
+        recorder.update_stat_info = true;
+    }
+
     recorder.chunk = options.count("chunk") > 0;
     recorder.capture_flags = ((options.count("wrm") > 0)              ?CaptureFlags::wrm:CaptureFlags::none)
                            | (((recorder.chunk)||(options.count("png") > 0))?CaptureFlags::png:CaptureFlags::none)
@@ -1283,7 +1313,6 @@ int parse_command_line_options(int argc, char const ** argv, struct RecorderPara
         }
     }
 
-    recorder.auto_output_file   = (options.count("auto-output-file" ) > 0);
     recorder.remove_input_file  = (options.count("remove-input-file") > 0);
 
     if (options.count("color-depth") > 0){
@@ -1341,7 +1370,71 @@ int parse_command_line_options(int argc, char const ** argv, struct RecorderPara
         }
     }
 
-    if (is_encrypted_file(recorder.input_filename.c_str(), recorder.infile_is_encrypted) == -1) {
+    if (recorder.hash_path.c_str()[0] == 0) {
+        std::cerr << "Missing hash-path : use -h path\n\n";
+        return 1;
+    }
+
+    if (recorder.mwrm_path.c_str()[0] == 0) {
+        std::cerr << "Missing mwrm-path : use -m path\n\n";
+        return 1;
+    }
+    std::cout << "mwrm-path is " << recorder.mwrm_path << "\".\n"; ;
+
+    if (recorder.input_filename.c_str()[0] == 0) {
+        std::cerr << "Missing input mwrm file name : use -i filename\n\n";
+        return 1;
+    }
+
+    // Input path rule is as follow:
+    // -----------------------------
+    //  default serach directory for mwrm is given in config file
+    // if --mwrm-path is provided on command line it will be preferably used as default
+    // if -i has a path component it will be used instead of mwrm-path
+    // if relative all command lines path are relative to current working directory
+
+    {
+        char temp_path[1024]     = {};
+        char temp_basename[1024] = {};
+        char temp_extension[256] = {};
+
+        canonical_path(recorder.input_filename.c_str(), temp_path, sizeof(temp_path), temp_basename, sizeof(temp_basename), temp_extension, sizeof(temp_extension));
+
+        if (strlen(temp_path) > 0) {
+            recorder.mwrm_path       = temp_path;
+        }
+
+        recorder.input_basename = "";
+        recorder.input_filename = "";
+        recorder.infile_extension = ".mwrm";
+        if (strlen(temp_basename) > 0) {
+            recorder.input_basename  = temp_basename;
+            recorder.input_filename  = temp_basename;
+            recorder.infile_extension = (strlen(temp_extension) > 0)?temp_extension:".mwrm";
+            recorder.input_filename += recorder.infile_extension;
+        }
+
+        if (recorder.mwrm_path.back() != '/'){
+            recorder.mwrm_path.push_back('/');
+        }
+        if (recorder.hash_path.back() != '/'){
+            recorder.hash_path.push_back('/');
+        }
+
+    }
+    std::cout << "Input file is \"" << recorder.mwrm_path << recorder.input_filename << "\".\n";
+
+    recorder.full_path = recorder.mwrm_path + recorder.input_filename;
+
+//    if (verbose) {
+        LOG(LOG_INFO, "hash_path=\"%s\"", recorder.hash_path.c_str());
+        LOG(LOG_INFO, "mwrm_path=\"%s\"", recorder.mwrm_path.c_str());
+        LOG(LOG_INFO, "file_name=\"%s\"", recorder.input_filename.c_str());
+        LOG(LOG_INFO, "full_path=\"%s\"", recorder.full_path.c_str());
+//    }
+
+
+    if (is_encrypted_file(recorder.full_path.c_str(), recorder.infile_is_encrypted) == -1) {
         std::cerr << "Input file is missing.\n";
         return -1;
     }
@@ -1460,20 +1553,37 @@ extern "C" {
             "Christophe Grosjean, Jonathan Poelen, Raphael Zhou.";
 
         uint32_t    verbose     = 0;
-        auto config_filename = std::string(CFG_PATH "/" RDPPROXY_INI);
+        RecorderParams rp;
+        // TODO: annoying, if we read default hash_path and mwrm_path from ini
+        // we should do that after config_filename was eventually changed...
+        rp.config_filename = std::string(CFG_PATH "/" RDPPROXY_INI);
+        rp.hash_path      = ini.get<cfg::video::hash_path>().c_str()  ;
+        rp.mwrm_path      = ini.get<cfg::video::record_path>().c_str();
+
+        if (parse_command_line_options(argc, argv, rp, verbose) < 0){
+            // parsing error
+            return -1;
+        }
+
+        if (rp.output_filename.size()) {
+            std::string directory = PNG_PATH "/"; // default value, actual one should come from rp.output_filename
+            std::string filename                ;
+            std::string extension = ".mwrm"     ;
+
+            ParsePath(rp.output_filename.c_str(), directory, filename, extension);
+            MakePath(rp.output_filename, directory.c_str(), filename.c_str(), extension.c_str());
+            std::cout << "Output file is \"" << rp.output_filename << "\".\n";
+        }
+
+        if (!rp.hash_path.empty()) {
+            rp.hash_path += '/';
+        }
 
         switch (command){
         case 0: // RECorder
         try {
 
             init_signals();
-
-            RecorderParams rp;
-            
-            if (parse_command_line_options(argc, argv, rp, verbose) < 0){
-                // parsing error
-                return -1;
-            }
 
             if (rp.input_filename.empty()) {
                 std::cerr << "Missing input filename : use -i filename\n\n";
@@ -1488,14 +1598,7 @@ extern "C" {
                 return -1;
             }
 
-            if (!rp.output_filename.empty() 
-            && rp.auto_output_file) {
-                std::cerr << "Conflicting options : --output-file and --auto-output-file\n\n";
-                return -1;
-            }
-
-
-            { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), config_filename.c_str()); }
+            { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), rp.config_filename.c_str()); }
 
             if (rp.chunk) {
                 ini.get_ref<cfg::video::disable_keyboard_log>() &= ~KeyboardLogFlags::meta;
@@ -1515,57 +1618,13 @@ extern "C" {
             ini.set<cfg::globals::video_quality>(rp.video_quality);
             ini.set<cfg::video::rt_display>(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png));
 
-            {
-                std::string directory          ;
-                std::string filename           ;
-                std::string extension = ".mwrm";
-
-                ParsePath(rp.input_filename.c_str(), directory, filename, extension);
-                if (!directory.size()) {
-                    if (file_exist(rp.input_filename.c_str())) {
-                        directory = "./";
-                    }
-                    else {
-                        directory = ini.get<cfg::video::record_path>().c_str();
-                    }
-                }
-                MakePath(rp.input_filename, directory.c_str(), filename.c_str(), extension.c_str());
-            }
-            std::cout << "Input file is \"" << rp.input_filename << "\".\n";
-
-            std::string infile_path;
-            std::string infile_basename;
-            std::string infile_extension;
-            ParsePath(rp.input_filename.c_str(), infile_path, infile_basename, infile_extension);
-
-            if (rp.auto_output_file) {
-                rp.output_filename =  infile_path;
-                rp.output_filename += infile_basename;
-                rp.output_filename += "-redrec";
-                rp.output_filename += infile_extension;
-
-                std::cout << "\nOutput file is \"" << rp.output_filename << "\" (autogenerated)." << std::endl;
-            }
-            else if (rp.output_filename.size()) {
-                std::string directory = PNG_PATH "/"; // default value, actual one should come from rp.output_filename
-                std::string filename                ;
-                std::string extension = ".mwrm"     ;
-
-                ParsePath(rp.output_filename.c_str(), directory, filename, extension);
-                MakePath(rp.output_filename, directory.c_str(), filename.c_str(), extension.c_str());
-                std::cout << "Output file is \"" << rp.output_filename << "\".\n";
-            }
-
-            if (!rp.hash_path.empty()) {
-                rp.hash_path += '/';
-            }
 
             // TODO before continuing to work with input file, check if it's mwrm or wrm and use right object in both cases
 
             // TODO also check if it contains any wrm at all and at wich one we should start depending on input time
             // TODO if start and stop time are outside wrm, users should also be warned
 
-            res = replay(infile_path, infile_basename, infile_extension,
+            res = replay(rp.mwrm_path, rp.input_basename, rp.infile_extension,
                           rp.hash_path,
                           rp.capture_flags,
                           rp.chunk,
@@ -1604,108 +1663,12 @@ extern "C" {
         case 1: // VERifier
             ini.set<cfg::debug::config>(false);
             try {
-                std::string hash_path      = ini.get<cfg::video::hash_path>().c_str()  ;
-                std::string mwrm_path      = ini.get<cfg::video::record_path>().c_str();
-                std::string input_filename;
-                bool        quick_check    = false;
-                bool      ignore_stat_info = false;
-                bool      update_stat_info = false;
-                uint32_t    verbose        = 0;
 
-                program_options::options_description desc({
-                    {'h', "help",    "produce help message"},
-                    {'v', "version", "show software version"},
-                    {'q', "quick",   "quick check only"},
-                    {'s', "hash-path",  &hash_path,         "hash file path"       },
-                    {'m', "mwrm-path",  &mwrm_path,         "mwrm file path"       },
-                    {'i', "input-file", &input_filename,    "input mwrm file name" },
-                    {'S', "ignore-stat-info", "ignore stat info data mismatch" },
-                    {'U', "update-stat-info", "update stat info data mismatch "
-                                              "(only if not checksum and no encrypted)" },
-                    {"verbose",         &verbose,           "more logs"            },
-                })
-                ;
-                auto options = program_options::parse_command_line(argc, argv, desc);
-
-                const char * copyright_notice = "ReDemPtion " VERSION ".\n"
-                    "Copyright (C) Wallix 2010-2016.\n"
-                    "Christophe Grosjean, Jonathan Poelen, Raphael Zhou.";
-
-                if (options.count("help") > 0) {
-                    std::cout << copyright_notice;
-                    std::cout << "Usage: redver [options]\n\n";
-                    std::cout << desc << std::endl;
-                    return 0;
-                }
-
-                if (options.count("version") > 0) {
-                    std::cout << copyright_notice;
-                    return 0;
-                }
-
-                if (options.count("quick") > 0) {
-                    quick_check = true;
-                }
-
-                if (options.count("ignore-stat-info") > 0) {
-                    ignore_stat_info = true;
-                }
-
-                if (options.count("update-stat-info") > 0) {
-                    update_stat_info = true;
-                }
-
-                if (hash_path.c_str()[0] == 0) {
-                    std::cerr << "Missing hash-path : use -h path\n\n";
-                    return 1;
-                }
-
-                if (mwrm_path.c_str()[0] == 0) {
-                    std::cerr << "Missing mwrm-path : use -m path\n\n";
-                    return 1;
-                }
-
-                if (input_filename.c_str()[0] == 0) {
-                    std::cerr << "Missing input mwrm file name : use -i filename\n\n";
-                    return 1;
-                }
-
-                {
-                    char temp_path[1024]     = {};
-                    char temp_basename[1024] = {};
-                    char temp_extension[256] = {};
-
-                    canonical_path(input_filename.c_str(), temp_path, sizeof(temp_path), temp_basename, sizeof(temp_basename), temp_extension, sizeof(temp_extension));
-
-                    if (strlen(temp_path) > 0) {
-                        mwrm_path       = temp_path;
-                        input_filename  = temp_basename;
-                        input_filename += temp_extension;
-                    }
-                    if (mwrm_path.back() != '/'){
-                        mwrm_path.push_back('/');
-                    }
-                    if (hash_path.back() != '/'){
-                        hash_path.push_back('/');
-                    }
-
-                }
-                std::cout << "Input file is \"" << mwrm_path << input_filename << "\".\n";
-
-                std::string full_path = mwrm_path + input_filename;
-
-                if (verbose) {
-                    LOG(LOG_INFO, "hash_path=\"%s\"", hash_path.c_str());
-                    LOG(LOG_INFO, "mwrm_path=\"%s\"", mwrm_path.c_str());
-                    LOG(LOG_INFO, "file_name=\"%s\"", input_filename.c_str());
-                    LOG(LOG_INFO, "full_path=\"%s\"", full_path.c_str());
-                }
-
-                encryption_type(full_path, cctx);
+                encryption_type(rp.full_path, cctx);
 
                 res = check_encrypted_or_checksumed(
-                    input_filename, mwrm_path, hash_path,
-                    quick_check, ignore_stat_info, update_stat_info, verbose, cctx
+                    rp.input_filename, rp.mwrm_path, rp.hash_path,
+                    rp.quick_check, rp.ignore_stat_info, rp.update_stat_info, verbose, cctx
                 );
                 std::puts(res == 0 ? "verify ok\n" : "verify failed\n");
             } catch (const Error & e) {
