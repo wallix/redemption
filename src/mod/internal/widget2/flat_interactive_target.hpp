@@ -77,7 +77,7 @@ public:
         : WidgetParent(drawable, parent, notifier)
         , caption_label(drawable, *this, nullptr, caption, -13,
                         theme.global.fgcolor, theme.global.bgcolor, font)
-        , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
+        , separator(drawable, *this, this, -12,
                     theme.global.separator_color)
         , device_label(drawable, *this, nullptr, text_device, -13,
                       theme.global.fgcolor, theme.global.bgcolor, font)
@@ -231,7 +231,7 @@ public:
         y = this->caption_label.bottom() + 20;
 
         this->separator.set_xy(left + x_cbloc, y);
-        this->separator.set_cx(cbloc_w);
+        this->separator.set_wh(cbloc_w, 2);
 
         y = this->separator.bottom() + 20;
 

@@ -32,8 +32,8 @@ public:
     int color;
 
 public:
-    WidgetRect(gdi::GraphicApi & drawable, const Rect& rect, Widget2 & parent, NotifyApi * notifier, int group_id = 0, int color = BLACK)
-    : Widget2(drawable, rect, parent, notifier, group_id)
+    WidgetRect(gdi::GraphicApi & drawable, Widget2 & parent, NotifyApi * notifier, int group_id = 0, int color = BLACK)
+    : Widget2(drawable, parent, notifier, group_id)
     , color(color)
     {
         this->tab_flag = IGNORE_TAB;

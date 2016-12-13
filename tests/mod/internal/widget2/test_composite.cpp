@@ -59,18 +59,36 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
                       drawable.gd.height());
     wcomposite.set_xy(0, 0);
 
-    WidgetRect wrect1(drawable.gd, Rect(0,0,100,100),
+    WidgetRect wrect1(drawable.gd,
                       wcomposite, notifier, id++, CYAN);
-    WidgetRect wrect2(drawable.gd, Rect(0,100,100,100),
+    wrect1.set_wh(100, 100);
+    wrect1.set_xy(0, 0);
+
+    WidgetRect wrect2(drawable.gd,
                       wcomposite, notifier, id++, RED);
-    WidgetRect wrect3(drawable.gd, Rect(100,100,100,100),
+    wrect2.set_wh(100, 100);
+    wrect2.set_xy(0, 100);
+
+    WidgetRect wrect3(drawable.gd,
                       wcomposite, notifier, id++, BLUE);
-    WidgetRect wrect4(drawable.gd, Rect(300,300,100,100),
+    wrect3.set_wh(100, 100);
+    wrect3.set_xy(100, 100);
+
+    WidgetRect wrect4(drawable.gd,
                       wcomposite, notifier, id++, GREEN);
-    WidgetRect wrect5(drawable.gd, Rect(700,-50,100,100),
+    wrect4.set_wh(100, 100);
+    wrect4.set_xy(300, 300);
+
+    WidgetRect wrect5(drawable.gd,
                       wcomposite, notifier, id++, WHITE);
-    WidgetRect wrect6(drawable.gd, Rect(-50,550,100,100),
+    wrect5.set_wh(100, 100);
+    wrect5.set_xy(700, -50);
+
+    WidgetRect wrect6(drawable.gd,
                       wcomposite, notifier, id++, GREY);
+    wrect6.set_wh(100, 100);
+    wrect6.set_xy(-50, 550);
+
     wcomposite.add_widget(&wrect1);
     wcomposite.add_widget(&wrect2);
     wcomposite.add_widget(&wrect3);
@@ -79,8 +97,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     wcomposite.add_widget(&wrect6);
 
     {
-        WidgetRect wrect7(drawable.gd, Rect(0, 0, 800, 600),
+        WidgetRect wrect7(drawable.gd,
                           wcomposite, notifier, id++, GREY);
+        wrect7.set_wh(800, 800);
+        wrect7.set_xy(0, 0);
+
         wcomposite.add_widget(&wrect7);
         wcomposite.remove_widget(&wrect7);
     }

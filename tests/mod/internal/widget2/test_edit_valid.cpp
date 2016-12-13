@@ -539,7 +539,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
         NotifyApi::notify_event_t event = 0;
 
         WidgetReceiveEvent(TestDraw& drawable)
-        : Widget2(drawable.gd, Rect(), *this, nullptr)
+        : Widget2(drawable.gd, *this, nullptr)
         {}
 
         void draw(const Rect&) override

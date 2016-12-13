@@ -46,7 +46,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect)
     int id = 0; // unique identifier of widget used par parent, it will be sent back in case of event
     int color = 0xCCF604; /* BGR */
 
-    WidgetRect wrect(drawable.gd, Rect(0,0,800,600), parent, notifier, id, color);
+    WidgetRect wrect(drawable.gd, parent, notifier, id, color);
+    wrect.set_wh(800, 600);
+    wrect.set_xy(0, 0);
 
     // ask to widget to redraw at it's current position
     wrect.rdp_input_invalidate(Rect(0 + wrect.x(),
@@ -78,7 +80,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
 
-    WidgetRect wrect(drawable.gd, Rect(-100,-100,200,200), parent, notifier, id, bgcolor);
+    WidgetRect wrect(drawable.gd, parent, notifier, id, bgcolor);
+    wrect.set_wh(200, 200);
+    wrect.set_xy(-100, -100);
 
     // ask to widget to redraw at it's current position
     wrect.rdp_input_invalidate(Rect(0 + wrect.x(),
@@ -110,7 +114,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
 
-    WidgetRect wrect(drawable.gd, Rect(-100,500,200,200), parent, notifier, id, bgcolor);
+    WidgetRect wrect(drawable.gd, parent, notifier, id, bgcolor);
+    wrect.set_wh(200, 200);
+    wrect.set_xy(-100, 500);
 
     // ask to widget to redraw at it's current position
     wrect.rdp_input_invalidate(Rect(0 + wrect.x(),
@@ -142,7 +148,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
 
-    WidgetRect wrect(drawable.gd, Rect(700,500,200,200), parent, notifier, id, bgcolor);
+    WidgetRect wrect(drawable.gd, parent, notifier, id, bgcolor);
+    wrect.set_wh(200, 200);
+    wrect.set_xy(700, 500);
 
     // ask to widget to redraw at it's current position
     wrect.rdp_input_invalidate(Rect(0 + wrect.x(),
@@ -174,7 +182,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
 
-    WidgetRect wrect(drawable.gd, Rect(700,-100,200,200), parent, notifier, id, bgcolor);
+    WidgetRect wrect(drawable.gd, parent, notifier, id, bgcolor);
+    wrect.set_wh(200, 200);
+    wrect.set_xy(700, -100);
 
     // ask to widget to redraw at it's current position
     wrect.rdp_input_invalidate(Rect(0 + wrect.x(),
@@ -206,7 +216,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
 
-    WidgetRect wrect(drawable.gd, Rect(300, 200,200,200), parent, notifier, id, bgcolor);
+    WidgetRect wrect(drawable.gd, parent, notifier, id, bgcolor);
+    wrect.set_wh(200, 200);
+    wrect.set_xy(300, 200);
 
     // ask to widget to redraw at it's current position
     wrect.rdp_input_invalidate(Rect(0 + wrect.x(),
@@ -238,7 +250,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip)
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
 
-    WidgetRect wrect(drawable.gd, Rect(300,200, 200,200), parent, notifier, id, bgcolor);
+    WidgetRect wrect(drawable.gd, parent, notifier, id, bgcolor);
+    wrect.set_wh(200, 200);
+    wrect.set_xy(300, 200);
 
     // ask to widget to redraw at position 400,300 and of size 100x100. After clip the size is of 100x50
     wrect.rdp_input_invalidate(Rect(150 + wrect.x(),
@@ -270,7 +284,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
 
-    WidgetRect wrect(drawable.gd, Rect(700,-100,200,200), parent, notifier, id, bgcolor);
+    WidgetRect wrect(drawable.gd, parent, notifier, id, bgcolor);
+    wrect.set_wh(200, 200);
+    wrect.set_xy(700, -100);
+
 
     // ask to widget to redraw at position 720,20 and of size 50x50
     wrect.rdp_input_invalidate(Rect(20 + wrect.x(),

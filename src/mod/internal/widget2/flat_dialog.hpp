@@ -68,7 +68,7 @@ public:
         : WidgetParent(drawable, parent, notifier)
         , title(drawable, *this, nullptr, caption, -9,
                 theme.global.fgcolor, theme.global.bgcolor, font, 5)
-        , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
+        , separator(drawable, *this, this, -12,
                     theme.global.separator_color)
         , dialog(drawable, *this, nullptr, text, -10,
                  theme.global.fgcolor, theme.global.bgcolor, font, 10, 2)
@@ -161,7 +161,7 @@ public:
 
         const int total_width = std::max(this->dialog.cx(), this->title.cx());
 
-        this->separator.set_cx(total_width);
+        this->separator.set_wh(total_width, 2);
         this->separator.set_xy(left + (width - total_width) / 2, y + 3);
 
         y            += 10;
