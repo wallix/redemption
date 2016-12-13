@@ -813,11 +813,16 @@ public:
         case MODULE_INTERNAL_WIDGETTEST:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
             this->set_mod(new WidgetTestMod(
+                this->ini,
                 this->front,
                 this->front.client_info.width,
                 this->front.client_info.height,
-                this->ini.get<cfg::font>(),
-                this->ini.get<cfg::theme>()
+                this->client_execute.adjust_rect(get_widget_rect(
+                    this->front.client_info.width,
+                    this->front.client_info.height,
+                    this->front.client_info.cs_monitor
+                )),
+                this->client_execute
             ));
             LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
             break;

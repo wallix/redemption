@@ -656,7 +656,7 @@ test-canonical mod/internal/interactive_target_mod.hpp : <library>bitmap <librar
 test-canonical mod/internal/internal_mod.hpp ;
 test-canonical mod/internal/replay_mod.hpp : <library>png ;
 test-canonical mod/internal/test_card_mod.hpp : <library>png ;
-test-canonical mod/internal/widget_test_mod.hpp : <library>png ;
+test-canonical mod/internal/widget_test_mod.hpp : <library>bitmap <library>png ;
 test-canonical mod/internal/flat_selector2_mod.hpp ;
 test-canonical mod/internal/flat_wait_mod.hpp ;
 test-canonical mod/internal/transparent_replay_mod.hpp ;
