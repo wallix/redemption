@@ -1208,7 +1208,7 @@ int parse_command_line_options(int argc, char const ** argv, struct RecorderPara
         {'o', "output-file", &recorder.output_filename, "output base filename"},
         {'i', "input-file", &recorder.input_filename, "input base filename"},
 
-        {'S', "hash-path",  &recorder.hash_path, "output hash dirname (if empty, use hash_path of ini)"},
+        {'H', "hash-path",  &recorder.hash_path, "output hash dirname (if empty, use hash_path of ini)"},
         {'M', "mwrm-path",  &recorder.mwrm_path,         "mwrm file path"       },
 
         // verifier options
