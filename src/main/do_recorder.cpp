@@ -1001,6 +1001,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   unsigned zoom,
                   bool full_video,
                   std::string & video_codec,
+                  Level video_quality,
                   bool remove_input_file,
                   int wrm_compression_algorithm_,
                   uint32_t flv_break_interval,
@@ -1013,7 +1014,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     std::snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), input_basename.c_str());
     ini.set<cfg::video::hash_path>(hash_path);
 
-
+    ini.set<cfg::globals::video_quality>(video_quality);
     ini.set<cfg::video::png_limit>(png_limit);
     ini.set<cfg::video::png_interval>(std::chrono::seconds{png_interval});
     ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned int, std::centi>{wrm_frame_interval});
@@ -1022,9 +1023,15 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     ini.set<cfg::video::flv_break_interval>(std::chrono::seconds{flv_break_interval});
     ini.set<cfg::globals::trace_type>(encryption_type);
     ini.set<cfg::video::capture_flags>(capture_flags);
+    ini.set<cfg::video::rt_display>(bool(capture_flags & CaptureFlags::png));
+
     ini.set<cfg::globals::capture_chunk>(chunk);
     ini.set<cfg::ocr::version>(ocr_version == 2 ? OcrVersion::v2 : OcrVersion::v1);
 
+    if (chunk){
+        ini.get_ref<cfg::video::disable_keyboard_log>() &= ~KeyboardLogFlags::meta;
+        ini.set<cfg::ocr::interval>(std::chrono::seconds{1});
+    }
 
     timeval  begin_record = { 0, 0 };
     timeval  end_record   = { 0, 0 };
@@ -1194,9 +1201,9 @@ struct RecorderParams {
 
 };
 
-int parse_command_line_options(int argc, char const ** argv, struct RecorderParams & recorder, uint32_t & verbose);
+int parse_command_line_options(int argc, char const ** argv, struct RecorderParams & recorder, Inifile & ini, uint32_t & verbose);
 
-int parse_command_line_options(int argc, char const ** argv, struct RecorderParams & recorder, uint32_t & verbose)
+int parse_command_line_options(int argc, char const ** argv, struct RecorderParams & recorder, Inifile & ini, uint32_t & verbose)
 {
     std::string png_geometry;
     std::string wrm_compression_algorithm;  // output compression algorithm.
@@ -1275,6 +1282,13 @@ int parse_command_line_options(int argc, char const ** argv, struct RecorderPara
     if (options.count("version") > 0) {
         std::cout << copyright_notice << std::endl << std::endl;
         return -1;
+    }
+
+    if (options.count("config-file") > 0) {
+        ConfigurationLoader cfg_loader_full(ini.configuration_holder(), recorder.config_filename.c_str()); 
+    }
+    else {
+        recorder.config_filename = std::string(CFG_PATH "/" RDPPROXY_INI);
     }
 
     if (options.count("quick") > 0) {
@@ -1368,16 +1382,29 @@ int parse_command_line_options(int argc, char const ** argv, struct RecorderPara
         }
     }
 
-    if (recorder.hash_path.c_str()[0] == 0) {
-        std::cerr << "Missing hash-path : use -h path\n\n";
-        return 1;
+    if (options.count("hash-path") > 0){
+        if (recorder.hash_path.c_str()[0] == 0) {
+            std::cerr << "Missing hash-path : use -h path\n\n";
+            return -1;
+        }
+    }
+    else {
+        recorder.hash_path      = ini.get<cfg::video::hash_path>().c_str();
+    }
+    // TODO: check we do not already have a trailing slash
+    if (!recorder.hash_path.empty()) {
+        recorder.hash_path += '/';
     }
 
-    if (recorder.mwrm_path.c_str()[0] == 0) {
-        std::cerr << "Missing mwrm-path : use -m path\n\n";
-        return 1;
+    if (options.count("mwrm-path") > 0){
+        if (recorder.mwrm_path.c_str()[0] == 0) {
+            std::cerr << "Missing mwrm-path : use -m path\n\n";
+            return -1;
+        }
     }
-    std::cout << "mwrm-path is " << recorder.mwrm_path << "\".\n"; ;
+    else {
+        recorder.mwrm_path = ini.get<cfg::video::record_path>().c_str();
+    }
 
     if (recorder.input_filename.c_str()[0] == 0) {
         std::cerr << "Missing input mwrm file name : use -i filename\n\n";
@@ -1420,17 +1447,14 @@ int parse_command_line_options(int argc, char const ** argv, struct RecorderPara
         }
 
     }
-    std::cout << "Input file is \"" << recorder.mwrm_path << recorder.input_filename << "\".\n";
-
     recorder.full_path = recorder.mwrm_path + recorder.input_filename;
 
-//    if (verbose) {
+    if (verbose) {
+        LOG(LOG_INFO, "Input file full_path=\"%s\"", recorder.full_path.c_str());
+        LOG(LOG_INFO, "Input file base name=\"%s\"", recorder.input_filename.c_str());
         LOG(LOG_INFO, "hash_path=\"%s\"", recorder.hash_path.c_str());
         LOG(LOG_INFO, "mwrm_path=\"%s\"", recorder.mwrm_path.c_str());
-        LOG(LOG_INFO, "file_name=\"%s\"", recorder.input_filename.c_str());
-        LOG(LOG_INFO, "full_path=\"%s\"", recorder.full_path.c_str());
-//    }
-
+    }
 
     if (is_encrypted_file(recorder.full_path.c_str(), recorder.infile_is_encrypted) == -1) {
         std::cerr << "Input file is missing.\n";
@@ -1456,6 +1480,16 @@ int parse_command_line_options(int argc, char const ** argv, struct RecorderPara
     recorder.full_video = (options.count("full") > 0);
     recorder.show_file_metadata = (options.count("meta"             ) > 0);
     recorder.show_statistics    = (options.count("statistics"       ) > 0);
+
+    if (recorder.output_filename.size()) {
+        std::string directory = PNG_PATH "/";
+        std::string filename                ;
+        std::string extension = ".mwrm"     ;
+
+        ParsePath(recorder.output_filename.c_str(), directory, filename, extension);
+        MakePath(recorder.output_filename, directory.c_str(), filename.c_str(), extension.c_str());
+        std::cout << "Output file is \"" << recorder.output_filename << "\".\n";
+    }
 
     return 0;
 }
@@ -1546,41 +1580,19 @@ extern "C" {
         argc -= arg_used;
         int res = -1;
 
-        const char * copyright_notice = "ReDemPtion " VERSION ".\n"
-            "Copyright (C) Wallix 2010-2016.\n"
-            "Christophe Grosjean, Jonathan Poelen, Raphael Zhou.";
-
         uint32_t    verbose     = 0;
         RecorderParams rp;
         // TODO: annoying, if we read default hash_path and mwrm_path from ini
         // we should do that after config_filename was eventually changed...
-        rp.config_filename = std::string(CFG_PATH "/" RDPPROXY_INI);
-        rp.hash_path      = ini.get<cfg::video::hash_path>().c_str()  ;
-        rp.mwrm_path      = ini.get<cfg::video::record_path>().c_str();
 
-        if (parse_command_line_options(argc, argv, rp, verbose) < 0){
+        if (parse_command_line_options(argc, argv, rp, ini, verbose) < 0){
             // parsing error
             return -1;
-        }
-
-        if (rp.output_filename.size()) {
-            std::string directory = PNG_PATH "/"; // default value, actual one should come from rp.output_filename
-            std::string filename                ;
-            std::string extension = ".mwrm"     ;
-
-            ParsePath(rp.output_filename.c_str(), directory, filename, extension);
-            MakePath(rp.output_filename, directory.c_str(), filename.c_str(), extension.c_str());
-            std::cout << "Output file is \"" << rp.output_filename << "\".\n";
-        }
-
-        if (!rp.hash_path.empty()) {
-            rp.hash_path += '/';
         }
 
         switch (command){
         case 0: // RECorder
         try {
-
             init_signals();
 
             if (rp.input_filename.empty()) {
@@ -1596,14 +1608,10 @@ extern "C" {
                 return -1;
             }
 
-            { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), rp.config_filename.c_str()); }
-
             if (rp.chunk) {
-                ini.get_ref<cfg::video::disable_keyboard_log>() &= ~KeyboardLogFlags::meta;
                 rp.flv_break_interval = 60*10; // 10 minutes
                 rp.png_interval = 1;
                 rp.png_limit = 0xFFFF;
-                ini.set<cfg::ocr::interval>(std::chrono::seconds{1});
             }
 
             if (rp.output_filename.length()
@@ -1613,14 +1621,10 @@ extern "C" {
                 return 1;
             }
 
-            ini.set<cfg::globals::video_quality>(rp.video_quality);
-            ini.set<cfg::video::rt_display>(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png));
-
-
             // TODO before continuing to work with input file, check if it's mwrm or wrm and use right object in both cases
 
             // TODO also check if it contains any wrm at all and at wich one we should start depending on input time
-            // TODO if start and stop time are outside wrm, users should also be warned
+            // TODO if start and stop time are outside wrm, userreplay(s should also be warned
 
             res = replay(rp.mwrm_path, rp.input_basename, rp.infile_extension,
                           rp.hash_path,
@@ -1647,6 +1651,7 @@ extern "C" {
                           rp.zoom,
                           rp.full_video,
                           rp.video_codec,
+                          rp.video_quality,
                           rp.remove_input_file,
                           rp.wrm_compression_algorithm_,
                           rp.flv_break_interval,
@@ -1675,60 +1680,22 @@ extern "C" {
         break;
         default: // DECrypter
             try {
-                std::string input_filename;
-                std::string output_filename;
-
-                uint32_t verbose = 0;
-
-                program_options::options_description desc({
-                    {'h', "help",    "produce help message"},
-                    {'v', "version", "show software version"},
-
-                    {'o', "output-file", &output_filename, "output base filename"},
-                    {'i', "input-file",  &input_filename,  "input base filename"},
-                    {"verbose",          &verbose,         "more logs"}
-                });
-
-                auto options = program_options::parse_command_line(argc, argv, desc);
-
-                if (options.count("help") > 0) {
-                    std::cout << copyright_notice << "\n\n";
-                    std::cout << "Usage: redrec [options]\n\n";
-                    std::cout << desc << std::endl;
-                    return 0;
-                }
-
-                if (options.count("version") > 0) {
-                    std::cout << copyright_notice << std::endl << std::endl;
-                    return 0;
-                }
-
-                if (input_filename.empty()) {
-                    std::cerr << "Missing input filename : use -i filename\n\n";
-                    return -1;
-                }
-
-                if (output_filename.empty()) {
-                    std::cerr << "Missing output filename : use -o filename\n\n";
-                    return -1;
-                }
-
-                int fd  = open(input_filename.c_str(), O_RDONLY);
+                int fd  = open(rp.full_path.c_str(), O_RDONLY);
                 if (fd == -1) {
-                    std::cerr << "can't open file " << input_filename << "\n\n";
+                    std::cerr << "can't open file " << rp.full_path << "\n\n";
                     std::puts("decrypt failed\n");
                     return -1;
                 }
 
-                if (0 == encryption_type(input_filename, cctx)){
-                    std::puts("File is not encrypted\n");
+                if (0 == encryption_type(rp.full_path, cctx)){
+                    std::puts("Input file is not encrypted\n");
                     return 0;
                 }
 
                 ifile_read_encrypted in_t(cctx, 1);
 
                 ssize_t res = -1;
-                const int fd1 = open(output_filename.c_str(), O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
+                const int fd1 = open(rp.output_filename.c_str(), O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
 
                 if (fd1 != -1) {
                     OutFileTransport out_t(fd1);
@@ -1736,7 +1703,7 @@ extern "C" {
                     char mem[4096];
 
                     try {
-                        in_t.open(input_filename.c_str());
+                        in_t.open(rp.full_path.c_str());
                         while (1) {
                             res = in_t.read(mem, sizeof(mem));
                             if (res == 0){

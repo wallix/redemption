@@ -251,7 +251,9 @@ public:
                 if (clear_png || force_capture_png_if_enable) {
                     this->psc.reset(new Static(
                         now, clear_png, authentifier, this->gd->impl(),
-                        record_tmp_path, basename, groupid, ini
+                        record_tmp_path, basename, groupid, 
+                        ini.get<cfg::video::png_limit>(),
+                        ini.get<cfg::video::png_interval>()
                     ));
                 }
             }
