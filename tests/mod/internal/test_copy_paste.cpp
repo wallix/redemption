@@ -143,7 +143,9 @@ BOOST_AUTO_TEST_CASE(TestPaste)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(mod.gd, info.width, info.height, font, nullptr, Theme{});
+    WidgetScreen parent(mod.gd, font, nullptr, Theme{});
+    parent.set_wh(info.width, info.height);
+
     WidgetEdit edit(mod.gd, parent, &notifier, "", 0, PINK, ORANGE, RED, font);
     Dimension dim = edit.get_optimal_dim();
     edit.set_wh(120, dim.h);

@@ -65,7 +65,7 @@ public:
                Theme const & theme, Font const & font, const char * ok_text = "Ok",
                const char * cancel_text = "Cancel",
                ChallengeOpt has_challenge = NO_CHALLENGE)
-        : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier)
+        : WidgetParent(drawable, parent, notifier)
         , title(drawable, *this, nullptr, caption, -9,
                 theme.global.fgcolor, theme.global.bgcolor, font, 5)
         , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,

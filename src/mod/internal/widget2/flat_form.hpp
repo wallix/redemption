@@ -76,7 +76,7 @@ public:
              Widget2 & parent, NotifyApi* notifier, int group_id,
              Font const & font, Theme const & theme, Translation::language_t lang,
              int flags = 0)
-        : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier, group_id)
+        : WidgetParent(drawable, parent, notifier, group_id)
         , warning_msg(drawable, *this, nullptr, "", group_id,
                       theme.global.error_color, theme.global.bgcolor, font)
         , duration_label(drawable, *this, nullptr, TR("duration", lang),

@@ -41,7 +41,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetEdit is a edit widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int fg_color = BLACK;
     int bg_color = WHITE;
@@ -84,7 +86,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetEdit is a edit widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int fg_color = BLACK;
     int bg_color = WHITE;
@@ -173,7 +177,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -266,7 +272,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -396,7 +404,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -555,7 +565,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     int16_t x = 0;
     int16_t y = 0;

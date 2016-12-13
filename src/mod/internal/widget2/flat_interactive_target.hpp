@@ -74,7 +74,7 @@ public:
                           const char * text_password,
                           Font const & font,
                           WidgetFlatButton * extra_button)
-        : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier)
+        : WidgetParent(drawable, parent, notifier)
         , caption_label(drawable, *this, nullptr, caption, -13,
                         theme.global.fgcolor, theme.global.bgcolor, font)
         , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,

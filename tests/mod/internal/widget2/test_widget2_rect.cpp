@@ -39,7 +39,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect)
     Font font;
 
     // WidgetRect is a monochrome rectangular widget of size 800x600 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
     int id = 0; // unique identifier of widget used par parent, it will be sent back in case of event
@@ -70,7 +71,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
     Font font;
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,-100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
@@ -101,7 +103,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
     Font font;
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
@@ -132,7 +135,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
     Font font;
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
@@ -163,7 +167,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
     Font font;
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
@@ -194,7 +199,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
     Font font;
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 300,200 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
@@ -225,7 +231,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip)
     Font font;
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 300,200 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
@@ -256,7 +263,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
     Font font;
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */

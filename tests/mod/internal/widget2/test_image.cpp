@@ -39,7 +39,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
@@ -71,7 +72,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage2)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
@@ -103,7 +105,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage3)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position -100,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
@@ -135,7 +138,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage4)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position 700,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
@@ -167,7 +171,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage5)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position -100,-100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
@@ -199,7 +204,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
@@ -231,7 +237,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
@@ -263,7 +270,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 

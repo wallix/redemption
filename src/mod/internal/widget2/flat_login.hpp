@@ -73,7 +73,7 @@ public:
               const char * label_error_message,
               WidgetFlatButton * extra_button,
               Font const & font, Translator tr, Theme const & theme)
-        : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier)
+        : WidgetParent(drawable, parent, notifier)
         , error_message_label(drawable, *this, nullptr, label_error_message, -15,
                         theme.global.error_color, theme.global.bgcolor,
                         font)

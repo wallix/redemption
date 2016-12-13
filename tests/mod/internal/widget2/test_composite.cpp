@@ -37,10 +37,7 @@ public:
     int color;
 
     WidgetCompositeRect(TestDraw & drawable)
-    : WidgetComposite(drawable.gd, Rect(0, 0,
-                                      drawable.gd.width(),
-                                      drawable.gd.height()),
-                      *this, nullptr)
+    : WidgetComposite(drawable.gd, *this, nullptr)
     , color(0x27642F)
     {}
 
@@ -58,6 +55,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     int id = 0;
 
     WidgetCompositeRect wcomposite(drawable);
+    wcomposite.set_wh(drawable.gd.width(),
+                      drawable.gd.height());
+    wcomposite.set_xy(0, 0);
+
     WidgetRect wrect1(drawable.gd, Rect(0,0,100,100),
                       wcomposite, notifier, id++, CYAN);
     WidgetRect wrect2(drawable.gd, Rect(0,100,100,100),

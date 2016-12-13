@@ -73,7 +73,7 @@ public:
                  const char * username, const char * target,
                  bool showtimer, Font const & font, Theme const & theme,
                  Translation::language_t lang, bool back_selector = false)
-    : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier)
+    : WidgetParent(drawable, parent, notifier)
     , connection_closed_label(drawable, *this, nullptr, TR("connection_closed", lang),
                               -13, theme.global.fgcolor,
                               theme.global.bgcolor, font)

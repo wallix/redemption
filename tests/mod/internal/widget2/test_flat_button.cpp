@@ -40,7 +40,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -77,7 +79,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -116,7 +120,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton3)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -155,7 +161,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton4)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -194,7 +202,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton5)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -233,7 +243,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton6)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -272,7 +284,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -311,7 +325,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -348,7 +364,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -508,10 +526,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
 
-    WidgetComposite wcomposite(drawable.gd, Rect(0,0,800,600), parent, notifier);
+    WidgetComposite wcomposite(drawable.gd, parent, notifier);
+    wcomposite.set_wh(800, 600);
+    wcomposite.set_xy(0, 0);
 
     WidgetFlatButton wbutton1(drawable.gd, wcomposite, notifier,
                               "abababab", 0, YELLOW, BLACK, WINBLUE, 2, font);
@@ -590,7 +612,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -667,7 +691,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonLite)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -714,7 +740,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonStrong)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;

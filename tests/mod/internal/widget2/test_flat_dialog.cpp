@@ -42,7 +42,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -76,7 +78,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -114,7 +118,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog3)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -152,7 +158,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog4)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 1280, 1024, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(1280, 1024);
+
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -190,7 +198,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog5)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, 640, 480, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(640, 480);
+
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -228,7 +238,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog6)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, 300, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(300, 600);
+
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -266,7 +278,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -304,7 +318,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -341,7 +357,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     struct Notify : NotifyApi {
         Widget2* sender = nullptr;
         notify_event_t event = 0;
@@ -448,7 +466,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     struct Notify : NotifyApi {
         Widget2* sender = nullptr;
         notify_event_t event = 0;
