@@ -1299,7 +1299,7 @@ public:
     void log() {
         LOG(LOG_INFO, "     Device Create Request:");
         LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes)", this->DesiredAccess_);
-        LOG(LOG_INFO, "          * AllocationSize    = 0x%" PRIu64 " (8 bytes)", this->AllocationSize);
+        LOG(LOG_INFO, "          * AllocationSize    = %" PRIu64 " (8 bytes)", this->AllocationSize);
         LOG(LOG_INFO, "          * FileAttributes    = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
         LOG(LOG_INFO, "          * SharedAccess      = 0x%08x (4 bytes): %s", int(this->SharedAccess),  smb2::get_ShareAccess_name(this->SharedAccess));
         LOG(LOG_INFO, "          * CreateDisposition = 0x%08x (4 bytes): %s", int(this->CreateDisposition_), smb2::get_CreateDisposition_name(this->CreateDisposition_));
@@ -1762,6 +1762,14 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Device Control Request:");
+        LOG(LOG_INFO, "          * OutputBufferLength = %d (4 bytes)", int(this->OutputBufferLength));
+        LOG(LOG_INFO, "          * InputBufferLength  = %d (4 bytes)", int(this->input_buffer.sz));
+        LOG(LOG_INFO, "          * IoControlCode      = 0x%08x (4 bytes)", this->IoControlCode_);
+        LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
     }
 };  // DeviceControlRequest
 
@@ -3188,6 +3196,8 @@ public:
 
     uint32_t FsInformationClass() const { return this->FsInformationClass_; }
 
+    uint32_t Length() const { return this->query_buffer.sz; }
+
     static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
         switch (FsInformationClass) {
             case FileBasicInformation:        return "FileBasicInformation";
@@ -3197,6 +3207,8 @@ public:
 
         return "<unknown>";
     }
+
+
 
 private:
     size_t str(char * buffer, size_t size) const {
@@ -3358,6 +3370,18 @@ enum {
     , FileFsDeviceInformation    = 0x00000004
 };
 
+static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
+    switch (FsInformationClass) {
+        case FileFsVolumeInformation:    return "FileFsVolumeInformation";
+        case FileFsSizeInformation:      return "FileFsSizeInformation";
+        case FileFsAttributeInformation: return "FileFsAttributeInformation";
+        case FileFsFullSizeInformation:  return "FileFsFullSizeInformation";
+        case FileFsDeviceInformation:    return "FileFsDeviceInformation";
+    }
+
+    return "<unknown>";
+}
+
 // Length (4 bytes): A 32-bit unsigned integer that specifies the number of
 //  bytes in the QueryVolumeBuffer field.
 
@@ -3430,23 +3454,13 @@ public:
 
     uint32_t FsInformationClass() const { return this->FsInformationClass_; }
 
-    static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
-        switch (FsInformationClass) {
-            case FileFsVolumeInformation:    return "FileFsVolumeInformation";
-            case FileFsSizeInformation:      return "FileFsSizeInformation";
-            case FileFsAttributeInformation: return "FileFsAttributeInformation";
-            case FileFsFullSizeInformation:  return "FileFsFullSizeInformation";
-            case FileFsDeviceInformation:    return "FileFsDeviceInformation";
-        }
 
-        return "<unknown>";
-    }
 
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ServerDriveQueryVolumeInformationRequest: FsInformationClass=%s(0x%X) Length=%zu",
-            this->get_FsInformationClass_name(this->FsInformationClass_),
+            get_FsInformationClass_name(this->FsInformationClass_),
             this->FsInformationClass_, this->query_volume_buffer.sz);
         return ((length < size) ? length : size - 1);
     }
@@ -3458,7 +3472,71 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    void log() {
+        LOG(LOG_INFO, "     Server Driv eQuery Volume Information Request:");
+        LOG(LOG_INFO, "          * FsInformationClass = %08x (4 bytes): %s", this->FsInformationClass_, get_FsInformationClass_name(this->FsInformationClass_));
+        LOG(LOG_INFO, "          * Length             = %d (4 bytes)", int(this->query_volume_buffer.sz));
+        LOG(LOG_INFO, "          * Padding - (4 bytes) NOT USED");
+    }
 };  // ServerDriveQueryVolumeInformationRequest
+
+
+
+// 2.2.3.4.6 Client Drive Query Volume Information Response (DR_DRIVE_QUERY_VOLUME_INFORMATION_RSP)
+
+// This message is sent by the client as a response to the Server Drive Query Volume Information Request (section 2.2.3.3.6).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                         DeviceIoReply                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                            Length                             |
+// +---------------------------------------------------------------+
+// |                       Buffer (variable)                       |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                       Padding (optional)                      |
+// +---------------------------------------------------------------+
+
+// DeviceIoReply (16 bytes): A DR_DEVICE_IOCOMPLETION (section 2.2.1.5) header. The CompletionId field of the DR_DEVICE_IOCOMPLETION header MUST match a Device I/O Request (section 2.2.1.4) that has the MajorFunction field set to IRP_MJ_QUERY_VOLUME_INFORMATION.
+
+// Length (4 bytes): A 32-bit unsigned integer that specifies the number of bytes in the Buffer field.
+
+// Buffer (variable): A variable-length array of bytes whose size is specified by the Length field. The content of this field is based on the value of the FsInformationClass field in the Server Drive Query Volume Information Request message, which determines the different structures that MUST be contained in the Buffer field. For a complete list of these structures, refer to [MS-FSCC] section 2.5. The "File system information class" table defines all the possible values for the FsInformationClass field.
+
+// Padding (1 byte): An optional, 8-bit unsigned integer that is intended to allow the client minor flexibility in determining the overall packet length. This field is unused and MUST be ignored.
+
+struct ClientDriveQueryVolumeInformationResponse {
+
+    uint32_t Length = 0;
+
+    ClientDriveQueryVolumeInformationResponse() = default;
+
+    ClientDriveQueryVolumeInformationResponse( uint32_t Length)
+      : Length(Length)
+      {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->Length);
+    }
+
+    void receive(InStream & stream) {
+        this->Length = stream.in_uint32_le();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Client Drive Query Volume Information Response:");
+        LOG(LOG_INFO, "          * Length = %d (4 bytes)", this->Length);
+    }
+};
 
 // [MS-RDPEFS] - 2.2.3.3.9 Server Drive Set Information Request
 //  (DR_DRIVE_SET_INFORMATION_REQ)
@@ -3634,6 +3712,13 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Server Drive Set Information Request:");
+        LOG(LOG_INFO, "          * FsInformationClass = %08x (4 bytes): %s", this->FsInformationClass_, get_FsInformationClass_name(this->FsInformationClass_));
+        LOG(LOG_INFO, "          * Length = %d (4 bytes)", int(this->Length_));
+        LOG(LOG_INFO, "          * Padding - (24 bytes) NOT USED");
     }
 };
 
@@ -3990,7 +4075,75 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    void log() {
+        LOG(LOG_INFO, "     Server Drive Query Directory Request:");
+        LOG(LOG_INFO, "          * FsInformationClass = %08x (4 bytes): %s", this->FsInformationClass_, this->get_FsInformationClass_name(this->FsInformationClass_));
+        LOG(LOG_INFO, "          * InitialQuery = %02x (1 byte)", this->InitialQuery_);
+        LOG(LOG_INFO, "          * PathLength   = %d (4 bytes)", int(this->path.size()));
+        LOG(LOG_INFO, "          * Padding - (23 byte) NOT USED");
+        LOG(LOG_INFO, "          * path         = \"%s\"", this->path.c_str());
+    }
 };  // ServerDriveQueryDirectoryRequest
+
+
+
+// 2.2.3.4.10 Client Drive Query Directory Response (DR_DRIVE_QUERY_DIRECTORY_RSP)
+
+// This message is sent by the client as a response to the Server Drive Query Directory Request (section 2.2.3.3.10).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                    DeviceIoReply (16 bytes)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                            Length                             |
+// +---------------------------------------------------------------+
+// |                       Buffer (variable)                       |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------+-----------------------------------------------+
+// |Padding(option)|                                               |
+// +---------------+-----------------------------------------------+
+
+// DeviceIoReply (16 bytes): A DR_DEVICE_IOCOMPLETION (section 2.2.1.5) header. The CompletionId field of the DR_DEVICE_IOCOMPLETION header MUST match a Device I/O Request (section 2.2.1.4) that has the MajorFunction field set to IRP_MJ_DIRECTORY_CONTROL and the MinorFunction field set to IRP_MN_QUERY_DIRECTORY.
+
+// Length (4 bytes): A 32-bit unsigned integer that specifies the number of bytes in the Buffer field.
+
+// Buffer (variable): A variable-length array of bytes, in which the number of bytes is specified in the Length field. The content of this field is based on the value of the FsInformationClass field in the Server Drive Query Directory Request message, which determines the different structures that MUST be contained in the Buffer field. For a complete list of these structures, refer to [MS-FSCC] section 2.4. The "File information class" table defines all the possible values for the FsInformationClass field.
+
+// Padding (1 byte):  An optional, 8-bit unsigned integer intended to allow the client minor flexibility in determining the overall packet length. This field is unused and MUST be ignored.
+
+struct ClientDriveQueryDirectoryResponse {
+
+    uint32_t Length = 0;
+
+    ClientDriveQueryDirectoryResponse() = default;
+
+    ClientDriveQueryDirectoryResponse( uint32_t Length)
+      : Length(Length)
+      {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->Length);
+    }
+
+    void receive(InStream & stream) {
+        this->Length = stream.in_uint32_le();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Client Drive Query Directory Response:");
+        LOG(LOG_INFO, "          * Length = %d (4 bytes)", this->Length);
+    }
+};
+
+
 
 // [MS-RDPEFS] - 2.2.3.4.4 Client Drive Write Response (DR_DRIVE_WRITE_RSP)
 // ========================================================================
@@ -4081,6 +4234,133 @@ struct ClientDriveQueryInformationResponse {
     }
 };
 
+
+
+// 2.2.3.4.7 Client Drive Set Volume Information Response (DR_DRIVE_SET_VOLUME_INFORMATION_RSP)
+
+// This message is sent by the client as a response to the Server Drive Set Volume Information Request (section 2.2.3.3.7).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                     DeviceIoReply (16 bytes)                  |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                            Length                             |
+// +---------------------------------------------------------------+
+
+// DeviceIoReply (16 bytes): A DR_DEVICE_IOCOMPLETION (section 2.2.1.5) header. The CompletionId field of the DR_DEVICE_IOCOMPLETION header MUST match a Device I/O Request (section 2.2.1.4) that has the MajorFunction field set to IRP_MJ_SET_VOLUME_INFORMATION.
+
+// Length (4 bytes): A 32-bit unsigned integer. It MUST match the Length field in the Server Drive Set Volume Information Request.
+
+struct ClientDriveSetVolumeInformationResponse {
+
+    uint32_t Length = 0;
+
+    ClientDriveSetVolumeInformationResponse() = default;
+
+    ClientDriveSetVolumeInformationResponse(uint32_t Length): Length(Length)
+    {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->Length);
+    }
+
+    void receive(InStream & stream) {
+        this->Length = stream.in_uint32_le();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Client Drive Set Volume Information Response:");
+        LOG(LOG_INFO, "          * Length = %d (4 bytes)", int(Length));
+    }
+};
+
+
+
+// 2.2.3.3.7 Server Drive Set Volume Information Request (DR_DRIVE_SET_VOLUME_INFORMATION_REQ)
+
+//  The server issues a set volume information request on a redirected file system device.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                         DeviceIoReply                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                       FsInformationClass                      |
+// +---------------------------------------------------------------+
+// |                             Length                            |
+// +---------------------------------------------------------------+
+// |                       Padding (24 bytes)                      |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                   SetVolumeBuffer (variable)                  |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoRequest (24 bytes): A DR_DEVICE_IOREQUEST (section 2.2.1.4) header. The MajorFunction field in the DR_DEVICE_IOREQUEST header MUST be set to IRP_MJ_SET_VOLUME_INFORMATION.
+
+// FsInformationClass (4 bytes): A 32-bit unsigned integer. The possible values for this field are defined in [MS-FSCC] section 2.5. This field MUST contain the following value.
+
+//  +------------------------------+-------------------------------------------+
+//  | Value                        | Meaning                                   |
+//  +------------------------------+-------------------------------------------+
+//  | FileFsLabelInformation       | Used to set the label for a file system   |
+//  | 0x00000002                   | volume.                                   |
+//  +------------------------------+-------------------------------------------+
+
+// Length (4 bytes): A 32-bit unsigned integer that specifies the number of bytes in the SetVolumeBuffer field.
+
+// Padding (24 bytes): An array of 24 bytes. This field is unused and MUST be ignored.
+
+// SetVolumeBuffer (variable): A variable-length array of bytes. The size of the array is specified by the Length field. The content of this field is based on the value of the FsInformationClass field, which determines the different structures that MUST be contained in the SetVolumeBuffer field. For a complete list of these structures, refer to [MS-FSCC] section 2.5. The "File system information class" table defines all the possible values for the FsInformationClass field.
+
+struct ServerDriveSetVolumeInformationRequest {
+
+    uint32_t FsInformationClass = 0;
+    uint32_t Length = 0;
+
+    ServerDriveSetVolumeInformationRequest() = default;
+
+    ServerDriveSetVolumeInformationRequest( uint32_t FsInformationClass
+                                          , uint32_t Length)
+    : FsInformationClass(FsInformationClass)
+    , Length(Length)
+    {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->FsInformationClass);
+        stream.out_uint32_le(this->Length);
+        stream.out_clear_bytes(24);
+    }
+
+    void receive(InStream & stream) {
+        this->FsInformationClass = stream.in_uint32_le();
+        this->Length = stream.in_uint32_le();
+        stream.in_skip_bytes(24);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Serve rDrive Set Volume InformationRequest:");
+        LOG(LOG_INFO, "          * FsInformationClass = %08x (4 bytes)", this->FsInformationClass);
+        LOG(LOG_INFO, "          * Length             = %d (4 bytes)", int(this->Length));
+        LOG(LOG_INFO, "          * Padding - (24 bytes) NOT USED");
+    }
+};
+
 // [MS-RDPEFS] - 2.2.3.4.9 Client Drive Set Information Response
 //  (DR_DRIVE_SET_INFORMATION_RSP)
 // =============================================================
@@ -4120,8 +4400,205 @@ struct ClientDriveQueryInformationResponse {
 //  length. This field is unused, and can be set to any value. If present,
 //  this field MUST be ignored on receipt.
 
+struct ClientDriveSetInformationResponse {
 
-    static void streamLog(InStream & stream, int & rdpdr_last_major_function, int & rdpdr_last_fs_information_class) {
+    uint32_t Length = 0;
+
+    ClientDriveSetInformationResponse() = default;
+
+    ClientDriveSetInformationResponse( uint32_t Length)
+      :  Length(Length)
+    {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->Length);
+        stream.out_clear_bytes(1);
+    }
+
+    void receive(InStream & stream) {
+        this->Length = stream.in_uint32_le();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Client rDrive Set Volume Information Response:");
+        LOG(LOG_INFO, "          * Length = %d (4 bytes)", int(this->Length));
+    }
+};
+
+
+
+// 2.2.3.3.12 Server Drive Lock Control Request (DR_DRIVE_LOCK_REQ)
+
+// The server issues a request to lock or unlock portions of a file.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                    DeviceIoRequest (24 bytes)                 |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                           Operation                           |
+// +-+-------------------------------------------------------------+
+// |F|                         Padding                             |
+// +-+-------------------------------------------------------------+
+// |                           NumLocks                            |
+// +---------------------------------------------------------------+
+// |                      Padding2 (20 bytes)                      |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                        Locks (variable)                       |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoRequest (24 bytes): A DR_DEVICE_IOREQUEST (section 2.2.1.4) header. The MajorFunction field in the DR_DEVICE_IOREQUEST header MUST be set to IRP_MJ_LOCK_CONTROL.
+
+// Operation (4 bytes): A 32-bit unsigned integer that specifies the type of the locking operation. It MUST have one of the following values:
+
+//  +------------------------------+-------------------------------------------+
+//  | Value                        | Meaning                                   |
+//  +------------------------------+-------------------------------------------+
+//  | RDP_LOWIO_OP_SHAREDLOCK      | The server is requesting a shared lock.   |
+//  | 0x00000002                   |                                           |
+//  +------------------------------+-------------------------------------------+
+//  | RDP_LOWIO_OP_EXCLUSIVELOCK   | The server is requesting an exclusive     |
+//  | 0x00000003                   | lock.                                     |
+//  +------------------------------+-------------------------------------------+
+//  | RDP_LOWIO_OP_UNLOCK          | The server is requesting to unlock a      |
+//  | 0x00000004                   | portion of the file.                      |
+//  +------------------------------+-------------------------------------------+
+//  | RDP_LOWIO_OP_UNLOCK_MULTIPLE | The server is requesting to unlock .      |
+//  | 0x00000005                   | multiple portions of the file             |
+//  +------------------------------+-------------------------------------------+
+
+//     If this field has any other value, the request MUST be failed immediately.
+
+// F (1 bit): If this bit is set, the client MUST wait for the locking operation to complete. If this bit is not set and the region cannot be locked, the request SHOULD fail.
+
+// Padding (31 bits): 31 bits of padding. This field is unused and MUST be ignored.
+
+// NumLocks (4 bytes): A 32-bit unsigned integer that specifies the number of RDP_LOCK_INFO structures in the Locks array.
+
+// Padding2 (20 bytes): An array of 20 bytes. Reserved. This field can be set to any value and MUST be ignored.
+
+// Locks (variable): A variable-length array of RDP_LOCK_INFO structures. This field specifies one or more regions of the file to lock or unlock.
+
+struct ServerDriveLockControlRequest {
+
+    uint32_t Operation = 0;
+    bool F = false;
+    uint32_t NumLocks = 0;
+
+
+    ServerDriveLockControlRequest() = default;
+
+    ServerDriveLockControlRequest( uint32_t Operation
+                                 , bool F
+                                 , uint32_t NumLocks)
+      : Operation(Operation)
+      , F(F)
+      , NumLocks(NumLocks)
+    {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->Operation);
+        stream.out_uint8(this->F << 7);
+        stream.out_clear_bytes(3);
+        stream.out_uint32_le(this->NumLocks);
+        stream.out_clear_bytes(20);
+    }
+
+    void receive(InStream & stream) {
+        this->Operation = stream.in_uint32_le();
+        this->F = stream.in_uint8() >> 7;
+        stream.in_skip_bytes(3);
+        this->NumLocks = stream.in_uint32_le();
+        stream.in_skip_bytes(20);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Server Drive Lock Control Request:");
+        LOG(LOG_INFO, "          * Operation = 0x%08x (4 bytes)", int(this->Operation));
+        LOG(LOG_INFO, "          * F         = 0x%01x (1 bit)", int(this->F));
+        LOG(LOG_INFO, "          * Padding - (7 bits and 3 bytes) NOT USED");
+        LOG(LOG_INFO, "          * NumLocks  = %d (4 bytes)", int(this->Operation));
+        LOG(LOG_INFO, "          * Padding - (20 byte) NOT USED");
+    }
+};
+
+
+
+// [MS-RDPEFS]: Remote Desktop Protocol: File System Virtual Channel Extension
+
+// 2.2.1.6 RDP_LOCK_INFO
+
+// The RDP_LOCK_INFO packet specifies the region of the file to lock or unlock.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Length                            |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                             Offset                            |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// Length (8 bytes): A 64-bit unsigned integer that specifies the length of the region. A value of zero is valid and MUST result in locking the zero length region.
+
+// Offset (8 bytes): A 64-bit unsigned integer that specifies the offset at which the region starts.
+
+struct RDP_Lock_Info {
+
+    uint64_t Length = 0;
+    uint64_t Offset = 0;
+
+    RDP_Lock_Info() = default;
+
+    RDP_Lock_Info( uint64_t Length
+                 , uint64_t Offset)
+      : Length(Length)
+      , Offset(Offset)
+    {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint64_le(this->Length);
+        stream.out_uint64_le(this->Offset);
+    }
+
+    void receive(InStream & stream) {
+        this->Length = stream.in_uint64_le();
+        this->Offset = stream.in_uint64_le();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     RDP_Lock_Info:");
+        LOG(LOG_INFO, "          * Length = %" PRIx64 " (8 bytes)", this->Length);
+        LOG(LOG_INFO, "          * Offset = %" PRIx64 " (8 bytes)", this->Offset);
+    }
+};
+
+
+
+
+
+
+    static void streamLog(InStream & stream
+      , int & rdpdr_last_major_function
+      , int & rdpdr_last_minor_function
+      , int & rdpdr_last_fs_information_class) {
         InStream s = stream.clone();
 
         SharedHeader sharedHeader;
@@ -4219,18 +4696,66 @@ struct ClientDriveQueryInformationResponse {
                                     {
                                         DeviceControlRequest dcr;
                                         dcr.receive(s);
+                                        dcr.log();
                                     }
                                     break;
                                 case IRP_MJ_QUERY_VOLUME_INFORMATION:
                                     {
                                         ServerDriveQueryVolumeInformationRequest sdqvir;
                                         sdqvir.receive(s);
+                                        sdqvir.log();
+
+                                        rdpdr_last_fs_information_class = sdqvir.FsInformationClass();
+
+                                        switch (rdpdr_last_fs_information_class) {
+                                            case FileFsVolumeInformation:
+                                                {
+                                                    fscc::FileFsVolumeInformation ffvi;
+                                                    ffvi.receive(s);
+                                                    ffvi.log();
+                                                }
+                                                break;
+                                            case FileFsSizeInformation:
+                                                {
+                                                    fscc::FileFsSizeInformation ffsi;
+                                                    ffsi.receive(s);
+                                                    ffsi.log();
+                                                }
+                                                break;
+                                            case FileFsAttributeInformation: {
+                                                    fscc::FileFsAttributeInformation ffai;
+                                                    ffai.receive(s);
+                                                    ffai.log();
+                                                }
+                                                break;
+                                            case FileFsFullSizeInformation:
+                                                {
+                                                    fscc::FileFsFullSizeInformation fffsi;
+                                                    fffsi.receive(s);
+                                                    fffsi.log();
+                                                }
+                                                break;
+                                            case FileFsDeviceInformation:
+                                                {
+                                                    fscc::FileFsDeviceInformation ffdi;
+                                                    ffdi.receive(s);
+                                                    ffdi.log();
+                                                }
+                                                break;
+                                        }
                                     }
                                     break;
                                 case IRP_MJ_SET_VOLUME_INFORMATION:
                                     {
-                                        //ServerDriveSetVolumeInformationRequest sdqvir;
-                                        //sdqvir.receive(s);
+                                        ServerDriveSetVolumeInformationRequest sdqvir;
+                                        sdqvir.receive(s);
+                                        sdqvir.log();
+
+                                        rdpdr_last_fs_information_class = sdqvir.FsInformationClass;
+
+                                        fscc::FileFsLabelInformation ffli;
+                                        ffli.receive(s);
+                                        ffli.log();
                                     }
                                     break;
                                 case IRP_MJ_QUERY_INFORMATION:
@@ -4240,23 +4765,113 @@ struct ClientDriveQueryInformationResponse {
                                         sdqir.log();
 
                                         rdpdr_last_fs_information_class = sdqir.FsInformationClass();
+
+                                        if (sdqir.Length() > 0) {
+                                            switch (rdpdr_last_fs_information_class) {
+                                                case FileBasicInformation:
+                                                    {
+                                                    fscc::FileBasicInformation fbi;
+                                                    fbi.receive(s);
+                                                    fbi.log();
+                                                    }
+                                                    break;
+                                                case FileStandardInformation:
+                                                    {
+                                                    fscc::FileStandardInformation fsi;
+                                                    fsi.receive(s);
+                                                    fsi.log();
+                                                    }
+                                                    break;
+                                                case FileAttributeTagInformation:
+                                                    {
+                                                    fscc::FileAttributeTagInformation fati;
+                                                    fati.receive(s);
+                                                    fati.log();
+                                                    }
+                                                    break;
+                                            }
+                                        }
                                     }
                                     break;
                                 case IRP_MJ_SET_INFORMATION:
                                     {
                                         ServerDriveSetInformationRequest sdsir;
                                         sdsir.receive(s);
+                                        sdsir.log();
+
+                                        rdpdr_last_fs_information_class = sdsir.FsInformationClass();
+
+                                        switch (rdpdr_last_fs_information_class) {
+                                            case FileBasicInformation:
+                                                {
+                                                    fscc::FileBasicInformation fbi;
+                                                    fbi.receive(s);
+                                                    fbi.log();
+                                                }
+                                                break;
+                                            case FileEndOfFileInformation:
+                                                {
+                                                    fscc::FileEndOfFileInformation feofi;
+                                                    feofi.receive(s);
+                                                    feofi.log();
+                                                }
+                                                break;
+                                            case FileDispositionInformation:
+                                                {
+                                                    fscc::FileDispositionInformation fdi;
+                                                    fdi.receive(s);
+                                                    fdi.log();
+                                                }
+                                                break;
+                                            case FileRenameInformation:
+                                                {
+                                                    fscc::FileRenameInformation fri;
+                                                    fri.receive(s);
+                                                    fri.log();
+                                                }
+                                                break;
+                                            case FileAllocationInformation:
+                                                {
+                                                    fscc::FileAllocationInformation fai;
+                                                    fai.receive(s);
+                                                    fai.log();
+                                                }
+                                                break;
+                                        }
                                     }
                                     break;
                                 case IRP_MJ_DIRECTORY_CONTROL:
                                     {
-                                        ServerDriveQueryDirectoryRequest sdqdr;
-                                        sdqdr.receive(s);
+                                        rdpdr_last_minor_function = int(dior.MinorFunction());
+
+                                        switch (rdpdr_last_minor_function) {
+
+                                            case IRP_MN_QUERY_DIRECTORY:
+                                                {
+                                                    ServerDriveQueryDirectoryRequest sdqdr;
+                                                    sdqdr.receive(s);
+                                                    sdqdr.log();
+                                                }
+                                                break;
+                                            case IRP_MN_NOTIFY_CHANGE_DIRECTORY:
+                                                {
+
+                                                }
+                                                break;
+                                        }
                                     }
                                     break;
                                 case IRP_MJ_LOCK_CONTROL:
                                     {
-                                        LOG(LOG_INFO, "     Device I/O Lock Request:");
+                                        ServerDriveLockControlRequest sdlcr;
+                                        sdlcr.receive(s);
+                                        sdlcr.log();
+
+                                        for (uint32_t i = 0; i < sdlcr.NumLocks; i++) {
+                                            RDP_Lock_Info rdpli;
+                                            rdpli.receive(s);
+                                            rdpli.log();
+                                        }
                                     }
                                     break;
                             }
@@ -4304,12 +4919,53 @@ struct ClientDriveQueryInformationResponse {
                                     break;
                                 case IRP_MJ_QUERY_VOLUME_INFORMATION:
                                     {
-                                        LOG(LOG_INFO, "     Device I/O Query Volume Information Response:");
+                                        ClientDriveQueryVolumeInformationResponse cdqvir;
+                                        cdqvir.receive(s);
+                                        cdqvir.log();
+
+                                         switch (rdpdr_last_fs_information_class) {
+                                            case FileFsVolumeInformation:
+                                                {
+                                                    fscc::FileFsVolumeInformation ffvi;
+                                                    ffvi.receive(s);
+                                                    ffvi.log();
+                                                }
+                                                break;
+                                            case FileFsSizeInformation:
+                                                {
+                                                    fscc::FileFsSizeInformation ffsi;
+                                                    ffsi.receive(s);
+                                                    ffsi.log();
+                                                }
+                                                break;
+                                            case FileFsAttributeInformation: {
+                                                    fscc::FileFsAttributeInformation ffai;
+                                                    ffai.receive(s);
+                                                    ffai.log();
+                                                }
+                                                break;
+                                            case FileFsFullSizeInformation:
+                                                {
+                                                    fscc::FileFsFullSizeInformation fffsi;
+                                                    fffsi.receive(s);
+                                                    fffsi.log();
+                                                }
+                                                break;
+                                            case FileFsDeviceInformation:
+                                                {
+                                                    fscc::FileFsDeviceInformation ffdi;
+                                                    ffdi.receive(s);
+                                                    ffdi.log();
+                                                }
+                                                break;
+                                        }
                                     }
                                     break;
                                 case IRP_MJ_SET_VOLUME_INFORMATION:
                                     {
-                                        LOG(LOG_INFO, "     Device I/O Set Volume Information Response:");
+                                        ClientDriveSetVolumeInformationResponse cdsvir;
+                                        cdsvir.receive(s);
+                                        cdsvir.log();
                                     }
                                     break;
                                 case IRP_MJ_QUERY_INFORMATION:
@@ -4341,23 +4997,74 @@ struct ClientDriveQueryInformationResponse {
                                                 }
                                                 break;
                                         }
-
-                                        rdpdr_last_fs_information_class = -1;
                                     }
                                     break;
                                 case IRP_MJ_SET_INFORMATION:
                                     {
-
+                                        ClientDriveSetInformationResponse cdsir;
+                                        cdsir.receive(s);
+                                        cdsir.log();
                                     }
                                     break;
                                 case IRP_MJ_DIRECTORY_CONTROL:
                                     {
+                                        switch (rdpdr_last_minor_function) {
 
+                                            case IRP_MN_QUERY_DIRECTORY:
+                                                {
+                                                    ClientDriveQueryDirectoryResponse cdqdr;
+                                                    cdqdr.receive(s);
+                                                    cdqdr.log();
+
+                                                    switch (rdpdr_last_fs_information_class) {
+                                                        case FileDirectoryInformation:
+                                                            {
+                                                            //fscc::FileDirectoryInformation fdi;
+                                                            //fdi.receive(s);
+                                                            //fdi.log();
+                                                            }
+                                                            break;
+                                                        case FileFullDirectoryInformation:
+                                                            {
+                                                            fscc::FileFullDirectoryInformation ffdi;
+                                                            ffdi.receive(s);
+                                                            //ffdi.log();
+                                                            }
+                                                            break;
+                                                        case FileBothDirectoryInformation:
+                                                            {
+                                                            fscc::FileBothDirectoryInformation fbdi;
+                                                            fbdi.receive(s);
+                                                            //fbdi.log();
+                                                            }
+                                                            break;
+                                                        case FileNamesInformation:
+                                                            {
+                                                            fscc::FileNamesInformation fni;
+                                                            fni.receive(s);
+                                                            //fni.log();
+                                                            }
+                                                            break;
+                                                    }
+                                                    rdpdr_last_fs_information_class = -1;
+                                                }
+                                                break;
+                                            case IRP_MN_NOTIFY_CHANGE_DIRECTORY:
+                                                {
+                                                    //ClientDriveNotifyChangeDirectoryResponse cdncdr;
+                                                    //cdncdr.receive(s);
+                                                    //cdncdr.log();
+                                                }
+                                                break;
+                                        }
+
+                                        rdpdr_last_minor_function = -1;
                                     }
                                     break;
                                 case IRP_MJ_LOCK_CONTROL:
                                     {
-                                        LOG(LOG_INFO, "     Device I/O Lock Response:");
+                                        LOG(LOG_INFO, "     Client Drive Lock Control Response:");
+                                        LOG(LOG_INFO, "          * Padding - (5 bytes) NOT USED");
                                     }
                                     break;
                                 default: LOG(LOG_INFO, "     default MajorFunction:");
@@ -4365,6 +5072,7 @@ struct ClientDriveQueryInformationResponse {
 
                             }
 
+                            rdpdr_last_fs_information_class = -1;
                             rdpdr_last_major_function = -1;
                         }
                         break;
@@ -4446,7 +5154,6 @@ struct ClientDriveQueryInformationResponse {
                         break;
 
                     case PacketId::PAKID_CORE_USER_LOGGEDON:
-                        LOG(LOG_INFO, "     Server User Logged On");
                         break;
 
                     case PacketId::PAKID_PRN_USING_XPS:

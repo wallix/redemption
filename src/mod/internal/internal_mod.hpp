@@ -42,8 +42,10 @@ public:
         : front_width(front_width)
         , front_height(front_height)
         , front(front)
-        , screen(front, front_width, front_height, font, nullptr, theme)
+        , screen(front, font, nullptr, theme)
     {
+        this->screen.set_wh(front_width, front_height);
+
         this->front.server_resize(front_width, front_height, 24);
     }
 

@@ -38,7 +38,6 @@ public:
     int y_text;
     uint32_t bg_color;
     uint32_t fg_color;
-    bool auto_resize_;
     bool tool;
 
     int w_border;
@@ -51,13 +50,12 @@ public:
                 NotifyApi* notifier, const char * text,
                 int group_id, uint32_t fgcolor, uint32_t bgcolor, Font const & font,
                 int xtext = 0, int ytext = 0)
-    : Widget2(drawable, Rect(0,0,0,0), parent, notifier, group_id)
+    : Widget2(drawable, parent, notifier, group_id)
     , initial_x_text(xtext)
     , x_text(xtext)
     , y_text(ytext)
     , bg_color(bgcolor)
     , fg_color(fgcolor)
-    , auto_resize_(false)
     , tool(false)
     , w_border(x_text)
     , h_border(y_text)
@@ -81,11 +79,6 @@ public:
                                 ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(text), remain_n));
             memcpy(this->buffer, text, max);
             this->buffer[max] = 0;
-            if (this->auto_resize_) {
-                Dimension dm = this->get_optimal_dim();
-                this->set_cx(dm.w);
-                this->set_cy(dm.h);
-            }
         }
     }
 

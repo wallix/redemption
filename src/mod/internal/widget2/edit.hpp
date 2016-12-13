@@ -117,13 +117,6 @@ public:
             gdi::TextMetrics tm(this->font, this->label.buffer);
             this->w_text = tm.width;
             this->h_text = tm.height;
-            if (this->label.auto_resize_) {
-                this->set_cx(this->label.x_text * 2 + this->w_text);
-                this->set_cy(this->label.y_text * 2 + this->h_text);
-                if (this->buffer_size == 1) {
-                    this->set_cx(this->cx() - 2);
-                }
-            }
             this->num_chars = UTF8Len(byte_ptr_cast(this->label.buffer));
         }
         this->edit_pos = this->num_chars;
@@ -155,13 +148,6 @@ public:
             gdi::TextMetrics tm(this->font, this->label.buffer);
             this->w_text = tm.width;
             this->h_text = tm.height;
-            if (this->label.auto_resize_) {
-                this->set_cx(this->label.x_text * 2 + this->w_text);
-                this->set_cy(this->label.y_text * 2 + this->h_text);
-                if (this->buffer_size == 1) {
-                    this->set_cx(this->cx() - 2);
-                }
-            }
             const size_t tmp_num_chars = this->num_chars;
             this->num_chars = UTF8Len(byte_ptr_cast(this->label.buffer));
             Rect rect = this->get_cursor_rect();

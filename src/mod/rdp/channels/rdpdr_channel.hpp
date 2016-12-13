@@ -1429,7 +1429,7 @@ public:
                     LOG(LOG_WARNING,
                         "FileSystemVirtualChannel::process_client_drive_query_volume_information_response: "
                             "Undecoded FsInformationClass - %s(0x%X)",
-                        rdpdr::ServerDriveQueryVolumeInformationRequest::get_FsInformationClass_name(
+                        rdpdr::get_FsInformationClass_name(
                             FsInformationClass),
                         FsInformationClass);
                 }

@@ -50,13 +50,18 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     // Widget2* parent = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetNumberEdit wnumber_edit(drawable.gd, x, y, cx, parent, &notifier, "123456", 0, GREEN, RED, RED, font);
+    WidgetNumberEdit wnumber_edit(drawable.gd, parent, &notifier, "123456", 0, GREEN, RED, RED, font);
+    Dimension dim = wnumber_edit.get_optimal_dim();
+    wnumber_edit.set_wh(cx, dim.h);
+    wnumber_edit.set_xy(x, y);
 
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
 //    drawable.save_to_png(OUTPUT_FILE_PATH "number_edit-e1.png");

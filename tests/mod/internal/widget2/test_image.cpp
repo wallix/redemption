@@ -39,11 +39,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable.gd, 0,0, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable.gd, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    Dimension dim = wimage.get_optimal_dim();
+    wimage.set_wh(dim);
+    wimage.set_xy(0, 0);
 
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.x(),
@@ -68,11 +72,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage2)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable.gd, 10,100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable.gd, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    Dimension dim = wimage.get_optimal_dim();
+    wimage.set_wh(dim);
+    wimage.set_xy(10, 100);
 
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.x(),
@@ -97,11 +105,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage3)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position -100,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable.gd, -100,500, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable.gd, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    Dimension dim = wimage.get_optimal_dim();
+    wimage.set_wh(dim);
+    wimage.set_xy(-100, 500);
 
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.x(),
@@ -126,11 +138,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage4)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position 700,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable.gd, 700,500, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable.gd, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    Dimension dim = wimage.get_optimal_dim();
+    wimage.set_wh(dim);
+    wimage.set_xy(700, 500);
 
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.x(),
@@ -155,11 +171,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage5)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position -100,-100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable.gd, -100,-100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable.gd, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    Dimension dim = wimage.get_optimal_dim();
+    wimage.set_wh(dim);
+    wimage.set_xy(-100, -100);
 
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.x(),
@@ -184,11 +204,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable.gd, 700,-100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable.gd, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    Dimension dim = wimage.get_optimal_dim();
+    wimage.set_wh(dim);
+    wimage.set_xy(700, -100);
 
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.x(),
@@ -213,11 +237,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable.gd, 700,-100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable.gd, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    Dimension dim = wimage.get_optimal_dim();
+    wimage.set_wh(dim);
+    wimage.set_xy(700, -100);
 
     // ask to widget to redraw at position 80,10 and of size 50x100. After clip the size is of 20x15
     wimage.rdp_input_invalidate(Rect(80 + wimage.x(),
@@ -242,11 +270,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable.gd, 0,0, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable.gd, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    Dimension dim = wimage.get_optimal_dim();
+    wimage.set_wh(dim);
+    wimage.set_xy(0, 0);
 
     // ask to widget to redraw at position 100,25 and of size 100x100.
     wimage.rdp_input_invalidate(Rect(100 + wimage.x(),

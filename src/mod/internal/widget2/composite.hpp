@@ -164,14 +164,6 @@ protected:
 public:
     Widget2 * current_focus;
 
-    WidgetParent(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
-                 NotifyApi * notifier, int group_id = 0)
-        : Widget2(drawable, rect, parent, notifier, group_id)
-        , pressed(nullptr)
-        , bg_color(BLACK)
-        , impl(nullptr)
-        , current_focus(nullptr) {}
-
     WidgetParent(gdi::GraphicApi & drawable, Widget2 & parent,
                  NotifyApi * notifier, int group_id = 0)
         : Widget2(drawable, parent, notifier, group_id)
@@ -536,9 +528,9 @@ class WidgetComposite: public WidgetParent {
     CompositeArray composite_array;
 
 public:
-    WidgetComposite(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetComposite(gdi::GraphicApi & drawable, Widget2 & parent,
                     NotifyApi * notifier, int group_id = 0)
-    : WidgetParent(drawable, rect, parent, notifier, group_id) {
+    : WidgetParent(drawable, parent, notifier, group_id) {
         this->impl = & composite_array;
     }
 
