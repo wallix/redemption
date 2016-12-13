@@ -42,12 +42,14 @@ class ImageCaptureImpl final : private gdi::UpdateConfigCaptureApi, gdi::Capture
 
         ImageTransportBuilder(
             const char * path, const char * basename, int groupid,
-            auth_api * authentifier, bool enable_rt, Inifile const & ini)
+            auth_api * authentifier, 
+            uint32_t png_limit,
+            bool enable_rt)
         : trans(
             FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
             path, basename, ".png", groupid, authentifier)
         , enable_rt(enable_rt)
-        , png_limit(enable_rt ? ini.get<cfg::video::png_limit>() : 0)
+        , png_limit(enable_rt ? png_limit : 0)
         {}
 
         ~ImageTransportBuilder() {
@@ -90,9 +92,9 @@ public:
     ImageCaptureImpl(
         const timeval & now, bool enable_rt, auth_api * authentifier, Drawable & drawable,
         const char * record_tmp_path, const char * basename, int groupid,
-        const Inifile & ini)
-    : png_interval(ini.get<cfg::video::png_interval>())
-    , trans_builder(record_tmp_path, basename, groupid, authentifier, enable_rt, ini)
+        uint32_t png_limit, std::chrono::microseconds png_interval)
+    : png_interval(png_interval)
+    , trans_builder(record_tmp_path, basename, groupid, authentifier, png_limit, enable_rt)
     , ic(now, drawable, this->trans_builder.get_transport(), this->png_interval)
     {}
 
