@@ -18,15 +18,36 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
 */
 
+#pragma once
+
 #include "utils/sugar/noncopyable.hpp"
+#include "utils/sugar/local_fd.hpp"
+#include "utils/log.hpp"
 
-#include <iostream>
+#include <cassert>
+#include <ctime>
 
-// format:
-// start: 0 -1
-// normal: $time_percentage $time_remaining
-// done: 100 0
-// error: -1 $error ($error_code)
+/**
+ * Format (JSON):
+ * \code{.json}
+   {
+    'percentage': 43,
+    'eta': 567,
+    'videos': 2,
+    'error': {
+        'code': 1,
+        'message': 'Failed to generate video'
+    }
+   }
+ * \endcode
+ *
+ * - percentage is the remaining percentage of the video
+ * - eta is the estimated time of arrival, the approximate end of generation of total videos
+ * - videos is the number of already genereated videos
+ * - error exists if the last videos fails (here the number 3), if it fails it sends back
+ *   - an error code
+ *   - a message
+ */
 class UpdateProgressData : noncopyable
 {
     int fd;
@@ -36,113 +57,132 @@ class UpdateProgressData : noncopyable
 
     const time_t processing_start_time;
 
-    unsigned int last_written_time_percentage;
 
     mutable bool error_raised = false;
+
+    unsigned time_percentage = 0;
+    unsigned int last_written_time_percentage = 0;
+    int time_remaining = -1; // -1 = unknown
+    unsigned nb_videos = 0;
 
 public:
     UpdateProgressData() = delete;
     UpdateProgressData( const char * progress_filename
                       , const time_t begin_record, const time_t end_record
                       , const time_t begin_capture, const time_t end_capture) noexcept
-    : fd(-1)
+    : fd(::open(progress_filename, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IRGRP))
     , start_record(begin_capture ? begin_capture : begin_record)
     , stop_record(end_capture ? end_capture : end_record)
     , processing_start_time(::time(nullptr))
-    , last_written_time_percentage(0) {
-        this->fd = ::open(progress_filename, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IRGRP);
+    {
         if (this->fd != -1) {
-            int write_result = ::write(this->fd, "0 -1", 4);
-(void)write_result;
+            this->write_datas();
         }
         else {
-            std::cerr << "Failed to create file: \"" << progress_filename << "\"" << std::endl;
+            LOG(LOG_ERR, "Failed to create file: \"%s\"", progress_filename);
         }
     }
 
-    ~UpdateProgressData() {
+    ~UpdateProgressData()
+    {
         if (this->fd != -1) {
             if (!this->error_raised) {
-                ::lseek(this->fd, 0, SEEK_SET);
-                int write_result = ::write(this->fd, "100 0", 5);
-                if (write_result != -1) {
-                    int truncate_result = ::ftruncate(this->fd, write_result);
-(void)truncate_result;
-                }
+                this->time_percentage = 100;
+                this->time_remaining = 0;
+                ++this->nb_videos;
+                this->write_datas();
             }
             ::close(this->fd);
         }
     }
 
-    bool is_valid() const {
+    void next_video(time_t record_now)
+    {
+        ++this->nb_videos;
+        (*this)(record_now);
+    }
+
+    bool is_valid() const
+    {
         return (this->fd != -1);
     }
 
-    void operator()(time_t record_now) {
+    void operator()(time_t record_now)
+    {
         if (this->fd == -1) {
             return;
         }
 
-        unsigned int time_percentage;
-
         if (record_now <= this->start_record) {
-            time_percentage = 0;
+            this->time_percentage = 0;
         }
         else if (record_now >= this->stop_record) {
-            time_percentage = 99;
+            this->time_percentage = 99;
         }
         else {
-            time_percentage = (record_now - this->start_record) * 100 /
+            this->time_percentage = (record_now - this->start_record) * 100 /
                 (this->stop_record - this->start_record);
         }
 
-        REDASSERT(time_percentage < 100);
+        assert(this->time_percentage < 100);
 
-        if (time_percentage != this->last_written_time_percentage) {
-            unsigned int elapsed_time = ::time(nullptr) - this->processing_start_time;
-
-            char str_time_percentage[64];
-
-            std::size_t len = ::snprintf( str_time_percentage, sizeof(str_time_percentage), "%u %u"
-                                        , time_percentage
-                                        , elapsed_time * 100 / time_percentage - elapsed_time);
-
-            ::lseek(this->fd, 0, SEEK_SET);
-            int write_result = ::write(this->fd, str_time_percentage, len);
-            if (write_result != -1) {
-                int truncate_result = ::ftruncate(this->fd, write_result);
-(void)truncate_result;
-            }
-            else {
-                LOG(LOG_ERR, "Failed to write progress information file!");
-            }
-
-            this->last_written_time_percentage = time_percentage;
+        if (this->time_percentage != this->last_written_time_percentage) {
+            unsigned int const elapsed_time = ::time(nullptr) - this->processing_start_time;
+            this->time_remaining = elapsed_time * 100 / this->time_percentage - elapsed_time;
+            this->write_datas();
+            this->last_written_time_percentage = this->time_percentage;
         }
     }
 
-    void raise_error(int code, const char * message) const {
+    void raise_error(int code, const char * message)
+    {
         if (this->fd == -1) {
             return;
         }
 
         char str_error_message[1024];
 
-        std::size_t len = ::snprintf( str_error_message, sizeof(str_error_message), "-1 %s (%d)"
-                                    , (message ? message : "")
-                                    , code
-                                    );
-
-        ::lseek(this->fd, 0, SEEK_SET);
-        int write_result = ::write(this->fd, str_error_message, len);
-        if (write_result != -1) {
-            int truncate_result = ::ftruncate(this->fd, write_result);
-(void)truncate_result;
-        }
-        else {
-            LOG(LOG_ERR, "Failed to write progress information file!");
-        }
+        int const len = std::snprintf(
+            str_error_message, sizeof(str_error_message),
+            "{'percentage':%u,'eta':%d,'videos':%u,'error':{'code':%d,'message':\"%s\"}}" ,
+            this->time_percentage, this->time_remaining, this->nb_videos, code, (message ? message : "")
+        );
 
         this->error_raised = true;
+        this->write_buf(str_error_message, len);
+    }
+
+private:
+    void write_datas()
+    {
+        char str_json[64];
+
+        int const len = std::snprintf(
+            str_json, sizeof(str_json),
+            "{'percentage':%u,'eta':%d,'videos':%u}",
+            this->time_percentage, this->time_remaining, this->nb_videos
+        );
+
+        this->write_buf(str_json, len);
+    }
+
+    void write_buf(char const * buf, std::size_t len)
+    {
+        bool has_error = true;
+
+        off_t const seek_result = ::lseek(this->fd, 0, SEEK_SET);
+        if (seek_result != -1) {
+            ssize_t const write_result = ::write(this->fd, buf, len);
+            if (write_result != -1) {
+                int const truncate_result = ::ftruncate(this->fd, write_result);
+                if (truncate_result !=  1) {
+                    has_error = false;
+                }
+            }
+        }
+
+        if (has_error) {
+            LOG(LOG_ERR, "Failed to write progress information file!");
+        }
     }
 };

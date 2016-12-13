@@ -29,6 +29,7 @@
 #include "utils/sugar/array_view.hpp"
 
 #include "capture/utils/capture_impl.hpp"
+#include "utils/apps/recording_progress.hpp"
 
 class Capture final
 : public gdi::GraphicBase<Capture>
@@ -78,6 +79,9 @@ class Capture final
             }
             if (this->capture.pvc) {
                 this->capture.pvc->next_video(now);
+            }
+            if (this->capture.update_progress_data) {
+                this->capture.update_progress_data->next_video(now.tv_sec);
             }
         }
 
@@ -130,6 +134,8 @@ private:
     std::unique_ptr<Title> ptc;
     std::unique_ptr<PatternsChecker> patterns_checker;
 
+    UpdateProgressData * update_progress_data;
+
     CaptureApisImpl::Capture capture_api;
     CaptureApisImpl::KbdInput kbd_input_api;
     CaptureApisImpl::CaptureProbe capture_probe_api;
@@ -165,6 +171,7 @@ public:
         CryptoContext & cctx,
         Random & rnd,
         bool full_video,
+        UpdateProgressData * update_progress_data = nullptr,
         bool force_capture_png_if_enable = false,
         const int delta_time = 1000)
     : is_replay_mod(!authentifier)
@@ -180,6 +187,7 @@ public:
     , capture_flv_full(full_video)
     // capture wab only
     , capture_meta(this->capture_ocr)
+    , update_progress_data(update_progress_data)
     , capture_api(now, width / 2, height / 2)
     , delta_time(delta_time)
     {
@@ -254,7 +262,7 @@ public:
                 if (real_time_image_capture) {
                     this->pscrt.reset(new ImageRT(
                         now, true, authentifier, this->gd->impl(),
-                        record_tmp_path, basename, groupid, 
+                        record_tmp_path, basename, groupid,
                         ini.get<cfg::video::png_interval>(),
                         ini.get<cfg::video::png_limit>()
                     ));
@@ -262,7 +270,7 @@ public:
                 else if (force_capture_png_if_enable) {
                     this->psc.reset(new Image(
                         now, false, authentifier, this->gd->impl(),
-                        record_tmp_path, basename, groupid, 
+                        record_tmp_path, basename, groupid,
                         ini.get<cfg::video::png_interval>(),
                         ini.get<cfg::video::png_limit>()
                     ));
