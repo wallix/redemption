@@ -1744,7 +1744,7 @@ public:
         stream.in_skip_bytes(InputBufferLength);
     }
 
-    //uint32_t IoControlCode() const { return this->IoControlCode_; }
+    uint32_t IoControlCode() const { return this->IoControlCode_; }
 
 private:
     size_t str(char * buffer, size_t size) const {
@@ -1772,6 +1772,77 @@ public:
         LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
     }
 };  // DeviceControlRequest
+
+
+
+
+// 2.2.3.4.5 Client Drive Control Response (DR_DRIVE_CONTROL_RSP)
+
+// This message is sent by the client as a response to the Server Drive Control Request (section 2.2.3.3.5).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                   DeviceIoResponse (variable)                 |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoResponse (variable):  Returns the result of DR_DRIVE_CONROL_REQ; it is the same as the common Device Control Response (section 2.2.1.5.5). The content of the OutputBuffer field is described in [MS-FSCC] section 2.3 as a reply type message.
+
+// 2.2.1.5.5 Device Control Response (DR_CONTROL_RSP)
+
+//  A message with this header describes a response to a Device Control Request (section 2.2.1.4.5).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                    DeviceIoReply (16 bytes)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                       OutputBufferLength                      |
+// +---------------------------------------------------------------+
+// |                     OutputBuffer (variable)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoReply (16 bytes):  A DR_DEVICE_IOCOMPLETION header. The CompletionId field of this header MUST match a Device I/O Request (section 2.2.1.4) that had the MajorFunction field set to IRP_MJ_DEVICE_CONTROL.
+
+// OutputBufferLength (4 bytes):  A 32-bit unsigned integer that specifies the number of bytes in the OutputBuffer field.
+
+// OutputBuffer (variable):  A variable-length array of bytes whose size is specified by the OutputBufferLength field.
+
+struct ClientDriveControlResponse {
+
+    uint32_t OutputBufferLength = 0;
+
+    ClientDriveControlResponse() = default;
+
+    ClientDriveControlResponse( uint32_t OutputBufferLength)
+      : OutputBufferLength(OutputBufferLength)
+      {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->OutputBufferLength);
+    }
+
+    void receive(InStream & stream) {
+        this->OutputBufferLength = stream.in_uint32_le();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Client Drive Control Response:");
+        LOG(LOG_INFO, "          * OutputBufferLength = %d (4 bytes)", this->OutputBufferLength);
+    }
+};
+
+
 
 // [MS-RDPEFS] - 2.2.1.5 Device I/O Response (DR_DEVICE_IOCOMPLETION)
 // ==================================================================
@@ -3236,6 +3307,8 @@ public:
 
 };  // ServerDriveQueryInformationRequest
 
+
+
 // [MS-RDPEFS] - 2.2.3.3.5 Server Drive Control Request
 //  (DR_DRIVE_CONTROL_REQ)
 // ====================================================
@@ -4592,13 +4665,210 @@ struct RDP_Lock_Info {
 
 
 
+// 2.2.3.3.11 Server Drive NotifyChange Directory Request (DR_DRIVE_NOTIFY_CHANGE_DIRECTORY_REQ)
+//
+// The server issues a notify change directory request on a redirected file system device to request directory change notification.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                  DeviceIoRequest (24 bytes)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------+-----------------------------------------------+
+// |  WatchTree    |              CompletionFilter                 |
+// +---------------+-----------------------------------------------+
+// |               |            Padding (27 bytes)                 |
+// +---------------+-----------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// DeviceIoRequest (24 bytes): A DR_DEVICE_IOREQUEST (section 2.2.1.4) header. The MajorFunction field in the DR_DEVICE_IOREQUEST header MUST be set to IRP_MJ_DIRECTORY_CONTROL, and the MinorFunction field MUST be set to IRP_MN_NOTIFY_CHANGE_DIRECTORY.
+//
+// WatchTree (1 byte): An 8-bit unsigned integer. If nonzero, a change anywhere within the tree MUST trigger the notification response; otherwise, only a change in the root directory will do so.
+//
+// CompletionFilter (4 bytes): A 32-bit unsigned integer. This field has the same meaning as the CompletionFilter field in the SMB2 CHANGE_NOTIFY Request message specified in [MS-SMB2] section 2.2.35.
+//
+// Padding (27 bytes):  An array of 27 bytes. This field is unused and MUST be ignored.
+
+struct ServerDriveNotifyChangeDirectoryRequest {
+
+    uint8_t WatchTree = 0;
+    uint32_t CompletionFilter = 0;
+
+    ServerDriveNotifyChangeDirectoryRequest() = default;
+
+    ServerDriveNotifyChangeDirectoryRequest(uint8_t WatchTree, uint32_t CompletionFilter)
+      : WatchTree(WatchTree)
+      , CompletionFilter(CompletionFilter)
+    {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint8(this->WatchTree);
+        stream.out_uint32_le(this->CompletionFilter);
+    }
+
+    void receive(InStream & stream) {
+        this->WatchTree = stream.in_uint8();
+        this->CompletionFilter = stream.in_uint32_le();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Server Driv Notify Chang eDirectory Request:");
+        LOG(LOG_INFO, "          * WatchTree        = 0x%02x (1 byte)", this->WatchTree);
+        LOG(LOG_INFO, "          * CompletionFilter = 0x%08x (4 bytes)", this->CompletionFilter);
+    }
+};
+
+// 2.2.35 SMB2 CHANGE_NOTIFY Request
+
+//  +---------------------------------+-----------------------------------------+
+//  | FILE_NOTIFY_CHANGE_FILE_NAME    | The client is notified if a file-name   |
+//  | 0x00000001                      | changes.                                |
+//  |                                 |                                         |
+//  |                                 |                                         |
+//  +---------------------------------+-----------------------------------------+
+//  | FILE_NOTIFY_CHANGE_DIR_NAME     | The client is notified if a directory   |
+//  | 0x00000002                      | name changes.                           |
+//  |                                 |                                         |
+//  |                                 |                                         |
+//  +---------------------------------+-----------------------------------------+
+//  | FILE_NOTIFY_CHANGE_ATTRIBUTES   | The client is notified if a file's      |
+//  | 0x00000004                      | attributes change. Possible file        |
+//  |                                 | attribute values are specified in       |
+//  |                                 | [MS-FSCC] section 2.6.                  |
+//  +---------------------------------+-----------------------------------------+
+//  | FILE_NOTIFY_CHANGE_SIZE         | The client is notified if a file's size |
+//  | 0x00000008                      | changes.                                |
+//  |                                 |                                         |
+//  |                                 |                                         |
+//  +---------------------------------+-----------------------------------------+
+//  | FILE_NOTIFY_CHANGE_LAST_WRITE   | The client is notified if the last      |
+//  | 0x00000010                      | write time of a file changes.           |
+//  |                                 |                                         |
+//  |                                 |                                         |
+//  +---------------------------------+-----------------------------------------+
+//  | FILE_NOTIFY_CHANGE_LAST_ACCESS  | The client is notified if the last      |
+//  | 0x00000020                      | access time of a file changes.          |
+//  |                                 |                                         |
+//  |                                 |                                         |
+//  +---------------------------------+-----------------------------------------+
+//  | FILE_NOTIFY_CHANGE_CREATION     | The client is notified if the creation  |
+//  | 0x00000040                      | time of a file changes.                 |
+//  |                                 |                                         |
+//  |                                 |                                         |
+//  +---------------------------------+-----------------------------------------+
+//  | FILE_NOTIFY_CHANGE_EA           | The client is notified if a file's      |
+//  | 0x00000080                      | extended attributes (EAs) change.       |
+//  |                                 |                                         |
+//  |                                 |                                         |
+//  +---------------------------------+-----------------------------------------+
+//  | FILE_NOTIFY_CHANGE_SECURITY     | The client is notified of a file's      |
+//  | 0x00000100                      | access control list (ACL) settings      |
+//  |                                 | change.                                 |
+//  |                                 |                                         |
+//  +---------------------------------+-----------------------------------------+
+//  | FILE_NOTIFY_CHANGE_STREAM_NAME  | The client is notified if a named       |
+//  | 0x00000200                      | stream is added to a file.              |
+//  |                                 |                                         |
+//  |                                 |                                         |
+//  +---------------------------------+-----------------------------------------+
+//  | FILE_NOTIFY_CHANGE_STREAM_SIZE  | The client is notified if the size of a |
+//  | 0x00000400                      | named stream is changed.                |
+//  |                                 |                                         |
+//  |                                 |                                         |
+//  +---------------------------------+-----------------------------------------+
+//  | FILE_NOTIFY_CHANGE_STREAM_WRITE | The client is notified if a named       |
+//  | 0x00000800                      | stream is modified.                     |
+//  |                                 |                                         |
+//  |                                 |                                         |
+//  +---------------------------------+-----------------------------------------+
+
+enum : uint32_t {
+
+    FILE_NOTIFY_CHANGE_FILE_NAME = 0x00000001,
+    FILE_NOTIFY_CHANGE_DIR_NAME = 0x00000002,
+    FILE_NOTIFY_CHANGE_ATTRIBUTES = 0x00000004,
+    FILE_NOTIFY_CHANGE_SIZE = 0x00000008,
+    FILE_NOTIFY_CHANGE_LAST_WRITE = 0x00000010,
+    FILE_NOTIFY_CHANGE_LAST_ACCESS = 0x00000020,
+    FILE_NOTIFY_CHANGE_CREATION = 0x00000040,
+    FILE_NOTIFY_CHANGE_EA = 0x00000080,
+    FILE_NOTIFY_CHANGE_SECURITY = 0x00000100,
+    FILE_NOTIFY_CHANGE_STREAM_NAME = 0x00000200,
+    FILE_NOTIFY_CHANGE_STREAM_SIZE = 0x00000400,
+    FILE_NOTIFY_CHANGE_STREAM_WRITE = 0x00000800,
+};
+
+
+
+// 2.2.3.4.11 Client Drive NotifyChange Directory Response (DR_DRIVE_NOTIFY_CHANGE_DIRECTORY_RSP)
+
+// This message is sent by the client as a response to the Server Drive NotifyChange Directory Request (section 2.2.3.3.11).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                    DeviceIoReply (16 bytes)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                            Length                             |
+// +---------------------------------------------------------------+
+// |                       Buffer (variable)                       |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------+-----------------------------------------------+
+// |Padding(option)|                                               |
+// +---------------+-----------------------------------------------+
+
+// DeviceIoReply (16 bytes):  A DR_DEVICE_IOCOMPLETION (section 2.2.1.5) header. The CompletionId field of the DR_DEVICE_IOCOMPLETION header MUST match a Device I/O Request (section 2.2.1.4) that has the MajorFunction field set to IRP_MJ_DIRECTORY_CONTROL and the MinorFunction field set to IRP_MN_NOTIFY_CHANGE_DIRECTORY.
+
+// Length (4 bytes): A 32-bit unsigned integer that specifies the number of bytes in the Buffer field.
+
+// Buffer (variable): A variable-length array of bytes, in which the number of bytes is specified in the Length field. This field has the same meaning as the Buffer field in the SMB2 CHANGE_NOTIFY Response message specified in [MS-SMB2] section 2.2.36. This buffer MUST be empty when the Server Close Drive Request (section 2.2.3.3.2) message has been issued and no drive-specific events have occurred.
+
+// Padding (1 byte): An optional, 8-bit unsigned integer intended to allow the client minor flexibility in determining the overall packet length. This field is unused and MUST be ignored.
+
+struct ClientDriveNotifyChangeDirectoryResponse {
+
+    uint32_t Length = 0;
+
+    ClientDriveNotifyChangeDirectoryResponse() = default;
+
+    ClientDriveNotifyChangeDirectoryResponse(uint32_t Length)
+      : Length(Length)
+    {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->Length);
+    }
+
+    void receive(InStream & stream) {
+        this->Length = stream.in_uint32_le();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Server Driv Notify Chang eDirectory Request:");
+        LOG(LOG_INFO, "          * Length = %d (4 bytes)", this->Length);
+    }
+};
 
 
 
     static void streamLog(InStream & stream
       , int & rdpdr_last_major_function
       , int & rdpdr_last_minor_function
-      , int & rdpdr_last_fs_information_class) {
+      , int & rdpdr_last_fs_information_class
+      , int & rdpdr_last_io_control_code) {
         InStream s = stream.clone();
 
         SharedHeader sharedHeader;
@@ -4697,6 +4967,19 @@ struct RDP_Lock_Info {
                                         DeviceControlRequest dcr;
                                         dcr.receive(s);
                                         dcr.log();
+
+                                        rdpdr_last_io_control_code = dcr.IoControlCode();
+
+                                        switch (rdpdr_last_io_control_code) {
+                                            case fscc::FSCTL_DELETE_REPARSE_POINT :
+                                                {
+                                                    fscc::ReparseGUIDDataBuffer rgdb;
+                                                    rgdb.receive(s);
+                                                    rgdb.log();
+                                                }
+                                                break;
+
+                                        }
                                     }
                                     break;
                                 case IRP_MJ_QUERY_VOLUME_INFORMATION:
@@ -4855,7 +5138,9 @@ struct RDP_Lock_Info {
                                                 break;
                                             case IRP_MN_NOTIFY_CHANGE_DIRECTORY:
                                                 {
-
+                                                    ServerDriveNotifyChangeDirectoryRequest sdcdr;
+                                                    sdcdr.receive(s);
+                                                    sdcdr.log();
                                                 }
                                                 break;
                                         }
@@ -4914,7 +5199,16 @@ struct RDP_Lock_Info {
                                     break;
                                 case IRP_MJ_DEVICE_CONTROL:
                                     {
+                                        ClientDriveControlResponse cdcr;
+                                        cdcr.receive(s);
+                                        cdcr.log();
 
+                                        switch (rdpdr_last_io_control_code) {
+                                            case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID:
+                                                break;
+                                            case fscc::FSCTL_FILESYSTEM_GET_STATISTICS:
+                                                break;
+                                        }
                                     }
                                     break;
                                 case IRP_MJ_QUERY_VOLUME_INFORMATION:
@@ -5019,23 +5313,23 @@ struct RDP_Lock_Info {
                                                     switch (rdpdr_last_fs_information_class) {
                                                         case FileDirectoryInformation:
                                                             {
-                                                            //fscc::FileDirectoryInformation fdi;
-                                                            //fdi.receive(s);
-                                                            //fdi.log();
+                                                            fscc::FileDirectoryInformation fdi;
+                                                            fdi.receive(s);
+                                                            fdi.log();
                                                             }
                                                             break;
                                                         case FileFullDirectoryInformation:
                                                             {
                                                             fscc::FileFullDirectoryInformation ffdi;
                                                             ffdi.receive(s);
-                                                            //ffdi.log();
+                                                            ffdi.log();
                                                             }
                                                             break;
                                                         case FileBothDirectoryInformation:
                                                             {
                                                             fscc::FileBothDirectoryInformation fbdi;
                                                             fbdi.receive(s);
-                                                            //fbdi.log();
+                                                            fbdi.log();
                                                             }
                                                             break;
                                                         case FileNamesInformation:
@@ -5051,9 +5345,17 @@ struct RDP_Lock_Info {
                                                 break;
                                             case IRP_MN_NOTIFY_CHANGE_DIRECTORY:
                                                 {
-                                                    //ClientDriveNotifyChangeDirectoryResponse cdncdr;
-                                                    //cdncdr.receive(s);
-                                                    //cdncdr.log();
+                                                    ClientDriveNotifyChangeDirectoryResponse cdncdr;
+                                                    cdncdr.receive(s);
+                                                    cdncdr.log();
+
+                                                    smb2::ChangeNotifyResponse cnr;
+                                                    cnr.receive(s);
+                                                    cnr.log();
+
+                                                    fscc::FileNotifyInformation fni;
+                                                    fni.receive(s);
+                                                    fni.log();
                                                 }
                                                 break;
                                         }

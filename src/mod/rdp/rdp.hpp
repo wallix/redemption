@@ -686,6 +686,7 @@ protected:
     int rdpdr_last_major_function = -1;
     int rdpdr_last_fs_information_class = -1;
     int rdpdr_last_minor_function = -1;
+    int rdpdr_last_io_control_code = -1;
 
 public:
     using Verbose = RDPVerbose;
@@ -1735,7 +1736,7 @@ private:
                     ::msgdump_c(send, from_or_to_client, chunk.get_offset(), flags,
                     chunk.get_data(), length);
 
-                    rdpdr::streamLog(chunk, this->rdpdr_last_major_function, this->rdpdr_last_minor_function, this->rdpdr_last_fs_information_class);
+                    rdpdr::streamLog(chunk, this->rdpdr_last_major_function, this->rdpdr_last_minor_function, this->rdpdr_last_fs_information_class, this->rdpdr_last_io_control_code);
                 }
             }
 
@@ -6826,7 +6827,7 @@ private:
                     ::msgdump_c(send, from_or_to_client, length, flags,
                         stream.get_data()+8, chunk_size);
 
-                    rdpdr::streamLog(stream, this->rdpdr_last_major_function, this->rdpdr_last_minor_function, this->rdpdr_last_fs_information_class);
+                    rdpdr::streamLog(stream, this->rdpdr_last_major_function, this->rdpdr_last_minor_function, this->rdpdr_last_fs_information_class, this->rdpdr_last_io_control_code);
                 }
             }
 

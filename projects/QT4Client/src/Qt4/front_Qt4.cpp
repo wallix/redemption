@@ -3265,6 +3265,19 @@ void log() {
         LOG(LOG_INFO, "          * VolumeLabel = \"%s\"", this->volume_label.c_str());
     }
 
+    void log() {
+        LOG(LOG_INFO, "     File Directory Information:");
+        LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
+        LOG(LOG_INFO, "          * FileIndex       = 0x%08x (4 bytes)", this->FileIndex);
+        LOG(LOG_INFO, "          * CreationTime    = 0x%" PRIx64 " (8 bytes)", this->CreationTime);
+        LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime_);
+        LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime_);
+        LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
+        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes)", this->FileAttributes_);
+        LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->FileName.size()));
+        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->FileName.c_str());
+    }
+
     static const char * get_PacketId_name(uint16_t packet_id) {
         switch (packet_id) {
             case PacketId::PAKID_CORE_SERVER_ANNOUNCE:     return "PAKID_CORE_SERVER_ANNOUNCE";

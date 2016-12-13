@@ -40,7 +40,9 @@ class Capture final
 {
     using Graphic = GraphicCaptureImpl;
 
-    using Static = ImageCaptureImpl;
+    using Image = PngCapture;
+
+    using ImageRT = PngCaptureRT;
 
     using Native = WrmCaptureImpl;
 
@@ -119,7 +121,8 @@ public:
 private:
     std::unique_ptr<Graphic> gd;
     std::unique_ptr<Native> pnc;
-    std::unique_ptr<Static> psc;
+    std::unique_ptr<Image> psc;
+    std::unique_ptr<ImageRT> pscrt;
     std::unique_ptr<Kbd> pkc;
     std::unique_ptr<Video> pvc;
     std::unique_ptr<FullVideo> pvc_full;
@@ -155,7 +158,7 @@ public:
         int height,
         int order_bpp,
         int capture_bpp,
-        bool clear_png,
+        bool real_time_image_capture,
         bool no_timestamp,
         auth_api * authentifier,
         const Inifile & ini,
@@ -248,12 +251,20 @@ public:
             this->capture_api.set_drawable(&this->gd->impl());
 
             if (this->capture_png) {
-                if (clear_png || force_capture_png_if_enable) {
-                    this->psc.reset(new Static(
-                        now, clear_png, authentifier, this->gd->impl(),
+                if (real_time_image_capture) {
+                    this->pscrt.reset(new ImageRT(
+                        now, true, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid, 
-                        ini.get<cfg::video::png_limit>(),
-                        ini.get<cfg::video::png_interval>()
+                        ini.get<cfg::video::png_interval>(),
+                        ini.get<cfg::video::png_limit>()
+                    ));
+                }
+                else if (force_capture_png_if_enable) {
+                    this->psc.reset(new Image(
+                        now, false, authentifier, this->gd->impl(),
+                        record_tmp_path, basename, groupid, 
+                        ini.get<cfg::video::png_interval>(),
+                        ini.get<cfg::video::png_limit>()
                     ));
                 }
             }
@@ -335,6 +346,7 @@ public:
 
         if (this->gd ) { this->gd ->attach_apis(apis_register, ini); }
         if (this->pnc) { this->pnc->attach_apis(apis_register, ini); }
+        if (this->pscrt) { this->pscrt->attach_apis(apis_register, ini); }
         if (this->psc) { this->psc->attach_apis(apis_register, ini); }
         if (this->pkc) { this->pkc->attach_apis(apis_register, ini); }
         if (this->pvc) { this->pvc->attach_apis(apis_register, ini); }
@@ -348,6 +360,7 @@ public:
     ~Capture() {
         if (this->is_replay_mod) {
             this->psc.reset();
+            if (this->pscrt) { this->pscrt.reset(); }
             this->pnc.reset();
             if (this->pvc) {
                 try {
@@ -376,6 +389,7 @@ public:
             this->pkc.reset();
             this->pvc.reset();
             this->psc.reset();
+            if (this->pscrt) { this->pscrt.reset(); }
 
             if (this->pnc) {
                 timeval now = tvtime();
@@ -496,6 +510,9 @@ public:
     void zoom(unsigned percent) {
         if (this->psc) {
             this->psc->zoom(percent);
+        }
+        if (this->pscrt) {
+            this->pscrt->zoom(percent);
         }
         if (this->pvc) {
             this->pvc->image_zoom(percent);

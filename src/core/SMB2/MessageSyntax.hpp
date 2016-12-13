@@ -667,5 +667,66 @@ bool write_access_is_required(uint32_t DesiredAccess, bool strict_check) {
            );
 }
 
+// 2.2.36 SMB2 CHANGE_NOTIFY Response
+
+// The SMB2 CHANGE_NOTIFY Response packet is sent by the server to transmit the results of a client's SMB2 CHANGE_NOTIFY Request (section 2.2.35). The server MUST send this packet only if a change occurs and MUST NOT send this packet otherwise. An SMB2 CHANGE_NOTIFY Request (section 2.2.35) will result in, at most, one response from the server. A server can choose to aggregate multiple changes into the same change notify response. The server MUST include at least one FILE_NOTIFY_INFORMATION structure if it detects a change. This response consists of an SMB2 header, as specified in section 2.2.1, followed by this response structure:
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |         StructureSize         |      OutputBufferOffset       |
+// +---------------------------------------------------------------+
+// |                       OutputBufferLength                      |
+// +---------------------------------------------------------------+
+// |                        Buffer (variable)                      |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// StructureSize (2 bytes): The server MUST set this field to 9, indicating the size of the request structure, not including the header. The server MUST set the field to this value regardless of how long Buffer[] actually is in the request being sent.
+
+// OutputBufferOffset (2 bytes): The offset, in bytes, from the beginning of the SMB2 header to the change information being returned.
+
+// OutputBufferLength (4 bytes): The length, in bytes, of the change information being returned.
+
+// Buffer (variable): A variable-length buffer containing the change information being returned in the response, as described by the OutputBufferOffset and OutputBufferLength fields. This field is an array of FILE_NOTIFY_INFORMATION structures, as specified in [MS-FSCC] section 2.4.42.
+
+struct ChangeNotifyResponse {
+
+    uint16_t StructureSize = 0;
+    uint16_t OutputBufferOffset = 0;
+    uint32_t OutputBufferLength = 0;
+
+    ChangeNotifyResponse() = default;
+
+    ChangeNotifyResponse( uint16_t StructureSize, uint16_t OutputBufferOffset,
+    uint32_t OutputBufferLength)
+      : StructureSize(StructureSize)
+      , OutputBufferOffset(OutputBufferOffset)
+      , OutputBufferLength(OutputBufferLength)
+      {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint16_le(this->StructureSize);
+        stream.out_uint16_le(this->OutputBufferOffset);
+        stream.out_uint32_le(this->OutputBufferLength);
+    }
+
+    void receive(InStream & stream) {
+        this->StructureSize = stream.in_uint16_le();
+        this->OutputBufferOffset = stream.in_uint16_le();
+        this->OutputBufferLength = stream.in_uint32_le();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Disposition Information:");
+        LOG(LOG_INFO, "          * StructureSize      = %d (2 bytes)", this->StructureSize);
+        LOG(LOG_INFO, "          * OutputBufferOffset = %d (2 bytes)", this->OutputBufferOffset);
+        LOG(LOG_INFO, "          * OutputBufferLength = %d (4 bytes)", this->OutputBufferLength);
+    }
+};
+
+
 }   // namespace smb2
 
