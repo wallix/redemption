@@ -103,66 +103,63 @@ class PngCapture final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
 
     std::chrono::microseconds png_interval;
     ImageTransportBuilder trans_builder;
-    class ImageCapture
-    {
-        timeval start_capture;
-        std::chrono::microseconds frame_interval;
 
-        Transport & trans;
-        unsigned zoom_factor;
-        unsigned scaled_width;
-        unsigned scaled_height;
+    timeval start_capture;
+    std::chrono::microseconds frame_interval;
 
-        Drawable & drawable;
-        std::unique_ptr<uint8_t[]> scaled_buffer;
+    Transport & trans;
+    unsigned zoom_factor;
+    unsigned scaled_width;
+    unsigned scaled_height;
 
-    public:
-        ImageCapture (const timeval & now, Drawable & drawable, Transport & trans,
-            std::chrono::microseconds png_interval)
-        : start_capture(now)
-        , frame_interval(png_interval)
-        , trans(trans)
-        , zoom_factor(100)
-        , scaled_width(drawable.width())
-        , scaled_height(drawable.height())
-        , drawable(drawable)
-        {}
+    Drawable & drawable;
+    std::unique_ptr<uint8_t[]> scaled_buffer;
 
-        void breakpoint(const timeval & now)
-        {
-            tm ptm;
-            localtime_r(&now.tv_sec, &ptm);
-            this->drawable.trace_timestamp(ptm);
-            if (this->zoom_factor == 100) {
-                this->dump24();
-            }
-            else {
-                this->scale_dump24();
-            }
-            this->trans.next();
-            this->drawable.clear_timestamp();
+public:
+    PngCapture(
+        const timeval & now, auth_api * authentifier, Drawable & drawable,
+        const char * record_tmp_path, const char * basename, int groupid,
+        std::chrono::microseconds png_interval)
+    : png_interval(png_interval)
+    , trans_builder(record_tmp_path, basename, groupid, authentifier)
+    , start_capture(now)
+    , frame_interval(png_interval)
+    , trans(this->trans_builder.get_transport())
+    , zoom_factor(100)
+    , scaled_width(drawable.width())
+    , scaled_height(drawable.height())
+    , drawable(drawable)
+    {}
+
+    void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
+        apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this));
+        apis_register.graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this));
+    }
+
+    void zoom(unsigned percent) {
+        percent = std::min(percent, 100u);
+        const unsigned zoom_width = (this->drawable.width() * percent) / 100;
+        const unsigned zoom_height = (this->drawable.height() * percent) / 100;
+        this->zoom_factor = percent;
+        this->scaled_width = (zoom_width + 3) & 0xFFC;
+        this->scaled_height = zoom_height;
+        if (this->zoom_factor != 100) {
+            this->scaled_buffer.reset(
+                new uint8_t[this->scaled_width * this->scaled_height * 3]);
         }
+    }
 
-        void zoom(unsigned percent) {
-            percent = std::min(percent, 100u);
-            const unsigned zoom_width = (this->drawable.width() * percent) / 100;
-            const unsigned zoom_height = (this->drawable.height() * percent) / 100;
-            this->zoom_factor = percent;
-            this->scaled_width = (zoom_width + 3) & 0xFFC;
-            this->scaled_height = zoom_height;
-            if (this->zoom_factor != 100) {
-                this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
-            }
-        }
-
-        void dump24() const {
+    void next(const timeval & now) {
+        tm ptm;
+        localtime_r(&now.tv_sec, &ptm);
+        this->drawable.trace_timestamp(ptm);
+        if (this->zoom_factor == 100) {
             ::transport_dump_png24(
                 this->trans, this->drawable.data(),
                 this->drawable.width(), this->drawable.height(),
                 this->drawable.rowsize(), true);
         }
-
-        void scale_dump24() const {
+        else {
             scale_data(
                 this->scaled_buffer.get(), this->drawable.data(),
                 this->scaled_width, this->drawable.width(),
@@ -173,30 +170,8 @@ class PngCapture final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
                 this->scaled_width, this->scaled_height,
                 this->scaled_width * 3, false);
         }
-
-    } ic;
-
-public:
-    PngCapture(
-        const timeval & now, auth_api * authentifier, Drawable & drawable,
-        const char * record_tmp_path, const char * basename, int groupid,
-        std::chrono::microseconds png_interval)
-    : png_interval(png_interval)
-    , trans_builder(record_tmp_path, basename, groupid, authentifier)
-    , ic(now, drawable, this->trans_builder.get_transport(), png_interval)
-    {}
-
-    void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
-        apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this));
-        apis_register.graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this));
-    }
-
-    void zoom(unsigned percent) {
-        this->ic.zoom(percent);
-    }
-
-    void next(const timeval & now) {
-        this->ic.breakpoint(now);
+        this->trans.next();
+        this->drawable.clear_timestamp();
     }
 
 private:
@@ -210,22 +185,43 @@ private:
         (void)y;
         (void)ignore_frame_in_timeval;
         using std::chrono::microseconds;
-        uint64_t const duration = difftimeval(now, this->ic.start_capture);
-        uint64_t const interval = this->ic.frame_interval.count();
+        uint64_t const duration = difftimeval(now, this->start_capture);
+        uint64_t const interval = this->frame_interval.count();
         if (duration >= interval) {
-            if (this->ic.drawable.logical_frame_ended
+            if (this->drawable.logical_frame_ended
                 // Force snapshot if diff_time_val >= 1.5 x frame_interval.
                 || (duration >= interval * 3 / 2)) {
-                this->ic.drawable.trace_mouse();
-                this->ic.breakpoint(now);
-                this->ic.start_capture = now;
-                this->ic.drawable.clear_mouse();
+                this->drawable.trace_mouse();
+                tm ptm;
+                localtime_r(&now.tv_sec, &ptm);
+                this->drawable.trace_timestamp(ptm);
+                if (this->zoom_factor == 100) {
+                    ::transport_dump_png24(
+                        this->trans, this->drawable.data(),
+                        this->drawable.width(), this->drawable.height(),
+                        this->drawable.rowsize(), true);
+                }
+                else {
+                    scale_data(
+                        this->scaled_buffer.get(), this->drawable.data(),
+                        this->scaled_width, this->drawable.width(),
+                        this->scaled_height, this->drawable.height(),
+                        this->drawable.rowsize());
+                    ::transport_dump_png24(
+                        this->trans, this->scaled_buffer.get(),
+                        this->scaled_width, this->scaled_height,
+                        this->scaled_width * 3, false);
+                }
+                this->trans.next();
+                this->drawable.clear_timestamp();
+                this->start_capture = now;
+                this->drawable.clear_mouse();
 
                 return microseconds(interval ? interval - duration % interval : 0u);
             }
             else {
                 // Wait 0.3 x frame_interval.
-                return this->ic.frame_interval / 3;
+                return this->frame_interval / 3;
             }
         }
         return microseconds(interval - duration);
@@ -236,16 +232,27 @@ private:
         time_t rawtime = now.tv_sec;
         tm ptm;
         localtime_r(&rawtime, &ptm);
-        this->ic.drawable.trace_pausetimestamp(ptm);
-        if (this->ic.zoom_factor == 100) {
-            this->ic.dump24();
+        this->drawable.trace_pausetimestamp(ptm);
+        if (this->zoom_factor == 100) {
+            ::transport_dump_png24(
+                this->trans, this->drawable.data(),
+                this->drawable.width(), this->drawable.height(),
+                this->drawable.rowsize(), true);
         }
         else {
-            this->ic.scale_dump24();
+            scale_data(
+                this->scaled_buffer.get(), this->drawable.data(),
+                this->scaled_width, this->drawable.width(),
+                this->scaled_height, this->drawable.height(),
+                this->drawable.rowsize());
+            ::transport_dump_png24(
+                this->trans, this->scaled_buffer.get(),
+                this->scaled_width, this->scaled_height,
+                this->scaled_width * 3, false);
         }
         this->trans.next();
-        this->ic.drawable.clear_pausetimestamp();
-        this->ic.start_capture = now;
+        this->drawable.clear_pausetimestamp();
+        this->start_capture = now;
     }
 
     void do_resume_capture(timeval const & now) override {
