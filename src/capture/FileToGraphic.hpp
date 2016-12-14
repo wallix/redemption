@@ -45,7 +45,7 @@
 #include "core/RDP/share.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "utils/difftimeval.hpp"
-#include "utils/compression_transport_wrapper.hpp"
+#include "utils/compression_transport_builder.hpp"
 #include "chunked_image_transport.hpp"
 #include "wrm_label.hpp"
 #include "utils/sugar/cast.hpp"
@@ -69,7 +69,7 @@ private:
     uint8_t stream_buf[65536];
     InStream stream;
 
-    CompressionInTransportWrapper compression_wrapper;
+    CompressionInTransportBuilder compression_builder;
 
     Transport * trans_source;
     Transport * trans;
@@ -217,7 +217,7 @@ public:
 
     FileToGraphic(Transport & trans, const timeval begin_capture, const timeval end_capture, bool real_time, Verbose verbose)
         : stream(stream_buf)
-        , compression_wrapper(trans, WrmCompressionAlgorithm::no_compression)
+        , compression_builder(trans, WrmCompressionAlgorithm::no_compression)
         , trans_source(&trans)
         , trans(&trans)
         , bmp_cache(nullptr)
@@ -764,10 +764,9 @@ public:
                         this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
                     }
 
-                    // re-init
-                    new (&this->compression_wrapper) CompressionInTransportWrapper(
-                        *this->trans_source, this->info_compression_algorithm);
-                    this->trans = &this->compression_wrapper.get();
+                    this->trans = &this->compression_builder.reset(
+                        *this->trans_source, this->info_compression_algorithm
+                    );
                 }
 
                 this->stream.in_skip_bytes(this->stream.in_remain());

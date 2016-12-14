@@ -24,14 +24,14 @@
 #include "FileToGraphic.hpp"
 #include "transport/transport.hpp"
 #include "RDPChunkedDevice.hpp"
-#include "utils/compression_transport_wrapper.hpp"
+#include "utils/compression_transport_builder.hpp"
 
 class FileToChunk
 {
     unsigned char stream_buf[65536];
     InStream stream;
 
-    CompressionInTransportWrapper compression_wrapper;
+    CompressionInTransportBuilder compression_builder;
 
     Transport * trans_source;
     Transport * trans;
@@ -81,7 +81,7 @@ public:
 
     FileToChunk(Transport * trans, Verbose verbose)
         : stream(this->stream_buf)
-        , compression_wrapper(*trans, WrmCompressionAlgorithm::no_compression)
+        , compression_builder(*trans, WrmCompressionAlgorithm::no_compression)
         , trans_source(trans)
         , trans(trans)
         // variables used to read batch of orders "chunks"
@@ -212,10 +212,9 @@ public:
                 }
 
                 // re-init
-                this->compression_wrapper.~CompressionTransportWrapper();
-                new (&this->compression_wrapper) CompressionInTransportWrapper(
-                    *this->trans_source, this->info_compression_algorithm);
-                this->trans = &this->compression_wrapper.get();
+                this->trans = &this->compression_builder.reset(
+                    *this->trans_source, this->info_compression_algorithm
+                );
             }
 
             this->stream.rewind();

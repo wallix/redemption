@@ -22,7 +22,7 @@
 #pragma once
 
 #include "utils/colors.hpp"
-#include "utils/compression_transport_wrapper.hpp"
+#include "utils/compression_transport_builder.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/RDPSerializer.hpp"
 #include "core/RDP/share.hpp"
@@ -33,7 +33,6 @@
 #include "gdi/capture_probe_api.hpp"
 
 #include "RDPChunkedDevice.hpp"
-#include "utils/compression_transport_wrapper.hpp"
 
 #include "cxx/attributes.hpp"
 #include "capture/utils/save_state_chunk.hpp"
@@ -122,7 +121,7 @@ inline void send_meta_chunk(
 
 struct ChunkToFile : public RDPChunkedDevice {
 private:
-    CompressionOutTransportWrapper compression_wrapper;
+    CompressionOutTransportBuilder compression_bullder;
     Transport & trans_target;
     Transport & trans;
 
@@ -159,12 +158,12 @@ public:
 
                , WrmCompressionAlgorithm wrm_compression_algorithm)
     : RDPChunkedDevice()
-    , compression_wrapper(*trans, wrm_compression_algorithm)
+    , compression_bullder(*trans, wrm_compression_algorithm)
     , trans_target(*trans)
-    , trans(this->compression_wrapper.get())
-    , wrm_format_version(bool(this->compression_wrapper.get_algorithm()) ? 4 : 3)
+    , trans(this->compression_bullder.get())
+    , wrm_format_version(bool(this->compression_bullder.get_algorithm()) ? 4 : 3)
     {
-        if (wrm_compression_algorithm != this->compression_wrapper.get_algorithm()) {
+        if (wrm_compression_algorithm != this->compression_bullder.get_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
                , static_cast<unsigned>(wrm_compression_algorithm));
         }
@@ -197,7 +196,7 @@ public:
           , info_cache_4_size
           , info_cache_4_persistent
 
-          , static_cast<unsigned>(this->compression_wrapper.get_algorithm())
+          , static_cast<unsigned>(this->compression_bullder.get_algorithm())
         );
     }
 
@@ -280,7 +279,7 @@ public:
                   , info_cache_4_size
                   , info_cache_4_persistent
 
-                  , static_cast<unsigned>(this->compression_wrapper.get_algorithm())
+                  , static_cast<unsigned>(this->compression_bullder.get_algorithm())
                 );
             }
             break;
@@ -381,7 +380,7 @@ class GraphicToFile
         GTF_SIZE_KEYBUF_REC = 1024
     };
 
-    CompressionOutTransportWrapper compression_wrapper;
+    CompressionOutTransportBuilder compression_bullder;
     Transport & trans_target;
     Transport & trans;
     StaticOutStream<65536> buffer_stream_orders;
@@ -422,9 +421,9 @@ public:
                 , Verbose verbose = Verbose::none)
     : RDPSerializer( this->buffer_stream_orders, this->buffer_stream_bitmaps, capture_bpp
                    , bmp_cache, gly_cache, ptr_cache, 0, 1, 1, 32 * 1024, verbose)
-    , compression_wrapper(trans, wrm_compression_algorithm)
+    , compression_bullder(trans, wrm_compression_algorithm)
     , trans_target(trans)
-    , trans(this->compression_wrapper.get())
+    , trans(this->compression_bullder.get())
     , delta_time(delta_time)
     , last_sent_timer()
     , timer(now)
@@ -435,9 +434,9 @@ public:
     , send_input(send_input == SendInput::YES)
     , dump_png24_api(dump_png24)
     , keyboard_buffer_32(keyboard_buffer_32_buf)
-    , wrm_format_version(bool(this->compression_wrapper.get_algorithm()) ? 4 : 3)
+    , wrm_format_version(bool(this->compression_bullder.get_algorithm()) ? 4 : 3)
     {
-        if (wrm_compression_algorithm != this->compression_wrapper.get_algorithm()) {
+        if (wrm_compression_algorithm != this->compression_bullder.get_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
                , static_cast<unsigned>(wrm_compression_algorithm));
         }
@@ -521,7 +520,7 @@ public:
           , c4.bmp_size()
           , c4.persistent()
 
-          , static_cast<unsigned>(this->compression_wrapper.get_algorithm())
+          , static_cast<unsigned>(this->compression_bullder.get_algorithm())
         );
     }
 
@@ -610,7 +609,7 @@ public:
         this->flush_orders();
         this->flush_bitmaps();
         this->send_timestamp_chunk();
-        if (bool(this->compression_wrapper.get_algorithm())) {
+        if (bool(this->compression_bullder.get_algorithm())) {
             this->send_reset_chunk();
         }
         this->trans.next();
