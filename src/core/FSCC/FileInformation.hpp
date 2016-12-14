@@ -209,6 +209,267 @@ enum {
     , FSCTL_WRITE_USN_CLOSE_RECORD            = 0x900ef
 };
 
+
+// 2.1.3.1 FILE_OBJECTID_BUFFER Type 1
+
+// The first possible structure for the FILE_OBJECTID_BUFFER data element is as follows.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                      ObjectId (16 bytes)                      |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                    BirthVolumeId (16 bytes)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                    BirthObjectId (16 bytes)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                      DomainId (16 bytes)                      |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// ObjectId (16 bytes): A 16-byte GUID that uniquely identifies the file or directory within the volume on which it resides. Specifically, the same object ID can be assigned to another file or directory on a different volume, but it MUST NOT be assigned to another file or directory on the same volume.
+
+// BirthVolumeId (16 bytes): A 16-byte GUID that uniquely identifies the volume on which the object resided when the object identifier was created, or zero if the volume had no object identifier at that time. After copy operations, move operations, or other file operations, this value is potentially different from the object identifier of the volume on which the object presently resides.
+
+// BirthObjectId (16 bytes): A 16-byte GUID value containing the object identifier of the object at the time it was created. Copy operations, move operations, or other file operations MAY change the value of the ObjectId member. Therefore, the BirthObjectId is potentially different from the ObjectId member at present. Specifically, the same object ID MAY be assigned to another file or directory on a different volume, but it MUST NOT be assigned to another file or directory on the same volume. The object ID is assigned at file creation time.<5>
+
+// DomainId (16 bytes): A 16-byte GUID value containing the domain identifier. This value is unused; it SHOULD be zero, and MUST be ignored.<6>
+
+enum : uint32_t {
+    GUID_SIZE = 128
+};
+
+struct FileObjectBuffer_Type1 {                             // FSCTL_CREATE_OR_GET_OBJECT_ID Reply struct
+
+    uint8_t ObjectId[128] = { 0 };
+    uint8_t BirthVolumeId[128] = { 0 };
+    uint8_t BirthObjectId[128] = { 0 };
+    uint8_t DomainId[128] = { 0 };
+
+
+    FileObjectBuffer_Type1() = default;
+
+    FileObjectBuffer_Type1(uint8_t * ObjectId, uint8_t * BirthVolumeId, uint8_t * BirthObjectId, uint8_t * DomainId)
+    {
+        for (size_t i = 0; i < GUID_SIZE; i++) {
+            this->ObjectId[i] = ObjectId[i];
+            this->BirthVolumeId[i] = BirthVolumeId[i];
+            this->BirthObjectId[i] = BirthObjectId[i];
+            this->DomainId[i] = DomainId[i];
+        }
+    }
+
+    void emit(OutStream & stream) {
+        stream.out_copy_bytes(this->ObjectId, GUID_SIZE);
+        stream.out_copy_bytes(this->BirthVolumeId, GUID_SIZE);
+        stream.out_copy_bytes(this->BirthObjectId, GUID_SIZE);
+        stream.out_copy_bytes(this->DomainId, GUID_SIZE);
+    }
+
+    void receive(InStream & stream) {
+        stream.in_copy_bytes(this->ObjectId, GUID_SIZE);
+        stream.in_copy_bytes(this->BirthVolumeId, GUID_SIZE);
+        stream.in_copy_bytes(this->BirthObjectId, GUID_SIZE);
+        stream.in_copy_bytes(this->DomainId, GUID_SIZE);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Object Buffer Type1:");
+        LOG(LOG_INFO, "          * ObjectId       (16 bytes):");
+        hexdump_c(this->ObjectId,  GUID_SIZE);
+        LOG(LOG_INFO, "          * BirthVolumeId  (16 bytes):");
+        hexdump_c(this->BirthVolumeId,  GUID_SIZE);
+        LOG(LOG_INFO, "          * BirthObjectId  (16 bytes):");
+        hexdump_c(this->BirthObjectId,  GUID_SIZE);
+        LOG(LOG_INFO, "          * DomainId       (16 bytes):");
+        hexdump_c(this->DomainId,  GUID_SIZE);
+    }
+};
+
+
+
+// 2.1.3.2 FILE_OBJECTID_BUFFER Type 2
+
+// The second possible structure for the FILE_OBJECTID_BUFFER data element is as follows.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                      ObjectId (16 bytes)                      |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                     ExtendedInfo (48 bytes)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// ObjectId (16 bytes): A 16-byte GUID that uniquely identifies the file or directory within the volume on which it resides. Specifically, the same object ID can be assigned to another file or directory on a different volume, but it MUST NOT be assigned to another file or directory on the same volume.
+
+// ExtendedInfo (48 bytes): A 48-byte value containing extended data that was set with the FSCTL_SET_OBJECT_ID_EXTENDED request. This field contains application-specific data.<7>
+
+struct FileObjectBuffer_Type2 {                             // FSCTL_CREATE_OR_GET_OBJECT_ID Reply struct
+
+    uint8_t ObjectId[128] = { 0 };
+    uint8_t ExtendedInfo[256] = { 0 };
+
+
+    const size_t ExtendedInfo_SIZE = 256;
+
+    FileObjectBuffer_Type2() = default;
+
+    FileObjectBuffer_Type2(uint8_t * ObjectId, uint8_t * ExtendedInfo)
+    {
+        for (size_t i = 0; i < GUID_SIZE; i++) {
+            this->ObjectId[i] = ObjectId[i];
+        }
+
+        for (size_t i = 0; i < this->ExtendedInfo_SIZE; i++) {
+            this->ExtendedInfo[i] = ExtendedInfo[i];
+        }
+    }
+
+    void emit(OutStream & stream) {
+        stream.out_copy_bytes(this->ObjectId, GUID_SIZE);
+        stream.out_copy_bytes(this->ExtendedInfo, this->ExtendedInfo_SIZE);
+    }
+
+    void receive(InStream & stream) {
+        stream.in_copy_bytes(this->ObjectId, GUID_SIZE);
+        stream.in_copy_bytes(this->ExtendedInfo, this->ExtendedInfo_SIZE);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Object Buffer Type2:");
+        LOG(LOG_INFO, "          * ObjectId     (16 bytes):");
+        hexdump_c(this->ObjectId,  GUID_SIZE);
+        LOG(LOG_INFO, "          * ExtendedInfo (48 bytes):");
+        hexdump_c(this->ExtendedInfo,  this->ExtendedInfo_SIZE);
+    }
+};
+
+
+
+
+// 2.3.5 FSCTL_DELETE_REPARSE_POINT Request
+//
+// This message requests that the server delete the reparse point from the file or directory associated with the handle on which this FSCTL was invoked. The underlying file or directory MUST NOT be deleted.
+//
+// The message MUST contain a REPARSE_GUID_DATA_BUFFER or a REPARSE_DATA_BUFFER (including subtypes) data element. Both the REPARSE_GUID_DATA_BUFFER and the REPARSE_DATA_BUFFER structures begin with a ReparseTag field. The ReparseTag value uniquely identifies the filter driver that creates/uses the reparse point, and the application's filter driver processes the reparse point data as either a REPARSE_GUID_DATA_BUFFER or a REPARSE_DATA_BUFFER, depending on the structure implemented by the filter driver for that type of reparse point.
+//
+// This message MUST only be sent for a file or directory handle.
+
+
+// 2.1.2.3 REPARSE_GUID_DATA_BUFFER
+//
+// The REPARSE_GUID_DATA_BUFFER data element stores data for a reparse point and associates a GUID with the reparse tag. This reparse data buffer MUST be used only with reparse tag values whose high bit is set to 0.
+//
+// Reparse point GUIDs are assigned by the independent software vendor (ISV). An ISV MUST link one GUID to each assigned reparse point tag, and MUST always use that GUID with that tag.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           ReparseTag                          |
+// +-------------------------------+-------------------------------+
+// |       ReparseDataLength       |           Reserved            |
+// +-------------------------------+-------------------------------+
+// |                     ReparseGuid (16 bytes)                    |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                     DataBuffer (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// ReparseTag (4 bytes): A 32-bit unsigned integer value containing the reparse point tag that uniquely identifies the owner of the reparse point.
+//
+// ReparseDataLength (2 bytes): A 16-bit unsigned integer value containing the size, in bytes, of the reparse data in the DataBuffer member.
+//
+// Reserved (2 bytes): A 16-bit field. This field SHOULD be set to 0 by the client, and MUST be ignored by the server.
+//
+// ReparseGuid (16 bytes): A 16-byte GUID that uniquely identifies the owner of the reparse point. Reparse point GUIDs are not assigned by Microsoft. A reparse point implementer MUST select one GUID to be used with their assigned reparse point tag to uniquely identify that reparse point. For more information, see [REPARSE].
+//
+// DataBuffer (variable): The content of this buffer is opaque to the file system. On receipt, its content MUST be preserved and properly returned to the caller.
+
+
+struct ReparseGUIDDataBuffer {
+
+  uint32_t ReparseTag = 0;
+  uint16_t ReparseDataLength = 0;
+  uint8_t ReparseGuid[128] = { 0 };
+  uint8_t * DataBuffer = nullptr;
+
+  ReparseGUIDDataBuffer() = default;
+
+  ReparseGUIDDataBuffer(uint32_t ReparseTag, uint16_t ReparseDataLength, uint8_t * ReparseGuid, uint8_t * DataBuffer)
+    : ReparseTag(ReparseTag)
+    , ReparseDataLength(ReparseDataLength)
+    , DataBuffer(DataBuffer)
+    {
+        for (size_t i = 0; i < GUID_SIZE; i++) {
+            this->ReparseGuid[i] = ReparseGuid[i];
+        }
+    }
+
+    void emit(OutStream & stream) {
+        stream.out_uint32_be(this->ReparseTag);
+        stream.out_uint16_be(this->ReparseDataLength);
+        stream.out_clear_bytes(2);
+        stream.out_copy_bytes(this->ReparseGuid, GUID_SIZE);
+        stream.out_copy_bytes(this->DataBuffer, this->ReparseDataLength);
+    }
+
+    void receive(InStream & stream) {
+        this->ReparseTag = stream.in_uint32_le();
+        this->ReparseDataLength = stream.in_uint16_le();
+        stream.in_skip_bytes(2);
+        stream.in_copy_bytes(this->ReparseGuid, GUID_SIZE);
+        stream.in_copy_bytes(this->DataBuffer, this->ReparseDataLength);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Object Buffer Type2:");
+        LOG(LOG_INFO, "          * ReparseTag        = 0x%08x (4 bytes)", this->ReparseTag);
+        LOG(LOG_INFO, "          * ReparseDataLength = %d (4 bytes)", int(this->ReparseDataLength));
+        LOG(LOG_INFO, "          * Reserved - (2 bytes) NOT USED");
+        LOG(LOG_INFO, "          * ReparseGuid (16 bytes):");
+        hexdump_c(this->ReparseGuid,  GUID_SIZE);
+        LOG(LOG_INFO, "          * DataBuffer (%d bytes):", int(this->ReparseDataLength));
+        hexdump_c(this->DataBuffer,  this->ReparseDataLength);
+    }
+};
+
+
+
+
+
+
+
+
+
 // [MS-FSCC] - 2.4.4 FileAllocationInformation
 // ===========================================
 
@@ -278,7 +539,7 @@ struct FileAllocationInformation {
 
     void log() {
         LOG(LOG_INFO, "     File Allocation Information:");
-        LOG(LOG_INFO, "          * VolumeCreationTime = %" PRIu64 " (8 bytes)", this->AllocationSize);
+        LOG(LOG_INFO, "          * VolumeCreationTime = 0x%" PRIu64 " (8 bytes)", this->AllocationSize);
     }
 };
 
@@ -380,8 +641,8 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Attribute Tag Information:");
-        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes)", this->FileAttributes);
-        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes)", this->ReparseTag);
+        LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes)", this->FileAttributes);
+        LOG(LOG_INFO, "          * ReparseTag     = 0x%08x (4 bytes)", this->ReparseTag);
     }
 };
 
@@ -557,10 +818,10 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Basic Information:");
-        LOG(LOG_INFO, "          * CreationTime   = %" PRIx64 " (8 bytes)", this->CreationTime);
-        LOG(LOG_INFO, "          * LastAccessTime = %" PRIx64 " (8 bytes)", this->LastAccessTime_);
-        LOG(LOG_INFO, "          * LastWriteTime  = %" PRIx64 " (8 bytes)", this->LastWriteTime_);
-        LOG(LOG_INFO, "          * ChangeTime     = %" PRIx64 " (8 bytes)", this->ChangeTime);
+        LOG(LOG_INFO, "          * CreationTime   = 0x%" PRIx64 " (8 bytes)", this->CreationTime);
+        LOG(LOG_INFO, "          * LastAccessTime = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime_);
+        LOG(LOG_INFO, "          * LastWriteTime  = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime_);
+        LOG(LOG_INFO, "          * ChangeTime     = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
         LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes)", this->FileAttributes_);
     }
 };  // FileBasicInformation
@@ -903,7 +1164,190 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    void log() {
+        LOG(LOG_INFO, "     File Both Directory Information:");
+        LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
+        LOG(LOG_INFO, "          * FileIndex       = 0x%08x (4 bytes)", this->FileIndex);
+        LOG(LOG_INFO, "          * CreationTime    = 0x%" PRIx64 " (8 bytes)", this->CreationTime);
+        LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime);
+        LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime);
+        LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
+        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes)", this->FileAttributes);
+        LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->file_name.size()));
+        LOG(LOG_INFO, "          * EaSize          = %d (4 bytes)", int(this->EaSize));
+        LOG(LOG_INFO, "          * ShortNameLength = %d (1 byte)", int(this->short_name.size()));
+        LOG(LOG_INFO, "          * Reserved - (1 byte) NOT USED");
+        LOG(LOG_INFO, "          * short_name      = \"%s\"", this->short_name.c_str());
+        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->file_name.c_str());
+    }
 };  // FileBothDirectoryInformation
+
+
+
+// 2.4.10 FileDirectoryInformation
+
+// This information class is used in directory enumeration to return detailed information about the contents of a directory.
+
+// This information class returns a list that contains a FILE_DIRECTORY_INFORMATION data element for each file or directory within the target directory. This list MUST reflect the presence of a subdirectory named "." (synonymous with the target directory itself) within the target directory and one named ".." (synonymous with the parent directory of the target directory). For more details, see section 2.1.5.1.
+
+// When multiple FILE_DIRECTORY_INFORMATION data elements are present in the buffer, each MUST be aligned on an 8-byte boundary. Any bytes inserted for alignment SHOULD be set to zero, and the receiver MUST ignore them. No padding is required following the last data element.
+
+// A FILE_DIRECTORY_INFORMATION data element is as follows.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        NextEntryOffset                        |
+// +---------------------------------------------------------------+
+// |                           FileIndex                           |
+// +---------------------------------------------------------------+
+// |                          CreationTime                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         LastAccessTime                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         LastWriteTime                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                           ChangeTime                          |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                           EndOfFile                           |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         AllocationSize                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         FileAttributes                        |
+// +---------------------------------------------------------------+
+// |                         FileNameLength                        |
+// +---------------------------------------------------------------+
+// |                       FileName (variable)                     |
+// +---------------+---------------+-------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// NextEntryOffset (4 bytes):  A 32-bit unsigned integer that contains the byte offset from the beginning of this entry, at which the next FILE_DIRECTORY_INFORMATION entry is located, if multiple entries are present in a buffer. This member MUST be zero if no other entries follow this one. An implementation MUST use this value to determine the location of the next entry (if multiple entries are present in a buffer).
+
+// FileIndex (4 bytes):  A 32-bit unsigned integer that contains the byte offset of the file within the parent directory. For file systems in which the position of a file within the parent directory is not fixed and can be changed at any time to maintain sort order, this field SHOULD be set to 0 and MUST be ignored.<100>
+
+// CreationTime (8 bytes):  The time when the file was created; see section 2.1.1. This value MUST be greater than or equal to 0.
+
+// LastAccessTime (8 bytes):  The last time the file was accessed; see section 2.1.1. This value MUST be greater than or equal to 0.
+
+// LastWriteTime (8 bytes):  The last time information was written to the file; see section 2.1.1. This value MUST be greater than or equal to 0.
+
+// ChangeTime (8 bytes):  The last time the file was changed; see section 2.1.1. This value MUST be greater than or equal to 0.
+
+// EndOfFile (8 bytes):  A 64-bit signed integer that contains the absolute new end-of-file position as a byte offset from the start of the file. EndOfFile specifies the offset to the byte immediately following the last valid byte in the file. Because this value is zero-based, it actually refers to the first free byte in the file. That is, it is the offset from the beginning of the file at which new bytes appended to the file will be written. The value of this field MUST be greater than or equal to 0.
+
+// AllocationSize (8 bytes):  A 64-bit signed integer that contains the file allocation size, in bytes. The value of this field MUST be an integer multiple of the cluster size.
+
+// FileAttributes (4 bytes):  A 32-bit unsigned integer that contains the file attributes. Valid attributes are as specified in section 2.6.
+
+// FileNameLength (4 bytes):  A 32-bit unsigned integer that specifies the length, in bytes, of the file name contained within the FileName member.
+
+// FileName (variable): A sequence of Unicode characters containing the file name. When working with this field, use FileNameLength to determine the length of the file name rather than assuming the presence of a trailing null delimiter. Dot directory names are valid for this field. For more details, see section 2.1.5.1.
+
+// This operation returns a status code, as specified in [MS-ERREF] section 2.3. The status code returned directly by the function that processes this file information class MUST be STATUS_SUCCESS or one of the following.
+
+//  +-----------------------------+--------------------------------------------+
+//  | Error code                  | Meaning                                    |
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_INFO_LENGTH_MISMATCH | The specified information record length    |
+//  | 0xC0000004                  | does not match the length that is required |
+//  |                             | for the specified information class.       |
+//  +-----------------------------+--------------------------------------------+
+
+class FileDirectoryInformation {
+
+    uint32_t NextEntryOffset = 0;
+    uint32_t FileIndex       = 0;
+    uint64_t CreationTime    = 0;
+    uint64_t LastAccessTime_ = 0;
+    uint64_t LastWriteTime_  = 0;
+    uint64_t ChangeTime      = 0;
+    uint32_t FileAttributes_ = 0;
+    std::string FileName;
+
+
+public:
+    FileDirectoryInformation() = default;
+
+    FileDirectoryInformation(uint32_t NextEntryOffset, uint32_t FileIndex,
+                             uint64_t CreationTime, uint64_t LastAccessTime,
+                             uint64_t LastWriteTime, uint64_t ChangeTime,
+                             uint32_t FileAttributes, std::string FileName)
+    : NextEntryOffset(NextEntryOffset)
+    , FileIndex(FileIndex)
+    , CreationTime(CreationTime)
+    , LastAccessTime_(LastAccessTime)
+    , LastWriteTime_(LastWriteTime)
+    , ChangeTime(ChangeTime)
+    , FileAttributes_(FileAttributes)
+    , FileName(FileName)
+    {}
+
+    void emit(OutStream & stream) const {
+        stream.out_uint32_le(this->NextEntryOffset);
+        stream.out_uint32_le(this->FileIndex);
+
+        stream.out_uint64_le(this->CreationTime);
+        stream.out_uint64_le(this->LastAccessTime_);
+        stream.out_uint64_le(this->LastWriteTime_);
+        stream.out_uint64_le(this->ChangeTime);
+
+        stream.out_uint32_le(this->FileAttributes_);
+
+        stream.out_uint32_le(this->FileName.size());
+
+        stream.out_copy_bytes(reinterpret_cast<const uint8_t *>(this->FileName.data()), this->FileName.size());
+    }
+
+    void receive(InStream & stream) {
+        this->NextEntryOffset = stream.in_uint32_le();
+        this->FileIndex       = stream.in_uint32_le();
+
+        this->CreationTime    = stream.in_uint64_le();
+        this->LastAccessTime_ = stream.in_uint64_le();
+        this->LastWriteTime_  = stream.in_uint64_le();
+        this->ChangeTime      = stream.in_uint64_le();
+
+        this->FileAttributes_ = stream.in_uint32_le();
+
+        size_t size = stream.in_uint32_le();
+
+        this->FileName = std::string(reinterpret_cast<const char *>(stream.get_current()), size);
+    }
+
+    inline uint64_t FileAttributes() const { return this->FileAttributes_; }
+
+    inline uint64_t LastAccessTime() const { return this->LastAccessTime_; }
+
+    inline uint64_t LastWriteTime() const { return this->LastWriteTime_; }
+
+    void log() {
+        LOG(LOG_INFO, "     File Directory Information:");
+        LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
+        LOG(LOG_INFO, "          * FileIndex       = 0x%08x (4 bytes)", this->FileIndex);
+        LOG(LOG_INFO, "          * CreationTime    = 0x%" PRIx64 " (8 bytes)", this->CreationTime);
+        LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime_);
+        LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime_);
+        LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
+        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes)", this->FileAttributes_);
+        LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->FileName.size()));
+        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->FileName.c_str());
+    }
+};  //FileDirectoryInformation
 
 
 
@@ -963,7 +1407,7 @@ struct FileDispositionInformation {
 
     void log() {
         LOG(LOG_INFO, "     File Disposition Information:");
-        LOG(LOG_INFO, "          * DeletePending = %02x (1 byte)", this->DeletePending);
+        LOG(LOG_INFO, "          * DeletePending = 0x%02x (1 byte)", this->DeletePending);
     }
 };
 
@@ -1037,7 +1481,7 @@ struct FileEndOfFileInformation {
 
     void log() {
         LOG(LOG_INFO, "     File EndOfFile Information:");
-        LOG(LOG_INFO, "          * EndOfFile = %" PRIx64 " (8 bytes)", this->EndOfFile);
+        LOG(LOG_INFO, "          * EndOfFile = 0x%" PRIx64 " (8 bytes)", this->EndOfFile);
     }
 };
 
@@ -1379,6 +1823,20 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    void log() {
+        LOG(LOG_INFO, "     File Directory Information:");
+        LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
+        LOG(LOG_INFO, "          * FileIndex       = 0x%08x (4 bytes)", this->FileIndex);
+        LOG(LOG_INFO, "          * CreationTime    = 0x%" PRIx64 " (8 bytes)", this->CreationTime);
+        LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime);
+        LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime);
+        LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
+        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes)", this->FileAttributes);
+        LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->file_name.size()));
+        LOG(LOG_INFO, "          * EaSize          = %d (4 bytes)", int(this->EaSize));
+        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->file_name.c_str());
+    }
 };  // FileFullDirectoryInformation
 
 // [MS-FSCC] - 2.4.26 FileNamesInformation
@@ -1539,6 +1997,14 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Directory Information:");
+        LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
+        LOG(LOG_INFO, "          * FileIndex       = 0x%08x (4 bytes)", this->FileIndex);
+        LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->file_name.size()));
+        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->file_name.c_str());
     }
 };
 
@@ -1806,8 +2272,8 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Standard Information:");
-        LOG(LOG_INFO, "          * AllocationSize = %" PRIx64 " (8 bytes)", this->AllocationSize);
-        LOG(LOG_INFO, "          * EndOfFile      = %" PRIx64 " (8 bytes)", this->EndOfFile);
+        LOG(LOG_INFO, "          * AllocationSize = v%" PRIx64 " (8 bytes)", this->AllocationSize);
+        LOG(LOG_INFO, "          * EndOfFile      = 0x%" PRIx64 " (8 bytes)", this->EndOfFile);
         LOG(LOG_INFO, "          * NumberOfLinks  = 0x%08x (4 bytes)", this->NumberOfLinks);
         LOG(LOG_INFO, "          * DeletePending  = 0x%02x (1 byte)", this->DeletePending);
         LOG(LOG_INFO, "          * Directory      = 0x%02x (1 byte)", this->Directory);
@@ -2121,10 +2587,10 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Fs Attribute Information:");
-        LOG(LOG_INFO, "          * FileSystemAttributes = %08x (4 bytes): %s", this->FileSystemAttributes_, get_FileSystemAttributes_name(this->FileSystemAttributes_));
+        LOG(LOG_INFO, "          * FileSystemAttributes       = 0x%08x (4 bytes): %s", this->FileSystemAttributes_, get_FileSystemAttributes_name(this->FileSystemAttributes_));
         LOG(LOG_INFO, "          * MaximumComponentNameLength = %d (4 bytes)", int(this->MaximumComponentNameLength));
-        LOG(LOG_INFO, "          * FileSystemNameLength = %d (4 bytes)", int(this->file_system_name.size()));
-        LOG(LOG_INFO, "          * FileSystemName = \"%s\"", this->file_system_name.c_str());
+        LOG(LOG_INFO, "          * FileSystemNameLength       = %d (4 bytes)", int(this->file_system_name.size()));
+        LOG(LOG_INFO, "          * FileSystemName             = \"%s\"", this->file_system_name.c_str());
     }
 };  // FileFsAttributeInformation
 
@@ -2271,11 +2737,11 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Fs Full Size Information:");
-        LOG(LOG_INFO, "          * TotalAllocationUnits = %" PRIx64 " (8 bytes)", this->TotalAllocationUnits);
-        LOG(LOG_INFO, "          * CallerAvailableAllocationUnits = %" PRIx64 " (8 bytes)", this->CallerAvailableAllocationUnits);
-        LOG(LOG_INFO, "          * ActualAvailableAllocationUnits = %" PRIx64 " (8 bytes)", this->ActualAvailableAllocationUnits);
-        LOG(LOG_INFO, "          * SectorsPerAllocationUnit = %d (4 bytes)", int(SectorsPerAllocationUnit));
-        LOG(LOG_INFO, "          * BytesPerSector = %d (4 bytes)", int(BytesPerSector));
+        LOG(LOG_INFO, "          * TotalAllocationUnits           = 0x%" PRIx64 " (8 bytes)", this->TotalAllocationUnits);
+        LOG(LOG_INFO, "          * CallerAvailableAllocationUnits = 0x%" PRIx64 " (8 bytes)", this->CallerAvailableAllocationUnits);
+        LOG(LOG_INFO, "          * ActualAvailableAllocationUnits = 0x%" PRIx64 " (8 bytes)", this->ActualAvailableAllocationUnits);
+        LOG(LOG_INFO, "          * SectorsPerAllocationUnit       = %d (4 bytes)", int(SectorsPerAllocationUnit));
+        LOG(LOG_INFO, "          * BytesPerSector                 = %d (4 bytes)", int(BytesPerSector));
     }
 };
 
@@ -2405,9 +2871,9 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Fs Size Information:");
-        LOG(LOG_INFO, "          * TotalAllocationUnits     = %" PRIx64 " (8 bytes)", this->TotalAllocationUnits);
-        LOG(LOG_INFO, "          * AvailableAllocationUnits = %" PRIx64 " (8 bytes)", this->AvailableAllocationUnits);
-        LOG(LOG_INFO, "          * SectorsPerAllocationUnit = %08x (4 byte)", this->SectorsPerAllocationUnit);
+        LOG(LOG_INFO, "          * TotalAllocationUnits     = 0x%" PRIx64 " (8 bytes)", this->TotalAllocationUnits);
+        LOG(LOG_INFO, "          * AvailableAllocationUnits = 0x%" PRIx64 " (8 bytes)", this->AvailableAllocationUnits);
+        LOG(LOG_INFO, "          * SectorsPerAllocationUnit = 0x%08x (4 byte)", this->SectorsPerAllocationUnit);
         LOG(LOG_INFO, "          * BytesPerSector           = %d (4 bytes)", int(this->BytesPerSector));
     }
 };
@@ -2603,10 +3069,10 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Fs Volume Information:");
-        LOG(LOG_INFO, "          * VolumeCreationTime = %" PRIx64 " (8 bytes)", this->VolumeCreationTime);
-        LOG(LOG_INFO, "          * VolumeSerialNumber = %08x (4 bytes)", this->VolumeSerialNumber);
+        LOG(LOG_INFO, "          * VolumeCreationTime = 0x%" PRIx64 " (8 bytes)", this->VolumeCreationTime);
+        LOG(LOG_INFO, "          * VolumeSerialNumber = 0x%08x (4 bytes)", this->VolumeSerialNumber);
         LOG(LOG_INFO, "          * VolumeLabelLength  = %d (4 bytes)", int(this->volume_label.size()));
-        LOG(LOG_INFO, "          * SupportsObjects    = %02x (1 byte)", this->SupportsObjects);
+        LOG(LOG_INFO, "          * SupportsObjects    = 0x%02x (1 byte)", this->SupportsObjects);
         LOG(LOG_INFO, "          * Padding - (1 byte) NOT USED");
         LOG(LOG_INFO, "          * VolumeLabel        = \"%s\"", this->volume_label.c_str());
     }
@@ -2806,8 +3272,8 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Fs Device Information:");
-        LOG(LOG_INFO, "          * DeviceType = %08x (4 bytes): %s", this->DeviceType, this->get_DeviceType_name(this->DeviceType));
-        LOG(LOG_INFO, "          * Characteristics = %08x (4 bytes)", this->Characteristics);
+        LOG(LOG_INFO, "          * DeviceType      = 0x%08x (4 bytes): %s", this->DeviceType, this->get_DeviceType_name(this->DeviceType));
+        LOG(LOG_INFO, "          * Characteristics = 0x%08x (4 bytes)", this->Characteristics);
     }
 };
 
@@ -2936,6 +3402,191 @@ enum {
     , FILE_ATTRIBUTE_INTEGRITY_STREAM    = 0x00008000
     , FILE_ATTRIBUTE_NO_SCRUB_DATA       = 0x00020000
 };
+
+
+// 2.4.42 FileNotifyInformation
+
+// The FILE_NOTIFY_INFORMATION structure contains the changes that the client is being notified of. The structure consists of the following:
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        NextEntryOffset                        |
+// +---------------------------------------------------------------+
+// |                             Action                            |
+// +---------------------------------------------------------------+
+// |                         FileNameLength                        |
+// +---------------------------------------------------------------+
+// |                       FileName (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// NextEntryOffset (4 bytes): The offset, in bytes, from the beginning of this structure to the subsequent FILE_NOTIFY_INFORMATION structure. If there are no subsequent structures, the NextEntryOffset field MUST be 0. NextEntryOffset MUST always be an integral multiple of 4. The FileName array MUST be padded to the next 4-byte boundary counted from the beginning of the structure.
+
+// Action (4 bytes): The changes that occurred on the file. This field MUST contain one of the following values.
+
+//  +------------------------------------+--------------------------------------------+
+//  | Value                              | Meaning                                    |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_ADDED                  | The file was added to the directory.       |
+//  | 0x00000001                         | configured to be excluded from the         |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_REMOVED                | The file was removed from the              |
+//  | 0x00000002                         | directory.                                 |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_MODIFIED               | The file was modified. This can be         |
+//  | 0x00000003                         | a change to the data or attributes         |
+//  |                                    | of the file.                               |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_RENAMED_OLD_NAME       | The file was renamed, and this is          |
+//  | 0x00000004                         | the old name. If the new name              |
+//  |                                    | resides within the directory being         |
+//  |                                    | monitored, the client will also            |
+//  |                                    | receive the                                |
+//  |                                    | FILE_ACTION_RENAMED_NEW_NAME bit           |
+//  |                                    | value as described in the next list        |
+//  |                                    | item. If the new name resides              |
+//  |                                    | outside of the directory being             |
+//  |                                    | monitored, the client will not             |
+//  |                                    | receive the                                |
+//  |                                    | FILE_ACTION_RENAMED_NEW_NAME bit           |
+//  |                                    | value.                                     |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_RENAMED_NEW_NAME       | The file was renamed, and this is the new  |
+//  | 0x00000005                         | name. If the old name resides within the   |
+//  |                                    | directory being monitored, the client will |
+//  |                                    | also receive the                           |
+//  |                                    | FILE_ACTION_RENAME_OLD_NAME bit value. If  |
+//  |                                    | the old name resides outside of the        |
+//  |                                    | directory being monitored, the client will |
+//  |                                    | not receive the                            |
+//  |                                    | FILE_ACTION_RENAME_OLD_NAME bit value.     |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_ADDED_STREAM           | The file was added to a named stream.      |
+//  | 0x00000006                         |                                            |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_REMOVED_STREAM         | The file was removed from the named        |
+//  | 0x00000007                         | stream.                                    |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_MODIFIED_STREAM        | The file was modified. This can be a       |
+//  | 0x00000008                         | change to the data or attributes of the    |
+//  |                                    | file.                                      |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_REMOVED_BY_DELETE      | An object ID was removed because the file  |
+//  | 0x00000009                         | the object ID referred to was deleted.     |
+//  |                                    |                                            |
+//  |                                    | This notification is only sent when the    |
+//  |                                    | directory being monitored is the special   |
+//  |                                    | directory                                  |
+//  |                                    | "\$Extend\$ObjId:$O:$INDEX_ALLOCATION".    |
+//  |                                    | <125>                                      |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_ID_NOT_TUNNELLED       | An attempt to tunnel object ID information |
+//  | 0x0000000A                         | to a file being created or renamed failed  |
+//  |                                    | because the object ID is in use by another |
+//  |                                    | file on the same volume.                   |
+//  |                                    |                                            |
+//  |                                    | This notification is only sent when the    |
+//  |                                    | directory being monitored is the special   |
+//  |                                    | directory                                  |
+//  |                                    | "\$Extend\$ObjId:$O:$INDEX_ALLOCATION".    |
+//  |                                    | <126>                                      |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_TUNNELLED_ID_COLLISION | An attempt to tunnel object ID information |
+//  | 0x0000000B                         | to a file being renamed failed because the |
+//  |                                    | file already has an object ID.             |
+//  |                                    |                                            |
+//  |                                    | This notification is only sent when the    |
+//  |                                    | directory being monitored is the special   |
+//  |                                    | directory                                  |
+//  |                                    | "\$Extend\$ObjId:$O:$INDEX_ALLOCATION".    |
+//  |                                    | <127>                                      |
+//  +------------------------------------+--------------------------------------------+
+
+// If two or more files have been renamed, then the corresponding FILE_NOTIFY_INFORMATION entries for each file rename MUST be consecutive in this response, in order for the client to make the correct correspondence between old and new names.
+
+// FileNameLength (4 bytes): The length, in bytes, of the file name in the FileName field.
+
+// FileName (variable): A Unicode string with the name of the file that changed.
+
+enum : uint32_t {
+
+    FILE_ACTION_ADDED                  = 0x00000001,
+    FILE_ACTION_REMOVED                = 0x00000002,
+    FILE_ACTION_MODIFIED               = 0x00000003,
+    FILE_ACTION_RENAMED_OLD_NAME       = 0x00000004,
+
+    FILE_ACTION_RENAMED_NEW_NAME       = 0x00000005,
+    FILE_ACTION_ADDED_STREAM           = 0x00000006,
+    FILE_ACTION_REMOVED_STREAM         = 0x00000007,
+    FILE_ACTION_MODIFIED_STREAM        = 0x00000008,
+    FILE_ACTION_REMOVED_BY_DELETE      = 0x00000009,
+    FILE_ACTION_ID_NOT_TUNNELLED       = 0x0000000A,
+    FILE_ACTION_TUNNELLED_ID_COLLISION = 0x0000000B,
+};
+
+static const char * get_Action_name(uint32_t action) {
+
+    switch (action) {
+        case FILE_ACTION_ADDED:                  return "FILE_ACTION_ADDED";
+        case FILE_ACTION_REMOVED:                return "FILE_ACTION_REMOVED";
+        case FILE_ACTION_MODIFIED:               return "FILE_ACTION_MODIFIED";
+        case FILE_ACTION_RENAMED_OLD_NAME:       return "FILE_ACTION_RENAMED_OLD_NAME";
+        case FILE_ACTION_RENAMED_NEW_NAME:       return "FILE_ACTION_RENAMED_NEW_NAME";
+        case FILE_ACTION_ADDED_STREAM:           return "FILE_ACTION_ADDED_STREAM";
+        case FILE_ACTION_REMOVED_STREAM:         return "FILE_ACTION_REMOVED_STREAM";
+        case FILE_ACTION_MODIFIED_STREAM:        return "FILE_ACTION_MODIFIED_STREAM";
+        case FILE_ACTION_REMOVED_BY_DELETE:      return "FILE_ACTION_REMOVED_BY_DELETE";
+        case FILE_ACTION_ID_NOT_TUNNELLED:       return "FILE_ACTION_ID_NOT_TUNNELLED";
+        case FILE_ACTION_TUNNELLED_ID_COLLISION: return "FILE_ACTION_TUNNELLED_ID_COLLISION";
+    }
+
+    return "<unknown>";
+}
+
+struct FileNotifyInformation {
+
+    uint32_t NextEntryOffset = 0;
+    uint32_t Action = 0;
+
+    std::string FileName;
+
+
+    FileNotifyInformation() = default;
+
+    FileNotifyInformation(uint32_t NextEntryOffset, uint32_t Action, std::string FileName)
+      : NextEntryOffset(NextEntryOffset)
+      , Action(Action)
+      , FileName(FileName)
+      {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->NextEntryOffset);
+        stream.out_uint32_le(this->Action);
+        stream.out_uint32_le(this->FileName.size());
+        stream.out_copy_bytes(reinterpret_cast<const uint8_t *>(this->FileName.data()), this->FileName.size());
+    }
+
+    void receive(InStream & stream) {
+        this->NextEntryOffset = stream.in_uint32_le();
+        this->Action = stream.in_uint32_le();
+        size_t size = stream.in_uint32_le();
+        uint8_t * data = nullptr;
+        stream.in_copy_bytes(data, size);
+        this->FileName = std::string(reinterpret_cast<const char *>(data), size);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Notify Information:");
+        LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
+        LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes): %s", this->Action, get_Action_name(this->Action));
+        LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->FileName.size()));
+        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->FileName.c_str());
+    }
+};
+
 
 }   // namespace fscc
 

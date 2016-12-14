@@ -29,6 +29,7 @@
 #include "utils/sugar/array_view.hpp"
 
 #include "capture/utils/capture_impl.hpp"
+#include "utils/apps/recording_progress.hpp"
 
 class Capture final
 : public gdi::GraphicBase<Capture>
@@ -40,7 +41,9 @@ class Capture final
 {
     using Graphic = GraphicCaptureImpl;
 
-    using Static = ImageCaptureImpl;
+    using Image = PngCapture;
+
+    using ImageRT = PngCaptureRT;
 
     using Native = WrmCaptureImpl;
 
@@ -76,6 +79,9 @@ class Capture final
             }
             if (this->capture.pvc) {
                 this->capture.pvc->next_video(now);
+            }
+            if (this->capture.update_progress_data) {
+                this->capture.update_progress_data->next_video(now.tv_sec);
             }
         }
 
@@ -119,13 +125,16 @@ public:
 private:
     std::unique_ptr<Graphic> gd;
     std::unique_ptr<Native> pnc;
-    std::unique_ptr<Static> psc;
+    std::unique_ptr<Image> psc;
+    std::unique_ptr<ImageRT> pscrt;
     std::unique_ptr<Kbd> pkc;
     std::unique_ptr<Video> pvc;
     std::unique_ptr<FullVideo> pvc_full;
     std::unique_ptr<Meta> pmc;
     std::unique_ptr<Title> ptc;
     std::unique_ptr<PatternsChecker> patterns_checker;
+
+    UpdateProgressData * update_progress_data;
 
     CaptureApisImpl::Capture capture_api;
     CaptureApisImpl::KbdInput kbd_input_api;
@@ -155,13 +164,14 @@ public:
         int height,
         int order_bpp,
         int capture_bpp,
-        bool clear_png,
+        bool real_time_image_capture,
         bool no_timestamp,
         auth_api * authentifier,
         const Inifile & ini,
         CryptoContext & cctx,
         Random & rnd,
         bool full_video,
+        UpdateProgressData * update_progress_data = nullptr,
         bool force_capture_png_if_enable = false,
         const int delta_time = 1000)
     : is_replay_mod(!authentifier)
@@ -177,6 +187,7 @@ public:
     , capture_flv_full(full_video)
     // capture wab only
     , capture_meta(this->capture_ocr)
+    , update_progress_data(update_progress_data)
     , capture_api(now, width / 2, height / 2)
     , delta_time(delta_time)
     {
@@ -248,10 +259,19 @@ public:
             this->capture_api.set_drawable(&this->gd->impl());
 
             if (this->capture_png) {
-                if (clear_png || force_capture_png_if_enable) {
-                    this->psc.reset(new Static(
-                        now, clear_png, authentifier, this->gd->impl(),
-                        record_tmp_path, basename, groupid, ini
+                if (real_time_image_capture) {
+                    this->pscrt.reset(new ImageRT(
+                        now, true, authentifier, this->gd->impl(),
+                        record_tmp_path, basename, groupid,
+                        ini.get<cfg::video::png_interval>(),
+                        ini.get<cfg::video::png_limit>()
+                    ));
+                }
+                else if (force_capture_png_if_enable) {
+                    this->psc.reset(new Image(
+                        now, authentifier, this->gd->impl(),
+                        record_tmp_path, basename, groupid,
+                        ini.get<cfg::video::png_interval>()
                     ));
                 }
             }
@@ -333,6 +353,7 @@ public:
 
         if (this->gd ) { this->gd ->attach_apis(apis_register, ini); }
         if (this->pnc) { this->pnc->attach_apis(apis_register, ini); }
+        if (this->pscrt) { this->pscrt->attach_apis(apis_register, ini); }
         if (this->psc) { this->psc->attach_apis(apis_register, ini); }
         if (this->pkc) { this->pkc->attach_apis(apis_register, ini); }
         if (this->pvc) { this->pvc->attach_apis(apis_register, ini); }
@@ -346,6 +367,7 @@ public:
     ~Capture() {
         if (this->is_replay_mod) {
             this->psc.reset();
+            if (this->pscrt) { this->pscrt.reset(); }
             this->pnc.reset();
             if (this->pvc) {
                 try {
@@ -374,6 +396,7 @@ public:
             this->pkc.reset();
             this->pvc.reset();
             this->psc.reset();
+            if (this->pscrt) { this->pscrt.reset(); }
 
             if (this->pnc) {
                 timeval now = tvtime();
@@ -494,6 +517,9 @@ public:
     void zoom(unsigned percent) {
         if (this->psc) {
             this->psc->zoom(percent);
+        }
+        if (this->pscrt) {
+            this->pscrt->zoom(percent);
         }
         if (this->pvc) {
             this->pvc->image_zoom(percent);

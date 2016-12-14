@@ -683,9 +683,7 @@ protected:
     time_t beginning;
     bool   session_disconnection_logged = false;
 
-    int rdpdr_last_major_function = -1;
-    int rdpdr_last_fs_information_class = -1;
-    int rdpdr_last_minor_function = -1;
+    rdpdr::RdpDrStatus rdpdrLogStatus;
 
 public:
     using Verbose = RDPVerbose;
@@ -1735,7 +1733,7 @@ private:
                     ::msgdump_c(send, from_or_to_client, chunk.get_offset(), flags,
                     chunk.get_data(), length);
 
-                    rdpdr::streamLog(chunk, this->rdpdr_last_major_function, this->rdpdr_last_minor_function, this->rdpdr_last_fs_information_class);
+                    rdpdr::streamLog(chunk, this->rdpdrLogStatus);
                 }
             }
 
@@ -6826,7 +6824,7 @@ private:
                     ::msgdump_c(send, from_or_to_client, length, flags,
                         stream.get_data()+8, chunk_size);
 
-                    rdpdr::streamLog(stream, this->rdpdr_last_major_function, this->rdpdr_last_minor_function, this->rdpdr_last_fs_information_class);
+                    rdpdr::streamLog(stream, this->rdpdrLogStatus);
                 }
             }
 

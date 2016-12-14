@@ -625,7 +625,6 @@ bool Front_Qt::connexionReleased(){
         res = this->connect();
     }
     this->_form->setCursor(Qt::ArrowCursor);
-
     return res;
 }
 
@@ -2587,15 +2586,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             case rdpdr::IRP_MJ_CLOSE:
                                 LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Close Request");
                                 {
-                                int DesiredAccess = chunk.in_uint32_le();
-                                int AllocationSize = chunk.in_uint64_le();
-                                int FileAttributes = chunk.in_uint32_le();
-                                int SharedAccess = chunk.in_uint32_le();
-                                int CreateDisposition = chunk.in_uint32_le();
-                                int CreateOptions = chunk.in_uint32_le();
-                                int PathLength = chunk.in_uint32_le();
-
-
 
                                 out_stream.out_uint32_le(deviceIORequest.FileId());
                                 out_stream.out_uint8(rdpdr::FILE_SUPERSEDED);
@@ -2617,11 +2607,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             case rdpdr::IRP_MJ_READ:
                                 LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Read Request");
                                 {
-                                int Length = chunk.in_uint32_le();
-                                uint64_t Offset = chunk.in_uint64_le();
-
-                                LOG(LOG_INFO, "          Length = %x", Length);
-                                LOG(LOG_INFO, "          Offset = %x", Offset);
 
                                 //StaticOutStream<128> out_stream;
                                 rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
@@ -2651,13 +2636,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     case rdpdr::IRP_MN_QUERY_DIRECTORY:
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Directory Request");
                                         {
-                                        int FsInformationClass = chunk.in_uint32_le();
-                                        uint8_t InitialQuery = chunk.in_uint8();
-                                        int PathLength = chunk.in_uint32_le();
-
-                                        LOG(LOG_INFO, "          FsInformationClass = %x", FsInformationClass);
-                                        LOG(LOG_INFO, "          InitialQuery = %x", InitialQuery);
-                                        LOG(LOG_INFO, "          PathLength = %d", PathLength);
 
                                         StaticOutStream<256> out_stream;
                                         rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
@@ -2708,8 +2686,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     case rdpdr::IRP_MN_NOTIFY_CHANGE_DIRECTORY:
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Notify Change Directory Request");
                                         {
-                                        int WatchTree = chunk.in_uint8();
-                                        int CompletionFilter = chunk.in_uint32_le();
 
                                         /*StaticOutStream<128> out_stream;
                                         rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
@@ -3263,6 +3239,21 @@ void log() {
         LOG(LOG_INFO, "          * SupportsObjects = %02x (1 byte)", this->SupportsObjects);
         LOG(LOG_INFO, "          * Padding - (1 byte) NOT USED");
         LOG(LOG_INFO, "          * VolumeLabel = \"%s\"", this->volume_label.c_str());
+    }
+
+hexdump_c(this->WriteData,  this->Length);
+    void log() {
+
+        LOG(LOG_INFO, "     File Directory Information:");
+        LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
+        LOG(LOG_INFO, "          * FileIndex       = 0x%08x (4 bytes)", this->FileIndex);
+        LOG(LOG_INFO, "          * CreationTime    = 0x%" PRIx64 " (8 bytes)", this->CreationTime);
+        LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime_);
+        LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime_);
+        LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
+        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes)", this->FileAttributes_);
+        LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->FileName.size()));
+        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->FileName.c_str());
     }
 
     static const char * get_PacketId_name(uint16_t packet_id) {

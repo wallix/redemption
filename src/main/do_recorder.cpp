@@ -755,6 +755,16 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
             ini.set<cfg::video::record_path>(outfile_path);
 
             ini.set<cfg::globals::movie_path>(&output_filename[0]);
+
+            char progress_filename[4096];
+            std::snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
+                    , outfile_path, outfile_basename);
+            UpdateProgressData update_progress_data(
+                progress_filename,
+                begin_record.tv_sec, end_record.tv_sec,
+                begin_capture.tv_sec, end_capture.tv_sec
+            );
+
             Capture capture(
                     ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                     , player.screen_rect.cx
@@ -767,7 +777,8 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , ini
                     , cctx
                     , gen
-                    , full_video);
+                    , full_video
+                    , &update_progress_data);
 
             if (capture.capture_png) {
                 if (png_width && png_height) {
@@ -784,14 +795,6 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                 capture.zoom(zoom);
             }
             player.add_consumer(&capture, &capture, &capture, &capture, &capture);
-
-            char progress_filename[4096];
-            std::snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
-                    , outfile_path, outfile_basename);
-
-            UpdateProgressData update_progress_data(
-                progress_filename, begin_record.tv_sec, end_record.tv_sec, begin_capture.tv_sec, end_capture.tv_sec
-            );
 
             if (update_progress_data.is_valid()) {
                 try {
@@ -1285,7 +1288,7 @@ int parse_command_line_options(int argc, char const ** argv, struct RecorderPara
     }
 
     if (options.count("config-file") > 0) {
-        ConfigurationLoader cfg_loader_full(ini.configuration_holder(), recorder.config_filename.c_str()); 
+        ConfigurationLoader cfg_loader_full(ini.configuration_holder(), recorder.config_filename.c_str());
     }
     else {
         recorder.config_filename = std::string(CFG_PATH "/" RDPPROXY_INI);
