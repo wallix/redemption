@@ -3524,7 +3524,8 @@ enum : uint32_t {
     FILE_ACTION_TUNNELLED_ID_COLLISION = 0x0000000B,
 };
 
-static const char * get_Action_name(uint32_t action) {
+static inline
+const char * get_Action_name(uint32_t action) {
 
     switch (action) {
         case FILE_ACTION_ADDED:                  return "FILE_ACTION_ADDED";
