@@ -22,10 +22,10 @@
 
 #include "widget.hpp"
 
-class WidgetRemoteDesktop : public Widget2
+class WidgetModuleHost : public Widget2
 {
 public:
-    WidgetRemoteDesktop(gdi::GraphicApi& drawable, Widget2& parent, NotifyApi* notifier, int group_id = 0)
+    WidgetModuleHost(gdi::GraphicApi& drawable, Widget2& parent, NotifyApi* notifier, int group_id = 0)
     : Widget2(drawable, parent, notifier, group_id)
     {
         this->tab_flag   = NORMAL_TAB;

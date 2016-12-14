@@ -23,7 +23,6 @@
 #include "mod/internal/internal_mod.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget2/notify_api.hpp"
-#include "mod/internal/widget2/remote_desktop.hpp"
 #include "mod/internal/widget2/widget_test.hpp"
 
 #include "configs/config_access.hpp"

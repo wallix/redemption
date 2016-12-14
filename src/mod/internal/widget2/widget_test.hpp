@@ -21,7 +21,7 @@
 #pragma once
 
 #include "mod/internal/widget2/composite.hpp"
-#include "mod/internal/widget2/remote_desktop.hpp"
+#include "mod/internal/widget2/module_host.hpp"
 #include "gdi/graphic_api.hpp"
 
 class WidgetTest : public WidgetParent
@@ -29,17 +29,17 @@ class WidgetTest : public WidgetParent
 private:
     CompositeArray composite_array;
 
-    WidgetRemoteDesktop remote_desktop;
+    WidgetModuleHost module_host;
 
 public:
     WidgetTest(gdi::GraphicApi& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
              Widget2& parent, NotifyApi* notifier)
         : WidgetParent(drawable, parent, notifier)
-        , remote_desktop(drawable, *this, this)
+        , module_host(drawable, *this, this)
     {
         this->impl = &composite_array;
 
-        this->add_widget(&this->remote_desktop);
+        this->add_widget(&this->module_host);
 
         this->move_size_widget(left, top, width, height);
     }
@@ -52,7 +52,7 @@ public:
         this->set_xy(left, top);
         this->set_wh(width, height);
 
-        this->remote_desktop.set_xy(left, top);
-        this->remote_desktop.set_wh(width, height);
+        this->module_host.set_xy(left, top);
+        this->module_host.set_wh(width, height);
     }
 };
