@@ -69,142 +69,125 @@ class PngCapture final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
     {
         timeval start_capture;
         std::chrono::microseconds frame_interval;
-        class LocalDrawableToFile
-        {
-        public:
-            Transport & trans;
-            unsigned zoom_factor;
-            unsigned scaled_width;
-            unsigned scaled_height;
 
-            Drawable & drawable;
+        Transport & trans;
+        unsigned zoom_factor;
+        unsigned scaled_width;
+        unsigned scaled_height;
 
-        private:
-            std::unique_ptr<uint8_t[]> scaled_buffer;
-
-        public:
-            LocalDrawableToFile(Transport & trans, Drawable & drawable)
-            : trans(trans)
-            , zoom_factor(100)
-            , scaled_width(drawable.width())
-            , scaled_height(drawable.height())
-            , drawable(drawable)
-            {}
-
-            ~LocalDrawableToFile() = default;
-
-            /// \param  percent  0 to 100 or 100 if greater
-            void zoom(unsigned percent) {
-                percent = std::min(percent, 100u);
-                const unsigned zoom_width = (this->drawable.width() * percent) / 100;
-                const unsigned zoom_height = (this->drawable.height() * percent) / 100;
-                this->zoom_factor = percent;
-                this->scaled_width = (zoom_width + 3) & 0xFFC;
-                this->scaled_height = zoom_height;
-                if (this->zoom_factor != 100) {
-                    this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
-                }
-            }
-
-            bool logical_frame_ended() const {
-                return this->drawable.logical_frame_ended;
-            }
-
-            void flush() {
-                if (this->zoom_factor == 100) {
-                    this->dump24();
-                }
-                else {
-                    this->scale_dump24();
-                }
-            }
-
-        private:
-            void dump24() const {
-                ::transport_dump_png24(
-                    this->trans, this->drawable.data(),
-                    this->drawable.width(), this->drawable.height(),
-                    this->drawable.rowsize(), true);
-            }
-
-            void scale_dump24() const {
-                scale_data(
-                    this->scaled_buffer.get(), this->drawable.data(),
-                    this->scaled_width, this->drawable.width(),
-                    this->scaled_height, this->drawable.height(),
-                    this->drawable.rowsize());
-                ::transport_dump_png24(
-                    this->trans, this->scaled_buffer.get(),
-                    this->scaled_width, this->scaled_height,
-                    this->scaled_width * 3, false);
-            }
-
-            static void scale_data(uint8_t *dest, const uint8_t *src,
-                                   unsigned int dest_width, unsigned int src_width,
-                                   unsigned int dest_height, unsigned int src_height,
-                                   unsigned int src_rowsize) {
-                const uint32_t Bpp = 3;
-                unsigned int y_pixels = dest_height;
-                unsigned int y_int_part = src_height / dest_height * src_rowsize;
-                unsigned int y_fract_part = src_height % dest_height;
-                unsigned int yE = 0;
-                unsigned int x_int_part = src_width / dest_width * Bpp;
-                unsigned int x_fract_part = src_width % dest_width;
-
-                while (y_pixels-- > 0) {
-                    unsigned int xE = 0;
-                    const uint8_t * x_src = src;
-                    unsigned int x_pixels = dest_width;
-                    while (x_pixels-- > 0) {
-                        dest[0] = x_src[2];
-                        dest[1] = x_src[1];
-                        dest[2] = x_src[0];
-
-                        dest += Bpp;
-                        x_src += x_int_part;
-                        xE += x_fract_part;
-                        if (xE >= dest_width) {
-                            xE -= dest_width;
-                            x_src += Bpp;
-                        }
-                    }
-                    src += y_int_part;
-                    yE += y_fract_part;
-                    if (yE >= dest_height) {
-                        yE -= dest_height;
-                        src += src_rowsize;
-                    }
-                }
-            }
-        } df;
+        Drawable & drawable;
+        std::unique_ptr<uint8_t[]> scaled_buffer;
 
     public:
         ImageCapture (const timeval & now, Drawable & drawable, Transport & trans,
             std::chrono::microseconds png_interval)
         : start_capture(now)
         , frame_interval(png_interval)
-        , df(trans, drawable)
+        , trans(trans)
+        , zoom_factor(100)
+        , scaled_width(drawable.width())
+        , scaled_height(drawable.height())
+        , drawable(drawable)
         {}
-
-        void zoom(unsigned percent) 
-        {
-            return this->df.zoom(percent);
-        }
 
         void breakpoint(const timeval & now)
         {
             tm ptm;
             localtime_r(&now.tv_sec, &ptm);
-            this->df.drawable.trace_timestamp(ptm);
+            this->drawable.trace_timestamp(ptm);
             this->flush_png();
-            this->df.drawable.clear_timestamp();
+            this->drawable.clear_timestamp();
         }
 
         void flush_png()
         {
-            this->df.flush();
-            this->df.trans.next();
+            this->flush();
+            this->trans.next();
         }
+
+        bool logical_frame_ended() const {
+            return this->drawable.logical_frame_ended;
+        }
+
+        void flush() {
+            if (this->zoom_factor == 100) {
+                this->dump24();
+            }
+            else {
+                this->scale_dump24();
+            }
+        }
+
+        void zoom(unsigned percent) {
+            percent = std::min(percent, 100u);
+            const unsigned zoom_width = (this->drawable.width() * percent) / 100;
+            const unsigned zoom_height = (this->drawable.height() * percent) / 100;
+            this->zoom_factor = percent;
+            this->scaled_width = (zoom_width + 3) & 0xFFC;
+            this->scaled_height = zoom_height;
+            if (this->zoom_factor != 100) {
+                this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
+            }
+        }
+
+        void dump24() const {
+            ::transport_dump_png24(
+                this->trans, this->drawable.data(),
+                this->drawable.width(), this->drawable.height(),
+                this->drawable.rowsize(), true);
+        }
+
+        void scale_dump24() const {
+            scale_data(
+                this->scaled_buffer.get(), this->drawable.data(),
+                this->scaled_width, this->drawable.width(),
+                this->scaled_height, this->drawable.height(),
+                this->drawable.rowsize());
+            ::transport_dump_png24(
+                this->trans, this->scaled_buffer.get(),
+                this->scaled_width, this->scaled_height,
+                this->scaled_width * 3, false);
+        }
+
+
+        static void scale_data(uint8_t *dest, const uint8_t *src,
+                               unsigned int dest_width, unsigned int src_width,
+                               unsigned int dest_height, unsigned int src_height,
+                               unsigned int src_rowsize) {
+            const uint32_t Bpp = 3;
+            unsigned int y_pixels = dest_height;
+            unsigned int y_int_part = src_height / dest_height * src_rowsize;
+            unsigned int y_fract_part = src_height % dest_height;
+            unsigned int yE = 0;
+            unsigned int x_int_part = src_width / dest_width * Bpp;
+            unsigned int x_fract_part = src_width % dest_width;
+
+            while (y_pixels-- > 0) {
+                unsigned int xE = 0;
+                const uint8_t * x_src = src;
+                unsigned int x_pixels = dest_width;
+                while (x_pixels-- > 0) {
+                    dest[0] = x_src[2];
+                    dest[1] = x_src[1];
+                    dest[2] = x_src[0];
+
+                    dest += Bpp;
+                    x_src += x_int_part;
+                    xE += x_fract_part;
+                    if (xE >= dest_width) {
+                        xE -= dest_width;
+                        x_src += Bpp;
+                    }
+                }
+                src += y_int_part;
+                yE += y_fract_part;
+                if (yE >= dest_height) {
+                    yE -= dest_height;
+                    src += src_rowsize;
+                }
+            }
+        }
+
 
         std::chrono::microseconds do_snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) 
         {
@@ -215,13 +198,13 @@ class PngCapture final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
             uint64_t const duration = difftimeval(now, this->start_capture);
             uint64_t const interval = this->frame_interval.count();
             if (duration >= interval) {
-                if (   this->df.logical_frame_ended()
+                if (   this->logical_frame_ended()
                     // Force snapshot if diff_time_val >= 1.5 x frame_interval.
                     || (duration >= interval * 3 / 2)) {
-                    this->df.drawable.trace_mouse();
+                    this->drawable.trace_mouse();
                     this->breakpoint(now);
                     this->start_capture = now;
-                    this->df.drawable.clear_mouse();
+                    this->drawable.clear_mouse();
 
                     return microseconds(interval ? interval - duration % interval : 0u);
                 }
@@ -231,20 +214,6 @@ class PngCapture final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
                 }
             }
             return microseconds(interval - duration);
-        }
-
-        void do_resume_capture(timeval const & now) {
-        }
-
-        void do_pause_capture(timeval const & now) {
-            // Draw Pause message
-            time_t rawtime = now.tv_sec;
-            tm ptm;
-            localtime_r(&rawtime, &ptm);
-            this->df.drawable.trace_pausetimestamp(ptm);
-            this->flush_png();
-            this->df.drawable.clear_pausetimestamp();
-            this->start_capture = now;
         }
     } ic;
 
@@ -276,17 +245,23 @@ private:
     }
 
     std::chrono::microseconds do_snapshot(
-        timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval
+        timeval const & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
-        return this->ic.do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        return this->ic.do_snapshot(now, x, y, ignore_frame_in_timeval);
     }
 
     void do_pause_capture(timeval const & now) override {
-        this->ic.do_pause_capture(now);
+        // Draw Pause message
+        time_t rawtime = now.tv_sec;
+        tm ptm;
+        localtime_r(&rawtime, &ptm);
+        this->ic.drawable.trace_pausetimestamp(ptm);
+        this->ic.flush_png();
+        this->ic.drawable.clear_pausetimestamp();
+        this->ic.start_capture = now;
     }
 
     void do_resume_capture(timeval const & now) override {
-        this->ic.do_resume_capture(now);
     }
 };
 
