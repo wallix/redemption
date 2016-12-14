@@ -53,7 +53,9 @@ public:
     ~mod_api() override {}
 
     virtual wait_obj& get_event() { return this->event; }
+
     virtual wait_obj * get_secondary_event() { return nullptr; }
+    virtual void process_secondary() {}
 
     virtual wait_obj * get_asynchronous_task_event(int & out_fd) { out_fd = -1; return nullptr; }
     virtual void process_asynchronous_task() {}

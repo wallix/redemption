@@ -3766,6 +3766,7 @@ public:
             }
         }
 
+/*
         //LOG(LOG_INFO, "mod_rdp::draw_event() session_probe_virtual_channel_p");
         try{
             if (this->session_probe_virtual_channel_p) {
@@ -3784,6 +3785,7 @@ public:
 
             this->event.signal = BACK_EVENT_NEXT;
         }
+*/
         //LOG(LOG_INFO, "mod_rdp::draw_event() done");
     }   // draw_event
 
@@ -3793,6 +3795,27 @@ public:
         }
 
         return nullptr;
+    }
+
+    void process_secondary() override {
+        //LOG(LOG_INFO, "mod_rdp::process_secondary() session_probe_virtual_channel_p");
+        try{
+            if (this->session_probe_virtual_channel_p) {
+                this->session_probe_virtual_channel_p->process_event();
+            }
+        }
+        catch (Error const & e) {
+            if (e.id != ERR_SESSION_PROBE_ENDING_IN_PROGRESS)
+                throw;
+
+            this->end_session_reason.clear();
+            this->end_session_message.clear();
+
+            this->acl->disconnect_target();
+            this->acl->set_auth_error_message(TR("session_logoff_in_progress", this->lang));
+
+            session_probe_virtual_channel_p->get_event()->signal = BACK_EVENT_NEXT;
+        }
     }
 
     // 1.3.1.3 Deactivation-Reactivation Sequence
