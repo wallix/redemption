@@ -153,23 +153,24 @@ public:
         tm ptm;
         localtime_r(&now.tv_sec, &ptm);
         this->drawable.trace_timestamp(ptm);
-        if (this->zoom_factor == 100) {
-            ::transport_dump_png24(
-                this->trans, this->drawable.data(),
-                this->drawable.width(), this->drawable.height(),
-                this->drawable.rowsize(), true);
-        }
-        else {
+        const uint8_t * buffer = this->drawable.data();
+        unsigned height = this->drawable.height();
+        unsigned width = this->drawable.width();
+        unsigned rowsize = this->drawable.rowsize();
+        bool bgr = true;
+        if (this->zoom_factor != 100) {
             scale_data(
-                this->scaled_buffer.get(), this->drawable.data(),
-                this->scaled_width, this->drawable.width(),
-                this->scaled_height, this->drawable.height(),
+                this->scaled_buffer.get(), buffer,
+                this->scaled_width, width,
+                this->scaled_height, height,
                 this->drawable.rowsize());
-            ::transport_dump_png24(
-                this->trans, this->scaled_buffer.get(),
-                this->scaled_width, this->scaled_height,
-                this->scaled_width * 3, false);
+            buffer = this->scaled_buffer.get();
+            height = this->drawable.height();
+            width = this->scaled_width;
+            rowsize = this->scaled_width * 3;
+            bgr = false;
         }
+        ::transport_dump_png24(this->trans, buffer, width, height, rowsize, bgr);
         this->trans.next();
         this->drawable.clear_timestamp();
     }
