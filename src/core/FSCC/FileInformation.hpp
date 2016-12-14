@@ -291,10 +291,14 @@ struct FileObjectBuffer_Type1 {                             // FSCTL_CREATE_OR_G
 
     void log() {
         LOG(LOG_INFO, "     File Object Buffer Type1:");
-        LOG(LOG_INFO, "          * ObjectId       (16 bytes)");
-        LOG(LOG_INFO, "          * BirthVolumeId  (16 bytes)");
-        LOG(LOG_INFO, "          * BirthObjectId  (16 bytes)");
-        LOG(LOG_INFO, "          * DomainId       (16 bytes)");
+        LOG(LOG_INFO, "          * ObjectId       (16 bytes):");
+        hexdump_c(this->ObjectId,  GUID_SIZE);
+        LOG(LOG_INFO, "          * BirthVolumeId  (16 bytes):");
+        hexdump_c(this->BirthVolumeId,  GUID_SIZE);
+        LOG(LOG_INFO, "          * BirthObjectId  (16 bytes):");
+        hexdump_c(this->BirthObjectId,  GUID_SIZE);
+        LOG(LOG_INFO, "          * DomainId       (16 bytes):");
+        hexdump_c(this->DomainId,  GUID_SIZE);
     }
 };
 
@@ -358,8 +362,10 @@ struct FileObjectBuffer_Type2 {                             // FSCTL_CREATE_OR_G
 
     void log() {
         LOG(LOG_INFO, "     File Object Buffer Type2:");
-        LOG(LOG_INFO, "          * ObjectId     (16 bytes)");
-        LOG(LOG_INFO, "          * ExtendedInfo (48 bytes)");
+        LOG(LOG_INFO, "          * ObjectId     (16 bytes):");
+        hexdump_c(this->ObjectId,  GUID_SIZE);
+        LOG(LOG_INFO, "          * ExtendedInfo (48 bytes):");
+        hexdump_c(this->ExtendedInfo,  this->ExtendedInfo_SIZE);
     }
 };
 
@@ -449,8 +455,10 @@ struct ReparseGUIDDataBuffer {
         LOG(LOG_INFO, "          * ReparseTag        = 0x%08x (4 bytes)", this->ReparseTag);
         LOG(LOG_INFO, "          * ReparseDataLength = %d (4 bytes)", int(this->ReparseDataLength));
         LOG(LOG_INFO, "          * Reserved - (2 bytes) NOT USED");
-        LOG(LOG_INFO, "          * ReparseGuid (16 bytes)");
-        LOG(LOG_INFO, "          * DataBuffer (%d bytes)", int(this->ReparseDataLength));
+        LOG(LOG_INFO, "          * ReparseGuid (16 bytes):");
+        hexdump_c(this->ReparseGuid,  GUID_SIZE);
+        LOG(LOG_INFO, "          * DataBuffer (%d bytes):", int(this->ReparseDataLength));
+        hexdump_c(this->DataBuffer,  this->ReparseDataLength);
     }
 };
 
@@ -531,7 +539,7 @@ struct FileAllocationInformation {
 
     void log() {
         LOG(LOG_INFO, "     File Allocation Information:");
-        LOG(LOG_INFO, "          * VolumeCreationTime = %" PRIu64 " (8 bytes)", this->AllocationSize);
+        LOG(LOG_INFO, "          * VolumeCreationTime = 0x%" PRIu64 " (8 bytes)", this->AllocationSize);
     }
 };
 
@@ -633,8 +641,8 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Attribute Tag Information:");
-        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes)", this->FileAttributes);
-        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes)", this->ReparseTag);
+        LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes)", this->FileAttributes);
+        LOG(LOG_INFO, "          * ReparseTag     = 0x%08x (4 bytes)", this->ReparseTag);
     }
 };
 
@@ -810,10 +818,10 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Basic Information:");
-        LOG(LOG_INFO, "          * CreationTime   = %" PRIx64 " (8 bytes)", this->CreationTime);
-        LOG(LOG_INFO, "          * LastAccessTime = %" PRIx64 " (8 bytes)", this->LastAccessTime_);
-        LOG(LOG_INFO, "          * LastWriteTime  = %" PRIx64 " (8 bytes)", this->LastWriteTime_);
-        LOG(LOG_INFO, "          * ChangeTime     = %" PRIx64 " (8 bytes)", this->ChangeTime);
+        LOG(LOG_INFO, "          * CreationTime   = 0x%" PRIx64 " (8 bytes)", this->CreationTime);
+        LOG(LOG_INFO, "          * LastAccessTime = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime_);
+        LOG(LOG_INFO, "          * LastWriteTime  = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime_);
+        LOG(LOG_INFO, "          * ChangeTime     = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
         LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes)", this->FileAttributes_);
     }
 };  // FileBasicInformation
@@ -1327,19 +1335,6 @@ public:
 
     inline uint64_t LastWriteTime() const { return this->LastWriteTime_; }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-
-    }
-
-public:
-    inline void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
-    }
-
     void log() {
         LOG(LOG_INFO, "     File Directory Information:");
         LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
@@ -1412,7 +1407,7 @@ struct FileDispositionInformation {
 
     void log() {
         LOG(LOG_INFO, "     File Disposition Information:");
-        LOG(LOG_INFO, "          * DeletePending = %02x (1 byte)", this->DeletePending);
+        LOG(LOG_INFO, "          * DeletePending = 0x%02x (1 byte)", this->DeletePending);
     }
 };
 
@@ -1486,7 +1481,7 @@ struct FileEndOfFileInformation {
 
     void log() {
         LOG(LOG_INFO, "     File EndOfFile Information:");
-        LOG(LOG_INFO, "          * EndOfFile = %" PRIx64 " (8 bytes)", this->EndOfFile);
+        LOG(LOG_INFO, "          * EndOfFile = 0x%" PRIx64 " (8 bytes)", this->EndOfFile);
     }
 };
 
@@ -2003,6 +1998,14 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    void log() {
+        LOG(LOG_INFO, "     File Directory Information:");
+        LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
+        LOG(LOG_INFO, "          * FileIndex       = 0x%08x (4 bytes)", this->FileIndex);
+        LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->file_name.size()));
+        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->file_name.c_str());
+    }
 };
 
 // [MS-FSCC] - 2.4.34 FileRenameInformation
@@ -2269,8 +2272,8 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Standard Information:");
-        LOG(LOG_INFO, "          * AllocationSize = %" PRIx64 " (8 bytes)", this->AllocationSize);
-        LOG(LOG_INFO, "          * EndOfFile      = %" PRIx64 " (8 bytes)", this->EndOfFile);
+        LOG(LOG_INFO, "          * AllocationSize = v%" PRIx64 " (8 bytes)", this->AllocationSize);
+        LOG(LOG_INFO, "          * EndOfFile      = 0x%" PRIx64 " (8 bytes)", this->EndOfFile);
         LOG(LOG_INFO, "          * NumberOfLinks  = 0x%08x (4 bytes)", this->NumberOfLinks);
         LOG(LOG_INFO, "          * DeletePending  = 0x%02x (1 byte)", this->DeletePending);
         LOG(LOG_INFO, "          * Directory      = 0x%02x (1 byte)", this->Directory);
@@ -2584,10 +2587,10 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Fs Attribute Information:");
-        LOG(LOG_INFO, "          * FileSystemAttributes = %08x (4 bytes): %s", this->FileSystemAttributes_, get_FileSystemAttributes_name(this->FileSystemAttributes_));
+        LOG(LOG_INFO, "          * FileSystemAttributes       = 0x%08x (4 bytes): %s", this->FileSystemAttributes_, get_FileSystemAttributes_name(this->FileSystemAttributes_));
         LOG(LOG_INFO, "          * MaximumComponentNameLength = %d (4 bytes)", int(this->MaximumComponentNameLength));
-        LOG(LOG_INFO, "          * FileSystemNameLength = %d (4 bytes)", int(this->file_system_name.size()));
-        LOG(LOG_INFO, "          * FileSystemName = \"%s\"", this->file_system_name.c_str());
+        LOG(LOG_INFO, "          * FileSystemNameLength       = %d (4 bytes)", int(this->file_system_name.size()));
+        LOG(LOG_INFO, "          * FileSystemName             = \"%s\"", this->file_system_name.c_str());
     }
 };  // FileFsAttributeInformation
 
@@ -2734,11 +2737,11 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Fs Full Size Information:");
-        LOG(LOG_INFO, "          * TotalAllocationUnits = %" PRIx64 " (8 bytes)", this->TotalAllocationUnits);
-        LOG(LOG_INFO, "          * CallerAvailableAllocationUnits = %" PRIx64 " (8 bytes)", this->CallerAvailableAllocationUnits);
-        LOG(LOG_INFO, "          * ActualAvailableAllocationUnits = %" PRIx64 " (8 bytes)", this->ActualAvailableAllocationUnits);
-        LOG(LOG_INFO, "          * SectorsPerAllocationUnit = %d (4 bytes)", int(SectorsPerAllocationUnit));
-        LOG(LOG_INFO, "          * BytesPerSector = %d (4 bytes)", int(BytesPerSector));
+        LOG(LOG_INFO, "          * TotalAllocationUnits           = 0x%" PRIx64 " (8 bytes)", this->TotalAllocationUnits);
+        LOG(LOG_INFO, "          * CallerAvailableAllocationUnits = 0x%" PRIx64 " (8 bytes)", this->CallerAvailableAllocationUnits);
+        LOG(LOG_INFO, "          * ActualAvailableAllocationUnits = 0x%" PRIx64 " (8 bytes)", this->ActualAvailableAllocationUnits);
+        LOG(LOG_INFO, "          * SectorsPerAllocationUnit       = %d (4 bytes)", int(SectorsPerAllocationUnit));
+        LOG(LOG_INFO, "          * BytesPerSector                 = %d (4 bytes)", int(BytesPerSector));
     }
 };
 
@@ -2868,9 +2871,9 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Fs Size Information:");
-        LOG(LOG_INFO, "          * TotalAllocationUnits     = %" PRIx64 " (8 bytes)", this->TotalAllocationUnits);
-        LOG(LOG_INFO, "          * AvailableAllocationUnits = %" PRIx64 " (8 bytes)", this->AvailableAllocationUnits);
-        LOG(LOG_INFO, "          * SectorsPerAllocationUnit = %08x (4 byte)", this->SectorsPerAllocationUnit);
+        LOG(LOG_INFO, "          * TotalAllocationUnits     = 0x%" PRIx64 " (8 bytes)", this->TotalAllocationUnits);
+        LOG(LOG_INFO, "          * AvailableAllocationUnits = 0x%" PRIx64 " (8 bytes)", this->AvailableAllocationUnits);
+        LOG(LOG_INFO, "          * SectorsPerAllocationUnit = 0x%08x (4 byte)", this->SectorsPerAllocationUnit);
         LOG(LOG_INFO, "          * BytesPerSector           = %d (4 bytes)", int(this->BytesPerSector));
     }
 };
@@ -3066,10 +3069,10 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Fs Volume Information:");
-        LOG(LOG_INFO, "          * VolumeCreationTime = %" PRIx64 " (8 bytes)", this->VolumeCreationTime);
-        LOG(LOG_INFO, "          * VolumeSerialNumber = %08x (4 bytes)", this->VolumeSerialNumber);
+        LOG(LOG_INFO, "          * VolumeCreationTime = 0x%" PRIx64 " (8 bytes)", this->VolumeCreationTime);
+        LOG(LOG_INFO, "          * VolumeSerialNumber = 0x%08x (4 bytes)", this->VolumeSerialNumber);
         LOG(LOG_INFO, "          * VolumeLabelLength  = %d (4 bytes)", int(this->volume_label.size()));
-        LOG(LOG_INFO, "          * SupportsObjects    = %02x (1 byte)", this->SupportsObjects);
+        LOG(LOG_INFO, "          * SupportsObjects    = 0x%02x (1 byte)", this->SupportsObjects);
         LOG(LOG_INFO, "          * Padding - (1 byte) NOT USED");
         LOG(LOG_INFO, "          * VolumeLabel        = \"%s\"", this->volume_label.c_str());
     }
@@ -3269,8 +3272,8 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Fs Device Information:");
-        LOG(LOG_INFO, "          * DeviceType = %08x (4 bytes): %s", this->DeviceType, this->get_DeviceType_name(this->DeviceType));
-        LOG(LOG_INFO, "          * Characteristics = %08x (4 bytes)", this->Characteristics);
+        LOG(LOG_INFO, "          * DeviceType      = 0x%08x (4 bytes): %s", this->DeviceType, this->get_DeviceType_name(this->DeviceType));
+        LOG(LOG_INFO, "          * Characteristics = 0x%08x (4 bytes)", this->Characteristics);
     }
 };
 
