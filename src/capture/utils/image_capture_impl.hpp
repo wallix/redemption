@@ -38,15 +38,13 @@ class PngCapture final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
         OutFilenameSequenceTransport trans;
         bool enable_rt;
         uint32_t num_start = 0;
-        unsigned png_limit;
 
         ImageTransportBuilder(
             const char * path, const char * basename, int groupid,
-            auth_api * authentifier, uint32_t png_limit)
+            auth_api * authentifier)
         : trans(
             FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
             path, basename, ".png", groupid, authentifier)
-        , png_limit(0)
         {}
 
         ~ImageTransportBuilder() {
@@ -254,10 +252,9 @@ public:
     PngCapture(
         const timeval & now, auth_api * authentifier, Drawable & drawable,
         const char * record_tmp_path, const char * basename, int groupid,
-        std::chrono::microseconds png_interval,
-        uint32_t png_limit)
+        std::chrono::microseconds png_interval)
     : png_interval(png_interval)
-    , trans_builder(record_tmp_path, basename, groupid, authentifier, png_limit)
+    , trans_builder(record_tmp_path, basename, groupid, authentifier)
     , ic(now, drawable, this->trans_builder.get_transport(), png_interval)
     {}
 

@@ -271,8 +271,7 @@ public:
                     this->psc.reset(new Image(
                         now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,
-                        ini.get<cfg::video::png_interval>(),
-                        ini.get<cfg::video::png_limit>()
+                        ini.get<cfg::video::png_interval>()
                     ));
                 }
             }
