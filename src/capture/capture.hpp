@@ -269,7 +269,7 @@ public:
                 }
                 else if (force_capture_png_if_enable) {
                     this->psc.reset(new Image(
-                        now, false, authentifier, this->gd->impl(),
+                        now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,
                         ini.get<cfg::video::png_interval>(),
                         ini.get<cfg::video::png_limit>()
