@@ -31,6 +31,44 @@
 #include "apis_register.hpp"
 
 
+static void scale_data(uint8_t *dest, const uint8_t *src,
+                       unsigned int dest_width, unsigned int src_width,
+                       unsigned int dest_height, unsigned int src_height,
+                       unsigned int src_rowsize) {
+    const uint32_t Bpp = 3;
+    unsigned int y_pixels = dest_height;
+    unsigned int y_int_part = src_height / dest_height * src_rowsize;
+    unsigned int y_fract_part = src_height % dest_height;
+    unsigned int yE = 0;
+    unsigned int x_int_part = src_width / dest_width * Bpp;
+    unsigned int x_fract_part = src_width % dest_width;
+
+    while (y_pixels-- > 0) {
+        unsigned int xE = 0;
+        const uint8_t * x_src = src;
+        unsigned int x_pixels = dest_width;
+        while (x_pixels-- > 0) {
+            dest[0] = x_src[2];
+            dest[1] = x_src[1];
+            dest[2] = x_src[0];
+
+            dest += Bpp;
+            x_src += x_int_part;
+            xE += x_fract_part;
+            if (xE >= dest_width) {
+                xE -= dest_width;
+                x_src += Bpp;
+            }
+        }
+        src += y_int_part;
+        yE += y_fract_part;
+        if (yE >= dest_height) {
+            yE -= dest_height;
+            src += src_rowsize;
+        }
+    }
+}
+
 class PngCapture final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
 {
     struct ImageTransportBuilder final : private Transport
@@ -95,27 +133,14 @@ class PngCapture final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
             tm ptm;
             localtime_r(&now.tv_sec, &ptm);
             this->drawable.trace_timestamp(ptm);
-            this->flush_png();
-            this->drawable.clear_timestamp();
-        }
-
-        void flush_png()
-        {
-            this->flush();
-            this->trans.next();
-        }
-
-        bool logical_frame_ended() const {
-            return this->drawable.logical_frame_ended;
-        }
-
-        void flush() {
             if (this->zoom_factor == 100) {
                 this->dump24();
             }
             else {
                 this->scale_dump24();
             }
+            this->trans.next();
+            this->drawable.clear_timestamp();
         }
 
         void zoom(unsigned percent) {
@@ -149,72 +174,6 @@ class PngCapture final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
                 this->scaled_width * 3, false);
         }
 
-
-        static void scale_data(uint8_t *dest, const uint8_t *src,
-                               unsigned int dest_width, unsigned int src_width,
-                               unsigned int dest_height, unsigned int src_height,
-                               unsigned int src_rowsize) {
-            const uint32_t Bpp = 3;
-            unsigned int y_pixels = dest_height;
-            unsigned int y_int_part = src_height / dest_height * src_rowsize;
-            unsigned int y_fract_part = src_height % dest_height;
-            unsigned int yE = 0;
-            unsigned int x_int_part = src_width / dest_width * Bpp;
-            unsigned int x_fract_part = src_width % dest_width;
-
-            while (y_pixels-- > 0) {
-                unsigned int xE = 0;
-                const uint8_t * x_src = src;
-                unsigned int x_pixels = dest_width;
-                while (x_pixels-- > 0) {
-                    dest[0] = x_src[2];
-                    dest[1] = x_src[1];
-                    dest[2] = x_src[0];
-
-                    dest += Bpp;
-                    x_src += x_int_part;
-                    xE += x_fract_part;
-                    if (xE >= dest_width) {
-                        xE -= dest_width;
-                        x_src += Bpp;
-                    }
-                }
-                src += y_int_part;
-                yE += y_fract_part;
-                if (yE >= dest_height) {
-                    yE -= dest_height;
-                    src += src_rowsize;
-                }
-            }
-        }
-
-
-        std::chrono::microseconds do_snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) 
-        {
-            (void)x;
-            (void)y;
-            (void)ignore_frame_in_timeval;
-            using std::chrono::microseconds;
-            uint64_t const duration = difftimeval(now, this->start_capture);
-            uint64_t const interval = this->frame_interval.count();
-            if (duration >= interval) {
-                if (   this->logical_frame_ended()
-                    // Force snapshot if diff_time_val >= 1.5 x frame_interval.
-                    || (duration >= interval * 3 / 2)) {
-                    this->drawable.trace_mouse();
-                    this->breakpoint(now);
-                    this->start_capture = now;
-                    this->drawable.clear_mouse();
-
-                    return microseconds(interval ? interval - duration % interval : 0u);
-                }
-                else {
-                    // Wait 0.3 x frame_interval.
-                    return this->frame_interval / 3;
-                }
-            }
-            return microseconds(interval - duration);
-        }
     } ic;
 
 public:
@@ -247,7 +206,29 @@ private:
     std::chrono::microseconds do_snapshot(
         timeval const & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
-        return this->ic.do_snapshot(now, x, y, ignore_frame_in_timeval);
+        (void)x;
+        (void)y;
+        (void)ignore_frame_in_timeval;
+        using std::chrono::microseconds;
+        uint64_t const duration = difftimeval(now, this->ic.start_capture);
+        uint64_t const interval = this->ic.frame_interval.count();
+        if (duration >= interval) {
+            if (this->ic.drawable.logical_frame_ended
+                // Force snapshot if diff_time_val >= 1.5 x frame_interval.
+                || (duration >= interval * 3 / 2)) {
+                this->ic.drawable.trace_mouse();
+                this->ic.breakpoint(now);
+                this->ic.start_capture = now;
+                this->ic.drawable.clear_mouse();
+
+                return microseconds(interval ? interval - duration % interval : 0u);
+            }
+            else {
+                // Wait 0.3 x frame_interval.
+                return this->ic.frame_interval / 3;
+            }
+        }
+        return microseconds(interval - duration);
     }
 
     void do_pause_capture(timeval const & now) override {
@@ -256,7 +237,13 @@ private:
         tm ptm;
         localtime_r(&rawtime, &ptm);
         this->ic.drawable.trace_pausetimestamp(ptm);
-        this->ic.flush_png();
+        if (this->ic.zoom_factor == 100) {
+            this->ic.dump24();
+        }
+        else {
+            this->ic.scale_dump24();
+        }
+        this->trans.next();
         this->ic.drawable.clear_pausetimestamp();
         this->ic.start_capture = now;
     }
