@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
         player.screen_rect.cx,
         player.screen_rect.cy,
         24,
-        bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression, 1000
+        bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression
     );
     NativeCapture wrm_recorder(graphic_to_file, player.record_now, std::chrono::seconds{1}, std::chrono::seconds{20});
 
@@ -118,15 +118,13 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     ::unlink(filename);
 
     filename = out_wrm_trans.seqgen()->get(0);
-    BOOST_CHECK_EQUAL(490806, ::filesize(filename));        // 490486
+    BOOST_CHECK_EQUAL(490454, ::filesize(filename));
     ::unlink(filename);
     filename = out_wrm_trans.seqgen()->get(1);
-//    BOOST_CHECK_EQUAL(1247534, ::filesize(filename));
-    BOOST_CHECK_EQUAL(1009341, ::filesize(filename));              // 1008349
+    BOOST_CHECK_EQUAL(1008253, ::filesize(filename));
     ::unlink(filename);
     filename = out_wrm_trans.seqgen()->get(2);
-//    BOOST_CHECK_EQUAL(363538, ::filesize(filename));
-    BOOST_CHECK_EQUAL(196076, ::filesize(filename));              // 195820
+    BOOST_CHECK_EQUAL(195756, ::filesize(filename));
     ::unlink(filename);
 }
 

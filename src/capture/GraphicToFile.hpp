@@ -23,6 +23,7 @@
 
 #include "utils/colors.hpp"
 #include "utils/compression_transport_builder.hpp"
+#include "utils/difftimeval.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/RDPSerializer.hpp"
 #include "core/RDP/share.hpp"
@@ -40,6 +41,8 @@
 #include "utils/stream.hpp"
 #include "transport/transport.hpp"
 #include "wrm_label.hpp"
+
+#include <chrono>
 
 
 inline void send_wrm_chunk(Transport & t, uint16_t chunktype, uint16_t data_size, uint16_t count)
@@ -386,9 +389,9 @@ class GraphicToFile
     StaticOutStream<65536> buffer_stream_orders;
     StaticOutStream<65536> buffer_stream_bitmaps;
 
-    const int delta_time;
-    timeval last_sent_timer;
+    const std::chrono::microseconds delta_time = std::chrono::seconds(1);
     timeval timer;
+    timeval last_sent_timer;
     const uint16_t width;
     const uint16_t height;
     uint16_t mouse_x;
@@ -416,7 +419,6 @@ public:
                 , PointerCache & ptr_cache
                 , gdi::DumpPng24Api & dump_png24
                 , WrmCompressionAlgorithm wrm_compression_algorithm
-                , const int delta_time
                 , SendInput send_input = SendInput::NO
                 , Verbose verbose = Verbose::none)
     : RDPSerializer( this->buffer_stream_orders, this->buffer_stream_bitmaps, capture_bpp
@@ -424,9 +426,8 @@ public:
     , compression_bullder(trans, wrm_compression_algorithm)
     , trans_target(trans)
     , trans(this->compression_bullder.get())
-    , delta_time(delta_time)
-    , last_sent_timer()
     , timer(now)
+    , last_sent_timer{0, 0}
     , width(width)
     , height(height)
     , mouse_x(0)
@@ -441,8 +442,6 @@ public:
                , static_cast<unsigned>(wrm_compression_algorithm));
         }
 
-        last_sent_timer.tv_sec = 0;
-        last_sent_timer.tv_usec = 0;
         this->order_count = 0;
 
         this->send_meta_chunk();
@@ -456,9 +455,7 @@ public:
     /// \brief Update timestamp but send nothing, the timestamp will be sent later with the next effective event
     void timestamp(const timeval& now)
     {
-        uint64_t old_timer = this->timer.tv_sec * 1000000ULL + this->timer.tv_usec;
-        uint64_t current_timer = now.tv_sec * 1000000ULL + now.tv_usec;
-        if (old_timer < current_timer) {
+        if (this->timer < now) {
             this->flush_orders();
             this->flush_bitmaps();
             this->timer = now;
@@ -624,25 +621,17 @@ public:
         this->send_caches_chunk();
     }
 
-protected:
-
-    bool timeval_comp(timeval a, timeval b) {
-
-        int sec = a.tv_sec - b.tv_sec;
-        int usec = a.tv_usec - b.tv_usec;
-        if (sec > 0) {
-            return true;
-        }
-        if ( (sec == 0) && (usec > this->delta_time) ) {
-            return true;
-        }
-
-        return false;
+private:
+    std::chrono::microseconds elapsed_time() const
+    {
+        using us = std::chrono::microseconds;
+        return us(ustime(this->timer)) - us(ustime(this->last_sent_timer));
     }
 
+protected:
     void flush_orders() override {
         if (this->order_count > 0) {
-            if (timeval_comp(this->timer, this->last_sent_timer)) {
+            if (this->elapsed_time() >= delta_time) {
                 this->send_timestamp_chunk();
             }
             this->send_orders_chunk();
@@ -661,7 +650,7 @@ public:
 protected:
     void flush_bitmaps() override {
         if (this->bitmap_count > 0) {
-            if (timeval_comp(this->timer, this->last_sent_timer)) {
+            if (this->elapsed_time() >= delta_time) {
                 this->send_timestamp_chunk();
             }
             this->send_bitmaps_chunk();
