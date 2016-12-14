@@ -63,7 +63,7 @@ struct LocallyIntegrableMod : public InternalMod {
         return &this->secondary_event;
     }
 
-    void process_secondary() override {
+    void process_secondary(time_t, gdi::GraphicApi&) override {
         if (this->secondary_event.object_and_time &&
             this->secondary_event.waked_up_by_time) {
             this->cancel_double_click_detection();

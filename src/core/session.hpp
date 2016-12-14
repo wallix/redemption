@@ -285,21 +285,21 @@ public:
                                                                          asynchronous_task_event->is_set(asynchronous_task_fd,
                                                                                 rfds));
                             if (asynchronous_task_event_is_set) {
-                                mm.mod->process_asynchronous_task();
+                                mm.mod->process_asynchronous_task(now, mm.get_graphic_wrapper(*this->front));
                             }
 
                             session_probe_launcher_event = mm.mod->get_session_probe_launcher_event();
                             const bool session_probe_launcher_event_is_set = (session_probe_launcher_event &&
                                                                               session_probe_launcher_event->is_set(asynchronous_task_fd, rfds));
                             if (session_probe_launcher_event_is_set) {
-                                mm.mod->process_session_probe_launcher();
+                                mm.mod->process_session_probe_launcher(now, mm.get_graphic_wrapper(*this->front));
                             }
 
                                        secondary_event        = mm.mod->get_secondary_event();
                             const bool secondary_event_is_set = (secondary_event &&
                                                                  secondary_event->is_set(INVALID_SOCKET, rfds));
                             if (secondary_event_is_set) {
-                                mm.mod->process_secondary();
+                                mm.mod->process_secondary(now, mm.get_graphic_wrapper(*this->front));
 
                                 if (secondary_event->signal != BACK_EVENT_NONE) {
                                     signal = secondary_event->signal;

@@ -55,13 +55,13 @@ public:
     virtual wait_obj& get_event() { return this->event; }
 
     virtual wait_obj * get_secondary_event() { return nullptr; }
-    virtual void process_secondary() {}
+    virtual void process_secondary(time_t, gdi::GraphicApi&) {}
 
     virtual wait_obj * get_asynchronous_task_event(int & out_fd) { out_fd = -1; return nullptr; }
-    virtual void process_asynchronous_task() {}
+    virtual void process_asynchronous_task(time_t, gdi::GraphicApi&) {}
 
     virtual wait_obj * get_session_probe_launcher_event() { return nullptr; }
-    virtual void process_session_probe_launcher() {}
+    virtual void process_session_probe_launcher(time_t, gdi::GraphicApi&) {}
 
     virtual void send_to_front_channel(const char * const mod_channel_name,
         uint8_t const * data, size_t length, size_t chunk_size, int flags) = 0;

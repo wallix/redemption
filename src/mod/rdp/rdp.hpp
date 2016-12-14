@@ -1633,7 +1633,7 @@ public:
         return &this->asynchronous_task_event;
     }
 
-    void process_asynchronous_task() override {
+    void process_asynchronous_task(time_t, gdi::GraphicApi&) override {
         if (!this->asynchronous_tasks.front()->run(this->asynchronous_task_event)) {
             this->asynchronous_tasks.pop_front();
         }
@@ -1654,7 +1654,7 @@ public:
         return nullptr;
     }
 
-    void process_session_probe_launcher() override {
+    void process_session_probe_launcher(time_t, gdi::GraphicApi&) override {
         if (this->session_probe_launcher) {
             this->session_probe_launcher->on_event();
         }
@@ -3797,7 +3797,7 @@ public:
         return nullptr;
     }
 
-    void process_secondary() override {
+    void process_secondary(time_t, gdi::GraphicApi&) override {
         //LOG(LOG_INFO, "mod_rdp::process_secondary() session_probe_virtual_channel_p");
         try{
             if (this->session_probe_virtual_channel_p) {

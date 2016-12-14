@@ -571,14 +571,17 @@ private:
         wait_obj * get_asynchronous_task_event(int & out_fd) override
         { return this->mm.internal_mod->get_asynchronous_task_event(out_fd); }
 
-        void process_asynchronous_task() override
-        { this->mm.internal_mod->process_asynchronous_task(); }
+        void process_secondary(time_t now, gdi::GraphicApi & drawable) override
+        { this->mm.internal_mod->process_secondary(now, drawable); }
+
+        void process_asynchronous_task(time_t now, gdi::GraphicApi & drawable) override
+        { this->mm.internal_mod->process_asynchronous_task(now, drawable); }
 
         wait_obj * get_session_probe_launcher_event() override
         { return this->mm.internal_mod->get_session_probe_launcher_event(); }
 
-        void process_session_probe_launcher() override
-        { this->mm.internal_mod->process_session_probe_launcher(); }
+        void process_session_probe_launcher(time_t now, gdi::GraphicApi & drawable) override
+        { this->mm.internal_mod->process_session_probe_launcher(now, drawable); }
 
         void send_to_front_channel(const char * const mod_channel_name,
             uint8_t const * data, size_t length, size_t chunk_size, int flags) override
