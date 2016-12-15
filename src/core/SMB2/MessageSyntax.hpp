@@ -724,9 +724,9 @@ struct ChangeNotifyResponse {
 
     void log() {
         LOG(LOG_INFO, "     File Disposition Information:");
-        LOG(LOG_INFO, "          * StructureSize      = %d (2 bytes)", this->StructureSize);
-        LOG(LOG_INFO, "          * OutputBufferOffset = %d (2 bytes)", this->OutputBufferOffset);
-        LOG(LOG_INFO, "          * OutputBufferLength = %d (4 bytes)", this->OutputBufferLength);
+        LOG(LOG_INFO, "          * StructureSize      = %d (2 bytes)", int(this->StructureSize));
+        LOG(LOG_INFO, "          * OutputBufferOffset = %d (2 bytes)", int(this->OutputBufferOffset));
+        LOG(LOG_INFO, "          * OutputBufferLength = %d (4 bytes)", int(this->OutputBufferLength));
     }
 };
 

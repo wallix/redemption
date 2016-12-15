@@ -531,10 +531,10 @@ struct CapabilityHeader {
     }
 
     void log() {
-        LOG(LOG_INFO, "Capability Header:");
-        LOG(LOG_INFO, "     * CapabilityType   = 0x%04x (2 bytes): %s", this->CapabilityType, get_CapabilityType_name(this->CapabilityType));
-        LOG(LOG_INFO, "     * CapabilityLength = %d (2 bytes)", this->CapabilityLength);
-        LOG(LOG_INFO, "     * Version          = 0x%08x (4 bytes): %s", this->Version, get_CapabilityVersion_name(this->Version));
+        LOG(LOG_INFO, "     Capability Header:");
+        LOG(LOG_INFO, "          * CapabilityType   = 0x%04x (2 bytes): %s", this->CapabilityType, get_CapabilityType_name(this->CapabilityType));
+        LOG(LOG_INFO, "          * CapabilityLength = %d (2 bytes)", this->CapabilityLength);
+        LOG(LOG_INFO, "          * Version          = 0x%08x (4 bytes): %s", this->Version, get_CapabilityVersion_name(this->Version));
     }
 };
 
@@ -776,6 +776,7 @@ public:
             }
         }
 
+
         this->device_data = {stream.get_current(), DeviceDataLength};
         stream.in_skip_bytes(DeviceDataLength);
     }
@@ -786,6 +787,15 @@ public:
 
     const char * PreferredDosName() const {
         return ::char_ptr_cast(this->PreferredDosName_);
+    }
+
+    const char * DeviceData() const {
+        return ::char_ptr_cast(this->device_data.p);
+    }
+
+    size_t DeviceDataLength() const {
+        return this->device_data.sz /* DeviceData(variable) */
+            ;
     }
 
     size_t size() const {
@@ -1068,11 +1078,11 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     Device I\\O Request:");
-        LOG(LOG_INFO, "          * DeviceId      = %08x (4 bytes)", this->DeviceId_);
-        LOG(LOG_INFO, "          * FileId        = %08x (4 bytes)", this->FileId_);
-        LOG(LOG_INFO, "          * CompletionId  = %08x (4 bytes)", this->CompletionId_);
-        LOG(LOG_INFO, "          * MajorFunction = %08x (4 bytes): %s", this->MajorFunction_, get_MajorFunction_name(this->MajorFunction_));
-        LOG(LOG_INFO, "          * MinorFunction = %08x (4 bytes): %s", this->MinorFunction_, get_MinorFunction_name(this->MinorFunction_));
+        LOG(LOG_INFO, "          * DeviceId      = 0x%08x (4 bytes)", this->DeviceId_);
+        LOG(LOG_INFO, "          * FileId        = 0x%08x (4 bytes)", this->FileId_);
+        LOG(LOG_INFO, "          * CompletionId  = 0x%08x (4 bytes)", this->CompletionId_);
+        LOG(LOG_INFO, "          * MajorFunction = 0x%08x (4 bytes): %s", this->MajorFunction_, get_MajorFunction_name(this->MajorFunction_));
+        LOG(LOG_INFO, "          * MinorFunction = 0x%08x (4 bytes): %s", this->MinorFunction_, get_MinorFunction_name(this->MinorFunction_));
     }
 };
 
@@ -1302,7 +1312,7 @@ public:
     void log() {
         LOG(LOG_INFO, "     Device Create Request:");
         LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes)", this->DesiredAccess_);
-        LOG(LOG_INFO, "          * AllocationSize    = %" PRIu64 " (8 bytes)", this->AllocationSize);
+        LOG(LOG_INFO, "          * AllocationSize    = 0x%" PRIu64 " (8 bytes)", this->AllocationSize);
         LOG(LOG_INFO, "          * FileAttributes    = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
         LOG(LOG_INFO, "          * SharedAccess      = 0x%08x (4 bytes): %s", int(this->SharedAccess),  smb2::get_ShareAccess_name(this->SharedAccess));
         LOG(LOG_INFO, "          * CreateDisposition = 0x%08x (4 bytes): %s", int(this->CreateDisposition_), smb2::get_CreateDisposition_name(this->CreateDisposition_));
@@ -1584,7 +1594,7 @@ struct DeviceWriteRequest {
 
     uint32_t  Length = 0;
     uint64_t  Offset = 0;
-    uint8_t const * WriteData;
+    uint8_t const * WriteData = nullptr;
 
     DeviceWriteRequest() = default;
 
@@ -1607,7 +1617,7 @@ struct DeviceWriteRequest {
         this->Length = stream.in_uint32_le();
         this->Offset = stream.in_uint64_le();
         stream.in_skip_bytes(20);
-        this->WriteData = stream.get_data();
+        this->WriteData = stream.get_current();
     }
 
     void log() {
@@ -1615,8 +1625,10 @@ struct DeviceWriteRequest {
         LOG(LOG_INFO, "          * Length = %d (4 bytes)", int(this->Length));
         LOG(LOG_INFO, "          * Offset = 0x%" PRIx64 " (8 bytes)", this->Offset);
         LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
-        LOG(LOG_INFO, "          * WriteData: array size = Length: %d byte(s)", int(this->Length));
-        hexdump_c(this->WriteData,  this->Length);
+        //LOG(LOG_INFO, "          * WriteData: array size = Length: %d byte(s)", int(this->Length));
+        std::string str(reinterpret_cast<char const *>(this->WriteData), this->Length);
+        LOG(LOG_INFO, "          * ReadData = \"%s\"", str.c_str());
+        //hexdump_c(this->WriteData,  this->Length);
 
     }
 };
@@ -1950,8 +1962,8 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     Device I\\O Response:");
-        LOG(LOG_INFO, "          * DeviceId     = %d (4 bytes)", this->DeviceId_);
-        LOG(LOG_INFO, "          * CompletionId = %d (4 bytes)", this->CompletionId_);
+        LOG(LOG_INFO, "          * DeviceId     = 0x%08x (4 bytes)", this->DeviceId_);
+        LOG(LOG_INFO, "          * CompletionId = 0x%08x (4 bytes)", this->CompletionId_);
         LOG(LOG_INFO, "          * IoStatus     = 0x%08x (4 bytes)", this->IoStatus_);
     }
 };
@@ -2287,7 +2299,7 @@ struct DeviceWriteResponse {
 
     void log() {
         LOG(LOG_INFO, "     Device Read Response:");
-        LOG(LOG_INFO, "          * Length      = %d (4 bytes)", this->Length);
+        LOG(LOG_INFO, "          * Length = %d (4 bytes)", this->Length);
         LOG(LOG_INFO, "          * Padding - (1 byte) NOT USED");
     }
 };
@@ -3041,6 +3053,20 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    void log() {
+        LOG(LOG_INFO, "     General Capability Set:");
+        LOG(LOG_INFO, "          * osType               = 0x%08x (4 bytes)", this->osType);
+        LOG(LOG_INFO, "          * osVersion            = 0x%08x (4 bytes)", this->osVersion);
+        LOG(LOG_INFO, "          * protocolMajorVersion = 0x%04x (2 bytes)", this->protocolMajorVersion);
+        LOG(LOG_INFO, "          * protocolMinorVersion = 0x%04x (2 bytes)", this->protocolMinorVersion);
+        LOG(LOG_INFO, "          * ioCode1              = 0x%08x (4 bytes)", this->ioCode1);
+        LOG(LOG_INFO, "          * ioCode2              = 0x%08x (4 bytes)", this->ioCode2);
+        LOG(LOG_INFO, "          * extendedPDU          = 0x%08x (4 bytes)", this->extendedPDU_);
+        LOG(LOG_INFO, "          * extraFlags1          = 0x%08x (4 bytes)", this->extraFlags1_);
+        LOG(LOG_INFO, "          * extraFlags2          = 0x%08x (4 bytes)", this->extraFlags2);
+        LOG(LOG_INFO, "          * SpecialTypeDeviceCap = 0x%08x (4 bytes)", this->SpecialTypeDeviceCap);
+    }
 };  // GeneralCapabilitySet
 
 // [MS-RDPEFS] - 2.2.2.9 Client Device List Announce Request
@@ -3551,7 +3577,7 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     Server Driv eQuery Volume Information Request:");
-        LOG(LOG_INFO, "          * FsInformationClass = %08x (4 bytes): %s", this->FsInformationClass_, get_FsInformationClass_name(this->FsInformationClass_));
+        LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes): %s", this->FsInformationClass_, get_FsInformationClass_name(this->FsInformationClass_));
         LOG(LOG_INFO, "          * Length             = %d (4 bytes)", int(this->query_volume_buffer.sz));
         LOG(LOG_INFO, "          * Padding - (4 bytes) NOT USED");
     }
@@ -3792,7 +3818,7 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     Server Drive Set Information Request:");
-        LOG(LOG_INFO, "          * FsInformationClass = %08x (4 bytes): %s", this->FsInformationClass_, get_FsInformationClass_name(this->FsInformationClass_));
+        LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes): %s", this->FsInformationClass_, get_FsInformationClass_name(this->FsInformationClass_));
         LOG(LOG_INFO, "          * Length = %d (4 bytes)", int(this->Length_));
         LOG(LOG_INFO, "          * Padding - (24 bytes) NOT USED");
     }
@@ -4154,8 +4180,8 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     Server Drive Query Directory Request:");
-        LOG(LOG_INFO, "          * FsInformationClass = %08x (4 bytes): %s", this->FsInformationClass_, this->get_FsInformationClass_name(this->FsInformationClass_));
-        LOG(LOG_INFO, "          * InitialQuery = %02x (1 byte)", this->InitialQuery_);
+        LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes): %s", this->FsInformationClass_, this->get_FsInformationClass_name(this->FsInformationClass_));
+        LOG(LOG_INFO, "          * InitialQuery = 0x%02x (1 byte)", this->InitialQuery_);
         LOG(LOG_INFO, "          * PathLength   = %d (4 bytes)", int(this->path.size()));
         LOG(LOG_INFO, "          * Padding - (23 byte) NOT USED");
         LOG(LOG_INFO, "          * path         = \"%s\"", this->path.c_str());
@@ -4306,7 +4332,7 @@ struct ClientDriveQueryInformationResponse {
 
     void log() {
         LOG(LOG_INFO, "     Client Drive Query Information Response:");
-        LOG(LOG_INFO, "          * Length = %d (4 bytes)", this->Length);
+        LOG(LOG_INFO, "          * Length = %d (4 bytes)", int(this->Length));
     }
 };
 
@@ -4431,7 +4457,7 @@ struct ServerDriveSetVolumeInformationRequest {
 
     void log() {
         LOG(LOG_INFO, "     Serve rDrive Set Volume InformationRequest:");
-        LOG(LOG_INFO, "          * FsInformationClass = %08x (4 bytes)", this->FsInformationClass);
+        LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes)", this->FsInformationClass);
         LOG(LOG_INFO, "          * Length             = %d (4 bytes)", int(this->Length));
         LOG(LOG_INFO, "          * Padding - (24 bytes) NOT USED");
     }
@@ -4661,8 +4687,8 @@ struct RDP_Lock_Info {
 
     void log() {
         LOG(LOG_INFO, "     RDP_Lock_Info:");
-        LOG(LOG_INFO, "          * Length = %" PRIx64 " (8 bytes)", this->Length);
-        LOG(LOG_INFO, "          * Offset = %" PRIx64 " (8 bytes)", this->Offset);
+        LOG(LOG_INFO, "          * Length = 0x%" PRIx64 " (8 bytes)", this->Length);
+        LOG(LOG_INFO, "          * Offset = 0x%" PRIx64 " (8 bytes)", this->Offset);
     }
 };
 
@@ -4794,17 +4820,17 @@ struct ServerDriveNotifyChangeDirectoryRequest {
 
 enum : uint32_t {
 
-    FILE_NOTIFY_CHANGE_FILE_NAME = 0x00000001,
-    FILE_NOTIFY_CHANGE_DIR_NAME = 0x00000002,
-    FILE_NOTIFY_CHANGE_ATTRIBUTES = 0x00000004,
-    FILE_NOTIFY_CHANGE_SIZE = 0x00000008,
-    FILE_NOTIFY_CHANGE_LAST_WRITE = 0x00000010,
-    FILE_NOTIFY_CHANGE_LAST_ACCESS = 0x00000020,
-    FILE_NOTIFY_CHANGE_CREATION = 0x00000040,
-    FILE_NOTIFY_CHANGE_EA = 0x00000080,
-    FILE_NOTIFY_CHANGE_SECURITY = 0x00000100,
-    FILE_NOTIFY_CHANGE_STREAM_NAME = 0x00000200,
-    FILE_NOTIFY_CHANGE_STREAM_SIZE = 0x00000400,
+    FILE_NOTIFY_CHANGE_FILE_NAME    = 0x00000001,
+    FILE_NOTIFY_CHANGE_DIR_NAME     = 0x00000002,
+    FILE_NOTIFY_CHANGE_ATTRIBUTES   = 0x00000004,
+    FILE_NOTIFY_CHANGE_SIZE         = 0x00000008,
+    FILE_NOTIFY_CHANGE_LAST_WRITE   = 0x00000010,
+    FILE_NOTIFY_CHANGE_LAST_ACCESS  = 0x00000020,
+    FILE_NOTIFY_CHANGE_CREATION     = 0x00000040,
+    FILE_NOTIFY_CHANGE_EA           = 0x00000080,
+    FILE_NOTIFY_CHANGE_SECURITY     = 0x00000100,
+    FILE_NOTIFY_CHANGE_STREAM_NAME  = 0x00000200,
+    FILE_NOTIFY_CHANGE_STREAM_SIZE  = 0x00000400,
     FILE_NOTIFY_CHANGE_STREAM_WRITE = 0x00000800,
 };
 
@@ -4860,18 +4886,23 @@ struct ClientDriveNotifyChangeDirectoryResponse {
     }
 
     void log() {
-        LOG(LOG_INFO, "     Server Driv Notify Chang eDirectory Request:");
-        LOG(LOG_INFO, "          * Length = %d (4 bytes)", this->Length);
+        LOG(LOG_INFO, "     Server Driv Notify Change Directory Request:");
+        LOG(LOG_INFO, "          * Length = %d (4 bytes)", int(this->Length));
     }
 };
 
 
+struct RdpDrStatus
+{
+    int rdpdr_last_major_function       = -1;
+    int rdpdr_last_minor_function       = -1;
+    int rdpdr_last_fs_information_class = -1;
+    int rdpdr_last_io_control_code      = -1;
+};
+
 static inline
-void streamLog(InStream & stream
-    , int & rdpdr_last_major_function
-    , int & rdpdr_last_minor_function
-    , int & rdpdr_last_fs_information_class
-    , int & rdpdr_last_io_control_code) {
+void streamLog( InStream & stream , RdpDrStatus & status)
+{
     InStream s = stream.clone();
 
     SharedHeader sharedHeader;
@@ -4934,9 +4965,9 @@ void streamLog(InStream & stream
                         dior.receive(s);
                         dior.log();
 
-                        rdpdr_last_major_function = dior.MajorFunction();
+                        status.rdpdr_last_major_function = dior.MajorFunction();
 
-                        switch (rdpdr_last_major_function) {
+                        switch (status.rdpdr_last_major_function) {
                             case IRP_MJ_CREATE:
                                 {
                                     DeviceCreateRequest dcr;
@@ -4971,9 +5002,9 @@ void streamLog(InStream & stream
                                     dcr.receive(s);
                                     dcr.log();
 
-                                    rdpdr_last_io_control_code = dcr.IoControlCode();
+                                    status.rdpdr_last_io_control_code = dcr.IoControlCode();
 
-                                    switch (rdpdr_last_io_control_code) {
+                                    switch (status.rdpdr_last_io_control_code) {
                                         case fscc::FSCTL_DELETE_REPARSE_POINT :
                                             {
                                                 fscc::ReparseGUIDDataBuffer rgdb;
@@ -4981,7 +5012,8 @@ void streamLog(InStream & stream
                                                 rgdb.log();
                                             }
                                             break;
-
+                                        default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Code: 0x%08x", status.rdpdr_last_io_control_code);
+                                            break;
                                     }
                                 }
                                 break;
@@ -4991,9 +5023,9 @@ void streamLog(InStream & stream
                                     sdqvir.receive(s);
                                     sdqvir.log();
 
-                                    rdpdr_last_fs_information_class = sdqvir.FsInformationClass();
+                                    status.rdpdr_last_fs_information_class = sdqvir.FsInformationClass();
 
-                                    switch (rdpdr_last_fs_information_class) {
+                                    switch (status.rdpdr_last_fs_information_class) {
                                         case FileFsVolumeInformation:
                                             {
                                                 fscc::FileFsVolumeInformation ffvi;
@@ -5037,7 +5069,7 @@ void streamLog(InStream & stream
                                     sdqvir.receive(s);
                                     sdqvir.log();
 
-                                    rdpdr_last_fs_information_class = sdqvir.FsInformationClass;
+                                    status.rdpdr_last_fs_information_class = sdqvir.FsInformationClass;
 
                                     fscc::FileFsLabelInformation ffli;
                                     ffli.receive(s);
@@ -5050,10 +5082,10 @@ void streamLog(InStream & stream
                                     sdqir.receive(s);
                                     sdqir.log();
 
-                                    rdpdr_last_fs_information_class = sdqir.FsInformationClass();
+                                    status.rdpdr_last_fs_information_class = sdqir.FsInformationClass();
 
                                     if (sdqir.Length() > 0) {
-                                        switch (rdpdr_last_fs_information_class) {
+                                        switch (status.rdpdr_last_fs_information_class) {
                                             case FileBasicInformation:
                                                 {
                                                 fscc::FileBasicInformation fbi;
@@ -5085,9 +5117,9 @@ void streamLog(InStream & stream
                                     sdsir.receive(s);
                                     sdsir.log();
 
-                                    rdpdr_last_fs_information_class = sdsir.FsInformationClass();
+                                    status.rdpdr_last_fs_information_class = sdsir.FsInformationClass();
 
-                                    switch (rdpdr_last_fs_information_class) {
+                                    switch (status.rdpdr_last_fs_information_class) {
                                         case FileBasicInformation:
                                             {
                                                 fscc::FileBasicInformation fbi;
@@ -5128,9 +5160,9 @@ void streamLog(InStream & stream
                                 break;
                             case IRP_MJ_DIRECTORY_CONTROL:
                                 {
-                                    rdpdr_last_minor_function = int(dior.MinorFunction());
+                                    status.rdpdr_last_minor_function = int(dior.MinorFunction());
 
-                                    switch (rdpdr_last_minor_function) {
+                                    switch (status.rdpdr_last_minor_function) {
 
                                         case IRP_MN_QUERY_DIRECTORY:
                                             {
@@ -5172,7 +5204,7 @@ void streamLog(InStream & stream
                         dior.receive(s);
                         dior.log();
 
-                            switch (rdpdr_last_major_function) {
+                            switch (status.rdpdr_last_major_function) {
                             case IRP_MJ_CREATE:
                                 {
                                     DeviceCreateResponse dcf;
@@ -5206,10 +5238,12 @@ void streamLog(InStream & stream
                                     cdcr.receive(s);
                                     cdcr.log();
 
-                                    switch (rdpdr_last_io_control_code) {
-                                        case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID:
-                                            break;
-                                        case fscc::FSCTL_FILESYSTEM_GET_STATISTICS:
+                                    switch (status.rdpdr_last_io_control_code) {
+                                        //case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID:
+                                        //    break;
+                                        //case fscc::FSCTL_FILESYSTEM_GET_STATISTICS:
+                                        //    break;
+                                        default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Code: 0x%08x", status.rdpdr_last_io_control_code);
                                             break;
                                     }
                                 }
@@ -5220,7 +5254,7 @@ void streamLog(InStream & stream
                                     cdqvir.receive(s);
                                     cdqvir.log();
 
-                                        switch (rdpdr_last_fs_information_class) {
+                                        switch (status.rdpdr_last_fs_information_class) {
                                         case FileFsVolumeInformation:
                                             {
                                                 fscc::FileFsVolumeInformation ffvi;
@@ -5271,7 +5305,7 @@ void streamLog(InStream & stream
                                     cdqir.receive(s);
                                     cdqir.log();
 
-                                    switch (rdpdr_last_fs_information_class) {
+                                    switch (status.rdpdr_last_fs_information_class) {
                                         case FileBasicInformation:
                                             {
                                             fscc::FileBasicInformation fbi;
@@ -5305,7 +5339,7 @@ void streamLog(InStream & stream
                                 break;
                             case IRP_MJ_DIRECTORY_CONTROL:
                                 {
-                                    switch (rdpdr_last_minor_function) {
+                                    switch (status.rdpdr_last_minor_function) {
 
                                         case IRP_MN_QUERY_DIRECTORY:
                                             {
@@ -5313,7 +5347,7 @@ void streamLog(InStream & stream
                                                 cdqdr.receive(s);
                                                 cdqdr.log();
 
-                                                switch (rdpdr_last_fs_information_class) {
+                                                switch (status.rdpdr_last_fs_information_class) {
                                                     case FileDirectoryInformation:
                                                         {
                                                         fscc::FileDirectoryInformation fdi;
@@ -5339,11 +5373,11 @@ void streamLog(InStream & stream
                                                         {
                                                         fscc::FileNamesInformation fni;
                                                         fni.receive(s);
-                                                        //fni.log();
+                                                        fni.log();
                                                         }
                                                         break;
                                                 }
-                                                rdpdr_last_fs_information_class = -1;
+                                                status.rdpdr_last_fs_information_class = -1;
                                             }
                                             break;
                                         case IRP_MN_NOTIFY_CHANGE_DIRECTORY:
@@ -5363,7 +5397,7 @@ void streamLog(InStream & stream
                                             break;
                                     }
 
-                                    rdpdr_last_minor_function = -1;
+                                    status.rdpdr_last_minor_function = -1;
                                 }
                                 break;
                             case IRP_MJ_LOCK_CONTROL:
@@ -5377,26 +5411,32 @@ void streamLog(InStream & stream
 
                         }
 
-                        rdpdr_last_fs_information_class = -1;
-                        rdpdr_last_major_function = -1;
+                        status.rdpdr_last_fs_information_class = -1;
+                        status.rdpdr_last_major_function = -1;
                     }
                     break;
 
                 case PacketId::PAKID_CORE_SERVER_CAPABILITY:
                     {
-                        LOG(LOG_INFO, "     Client Core Capability Request:");
-                        /*uint16_t numCapabilities(s.in_uint16_le());
+                        int numCapabilities(s.in_uint16_le());
                         s.in_skip_bytes(2);
-                            LOG(LOG_INFO, "     * numCapabilities  = 0x%02x (2 bytes)", numCapabilities);
+
+                        LOG(LOG_INFO, "     Client Core Capability Request:");
+                        LOG(LOG_INFO, "          * numCapabilities = %d (2 bytes)", numCapabilities);
+                        LOG(LOG_INFO, "          * Padding - (2 bytes) NOT USED");
+
                         for (uint16_t i = 0; i < numCapabilities; i++) {
                             InStream s_serie = s.clone();
                             uint16_t CapabilityType = s_serie.in_uint16_le();
                             switch (CapabilityType) {
                                 case CAP_GENERAL_TYPE:
                                     {
+                                        CapabilityHeader ch;
+                                        ch.receive(s);
+                                        ch.log();
                                         GeneralCapabilitySet gcs;
-                                        gcs.receive(s, GENERAL_CAPABILITY_VERSION_01);
-                                        gcs.log(0);
+                                        gcs.receive(s, ch.Version);
+                                        gcs.log();
                                     }
                                     break;
                                 case CAP_PRINTER_TYPE:
@@ -5410,26 +5450,32 @@ void streamLog(InStream & stream
                                     }
                                     break;
                             }
-                        }*/
+                        }
 
                     }
                     break;
 
                 case PacketId::PAKID_CORE_CLIENT_CAPABILITY:
                     {
-                        LOG(LOG_INFO, "     Client Core Capability Request:");
-                        /*uint16_t numCapabilities(s.in_uint16_le());
+                        int numCapabilities(s.in_uint16_le());
                         s.in_skip_bytes(2);
-                            LOG(LOG_INFO, "     * numCapabilities  = 0x%02x (2 bytes)", numCapabilities);
+
+                        LOG(LOG_INFO, "     Client Core Capability Request:");
+                        LOG(LOG_INFO, "          * numCapabilities = %d (2 bytes)", numCapabilities);
+                        LOG(LOG_INFO, "          * Padding - (2 bytes) NOT USED");
+
                         for (uint16_t i = 0; i < numCapabilities; i++) {
                             InStream s_serie = s.clone();
                             uint16_t CapabilityType = s_serie.in_uint16_le();
                             switch (CapabilityType) {
                                 case CAP_GENERAL_TYPE:
                                     {
+                                        CapabilityHeader ch;
+                                        ch.receive(s);
+                                        ch.log();
                                         GeneralCapabilitySet gcs;
-                                        gcs.receive(s, GENERAL_CAPABILITY_VERSION_01);
-                                        gcs.log(0);
+                                        gcs.receive(s, ch.Version);
+                                        gcs.log();
                                         break;
                                     }
                                 case CAP_PRINTER_TYPE:
@@ -5443,7 +5489,7 @@ void streamLog(InStream & stream
                                         break;
                                     }
                             }
-                        }*/
+                        }
                     }
                     break;
 
@@ -5469,7 +5515,6 @@ void streamLog(InStream & stream
         case Component::RDPDR_CTYP_PRT:
             break;
     }
-
 }
 
 }   // namespace rdpdr

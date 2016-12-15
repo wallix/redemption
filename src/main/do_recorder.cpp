@@ -687,6 +687,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , unsigned png_width, unsigned png_height
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
                     , bool full_video) {
+
     for (unsigned i = 1; i < file_count ; i++) {
         in_wrm_trans.next();
     }
@@ -765,12 +766,25 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                 begin_capture.tv_sec, end_capture.tv_sec
             );
 
+            if (png_width && png_height) {
+                auto get_percent = [](unsigned target_dim, unsigned source_dim) -> unsigned {
+                    return ((target_dim * 100 / source_dim) + ((target_dim * 100 % source_dim) ? 1 : 0));
+                };
+                zoom = std::max<unsigned>(
+                        get_percent(png_width, player.screen_rect.cx),
+                        get_percent(png_height, player.screen_rect.cy)
+                    );
+                //std::cout << "zoom: " << zoom << '%' << std::endl;
+            }
+
+
             Capture capture(
                     ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                     , player.screen_rect.cx
                     , player.screen_rect.cy
                     , player.info_bpp
                     , capture_bpp
+                    , zoom
                     , enable_rt
                     , no_timestamp
                     , authentifier
@@ -780,20 +794,6 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , full_video
                     , &update_progress_data);
 
-            if (capture.capture_png) {
-                if (png_width && png_height) {
-                    auto get_percent = [](unsigned target_dim, unsigned source_dim) -> unsigned {
-                        return ((target_dim * 100 / source_dim) + ((target_dim * 100 % source_dim) ? 1 : 0));
-                    };
-                    zoom = std::max<unsigned>(
-                            get_percent(png_width, player.screen_rect.cx),
-                            get_percent(png_height, player.screen_rect.cy)
-                        );
-                    //std::cout << "zoom: " << zoom << '%' << std::endl;
-                }
-
-                capture.zoom(zoom);
-            }
             player.add_consumer(&capture, &capture, &capture, &capture, &capture);
 
             if (update_progress_data.is_valid()) {

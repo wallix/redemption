@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         // TODO remove this after unifying capture interface
         bool force_capture_png_if_enable = true;
         Capture capture(
-            now, scr.cx, scr.cy, 24, 24
+            now, scr.cx, scr.cy, 24, 24, 100
             , clear_png, no_timestamp, authentifier
             , ini, cctx, rnd, full_video, nullptr, force_capture_png_if_enable);
         bool ignore_frame_in_timeval = false;
@@ -231,9 +231,9 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     // TODO remove this after unifying capture interface
     bool force_capture_png_if_enable = true;
 
-    Capture capture(now, scr.cx, scr.cy, 16, 16
-                    , clear_png, no_timestamp, authentifier
-                    , ini, cctx, rnd, full_video, nullptr, force_capture_png_if_enable);
+    Capture capture(now, scr.cx, scr.cy, 16, 16, 100
+                   , clear_png, no_timestamp, authentifier
+                   , ini, cctx, rnd, full_video, nullptr, force_capture_png_if_enable);
 
     Pointer pointer1(Pointer::POINTER_EDIT);
     capture.set_pointer(pointer1);

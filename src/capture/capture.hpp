@@ -162,6 +162,7 @@ public:
         int height,
         int order_bpp,
         int capture_bpp,
+        unsigned zoom,
         bool real_time_image_capture,
         bool no_timestamp,
         auth_api * authentifier,
@@ -259,16 +260,17 @@ public:
                     this->pscrt.reset(new ImageRT(
                         now, true, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,
+                        zoom,
                         ini.get<cfg::video::png_interval>(),
                         ini.get<cfg::video::png_limit>()
                     ));
                 }
                 else if (force_capture_png_if_enable) {
                     this->psc.reset(new Image(
-                        now, false, authentifier, this->gd->impl(),
+                        now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,
-                        ini.get<cfg::video::png_interval>(),
-                        ini.get<cfg::video::png_limit>()
+                        zoom,
+                        ini.get<cfg::video::png_interval>()
                     ));
                 }
             }
@@ -304,7 +306,7 @@ public:
                     notifier = this->notifier_next_video;
                 }
                 this->pvc.reset(new Video(
-                    now, record_path, basename, groupid, no_timestamp, this->gd->impl(),
+                    now, record_path, basename, groupid, no_timestamp, zoom, this->gd->impl(),
                     video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini),
                     ini.get<cfg::video::flv_break_interval>(), notifier
                 ));
@@ -508,18 +510,5 @@ public:
 
     void possible_active_window_change() override {
         this->capture_probe_api.possible_active_window_change();
-    }
-
-    // TODO move to ctor
-    void zoom(unsigned percent) {
-        if (this->psc) {
-            this->psc->zoom(percent);
-        }
-        if (this->pscrt) {
-            this->pscrt->zoom(percent);
-        }
-        if (this->pvc) {
-            this->pvc->image_zoom(percent);
-        }
     }
 };
