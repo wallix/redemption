@@ -325,12 +325,8 @@ class Sesman():
             # Fetch Data from Redemption
             try:
                 while True:
-                    Logger().info(u">>> unpack")
-
                     _is_multi_packet, = unpack(">H", self.proxy_conx.recv(2))
-                    Logger().info(u">>> unpack 1")
                     _packet_size, = unpack(">H", self.proxy_conx.recv(2))
-                    Logger().info(u">>> unpack 2")
                     _data += self.proxy_conx.recv(_packet_size)
                     if not _is_multi_packet:
                         break
@@ -553,9 +549,7 @@ class Sesman():
              The user preferred language will be set as the language to use in
              interactive messages
         """
-        Logger().info(u">>> authentify")
         _status, _error = self.receive_data()
-        Logger().info(u">>> authentify end")
         if not _status:
             return False, _error
 
