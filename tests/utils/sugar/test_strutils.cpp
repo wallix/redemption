@@ -300,26 +300,18 @@ BOOST_AUTO_TEST_CASE(TestLinuxToWindowsNewLineConverter)
     }
 
     {
-        try
-        {
-            linux_to_windows_newline_convert("text", 4, nullptr, 0);
-            BOOST_CHECK(false);
-        }
-        catch (Error & e) {
-            BOOST_CHECK(e.id == ERR_STREAM_MEMORY_TOO_SMALL);
-        }
+        CHECK_EXCEPTION_ERROR_ID(
+            linux_to_windows_newline_convert("text", 4, nullptr, 0),
+            ERR_STREAM_MEMORY_TOO_SMALL
+        );
     }
 
     {
-        try
-        {
-            char d[2];
-            linux_to_windows_newline_convert("text", 4, d, sizeof(d));
-            BOOST_CHECK(false);
-        }
-        catch (Error & e) {
-            BOOST_CHECK(e.id == ERR_STREAM_MEMORY_TOO_SMALL);
-        }
+        char d[2];
+        CHECK_EXCEPTION_ERROR_ID(
+            linux_to_windows_newline_convert("text", 4, d, sizeof(d)),
+            ERR_STREAM_MEMORY_TOO_SMALL
+        );
     }
 
     {

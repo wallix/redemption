@@ -583,12 +583,8 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
            "\xc3\xef\x1a"
     ;
 
-    try {
-        Bitmap bloc32x1(16, 16, nullptr, 32, 1, source32x1, sizeof(source32x1)-1, true );
-        drawable.draw(RDPMemBlt(0, Rect(100, 100, bloc32x1.cx(), bloc32x1.cy()), 0xCC, 0, 0, 0), scr, bloc32x1);
-    } catch (Error e) {
-        printf("exception caught e=%d\n", e.id);
-    };
+    Bitmap bloc32x1(16, 16, nullptr, 32, 1, source32x1, sizeof(source32x1)-1, true);
+    drawable.draw(RDPMemBlt(0, Rect(100, 100, bloc32x1.cx(), bloc32x1.cy()), 0xCC, 0, 0, 0), scr, bloc32x1);
 
     d.flush();
     const char * filename = trans.seqgen()->get(0);

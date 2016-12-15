@@ -148,12 +148,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     GCC::Create_Request_Send(gcc_header, sizeof(gcc_user_data)-1);
     t.send(gcc_header.get_data(), gcc_header.get_offset());
 
-    try {
-        InStream in_stream(gcc_conference_create_request_expected, sz);
-        GCC::Create_Request_Recv header(in_stream);
-    } catch(Error const &) {
-        BOOST_CHECK(false);
-    };
+    InStream in_stream(gcc_conference_create_request_expected, sz);
+    BOOST_CHECK_NO_THROW(GCC::Create_Request_Recv{in_stream});
 
 //    BOOST_CHECK(t.get_status());
 }
