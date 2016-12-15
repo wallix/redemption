@@ -1075,12 +1075,15 @@ struct InfoPacket {
                 this->extendedInfoPacket.cbAutoReconnectLen = 0;
                 return;
             }
-            if (0x0000001C != this->extendedInfoPacket.cbAutoReconnectLen) {
-                LOG(LOG_ERR, "Wrong data size when reading autoReconnectCookie. Expected=%u Got=%u",
-                    0x0000001C, unsigned(this->extendedInfoPacket.cbAutoReconnectLen));
-                return;
+            if (this->extendedInfoPacket.cbAutoReconnectLen) {
+                if (0x0000001C != this->extendedInfoPacket.cbAutoReconnectLen) {
+                    LOG(LOG_ERR, "Wrong data size when reading autoReconnectCookie. Expected=%u Got=%u",
+                        0x0000001C, unsigned(this->extendedInfoPacket.cbAutoReconnectLen));
+                    return;
+                }
+
+                stream.in_copy_bytes(this->extendedInfoPacket.autoReconnectCookie, this->extendedInfoPacket.cbAutoReconnectLen);
             }
-            stream.in_copy_bytes(this->extendedInfoPacket.autoReconnectCookie, this->extendedInfoPacket.cbAutoReconnectLen);
 
             if (stream.get_current() + 4 > stream.get_data_end()){
                 // LOG(LOG_WARNING, "Missing InfoPacket.reserved"); // But seems to be OK
