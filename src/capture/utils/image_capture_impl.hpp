@@ -71,43 +71,13 @@ static void scale_data(uint8_t *dest, const uint8_t *src,
 
 class PngCapture final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
 {
-    struct ImageTransportBuilder final : private Transport
-    {
-        OutFilenameSequenceTransport trans;
-        bool enable_rt;
-        uint32_t num_start = 0;
 
-        ImageTransportBuilder(
-            const char * path, const char * basename, int groupid,
-            auth_api * authentifier)
-        : trans(
-            FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-            path, basename, ".png", groupid, authentifier)
-        {}
-
-        ~ImageTransportBuilder() {
-        }
-
-        bool next() override {
-            return this->trans.next();
-        }
-
-        void do_send(const uint8_t * const buffer, size_t len) override {
-            this->trans.send(buffer, len);
-        }
-
-        Transport & get_transport() {
-            return this->trans;
-        }
-    };
-
+    OutFilenameSequenceTransport trans;
     std::chrono::microseconds png_interval;
-    ImageTransportBuilder trans_builder;
 
     timeval start_capture;
     std::chrono::microseconds frame_interval;
 
-    Transport & trans;
     unsigned zoom_factor;
     unsigned scaled_width;
     unsigned scaled_height;
@@ -120,11 +90,11 @@ public:
         const timeval & now, auth_api * authentifier, Drawable & drawable,
         const char * record_tmp_path, const char * basename, int groupid,
         std::chrono::microseconds png_interval)
-    : png_interval(png_interval)
-    , trans_builder(record_tmp_path, basename, groupid, authentifier)
+    : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+            record_tmp_path, basename, ".png", groupid, authentifier)
+    , png_interval(png_interval)
     , start_capture(now)
     , frame_interval(png_interval)
-    , trans(this->trans_builder.get_transport())
     , zoom_factor(100)
     , scaled_width(drawable.width())
     , scaled_height(drawable.height())
