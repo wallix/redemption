@@ -262,7 +262,7 @@ public:
             if (this->capture_png) {
                 if (real_time_image_capture) {
                     this->pscrt.reset(new ImageRT(
-                        now, true, authentifier, this->gd->impl(),
+                        now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,
                         zoom,
                         ini.get<cfg::video::png_interval>(),
