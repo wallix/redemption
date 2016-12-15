@@ -79,30 +79,25 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
     now.tv_usec = 0;
     now.tv_sec = 1000;
 
-    try {
-        Rect scr(0, 0, 20, 10);
-        CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
-        BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
-                           BmpCache::CacheOption(600, 256, false),
-                           BmpCache::CacheOption(300, 1024, false),
-                           BmpCache::CacheOption(262, 4096, false));
-        PointerCache ptr_cache;
-        GlyphCache gly_cache;
-        RDPDrawable drawable(scr.cx, scr.cy, 24);
-        DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
-        GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, WrmCompressionAlgorithm::no_compression);
-        drawable.draw(RDPOpaqueRect(scr, RED), scr);
-        consumer.draw(RDPOpaqueRect(scr, RED), scr);
-        drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
-        consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
-        drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
-        consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
-        consumer.sync();
-        consumer.send_image_chunk();
-    }
-    catch (Error const &){
-        BOOST_CHECK(false);
-    };
+    Rect scr(0, 0, 20, 10);
+    CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
+    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
+                        BmpCache::CacheOption(600, 256, false),
+                        BmpCache::CacheOption(300, 1024, false),
+                        BmpCache::CacheOption(262, 4096, false));
+    PointerCache ptr_cache;
+    GlyphCache gly_cache;
+    RDPDrawable drawable(scr.cx, scr.cy, 24);
+    DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
+    GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, WrmCompressionAlgorithm::no_compression);
+    drawable.draw(RDPOpaqueRect(scr, RED), scr);
+    consumer.draw(RDPOpaqueRect(scr, RED), scr);
+    drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
+    consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
+    drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
+    consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
+    consumer.sync();
+    consumer.send_image_chunk();
 }
 
 BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
@@ -178,12 +173,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     consumer.sync();
 
     OutChunkedBufferingTransport<100> png_trans(trans);
-    try {
-        consumer.dump_png24(png_trans, true);
-//        DumpPng24FromRDPDrawableAdapter(consumer).dump_png24(png_trans, true);
-    } catch (Error const &) {
-        BOOST_CHECK(false);
-    };
+    BOOST_CHECK_NO_THROW(consumer.dump_png24(png_trans, true));
 }
 
 BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)

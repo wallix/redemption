@@ -142,16 +142,10 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     uint8_t buf[65536];
     auto p = buf;
 
-    try {
-        transport->recv(&p, CHANNELS::CHANNEL_CHUNK_LENGTH + 1024);
-    }
-    catch (Error & e) {
-        if(e.id != 1501) {
-            LOG(LOG_ERR, "Error = %d", e.id);
-
-            throw;
-        }
-    }
+    CHECK_EXCEPTION_ERROR_ID(
+        transport->recv(&p, CHANNELS::CHANNEL_CHUNK_LENGTH + 1024),
+        ERR_TRANSPORT_NO_MORE_DATA
+    );
 
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);
