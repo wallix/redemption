@@ -82,6 +82,19 @@ TESTS.failure++;} else { TESTS.success++;}
 #define BOOST_CHECK_THROW(statement, exception) \
     BOOST_CHECK_EXCEPTION(statement, exception, [](exception const &){ return true; })
 
+#define CHECK_EXCEPTION_ERROR_ID(stmt, ErrId)   \
+    BOOST_CHECK_EXCEPTION(                      \
+        stmt, Error,                            \
+        [&](Error const & e) {                  \
+            if (e.id == ErrId) {                \
+                BOOST_CHECK_EQUAL(e.id, ErrId); \
+                return true;                    \
+            }                                   \
+            LOG(LOG_ERR, "Exception=%d", e.id); \
+            return false;                       \
+        }                                       \
+    )
+
 #ifdef BOOST_AUTO_TEST_MAIN
 struct TESTS {
     struct item {

@@ -142,7 +142,8 @@ enum FileAttributes : uint32_t {
     FILE_ATTRIBUTE_NO_SCRUB_DATA       = 0x00020000
 };
 
-static const char * get_FileAttributes_name(uint32_t fileAttribute) {
+static inline
+const char * get_FileAttributes_name(uint32_t fileAttribute) {
     switch (fileAttribute) {
         case FileAttributes::FILE_ATTRIBUTES_READONLY:           return "FILE_ATTRIBUTES_READONLY";
         case FileAttributes::FILE_ATTRIBUTES_HIDDEN:             return "FILE_ATTRIBUTES_HIDDEN";
@@ -408,7 +409,8 @@ enum {
     , CAP_SMARTCARD_TYPE = 0x0005
 };
 
-static const char * get_CapabilityType_name(uint16_t capabilityType) {
+static inline
+const char * get_CapabilityType_name(uint16_t capabilityType) {
     switch (capabilityType) {
         case CAP_GENERAL_TYPE:   return "CAP_GENERAL_TYPE";
         case CAP_PRINTER_TYPE:   return "CAP_PRINTER_TYPE";
@@ -468,7 +470,8 @@ enum {
     , GENERAL_CAPABILITY_VERSION_02 = 0x00000002
 };
 
-static const char * get_CapabilityVersion_name(uint16_t version) {
+static inline
+const char * get_CapabilityVersion_name(uint16_t version) {
     switch (version) {
         case GENERAL_CAPABILITY_VERSION_01: return "GENERAL_CAPABILITY_VERSION_01";
         case GENERAL_CAPABILITY_VERSION_02: return "GENERAL_CAPABILITY_VERSION_02";
@@ -4910,428 +4913,199 @@ struct ClientDriveNotifyChangeDirectoryResponse {
 };
 
 
+struct RdpDrStatus
+{
+    int rdpdr_last_major_function       = -1;
+    int rdpdr_last_minor_function       = -1;
+    int rdpdr_last_fs_information_class = -1;
+    int rdpdr_last_io_control_code      = -1;
+};
 
+static inline
+void streamLog( InStream & stream , RdpDrStatus & status)
+{
+    InStream s = stream.clone();
 
+    SharedHeader sharedHeader;
+    sharedHeader.receive(s);
+    sharedHeader.log();
 
+    switch (sharedHeader.component) {
 
+        case Component::RDPDR_CTYP_CORE:
+            switch (sharedHeader.packet_id) {
 
+                case PacketId::PAKID_CORE_SERVER_ANNOUNCE:
+                    {
+                        ServerAnnounceRequest sar;
+                        sar.receive(s);
+                        sar.log();
+                    }
+                    break;
 
+                case PacketId::PAKID_CORE_CLIENTID_CONFIRM:
+                    {
+                        ClientAnnounceReply car;
+                        car.receive(s);
+                        car.log();
+                    }
+                    break;
 
+                case PacketId::PAKID_CORE_CLIENT_NAME:
+                    {
+                        ClientNameRequest cnr;
+                        cnr.receive(s);
+                        cnr.log();
+                    }
+                    break;
 
-
-
-    struct RdpDrStatus {
-       int rdpdr_last_major_function       = -1;
-       int rdpdr_last_minor_function       = -1;
-       int rdpdr_last_fs_information_class = -1;
-       int rdpdr_last_io_control_code      = -1;
-    };
-
-
-    static void streamLog( InStream & stream
-                         , RdpDrStatus & status) {
-        InStream s = stream.clone();
-
-        SharedHeader sharedHeader;
-        sharedHeader.receive(s);
-        sharedHeader.log();
-
-        switch (sharedHeader.component) {
-
-            case Component::RDPDR_CTYP_CORE:
-                switch (sharedHeader.packet_id) {
-
-                    case PacketId::PAKID_CORE_SERVER_ANNOUNCE:
-                        {
-                            ServerAnnounceRequest sar;
-                            sar.receive(s);
-                            sar.log();
+                case PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE:
+                    {
+                        ClientDeviceListAnnounceRequest cdar;
+                        cdar.receive(s);
+                        cdar.log();
+                        for (uint32_t i = 0; i < cdar.DeviceCount; i++) {
+                            DeviceAnnounceHeader dah;
+                            dah.receive(s);
+                            dah.log();
                         }
-                        break;
+                    }
+                    break;
 
-                    case PacketId::PAKID_CORE_CLIENTID_CONFIRM:
-                        {
-                            ClientAnnounceReply car;
-                            car.receive(s);
-                            car.log();
-                        }
-                        break;
+                case PacketId::PAKID_CORE_DEVICE_REPLY:
+                    {
+                        ServerDeviceAnnounceResponse sdar;
+                        sdar.receive(s);
+                        sdar.log();
+                    }
+                    break;
 
-                    case PacketId::PAKID_CORE_CLIENT_NAME:
-                        {
-                            ClientNameRequest cnr;
-                            cnr.receive(s);
-                            cnr.log();
-                        }
-                        break;
+                case PacketId::PAKID_CORE_DEVICE_IOREQUEST:
+                    {
+                        DeviceIORequest dior;
+                        dior.receive(s);
+                        dior.log();
 
-                    case PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE:
-                        {
-                            ClientDeviceListAnnounceRequest cdar;
-                            cdar.receive(s);
-                            cdar.log();
-                            for (uint32_t i = 0; i < cdar.DeviceCount; i++) {
-                                DeviceAnnounceHeader dah;
-                                dah.receive(s);
-                                dah.log();
-                            }
-                        }
-                        break;
+                        status.rdpdr_last_major_function = dior.MajorFunction();
 
-                    case PacketId::PAKID_CORE_DEVICE_REPLY:
-                        {
-                            ServerDeviceAnnounceResponse sdar;
-                            sdar.receive(s);
-                            sdar.log();
-                        }
-                        break;
+                        switch (status.rdpdr_last_major_function) {
+                            case IRP_MJ_CREATE:
+                                {
+                                    DeviceCreateRequest dcr;
+                                    dcr.receive(s);
+                                    dcr.log();
+                                }
+                                break;
+                            case IRP_MJ_CLOSE:
+                                {
+                                    DeviceCloseRequest dcr;
+                                    dcr.receive(s);
+                                    dcr.log();
+                                }
+                                break;
+                            case IRP_MJ_READ:
+                                {
+                                    DeviceReadRequest drr;
+                                    drr.receive(s);
+                                    drr.log();
+                                }
+                                break;
+                            case IRP_MJ_WRITE:
+                                {
+                                    DeviceWriteRequest dwr;
+                                    dwr.receive(s);
+                                    dwr.log();
+                                }
+                                break;
+                            case IRP_MJ_DEVICE_CONTROL:
+                                {
+                                    DeviceControlRequest dcr;
+                                    dcr.receive(s);
+                                    dcr.log();
 
-                    case PacketId::PAKID_CORE_DEVICE_IOREQUEST:
-                        {
-                            DeviceIORequest dior;
-                            dior.receive(s);
-                            dior.log();
+                                    status.rdpdr_last_io_control_code = dcr.IoControlCode();
 
-                            status.rdpdr_last_major_function = dior.MajorFunction();
-
-                            switch (status.rdpdr_last_major_function) {
-                                case IRP_MJ_CREATE:
-                                    {
-                                        DeviceCreateRequest dcr;
-                                        dcr.receive(s);
-                                        dcr.log();
-                                    }
-                                    break;
-                                case IRP_MJ_CLOSE:
-                                    {
-                                        DeviceCloseRequest dcr;
-                                        dcr.receive(s);
-                                        dcr.log();
-                                    }
-                                    break;
-                                case IRP_MJ_READ:
-                                    {
-                                        DeviceReadRequest drr;
-                                        drr.receive(s);
-                                        drr.log();
-                                    }
-                                    break;
-                                case IRP_MJ_WRITE:
-                                    {
-                                        DeviceWriteRequest dwr;
-                                        dwr.receive(s);
-                                        dwr.log();
-                                    }
-                                    break;
-                                case IRP_MJ_DEVICE_CONTROL:
-                                    {
-                                        DeviceControlRequest dcr;
-                                        dcr.receive(s);
-                                        dcr.log();
-
-                                        status.rdpdr_last_io_control_code = dcr.IoControlCode();
-
-                                        switch (status.rdpdr_last_io_control_code) {
-                                            case fscc::FSCTL_DELETE_REPARSE_POINT :
-                                                {
-                                                    fscc::ReparseGUIDDataBuffer rgdb;
-                                                    rgdb.receive(s);
-                                                    rgdb.log();
-                                                }
-                                                break;
-                                            default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Code: 0x%08x", status.rdpdr_last_io_control_code);
-                                                break;
-                                        }
-                                    }
-                                    break;
-                                case IRP_MJ_QUERY_VOLUME_INFORMATION:
-                                    {
-                                        ServerDriveQueryVolumeInformationRequest sdqvir;
-                                        sdqvir.receive(s);
-                                        sdqvir.log();
-
-                                        status.rdpdr_last_fs_information_class = sdqvir.FsInformationClass();
-
-                                        switch (status.rdpdr_last_fs_information_class) {
-                                            case FileFsVolumeInformation:
-                                                {
-                                                    fscc::FileFsVolumeInformation ffvi;
-                                                    ffvi.receive(s);
-                                                    ffvi.log();
-                                                }
-                                                break;
-                                            case FileFsSizeInformation:
-                                                {
-                                                    fscc::FileFsSizeInformation ffsi;
-                                                    ffsi.receive(s);
-                                                    ffsi.log();
-                                                }
-                                                break;
-                                            case FileFsAttributeInformation: {
-                                                    fscc::FileFsAttributeInformation ffai;
-                                                    ffai.receive(s);
-                                                    ffai.log();
-                                                }
-                                                break;
-                                            case FileFsFullSizeInformation:
-                                                {
-                                                    fscc::FileFsFullSizeInformation fffsi;
-                                                    fffsi.receive(s);
-                                                    fffsi.log();
-                                                }
-                                                break;
-                                            case FileFsDeviceInformation:
-                                                {
-                                                    fscc::FileFsDeviceInformation ffdi;
-                                                    ffdi.receive(s);
-                                                    ffdi.log();
-                                                }
-                                                break;
-                                        }
-                                    }
-                                    break;
-                                case IRP_MJ_SET_VOLUME_INFORMATION:
-                                    {
-                                        ServerDriveSetVolumeInformationRequest sdqvir;
-                                        sdqvir.receive(s);
-                                        sdqvir.log();
-
-                                        status.rdpdr_last_fs_information_class = sdqvir.FsInformationClass;
-
-                                        fscc::FileFsLabelInformation ffli;
-                                        ffli.receive(s);
-                                        ffli.log();
-                                    }
-                                    break;
-                                case IRP_MJ_QUERY_INFORMATION:
-                                    {
-                                        ServerDriveQueryInformationRequest sdqir;
-                                        sdqir.receive(s);
-                                        sdqir.log();
-
-                                        status.rdpdr_last_fs_information_class = sdqir.FsInformationClass();
-
-                                        if (sdqir.Length() > 0) {
-                                            switch (status.rdpdr_last_fs_information_class) {
-                                                case FileBasicInformation:
-                                                    {
-                                                    fscc::FileBasicInformation fbi;
-                                                    fbi.receive(s);
-                                                    fbi.log();
-                                                    }
-                                                    break;
-                                                case FileStandardInformation:
-                                                    {
-                                                    fscc::FileStandardInformation fsi;
-                                                    fsi.receive(s);
-                                                    fsi.log();
-                                                    }
-                                                    break;
-                                                case FileAttributeTagInformation:
-                                                    {
-                                                    fscc::FileAttributeTagInformation fati;
-                                                    fati.receive(s);
-                                                    fati.log();
-                                                    }
-                                                    break;
+                                    switch (status.rdpdr_last_io_control_code) {
+                                        case fscc::FSCTL_DELETE_REPARSE_POINT :
+                                            {
+                                                fscc::ReparseGUIDDataBuffer rgdb;
+                                                rgdb.receive(s);
+                                                rgdb.log();
                                             }
-                                        }
+                                            break;
+                                        default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Code: 0x%08x", status.rdpdr_last_io_control_code);
+                                            break;
                                     }
-                                    break;
-                                case IRP_MJ_SET_INFORMATION:
-                                    {
-                                        ServerDriveSetInformationRequest sdsir;
-                                        sdsir.receive(s);
-                                        sdsir.log();
+                                }
+                                break;
+                            case IRP_MJ_QUERY_VOLUME_INFORMATION:
+                                {
+                                    ServerDriveQueryVolumeInformationRequest sdqvir;
+                                    sdqvir.receive(s);
+                                    sdqvir.log();
 
-                                        status.rdpdr_last_fs_information_class = sdsir.FsInformationClass();
+                                    status.rdpdr_last_fs_information_class = sdqvir.FsInformationClass();
 
-                                        switch (status.rdpdr_last_fs_information_class) {
-                                            case FileBasicInformation:
-                                                {
-                                                    fscc::FileBasicInformation fbi;
-                                                    fbi.receive(s);
-                                                    fbi.log();
-                                                }
-                                                break;
-                                            case FileEndOfFileInformation:
-                                                {
-                                                    fscc::FileEndOfFileInformation feofi;
-                                                    feofi.receive(s);
-                                                    feofi.log();
-                                                }
-                                                break;
-                                            case FileDispositionInformation:
-                                                {
-                                                    fscc::FileDispositionInformation fdi;
-                                                    fdi.receive(s);
-                                                    fdi.log();
-                                                }
-                                                break;
-                                            case FileRenameInformation:
-                                                {
-                                                    fscc::FileRenameInformation fri;
-                                                    fri.receive(s);
-                                                    fri.log();
-                                                }
-                                                break;
-                                            case FileAllocationInformation:
-                                                {
-                                                    fscc::FileAllocationInformation fai;
-                                                    fai.receive(s);
-                                                    fai.log();
-                                                }
-                                                break;
-                                        }
+                                    switch (status.rdpdr_last_fs_information_class) {
+                                        case FileFsVolumeInformation:
+                                            {
+                                                fscc::FileFsVolumeInformation ffvi;
+                                                ffvi.receive(s);
+                                                ffvi.log();
+                                            }
+                                            break;
+                                        case FileFsSizeInformation:
+                                            {
+                                                fscc::FileFsSizeInformation ffsi;
+                                                ffsi.receive(s);
+                                                ffsi.log();
+                                            }
+                                            break;
+                                        case FileFsAttributeInformation: {
+                                                fscc::FileFsAttributeInformation ffai;
+                                                ffai.receive(s);
+                                                ffai.log();
+                                            }
+                                            break;
+                                        case FileFsFullSizeInformation:
+                                            {
+                                                fscc::FileFsFullSizeInformation fffsi;
+                                                fffsi.receive(s);
+                                                fffsi.log();
+                                            }
+                                            break;
+                                        case FileFsDeviceInformation:
+                                            {
+                                                fscc::FileFsDeviceInformation ffdi;
+                                                ffdi.receive(s);
+                                                ffdi.log();
+                                            }
+                                            break;
                                     }
-                                    break;
-                                case IRP_MJ_DIRECTORY_CONTROL:
-                                    {
-                                        status.rdpdr_last_minor_function = int(dior.MinorFunction());
+                                }
+                                break;
+                            case IRP_MJ_SET_VOLUME_INFORMATION:
+                                {
+                                    ServerDriveSetVolumeInformationRequest sdqvir;
+                                    sdqvir.receive(s);
+                                    sdqvir.log();
 
-                                        switch (status.rdpdr_last_minor_function) {
+                                    status.rdpdr_last_fs_information_class = sdqvir.FsInformationClass;
 
-                                            case IRP_MN_QUERY_DIRECTORY:
-                                                {
-                                                    ServerDriveQueryDirectoryRequest sdqdr;
-                                                    sdqdr.receive(s);
-                                                    sdqdr.log();
-                                                }
-                                                break;
-                                            case IRP_MN_NOTIFY_CHANGE_DIRECTORY:
-                                                {
-                                                    ServerDriveNotifyChangeDirectoryRequest sdcdr;
-                                                    sdcdr.receive(s);
-                                                    sdcdr.log();
-                                                }
-                                                break;
-                                        }
-                                    }
-                                    break;
-                                case IRP_MJ_LOCK_CONTROL:
-                                    {
-                                        ServerDriveLockControlRequest sdlcr;
-                                        sdlcr.receive(s);
-                                        sdlcr.log();
+                                    fscc::FileFsLabelInformation ffli;
+                                    ffli.receive(s);
+                                    ffli.log();
+                                }
+                                break;
+                            case IRP_MJ_QUERY_INFORMATION:
+                                {
+                                    ServerDriveQueryInformationRequest sdqir;
+                                    sdqir.receive(s);
+                                    sdqir.log();
 
-                                        for (uint32_t i = 0; i < sdlcr.NumLocks; i++) {
-                                            RDP_Lock_Info rdpli;
-                                            rdpli.receive(s);
-                                            rdpli.log();
-                                        }
-                                    }
-                                    break;
-                            }
-                        }
-                        break;
+                                    status.rdpdr_last_fs_information_class = sdqir.FsInformationClass();
 
-                    case PacketId::PAKID_CORE_DEVICE_IOCOMPLETION:
-                        {
-                            DeviceIOResponse dior;
-                            dior.receive(s);
-                            dior.log();
-
-                             switch (status.rdpdr_last_major_function) {
-                                case IRP_MJ_CREATE:
-                                    {
-                                        DeviceCreateResponse dcf;
-                                        dcf.receive(s);
-                                        dcf.log();
-                                    }
-                                    break;
-                                case IRP_MJ_CLOSE:
-                                    {
-                                        LOG(LOG_INFO, "     Device Close Response:");
-                                        LOG(LOG_INFO, "          * Padding - (4 bytes) NOT USED");
-                                    }
-                                    break;
-                                case IRP_MJ_READ:
-                                    {
-                                        DeviceReadResponse drr;
-                                        drr.receive(s);
-                                        drr.log();
-                                    }
-                                    break;
-                                case IRP_MJ_WRITE:
-                                    {
-                                        DeviceWriteResponse dwr;
-                                        dwr.receive(s);
-                                        dwr.log();
-                                    }
-                                    break;
-                                case IRP_MJ_DEVICE_CONTROL:
-                                    {
-                                        ClientDriveControlResponse cdcr;
-                                        cdcr.receive(s);
-                                        cdcr.log();
-
-                                        switch (status.rdpdr_last_io_control_code) {
-                                            //case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID:
-                                            //    break;
-                                            //case fscc::FSCTL_FILESYSTEM_GET_STATISTICS:
-                                            //    break;
-                                            default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Code: 0x%08x", status.rdpdr_last_io_control_code);
-                                                break;
-                                        }
-                                    }
-                                    break;
-                                case IRP_MJ_QUERY_VOLUME_INFORMATION:
-                                    {
-                                        ClientDriveQueryVolumeInformationResponse cdqvir;
-                                        cdqvir.receive(s);
-                                        cdqvir.log();
-
-                                         switch (status.rdpdr_last_fs_information_class) {
-                                            case FileFsVolumeInformation:
-                                                {
-                                                    fscc::FileFsVolumeInformation ffvi;
-                                                    ffvi.receive(s);
-                                                    ffvi.log();
-                                                }
-                                                break;
-                                            case FileFsSizeInformation:
-                                                {
-                                                    fscc::FileFsSizeInformation ffsi;
-                                                    ffsi.receive(s);
-                                                    ffsi.log();
-                                                }
-                                                break;
-                                            case FileFsAttributeInformation: {
-                                                    fscc::FileFsAttributeInformation ffai;
-                                                    ffai.receive(s);
-                                                    ffai.log();
-                                                }
-                                                break;
-                                            case FileFsFullSizeInformation:
-                                                {
-                                                    fscc::FileFsFullSizeInformation fffsi;
-                                                    fffsi.receive(s);
-                                                    fffsi.log();
-                                                }
-                                                break;
-                                            case FileFsDeviceInformation:
-                                                {
-                                                    fscc::FileFsDeviceInformation ffdi;
-                                                    ffdi.receive(s);
-                                                    ffdi.log();
-                                                }
-                                                break;
-                                        }
-                                    }
-                                    break;
-                                case IRP_MJ_SET_VOLUME_INFORMATION:
-                                    {
-                                        ClientDriveSetVolumeInformationResponse cdsvir;
-                                        cdsvir.receive(s);
-                                        cdsvir.log();
-                                    }
-                                    break;
-                                case IRP_MJ_QUERY_INFORMATION:
-                                    {
-                                        rdpdr::ClientDriveQueryInformationResponse cdqir;
-                                        cdqir.receive(s);
-                                        cdqir.log();
-
+                                    if (sdqir.Length() > 0) {
                                         switch (status.rdpdr_last_fs_information_class) {
                                             case FileBasicInformation:
                                                 {
@@ -5356,194 +5130,413 @@ struct ClientDriveNotifyChangeDirectoryResponse {
                                                 break;
                                         }
                                     }
-                                    break;
-                                case IRP_MJ_SET_INFORMATION:
-                                    {
-                                        ClientDriveSetInformationResponse cdsir;
-                                        cdsir.receive(s);
-                                        cdsir.log();
-                                    }
-                                    break;
-                                case IRP_MJ_DIRECTORY_CONTROL:
-                                    {
-                                        switch (status.rdpdr_last_minor_function) {
-
-                                            case IRP_MN_QUERY_DIRECTORY:
-                                                {
-                                                    ClientDriveQueryDirectoryResponse cdqdr;
-                                                    cdqdr.receive(s);
-                                                    cdqdr.log();
-
-                                                    switch (status.rdpdr_last_fs_information_class) {
-                                                        case FileDirectoryInformation:
-                                                            {
-                                                            fscc::FileDirectoryInformation fdi;
-                                                            fdi.receive(s);
-                                                            fdi.log();
-                                                            }
-                                                            break;
-                                                        case FileFullDirectoryInformation:
-                                                            {
-                                                            fscc::FileFullDirectoryInformation ffdi;
-                                                            ffdi.receive(s);
-                                                            ffdi.log();
-                                                            }
-                                                            break;
-                                                        case FileBothDirectoryInformation:
-                                                            {
-                                                            fscc::FileBothDirectoryInformation fbdi;
-                                                            fbdi.receive(s);
-                                                            fbdi.log();
-                                                            }
-                                                            break;
-                                                        case FileNamesInformation:
-                                                            {
-                                                            fscc::FileNamesInformation fni;
-                                                            fni.receive(s);
-                                                            fni.log();
-                                                            }
-                                                            break;
-                                                    }
-                                                    status.rdpdr_last_fs_information_class = -1;
-                                                }
-                                                break;
-                                            case IRP_MN_NOTIFY_CHANGE_DIRECTORY:
-                                                {
-                                                    ClientDriveNotifyChangeDirectoryResponse cdncdr;
-                                                    cdncdr.receive(s);
-                                                    cdncdr.log();
-
-                                                    smb2::ChangeNotifyResponse cnr;
-                                                    cnr.receive(s);
-                                                    cnr.log();
-
-                                                    fscc::FileNotifyInformation fni;
-                                                    fni.receive(s);
-                                                    fni.log();
-                                                }
-                                                break;
-                                        }
-
-                                        status.rdpdr_last_minor_function = -1;
-                                    }
-                                    break;
-                                case IRP_MJ_LOCK_CONTROL:
-                                    {
-                                        LOG(LOG_INFO, "     Client Drive Lock Control Response:");
-                                        LOG(LOG_INFO, "          * Padding - (5 bytes) NOT USED");
-                                    }
-                                    break;
-                                default: LOG(LOG_INFO, "     default MajorFunction:");
-                                    break;
-
-                            }
-
-                            status.rdpdr_last_fs_information_class = -1;
-                            status.rdpdr_last_major_function = -1;
-                        }
-                        break;
-
-                    case PacketId::PAKID_CORE_SERVER_CAPABILITY:
-                        {
-                            int numCapabilities(s.in_uint16_le());
-                            s.in_skip_bytes(2);
-
-                            LOG(LOG_INFO, "     Client Core Capability Request:");
-                            LOG(LOG_INFO, "          * numCapabilities = %d (2 bytes)", numCapabilities);
-                            LOG(LOG_INFO, "          * Padding - (2 bytes) NOT USED");
-
-                            for (uint16_t i = 0; i < numCapabilities; i++) {
-                                InStream s_serie = s.clone();
-                                uint16_t CapabilityType = s_serie.in_uint16_le();
-                                switch (CapabilityType) {
-                                    case CAP_GENERAL_TYPE:
-                                        {
-                                            CapabilityHeader ch;
-                                            ch.receive(s);
-                                            ch.log();
-                                            GeneralCapabilitySet gcs;
-                                            gcs.receive(s, ch.Version);
-                                            gcs.log();
-                                        }
-                                        break;
-                                    case CAP_PRINTER_TYPE:
-                                    case CAP_PORT_TYPE:
-                                    case CAP_DRIVE_TYPE:
-                                    case CAP_SMARTCARD_TYPE:
-                                        {
-                                            CapabilityHeader ch;
-                                            ch.receive(s);
-                                            ch.log();
-                                        }
-                                        break;
                                 }
-                            }
+                                break;
+                            case IRP_MJ_SET_INFORMATION:
+                                {
+                                    ServerDriveSetInformationRequest sdsir;
+                                    sdsir.receive(s);
+                                    sdsir.log();
 
-                        }
-                        break;
+                                    status.rdpdr_last_fs_information_class = sdsir.FsInformationClass();
 
-                    case PacketId::PAKID_CORE_CLIENT_CAPABILITY:
-                        {
-                            int numCapabilities(s.in_uint16_le());
-                            s.in_skip_bytes(2);
-
-                            LOG(LOG_INFO, "     Client Core Capability Request:");
-                            LOG(LOG_INFO, "          * numCapabilities = %d (2 bytes)", numCapabilities);
-                            LOG(LOG_INFO, "          * Padding - (2 bytes) NOT USED");
-
-                            for (uint16_t i = 0; i < numCapabilities; i++) {
-                                InStream s_serie = s.clone();
-                                uint16_t CapabilityType = s_serie.in_uint16_le();
-                                switch (CapabilityType) {
-                                    case CAP_GENERAL_TYPE:
-                                        {
-                                            CapabilityHeader ch;
-                                            ch.receive(s);
-                                            ch.log();
-                                            GeneralCapabilitySet gcs;
-                                            gcs.receive(s, ch.Version);
-                                            gcs.log();
+                                    switch (status.rdpdr_last_fs_information_class) {
+                                        case FileBasicInformation:
+                                            {
+                                                fscc::FileBasicInformation fbi;
+                                                fbi.receive(s);
+                                                fbi.log();
+                                            }
                                             break;
-                                        }
-                                    case CAP_PRINTER_TYPE:
-                                    case CAP_PORT_TYPE:
-                                    case CAP_DRIVE_TYPE:
-                                    case CAP_SMARTCARD_TYPE:
-                                        {
-                                            CapabilityHeader ch;
-                                            ch.receive(s);
-                                            ch.log();
+                                        case FileEndOfFileInformation:
+                                            {
+                                                fscc::FileEndOfFileInformation feofi;
+                                                feofi.receive(s);
+                                                feofi.log();
+                                            }
                                             break;
-                                        }
+                                        case FileDispositionInformation:
+                                            {
+                                                fscc::FileDispositionInformation fdi;
+                                                fdi.receive(s);
+                                                fdi.log();
+                                            }
+                                            break;
+                                        case FileRenameInformation:
+                                            {
+                                                fscc::FileRenameInformation fri;
+                                                fri.receive(s);
+                                                fri.log();
+                                            }
+                                            break;
+                                        case FileAllocationInformation:
+                                            {
+                                                fscc::FileAllocationInformation fai;
+                                                fai.receive(s);
+                                                fai.log();
+                                            }
+                                            break;
+                                    }
                                 }
+                                break;
+                            case IRP_MJ_DIRECTORY_CONTROL:
+                                {
+                                    status.rdpdr_last_minor_function = int(dior.MinorFunction());
+
+                                    switch (status.rdpdr_last_minor_function) {
+
+                                        case IRP_MN_QUERY_DIRECTORY:
+                                            {
+                                                ServerDriveQueryDirectoryRequest sdqdr;
+                                                sdqdr.receive(s);
+                                                sdqdr.log();
+                                            }
+                                            break;
+                                        case IRP_MN_NOTIFY_CHANGE_DIRECTORY:
+                                            {
+                                                ServerDriveNotifyChangeDirectoryRequest sdcdr;
+                                                sdcdr.receive(s);
+                                                sdcdr.log();
+                                            }
+                                            break;
+                                    }
+                                }
+                                break;
+                            case IRP_MJ_LOCK_CONTROL:
+                                {
+                                    ServerDriveLockControlRequest sdlcr;
+                                    sdlcr.receive(s);
+                                    sdlcr.log();
+
+                                    for (uint32_t i = 0; i < sdlcr.NumLocks; i++) {
+                                        RDP_Lock_Info rdpli;
+                                        rdpli.receive(s);
+                                        rdpli.log();
+                                    }
+                                }
+                                break;
+                        }
+                    }
+                    break;
+
+                case PacketId::PAKID_CORE_DEVICE_IOCOMPLETION:
+                    {
+                        DeviceIOResponse dior;
+                        dior.receive(s);
+                        dior.log();
+
+                            switch (status.rdpdr_last_major_function) {
+                            case IRP_MJ_CREATE:
+                                {
+                                    DeviceCreateResponse dcf;
+                                    dcf.receive(s);
+                                    dcf.log();
+                                }
+                                break;
+                            case IRP_MJ_CLOSE:
+                                {
+                                    LOG(LOG_INFO, "     Device Close Response:");
+                                    LOG(LOG_INFO, "          * Padding - (4 bytes) NOT USED");
+                                }
+                                break;
+                            case IRP_MJ_READ:
+                                {
+                                    DeviceReadResponse drr;
+                                    drr.receive(s);
+                                    drr.log();
+                                }
+                                break;
+                            case IRP_MJ_WRITE:
+                                {
+                                    DeviceWriteResponse dwr;
+                                    dwr.receive(s);
+                                    dwr.log();
+                                }
+                                break;
+                            case IRP_MJ_DEVICE_CONTROL:
+                                {
+                                    ClientDriveControlResponse cdcr;
+                                    cdcr.receive(s);
+                                    cdcr.log();
+
+                                    switch (status.rdpdr_last_io_control_code) {
+                                        //case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID:
+                                        //    break;
+                                        //case fscc::FSCTL_FILESYSTEM_GET_STATISTICS:
+                                        //    break;
+                                        default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Code: 0x%08x", status.rdpdr_last_io_control_code);
+                                            break;
+                                    }
+                                }
+                                break;
+                            case IRP_MJ_QUERY_VOLUME_INFORMATION:
+                                {
+                                    ClientDriveQueryVolumeInformationResponse cdqvir;
+                                    cdqvir.receive(s);
+                                    cdqvir.log();
+
+                                        switch (status.rdpdr_last_fs_information_class) {
+                                        case FileFsVolumeInformation:
+                                            {
+                                                fscc::FileFsVolumeInformation ffvi;
+                                                ffvi.receive(s);
+                                                ffvi.log();
+                                            }
+                                            break;
+                                        case FileFsSizeInformation:
+                                            {
+                                                fscc::FileFsSizeInformation ffsi;
+                                                ffsi.receive(s);
+                                                ffsi.log();
+                                            }
+                                            break;
+                                        case FileFsAttributeInformation: {
+                                                fscc::FileFsAttributeInformation ffai;
+                                                ffai.receive(s);
+                                                ffai.log();
+                                            }
+                                            break;
+                                        case FileFsFullSizeInformation:
+                                            {
+                                                fscc::FileFsFullSizeInformation fffsi;
+                                                fffsi.receive(s);
+                                                fffsi.log();
+                                            }
+                                            break;
+                                        case FileFsDeviceInformation:
+                                            {
+                                                fscc::FileFsDeviceInformation ffdi;
+                                                ffdi.receive(s);
+                                                ffdi.log();
+                                            }
+                                            break;
+                                    }
+                                }
+                                break;
+                            case IRP_MJ_SET_VOLUME_INFORMATION:
+                                {
+                                    ClientDriveSetVolumeInformationResponse cdsvir;
+                                    cdsvir.receive(s);
+                                    cdsvir.log();
+                                }
+                                break;
+                            case IRP_MJ_QUERY_INFORMATION:
+                                {
+                                    rdpdr::ClientDriveQueryInformationResponse cdqir;
+                                    cdqir.receive(s);
+                                    cdqir.log();
+
+                                    switch (status.rdpdr_last_fs_information_class) {
+                                        case FileBasicInformation:
+                                            {
+                                            fscc::FileBasicInformation fbi;
+                                            fbi.receive(s);
+                                            fbi.log();
+                                            }
+                                            break;
+                                        case FileStandardInformation:
+                                            {
+                                            fscc::FileStandardInformation fsi;
+                                            fsi.receive(s);
+                                            fsi.log();
+                                            }
+                                            break;
+                                        case FileAttributeTagInformation:
+                                            {
+                                            fscc::FileAttributeTagInformation fati;
+                                            fati.receive(s);
+                                            fati.log();
+                                            }
+                                            break;
+                                    }
+                                }
+                                break;
+                            case IRP_MJ_SET_INFORMATION:
+                                {
+                                    ClientDriveSetInformationResponse cdsir;
+                                    cdsir.receive(s);
+                                    cdsir.log();
+                                }
+                                break;
+                            case IRP_MJ_DIRECTORY_CONTROL:
+                                {
+                                    switch (status.rdpdr_last_minor_function) {
+
+                                        case IRP_MN_QUERY_DIRECTORY:
+                                            {
+                                                ClientDriveQueryDirectoryResponse cdqdr;
+                                                cdqdr.receive(s);
+                                                cdqdr.log();
+
+                                                switch (status.rdpdr_last_fs_information_class) {
+                                                    case FileDirectoryInformation:
+                                                        {
+                                                        fscc::FileDirectoryInformation fdi;
+                                                        fdi.receive(s);
+                                                        fdi.log();
+                                                        }
+                                                        break;
+                                                    case FileFullDirectoryInformation:
+                                                        {
+                                                        fscc::FileFullDirectoryInformation ffdi;
+                                                        ffdi.receive(s);
+                                                        ffdi.log();
+                                                        }
+                                                        break;
+                                                    case FileBothDirectoryInformation:
+                                                        {
+                                                        fscc::FileBothDirectoryInformation fbdi;
+                                                        fbdi.receive(s);
+                                                        fbdi.log();
+                                                        }
+                                                        break;
+                                                    case FileNamesInformation:
+                                                        {
+                                                        fscc::FileNamesInformation fni;
+                                                        fni.receive(s);
+                                                        fni.log();
+                                                        }
+                                                        break;
+                                                }
+                                                status.rdpdr_last_fs_information_class = -1;
+                                            }
+                                            break;
+                                        case IRP_MN_NOTIFY_CHANGE_DIRECTORY:
+                                            {
+                                                ClientDriveNotifyChangeDirectoryResponse cdncdr;
+                                                cdncdr.receive(s);
+                                                cdncdr.log();
+
+                                                smb2::ChangeNotifyResponse cnr;
+                                                cnr.receive(s);
+                                                cnr.log();
+
+                                                fscc::FileNotifyInformation fni;
+                                                fni.receive(s);
+                                                fni.log();
+                                            }
+                                            break;
+                                    }
+
+                                    status.rdpdr_last_minor_function = -1;
+                                }
+                                break;
+                            case IRP_MJ_LOCK_CONTROL:
+                                {
+                                    LOG(LOG_INFO, "     Client Drive Lock Control Response:");
+                                    LOG(LOG_INFO, "          * Padding - (5 bytes) NOT USED");
+                                }
+                                break;
+                            default: LOG(LOG_INFO, "     default MajorFunction:");
+                                break;
+
+                        }
+
+                        status.rdpdr_last_fs_information_class = -1;
+                        status.rdpdr_last_major_function = -1;
+                    }
+                    break;
+
+                case PacketId::PAKID_CORE_SERVER_CAPABILITY:
+                    {
+                        int numCapabilities(s.in_uint16_le());
+                        s.in_skip_bytes(2);
+
+                        LOG(LOG_INFO, "     Client Core Capability Request:");
+                        LOG(LOG_INFO, "          * numCapabilities = %d (2 bytes)", numCapabilities);
+                        LOG(LOG_INFO, "          * Padding - (2 bytes) NOT USED");
+
+                        for (uint16_t i = 0; i < numCapabilities; i++) {
+                            InStream s_serie = s.clone();
+                            uint16_t CapabilityType = s_serie.in_uint16_le();
+                            switch (CapabilityType) {
+                                case CAP_GENERAL_TYPE:
+                                    {
+                                        CapabilityHeader ch;
+                                        ch.receive(s);
+                                        ch.log();
+                                        GeneralCapabilitySet gcs;
+                                        gcs.receive(s, ch.Version);
+                                        gcs.log();
+                                    }
+                                    break;
+                                case CAP_PRINTER_TYPE:
+                                case CAP_PORT_TYPE:
+                                case CAP_DRIVE_TYPE:
+                                case CAP_SMARTCARD_TYPE:
+                                    {
+                                        CapabilityHeader ch;
+                                        ch.receive(s);
+                                        ch.log();
+                                    }
+                                    break;
                             }
                         }
-                        break;
 
-                    case PacketId::PAKID_CORE_DEVICELIST_REMOVE:
-                        {
-                            ClientDriveDeviceListRemove cdlr;
-                            cdlr.receive(s);
-                            cdlr.log();
+                    }
+                    break;
+
+                case PacketId::PAKID_CORE_CLIENT_CAPABILITY:
+                    {
+                        int numCapabilities(s.in_uint16_le());
+                        s.in_skip_bytes(2);
+
+                        LOG(LOG_INFO, "     Client Core Capability Request:");
+                        LOG(LOG_INFO, "          * numCapabilities = %d (2 bytes)", numCapabilities);
+                        LOG(LOG_INFO, "          * Padding - (2 bytes) NOT USED");
+
+                        for (uint16_t i = 0; i < numCapabilities; i++) {
+                            InStream s_serie = s.clone();
+                            uint16_t CapabilityType = s_serie.in_uint16_le();
+                            switch (CapabilityType) {
+                                case CAP_GENERAL_TYPE:
+                                    {
+                                        CapabilityHeader ch;
+                                        ch.receive(s);
+                                        ch.log();
+                                        GeneralCapabilitySet gcs;
+                                        gcs.receive(s, ch.Version);
+                                        gcs.log();
+                                        break;
+                                    }
+                                case CAP_PRINTER_TYPE:
+                                case CAP_PORT_TYPE:
+                                case CAP_DRIVE_TYPE:
+                                case CAP_SMARTCARD_TYPE:
+                                    {
+                                        CapabilityHeader ch;
+                                        ch.receive(s);
+                                        ch.log();
+                                        break;
+                                    }
+                            }
                         }
-                        break;
+                    }
+                    break;
 
-                    case PacketId::PAKID_PRN_CACHE_DATA:
-                        break;
+                case PacketId::PAKID_CORE_DEVICELIST_REMOVE:
+                    {
+                        ClientDriveDeviceListRemove cdlr;
+                        cdlr.receive(s);
+                        cdlr.log();
+                    }
+                    break;
 
-                    case PacketId::PAKID_CORE_USER_LOGGEDON:
-                        break;
+                case PacketId::PAKID_PRN_CACHE_DATA:
+                    break;
 
-                    case PacketId::PAKID_PRN_USING_XPS:
-                        break;
-                }
-                break;
+                case PacketId::PAKID_CORE_USER_LOGGEDON:
+                    break;
 
-            case Component::RDPDR_CTYP_PRT:
-                break;
-        }
+                case PacketId::PAKID_PRN_USING_XPS:
+                    break;
+            }
+            break;
 
+        case Component::RDPDR_CTYP_PRT:
+            break;
     }
+}
 
 }   // namespace rdpdr
 

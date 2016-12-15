@@ -45,19 +45,14 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose)
 
     NotifyApi * notifier = nullptr;
 
-    try {
-        FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
-                                    "abc<br>def", "rec", "rec",
-                                    false, font, Theme(), Translation::EN);
+    FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
+                                "abc<br>def", "rec", "rec",
+                                false, font, Theme(), Translation::EN);
 
-        // ask to widget to redraw at it's current position
-        flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
+    // ask to widget to redraw at it's current position
+    flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
-        // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close.png");
-    } catch (Error & e) {
-        LOG(LOG_INFO, "e=%u", e.id);
-        BOOST_CHECK(false);
-    };
+    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close.png");
 
     char message[1024];
 
@@ -80,30 +75,24 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
 
     NotifyApi * notifier = nullptr;
 
-    try {
-        FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
-            "Lorem ipsum dolor sit amet, consectetur<br>"
-            "adipiscing elit. Nam purus lacus, luctus sit<br>"
-            "amet suscipit vel, posuere quis turpis. Sed<br>"
-            "venenatis rutrum sem ac posuere. Phasellus<br>"
-            "feugiat dui eu mauris adipiscing sodales.<br>"
-            "Mauris rutrum molestie purus, in tempor lacus<br>"
-            "tincidunt et. Sed eu ligula mauris, a rutrum<br>"
-            "est. Vestibulum in nunc vel massa condimentum<br>"
-            "iaculis nec in arcu. Pellentesque accumsan,<br>"
-            "quam sit amet aliquam mattis, odio purus<br>"
-            "porttitor tortor, sit amet tincidunt odio<br>"
-            "erat ut ligula. Fusce sit amet mauris neque.<br>"
-            "Sed orci augue, luctus in ornare sed,<br>"
-            "adipiscing et arcu.",
-            nullptr, nullptr, false, font, Theme(), Translation::EN);
+    FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
+        "Lorem ipsum dolor sit amet, consectetur<br>"
+        "adipiscing elit. Nam purus lacus, luctus sit<br>"
+        "amet suscipit vel, posuere quis turpis. Sed<br>"
+        "venenatis rutrum sem ac posuere. Phasellus<br>"
+        "feugiat dui eu mauris adipiscing sodales.<br>"
+        "Mauris rutrum molestie purus, in tempor lacus<br>"
+        "tincidunt et. Sed eu ligula mauris, a rutrum<br>"
+        "est. Vestibulum in nunc vel massa condimentum<br>"
+        "iaculis nec in arcu. Pellentesque accumsan,<br>"
+        "quam sit amet aliquam mattis, odio purus<br>"
+        "porttitor tortor, sit amet tincidunt odio<br>"
+        "erat ut ligula. Fusce sit amet mauris neque.<br>"
+        "Sed orci augue, luctus in ornare sed,<br>"
+        "adipiscing et arcu.",
+        nullptr, nullptr, false, font, Theme(), Translation::EN);
 
-        flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
-    }
-    catch(Error & e) {
-        LOG(LOG_INFO, "error.id=%d", e.id);
-        BOOST_CHECK(false);
-    };
+    flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
     // ask to widget to redraw at it's current position
 

@@ -183,7 +183,8 @@ enum : uint32_t {
     , FILE_SHARE_DELETE = 0x00000004
 };
 
-static const char * get_ShareAccess_name(uint32_t shareAccess) {
+static inline
+const char * get_ShareAccess_name(uint32_t shareAccess) {
     switch (shareAccess) {
         case FILE_SHARE_READ:   return "FILE_SHARE_READ";
         case FILE_SHARE_WRITE:  return "FILE_SHARE_WRITE";
@@ -237,7 +238,8 @@ enum {
     , FILE_OVERWRITE_IF = 0x00000005
 };
 
-static const char * get_CreateDisposition_name(uint32_t createDisposition) {
+static inline
+const char * get_CreateDisposition_name(uint32_t createDisposition) {
     switch (createDisposition) {
         case FILE_SUPERSEDE:    return "FILE_SUPERSEDE";
         case FILE_OPEN:         return "FILE_OPEN";
@@ -432,7 +434,8 @@ enum {
     , FILE_OPEN_FOR_FREE_SPACE_QUERY = 0x00800000
 };
 
-static const char * get_CreateOptions_name(uint32_t createOptions) {
+static inline
+const char * get_CreateOptions_name(uint32_t createOptions) {
     switch (createOptions) {
         case FILE_DIRECTORY_FILE:            return "FILE_DIRECTORY_FILE";
         case FILE_WRITE_THROUGH:             return "FILE_WRITE_THROUGH";

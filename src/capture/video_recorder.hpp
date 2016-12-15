@@ -394,6 +394,7 @@ public:
         // write last frame : we must ensure writing at least one frame to avoid empty movies
         encoding_video_frame();
 
+        // write the last second for mp4
         if (bool(this->video_st->codec->flags & AVFMT_NOTIMESTAMPS)) {
             auto const frame_rate = 1000u / this->duration_frame.count();
             int const loop = frame_rate - this->frame_key % frame_rate;

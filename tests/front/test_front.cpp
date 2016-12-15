@@ -296,15 +296,14 @@ BOOST_AUTO_TEST_CASE(TestFront)
 
     //    front.dump_png("trace_w2008_");
     } catch (...) {
+        // TEST Error or not error...?
         LOG(LOG_INFO, "Exiting on Exception");
     };
 }
 
 BOOST_AUTO_TEST_CASE(TestFront2)
 {
-    bool rdp_handshake_timeout_exception_raised = false;
-
-    try {
+    auto test = [&]{
         ::unlink(RECORD_PATH "/redemption.mwrm");
         ::unlink(RECORD_PATH "/redemption-000000.wrm");
 
@@ -479,13 +478,8 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         front.must_be_stop_capture();
 
     //    front.dump_png("trace_w2008_");
-    } catch (const Error & e) {
-        rdp_handshake_timeout_exception_raised = (e.id == ERR_RDP_HANDSHAKE_TIMEOUT);
-    } catch (...) {
-        LOG(LOG_INFO, "Exiting on Exception");
     };
-
-    BOOST_CHECK(rdp_handshake_timeout_exception_raised);
+    CHECK_EXCEPTION_ERROR_ID(test(), ERR_RDP_HANDSHAKE_TIMEOUT);
 }
 
 /*
