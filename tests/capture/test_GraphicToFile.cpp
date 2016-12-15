@@ -458,7 +458,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
-    DrawableToFile png_recorder(out_png_trans, drawable1.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable1.impl(), 100);
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
 
     png_recorder.flush();
@@ -603,7 +603,7 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png", groupid);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-    DrawableToFile png_recorder(out_png_trans, drawable.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
@@ -736,7 +736,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png", groupid);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-    DrawableToFile png_recorder(out_png_trans, drawable.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
@@ -829,7 +829,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     const FilenameGenerator * seq = out_png_trans.seqgen();
     BOOST_CHECK(seq);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-    DrawableToFile png_recorder(out_png_trans, drawable.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){

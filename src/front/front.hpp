@@ -937,6 +937,7 @@ public:
             now,
             this->client_info.width, this->client_info.height,
             this->mod_bpp, this->capture_bpp
+          , 100u // zoom facture, not provided in real time capture
           , true, false, authentifier
           , ini, this->cctx, this->gen
           , full_video

@@ -37,7 +37,7 @@ public:
     ImageCapture (
         const timeval & now, const Drawable & drawable, Transport & trans,
         std::chrono::microseconds png_interval)
-    : DrawableToFile(trans, drawable)
+    : DrawableToFile(trans, drawable, 100)
     , start_capture(now)
     , frame_interval(png_interval)
     {}

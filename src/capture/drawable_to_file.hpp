@@ -44,13 +44,21 @@ private:
     std::unique_ptr<uint8_t[]> scaled_buffer;
 
 public:
-    DrawableToFile(Transport & trans, const Drawable & drawable)
+    DrawableToFile(Transport & trans, const Drawable & drawable, unsigned zoom)
     : trans(trans)
-    , zoom_factor(100)
+    , zoom_factor(std::min(zoom, 100u))
     , scaled_width(drawable.width())
     , scaled_height(drawable.height())
     , drawable(drawable)
-    {}
+    {
+        const unsigned zoom_width = (this->drawable.width() * this->zoom_factor) / 100;
+        const unsigned zoom_height = (this->drawable.height() * this->zoom_factor) / 100;
+        this->scaled_width = (zoom_width + 3) & 0xFFC;
+        this->scaled_height = zoom_height;
+        if (this->zoom_factor != 100) {
+            this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
+        }
+    }
 
     ~DrawableToFile() = default;
 

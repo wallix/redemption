@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid);
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
-    DrawableToFile png_recorder(out_png_trans, drawable1.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable1.impl(), 100);
 
 //    png_recorder.update_config(ini);
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
