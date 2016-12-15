@@ -237,7 +237,7 @@ BOOST_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
 {
     CheckTransport trans(expected_red, sizeof(expected_red)-1);
     RDPDrawable drawable(800, 600, 24);
-    DrawableToFile d(trans, drawable.impl());
+    DrawableToFile d(trans, drawable.impl(), 100);
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
@@ -260,7 +260,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
 
     OutFileTransport trans(fd);
     RDPDrawable drawable(800, 600, 24);
-    DrawableToFile d(trans, drawable.impl());
+    DrawableToFile d(trans, drawable.impl(), 100);
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
@@ -275,7 +275,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
     RDPDrawable drawable(800, 600, 24);
-    DrawableToFile d(trans, drawable.impl());
+    DrawableToFile d(trans, drawable.impl(), 100);
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
@@ -379,7 +379,7 @@ BOOST_AUTO_TEST_CASE(TestSmallImage)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid);
     Rect scr(0, 0, 20, 10);
     RDPDrawable drawable(20, 10, 24);
-    DrawableToFile d(trans, drawable.impl());
+    DrawableToFile d(trans, drawable.impl(), 100);
     drawable.draw(RDPOpaqueRect(scr, RED), scr);
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
@@ -397,7 +397,7 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid);
     Rect scr(0, 0, width, height);
     RDPDrawable drawable(scr.cx, scr.cy, 24);
-    DrawableToFile d(trans, drawable.impl());
+    DrawableToFile d(trans, drawable.impl(), 100);
     d.zoom(50);
 
     {
@@ -421,7 +421,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600, 24);
-    DrawableToFile d(trans, drawable.impl());
+    DrawableToFile d(trans, drawable.impl(), 100);
     drawable.draw(RDPOpaqueRect(scr, GREEN), scr);
 
     uint8_t source64x64[] = {
@@ -549,7 +549,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600, 24);
-    DrawableToFile d(trans, drawable.impl());
+    DrawableToFile d(trans, drawable.impl(), 100);
     drawable.draw(RDPOpaqueRect(scr, GREEN), scr);
 
     uint8_t source32x1[] =

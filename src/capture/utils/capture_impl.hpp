@@ -155,7 +155,6 @@ class SequencedVideoCaptureImpl
     struct ImageToFile : private DrawableToFile
     {
         using DrawableToFile::DrawableToFile;
-        using DrawableToFile::zoom;
         using DrawableToFile::logical_frame_ended;
 
         bool has_first_img = false;
@@ -268,6 +267,7 @@ public:
         const char * const basename,
         const int groupid,
         bool no_timestamp,
+        unsigned image_zoom,
         const Drawable & drawable,
         VideoParams video_param,
         std::chrono::microseconds video_interval,
@@ -275,7 +275,7 @@ public:
     : vc_trans(record_path, basename, ("." + video_param.codec).c_str(), groupid)
     , vc(now, this->vc_trans, drawable, no_timestamp, std::move(video_param))
     , ic_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_path, basename, ".png", groupid)
-    , ic(this->ic_trans, drawable)
+    , ic(this->ic_trans, drawable, image_zoom)
     , video_sequencer(
         now, video_interval > std::chrono::microseconds(0) ? video_interval : std::chrono::microseconds::max(),
         VideoSequencerAction{*this})
@@ -301,10 +301,6 @@ public:
     void request_full_cleaning() {
         this->vc_trans.request_full_cleaning();
         this->ic_trans.request_full_cleaning();
-    }
-
-    void image_zoom(unsigned percent) {
-        this->ic.zoom(percent);
     }
 };
 
