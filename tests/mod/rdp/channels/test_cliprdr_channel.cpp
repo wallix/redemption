@@ -135,10 +135,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    bool end_of_file_reached = false;
-
-    try
-    {
+    auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
             t.recv(&end,
@@ -186,17 +183,8 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
 
             virtual_channel_stream.rewind();
         }
-    }
-    catch (Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            LOG(LOG_ERR, "Exception=%d", e.id);
-            throw;
-        }
-
-        end_of_file_reached = true;
-    }
-
-    BOOST_CHECK(end_of_file_reached || t.get_status());
+    };
+    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
@@ -243,10 +231,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    bool end_of_file_reached = false;
-
-    try
-    {
+    auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
             t.recv(&end,
@@ -294,17 +279,8 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
 
             virtual_channel_stream.rewind();
         }
-    }
-    catch (Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            LOG(LOG_ERR, "Exception=%d", e.id);
-            throw;
-        }
-
-        end_of_file_reached = true;
-    }
-
-    BOOST_CHECK(end_of_file_reached || t.get_status());
+    };
+    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
@@ -351,10 +327,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    bool end_of_file_reached = false;
-
-    try
-    {
+    auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
             t.recv(&end,
@@ -402,17 +375,8 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
 
             virtual_channel_stream.rewind();
         }
-    }
-    catch (Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            LOG(LOG_ERR, "Exception=%d", e.id);
-            throw;
-        }
-
-        end_of_file_reached = true;
-    }
-
-    BOOST_CHECK(end_of_file_reached || t.get_status());
+    };
+    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
@@ -459,10 +423,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    bool end_of_file_reached = false;
-
-    try
-    {
+    auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
             t.recv(&end,
@@ -510,17 +471,8 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
 
             virtual_channel_stream.rewind();
         }
-    }
-    catch (Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            LOG(LOG_ERR, "Exception=%d", e.id);
-            throw;
-        }
-
-        end_of_file_reached = true;
-    }
-
-    BOOST_CHECK(end_of_file_reached || t.get_status());
+    };
+    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 class NullSender : public VirtualChannelDataSender {

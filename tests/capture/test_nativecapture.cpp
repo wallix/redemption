@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     DumpPng24FromRDPDrawableAdapter dump_png{drawable};
     GraphicToFile graphic_to_file(
         now, trans, 800, 600, 24,
-        bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression, 1000
+        bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression
     );
     NativeCapture consumer(graphic_to_file, now, std::chrono::seconds{1}, std::chrono::seconds{5});
 

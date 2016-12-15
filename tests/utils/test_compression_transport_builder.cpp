@@ -25,12 +25,12 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "utils/compression_transport_wrapper.hpp"
+#include "utils/compression_transport_builder.hpp"
 
 #include <iostream>
 #include <sstream>
 
-BOOST_AUTO_TEST_CASE(TestCompressionTransportWrapper)
+BOOST_AUTO_TEST_CASE(TestCompressionTransportBuilder)
 {
     std::stringbuf buf;
     auto * oldbuf = std::cout.rdbuf(&buf);
@@ -48,16 +48,16 @@ BOOST_AUTO_TEST_CASE(TestCompressionTransportWrapper)
 
     NoneTransport trans;
 
-    using CompressionTestTransportWrapper = CompressionTransportWrapper<GzipTransport, SnappyTransport>;
+    using CompressionTestTransportBuilder = CompressionTransportBuilder<GzipTransport, SnappyTransport>;
 
-    CompressionTestTransportWrapper(trans, WrmCompressionAlgorithm::no_compression).get().flush();
-    CompressionTestTransportWrapper(trans, WrmCompressionAlgorithm::gzip).get().flush();
-    CompressionTestTransportWrapper(trans, WrmCompressionAlgorithm::snappy).get().flush();
+    CompressionTestTransportBuilder(trans, WrmCompressionAlgorithm::no_compression).get().flush();
+    CompressionTestTransportBuilder(trans, WrmCompressionAlgorithm::gzip).get().flush();
+    CompressionTestTransportBuilder(trans, WrmCompressionAlgorithm::snappy).get().flush();
 
     std::cout.rdbuf(oldbuf);
 
     BOOST_CHECK_EQUAL(buf.str(), "none\ngzip\nsnappy\n");
 
-    CompressionTestTransportWrapper t(trans, WrmCompressionAlgorithm::gzip);
+    CompressionTestTransportBuilder t(trans, WrmCompressionAlgorithm::gzip);
     BOOST_CHECK_EQUAL(t.get_algorithm(), WrmCompressionAlgorithm::gzip);
 }

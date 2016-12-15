@@ -193,72 +193,65 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
 BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 {
-    try {
-
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
-    {
-        // Timestamps are applied only when flushing
-        timeval now;
-        now.tv_usec = 0;
-        now.tv_sec = 1000;
 
-        Rect scr(0, 0, 12, 10);
+    // Timestamps are applied only when flushing
+    timeval now;
+    now.tv_usec = 0;
+    now.tv_sec = 1000;
 
-        ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
-        ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
+    Rect scr(0, 0, 12, 10);
 
-        ini.set<cfg::video::png_limit>(10); // one snapshot by second
-        ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
+    ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
+    ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
 
-        ini.set<cfg::video::capture_flags>(CaptureFlags::png);
-        ini.set<cfg::globals::trace_type>(TraceType::localfile);
+    ini.set<cfg::video::png_limit>(10); // one snapshot by second
+    ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
 
-        ini.set<cfg::video::record_tmp_path>("./");
-        ini.set<cfg::video::record_path>("./");
-        ini.set<cfg::video::hash_path>("/tmp");
-        ini.set<cfg::globals::movie_path>("capture");
+    ini.set<cfg::video::capture_flags>(CaptureFlags::png);
+    ini.set<cfg::globals::trace_type>(TraceType::localfile);
 
-        LCGRandom rnd(0);
-        CryptoContext cctx;
+    ini.set<cfg::video::record_tmp_path>("./");
+    ini.set<cfg::video::record_path>("./");
+    ini.set<cfg::video::hash_path>("/tmp");
+    ini.set<cfg::globals::movie_path>("capture");
 
-        // TODO remove this after unifying capture interface
-        bool full_video = false;
-        // TODO remove this after unifying capture interface
-        bool clear_png = false;
-        // TODO remove this after unifying capture interface
-        bool no_timestamp = false;
-        // TODO remove this after unifying capture interface
-        auth_api * authentifier = nullptr;
-        // TODO remove this after unifying capture interface
-        bool force_capture_png_if_enable = true;
+    LCGRandom rnd(0);
+    CryptoContext cctx;
 
-        Capture capture(now, scr.cx, scr.cy, 16, 16, 100
-                        , clear_png, no_timestamp, authentifier
-                        , ini, cctx, rnd, full_video, nullptr, force_capture_png_if_enable);
+    // TODO remove this after unifying capture interface
+    bool full_video = false;
+    // TODO remove this after unifying capture interface
+    bool clear_png = false;
+    // TODO remove this after unifying capture interface
+    bool no_timestamp = false;
+    // TODO remove this after unifying capture interface
+    auth_api * authentifier = nullptr;
+    // TODO remove this after unifying capture interface
+    bool force_capture_png_if_enable = true;
 
-        Pointer pointer1(Pointer::POINTER_EDIT);
-        capture.set_pointer(pointer1);
+    Capture capture(now, scr.cx, scr.cy, 16, 16, 100
+                   , clear_png, no_timestamp, authentifier
+                   , ini, cctx, rnd, full_video, nullptr, force_capture_png_if_enable);
 
-        bool ignore_frame_in_timeval = true;
+    Pointer pointer1(Pointer::POINTER_EDIT);
+    capture.set_pointer(pointer1);
 
-        capture.draw(RDPOpaqueRect(scr, color_encode(BLUE, 16)), scr);
-        now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+    bool ignore_frame_in_timeval = true;
 
-        const char * filename = "./capture-000000.png";
+    capture.draw(RDPOpaqueRect(scr, color_encode(BLUE, 16)), scr);
+    now.tv_sec++;
+    capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        auto s = get_file_contents<std::string>(filename);
-        char message[1024];
-        if (!check_sig(reinterpret_cast<const uint8_t*>(s.data()), s.size(), message,
-            "\x39\xb2\x11\x9d\x25\x64\x8d\x7b\xce\x3e\xf1\xf0\xad\x29\x50\xea\xa3\x01\x5c\x27"
-        )) {
-            BOOST_CHECK_MESSAGE(false, message);
-        }
-        ::unlink(filename);
+    const char * filename = "./capture-000000.png";
+
+    auto s = get_file_contents<std::string>(filename);
+    char message[1024];
+    if (!check_sig(reinterpret_cast<const uint8_t*>(s.data()), s.size(), message,
+        "\x39\xb2\x11\x9d\x25\x64\x8d\x7b\xce\x3e\xf1\xf0\xad\x29\x50\xea\xa3\x01\x5c\x27"
+    )) {
+        BOOST_CHECK_MESSAGE(false, message);
     }
-
-    } catch (...) {
-        BOOST_CHECK(false);
-    };
+    ::unlink(filename);
 }

@@ -42,11 +42,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     LogTransport trans;
     AclSerializer acl(ini, trans, to_verbose_flags(0));
     ini.set<cfg::context::forcemodule>(true);
-    try {
-        acl.send_acl_data();
-    } catch (const Error &){
-        BOOST_CHECK(false);
-    }
+    BOOST_CHECK_NO_THROW(acl.send_acl_data());
 
     // try exception
     CheckTransport transexcpt("", 0);
@@ -76,11 +72,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     BOOST_CHECK(ini.get<cfg::context::session_id>().empty());
     BOOST_CHECK(!ini.is_asked<cfg::globals::auth_user>());
 
-    try {
-        acl.incoming();
-    } catch (const Error &){
-        BOOST_CHECK(false);
-    }
+    BOOST_CHECK_NO_THROW(acl.incoming());
     BOOST_CHECK(ini.is_asked<cfg::globals::auth_user>());
     BOOST_CHECK(!ini.get<cfg::context::session_id>().empty());
 
@@ -111,12 +103,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
 
     GeneratorTransport transexcpt(u.get(), big_stream.get_offset());
     AclSerializer aclexcpt(ini, transexcpt, to_verbose_flags(0));
-    try {
-        aclexcpt.incoming();
-        BOOST_CHECK(false);
-    } catch (const Error & e){
-        BOOST_CHECK_EQUAL(uint32_t(ERR_ACL_MESSAGE_TOO_BIG), uint32_t(e.id));
-    }
+    CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
 }
 
 BOOST_AUTO_TEST_CASE(TestAclSerializerIncoming)

@@ -143,8 +143,6 @@ private:
     CaptureApisImpl::UpdateConfigCapture update_config_capture_api;
     Graphic::GraphicApi * graphic_api = nullptr;
 
-    const int delta_time;
-
     ApisRegister get_apis_register() {
         return {
             this->graphic_api ? &this->graphic_api->gds : nullptr,
@@ -173,8 +171,7 @@ public:
         Random & rnd,
         bool full_video,
         UpdateProgressData * update_progress_data = nullptr,
-        bool force_capture_png_if_enable = false,
-        const int delta_time = 1000)
+        bool force_capture_png_if_enable = false)
     : is_replay_mod(!authentifier)
     , capture_wrm(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::wrm))
     , capture_png(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png)
@@ -190,7 +187,6 @@ public:
     , capture_meta(this->capture_ocr)
     , update_progress_data(update_progress_data)
     , capture_api(now, width / 2, height / 2)
-    , delta_time(delta_time)
     {
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
 
@@ -292,7 +288,7 @@ public:
                 this->pnc.reset(new Native(
                     now, capture_bpp, ini.get<cfg::globals::trace_type>(),
                     cctx, rnd, record_path, hash_path, basename,
-                    groupid, authentifier, this->gd->rdp_drawable(), ini, this->delta_time
+                    groupid, authentifier, this->gd->rdp_drawable(), ini
                 ));
             }
 
