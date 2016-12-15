@@ -543,7 +543,7 @@ test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
 test-canonical transport/socket_transport.hpp : <library>openssl <library>crypto <library>dl ;
 test-canonical transport/test_transport.hpp ;
 # TODO mote to transport/
-test-canonical utils/compression_transport_wrapper.hpp : <library>z <library>snappy ;
+test-canonical utils/compression_transport_builder.hpp : <library>z <library>snappy ;
 test-canonical capture/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 
 
@@ -987,6 +987,7 @@ test-run test_mstsc_client_rdp50bulk
 ## @{
 test-canonical core/FSCC/FileInformation.hpp ;
 test-canonical core/RDP/channels/rdpdr.hpp ;
+test-canonical core/SMB2/MessageSyntax.hpp ;
 test-canonical core/activity_checker.hpp ;
 test-canonical core/authid.hpp ;
 test-canonical core/callback.hpp ;

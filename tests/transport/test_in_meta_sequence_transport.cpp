@@ -41,16 +41,15 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
     char buffer[10000];
     char * pbuffer = buffer;
     size_t total = 0;
-    try {
+    auto test = [&]{
         for (size_t i = 0; i < 221 ; i++){
             pbuffer = buffer;
             wrm_trans.recv(&pbuffer, sizeof(buffer));
             total += pbuffer - buffer;
         }
-    } catch (const Error & e) {
-        BOOST_CHECK_EQUAL(ERR_TRANSPORT_NO_MORE_DATA, e.id);
-        total += pbuffer - buffer;
     };
+    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    total += pbuffer - buffer;
     // total size if sum of sample sizes
     BOOST_CHECK_EQUAL(1471394 + 444578 + 290245, total);
 }
@@ -62,16 +61,15 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
     char buffer[10000];
     char * pbuffer = buffer;
     size_t total = 0;
-    try {
+    auto test = [&]{
         for (size_t i = 0; i < 221 ; i++){
             pbuffer = buffer;
             wrm_trans.recv(&pbuffer, sizeof(buffer));
             total += pbuffer - buffer;
         }
-    } catch (const Error & e) {
-        BOOST_CHECK_EQUAL(ERR_TRANSPORT_NO_MORE_DATA, e.id);
-        total += pbuffer - buffer;
     };
+    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    total += pbuffer - buffer;
     // total size if sum of sample sizes
     BOOST_CHECK_EQUAL(1471394 + 444578 + 290245, total);
 }
@@ -108,13 +106,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
         BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
         BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
 
-        try {
-            mwrm_trans.next();
-            BOOST_CHECK(false);
-        }
-        catch (const Error & e){
-            BOOST_CHECK_EQUAL(ERR_TRANSPORT_NO_MORE_DATA, e.id);
-        };
+        CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
     }
 
     // check we can do it two times
@@ -151,39 +143,28 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
 //        FIXTURES_PATH "/sample2.wrm 1352304930 1352304990\n",
 
     // This is what we are actually testing, chaining of several files content
-    try {
-        InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/sample", ".mwrm", 0);
-        BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
+    InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/sample", ".mwrm", 0);
+    BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
-        mwrm_trans.next();
-        BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample0.wrm", mwrm_trans.path());
-        BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
-        BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
-        BOOST_CHECK_EQUAL(1, mwrm_trans.get_seqno());
+    mwrm_trans.next();
+    BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample0.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
+    BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
+    BOOST_CHECK_EQUAL(1, mwrm_trans.get_seqno());
 
-        mwrm_trans.next();
-        BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample1.wrm", mwrm_trans.path());
-        BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
-        BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
-        BOOST_CHECK_EQUAL(2, mwrm_trans.get_seqno());
+    mwrm_trans.next();
+    BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample1.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
+    BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
+    BOOST_CHECK_EQUAL(2, mwrm_trans.get_seqno());
 
-        mwrm_trans.next();
-        BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample2.wrm", mwrm_trans.path());
-        BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
-        BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
-        BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
+    mwrm_trans.next();
+    BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample2.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
+    BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
+    BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
 
-        try {
-            mwrm_trans.next();
-            BOOST_CHECK(false);
-        }
-        catch (const Error & e) {
-            BOOST_CHECK_EQUAL(ERR_TRANSPORT_NO_MORE_DATA, e.id);
-        };
-
-    } catch (const Error &) {
-        BOOST_CHECK(false);
-    };
+    CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
@@ -219,13 +200,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
         BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
         BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
 
-        try {
-            mwrm_trans.next();
-            BOOST_CHECK(false);
-        }
-        catch (const Error & e) {
-            BOOST_CHECK_EQUAL(ERR_TRANSPORT_NO_MORE_DATA, e.id);
-        };
+        CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
     }
 
     // check we can do it two times
@@ -304,11 +279,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
         BOOST_CHECK(true);
 
-        try {
-            crypto_trans.recv(pbuffer, 15);
-        } catch (Error const &){
-            BOOST_CHECK(false);
-        };
+        BOOST_CHECK_NO_THROW(crypto_trans.recv(pbuffer, 15));
 
         BOOST_CHECK(true);
 
@@ -350,12 +321,5 @@ BOOST_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)
     ));
     cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
 
-    try {
-        InMetaSequenceTransport(&cctx, "TESTOFSXXX", ".mwrm", 1);
-        BOOST_CHECK(false); // check open fails if file does not exist
-    } catch (Error const & e) {
-        if (e.id != ERR_TRANSPORT_OPEN_FAILED) {
-            BOOST_CHECK(false); // check open fails if file does not exist
-        }
-    }
+    CHECK_EXCEPTION_ERROR_ID(InMetaSequenceTransport(&cctx, "TESTOFSXXX", ".mwrm", 1), ERR_TRANSPORT_OPEN_FAILED);
 }

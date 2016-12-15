@@ -38,8 +38,6 @@
 
 #include <fstream>
 #include <sstream>
-#include <iostream>
-#include <ostream>
 #include "utils/fileutils.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 
@@ -101,11 +99,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
     int argc = sizeof(argv)/sizeof(char*);
 
     int res = -1;
-    try {
-        res = do_main(argc, argv, hmac_fn, trace_fn);
-    } catch (const Error & e) {
-        printf("verify failed: with id=%d\n", e.id);
-    }
+    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
     BOOST_CHECK_EQUAL(0, unlink("./decrypted.out"));
     BOOST_CHECK_EQUAL(0, res);
 }
@@ -128,11 +122,7 @@ BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
     int argc = sizeof(argv)/sizeof(char*);
 
     int res = -1;
-    try {
-        res = do_main(argc, argv, hmac_fn, trace_fn);
-    } catch (const Error & e) {
-        printf("verify failed: with id=%d\n", e.id);
-    }
+    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
     BOOST_CHECK_EQUAL(0, res);
 }
 
@@ -370,7 +360,8 @@ BOOST_AUTO_TEST_CASE(TestVerifierFileNotFound)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    int res = do_main(argc, argv, hmac_fn, trace_fn);
+    int res = -1;
+    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
     BOOST_CHECK_EQUAL(res, -1);
 }
 
@@ -393,9 +384,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
     int argc = sizeof(argv)/sizeof(char*);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(
-        res = do_main(argc, argv, hmac_fn, trace_fn)
-    );
+    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
     BOOST_CHECK_EQUAL(1, res);
 }
 
@@ -418,9 +407,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
     int argc = sizeof(argv)/sizeof(char*);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(
-        res = do_main(argc, argv, hmac_fn, trace_fn)
-    );
+    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
     BOOST_CHECK_EQUAL(0, res);
 }
 
@@ -446,9 +433,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
     BOOST_CHECK_EQUAL(true, true);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(
-        res = do_main(argc, argv, hmac_fn, trace_fn)
-    );
+    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
     BOOST_CHECK_EQUAL(0, res);
 }
 
@@ -535,9 +520,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierUpdateData)
     int argc = sizeof(argv)/sizeof(char*);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(
-        res = do_main(argc, argv, hmac_fn, trace_fn)
-    );
+    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
     BOOST_CHECK_EQUAL(0, res);
 
     mwrm_hash_contents = "v2\n\n\n" MWRM_FILENAME " " + str_stat(tmp_recorded_mwrm) + "\n";
@@ -577,9 +560,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
     BOOST_CHECK_EQUAL(true, true);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(
-        res = do_main(argc, argv, hmac_fn, trace_fn)
-    );
+    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
     BOOST_CHECK_EQUAL(1, res);
 }
 
@@ -852,7 +833,8 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncrypted)
 
     BOOST_CHECK_EQUAL(true, true);
 
-    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    int res = -1;
+    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     BOOST_CHECK_EQUAL(0, res);
 }
 
@@ -871,7 +853,8 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncrypted1)
 
     BOOST_CHECK_EQUAL(true, true);
 
-    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    int res = -1;
+    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     BOOST_CHECK_EQUAL(0, res);
 }
 
@@ -894,7 +877,8 @@ BOOST_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted)
 
     BOOST_CHECK_EQUAL(true, true);
 
-    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    int res = -1;
+    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     BOOST_CHECK_EQUAL(0, res);
 }
 
@@ -917,7 +901,8 @@ BOOST_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted2)
 
     BOOST_CHECK_EQUAL(true, true);
 
-    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    int res = -1;
+    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     BOOST_CHECK_EQUAL(0, res);
 }
 
@@ -940,7 +925,8 @@ BOOST_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
 
     BOOST_CHECK_EQUAL(true, true);
 
-    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    int res = -1;
+    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     BOOST_CHECK_EQUAL(1, res);
 }
 
@@ -962,7 +948,8 @@ BOOST_AUTO_TEST_CASE(TestVerifier4714)
 
     BOOST_CHECK_EQUAL(true, true);
 
-    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    int res = -1;
+    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     BOOST_CHECK_EQUAL(-1, res);
 }
 
@@ -987,7 +974,8 @@ BOOST_AUTO_TEST_CASE(TestVerifier7192)
 
     BOOST_CHECK_EQUAL(true, true);
 
-    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    int res = -1;
+    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     BOOST_CHECK_EQUAL(0, res);
 }
 
@@ -1012,7 +1000,8 @@ BOOST_AUTO_TEST_CASE(TestVerifier2510)
 
     BOOST_CHECK_EQUAL(true, true);
 
-    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    int res = -1;
+    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     BOOST_CHECK_EQUAL(0, res);
 }
 
@@ -1274,7 +1263,8 @@ BOOST_AUTO_TEST_CASE(TestVerifier1914MigratedNocryptHasChecksum)
 
     BOOST_CHECK_EQUAL(true, true);
 
-    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    int res = -1;
+    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     BOOST_CHECK_EQUAL(0, res);
 }
 
@@ -1306,7 +1296,8 @@ BOOST_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
 
     BOOST_CHECK_EQUAL(true, true);
 
-    int res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn);
+    int res = -1;
+    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     BOOST_CHECK_EQUAL(1, res);
 }
 
@@ -1320,7 +1311,7 @@ BOOST_AUTO_TEST_CASE(TestAppRecorder)
             FIXTURES_PATH "/verifier/recorded/"
             "toto@10.10.43.13,Administrateur@QA@cible"
             ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
-        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/", 
+        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
         "-o",
             "/tmp/recorder.1.flva",
         "--flv",

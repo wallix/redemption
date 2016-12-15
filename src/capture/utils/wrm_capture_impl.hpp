@@ -150,7 +150,7 @@ public:
         CryptoContext & cctx, Random & rnd,
         const char * record_path, const char * hash_path, const char * basename,
         int groupid, auth_api * authentifier,
-        RDPDrawable & drawable, const Inifile & ini, const int delta_time
+        RDPDrawable & drawable, const Inifile & ini
     )
     : bmp_cache(
         BmpCache::Recorder, capture_bpp, 3, false,
@@ -165,7 +165,7 @@ public:
     , graphic_to_file(
         now, *this->trans_variant.trans, drawable.width(), drawable.height(), capture_bpp,
         this->bmp_cache, this->gly_cache, this->ptr_cache, this->dump_png24_api,
-        ini.get<cfg::video::wrm_compression_algorithm>(), delta_time, GraphicToFile::SendInput::YES,
+        ini.get<cfg::video::wrm_compression_algorithm>(), GraphicToFile::SendInput::YES,
         to_verbose_flags(ini.get<cfg::debug::capture>())
         | (ini.get<cfg::debug::primary_orders>()
             ? GraphicToFile::Verbose::primary_orders   : GraphicToFile::Verbose::none)

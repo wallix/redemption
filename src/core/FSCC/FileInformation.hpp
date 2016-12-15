@@ -252,15 +252,15 @@ enum {
 // DomainId (16 bytes): A 16-byte GUID value containing the domain identifier. This value is unused; it SHOULD be zero, and MUST be ignored.<6>
 
 enum : uint32_t {
-    GUID_SIZE = 128
+    GUID_SIZE = 16
 };
 
 struct FileObjectBuffer_Type1 {                             // FSCTL_CREATE_OR_GET_OBJECT_ID Reply struct
 
-    uint8_t ObjectId[128] = { 0 };
-    uint8_t BirthVolumeId[128] = { 0 };
-    uint8_t BirthObjectId[128] = { 0 };
-    uint8_t DomainId[128] = { 0 };
+    uint8_t ObjectId[GUID_SIZE] = { 0 };
+    uint8_t BirthVolumeId[GUID_SIZE] = { 0 };
+    uint8_t BirthObjectId[GUID_SIZE] = { 0 };
+    uint8_t DomainId[GUID_SIZE] = { 0 };
 
 
     FileObjectBuffer_Type1() = default;
@@ -331,11 +331,11 @@ struct FileObjectBuffer_Type1 {                             // FSCTL_CREATE_OR_G
 
 struct FileObjectBuffer_Type2 {                             // FSCTL_CREATE_OR_GET_OBJECT_ID Reply struct
 
-    uint8_t ObjectId[128] = { 0 };
-    uint8_t ExtendedInfo[256] = { 0 };
+    uint8_t ObjectId[GUID_SIZE] = { 0 };
+    uint8_t ExtendedInfo[48] = { 0 };
 
 
-    const size_t ExtendedInfo_SIZE = 256;
+    const size_t ExtendedInfo_SIZE = 48;
 
     FileObjectBuffer_Type2() = default;
 
@@ -419,15 +419,16 @@ struct ReparseGUIDDataBuffer {
 
   uint32_t ReparseTag = 0;
   uint16_t ReparseDataLength = 0;
-  uint8_t ReparseGuid[128] = { 0 };
-  uint8_t * DataBuffer = nullptr;
+  uint8_t ReparseGuid[GUID_SIZE] = { 0 };
+
+  std::string DataBuffer;
 
   ReparseGUIDDataBuffer() = default;
 
   ReparseGUIDDataBuffer(uint32_t ReparseTag, uint16_t ReparseDataLength, uint8_t * ReparseGuid, uint8_t * DataBuffer)
     : ReparseTag(ReparseTag)
     , ReparseDataLength(ReparseDataLength)
-    , DataBuffer(DataBuffer)
+    , DataBuffer(reinterpret_cast<char *>(DataBuffer), ReparseDataLength)
     {
         for (size_t i = 0; i < GUID_SIZE; i++) {
             this->ReparseGuid[i] = ReparseGuid[i];
@@ -435,11 +436,11 @@ struct ReparseGUIDDataBuffer {
     }
 
     void emit(OutStream & stream) {
-        stream.out_uint32_be(this->ReparseTag);
-        stream.out_uint16_be(this->ReparseDataLength);
+        stream.out_uint32_le(this->ReparseTag);
+        stream.out_uint16_le(this->ReparseDataLength);
         stream.out_clear_bytes(2);
         stream.out_copy_bytes(this->ReparseGuid, GUID_SIZE);
-        stream.out_copy_bytes(this->DataBuffer, this->ReparseDataLength);
+        stream.out_copy_bytes(reinterpret_cast<const uint8_t *>(this->DataBuffer.data()), this->ReparseDataLength);
     }
 
     void receive(InStream & stream) {
@@ -447,7 +448,9 @@ struct ReparseGUIDDataBuffer {
         this->ReparseDataLength = stream.in_uint16_le();
         stream.in_skip_bytes(2);
         stream.in_copy_bytes(this->ReparseGuid, GUID_SIZE);
-        stream.in_copy_bytes(this->DataBuffer, this->ReparseDataLength);
+        uint8_t data[0xffff];
+        stream.in_copy_bytes(data, this->ReparseDataLength);
+        this->DataBuffer = std::string(reinterpret_cast<char *>(data), this->ReparseDataLength);
     }
 
     void log() {
@@ -458,7 +461,7 @@ struct ReparseGUIDDataBuffer {
         LOG(LOG_INFO, "          * ReparseGuid (16 bytes):");
         hexdump_c(this->ReparseGuid,  GUID_SIZE);
         LOG(LOG_INFO, "          * DataBuffer (%d bytes):", int(this->ReparseDataLength));
-        hexdump_c(this->DataBuffer,  this->ReparseDataLength);
+        hexdump_c(this->DataBuffer.data(),  this->ReparseDataLength);
     }
 };
 
@@ -3527,7 +3530,8 @@ enum : uint32_t {
     FILE_ACTION_TUNNELLED_ID_COLLISION = 0x0000000B,
 };
 
-static const char * get_Action_name(uint32_t action) {
+static inline
+const char * get_Action_name(uint32_t action) {
 
     switch (action) {
         case FILE_ACTION_ADDED:                  return "FILE_ACTION_ADDED";

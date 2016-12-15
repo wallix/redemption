@@ -54,23 +54,17 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
     BOOST_CHECK_EQUAL(16, out_stream.get_offset());
     BOOST_CHECK(0 == memcmp(expected, out_stream.get_data(), 12));
 
-    try {
-        GCC::UserData::SCNet sc_net2;
+    GCC::UserData::SCNet sc_net2;
 
-        const bool bogus_sc_net_size = false;
-        InStream in_stream(buf);
-        sc_net2.recv(in_stream, bogus_sc_net_size);
-        BOOST_CHECK_EQUAL(SC_NET, sc_net2.userDataType);
-        BOOST_CHECK_EQUAL(1003, sc_net2.MCSChannelId);
-        BOOST_CHECK_EQUAL(3, sc_net2.channelCount);
-        BOOST_CHECK_EQUAL(1004, sc_net2.channelDefArray[0].id);
-        BOOST_CHECK_EQUAL(1005, sc_net2.channelDefArray[1].id);
-        BOOST_CHECK_EQUAL(1006, sc_net2.channelDefArray[2].id);
+    const bool bogus_sc_net_size = false;
+    InStream in_stream(buf);
+    BOOST_CHECK_NO_THROW(sc_net2.recv(in_stream, bogus_sc_net_size));
+    BOOST_CHECK_EQUAL(SC_NET, sc_net2.userDataType);
+    BOOST_CHECK_EQUAL(1003, sc_net2.MCSChannelId);
+    BOOST_CHECK_EQUAL(3, sc_net2.channelCount);
+    BOOST_CHECK_EQUAL(1004, sc_net2.channelDefArray[0].id);
+    BOOST_CHECK_EQUAL(1005, sc_net2.channelDefArray[1].id);
+    BOOST_CHECK_EQUAL(1006, sc_net2.channelDefArray[2].id);
 
-        sc_net2.log("Server Received");
-    }
-    catch (const Error &){
-        BOOST_CHECK(false);
-    };
-
+    sc_net2.log("Server Received");
 }

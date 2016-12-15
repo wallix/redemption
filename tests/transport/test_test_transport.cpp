@@ -67,13 +67,8 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport)
     BOOST_CHECK_EQUAL(p-buffer, 0);
 
     p = buffer;
-    try {
-        gt.recv(&p, 1);
-        BOOST_CHECK_EQUAL(true, false);
-    } catch (Error & e) {
-        BOOST_CHECK_EQUAL(p-buffer, 0);
-        BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_TRANSPORT_NO_MORE_DATA));
-    }
+    CHECK_EXCEPTION_ERROR_ID(gt.recv(&p, 1), ERR_TRANSPORT_NO_MORE_DATA);
+    BOOST_CHECK_EQUAL(p-buffer, 0);
 }
 
 BOOST_AUTO_TEST_CASE(TestGeneratorTransport2)
@@ -104,14 +99,9 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport2)
     BOOST_CHECK_EQUAL(0, strncmp(buffer, "read what", 9));
 
     p = buffer;
-    try {
-        gt.recv(&p, 13);
-        BOOST_CHECK(false);
-    } catch (Error & e) {
-        BOOST_CHECK_EQUAL(p-buffer, 12);
-        BOOST_CHECK_EQUAL(0, strncmp(buffer, " we provide!", 12));
-        BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_TRANSPORT_NO_MORE_DATA));
-    }
+    CHECK_EXCEPTION_ERROR_ID(gt.recv(&p, 13), ERR_TRANSPORT_NO_MORE_DATA);
+    BOOST_CHECK_EQUAL(p-buffer, 12);
+    BOOST_CHECK_EQUAL(0, strncmp(buffer, " we provide!", 12));
 }
 
 BOOST_AUTO_TEST_CASE(TestCheckTransport)
@@ -119,17 +109,9 @@ BOOST_AUTO_TEST_CASE(TestCheckTransport)
     CheckTransport gt("input", 5);
     gt.disable_remaining_error();
     BOOST_CHECK_EQUAL(gt.get_status(), true);
-    try{
-        gt.send("in", 2);
-    } catch (const Error &){
-        BOOST_CHECK(false);
-    }
+    BOOST_CHECK_NO_THROW(gt.send("in", 2));
     BOOST_CHECK_EQUAL(gt.get_status(), true);
-    try{
-        gt.send("pot", 3);
-    } catch (const Error & e){
-        BOOST_CHECK_EQUAL(ERR_TRANSPORT_DIFFERS, e.id);
-    }
+    CHECK_EXCEPTION_ERROR_ID(gt.send("in", 2), ERR_TRANSPORT_DIFFERS);
     BOOST_CHECK(!gt.get_status());
 }
 
@@ -137,12 +119,7 @@ BOOST_AUTO_TEST_CASE(TestCheckTransportInputOverflow)
 {
     CheckTransport gt("0123456789ABCDEF", 16);
     BOOST_CHECK_EQUAL(gt.get_status(), true);
-    try {
-        gt.send("0123456789ABCDEFGHI", 19);
-    } catch (const Error & e)
-    {
-        BOOST_CHECK_EQUAL(ERR_TRANSPORT_DIFFERS, e.id);
-    }
+    CHECK_EXCEPTION_ERROR_ID(gt.send("0123456789ABCDEFGHI", 19), ERR_TRANSPORT_DIFFERS);
     BOOST_CHECK(!gt.get_status());
 }
 
@@ -168,11 +145,7 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
     sz = 3;
     gt.recv(&p, sz);
     BOOST_CHECK(0 == memcmp(p - sz, "PUT", sz));
-    try {
-        gt.send("pot", 3);
-    } catch (const Error & e){
-        BOOST_CHECK_EQUAL(ERR_TRANSPORT_DIFFERS, e.id);
-    }
+    CHECK_EXCEPTION_ERROR_ID(gt.send("pot", 3), ERR_TRANSPORT_DIFFERS);
     BOOST_CHECK(!gt.get_status());
 }
 

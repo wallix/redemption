@@ -152,10 +152,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    bool end_of_file_reached = false;
-
-    try
-    {
+    auto test = [&]{
         while (true) {
             auto * end = virtual_channel_data;
             t.recv(&end,
@@ -203,17 +200,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
 
             virtual_channel_stream.rewind();
         }
-    }
-    catch (Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            LOG(LOG_ERR, "Exception=%d", e.id);
-            throw;
-        }
-
-        end_of_file_reached = true;
-    }
-
-    BOOST_CHECK(end_of_file_reached || t.get_status());
+    };
+    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
@@ -276,10 +264,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    bool end_of_file_reached = false;
-
-    try
-    {
+    auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
             t.recv(&end,
@@ -327,17 +312,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
 
             virtual_channel_stream.rewind();
         }
-    }
-    catch (Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            LOG(LOG_ERR, "Exception=%d", e.id);
-            throw;
-        }
-
-        end_of_file_reached = true;
-    }
-
-    BOOST_CHECK(end_of_file_reached || t.get_status());
+    };
+    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
@@ -400,10 +376,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    bool end_of_file_reached = false;
-
-    try
-    {
+    auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
             t.recv(&end,
@@ -451,17 +424,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
 
             virtual_channel_stream.rewind();
         }
-    }
-    catch (Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            LOG(LOG_ERR, "Exception=%d", e.id);
-            throw;
-        }
-
-        end_of_file_reached = true;
-    }
-
-    BOOST_CHECK(end_of_file_reached || t.get_status());
+    };
+    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
@@ -524,10 +488,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    bool end_of_file_reached = false;
-
-    try
-    {
+    auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
             t.recv(&end,
@@ -575,17 +536,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
 
             virtual_channel_stream.rewind();
         }
-    }
-    catch (Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            LOG(LOG_ERR, "Exception=%d", e.id);
-            throw;
-        }
-
-        end_of_file_reached = true;
-    }
-
-    BOOST_CHECK(end_of_file_reached || t.get_status());
+    };
+    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
@@ -648,10 +600,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    bool end_of_file_reached = false;
-
-    try
-    {
+    auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
             t.recv(&end,
@@ -699,17 +648,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
 
             virtual_channel_stream.rewind();
         }
-    }
-    catch (Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            LOG(LOG_ERR, "Exception=%d", e.id);
-            throw;
-        }
-
-        end_of_file_reached = true;
-    }
-
-    BOOST_CHECK(end_of_file_reached || t.get_status());
+    };
+    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
@@ -772,10 +712,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH + 8];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    bool end_of_file_reached = false;
-
-    try
-    {
+    auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
             t.recv(&end,
@@ -825,17 +762,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
 
             virtual_channel_stream.rewind();
         }
-    }
-    catch (Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            LOG(LOG_ERR, "Exception=%d", e.id);
-            throw;
-        }
-
-        end_of_file_reached = true;
-    }
-
-    BOOST_CHECK(end_of_file_reached || t.get_status());
+    };
+    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 BOOST_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
@@ -891,10 +819,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH + 8];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    bool end_of_file_reached = false;
-
-    try
-    {
+    auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
             t.recv(&end,
@@ -944,15 +869,6 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
 
             virtual_channel_stream.rewind();
         }
-    }
-    catch (Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            LOG(LOG_ERR, "Exception=%d", e.id);
-            throw;
-        }
-
-        end_of_file_reached = true;
-    }
-
-    BOOST_CHECK(end_of_file_reached || t.get_status());
+    };
+    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }

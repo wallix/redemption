@@ -562,7 +562,7 @@ inline void remove_file(
 }
 
 inline
-static void raise_error(std::string const & output_filename, int code, const char * message) {
+static void raise_error(UpdateProgressData::Format pgs_format, std::string const & output_filename, int code, const char * message) {
     if (!output_filename.length()) {
         return;
     }
@@ -587,7 +587,7 @@ static void raise_error(std::string const & output_filename, int code, const cha
     std::snprintf( progress_filename, sizeof(progress_filename), "%s%s-%s.pgs"
             , outfile_path, outfile_basename, outfile_pid);
 
-    UpdateProgressData update_progress_data(progress_filename, 0, 0, 0, 0);
+    UpdateProgressData update_progress_data(pgs_format, progress_filename, 0, 0, 0, 0);
 
     update_progress_data.raise_error(code, message);
 }
@@ -679,6 +679,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
                     , int capture_bpp, int wrm_compression_algorithm_
 
+                    , UpdateProgressData::Format pgs_format
                     , bool enable_rt
                     , bool no_timestamp
                     , auth_api * authentifier
@@ -761,7 +762,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
             std::snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
                     , outfile_path, outfile_basename);
             UpdateProgressData update_progress_data(
-                progress_filename,
+                pgs_format, progress_filename,
                 begin_record.tv_sec, end_record.tv_sec,
                 begin_capture.tv_sec, end_capture.tv_sec
             );
@@ -982,6 +983,7 @@ inline int is_encrypted_file(const char * input_filename, bool & infile_is_encry
 inline int replay(std::string & infile_path, std::string & input_basename, std::string & infile_extension,
                   std::string & hash_path,
                   CaptureFlags & capture_flags,
+                  UpdateProgressData::Format pgs_format,
                   bool chunk,
                   unsigned ocr_version,
                   std::string & output_filename,
@@ -1055,7 +1057,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
             std::cerr << "Error: " << e.errmsg() << std::endl;
         }
         const bool msg_with_error_id = false;
-        raise_error(output_filename, e.id, e.errmsg(msg_with_error_id));
+        raise_error(pgs_format, output_filename, e.id, e.errmsg(msg_with_error_id));
         return -1;
     };
 
@@ -1090,6 +1092,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             , begin_capture, end_capture
                             , output_filename, wrm_color_depth
                             , wrm_compression_algorithm_
+                            , pgs_format
                             , enable_rt
                             , no_timestamp
                             , nullptr
@@ -1115,7 +1118,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
         }
         catch (const Error & e) {
             const bool msg_with_error_id = false;
-            raise_error(output_filename, e.id, e.errmsg(msg_with_error_id));
+            raise_error(pgs_format, output_filename, e.id, e.errmsg(msg_with_error_id));
         }
 
         if (!result && remove_input_file) {
@@ -1201,12 +1204,12 @@ struct RecorderParams {
     bool      ignore_stat_info = false;
     bool      update_stat_info = false;
 
-
+    bool json_pgs = false;
 };
 
-int parse_command_line_options(int argc, char const ** argv, struct RecorderParams & recorder, Inifile & ini, uint32_t & verbose);
+int parse_command_line_options(int argc, char const ** argv, RecorderParams & recorder, Inifile & ini, uint32_t & verbose);
 
-int parse_command_line_options(int argc, char const ** argv, struct RecorderParams & recorder, Inifile & ini, uint32_t & verbose)
+int parse_command_line_options(int argc, char const ** argv, RecorderParams & recorder, Inifile & ini, uint32_t & verbose)
 {
     std::string png_geometry;
     std::string wrm_compression_algorithm;  // output compression algorithm.
@@ -1267,6 +1270,8 @@ int parse_command_line_options(int argc, char const ** argv, struct RecorderPara
         {"ocr-version", &recorder.ocr_version, "version 1 or 2"},
 
         {"video-codec", &recorder.video_codec, "ffmpeg video codec id (flv, mp4, etc)"},
+
+        {"json-pgs", "use json format to .pgs file"},
     });
 
     auto options = program_options::parse_command_line(argc, argv, desc);
@@ -1304,6 +1309,10 @@ int parse_command_line_options(int argc, char const ** argv, struct RecorderPara
 
     if (options.count("update-stat-info") > 0) {
         recorder.update_stat_info = true;
+    }
+
+    if (options.count("json-pgs") > 0) {
+        recorder.json_pgs = true;
     }
 
     recorder.chunk = options.count("chunk") > 0;
@@ -1632,6 +1641,7 @@ extern "C" {
             res = replay(rp.mwrm_path, rp.input_basename, rp.infile_extension,
                           rp.hash_path,
                           rp.capture_flags,
+                          rp.json_pgs ? UpdateProgressData::JSON_FORMAT : UpdateProgressData::OLD_FORMAT,
                           rp.chunk,
                           rp.ocr_version,
                           rp.output_filename,
