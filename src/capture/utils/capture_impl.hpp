@@ -46,6 +46,10 @@
 #include "capture/utils/pattern_checker.hpp"
 
 #include "capture/session_meta.hpp"
+#include "capture/drawable_to_file.hpp"
+#include "utils/difftimeval.hpp"
+#include "transport/transport.hpp"
+#include "gdi/capture_api.hpp"
 #include "capture/utils/image_capture_impl.hpp"
 
 #include "openssl_crypto.hpp"

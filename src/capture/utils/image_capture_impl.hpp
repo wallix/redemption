@@ -25,7 +25,6 @@
 
 #include "transport/out_meta_sequence_transport.hpp"
 
-#include "capture/image_capture.hpp"
 #include "utils/drawable.hpp"
 
 #include "apis_register.hpp"

@@ -33,7 +33,8 @@
 #include "transport/out_meta_sequence_transport.hpp"
 #include "transport/test_transport.hpp"
 #include "capture/drawable_to_file.hpp"
-#include "capture/image_capture.hpp"
+#include "utils/difftimeval.hpp"
+#include "gdi/capture_api.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 
 const char expected_red[] =
@@ -330,7 +331,55 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     } trans;
     RDPDrawable drawable(800, 600, 24);
 
-    ImageCapture consumer(now, drawable.impl(), trans, std::chrono::seconds{1});
+    class ImageCaptureLocal : private DrawableToFile
+    {
+        timeval start_capture;
+        std::chrono::microseconds frame_interval;
+
+    public:
+        ImageCaptureLocal (
+            const timeval & now, const Drawable & drawable, Transport & trans,
+            std::chrono::microseconds png_interval)
+        : DrawableToFile(trans, drawable, 100)
+        , start_capture(now)
+        , frame_interval(png_interval)
+        {}
+
+        std::chrono::microseconds do_snapshot(
+            const timeval & now, int x, int y, bool ignore_frame_in_timeval
+        ) {
+            (void)x;
+            (void)y;
+            (void)ignore_frame_in_timeval;
+            using std::chrono::microseconds;
+            uint64_t const duration = difftimeval(now, this->start_capture);
+            uint64_t const interval = this->frame_interval.count();
+            if (duration >= interval) {
+                if (   this->logical_frame_ended()
+                    // Force snapshot if diff_time_val >= 1.5 x frame_interval.
+                    || (duration >= interval * 3 / 2)) {
+                    const_cast<Drawable&>(this->drawable).trace_mouse();
+                    tm ptm;
+                    localtime_r(&now.tv_sec, &ptm);
+                    const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
+                    this->flush();
+                    this->trans.next();
+                    const_cast<Drawable&>(this->drawable).clear_timestamp();
+                    this->start_capture = now;
+                    const_cast<Drawable&>(this->drawable).clear_mouse();
+
+                    return microseconds(interval ? interval - duration % interval : 0u);
+                }
+                else {
+                    // Wait 0.3 x frame_interval.
+                    return this->frame_interval / 3;
+                }
+            }
+            return microseconds(interval - duration);
+        }
+    };
+
+    ImageCaptureLocal consumer(now, drawable.impl(), trans, std::chrono::seconds{1});
 
     drawable.impl().dont_show_mouse_cursor = true;
 
@@ -342,25 +391,25 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     bool ignore_frame_in_timeval = false;
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
+    now.tv_sec++; consumer.do_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     BOOST_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(1)));
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
+    now.tv_sec++; consumer.do_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     BOOST_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
     BOOST_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(2)));
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
+    now.tv_sec++; consumer.do_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     BOOST_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
     BOOST_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
     BOOST_CHECK_EQUAL(3057, ::filesize(trans.seqgen()->get(2)));
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(3)));
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
+    now.tv_sec++; consumer.do_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
     BOOST_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
