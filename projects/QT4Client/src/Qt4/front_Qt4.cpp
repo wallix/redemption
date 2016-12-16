@@ -2658,7 +2658,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         out_stream.out_uint64_le(0);
                                         out_stream.out_uint64_le(0);
 
-                                        out_stream.out_uint32_le(RDPECLIP::FILE_ATTRIBUTE_DIRECTORY);
+                                        out_stream.out_uint32_le(fscc::FILE_ATTRIBUTE_DIRECTORY);
                                         out_stream.out_uint32_le(6);
                                         out_stream.out_uint32_le(0);
 

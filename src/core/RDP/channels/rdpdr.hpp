@@ -34,136 +34,7 @@
 
 namespace rdpdr {
 
-// [MS-FSCC]: File System Control Codes
 
-// 2.6 File Attributes
-
-// The following attributes are defined for files and directories. They can be used in any combination unless noted in the description of the attribute's meaning. There is no file attribute with the value 0x00000000 because a value of 0x00000000 in the FileAttributes field means that the file attributes for this file MUST NOT be changed when setting basic information for the file.
-
-//  +------------------------------------+-----------------------------------------------+
-//  | Value                              | Meaning                                       |
-//  +------------------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_ARCHIVE             | A file or directory that is an archive file   |
-//  | 0x00000020                         | or directory. Applications typically use this |
-//  |                                    | attribute to mark files for backup or         |
-//  |                                    | removal.                                      |
-//  +------------------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_COMPRESSED          | A file or directory that is compressed.       |
-//  | 0x00000800                         | For a file, all of the data in the file is    |
-//  |                                    | compressed. For a directory, compression is   |
-//  |                                    | the default for newly created files and       |
-//  |                                    | subdirectories.                               |
-//  +------------------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_DIRECTORY           | Identifies a directory.                       |
-//  | 0x00000010                         |                                               |
-//  +------------------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_ENCRYPTED           | A file or directory that is encrypted.        |
-//  | 0x00004000                         | For a file, all data streams in the file are  |
-//  |                                    | encrypted. For a directory, encryption is     |
-//  |                                    | default for newly created files and           |
-//  |                                    | subdirectories.                               |
-//  +------------------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_HIDDEN              | A file or directory is hidden. It is not      |
-//  | 0x00000002                         | included in an ordinary directory listing.    |
-//  +------------------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_NORMAL              | A file that does not have other attributes    |
-//  | 0x00000080                         | set. set. This flag is used to clear all      |
-//  |                                    | other flags by specifying it with no other    |
-//  |                                    | flags set.                                    |
-//  |                                    | This flag MUST be ignored if other flags are  |
-//  |                                    | set.<163>                                     |
-//  +------------------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | A file or directory that is not indexed by    |
-//  | 0x00002000                         | the content indexing service.                 |
-//  +------------------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_OFFLINE             | The data in this file is not available        |
-//  | 0x00001000                         | immediately. This attribute indicates that    |
-//  |                                    | the file data is physically moved to offline  |
-//  |                                    | storage. This attribute is used by Remote     |
-//  |                                    | Storage, which is hierarchical storage        |
-//  |                                    | management software.                          |
-//  +------------------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_READONLY            | A file or directory that is read-only. For a  |
-//  | 0x00000001                         | file, applications can read the file but      |
-//  |                                    | cannot write to it or delete it. For a        |
-//  |                                    | directory, applications cannot delete it, but |
-//  |                                    | applications can create and delete files from |
-//  |                                    | that directory.                               |
-//  +------------------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_REPARSE_POINT       | A file or directory that has an associated    |
-//  | 0x00000400                         | reparse point.                                |
-//  +------------------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_SPARSE_FILE         | A file that is a sparse file.                 |
-//  | 0x00000200                         |                                               |
-//  +------------------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_SYSTEM              | A file or directory that the operating system |
-//  | 0x00000004                         | uses a part of, or uses exclusively.          |
-//  +------------------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_TEMPORARY           | A file or directory that is configured with   |
-//  | 0x00000100                         | integrity support. For a file, all data       |
-//  |                                    | streams in the file have integrity support.   |
-//  |                                    | For a directory, integrity support is the     |
-//  |                                    | default for newly created files and           |
-//  |                                    | subdirectories, unless the caller specifies   |
-//  |                                    | otherwise.<164>                               |
-//  +------------------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_INTEGRITY_STREAM    | A file or directory that is configured with   |
-//  | 0x00008000                         | integrity support. For a file, all data       |
-//  |                                    | streams in the file have integrity support.   |
-//  |                                    | For a directory, integrity support is the     |
-//  |                                    | default for newly created files and           |
-//  |                                    | subdirectories, unless the caller specifies   |
-//  |                                    | otherwise.<164>                               |
-//  +------------------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_NO_SCRUB_DATA       | A file or directory that is configured to be  |
-//  | 0x00020000                         | excluded from the data integrity scan. For a  |
-//  |                                    | directory configured with                     |
-//  |                                    | FILE_ATTRIBUTE_NO_SCRUB_DATA, the default for |
-//  |                                    | newly created files and subdirectories is to  |
-//  |                                    | inherit the FILE_ATTRIBUTE_NO_SCRUB_DATA      |
-//  |                                    | attribute.<165>                               |
-//  +------------------------------------+-----------------------------------------------+
-
-enum FileAttributes : uint32_t {
-    FILE_ATTRIBUTES_READONLY           = 0x00000001,
-    FILE_ATTRIBUTES_HIDDEN             = 0x00000002,
-    FILE_ATTRIBUTES_SYSTEM             = 0x00000004,
-    FILE_ATTRIBUTES_DIRECTORY          = 0x00000010,
-    FILE_ATTRIBUTES_ARCHIVE            = 0x00000020,
-    FILE_ATTRIBUTES_NORMAL             = 0x00000080,
-    FILE_ATTRIBUTE_TEMPORARY           = 0x00000100,
-    FILE_ATTRIBUTE_SPARSE_FILE         = 0x00000200,
-    FILE_ATTRIBUTE_REPARSE_POINT       = 0x00000400,
-    FILE_ATTRIBUTE_OFFLINE             = 0x00001000,
-    FILE_ATTRIBUTE_NOT_CONTENT_INDEXED = 0x00002000,
-    FILE_ATTRIBUTE_ENCRYPTED           = 0x00004000,
-    FILE_ATTRIBUTE_COMPRESSED          = 0x00000800,
-    FILE_ATTRIBUTE_INTEGRITY_STREAM    = 0x00008000,
-    FILE_ATTRIBUTE_NO_SCRUB_DATA       = 0x00020000
-};
-
-static inline
-const char * get_FileAttributes_name(uint32_t fileAttribute) {
-    switch (fileAttribute) {
-        case FileAttributes::FILE_ATTRIBUTES_READONLY:           return "FILE_ATTRIBUTES_READONLY";
-        case FileAttributes::FILE_ATTRIBUTES_HIDDEN:             return "FILE_ATTRIBUTES_HIDDEN";
-        case FileAttributes::FILE_ATTRIBUTES_SYSTEM:             return "FILE_ATTRIBUTES_SYSTEM";
-        case FileAttributes::FILE_ATTRIBUTES_DIRECTORY:          return "FILE_ATTRIBUTES_DIRECTORY";
-        case FileAttributes::FILE_ATTRIBUTES_ARCHIVE:            return "FILE_ATTRIBUTES_ARCHIVE";
-        case FileAttributes::FILE_ATTRIBUTES_NORMAL:             return "FILE_ATTRIBUTES_NORMAL";
-        case FileAttributes::FILE_ATTRIBUTE_TEMPORARY:           return "FILE_ATTRIBUTE_TEMPORARY";
-        case FileAttributes::FILE_ATTRIBUTE_SPARSE_FILE:         return "FILE_ATTRIBUTE_SPARSE_FILE";
-        case FileAttributes::FILE_ATTRIBUTE_REPARSE_POINT:       return "FILE_ATTRIBUTE_REPARSE_POINT";
-        case FileAttributes::FILE_ATTRIBUTE_OFFLINE:             return "FILE_ATTRIBUTE_OFFLINE";
-        case FileAttributes::FILE_ATTRIBUTE_NOT_CONTENT_INDEXED: return "FILE_ATTRIBUTE_NOT_CONTENT_INDEXED";
-        case FileAttributes::FILE_ATTRIBUTE_ENCRYPTED:           return "FILE_ATTRIBUTE_ENCRYPTED";
-        case FileAttributes::FILE_ATTRIBUTE_COMPRESSED:          return "FILE_ATTRIBUTE_COMPRESSED";
-        case FileAttributes::FILE_ATTRIBUTE_INTEGRITY_STREAM:    return "FILE_ATTRIBUTE_INTEGRITY_STREAM";
-        case FileAttributes::FILE_ATTRIBUTE_NO_SCRUB_DATA:       return "FILE_ATTRIBUTE_NO_SCRUB_DATA";
-    }
-
-    return "<unknown>";
-}
 
 // [MS-RDPEFS] - 2.2.1.1 Shared Header (RDPDR_HEADER)
 // ==================================================
@@ -1313,10 +1184,10 @@ public:
         LOG(LOG_INFO, "     Device Create Request:");
         LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes)", this->DesiredAccess_);
         LOG(LOG_INFO, "          * AllocationSize    = 0x%" PRIu64 " (8 bytes)", this->AllocationSize);
-        LOG(LOG_INFO, "          * FileAttributes    = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
-        LOG(LOG_INFO, "          * SharedAccess      = 0x%08x (4 bytes): %s", int(this->SharedAccess),  smb2::get_ShareAccess_name(this->SharedAccess));
-        LOG(LOG_INFO, "          * CreateDisposition = 0x%08x (4 bytes): %s", int(this->CreateDisposition_), smb2::get_CreateDisposition_name(this->CreateDisposition_));
-        LOG(LOG_INFO, "          * CreateOptions     = 0x%08x (4 bytes): %s", int(this->CreateOptions_), smb2::get_CreateOptions_name(this->CreateOptions_));
+        LOG(LOG_INFO, "          * FileAttributes    = 0x%08x (4 bytes): %s", this->FileAttributes, fscc::get_FileAttributes_name(this->FileAttributes));
+        LOG(LOG_INFO, "          * SharedAccess      = 0x%08x (4 bytes): %s", this->SharedAccess,  smb2::get_ShareAccess_name(this->SharedAccess));
+        LOG(LOG_INFO, "          * CreateDisposition = 0x%08x (4 bytes): %s", this->CreateDisposition_, smb2::get_CreateDisposition_name(this->CreateDisposition_));
+        LOG(LOG_INFO, "          * CreateOptions     = 0x%08x (4 bytes): %s", this->CreateOptions_, smb2::get_CreateOptions_name(this->CreateOptions_));
         LOG(LOG_INFO, "          * PathLength        = %d (4 bytes)", int(this->path.size()));
         LOG(LOG_INFO, "          * Path              = \"%s\"", this->path.c_str());
     }
@@ -4618,14 +4489,14 @@ struct ClientDriveSetInformationResponse {
 struct ServerDriveLockControlRequest {
 
     uint32_t Operation = 0;
-    bool F = false;
+    uint8_t F = 0;
     uint32_t NumLocks = 0;
 
 
     ServerDriveLockControlRequest() = default;
 
     ServerDriveLockControlRequest( uint32_t Operation
-                                 , bool F
+                                 , uint8_t F
                                  , uint32_t NumLocks)
       : Operation(Operation)
       , F(F)
@@ -5033,7 +4904,7 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                                 rgdb.log();
                                             }
                                             break;
-                                        default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Code: 0x%08x", status.rdpdr_last_io_control_code);
+                                        default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Data: Code = 0x%08x", status.rdpdr_last_io_control_code);
                                             break;
                                     }
                                 }
