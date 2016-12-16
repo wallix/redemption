@@ -72,8 +72,6 @@ class PngCapture final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
 {
 
     OutFilenameSequenceTransport trans;
-    std::chrono::microseconds png_interval;
-
     timeval start_capture;
     std::chrono::microseconds frame_interval;
 
@@ -92,7 +90,6 @@ public:
         std::chrono::microseconds png_interval)
     : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
             record_tmp_path, basename, ".png", groupid, authentifier)
-    , png_interval(png_interval)
     , start_capture(now)
     , frame_interval(png_interval)
     , zoom_factor(zoom)
@@ -119,31 +116,31 @@ public:
         }
     }
 
-    void next(const timeval & now) {
-        tm ptm;
-        localtime_r(&now.tv_sec, &ptm);
-        this->drawable.trace_timestamp(ptm);
-        const uint8_t * buffer = this->drawable.data();
-        unsigned height = this->drawable.height();
-        unsigned width = this->drawable.width();
-        unsigned rowsize = this->drawable.rowsize();
-        bool bgr = true;
-        if (this->zoom_factor != 100) {
-            scale_data(
-                this->scaled_buffer.get(), buffer,
-                this->scaled_width, width,
-                this->scaled_height, height,
-                this->drawable.rowsize());
-            buffer = this->scaled_buffer.get();
-            height = this->drawable.height();
-            width = this->scaled_width;
-            rowsize = this->scaled_width * 3;
-            bgr = false;
-        }
-        ::transport_dump_png24(this->trans, buffer, width, height, rowsize, bgr);
-        this->trans.next();
-        this->drawable.clear_timestamp();
-    }
+//    void next(const timeval & now) {
+//        tm ptm;
+//        localtime_r(&now.tv_sec, &ptm);
+//        this->drawable.trace_timestamp(ptm);
+//        const uint8_t * buffer = this->drawable.data();
+//        unsigned height = this->drawable.height();
+//        unsigned width = this->drawable.width();
+//        unsigned rowsize = this->drawable.rowsize();
+//        bool bgr = true;
+//        if (this->zoom_factor != 100) {
+//            scale_data(
+//                this->scaled_buffer.get(), buffer,
+//                this->scaled_width, width,
+//                this->scaled_height, height,
+//                this->drawable.rowsize());
+//            buffer = this->scaled_buffer.get();
+//            height = this->drawable.height();
+//            width = this->scaled_width;
+//            rowsize = this->scaled_width * 3;
+//            bgr = false;
+//        }
+//        ::transport_dump_png24(this->trans, buffer, width, height, rowsize, bgr);
+//        this->trans.next();
+//        this->drawable.clear_timestamp();
+//    }
 
 private:
     void update_config(Inifile const & ini) override {
@@ -230,54 +227,10 @@ private:
 
 class PngCaptureRT final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
 {
-    struct ImageTransportBuilder final : private Transport
-    {
-        OutFilenameSequenceTransport trans;
-        uint32_t num_start = 0;
-        unsigned png_limit;
-
-        ImageTransportBuilder(
-            const char * path, const char * basename, int groupid,
-            auth_api * authentifier, uint32_t png_limit)
-        : trans(
-            FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-            path, basename, ".png", groupid, authentifier)
-        , png_limit(png_limit)
-        {}
-
-        ~ImageTransportBuilder() {
-            this->unlink_all_png();
-        }
-
-        bool next() override {
-            if (this->png_limit && this->trans.get_seqno() >= this->png_limit) {
-                // unlink may fail, for instance if file does not exist, just don't care
-                ::unlink(this->trans.seqgen()->get(this->trans.get_seqno() - this->png_limit));
-            }
-            return this->trans.next();
-        }
-
-        void do_send(const uint8_t * const buffer, size_t len) override {
-            this->trans.send(buffer, len);
-        }
-
-        Transport & get_transport() {
-            return this->png_limit ? static_cast<Transport&>(*this) : this->trans;
-        }
-
-        void unlink_all_png()
-        {
-            for(uint32_t until_num = this->trans.get_seqno() + 1; this->num_start < until_num; ++this->num_start){
-                // unlink may fail, for instance if file does not exist, just don't care
-                ::unlink(this->trans.seqgen()->get(this->num_start));
-            }
-        }
-    };
-
-    std::chrono::microseconds png_interval;
-    ImageTransportBuilder trans_builder;
+    OutFilenameSequenceTransport trans;
+    uint32_t num_start = 0;
+    unsigned png_limit;
     
-    Transport & trans;
     unsigned zoom_factor;
     unsigned scaled_width;
     unsigned scaled_height;
@@ -298,9 +251,9 @@ public:
         unsigned zoom,
         std::chrono::microseconds png_interval,
         uint32_t png_limit)
-    : png_interval(png_interval)
-    , trans_builder(record_tmp_path, basename, groupid, authentifier, png_limit)
-    , trans(this->trans_builder.get_transport())
+    : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+        record_tmp_path, basename, ".png", groupid, authentifier)
+    , png_limit(png_limit)
     , zoom_factor(std::min(zoom, 100u))
     , scaled_width(drawable.width())
     , scaled_height(drawable.height())
@@ -317,6 +270,14 @@ public:
         }
     }
 
+    ~PngCaptureRT()
+    {
+        for(uint32_t until_num = this->trans.get_seqno() + 1; this->num_start < until_num; ++this->num_start){
+            // unlink may fail, for instance if file does not exist, just don't care
+            ::unlink(this->trans.seqgen()->get(this->num_start));
+        }
+    }
+
     void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
         this->enable_rt_display = ini.get<cfg::video::rt_display>();
         apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this));
@@ -324,30 +285,34 @@ public:
         apis_register.update_config_capture_list.push_back(static_cast<gdi::UpdateConfigCaptureApi&>(*this));
     }
 
-    void next(const timeval & now) {
-        tm ptm;
-        localtime_r(&now.tv_sec, &ptm);
-        this->drawable.trace_timestamp(ptm);
-        if (this->zoom_factor == 100) {
-            ::transport_dump_png24(
-                this->trans, this->drawable.data(),
-                this->drawable.width(), this->drawable.height(),
-                this->drawable.rowsize(), true);
-        }
-        else {
-            scale_data(
-                this->scaled_buffer.get(), this->drawable.data(),
-                this->scaled_width, this->drawable.width(),
-                this->scaled_height, this->drawable.height(),
-                this->drawable.rowsize());
-            ::transport_dump_png24(
-                this->trans, this->scaled_buffer.get(),
-                this->scaled_width, this->scaled_height,
-                this->scaled_width * 3, false);
-        }
-        this->trans.next();
-        this->drawable.clear_timestamp();
-    }
+//    void next(const timeval & now) {
+//        tm ptm;
+//        localtime_r(&now.tv_sec, &ptm);
+//        this->drawable.trace_timestamp(ptm);
+//        if (this->zoom_factor == 100) {
+//            ::transport_dump_png24(
+//                this->trans, this->drawable.data(),
+//                this->drawable.width(), this->drawable.height(),
+//                this->drawable.rowsize(), true);
+//        }
+//        else {
+//            scale_data(
+//                this->scaled_buffer.get(), this->drawable.data(),
+//                this->scaled_width, this->drawable.width(),
+//                this->scaled_height, this->drawable.height(),
+//                this->drawable.rowsize());
+//            ::transport_dump_png24(
+//                this->trans, this->scaled_buffer.get(),
+//                this->scaled_width, this->scaled_height,
+//                this->scaled_width * 3, false);
+//        }
+//        if (this->png_limit && this->trans.get_seqno() >= this->png_limit) {
+//            // unlink may fail, for instance if file does not exist, just don't care
+//            ::unlink(this->trans.seqgen()->get(this->trans.get_seqno() - this->png_limit));
+//        }
+//        this->trans.next();
+//        this->drawable.clear_timestamp();
+//    }
 
 private:
     void update_config(Inifile const & ini) override {
@@ -363,7 +328,10 @@ private:
         }
 
         if (!this->enable_rt_display) {
-            this->trans_builder.unlink_all_png();
+            for(uint32_t until_num = this->trans.get_seqno() + 1; this->num_start < until_num; ++this->num_start){
+                // unlink may fail, for instance if file does not exist, just don't care
+                ::unlink(this->trans.seqgen()->get(this->num_start));
+            }
         }
     }
 
@@ -402,6 +370,10 @@ private:
                             this->scaled_width, this->scaled_height,
                             this->scaled_width * 3, false);
                     }
+                    if (this->png_limit && this->trans.get_seqno() >= this->png_limit) {
+                        // unlink may fail, for instance if file does not exist, just don't care
+                        ::unlink(this->trans.seqgen()->get(this->trans.get_seqno() - this->png_limit));
+                    }
                     this->trans.next();
                     this->drawable.clear_timestamp();
                     this->start_capture = now;
@@ -416,7 +388,7 @@ private:
             }
             return microseconds(interval - duration);
         }
-        return this->png_interval;
+        return this->frame_interval;
     }
 
     void do_pause_capture(timeval const & now) override {
@@ -442,6 +414,10 @@ private:
                     this->trans, this->scaled_buffer.get(),
                     this->scaled_width, this->scaled_height,
                     this->scaled_width * 3, false);
+            }
+            if (this->png_limit && this->trans.get_seqno() >= this->png_limit) {
+                // unlink may fail, for instance if file does not exist, just don't care
+                ::unlink(this->trans.seqgen()->get(this->trans.get_seqno() - this->png_limit));
             }
             this->trans.next();
             this->drawable.clear_pausetimestamp();
