@@ -25,7 +25,6 @@
 
 #include "transport/out_meta_sequence_transport.hpp"
 
-#include "capture/image_capture.hpp"
 #include "utils/drawable.hpp"
 
 #include "apis_register.hpp"
@@ -236,24 +235,20 @@ class PngCaptureRT final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
     struct ImageTransportBuilder final : private Transport
     {
         OutFilenameSequenceTransport trans;
-        bool enable_rt;
         uint32_t num_start = 0;
         unsigned png_limit;
 
         ImageTransportBuilder(
             const char * path, const char * basename, int groupid,
-            auth_api * authentifier, bool enable_rt, uint32_t png_limit)
+            auth_api * authentifier, uint32_t png_limit)
         : trans(
             FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
             path, basename, ".png", groupid, authentifier)
-        , enable_rt(enable_rt)
-        , png_limit(enable_rt ? png_limit : 0)
+        , png_limit(png_limit)
         {}
 
         ~ImageTransportBuilder() {
-            if (this->enable_rt) {
-                this->unlink_all_png();
-            }
+            this->unlink_all_png();
         }
 
         bool next() override {
@@ -274,7 +269,7 @@ class PngCaptureRT final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
 
         void unlink_all_png()
         {
-            for(uint32_t until_num = this->trans.get_seqno() + 1; this->num_start < until_num; ++this->num_start) {
+            for(uint32_t until_num = this->trans.get_seqno() + 1; this->num_start < until_num; ++this->num_start){
                 // unlink may fail, for instance if file does not exist, just don't care
                 ::unlink(this->trans.seqgen()->get(this->num_start));
             }
@@ -285,26 +280,31 @@ class PngCaptureRT final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
     ImageTransportBuilder trans_builder;
     
     
-    class DrawableToFileLocal
+    class ImageCaptureLocal
     {
-    protected:
         Transport & trans;
         unsigned zoom_factor;
         unsigned scaled_width;
         unsigned scaled_height;
 
-        const Drawable & drawable;
+        Drawable & drawable;
 
-    private:
         std::unique_ptr<uint8_t[]> scaled_buffer;
 
+        timeval start_capture;
+        std::chrono::microseconds frame_interval;
+
     public:
-        DrawableToFileLocal(Transport & trans, const Drawable & drawable, unsigned zoom)
+        ImageCaptureLocal (
+            const timeval & now, Drawable & drawable, Transport & trans,
+            unsigned zoom, std::chrono::microseconds png_interval)
         : trans(trans)
         , zoom_factor(std::min(zoom, 100u))
         , scaled_width(drawable.width())
         , scaled_height(drawable.height())
         , drawable(drawable)
+        , start_capture(now)
+        , frame_interval(png_interval)
         {
             const unsigned zoom_width = (this->drawable.width() * this->zoom_factor) / 100;
             const unsigned zoom_height = (this->drawable.height() * this->zoom_factor) / 100;
@@ -314,8 +314,6 @@ class PngCaptureRT final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
                 this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
             }
         }
-
-        ~DrawableToFileLocal() = default;
 
         bool logical_frame_ended() const {
             return this->drawable.logical_frame_ended;
@@ -330,87 +328,13 @@ class PngCaptureRT final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
             }
         }
 
-    private:
-        void dump24() const {
-            ::transport_dump_png24(
-                this->trans, this->drawable.data(),
-                this->drawable.width(), this->drawable.height(),
-                this->drawable.rowsize(), true);
-        }
-
-        void scale_dump24() const {
-            scale_data(
-                this->scaled_buffer.get(), this->drawable.data(),
-                this->scaled_width, this->drawable.width(),
-                this->scaled_height, this->drawable.height(),
-                this->drawable.rowsize());
-            ::transport_dump_png24(
-                this->trans, this->scaled_buffer.get(),
-                this->scaled_width, this->scaled_height,
-                this->scaled_width * 3, false);
-        }
-
-        static void scale_data(uint8_t *dest, const uint8_t *src,
-                               unsigned int dest_width, unsigned int src_width,
-                               unsigned int dest_height, unsigned int src_height,
-                               unsigned int src_rowsize) {
-            const uint32_t Bpp = 3;
-            unsigned int y_pixels = dest_height;
-            unsigned int y_int_part = src_height / dest_height * src_rowsize;
-            unsigned int y_fract_part = src_height % dest_height;
-            unsigned int yE = 0;
-            unsigned int x_int_part = src_width / dest_width * Bpp;
-            unsigned int x_fract_part = src_width % dest_width;
-
-            while (y_pixels-- > 0) {
-                unsigned int xE = 0;
-                const uint8_t * x_src = src;
-                unsigned int x_pixels = dest_width;
-                while (x_pixels-- > 0) {
-                    dest[0] = x_src[2];
-                    dest[1] = x_src[1];
-                    dest[2] = x_src[0];
-
-                    dest += Bpp;
-                    x_src += x_int_part;
-                    xE += x_fract_part;
-                    if (xE >= dest_width) {
-                        xE -= dest_width;
-                        x_src += Bpp;
-                    }
-                }
-                src += y_int_part;
-                yE += y_fract_part;
-                if (yE >= dest_height) {
-                    yE -= dest_height;
-                    src += src_rowsize;
-                }
-            }
-        }
-    };
-    
-    
-    class ImageCaptureLocal : private DrawableToFileLocal
-    {
-        timeval start_capture;
-        std::chrono::microseconds frame_interval;
-
-    public:
-        ImageCaptureLocal (
-            const timeval & now, const Drawable & drawable, Transport & trans,
-            unsigned zoom, std::chrono::microseconds png_interval)
-        : DrawableToFileLocal(trans, drawable, zoom)
-        , start_capture(now)
-        , frame_interval(png_interval)
-        {}
-
         void breakpoint(const timeval & now)
         {
             tm ptm;
             localtime_r(&now.tv_sec, &ptm);
-            const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
+            this->drawable.trace_timestamp(ptm);
             this->flush_png();
-            const_cast<Drawable&>(this->drawable).clear_timestamp();
+            this->drawable.clear_timestamp();
         }
 
         void flush_png()
@@ -432,10 +356,10 @@ class PngCaptureRT final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
                 if (   this->logical_frame_ended()
                     // Force snapshot if diff_time_val >= 1.5 x frame_interval.
                     || (duration >= interval * 3 / 2)) {
-                    const_cast<Drawable&>(this->drawable).trace_mouse();
+                    this->drawable.trace_mouse();
                     this->breakpoint(now);
                     this->start_capture = now;
-                    const_cast<Drawable&>(this->drawable).clear_mouse();
+                    this->drawable.clear_mouse();
 
                     return microseconds(interval ? interval - duration % interval : 0u);
                 }
@@ -452,28 +376,47 @@ class PngCaptureRT final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
             time_t rawtime = now.tv_sec;
             tm ptm;
             localtime_r(&rawtime, &ptm);
-            const_cast<Drawable&>(this->drawable).trace_pausetimestamp(ptm);
+            this->drawable.trace_pausetimestamp(ptm);
             this->flush_png();
-            const_cast<Drawable&>(this->drawable).clear_pausetimestamp();
+            this->drawable.clear_pausetimestamp();
             this->start_capture = now;
         }
 
         void do_resume_capture(timeval const & now)
         {
         }        
+
+        void dump24() const {
+            ::transport_dump_png24(
+                this->trans, this->drawable.data(),
+                this->drawable.width(), this->drawable.height(),
+                this->drawable.rowsize(), true);
+        }
+
+        void scale_dump24() const {
+            scale_data(
+                this->scaled_buffer.get(), this->drawable.data(),
+                this->scaled_width, this->drawable.width(),
+                this->scaled_height, this->drawable.height(),
+                this->drawable.rowsize());
+            ::transport_dump_png24(
+                this->trans, this->scaled_buffer.get(),
+                this->scaled_width, this->scaled_height,
+                this->scaled_width * 3, false);
+        }
         
     } ic;
     bool enable_rt_display = false;
 
 public:
     PngCaptureRT(
-        const timeval & now, bool enable_rt, auth_api * authentifier, Drawable & drawable,
+        const timeval & now, auth_api * authentifier, Drawable & drawable,
         const char * record_tmp_path, const char * basename, int groupid,
         unsigned zoom,
         std::chrono::microseconds png_interval,
         uint32_t png_limit)
     : png_interval(png_interval)
-    , trans_builder(record_tmp_path, basename, groupid, authentifier, enable_rt, png_limit)
+    , trans_builder(record_tmp_path, basename, groupid, authentifier, png_limit)
     , ic(now, drawable, this->trans_builder.get_transport(), zoom, png_interval)
     {}
 

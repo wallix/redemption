@@ -29,8 +29,14 @@
 #define LOGNULL
 //#define LOGPRINT
 
+#include <memory>
+
 #include "transport/out_meta_sequence_transport.hpp"
-#include "capture/image_capture.hpp"
+#include "utils/png.hpp"
+#include "utils/drawable.hpp"
+#include "utils/difftimeval.hpp"
+#include "transport/transport.hpp"
+#include "gdi/capture_api.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "utils/protect_graphics.hpp"
 #include "utils/bitmap_with_png.hpp"
@@ -47,7 +53,84 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
     now.tv_sec = 1350998222;
     now.tv_usec = 0;
 
-    ImageCapture consumer(now, drawable.impl(), trans, {});
+    class DrawableToFileLocal
+    {
+    protected:
+        Transport & trans;
+        const Drawable & drawable;
+
+    public:
+        DrawableToFileLocal(Transport & trans, const Drawable & drawable)
+        : trans(trans)
+        , drawable(drawable)
+        {
+        }
+
+        ~DrawableToFileLocal() = default;
+
+        bool logical_frame_ended() const {
+            return this->drawable.logical_frame_ended;
+        }
+
+        void flush() {
+            this->dump24();
+        }
+
+    private:
+        void dump24() const {
+            ::transport_dump_png24(
+                this->trans, this->drawable.data(),
+                this->drawable.width(), this->drawable.height(),
+                this->drawable.rowsize(), true);
+        }
+    };
+
+
+    class ImageCaptureLocal : private DrawableToFileLocal
+    {
+        timeval start_capture;
+        std::chrono::microseconds frame_interval;
+
+    public:
+        ImageCaptureLocal (
+            const timeval & now, const Drawable & drawable, Transport & trans,
+            std::chrono::microseconds png_interval)
+        : DrawableToFileLocal(trans, drawable)
+        , start_capture(now)
+        , frame_interval(png_interval)
+        {}
+
+        std::chrono::microseconds do_snapshot(const timeval & now) {
+            using std::chrono::microseconds;
+            uint64_t const duration = difftimeval(now, this->start_capture);
+            uint64_t const interval = this->frame_interval.count();
+            if (duration >= interval) {
+                if (this->logical_frame_ended()
+                    // Force snapshot if diff_time_val >= 1.5 x frame_interval.
+                    || (duration >= interval * 3 / 2)) {
+                    const_cast<Drawable&>(this->drawable).trace_mouse();
+                    tm ptm;
+                    localtime_r(&now.tv_sec, &ptm);
+                    const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
+                    this->flush();
+                    this->trans.next();
+                    const_cast<Drawable&>(this->drawable).clear_timestamp();
+                    this->start_capture = now;
+                    const_cast<Drawable&>(this->drawable).clear_mouse();
+
+                    return microseconds(interval ? interval - duration % interval : 0u);
+                }
+                else {
+                    // Wait 0.3 x frame_interval.
+                    return this->frame_interval / 3;
+                }
+            }
+            return microseconds(interval - duration);
+        }
+    };
+
+
+    ImageCaptureLocal consumer(now, drawable.impl(), trans, {});
 
     drawable.show_mouse_cursor(false);
 
@@ -65,7 +148,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
         drawable.draw(RDPMemBlt(0, bmp_rect, 0xCC, 0, 0, 0), rect, bmp);
 
         now.tv_sec++;
-        consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+        consumer.do_snapshot(now);
 
         struct OSD : ProtectGraphics
         {
@@ -74,7 +157,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
         } osd(drawable, rect);
         osd.draw(RDPOpaqueRect(Rect(100, 100, 200, 200), GREEN), screen_rect);
         now.tv_sec++;
-        consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+        consumer.do_snapshot(now);
     }
 
     trans.disconnect();

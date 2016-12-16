@@ -38,6 +38,8 @@ namespace boost { namespace unit_test { namespace ut_detail {
 
 #include <boost/test/unit_test_monitor.hpp>
 
+#include "cxx/diagnostic.hpp"
+
 namespace redemption_unit_test__
 {
 //   static std::terminate_handler old_terminate_handler = std::set_terminate([](){
@@ -56,15 +58,18 @@ namespace redemption_unit_test__
 //     old_terminate_handler();
 //   });
 
-  struct register_exception {
-    register_exception() {
-        boost::unit_test::unit_test_monitor.register_exception_translator<Error>(+[](Error const & e){
-            std::printf("Exception Error: %s\n", e.errmsg());
-            throw e;
-        });
-    }
-  };
-  static register_exception Init;
+    struct register_exception {
+        register_exception() {
+            REDEMPTION_DIAGNOSTIC_PUSH
+            REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
+            boost::unit_test::unit_test_monitor.register_exception_translator<Error>(+[](Error const & e){
+                std::printf("Exception Error: %s\n", e.errmsg());
+                throw e;
+            });
+            REDEMPTION_DIAGNOSTIC_POP
+        }
+    };
+    static register_exception Init;
 }
 
 // force line to last checkpoint

@@ -32,7 +32,7 @@ if __name__ == '__main__':
         if ha_status() > HA_MASTER:
             # If HA is configured we run this script only on the MASTER node
             sys.exit(-1)
-            
+
         proxy = get_proxy()
 
         os.seteuid(original_uid)
@@ -64,7 +64,7 @@ libredrec = ctypes.CDLL('libredrec.so')
 
 
 def verify(cryptoapi, argv):
-    from wabha.utils import *
+    from wabha.utils import cryptoapi
     args = ["redver"].extend(argv)
     global proxy
     proxy = cryptoapi
