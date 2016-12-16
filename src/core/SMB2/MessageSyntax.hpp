@@ -185,14 +185,13 @@ enum : uint32_t {
 
 static inline
 const char * get_ShareAccess_name(uint32_t shareAccess) {
-    switch (shareAccess) {
-        case FILE_SHARE_READ:   return "FILE_SHARE_READ";
-        case FILE_SHARE_WRITE:  return "FILE_SHARE_WRITE";
-        case FILE_SHARE_DELETE: return "FILE_SHARE_DELETE";
 
-    }
+    std::string str;
+    (shareAccess & FILE_SHARE_READ) ? str+="FILE_SHARE_READ ":str;
+    (shareAccess & FILE_SHARE_WRITE) ? str+="FILE_SHARE_WRITE ":str;
+    (shareAccess & FILE_SHARE_DELETE) ? str+="FILE_SHARE_DELETE ":str;
 
-    return "<unknown>";
+    return str.c_str();
 }
 
 

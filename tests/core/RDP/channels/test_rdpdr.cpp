@@ -20,7 +20,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestGCC
+#define BOOST_TEST_MODULE Test_rdpdr
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -592,12 +592,13 @@ BOOST_AUTO_TEST_CASE(streamLog)
 
 BOOST_AUTO_TEST_CASE(ServerDriveLockControlRequestEmit)
 {
-    const size_t len = 12;
+    const size_t len = 32;
     const char data[] =
-            "\x01\x00\x00\x02\x80\x00\x00\x00\x03\x00\x00\x04";
+            "\x01\x00\x00\x02\x80\x00\x00\x00\x03\x00\x00\x04\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
 
     StaticOutStream<128> stream;
-    rdpdr::ServerDriveLockControlRequest pdu(0x02000001, true, 0x04000003);
+    rdpdr::ServerDriveLockControlRequest pdu(0x02000001, 1, 0x04000003);
     pdu.emit(stream);
 
     std::string const out_data(data, len);
@@ -607,16 +608,17 @@ BOOST_AUTO_TEST_CASE(ServerDriveLockControlRequestEmit)
 
 BOOST_AUTO_TEST_CASE(ServerDriveLockControlRequestReceive)
 {
-    const size_t len = 12;
+    const size_t len = 32;
     const char data[] =
-            "\x01\x00\x00\x02\x80\x00\x00\x00\x03\x00\x00\x04";
+            "\x01\x00\x00\x02\x80\x00\x00\x00\x03\x00\x00\x04\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
 
     InStream in_stream(data, len);
     rdpdr::ServerDriveLockControlRequest pdu;
     pdu.receive(in_stream);
 
     BOOST_CHECK_EQUAL(pdu.Operation, 0x02000001);
-    BOOST_CHECK_EQUAL(pdu.F, true);
+    BOOST_CHECK_EQUAL(pdu.F, 1);
     BOOST_CHECK_EQUAL(pdu.NumLocks, 0x04000003);
 }
 
@@ -650,9 +652,10 @@ BOOST_AUTO_TEST_CASE(ClientDriveSetInformationResponseReceive)
 
 BOOST_AUTO_TEST_CASE(ServerDriveSetVolumeInformationRequestEmit)
 {
-    const size_t len = 8;
+    const size_t len = 32;
     const char data[] =
-            "\x01\x00\x00\x02\x03\x00\x00\x04";
+            "\x01\x00\x00\x02\x03\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
 
     StaticOutStream<128> stream;
     rdpdr::ServerDriveSetVolumeInformationRequest pdu(0x02000001, 0x04000003);
@@ -665,9 +668,10 @@ BOOST_AUTO_TEST_CASE(ServerDriveSetVolumeInformationRequestEmit)
 
 BOOST_AUTO_TEST_CASE(ServerDriveSetVolumeInformationRequestReceive)
 {
-    const size_t len = 8;
+    const size_t len = 32;
     const char data[] =
-            "\x01\x00\x00\x02\x03\x00\x00\x04";
+            "\x01\x00\x00\x02\x03\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
 
     InStream in_stream(data, len);
     rdpdr::ServerDriveSetVolumeInformationRequest pdu;
