@@ -202,17 +202,6 @@ public:
                     secondary_event->wait_on_timeout(timeout);
                 }
 
-                int        asynchronous_task_fd    = INVALID_SOCKET;
-                wait_obj * asynchronous_task_event = mm.mod->get_asynchronous_task_event(asynchronous_task_fd);
-                if (asynchronous_task_event) {
-                    asynchronous_task_event->wait_on_fd(asynchronous_task_fd, rfds, max, timeout);
-                }
-
-                wait_obj * session_probe_launcher_event = mm.mod->get_session_probe_launcher_event();
-                if (session_probe_launcher_event) {
-                    session_probe_launcher_event->wait_on_timeout(timeout);
-                }
-
                 event_handlers.clear();
                 mm.mod->get_event_handlers(event_handlers);
                 for (EventHandler& event_handler : event_handlers) {
@@ -314,22 +303,6 @@ public:
                                         event->reset();
                                     }
                                 }
-                            }
-
-                            asynchronous_task_fd    = -1;
-                            asynchronous_task_event = mm.mod->get_asynchronous_task_event(asynchronous_task_fd);
-                            const bool asynchronous_task_event_is_set = (asynchronous_task_event &&
-                                                                         asynchronous_task_event->is_set(asynchronous_task_fd,
-                                                                                rfds));
-                            if (asynchronous_task_event_is_set) {
-                                mm.mod->process_asynchronous_task(now, mm.get_graphic_wrapper(*this->front));
-                            }
-
-                            session_probe_launcher_event = mm.mod->get_session_probe_launcher_event();
-                            const bool session_probe_launcher_event_is_set = (session_probe_launcher_event &&
-                                                                              session_probe_launcher_event->is_set(INVALID_SOCKET, rfds));
-                            if (session_probe_launcher_event_is_set) {
-                                mm.mod->process_session_probe_launcher(now, mm.get_graphic_wrapper(*this->front));
                             }
 
                                        secondary_event        = mm.mod->get_secondary_event();

@@ -98,12 +98,6 @@ public:
     virtual wait_obj * get_secondary_event() { return nullptr; }
     virtual void process_secondary(time_t, gdi::GraphicApi&) {}
 
-    virtual wait_obj * get_asynchronous_task_event(int & out_fd) { out_fd = -1; return nullptr; }
-    virtual void process_asynchronous_task(time_t, gdi::GraphicApi&) {}
-
-    virtual wait_obj * get_session_probe_launcher_event() { return nullptr; }
-    virtual void process_session_probe_launcher(time_t, gdi::GraphicApi&) {}
-
     virtual void get_event_handlers(std::vector<EventHandler>& out_event_handlers) {}
 
     virtual void send_to_front_channel(const char * const mod_channel_name,

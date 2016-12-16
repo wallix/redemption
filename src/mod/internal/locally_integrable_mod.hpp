@@ -52,7 +52,7 @@ struct LocallyIntegrableMod : public InternalMod {
         {}
 
         void operator()(time_t now, gdi::GraphicApi& drawable) override {
-            this->mod_.process_secondary(now, drawable);
+            this->mod_.process_secondary_event(now, drawable);
         }
     } secondary_event_handler;
 
@@ -70,15 +70,6 @@ struct LocallyIntegrableMod : public InternalMod {
         this->client_execute.reset();
     }
 
-/*
-    wait_obj * get_secondary_event() override {
-        if (!this->secondary_event.object_and_time)
-            return nullptr;
-
-        return &this->secondary_event;
-    }
-*/
-
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
         if (this->secondary_event.object_and_time) {
             out_event_handlers.emplace_back(
@@ -89,7 +80,7 @@ struct LocallyIntegrableMod : public InternalMod {
         }
     }
 
-    void process_secondary(time_t, gdi::GraphicApi&) override {
+    void process_secondary_event(time_t, gdi::GraphicApi&) {
         if (this->secondary_event.object_and_time &&
             this->secondary_event.waked_up_by_time) {
             this->cancel_double_click_detection();

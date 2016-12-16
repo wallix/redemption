@@ -685,6 +685,32 @@ protected:
 
     rdpdr::RdpDrStatus rdpdrLogStatus;
 
+    class AsynchronousTaskEventHandler : public EventHandler::CB {
+        mod_rdp& mod_;
+
+    public:
+        AsynchronousTaskEventHandler(mod_rdp& mod)
+        : mod_(mod)
+        {}
+
+        void operator()(time_t now, gdi::GraphicApi& drawable) override {
+            this->mod_.process_asynchronous_task_event(now, drawable);
+        }
+    } asynchronous_task_event_handler;
+
+    class SessionProbeLauncherEventHandler : public EventHandler::CB {
+        mod_rdp& mod_;
+
+    public:
+        SessionProbeLauncherEventHandler(mod_rdp& mod)
+        : mod_(mod)
+        {}
+
+        void operator()(time_t now, gdi::GraphicApi& drawable) override {
+            this->mod_.process_session_probe_launcher_event(now, drawable);
+        }
+    } session_probe_launcher_event_handler;
+
 public:
     using Verbose = RDPVerbose;
 
@@ -831,6 +857,8 @@ public:
         , client_execute_exe_or_file(mod_rdp_params.client_execute_exe_or_file)
         , client_execute_working_dir(mod_rdp_params.client_execute_working_dir)
         , client_execute_arguments(mod_rdp_params.client_execute_arguments)
+        , asynchronous_task_event_handler(*this)
+        , session_probe_launcher_event_handler(*this)
     {
         if (this->verbose & RDPVerbose::basic_trace) {
             if (!enable_transparent_mode) {
@@ -1622,18 +1650,7 @@ public:
     }
 
 public:
-    wait_obj * get_asynchronous_task_event(int & out_fd) override {
-        if (this->asynchronous_tasks.empty()) {
-            out_fd = -1;
-            return nullptr;
-        }
-
-        out_fd = this->asynchronous_tasks.front()->get_file_descriptor();
-
-        return &this->asynchronous_task_event;
-    }
-
-    void process_asynchronous_task(time_t, gdi::GraphicApi&) override {
+    void process_asynchronous_task_event(time_t, gdi::GraphicApi&) {
         if (!this->asynchronous_tasks.front()->run(this->asynchronous_task_event)) {
             this->asynchronous_tasks.pop_front();
         }
@@ -1646,17 +1663,30 @@ public:
         }
     }
 
-    wait_obj * get_session_probe_launcher_event() override {
-        if (this->session_probe_launcher) {
-            return this->session_probe_launcher->get_event();
-        }
-
-        return nullptr;
-    }
-
-    void process_session_probe_launcher(time_t, gdi::GraphicApi&) override {
+    void process_session_probe_launcher_event(time_t, gdi::GraphicApi&) {
         if (this->session_probe_launcher) {
             this->session_probe_launcher->on_event();
+        }
+    }
+
+    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
+        if (this->session_probe_launcher) {
+            wait_obj* event = this->session_probe_launcher->get_event();
+            if (event) {
+                out_event_handlers.emplace_back(
+                        event,
+                        &session_probe_launcher_event_handler,
+                        INVALID_SOCKET
+                    );
+            }
+        }
+
+        if (!this->asynchronous_tasks.empty()) {
+            out_event_handlers.emplace_back(
+                    &this->asynchronous_task_event,
+                    &asynchronous_task_event_handler,
+                    this->asynchronous_tasks.front()->get_file_descriptor()
+                );
         }
     }
 

@@ -20,9 +20,11 @@
 
 #pragma once
 
+#include "core/front_api.hpp"
+#include "gdi/graphic_api.hpp"
 #include "mod/internal/widget2/composite.hpp"
 #include "mod/internal/widget2/module_host.hpp"
-#include "gdi/graphic_api.hpp"
+#include "mod/mod_api.hpp"
 
 class WidgetTest : public WidgetParent
 {
@@ -32,10 +34,12 @@ private:
     WidgetModuleHost module_host;
 
 public:
-    WidgetTest(gdi::GraphicApi& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
-             Widget2& parent, NotifyApi* notifier)
-        : WidgetParent(drawable, parent, notifier)
-        , module_host(drawable, *this, this)
+    WidgetTest(gdi::GraphicApi& drawable,
+               int16_t left, int16_t top, int16_t width, int16_t height,
+               Widget2& parent, NotifyApi* notifier,
+               std::unique_ptr<mod_api> managed_mod)
+    : WidgetParent(drawable, parent, notifier)
+    , module_host(drawable, *this, this, std::move(managed_mod))
     {
         this->impl = &composite_array;
 
@@ -48,7 +52,13 @@ public:
         this->clear();
     }
 
-    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
+    mod_api& get_managed_mod()
+    {
+        return this->module_host.get_managed_mod();
+    }
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width,
+                          uint16_t height) {
         this->set_xy(left, top);
         this->set_wh(width, height);
 

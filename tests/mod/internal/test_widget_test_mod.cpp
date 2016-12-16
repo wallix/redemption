@@ -25,6 +25,7 @@
 
 #define LOGNULL
 
+#include "mod/internal/bouncer2_mod.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 #include "../../front/fake_front.hpp"
 
@@ -41,12 +42,18 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     FakeFront front(info, 0);
     ClientExecute client_execute(front, 0);
 
+    Font font;
+
     Inifile ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    WidgetTestMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), client_execute);
+    std::unique_ptr<mod_api> managed_mod(
+        new Bouncer2Mod(front, 800, 600, font));
+
+    WidgetTestMod d(ini, front, 800, 600, Rect(0, 0, 799, 599),
+        std::move(managed_mod), client_execute);
     d.draw_event(100001, front);
 /*
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate

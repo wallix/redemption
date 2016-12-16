@@ -24,6 +24,7 @@
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget2/notify_api.hpp"
 #include "mod/internal/widget2/widget_test.hpp"
+#include "mod/mod_api.hpp"
 
 #include "configs/config_access.hpp"
 
@@ -41,16 +42,20 @@ class WidgetTestMod : public LocallyIntegrableMod, public NotifyApi {
 public:
     WidgetTestMod(
         WidgetTestModVariables vars,
-        FrontAPI& front, uint16_t width, uint16_t height, Rect const& widget_rect,
+        FrontAPI& front, uint16_t width, uint16_t height,
+        Rect const& widget_rect, std::unique_ptr<mod_api> managed_mod,
         ClientExecute& client_execute)
-    : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
-    , widget_test(front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1,
-                  this->screen, this)
+    : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(),
+                           client_execute, vars.get<cfg::theme>())
+    , widget_test(front, widget_rect.x, widget_rect.y,
+                  widget_rect.cx + 1, widget_rect.cy + 1,
+                  this->screen, this, std::move(managed_mod))
     , vars(vars)
     {
         this->screen.add_widget(&this->widget_test);
 
-        this->screen.set_widget_focus(&this->widget_test, Widget2::focus_reason_tabkey);
+        this->screen.set_widget_focus(&this->widget_test,
+            Widget2::focus_reason_tabkey);
 
         this->screen.refresh(this->screen.get_rect());
     }
@@ -66,15 +71,41 @@ public:
     void draw_event(time_t now, gdi::GraphicApi& gapi) override
     {
         LocallyIntegrableMod::draw_event(now, gapi);
+
+        mod_api& mod = this->widget_test.get_managed_mod();
+
+        mod.draw_event(now, gapi);
     }
 
-    bool is_up_and_running() override { return true; }
+    wait_obj* get_secondary_event() override
+    {
+        mod_api& mod = this->widget_test.get_managed_mod();
 
-    void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
-        LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk, length, flags);
+        return &mod.get_event();
     }
 
-    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
+    bool is_up_and_running() override
+    {
+        mod_api& mod = this->widget_test.get_managed_mod();
+
+        return mod.is_up_and_running();
+    }
+
+    void send_to_mod_channel(const char* front_channel_name,
+                             InStream& chunk, size_t length,
+                             uint32_t flags) override
+    {
+        LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk,
+            length, flags);
+
+        mod_api& mod = this->widget_test.get_managed_mod();
+
+        mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
+    }
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width,
+                          uint16_t height) override
+    {
         this->widget_test.move_size_widget(left, top, width + 1, height + 1);
     }
 };

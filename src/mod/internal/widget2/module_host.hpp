@@ -20,32 +20,176 @@
 
 #pragma once
 
-#include "widget.hpp"
+#include "gdi/graphic_api.hpp"
+#include "mod/internal/widget2/widget.hpp"
+#include "mod/mod_api.hpp"
 
-class WidgetModuleHost : public Widget2
+class WidgetModuleHost : public Widget2,
+    public gdi::GraphicBase<WidgetModuleHost>
 {
+private:
+    class ModuleHolder : public mod_api
+    {
+    private:
+        WidgetModuleHost& host;
+
+        std::unique_ptr<mod_api> managed_mod;
+
+    public:
+        ModuleHolder(WidgetModuleHost& host,
+                     std::unique_ptr<mod_api> managed_mod)
+        : host(host)
+        , managed_mod(std::move(managed_mod))
+        {}
+
+        // mod_api
+
+        void draw_event(time_t now, gdi::GraphicApi& drawable) override
+        {
+            if (this->managed_mod)
+            {
+                this->host.drawable_ptr = &drawable;
+
+                this->managed_mod->draw_event(now, this->host);
+
+                this->host.drawable_ptr = nullptr;
+            }
+        }
+
+        void send_to_front_channel(const char* const mod_channel_name,
+                                   const uint8_t* data, size_t length,
+                                   size_t chunk_size, int flags) override
+        {
+            if (this->managed_mod)
+            {
+                this->managed_mod->send_to_front_channel(mod_channel_name,
+                    data, length, chunk_size, flags);
+            }
+        }
+
+        // RdpInput
+
+        void rdp_input_invalidate(const Rect& r) override
+        {
+            if (this->managed_mod)
+            {
+                this->managed_mod->rdp_input_invalidate(r);
+            }
+        }
+
+        void rdp_input_mouse(int device_flags, int x, int y,
+                             Keymap2* keymap) override
+        {
+            if (this->managed_mod)
+            {
+                this->managed_mod->rdp_input_mouse(device_flags, x, y,
+                    keymap);
+            }
+        }
+
+        void rdp_input_scancode(long param1, long param2, long param3,
+                                long param4, Keymap2* keymap) override
+        {
+            if (this->managed_mod)
+            {
+                this->managed_mod->rdp_input_scancode(param1, param2, param3,
+                    param4, keymap);
+            }
+        }
+
+        void rdp_input_synchronize(uint32_t time, uint16_t device_flags,
+                                   int16_t param1, int16_t param2) override
+        {
+            if (this->managed_mod)
+            {
+                this->managed_mod->rdp_input_synchronize(time, device_flags,
+                    param1, param2);
+            }
+        }
+    } module_holder;
+
+    gdi::GraphicApi* drawable_ptr = nullptr;
+
+    gdi::GraphicApi& drawable_ref;
+
 public:
-    WidgetModuleHost(gdi::GraphicApi& drawable, Widget2& parent, NotifyApi* notifier, int group_id = 0)
+    WidgetModuleHost(gdi::GraphicApi& drawable, Widget2& parent,
+                     NotifyApi* notifier,
+                     std::unique_ptr<mod_api> managed_mod, int group_id = 0)
     : Widget2(drawable, parent, notifier, group_id)
+    , module_holder(*this, std::move(managed_mod))
+    , drawable_ref(drawable)
     {
         this->tab_flag   = NORMAL_TAB;
         this->focus_flag = NORMAL_FOCUS;
     }
 
+    mod_api& get_managed_mod()
+    {
+        return this->module_holder;
+    }
+
+private:
+    gdi::GraphicApi& get_drawable()
+    {
+        if (this->drawable_ptr)
+        {
+            return *this->drawable_ptr;
+        }
+
+        return this->drawable_ref;
+    }
+
+public:
+    using gdi::GraphicBase<WidgetModuleHost>::draw;
+
+public:
+    // Widget2
     void draw(const Rect& clip) override
     {
-        this->drawable.draw(
+        gdi::GraphicApi& drawable = this->get_drawable();
+
+        drawable.draw(
             RDPOpaqueRect(
                 clip,
                 BLACK
             ), this->get_rect()
         );
 
-        this->drawable.draw(
+/*
+        drawable.draw(
             RDPOpaqueRect(
                 clip,
                 RED
             ), this->get_rect().shrink(10)
         );
+*/
+    }
+
+private:
+    // gdi::GraphicBase
+
+    friend gdi::GraphicCoreAccess;
+
+    template<class Cmd>
+    void draw_impl(const Cmd& cmd) {
+        gdi::GraphicApi& drawable = this->get_drawable();
+
+        drawable.draw(cmd);
+    }
+
+    template<class Cmd, class... Args>
+    void draw_impl(const Cmd& cmd, const Rect& clip, const Args&... args)
+    {
+        gdi::GraphicApi& drawable = this->get_drawable();
+
+        drawable.draw(cmd, clip, args...);
+    }
+
+    void draw_impl(const RDPBitmapData& bitmap_data, const Bitmap& bmp)
+    {
+        gdi::GraphicApi& drawable = this->get_drawable();
+
+        drawable.draw(bitmap_data, bmp);
     }
 };
