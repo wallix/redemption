@@ -3621,9 +3621,7 @@ public:
               )
             );
 
-        if ((!this->event.waked_up_by_time
-            && (!this->session_probe_virtual_channel_p
-                || !this->session_probe_virtual_channel_p->is_event_signaled()))
+        if (!this->event.waked_up_by_time
         || ((this->state == MOD_RDP_NEGO)
             && ((this->nego.state == RdpNego::NEGO_STATE_INITIAL)
                 || (this->nego.state == RdpNego::NEGO_STATE_FINAL)))) {

@@ -43,6 +43,19 @@ struct LocallyIntegrableMod : public InternalMod {
 
     wait_obj secondary_event;
 
+    class SecondaryEventHandler : public EventHandler::CB {
+        LocallyIntegrableMod& mod_;
+
+    public:
+        SecondaryEventHandler(LocallyIntegrableMod& mod)
+        : mod_(mod)
+        {}
+
+        void operator()(time_t now, gdi::GraphicApi& drawable) override {
+            this->mod_.process_secondary(now, drawable);
+        }
+    } secondary_event_handler;
+
     LocallyIntegrableMod(FrontAPI & front,
                          uint16_t front_width, uint16_t front_height,
                          Font const & font, ClientExecute & client_execute,
@@ -50,17 +63,30 @@ struct LocallyIntegrableMod : public InternalMod {
     : InternalMod(front, front_width, front_height, font, theme)
     , client_execute(client_execute)
     , front_width(front_width)
-    , front_height(front_height) {}
+    , front_height(front_height)
+    , secondary_event_handler(*this) {}
 
     ~LocallyIntegrableMod() override {
         this->client_execute.reset();
     }
 
+/*
     wait_obj * get_secondary_event() override {
         if (!this->secondary_event.object_and_time)
             return nullptr;
 
         return &this->secondary_event;
+    }
+*/
+
+    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
+        if (this->secondary_event.object_and_time) {
+            out_event_handlers.emplace_back(
+                    &this->secondary_event,
+                    &secondary_event_handler,
+                    INVALID_SOCKET
+                );
+        }
     }
 
     void process_secondary(time_t, gdi::GraphicApi&) override {

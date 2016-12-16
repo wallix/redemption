@@ -22,6 +22,7 @@
 #pragma once
 
 #include <ctime>
+#include <vector>
 
 #include "core/callback.hpp"
 #include "core/font.hpp"
@@ -36,6 +37,46 @@ class Inifile;
 enum {
     BUTTON_STATE_UP   = 0,
     BUTTON_STATE_DOWN = 1
+};
+
+class EventHandler {
+public:
+    class CB {
+    public:
+        virtual ~CB() = default;
+
+        virtual void operator()(time_t now, gdi::GraphicApi& drawable) = 0;
+    };
+
+private:
+    wait_obj* event_;
+
+    CB* cb_;
+
+    int fd_;
+
+public:
+    EventHandler(wait_obj* event, CB* cb, int fd = INVALID_SOCKET)
+    : event_(event)
+    , cb_(cb)
+    , fd_(fd) {
+        REDASSERT(event_);
+        REDASSERT(cb_);
+    }
+
+    void operator()(time_t now, gdi::GraphicApi& drawable) {
+        if (this->cb_) {
+            (*this->cb_)(now, drawable);
+        }
+    }
+
+    wait_obj* get_event() const {
+        return this->event_;
+    }
+
+    int get_fd() const {
+        return this->fd_;
+    }
 };
 
 class mod_api : public Callback
@@ -62,6 +103,8 @@ public:
 
     virtual wait_obj * get_session_probe_launcher_event() { return nullptr; }
     virtual void process_session_probe_launcher(time_t, gdi::GraphicApi&) {}
+
+    virtual void get_event_handlers(std::vector<EventHandler>& out_event_handlers) {}
 
     virtual void send_to_front_channel(const char * const mod_channel_name,
         uint8_t const * data, size_t length, size_t chunk_size, int flags) = 0;

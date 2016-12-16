@@ -37,20 +37,21 @@
 
 #include "utils/invalid_socket.hpp"
 
+#include "acl/authentifier.hpp"
 #include "core/server.hpp"
-#include "utils/colors.hpp"
-#include "utils/stream.hpp"
+#include "core/wait_obj.hpp"
 #include "front/front.hpp"
+#include "mod/mod_api.hpp"
 #include "system/ssl_calls.hpp"
-#include "utils/rect.hpp"
+#include "transport/transport.hpp"
+#include "utils/colors.hpp"
+#include "utils/bitmap.hpp"
 #include "utils/netutils.hpp"
+#include "utils/rect.hpp"
+#include "utils/stream.hpp"
 
 #include "configs/config.hpp"
-#include "core/wait_obj.hpp"
-#include "transport/transport.hpp"
-#include "utils/bitmap.hpp"
 
-#include "acl/authentifier.hpp"
 
 
 enum {
@@ -172,6 +173,8 @@ public:
             unsigned osd_state = OSD_STATE_NOT_YET_COMPUTED;
             const bool enable_osd = this->ini.get<cfg::globals::enable_osd>();
 
+            std::vector<EventHandler> event_handlers;
+
             while (run_session) {
                 unsigned max = 0;
                 fd_set rfds;
@@ -208,6 +211,22 @@ public:
                 wait_obj * session_probe_launcher_event = mm.mod->get_session_probe_launcher_event();
                 if (session_probe_launcher_event) {
                     session_probe_launcher_event->wait_on_timeout(timeout);
+                }
+
+                event_handlers.clear();
+                mm.mod->get_event_handlers(event_handlers);
+                for (EventHandler& event_handler : event_handlers) {
+                    const wait_obj* event = event_handler.get_event();
+                    const int       fd    = event_handler.get_fd();
+
+                    if (event) {
+                        if (INVALID_SOCKET != fd) {
+                            event->wait_on_fd(fd, rfds, max, timeout);
+                        }
+                        else {
+                            event->wait_on_timeout(timeout);
+                        }
+                    }
                 }
 
                 const bool has_pending_data = (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl));
@@ -279,6 +298,24 @@ public:
 
                         try
                         {
+                            for (EventHandler& event_handler : event_handlers) {
+                                if (BACK_EVENT_NONE != signal) {
+                                    break;
+                                }
+
+                                      wait_obj* event = event_handler.get_event();
+                                const int       fd    = event_handler.get_fd();
+
+                                if (event && event->is_set(fd, rfds)) {
+                                    event_handler(now, mm.get_graphic_wrapper(*this->front));
+
+                                    if (BACK_EVENT_NONE != event->signal) {
+                                        signal = event->signal;
+                                        event->reset();
+                                    }
+                                }
+                            }
+
                             asynchronous_task_fd    = -1;
                             asynchronous_task_event = mm.mod->get_asynchronous_task_event(asynchronous_task_fd);
                             const bool asynchronous_task_event_is_set = (asynchronous_task_event &&
@@ -290,7 +327,7 @@ public:
 
                             session_probe_launcher_event = mm.mod->get_session_probe_launcher_event();
                             const bool session_probe_launcher_event_is_set = (session_probe_launcher_event &&
-                                                                              session_probe_launcher_event->is_set(asynchronous_task_fd, rfds));
+                                                                              session_probe_launcher_event->is_set(INVALID_SOCKET, rfds));
                             if (session_probe_launcher_event_is_set) {
                                 mm.mod->process_session_probe_launcher(now, mm.get_graphic_wrapper(*this->front));
                             }
@@ -300,11 +337,6 @@ public:
                                                                  secondary_event->is_set(INVALID_SOCKET, rfds));
                             if (secondary_event_is_set) {
                                 mm.mod->process_secondary(now, mm.get_graphic_wrapper(*this->front));
-
-                                if (secondary_event->signal != BACK_EVENT_NONE) {
-                                    signal = secondary_event->signal;
-                                    secondary_event->reset();
-                                }
                             }
 
                             // Process incoming module trafic
