@@ -1317,6 +1317,7 @@ BOOST_AUTO_TEST_CASE(TestAppRecorder)
         "--flv",
         "--full",
         "--flvbreakinterval", "500",
+        "--video-codec", "flv"
     };
     int argc = sizeof(argv)/sizeof(char*);
 

@@ -1373,7 +1373,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         std::cout << "png-geometry: " << recorder.png_width << "x" << recorder.png_height << std::endl;
     }
 
-    recorder.video_codec = "flv";
+    //recorder.video_codec = "flv";
 
     if (options.count("compression") > 0) {
          if (wrm_compression_algorithm == "none") {
