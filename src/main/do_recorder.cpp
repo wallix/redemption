@@ -58,6 +58,7 @@
 #include "capture/GraphicToFile.hpp"
 #include "utils/apps/recording_progress.hpp"
 
+#include "capture/png_params.hpp"
 
 struct HashHeader {
     unsigned version;
@@ -678,14 +679,13 @@ static void show_statistics(FileToGraphic::Statistics const & statistics) {
 static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
                     , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
                     , int capture_bpp, int wrm_compression_algorithm_
-
                     , UpdateProgressData::Format pgs_format
                     , bool enable_rt
                     , bool no_timestamp
                     , auth_api * authentifier
                     , Inifile & ini, CryptoContext & cctx, Random & gen
-                    , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
-                    , unsigned png_width, unsigned png_height
+                    , unsigned file_count, uint32_t order_count, uint32_t clear
+                    , PngParams & png_params
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
                     , bool full_video) {
 
@@ -767,13 +767,13 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                 begin_capture.tv_sec, end_capture.tv_sec
             );
 
-            if (png_width && png_height) {
+            if (png_params.png_width && png_params.png_height) {
                 auto get_percent = [](unsigned target_dim, unsigned source_dim) -> unsigned {
                     return ((target_dim * 100 / source_dim) + ((target_dim * 100 % source_dim) ? 1 : 0));
                 };
-                zoom = std::max<unsigned>(
-                        get_percent(png_width, player.screen_rect.cx),
-                        get_percent(png_height, player.screen_rect.cy)
+                png_params.zoom = std::max<unsigned>(
+                        get_percent(png_params.png_width, player.screen_rect.cx),
+                        get_percent(png_params.png_height, player.screen_rect.cy)
                     );
                 //std::cout << "zoom: " << zoom << '%' << std::endl;
             }
@@ -785,7 +785,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , player.screen_rect.cy
                     , player.info_bpp
                     , capture_bpp
-                    , zoom
+                    , png_params.zoom
                     , enable_rt
                     , no_timestamp
                     , authentifier
@@ -989,21 +989,17 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   std::string & output_filename,
                   uint32_t begin_cap,
                   uint32_t end_cap,
-                  unsigned png_width,
-                  unsigned png_height,
-                  uint32_t png_limit,
-                  uint32_t png_interval,
+                  PngParams & png_params,
                   int wrm_color_depth,
                   uint32_t wrm_frame_interval,
                   uint32_t wrm_break_interval,
                   bool const enable_rt,
                   bool const no_timestamp,
                   bool infile_is_encrypted,
-                  uint32_t    order_count,
+                  uint32_t order_count,
                   bool show_file_metadata,
                   bool show_statistics,
                   uint32_t clear,
-                  unsigned zoom,
                   bool full_video,
                   std::string & video_codec,
                   Level video_quality,
@@ -1020,8 +1016,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     ini.set<cfg::video::hash_path>(hash_path);
 
     ini.set<cfg::globals::video_quality>(video_quality);
-    ini.set<cfg::video::png_limit>(png_limit);
-    ini.set<cfg::video::png_interval>(std::chrono::seconds{png_interval});
+    ini.set<cfg::video::png_interval>(std::chrono::seconds{png_params.png_interval});
     ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned int, std::centi>{wrm_frame_interval});
     ini.set<cfg::video::break_interval>(std::chrono::seconds{wrm_break_interval});
     ini.set<cfg::globals::codec_id>(video_codec);
@@ -1097,8 +1092,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             , no_timestamp
                             , nullptr
                             , ini, cctx, rnd
-                            , file_count, order_count, clear, zoom
-                            , png_width, png_height
+                            , file_count, order_count, clear
+                            , png_params
                             , show_file_metadata, show_statistics, verbose
                             , full_video
                             );
@@ -1167,11 +1162,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    unsigned png_width  = 0;
-    unsigned png_height = 0;
-    uint32_t png_limit = 10;
-    uint32_t png_interval = 60;
-    unsigned zoom         = 100;
+    PngParams png_params = {0, 0, 60, 100};
 
     // flv output options
     bool full_video; // create full video
@@ -1234,8 +1225,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         {'e', "end", &recorder.end_cap, "end capture time (in seconds), default=none"},
         {"count", &recorder.order_count, "Number of orders to execute before stopping, default=0 execute all orders"},
 
-        {'l', "png_limit", &recorder.png_limit, "maximum number of png files to create (remove older), default=10, 0 will disable png capture"},
-        {'n', "png_interval", &recorder.png_interval, "time interval between png captures, default=60 seconds"},
+        {'n', "png_interval", &recorder.png_params.png_interval, "time interval between png captures, default=60 seconds"},
 
         {'r', "frameinterval", &recorder.wrm_frame_interval, "time between consecutive capture frames (in 100/th of seconds), default=100 one frame per second"},
 
@@ -1250,7 +1240,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 
         {"clear", &recorder.clear, "clear old capture files with same prefix (default on)"},
         {"verbose", &verbose, "more logs"},
-        {"zoom", &recorder.zoom, "scaling factor for png capture (default 100%)"},
+        {"zoom", &recorder.png_params.zoom, "scaling factor for png capture (default 100%)"},
         {'g', "png-geometry", &png_geometry, "png capture geometry (Ex. 160x120)"},
         {'m', "meta", "show file metadata"},
         {'s', "statistics", "show statistics"},
@@ -1368,9 +1358,9 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
             std::cerr << "Invalide png geometry\n\n";
             return -1;
         }
-        recorder.png_width  = png_w;
-        recorder.png_height = png_h;
-        std::cout << "png-geometry: " << recorder.png_width << "x" << recorder.png_height << std::endl;
+        recorder.png_params.png_width  = png_w;
+        recorder.png_params.png_height = png_h;
+        std::cout << "png-geometry: " << recorder.png_params.png_width << "x" << recorder.png_params.png_height << std::endl;
     }
 
     //recorder.video_codec = "flv";
@@ -1622,8 +1612,7 @@ extern "C" {
 
             if (rp.chunk) {
                 rp.flv_break_interval = 60*10; // 10 minutes
-                rp.png_interval = 1;
-                rp.png_limit = 0xFFFF;
+                rp.png_params.png_interval = 1;
             }
 
             if (rp.output_filename.length()
@@ -1647,10 +1636,7 @@ extern "C" {
                           rp.output_filename,
                           rp.begin_cap,
                           rp.end_cap,
-                          rp.png_width,
-                          rp.png_height,
-                          rp.png_limit,
-                          rp.png_interval,
+                          rp.png_params,
                           rp.wrm_color_depth,
                           rp.wrm_frame_interval,
                           rp.wrm_break_interval,
@@ -1661,7 +1647,6 @@ extern "C" {
                           rp.show_file_metadata,
                           rp.show_statistics,
                           rp.clear,
-                          rp.zoom,
                           rp.full_video,
                           rp.video_codec,
                           rp.video_quality,

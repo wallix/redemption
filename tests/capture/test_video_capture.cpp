@@ -163,10 +163,10 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureMP4)
     // values below depends on current embedded ffmpeg version
     const char * filename;
     filename = (file_gen.get(0));
-    BOOST_CHECK_EQUAL(15663, filesize(filename));
+    BOOST_CHECK((15663 == filesize(filename))||(15649 == filesize(filename)));
     ::unlink(filename);
     filename = (file_gen.get(1));
-    BOOST_CHECK_EQUAL(16090, filesize(filename));
+    BOOST_CHECK((16090 == filesize(filename))||(16076 == filesize(filename)));
     ::unlink(filename);
     filename = (file_gen.get(2));
     BOOST_CHECK_EQUAL(262, filesize(filename));

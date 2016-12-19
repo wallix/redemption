@@ -45,6 +45,11 @@
 #include <string>
 #include <algorithm>
 
+template<typename T> T Flag(bool condition, T value) 
+{
+    return (condition) ? value : T(0);
+}
+
 #define EPOCH_DIFF 11644473600LL
 
 #define FILE_TIME_SYSTEM_TO_RDP(_t) \
@@ -369,8 +374,9 @@ public:
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_atime),                           // LastAccessTime(8)
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),                           // LastWriteTime(8)
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_ctime),                           // ChangeTime(8)
-                        (this->IsDirectory() ? fscc::FILE_ATTRIBUTE_DIRECTORY : 0) |    // FileAttributes(4)
-                            ((sb.st_mode & S_IWUSR) ? 0 : fscc::FILE_ATTRIBUTE_READONLY)
+                        // FileAttributes(4)
+                        Flag(this->IsDirectory(), fscc::FILE_ATTRIBUTE_DIRECTORY)
+                        | Flag(!(sb.st_mode & S_IWUSR),fscc::FILE_ATTRIBUTE_READONLY)
                     );
 
                 if (bool(verbose & RDPVerbose::fsdrvmgr)) {
@@ -424,9 +430,10 @@ public:
                 out_stream.out_uint32_le(fscc::FileAttributeTagInformation::size());    // Length(4)
 
                 fscc::FileAttributeTagInformation file_attribute_tag_information(
-                        fscc::FILE_ATTRIBUTE_DIRECTORY |                                    // FileAttributes
-                            ((sb.st_mode & S_IWUSR) ? 0 : fscc::FILE_ATTRIBUTE_READONLY),
-                        0                                                                   // ReparseTag
+                        // FileAttributes
+                         fscc::FILE_ATTRIBUTE_DIRECTORY
+                        | Flag(!(sb.st_mode & S_IWUSR), fscc::FILE_ATTRIBUTE_READONLY),
+                    0                                                                   // ReparseTag
                     );
 
                 if (bool(verbose & RDPVerbose::fsdrvmgr)) {
@@ -1109,8 +1116,8 @@ public:
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_ctime),
                         sb.st_size, sb.st_blocks * 512 /* Block size */,
-                        (S_ISDIR(sb.st_mode) ? fscc::FILE_ATTRIBUTE_DIRECTORY : 0) |
-                            ((sb.st_mode & S_IWUSR) ? 0 : fscc::FILE_ATTRIBUTE_READONLY),
+                        Flag(S_ISDIR(sb.st_mode),fscc::FILE_ATTRIBUTE_DIRECTORY) 
+                        | Flag(!(sb.st_mode & S_IWUSR),fscc::FILE_ATTRIBUTE_READONLY),
                         result->d_name
                         );
                     if (bool(verbose & RDPVerbose::fsdrvmgr)) {
@@ -1140,8 +1147,8 @@ public:
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_ctime),
                         sb.st_size, sb.st_blocks * 512 /* Block size */,
-                        (S_ISDIR(sb.st_mode) ? fscc::FILE_ATTRIBUTE_DIRECTORY : 0) |
-                            ((sb.st_mode & S_IWUSR) ? 0 : fscc::FILE_ATTRIBUTE_READONLY),
+                        Flag(S_ISDIR(sb.st_mode),fscc::FILE_ATTRIBUTE_DIRECTORY) 
+                        | Flag(!(sb.st_mode & S_IWUSR), fscc::FILE_ATTRIBUTE_READONLY),
                         result->d_name
                         );
                     if (bool(verbose & RDPVerbose::fsdrvmgr)) {
