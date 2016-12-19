@@ -30,6 +30,7 @@
 
 #include "capture/utils/capture_impl.hpp"
 #include "utils/apps/recording_progress.hpp"
+#include "capture/png_params.hpp"
 
 class Capture final
 : public gdi::GraphicBase<Capture>
@@ -163,7 +164,7 @@ public:
         int height,
         int order_bpp,
         int capture_bpp,
-        unsigned zoom,
+        const PngParams png_params,
         bool real_time_image_capture,
         bool no_timestamp,
         auth_api * authentifier,
@@ -175,8 +176,7 @@ public:
         bool force_capture_png_if_enable)
     : is_replay_mod(!authentifier)
     , capture_wrm(bool(capture_flags & CaptureFlags::wrm))
-    , capture_png(bool(capture_flags & CaptureFlags::png)
-                  && (!authentifier || ini.get<cfg::video::png_limit>() > 0))
+    , capture_png(bool(capture_flags & CaptureFlags::png) && (!authentifier || png_params.png_limit > 0))
     , capture_pattern_checker(authentifier && (
         ::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
      || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())))
@@ -261,16 +261,16 @@ public:
                     this->pscrt.reset(new ImageRT(
                         now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,
-                        zoom,
+                        png_params.zoom,
                         ini.get<cfg::video::png_interval>(),
-                        ini.get<cfg::video::png_limit>()
+                        png_params.png_limit
                     ));
                 }
                 else if (force_capture_png_if_enable) {
                     this->psc.reset(new Image(
                         now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,
-                        zoom,
+                        png_params.zoom,
                         ini.get<cfg::video::png_interval>()
                     ));
                 }
@@ -307,7 +307,7 @@ public:
                     notifier = this->notifier_next_video;
                 }
                 this->pvc.reset(new Video(
-                    now, record_path, basename, groupid, no_timestamp, zoom, this->gd->impl(),
+                    now, record_path, basename, groupid, no_timestamp, png_params.zoom, this->gd->impl(),
                     video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini),
                     ini.get<cfg::video::flv_break_interval>(), notifier
                 ));

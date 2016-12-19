@@ -1008,7 +1008,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                     , player.screen_rect.cy
                                     , player.info_bpp
                                     , wrm_color_depth
-                                    , png_params.zoom
+                                    , png_params
                                     , enable_rt
                                     , no_timestamp
                                     , authentifier
@@ -1016,8 +1016,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                     , cctx
                                     , rnd
                                     , full_video
-                                    , &update_progress_data,
-                                    false);
+                                    , &update_progress_data
+                                    , false);
 
                             player.add_consumer(&capture, &capture, &capture, &capture, &capture);
 
@@ -1129,7 +1129,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, 60, 100};
+    PngParams png_params = {0, 0, 60, 100, 0};
     FlvParams flv_params = {"", Level::high};
 
     // flv output options
