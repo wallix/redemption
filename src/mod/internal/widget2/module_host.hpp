@@ -56,6 +56,18 @@ private:
             }
         }
 
+        wait_obj& get_event() override
+        {
+            if (this->managed_mod)
+            {
+                return this->managed_mod->get_event();
+            }
+
+            REDASSERT(false);
+
+            return mod_api::get_event();
+        }
+
         void send_to_front_channel(const char* const mod_channel_name,
                                    const uint8_t* data, size_t length,
                                    size_t chunk_size, int flags) override
@@ -145,8 +157,9 @@ public:
 
 public:
     // Widget2
-    void draw(const Rect& clip) override
+    void draw(const Rect&/* clip*/) override
     {
+/*
         gdi::GraphicApi& drawable = this->get_drawable();
 
         drawable.draw(
@@ -156,7 +169,6 @@ public:
             ), this->get_rect()
         );
 
-/*
         drawable.draw(
             RDPOpaqueRect(
                 clip,
@@ -170,6 +182,20 @@ private:
     // gdi::GraphicBase
 
     friend gdi::GraphicCoreAccess;
+
+    void begin_update() override
+    {
+        gdi::GraphicApi& drawable = this->get_drawable();
+
+        drawable.begin_update();
+    }
+
+    void end_update() override
+    {
+        gdi::GraphicApi& drawable = this->get_drawable();
+
+        drawable.end_update();
+    }
 
     template<class Cmd>
     void draw_impl(const Cmd& cmd) {

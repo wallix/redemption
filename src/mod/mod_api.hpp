@@ -98,7 +98,7 @@ public:
     virtual wait_obj * get_secondary_event() { return nullptr; }
     virtual void process_secondary(time_t, gdi::GraphicApi&) {}
 
-    virtual void get_event_handlers(std::vector<EventHandler>& out_event_handlers) {}
+    virtual void get_event_handlers(std::vector<EventHandler>&/* out_event_handlers*/) {}
 
     virtual void send_to_front_channel(const char * const mod_channel_name,
         uint8_t const * data, size_t length, size_t chunk_size, int flags) = 0;

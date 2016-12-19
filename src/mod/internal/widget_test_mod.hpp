@@ -71,10 +71,6 @@ public:
     void draw_event(time_t now, gdi::GraphicApi& gapi) override
     {
         LocallyIntegrableMod::draw_event(now, gapi);
-
-        mod_api& mod = this->widget_test.get_managed_mod();
-
-        mod.draw_event(now, gapi);
     }
 
     wait_obj* get_secondary_event() override
@@ -82,6 +78,12 @@ public:
         mod_api& mod = this->widget_test.get_managed_mod();
 
         return &mod.get_event();
+    }
+
+    void process_secondary(time_t now, gdi::GraphicApi& gapi) override {
+        mod_api& mod = this->widget_test.get_managed_mod();
+
+        mod.draw_event(now, gapi);
     }
 
     bool is_up_and_running() override
