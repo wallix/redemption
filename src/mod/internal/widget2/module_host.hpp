@@ -68,6 +68,18 @@ private:
             return mod_api::get_event();
         }
 
+        bool is_up_and_running() override
+        {
+            if (this->managed_mod)
+            {
+                return this->managed_mod->is_up_and_running();
+            }
+
+            REDASSERT(false);
+
+            return mod_api::is_up_and_running();
+        }
+
         void send_to_front_channel(const char* const mod_channel_name,
                                    const uint8_t* data, size_t length,
                                    size_t chunk_size, int flags) override
@@ -157,26 +169,8 @@ public:
 
 public:
     // Widget2
-    void draw(const Rect&/* clip*/) override
-    {
-/*
-        gdi::GraphicApi& drawable = this->get_drawable();
 
-        drawable.draw(
-            RDPOpaqueRect(
-                clip,
-                BLACK
-            ), this->get_rect()
-        );
-
-        drawable.draw(
-            RDPOpaqueRect(
-                clip,
-                RED
-            ), this->get_rect().shrink(10)
-        );
-*/
-    }
+    void draw(const Rect&/* clip*/) override {}
 
 private:
     // gdi::GraphicBase

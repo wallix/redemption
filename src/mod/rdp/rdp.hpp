@@ -1675,7 +1675,7 @@ public:
             if (event) {
                 out_event_handlers.emplace_back(
                         event,
-                        &session_probe_launcher_event_handler,
+                        &this->session_probe_launcher_event_handler,
                         INVALID_SOCKET
                     );
             }
@@ -1684,7 +1684,7 @@ public:
         if (!this->asynchronous_tasks.empty()) {
             out_event_handlers.emplace_back(
                     &this->asynchronous_task_event,
-                    &asynchronous_task_event_handler,
+                    &this->asynchronous_task_event_handler,
                     this->asynchronous_tasks.front()->get_file_descriptor()
                 );
         }
