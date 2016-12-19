@@ -88,36 +88,6 @@ public:
     }
 
 public:
-    // RdpInput
-
-    void rdp_input_invalidate(const Rect & r) override
-    {
-        mod_api& mod = this->widget_test.get_managed_mod();
-
-        mod.rdp_input_invalidate(r);
-    }
-
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
-    {
-        mod_api& mod = this->widget_test.get_managed_mod();
-
-        mod.rdp_input_mouse(device_flags, x, y, keymap);
-    }
-
-    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
-    {
-        mod_api& mod = this->widget_test.get_managed_mod();
-
-        mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
-    }
-
-    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
-    {
-        mod_api& mod = this->widget_test.get_managed_mod();
-
-        mod.rdp_input_synchronize(time, device_flags, param1, param2);
-    }
-
     // Callback
 
     void send_to_mod_channel(const char* front_channel_name,
