@@ -991,7 +991,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   uint32_t end_cap,
                   unsigned png_width,
                   unsigned png_height,
-                  uint32_t png_limit,
                   uint32_t png_interval,
                   int wrm_color_depth,
                   uint32_t wrm_frame_interval,
@@ -1020,7 +1019,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     ini.set<cfg::video::hash_path>(hash_path);
 
     ini.set<cfg::globals::video_quality>(video_quality);
-    ini.set<cfg::video::png_limit>(png_limit);
     ini.set<cfg::video::png_interval>(std::chrono::seconds{png_interval});
     ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned int, std::centi>{wrm_frame_interval});
     ini.set<cfg::video::break_interval>(std::chrono::seconds{wrm_break_interval});
@@ -1169,7 +1167,6 @@ struct RecorderParams {
     // png output options
     unsigned png_width  = 0;
     unsigned png_height = 0;
-    uint32_t png_limit = 10;
     uint32_t png_interval = 60;
     unsigned zoom         = 100;
 
@@ -1234,7 +1231,6 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         {'e', "end", &recorder.end_cap, "end capture time (in seconds), default=none"},
         {"count", &recorder.order_count, "Number of orders to execute before stopping, default=0 execute all orders"},
 
-        {'l', "png_limit", &recorder.png_limit, "maximum number of png files to create (remove older), default=10, 0 will disable png capture"},
         {'n', "png_interval", &recorder.png_interval, "time interval between png captures, default=60 seconds"},
 
         {'r', "frameinterval", &recorder.wrm_frame_interval, "time between consecutive capture frames (in 100/th of seconds), default=100 one frame per second"},
@@ -1623,7 +1619,6 @@ extern "C" {
             if (rp.chunk) {
                 rp.flv_break_interval = 60*10; // 10 minutes
                 rp.png_interval = 1;
-                rp.png_limit = 0xFFFF;
             }
 
             if (rp.output_filename.length()
@@ -1649,7 +1644,6 @@ extern "C" {
                           rp.end_cap,
                           rp.png_width,
                           rp.png_height,
-                          rp.png_limit,
                           rp.png_interval,
                           rp.wrm_color_depth,
                           rp.wrm_frame_interval,
