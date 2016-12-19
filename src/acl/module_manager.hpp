@@ -568,17 +568,8 @@ private:
         wait_obj * get_secondary_event() override
         { return this->mm.internal_mod->get_secondary_event(); }
 
-        wait_obj * get_asynchronous_task_event(int & out_fd) override
-        { return this->mm.internal_mod->get_asynchronous_task_event(out_fd); }
-
-        void process_asynchronous_task() override
-        { this->mm.internal_mod->process_asynchronous_task(); }
-
-        wait_obj * get_session_probe_launcher_event() override
-        { return this->mm.internal_mod->get_session_probe_launcher_event(); }
-
-        void process_session_probe_launcher() override
-        { this->mm.internal_mod->process_session_probe_launcher(); }
+        void process_secondary(time_t now, gdi::GraphicApi & drawable) override
+        { this->mm.internal_mod->process_secondary(now, drawable); }
 
         void send_to_front_channel(const char * const mod_channel_name,
             uint8_t const * data, size_t length, size_t chunk_size, int flags) override
@@ -811,15 +802,31 @@ public:
             }
             break;
         case MODULE_INTERNAL_WIDGETTEST:
-            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
-            this->set_mod(new WidgetTestMod(
-                this->front,
-                this->front.client_info.width,
-                this->front.client_info.height,
-                this->ini.get<cfg::font>(),
-                this->ini.get<cfg::theme>()
-            ));
-            LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
+            {
+                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
+                std::unique_ptr<mod_api> managed_mod(
+                        new Bouncer2Mod(
+                                this->front,
+                                this->front.client_info.width,
+                                this->front.client_info.height,
+                                this->ini.get<cfg::font>()
+                            )
+                    );
+                this->set_mod(new WidgetTestMod(
+                    this->ini,
+                    this->front,
+                    this->front.client_info.width,
+                    this->front.client_info.height,
+                    this->client_execute.adjust_rect(get_widget_rect(
+                        this->front.client_info.width,
+                        this->front.client_info.height,
+                        this->front.client_info.cs_monitor
+                    )),
+                    std::move(managed_mod),
+                    this->client_execute
+                ));
+                LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
+            }
             break;
         case MODULE_INTERNAL_CARD:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test_card'");

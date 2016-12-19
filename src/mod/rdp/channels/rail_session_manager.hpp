@@ -178,6 +178,20 @@ public:
 private:
     friend gdi::GraphicCoreAccess;
 
+    void begin_update() override
+    {
+        if (this->drawable) {
+            this->drawable->begin_update();
+        }
+    }
+
+    void end_update() override
+    {
+        if (this->drawable) {
+            this->drawable->end_update();
+        }
+    }
+
     template<class Cmd>
     void draw_impl(Cmd const & cmd) {
         if (this->drawable) {
