@@ -302,6 +302,7 @@ enum {
 //  +------------------------------------+-----------------------------------------------+
 
 enum : uint32_t {
+    FILE_ATTRIBUTE_NONE               = 0,
     FILE_ATTRIBUTE_READONLY           = 0x00000001,
     FILE_ATTRIBUTE_HIDDEN             = 0x00000002,
     FILE_ATTRIBUTE_SYSTEM             = 0x00000004,
