@@ -858,7 +858,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     ini.set<cfg::globals::codec_id>(flv_params.video_codec);
     ini.set<cfg::video::flv_break_interval>(std::chrono::seconds{flv_break_interval});
     ini.set<cfg::globals::trace_type>(encryption_type);
-    ini.set<cfg::video::capture_flags>(capture_flags);
     ini.set<cfg::video::rt_display>(bool(capture_flags & CaptureFlags::png));
 
     ini.set<cfg::globals::capture_chunk>(chunk);
@@ -1003,6 +1002,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             }
 
                             Capture capture(
+                                    capture_flags,
                                     ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                                     , player.screen_rect.cx
                                     , player.screen_rect.cy
@@ -1016,7 +1016,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                     , cctx
                                     , rnd
                                     , full_video
-                                    , &update_progress_data);
+                                    , &update_progress_data,
+                                    false);
 
                             player.add_consumer(&capture, &capture, &capture, &capture, &capture);
 

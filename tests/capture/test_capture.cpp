@@ -53,6 +53,8 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
 
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
+        CaptureFlags capture_flags = CaptureFlags::wrm | CaptureFlags::png;
+        
         ini.set<cfg::globals::trace_type>(TraceType::localfile);
 
         ini.set<cfg::video::record_tmp_path>("./");
@@ -73,7 +75,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         auth_api * authentifier = nullptr;
         // TODO remove this after unifying capture interface
         bool force_capture_png_if_enable = true;
-        Capture capture(
+        Capture capture(capture_flags,
             now, scr.cx, scr.cy, 24, 24, 100
             , clear_png, no_timestamp, authentifier
             , ini, cctx, rnd, full_video, nullptr, force_capture_png_if_enable);
@@ -210,6 +212,8 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
 
     ini.set<cfg::video::capture_flags>(CaptureFlags::png);
+    CaptureFlags capture_flags = CaptureFlags::png;
+
     ini.set<cfg::globals::trace_type>(TraceType::localfile);
 
     ini.set<cfg::video::record_tmp_path>("./");
@@ -231,7 +235,8 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     // TODO remove this after unifying capture interface
     bool force_capture_png_if_enable = true;
 
-    Capture capture(now, scr.cx, scr.cy, 16, 16, 100
+    Capture capture(capture_flags
+                   , now, scr.cx, scr.cy, 16, 16, 100
                    , clear_png, no_timestamp, authentifier
                    , ini, cctx, rnd, full_video, nullptr, force_capture_png_if_enable);
 
