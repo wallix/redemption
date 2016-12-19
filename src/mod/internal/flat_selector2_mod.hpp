@@ -358,6 +358,7 @@ public:
         if (!this->copy_paste && event.waked_up_by_time) {
             this->copy_paste.ready(this->front);
         }
+
         this->event.reset();
     }
 

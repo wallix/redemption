@@ -74,7 +74,7 @@ struct LocallyIntegrableMod : public InternalMod {
         if (this->secondary_event.object_and_time) {
             out_event_handlers.emplace_back(
                     &this->secondary_event,
-                    &secondary_event_handler,
+                    &this->secondary_event_handler,
                     INVALID_SOCKET
                 );
         }

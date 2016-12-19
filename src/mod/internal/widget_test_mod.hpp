@@ -39,6 +39,19 @@ class WidgetTestMod : public LocallyIntegrableMod, public NotifyApi {
 
     WidgetTestModVariables vars;
 
+    class ManagedModEventHandler : public EventHandler::CB {
+        WidgetTestMod& mod_;
+
+    public:
+        ManagedModEventHandler(WidgetTestMod& mod)
+        : mod_(mod)
+        {}
+
+        void operator()(time_t now, gdi::GraphicApi& drawable) override {
+            this->mod_.process_managed_mod_event(now, drawable);
+        }
+    } managed_mod_event_handler;
+
 public:
     WidgetTestMod(
         WidgetTestModVariables vars,
@@ -51,6 +64,7 @@ public:
                   widget_rect.cx + 1, widget_rect.cy + 1,
                   this->screen, this, std::move(managed_mod))
     , vars(vars)
+    , managed_mod_event_handler(*this)
     {
         this->screen.add_widget(&this->widget_test);
 
@@ -67,31 +81,44 @@ public:
 
     void notify(Widget2*, notify_event_t) override {}
 
-public:
-    void draw_event(time_t now, gdi::GraphicApi& gapi) override
-    {
-        LocallyIntegrableMod::draw_event(now, gapi);
-    }
-
-    wait_obj* get_secondary_event() override
-    {
-        mod_api& mod = this->widget_test.get_managed_mod();
-
-        return &mod.get_event();
-    }
-
-    void process_secondary(time_t now, gdi::GraphicApi& gapi) override {
+    void process_managed_mod_event(time_t now, gdi::GraphicApi& gapi) {
         mod_api& mod = this->widget_test.get_managed_mod();
 
         mod.draw_event(now, gapi);
     }
 
-    bool is_up_and_running() override
+public:
+    // RdpInput
+
+    void rdp_input_invalidate(const Rect & r) override
     {
         mod_api& mod = this->widget_test.get_managed_mod();
 
-        return mod.is_up_and_running();
+        mod.rdp_input_invalidate(r);
     }
+
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
+    {
+        mod_api& mod = this->widget_test.get_managed_mod();
+
+        mod.rdp_input_mouse(device_flags, x, y, keymap);
+    }
+
+    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
+    {
+        mod_api& mod = this->widget_test.get_managed_mod();
+
+        mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
+    }
+
+    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
+    {
+        mod_api& mod = this->widget_test.get_managed_mod();
+
+        mod.rdp_input_synchronize(time, device_flags, param1, param2);
+    }
+
+    // Callback
 
     void send_to_mod_channel(const char* front_channel_name,
                              InStream& chunk, size_t length,
@@ -103,6 +130,34 @@ public:
         mod_api& mod = this->widget_test.get_managed_mod();
 
         mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
+    }
+
+    // mod_api
+
+    void draw_event(time_t now, gdi::GraphicApi& gapi) override
+    {
+        LocallyIntegrableMod::draw_event(now, gapi);
+
+        this->event.reset();
+    }
+
+    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
+        mod_api& mod = this->widget_test.get_managed_mod();
+
+        mod.get_event_handlers(out_event_handlers);
+
+        out_event_handlers.emplace_back(
+                &mod.get_event(),
+                &this->managed_mod_event_handler,
+                INVALID_SOCKET
+            );
+    }
+
+    bool is_up_and_running() override
+    {
+        mod_api& mod = this->widget_test.get_managed_mod();
+
+        return mod.is_up_and_running();
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width,
