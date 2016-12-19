@@ -59,6 +59,8 @@
 #include "utils/apps/recording_progress.hpp"
 
 #include "capture/png_params.hpp"
+#include "capture/wrm_params.hpp"
+#include "capture/flv_params.hpp"
 
 struct HashHeader {
     unsigned version;
@@ -990,6 +992,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   uint32_t begin_cap,
                   uint32_t end_cap,
                   PngParams & png_params,
+                  FlvParams & flv_params,
                   int wrm_color_depth,
                   uint32_t wrm_frame_interval,
                   uint32_t wrm_break_interval,
@@ -1001,8 +1004,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   bool show_statistics,
                   uint32_t clear,
                   bool full_video,
-                  std::string & video_codec,
-                  Level video_quality,
                   bool remove_input_file,
                   int wrm_compression_algorithm_,
                   uint32_t flv_break_interval,
@@ -1015,11 +1016,11 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     std::snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), input_basename.c_str());
     ini.set<cfg::video::hash_path>(hash_path);
 
-    ini.set<cfg::globals::video_quality>(video_quality);
+    ini.set<cfg::globals::video_quality>(flv_params.video_quality);
     ini.set<cfg::video::png_interval>(std::chrono::seconds{png_params.png_interval});
     ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned int, std::centi>{wrm_frame_interval});
     ini.set<cfg::video::break_interval>(std::chrono::seconds{wrm_break_interval});
-    ini.set<cfg::globals::codec_id>(video_codec);
+    ini.set<cfg::globals::codec_id>(flv_params.video_codec);
     ini.set<cfg::video::flv_break_interval>(std::chrono::seconds{flv_break_interval});
     ini.set<cfg::globals::trace_type>(encryption_type);
     ini.set<cfg::video::capture_flags>(capture_flags);
@@ -1163,13 +1164,12 @@ struct RecorderParams {
 
     // png output options
     PngParams png_params = {0, 0, 60, 100};
+    FlvParams flv_params = {"", Level::high};
 
     // flv output options
     bool full_video; // create full video
     uint32_t    flv_break_interval = 10*60;
-    Level video_quality = Level::high;
     std::string flv_quality;
-    std::string video_codec;
 
     // wrm output options
     int wrm_compression_algorithm_ = static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
@@ -1259,7 +1259,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 
         {"ocr-version", &recorder.ocr_version, "version 1 or 2"},
 
-        {"video-codec", &recorder.video_codec, "ffmpeg video codec id (flv, mp4, etc)"},
+        {"video-codec", &recorder.flv_params.video_codec, "ffmpeg video codec id (flv, mp4, etc)"},
 
         {"json-pgs", "use json format to .pgs file"},
     });
@@ -1313,13 +1313,13 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 
     if (options.count("flv-quality") > 0) {
             if (0 == strcmp(recorder.flv_quality.c_str(), "high")) {
-            recorder.video_quality = Level::high;
+            recorder.flv_params.video_quality = Level::high;
         }
         else if (0 == strcmp(recorder.flv_quality.c_str(), "low")) {
-            recorder.video_quality = Level::low;
+            recorder.flv_params.video_quality = Level::low;
         }
         else  if (0 == strcmp(recorder.flv_quality.c_str(), "medium")) {
-            recorder.video_quality = Level::medium;
+            recorder.flv_params.video_quality = Level::medium;
         }
         else {
             std::cerr << "Unknown video quality" << std::endl;
@@ -1363,7 +1363,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         std::cout << "png-geometry: " << recorder.png_params.png_width << "x" << recorder.png_params.png_height << std::endl;
     }
 
-    //recorder.video_codec = "flv";
+    //recorder.flv_params.video_codec = "flv";
 
     if (options.count("compression") > 0) {
          if (wrm_compression_algorithm == "none") {
@@ -1637,6 +1637,7 @@ extern "C" {
                           rp.begin_cap,
                           rp.end_cap,
                           rp.png_params,
+                          rp.flv_params,
                           rp.wrm_color_depth,
                           rp.wrm_frame_interval,
                           rp.wrm_break_interval,
@@ -1648,8 +1649,6 @@ extern "C" {
                           rp.show_statistics,
                           rp.clear,
                           rp.full_video,
-                          rp.video_codec,
-                          rp.video_quality,
                           rp.remove_input_file,
                           rp.wrm_compression_algorithm_,
                           rp.flv_break_interval,
