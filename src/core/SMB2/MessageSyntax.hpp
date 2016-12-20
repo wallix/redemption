@@ -461,6 +461,8 @@ const char * get_CreateOptions_name(uint32_t createOptions) {
     return "<unknown>";
 }
 
+
+
 // NameOffset (2 bytes): The offset, in bytes, from the beginning of the SMB2
 //  header to the 8-byte aligned file name. If SMB2_FLAGS_DFS_OPERATIONS is
 //  set in the Flags field of the SMB2 header, the file name can be prefixed
@@ -628,6 +630,34 @@ enum {
 };
 
 static inline
+const char * get_File_Pipe_Printer_Access_Mask_name(uint32_t File_Pipe_Printer_Access_Mask) {
+
+    std::string str;
+    (File_Pipe_Printer_Access_Mask & FILE_READ_DATA) ? str+="FILE_READ_DATA " :str;
+    (File_Pipe_Printer_Access_Mask & FILE_WRITE_DATA) ? str+="FILE_WRITE_DATA " :str;
+    (File_Pipe_Printer_Access_Mask & FILE_APPEND_DATA) ? str+="FILE_APPEND_DATA " :str;
+    (File_Pipe_Printer_Access_Mask & FILE_READ_EA) ? str+="FILE_READ_EA " : str;
+    (File_Pipe_Printer_Access_Mask & FILE_WRITE_EA) ? str+="FILE_WRITE_EA " : str;
+    (File_Pipe_Printer_Access_Mask & FILE_DELETE_CHILD) ? str+="FILE_DELETE_CHILD " : str;
+    (File_Pipe_Printer_Access_Mask & FILE_EXECUTE) ? str+="FILE_EXECUTE " :str;
+    (File_Pipe_Printer_Access_Mask & FILE_READ_ATTRIBUTES) ? str+="FILE_READ_ATTRIBUTES " : str;
+    (File_Pipe_Printer_Access_Mask & FILE_WRITE_ATTRIBUTES) ? str+="FILE_WRITE_ATTRIBUTES " : str;
+    (File_Pipe_Printer_Access_Mask & DELETE) ? str+="DELETE " : str;
+    (File_Pipe_Printer_Access_Mask & READ_CONTROL) ? str+="READ_CONTROL ":str;
+    (File_Pipe_Printer_Access_Mask & WRITE_DAC) ? str+="WRITE_DAC " : str;
+    (File_Pipe_Printer_Access_Mask & WRITE_OWNER) ? str+="WRITE_OWNER " : str;
+    (File_Pipe_Printer_Access_Mask & SYNCHRONIZE) ? str+="SYNCHRONIZE " : str;
+    (File_Pipe_Printer_Access_Mask & ACCESS_SYSTEM_SECURITY) ? str+="ACCESS_SYSTEM_SECURITY " : str;
+    (File_Pipe_Printer_Access_Mask & MAXIMUM_ALLOWED) ? str+="MAXIMUM_ALLOWED " : str;
+    (File_Pipe_Printer_Access_Mask & GENERIC_ALL) ? str+="GENERIC_ALL " : str;
+    (File_Pipe_Printer_Access_Mask & GENERIC_EXECUTE) ? str+="GENERIC_EXECUTE " : str;
+    (File_Pipe_Printer_Access_Mask & GENERIC_WRITE) ? str+="GENERIC_WRITE " : str;
+    (File_Pipe_Printer_Access_Mask & GENERIC_READ) ? str+="GENERIC_READ " : str;
+
+    return str.c_str();
+}
+
+static inline
 bool read_access_is_required(uint32_t DesiredAccess, bool strict_check) {
     uint32_t values_of_strict_checking = (FILE_READ_EA |
                                           FILE_READ_ATTRIBUTES |
@@ -668,6 +698,156 @@ bool write_access_is_required(uint32_t DesiredAccess, bool strict_check) {
             )
            );
 }
+
+
+
+//2.2.13.1.2 Directory_Access_Mask
+
+// The following SMB2 Access Mask flag values can be used when accessing a directory.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                    Directory_Access_Mask                      |
+// +---------------------------------------------------------------+
+
+// Directory_Access_Mask (4 bytes): For a directory, the value MUST be constructed using the following values:
+
+//  +------------------------+-------------------------------------------------+
+//  | Value                  | Meaning                                         |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_LIST_DIRECTORY    | This value indicates the right to enumerate the |
+//  | 0x00000001             | contents of the directory.                      |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_ADD_FILE          | This value indicates the right to create a file |
+//  | 0x00000002             | under the directory.                            |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_ADD_SUBDIRECTORY  | This value indicates the right to add a         |
+//  | 0x00000004             | sub-directory under the directory.              |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_READ_EA           | This value indicates the right to read the      |
+//  | 0x00000008             | extended attributes of the directory.           |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_WRITE_EA          | This value indicates the right to write or      |
+//  | 0x00000010             | change the extended attributes of the directory.|
+//  +------------------------+-------------------------------------------------+
+//  | FILE_TRAVERSE          | This value indicates the right to traverse this |
+//  | 0x00000020             | directory if the server enforces traversal      |
+//  |                        | checking.                                       |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_DELETE_CHILD      | This value indicates the right to delete the    |
+//  | 0x00000040             | files and directories within this directory.    |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_READ_ATTRIBUTES   | This value indicates the right to read the      |
+//  | 0x00000080             | attributes of the directory.                    |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_WRITE_ATTRIBUTES  | This value indicates the right to change the    |
+//  | 0x00000100             | attributes of the directory.                    |
+//  +------------------------+-------------------------------------------------+
+//  | DELETE                 | This value indicates the right to delete the    |
+//  | 0x00010000             | directory.                                      |
+//  +------------------------+-------------------------------------------------+
+//  | READ_CONTROL           | This value indicates the right to read the      |
+//  | 0x00020000             | security descriptor for the directory.          |
+//  |                        |                                                 |
+//  +------------------------+-------------------------------------------------+
+//  | WRITE_DAC              | This value indicates the right to change the    |
+//  | 0x00040000             | DACL in the security descriptor for the         |
+//  |                        | directory. For the DACL data structure, see ACL |
+//  |                        | in [MS-DTYP].                                   |
+//  +------------------------+-------------------------------------------------+
+//  | WRITE_OWNER            | This value indicates the right to change the    |
+//  | 0x00080000             | owner in the security descriptor for the        |
+//  |                        | directory.                                      |
+//  +------------------------+-------------------------------------------------+
+//  | SYNCHRONIZE            | SMB2 clients set this flag to any value.<45>    |
+//  | 0x00100000             | SMB2 servers SHOULD<46> ignore this flag.       |
+//  +------------------------+-------------------------------------------------+
+//  | ACCESS_SYSTEM_SECURITY | This value indicates the right to read or change|
+//  | 0x01000000             | the SACL in the security descriptor for the     |
+//  |                        | directory. For the SACL data structure, see ACL |
+//  |                        | in [MS-DTYP].<47>                               |
+//  +------------------------+-------------------------------------------------+
+//  | MAXIMUM_ALLOWED        | This value indicates that the client is         |
+//  | 0x02000000             | requesting an open to the directory with the    |
+//  |                        | highest level of access the client has on this  |
+//  |                        | directory. If no access is granted for the      |
+//  |                        | client on this directory, the server MUST fail  |
+//  |                        | the open with STATUS_ACCESS_DENIED.             |
+//  +------------------------+-------------------------------------------------+
+//  | GENERIC_ALL            | This value indicates a request for all the      |
+//  | 0x10000000             | access flags that are listed above except       |
+//  |                        | MAXIMUM_ALLOWED and ACCESS_SYSTEM_SECURITY.     |
+//  +------------------------+-------------------------------------------------+
+//  | GENERIC_EXECUTE        | TThis value indicates a request for the         |
+//  | 0x20000000             | following access flags listed above:            |
+//  |                        | FILE_READ_ATTRIBUTES| FILE_TRAVERSE|            |
+//  |                        | SYNCHRONIZE| READ_CONTROL.                      |
+//  +------------------------+-------------------------------------------------+
+//  | GENERIC_WRITE          | This value indicates a request for the following|
+//  | 0x40000000             | access flags listed above: FILE_ADD_FILE|       |
+//  |                        | FILE_ADD_SUBDIRECTORY| FILE_WRITE_ATTRIBUTES|   |
+//  |                        | FILE_WRITE_EA| SYNCHRONIZE| READ_CONTROL.       |
+//  +------------------------+-------------------------------------------------+
+//  | GENERIC_READ           | This value indicates a request for the following|
+//  | 0x80000000             | access flags listed above: FILE_LIST_DIRECTORY| |
+//  |                        | FILE_READ_ATTRIBUTES| FILE_READ_EA|             |
+//  |                        | SYNCHRONIZE| READ_CONTROL.                      |
+//  +------------------------+-------------------------------------------------+
+
+enum : uint32_t {
+    FILE_LIST_DIRECTORY    = 0x00000001,
+    FILE_ADD_FILE          = 0x00000002,
+    FILE_ADD_SUBDIRECTORY  = 0x00000004,
+    //FILE_READ_EA           = 0x00000008,
+    //FILE_WRITE_EA          = 0x00000010,
+    FILE_TRAVERSE          = 0x00000020,
+    //FILE_DELETE_CHILD      = 0x00000040,
+    //FILE_READ_ATTRIBUTES   = 0x00000080,
+    //FILE_WRITE_ATTRIBUTES  = 0x00000100,
+    //DELETE                 = 0x00010000,
+    //READ_CONTROL           = 0x00020000,
+    //WRITE_DAC              = 0x00040000,
+    //WRITE_OWNER            = 0x00080000,
+    //SYNCHRONIZE            = 0x00100000,
+    //ACCESS_SYSTEM_SECURITY = 0x01000000,
+    //MAXIMUM_ALLOWED        = 0x02000000,
+    //GENERIC_ALL            = 0x10000000,
+    //GENERIC_EXECUTE        = 0x20000000,
+    //GENERIC_WRITE          = 0x40000000,
+    //GENERIC_READ           = 0x80000000
+};
+
+static inline
+const char * get_Directory_Access_Mask_name(uint32_t Directory_Access_Mask) {
+
+    std::string str;
+    (Directory_Access_Mask & FILE_LIST_DIRECTORY) ? str+="FILE_LIST_DIRECTORY " :str;
+    (Directory_Access_Mask & FILE_ADD_FILE) ? str+="FILE_ADD_FILE " :str;
+    (Directory_Access_Mask & FILE_ADD_SUBDIRECTORY) ? str+="FILE_ADD_SUBDIRECTORY " :str;
+    (Directory_Access_Mask & FILE_READ_EA) ? str+="FILE_READ_EA " : str;
+    (Directory_Access_Mask & FILE_WRITE_EA) ? str+="FILE_WRITE_EA " : str;
+    (Directory_Access_Mask & FILE_TRAVERSE) ? str+="FILE_TRAVERSE " : str;
+    (Directory_Access_Mask & FILE_DELETE_CHILD) ? str+="FILE_DELETE_CHILD " :str;
+    (Directory_Access_Mask & FILE_READ_ATTRIBUTES) ? str+="FILE_READ_ATTRIBUTES " : str;
+    (Directory_Access_Mask & FILE_WRITE_ATTRIBUTES) ? str+="FILE_WRITE_ATTRIBUTES " : str;
+    (Directory_Access_Mask & DELETE) ? str+="DELETE " : str;
+    (Directory_Access_Mask & READ_CONTROL) ? str+="READ_CONTROL ":str;
+    (Directory_Access_Mask & WRITE_DAC) ? str+="WRITE_DAC " : str;
+    (Directory_Access_Mask & WRITE_OWNER) ? str+="WRITE_OWNER " : str;
+    (Directory_Access_Mask & SYNCHRONIZE) ? str+="SYNCHRONIZE " : str;
+    (Directory_Access_Mask & ACCESS_SYSTEM_SECURITY) ? str+="ACCESS_SYSTEM_SECURITY " : str;
+    (Directory_Access_Mask & MAXIMUM_ALLOWED) ? str+="MAXIMUM_ALLOWED " : str;
+    (Directory_Access_Mask & GENERIC_ALL) ? str+="GENERIC_ALL " : str;
+    (Directory_Access_Mask & GENERIC_EXECUTE) ? str+="GENERIC_EXECUTE " : str;
+    (Directory_Access_Mask & GENERIC_WRITE) ? str+="GENERIC_WRITE " : str;
+    (Directory_Access_Mask & GENERIC_READ) ? str+="GENERIC_READ " : str;
+
+    return str.c_str();
+}
+
+
 
 // 2.2.36 SMB2 CHANGE_NOTIFY Response
 

@@ -529,6 +529,7 @@ bool Front_Qt::connect() {
                                         , this->_info.height
                                         , this->_info.bpp
                                         , this->_info.bpp
+                                        , 0                 // zoom
                                         , enable_rt
                                         , false
                                         , authentifier
@@ -536,7 +537,7 @@ bool Front_Qt::connect() {
                                         , cctx
                                         , gen
                                         , false
-                                        , this->_delta_time
+                                        //, this->_delta_time
                                         );
             this->_graph_capture = this->_capture->get_graphic_api();
         }
@@ -2128,11 +2129,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                             RDPECLIP::FD_FILESIZE       |
                                                             RDPECLIP::FD_WRITESTIME     |
                                                             RDPECLIP::FD_ATTRIBUTES;
-                                        fd.fileAttributes = RDPECLIP::FILE_ATTRIBUTES_ARCHIVE;
+                                        fd.fileAttributes = fscc::FILE_ATTRIBUTE_ARCHIVE;
                                         fd.lastWriteTime  = RDPECLIP::TIME64_FILE_LIST;
                                         fd.fileSizeHigh   = file->size >> 32;
                                         fd.fileSizeLow    = file->size;
-
                                         fd.file_name      = file->nameUTF8;
                                         fd.emit(out_stream_next_part);
 
@@ -2199,7 +2199,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 if (this->verbose & RDPVerbose::cliprdr) {
                                     LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Response PDU SIZE");
                                 }
-
                             }
                             break;
 
@@ -2281,7 +2280,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                     case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
                         {
                         LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Announce Request");
-                        this->show_in_stream(0, chunk_series, chunk_size);
+                        //this->show_in_stream(0, chunk_series, chunk_size);
 
                         this->fileSystemData.versionMajor = chunk.in_uint16_le();      // 0x0001
                         this->fileSystemData.versionMinor = chunk.in_uint16_le();      //  0x000C
@@ -2309,7 +2308,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                             );
 
                         LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Announce Reply");
-                        this->show_out_stream(0, stream, total_length);
+                        //this->show_out_stream(0, stream, total_length);
                         }
 
                         {
@@ -2336,7 +2335,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                             );
 
                         LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Name Request");
-                        this->show_out_stream(0, stream, total_length);
+                        //this->show_out_stream(0, stream, total_length);
                         }
                         break;
 
@@ -2358,10 +2357,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                         if (driveEnable) {
                             LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Core Capability Request - Drive Capability Enable");
-                            this->show_in_stream(0, chunk_series, chunk_size);
+                            //this->show_in_stream(0, chunk_series, chunk_size);
                         } else {
                             LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Core Capability Request - Drive Not Allowed");
-                            this->show_in_stream(0, chunk_series, chunk_size);
+                            //this->show_in_stream(0, chunk_series, chunk_size);
                         }
                         }
 
@@ -2369,7 +2368,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                     case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
                         LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Client ID Confirm");
-                        this->show_in_stream(0, chunk_series, chunk_size);
+                        //this->show_in_stream(0, chunk_series, chunk_size);
                         {
                         StaticOutStream<1024> out_stream;
                         rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
@@ -2529,11 +2528,12 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     case rdpdr::FileBasicInformation:
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Basic Query Information Request");
                                         {
+                                        rdpdr::ClientDriveQueryInformationResponse cdqir(36);
+                                        cdqir.emit(out_stream);
 
-                                        out_stream.out_uint32_le(fscc::FileBasicInformation::size());
-
-                                        fscc::FileBasicInformation fileBasicInformation(0, 0, 0, 0,
-                                                    fscc::FILE_ATTRIBUTE_DIRECTORY
+                                        uint64_t time(0x1cbf8fef0787980);
+                                        fscc::FileBasicInformation fileBasicInformation(time, time, time, 0,
+                                                    fscc::FILE_ATTRIBUTE_DIRECTORY | fscc::FILE_ATTRIBUTE_READONLY
                                           );
                                         fileBasicInformation.emit(out_stream);
                                         //DIR * dir;
@@ -2555,14 +2555,11 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     case rdpdr::FileStandardInformation:
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Standard Information Request");
                                         {
+                                        rdpdr::ClientDriveQueryInformationResponse cdqir(22);
+                                        cdqir.emit(out_stream);
 
-                                        out_stream.out_uint32_le(22); // 24-2
-                                        out_stream.out_uint64_le(0); // AllocationSize
-                                        out_stream.out_uint64_le(0); // EndOfFile
-                                        out_stream.out_uint32_le(0); // NumberOfLinks
-                                        out_stream.out_uint8(0); // DeletePending
-                                        out_stream.out_uint8(0); // Directory
-                                        //out_stream.out_uint16_le(0); // Reserved
+                                        fscc::FileStandardInformation fsi(0, 0, 0, 0, 1);
+                                        fsi.emit(out_stream);
 
                                         int total_length(out_stream.get_offset());
                                         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
@@ -2607,13 +2604,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             case rdpdr::IRP_MJ_READ:
                                 LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Read Request");
                                 {
-
-                                //StaticOutStream<128> out_stream;
-                                rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
-                                                                , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
-                                sharedHeader.emit(out_stream);
-
-                                out_stream.out_uint32_le(0);
+                                rdpdr::DeviceReadResponse deviceReadResponse(0, nullptr);
+                                deviceReadResponse.emit(out_stream);
 
                                 int total_length(out_stream.get_offset());
                                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
@@ -2635,7 +2627,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                     case rdpdr::IRP_MN_QUERY_DIRECTORY:
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Directory Request");
-                                        {
+                                        /*{
 
                                         StaticOutStream<256> out_stream;
                                         rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
@@ -2680,7 +2672,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
 
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query directory Response");
-                                        }
+                                        }*/
                                         break;
 
                                     case rdpdr::IRP_MN_NOTIFY_CHANGE_DIRECTORY:
