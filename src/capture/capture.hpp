@@ -356,8 +356,16 @@ public:
         if (this->pscrt) { this->pscrt->attach_apis(apis_register, ini); }
         if (this->psc) { this->psc->attach_apis(apis_register, ini); }
         if (this->pkc) { this->pkc->attach_apis(apis_register, ini); }
-        if (this->pvc) { this->pvc->attach_apis(apis_register, ini); }
-        if (this->pvc_full) { this->pvc_full->attach_apis(apis_register, ini); }
+        if (this->pvc) { 
+            apis_register.capture_list.push_back(this->pvc->vc);
+            apis_register.graphic_snapshot_list->push_back(this->pvc->preparing_vc);
+            this->pvc->first_image.cap_elem = {apis_register.capture_list, this->pvc->first_image};
+            this->pvc->first_image.gcap_elem = {*apis_register.graphic_snapshot_list, this->pvc->first_image};
+        }
+        if (this->pvc_full) { 
+            apis_register.capture_list.push_back(this->pvc_full->vc);
+            apis_register.graphic_snapshot_list->push_back(this->pvc_full->preparing_vc);
+        }
         if (this->pmc) { this->pmc->attach_apis(apis_register, ini); }
         if (this->ptc) { this->ptc->attach_apis(apis_register, ini); }
 

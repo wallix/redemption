@@ -81,10 +81,10 @@ private:
 class FullVideoCaptureImpl
 {
     OutFilenameSequenceSeekableTransport trans;
+public:
     VideoCapture vc;
     PreparingWhenFrameMarkerEnd preparing_vc{vc};
 
-public:
     FullVideoCaptureImpl(
         const timeval & now,
         const char * const record_path,
@@ -99,11 +99,6 @@ public:
     , vc(now, this->trans, drawable, no_timestamp, std::move(video_param))
     {
         ::unlink((std::string(record_path) + basename + "." + video_param.codec).c_str());
-    }
-
-    void attach_apis(ApisRegister & apis_register, const Inifile &) {
-        apis_register.capture_list.push_back(this->vc);
-        apis_register.graphic_snapshot_list->push_back(this->preparing_vc);
     }
 
     void encoding_video_frame() {
@@ -240,6 +235,7 @@ class SequencedVideoCaptureImpl
         void do_pause_capture(const timeval& now) override { this->impl.video_sequencer.pause_capture(now); }
     };
 
+public:
     VideoTransport vc_trans;
     VideoCapture vc;
     PreparingWhenFrameMarkerEnd preparing_vc{vc};
@@ -287,12 +283,12 @@ public:
     , next_video_notifier(next_video_notifier)
     {}
 
-    void attach_apis(ApisRegister & apis_register, const Inifile &) {
-        apis_register.capture_list.push_back(this->vc);
-        apis_register.graphic_snapshot_list->push_back(this->preparing_vc);
-        this->first_image.cap_elem = {apis_register.capture_list, this->first_image};
-        this->first_image.gcap_elem = {*apis_register.graphic_snapshot_list, this->first_image};
-    }
+//    void attach_apis(ApisRegister & apis_register, const Inifile &) {
+//        apis_register.capture_list.push_back(this->vc);
+//        apis_register.graphic_snapshot_list->push_back(this->preparing_vc);
+//        this->first_image.cap_elem = {apis_register.capture_list, this->first_image};
+//        this->first_image.gcap_elem = {*apis_register.graphic_snapshot_list, this->first_image};
+//    }
 
     void next_video(const timeval& now) {
         this->next_video_impl(now, NotifyNextVideo::reason::external);
