@@ -82,8 +82,7 @@ public:
 class mod_api : public Callback
 {
 protected:
-    wait_obj           event;
-    RDPPen             pen;
+    wait_obj event;
 
 public:
     mod_api()
