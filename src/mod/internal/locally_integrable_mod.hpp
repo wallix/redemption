@@ -60,7 +60,7 @@ struct LocallyIntegrableMod : public InternalMod {
                          uint16_t front_width, uint16_t front_height,
                          Font const & font, ClientExecute & client_execute,
                          Theme const & theme)
-    : InternalMod(front, front_width, front_height, font, theme)
+    : InternalMod(front, front_width, front_height, font, theme, false)
     , client_execute(client_execute)
     , front_width(front_width)
     , front_height(front_height)
