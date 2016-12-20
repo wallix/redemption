@@ -851,10 +851,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     std::snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), input_basename.c_str());
     ini.set<cfg::video::hash_path>(hash_path);
 
-    ini.set<cfg::globals::video_quality>(flv_params.video_quality);
     ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned int, std::centi>{wrm_frame_interval});
     ini.set<cfg::video::break_interval>(std::chrono::seconds{wrm_break_interval});
-    ini.set<cfg::globals::codec_id>(flv_params.video_codec);
     ini.set<cfg::video::flv_break_interval>(std::chrono::seconds{flv_break_interval});
     ini.set<cfg::globals::trace_type>(encryption_type);
     ini.set<cfg::video::rt_display>(bool(capture_flags & CaptureFlags::png));
@@ -1000,6 +998,11 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 //std::cout << "zoom: " << zoom << '%' << std::endl;
                             }
 
+                            ini.set<cfg::globals::video_quality>(flv_params.video_quality);
+                            ini.set<cfg::globals::codec_id>(flv_params.codec);
+                            flv_params = flv_params_from_ini(
+                                player.screen_rect.cx, player.screen_rect.cy, ini);
+
                             Capture capture(
                                     capture_flags,
                                     ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
@@ -1008,6 +1011,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                     , player.info_bpp
                                     , wrm_color_depth
                                     , png_params
+                                    , flv_params
                                     , enable_rt
                                     , no_timestamp
                                     , authentifier
@@ -1129,7 +1133,7 @@ struct RecorderParams {
 
     // png output options
     PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0};
-    FlvParams flv_params = {"", Level::high};
+    FlvParams flv_params = {};
 
     // flv output options
     bool full_video; // create full video
@@ -1225,7 +1229,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 
         {"ocr-version", &recorder.ocr_version, "version 1 or 2"},
 
-        {"video-codec", &recorder.flv_params.video_codec, "ffmpeg video codec id (flv, mp4, etc)"},
+        {"video-codec", &recorder.flv_params.codec, "ffmpeg video codec id (flv, mp4, etc)"},
 
         {"json-pgs", "use json format to .pgs file"},
     });
@@ -1271,6 +1275,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         recorder.json_pgs = true;
     }
 
+    recorder.flv_params.video_quality = Level::high;
     recorder.chunk = options.count("chunk") > 0;
     recorder.capture_flags = ((options.count("wrm") > 0)              ?CaptureFlags::wrm:CaptureFlags::none)
                            | (((recorder.chunk)||(options.count("png") > 0))?CaptureFlags::png:CaptureFlags::none)

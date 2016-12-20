@@ -165,6 +165,7 @@ public:
         int order_bpp,
         int capture_bpp,
         const PngParams png_params,
+        const FlvParams flv_params,
         bool real_time_image_capture,
         bool no_timestamp,
         auth_api * authentifier,
@@ -190,6 +191,8 @@ public:
     , capture_api(now, width / 2, height / 2)
     {
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
+
+//        FlvParams flv_params = flv_params_from_ini(width, height, ini);
 
         bool const enable_kbd
           = authentifier
@@ -251,6 +254,7 @@ public:
             cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
         }
 
+
         if (capture_drawable) {
             this->gd.reset(new Graphic(width, height, order_bpp, this->capture_api.mouse_trace()));
             this->graphic_api = &this->gd->get_graphic_api();
@@ -295,7 +299,7 @@ public:
                     authentifier && ini.get<cfg::session_log::enable_session_log>()
                 ));
             }
-
+            
             if (this->capture_flv) {
                 std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
                 if (ini.get<cfg::globals::capture_chunk>() && this->pmc) {
@@ -304,7 +308,7 @@ public:
                 }
                 this->pvc.reset(new Video(
                     now, record_path, basename, groupid, no_timestamp, png_params.zoom, this->gd->impl(),
-                    video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini),
+                    flv_params,
                     ini.get<cfg::video::flv_break_interval>(), notifier
                 ));
             }
@@ -312,8 +316,7 @@ public:
             if (this->capture_flv_full) {
                 this->pvc_full.reset(new FullVideo(
                     now, record_path, basename, groupid, no_timestamp, this->gd->impl(),
-                    video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini)
-                ));
+                    flv_params));
             }
 
             if (this->capture_pattern_checker) {
@@ -362,7 +365,31 @@ public:
             apis_register.capture_list.push_back(this->pvc_full->vc);
             apis_register.graphic_snapshot_list->push_back(this->pvc_full->preparing_vc);
         }
-        if (this->pmc) { this->pmc->attach_apis(apis_register, ini); }
+        if (this->pmc) {
+//    void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
+//        apis_register.capture_list.push_back(this->meta);
+//        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta)) {
+//            apis_register.kbd_input_list.push_back(this->meta);
+//            apis_register.capture_probe_list.push_back(this->meta);
+//        }
+
+//        if (this->enable_agent) {
+//            apis_register.capture_probe_list.push_back(this->session_log_agent);
+//        }
+//    }        
+//            this->pmc->attach_apis(apis_register, ini); 
+
+        apis_register.capture_list.push_back(this->pmc->meta);
+        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta)) {
+            apis_register.kbd_input_list.push_back(this->pmc->meta);
+            apis_register.capture_probe_list.push_back(this->pmc->meta);
+        }
+
+        if (this->pmc->enable_agent) {
+            apis_register.capture_probe_list.push_back(this->pmc->session_log_agent);
+        }
+
+        }
         if (this->ptc) { this->ptc->attach_apis(apis_register, ini); }
 
         if (this->gd) { this->gd->start(); }

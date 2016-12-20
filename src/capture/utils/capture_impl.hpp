@@ -33,7 +33,7 @@
 // private extension
 #include "capture/sequencer.hpp"
 #include "capture/video_capture.hpp"
-#include "capture/utils/video_params_from_ini.hpp"
+#include "capture/flv_params.hpp"
 #include "utils/pattutils.hpp"
 // end private extension
 
@@ -92,13 +92,13 @@ public:
         const int groupid,
         bool no_timestamp,
         const Drawable & drawable,
-        VideoParams video_param)
+        FlvParams flv_params)
     : trans(
         FilenameGenerator::PATH_FILE_EXTENSION,
-        record_path, basename, ("." + video_param.codec).c_str(), groupid)
-    , vc(now, this->trans, drawable, no_timestamp, std::move(video_param))
+        record_path, basename, ("." + flv_params.codec).c_str(), groupid)
+    , vc(now, this->trans, drawable, no_timestamp, std::move(flv_params))
     {
-        ::unlink((std::string(record_path) + basename + "." + video_param.codec).c_str());
+        ::unlink((std::string(record_path) + basename + "." + flv_params.codec).c_str());
     }
 
     void encoding_video_frame() {
@@ -269,11 +269,11 @@ public:
         bool no_timestamp,
         unsigned image_zoom,
         const Drawable & drawable,
-        VideoParams video_param,
+        FlvParams flv_params,
         std::chrono::microseconds video_interval,
         NotifyNextVideo & next_video_notifier)
-    : vc_trans(record_path, basename, ("." + video_param.codec).c_str(), groupid)
-    , vc(now, this->vc_trans, drawable, no_timestamp, std::move(video_param))
+    : vc_trans(record_path, basename, ("." + flv_params.codec).c_str(), groupid)
+    , vc(now, this->vc_trans, drawable, no_timestamp, std::move(flv_params))
     , ic_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_path, basename, ".png", groupid)
     , ic(this->ic_trans, drawable, image_zoom)
     , video_sequencer(
@@ -282,13 +282,6 @@ public:
     , first_image(now, *this)
     , next_video_notifier(next_video_notifier)
     {}
-
-//    void attach_apis(ApisRegister & apis_register, const Inifile &) {
-//        apis_register.capture_list.push_back(this->vc);
-//        apis_register.graphic_snapshot_list->push_back(this->preparing_vc);
-//        this->first_image.cap_elem = {apis_register.capture_list, this->first_image};
-//        this->first_image.gcap_elem = {*apis_register.graphic_snapshot_list, this->first_image};
-//    }
 
     void next_video(const timeval& now) {
         this->next_video_impl(now, NotifyNextVideo::reason::external);
@@ -307,13 +300,13 @@ public:
 
 class MetaCaptureImpl
 {
+public:
     local_fd fd;
     OutFileTransport meta_trans;
     SessionMeta meta;
     SessionLogAgent session_log_agent;
     bool enable_agent;
 
-public:
     MetaCaptureImpl(
         const timeval & now,
         std::string record_path,
@@ -334,17 +327,17 @@ public:
     {
     }
 
-    void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
-        apis_register.capture_list.push_back(this->meta);
-        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta)) {
-            apis_register.kbd_input_list.push_back(this->meta);
-            apis_register.capture_probe_list.push_back(this->meta);
-        }
+//    void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
+//        apis_register.capture_list.push_back(this->meta);
+//        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta)) {
+//            apis_register.kbd_input_list.push_back(this->meta);
+//            apis_register.capture_probe_list.push_back(this->meta);
+//        }
 
-        if (this->enable_agent) {
-            apis_register.capture_probe_list.push_back(this->session_log_agent);
-        }
-    }
+//        if (this->enable_agent) {
+//            apis_register.capture_probe_list.push_back(this->session_log_agent);
+//        }
+//    }
 
     SessionMeta & get_session_meta() {
         return this->meta;
