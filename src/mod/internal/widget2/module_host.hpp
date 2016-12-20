@@ -68,6 +68,15 @@ private:
             return mod_api::get_event();
         }
 
+        void get_event_handlers(std::vector<EventHandler>& out_event_handlers)
+            override
+        {
+            if (this->managed_mod)
+            {
+                this->managed_mod->get_event_handlers(out_event_handlers);
+            }
+        }
+
         bool is_up_and_running() override
         {
             if (this->managed_mod)

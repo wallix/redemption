@@ -565,11 +565,8 @@ private:
         wait_obj & get_event() override
         { return this->mm.internal_mod->get_event(); }
 
-        wait_obj * get_secondary_event() override
-        { return this->mm.internal_mod->get_secondary_event(); }
-
-        void process_secondary(time_t now, gdi::GraphicApi & drawable) override
-        { this->mm.internal_mod->process_secondary(now, drawable); }
+        void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override
+        { return this->mm.internal_mod->get_event_handlers(out_event_handlers); }
 
         void send_to_front_channel(const char * const mod_channel_name,
             uint8_t const * data, size_t length, size_t chunk_size, int flags) override

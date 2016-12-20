@@ -41,20 +41,20 @@ struct LocallyIntegrableMod : public InternalMod {
 
     int dc_state = DCSTATE_WAIT;
 
-    wait_obj secondary_event;
+    wait_obj first_click_down_event;
 
-    class SecondaryEventHandler : public EventHandler::CB {
+    class FirstClickDownEventHandler : public EventHandler::CB {
         LocallyIntegrableMod& mod_;
 
     public:
-        SecondaryEventHandler(LocallyIntegrableMod& mod)
+        FirstClickDownEventHandler(LocallyIntegrableMod& mod)
         : mod_(mod)
         {}
 
         void operator()(time_t now, gdi::GraphicApi& drawable) override {
-            this->mod_.process_secondary_event(now, drawable);
+            this->mod_.process_first_click_down_event(now, drawable);
         }
-    } secondary_event_handler;
+    } first_click_down_event_handler;
 
     LocallyIntegrableMod(FrontAPI & front,
                          uint16_t front_width, uint16_t front_height,
@@ -64,25 +64,25 @@ struct LocallyIntegrableMod : public InternalMod {
     , client_execute(client_execute)
     , front_width(front_width)
     , front_height(front_height)
-    , secondary_event_handler(*this) {}
+    , first_click_down_event_handler(*this) {}
 
     ~LocallyIntegrableMod() override {
         this->client_execute.reset();
     }
 
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
-        if (this->secondary_event.object_and_time) {
+        if (this->first_click_down_event.object_and_time) {
             out_event_handlers.emplace_back(
-                    &this->secondary_event,
-                    &this->secondary_event_handler,
+                    &this->first_click_down_event,
+                    &this->first_click_down_event_handler,
                     INVALID_SOCKET
                 );
         }
     }
 
-    void process_secondary_event(time_t, gdi::GraphicApi&) {
-        if (this->secondary_event.object_and_time &&
-            this->secondary_event.waked_up_by_time) {
+    void process_first_click_down_event(time_t, gdi::GraphicApi&) {
+        if (this->first_click_down_event.object_and_time &&
+            this->first_click_down_event.waked_up_by_time) {
             this->cancel_double_click_detection();
         }
     }
@@ -105,10 +105,10 @@ struct LocallyIntegrableMod : public InternalMod {
                 if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
                     this->dc_state = DCSTATE_FIRST_CLICK_DOWN;
 
-                    this->secondary_event.set(1000000);
+                    this->first_click_down_event.set(1000000);
 
-                    this->secondary_event.object_and_time  = true;
-                    this->secondary_event.waked_up_by_time = false;
+                    this->first_click_down_event.object_and_time  = true;
+                    this->first_click_down_event.waked_up_by_time = false;
                 }
             break;
 
@@ -189,10 +189,10 @@ struct LocallyIntegrableMod : public InternalMod {
 
 private:
     void cancel_double_click_detection() {
-        this->secondary_event.reset();
+        this->first_click_down_event.reset();
 
-        this->secondary_event.object_and_time  = false;
-        this->secondary_event.waked_up_by_time = false;
+        this->first_click_down_event.object_and_time  = false;
+        this->first_click_down_event.waked_up_by_time = false;
 
         this->dc_state = DCSTATE_WAIT;
     }

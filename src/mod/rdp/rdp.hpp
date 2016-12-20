@@ -711,6 +711,19 @@ protected:
         }
     } session_probe_launcher_event_handler;
 
+    class SessionProbeVirtualChannelEventHandler : public EventHandler::CB {
+        mod_rdp& mod_;
+
+    public:
+        SessionProbeVirtualChannelEventHandler(mod_rdp& mod)
+        : mod_(mod)
+        {}
+
+        void operator()(time_t now, gdi::GraphicApi& drawable) override {
+            this->mod_.process_session_probe_virtual_channel_event(now, drawable);
+        }
+    } session_probe_virtual_channel_event_handler;
+
 public:
     using Verbose = RDPVerbose;
 
@@ -859,6 +872,7 @@ public:
         , client_execute_arguments(mod_rdp_params.client_execute_arguments)
         , asynchronous_task_event_handler(*this)
         , session_probe_launcher_event_handler(*this)
+        , session_probe_virtual_channel_event_handler(*this)
     {
         if (this->verbose & RDPVerbose::basic_trace) {
             if (!enable_transparent_mode) {
@@ -1649,7 +1663,7 @@ public:
         }
     }
 
-public:
+private:
     void process_asynchronous_task_event(time_t, gdi::GraphicApi&) {
         if (!this->asynchronous_tasks.front()->run(this->asynchronous_task_event)) {
             this->asynchronous_tasks.pop_front();
@@ -1669,7 +1683,37 @@ public:
         }
     }
 
+    void process_session_probe_virtual_channel_event(time_t, gdi::GraphicApi&) {
+        //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event()");
+        try{
+            if (this->session_probe_virtual_channel_p) {
+                this->session_probe_virtual_channel_p->process_event();
+            }
+        }
+        catch (Error const & e) {
+            if (e.id != ERR_SESSION_PROBE_ENDING_IN_PROGRESS)
+                throw;
+
+            this->end_session_reason.clear();
+            this->end_session_message.clear();
+
+            this->acl->disconnect_target();
+            this->acl->set_auth_error_message(TR("session_logoff_in_progress", this->lang));
+
+            session_probe_virtual_channel_p->get_event()->signal = BACK_EVENT_NEXT;
+        }
+    }
+
+public:
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
+        if (!this->asynchronous_tasks.empty()) {
+            out_event_handlers.emplace_back(
+                    &this->asynchronous_task_event,
+                    &this->asynchronous_task_event_handler,
+                    this->asynchronous_tasks.front()->get_file_descriptor()
+                );
+        }
+
         if (this->session_probe_launcher) {
             wait_obj* event = this->session_probe_launcher->get_event();
             if (event) {
@@ -1681,12 +1725,15 @@ public:
             }
         }
 
-        if (!this->asynchronous_tasks.empty()) {
-            out_event_handlers.emplace_back(
-                    &this->asynchronous_task_event,
-                    &this->asynchronous_task_event_handler,
-                    this->asynchronous_tasks.front()->get_file_descriptor()
+        if (this->session_probe_virtual_channel_p) {
+            wait_obj* event = this->session_probe_virtual_channel_p->get_event();
+            if (event) {
+                out_event_handlers.emplace_back(
+                        event,
+                        &this->session_probe_virtual_channel_event_handler,
+                        INVALID_SOCKET
                 );
+            }
         }
     }
 
@@ -3816,35 +3863,6 @@ public:
 */
         //LOG(LOG_INFO, "mod_rdp::draw_event() done");
     }   // draw_event
-
-    wait_obj * get_secondary_event() override {
-        if (this->session_probe_virtual_channel_p) {
-            return session_probe_virtual_channel_p->get_event();
-        }
-
-        return nullptr;
-    }
-
-    void process_secondary(time_t, gdi::GraphicApi&) override {
-        //LOG(LOG_INFO, "mod_rdp::process_secondary() session_probe_virtual_channel_p");
-        try{
-            if (this->session_probe_virtual_channel_p) {
-                this->session_probe_virtual_channel_p->process_event();
-            }
-        }
-        catch (Error const & e) {
-            if (e.id != ERR_SESSION_PROBE_ENDING_IN_PROGRESS)
-                throw;
-
-            this->end_session_reason.clear();
-            this->end_session_message.clear();
-
-            this->acl->disconnect_target();
-            this->acl->set_auth_error_message(TR("session_logoff_in_progress", this->lang));
-
-            session_probe_virtual_channel_p->get_event()->signal = BACK_EVENT_NEXT;
-        }
-    }
 
     // 1.3.1.3 Deactivation-Reactivation Sequence
     // ==========================================
