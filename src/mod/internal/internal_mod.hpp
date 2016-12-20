@@ -33,12 +33,13 @@ struct InternalMod : public mod_api {
 public:
     uint16_t front_width;
     uint16_t front_height;
+
     FrontAPI & front;
 
     WidgetScreen screen;
 
     InternalMod(FrontAPI & front, uint16_t front_width, uint16_t front_height, Font const & font,
-                Theme const & theme)
+                Theme const & theme, bool dont_resize)
         : front_width(front_width)
         , front_height(front_height)
         , front(front)
@@ -46,7 +47,9 @@ public:
     {
         this->screen.set_wh(front_width, front_height);
 
-        this->front.server_resize(front_width, front_height, 24);
+        if (!dont_resize) {
+            this->front.server_resize(front_width, front_height, 24);
+        }
     }
 
     Font const & font() const {

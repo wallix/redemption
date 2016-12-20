@@ -778,7 +778,8 @@ public:
                 this->front,
                 this->front.client_info.width,
                 this->front.client_info.height,
-                this->ini.get<cfg::font>()
+                this->ini.get<cfg::font>(),
+                false
             ));
             if (this->verbose & Verbose::new_mod){
                 LOG(LOG_INFO, "ModuleManager::internal module 'bouncer2_mod' ready");
@@ -807,9 +808,10 @@ public:
                 std::unique_ptr<mod_api> managed_mod(
                         new Bouncer2Mod(
                                 this->front,
-                                this->front.client_info.width,
-                                this->front.client_info.height,
-                                this->ini.get<cfg::font>()
+                                this->front.client_info.width - 8 * 2,
+                                this->front.client_info.height - 8 * 2,
+                                this->ini.get<cfg::font>(),
+                                true
                             )
                     );
                 this->set_mod(new WidgetTestMod(

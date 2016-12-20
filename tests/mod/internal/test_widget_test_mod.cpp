@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     keymap.init_layout(info.keylayout);
 
     std::unique_ptr<mod_api> managed_mod(
-        new Bouncer2Mod(front, 800, 600, font));
+        new Bouncer2Mod(front, 800, 600, font, true));
 
     WidgetTestMod d(ini, front, 800, 600, Rect(0, 0, 799, 599),
         std::move(managed_mod), client_execute);
