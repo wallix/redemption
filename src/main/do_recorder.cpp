@@ -58,6 +58,9 @@
 #include "capture/GraphicToFile.hpp"
 #include "utils/apps/recording_progress.hpp"
 
+#include "capture/png_params.hpp"
+#include "capture/wrm_params.hpp"
+#include "capture/flv_params.hpp"
 
 struct HashHeader {
     unsigned version;
@@ -675,172 +678,6 @@ static void show_statistics(FileToGraphic::Statistics const & statistics) {
     << std::endl;
 }
 
-static int do_record( Transport & in_wrm_trans, const timeval begin_record, const timeval end_record
-                    , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
-                    , int capture_bpp, int wrm_compression_algorithm_
-
-                    , UpdateProgressData::Format pgs_format
-                    , bool enable_rt
-                    , bool no_timestamp
-                    , auth_api * authentifier
-                    , Inifile & ini, CryptoContext & cctx, Random & gen
-                    , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
-                    , unsigned png_width, unsigned png_height
-                    , bool show_file_metadata, bool show_statistics, uint32_t verbose
-                    , bool full_video) {
-
-    for (unsigned i = 1; i < file_count ; i++) {
-        in_wrm_trans.next();
-    }
-
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(verbose));
-
-    if (show_file_metadata) {
-        show_metadata(player);
-        std::cout << "Duration (in seconds) : " << (end_record.tv_sec - begin_record.tv_sec + 1) << std::endl;
-        if (!show_statistics && !output_filename.length()) {
-            return 0;
-        }
-    }
-
-    player.max_order_count = order_count;
-
-    int return_code = 0;
-
-    if (output_filename.length()) {
-//        char outfile_pid[32];
-//        std::snprintf(outfile_pid, sizeof(outfile_pid), "%06u", getpid());
-
-        char outfile_path     [1024] = {};
-        char outfile_basename [1024] = {};
-        char outfile_extension[1024] = {};
-
-        canonical_path( output_filename.c_str()
-                      , outfile_path
-                      , sizeof(outfile_path)
-                      , outfile_basename
-                      , sizeof(outfile_basename)
-                      , outfile_extension
-                      , sizeof(outfile_extension)
-                      );
-
-        if (verbose) {
-//            std::cout << "Output file path: " << outfile_path << outfile_basename << '-' << outfile_pid << outfile_extension <<
-            std::cout << "Output file path: " << outfile_path << outfile_basename << outfile_extension <<
-                '\n' << std::endl;
-        }
-
-        if (clear == 1) {
-            clear_files_flv_meta_png(outfile_path, outfile_basename);
-        }
-
-//        if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
-//            ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
-//        }
-        ini.set<cfg::video::wrm_compression_algorithm>(
-            (wrm_compression_algorithm_ == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM))
-            ? player.info_compression_algorithm
-            : static_cast<WrmCompressionAlgorithm>(wrm_compression_algorithm_)
-        );
-
-//        if (ini.get<cfg::video::wrm_color_depth_selection_strategy>() == USE_ORIGINAL_COLOR_DEPTH) {
-//            ini.set<cfg::video::wrm_color_depth_selection_strategy>(player.info_bpp);
-//        }
-        if (capture_bpp == static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)) {
-            capture_bpp = player.info_bpp;
-        }
-//        ini.set<cfg::video::wrm_color_depth_selection_strategy>(capture_bpp);
-
-        {
-            ini.set<cfg::video::hash_path>(outfile_path);
-            ini.set<cfg::video::record_tmp_path>(outfile_path);
-            ini.set<cfg::video::record_path>(outfile_path);
-
-            ini.set<cfg::globals::movie_path>(&output_filename[0]);
-
-            char progress_filename[4096];
-            std::snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
-                    , outfile_path, outfile_basename);
-            UpdateProgressData update_progress_data(
-                pgs_format, progress_filename,
-                begin_record.tv_sec, end_record.tv_sec,
-                begin_capture.tv_sec, end_capture.tv_sec
-            );
-
-            if (png_width && png_height) {
-                auto get_percent = [](unsigned target_dim, unsigned source_dim) -> unsigned {
-                    return ((target_dim * 100 / source_dim) + ((target_dim * 100 % source_dim) ? 1 : 0));
-                };
-                zoom = std::max<unsigned>(
-                        get_percent(png_width, player.screen_rect.cx),
-                        get_percent(png_height, player.screen_rect.cy)
-                    );
-                //std::cout << "zoom: " << zoom << '%' << std::endl;
-            }
-
-
-            Capture capture(
-                    ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
-                    , player.screen_rect.cx
-                    , player.screen_rect.cy
-                    , player.info_bpp
-                    , capture_bpp
-                    , zoom
-                    , enable_rt
-                    , no_timestamp
-                    , authentifier
-                    , ini
-                    , cctx
-                    , gen
-                    , full_video
-                    , &update_progress_data);
-
-            player.add_consumer(&capture, &capture, &capture, &capture, &capture);
-
-            if (update_progress_data.is_valid()) {
-                try {
-                    player.play(std::ref(update_progress_data), program_requested_to_shutdown);
-
-                    if (program_requested_to_shutdown) {
-                        update_progress_data.raise_error(65537, "Program requested to shutdown");
-                    }
-                }
-                catch (Error const & e) {
-                    const bool msg_with_error_id = false;
-                    update_progress_data.raise_error(e.id, e.errmsg(msg_with_error_id));
-
-                    return_code = -1;
-                }
-                catch (...) {
-                    update_progress_data.raise_error(65536, "Unknown error");
-
-                    return_code = -1;
-                }
-            }
-            else {
-                return_code = -1;
-            }
-        }
-
-        if (!return_code && program_requested_to_shutdown) {
-            clear_files_flv_meta_png(outfile_path, outfile_basename);
-        }
-    }
-    else {
-        try {
-            player.play(program_requested_to_shutdown);
-        }
-        catch (Error const &) {
-            return_code = -1;
-        }
-    }
-
-    if (show_statistics && return_code == 0) {
-      ::show_statistics(player.statistics);
-    }
-
-    return return_code;
-}   // do_record
 
 inline
 static int do_recompress(
@@ -989,26 +826,21 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   std::string & output_filename,
                   uint32_t begin_cap,
                   uint32_t end_cap,
-                  unsigned png_width,
-                  unsigned png_height,
-                  uint32_t png_limit,
-                  uint32_t png_interval,
+                  PngParams & png_params,
+                  FlvParams & flv_params,
                   int wrm_color_depth,
                   uint32_t wrm_frame_interval,
                   uint32_t wrm_break_interval,
                   bool const enable_rt,
                   bool const no_timestamp,
                   bool infile_is_encrypted,
-                  uint32_t    order_count,
+                  uint32_t order_count,
                   bool show_file_metadata,
                   bool show_statistics,
                   uint32_t clear,
-                  unsigned zoom,
                   bool full_video,
-                  std::string & video_codec,
-                  Level video_quality,
                   bool remove_input_file,
-                  int wrm_compression_algorithm_,
+                  int wrm_compression_algorithm,
                   uint32_t flv_break_interval,
                   TraceType encryption_type,
                   Inifile & ini, CryptoContext & cctx, Random & rnd,
@@ -1019,15 +851,10 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     std::snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), input_basename.c_str());
     ini.set<cfg::video::hash_path>(hash_path);
 
-    ini.set<cfg::globals::video_quality>(video_quality);
-    ini.set<cfg::video::png_limit>(png_limit);
-    ini.set<cfg::video::png_interval>(std::chrono::seconds{png_interval});
     ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned int, std::centi>{wrm_frame_interval});
     ini.set<cfg::video::break_interval>(std::chrono::seconds{wrm_break_interval});
-    ini.set<cfg::globals::codec_id>(video_codec);
     ini.set<cfg::video::flv_break_interval>(std::chrono::seconds{flv_break_interval});
     ini.set<cfg::globals::trace_type>(encryption_type);
-    ini.set<cfg::video::capture_flags>(capture_flags);
     ini.set<cfg::video::rt_display>(bool(capture_flags & CaptureFlags::png));
 
     ini.set<cfg::globals::capture_chunk>(chunk);
@@ -1062,7 +889,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     };
 
     {
-        InMetaSequenceTransport trans(
+        InMetaSequenceTransport in_wrm_trans(
             &cctx, infile_prefix,
             infile_extension.c_str(),
             infile_is_encrypted?1:0
@@ -1087,30 +914,168 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
               || end_cap != begin_cap);
 
             if (test){
-                result = do_record(trans
-                            , begin_record, end_record
-                            , begin_capture, end_capture
-                            , output_filename, wrm_color_depth
-                            , wrm_compression_algorithm_
-                            , pgs_format
-                            , enable_rt
-                            , no_timestamp
-                            , nullptr
-                            , ini, cctx, rnd
-                            , file_count, order_count, clear, zoom
-                            , png_width, png_height
-                            , show_file_metadata, show_statistics, verbose
-                            , full_video
+                auth_api * authentifier = nullptr;      
+                for (unsigned i = 1; i < file_count ; i++) {
+                    in_wrm_trans.next();
+                }
+
+                FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(verbose));
+
+                if (show_file_metadata) {
+                    show_metadata(player);
+                    std::cout << "Duration (in seconds) : " << (end_record.tv_sec - begin_record.tv_sec + 1) << std::endl;
+                }
+
+                if (show_file_metadata && !show_statistics && !output_filename.length()) {
+                    result = 0;
+                }
+                else {
+                    player.max_order_count = order_count;
+
+                    int return_code = 0;
+
+                    if (output_filename.length()) {
+                //        char outfile_pid[32];
+                //        std::snprintf(outfile_pid, sizeof(outfile_pid), "%06u", getpid());
+
+                        char outfile_path     [1024] = {};
+                        char outfile_basename [1024] = {};
+                        char outfile_extension[1024] = {};
+
+                        canonical_path( output_filename.c_str()
+                                      , outfile_path
+                                      , sizeof(outfile_path)
+                                      , outfile_basename
+                                      , sizeof(outfile_basename)
+                                      , outfile_extension
+                                      , sizeof(outfile_extension)
+                                      );
+
+                        if (verbose) {
+                            std::cout << "Output file path: " 
+                                      << outfile_path << outfile_basename << outfile_extension 
+                                      << '\n' << std::endl;
+                        }
+
+                        if (clear == 1) {
+                            clear_files_flv_meta_png(outfile_path, outfile_basename);
+                        }
+
+                        ini.set<cfg::video::wrm_compression_algorithm>(
+                            (wrm_compression_algorithm == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM))
+                            ? player.info_compression_algorithm
+                            : static_cast<WrmCompressionAlgorithm>(wrm_compression_algorithm)
+                        );
+
+                        if (wrm_color_depth == static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)) {
+                            wrm_color_depth = player.info_bpp;
+                        }
+
+                        {
+                            ini.set<cfg::video::hash_path>(outfile_path);
+                            ini.set<cfg::video::record_tmp_path>(outfile_path);
+                            ini.set<cfg::video::record_path>(outfile_path);
+
+                            ini.set<cfg::globals::movie_path>(&output_filename[0]);
+
+                            char progress_filename[4096];
+                            std::snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
+                                    , outfile_path, outfile_basename);
+                            UpdateProgressData update_progress_data(
+                                pgs_format, progress_filename,
+                                begin_record.tv_sec, end_record.tv_sec,
+                                begin_capture.tv_sec, end_capture.tv_sec
                             );
+
+                            if (png_params.png_width && png_params.png_height) {
+                                auto get_percent = [](unsigned target_dim, unsigned source_dim) -> unsigned {
+                                    return ((target_dim * 100 / source_dim) + ((target_dim * 100 % source_dim) ? 1 : 0));
+                                };
+                                png_params.zoom = std::max<unsigned>(
+                                        get_percent(png_params.png_width, player.screen_rect.cx),
+                                        get_percent(png_params.png_height, player.screen_rect.cy)
+                                    );
+                                //std::cout << "zoom: " << zoom << '%' << std::endl;
+                            }
+
+                            ini.set<cfg::globals::video_quality>(flv_params.video_quality);
+                            ini.set<cfg::globals::codec_id>(flv_params.codec);
+                            flv_params = flv_params_from_ini(
+                                player.screen_rect.cx, player.screen_rect.cy, ini);
+
+                            Capture capture(
+                                    capture_flags,
+                                    ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
+                                    , player.screen_rect.cx
+                                    , player.screen_rect.cy
+                                    , player.info_bpp
+                                    , wrm_color_depth
+                                    , png_params
+                                    , flv_params
+                                    , enable_rt
+                                    , no_timestamp
+                                    , authentifier
+                                    , ini
+                                    , cctx
+                                    , rnd
+                                    , full_video
+                                    , &update_progress_data
+                                    , false);
+
+                            player.add_consumer(&capture, &capture, &capture, &capture, &capture);
+
+                            if (update_progress_data.is_valid()) {
+                                try {
+                                    player.play(std::ref(update_progress_data), program_requested_to_shutdown);
+
+                                    if (program_requested_to_shutdown) {
+                                        update_progress_data.raise_error(65537, "Program requested to shutdown");
+                                    }
+                                }
+                                catch (Error const & e) {
+                                    const bool msg_with_error_id = false;
+                                    update_progress_data.raise_error(e.id, e.errmsg(msg_with_error_id));
+
+                                    return_code = -1;
+                                }
+                                catch (...) {
+                                    update_progress_data.raise_error(65536, "Unknown error");
+
+                                    return_code = -1;
+                                }
+                            }
+                            else {
+                                return_code = -1;
+                            }
+                        }
+
+                        if (!return_code && program_requested_to_shutdown) {
+                            clear_files_flv_meta_png(outfile_path, outfile_basename);
+                        }
+                    }
+                    else {
+                        try {
+                            player.play(program_requested_to_shutdown);
+                        }
+                        catch (Error const &) {
+                            return_code = -1;
+                        }
+                    }
+
+                    if (show_statistics && return_code == 0) {
+                      ::show_statistics(player.statistics);
+                    }
+
+                    result = return_code;
+                }
             }
             else {
-                std::cout << "[B]" << std::endl;
                 result = do_recompress(
                     cctx,
                     rnd,
-                    trans,
+                    in_wrm_trans,
                     begin_record,
-                    wrm_compression_algorithm_,
+                    wrm_compression_algorithm,
                     output_filename,
                     ini,
                     verbose);
@@ -1167,18 +1132,13 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    unsigned png_width  = 0;
-    unsigned png_height = 0;
-    uint32_t png_limit = 10;
-    uint32_t png_interval = 60;
-    unsigned zoom         = 100;
+    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0};
+    FlvParams flv_params = {};
 
     // flv output options
     bool full_video; // create full video
     uint32_t    flv_break_interval = 10*60;
-    Level video_quality = Level::high;
     std::string flv_quality;
-    std::string video_codec;
 
     // wrm output options
     int wrm_compression_algorithm_ = static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
@@ -1214,6 +1174,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
     std::string png_geometry;
     std::string wrm_compression_algorithm;  // output compression algorithm.
     std::string color_depth;
+    uint32_t png_interval = 0;
 
     program_options::options_description desc({
         {'h', "help", "produce help message"},
@@ -1234,8 +1195,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         {'e', "end", &recorder.end_cap, "end capture time (in seconds), default=none"},
         {"count", &recorder.order_count, "Number of orders to execute before stopping, default=0 execute all orders"},
 
-        {'l', "png_limit", &recorder.png_limit, "maximum number of png files to create (remove older), default=10, 0 will disable png capture"},
-        {'n', "png_interval", &recorder.png_interval, "time interval between png captures, default=60 seconds"},
+        {'n', "png_interval", &png_interval, "time interval between png captures, default=60 seconds"},
 
         {'r', "frameinterval", &recorder.wrm_frame_interval, "time between consecutive capture frames (in 100/th of seconds), default=100 one frame per second"},
 
@@ -1250,7 +1210,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 
         {"clear", &recorder.clear, "clear old capture files with same prefix (default on)"},
         {"verbose", &verbose, "more logs"},
-        {"zoom", &recorder.zoom, "scaling factor for png capture (default 100%)"},
+        {"zoom", &recorder.png_params.zoom, "scaling factor for png capture (default 100%)"},
         {'g', "png-geometry", &png_geometry, "png capture geometry (Ex. 160x120)"},
         {'m', "meta", "show file metadata"},
         {'s', "statistics", "show statistics"},
@@ -1269,7 +1229,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 
         {"ocr-version", &recorder.ocr_version, "version 1 or 2"},
 
-        {"video-codec", &recorder.video_codec, "ffmpeg video codec id (flv, mp4, etc)"},
+        {"video-codec", &recorder.flv_params.codec, "ffmpeg video codec id (flv, mp4, etc)"},
 
         {"json-pgs", "use json format to .pgs file"},
     });
@@ -1315,6 +1275,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         recorder.json_pgs = true;
     }
 
+    recorder.flv_params.video_quality = Level::high;
     recorder.chunk = options.count("chunk") > 0;
     recorder.capture_flags = ((options.count("wrm") > 0)              ?CaptureFlags::wrm:CaptureFlags::none)
                            | (((recorder.chunk)||(options.count("png") > 0))?CaptureFlags::png:CaptureFlags::none)
@@ -1323,13 +1284,13 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 
     if (options.count("flv-quality") > 0) {
             if (0 == strcmp(recorder.flv_quality.c_str(), "high")) {
-            recorder.video_quality = Level::high;
+            recorder.flv_params.video_quality = Level::high;
         }
         else if (0 == strcmp(recorder.flv_quality.c_str(), "low")) {
-            recorder.video_quality = Level::low;
+            recorder.flv_params.video_quality = Level::low;
         }
         else  if (0 == strcmp(recorder.flv_quality.c_str(), "medium")) {
-            recorder.video_quality = Level::medium;
+            recorder.flv_params.video_quality = Level::medium;
         }
         else {
             std::cerr << "Unknown video quality" << std::endl;
@@ -1350,6 +1311,10 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         }
     }
 
+    if (options.count("png_interval") > 0){
+        recorder.png_params.png_interval = std::chrono::seconds{png_interval};
+    }
+
     if ((options.count("zoom") > 0)
     && (options.count("png-geometry") > 0)) {
         std::cerr << "Conflicting options : --zoom and --png-geometry\n\n";
@@ -1368,12 +1333,12 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
             std::cerr << "Invalide png geometry\n\n";
             return -1;
         }
-        recorder.png_width  = png_w;
-        recorder.png_height = png_h;
-        std::cout << "png-geometry: " << recorder.png_width << "x" << recorder.png_height << std::endl;
+        recorder.png_params.png_width  = png_w;
+        recorder.png_params.png_height = png_h;
+        std::cout << "png-geometry: " << recorder.png_params.png_width << "x" << recorder.png_params.png_height << std::endl;
     }
 
-    //recorder.video_codec = "flv";
+    //recorder.flv_params.video_codec = "flv";
 
     if (options.count("compression") > 0) {
          if (wrm_compression_algorithm == "none") {
@@ -1622,8 +1587,7 @@ extern "C" {
 
             if (rp.chunk) {
                 rp.flv_break_interval = 60*10; // 10 minutes
-                rp.png_interval = 1;
-                rp.png_limit = 0xFFFF;
+                rp.png_params.png_interval = std::chrono::seconds{1};
             }
 
             if (rp.output_filename.length()
@@ -1647,10 +1611,8 @@ extern "C" {
                           rp.output_filename,
                           rp.begin_cap,
                           rp.end_cap,
-                          rp.png_width,
-                          rp.png_height,
-                          rp.png_limit,
-                          rp.png_interval,
+                          rp.png_params,
+                          rp.flv_params,
                           rp.wrm_color_depth,
                           rp.wrm_frame_interval,
                           rp.wrm_break_interval,
@@ -1661,10 +1623,7 @@ extern "C" {
                           rp.show_file_metadata,
                           rp.show_statistics,
                           rp.clear,
-                          rp.zoom,
                           rp.full_video,
-                          rp.video_codec,
-                          rp.video_quality,
                           rp.remove_input_file,
                           rp.wrm_compression_algorithm_,
                           rp.flv_break_interval,

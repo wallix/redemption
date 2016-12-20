@@ -18,6 +18,10 @@
 *   Author(s): Jonathan Poelen
 */
 
+
 #pragma once
 
+struct OcrParams
+{
 
+};

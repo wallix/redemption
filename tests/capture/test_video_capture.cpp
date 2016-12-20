@@ -56,7 +56,8 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCapture)
         const int height = 600;
         Drawable drawable(width, height);
 
-        VideoCapture flvgen(now, trans, drawable, false, {width, height, 25, 15, 100000, "flv", 0});
+        FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "flv", 0};
+        VideoCapture flvgen(now, trans, drawable, false, flv_params);
         VideoSequencer flvseq(now, std::chrono::microseconds{2 * 1000000l}, VideoSequencerAction{flvgen});
 
         auto const color1 = drawable.u32bgr_to_color(BLUE);
@@ -126,7 +127,8 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureMP4)
         const int height = 600;
         Drawable drawable(width, height);
 
-        VideoCapture flvgen(now, trans, drawable, false, {width, height, 25, 15, 100000, "mp4", 0});
+        FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "mp4", 0};
+        VideoCapture flvgen(now, trans, drawable, false, flv_params);
         VideoSequencer flvseq(now, std::chrono::microseconds{2 * 1000000l}, VideoSequencerAction{flvgen});
 
         auto const color1 = drawable.u32bgr_to_color(BLUE);
@@ -187,7 +189,8 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureOneChunk)
         const int height = 600;
         Drawable drawable(width, height);
 
-        VideoCapture flvgen(now, trans, drawable, false, {width, height, 25, 15, 100000, "flv", 0});
+//        FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "flv", 0};
+        VideoCapture flvgen(now, trans, drawable, false, {Level::high, width, height, 25, 15, 100000, "flv", 0});
         VideoSequencer flvseq(now, std::chrono::microseconds{1000 * 1000000l}, VideoSequencerAction{flvgen});
 
         auto const color1 = drawable.u32bgr_to_color(BLUE);
@@ -241,7 +244,8 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
         const int height = 600;
         Drawable drawable(width, height);
 
-        VideoCapture flvgen(now, trans, drawable, false, {width, height, 25, 15, 100000, "flv", 0});
+        FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "flv", 0};
+        VideoCapture flvgen(now, trans, drawable, false, flv_params);
         VideoSequencer flvseq(now, std::chrono::microseconds{1000 * 1000000l}, VideoSequencerAction{flvgen});
 
         auto const color1 = drawable.u32bgr_to_color(BLUE);

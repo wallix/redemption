@@ -37,20 +37,21 @@
 
 #include "utils/invalid_socket.hpp"
 
+#include "acl/authentifier.hpp"
 #include "core/server.hpp"
-#include "utils/colors.hpp"
-#include "utils/stream.hpp"
+#include "core/wait_obj.hpp"
 #include "front/front.hpp"
+#include "mod/mod_api.hpp"
 #include "system/ssl_calls.hpp"
-#include "utils/rect.hpp"
+#include "transport/transport.hpp"
+#include "utils/colors.hpp"
+#include "utils/bitmap.hpp"
 #include "utils/netutils.hpp"
+#include "utils/rect.hpp"
+#include "utils/stream.hpp"
 
 #include "configs/config.hpp"
-#include "core/wait_obj.hpp"
-#include "transport/transport.hpp"
-#include "utils/bitmap.hpp"
 
-#include "acl/authentifier.hpp"
 
 
 enum {
@@ -172,6 +173,8 @@ public:
             unsigned osd_state = OSD_STATE_NOT_YET_COMPUTED;
             const bool enable_osd = this->ini.get<cfg::globals::enable_osd>();
 
+            std::vector<EventHandler> event_handlers;
+
             while (run_session) {
                 unsigned max = 0;
                 fd_set rfds;
@@ -199,15 +202,20 @@ public:
                     secondary_event->wait_on_timeout(timeout);
                 }
 
-                int        asynchronous_task_fd    = INVALID_SOCKET;
-                wait_obj * asynchronous_task_event = mm.mod->get_asynchronous_task_event(asynchronous_task_fd);
-                if (asynchronous_task_event) {
-                    asynchronous_task_event->wait_on_fd(asynchronous_task_fd, rfds, max, timeout);
-                }
+                event_handlers.clear();
+                mm.mod->get_event_handlers(event_handlers);
+                for (EventHandler& event_handler : event_handlers) {
+                    const wait_obj* event = event_handler.get_event();
+                    const int       fd    = event_handler.get_fd();
 
-                wait_obj * session_probe_launcher_event = mm.mod->get_session_probe_launcher_event();
-                if (session_probe_launcher_event) {
-                    session_probe_launcher_event->wait_on_timeout(timeout);
+                    if (event) {
+                        if (INVALID_SOCKET != fd) {
+                            event->wait_on_fd(fd, rfds, max, timeout);
+                        }
+                        else {
+                            event->wait_on_timeout(timeout);
+                        }
+                    }
                 }
 
                 const bool has_pending_data = (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl));
@@ -277,30 +285,36 @@ public:
                             mm.check_module();
                         }
 
-                        asynchronous_task_fd    = -1;
-                        asynchronous_task_event = mm.mod->get_asynchronous_task_event(asynchronous_task_fd);
-                        const bool asynchronous_task_event_is_set = (asynchronous_task_event &&
-                                                                     asynchronous_task_event->is_set(asynchronous_task_fd,
-                                                                            rfds));
-                        if (asynchronous_task_event_is_set) {
-                            mm.mod->process_asynchronous_task();
-                        }
+                        try
+                        {
+                            for (EventHandler& event_handler : event_handlers) {
+                                if (BACK_EVENT_NONE != signal) {
+                                    break;
+                                }
 
-                        session_probe_launcher_event = mm.mod->get_session_probe_launcher_event();
-                        const bool session_probe_launcher_event_is_set = (session_probe_launcher_event &&
-                                                                          session_probe_launcher_event->is_set(asynchronous_task_fd, rfds));
-                        if (session_probe_launcher_event_is_set) {
-                            mm.mod->process_session_probe_launcher();
-                        }
+                                      wait_obj* event = event_handler.get_event();
+                                const int       fd    = event_handler.get_fd();
 
-                        // Process incoming module trafic
-                                   secondary_event        = mm.mod->get_secondary_event();
-                        const bool secondary_event_is_set = (secondary_event &&
-                                                             secondary_event->is_set(INVALID_SOCKET, rfds));
-                        if (mm.mod->get_event().is_set(mm.mod_transport?mm.mod_transport->sck:INVALID_SOCKET, rfds) ||
-                            secondary_event_is_set) {
-                            try
-                            {
+                                if (event && event->is_set(fd, rfds)) {
+                                    event_handler(now, mm.get_graphic_wrapper(*this->front));
+
+                                    if (BACK_EVENT_NONE != event->signal) {
+                                        signal = event->signal;
+                                        event->reset();
+                                    }
+                                }
+                            }
+
+                                       secondary_event        = mm.mod->get_secondary_event();
+                            const bool secondary_event_is_set = (secondary_event &&
+                                                                 secondary_event->is_set(INVALID_SOCKET, rfds));
+                            if (secondary_event_is_set) {
+                                mm.mod->process_secondary(now, mm.get_graphic_wrapper(*this->front));
+                            }
+
+                            // Process incoming module trafic
+                            if ((BACK_EVENT_NONE == signal) &&
+                                mm.mod->get_event().is_set(mm.mod_transport?mm.mod_transport->sck:INVALID_SOCKET, rfds)) {
                                 mm.mod->draw_event(now, mm.get_graphic_wrapper(*this->front));
 
                                 if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
@@ -308,59 +322,59 @@ public:
                                     mm.mod->get_event().reset();
                                 }
                             }
-                            catch (Error const & e) {
-                                if (e.id == ERR_SESSION_PROBE_LAUNCH) {
-                                    if (this->ini.get<cfg::mod_rdp::session_probe_on_launch_failure>() ==
-                                        SessionProbeOnLaunchFailure::retry_without_session_probe) {
-                                        this->ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
-
-                                        signal = BACK_EVENT_RETRY_CURRENT;
-                                        mm.mod->get_event().reset();
-                                    }
-                                    else if (this->client) {
-                                        this->client->acl.report("SESSION_PROBE_LAUNCH_FAILED", "");
-                                    }
-                                    else {
-                                        throw;
-                                    }
-                                }
-                                else if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
-                                    signal = BACK_EVENT_RETRY_CURRENT;
-                                    mm.mod->get_event().reset();
-                                }
-                                else if (e.id == ERR_RDP_SERVER_REDIR) {
-                                    // SET new target in ini
-                                    const char * host = char_ptr_cast(
-                                        this->ini.get<cfg::mod_rdp::redir_info>().host);
-                                    const char * password = char_ptr_cast(
-                                        this->ini.get<cfg::mod_rdp::redir_info>().password);
-                                    const char * username = char_ptr_cast(
-                                        this->ini.get<cfg::mod_rdp::redir_info>().username);
-                                    const char * change_user = "";
-                                    if (this->ini.get<cfg::mod_rdp::redir_info>().dont_store_username &&
-                                        (username[0] != 0)) {
-                                        LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
-                                        this->ini.set_acl<cfg::globals::target_user>(username);
-                                        change_user = username;
-                                    }
-                                    if (password[0] != 0) {
-                                        LOG(LOG_INFO, "SrvRedir: Change target password");
-                                        this->ini.set_acl<cfg::context::target_password>(password);
-                                    }
-                                    LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
-                                    this->ini.set_acl<cfg::context::target_host>(host);
-                                    char message[768] = {};
-                                    sprintf(message, "%s@%s", change_user, host);
-                                    if (this->client) {
-                                        this->client->acl.report("SERVER_REDIRECTION", message);
-                                    }
+                        }
+                        catch (Error const & e) {
+                            if (e.id == ERR_SESSION_PROBE_LAUNCH) {
+                                if (this->ini.get<cfg::mod_rdp::session_probe_on_launch_failure>() ==
+                                    SessionProbeOnLaunchFailure::retry_without_session_probe) {
+                                    this->ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
 
                                     signal = BACK_EVENT_RETRY_CURRENT;
                                     mm.mod->get_event().reset();
+                                }
+                                else if (this->client) {
+                                    this->client->acl.report("SESSION_PROBE_LAUNCH_FAILED", "");
                                 }
                                 else {
                                     throw;
                                 }
+                            }
+                            else if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
+                                signal = BACK_EVENT_RETRY_CURRENT;
+                                mm.mod->get_event().reset();
+                            }
+                            else if (e.id == ERR_RDP_SERVER_REDIR) {
+                                // SET new target in ini
+                                const char * host = char_ptr_cast(
+                                    this->ini.get<cfg::mod_rdp::redir_info>().host);
+                                const char * password = char_ptr_cast(
+                                    this->ini.get<cfg::mod_rdp::redir_info>().password);
+                                const char * username = char_ptr_cast(
+                                    this->ini.get<cfg::mod_rdp::redir_info>().username);
+                                const char * change_user = "";
+                                if (this->ini.get<cfg::mod_rdp::redir_info>().dont_store_username &&
+                                    (username[0] != 0)) {
+                                    LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
+                                    this->ini.set_acl<cfg::globals::target_user>(username);
+                                    change_user = username;
+                                }
+                                if (password[0] != 0) {
+                                    LOG(LOG_INFO, "SrvRedir: Change target password");
+                                    this->ini.set_acl<cfg::context::target_password>(password);
+                                }
+                                LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
+                                this->ini.set_acl<cfg::context::target_host>(host);
+                                char message[768] = {};
+                                sprintf(message, "%s@%s", change_user, host);
+                                if (this->client) {
+                                    this->client->acl.report("SERVER_REDIRECTION", message);
+                                }
+
+                                signal = BACK_EVENT_RETRY_CURRENT;
+                                mm.mod->get_event().reset();
+                            }
+                            else {
+                                throw;
                             }
                         }
                         if (this->front->capture && this->front->capture->get_capture_event().is_set(INVALID_SOCKET, rfds)) {

@@ -53,6 +53,8 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
 
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
+        CaptureFlags capture_flags = CaptureFlags::wrm | CaptureFlags::png;
+        
         ini.set<cfg::globals::trace_type>(TraceType::localfile);
 
         ini.set<cfg::video::record_tmp_path>("./");
@@ -72,9 +74,12 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         // TODO remove this after unifying capture interface
         auth_api * authentifier = nullptr;
         // TODO remove this after unifying capture interface
+        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0};
         bool force_capture_png_if_enable = true;
-        Capture capture(
-            now, scr.cx, scr.cy, 24, 24, 100
+
+        FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
+        Capture capture(capture_flags,
+            now, scr.cx, scr.cy, 24, 24, png_params, flv_params
             , clear_png, no_timestamp, authentifier
             , ini, cctx, rnd, full_video, nullptr, force_capture_png_if_enable);
         bool ignore_frame_in_timeval = false;
@@ -210,6 +215,8 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
 
     ini.set<cfg::video::capture_flags>(CaptureFlags::png);
+    CaptureFlags capture_flags = CaptureFlags::png;
+
     ini.set<cfg::globals::trace_type>(TraceType::localfile);
 
     ini.set<cfg::video::record_tmp_path>("./");
@@ -231,7 +238,11 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     // TODO remove this after unifying capture interface
     bool force_capture_png_if_enable = true;
 
-    Capture capture(now, scr.cx, scr.cy, 16, 16, 100
+    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0};
+    FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
+
+    Capture capture(capture_flags
+                   , now, scr.cx, scr.cy, 16, 16, png_params, flv_params
                    , clear_png, no_timestamp, authentifier
                    , ini, cctx, rnd, full_video, nullptr, force_capture_png_if_enable);
 

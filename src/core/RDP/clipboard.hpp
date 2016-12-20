@@ -26,6 +26,7 @@
 
 #include "utils/stream.hpp"
 #include "core/error.hpp"
+#include "core/FSCC/FileInformation.hpp"
 #include "utils/sugar/cast.hpp"
 
 namespace RDPECLIP {
@@ -1483,15 +1484,6 @@ enum {
 //  |                          | alone.                                        |
 //  +--------------------------+-----------------------------------------------+
 
-enum FileAttributes : uint32_t {
-    FILE_ATTRIBUTES_READONLY  = 0x0001,
-    FILE_ATTRIBUTES_HIDDEN    = 0x0002,
-    FILE_ATTRIBUTES_SYSTEM    = 0x0004,
-    FILE_ATTRIBUTES_DIRECTORY = 0x0010,
-    FILE_ATTRIBUTES_ARCHIVE   = 0x0020,
-    FILE_ATTRIBUTES_NORMAL    = 0x0080
-};
-
 // reserved2 (16 bytes): An array of 16 bytes. This field MUST be initialized
 //  with zeros when sent and MUST be ignored on receipt.
 
@@ -1961,17 +1953,6 @@ enum {
 // requestedFormatData (variable): Variable length clipboard format data. The
 //  contents of this field MUST be one of the following types: generic, Packed
 //  Metafile Payload, or Packed Palette Payload.
-
-
-
-enum : uint32_t {
-    FILE_ATTRIBUTE_READONLY  = 0x0001,
-    FILE_ATTRIBUTE_HIDDEN    = 0x0002,
-    FILE_ATTRIBUTE_SYSTEM    = 0x0004,
-    FILE_ATTRIBUTE_DIRECTORY = 0x0010,
-    FILE_ATTRIBUTE_ARCHIVE   = 0x0020,
-    FILE_ATTRIBUTE_NORMAL    = 0x0080
-};
 
 enum : uint64_t {
     TIME64_FILE_LIST = 0x01d1e2a0379fb504
@@ -2942,7 +2923,7 @@ struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
       , name(std::move(name))
       , size(size)
       , flags(FD_SHOWPROGRESSUI |FD_FILESIZE | FD_WRITESTIME | FD_ATTRIBUTES)
-      , attribute(FILE_ATTRIBUTE_ARCHIVE)
+      , attribute(fscc::FILE_ATTRIBUTE_ARCHIVE)
       , time(TIME64_FILE_LIST)
     {}
 

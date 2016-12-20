@@ -18,6 +18,14 @@
 *   Author(s): Jonathan Poelen
 */
 
+
 #pragma once
 
-
+struct PngParams
+{
+    unsigned png_width;
+    unsigned png_height;
+    std::chrono::milliseconds png_interval;
+    unsigned zoom;
+    uint32_t png_limit;
+};

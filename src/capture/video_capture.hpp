@@ -27,7 +27,7 @@
 #include "utils/log.hpp"
 #include "utils/drawable.hpp"
 #include "utils/difftimeval.hpp"
-
+#include "capture/flv_params.hpp"
 #include "transport/transport.hpp"
 
 #include "gdi/capture_api.hpp"
@@ -35,21 +35,11 @@
 #include "video_recorder.hpp"
 
 
-struct VideoParams {
-    unsigned target_width;
-    unsigned target_height;
-    unsigned frame_rate;
-    unsigned qscale;
-    unsigned bitrate;
-    std::string codec;
-    unsigned verbosity;
-};
-
 class VideoCapture : public gdi::CaptureApi
 {
     Transport & trans;
 
-    VideoParams video_params;
+    FlvParams flv_params;
 
     const Drawable & drawable;
     std::unique_ptr<video_recorder> recorder;
@@ -64,19 +54,19 @@ public:
         Transport & trans,
         const Drawable & drawable,
         bool no_timestamp,
-        VideoParams video_params)
+        FlvParams flv_params)
     : trans(trans)
-    , video_params(std::move(video_params))
+    , flv_params(std::move(flv_params))
     , drawable(drawable)
     , start_video_capture(now)
-    , inter_frame_interval(1000000L / this->video_params.frame_rate)
+    , inter_frame_interval(1000000L / this->flv_params.frame_rate)
     , no_timestamp(no_timestamp)
     {
-        if (this->video_params.verbosity) {
+        if (this->flv_params.verbosity) {
             LOG(LOG_INFO, "Video recording %d x %d, rate: %d, qscale: %d, brate: %d, codec: %s",
-                this->video_params.target_width, this->video_params.target_height,
-                this->video_params.frame_rate, this->video_params.qscale, this->video_params.bitrate,
-                this->video_params.codec.c_str());
+                this->flv_params.target_width, this->flv_params.target_height,
+                this->flv_params.frame_rate, this->flv_params.qscale, this->flv_params.bitrate,
+                this->flv_params.codec.c_str());
         }
 
         this->next_video();
@@ -94,13 +84,13 @@ public:
             drawable.width(), drawable.height(),
             drawable.pix_len(),
             drawable.data(),
-            this->video_params.bitrate,
-            this->video_params.frame_rate,
-            this->video_params.qscale,
-            this->video_params.codec.c_str(),
-            this->video_params.target_width,
-            this->video_params.target_height,
-            this->video_params.verbosity
+            this->flv_params.bitrate,
+            this->flv_params.frame_rate,
+            this->flv_params.qscale,
+            this->flv_params.codec.c_str(),
+            this->flv_params.target_width,
+            this->flv_params.target_height,
+            this->flv_params.verbosity
         ));
     }
 

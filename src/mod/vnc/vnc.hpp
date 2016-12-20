@@ -216,7 +216,7 @@ public:
            , uint32_t verbose
            )
     //==============================================================================================================
-    : InternalMod(front, front_width, front_height, font, theme)
+    : InternalMod(front, front_width, front_height, font, theme, false)
     , challenge(front, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
                 "Redemption " VERSION, this->theme(),
                 tr("authentication_required"),

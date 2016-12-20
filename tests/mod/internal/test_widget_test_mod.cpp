@@ -25,6 +25,7 @@
 
 #define LOGNULL
 
+#include "mod/internal/bouncer2_mod.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 #include "../../front/fake_front.hpp"
 
@@ -39,15 +40,25 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     info.height = 600;
 
     FakeFront front(info, 0);
+    ClientExecute client_execute(front, 0);
 
     Font font;
+
+    Inifile ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    WidgetTestMod d(front, 800, 600, font, Theme()/*, "Title", "Hello, World", "OK", 0*/);
+    std::unique_ptr<mod_api> managed_mod(
+        new Bouncer2Mod(front, 800, 600, font, true));
+
+    WidgetTestMod d(ini, front, 800, 600, Rect(0, 0, 799, 599),
+        std::move(managed_mod), client_execute);
+    d.draw_event(100001, front);
+/*
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+*/
 
 /*
     const char * res = ini.context_get_value(AUTHID_ACCEPT_MESSAGE);

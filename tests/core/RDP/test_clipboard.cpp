@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         BOOST_CHECK_EQUAL(fdr_recv.size, size);
         BOOST_CHECK_EQUAL(std::string(fdr_recv.name.c_str(), name.size()), name);
         BOOST_CHECK_EQUAL(fdr_recv.flags, RDPECLIP::FD_SHOWPROGRESSUI |RDPECLIP::FD_FILESIZE | RDPECLIP::FD_WRITESTIME | RDPECLIP::FD_ATTRIBUTES);
-        BOOST_CHECK_EQUAL(fdr_recv.attribute, RDPECLIP::FILE_ATTRIBUTE_ARCHIVE);
+        BOOST_CHECK_EQUAL(fdr_recv.attribute, fscc::FILE_ATTRIBUTE_ARCHIVE);
         BOOST_CHECK_EQUAL(fdr_recv.time, RDPECLIP::TIME64_FILE_LIST);
     }
 

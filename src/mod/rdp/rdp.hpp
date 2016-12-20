@@ -685,6 +685,32 @@ protected:
 
     rdpdr::RdpDrStatus rdpdrLogStatus;
 
+    class AsynchronousTaskEventHandler : public EventHandler::CB {
+        mod_rdp& mod_;
+
+    public:
+        AsynchronousTaskEventHandler(mod_rdp& mod)
+        : mod_(mod)
+        {}
+
+        void operator()(time_t now, gdi::GraphicApi& drawable) override {
+            this->mod_.process_asynchronous_task_event(now, drawable);
+        }
+    } asynchronous_task_event_handler;
+
+    class SessionProbeLauncherEventHandler : public EventHandler::CB {
+        mod_rdp& mod_;
+
+    public:
+        SessionProbeLauncherEventHandler(mod_rdp& mod)
+        : mod_(mod)
+        {}
+
+        void operator()(time_t now, gdi::GraphicApi& drawable) override {
+            this->mod_.process_session_probe_launcher_event(now, drawable);
+        }
+    } session_probe_launcher_event_handler;
+
 public:
     using Verbose = RDPVerbose;
 
@@ -831,6 +857,8 @@ public:
         , client_execute_exe_or_file(mod_rdp_params.client_execute_exe_or_file)
         , client_execute_working_dir(mod_rdp_params.client_execute_working_dir)
         , client_execute_arguments(mod_rdp_params.client_execute_arguments)
+        , asynchronous_task_event_handler(*this)
+        , session_probe_launcher_event_handler(*this)
     {
         if (this->verbose & RDPVerbose::basic_trace) {
             if (!enable_transparent_mode) {
@@ -1622,18 +1650,7 @@ public:
     }
 
 public:
-    wait_obj * get_asynchronous_task_event(int & out_fd) override {
-        if (this->asynchronous_tasks.empty()) {
-            out_fd = -1;
-            return nullptr;
-        }
-
-        out_fd = this->asynchronous_tasks.front()->get_file_descriptor();
-
-        return &this->asynchronous_task_event;
-    }
-
-    void process_asynchronous_task() override {
+    void process_asynchronous_task_event(time_t, gdi::GraphicApi&) {
         if (!this->asynchronous_tasks.front()->run(this->asynchronous_task_event)) {
             this->asynchronous_tasks.pop_front();
         }
@@ -1646,17 +1663,30 @@ public:
         }
     }
 
-    wait_obj * get_session_probe_launcher_event() override {
-        if (this->session_probe_launcher) {
-            return this->session_probe_launcher->get_event();
-        }
-
-        return nullptr;
-    }
-
-    void process_session_probe_launcher() override {
+    void process_session_probe_launcher_event(time_t, gdi::GraphicApi&) {
         if (this->session_probe_launcher) {
             this->session_probe_launcher->on_event();
+        }
+    }
+
+    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
+        if (this->session_probe_launcher) {
+            wait_obj* event = this->session_probe_launcher->get_event();
+            if (event) {
+                out_event_handlers.emplace_back(
+                        event,
+                        &this->session_probe_launcher_event_handler,
+                        INVALID_SOCKET
+                    );
+            }
+        }
+
+        if (!this->asynchronous_tasks.empty()) {
+            out_event_handlers.emplace_back(
+                    &this->asynchronous_task_event,
+                    &this->asynchronous_task_event_handler,
+                    this->asynchronous_tasks.front()->get_file_descriptor()
+                );
         }
     }
 
@@ -3621,9 +3651,7 @@ public:
               )
             );
 
-        if ((!this->event.waked_up_by_time
-            && (!this->session_probe_virtual_channel_p
-                || !this->session_probe_virtual_channel_p->is_event_signaled()))
+        if (!this->event.waked_up_by_time
         || ((this->state == MOD_RDP_NEGO)
             && ((this->nego.state == RdpNego::NEGO_STATE_INITIAL)
                 || (this->nego.state == RdpNego::NEGO_STATE_FINAL)))) {
@@ -3766,6 +3794,7 @@ public:
             }
         }
 
+/*
         //LOG(LOG_INFO, "mod_rdp::draw_event() session_probe_virtual_channel_p");
         try{
             if (this->session_probe_virtual_channel_p) {
@@ -3784,6 +3813,7 @@ public:
 
             this->event.signal = BACK_EVENT_NEXT;
         }
+*/
         //LOG(LOG_INFO, "mod_rdp::draw_event() done");
     }   // draw_event
 
@@ -3793,6 +3823,27 @@ public:
         }
 
         return nullptr;
+    }
+
+    void process_secondary(time_t, gdi::GraphicApi&) override {
+        //LOG(LOG_INFO, "mod_rdp::process_secondary() session_probe_virtual_channel_p");
+        try{
+            if (this->session_probe_virtual_channel_p) {
+                this->session_probe_virtual_channel_p->process_event();
+            }
+        }
+        catch (Error const & e) {
+            if (e.id != ERR_SESSION_PROBE_ENDING_IN_PROGRESS)
+                throw;
+
+            this->end_session_reason.clear();
+            this->end_session_message.clear();
+
+            this->acl->disconnect_target();
+            this->acl->set_auth_error_message(TR("session_logoff_in_progress", this->lang));
+
+            session_probe_virtual_channel_p->get_event()->signal = BACK_EVENT_NEXT;
+        }
     }
 
     // 1.3.1.3 Deactivation-Reactivation Sequence

@@ -87,7 +87,7 @@ private:
              , Font const & font
              , bool wait_for_escape
              , Verbose debug_capture)
-    : InternalMod(front, width, height, font, Theme{})
+    : InternalMod(front, width, height, font, Theme{}, false)
     , auth_error_message(auth_error_message)
     , in_trans(&this->cctx, path.prefix, path.extension, 0)
     , reader(this->in_trans, /*begin_capture*/{0, 0}, /*end_capture*/{0, 0}, true, debug_capture)

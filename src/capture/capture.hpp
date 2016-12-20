@@ -30,6 +30,7 @@
 
 #include "capture/utils/capture_impl.hpp"
 #include "utils/apps/recording_progress.hpp"
+#include "capture/png_params.hpp"
 
 class Capture final
 : public gdi::GraphicBase<Capture>
@@ -157,12 +158,14 @@ private:
 
 public:
     Capture(
+        const CaptureFlags capture_flags,
         const timeval & now,
         int width,
         int height,
         int order_bpp,
         int capture_bpp,
-        unsigned zoom,
+        const PngParams png_params,
+        const FlvParams flv_params,
         bool real_time_image_capture,
         bool no_timestamp,
         auth_api * authentifier,
@@ -170,17 +173,16 @@ public:
         CryptoContext & cctx,
         Random & rnd,
         bool full_video,
-        UpdateProgressData * update_progress_data = nullptr,
-        bool force_capture_png_if_enable = false)
+        UpdateProgressData * update_progress_data,
+        bool force_capture_png_if_enable)
     : is_replay_mod(!authentifier)
-    , capture_wrm(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::wrm))
-    , capture_png(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png)
-                  && (!authentifier || ini.get<cfg::video::png_limit>() > 0))
+    , capture_wrm(bool(capture_flags & CaptureFlags::wrm))
+    , capture_png(bool(capture_flags & CaptureFlags::png) && (!authentifier || png_params.png_limit > 0))
     , capture_pattern_checker(authentifier && (
         ::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
      || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())))
-    , capture_ocr(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::ocr) || this->capture_pattern_checker)
-    , capture_flv(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::flv))
+    , capture_ocr(bool(capture_flags & CaptureFlags::ocr) || this->capture_pattern_checker)
+    , capture_flv(bool(capture_flags & CaptureFlags::flv))
     // capture wab only
     , capture_flv_full(full_video)
     // capture wab only
@@ -189,6 +191,8 @@ public:
     , capture_api(now, width / 2, height / 2)
     {
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
+
+//        FlvParams flv_params = flv_params_from_ini(width, height, ini);
 
         bool const enable_kbd
           = authentifier
@@ -250,6 +254,7 @@ public:
             cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
         }
 
+
         if (capture_drawable) {
             this->gd.reset(new Graphic(width, height, order_bpp, this->capture_api.mouse_trace()));
             this->graphic_api = &this->gd->get_graphic_api();
@@ -260,18 +265,14 @@ public:
                     this->pscrt.reset(new ImageRT(
                         now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,
-                        zoom,
-                        ini.get<cfg::video::png_interval>(),
-                        ini.get<cfg::video::png_limit>()
+                        png_params
                     ));
                 }
                 else if (force_capture_png_if_enable) {
                     this->psc.reset(new Image(
                         now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,
-                        zoom,
-                        ini.get<cfg::video::png_interval>()
-                    ));
+                        png_params));
                 }
             }
 
@@ -298,7 +299,7 @@ public:
                     authentifier && ini.get<cfg::session_log::enable_session_log>()
                 ));
             }
-
+            
             if (this->capture_flv) {
                 std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
                 if (ini.get<cfg::globals::capture_chunk>() && this->pmc) {
@@ -306,8 +307,8 @@ public:
                     notifier = this->notifier_next_video;
                 }
                 this->pvc.reset(new Video(
-                    now, record_path, basename, groupid, no_timestamp, zoom, this->gd->impl(),
-                    video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini),
+                    now, record_path, basename, groupid, no_timestamp, png_params.zoom, this->gd->impl(),
+                    flv_params,
                     ini.get<cfg::video::flv_break_interval>(), notifier
                 ));
             }
@@ -315,8 +316,7 @@ public:
             if (this->capture_flv_full) {
                 this->pvc_full.reset(new FullVideo(
                     now, record_path, basename, groupid, no_timestamp, this->gd->impl(),
-                    video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini)
-                ));
+                    flv_params));
             }
 
             if (this->capture_pattern_checker) {
@@ -355,9 +355,41 @@ public:
         if (this->pscrt) { this->pscrt->attach_apis(apis_register, ini); }
         if (this->psc) { this->psc->attach_apis(apis_register, ini); }
         if (this->pkc) { this->pkc->attach_apis(apis_register, ini); }
-        if (this->pvc) { this->pvc->attach_apis(apis_register, ini); }
-        if (this->pvc_full) { this->pvc_full->attach_apis(apis_register, ini); }
-        if (this->pmc) { this->pmc->attach_apis(apis_register, ini); }
+        if (this->pvc) { 
+            apis_register.capture_list.push_back(this->pvc->vc);
+            apis_register.graphic_snapshot_list->push_back(this->pvc->preparing_vc);
+            this->pvc->first_image.cap_elem = {apis_register.capture_list, this->pvc->first_image};
+            this->pvc->first_image.gcap_elem = {*apis_register.graphic_snapshot_list, this->pvc->first_image};
+        }
+        if (this->pvc_full) { 
+            apis_register.capture_list.push_back(this->pvc_full->vc);
+            apis_register.graphic_snapshot_list->push_back(this->pvc_full->preparing_vc);
+        }
+        if (this->pmc) {
+//    void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
+//        apis_register.capture_list.push_back(this->meta);
+//        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta)) {
+//            apis_register.kbd_input_list.push_back(this->meta);
+//            apis_register.capture_probe_list.push_back(this->meta);
+//        }
+
+//        if (this->enable_agent) {
+//            apis_register.capture_probe_list.push_back(this->session_log_agent);
+//        }
+//    }        
+//            this->pmc->attach_apis(apis_register, ini); 
+
+        apis_register.capture_list.push_back(this->pmc->meta);
+        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta)) {
+            apis_register.kbd_input_list.push_back(this->pmc->meta);
+            apis_register.capture_probe_list.push_back(this->pmc->meta);
+        }
+
+        if (this->pmc->enable_agent) {
+            apis_register.capture_probe_list.push_back(this->pmc->session_log_agent);
+        }
+
+        }
         if (this->ptc) { this->ptc->attach_apis(apis_register, ini); }
 
         if (this->gd) { this->gd->start(); }
