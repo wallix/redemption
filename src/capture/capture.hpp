@@ -261,18 +261,14 @@ public:
                     this->pscrt.reset(new ImageRT(
                         now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,
-                        png_params.zoom,
-                        ini.get<cfg::video::png_interval>(),
-                        png_params.png_limit
+                        png_params
                     ));
                 }
                 else if (force_capture_png_if_enable) {
                     this->psc.reset(new Image(
                         now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,
-                        png_params.zoom,
-                        ini.get<cfg::video::png_interval>()
-                    ));
+                        png_params));
                 }
             }
 

@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         // TODO remove this after unifying capture interface
         auth_api * authentifier = nullptr;
         // TODO remove this after unifying capture interface
-        PngParams png_params = {0, 0, 60, 100, 0};
+        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0};
         bool force_capture_png_if_enable = true;
         Capture capture(capture_flags,
             now, scr.cx, scr.cy, 24, 24, png_params
@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     // TODO remove this after unifying capture interface
     bool force_capture_png_if_enable = true;
 
-    PngParams png_params = {0, 0, 60, 100, 0};
+    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0};
     Capture capture(capture_flags
                    , now, scr.cx, scr.cy, 16, 16, png_params
                    , clear_png, no_timestamp, authentifier

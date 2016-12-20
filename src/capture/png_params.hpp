@@ -25,7 +25,7 @@ struct PngParams
 {
     unsigned png_width;
     unsigned png_height;
-    uint32_t png_interval;
+    std::chrono::milliseconds png_interval;
     unsigned zoom;
     uint32_t png_limit;
 };
