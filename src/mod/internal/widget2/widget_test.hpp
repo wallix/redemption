@@ -62,7 +62,19 @@ public:
         this->set_xy(left, top);
         this->set_wh(width, height);
 
-        this->module_host.set_xy(left, top);
-        this->module_host.set_wh(width, height);
+        this->module_host.set_xy(left + 8, top + 8);
+        this->module_host.set_wh(width - 8 * 2, height - 8 * 2);
+    }
+
+    // Widget2
+
+    void focus(int reason) override {
+        this->module_host.focus(reason);
+        Widget2::focus(reason);
+    }
+
+    void blur() override {
+        this->module_host.blur();
+        Widget2::blur();
     }
 };

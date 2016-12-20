@@ -168,6 +168,28 @@ public:
     using gdi::GraphicBase<WidgetModuleHost>::draw;
 
 public:
+    // RdpInput
+
+    void rdp_input_invalidate(const Rect & r) override
+    {
+        this->module_holder.rdp_input_invalidate(r);
+    }
+
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
+    {
+        this->module_holder.rdp_input_mouse(device_flags, x + this->x(), y + this->y(), keymap);
+    }
+
+    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
+    {
+        this->module_holder.rdp_input_scancode(param1, param2, param3, param4, keymap);
+    }
+
+    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
+    {
+        this->module_holder.rdp_input_synchronize(time, device_flags, param1, param2);
+    }
+
     // Widget2
 
     void draw(const Rect&/* clip*/) override {}
@@ -203,7 +225,7 @@ private:
     {
         gdi::GraphicApi& drawable = this->get_drawable();
 
-        drawable.draw(cmd, clip, args...);
+        drawable.draw(cmd, clip.offset(this->x(), this->y()), args...);
     }
 
     void draw_impl(const RDPBitmapData& bitmap_data, const Bitmap& bmp)
@@ -211,5 +233,21 @@ private:
         gdi::GraphicApi& drawable = this->get_drawable();
 
         drawable.draw(bitmap_data, bmp);
+    }
+
+    void draw(const RDPOpaqueRect& cmd, const Rect& clip) override {
+        const Rect widget_rect = this->get_rect();
+
+        Rect new_clip = clip.offset(this->x(), this->y());
+        new_clip = new_clip.intersect(widget_rect);
+        if (new_clip.isempty()) { return; }
+
+        RDPOpaqueRect new_cmd = cmd;
+
+        new_cmd.move(this->x(), this->y());
+        new_cmd.rect = new_cmd.rect.intersect(widget_rect);
+        if (new_cmd.rect.isempty()) { return; }
+
+        drawable.draw(new_cmd, new_clip);
     }
 };
