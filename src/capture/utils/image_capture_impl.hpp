@@ -28,8 +28,6 @@
 
 #include "utils/drawable.hpp"
 
-#include "apis_register.hpp"
-
 
 static void scale_data(uint8_t *dest, const uint8_t *src,
                        unsigned int dest_width, unsigned int src_width,
@@ -69,8 +67,9 @@ static void scale_data(uint8_t *dest, const uint8_t *src,
     }
 }
 
-class PngCapture final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
+class PngCapture : public gdi::UpdateConfigCaptureApi, public gdi::CaptureApi
 {
+public:
     OutFilenameSequenceTransport trans;
     timeval start_capture;
     std::chrono::microseconds frame_interval;
@@ -82,7 +81,6 @@ class PngCapture final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
     Drawable & drawable;
     std::unique_ptr<uint8_t[]> scaled_buffer;
 
-public:
     PngCapture(
         const timeval & now, auth_api * authentifier, Drawable & drawable,
         const char * record_tmp_path, const char * basename, int groupid,
@@ -95,11 +93,6 @@ public:
     , scaled_height(drawable.height())
     , drawable(drawable)
     {}
-
-    void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
-        apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this));
-        apis_register.graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this));
-    }
 
 private:
     void update_config(Inifile const & ini) override {
@@ -190,8 +183,9 @@ private:
 
 };
 
-class PngCaptureRT final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
+class PngCaptureRT : public gdi::UpdateConfigCaptureApi, public gdi::CaptureApi
 {
+public:
     OutFilenameSequenceTransport trans;
     uint32_t num_start = 0;
     unsigned png_limit;
@@ -209,7 +203,6 @@ class PngCaptureRT final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
     
     bool enable_rt_display = false;
 
-public:
     PngCaptureRT(
         const timeval & now, auth_api * authentifier, Drawable & drawable,
         const char * record_tmp_path, const char * basename, int groupid,
@@ -240,42 +233,6 @@ public:
             ::unlink(this->trans.seqgen()->get(this->num_start));
         }
     }
-
-    void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
-        this->enable_rt_display = ini.get<cfg::video::rt_display>();
-        apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this));
-        apis_register.graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this));
-        apis_register.update_config_capture_list.push_back(static_cast<gdi::UpdateConfigCaptureApi&>(*this));
-    }
-
-//    void next(const timeval & now) {
-//        tm ptm;
-//        localtime_r(&now.tv_sec, &ptm);
-//        this->drawable.trace_timestamp(ptm);
-//        if (this->zoom_factor == 100) {
-//            ::transport_dump_png24(
-//                this->trans, this->drawable.data(),
-//                this->drawable.width(), this->drawable.height(),
-//                this->drawable.rowsize(), true);
-//        }
-//        else {
-//            scale_data(
-//                this->scaled_buffer.get(), this->drawable.data(),
-//                this->scaled_width, this->drawable.width(),
-//                this->scaled_height, this->drawable.height(),
-//                this->drawable.rowsize());
-//            ::transport_dump_png24(
-//                this->trans, this->scaled_buffer.get(),
-//                this->scaled_width, this->scaled_height,
-//                this->scaled_width * 3, false);
-//        }
-//        if (this->png_limit && this->trans.get_seqno() >= this->png_limit) {
-//            // unlink may fail, for instance if file does not exist, just don't care
-//            ::unlink(this->trans.seqgen()->get(this->trans.get_seqno() - this->png_limit));
-//        }
-//        this->trans.next();
-//        this->drawable.clear_timestamp();
-//    }
 
 private:
     void update_config(Inifile const & ini) override {
