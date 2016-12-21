@@ -26,12 +26,14 @@
 
 #define LOGNULL
 //#define LOGPRINT
-
-#include "core/RDP/RDPDrawable.hpp"
-
-#include "core/RDP/caches/glyphcache.hpp"
-
 #include "utils/log.hpp"
+
+#include <memory>
+
+#include "utils/png.hpp"
+#include "utils/drawable.hpp"
+#include "core/RDP/RDPDrawable.hpp"
+#include "core/RDP/caches/glyphcache.hpp"
 #include "check_sig.hpp"
 #include "utils/png.hpp"
 #include "utils/rect.hpp"
@@ -39,11 +41,126 @@
 #include "transport/out_file_transport.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 #include "transport/test_transport.hpp"
-#include "capture/drawable_to_file.hpp"
 #include "utils/difftimeval.hpp"
 #include "gdi/capture_api.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 
+class DrawableToFile
+{
+protected:
+    Transport & trans;
+    unsigned zoom_factor;
+    unsigned scaled_width;
+    unsigned scaled_height;
+
+    const Drawable & drawable;
+
+private:
+    std::unique_ptr<uint8_t[]> scaled_buffer;
+
+public:
+    DrawableToFile(Transport & trans, const Drawable & drawable, unsigned zoom)
+    : trans(trans)
+    , zoom_factor(std::min(zoom, 100u))
+    , scaled_width(drawable.width())
+    , scaled_height(drawable.height())
+    , drawable(drawable)
+    {
+        const unsigned zoom_width = (this->drawable.width() * this->zoom_factor) / 100;
+        const unsigned zoom_height = (this->drawable.height() * this->zoom_factor) / 100;
+        this->scaled_width = (zoom_width + 3) & 0xFFC;
+        this->scaled_height = zoom_height;
+        if (this->zoom_factor != 100) {
+            this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
+        }
+    }
+
+    ~DrawableToFile() = default;
+
+    /// \param  percent  0 to 100 or 100 if greater
+    void zoom(unsigned percent) {
+        percent = std::min(percent, 100u);
+        const unsigned zoom_width = (this->drawable.width() * percent) / 100;
+        const unsigned zoom_height = (this->drawable.height() * percent) / 100;
+        this->zoom_factor = percent;
+        this->scaled_width = (zoom_width + 3) & 0xFFC;
+        this->scaled_height = zoom_height;
+        if (this->zoom_factor != 100) {
+            this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
+        }
+    }
+
+    bool logical_frame_ended() const {
+        return this->drawable.logical_frame_ended;
+    }
+
+    void flush() {
+        if (this->zoom_factor == 100) {
+            this->dump24();
+        }
+        else {
+            this->scale_dump24();
+        }
+    }
+
+private:
+    void dump24() const {
+        ::transport_dump_png24(
+            this->trans, this->drawable.data(),
+            this->drawable.width(), this->drawable.height(),
+            this->drawable.rowsize(), true);
+    }
+
+    void scale_dump24() const {
+        scale_data(
+            this->scaled_buffer.get(), this->drawable.data(),
+            this->scaled_width, this->drawable.width(),
+            this->scaled_height, this->drawable.height(),
+            this->drawable.rowsize());
+        ::transport_dump_png24(
+            this->trans, this->scaled_buffer.get(),
+            this->scaled_width, this->scaled_height,
+            this->scaled_width * 3, false);
+    }
+
+    static void scale_data(uint8_t *dest, const uint8_t *src,
+                           unsigned int dest_width, unsigned int src_width,
+                           unsigned int dest_height, unsigned int src_height,
+                           unsigned int src_rowsize) {
+        const uint32_t Bpp = 3;
+        unsigned int y_pixels = dest_height;
+        unsigned int y_int_part = src_height / dest_height * src_rowsize;
+        unsigned int y_fract_part = src_height % dest_height;
+        unsigned int yE = 0;
+        unsigned int x_int_part = src_width / dest_width * Bpp;
+        unsigned int x_fract_part = src_width % dest_width;
+
+        while (y_pixels-- > 0) {
+            unsigned int xE = 0;
+            const uint8_t * x_src = src;
+            unsigned int x_pixels = dest_width;
+            while (x_pixels-- > 0) {
+                dest[0] = x_src[2];
+                dest[1] = x_src[1];
+                dest[2] = x_src[0];
+
+                dest += Bpp;
+                x_src += x_int_part;
+                xE += x_fract_part;
+                if (xE >= dest_width) {
+                    xE -= dest_width;
+                    x_src += Bpp;
+                }
+            }
+            src += y_int_part;
+            yE += y_fract_part;
+            if (yE >= dest_height) {
+                yE -= dest_height;
+                src += src_rowsize;
+            }
+        }
+    }
+};
 
 
 inline bool check_sig(RDPDrawable & data, char * message, const char * shasig)
@@ -497,8 +614,6 @@ BOOST_AUTO_TEST_CASE(TestTransportPngOneRedScreen)
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     d.draw(cmd, screen_rect);
     TestTransport trans("", 0, expected_red, sizeof(expected_red)-1);
-    //int fd = open("TestTransportPNG.png", O_WRONLY|O_CREAT, 0777);
-    //OutFileTransport trans(fd);
     dump_png24(d.impl(), trans, true);
 }
 
@@ -506,11 +621,10 @@ BOOST_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
 {
     CheckTransport trans(expected_red, sizeof(expected_red)-1);
     RDPDrawable drawable(800, 600, 24);
-    DrawableToFile d(trans, drawable.impl(), 100);
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
-    d.flush();
+    dump_png24(drawable.impl(), trans, true);
 }
 
 BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
@@ -529,11 +643,10 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
 
     OutFileTransport trans(fd);
     RDPDrawable drawable(800, 600, 24);
-    DrawableToFile d(trans, drawable.impl(), 100);
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
-    d.flush();
+    dump_png24(drawable.impl(), trans, true);
     trans.disconnect(); // close file before checking size
     BOOST_CHECK_EQUAL(2786, filesize(filename));
     ::unlink(filename);
@@ -599,8 +712,12 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     } trans;
     RDPDrawable drawable(800, 600, 24);
 
-    class ImageCaptureLocal : private DrawableToFile
+    class ImageCaptureLocal
     {
+    private:
+        Transport & trans;
+        const Drawable & drawable;
+
         timeval start_capture;
         std::chrono::microseconds frame_interval;
 
@@ -608,10 +725,12 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
         ImageCaptureLocal (
             const timeval & now, const Drawable & drawable, Transport & trans,
             std::chrono::microseconds png_interval)
-        : DrawableToFile(trans, drawable, 100)
+        : trans(trans)
+        , drawable(drawable)
         , start_capture(now)
         , frame_interval(png_interval)
-        {}
+        {
+        }
 
         std::chrono::microseconds do_snapshot(
             const timeval & now, int x, int y, bool ignore_frame_in_timeval
@@ -644,6 +763,22 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
                 }
             }
             return microseconds(interval - duration);
+        }
+
+        bool logical_frame_ended() const {
+            return this->drawable.logical_frame_ended;
+        }
+
+        void flush() {
+            this->dump24();
+        }
+
+    private:
+        void dump24() const {
+            ::transport_dump_png24(
+                this->trans, this->drawable.data(),
+                this->drawable.width(), this->drawable.height(),
+                this->drawable.rowsize(), true);
         }
     };
 
