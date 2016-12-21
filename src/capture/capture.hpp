@@ -27,6 +27,9 @@
 #include "utils/sugar/array_view.hpp"
 #include "capture/png_params.hpp"
 #include "capture/flv_params.hpp"
+#include "capture/sequencer.hpp"
+#include "capture/video_capture.hpp"
+#include "utils/pattutils.hpp"
 
 template<class T>
 struct ApiRegisterElement
@@ -56,15 +59,47 @@ private:
     std::size_t i = ~std::size_t{};
 };
 
+#include "configs/config.hpp"
 
+#include "transport/out_meta_sequence_transport.hpp"
+#include "utils/apps/recording_progress.hpp"
+#include "utils/difftimeval.hpp"
+#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 
 #include "capture/utils/graphic_capture_impl.hpp"
-#include "capture/utils/wrm_capture_impl.hpp"
 #include "capture/utils/kbd_capture_impl.hpp"
 #include "capture/utils/image_capture_impl.hpp"
 #include "capture/utils/capture_apis_impl.hpp"
-#include "capture/utils/capture_impl.hpp"
-#include "utils/apps/recording_progress.hpp"
+#include "core/RDP/caches/bmpcache.hpp"
+#include "core/RDP/caches/glyphcache.hpp"
+#include "core/RDP/caches/pointercache.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
+#include "capture/utils/kbd_capture_impl.hpp"
+#include "capture/GraphicToFile.hpp"
+#include "gdi/capture_api.hpp"
+#include "gdi/dump_png24.hpp"
+#include "capture/session_log_agent.hpp"
+#include "capture/title_extractors/agent_title_extractor.hpp"
+#include "capture/title_extractors/ocr_title_filter.hpp"
+#include "capture/title_extractors/ocr_titles_extractor.hpp"
+#include "capture/title_extractors/ppocr_titles_extractor.hpp"
+#include "capture/title_extractors/ocr_title_extractor_builder.hpp"
+#include "capture/utils/pattern_checker.hpp"
+
+#include "capture/session_meta.hpp"
+#include "utils/difftimeval.hpp"
+#include "transport/transport.hpp"
+#include "gdi/capture_api.hpp"
+#include "capture/utils/image_capture_impl.hpp"
+
+#include "openssl_crypto.hpp"
+
+#include "utils/log.hpp"
+#include "transport/out_file_transport.hpp"
+#include "capture/cryptofile.hpp"
+#include "utils/urandom_read.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/sugar/local_fd.hpp"
 
 namespace gdi {
     class GraphicApi;
@@ -86,6 +121,710 @@ struct ApisRegister
     std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> & update_config_capture_list;
 };
 
+
+struct PreparingWhenFrameMarkerEnd final : gdi::CaptureApi
+{
+    PreparingWhenFrameMarkerEnd(VideoCapture & vc)
+    : vc(vc)
+    {}
+
+private:
+    VideoCapture & vc;
+
+    std::chrono::microseconds do_snapshot(
+        const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
+    ) override {
+        vc.preparing_video_frame();
+        return std::chrono::microseconds{};
+    }
+};
+
+class FullVideoCaptureImpl
+{
+    OutFilenameSequenceSeekableTransport trans;
+public:
+    VideoCapture vc;
+    PreparingWhenFrameMarkerEnd preparing_vc{vc};
+
+    FullVideoCaptureImpl(
+        const timeval & now,
+        const char * const record_path,
+        const char * const basename,
+        const int groupid,
+        bool no_timestamp,
+        const Drawable & drawable,
+        FlvParams flv_params)
+    : trans(
+        FilenameGenerator::PATH_FILE_EXTENSION,
+        record_path, basename, ("." + flv_params.codec).c_str(), groupid)
+    , vc(now, this->trans, drawable, no_timestamp, std::move(flv_params))
+    {
+        ::unlink((std::string(record_path) + basename + "." + flv_params.codec).c_str());
+    }
+
+    void encoding_video_frame() {
+        this->vc.encoding_video_frame();
+    }
+
+    void request_full_cleaning() {
+        this->trans.request_full_cleaning();
+    }
+};
+
+
+struct NotifyNextVideo : private noncopyable
+{
+    enum class reason { sequenced, external };
+    virtual void notify_next_video(const timeval& now, reason) = 0;
+    virtual ~NotifyNextVideo() = default;
+};
+
+class SequencedVideoCaptureImpl
+{
+    class VideoTransport final : public OutFilenameSequenceSeekableTransport
+    {
+        using transport_base = OutFilenameSequenceSeekableTransport;
+
+    public:
+        VideoTransport(
+            const char * const record_path,
+            const char * const basename,
+            const char * const suffix,
+            const int groupid
+        )
+        : transport_base(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_path, basename, suffix, groupid)
+        {
+            this->remove_current_path();
+        }
+
+        bool next() override {
+            if (transport_base::next()) {
+                this->remove_current_path();
+                return true;
+            }
+            return false;
+        }
+
+    private:
+        void remove_current_path() {
+            const char * const path = this->seqgen()->get(this->get_seqno());
+            ::unlink(path);
+        }
+    };
+
+
+    struct ImageToFile
+    {
+        Transport & trans;
+        unsigned zoom_factor;
+        unsigned scaled_width;
+        unsigned scaled_height;
+
+        const Drawable & drawable;
+
+    private:
+        std::unique_ptr<uint8_t[]> scaled_buffer;
+
+    public:
+        ImageToFile(Transport & trans, const Drawable & drawable, unsigned zoom)
+        : trans(trans)
+        , zoom_factor(std::min(zoom, 100u))
+        , scaled_width(drawable.width())
+        , scaled_height(drawable.height())
+        , drawable(drawable)
+        {
+            const unsigned zoom_width = (this->drawable.width() * this->zoom_factor) / 100;
+            const unsigned zoom_height = (this->drawable.height() * this->zoom_factor) / 100;
+            this->scaled_width = (zoom_width + 3) & 0xFFC;
+            this->scaled_height = zoom_height;
+            if (this->zoom_factor != 100) {
+                this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
+            }
+        }
+
+        ~ImageToFile() = default;
+
+        /// \param  percent  0 to 100 or 100 if greater
+        void zoom(unsigned percent) {
+            percent = std::min(percent, 100u);
+            const unsigned zoom_width = (this->drawable.width() * percent) / 100;
+            const unsigned zoom_height = (this->drawable.height() * percent) / 100;
+            this->zoom_factor = percent;
+            this->scaled_width = (zoom_width + 3) & 0xFFC;
+            this->scaled_height = zoom_height;
+            if (this->zoom_factor != 100) {
+                this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
+            }
+        }
+
+        void flush() {
+            if (this->zoom_factor == 100) {
+                this->dump24();
+            }
+            else {
+                this->scale_dump24();
+            }
+        }
+
+        void dump24() const {
+            ::transport_dump_png24(
+                this->trans, this->drawable.data(),
+                this->drawable.width(), this->drawable.height(),
+                this->drawable.rowsize(), true);
+        }
+
+        void scale_dump24() const {
+            scale_data(
+                this->scaled_buffer.get(), this->drawable.data(),
+                this->scaled_width, this->drawable.width(),
+                this->scaled_height, this->drawable.height(),
+                this->drawable.rowsize());
+            ::transport_dump_png24(
+                this->trans, this->scaled_buffer.get(),
+                this->scaled_width, this->scaled_height,
+                this->scaled_width * 3, false);
+        }
+
+        static void scale_data(uint8_t *dest, const uint8_t *src,
+                               unsigned int dest_width, unsigned int src_width,
+                               unsigned int dest_height, unsigned int src_height,
+                               unsigned int src_rowsize) {
+            const uint32_t Bpp = 3;
+            unsigned int y_pixels = dest_height;
+            unsigned int y_int_part = src_height / dest_height * src_rowsize;
+            unsigned int y_fract_part = src_height % dest_height;
+            unsigned int yE = 0;
+            unsigned int x_int_part = src_width / dest_width * Bpp;
+            unsigned int x_fract_part = src_width % dest_width;
+
+            while (y_pixels-- > 0) {
+                unsigned int xE = 0;
+                const uint8_t * x_src = src;
+                unsigned int x_pixels = dest_width;
+                while (x_pixels-- > 0) {
+                    dest[0] = x_src[2];
+                    dest[1] = x_src[1];
+                    dest[2] = x_src[0];
+
+                    dest += Bpp;
+                    x_src += x_int_part;
+                    xE += x_fract_part;
+                    if (xE >= dest_width) {
+                        xE -= dest_width;
+                        x_src += Bpp;
+                    }
+                }
+                src += y_int_part;
+                yE += y_fract_part;
+                if (yE >= dest_height) {
+                    yE -= dest_height;
+                    src += src_rowsize;
+                }
+            }
+        }
+
+        bool has_first_img = false;
+
+        void breakpoint_image(const timeval& now)
+        {
+            tm ptm;
+            localtime_r(&now.tv_sec, &ptm);
+            //const_cast<Drawable&>(this->drawable).trace_mouse();
+            const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
+            this->flush();
+            const_cast<Drawable&>(this->drawable).clear_timestamp();
+            //const_cast<Drawable&>(this->drawable).clear_mouse();
+            this->has_first_img = true;
+            this->trans.next();
+        }
+    };
+
+    struct VideoSequencerAction
+    {
+        SequencedVideoCaptureImpl & impl;
+
+        void operator()(const timeval& now) const {
+            this->impl.next_video_impl(now, NotifyNextVideo::reason::sequenced);
+        }
+    };
+
+    using VideoSequencer = SequencerCapture<VideoSequencerAction>;
+
+    // first next_video is ignored
+    struct FirstImage : gdi::CaptureApi
+    {
+        using capture_list_t = std::vector<std::reference_wrapper<gdi::CaptureApi>>;
+
+        SequencedVideoCaptureImpl & impl;
+        ApiRegisterElement<gdi::CaptureApi> cap_elem;
+        ApiRegisterElement<gdi::CaptureApi> gcap_elem;
+
+        using seconds = std::chrono::seconds;
+        using microseconds = std::chrono::microseconds;
+
+        const timeval start_capture;
+
+        FirstImage(timeval const & now, SequencedVideoCaptureImpl & impl)
+        : impl(impl)
+        , start_capture(now)
+        {}
+
+        std::chrono::microseconds do_snapshot(
+            const timeval& now, int x, int y, bool ignore_frame_in_timeval
+        ) override {
+            microseconds ret;
+
+            auto const duration = microseconds(difftimeval(now, this->start_capture));
+            auto const interval = microseconds(seconds(3))/2;
+            if (duration >= interval) {
+                auto video_interval = this->impl.video_sequencer.get_interval();
+                if (this->impl.ic.drawable.logical_frame_ended || duration > seconds(2) || duration >= video_interval) {
+                    this->impl.ic.breakpoint_image(now);
+                    assert(this->cap_elem == *this);
+                    assert(this->gcap_elem == *this);
+                    this->cap_elem = this->impl.video_sequencer;
+                    this->gcap_elem = this->impl.video_sequencer;
+
+                    ret = video_interval;
+                }
+                else {
+                    ret = interval / 3;
+                }
+            }
+            else {
+                ret = microseconds(interval - duration);
+            }
+
+            return std::min(ret, this->impl.video_sequencer.snapshot(now, x, y, ignore_frame_in_timeval));
+        }
+
+        void do_resume_capture(const timeval& now) override { this->impl.video_sequencer.resume_capture(now); }
+        void do_pause_capture(const timeval& now) override { this->impl.video_sequencer.pause_capture(now); }
+    };
+
+public:
+    VideoTransport vc_trans;
+    VideoCapture vc;
+    PreparingWhenFrameMarkerEnd preparing_vc{vc};
+
+    OutFilenameSequenceTransport ic_trans;
+    ImageToFile ic;
+
+    VideoSequencer video_sequencer;
+    FirstImage first_image;
+
+    NotifyNextVideo & next_video_notifier;
+
+    void next_video_impl(const timeval& now, NotifyNextVideo::reason reason) {
+        this->video_sequencer.reset_now(now);
+        if (!this->ic.has_first_img) {
+            this->ic.breakpoint_image(now);
+            this->first_image.cap_elem = this->video_sequencer;
+            this->first_image.gcap_elem = this->video_sequencer;
+        }
+        this->vc.next_video();
+        this->ic.breakpoint_image(now);
+        this->next_video_notifier.notify_next_video(now, reason);
+    }
+
+public:
+    SequencedVideoCaptureImpl(
+        const timeval & now,
+        const char * const record_path,
+        const char * const basename,
+        const int groupid,
+        bool no_timestamp,
+        unsigned image_zoom,
+        const Drawable & drawable,
+        FlvParams flv_params,
+        std::chrono::microseconds video_interval,
+        NotifyNextVideo & next_video_notifier)
+    : vc_trans(record_path, basename, ("." + flv_params.codec).c_str(), groupid)
+    , vc(now, this->vc_trans, drawable, no_timestamp, std::move(flv_params))
+    , ic_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_path, basename, ".png", groupid)
+    , ic(this->ic_trans, drawable, image_zoom)
+    , video_sequencer(
+        now, video_interval > std::chrono::microseconds(0) ? video_interval : std::chrono::microseconds::max(),
+        VideoSequencerAction{*this})
+    , first_image(now, *this)
+    , next_video_notifier(next_video_notifier)
+    {}
+
+    void next_video(const timeval& now) {
+        this->next_video_impl(now, NotifyNextVideo::reason::external);
+    }
+
+    void encoding_video_frame() {
+        this->vc.encoding_video_frame();
+    }
+
+    void request_full_cleaning() {
+        this->vc_trans.request_full_cleaning();
+        this->ic_trans.request_full_cleaning();
+    }
+};
+
+
+class MetaCaptureImpl
+{
+public:
+    local_fd fd;
+    OutFileTransport meta_trans;
+    SessionMeta meta;
+    SessionLogAgent session_log_agent;
+    bool enable_agent;
+
+    MetaCaptureImpl(
+        const timeval & now,
+        std::string record_path,
+        const char * const basename,
+        bool enable_agent)
+    : fd([](const char * filename){
+        int fd = ::open(filename, O_CREAT | O_TRUNC | O_WRONLY, 0440);
+        if (fd < 0) {
+            LOG(LOG_ERR, "failed opening=%s\n", filename);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+        return fd;
+    }(record_path.append(basename).append(".meta").c_str()))
+    , meta_trans(this->fd.get())
+    , meta(now, this->meta_trans)
+    , session_log_agent(this->meta)
+    , enable_agent(enable_agent)
+    {
+    }
+
+    SessionMeta & get_session_meta() {
+        return this->meta;
+    }
+
+    void request_full_cleaning() {
+        this->meta_trans.request_full_cleaning();
+    }
+};
+
+
+struct NotifyTitleChanged : private noncopyable
+{
+    virtual void notify_title_changed(const timeval & now, array_view_const_char title) = 0;
+    virtual ~NotifyTitleChanged() = default;
+};
+
+class TitleCaptureImpl : public gdi::CaptureApi, public gdi::CaptureProbeApi
+{
+public:
+    OcrTitleExtractorBuilder ocr_title_extractor_builder;
+    AgentTitleExtractor agent_title_extractor;
+
+    std::reference_wrapper<TitleExtractorApi> title_extractor;
+
+    timeval  last_ocr;
+    std::chrono::microseconds usec_ocr_interval;
+
+    NotifyTitleChanged & notify_title_changed;
+
+    TitleCaptureImpl(
+        const timeval & now,
+        auth_api * authentifier,
+        const Drawable & drawable,
+        const Inifile & ini,
+        NotifyTitleChanged & notify_title_changed)
+    : ocr_title_extractor_builder(
+        drawable, authentifier != nullptr,
+        ini.get<cfg::ocr::version>(),
+        static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
+        ini.get<cfg::ocr::on_title_bar_only>(),
+        ini.get<cfg::ocr::max_unrecog_char_rate>())
+    , title_extractor(this->ocr_title_extractor_builder.get_title_extractor())
+    , last_ocr(now)
+    , usec_ocr_interval(ini.get<cfg::ocr::interval>())
+    , notify_title_changed(notify_title_changed)
+    {
+    }
+
+
+    std::chrono::microseconds do_snapshot(
+        const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
+    ) override {
+        std::chrono::microseconds const diff {difftimeval(now, this->last_ocr)};
+
+        using std::chrono::milliseconds;
+        using std::chrono::duration_cast;
+
+        if (diff >= this->usec_ocr_interval) {
+            this->last_ocr = now;
+
+            auto title = this->title_extractor.get().extract_title();
+
+            if (title.data()/* && title.size()*/) {
+                notify_title_changed.notify_title_changed(now, title);
+            }
+
+            return this->usec_ocr_interval;
+        }
+        else {
+            return this->usec_ocr_interval - diff;
+        }
+    }
+
+    void session_update(timeval const & /*now*/, array_view_const_char message) override {
+        bool const enable_probe = (::strcmp(message.data(), "Probe.Status=Unknown") != 0);
+        if (enable_probe) {
+            this->title_extractor = this->agent_title_extractor;
+        }
+        else {
+            this->title_extractor = this->ocr_title_extractor_builder.get_title_extractor();
+        }
+
+        this->agent_title_extractor.session_update(message);
+    }
+
+    void possible_active_window_change() override {}
+};
+
+class WrmCaptureImpl : public gdi::KbdInputApi, public gdi::CaptureApi
+{
+public:
+    BmpCache     bmp_cache;
+    GlyphCache   gly_cache;
+    PointerCache ptr_cache;
+
+    DumpPng24FromRDPDrawableAdapter dump_png24_api;
+
+    struct TransportVariant
+    {
+        union Variant
+        {
+            OutMetaSequenceTransportWithSum out_with_sum;
+            CryptoOutMetaSequenceTransport out_crypto;
+            OutMetaSequenceTransport out;
+
+            struct {} dummy;
+            Variant() : dummy() {}
+            ~Variant() {}
+        } variant;
+        ::Transport * trans;
+
+        template<class... Ts>
+        TransportVariant(
+            TraceType trace_type,
+            CryptoContext & cctx,
+            Random & rnd,
+            const char * path,
+            const char * hash_path,
+            const char * basename,
+            timeval const & now,
+            uint16_t width,
+            uint16_t height,
+            const int groupid,
+            auth_api * authentifier
+        ) {
+            // TODO there should only be one outmeta, not two. Capture code should not really care if file is encrypted or not. Here is not the right level to manage anything related to encryption.
+            // TODO Also we may wonder why we are encrypting wrm and not png (This is related to the path split between png and wrm). We should stop and consider what we should actually do
+            switch (trace_type) {
+                case TraceType::cryptofile:
+                    this->trans = new (&this->variant.out_crypto)
+                    CryptoOutMetaSequenceTransport(
+                        cctx, rnd, path, hash_path, basename, now,
+                        width, height, groupid, authentifier);
+                    break;
+                case TraceType::localfile_hashed:
+                    this->trans = new (&this->variant.out_with_sum)
+                    OutMetaSequenceTransportWithSum(
+                        cctx, path, hash_path, basename, now,
+                        width, height, groupid, authentifier);
+                    break;
+                default:
+                case TraceType::localfile:
+                    this->trans = new (&this->variant.out)
+                    OutMetaSequenceTransport(
+                        path, hash_path, basename, now,
+                        width, height, groupid, authentifier);
+                    break;
+            }
+        }
+
+        TransportVariant & operator = (TransportVariant const &) = delete;
+
+        ~TransportVariant() {
+            this->trans->~Transport();
+        }
+    } trans_variant;
+
+
+    struct Serializer final : GraphicToFile {
+        using GraphicToFile::GraphicToFile;
+
+        using GraphicToFile::GraphicToFile::draw;
+        using GraphicToFile::GraphicToFile::capture_bpp;
+
+        void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
+            auto compress_and_draw_bitmap_update = [&bitmap_data, this](const Bitmap & bmp) {
+                StaticOutStream<65535> bmp_stream;
+                bmp.compress(this->capture_bpp, bmp_stream);
+
+                RDPBitmapData target_bitmap_data = bitmap_data;
+
+                target_bitmap_data.bits_per_pixel = bmp.bpp();
+                target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
+                target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
+
+                GraphicToFile::draw(target_bitmap_data, bmp);
+            };
+
+            if (bmp.bpp() > this->capture_bpp) {
+                // reducing the color depth of image.
+                Bitmap capture_bmp(this->capture_bpp, bmp);
+                compress_and_draw_bitmap_update(capture_bmp);
+            }
+            else if (!bmp.has_data_compressed()) {
+                compress_and_draw_bitmap_update(bmp);
+            }
+            else {
+                GraphicToFile::draw(bitmap_data, bmp);
+            }
+        }
+
+        WrmCaptureImpl * impl = nullptr;
+        void enable_kbd_input_mask(bool enable) override {
+            this->impl->enable_kbd_input_mask(enable);
+        }
+    } graphic_to_file;
+
+    class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi
+    {
+        timeval start_native_capture;
+        uint64_t inter_frame_interval_native_capture;
+
+        timeval start_break_capture;
+        uint64_t inter_frame_interval_start_break_capture;
+
+        GraphicToFile & recorder;
+        uint64_t time_to_wait;
+
+    public:
+        NativeCaptureLocal(
+            GraphicToFile & recorder,
+            const timeval & now,
+            std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval,
+            std::chrono::seconds break_interval
+        )
+        : start_native_capture(now)
+        , inter_frame_interval_native_capture(
+            std::chrono::duration_cast<std::chrono::microseconds>(frame_interval).count())
+        , start_break_capture(now)
+        , inter_frame_interval_start_break_capture(
+            std::chrono::duration_cast<std::chrono::microseconds>(break_interval).count())
+        , recorder(recorder)
+        , time_to_wait(0)
+        {}
+
+        ~NativeCaptureLocal() override {
+            this->recorder.sync();
+        }
+
+        // toggles externally genareted breakpoint.
+        void external_breakpoint() override {
+            this->recorder.breakpoint();
+        }
+
+        void external_time(const timeval & now) override {
+            this->recorder.sync();
+            this->recorder.timestamp(now);
+        }
+
+    private:
+        std::chrono::microseconds do_snapshot(
+            const timeval & now, int x, int y, bool ignore_frame_in_timeval
+        ) override {
+            (void)ignore_frame_in_timeval;
+            if (difftimeval(now, this->start_native_capture)
+                    >= this->inter_frame_interval_native_capture) {
+                this->recorder.timestamp(now);
+                this->time_to_wait = this->inter_frame_interval_native_capture;
+                this->recorder.mouse(static_cast<uint16_t>(x), static_cast<uint16_t>(y));
+                this->start_native_capture = now;
+                if ((difftimeval(now, this->start_break_capture) >=
+                     this->inter_frame_interval_start_break_capture)) {
+                    this->recorder.breakpoint();
+                    this->start_break_capture = now;
+                }
+            }
+            else {
+                this->time_to_wait = this->inter_frame_interval_native_capture - difftimeval(now, this->start_native_capture);
+            }
+            return std::chrono::microseconds{this->time_to_wait};
+        }
+    } nc;
+
+    ApiRegisterElement<gdi::KbdInputApi> kbd_element;
+
+public:
+    WrmCaptureImpl(
+        const timeval & now, uint8_t capture_bpp, TraceType trace_type,
+        CryptoContext & cctx, Random & rnd,
+        const char * record_path, const char * hash_path, const char * basename,
+        int groupid, auth_api * authentifier,
+        RDPDrawable & drawable, const Inifile & ini
+    )
+    : bmp_cache(
+        BmpCache::Recorder, capture_bpp, 3, false,
+        BmpCache::CacheOption(600, 768, false),
+        BmpCache::CacheOption(300, 3072, false),
+        BmpCache::CacheOption(262, 12288, false))
+    , ptr_cache(/*pointerCacheSize=*/0x19)
+    , dump_png24_api{drawable}
+    , trans_variant(
+        trace_type, cctx, rnd, record_path, hash_path, basename, now,
+        drawable.width(), drawable.height(), groupid, authentifier)
+    , graphic_to_file(
+        now, *this->trans_variant.trans, drawable.width(), drawable.height(), capture_bpp,
+        this->bmp_cache, this->gly_cache, this->ptr_cache, this->dump_png24_api,
+        ini.get<cfg::video::wrm_compression_algorithm>(), GraphicToFile::SendInput::YES,
+        to_verbose_flags(ini.get<cfg::debug::capture>())
+        | (ini.get<cfg::debug::primary_orders>()
+            ? GraphicToFile::Verbose::primary_orders   : GraphicToFile::Verbose::none)
+        | (ini.get<cfg::debug::secondary_orders>()
+            ? GraphicToFile::Verbose::secondary_orders : GraphicToFile::Verbose::none)
+        | (ini.get<cfg::debug::bitmap_update>()
+            ? GraphicToFile::Verbose::bitmap_update    : GraphicToFile::Verbose::none)
+    )
+    , nc(this->graphic_to_file, now, ini.get<cfg::video::frame_interval>(), ini.get<cfg::video::break_interval>())
+    {}
+
+
+    void enable_kbd_input_mask(bool enable) override {
+        assert(this->kbd_element == *this || this->kbd_element == this->graphic_to_file);
+        this->kbd_element = enable
+            ? static_cast<gdi::KbdInputApi&>(*this)
+            : static_cast<gdi::KbdInputApi&>(this->graphic_to_file);
+    }
+
+    void send_timestamp_chunk(timeval const & now, bool ignore_time_interval) {
+        this->graphic_to_file.timestamp(now);
+        this->graphic_to_file.send_timestamp_chunk(ignore_time_interval);
+    }
+
+    void request_full_cleaning() {
+        this->trans_variant.trans->request_full_cleaning();
+    }
+
+    std::chrono::microseconds do_snapshot(
+        const timeval & now, int x, int y, bool ignore_frame_in_timeval
+    ) override {
+        return this->nc.snapshot(now, x, y, ignore_frame_in_timeval);
+    }
+
+    void do_resume_capture(const timeval& now) override {
+        this->trans_variant.trans->next();
+        this->send_timestamp_chunk(now, true);
+    }
+
+    // shadow text
+    bool kbd_input(const timeval& now, uint32_t) override {
+        return this->graphic_to_file.kbd_input(now, '*');
+    }
+};
 
 
 class Capture final
@@ -631,3 +1370,74 @@ public:
         this->capture_probe_api.possible_active_window_change();
     }
 };
+
+
+class NativeCapture
+: public gdi::CaptureApi
+, public gdi::ExternalCaptureApi
+{
+    timeval start_native_capture;
+    uint64_t inter_frame_interval_native_capture;
+
+    timeval start_break_capture;
+    uint64_t inter_frame_interval_start_break_capture;
+
+    GraphicToFile & recorder;
+    uint64_t time_to_wait;
+
+public:
+    NativeCapture(
+        GraphicToFile & recorder,
+        const timeval & now,
+        std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval,
+        std::chrono::seconds break_interval
+    )
+    : start_native_capture(now)
+    , inter_frame_interval_native_capture(
+        std::chrono::duration_cast<std::chrono::microseconds>(frame_interval).count())
+    , start_break_capture(now)
+    , inter_frame_interval_start_break_capture(
+        std::chrono::duration_cast<std::chrono::microseconds>(break_interval).count())
+    , recorder(recorder)
+    , time_to_wait(0)
+    {}
+
+    ~NativeCapture() override {
+        this->recorder.sync();
+    }
+
+    // toggles externally genareted breakpoint.
+    void external_breakpoint() override {
+        this->recorder.breakpoint();
+    }
+
+    void external_time(const timeval & now) override {
+        this->recorder.sync();
+        this->recorder.timestamp(now);
+    }
+
+private:
+    std::chrono::microseconds do_snapshot(
+        const timeval & now, int x, int y, bool ignore_frame_in_timeval
+    ) override {
+        (void)ignore_frame_in_timeval;
+        if (difftimeval(now, this->start_native_capture)
+                >= this->inter_frame_interval_native_capture) {
+            this->recorder.timestamp(now);
+            this->time_to_wait = this->inter_frame_interval_native_capture;
+            this->recorder.mouse(static_cast<uint16_t>(x), static_cast<uint16_t>(y));
+            this->start_native_capture = now;
+            if ((difftimeval(now, this->start_break_capture) >=
+                 this->inter_frame_interval_start_break_capture)) {
+                this->recorder.breakpoint();
+                this->start_break_capture = now;
+            }
+        }
+        else {
+            this->time_to_wait = this->inter_frame_interval_native_capture - difftimeval(now, this->start_native_capture);
+        }
+        return std::chrono::microseconds{this->time_to_wait};
+    }
+};
+
+

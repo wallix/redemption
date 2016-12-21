@@ -32,6 +32,12 @@
 #include "capture/capture.hpp"
 #include "check_sig.hpp"
 #include "get_file_contents.hpp"
+#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
+#include "core/RDP/caches/bmpcache.hpp"
+#include "utils/fileutils.hpp"
+
+
 
 BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 {
@@ -266,3 +272,49 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     }
     ::unlink(filename);
 }
+
+BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
+{
+    Rect scr(0, 0, 800, 600);
+    const int groupid = 0;
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".wrm", groupid);
+
+    struct timeval now;
+    now.tv_sec = 1000;
+    now.tv_usec = 0;
+
+    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
+                       BmpCache::CacheOption(600, 768, false),
+                       BmpCache::CacheOption(300, 3072, false),
+                       BmpCache::CacheOption(262, 12288, false));
+    GlyphCache gly_cache;
+    PointerCache ptr_cache;
+    RDPDrawable drawable(800, 600, 24);
+    DumpPng24FromRDPDrawableAdapter dump_png{drawable};
+    GraphicToFile graphic_to_file(
+        now, trans, 800, 600, 24,
+        bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression
+    );
+    NativeCapture consumer(graphic_to_file, now, std::chrono::seconds{1}, std::chrono::seconds{5});
+
+    drawable.show_mouse_cursor(false);
+
+    bool ignore_frame_in_timeval = false;
+
+    drawable.draw(RDPOpaqueRect(scr, RED), scr);
+    graphic_to_file.draw(RDPOpaqueRect(scr, RED), scr);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    now.tv_sec += 6;
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    trans.disconnect();
+
+    const char * filename;
+
+    filename = trans.seqgen()->get(0);
+    BOOST_CHECK_EQUAL(1560, ::filesize(filename));
+    ::unlink(filename);
+    filename = trans.seqgen()->get(1);
+    BOOST_CHECK_EQUAL(3365, ::filesize(filename));
+    ::unlink(filename);
+}
+
