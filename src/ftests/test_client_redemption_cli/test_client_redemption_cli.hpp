@@ -1183,6 +1183,7 @@ public:
                          , std::string * formatListDataLongName
                          , size_t size) {
         EventConfig * action = new ClipboardChange(front, formatIDs, formatListDataLongName, size);
+
         this->setAction(action);
     }
 

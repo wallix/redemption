@@ -22,7 +22,6 @@
 #pragma once
 
 #include "configs/config.hpp"
-#include "apis_register.hpp"
 #include "capture/new_kbdcapture.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/kbd_input_api.hpp"
@@ -30,12 +29,12 @@
 
 class KbdCaptureImpl
 {
+public:
     auth_api * authentifier;
     SyslogKbd syslog_kbd;
     SessionLogKbd session_log_kbd;
     PatternKbd pattern_kbd;
 
-public:
     KbdCaptureImpl(const timeval & now, auth_api * authentifier, const Inifile & ini)
     : authentifier(authentifier)
     , syslog_kbd(now)
@@ -45,24 +44,5 @@ public:
         ini.get<cfg::context::pattern_notify>().c_str(),
         ini.get<cfg::debug::capture>())
     {}
-
-    void attach_apis(ApisRegister & api_register, const Inifile & ini) {
-        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)) {
-            api_register.kbd_input_list.push_back(this->syslog_kbd);
-            api_register.capture_list.push_back(this->syslog_kbd);
-        }
-
-        if (this->authentifier && ini.get<cfg::session_log::enable_session_log>() &&
-            (ini.get<cfg::session_log::keyboard_input_masking_level>()
-             != ::KeyboardInputMaskingLevel::fully_masked)
-        ) {
-            api_register.kbd_input_list.push_back(this->session_log_kbd);
-            api_register.capture_probe_list.push_back(this->session_log_kbd);
-        }
-
-        if (this->pattern_kbd.contains_pattern()) {
-            api_register.kbd_input_list.push_back(this->pattern_kbd);
-        }
-    }
 };
 

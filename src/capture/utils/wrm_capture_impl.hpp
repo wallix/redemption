@@ -28,11 +28,11 @@
 #include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 #include "capture/nativecapture.hpp"
-#include "apis_register.hpp"
+#include "capture/utils/kbd_capture_impl.hpp"
 
-
-class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
+class WrmCaptureImpl : public gdi::KbdInputApi, public gdi::CaptureApi
 {
+public:
     BmpCache     bmp_cache;
     GlyphCache   gly_cache;
     PointerCache ptr_cache;
@@ -177,17 +177,6 @@ public:
     , nc(this->graphic_to_file, now, ini.get<cfg::video::frame_interval>(), ini.get<cfg::video::break_interval>())
     {}
 
-    void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
-        apis_register.graphic_list->push_back(this->graphic_to_file);
-        apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this));
-        apis_register.external_capture_list.push_back(this->nc);
-        apis_register.capture_probe_list.push_back(this->graphic_to_file);
-
-        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm)) {
-            this->kbd_element = {apis_register.kbd_input_list, this->graphic_to_file};
-            this->graphic_to_file.impl = this;
-        }
-    }
 
     void enable_kbd_input_mask(bool enable) override {
         assert(this->kbd_element == *this || this->kbd_element == this->graphic_to_file);
@@ -205,7 +194,6 @@ public:
         this->trans_variant.trans->request_full_cleaning();
     }
 
-private:
     std::chrono::microseconds do_snapshot(
         const timeval & now, int x, int y, bool ignore_frame_in_timeval
     ) override {

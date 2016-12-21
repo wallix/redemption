@@ -32,6 +32,8 @@
 #include "core/SMB2/MessageSyntax.hpp"
 #include "core/FSCC/FileInformation.hpp"
 
+#include <vector>
+
 namespace rdpdr {
 
 
@@ -1182,7 +1184,12 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     Device Create Request:");
-        LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes)", this->DesiredAccess_);
+        const char * desiredAccessStrFlag = nullptr;
+        if (this->CreateOptions_ & smb2::FILE_DIRECTORY_FILE) {
+            LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes): %s", this->DesiredAccess_, smb2::get_Directory_Access_Mask_name(this->DesiredAccess_));
+        } else {
+            LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes): %s", this->DesiredAccess_, smb2::get_File_Pipe_Printer_Access_Mask_name(this->DesiredAccess_));
+        }
         LOG(LOG_INFO, "          * AllocationSize    = 0x%" PRIu64 " (8 bytes)", this->AllocationSize);
         LOG(LOG_INFO, "          * FileAttributes    = 0x%08x (4 bytes): %s", this->FileAttributes, fscc::get_FileAttributes_name(this->FileAttributes));
         LOG(LOG_INFO, "          * SharedAccess      = 0x%08x (4 bytes): %s", this->SharedAccess,  smb2::get_ShareAccess_name(this->SharedAccess));
@@ -2261,7 +2268,7 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     Server Device Announce Response:");
-        LOG(LOG_INFO, "          * DeviceId_  = 0x%08x (4 bytes)", this->DeviceId_);
+        LOG(LOG_INFO, "          * DeviceId   = 0x%08x (4 bytes)", this->DeviceId_);
         LOG(LOG_INFO, "          * ResultCode = 0x%08x (4 bytes)", this->ResultCode_);
     }
 };
@@ -4215,7 +4222,7 @@ struct ClientDriveQueryInformationResponse {
       {}
 
     void emit(OutStream & stream) {
-        stream.out_uint16_le(this->Length);
+        stream.out_uint32_le(this->Length);
     }
 
     void receive(InStream & stream) {
@@ -4640,7 +4647,7 @@ struct ServerDriveNotifyChangeDirectoryRequest {
     }
 
     void log() {
-        LOG(LOG_INFO, "     Server Driv Notify Chang eDirectory Request:");
+        LOG(LOG_INFO, "     Server Drive Notify Change Directory Request:");
         LOG(LOG_INFO, "          * WatchTree        = 0x%02x (1 byte)", this->WatchTree);
         LOG(LOG_INFO, "          * CompletionFilter = 0x%08x (4 bytes)", this->CompletionFilter);
     }
@@ -4778,19 +4785,90 @@ struct ClientDriveNotifyChangeDirectoryResponse {
     }
 
     void log() {
-        LOG(LOG_INFO, "     Server Driv Notify Change Directory Request:");
+        LOG(LOG_INFO, "     Client Drive Notify Change Directory Response:");
         LOG(LOG_INFO, "          * Length = %d (4 bytes)", int(this->Length));
     }
 };
 
 
+
 struct RdpDrStatus
 {
-    int rdpdr_last_major_function       = -1;
-    int rdpdr_last_minor_function       = -1;
-    int rdpdr_last_fs_information_class = -1;
-    int rdpdr_last_io_control_code      = -1;
+    struct DeviceIORequestData {
+        DeviceIORequest request;
+        uint32_t FsInformationClass = -1;
+        uint32_t IOControlCode = -1;
+
+        DeviceIORequestData(DeviceIORequest & request)
+          : request(request)
+        {}
+
+        DeviceIORequestData()
+        {}
+
+        uint32_t DeviceId() {
+            return this->request.DeviceId();
+        }
+
+        uint32_t CompletionId() {
+            return this->request.CompletionId();
+        }
+
+        uint32_t MajorFunction() {
+            return this->request.MajorFunction();
+        }
+
+        uint32_t MinorFunction() {
+            return this->request.MinorFunction();
+        }
+    };
+
+    std::vector<DeviceIORequestData> requestList;
+
+
+
+
+    void SetFsInformationClass(uint32_t FsInformationClass) {
+        this->requestList[this->requestList.size()-1].FsInformationClass = FsInformationClass;
+    }
+
+    void SetIOControlCode(uint32_t IOControlCode) {
+        this->requestList[this->requestList.size()-1].IOControlCode = IOControlCode;
+    }
+
+    void setDeviceIORequest(DeviceIORequest & request) {
+        if (this->requestList.size() >=  10) {
+            this->requestList.erase(this->requestList.begin());
+        }
+        this->requestList.emplace_back<DeviceIORequestData>(request);
+    }
+
+    DeviceIORequestData & get_completion_resquest(uint32_t deviceId, uint32_t completionId) {
+
+        DeviceIORequestData res;
+
+        size_t index = -1;
+
+        for (size_t i = 0; i < this->requestList.size(); i++) {
+            if (this->requestList[i].DeviceId() == deviceId && this->requestList[i].CompletionId() == completionId) {
+                res = this->requestList[i];
+                index = i;
+            }
+        }
+
+        if (index != -1) {
+            this->requestList.erase(this->requestList.begin()+index);
+        }
+
+        return res;
+    }
+
+    ~RdpDrStatus() {
+        this->requestList.clear();
+    }
 };
+
+
 
 static inline
 void streamLog( InStream & stream , RdpDrStatus & status)
@@ -4804,6 +4882,7 @@ void streamLog( InStream & stream , RdpDrStatus & status)
     switch (sharedHeader.component) {
 
         case Component::RDPDR_CTYP_CORE:
+
             switch (sharedHeader.packet_id) {
 
                 case PacketId::PAKID_CORE_SERVER_ANNOUNCE:
@@ -4857,9 +4936,9 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                         dior.receive(s);
                         dior.log();
 
-                        status.rdpdr_last_major_function = dior.MajorFunction();
+                        status.setDeviceIORequest(dior);
 
-                        switch (status.rdpdr_last_major_function) {
+                        switch (dior.MajorFunction()) {
                             case IRP_MJ_CREATE:
                                 {
                                     DeviceCreateRequest dcr;
@@ -4894,9 +4973,9 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                     dcr.receive(s);
                                     dcr.log();
 
-                                    status.rdpdr_last_io_control_code = dcr.IoControlCode();
+                                    status.SetIOControlCode(dcr.IoControlCode());;
 
-                                    switch (status.rdpdr_last_io_control_code) {
+                                    switch (dcr.IoControlCode()) {
                                         case fscc::FSCTL_DELETE_REPARSE_POINT :
                                             {
                                                 fscc::ReparseGUIDDataBuffer rgdb;
@@ -4904,7 +4983,7 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                                 rgdb.log();
                                             }
                                             break;
-                                        default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Data: Code = 0x%08x", status.rdpdr_last_io_control_code);
+                                        default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Data: Code = 0x%08x", dcr.IoControlCode());
                                             break;
                                     }
                                 }
@@ -4915,9 +4994,9 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                     sdqvir.receive(s);
                                     sdqvir.log();
 
-                                    status.rdpdr_last_fs_information_class = sdqvir.FsInformationClass();
+                                    status.SetFsInformationClass(sdqvir.FsInformationClass());
 
-                                    switch (status.rdpdr_last_fs_information_class) {
+                                    switch (sdqvir.FsInformationClass()) {
                                         case FileFsVolumeInformation:
                                             {
                                                 fscc::FileFsVolumeInformation ffvi;
@@ -4957,11 +5036,11 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                 break;
                             case IRP_MJ_SET_VOLUME_INFORMATION:
                                 {
-                                    ServerDriveSetVolumeInformationRequest sdqvir;
-                                    sdqvir.receive(s);
-                                    sdqvir.log();
+                                    ServerDriveSetVolumeInformationRequest sdsvir;
+                                    sdsvir.receive(s);
+                                    sdsvir.log();
 
-                                    status.rdpdr_last_fs_information_class = sdqvir.FsInformationClass;
+                                    status.SetFsInformationClass(sdsvir.FsInformationClass);
 
                                     fscc::FileFsLabelInformation ffli;
                                     ffli.receive(s);
@@ -4974,10 +5053,10 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                     sdqir.receive(s);
                                     sdqir.log();
 
-                                    status.rdpdr_last_fs_information_class = sdqir.FsInformationClass();
+                                    status.SetFsInformationClass(sdqir.FsInformationClass());
 
                                     if (sdqir.Length() > 0) {
-                                        switch (status.rdpdr_last_fs_information_class) {
+                                        switch (sdqir.FsInformationClass()) {
                                             case FileBasicInformation:
                                                 {
                                                 fscc::FileBasicInformation fbi;
@@ -5009,9 +5088,9 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                     sdsir.receive(s);
                                     sdsir.log();
 
-                                    status.rdpdr_last_fs_information_class = sdsir.FsInformationClass();
+                                    status.SetFsInformationClass(sdsir.FsInformationClass());
 
-                                    switch (status.rdpdr_last_fs_information_class) {
+                                    switch (sdsir.FsInformationClass()) {
                                         case FileBasicInformation:
                                             {
                                                 fscc::FileBasicInformation fbi;
@@ -5052,9 +5131,7 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                 break;
                             case IRP_MJ_DIRECTORY_CONTROL:
                                 {
-                                    status.rdpdr_last_minor_function = int(dior.MinorFunction());
-
-                                    switch (status.rdpdr_last_minor_function) {
+                                    switch (dior.MinorFunction()) {
 
                                         case IRP_MN_QUERY_DIRECTORY:
                                             {
@@ -5096,108 +5173,115 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                         dior.receive(s);
                         dior.log();
 
-                            switch (status.rdpdr_last_major_function) {
-                            case IRP_MJ_CREATE:
-                                {
-                                    DeviceCreateResponse dcf;
-                                    dcf.receive(s);
-                                    dcf.log();
-                                }
-                                break;
-                            case IRP_MJ_CLOSE:
-                                {
-                                    LOG(LOG_INFO, "     Device Close Response:");
-                                    LOG(LOG_INFO, "          * Padding - (4 bytes) NOT USED");
-                                }
-                                break;
-                            case IRP_MJ_READ:
-                                {
-                                    DeviceReadResponse drr;
-                                    drr.receive(s);
-                                    drr.log();
-                                }
-                                break;
-                            case IRP_MJ_WRITE:
-                                {
-                                    DeviceWriteResponse dwr;
-                                    dwr.receive(s);
-                                    dwr.log();
-                                }
-                                break;
-                            case IRP_MJ_DEVICE_CONTROL:
-                                {
-                                    ClientDriveControlResponse cdcr;
-                                    cdcr.receive(s);
-                                    cdcr.log();
+                        RdpDrStatus::DeviceIORequestData status_dior = status.get_completion_resquest(dior.DeviceId(), dior.CompletionId());
 
-                                    switch (status.rdpdr_last_io_control_code) {
-                                        //case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID:
-                                        //    break;
-                                        //case fscc::FSCTL_FILESYSTEM_GET_STATISTICS:
-                                        //    break;
-                                        default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Code: 0x%08x", status.rdpdr_last_io_control_code);
-                                            break;
-                                    }
-                                }
-                                break;
-                            case IRP_MJ_QUERY_VOLUME_INFORMATION:
-                                {
-                                    ClientDriveQueryVolumeInformationResponse cdqvir;
-                                    cdqvir.receive(s);
-                                    cdqvir.log();
+                        if (status_dior.DeviceId() == 0) {
+                            LOG(LOG_INFO, "Can't find corresponding Request for this Response (DeviceId = %d, CompletionId = %d", dior.DeviceId(), dior.CompletionId());
+                            return;
+                        }
 
-                                        switch (status.rdpdr_last_fs_information_class) {
-                                        case FileFsVolumeInformation:
-                                            {
-                                                fscc::FileFsVolumeInformation ffvi;
-                                                ffvi.receive(s);
-                                                ffvi.log();
-                                            }
-                                            break;
-                                        case FileFsSizeInformation:
-                                            {
-                                                fscc::FileFsSizeInformation ffsi;
-                                                ffsi.receive(s);
-                                                ffsi.log();
-                                            }
-                                            break;
-                                        case FileFsAttributeInformation: {
-                                                fscc::FileFsAttributeInformation ffai;
-                                                ffai.receive(s);
-                                                ffai.log();
-                                            }
-                                            break;
-                                        case FileFsFullSizeInformation:
-                                            {
-                                                fscc::FileFsFullSizeInformation fffsi;
-                                                fffsi.receive(s);
-                                                fffsi.log();
-                                            }
-                                            break;
-                                        case FileFsDeviceInformation:
-                                            {
-                                                fscc::FileFsDeviceInformation ffdi;
-                                                ffdi.receive(s);
-                                                ffdi.log();
-                                            }
-                                            break;
-                                    }
-                                }
-                                break;
-                            case IRP_MJ_SET_VOLUME_INFORMATION:
-                                {
-                                    ClientDriveSetVolumeInformationResponse cdsvir;
-                                    cdsvir.receive(s);
-                                    cdsvir.log();
-                                }
-                                break;
-                            case IRP_MJ_QUERY_INFORMATION:
-                                {
-                                    rdpdr::ClientDriveQueryInformationResponse cdqir;
-                                    cdqir.receive(s);
-                                    cdqir.log();
+                        switch (status_dior.MajorFunction()) {
+                        case IRP_MJ_CREATE:
+                            {
+                                DeviceCreateResponse dcf;
+                                dcf.receive(s);
+                                dcf.log();
+                            }
+                            break;
+                        case IRP_MJ_CLOSE:
+                            {
+                                LOG(LOG_INFO, "     Device Close Response:");
+                                LOG(LOG_INFO, "          * Padding - (4 bytes) NOT USED");
+                            }
+                            break;
+                        case IRP_MJ_READ:
+                            {
+                                DeviceReadResponse drr;
+                                drr.receive(s);
+                                drr.log();
+                            }
+                            break;
+                        case IRP_MJ_WRITE:
+                            {
+                                DeviceWriteResponse dwr;
+                                dwr.receive(s);
+                                dwr.log();
+                            }
+                            break;
+                        case IRP_MJ_DEVICE_CONTROL:
+                            {
+                                ClientDriveControlResponse cdcr;
+                                cdcr.receive(s);
+                                cdcr.log();
 
-                                    switch (status.rdpdr_last_fs_information_class) {
+                                switch (status_dior.IOControlCode) {
+                                    //case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID:
+                                    //    break;
+                                    //case fscc::FSCTL_FILESYSTEM_GET_STATISTICS:
+                                    //    break;
+                                    default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Code: 0x%08x", status_dior.IOControlCode);
+                                        break;
+                                }
+                            }
+                            break;
+                        case IRP_MJ_QUERY_VOLUME_INFORMATION:
+                            {
+                                ClientDriveQueryVolumeInformationResponse cdqvir;
+                                cdqvir.receive(s);
+                                cdqvir.log();
+
+                                    switch (status_dior.FsInformationClass) {
+                                    case FileFsVolumeInformation:
+                                        {
+                                            fscc::FileFsVolumeInformation ffvi;
+                                            ffvi.receive(s);
+                                            ffvi.log();
+                                        }
+                                        break;
+                                    case FileFsSizeInformation:
+                                        {
+                                            fscc::FileFsSizeInformation ffsi;
+                                            ffsi.receive(s);
+                                            ffsi.log();
+                                        }
+                                        break;
+                                    case FileFsAttributeInformation: {
+                                            fscc::FileFsAttributeInformation ffai;
+                                            ffai.receive(s);
+                                            ffai.log();
+                                        }
+                                        break;
+                                    case FileFsFullSizeInformation:
+                                        {
+                                            fscc::FileFsFullSizeInformation fffsi;
+                                            fffsi.receive(s);
+                                            fffsi.log();
+                                        }
+                                        break;
+                                    case FileFsDeviceInformation:
+                                        {
+                                            fscc::FileFsDeviceInformation ffdi;
+                                            ffdi.receive(s);
+                                            ffdi.log();
+                                        }
+                                        break;
+                                }
+                            }
+                            break;
+                        case IRP_MJ_SET_VOLUME_INFORMATION:
+                            {
+                                ClientDriveSetVolumeInformationResponse cdsvir;
+                                cdsvir.receive(s);
+                                cdsvir.log();
+                            }
+                            break;
+                        case IRP_MJ_QUERY_INFORMATION:
+                            {
+                                rdpdr::ClientDriveQueryInformationResponse cdqir;
+                                cdqir.receive(s);
+                                cdqir.log();
+                                if (cdqir.Length > 0) {
+                                    switch (status_dior.FsInformationClass) {
                                         case FileBasicInformation:
                                             {
                                             fscc::FileBasicInformation fbi;
@@ -5221,90 +5305,84 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                             break;
                                     }
                                 }
-                                break;
-                            case IRP_MJ_SET_INFORMATION:
-                                {
-                                    ClientDriveSetInformationResponse cdsir;
-                                    cdsir.receive(s);
-                                    cdsir.log();
-                                }
-                                break;
-                            case IRP_MJ_DIRECTORY_CONTROL:
-                                {
-                                    switch (status.rdpdr_last_minor_function) {
+                            }
+                            break;
+                        case IRP_MJ_SET_INFORMATION:
+                            {
+                                ClientDriveSetInformationResponse cdsir;
+                                cdsir.receive(s);
+                                cdsir.log();
+                            }
+                            break;
+                        case IRP_MJ_DIRECTORY_CONTROL:
+                            {
+                                switch (status_dior.MinorFunction()) {
 
-                                        case IRP_MN_QUERY_DIRECTORY:
-                                            {
-                                                ClientDriveQueryDirectoryResponse cdqdr;
-                                                cdqdr.receive(s);
-                                                cdqdr.log();
+                                    case IRP_MN_QUERY_DIRECTORY:
+                                        {
+                                            ClientDriveQueryDirectoryResponse cdqdr;
+                                            cdqdr.receive(s);
+                                            cdqdr.log();
 
-                                                switch (status.rdpdr_last_fs_information_class) {
-                                                    case FileDirectoryInformation:
-                                                        {
-                                                        fscc::FileDirectoryInformation fdi;
-                                                        fdi.receive(s);
-                                                        fdi.log();
-                                                        }
-                                                        break;
-                                                    case FileFullDirectoryInformation:
-                                                        {
-                                                        fscc::FileFullDirectoryInformation ffdi;
-                                                        ffdi.receive(s);
-                                                        ffdi.log();
-                                                        }
-                                                        break;
-                                                    case FileBothDirectoryInformation:
-                                                        {
-                                                        fscc::FileBothDirectoryInformation fbdi;
-                                                        fbdi.receive(s);
-                                                        fbdi.log();
-                                                        }
-                                                        break;
-                                                    case FileNamesInformation:
-                                                        {
-                                                        fscc::FileNamesInformation fni;
-                                                        fni.receive(s);
-                                                        fni.log();
-                                                        }
-                                                        break;
-                                                }
-                                                status.rdpdr_last_fs_information_class = -1;
+                                            switch (status_dior.FsInformationClass) {
+                                                case FileDirectoryInformation:
+                                                    {
+                                                    fscc::FileDirectoryInformation fdi;
+                                                    fdi.receive(s);
+                                                    fdi.log();
+                                                    }
+                                                    break;
+                                                case FileFullDirectoryInformation:
+                                                    {
+                                                    fscc::FileFullDirectoryInformation ffdi;
+                                                    ffdi.receive(s);
+                                                    ffdi.log();
+                                                    }
+                                                    break;
+                                                case FileBothDirectoryInformation:
+                                                    {
+                                                    fscc::FileBothDirectoryInformation fbdi;
+                                                    fbdi.receive(s);
+                                                    fbdi.log();
+                                                    }
+                                                    break;
+                                                case FileNamesInformation:
+                                                    {
+                                                    fscc::FileNamesInformation fni;
+                                                    fni.receive(s);
+                                                    fni.log();
+                                                    }
+                                                    break;
                                             }
-                                            break;
-                                        case IRP_MN_NOTIFY_CHANGE_DIRECTORY:
-                                            {
-                                                ClientDriveNotifyChangeDirectoryResponse cdncdr;
-                                                cdncdr.receive(s);
-                                                cdncdr.log();
+                                        }
+                                        break;
+                                    case IRP_MN_NOTIFY_CHANGE_DIRECTORY:
+                                        {
+                                            ClientDriveNotifyChangeDirectoryResponse cdncdr;
+                                            cdncdr.receive(s);
+                                            cdncdr.log();
 
-                                                smb2::ChangeNotifyResponse cnr;
-                                                cnr.receive(s);
-                                                cnr.log();
+                                            smb2::ChangeNotifyResponse cnr;
+                                            cnr.receive(s);
+                                            cnr.log();
 
-                                                fscc::FileNotifyInformation fni;
-                                                fni.receive(s);
-                                                fni.log();
-                                            }
-                                            break;
-                                    }
-
-                                    status.rdpdr_last_minor_function = -1;
+                                            fscc::FileNotifyInformation fni;
+                                            fni.receive(s);
+                                            fni.log();
+                                        }
+                                        break;
                                 }
-                                break;
-                            case IRP_MJ_LOCK_CONTROL:
-                                {
-                                    LOG(LOG_INFO, "     Client Drive Lock Control Response:");
-                                    LOG(LOG_INFO, "          * Padding - (5 bytes) NOT USED");
-                                }
-                                break;
-                            default: LOG(LOG_INFO, "     default MajorFunction:");
-                                break;
-
+                            }
+                            break;
+                        case IRP_MJ_LOCK_CONTROL:
+                            {
+                                LOG(LOG_INFO, "     Client Drive Lock Control Response:");
+                                LOG(LOG_INFO, "          * Padding - (5 bytes) NOT USED");
+                            }
+                            break;
+                        default: LOG(LOG_INFO, "     default MajorFunction:");
+                            break;
                         }
-
-                        status.rdpdr_last_fs_information_class = -1;
-                        status.rdpdr_last_major_function = -1;
                     }
                     break;
 
@@ -5343,7 +5421,6 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                     break;
                             }
                         }
-
                     }
                     break;
 

@@ -23,11 +23,10 @@
 
 #include <algorithm>
 
+#include "capture/png_params.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 
 #include "utils/drawable.hpp"
-
-#include "apis_register.hpp"
 
 
 static void scale_data(uint8_t *dest, const uint8_t *src,
@@ -68,9 +67,9 @@ static void scale_data(uint8_t *dest, const uint8_t *src,
     }
 }
 
-class PngCapture final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
+class PngCapture : public gdi::UpdateConfigCaptureApi, public gdi::CaptureApi
 {
-
+public:
     OutFilenameSequenceTransport trans;
     timeval start_capture;
     std::chrono::microseconds frame_interval;
@@ -82,65 +81,18 @@ class PngCapture final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
     Drawable & drawable;
     std::unique_ptr<uint8_t[]> scaled_buffer;
 
-public:
     PngCapture(
         const timeval & now, auth_api * authentifier, Drawable & drawable,
         const char * record_tmp_path, const char * basename, int groupid,
-        unsigned zoom,
-        std::chrono::microseconds png_interval)
-    : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-            record_tmp_path, basename, ".png", groupid, authentifier)
+        const PngParams & png_params) 
+    : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_tmp_path, basename, ".png", groupid, authentifier)
     , start_capture(now)
-    , frame_interval(png_interval)
-    , zoom_factor(zoom)
+    , frame_interval(png_params.png_interval)
+    , zoom_factor(png_params.zoom)
     , scaled_width(drawable.width())
     , scaled_height(drawable.height())
     , drawable(drawable)
     {}
-
-    void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
-        apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this));
-        apis_register.graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this));
-    }
-
-    void zoom(unsigned percent) {
-        percent = std::min(percent, 100u);
-        const unsigned zoom_width = (this->drawable.width() * percent) / 100;
-        const unsigned zoom_height = (this->drawable.height() * percent) / 100;
-        this->zoom_factor = percent;
-        this->scaled_width = (zoom_width + 3) & 0xFFC;
-        this->scaled_height = zoom_height;
-        if (this->zoom_factor != 100) {
-            this->scaled_buffer.reset(
-                new uint8_t[this->scaled_width * this->scaled_height * 3]);
-        }
-    }
-
-//    void next(const timeval & now) {
-//        tm ptm;
-//        localtime_r(&now.tv_sec, &ptm);
-//        this->drawable.trace_timestamp(ptm);
-//        const uint8_t * buffer = this->drawable.data();
-//        unsigned height = this->drawable.height();
-//        unsigned width = this->drawable.width();
-//        unsigned rowsize = this->drawable.rowsize();
-//        bool bgr = true;
-//        if (this->zoom_factor != 100) {
-//            scale_data(
-//                this->scaled_buffer.get(), buffer,
-//                this->scaled_width, width,
-//                this->scaled_height, height,
-//                this->drawable.rowsize());
-//            buffer = this->scaled_buffer.get();
-//            height = this->drawable.height();
-//            width = this->scaled_width;
-//            rowsize = this->scaled_width * 3;
-//            bgr = false;
-//        }
-//        ::transport_dump_png24(this->trans, buffer, width, height, rowsize, bgr);
-//        this->trans.next();
-//        this->drawable.clear_timestamp();
-//    }
 
 private:
     void update_config(Inifile const & ini) override {
@@ -164,12 +116,16 @@ private:
                 localtime_r(&now.tv_sec, &ptm);
                 this->drawable.trace_timestamp(ptm);
                 if (this->zoom_factor == 100) {
+                    // TODO we should have a variant of ::transport_dump_png24
+                    // taking a Drawable as input
                     ::transport_dump_png24(
                         this->trans, this->drawable.data(),
                         this->drawable.width(), this->drawable.height(),
                         this->drawable.rowsize(), true);
                 }
                 else {
+                    // TODO all the zoom thing could be hidden behind a
+                    // special type of Drawable
                     scale_data(
                         this->scaled_buffer.get(), this->drawable.data(),
                         this->scaled_width, this->drawable.width(),
@@ -180,6 +136,8 @@ private:
                         this->scaled_width, this->scaled_height,
                         this->scaled_width * 3, false);
                 }
+                // TODO: showing hiding mouse/timestamp should be hidden
+                // behind a special type of Drawable
                 this->trans.next();
                 this->drawable.clear_timestamp();
                 this->start_capture = now;
@@ -225,8 +183,9 @@ private:
 
 };
 
-class PngCaptureRT final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
+class PngCaptureRT : public gdi::UpdateConfigCaptureApi, public gdi::CaptureApi
 {
+public:
     OutFilenameSequenceTransport trans;
     uint32_t num_start = 0;
     unsigned png_limit;
@@ -244,22 +203,19 @@ class PngCaptureRT final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
     
     bool enable_rt_display = false;
 
-public:
     PngCaptureRT(
         const timeval & now, auth_api * authentifier, Drawable & drawable,
         const char * record_tmp_path, const char * basename, int groupid,
-        unsigned zoom,
-        std::chrono::microseconds png_interval,
-        uint32_t png_limit)
+        const PngParams & png_params) 
     : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
         record_tmp_path, basename, ".png", groupid, authentifier)
-    , png_limit(png_limit)
-    , zoom_factor(std::min(zoom, 100u))
+    , png_limit(png_params.png_limit)
+    , zoom_factor(std::min(png_params.zoom, 100u))
     , scaled_width(drawable.width())
     , scaled_height(drawable.height())
     , drawable(drawable)
     , start_capture(now)
-    , frame_interval(png_interval)
+    , frame_interval(png_params.png_interval)
     {
         const unsigned zoom_width = (this->drawable.width() * this->zoom_factor) / 100;
         const unsigned zoom_height = (this->drawable.height() * this->zoom_factor) / 100;
@@ -277,42 +233,6 @@ public:
             ::unlink(this->trans.seqgen()->get(this->num_start));
         }
     }
-
-    void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
-        this->enable_rt_display = ini.get<cfg::video::rt_display>();
-        apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this));
-        apis_register.graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this));
-        apis_register.update_config_capture_list.push_back(static_cast<gdi::UpdateConfigCaptureApi&>(*this));
-    }
-
-//    void next(const timeval & now) {
-//        tm ptm;
-//        localtime_r(&now.tv_sec, &ptm);
-//        this->drawable.trace_timestamp(ptm);
-//        if (this->zoom_factor == 100) {
-//            ::transport_dump_png24(
-//                this->trans, this->drawable.data(),
-//                this->drawable.width(), this->drawable.height(),
-//                this->drawable.rowsize(), true);
-//        }
-//        else {
-//            scale_data(
-//                this->scaled_buffer.get(), this->drawable.data(),
-//                this->scaled_width, this->drawable.width(),
-//                this->scaled_height, this->drawable.height(),
-//                this->drawable.rowsize());
-//            ::transport_dump_png24(
-//                this->trans, this->scaled_buffer.get(),
-//                this->scaled_width, this->scaled_height,
-//                this->scaled_width * 3, false);
-//        }
-//        if (this->png_limit && this->trans.get_seqno() >= this->png_limit) {
-//            // unlink may fail, for instance if file does not exist, just don't care
-//            ::unlink(this->trans.seqgen()->get(this->trans.get_seqno() - this->png_limit));
-//        }
-//        this->trans.next();
-//        this->drawable.clear_timestamp();
-//    }
 
 private:
     void update_config(Inifile const & ini) override {

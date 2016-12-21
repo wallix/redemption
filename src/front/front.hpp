@@ -934,13 +934,19 @@ public:
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16) ? 16 : 24);
         // TODO remove this after unifying capture interface
         bool full_video = false;
-        PngParams png_params = {0, 0, 0, 100u, 0};
+        PngParams png_params = {
+                0, 0,
+                ini.get<cfg::video::png_interval>(),
+                100u, 
+                ini.get<cfg::video::png_limit>()
+        };
+        FlvParams flv_params = flv_params_from_ini(this->client_info.width, this->client_info.height, ini);
         this->capture = new Capture(
             ini.get<cfg::video::capture_flags>()
           , now
           , this->client_info.width, this->client_info.height
           , this->mod_bpp, this->capture_bpp
-          , png_params
+          , png_params, flv_params
           , true, false, authentifier
           , ini, this->cctx, this->gen
           , full_video

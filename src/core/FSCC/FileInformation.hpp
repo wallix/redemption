@@ -319,13 +319,13 @@ enum : uint32_t {
     FILE_ATTRIBUTE_INTEGRITY_STREAM    = 0x00008000,
     FILE_ATTRIBUTE_NO_SCRUB_DATA       = 0x00020000
 };
-//"<unknown>";
+
 
 static inline
 const char * get_FileAttributes_name(uint32_t fileAttribute) {
 
     std::string str;
-
+    (fileAttribute & FILE_ATTRIBUTE_READONLY) ? str+="FILE_ATTRIBUTE_READONLY " :str;
     (fileAttribute & FILE_ATTRIBUTE_HIDDEN) ? str+="FILE_ATTRIBUTE_HIDDEN " :str;
     (fileAttribute & FILE_ATTRIBUTE_SYSTEM) ? str+="FILE_ATTRIBUTE_SYSTEM " :str;
     (fileAttribute & FILE_ATTRIBUTE_DIRECTORY) ? str+="FILE_ATTRIBUTE_DIRECTORY " : str;
@@ -898,6 +898,7 @@ public:
 
         stream.out_uint32_le(this->FileAttributes_);
 
+        //stream.out_clear_bytes(2);
         // Reserved(4), MUST NOT be transmitted.
     }
 
@@ -2353,13 +2354,10 @@ public:
     inline void emit(OutStream & stream) const {
         stream.out_sint64_le(this->AllocationSize);
         stream.out_sint64_le(this->EndOfFile);
-
         stream.out_uint32_le(this->NumberOfLinks);
-
         stream.out_uint8(this->DeletePending);
         stream.out_uint8(this->Directory);
-
-        // Reserved(2), MUST NOT be transmitted.
+        //stream.out_clear_bytes(2);
     }
 
     inline void receive(InStream & stream) {
@@ -2375,8 +2373,8 @@ public:
             }
         }
 
-        this->AllocationSize = stream.in_sint64_le();
-        this->EndOfFile      = stream.in_sint64_le();
+        this->AllocationSize = stream.in_uint64_le();
+        this->EndOfFile      = stream.in_uint64_le();
         this->NumberOfLinks  = stream.in_uint32_le();
         this->DeletePending  = stream.in_uint8();
         this->Directory      = stream.in_uint8();
@@ -2409,7 +2407,7 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Standard Information:");
-        LOG(LOG_INFO, "          * AllocationSize = v%" PRIx64 " (8 bytes)", this->AllocationSize);
+        LOG(LOG_INFO, "          * AllocationSize = 0x%" PRIx64 " (8 bytes)", this->AllocationSize);
         LOG(LOG_INFO, "          * EndOfFile      = 0x%" PRIx64 " (8 bytes)", this->EndOfFile);
         LOG(LOG_INFO, "          * NumberOfLinks  = 0x%08x (4 bytes)", this->NumberOfLinks);
         LOG(LOG_INFO, "          * DeletePending  = 0x%02x (1 byte)", this->DeletePending);

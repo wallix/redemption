@@ -394,7 +394,7 @@ public:
             char name[8] = {0};
             uint32_t ID = 0;
             uint32_t status = -1;
-            uint32_t field = 0;
+            uint32_t file_id = 0;
         };
 
         uint32_t clientID = 0;

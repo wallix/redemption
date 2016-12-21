@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "apis_register.hpp"
 #include "mouse_trace.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "gdi/graphic_cmd_color_converter.hpp"
@@ -32,7 +31,7 @@
 
 class GraphicCaptureImpl
 {
-private:
+public:
     using PtrColorConverter = std::unique_ptr<gdi::GraphicApi>;
     using GdRef = std::reference_wrapper<gdi::GraphicApi>;
 
@@ -101,11 +100,6 @@ public:
     , drawable(width, height, order_bpp)
     , order_bpp(order_bpp)
     {
-    }
-
-    void attach_apis(ApisRegister & apis_register, const Inifile &) {
-        assert(apis_register.graphic_list);
-        apis_register.graphic_list->push_back(this->drawable);
     }
 
     void update_order_bpp(uint8_t order_bpp) {

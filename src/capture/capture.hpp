@@ -21,16 +21,72 @@
 
 #pragma once
 
+#include <vector>
+#include <functional>
+
+#include "utils/sugar/array_view.hpp"
+#include "capture/png_params.hpp"
+#include "capture/flv_params.hpp"
+
+template<class T>
+struct ApiRegisterElement
+{
+    using list_type = std::vector<std::reference_wrapper<T>>;
+
+    ApiRegisterElement() = default;
+
+    ApiRegisterElement(list_type & l, T & x)
+    : l(&l)
+    , i(l.size())
+    {
+        l.push_back(x);
+    }
+
+    ApiRegisterElement & operator = (ApiRegisterElement const &) = default;
+    ApiRegisterElement & operator = (T & x) { (*this->l)[this->i] = x; return *this; }
+
+    bool operator == (T const & x) const { return &this->get() == &x; }
+    bool operator != (T const & x) const { return !(this == x); }
+
+    T & get() { return (*this->l)[this->i]; }
+    T const & get() const { return (*this->l)[this->i]; }
+
+private:
+    list_type * l = nullptr;
+    std::size_t i = ~std::size_t{};
+};
+
+
+
 #include "capture/utils/graphic_capture_impl.hpp"
 #include "capture/utils/wrm_capture_impl.hpp"
 #include "capture/utils/kbd_capture_impl.hpp"
 #include "capture/utils/image_capture_impl.hpp"
 #include "capture/utils/capture_apis_impl.hpp"
-#include "utils/sugar/array_view.hpp"
-
 #include "capture/utils/capture_impl.hpp"
 #include "utils/apps/recording_progress.hpp"
-#include "capture/png_params.hpp"
+
+namespace gdi {
+    class GraphicApi;
+    class CaptureApi;
+    class CaptureProbeApi;
+    class KbdInputApi;
+    class ExternalCaptureApi;
+    class UpdateConfigCaptureApi;
+}
+
+struct ApisRegister
+{
+    std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list;
+    std::vector<std::reference_wrapper<gdi::CaptureApi>> * graphic_snapshot_list;
+    std::vector<std::reference_wrapper<gdi::CaptureApi>> & capture_list;
+    std::vector<std::reference_wrapper<gdi::KbdInputApi>> & kbd_input_list;
+    std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> & capture_probe_list;
+    std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> & external_capture_list;
+    std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> & update_config_capture_list;
+};
+
+
 
 class Capture final
 : public gdi::GraphicBase<Capture>
@@ -165,6 +221,7 @@ public:
         int order_bpp,
         int capture_bpp,
         const PngParams png_params,
+        const FlvParams flv_params,
         bool real_time_image_capture,
         bool no_timestamp,
         auth_api * authentifier,
@@ -190,6 +247,8 @@ public:
     , capture_api(now, width / 2, height / 2)
     {
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
+
+//        FlvParams flv_params = flv_params_from_ini(width, height, ini);
 
         bool const enable_kbd
           = authentifier
@@ -251,6 +310,7 @@ public:
             cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
         }
 
+
         if (capture_drawable) {
             this->gd.reset(new Graphic(width, height, order_bpp, this->capture_api.mouse_trace()));
             this->graphic_api = &this->gd->get_graphic_api();
@@ -261,18 +321,14 @@ public:
                     this->pscrt.reset(new ImageRT(
                         now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,
-                        png_params.zoom,
-                        ini.get<cfg::video::png_interval>(),
-                        png_params.png_limit
+                        png_params
                     ));
                 }
                 else if (force_capture_png_if_enable) {
                     this->psc.reset(new Image(
                         now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,
-                        png_params.zoom,
-                        ini.get<cfg::video::png_interval>()
-                    ));
+                        png_params));
                 }
             }
 
@@ -299,7 +355,7 @@ public:
                     authentifier && ini.get<cfg::session_log::enable_session_log>()
                 ));
             }
-
+            
             if (this->capture_flv) {
                 std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
                 if (ini.get<cfg::globals::capture_chunk>() && this->pmc) {
@@ -308,7 +364,7 @@ public:
                 }
                 this->pvc.reset(new Video(
                     now, record_path, basename, groupid, no_timestamp, png_params.zoom, this->gd->impl(),
-                    video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini),
+                    flv_params,
                     ini.get<cfg::video::flv_break_interval>(), notifier
                 ));
             }
@@ -316,8 +372,7 @@ public:
             if (this->capture_flv_full) {
                 this->pvc_full.reset(new FullVideo(
                     now, record_path, basename, groupid, no_timestamp, this->gd->impl(),
-                    video_params_from_ini(this->gd->impl().width(), this->gd->impl().height(), ini)
-                ));
+                    flv_params));
             }
 
             if (this->capture_pattern_checker) {
@@ -351,11 +406,53 @@ public:
         }
         ApisRegister apis_register = this->get_apis_register();
 
-        if (this->gd ) { this->gd ->attach_apis(apis_register, ini); }
-        if (this->pnc) { this->pnc->attach_apis(apis_register, ini); }
-        if (this->pscrt) { this->pscrt->attach_apis(apis_register, ini); }
-        if (this->psc) { this->psc->attach_apis(apis_register, ini); }
-        if (this->pkc) { this->pkc->attach_apis(apis_register, ini); }
+        if (this->gd ) {
+            assert(apis_register.graphic_list);
+            apis_register.graphic_list->push_back(this->gd->drawable);
+        }
+        if (this->pnc) {
+            apis_register.graphic_list->push_back(this->pnc->graphic_to_file);
+            apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this->pnc));
+            apis_register.external_capture_list.push_back(this->pnc->nc);
+            apis_register.capture_probe_list.push_back(this->pnc->graphic_to_file);
+
+            if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm)) {
+                this->pnc->kbd_element = {apis_register.kbd_input_list, this->pnc->graphic_to_file};
+                this->pnc->graphic_to_file.impl = this->pnc.get();
+            }
+        }
+
+        if (this->pscrt) {
+            this->pscrt->enable_rt_display = ini.get<cfg::video::rt_display>();
+            apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
+            apis_register.graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
+            apis_register.update_config_capture_list.push_back(static_cast<gdi::UpdateConfigCaptureApi&>(*this->pscrt));
+        }
+
+        if (this->psc) { 
+            apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
+            apis_register.graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this->psc));
+        }
+
+        if (this->pkc) {
+            if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)) {
+                apis_register.kbd_input_list.push_back(this->pkc->syslog_kbd);
+                apis_register.capture_list.push_back(this->pkc->syslog_kbd);
+            }
+
+            if (this->pkc->authentifier && ini.get<cfg::session_log::enable_session_log>() &&
+                (ini.get<cfg::session_log::keyboard_input_masking_level>()
+                 != ::KeyboardInputMaskingLevel::fully_masked)
+            ) {
+                apis_register.kbd_input_list.push_back(this->pkc->session_log_kbd);
+                apis_register.capture_probe_list.push_back(this->pkc->session_log_kbd);
+            }
+
+            if (this->pkc->pattern_kbd.contains_pattern()) {
+                apis_register.kbd_input_list.push_back(this->pkc->pattern_kbd);
+            }
+        }
+
         if (this->pvc) { 
             apis_register.capture_list.push_back(this->pvc->vc);
             apis_register.graphic_snapshot_list->push_back(this->pvc->preparing_vc);
@@ -366,8 +463,21 @@ public:
             apis_register.capture_list.push_back(this->pvc_full->vc);
             apis_register.graphic_snapshot_list->push_back(this->pvc_full->preparing_vc);
         }
-        if (this->pmc) { this->pmc->attach_apis(apis_register, ini); }
-        if (this->ptc) { this->ptc->attach_apis(apis_register, ini); }
+        if (this->pmc) {
+            apis_register.capture_list.push_back(this->pmc->meta);
+            if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta)) {
+                apis_register.kbd_input_list.push_back(this->pmc->meta);
+                apis_register.capture_probe_list.push_back(this->pmc->meta);
+            }
+
+            if (this->pmc->enable_agent) {
+                apis_register.capture_probe_list.push_back(this->pmc->session_log_agent);
+            }
+        }
+        if (this->ptc) { 
+            apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this->ptc));
+            apis_register.capture_probe_list.push_back(static_cast<gdi::CaptureProbeApi&>(*this->ptc));
+        }
 
         if (this->gd) { this->gd->start(); }
     }
