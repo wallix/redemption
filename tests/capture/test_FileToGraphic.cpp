@@ -31,9 +31,126 @@
 #include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 #include "transport/in_file_transport.hpp"
-#include "capture/nativecapture.hpp"
+#include "capture/capture.hpp"
 #include "capture/FileToGraphic.hpp"
-#include "capture/drawable_to_file.hpp"
+
+class DrawableToFile
+{
+protected:
+    Transport & trans;
+    unsigned zoom_factor;
+    unsigned scaled_width;
+    unsigned scaled_height;
+
+    const Drawable & drawable;
+
+private:
+    std::unique_ptr<uint8_t[]> scaled_buffer;
+
+public:
+    DrawableToFile(Transport & trans, const Drawable & drawable, unsigned zoom)
+    : trans(trans)
+    , zoom_factor(std::min(zoom, 100u))
+    , scaled_width(drawable.width())
+    , scaled_height(drawable.height())
+    , drawable(drawable)
+    {
+        const unsigned zoom_width = (this->drawable.width() * this->zoom_factor) / 100;
+        const unsigned zoom_height = (this->drawable.height() * this->zoom_factor) / 100;
+        this->scaled_width = (zoom_width + 3) & 0xFFC;
+        this->scaled_height = zoom_height;
+        if (this->zoom_factor != 100) {
+            this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
+        }
+    }
+
+    ~DrawableToFile() = default;
+
+    /// \param  percent  0 to 100 or 100 if greater
+    void zoom(unsigned percent) {
+        percent = std::min(percent, 100u);
+        const unsigned zoom_width = (this->drawable.width() * percent) / 100;
+        const unsigned zoom_height = (this->drawable.height() * percent) / 100;
+        this->zoom_factor = percent;
+        this->scaled_width = (zoom_width + 3) & 0xFFC;
+        this->scaled_height = zoom_height;
+        if (this->zoom_factor != 100) {
+            this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
+        }
+    }
+
+    bool logical_frame_ended() const {
+        return this->drawable.logical_frame_ended;
+    }
+
+    void flush() {
+        if (this->zoom_factor == 100) {
+            this->dump24();
+        }
+        else {
+            this->scale_dump24();
+        }
+    }
+
+private:
+    void dump24() const {
+        ::transport_dump_png24(
+            this->trans, this->drawable.data(),
+            this->drawable.width(), this->drawable.height(),
+            this->drawable.rowsize(), true);
+    }
+
+    void scale_dump24() const {
+        scale_data(
+            this->scaled_buffer.get(), this->drawable.data(),
+            this->scaled_width, this->drawable.width(),
+            this->scaled_height, this->drawable.height(),
+            this->drawable.rowsize());
+        ::transport_dump_png24(
+            this->trans, this->scaled_buffer.get(),
+            this->scaled_width, this->scaled_height,
+            this->scaled_width * 3, false);
+    }
+
+    static void scale_data(uint8_t *dest, const uint8_t *src,
+                           unsigned int dest_width, unsigned int src_width,
+                           unsigned int dest_height, unsigned int src_height,
+                           unsigned int src_rowsize) {
+        const uint32_t Bpp = 3;
+        unsigned int y_pixels = dest_height;
+        unsigned int y_int_part = src_height / dest_height * src_rowsize;
+        unsigned int y_fract_part = src_height % dest_height;
+        unsigned int yE = 0;
+        unsigned int x_int_part = src_width / dest_width * Bpp;
+        unsigned int x_fract_part = src_width % dest_width;
+
+        while (y_pixels-- > 0) {
+            unsigned int xE = 0;
+            const uint8_t * x_src = src;
+            unsigned int x_pixels = dest_width;
+            while (x_pixels-- > 0) {
+                dest[0] = x_src[2];
+                dest[1] = x_src[1];
+                dest[2] = x_src[0];
+
+                dest += Bpp;
+                x_src += x_int_part;
+                xE += x_fract_part;
+                if (xE >= dest_width) {
+                    xE -= dest_width;
+                    x_src += Bpp;
+                }
+            }
+            src += y_int_part;
+            yE += y_fract_part;
+            if (yE >= dest_height) {
+                yE -= dest_height;
+                src += src_rowsize;
+            }
+        }
+    }
+};
+
 
 BOOST_AUTO_TEST_CASE(TestSample0WRM)
 {
@@ -128,96 +245,4 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     ::unlink(filename);
 }
 
-//BOOST_AUTO_TEST_CASE(TestSecondPart)
-//{
-//    const char * input_filename = FIXTURES_PATH "/sample1.wrm";
-//    char path[1024];
-//    size_t len = strlen(input_filename);
-//    memcpy(path, input_filename, len);
-//    path[len] = 0;
-
-//    int fd = ::open(path, O_RDONLY);
-//    if (fd == -1){
-//        LOG(LOG_INFO, "open '%s' failed with error : %s", path, strerror(errno));
-//        BOOST_CHECK(false);
-//        return;
-//    }
-
-//    InFileTransport in_wrm_trans(fd);
-//    timeval begin_capture;
-//    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-//    timeval end_capture;
-//    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-//    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, 0);
-
-//    Inifile ini;
-//    ini.set<cfg::debug::primary_orders>(0);
-//    ini.set<cfg::debug::secondary_orders>(0);
-
-//    const int groupid = 0;
-//    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".png", groupid);
-//    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
-//    DrawableToFile png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
-
-//    png_recorder.update_config(ini);
-//    player.add_consumer(&drawable1, &drawable1);
-
-//    OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".wrm", groupid);
-//    ini.set<cfg::video::frame_interval>(10);
-//    ini.set<cfg::video::break_interval>(20);
-
-//    BmpCache bmp_cache(
-//        BmpCache::Recorder,
-//        player.bmp_cache->bpp,
-//        player.bmp_cache->number_of_cache,
-//        player.bmp_cache->use_waiting_list,
-//        player.bmp_cache->cache_0_entries,
-//        player.bmp_cache->cache_0_size,
-//        player.bmp_cache->cache_0_persistent,
-//        player.bmp_cache->cache_1_entries,
-//        player.bmp_cache->cache_1_size,
-//        player.bmp_cache->cache_1_persistent,
-//        player.bmp_cache->cache_2_entries,
-//        player.bmp_cache->cache_2_size,
-//        player.bmp_cache->cache_2_persistent,
-//        player.bmp_cache->cache_3_entries,
-//        player.bmp_cache->cache_3_size,
-//        player.bmp_cache->cache_3_persistent,
-//        player.bmp_cache->cache_4_entries,
-//        player.bmp_cache->cache_4_size,
-//        player.bmp_cache->cache_4_persistent);
-
-//    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-//    NativeCapture wrm_recorder(
-//        player.record_now,
-//        out_wrm_trans,
-//        player.screen_rect.cx,
-//        player.screen_rect.cy,
-//        bmp_cache, drawable, ini);
-
-//    wrm_recorder.update_config(ini);
-//    player.add_consumer(&wrm_recorder, &wrm_recorder);
-
-//    bool requested_to_stop = false;
-
-//    BOOST_CHECK_EQUAL((unsigned)1352304870, (unsigned)player.record_now.tv_sec);
-//    player.play(requested_to_stop);
-//    BOOST_CHECK_EQUAL((unsigned)1352304928, (unsigned)player.record_now.tv_sec);
-
-//    png_recorder.flush();
-
-//    // TODO "check RGB/BGR: fixed test replacing 47483 with 47553"
-//    BOOST_CHECK_EQUAL((unsigned)47553, (unsigned)sq_outfilename_filesize(&(out_png_trans.seq), 0));
-//    sq_outfilename_unlink(&(out_png_trans.seq), 0);
-
-//    wrm_recorder.flush();
-//    BOOST_CHECK_EQUAL((unsigned)74803, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 0));
-//    sq_outfilename_unlink(&(out_wrm_trans.seq), 0);
-//    // Mem3Blt save state = 34 bytes
-//    BOOST_CHECK_EQUAL(static_cast<unsigned>(273774) + 34, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 1));
-//    sq_outfilename_unlink(&(out_wrm_trans.seq), 1);
-//    // Mem3Blt save state = 34 bytes
-//    BOOST_CHECK_EQUAL(static_cast<unsigned>(185108) + 34, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 2));
-//    sq_outfilename_unlink(&(out_wrm_trans.seq), 2);
-//}
 
