@@ -5414,41 +5414,43 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                 cdqvir.receive(s);
                                 cdqvir.log();
 
+                                if (dior.IoStatus() ==  0) {
                                     switch (status_dior.FsInformationClass) {
-                                    case FileFsVolumeInformation:
-                                        {
-                                            fscc::FileFsVolumeInformation ffvi;
-                                            ffvi.receive(s);
-                                            ffvi.log();
-                                        }
-                                        break;
-                                    case FileFsSizeInformation:
-                                        {
-                                            fscc::FileFsSizeInformation ffsi;
-                                            ffsi.receive(s);
-                                            ffsi.log();
-                                        }
-                                        break;
-                                    case FileFsAttributeInformation: {
-                                            fscc::FileFsAttributeInformation ffai;
-                                            ffai.receive(s);
-                                            ffai.log();
-                                        }
-                                        break;
-                                    case FileFsFullSizeInformation:
-                                        {
-                                            fscc::FileFsFullSizeInformation fffsi;
-                                            fffsi.receive(s);
-                                            fffsi.log();
-                                        }
-                                        break;
-                                    case FileFsDeviceInformation:
-                                        {
-                                            fscc::FileFsDeviceInformation ffdi;
-                                            ffdi.receive(s);
-                                            ffdi.log();
-                                        }
-                                        break;
+                                        case FileFsVolumeInformation:
+                                            {
+                                                fscc::FileFsVolumeInformation ffvi;
+                                                ffvi.receive(s);
+                                                ffvi.log();
+                                            }
+                                            break;
+                                        case FileFsSizeInformation:
+                                            {
+                                                fscc::FileFsSizeInformation ffsi;
+                                                ffsi.receive(s);
+                                                ffsi.log();
+                                            }
+                                            break;
+                                        case FileFsAttributeInformation: {
+                                                fscc::FileFsAttributeInformation ffai;
+                                                ffai.receive(s);
+                                                ffai.log();
+                                            }
+                                            break;
+                                        case FileFsFullSizeInformation:
+                                            {
+                                                fscc::FileFsFullSizeInformation fffsi;
+                                                fffsi.receive(s);
+                                                fffsi.log();
+                                            }
+                                            break;
+                                        case FileFsDeviceInformation:
+                                            {
+                                                fscc::FileFsDeviceInformation ffdi;
+                                                ffdi.receive(s);
+                                                ffdi.log();
+                                            }
+                                            break;
+                                    }
                                 }
                             }
                             break;
@@ -5464,7 +5466,7 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                 rdpdr::ClientDriveQueryInformationResponse cdqir;
                                 cdqir.receive(s);
                                 cdqir.log();
-                                if (cdqir.Length > 0) {
+                                if (dior.IoStatus() ==  0) {
                                     switch (status_dior.FsInformationClass) {
                                         case FileBasicInformation:
                                             {
@@ -5508,35 +5510,37 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                             cdqdr.receive(s);
                                             cdqdr.log();
 
-                                            switch (status_dior.FsInformationClass) {
-                                                case FileDirectoryInformation:
-                                                    {
-                                                    fscc::FileDirectoryInformation fdi;
-                                                    fdi.receive(s);
-                                                    fdi.log();
-                                                    }
-                                                    break;
-                                                case FileFullDirectoryInformation:
-                                                    {
-                                                    fscc::FileFullDirectoryInformation ffdi;
-                                                    ffdi.receive(s);
-                                                    ffdi.log();
-                                                    }
-                                                    break;
-                                                case FileBothDirectoryInformation:
-                                                    {
-                                                    fscc::FileBothDirectoryInformation fbdi;
-                                                    fbdi.receive(s);
-                                                    fbdi.log();
-                                                    }
-                                                    break;
-                                                case FileNamesInformation:
-                                                    {
-                                                    fscc::FileNamesInformation fni;
-                                                    fni.receive(s);
-                                                    fni.log();
-                                                    }
-                                                    break;
+                                            if (dior.IoStatus() ==  0) {
+                                                switch (status_dior.FsInformationClass) {
+                                                    case FileDirectoryInformation:
+                                                        {
+                                                        fscc::FileDirectoryInformation fdi;
+                                                        fdi.receive(s);
+                                                        fdi.log();
+                                                        }
+                                                        break;
+                                                    case FileFullDirectoryInformation:
+                                                        {
+                                                        fscc::FileFullDirectoryInformation ffdi;
+                                                        ffdi.receive(s);
+                                                        ffdi.log();
+                                                        }
+                                                        break;
+                                                    case FileBothDirectoryInformation:
+                                                        {
+                                                        fscc::FileBothDirectoryInformation fbdi;
+                                                        fbdi.receive(s);
+                                                        fbdi.log();
+                                                        }
+                                                        break;
+                                                    case FileNamesInformation:
+                                                        {
+                                                        fscc::FileNamesInformation fni;
+                                                        fni.receive(s);
+                                                        fni.log();
+                                                        }
+                                                        break;
+                                                }
                                             }
                                         }
                                         break;
