@@ -467,7 +467,6 @@ struct ClientDriveDeviceListRemove {
     ClientDriveDeviceListRemove() = default;
 
     void emit(OutStream & stream) {
-        //REDASSERT(DeviceCount <= 1592);
         stream.out_uint32_le(DeviceCount);
         for (uint32_t i = 0; i < DeviceCount; i++) {
             stream.out_uint32_le(DeviceIds[i]);
@@ -475,8 +474,25 @@ struct ClientDriveDeviceListRemove {
     }
 
     void receive(InStream & stream) {
+        {
+            const unsigned expected = 4;
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientDriveDeviceListRemove: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         this->DeviceCount = stream.in_uint32_le();
-        //REDASSERT(DeviceCount <= 1592);
+        {
+            const unsigned expected = this->DeviceCount * 4;
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientDriveDeviceListRemove: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         for (uint32_t i = 0; i < this->DeviceCount; i++) {
             this->DeviceIds[i] = stream.in_uint32_le();
         }
@@ -715,10 +731,10 @@ public:
         LOG(LOG_INFO, "          * DeviceType       = 0x%08x (4 bytes): %s", this->DeviceType_, get_DeviceType_name(this->DeviceType_));
         LOG(LOG_INFO, "          * DeviceId         = 0x%08x (4 bytes)", this->DeviceId_);
         std::string DeviceName(reinterpret_cast<char *>(this->PreferredDosName_), 8);
-        LOG(LOG_INFO, "          * DeviceName       = \"%s\"", DeviceName.c_str());
+        LOG(LOG_INFO, "          * DeviceName       = \"%s\" (8 bytes)", DeviceName.c_str());
         LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->device_data.sz));
         std::string DeviceData(reinterpret_cast<const char *>(this->device_data.p), this->device_data.sz);
-        LOG(LOG_INFO, "          * DeviceData       = \"%s\"", DeviceData.c_str());
+        LOG(LOG_INFO, "          * DeviceData       = \"%s\" (%d byte(s))", DeviceData.c_str(), int(this->device_data.sz));
     }
 };  // DeviceAnnounceHeader
 
@@ -1184,19 +1200,18 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     Device Create Request:");
-        const char * desiredAccessStrFlag = nullptr;
         if (this->CreateOptions_ & smb2::FILE_DIRECTORY_FILE) {
             LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes): %s", this->DesiredAccess_, smb2::get_Directory_Access_Mask_name(this->DesiredAccess_));
         } else {
             LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes): %s", this->DesiredAccess_, smb2::get_File_Pipe_Printer_Access_Mask_name(this->DesiredAccess_));
         }
-        LOG(LOG_INFO, "          * AllocationSize    = 0x%" PRIu64 " (8 bytes)", this->AllocationSize);
+        LOG(LOG_INFO, "          * AllocationSize    = %" PRIu64 " (8 bytes)", this->AllocationSize);
         LOG(LOG_INFO, "          * FileAttributes    = 0x%08x (4 bytes): %s", this->FileAttributes, fscc::get_FileAttributes_name(this->FileAttributes));
         LOG(LOG_INFO, "          * SharedAccess      = 0x%08x (4 bytes): %s", this->SharedAccess,  smb2::get_ShareAccess_name(this->SharedAccess));
         LOG(LOG_INFO, "          * CreateDisposition = 0x%08x (4 bytes): %s", this->CreateDisposition_, smb2::get_CreateDisposition_name(this->CreateDisposition_));
         LOG(LOG_INFO, "          * CreateOptions     = 0x%08x (4 bytes): %s", this->CreateOptions_, smb2::get_CreateOptions_name(this->CreateOptions_));
         LOG(LOG_INFO, "          * PathLength        = %d (4 bytes)", int(this->path.size()));
-        LOG(LOG_INFO, "          * Path              = \"%s\"", this->path.c_str());
+        LOG(LOG_INFO, "          * Path              = \"%s\" (%d byte(s))", this->path.c_str(), int(this->path.size()));
     }
 
 };  // DeviceCreateRequest
@@ -1492,9 +1507,29 @@ struct DeviceWriteRequest {
     }
 
     void receive(InStream & stream) {
+        {
+            const unsigned expected = 32;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated DeviceWriteRequest: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         this->Length = stream.in_uint32_le();
         this->Offset = stream.in_uint64_le();
         stream.in_skip_bytes(20);
+        {
+            const unsigned expected = this->Length;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated DeviceWriteRequest: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         this->WriteData = stream.get_current();
     }
 
@@ -1505,7 +1540,7 @@ struct DeviceWriteRequest {
         LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
         //LOG(LOG_INFO, "          * WriteData: array size = Length: %d byte(s)", int(this->Length));
         std::string str(reinterpret_cast<char const *>(this->WriteData), this->Length);
-        LOG(LOG_INFO, "          * ReadData = \"%s\"", str.c_str());
+        LOG(LOG_INFO, "          * ReadData = \"%s\" (%d byte(s))", str.c_str(), int(this->Length));
         //hexdump_c(this->WriteData,  this->Length);
 
     }
@@ -1726,6 +1761,15 @@ struct ClientDriveControlResponse {
     }
 
     void receive(InStream & stream) {
+        {
+            const unsigned expected = 4;
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientDriveControlResponse: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         this->OutputBufferLength = stream.in_uint32_le();
     }
 
@@ -2106,7 +2150,25 @@ struct DeviceReadResponse {
     }
 
     void receive(InStream & stream) {
+        {
+            const unsigned expected = 4;
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated DeviceReadResponse: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         int Length = stream.in_uint32_le();
+        {
+            const unsigned expected = Length;
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated DeviceReadResponse: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         uint8_t data[0xffff];
         stream.in_copy_bytes(data, Length);
         this->ReadData = std::string(reinterpret_cast<char *>(data), Length);
@@ -2115,7 +2177,7 @@ struct DeviceReadResponse {
     void log() {
         LOG(LOG_INFO, "     Device Read Response:");
         LOG(LOG_INFO, "          * Length   = %d (4 bytes)", int(this->ReadData.size()));
-        LOG(LOG_INFO, "          * ReadData = \"%s\"", this->ReadData.c_str());
+        LOG(LOG_INFO, "          * ReadData = \"%s\" (%d byte(s))", this->ReadData.c_str(), int(this->ReadData.size()));
     }
 };
 
@@ -2171,6 +2233,16 @@ struct DeviceWriteResponse {
     }
 
     void receive(InStream & stream) {
+        {
+            const unsigned expected = 4;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated DeviceWriteResponse: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         this->Length = stream.in_uint32_le();
     }
 
@@ -2652,7 +2724,7 @@ public:
         LOG(LOG_INFO, "          * UnicodeFlag     = 0x%08x (4 bytes)", this->UnicodeFlag);
         LOG(LOG_INFO, "          * CodePage        = 0x%08x (4 bytes)", this->CodePage);
         LOG(LOG_INFO, "          * ComputerNameLen = %d (4 bytes)", int(this->computer_name.size()));
-        LOG(LOG_INFO, "          * ComputerName    = \"%s\"", this->computer_name.c_str());
+        LOG(LOG_INFO, "          * ComputerName    = \"%s\" (%d byte(s))", this->computer_name.c_str(), int(this->computer_name.size()));
     }
 
 };  // ClientNameRequest
@@ -3006,6 +3078,16 @@ struct ClientDeviceListAnnounceRequest {
     }
 
     void receive(InStream & stream) {
+        {
+            const unsigned expected = 4;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientDeviceListAnnounceRequest: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         this->DeviceCount = stream.in_uint32_le();
     }
 
@@ -3522,6 +3604,16 @@ struct ClientDriveQueryVolumeInformationResponse {
     }
 
     void receive(InStream & stream) {
+        {
+            const unsigned expected = 4;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientDriveQueryVolumeInformationResponse: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         this->Length = stream.in_uint32_le();
     }
 
@@ -4083,7 +4175,7 @@ public:
         LOG(LOG_INFO, "          * InitialQuery = 0x%02x (1 byte)", this->InitialQuery_);
         LOG(LOG_INFO, "          * PathLength   = %d (4 bytes)", int(this->path.size()));
         LOG(LOG_INFO, "          * Padding - (23 byte) NOT USED");
-        LOG(LOG_INFO, "          * path         = \"%s\"", this->path.c_str());
+        LOG(LOG_INFO, "          * path         = \"%s\" (%d byte(s))", this->path.c_str(), int(this->path.size()));
     }
 };  // ServerDriveQueryDirectoryRequest
 
@@ -4135,6 +4227,16 @@ struct ClientDriveQueryDirectoryResponse {
     }
 
     void receive(InStream & stream) {
+        {
+            const unsigned expected = 4;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientDriveQueryDirectoryResponse (0): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         this->Length = stream.in_uint32_le();
     }
 
@@ -4226,6 +4328,16 @@ struct ClientDriveQueryInformationResponse {
     }
 
     void receive(InStream & stream) {
+        {
+            const unsigned expected = 4;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientDriveQueryInformationResponse (0): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         this->Length = stream.in_uint32_le();
     }
 
@@ -4272,6 +4384,16 @@ struct ClientDriveSetVolumeInformationResponse {
     }
 
     void receive(InStream & stream) {
+        {
+            const unsigned expected = 4;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientDriveSetVolumeInformationResponse (0): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         this->Length = stream.in_uint32_le();
     }
 
@@ -4349,6 +4471,16 @@ struct ServerDriveSetVolumeInformationRequest {
     }
 
     void receive(InStream & stream) {
+        {
+            const unsigned expected = 32;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientDriveSetVolumeInformationResponse (0): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         this->FsInformationClass = stream.in_uint32_le();
         this->Length = stream.in_uint32_le();
         stream.in_skip_bytes(24);
@@ -4417,6 +4549,16 @@ struct ClientDriveSetInformationResponse {
     }
 
     void receive(InStream & stream) {
+        {
+            const unsigned expected = 4;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientDriveSetInformationResponse (0): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         this->Length = stream.in_uint32_le();
     }
 
@@ -4519,6 +4661,16 @@ struct ServerDriveLockControlRequest {
     }
 
     void receive(InStream & stream) {
+        {
+            const unsigned expected = 32;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ServerDriveLockControlRequest (0): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         this->Operation = stream.in_uint32_le();
         this->F = stream.in_uint8() >> 7;
         stream.in_skip_bytes(3);
@@ -4580,6 +4732,16 @@ struct RDP_Lock_Info {
     }
 
     void receive(InStream & stream) {
+        {
+            const unsigned expected = 16;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated RDP_Lock_Info (0): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         this->Length = stream.in_uint64_le();
         this->Offset = stream.in_uint64_le();
     }
@@ -4642,6 +4804,16 @@ struct ServerDriveNotifyChangeDirectoryRequest {
     }
 
     void receive(InStream & stream) {
+        {
+            const unsigned expected = 5;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ServerDriveNotifyChangeDirectoryRequest (0): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         this->WatchTree = stream.in_uint8();
         this->CompletionFilter = stream.in_uint32_le();
     }
@@ -4781,6 +4953,16 @@ struct ClientDriveNotifyChangeDirectoryResponse {
     }
 
     void receive(InStream & stream) {
+        {
+            const unsigned expected = 4;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientDriveNotifyChangeDirectoryResponse (0): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
         this->Length = stream.in_uint32_le();
     }
 
@@ -4827,7 +5009,6 @@ struct RdpDrStatus
 
 
 
-
     void SetFsInformationClass(uint32_t FsInformationClass) {
         this->requestList[this->requestList.size()-1].FsInformationClass = FsInformationClass;
     }
@@ -4843,13 +5024,14 @@ struct RdpDrStatus
         this->requestList.emplace_back<DeviceIORequestData>(request);
     }
 
-    DeviceIORequestData & get_completion_resquest(uint32_t deviceId, uint32_t completionId) {
+    DeviceIORequestData get_completion_resquest(uint32_t deviceId, uint32_t completionId) {
 
         DeviceIORequestData res;
 
-        size_t index = -1;
+        int index = -1;
+        int size(this->requestList.size());
 
-        for (size_t i = 0; i < this->requestList.size(); i++) {
+        for (int i = 0; i < size; i++) {
             if (this->requestList[i].DeviceId() == deviceId && this->requestList[i].CompletionId() == completionId) {
                 res = this->requestList[i];
                 index = i;
@@ -4863,7 +5045,7 @@ struct RdpDrStatus
         return res;
     }
 
-    ~DeviceIORequestData() {
+    ~RdpDrStatus() {
         this->requestList.clear();
     }
 };
@@ -5138,6 +5320,8 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                                 ServerDriveQueryDirectoryRequest sdqdr;
                                                 sdqdr.receive(s);
                                                 sdqdr.log();
+
+                                                status.SetFsInformationClass(sdqdr.FsInformationClass());
                                             }
                                             break;
                                         case IRP_MN_NOTIFY_CHANGE_DIRECTORY:

@@ -435,30 +435,32 @@ enum {
 
 static inline
 const char * get_CreateOptions_name(uint32_t createOptions) {
-    switch (createOptions) {
-        case FILE_DIRECTORY_FILE:            return "FILE_DIRECTORY_FILE";
-        case FILE_WRITE_THROUGH:             return "FILE_WRITE_THROUGH";
-        case FILE_SEQUENTIAL_ONLY:           return "FILE_SEQUENTIAL_ONLY";
-        case FILE_NO_INTERMEDIATE_BUFFERING: return "FILE_NO_INTERMEDIATE_BUFFERING";
-        case FILE_SYNCHRONOUS_IO_ALERT:      return "FILE_SYNCHRONOUS_IO_ALERT";
-        case FILE_SYNCHRONOUS_IO_NONALERT:   return "FILE_SYNCHRONOUS_IO_NONALERT";
-        case FILE_NON_DIRECTORY_FILE:        return "FILE_NON_DIRECTORY_FILE";
-        case FILE_COMPLETE_IF_OPLOCKED:      return "FILE_COMPLETE_IF_OPLOCKED";
-        case FILE_NO_EA_KNOWLEDGE:           return "FILE_NO_EA_KNOWLEDGE";
-        case FILE_RANDOM_ACCESS:             return "FILE_RANDOM_ACCESS";
-        case FILE_DELETE_ON_CLOSE:           return "FILE_DELETE_ON_CLOSE";
-        case FILE_OPEN_BY_FILE_ID:           return "FILE_OPEN_BY_FILE_ID";
-        case FILE_OPEN_FOR_BACKUP_INTENT:    return "FILE_OPEN_FOR_BACKUP_INTENT";
-        case FILE_NO_COMPRESSION:            return "FILE_NO_COMPRESSION";
-        case FILE_OPEN_REMOTE_INSTANCE:      return "FILE_OPEN_REMOTE_INSTANCE";
-        case FILE_OPEN_REQUIRING_OPLOCK:     return "FILE_OPEN_REQUIRING_OPLOCK";
-        case FILE_RESERVE_OPFILTER:          return "FILE_RESERVE_OPFILTER";
-        case FILE_OPEN_REPARSE_POINT:        return "FILE_OPEN_REPARSE_POINT";
-        case FILE_OPEN_NO_RECALL:            return "FILE_OPEN_NO_RECALL";
-        case FILE_OPEN_FOR_FREE_SPACE_QUERY: return "FILE_OPEN_FOR_FREE_SPACE_QUERY";
-    }
 
-    return "<unknown>";
+    std::string str;
+
+    (createOptions & FILE_DIRECTORY_FILE) ? str+="FILE_DIRECTORY_FILE " :str;
+    (createOptions & FILE_WRITE_THROUGH) ? str+="FILE_WRITE_THROUGH " :str;
+    (createOptions & FILE_SEQUENTIAL_ONLY) ? str+="FILE_SEQUENTIAL_ONLY " :str;
+    (createOptions & FILE_NO_INTERMEDIATE_BUFFERING) ? str+="FILE_NO_INTERMEDIATE_BUFFERING " : str;
+    (createOptions & FILE_SYNCHRONOUS_IO_ALERT) ? str+="FILE_SYNCHRONOUS_IO_ALERT " : str;
+    (createOptions & FILE_SYNCHRONOUS_IO_NONALERT) ? str+="FILE_SYNCHRONOUS_IO_NONALERT " : str;
+    (createOptions & FILE_NON_DIRECTORY_FILE) ? str+="FILE_NON_DIRECTORY_FILE " :str;
+    (createOptions & FILE_COMPLETE_IF_OPLOCKED) ? str+="FILE_COMPLETE_IF_OPLOCKED " : str;
+    (createOptions & FILE_NO_EA_KNOWLEDGE) ? str+="FILE_NO_EA_KNOWLEDGE " : str;
+    (createOptions & FILE_RANDOM_ACCESS) ? str+="FILE_RANDOM_ACCESS " : str;
+    (createOptions & FILE_DELETE_ON_CLOSE) ? str+="FILE_DELETE_ON_CLOSE ":str;
+    (createOptions & FILE_OPEN_BY_FILE_ID) ? str+="FILE_OPEN_BY_FILE_ID " : str;
+    (createOptions & FILE_OPEN_FOR_BACKUP_INTENT) ? str+="FILE_OPEN_FOR_BACKUP_INTENT " : str;
+    (createOptions & FILE_NO_COMPRESSION) ? str+="FILE_NO_COMPRESSION " : str;
+    (createOptions & FILE_OPEN_REMOTE_INSTANCE) ? str+="FILE_OPEN_REMOTE_INSTANCE " : str;
+    (createOptions & FILE_OPEN_REQUIRING_OPLOCK) ? str+="FILE_OPEN_REQUIRING_OPLOCK " : str;
+    (createOptions & FILE_DISALLOW_EXCLUSIVE) ? str+="FILE_DISALLOW_EXCLUSIVE " : str;
+    (createOptions & FILE_RESERVE_OPFILTER) ? str+="FILE_RESERVE_OPFILTER " : str;
+    (createOptions & FILE_OPEN_REPARSE_POINT) ? str+="FILE_OPEN_REPARSE_POINT " : str;
+    (createOptions & FILE_OPEN_NO_RECALL) ? str+="FILE_OPEN_NO_RECALL " : str;
+    (createOptions & FILE_OPEN_FOR_FREE_SPACE_QUERY) ? str+="FILE_OPEN_FOR_FREE_SPACE_QUERY " : str;
+
+    return str.c_str();
 }
 
 
