@@ -31,6 +31,7 @@
 #include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 #include "transport/in_file_transport.hpp"
+#include "transport/test_transport.hpp"
 #include "capture/capture.hpp"
 #include "capture/FileToGraphic.hpp"
 
@@ -245,4 +246,65 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     ::unlink(filename);
 }
 
+BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
+{
+    const char source_png[] =
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x00\x00\x00\x14\x00\x00\x00\x0a"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x08\x02\x00\x00\x00\x3b\x37\xe9"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\xb1\x00\x00\x00\x32\x49\x44\x41"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x54\x28\x91\x63\xfc\xcf\x80\x17"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\xfc\xff\xcf\xc0\xc8\x88\x4b\x92"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x09\xbf\x5e\xfc\x60\x88\x6a\x66"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x41\xe3\x33\x32\xa0\x84\xe0\x7f"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x54\x91\xff\x0c\x28\x81\x37\x70"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\xce\x66\x1c\xb0\x78\x06\x00\x69"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\xdc\x0a\x12\x86\x4a\x0c\x44\x00"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x00\x00\x00\x49\x45\x4e\x44\xae"
+    /* 0000 */ "\x00\x10\x0b\x00\x00\x00\x01\x00" // 0x1000: FINAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x42\x60\x82"
+    ;
+
+    GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);
+    constexpr std::size_t sz_buf = 8;
+    uint8_t buf[sz_buf];
+    auto end = buf;
+    in_png_trans.recv(&end, sz_buf); // skip first chunk header
+    InStream stream(buf);
+
+//    in_png_trans.recv(&stream.end, 107); // skip first chunk header
+
+    uint16_t chunk_type = stream.in_uint16_le();
+    uint32_t chunk_size = stream.in_uint32_le();
+    uint16_t chunk_count = stream.in_uint16_le();
+    (void)chunk_count;
+
+    InChunkedImageTransport chunk_trans(chunk_type, chunk_size, &in_png_trans);
+
+
+    RDPDrawable d(20, 10, 24);
+    ::transport_read_png24(&chunk_trans, d.data(),
+                 d.width(), d.height(),
+                 d.rowsize()
+                 );
+    const int groupid = 0;
+    OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
+    DumpPng24FromRDPDrawableAdapter(d).dump_png24(png_trans, true);
+//    d.dump_png24(png_trans, true);
+    ::unlink(png_trans.seqgen()->get(0));
+}
 
