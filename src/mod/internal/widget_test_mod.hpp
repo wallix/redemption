@@ -96,6 +96,12 @@ public:
         this->widget_test.rdp_input_invalidate(r);
     }
 
+    void rdp_input_up_and_running() override {
+        mod_api& mod = this->widget_test.get_managed_mod();
+
+        mod.rdp_input_up_and_running();
+    }
+
     // Callback
 
     void send_to_mod_channel(const char* front_channel_name,

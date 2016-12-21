@@ -68,6 +68,18 @@ private:
             return mod_api::get_event();
         }
 
+        int get_fd() const override
+        {
+            if (this->managed_mod)
+            {
+                return this->managed_mod->get_fd();
+            }
+
+            REDASSERT(false);
+
+            return INVALID_SOCKET;
+        }
+
         void get_event_handlers(std::vector<EventHandler>& out_event_handlers)
             override
         {
@@ -139,6 +151,14 @@ private:
                     param1, param2);
             }
         }
+
+        void rdp_input_up_and_running() override
+        {
+            if (this->managed_mod)
+            {
+                this->managed_mod->rdp_input_up_and_running();
+            }
+        }
     } module_holder;
 
     gdi::GraphicApi* drawable_ptr = nullptr;
@@ -185,7 +205,7 @@ public:
 
         drawable.draw(RDPOpaqueRect(this->get_rect(), 0x000000), this->get_rect());
 
-        this->module_holder.rdp_input_invalidate(r);
+        this->module_holder.rdp_input_invalidate(r.offset(-this->x(), -this->y()));
 
         this->end_update();
     }
@@ -250,6 +270,22 @@ private:
         drawable.draw(bitmap_data, bmp);
     }
 
+    void draw(const RDPMemBlt& cmd, const Rect& clip, Bitmap const & bmp) override {
+        const Rect widget_rect = this->get_rect();
+
+        Rect new_clip = clip.offset(this->x(), this->y());
+        new_clip = new_clip.intersect(widget_rect);
+        if (new_clip.isempty()) { return; }
+
+        RDPMemBlt new_cmd = cmd;
+
+        new_cmd.move(this->x(), this->y());
+        new_cmd.rect = new_cmd.rect.intersect(widget_rect);
+        if (new_cmd.rect.isempty()) { return; }
+
+        drawable.draw(new_cmd, new_clip, bmp);
+    }
+
     void draw(const RDPOpaqueRect& cmd, const Rect& clip) override {
         const Rect widget_rect = this->get_rect();
 
@@ -258,6 +294,22 @@ private:
         if (new_clip.isempty()) { return; }
 
         RDPOpaqueRect new_cmd = cmd;
+
+        new_cmd.move(this->x(), this->y());
+        new_cmd.rect = new_cmd.rect.intersect(widget_rect);
+        if (new_cmd.rect.isempty()) { return; }
+
+        drawable.draw(new_cmd, new_clip);
+    }
+
+    void draw(const RDPScrBlt& cmd, const Rect& clip) override {
+        const Rect widget_rect = this->get_rect();
+
+        Rect new_clip = clip.offset(this->x(), this->y());
+        new_clip = new_clip.intersect(widget_rect);
+        if (new_clip.isempty()) { return; }
+
+        RDPScrBlt new_cmd = cmd;
 
         new_cmd.move(this->x(), this->y());
         new_cmd.rect = new_cmd.rect.intersect(widget_rect);
