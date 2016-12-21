@@ -321,6 +321,7 @@ public:
         this->draw_inner_free(rect_intersect, this->get_bg_color());
         this->draw_children(rect_intersect);
     }
+
     virtual void draw_children(const Rect & clip) {
         CompositeContainer::iterator iter_w_current = this->impl->get_first();
         while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
@@ -462,6 +463,27 @@ public:
         }
 
         return nullptr;
+    }
+
+    void rdp_input_invalidate(const Rect& r) override {
+        Rect rect_intersect = r.intersect(this->get_rect());
+        this->draw_inner_free(rect_intersect, this->get_bg_color());
+
+        Widget2::rdp_input_invalidate(r);
+
+        CompositeContainer::iterator iter_w_current = this->impl->get_first();
+        while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
+            Widget2 * w = this->impl->get(iter_w_current);
+            REDASSERT(w);
+
+            Rect newr = rect_intersect.intersect(w->get_rect());
+
+            if (!newr.isempty()) {
+                w->rdp_input_invalidate(newr);
+            }
+
+            iter_w_current = this->impl->get_next(iter_w_current);
+        }
     }
 
     void rdp_input_scancode( long param1, long param2, long param3

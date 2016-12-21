@@ -82,8 +82,7 @@ public:
 class mod_api : public Callback
 {
 protected:
-    wait_obj           event;
-    RDPPen             pen;
+    wait_obj event;
 
 public:
     mod_api()
@@ -94,9 +93,6 @@ public:
     ~mod_api() override {}
 
     virtual wait_obj& get_event() { return this->event; }
-
-    virtual wait_obj * get_secondary_event() { return nullptr; }
-    virtual void process_secondary(time_t, gdi::GraphicApi&) {}
 
     virtual void get_event_handlers(std::vector<EventHandler>&/* out_event_handlers*/) {}
 

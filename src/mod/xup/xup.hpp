@@ -74,6 +74,8 @@ enum {
     int fgcolor;
     BGRPalette const & palette332 = BGRPalette::classic_332();
 
+    RDPPen pen;
+
     xup_mod( Transport & t
            , FrontAPI & front
            , uint16_t /*front_width*/

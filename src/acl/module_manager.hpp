@@ -565,11 +565,8 @@ private:
         wait_obj & get_event() override
         { return this->mm.internal_mod->get_event(); }
 
-        wait_obj * get_secondary_event() override
-        { return this->mm.internal_mod->get_secondary_event(); }
-
-        void process_secondary(time_t now, gdi::GraphicApi & drawable) override
-        { this->mm.internal_mod->process_secondary(now, drawable); }
+        void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override
+        { return this->mm.internal_mod->get_event_handlers(out_event_handlers); }
 
         void send_to_front_channel(const char * const mod_channel_name,
             uint8_t const * data, size_t length, size_t chunk_size, int flags) override
@@ -805,11 +802,19 @@ public:
         case MODULE_INTERNAL_WIDGETTEST:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
+
+                Rect adjusted_client_execute_rect =
+                    this->client_execute.adjust_rect(get_widget_rect(
+                            this->front.client_info.width,
+                            this->front.client_info.height,
+                            this->front.client_info.cs_monitor
+                        ));
+
                 std::unique_ptr<mod_api> managed_mod(
                         new Bouncer2Mod(
                                 this->front,
-                                this->front.client_info.width - 8 * 2,
-                                this->front.client_info.height - 8 * 2,
+                                adjusted_client_execute_rect.cx - 8 * 2,
+                                adjusted_client_execute_rect.cy - 8 * 2,
                                 this->ini.get<cfg::font>(),
                                 true
                             )
@@ -819,11 +824,7 @@ public:
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
-                    this->client_execute.adjust_rect(get_widget_rect(
-                        this->front.client_info.width,
-                        this->front.client_info.height,
-                        this->front.client_info.cs_monitor
-                    )),
+                    adjusted_client_execute_rect,
                     std::move(managed_mod),
                     this->client_execute
                 ));

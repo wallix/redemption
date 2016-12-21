@@ -197,11 +197,6 @@ public:
                 mm.mod_transport ? mm.mod->get_event().wait_on_fd(mm.mod_transport->sck, rfds, max, timeout)
                                  : mm.mod->get_event().wait_on_timeout(timeout);
 
-                wait_obj * secondary_event = mm.mod->get_secondary_event();
-                if (secondary_event) {
-                    secondary_event->wait_on_timeout(timeout);
-                }
-
                 event_handlers.clear();
                 mm.mod->get_event_handlers(event_handlers);
                 for (EventHandler& event_handler : event_handlers) {
@@ -303,13 +298,6 @@ public:
                                         event->reset();
                                     }
                                 }
-                            }
-
-                                       secondary_event        = mm.mod->get_secondary_event();
-                            const bool secondary_event_is_set = (secondary_event &&
-                                                                 secondary_event->is_set(INVALID_SOCKET, rfds));
-                            if (secondary_event_is_set) {
-                                mm.mod->process_secondary(now, mm.get_graphic_wrapper(*this->front));
                             }
 
                             // Process incoming module trafic

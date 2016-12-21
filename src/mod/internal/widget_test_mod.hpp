@@ -88,6 +88,14 @@ public:
     }
 
 public:
+    // RdpInput
+
+    void rdp_input_invalidate(const Rect& r) override {
+        LocallyIntegrableMod::rdp_input_invalidate(r);
+
+        this->widget_test.rdp_input_invalidate(r);
+    }
+
     // Callback
 
     void send_to_mod_channel(const char* front_channel_name,
@@ -121,6 +129,8 @@ public:
                 &this->managed_mod_event_handler,
                 INVALID_SOCKET
             );
+
+        LocallyIntegrableMod::get_event_handlers(out_event_handlers);
     }
 
     bool is_up_and_running() override
@@ -134,5 +144,7 @@ public:
                           uint16_t height) override
     {
         this->widget_test.move_size_widget(left, top, width + 1, height + 1);
+
+        this->rdp_input_invalidate(Rect(left, top, width, height));
     }
 };
