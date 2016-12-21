@@ -181,12 +181,18 @@ public:
 
     void rdp_input_invalidate(const Rect & r) override
     {
+        this->begin_update();
+
+        drawable.draw(RDPOpaqueRect(this->get_rect(), 0x000000), this->get_rect());
+
         this->module_holder.rdp_input_invalidate(r);
+
+        this->end_update();
     }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
     {
-        this->module_holder.rdp_input_mouse(device_flags, x + this->x(), y + this->y(), keymap);
+        this->module_holder.rdp_input_mouse(device_flags, x - this->x(), y - this->y(), keymap);
     }
 
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override

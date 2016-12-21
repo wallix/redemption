@@ -78,6 +78,8 @@ struct LocallyIntegrableMod : public InternalMod {
                     INVALID_SOCKET
                 );
         }
+
+        InternalMod::get_event_handlers(out_event_handlers);
     }
 
     void process_first_click_down_event(time_t, gdi::GraphicApi&) {

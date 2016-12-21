@@ -50,8 +50,10 @@ using FlatWabCloseModVariables = vcfg::variables<
 
 class FlatWabCloseMod : public LocallyIntegrableMod, public NotifyApi
 {
-    FlatWabClose     close_widget;
+    FlatWabClose close_widget;
+
     Timeout timeout;
+
     FlatWabCloseModVariables vars;
 
     bool showtimer;
