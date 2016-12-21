@@ -45,124 +45,6 @@
 #include "gdi/capture_api.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 
-class DrawableToFile
-{
-protected:
-    Transport & trans;
-    unsigned zoom_factor;
-    unsigned scaled_width;
-    unsigned scaled_height;
-
-    const Drawable & drawable;
-
-private:
-    std::unique_ptr<uint8_t[]> scaled_buffer;
-
-public:
-    DrawableToFile(Transport & trans, const Drawable & drawable, unsigned zoom)
-    : trans(trans)
-    , zoom_factor(std::min(zoom, 100u))
-    , scaled_width(drawable.width())
-    , scaled_height(drawable.height())
-    , drawable(drawable)
-    {
-        const unsigned zoom_width = (this->drawable.width() * this->zoom_factor) / 100;
-        const unsigned zoom_height = (this->drawable.height() * this->zoom_factor) / 100;
-        this->scaled_width = (zoom_width + 3) & 0xFFC;
-        this->scaled_height = zoom_height;
-        if (this->zoom_factor != 100) {
-            this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
-        }
-    }
-
-    ~DrawableToFile() = default;
-
-    /// \param  percent  0 to 100 or 100 if greater
-    void zoom(unsigned percent) {
-        percent = std::min(percent, 100u);
-        const unsigned zoom_width = (this->drawable.width() * percent) / 100;
-        const unsigned zoom_height = (this->drawable.height() * percent) / 100;
-        this->zoom_factor = percent;
-        this->scaled_width = (zoom_width + 3) & 0xFFC;
-        this->scaled_height = zoom_height;
-        if (this->zoom_factor != 100) {
-            this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
-        }
-    }
-
-    bool logical_frame_ended() const {
-        return this->drawable.logical_frame_ended;
-    }
-
-    void flush() {
-        if (this->zoom_factor == 100) {
-            this->dump24();
-        }
-        else {
-            this->scale_dump24();
-        }
-    }
-
-private:
-    void dump24() const {
-        ::transport_dump_png24(
-            this->trans, this->drawable.data(),
-            this->drawable.width(), this->drawable.height(),
-            this->drawable.rowsize(), true);
-    }
-
-    void scale_dump24() const {
-        scale_data(
-            this->scaled_buffer.get(), this->drawable.data(),
-            this->scaled_width, this->drawable.width(),
-            this->scaled_height, this->drawable.height(),
-            this->drawable.rowsize());
-        ::transport_dump_png24(
-            this->trans, this->scaled_buffer.get(),
-            this->scaled_width, this->scaled_height,
-            this->scaled_width * 3, false);
-    }
-
-    static void scale_data(uint8_t *dest, const uint8_t *src,
-                           unsigned int dest_width, unsigned int src_width,
-                           unsigned int dest_height, unsigned int src_height,
-                           unsigned int src_rowsize) {
-        const uint32_t Bpp = 3;
-        unsigned int y_pixels = dest_height;
-        unsigned int y_int_part = src_height / dest_height * src_rowsize;
-        unsigned int y_fract_part = src_height % dest_height;
-        unsigned int yE = 0;
-        unsigned int x_int_part = src_width / dest_width * Bpp;
-        unsigned int x_fract_part = src_width % dest_width;
-
-        while (y_pixels-- > 0) {
-            unsigned int xE = 0;
-            const uint8_t * x_src = src;
-            unsigned int x_pixels = dest_width;
-            while (x_pixels-- > 0) {
-                dest[0] = x_src[2];
-                dest[1] = x_src[1];
-                dest[2] = x_src[0];
-
-                dest += Bpp;
-                x_src += x_int_part;
-                xE += x_fract_part;
-                if (xE >= dest_width) {
-                    xE -= dest_width;
-                    x_src += Bpp;
-                }
-            }
-            src += y_int_part;
-            yE += y_fract_part;
-            if (yE >= dest_height) {
-                yE -= dest_height;
-                src += src_rowsize;
-            }
-        }
-    }
-};
-
-
 inline bool check_sig(RDPDrawable & data, char * message, const char * shasig)
 {
     return check_sig(data.data(), data.height(), data.rowsize(), message, shasig);
@@ -657,16 +539,16 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
     RDPDrawable drawable(800, 600, 24);
-    DrawableToFile d(trans, drawable.impl(), 100);
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
-    d.flush();
+    dump_png24(drawable.impl(), trans, true);
 
     RDPOpaqueRect cmd2(Rect(50, 50, 100, 50), BLUE);
     drawable.draw(cmd2, screen_rect);
     trans.next();
-    d.flush();
+
+    dump_png24(drawable.impl(), trans, true);
 
     const char * filename;
 
@@ -770,15 +652,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
         }
 
         void flush() {
-            this->dump24();
-        }
-
-    private:
-        void dump24() const {
-            ::transport_dump_png24(
-                this->trans, this->drawable.data(),
-                this->drawable.width(), this->drawable.height(),
-                this->drawable.rowsize(), true);
+            dump_png24(const_cast<Drawable&>(this->drawable), this->trans, true);
         }
     };
 
@@ -831,15 +705,54 @@ BOOST_AUTO_TEST_CASE(TestSmallImage)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid);
     Rect scr(0, 0, 20, 10);
     RDPDrawable drawable(20, 10, 24);
-    DrawableToFile d(trans, drawable.impl(), 100);
     drawable.draw(RDPOpaqueRect(scr, RED), scr);
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
-    d.flush();
+    dump_png24(drawable.impl(), trans, true);
     const char * filename = trans.seqgen()->get(0);
     BOOST_CHECK_EQUAL(107, ::filesize(filename));
     ::unlink(filename);
 }
+
+
+static void scale_data_local(uint8_t *dest, const uint8_t *src,
+                       unsigned int dest_width, unsigned int src_width,
+                       unsigned int dest_height, unsigned int src_height,
+                       unsigned int src_rowsize) {
+    const uint32_t Bpp = 3;
+    unsigned int y_pixels = dest_height;
+    unsigned int y_int_part = src_height / dest_height * src_rowsize;
+    unsigned int y_fract_part = src_height % dest_height;
+    unsigned int yE = 0;
+    unsigned int x_int_part = src_width / dest_width * Bpp;
+    unsigned int x_fract_part = src_width % dest_width;
+
+    while (y_pixels-- > 0) {
+        unsigned int xE = 0;
+        const uint8_t * x_src = src;
+        unsigned int x_pixels = dest_width;
+        while (x_pixels-- > 0) {
+            dest[0] = x_src[2];
+            dest[1] = x_src[1];
+            dest[2] = x_src[0];
+
+            dest += Bpp;
+            x_src += x_int_part;
+            xE += x_fract_part;
+            if (xE >= dest_width) {
+                xE -= dest_width;
+                x_src += Bpp;
+            }
+        }
+        src += y_int_part;
+        yE += y_fract_part;
+        if (yE >= dest_height) {
+            yE -= dest_height;
+            src += src_rowsize;
+        }
+    }
+}
+
 
 BOOST_AUTO_TEST_CASE(TestScaleImage)
 {
@@ -849,8 +762,6 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid);
     Rect scr(0, 0, width, height);
     RDPDrawable drawable(scr.cx, scr.cy, 24);
-    DrawableToFile d(trans, drawable.impl(), 100);
-    d.zoom(50);
 
     {
         const char * filename = FIXTURES_PATH "/win2008capture10.png";
@@ -859,7 +770,26 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
         read_png24(fd, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize());
         fclose(fd);
     }
-    d.flush();
+
+    // TODO: zooming should be managed by some dedicated Drawable
+    unsigned zoom_factor = 50;
+    unsigned scaled_width = (((drawable.width() * zoom_factor) / 100) + 3) & 0xFFC;
+    unsigned scaled_height = (drawable.height() * zoom_factor) / 100;
+    std::unique_ptr<uint8_t[]> scaled_buffer = nullptr;
+    scaled_buffer.reset(new uint8_t[scaled_width * scaled_height * 3]);
+
+    // Zoom 50
+    scale_data_local(
+        scaled_buffer.get(), drawable.data(),
+        scaled_width, drawable.width(),
+        scaled_height, drawable.height(),
+        drawable.rowsize());
+
+    ::transport_dump_png24(
+        trans, scaled_buffer.get(),
+        scaled_width, scaled_height,
+        scaled_width * 3, false);
+
     // TODO "check this: BGR/RGB problem i changed 8176 to 8162 to fix test"
     const char * filename = trans.seqgen()->get(0);
     BOOST_CHECK_EQUAL(8162, ::filesize(filename));
@@ -873,8 +803,8 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600, 24);
-    DrawableToFile d(trans, drawable.impl(), 100);
     drawable.draw(RDPOpaqueRect(scr, GREEN), scr);
+    
 
     uint8_t source64x64[] = {
 // MIX_SET 60 remaining=932 bytes pix=0
@@ -988,7 +918,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
 //     dump_png24(f, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize(), true);
 //     fclose(f);
 
-    d.flush();
+    dump_png24(drawable.impl(), trans, true);
     const char * filename = trans.seqgen()->get(0);
     BOOST_CHECK_EQUAL(4094, ::filesize(filename));
     ::unlink(filename);
@@ -1001,7 +931,6 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600, 24);
-    DrawableToFile d(trans, drawable.impl(), 100);
     drawable.draw(RDPOpaqueRect(scr, GREEN), scr);
 
     uint8_t source32x1[] =
@@ -1038,7 +967,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
     Bitmap bloc32x1(16, 16, nullptr, 32, 1, source32x1, sizeof(source32x1)-1, true);
     drawable.draw(RDPMemBlt(0, Rect(100, 100, bloc32x1.cx(), bloc32x1.cy()), 0xCC, 0, 0, 0), scr, bloc32x1);
 
-    d.flush();
+    dump_png24(drawable.impl(), trans, true);
     const char * filename = trans.seqgen()->get(0);
     BOOST_CHECK_EQUAL(2913, ::filesize(filename));
     ::unlink(filename);
