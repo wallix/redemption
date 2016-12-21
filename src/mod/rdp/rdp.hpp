@@ -1263,6 +1263,8 @@ public:
         }
     }
 
+    int get_fd() const override { return this->nego.trans.get_fd(); }
+
 protected:
     std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
             const char* channel_name) const

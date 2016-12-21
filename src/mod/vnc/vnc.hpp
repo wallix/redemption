@@ -284,6 +284,8 @@ public:
         this->screen.clear();
     }
 
+    int get_fd() const override { return this->t.get_fd(); }
+
     void ms_logon(uint64_t gen, uint64_t mod, uint64_t resp) {
         if (this->verbose) {
             LOG(LOG_INFO, "MS-Logon with following values:");

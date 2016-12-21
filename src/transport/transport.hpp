@@ -31,6 +31,7 @@
 #include "core/error.hpp"
 #include "acl/auth_api.hpp"
 #include "utils/sugar/noncopyable.hpp"
+#include "utils/invalid_socket.hpp"
 
 #include "configs/autogen/enums.hpp"
 
@@ -204,6 +205,8 @@ public:
 
     virtual void request_full_cleaning()
     {}
+
+    virtual int get_fd() const { return INVALID_SOCKET; }
 
 private:
     Transport(const Transport &) = delete;

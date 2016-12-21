@@ -102,6 +102,8 @@ public:
         }
     }
 
+    int get_fd() const override { return this->sck; }
+
     const uint8_t * get_public_key() const override {
         return this->tls ? this->tls->public_key.get() : nullptr;
     }

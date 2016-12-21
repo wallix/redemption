@@ -614,9 +614,7 @@ private:
                          , to_verbose_flags(verbose), error_message)
         , Mod(*this, std::forward<Args>(mod_args)...)
         , mm(mm)
-        {
-            mm.mod_transport = this;
-        }
+        {}
 
         void display_osd_message(std::string const & message) override {
             this->mm.osd_message(message, true);
@@ -702,7 +700,6 @@ public:
     null_mod no_mod;
     ModOSD mod_osd;
     mod_api * internal_mod = &no_mod;
-    SocketTransport * mod_transport;
     Random & gen;
     TimeObj & timeobj;
 
@@ -721,7 +718,6 @@ public:
         , front(front)
         , no_mod(this->front)
         , mod_osd(*this)
-        , mod_transport(nullptr)
         , gen(gen)
         , timeobj(timeobj)
         , client_execute(front, ini.get<cfg::debug::mod_internal>() & 1)
@@ -736,7 +732,6 @@ public:
             delete this->internal_mod;
             this->internal_mod = &this->no_mod;
             this->mod = &this->no_mod;
-            this->mod_transport = nullptr;
         }
         this->front.must_be_stop_capture();
     }
@@ -1399,36 +1394,92 @@ public:
 
                 try {
                     const char * const name = "VNC Target";
-                    this->set_mod(new ModWithSocket<mod_vnc>(
-                        *this,
-                        name,
-                        client_sck,
-                        this->ini.get<cfg::debug::mod_vnc>(),
-                        nullptr,
-                        sock_mod_barrier(),
-                        this->ini.get<cfg::globals::target_user>().c_str(),
-                        this->ini.get<cfg::context::target_password>().c_str(),
-                        this->front,
-                        this->front.client_info.width,
-                        this->front.client_info.height,
-                        this->ini.get<cfg::font>(),
-                        Translator(language(this->ini)),
-                        this->ini.get<cfg::theme>(),
-                        this->front.client_info.keylayout,
-                        this->front.keymap.key_flags,
-                        this->ini.get<cfg::mod_vnc::clipboard_up>(),
-                        this->ini.get<cfg::mod_vnc::clipboard_down>(),
-                        this->ini.get<cfg::mod_vnc::encodings>().c_str(),
-                        this->ini.get<cfg::mod_vnc::allow_authentification_retries>(),
-                        true,
-                        this->ini.get<cfg::mod_vnc::server_clipboard_encoding_type>()
-                            != ClipboardEncodingType::latin1
-                            ? mod_vnc::ClipboardEncodingType::UTF8
-                            : mod_vnc::ClipboardEncodingType::Latin1,
-                        this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
-                        acl,
-                        this->ini.get<cfg::debug::mod_vnc>()
-                    ));
+
+                    if (this->front.client_info.remote_program) {
+                        LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
+
+                        Rect adjusted_client_execute_rect =
+                            this->client_execute.adjust_rect(get_widget_rect(
+                                    this->front.client_info.width,
+                                    this->front.client_info.height,
+                                    this->front.client_info.cs_monitor
+                                ));
+
+                        std::unique_ptr<mod_api> managed_mod(
+                                new ModWithSocket<mod_vnc>(
+                                        *this,
+                                        name,
+                                        client_sck,
+                                        this->ini.get<cfg::debug::mod_vnc>(),
+                                        nullptr,
+                                        sock_mod_barrier(),
+                                        this->ini.get<cfg::globals::target_user>().c_str(),
+                                        this->ini.get<cfg::context::target_password>().c_str(),
+                                        this->front,
+                                        this->front.client_info.width,
+                                        this->front.client_info.height,
+                                        this->ini.get<cfg::font>(),
+                                        Translator(language(this->ini)),
+                                        this->ini.get<cfg::theme>(),
+                                        this->front.client_info.keylayout,
+                                        this->front.keymap.key_flags,
+                                        this->ini.get<cfg::mod_vnc::clipboard_up>(),
+                                        this->ini.get<cfg::mod_vnc::clipboard_down>(),
+                                        this->ini.get<cfg::mod_vnc::encodings>().c_str(),
+                                        this->ini.get<cfg::mod_vnc::allow_authentification_retries>(),
+                                        true,
+                                        this->ini.get<cfg::mod_vnc::server_clipboard_encoding_type>()
+                                            != ClipboardEncodingType::latin1
+                                            ? mod_vnc::ClipboardEncodingType::UTF8
+                                            : mod_vnc::ClipboardEncodingType::Latin1,
+                                        this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
+                                        acl,
+                                        this->ini.get<cfg::debug::mod_vnc>()
+                                    )
+                            );
+                        this->set_mod(new WidgetTestMod(
+                            this->ini,
+                            this->front,
+                            this->front.client_info.width,
+                            this->front.client_info.height,
+                            adjusted_client_execute_rect,
+                            std::move(managed_mod),
+                            this->client_execute
+                        ));
+                        LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
+                    }
+                    else {
+                        this->set_mod(new ModWithSocket<mod_vnc>(
+                            *this,
+                            name,
+                            client_sck,
+                            this->ini.get<cfg::debug::mod_vnc>(),
+                            nullptr,
+                            sock_mod_barrier(),
+                            this->ini.get<cfg::globals::target_user>().c_str(),
+                            this->ini.get<cfg::context::target_password>().c_str(),
+                            this->front,
+                            this->front.client_info.width,
+                            this->front.client_info.height,
+                            this->ini.get<cfg::font>(),
+                            Translator(language(this->ini)),
+                            this->ini.get<cfg::theme>(),
+                            this->front.client_info.keylayout,
+                            this->front.keymap.key_flags,
+                            this->ini.get<cfg::mod_vnc::clipboard_up>(),
+                            this->ini.get<cfg::mod_vnc::clipboard_down>(),
+                            this->ini.get<cfg::mod_vnc::encodings>().c_str(),
+                            this->ini.get<cfg::mod_vnc::allow_authentification_retries>(),
+                            true,
+                            this->ini.get<cfg::mod_vnc::server_clipboard_encoding_type>()
+                                != ClipboardEncodingType::latin1
+                                ? mod_vnc::ClipboardEncodingType::UTF8
+                                : mod_vnc::ClipboardEncodingType::Latin1,
+                            this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
+                            acl,
+                            this->ini.get<cfg::debug::mod_vnc>()
+                        ));
+                    }
                 }
                 catch (...) {
                     if (acl) {

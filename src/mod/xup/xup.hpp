@@ -109,6 +109,8 @@ enum {
 
     ~xup_mod() override {}
 
+    int get_fd() const override { return this->t.get_fd(); }
+
     enum {
         XUPWM_INVALIDATE = 200
     };
