@@ -4863,7 +4863,7 @@ struct RdpDrStatus
         return res;
     }
 
-    ~DeviceIORequestData() {
+    ~RdpDrStatus() {
         this->requestList.clear();
     }
 };

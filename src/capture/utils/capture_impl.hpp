@@ -327,18 +327,6 @@ public:
     {
     }
 
-//    void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
-//        apis_register.capture_list.push_back(this->meta);
-//        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta)) {
-//            apis_register.kbd_input_list.push_back(this->meta);
-//            apis_register.capture_probe_list.push_back(this->meta);
-//        }
-
-//        if (this->enable_agent) {
-//            apis_register.capture_probe_list.push_back(this->session_log_agent);
-//        }
-//    }
-
     SessionMeta & get_session_meta() {
         return this->meta;
     }
@@ -355,8 +343,9 @@ struct NotifyTitleChanged : private noncopyable
     virtual ~NotifyTitleChanged() = default;
 };
 
-class TitleCaptureImpl final : gdi::CaptureApi, gdi::CaptureProbeApi
+class TitleCaptureImpl : public gdi::CaptureApi, public gdi::CaptureProbeApi
 {
+public:
     OcrTitleExtractorBuilder ocr_title_extractor_builder;
     AgentTitleExtractor agent_title_extractor;
 
@@ -367,7 +356,6 @@ class TitleCaptureImpl final : gdi::CaptureApi, gdi::CaptureProbeApi
 
     NotifyTitleChanged & notify_title_changed;
 
-public:
     TitleCaptureImpl(
         const timeval & now,
         auth_api * authentifier,
@@ -387,12 +375,7 @@ public:
     {
     }
 
-    void attach_apis(ApisRegister & apis_register, const Inifile & /*ini*/) {
-        apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this));
-        apis_register.capture_probe_list.push_back(static_cast<gdi::CaptureProbeApi&>(*this));
-    }
 
-private:
     std::chrono::microseconds do_snapshot(
         const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
     ) override {

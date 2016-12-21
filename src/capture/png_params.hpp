@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <chrono>
+
 struct PngParams
 {
     unsigned png_width;

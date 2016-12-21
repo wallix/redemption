@@ -23,9 +23,6 @@
 #include <string>
 #include "configs/config.hpp"
 
-#include "capture/video_capture.hpp"
-#include "configs/config.hpp"
-
 struct FlvParams
 {
     Level video_quality;
