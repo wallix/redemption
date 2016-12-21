@@ -614,9 +614,7 @@ private:
                          , to_verbose_flags(verbose), error_message)
         , Mod(*this, std::forward<Args>(mod_args)...)
         , mm(mm)
-        {
-            mm.mod_transport = this;
-        }
+        {}
 
         void display_osd_message(std::string const & message) override {
             this->mm.osd_message(message, true);
@@ -702,7 +700,6 @@ public:
     null_mod no_mod;
     ModOSD mod_osd;
     mod_api * internal_mod = &no_mod;
-    SocketTransport * mod_transport;
     Random & gen;
     TimeObj & timeobj;
 
@@ -721,7 +718,6 @@ public:
         , front(front)
         , no_mod(this->front)
         , mod_osd(*this)
-        , mod_transport(nullptr)
         , gen(gen)
         , timeobj(timeobj)
         , client_execute(front, ini.get<cfg::debug::mod_internal>() & 1)
@@ -736,7 +732,6 @@ public:
             delete this->internal_mod;
             this->internal_mod = &this->no_mod;
             this->mod = &this->no_mod;
-            this->mod_transport = nullptr;
         }
         this->front.must_be_stop_capture();
     }

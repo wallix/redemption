@@ -194,8 +194,12 @@ public:
                     this->client->auth_event.wait_on_fd(this->client->auth_trans.sck, rfds, max, timeout);
                 }
 
-                mm.mod_transport ? mm.mod->get_event().wait_on_fd(mm.mod_transport->sck, rfds, max, timeout)
-                                 : mm.mod->get_event().wait_on_timeout(timeout);
+                {
+                    const int fd = mm.mod->get_fd();
+                    (INVALID_SOCKET != fd)
+                        ? mm.mod->get_event().wait_on_fd(fd, rfds, max, timeout)
+                        : mm.mod->get_event().wait_on_timeout(timeout);
+                }
 
                 event_handlers.clear();
                 mm.mod->get_event_handlers(event_handlers);
@@ -302,7 +306,7 @@ public:
 
                             // Process incoming module trafic
                             if ((BACK_EVENT_NONE == signal) &&
-                                mm.mod->get_event().is_set(mm.mod_transport?mm.mod_transport->sck:INVALID_SOCKET, rfds)) {
+                                mm.mod->get_event().is_set(mm.mod->get_fd(), rfds)) {
                                 mm.mod->draw_event(now, mm.get_graphic_wrapper(*this->front));
 
                                 if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
