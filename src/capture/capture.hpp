@@ -1219,8 +1219,7 @@ public:
         CryptoContext & cctx,
         Random & rnd,
         bool full_video,
-        UpdateProgressData * update_progress_data,
-        bool force_capture_png_if_enable)
+        UpdateProgressData * update_progress_data)
     : is_replay_mod(!authentifier)
     , capture_wrm(bool(capture_flags & CaptureFlags::wrm))
     , capture_png(bool(capture_flags & CaptureFlags::png) && (!authentifier || png_params.png_limit > 0))
@@ -1314,7 +1313,7 @@ public:
                         png_params
                     ));
                 }
-                else if (force_capture_png_if_enable) {
+                else if (png_params.force_capture_png_if_enable) {
                     this->psc.reset(new Image(
                         now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,

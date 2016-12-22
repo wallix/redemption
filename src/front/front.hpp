@@ -938,7 +938,8 @@ public:
                 0, 0,
                 ini.get<cfg::video::png_interval>(),
                 100u, 
-                ini.get<cfg::video::png_limit>()
+                ini.get<cfg::video::png_limit>(),
+                false
         };
         FlvParams flv_params = flv_params_from_ini(this->client_info.width, this->client_info.height, ini);
         this->capture = new Capture(
@@ -951,7 +952,6 @@ public:
           , ini, this->cctx, this->gen
           , full_video
           , nullptr
-          , false
         );
         if (this->nomouse) {
             this->capture->set_pointer_display();
