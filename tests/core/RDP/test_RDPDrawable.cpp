@@ -44,6 +44,7 @@
 #include "utils/difftimeval.hpp"
 #include "gdi/capture_api.hpp"
 #include "core/RDP/RDPDrawable.hpp"
+#include "utils/bitmap_shrink.hpp"
 
 inline bool check_sig(RDPDrawable & data, char * message, const char * shasig)
 {

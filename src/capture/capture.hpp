@@ -23,6 +23,13 @@
 
 #include <vector>
 #include <functional>
+#include <cerrno>
+#include <fcntl.h>
+#include <snappy-c.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <time.h> // localtime_r
+#include <memory>
 
 #include "utils/sugar/array_view.hpp"
 #include "capture/png_params.hpp"
@@ -68,7 +75,6 @@ private:
 
 #include "capture/utils/graphic_capture_impl.hpp"
 #include "capture/utils/kbd_capture_impl.hpp"
-#include "capture/utils/image_capture_impl.hpp"
 #include "capture/utils/capture_apis_impl.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
@@ -90,7 +96,6 @@ private:
 #include "utils/difftimeval.hpp"
 #include "transport/transport.hpp"
 #include "gdi/capture_api.hpp"
-#include "capture/utils/image_capture_impl.hpp"
 #include "utils/bitmap_shrink.hpp"
 
 #include "openssl_crypto.hpp"

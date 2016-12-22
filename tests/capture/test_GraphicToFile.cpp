@@ -46,6 +46,7 @@
 #include "capture/GraphicToFile.hpp"
 
 #include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
+#include "utils/bitmap_shrink.hpp"
 
 class DrawableToFile
 {
