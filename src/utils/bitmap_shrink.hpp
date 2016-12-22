@@ -20,13 +20,17 @@
 
 #pragma once
 
+
+// TODO: see parameters used rowsize if annoying as it's an implicit way
+// to provide Bpp (Bytes per pixel) and the function hard encode it to 3.
+// There are also annoying rounding behaviors. Fix that.
 static inline void scale_data(uint8_t *dest, const uint8_t *src,
                        unsigned int dest_width, unsigned int src_width,
                        unsigned int dest_height, unsigned int src_height,
                        unsigned int src_rowsize) {
     const uint32_t Bpp = 3;
     unsigned int y_pixels = dest_height;
-    unsigned int y_int_part = src_height / dest_height * src_rowsize;
+    unsigned int y_int_part = (src_height / dest_height) * src_rowsize;
     unsigned int y_fract_part = src_height % dest_height;
     unsigned int yE = 0;
     unsigned int x_int_part = src_width / dest_width * Bpp;
