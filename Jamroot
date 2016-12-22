@@ -457,7 +457,6 @@ test-canonical capture/FileToGraphic.hpp : <library>bitmap <library>snappy <libr
 test-canonical capture/GraphicToFile.hpp : <library>bitmap <library>snappy <library>crypto <library>png ;
 test-canonical capture/RDPChunkedDevice.hpp ;
 test-canonical capture/capture.hpp : <library>bitmap <library>png <library>crypto <library>dl <library>z <library>snappy <library>ppocr_test <library>ocr <library>ffmpeg ;
-test-canonical capture/chunked_image_transport.hpp : <library>bitmap <library>png <library>z <library>snappy <library>crypto <library>png ;
 test-canonical capture/new_kbdcapture.hpp ;
 test-canonical capture/session_meta.hpp ;
 test-canonical capture/transparentchunk.hpp ;
