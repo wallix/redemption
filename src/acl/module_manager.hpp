@@ -49,6 +49,7 @@
 #include "mod/internal/flat_dialog_mod.hpp"
 #include "mod/internal/flat_wait_mod.hpp"
 #include "mod/internal/interactive_target_mod.hpp"
+#include "mod/internal/rail_module_host_mod.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 
 #include "utils/protect_graphics.hpp"
@@ -1396,7 +1397,7 @@ public:
                     const char * const name = "VNC Target";
 
                     if (this->front.client_info.remote_program) {
-                        LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
+                        LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
 
                         Rect adjusted_client_execute_rect =
                             this->client_execute.adjust_rect(get_widget_rect(
@@ -1437,7 +1438,7 @@ public:
                                         this->ini.get<cfg::debug::mod_vnc>()
                                     )
                             );
-                        this->set_mod(new WidgetTestMod(
+                        this->set_mod(new RailModuleHostMod(
                             this->ini,
                             this->front,
                             this->front.client_info.width,
@@ -1446,7 +1447,7 @@ public:
                             std::move(managed_mod),
                             this->client_execute
                         ));
-                        LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
+                        LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
                     }
                     else {
                         this->set_mod(new ModWithSocket<mod_vnc>(
