@@ -34,7 +34,7 @@
 BOOST_AUTO_TEST_CASE(TestSessionMeta)
 {
     char const out_data[] =
-        "1970-01-01 01:16:40 + [Kbd]ABCDABCDABCDABCDABCDABCDABCDABCDABCD\n"
+        "1970-01-01 01:16:40 - [Kbd]ABCDABCDABCDABCDABCDABCDABCDABCDABCD\n"
         "1970-01-01 01:16:49 - [Kbd]ABCD\n"
         "1970-01-01 01:16:50 + Blah1\n"
         "1970-01-01 01:16:51 + Blah2[Kbd]ABCDABCD\n"
