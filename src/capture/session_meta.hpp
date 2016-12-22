@@ -43,6 +43,7 @@ namespace {
 /*
 * Format:
 *
+* $date ' - [Kbd]' $kbd
 * $date ' ' [+-] ' ' $title? '[Kbd]' $kbd
 * $date ' - ' $line
 */
@@ -54,7 +55,7 @@ class SessionMeta final : public TextKbd<SessionMeta>, public gdi::CaptureApi, p
     Transport & trans;
     std::string title;
     bool require_kbd = false;
-    char current_seperator = '+';
+    char current_seperator = '-';
     bool is_probe_enabled_session = false;
 
 public:
