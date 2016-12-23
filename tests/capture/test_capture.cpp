@@ -80,14 +80,13 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         // TODO remove this after unifying capture interface
         auth_api * authentifier = nullptr;
         // TODO remove this after unifying capture interface
-        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0};
-        bool force_capture_png_if_enable = true;
+        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true};
 
         FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
         Capture capture(capture_flags,
             now, scr.cx, scr.cy, 24, 24, png_params, flv_params
             , clear_png, no_timestamp, authentifier
-            , ini, cctx, rnd, full_video, nullptr, force_capture_png_if_enable);
+            , ini, cctx, rnd, full_video, nullptr);
         bool ignore_frame_in_timeval = false;
 
         capture.draw(RDPOpaqueRect(scr, GREEN), scr);
@@ -241,16 +240,14 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     bool no_timestamp = false;
     // TODO remove this after unifying capture interface
     auth_api * authentifier = nullptr;
-    // TODO remove this after unifying capture interface
-    bool force_capture_png_if_enable = true;
 
-    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0};
+    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true};
     FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
 
     Capture capture(capture_flags
                    , now, scr.cx, scr.cy, 16, 16, png_params, flv_params
                    , clear_png, no_timestamp, authentifier
-                   , ini, cctx, rnd, full_video, nullptr, force_capture_png_if_enable);
+                   , ini, cctx, rnd, full_video, nullptr);
 
     Pointer pointer1(Pointer::POINTER_EDIT);
     capture.set_pointer(pointer1);
