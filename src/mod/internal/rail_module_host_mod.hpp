@@ -111,6 +111,8 @@ public:
         LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk,
             length, flags);
 
+        if (!::strncmp(front_channel_name, "rail", 4)) { return; }
+
         mod_api& mod = this->rail_module_host.get_managed_mod();
 
         mod.send_to_mod_channel(front_channel_name, chunk, length, flags);

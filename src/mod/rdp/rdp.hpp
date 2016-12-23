@@ -842,7 +842,7 @@ public:
         , enable_multiopaquerect(false)
         , enable_multipatblt(false)
         , enable_multiscrblt(false)
-        , remote_program(info.remote_program)
+        , remote_program(mod_rdp_params.remote_program)
         , server_redirection_support(mod_rdp_params.server_redirection_support)
         , transparent_recorder(nullptr)
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
@@ -1132,6 +1132,10 @@ public:
                 this->client_execute_arguments   = this->session_probe_arguments;
                 this->client_execute_working_dir = "%TMP%";
                 this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
+
+                this->session_probe_launcher =
+                    std::make_unique<SessionProbeAlternateShellBasedLauncher>(
+                        this->verbose);
             }   // if (this->remote_program)
             else {
                 if (mod_rdp_params.session_probe_use_clipboard_based_launcher &&
@@ -1228,7 +1232,7 @@ public:
             }
         }
 
-        if (remote_program) {
+        if (this->remote_program) {
             this->remote_programs_session_manager =
                 std::make_unique<RemoteProgramsSessionManager>(front, *this,
                     this->lang, this->front_width, this->front_height,
@@ -2090,10 +2094,14 @@ public:
                     bool has_rdpsnd_channel  = false;
                     for (size_t index = 0; index < num_channels; index++) {
                         const CHANNELS::ChannelDef & channel_item = channel_list[index];
-                        if (this->authorization_channels.is_authorized(channel_item.name) ||
-                            ((!strcmp(channel_item.name, channel_names::rdpdr) ||
-                              !strcmp(channel_item.name, channel_names::rdpsnd)) &&
-                            this->file_system_drive_manager.HasManagedDrive())
+                        if (!this->remote_program &&
+                            !::strncmp(channel_item.name, "rail", 4)) {
+                            memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
+                        }
+                        else if (this->authorization_channels.is_authorized(channel_item.name) ||
+                                 ((!strcmp(channel_item.name, channel_names::rdpdr) ||
+                                   !strcmp(channel_item.name, channel_names::rdpsnd)) &&
+                                  this->file_system_drive_manager.HasManagedDrive())
                         ) {
                             if (!strcmp(channel_item.name, channel_names::cliprdr)) {
                                 has_cliprdr_channel = true;

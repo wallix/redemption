@@ -143,6 +143,7 @@ struct ModRDPParams {
     const char * client_execute_working_dir = "";
     const char * client_execute_arguments = "";
 
+    bool remote_program = false;
 
     Font const & font;
     Theme const & theme;
@@ -297,6 +298,8 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     s_or_none,             client_execute_exe_or_file);
         RDP_PARAMS_LOG("%s",     s_or_none,             client_execute_working_dir);
         RDP_PARAMS_LOG("%s",     s_or_none,             client_execute_arguments);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             remote_program);
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, verbose);
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);

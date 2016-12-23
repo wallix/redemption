@@ -1318,24 +1318,63 @@ public:
                 mod_rdp_params.client_execute_working_dir          = this->client_execute.WorkingDir();
                 mod_rdp_params.client_execute_arguments            = this->client_execute.Arguments();
 
+                mod_rdp_params.remote_program                      = (client_info.remote_program &&
+                                                                      (mod_rdp_params.target_application &&
+                                                                       (*mod_rdp_params.target_application)));
+
                 try {
                     const char * const name = "RDP Target";
-                    // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport
-                    ModWithSocket<mod_rdp>* new_mod = new ModWithSocket<mod_rdp>(
-                        *this,
-                        name,
-                        client_sck,
-                        this->ini.get<cfg::debug::mod_rdp>(),
-                        &this->ini.get_ref<cfg::context::auth_error_message>(),
-                        sock_mod_barrier(),
-                        this->front,
-                        client_info,
-                        ini.get_ref<cfg::mod_rdp::redir_info>(),
-                        this->gen,
-                        this->timeobj,
-                        mod_rdp_params
-                    );
-                    this->set_mod(new_mod, (new_mod ? new_mod->get_windowing_api() : nullptr));
+
+                    ModWithSocket<mod_rdp>* new_mod =
+                        new ModWithSocket<mod_rdp>(
+                                *this,
+                                name,
+                                client_sck,
+                                this->ini.get<cfg::debug::mod_rdp>(),
+                                &this->ini.get_ref<cfg::context::auth_error_message>(),
+                                sock_mod_barrier(),
+                                this->front,
+                                client_info,
+                                ini.get_ref<cfg::mod_rdp::redir_info>(),
+                                this->gen,
+                                this->timeobj,
+                                mod_rdp_params
+                            );
+
+                    windowing_api* winapi = (new_mod ? new_mod->get_windowing_api() : nullptr);
+
+                    std::unique_ptr<mod_api> managed_mod(new_mod);
+
+                    if (this->front.client_info.remote_program &&
+                        (!mod_rdp_params.target_application ||
+                         !(*mod_rdp_params.target_application))) {
+                        LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
+
+                        Rect adjusted_client_execute_rect =
+                            this->client_execute.adjust_rect(get_widget_rect(
+                                    this->front.client_info.width,
+                                    this->front.client_info.height,
+                                    this->front.client_info.cs_monitor
+                                ));
+
+                        this->set_mod(
+                                new RailModuleHostMod(
+                                        this->ini,
+                                        this->front,
+                                        this->front.client_info.width,
+                                        this->front.client_info.height,
+                                        adjusted_client_execute_rect,
+                                        std::move(managed_mod),
+                                        this->client_execute
+                                    ),
+                                winapi
+                            );
+                        LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
+                    }
+                    else {
+                        // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport
+                        this->set_mod(managed_mod.release(), winapi);
+                    }
                 }
                 catch (...) {
                     if (acl) {

@@ -43,7 +43,25 @@ private:
                      std::unique_ptr<mod_api> managed_mod)
         : host(host)
         , managed_mod(std::move(managed_mod))
-        {}
+        {
+            REDASSERT(this->managed_mod);
+        }
+
+        // Callback
+        void send_to_mod_channel(const char* front_channel_name,
+                                 InStream& chunk, size_t length,
+                                 uint32_t flags) override
+        {
+            if (this->managed_mod)
+            {
+                return this->managed_mod->send_to_mod_channel(
+                        front_channel_name,
+                        chunk,
+                        length,
+                        flags
+                    );
+            }
+        }
 
         // mod_api
 
@@ -66,8 +84,6 @@ private:
                 return this->managed_mod->get_event();
             }
 
-            REDASSERT(false);
-
             return mod_api::get_event();
         }
 
@@ -77,8 +93,6 @@ private:
             {
                 return this->managed_mod->get_fd();
             }
-
-            REDASSERT(false);
 
             return INVALID_SOCKET;
         }
@@ -98,8 +112,6 @@ private:
             {
                 return this->managed_mod->is_up_and_running();
             }
-
-            REDASSERT(false);
 
             return mod_api::is_up_and_running();
         }
