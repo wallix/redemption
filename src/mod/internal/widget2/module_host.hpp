@@ -206,7 +206,7 @@ public:
     {
         this->begin_update();
 
-        drawable.draw(RDPOpaqueRect(this->get_rect(), 0x000000), this->get_rect());
+        this->drawable.draw(RDPOpaqueRect(this->get_rect(), 0x000000), this->get_rect());
 
         this->module_holder.rdp_input_invalidate(r.offset(-this->x(), -this->y()));
 
@@ -239,41 +239,43 @@ private:
 
     void begin_update() override
     {
-        gdi::GraphicApi& drawable = this->get_drawable();
+        gdi::GraphicApi& drawable_ = this->get_drawable();
 
-        drawable.begin_update();
+        drawable_.begin_update();
     }
 
     void end_update() override
     {
-        gdi::GraphicApi& drawable = this->get_drawable();
+        gdi::GraphicApi& drawable_ = this->get_drawable();
 
-        drawable.end_update();
+        drawable_.end_update();
     }
 
     template<class Cmd>
     void draw_impl(const Cmd& cmd) {
-        gdi::GraphicApi& drawable = this->get_drawable();
+        gdi::GraphicApi& drawable_ = this->get_drawable();
 
-        drawable.draw(cmd);
+        drawable_.draw(cmd);
     }
 
     template<class Cmd, class... Args>
     void draw_impl(const Cmd& cmd, const Rect& clip, const Args&... args)
     {
-        gdi::GraphicApi& drawable = this->get_drawable();
+        gdi::GraphicApi& drawable_ = this->get_drawable();
 
-        drawable.draw(cmd, clip.offset(this->x(), this->y()), args...);
+        drawable_.draw(cmd, clip.offset(this->x(), this->y()), args...);
     }
 
     void draw_impl(const RDPBitmapData& bitmap_data, const Bitmap& bmp)
     {
-        gdi::GraphicApi& drawable = this->get_drawable();
+        gdi::GraphicApi& drawable_ = this->get_drawable();
 
-        drawable.draw(bitmap_data, bmp);
+        drawable_.draw(bitmap_data, bmp);
     }
 
     void draw(const RDPMemBlt& cmd, const Rect& clip, Bitmap const & bmp) override {
+        gdi::GraphicApi& drawable_ = this->get_drawable();
+
         const Rect widget_rect = this->get_rect();
 
         Rect new_clip = clip.offset(this->x(), this->y());
@@ -286,10 +288,12 @@ private:
         new_cmd.rect = new_cmd.rect.intersect(widget_rect);
         if (new_cmd.rect.isempty()) { return; }
 
-        drawable.draw(new_cmd, new_clip, bmp);
+        drawable_.draw(new_cmd, new_clip, bmp);
     }
 
     void draw(const RDPOpaqueRect& cmd, const Rect& clip) override {
+        gdi::GraphicApi& drawable_ = this->get_drawable();
+
         const Rect widget_rect = this->get_rect();
 
         Rect new_clip = clip.offset(this->x(), this->y());
@@ -302,10 +306,12 @@ private:
         new_cmd.rect = new_cmd.rect.intersect(widget_rect);
         if (new_cmd.rect.isempty()) { return; }
 
-        drawable.draw(new_cmd, new_clip);
+        drawable_.draw(new_cmd, new_clip);
     }
 
     void draw(const RDPScrBlt& cmd, const Rect& clip) override {
+        gdi::GraphicApi& drawable_ = this->get_drawable();
+
         const Rect widget_rect = this->get_rect();
 
         Rect new_clip = clip.offset(this->x(), this->y());
@@ -318,6 +324,6 @@ private:
         new_cmd.rect = new_cmd.rect.intersect(widget_rect);
         if (new_cmd.rect.isempty()) { return; }
 
-        drawable.draw(new_cmd, new_clip);
+        drawable_.draw(new_cmd, new_clip);
     }
 };
