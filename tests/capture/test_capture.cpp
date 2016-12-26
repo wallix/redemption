@@ -106,13 +106,12 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
                         , capture_flv_full
                         , capture_meta
                         
-                        , capture_flags
                         , now, scr.cx, scr.cy, 24, 24
                         , record_tmp_path
                         , record_path
                         , wrm_params, png_params, flv_params
                         , no_timestamp, authentifier
-                        , ini, cctx, rnd, full_video, nullptr);
+                        , ini, cctx, rnd, nullptr);
         bool ignore_frame_in_timeval = false;
 
         capture.draw(RDPOpaqueRect(scr, GREEN), scr);
@@ -291,13 +290,12 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , capture_flv_full
                    , capture_meta
                    
-                   , capture_flags
                    , now, scr.cx, scr.cy, 16, 16
                    , record_tmp_path
                    , record_path
                    , wrm_params, png_params, flv_params
                    , no_timestamp, authentifier
-                   , ini, cctx, rnd, full_video, nullptr);
+                   , ini, cctx, rnd, nullptr);
 
     Pointer pointer1(Pointer::POINTER_EDIT);
     capture.set_pointer(pointer1);

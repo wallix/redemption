@@ -966,13 +966,10 @@ public:
         this->capture = new Capture(capture_pattern_checker
                                     , capture_wrm
                                     , capture_png
-
                                     , capture_ocr
                                     , capture_flv
                                     , capture_flv_full
                                     , capture_meta
-
-                                    , capture_flags
 
                                     , now
                                     , this->client_info.width, this->client_info.height
@@ -982,7 +979,6 @@ public:
                                     , wrm_params, png_params, flv_params
                                     , false, authentifier
                                     , ini, this->cctx, this->gen
-                                    , full_video
                                     , nullptr
                                     );
         if (this->nomouse) {

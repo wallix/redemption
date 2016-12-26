@@ -1027,7 +1027,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                     , capture_flv
                                     , capture_flv_full
                                     , capture_meta
-                                    , capture_flags
                                     , ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                                     , player.screen_rect.cx
                                     , player.screen_rect.cy
@@ -1043,7 +1042,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                     , ini
                                     , cctx
                                     , rnd
-                                    , full_video
                                     , &update_progress_data);
 
                             player.add_consumer(&capture, &capture, &capture, &capture, &capture);

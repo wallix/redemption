@@ -1215,8 +1215,6 @@ public:
         bool capture_flv,
         bool capture_flv_full,
         bool capture_meta,
-        
-        const CaptureFlags capture_flags,
         const timeval & now,
         int width,
         int height,
@@ -1232,7 +1230,6 @@ public:
         const Inifile & ini,
         CryptoContext & cctx,
         Random & rnd,
-        bool full_video,
         UpdateProgressData * update_progress_data)
     : is_replay_mod(!authentifier)
     , capture_wrm(capture_wrm)
