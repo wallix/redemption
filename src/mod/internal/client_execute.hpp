@@ -30,6 +30,8 @@
 #include "core/RDP/remote_programs.hpp"
 #include "mod/internal/internal_mod.hpp"
 #include "mod/mod_api.hpp"
+#include "mod/rdp/channels/rail_window_id_manager.hpp"
+#include "mod/rdp/windowing_api.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_with_png.hpp"
 #include "utils/stream.hpp"
@@ -37,6 +39,8 @@
 
 #define INTERNAL_MODULE_WINDOW_ID    40000
 #define INTERNAL_MODULE_WINDOW_TITLE "Wallix AdminBastion"
+
+#define AUXILIARY_WINDOW_ID          40001
 
 #define TITLE_BAR_HEIGHT       24
 #define TITLE_BAR_BUTTON_WIDTH 37
@@ -46,7 +50,7 @@
 #define INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH  640
 #define INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT 480
 
-class ClientExecute
+class ClientExecute : public windowing_api
 {
           FrontAPI             * front_   = nullptr;
           mod_api              * mod_     = nullptr;
@@ -123,6 +127,8 @@ class ClientExecute
     bool maximized = false;
 
     Bitmap wallix_icon_min;
+
+    uint32_t auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
     bool verbose;
 
@@ -1547,6 +1553,7 @@ public:
             this->internal_module_window_created = false;
         }
 
+        auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
         this->channel_ = nullptr;
     }   // reset
@@ -2667,4 +2674,82 @@ public:
     const char * WorkingDir() const { return this->client_execute_working_dir.c_str(); }
 
     const char * Arguments() const { return this->client_execute_arguments.c_str(); }
+
+    void create_auxiliary_window(Rect const& window_rect) override {
+        if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != this->auxiliary_window_id) return;
+
+        this->auxiliary_window_id = AUXILIARY_WINDOW_ID;
+
+        {
+            RDP::RAIL::NewOrExistingWindow order;
+
+            order.header.FieldsPresentFlags(
+                      RDP::RAIL::WINDOW_ORDER_STATE_NEW
+                    | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTDELTA
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_SHOW
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_STYLE
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_TITLE
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_OWNER
+                );
+            order.header.WindowId(this->auxiliary_window_id);
+
+            order.OwnerWindowId(0x0);
+            order.Style(0x14EE0000);
+            order.ExtendedStyle(0x40310 | 0x8);
+            order.ShowState(5);
+            order.TitleInfo("Dialog box");
+            order.ClientOffsetX(window_rect.x + 6);
+            order.ClientOffsetY(window_rect.y + 25);
+            order.WindowOffsetX(window_rect.x);
+            order.WindowOffsetY(window_rect.y);
+            order.WindowClientDeltaX(6);
+            order.WindowClientDeltaY(25);
+            order.WindowWidth(window_rect.cx);
+            order.WindowHeight(window_rect.cy);
+            order.VisibleOffsetX(window_rect.x);
+            order.VisibleOffsetY(window_rect.y);
+            order.NumVisibilityRects(1);
+            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, window_rect.cx, window_rect.cy));
+
+            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+                StaticOutStream<1024> out_s;
+                order.emit(out_s);
+                order.log(LOG_INFO);
+                LOG(LOG_INFO, "ClientExecute::dialog_box_create: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
+            }
+
+            this->front_->draw(order);
+        }
+    }
+
+    void destroy_auxiliary_window() override {
+        if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == this->auxiliary_window_id) return;
+
+        {
+            RDP::RAIL::DeletedWindow order;
+
+            order.header.FieldsPresentFlags(
+                      RDP::RAIL::WINDOW_ORDER_STATE_DELETED
+                    | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                );
+            order.header.WindowId(this->auxiliary_window_id);
+
+            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+                StaticOutStream<1024> out_s;
+                order.emit(out_s);
+                order.log(LOG_INFO);
+                LOG(LOG_INFO, "ClientExecute::destroy_auxiliary_window: Send DeletedWindow to client: size=%zu", out_s.get_offset() - 1);
+            }
+
+            this->front_->draw(order);
+        }
+
+        this->auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
+    }
 };  // class ClientExecute
