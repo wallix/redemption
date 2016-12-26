@@ -1012,9 +1012,21 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             bool capture_pattern_checker = authentifier 
                                 && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
                                     || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
+                                    
+                            bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) 
+                                                || capture_pattern_checker;
+                            bool capture_flv = bool(capture_flags & CaptureFlags::flv);
+                            bool capture_flv_full = full_video;
+                            bool capture_meta = capture_ocr;
+                                    
+                                    
                             Capture capture(capture_wrm             
                                     , capture_png
                                     , capture_pattern_checker
+                                    , capture_ocr
+                                    , capture_flv
+                                    , capture_flv_full
+                                    , capture_meta
                                     , capture_flags
                                     , ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                                     , player.screen_rect.cx

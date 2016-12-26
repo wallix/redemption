@@ -93,9 +93,19 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
             && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
                 || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
 
+        bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
+        bool capture_flv = bool(capture_flags & CaptureFlags::flv);
+        bool capture_flv_full = full_video;
+        bool capture_meta = capture_ocr;
+
         Capture capture(  capture_wrm
                         , capture_png
                         , capture_pattern_checker
+                        , capture_ocr
+                        , capture_flv
+                        , capture_flv_full
+                        , capture_meta
+                        
                         , capture_flags
                         , now, scr.cx, scr.cy, 24, 24
                         , record_tmp_path
@@ -267,9 +277,20 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
             || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
 
+    bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
+    bool capture_flv = bool(capture_flags & CaptureFlags::flv);
+    bool capture_flv_full = full_video;
+    bool capture_meta = capture_ocr;
+
     Capture capture( capture_wrm
                    , capture_png
                    , capture_pattern_checker
+
+                   , capture_ocr
+                   , capture_flv
+                   , capture_flv_full
+                   , capture_meta
+                   
                    , capture_flags
                    , now, scr.cx, scr.cy, 16, 16
                    , record_tmp_path

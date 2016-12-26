@@ -1210,6 +1210,12 @@ public:
         bool capture_wrm,
         bool capture_png,
         bool capture_pattern_checker,
+        
+        bool capture_ocr,
+        bool capture_flv,
+        bool capture_flv_full,
+        bool capture_meta,
+        
         const CaptureFlags capture_flags,
         const timeval & now,
         int width,
@@ -1232,12 +1238,10 @@ public:
     , capture_wrm(capture_wrm)
     , capture_png(capture_png)
     , capture_pattern_checker(capture_pattern_checker)
-    , capture_ocr(bool(capture_flags & CaptureFlags::ocr) || this->capture_pattern_checker)
-    , capture_flv(bool(capture_flags & CaptureFlags::flv))
-    // capture wab only
-    , capture_flv_full(full_video)
-    // capture wab only
-    , capture_meta(this->capture_ocr)
+    , capture_ocr(capture_ocr)
+    , capture_flv(capture_flv)
+    , capture_flv_full(capture_flv_full)
+    , capture_meta(capture_meta)
     , update_progress_data(update_progress_data)
     , capture_api(now, width / 2, height / 2)
     {

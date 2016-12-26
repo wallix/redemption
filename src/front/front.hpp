@@ -956,11 +956,22 @@ public:
         bool capture_pattern_checker = authentifier 
             && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
                 || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
+                
+        bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
+        bool capture_flv = bool(capture_flags & CaptureFlags::flv);
+        bool capture_flv_full = full_video;
+        bool capture_meta = capture_ocr;
+                
         
         this->capture = new Capture(capture_pattern_checker
                                     , capture_wrm
                                     , capture_png
                                     , capture_flags
+                                    , capture_ocr
+                                    , capture_flv
+                                    , capture_flv_full
+                                    , capture_meta
+
                                     , now
                                     , this->client_info.width, this->client_info.height
                                     , this->mod_bpp, this->capture_bpp
