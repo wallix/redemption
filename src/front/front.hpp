@@ -939,7 +939,8 @@ public:
                 ini.get<cfg::video::png_interval>(),
                 100u, 
                 ini.get<cfg::video::png_limit>(),
-                false
+                false,
+                true
         };
         FlvParams flv_params = flv_params_from_ini(this->client_info.width, this->client_info.height, ini);
         this->capture = new Capture(
@@ -948,7 +949,7 @@ public:
           , this->client_info.width, this->client_info.height
           , this->mod_bpp, this->capture_bpp
           , png_params, flv_params
-          , true, false, authentifier
+          , false, authentifier
           , ini, this->cctx, this->gen
           , full_video
           , nullptr

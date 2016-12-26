@@ -74,18 +74,16 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         // TODO remove this after unifying capture interface
         bool full_video = false;
         // TODO remove this after unifying capture interface
-        bool clear_png = false;
-        // TODO remove this after unifying capture interface
         bool no_timestamp = false;
         // TODO remove this after unifying capture interface
         auth_api * authentifier = nullptr;
         // TODO remove this after unifying capture interface
-        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true};
+        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true, false};
 
         FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
         Capture capture(capture_flags,
             now, scr.cx, scr.cy, 24, 24, png_params, flv_params
-            , clear_png, no_timestamp, authentifier
+            , no_timestamp, authentifier
             , ini, cctx, rnd, full_video, nullptr);
         bool ignore_frame_in_timeval = false;
 
@@ -235,18 +233,16 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     // TODO remove this after unifying capture interface
     bool full_video = false;
     // TODO remove this after unifying capture interface
-    bool clear_png = false;
-    // TODO remove this after unifying capture interface
     bool no_timestamp = false;
     // TODO remove this after unifying capture interface
     auth_api * authentifier = nullptr;
 
-    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true};
+    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true, false };
     FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
 
     Capture capture(capture_flags
                    , now, scr.cx, scr.cy, 16, 16, png_params, flv_params
-                   , clear_png, no_timestamp, authentifier
+                   , no_timestamp, authentifier
                    , ini, cctx, rnd, full_video, nullptr);
 
     Pointer pointer1(Pointer::POINTER_EDIT);

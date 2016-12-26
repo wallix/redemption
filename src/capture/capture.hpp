@@ -1212,7 +1212,6 @@ public:
         int capture_bpp,
         const PngParams png_params,
         const FlvParams flv_params,
-        bool real_time_image_capture,
         bool no_timestamp,
         auth_api * authentifier,
         const Inifile & ini,
@@ -1306,7 +1305,7 @@ public:
             this->capture_api.set_drawable(&this->gd->impl());
 
             if (this->capture_png) {
-                if (real_time_image_capture) {
+                if (png_params.real_time_image_capture) {
                     this->pscrt.reset(new ImageRT(
                         now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,

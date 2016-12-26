@@ -831,7 +831,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   int wrm_color_depth,
                   uint32_t wrm_frame_interval,
                   uint32_t wrm_break_interval,
-                  bool const enable_rt,
                   bool const no_timestamp,
                   bool infile_is_encrypted,
                   uint32_t order_count,
@@ -1012,7 +1011,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                     , wrm_color_depth
                                     , png_params
                                     , flv_params
-                                    , enable_rt
                                     , no_timestamp
                                     , authentifier
                                     , ini
@@ -1131,7 +1129,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false};
+    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false, false };
     FlvParams flv_params = {};
 
     // flv output options
@@ -1615,7 +1613,6 @@ extern "C" {
                           rp.wrm_color_depth,
                           rp.wrm_frame_interval,
                           rp.wrm_break_interval,
-                          false, // enable_rt
                           false, // no_timestamp,
                           rp.infile_is_encrypted,
                           rp.order_count,
