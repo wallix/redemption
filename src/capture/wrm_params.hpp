@@ -23,6 +23,7 @@
 
 struct WrmParams
 {
+    
 };
 
 struct WrmInputParams

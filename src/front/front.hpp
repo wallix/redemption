@@ -114,6 +114,8 @@
 
 #include "gdi/clip_from_cmd.hpp"
 #include "capture/png_params.hpp"
+#include "capture/flv_params.hpp"
+#include "capture/wrm_params.hpp"
 
 
 class Front : public gdi::GraphicBase<Front, FrontAPI>, public ActivityChecker {
@@ -943,7 +945,9 @@ public:
                 true
         };
         FlvParams flv_params = flv_params_from_ini(this->client_info.width, this->client_info.height, ini);
+        WrmParams wrm_params = {};
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
+        const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
 
         this->capture = new Capture(
             ini.get<cfg::video::capture_flags>()
@@ -951,7 +955,8 @@ public:
           , this->client_info.width, this->client_info.height
           , this->mod_bpp, this->capture_bpp
           , record_tmp_path
-          , png_params, flv_params
+          , record_path
+          , wrm_params, png_params, flv_params
           , false, authentifier
           , ini, this->cctx, this->gen
           , full_video

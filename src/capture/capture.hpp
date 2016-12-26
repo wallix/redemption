@@ -32,6 +32,7 @@
 #include <memory>
 
 #include "utils/sugar/array_view.hpp"
+#include "capture/wrm_params.hpp"
 #include "capture/png_params.hpp"
 #include "capture/flv_params.hpp"
 #include "capture/sequencer.hpp"
@@ -1012,7 +1013,9 @@ public:
 
 public:
     WrmCaptureImpl(
-        const timeval & now, uint8_t capture_bpp, TraceType trace_type,
+        const timeval & now, 
+        const WrmParams wrm_params,
+        uint8_t capture_bpp, TraceType trace_type,
         CryptoContext & cctx, Random & rnd,
         const char * record_path, const char * hash_path, const char * basename,
         int groupid, auth_api * authentifier,
@@ -1211,6 +1214,8 @@ public:
         int order_bpp,
         int capture_bpp,
         const char * record_tmp_path,
+        const char * record_path,
+        const WrmParams wrm_params,
         const PngParams png_params,
         const FlvParams flv_params,
         bool no_timestamp,
@@ -1265,8 +1270,6 @@ public:
         const bool capture_drawable = this->capture_wrm || this->capture_flv
                                    || this->capture_ocr || this->capture_png
                                    || this->capture_flv_full;
-//        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-        const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
 
         if (this->capture_png || (authentifier && (this->capture_flv || this->capture_ocr))) {
@@ -1332,7 +1335,7 @@ public:
                     }
                 }
                 this->pnc.reset(new Native(
-                    now, capture_bpp, ini.get<cfg::globals::trace_type>(),
+                    now, wrm_params, capture_bpp, ini.get<cfg::globals::trace_type>(),
                     cctx, rnd, record_path, hash_path, basename,
                     groupid, authentifier, this->gd->rdp_drawable(), ini
                 ));
