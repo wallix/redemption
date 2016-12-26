@@ -1367,7 +1367,7 @@ public:
                                         std::move(managed_mod),
                                         this->client_execute
                                     ),
-                                winapi
+                                &this->client_execute
                             );
                         LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
                     }
