@@ -1207,6 +1207,9 @@ private:
 
 public:
     Capture(
+        bool capture_wrm,
+        bool capture_png,
+        bool capture_pattern_checker,
         const CaptureFlags capture_flags,
         const timeval & now,
         int width,
@@ -1226,11 +1229,9 @@ public:
         bool full_video,
         UpdateProgressData * update_progress_data)
     : is_replay_mod(!authentifier)
-    , capture_wrm(bool(capture_flags & CaptureFlags::wrm))
-    , capture_png(bool(capture_flags & CaptureFlags::png) && (!authentifier || png_params.png_limit > 0))
-    , capture_pattern_checker(authentifier && (
-        ::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-     || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())))
+    , capture_wrm(capture_wrm)
+    , capture_png(capture_png)
+    , capture_pattern_checker(capture_pattern_checker)
     , capture_ocr(bool(capture_flags & CaptureFlags::ocr) || this->capture_pattern_checker)
     , capture_flv(bool(capture_flags & CaptureFlags::flv))
     // capture wab only

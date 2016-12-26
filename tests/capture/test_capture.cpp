@@ -85,14 +85,24 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
+        
+        bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
+        bool capture_png = bool(capture_flags & CaptureFlags::png) 
+                        && (!authentifier || png_params.png_limit > 0);
+        bool capture_pattern_checker = authentifier 
+            && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+                || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
 
-        Capture capture(capture_flags,
-            now, scr.cx, scr.cy, 24, 24
-            , record_tmp_path
-            , record_path
-            , wrm_params, png_params, flv_params
-            , no_timestamp, authentifier
-            , ini, cctx, rnd, full_video, nullptr);
+        Capture capture(  capture_wrm
+                        , capture_png
+                        , capture_pattern_checker
+                        , capture_flags
+                        , now, scr.cx, scr.cy, 24, 24
+                        , record_tmp_path
+                        , record_path
+                        , wrm_params, png_params, flv_params
+                        , no_timestamp, authentifier
+                        , ini, cctx, rnd, full_video, nullptr);
         bool ignore_frame_in_timeval = false;
 
         capture.draw(RDPOpaqueRect(scr, GREEN), scr);
@@ -250,8 +260,17 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
     const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
     const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
+    bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
+    bool capture_png = bool(capture_flags & CaptureFlags::png) 
+                    && (!authentifier || png_params.png_limit > 0);
+    bool capture_pattern_checker = authentifier 
+        && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+            || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
 
-    Capture capture(capture_flags
+    Capture capture( capture_wrm
+                   , capture_png
+                   , capture_pattern_checker
+                   , capture_flags
                    , now, scr.cx, scr.cy, 16, 16
                    , record_tmp_path
                    , record_path

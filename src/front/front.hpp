@@ -948,20 +948,30 @@ public:
         WrmParams wrm_params = {};
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
-
-        this->capture = new Capture(
-            ini.get<cfg::video::capture_flags>()
-          , now
-          , this->client_info.width, this->client_info.height
-          , this->mod_bpp, this->capture_bpp
-          , record_tmp_path
-          , record_path
-          , wrm_params, png_params, flv_params
-          , false, authentifier
-          , ini, this->cctx, this->gen
-          , full_video
-          , nullptr
-        );
+        const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
+        
+        bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
+        bool capture_png = bool(capture_flags & CaptureFlags::png) 
+                        && (!authentifier || png_params.png_limit > 0);
+        bool capture_pattern_checker = authentifier 
+            && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+                || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
+        
+        this->capture = new Capture(capture_pattern_checker
+                                    , capture_wrm
+                                    , capture_png
+                                    , capture_flags
+                                    , now
+                                    , this->client_info.width, this->client_info.height
+                                    , this->mod_bpp, this->capture_bpp
+                                    , record_tmp_path
+                                    , record_path
+                                    , wrm_params, png_params, flv_params
+                                    , false, authentifier
+                                    , ini, this->cctx, this->gen
+                                    , full_video
+                                    , nullptr
+                                    );
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }

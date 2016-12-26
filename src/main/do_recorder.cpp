@@ -1006,9 +1006,17 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
                             const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
 
-                            Capture capture(
-                                    capture_flags,
-                                    ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
+                            bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
+                            bool capture_png = bool(capture_flags & CaptureFlags::png) 
+                                            && (!authentifier || png_params.png_limit > 0);
+                            bool capture_pattern_checker = authentifier 
+                                && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+                                    || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
+                            Capture capture(capture_wrm             
+                                    , capture_png
+                                    , capture_pattern_checker
+                                    , capture_flags
+                                    , ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                                     , player.screen_rect.cx
                                     , player.screen_rect.cy
                                     , player.info_bpp
