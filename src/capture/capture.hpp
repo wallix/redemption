@@ -1259,15 +1259,15 @@ public:
         ;
 
         if (ini.get<cfg::debug::capture>()) {
-            LOG(LOG_INFO, "Enable capture:  wrm=%d  png=%d  kbd=%d  flv=%d  flv_full=%d  pattern=%d  ocr=%d  meta=%d",
-                this->capture_wrm ? 1 : 0,
-                this->capture_png ? 1 : 0,
+            LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
+                this->capture_wrm ?"wrm ":"",
+                this->capture_png ?"png ":"",
                 enable_kbd ? 1 : 0,
-                this->capture_flv ? 1 : 0,
-                this->capture_flv_full ? 1 : 0,
-                this->capture_pattern_checker ? 1 : 0,
+                this->capture_flv ?"flv ":"",
+                this->capture_flv_full ?"flv_full ":"",
+                this->capture_pattern_checker ?"pattern ":"",
                 this->capture_ocr ? (ini.get<cfg::ocr::version>() == OcrVersion::v2 ? 2 : 1) : 0,
-                this->capture_meta
+                this->capture_meta?"meta ":""
             );
         }
 

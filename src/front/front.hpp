@@ -966,11 +966,13 @@ public:
         this->capture = new Capture(capture_pattern_checker
                                     , capture_wrm
                                     , capture_png
-                                    , capture_flags
+
                                     , capture_ocr
                                     , capture_flv
                                     , capture_flv_full
                                     , capture_meta
+
+                                    , capture_flags
 
                                     , now
                                     , this->client_info.width, this->client_info.height
