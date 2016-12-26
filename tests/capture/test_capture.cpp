@@ -354,7 +354,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
         now, trans, 800, 600, 24,
         bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression
     );
-    NativeCapture consumer(graphic_to_file, now, std::chrono::seconds{1}, std::chrono::seconds{5});
+    WrmCaptureImpl::NativeCaptureLocal consumer(graphic_to_file, now, std::chrono::seconds{1}, std::chrono::seconds{5});
 
     drawable.show_mouse_cursor(false);
 

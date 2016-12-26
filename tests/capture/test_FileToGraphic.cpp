@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
         24,
         bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression
     );
-    NativeCapture wrm_recorder(graphic_to_file, player.record_now, std::chrono::seconds{1}, std::chrono::seconds{20});
+    WrmCaptureImpl::NativeCaptureLocal wrm_recorder(graphic_to_file, player.record_now, std::chrono::seconds{1}, std::chrono::seconds{20});
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
     player.add_consumer(&graphic_to_file, &wrm_recorder, nullptr, nullptr, &wrm_recorder);

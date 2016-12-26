@@ -1245,9 +1245,6 @@ public:
     {
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
 
-//        FlvParams flv_params = flv_params_from_ini(width, height, ini);
-
-
         if (ini.get<cfg::debug::capture>()) {
             LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
                 this->capture_wrm ?"wrm ":"",
@@ -1616,75 +1613,6 @@ public:
 
     void possible_active_window_change() override {
         this->capture_probe_api.possible_active_window_change();
-    }
-};
-
-
-class NativeCapture
-: public gdi::CaptureApi
-, public gdi::ExternalCaptureApi
-{
-    timeval start_native_capture;
-    uint64_t inter_frame_interval_native_capture;
-
-    timeval start_break_capture;
-    uint64_t inter_frame_interval_start_break_capture;
-
-    GraphicToFile & recorder;
-    uint64_t time_to_wait;
-
-public:
-    NativeCapture(
-        GraphicToFile & recorder,
-        const timeval & now,
-        std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval,
-        std::chrono::seconds break_interval
-    )
-    : start_native_capture(now)
-    , inter_frame_interval_native_capture(
-        std::chrono::duration_cast<std::chrono::microseconds>(frame_interval).count())
-    , start_break_capture(now)
-    , inter_frame_interval_start_break_capture(
-        std::chrono::duration_cast<std::chrono::microseconds>(break_interval).count())
-    , recorder(recorder)
-    , time_to_wait(0)
-    {}
-
-    ~NativeCapture() override {
-        this->recorder.sync();
-    }
-
-    // toggles externally genareted breakpoint.
-    void external_breakpoint() override {
-        this->recorder.breakpoint();
-    }
-
-    void external_time(const timeval & now) override {
-        this->recorder.sync();
-        this->recorder.timestamp(now);
-    }
-
-private:
-    std::chrono::microseconds do_snapshot(
-        const timeval & now, int x, int y, bool ignore_frame_in_timeval
-    ) override {
-        (void)ignore_frame_in_timeval;
-        if (difftimeval(now, this->start_native_capture)
-                >= this->inter_frame_interval_native_capture) {
-            this->recorder.timestamp(now);
-            this->time_to_wait = this->inter_frame_interval_native_capture;
-            this->recorder.mouse(static_cast<uint16_t>(x), static_cast<uint16_t>(y));
-            this->start_native_capture = now;
-            if ((difftimeval(now, this->start_break_capture) >=
-                 this->inter_frame_interval_start_break_capture)) {
-                this->recorder.breakpoint();
-                this->start_break_capture = now;
-            }
-        }
-        else {
-            this->time_to_wait = this->inter_frame_interval_native_capture - difftimeval(now, this->start_native_capture);
-        }
-        return std::chrono::microseconds{this->time_to_wait};
     }
 };
 
