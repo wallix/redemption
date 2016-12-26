@@ -1002,6 +1002,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             flv_params = flv_params_from_ini(
                                 player.screen_rect.cx, player.screen_rect.cy, ini);
 
+                            const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
                             Capture capture(
                                     capture_flags,
                                     ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
@@ -1009,6 +1010,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                     , player.screen_rect.cy
                                     , player.info_bpp
                                     , wrm_color_depth
+                                    , record_tmp_path
                                     , png_params
                                     , flv_params
                                     , no_timestamp

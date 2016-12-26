@@ -1210,6 +1210,7 @@ public:
         int height,
         int order_bpp,
         int capture_bpp,
+        const char * record_tmp_path,
         const PngParams png_params,
         const FlvParams flv_params,
         bool no_timestamp,
@@ -1264,7 +1265,7 @@ public:
         const bool capture_drawable = this->capture_wrm || this->capture_flv
                                    || this->capture_ocr || this->capture_png
                                    || this->capture_flv_full;
-        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
+//        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
 

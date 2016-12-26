@@ -943,11 +943,14 @@ public:
                 true
         };
         FlvParams flv_params = flv_params_from_ini(this->client_info.width, this->client_info.height, ini);
+        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
+
         this->capture = new Capture(
             ini.get<cfg::video::capture_flags>()
           , now
           , this->client_info.width, this->client_info.height
           , this->mod_bpp, this->capture_bpp
+          , record_tmp_path
           , png_params, flv_params
           , false, authentifier
           , ini, this->cctx, this->gen
