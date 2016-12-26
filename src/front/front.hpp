@@ -961,6 +961,13 @@ public:
         bool capture_flv = bool(capture_flags & CaptureFlags::flv);
         bool capture_flv_full = full_video;
         bool capture_meta = capture_ocr;
+        bool capture_kbd = authentifier
+          ? !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
+          || ini.get<cfg::session_log::enable_session_log>()
+          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
+          : false
+        ;
                 
         
         this->capture = new Capture(capture_pattern_checker
@@ -970,6 +977,7 @@ public:
                                     , capture_flv
                                     , capture_flv_full
                                     , capture_meta
+                                    , capture_kbd
 
                                     , now
                                     , this->client_info.width, this->client_info.height

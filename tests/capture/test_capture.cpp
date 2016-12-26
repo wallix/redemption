@@ -97,6 +97,13 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         bool capture_flv = bool(capture_flags & CaptureFlags::flv);
         bool capture_flv_full = full_video;
         bool capture_meta = capture_ocr;
+        bool capture_kbd = authentifier
+          ? !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
+          || ini.get<cfg::session_log::enable_session_log>()
+          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
+          : false
+        ;
 
         Capture capture(  capture_wrm
                         , capture_png
@@ -105,7 +112,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
                         , capture_flv
                         , capture_flv_full
                         , capture_meta
-                        
+                        , capture_kbd
                         , now, scr.cx, scr.cy, 24, 24
                         , record_tmp_path
                         , record_path
@@ -280,15 +287,22 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     bool capture_flv = bool(capture_flags & CaptureFlags::flv);
     bool capture_flv_full = full_video;
     bool capture_meta = capture_ocr;
+    bool capture_kbd = authentifier
+      ? !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
+      || ini.get<cfg::session_log::enable_session_log>()
+      || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+      || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
+      : false
+    ;
 
     Capture capture( capture_wrm
                    , capture_png
                    , capture_pattern_checker
-
                    , capture_ocr
                    , capture_flv
                    , capture_flv_full
                    , capture_meta
+                   , capture_kbd
                    
                    , now, scr.cx, scr.cy, 16, 16
                    , record_tmp_path

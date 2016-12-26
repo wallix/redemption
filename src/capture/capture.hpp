@@ -1215,6 +1215,7 @@ public:
         bool capture_flv,
         bool capture_flv_full,
         bool capture_meta,
+        bool capture_kbd,
         const timeval & now,
         int width,
         int height,
@@ -1246,20 +1247,12 @@ public:
 
 //        FlvParams flv_params = flv_params_from_ini(width, height, ini);
 
-        bool const enable_kbd
-          = authentifier
-          ? !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
-          || ini.get<cfg::session_log::enable_session_log>()
-          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
-          : false
-        ;
 
         if (ini.get<cfg::debug::capture>()) {
             LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
                 this->capture_wrm ?"wrm ":"",
                 this->capture_png ?"png ":"",
-                enable_kbd ? 1 : 0,
+                capture_kbd ? 1 : 0,
                 this->capture_flv ?"flv ":"",
                 this->capture_flv_full ?"flv_full ":"",
                 this->capture_pattern_checker ?"pattern ":"",
@@ -1395,7 +1388,7 @@ public:
         }
 
         // TODO this->pkc = Kbd::construct(now, authentifier, ini); ?
-        if (enable_kbd) {
+        if (capture_kbd) {
             this->pkc.reset(new Kbd(now, authentifier, ini));
         }
         ApisRegister apis_register = this->get_apis_register();
