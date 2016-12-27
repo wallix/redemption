@@ -116,6 +116,7 @@
 #include "capture/png_params.hpp"
 #include "capture/flv_params.hpp"
 #include "capture/wrm_params.hpp"
+#include "capture/ocr_params.hpp"
 
 
 class Front : public gdi::GraphicBase<Front, FrontAPI>, public ActivityChecker {
@@ -969,11 +970,12 @@ public:
           : false
         ;
                 
-        
-        this->capture = new Capture(capture_pattern_checker
-                                    , capture_wrm
-                                    , capture_png
-                                    , capture_ocr
+        OcrParams ocr_params = {};
+
+        this->capture = new Capture(  capture_wrm, wrm_params
+                                    , capture_png, png_params
+                                    , capture_pattern_checker
+                                    , capture_ocr, ocr_params
                                     , capture_flv
                                     , capture_flv_full
                                     , capture_meta
@@ -984,7 +986,7 @@ public:
                                     , this->mod_bpp, this->capture_bpp
                                     , record_tmp_path
                                     , record_path
-                                    , wrm_params, png_params, flv_params
+                                    , flv_params
                                     , false, authentifier
                                     , ini, this->cctx, this->gen
                                     , nullptr

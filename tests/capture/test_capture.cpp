@@ -105,10 +105,12 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
           : false
         ;
 
-        Capture capture(  capture_wrm
-                        , capture_png
+        OcrParams ocr_params = {};
+
+        Capture capture(  capture_wrm, wrm_params
+                        , capture_png, png_params
                         , capture_pattern_checker
-                        , capture_ocr
+                        , capture_ocr, ocr_params
                         , capture_flv
                         , capture_flv_full
                         , capture_meta
@@ -116,7 +118,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
                         , now, scr.cx, scr.cy, 24, 24
                         , record_tmp_path
                         , record_path
-                        , wrm_params, png_params, flv_params
+                        , flv_params
                         , no_timestamp, authentifier
                         , ini, cctx, rnd, nullptr);
         bool ignore_frame_in_timeval = false;
@@ -295,10 +297,12 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
       : false
     ;
 
-    Capture capture( capture_wrm
-                   , capture_png
+    OcrParams ocr_params = {};
+
+    Capture capture( capture_wrm, wrm_params
+                   , capture_png, png_params
                    , capture_pattern_checker
-                   , capture_ocr
+                   , capture_ocr, ocr_params
                    , capture_flv
                    , capture_flv_full
                    , capture_meta
@@ -307,7 +311,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , now, scr.cx, scr.cy, 16, 16
                    , record_tmp_path
                    , record_path
-                   , wrm_params, png_params, flv_params
+                   , flv_params
                    , no_timestamp, authentifier
                    , ini, cctx, rnd, nullptr);
 

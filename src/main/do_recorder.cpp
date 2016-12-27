@@ -61,6 +61,7 @@
 #include "capture/png_params.hpp"
 #include "capture/wrm_params.hpp"
 #include "capture/flv_params.hpp"
+#include "capture/ocr_params.hpp"
 
 struct HashHeader {
     unsigned version;
@@ -1026,11 +1027,13 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                               : false
                             ;
 
+                            OcrParams ocr_params = {};
+
                                     
-                            Capture capture(capture_wrm             
-                                    , capture_png
+                            Capture capture(capture_wrm, wrm_params
+                                    , capture_png, png_params
                                     , capture_pattern_checker
-                                    , capture_ocr
+                                    , capture_ocr, ocr_params
                                     , capture_flv
                                     , capture_flv_full
                                     , capture_meta
@@ -1042,8 +1045,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                     , wrm_color_depth
                                     , record_tmp_path
                                     , record_path
-                                    , wrm_params
-                                    , png_params
                                     , flv_params
                                     , no_timestamp
                                     , authentifier
