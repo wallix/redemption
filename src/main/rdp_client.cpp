@@ -446,6 +446,7 @@ public:
     , mod_bpp(info.bpp)
     , mod_palette(BGRPalette::no_init())
     , gd(info.width, info.height, 24)
+    , order_depth_(gdi::GraphicDepth::unspecified())
     {
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
@@ -455,6 +456,17 @@ public:
     }
 
     void update_pointer_position(uint16_t, uint16_t) override {}
+    
+    virtual void set_depths(gdi::GraphicDepth const & depth) {
+        this->order_depth_ = depth;
+    }
+
+    virtual gdi::GraphicDepth const & order_depth() const {
+        return this->order_depth_;
+    }
+
+    gdi::GraphicDepth order_depth_;
+
 };
 
 void run_mod(mod_api & mod, ClientFront & front, wait_obj & front_event, SocketTransport * st_mod, SocketTransport * st_front);

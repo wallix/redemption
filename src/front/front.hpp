@@ -208,11 +208,18 @@ private:
               , verbose
             )
             , client_order_caps(client_order_caps)
+            , order_depth_(gdi::GraphicDepth::from_bpp(bpp))
             {
                 this->set_depths(gdi::GraphicDepth::from_bpp(bpp));
             }
 
-            using GraphicsUpdatePDU::set_depths;
+            virtual void set_depths(gdi::GraphicDepth const & depth) {
+                this->order_depth_ = depth;
+            }
+
+            virtual gdi::GraphicDepth const & order_depth() const {
+                return this->order_depth_;
+            }
 
             using GraphicsUpdatePDU::draw;
 
@@ -241,6 +248,9 @@ private:
             }
 
             OrderCaps & client_order_caps;
+
+            gdi::GraphicDepth order_depth_;
+
         } graphics_update_pdu;
 
         Graphics(
@@ -512,6 +522,7 @@ private:
             : GraphicConverter::base_type(depth)
             , color_converter(color_converter)
             , graphics(graphics)
+            , order_depth_(depth)
             {}
 
             ColorConverter const & get_color_converter() const {
@@ -524,6 +535,17 @@ private:
 
             ColorConverter color_converter;
             Graphics::PrivateGraphicsUpdatePDU & graphics;
+            
+            virtual void set_depths(gdi::GraphicDepth const & depth) {
+                this->order_depth_ = depth;
+            }
+
+            virtual gdi::GraphicDepth const & order_depth() const {
+                return this->order_depth_;
+            }
+
+            gdi::GraphicDepth order_depth_;
+
         };
 
         template<class Dec, class Enc>
@@ -716,6 +738,7 @@ public:
     , authentifier(nullptr)
     , auth_info_sent(false)
     , timeout(now, this->ini.get<cfg::globals::handshake_timeout>().count())
+    , order_depth_(gdi::GraphicDepth::unspecified())
     {
         // init TLS
         // --------------------------------------------------------
@@ -792,6 +815,16 @@ public:
 
         delete this->capture;
     }
+
+    virtual void set_depths(gdi::GraphicDepth const & depth) {
+        this->order_depth_ = depth;
+    }
+
+    virtual gdi::GraphicDepth const & order_depth() const {
+        return this->order_depth_;
+    }
+
+    gdi::GraphicDepth order_depth_;
 
     uint64_t get_total_received() const
     {

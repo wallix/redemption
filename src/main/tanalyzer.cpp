@@ -452,7 +452,9 @@ public:
     , multiopaquerect()
     , multipatblt()
     , multiscrblt()
-    , polyline() {
+    , polyline() 
+    , order_depth_(gdi::GraphicDepth::unspecified())
+    {
         InitializeVirtualChannelList();
     }
 
@@ -503,6 +505,17 @@ public:
         LOG(LOG_INFO, "polyline count=%u",        this->statistic.polyline_count);
         LOG(LOG_INFO, "****************************************");
     }
+    
+    virtual void set_depths(gdi::GraphicDepth const & depth) {
+        this->order_depth_ = depth;
+    }
+
+    virtual gdi::GraphicDepth const & order_depth() const {
+        return this->order_depth_;
+    }
+
+    gdi::GraphicDepth order_depth_;
+
 };  // class Analyzer
 
 int main(int argc, char * argv[]) {

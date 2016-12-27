@@ -193,6 +193,7 @@ public:
     , gdi::GraphicBase<WidgetModuleHost>(gdi::GraphicDepth::unspecified())
     , module_holder(*this, std::move(managed_mod))
     , drawable_ref(drawable)
+    , order_depth_(gdi::GraphicDepth::unspecified())
     {
         this->tab_flag   = NORMAL_TAB;
         this->focus_flag = NORMAL_FOCUS;
@@ -216,6 +217,16 @@ private:
 
 public:
     using gdi::GraphicBase<WidgetModuleHost>::draw;
+
+    virtual void set_depths(gdi::GraphicDepth const & depth) {
+        this->order_depth_ = depth;
+    }
+
+    virtual gdi::GraphicDepth const & order_depth() const {
+        return this->order_depth_;
+    }
+
+    gdi::GraphicDepth order_depth_;
 
 public:
     // RdpInput

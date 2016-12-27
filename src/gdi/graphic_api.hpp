@@ -154,7 +154,7 @@ constexpr bool operator >= (GraphicDepth const & depth1, GraphicDepth const & de
 struct GraphicApi : private noncopyable
 {
     GraphicApi(GraphicDepth const & order_depths /* = GraphicDepth::unspecified() */)
-    : order_depth_(order_depths)
+//    : order_depth_(order_depths)
     {}
 
     virtual ~GraphicApi() = default;
@@ -204,17 +204,22 @@ struct GraphicApi : private noncopyable
     // TODO berk, data within size
     virtual void set_row(std::size_t rownum, const uint8_t * data) { (void)rownum; (void)data; }
 
-    GraphicDepth const & order_depth() const {
-        return this->order_depth_;
-    }
+    virtual GraphicDepth const & order_depth() const = 0;
 
-private:
-    GraphicDepth order_depth_;
+//    virtual GraphicDepth const & order_depth() const {
+//        return this->order_depth_;
+//    }
+
+public:
+//    GraphicDepth order_depth_;
+
+    virtual void set_depths(GraphicDepth const & depths) = 0;
 
 protected:
-    void set_depths(GraphicDepth const & depths) {
-        this->order_depth_ = depths;
-    }
+private:
+//    virtual void set_depths(GraphicDepth const & depths) {
+//        this->order_depth_ = depths;
+//    }
 };
 
 
@@ -536,10 +541,24 @@ class BlackoutGraphic final : public GraphicBase<BlackoutGraphic>
     template<class... Args>
     void draw_impl(Args const & ...) {}
 
-    using base_type_ = GraphicBase<BlackoutGraphic>;
+//    using base_type_ = GraphicBase<BlackoutGraphic>;
 
 public:
-    using base_type_::base_type_;
+
+    virtual void set_depths(gdi::GraphicDepth const & depths) {
+        this->order_depth_ = depths;
+    }
+
+    virtual GraphicDepth const & order_depth() const {
+        return this->order_depth_;
+    }
+
+    gdi::GraphicDepth order_depth_;
+
+    BlackoutGraphic(gdi::GraphicDepth const & depths) 
+        : GraphicBase<BlackoutGraphic>(depths)
+        , order_depth_(depths) {}
+//    using base_type_::base_type_;
 };
 
 

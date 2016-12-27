@@ -103,7 +103,20 @@ public:
     , verbose(verbose)
     , dialog_box_rect((front_width - 640) / 2, (front_height - 480) / 2, 640, 480)
     , acl(acl)
-    , session_probe_window_title(session_probe_window_title) {}
+    , session_probe_window_title(session_probe_window_title) 
+    , order_depth_(gdi::GraphicDepth::unspecified())
+    {}
+
+
+    virtual void set_depths(gdi::GraphicDepth const & depth) {
+        this->order_depth_ = depth;
+    }
+
+    virtual gdi::GraphicDepth const & order_depth() const {
+        return this->order_depth_;
+    }
+
+    gdi::GraphicDepth order_depth_;
 
     void disable_graphics_update(bool disable) {
         this->graphics_update_disabled = disable;

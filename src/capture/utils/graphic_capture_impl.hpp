@@ -45,7 +45,7 @@ public:
         std::vector<GdRef> gds;
         std::vector<std::reference_wrapper<gdi::CaptureApi>> snapshoters;
 
-        gdi::GraphicDepth order_depth = gdi::GraphicDepth::unspecified();
+        gdi::GraphicDepth order_depth_ = gdi::GraphicDepth::unspecified();
         gdi::RngByBpp<std::vector<GdRef>::iterator> rng_by_bpp;
 
         Graphic(gdi::GraphicDepth const & depth, MouseTrace const & mouse)
@@ -62,8 +62,8 @@ public:
         void draw_impl(Cmd const & cmd, Ts const & ... args)
         {
             if (gdi::GraphicCmdColor::is_encodable_cmd_color(cmd)) {
-                assert(gdi::GraphicDepth::unspecified() != this->order_depth);
-                gdi::draw_cmd_color_convert(order_depth, this->rng_by_bpp, cmd, args...);
+                assert(gdi::GraphicDepth::unspecified() != this->order_depth_);
+                gdi::draw_cmd_color_convert(this->order_depth_, this->rng_by_bpp, cmd, args...);
             }
             else {
                 this->get_graphic_proxy().draw(cmd, args...);
@@ -86,6 +86,15 @@ public:
                 }
             }
         }
+        
+        virtual void set_depths(gdi::GraphicDepth const & depth) {
+            this->order_depth_ = depth;
+        }
+
+        virtual gdi::GraphicDepth const & order_depth() const {
+            return this->order_depth_;
+        }
+
     };
 
     Graphic graphic_api;
@@ -99,6 +108,7 @@ public:
     : graphic_api(gdi::GraphicDepth::unspecified(), mouse)
     , drawable(width, height, order_bpp)
     , order_bpp(order_bpp)
+    , order_depth_(gdi::GraphicDepth::unspecified())
     {
     }
 
@@ -115,12 +125,23 @@ public:
         auto const order_depth = gdi::GraphicDepth::from_bpp(this->order_bpp);
         auto & gds = this->graphic_api.gds;
         this->graphic_api.rng_by_bpp = {order_depth, gds.begin(), gds.end()};
-        this->graphic_api.order_depth = order_depth;
+        this->graphic_api.order_depth_ = order_depth;
     }
 
     GraphicApi & get_graphic_api() { return this->graphic_api; }
 
     Drawable & impl() { return this->drawable.impl(); }
     RDPDrawable & rdp_drawable() { return this->drawable; }
+    
+    virtual void set_depths(gdi::GraphicDepth const & depth) {
+        this->order_depth_ = depth;
+    }
+
+    virtual gdi::GraphicDepth const & order_depth() const {
+        return this->order_depth_;
+    }
+
+    gdi::GraphicDepth order_depth_;
+    
 };
 

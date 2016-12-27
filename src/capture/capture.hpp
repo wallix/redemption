@@ -1062,10 +1062,36 @@ public:
 
 
     struct Serializer final : GraphicToFile {
-        using GraphicToFile::GraphicToFile;
+        Serializer(const timeval & now
+                , Transport & trans
+                , const uint16_t width
+                , const uint16_t height
+                , const uint8_t  capture_bpp
+                , BmpCache & bmp_cache
+                , GlyphCache & gly_cache
+                , PointerCache & ptr_cache
+                , gdi::DumpPng24Api & dump_png24
+                , WrmCompressionAlgorithm wrm_compression_algorithm
+                , SendInput send_input = SendInput::NO
+                , Verbose verbose = Verbose::none) 
+            : GraphicToFile(now, trans, width, height, 
+                            capture_bpp, 
+                            bmp_cache, gly_cache, ptr_cache, 
+                            dump_png24, wrm_compression_algorithm, 
+                            send_input, verbose) 
+            , order_depth_(gdi::GraphicDepth::unspecified()) {};
 
         using GraphicToFile::GraphicToFile::draw;
         using GraphicToFile::GraphicToFile::capture_bpp;
+        
+        virtual void set_depths(gdi::GraphicDepth const & depth) {
+            this->order_depth_ = depth;
+        }
+
+        virtual gdi::GraphicDepth const & order_depth() const {
+            return this->order_depth_;
+        }
+
 
         void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
             auto compress_and_draw_bitmap_update = [&bitmap_data, this](const Bitmap & bmp) {
@@ -1098,6 +1124,7 @@ public:
         void enable_kbd_input_mask(bool enable) override {
             this->impl->enable_kbd_input_mask(enable);
         }
+        gdi::GraphicDepth order_depth_ = gdi::GraphicDepth::unspecified();
     } graphic_to_file;
 
     class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi
@@ -1164,6 +1191,7 @@ public:
             }
             return std::chrono::microseconds{this->time_to_wait};
         }
+       
     } nc;
 
 //    template<>
@@ -1227,6 +1255,7 @@ public:
             ? GraphicToFile::Verbose::bitmap_update    : GraphicToFile::Verbose::none)
     )
     , nc(this->graphic_to_file, now, ini.get<cfg::video::frame_interval>(), ini.get<cfg::video::break_interval>())
+    , order_depth_(gdi::GraphicDepth::unspecified())
     {}
 
 
@@ -1261,6 +1290,17 @@ public:
     bool kbd_input(const timeval& now, uint32_t) override {
         return this->graphic_to_file.kbd_input(now, '*');
     }
+    
+    virtual void set_depths(gdi::GraphicDepth const & depth) {
+        this->order_depth_ = depth;
+    }
+
+    virtual gdi::GraphicDepth const & order_depth() const {
+        return this->order_depth_;
+    }
+
+    gdi::GraphicDepth order_depth_;
+
 };
 
 
@@ -1385,7 +1425,7 @@ public:
         const PngParams png_params,
         bool capture_pattern_checker,
         
-        bool capture_ocr, OcrParams,
+        bool capture_ocr, OcrParams ocr_params,
         bool capture_flv,
         bool capture_flv_full,
         bool capture_meta,
@@ -1415,6 +1455,7 @@ public:
     , capture_meta(capture_meta)
     , update_progress_data(update_progress_data)
     , capture_api(now, width / 2, height / 2)
+    , order_depth_(gdi::GraphicDepth::unspecified())
     {
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
 
@@ -1730,18 +1771,6 @@ public:
 
     void add_graphic(gdi::GraphicApi & gd) {
         if (this->graphic_api) {
-
-//struct ApisRegister
-//{
-//    std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list;
-//    std::vector<std::reference_wrapper<gdi::CaptureApi>> * graphic_snapshot_list;
-//    std::vector<std::reference_wrapper<gdi::CaptureApi>> & capture_list;
-//    std::vector<std::reference_wrapper<gdi::KbdInputApi>> & kbd_input_list;
-//    std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> & capture_probe_list;
-//    std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> & external_capture_list;
-//    std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> & update_config_capture_list;
-//};
-
             std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list = this->graphic_api ? &this->graphic_api->gds : nullptr;
             graphic_list->push_back(gd);
             // TODO
@@ -1814,6 +1843,16 @@ public:
     void possible_active_window_change() override {
         this->capture_probe_api.possible_active_window_change();
     }
+    
+        virtual void set_depths(gdi::GraphicDepth const & depth) {
+        this->order_depth_ = depth;
+    }
+
+    virtual gdi::GraphicDepth const & order_depth() const {
+        return this->order_depth_;
+    }
+
+    gdi::GraphicDepth order_depth_;
 };
 
 
