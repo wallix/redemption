@@ -381,5 +381,15 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         printf("%s", buffer);
     }
+
+    void move(int offset_x, int offset_y) {
+        this->nLeftRect += offset_x;
+        this->nTopRect  += offset_y;
+
+        if (this->nDeltaEntries) {
+            this->deltaEncodedRectangles[0].leftDelta += offset_x;
+            this->deltaEncodedRectangles[0].topDelta  += offset_y;
+        }
+    }
 };  // class RDPMultiOpaqueRect
 

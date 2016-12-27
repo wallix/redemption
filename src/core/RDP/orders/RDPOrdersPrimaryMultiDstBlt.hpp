@@ -354,5 +354,9 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         printf("%s", buffer);
     }
-};  // class RDPMultiDstBlt
 
+    void move(int offset_x, int offset_y) {
+        this->nLeftRect += offset_x;
+        this->nTopRect  += offset_y;
+    }
+};  // class RDPMultiDstBlt

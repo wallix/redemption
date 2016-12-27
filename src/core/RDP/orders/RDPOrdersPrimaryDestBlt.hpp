@@ -163,6 +163,7 @@ class RDPDestBlt {
         printf("%s", buffer);
     }
 
+    void move(int offset_x, int offset_y) {
+        this->rect = this->rect.offset(offset_x, offset_y);
+    }
 };
-
-
