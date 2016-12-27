@@ -57,7 +57,7 @@ struct ApiRegisterElement
     ApiRegisterElement & operator = (T & x) { (*this->l)[this->i] = x; return *this; }
 
     bool operator == (T const & x) const { return &this->get() == &x; }
-    bool operator != (T const & x) const { return !(this == x); }
+//    bool operator != (T const & x) const { return !(this == x); }
 
     T & get() { return (*this->l)[this->i]; }
     T const & get() const { return (*this->l)[this->i]; }
@@ -1193,17 +1193,6 @@ private:
     CaptureApisImpl::UpdateConfigCapture update_config_capture_api;
     Graphic::GraphicApi * graphic_api = nullptr;
 
-    ApisRegister get_apis_register() {
-        return {
-            this->graphic_api ? &this->graphic_api->gds : nullptr,
-            this->graphic_api ? &this->graphic_api->snapshoters : nullptr,
-            this->capture_api.caps,
-            this->kbd_input_api.kbds,
-            this->capture_probe_api.probes,
-            this->external_capture_api.objs,
-            this->update_config_capture_api.objs,
-        };
-    }
 
 public:
     Capture(
@@ -1388,7 +1377,27 @@ public:
         if (capture_kbd) {
             this->pkc.reset(new Kbd(now, authentifier, ini));
         }
-        ApisRegister apis_register = this->get_apis_register();
+
+//struct ApisRegister
+//{
+//    std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list;
+//    std::vector<std::reference_wrapper<gdi::CaptureApi>> * graphic_snapshot_list;
+//    std::vector<std::reference_wrapper<gdi::CaptureApi>> & capture_list;
+//    std::vector<std::reference_wrapper<gdi::KbdInputApi>> & kbd_input_list;
+//    std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> & capture_probe_list;
+//    std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> & external_capture_list;
+//    std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> & update_config_capture_list;
+//};
+
+        ApisRegister apis_register = {
+            this->graphic_api ? &this->graphic_api->gds : nullptr,
+            this->graphic_api ? &this->graphic_api->snapshoters : nullptr,
+            this->capture_api.caps,
+            this->kbd_input_api.kbds,
+            this->capture_probe_api.probes,
+            this->external_capture_api.objs,
+            this->update_config_capture_api.objs,
+        };
 
         if (this->gd ) {
             assert(apis_register.graphic_list);
@@ -1543,7 +1552,20 @@ public:
 
     void add_graphic(gdi::GraphicApi & gd) {
         if (this->graphic_api) {
-            this->get_apis_register().graphic_list->push_back(gd);
+
+//struct ApisRegister
+//{
+//    std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list;
+//    std::vector<std::reference_wrapper<gdi::CaptureApi>> * graphic_snapshot_list;
+//    std::vector<std::reference_wrapper<gdi::CaptureApi>> & capture_list;
+//    std::vector<std::reference_wrapper<gdi::KbdInputApi>> & kbd_input_list;
+//    std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> & capture_probe_list;
+//    std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> & external_capture_list;
+//    std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> & update_config_capture_list;
+//};
+
+            std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list = this->graphic_api ? &this->graphic_api->gds : nullptr;
+            graphic_list->push_back(gd);
             // TODO
             this->gd->start();
         }
