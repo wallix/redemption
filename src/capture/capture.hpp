@@ -1009,7 +1009,33 @@ public:
         }
     } nc;
 
-    ApiRegisterElement<gdi::KbdInputApi> kbd_element;
+//    template<>
+    struct ApiRegisterElement_KBD
+    {
+        using list_type = std::vector<std::reference_wrapper<gdi::KbdInputApi>>;
+
+        ApiRegisterElement_KBD() = default;
+
+        ApiRegisterElement_KBD(list_type & l, gdi::KbdInputApi & x)
+        : l(&l)
+        , i(l.size())
+        {
+            l.push_back(x);
+        }
+
+        ApiRegisterElement_KBD & operator = (ApiRegisterElement_KBD const &) = default;
+        ApiRegisterElement_KBD & operator = (gdi::KbdInputApi & x) { (*this->l)[this->i] = x; return *this; }
+
+        bool operator == (gdi::KbdInputApi const & x) const { return &this->get() == &x; }
+    //    bool operator != (gdi::KbdInputApi const & x) const { return !(this == x); }
+
+        gdi::KbdInputApi & get() { return (*this->l)[this->i]; }
+        gdi::KbdInputApi const & get() const { return (*this->l)[this->i]; }
+
+    private:
+        list_type * l = nullptr;
+        std::size_t i = ~std::size_t{};
+    } kbd_element;
 
 public:
     WrmCaptureImpl(
