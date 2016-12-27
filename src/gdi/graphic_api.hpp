@@ -153,7 +153,7 @@ constexpr bool operator >= (GraphicDepth const & depth1, GraphicDepth const & de
 
 struct GraphicApi : private noncopyable
 {
-    GraphicApi(GraphicDepth const & order_depths = GraphicDepth::unspecified())
+    GraphicApi(GraphicDepth const & order_depths /* = GraphicDepth::unspecified() */)
     : order_depth_(order_depths)
     {}
 
@@ -544,7 +544,7 @@ public:
 
 
 inline gdi::GraphicApi & null_gd() {
-    static gdi::BlackoutGraphic gd;
+    static gdi::BlackoutGraphic gd(gdi::GraphicDepth::unspecified());
     return gd;
 }
 

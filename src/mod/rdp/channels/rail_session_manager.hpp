@@ -92,7 +92,8 @@ public:
                                  uint16_t front_width, uint16_t front_height,
                                  Font const & font, Theme const & theme, auth_api* acl,
                                  char const* session_probe_window_title, RDPVerbose verbose)
-    : front(front)
+    : gdi::GraphicBase<RemoteProgramsSessionManager>(gdi::GraphicDepth::unspecified())
+    , front(front)
     , mod(mod)
     , lang(lang)
     , front_width(front_width)

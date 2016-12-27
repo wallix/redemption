@@ -190,6 +190,7 @@ public:
                      NotifyApi* notifier,
                      std::unique_ptr<mod_api> managed_mod, int group_id = 0)
     : Widget2(drawable, parent, notifier, group_id)
+    , gdi::GraphicBase<WidgetModuleHost>(gdi::GraphicDepth::unspecified())
     , module_holder(*this, std::move(managed_mod))
     , drawable_ref(drawable)
     {
