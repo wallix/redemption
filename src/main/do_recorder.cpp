@@ -831,7 +831,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   int wrm_color_depth,
                   uint32_t wrm_frame_interval,
                   uint32_t wrm_break_interval,
-                  bool const enable_rt,
                   bool const no_timestamp,
                   bool infile_is_encrypted,
                   uint32_t order_count,
@@ -1003,22 +1002,54 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             flv_params = flv_params_from_ini(
                                 player.screen_rect.cx, player.screen_rect.cy, ini);
 
-                            Capture capture(
-                                    capture_flags,
-                                    ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
+                            WrmParams wrm_params = {};
+                            const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
+                            const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
+
+                            bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
+                            bool capture_png = bool(capture_flags & CaptureFlags::png) 
+                                            && (!authentifier || png_params.png_limit > 0);
+                            bool capture_pattern_checker = authentifier 
+                                && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+                                    || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
+                                    
+                            bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) 
+                                                || capture_pattern_checker;
+                            bool capture_flv = bool(capture_flags & CaptureFlags::flv);
+                            bool capture_flv_full = full_video;
+                            bool capture_meta = capture_ocr;
+                            bool capture_kbd = authentifier
+                              ? !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
+                              || ini.get<cfg::session_log::enable_session_log>()
+                              || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+                              || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
+                              : false
+                            ;
+
+                                    
+                            Capture capture(capture_wrm             
+                                    , capture_png
+                                    , capture_pattern_checker
+                                    , capture_ocr
+                                    , capture_flv
+                                    , capture_flv_full
+                                    , capture_meta
+                                    , capture_kbd
+                                    , ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                                     , player.screen_rect.cx
                                     , player.screen_rect.cy
                                     , player.info_bpp
                                     , wrm_color_depth
+                                    , record_tmp_path
+                                    , record_path
+                                    , wrm_params
                                     , png_params
                                     , flv_params
-                                    , enable_rt
                                     , no_timestamp
                                     , authentifier
                                     , ini
                                     , cctx
                                     , rnd
-                                    , full_video
                                     , &update_progress_data);
 
                             player.add_consumer(&capture, &capture, &capture, &capture, &capture);
@@ -1131,7 +1162,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false};
+    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false, false };
     FlvParams flv_params = {};
 
     // flv output options
@@ -1615,7 +1646,6 @@ extern "C" {
                           rp.wrm_color_depth,
                           rp.wrm_frame_interval,
                           rp.wrm_break_interval,
-                          false, // enable_rt
                           false, // no_timestamp,
                           rp.infile_is_encrypted,
                           rp.order_count,

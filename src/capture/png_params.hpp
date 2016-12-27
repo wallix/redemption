@@ -31,4 +31,5 @@ struct PngParams
     unsigned zoom;
     uint32_t png_limit;
     bool force_capture_png_if_enable;
+    bool real_time_image_capture;
 };

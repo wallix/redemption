@@ -32,6 +32,7 @@
 #include <memory>
 
 #include "utils/sugar/array_view.hpp"
+#include "capture/wrm_params.hpp"
 #include "capture/png_params.hpp"
 #include "capture/flv_params.hpp"
 #include "capture/sequencer.hpp"
@@ -56,7 +57,7 @@ struct ApiRegisterElement
     ApiRegisterElement & operator = (T & x) { (*this->l)[this->i] = x; return *this; }
 
     bool operator == (T const & x) const { return &this->get() == &x; }
-    bool operator != (T const & x) const { return !(this == x); }
+//    bool operator != (T const & x) const { return !(this == x); }
 
     T & get() { return (*this->l)[this->i]; }
     T const & get() const { return (*this->l)[this->i]; }
@@ -1012,7 +1013,9 @@ public:
 
 public:
     WrmCaptureImpl(
-        const timeval & now, uint8_t capture_bpp, TraceType trace_type,
+        const timeval & now, 
+        const WrmParams wrm_params,
+        uint8_t capture_bpp, TraceType trace_type,
         CryptoContext & cctx, Random & rnd,
         const char * record_path, const char * hash_path, const char * basename,
         int groupid, auth_api * authentifier,
@@ -1190,74 +1193,57 @@ private:
     CaptureApisImpl::UpdateConfigCapture update_config_capture_api;
     Graphic::GraphicApi * graphic_api = nullptr;
 
-    ApisRegister get_apis_register() {
-        return {
-            this->graphic_api ? &this->graphic_api->gds : nullptr,
-            this->graphic_api ? &this->graphic_api->snapshoters : nullptr,
-            this->capture_api.caps,
-            this->kbd_input_api.kbds,
-            this->capture_probe_api.probes,
-            this->external_capture_api.objs,
-            this->update_config_capture_api.objs,
-        };
-    }
 
 public:
     Capture(
-        const CaptureFlags capture_flags,
+        bool capture_wrm,
+        bool capture_png,
+        bool capture_pattern_checker,
+        
+        bool capture_ocr,
+        bool capture_flv,
+        bool capture_flv_full,
+        bool capture_meta,
+        bool capture_kbd,
         const timeval & now,
         int width,
         int height,
         int order_bpp,
         int capture_bpp,
+        const char * record_tmp_path,
+        const char * record_path,
+        const WrmParams wrm_params,
         const PngParams png_params,
         const FlvParams flv_params,
-        bool real_time_image_capture,
         bool no_timestamp,
         auth_api * authentifier,
         const Inifile & ini,
         CryptoContext & cctx,
         Random & rnd,
-        bool full_video,
         UpdateProgressData * update_progress_data)
     : is_replay_mod(!authentifier)
-    , capture_wrm(bool(capture_flags & CaptureFlags::wrm))
-    , capture_png(bool(capture_flags & CaptureFlags::png) && (!authentifier || png_params.png_limit > 0))
-    , capture_pattern_checker(authentifier && (
-        ::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-     || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())))
-    , capture_ocr(bool(capture_flags & CaptureFlags::ocr) || this->capture_pattern_checker)
-    , capture_flv(bool(capture_flags & CaptureFlags::flv))
-    // capture wab only
-    , capture_flv_full(full_video)
-    // capture wab only
-    , capture_meta(this->capture_ocr)
+    , capture_wrm(capture_wrm)
+    , capture_png(capture_png)
+    , capture_pattern_checker(capture_pattern_checker)
+    , capture_ocr(capture_ocr)
+    , capture_flv(capture_flv)
+    , capture_flv_full(capture_flv_full)
+    , capture_meta(capture_meta)
     , update_progress_data(update_progress_data)
     , capture_api(now, width / 2, height / 2)
     {
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
 
-//        FlvParams flv_params = flv_params_from_ini(width, height, ini);
-
-        bool const enable_kbd
-          = authentifier
-          ? !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
-          || ini.get<cfg::session_log::enable_session_log>()
-          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
-          : false
-        ;
-
         if (ini.get<cfg::debug::capture>()) {
-            LOG(LOG_INFO, "Enable capture:  wrm=%d  png=%d  kbd=%d  flv=%d  flv_full=%d  pattern=%d  ocr=%d  meta=%d",
-                this->capture_wrm ? 1 : 0,
-                this->capture_png ? 1 : 0,
-                enable_kbd ? 1 : 0,
-                this->capture_flv ? 1 : 0,
-                this->capture_flv_full ? 1 : 0,
-                this->capture_pattern_checker ? 1 : 0,
+            LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
+                this->capture_wrm ?"wrm ":"",
+                this->capture_png ?"png ":"",
+                capture_kbd ? 1 : 0,
+                this->capture_flv ?"flv ":"",
+                this->capture_flv_full ?"flv_full ":"",
+                this->capture_pattern_checker ?"pattern ":"",
                 this->capture_ocr ? (ini.get<cfg::ocr::version>() == OcrVersion::v2 ? 2 : 1) : 0,
-                this->capture_meta
+                this->capture_meta?"meta ":""
             );
         }
 
@@ -1265,8 +1251,6 @@ public:
         const bool capture_drawable = this->capture_wrm || this->capture_flv
                                    || this->capture_ocr || this->capture_png
                                    || this->capture_flv_full;
-        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-        const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
 
         if (this->capture_png || (authentifier && (this->capture_flv || this->capture_ocr))) {
@@ -1306,7 +1290,7 @@ public:
             this->capture_api.set_drawable(&this->gd->impl());
 
             if (this->capture_png) {
-                if (real_time_image_capture) {
+                if (png_params.real_time_image_capture) {
                     this->pscrt.reset(new ImageRT(
                         now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,
@@ -1332,7 +1316,7 @@ public:
                     }
                 }
                 this->pnc.reset(new Native(
-                    now, capture_bpp, ini.get<cfg::globals::trace_type>(),
+                    now, wrm_params, capture_bpp, ini.get<cfg::globals::trace_type>(),
                     cctx, rnd, record_path, hash_path, basename,
                     groupid, authentifier, this->gd->rdp_drawable(), ini
                 ));
@@ -1390,10 +1374,30 @@ public:
         }
 
         // TODO this->pkc = Kbd::construct(now, authentifier, ini); ?
-        if (enable_kbd) {
+        if (capture_kbd) {
             this->pkc.reset(new Kbd(now, authentifier, ini));
         }
-        ApisRegister apis_register = this->get_apis_register();
+
+//struct ApisRegister
+//{
+//    std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list;
+//    std::vector<std::reference_wrapper<gdi::CaptureApi>> * graphic_snapshot_list;
+//    std::vector<std::reference_wrapper<gdi::CaptureApi>> & capture_list;
+//    std::vector<std::reference_wrapper<gdi::KbdInputApi>> & kbd_input_list;
+//    std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> & capture_probe_list;
+//    std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> & external_capture_list;
+//    std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> & update_config_capture_list;
+//};
+
+        ApisRegister apis_register = {
+            this->graphic_api ? &this->graphic_api->gds : nullptr,
+            this->graphic_api ? &this->graphic_api->snapshoters : nullptr,
+            this->capture_api.caps,
+            this->kbd_input_api.kbds,
+            this->capture_probe_api.probes,
+            this->external_capture_api.objs,
+            this->update_config_capture_api.objs,
+        };
 
         if (this->gd ) {
             assert(apis_register.graphic_list);
@@ -1548,7 +1552,20 @@ public:
 
     void add_graphic(gdi::GraphicApi & gd) {
         if (this->graphic_api) {
-            this->get_apis_register().graphic_list->push_back(gd);
+
+//struct ApisRegister
+//{
+//    std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list;
+//    std::vector<std::reference_wrapper<gdi::CaptureApi>> * graphic_snapshot_list;
+//    std::vector<std::reference_wrapper<gdi::CaptureApi>> & capture_list;
+//    std::vector<std::reference_wrapper<gdi::KbdInputApi>> & kbd_input_list;
+//    std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> & capture_probe_list;
+//    std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> & external_capture_list;
+//    std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> & update_config_capture_list;
+//};
+
+            std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list = this->graphic_api ? &this->graphic_api->gds : nullptr;
+            graphic_list->push_back(gd);
             // TODO
             this->gd->start();
         }
@@ -1618,75 +1635,6 @@ public:
 
     void possible_active_window_change() override {
         this->capture_probe_api.possible_active_window_change();
-    }
-};
-
-
-class NativeCapture
-: public gdi::CaptureApi
-, public gdi::ExternalCaptureApi
-{
-    timeval start_native_capture;
-    uint64_t inter_frame_interval_native_capture;
-
-    timeval start_break_capture;
-    uint64_t inter_frame_interval_start_break_capture;
-
-    GraphicToFile & recorder;
-    uint64_t time_to_wait;
-
-public:
-    NativeCapture(
-        GraphicToFile & recorder,
-        const timeval & now,
-        std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval,
-        std::chrono::seconds break_interval
-    )
-    : start_native_capture(now)
-    , inter_frame_interval_native_capture(
-        std::chrono::duration_cast<std::chrono::microseconds>(frame_interval).count())
-    , start_break_capture(now)
-    , inter_frame_interval_start_break_capture(
-        std::chrono::duration_cast<std::chrono::microseconds>(break_interval).count())
-    , recorder(recorder)
-    , time_to_wait(0)
-    {}
-
-    ~NativeCapture() override {
-        this->recorder.sync();
-    }
-
-    // toggles externally genareted breakpoint.
-    void external_breakpoint() override {
-        this->recorder.breakpoint();
-    }
-
-    void external_time(const timeval & now) override {
-        this->recorder.sync();
-        this->recorder.timestamp(now);
-    }
-
-private:
-    std::chrono::microseconds do_snapshot(
-        const timeval & now, int x, int y, bool ignore_frame_in_timeval
-    ) override {
-        (void)ignore_frame_in_timeval;
-        if (difftimeval(now, this->start_native_capture)
-                >= this->inter_frame_interval_native_capture) {
-            this->recorder.timestamp(now);
-            this->time_to_wait = this->inter_frame_interval_native_capture;
-            this->recorder.mouse(static_cast<uint16_t>(x), static_cast<uint16_t>(y));
-            this->start_native_capture = now;
-            if ((difftimeval(now, this->start_break_capture) >=
-                 this->inter_frame_interval_start_break_capture)) {
-                this->recorder.breakpoint();
-                this->start_break_capture = now;
-            }
-        }
-        else {
-            this->time_to_wait = this->inter_frame_interval_native_capture - difftimeval(now, this->start_native_capture);
-        }
-        return std::chrono::microseconds{this->time_to_wait};
     }
 };
 
