@@ -465,7 +465,6 @@ test-canonical capture/transparentrecorder.hpp ;
 test-canonical capture/utils/match_finder.hpp : <covflag>nocover ;
 test-canonical capture/utils/pattern_checker.hpp ;
 test-canonical capture/utils/save_state_chunk.hpp ;
-test-canonical capture/video_capture.hpp : <library>ffmpeg ;
 test-canonical capture/wrm_label.hpp ;
 ## @}
 

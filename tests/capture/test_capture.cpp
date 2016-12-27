@@ -381,3 +381,290 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     ::unlink(filename);
 }
 
+class VideoSequencer : public gdi::CaptureApi
+{
+    timeval start_break;
+    std::chrono::microseconds break_interval;
+
+protected:
+    VideoCapture & action;
+
+public:
+    VideoSequencer(const timeval & now, std::chrono::microseconds break_interval, VideoCapture & action)
+    : start_break(now)
+    , break_interval(break_interval)
+    , action(action)
+    {}
+
+    std::chrono::microseconds get_interval() const {
+        return this->break_interval;
+    }
+
+    void reset_now(const timeval& now) {
+        this->start_break = now;
+    }
+
+private:
+    std::chrono::microseconds do_snapshot(
+        const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
+    ) override {
+        assert(this->break_interval.count());
+        auto const interval = difftimeval(now, this->start_break);
+        if (interval >= uint64_t(this->break_interval.count())) {
+            this->action.next_video();
+            this->start_break = now;
+        }
+        return this->break_interval;
+    }
+};
+
+BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCapture)
+{
+    const int groupid = 0;
+    OutFilenameSequenceSeekableTransport trans(
+        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+        "./", "opaquerect_videocapture", ".flv", groupid);
+
+    {
+        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
+        const int width  = 800;
+        const int height = 600;
+        Drawable drawable(width, height);
+
+        FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "flv", 0};
+        VideoCapture flvgen(now, trans, drawable, false, flv_params);
+        VideoSequencer flvseq(now, std::chrono::microseconds{2 * 1000000l}, flvgen);
+
+        auto const color1 = drawable.u32bgr_to_color(BLUE);
+        auto const color2 = drawable.u32bgr_to_color(WABGREEN);
+
+        Rect screen(0, 0, width, height);
+        drawable.opaquerect(screen, color1);
+        uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
+        Rect r(10, 10, 50, 50);
+        int vx = 5;
+        int vy = 4;
+        bool ignore_frame_in_timeval = false;
+        for (size_t x = 0; x < 250; x++) {
+            drawable.opaquerect(r.intersect(screen), color1);
+            r.y += vy;
+            r.x += vx;
+            drawable.opaquerect(r.intersect(screen), color2);
+            usec += 40000LL;
+            now.tv_sec  = usec / 1000000LL;
+            now.tv_usec = (usec % 1000000LL);
+            //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
+            drawable.set_mouse_cursor_pos(r.x + 10, r.y + 10);
+            flvgen.snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+            flvseq.snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+            if ((r.x + r.cx >= width ) || (r.x < 0)) { vx = -vx; }
+            if ((r.y + r.cy >= height) || (r.y < 0)) { vy = -vy; }
+        }
+    }
+
+    trans.disconnect();
+    auto & file_gen = *trans.seqgen();
+
+    // actual generated files depends on ffmpeg version
+    // values below depends on current embedded ffmpeg version
+    const char * filename;
+    filename = (file_gen.get(0));
+    BOOST_CHECK_EQUAL(40677, filesize(filename));
+    ::unlink(filename);
+    filename = (file_gen.get(1));
+    BOOST_CHECK_EQUAL(40011, filesize(filename));
+    ::unlink(filename);
+    filename = (file_gen.get(2));
+    BOOST_CHECK_EQUAL(41172, filesize(filename));
+    ::unlink(filename);
+    filename = (file_gen.get(3));
+    BOOST_CHECK_EQUAL(40610, filesize(filename));
+    ::unlink(filename);
+    filename = (file_gen.get(4));
+    BOOST_CHECK_EQUAL(40173, filesize(filename));
+    ::unlink(filename);
+    filename = (file_gen.get(5));
+    BOOST_CHECK_EQUAL(13539, filesize(filename));
+    ::unlink(filename);
+}
+
+
+BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureMP4)
+{
+    const int groupid = 0;
+    OutFilenameSequenceSeekableTransport trans(
+        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+        "./", "opaquerect_videocapture", ".mp4", groupid);
+
+    {
+        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
+        const int width  = 800;
+        const int height = 600;
+        Drawable drawable(width, height);
+
+        FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "mp4", 0};
+        VideoCapture flvgen(now, trans, drawable, false, flv_params);
+        VideoSequencer flvseq(now, std::chrono::microseconds{2 * 1000000l}, flvgen);
+
+        auto const color1 = drawable.u32bgr_to_color(BLUE);
+        auto const color2 = drawable.u32bgr_to_color(WABGREEN);
+
+        Rect screen(0, 0, width, height);
+        drawable.opaquerect(screen, color1);
+        uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
+        Rect r(10, 10, 50, 50);
+        int vx = 5;
+        int vy = 4;
+        bool ignore_frame_in_timeval = false;
+        for (size_t x = 0; x < 100; x++) {
+            drawable.opaquerect(r.intersect(screen), color1);
+            r.y += vy;
+            r.x += vx;
+            drawable.opaquerect(r.intersect(screen), color2);
+            usec += 40000LL;
+            now.tv_sec  = usec / 1000000LL;
+            now.tv_usec = (usec % 1000000LL);
+            //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
+            drawable.set_mouse_cursor_pos(r.x + 10, r.y + 10);
+            flvgen.snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+            flvseq.snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+            if ((r.x + r.cx >= width ) || (r.x < 0)) { vx = -vx; }
+            if ((r.y + r.cy >= height) || (r.y < 0)) { vy = -vy; }
+        }
+    }
+
+    trans.disconnect();
+    auto & file_gen = *trans.seqgen();
+
+    // actual generated files depends on ffmpeg version
+    // values below depends on current embedded ffmpeg version
+    const char * filename;
+    filename = (file_gen.get(0));
+    BOOST_CHECK((15663 == filesize(filename))||(15649 == filesize(filename)));
+    ::unlink(filename);
+    filename = (file_gen.get(1));
+    BOOST_CHECK((16090 == filesize(filename))||(16076 == filesize(filename)));
+    ::unlink(filename);
+    filename = (file_gen.get(2));
+    BOOST_CHECK_EQUAL(262, filesize(filename));
+    ::unlink(filename);
+}
+
+
+BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureOneChunk)
+{
+    const int groupid = 0;
+    OutFilenameSequenceSeekableTransport trans(
+        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+        "./", "opaquerect_videocapture_one_chunk", ".flv", groupid);
+
+    {
+        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
+        const int width  = 800;
+        const int height = 600;
+        Drawable drawable(width, height);
+
+//        FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "flv", 0};
+        VideoCapture flvgen(now, trans, drawable, false, {Level::high, width, height, 25, 15, 100000, "flv", 0});
+        VideoSequencer flvseq(now, std::chrono::microseconds{1000 * 1000000l}, flvgen);
+
+        auto const color1 = drawable.u32bgr_to_color(BLUE);
+        auto const color2 = drawable.u32bgr_to_color(WABGREEN);
+
+        Rect screen(0, 0, width, height);
+        drawable.opaquerect(screen, color1);
+        uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
+        Rect r(10, 10, 50, 50);
+        int vx = 5;
+        int vy = 4;
+        bool ignore_frame_in_timeval = false;
+        for (size_t x = 0; x < 1000 ; x++) {
+            r.y += vy;
+            drawable.opaquerect(r.intersect(screen), color1);
+            r.x += vx;
+            drawable.opaquerect(r.intersect(screen), color2);
+            usec += 40000LL;
+            now.tv_sec  = usec / 1000000LL;
+            now.tv_usec = (usec % 1000000LL);
+            //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
+            drawable.set_mouse_cursor_pos(r.x + 10, r.y + 10);
+            flvgen.snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+            flvseq.snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+            if ((r.x + r.cx >= width ) || (r.x < 0)) { vx = -vx; }
+            if ((r.y + r.cy >= height) || (r.y < 0)) { vy = -vy; }
+        }
+    }
+
+    trans.disconnect();
+    auto & file_gen = *trans.seqgen();
+
+    // actual generated files depends on ffmpeg version
+    // values below depends on current embedded ffmpeg version
+    const char * filename = (file_gen.get(0));
+    BOOST_CHECK_EQUAL(1629235, filesize(filename));
+    ::unlink(filename);
+}
+
+
+BOOST_AUTO_TEST_CASE(TestFrameMarker)
+{
+    const int groupid = 0;
+    OutFilenameSequenceSeekableTransport trans(
+        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+        "./", "framemarked_opaquerect_videocapture", ".flv", groupid);
+
+    {
+        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
+        const int width  = 800;
+        const int height = 600;
+        Drawable drawable(width, height);
+
+        FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "flv", 0};
+        VideoCapture flvgen(now, trans, drawable, false, flv_params);
+        VideoSequencer flvseq(now, std::chrono::microseconds{1000 * 1000000l}, flvgen);
+
+        auto const color1 = drawable.u32bgr_to_color(BLUE);
+        auto const color2 = drawable.u32bgr_to_color(WABGREEN);
+        auto const color3 = drawable.u32bgr_to_color(RED);
+
+        Rect screen(0, 0, width, height);
+        drawable.opaquerect(screen, color1);
+        uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
+        Rect r(10, 10, 50, 25);
+        Rect r1(10, 10 + 25, 50, 25);
+        int vx = 5;
+        int vy = 4;
+        bool ignore_frame_in_timeval = false;
+        for (size_t x = 0; x < 1000 ; x++) {
+            drawable.opaquerect(r.intersect(screen), color1);
+            drawable.opaquerect(r1.intersect(screen), color1);
+            r.y += vy;
+            r.x += vx;
+            drawable.opaquerect(r.intersect(screen), color2);
+            usec += 40000LL;
+            now.tv_sec  = usec / 1000000LL;
+            now.tv_usec = (usec % 1000000LL);
+            //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
+            drawable.set_mouse_cursor_pos(r.x + 10, r.y + 10);
+            flvgen.snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+            flvseq.snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+            r1.y += vy;
+            r1.x += vx;
+            drawable.opaquerect(r1.intersect(screen), color3);
+
+            flvgen.preparing_video_frame();
+
+            if ((r.x + r.cx >= width ) || (r.x < 0)) { vx = -vx; }
+            if ((r.y + r.cy >= height) || (r.y < 0)) { vy = -vy; }
+        }
+    }
+
+    trans.disconnect();
+    auto & file_gen = *trans.seqgen();
+
+    // actual generated files depends on ffmpeg version
+    // values below depends on current embedded ffmpeg version
+    const char * filename = (file_gen.get(0));
+    BOOST_CHECK_EQUAL(734469, filesize(filename));
+    ::unlink(filename);
+}
