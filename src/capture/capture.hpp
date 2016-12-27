@@ -44,7 +44,6 @@
 #include "capture/png_params.hpp"
 #include "capture/flv_params.hpp"
 #include "capture/ocr_params.hpp"
-//#include "capture/sequencer.hpp"
 #include "capture/video_capture.hpp"
 #include "utils/pattutils.hpp"
 
@@ -457,47 +456,6 @@ public:
     }
 };
 
-template<class Action>
-class SequencerCapture : public gdi::CaptureApi
-{
-    timeval start_break;
-    std::chrono::microseconds break_interval;
-
-protected:
-    Action action;
-
-public:
-    template<class... ActionArgs>
-    SequencerCapture(
-        const timeval & now, std::chrono::microseconds break_interval,
-        ActionArgs && ... action_args)
-    : start_break(now)
-    , break_interval(break_interval)
-    , action(std::forward<ActionArgs>(action_args)...)
-    {}
-
-    std::chrono::microseconds get_interval() const {
-        return this->break_interval;
-    }
-
-    void reset_now(const timeval& now) {
-        this->start_break = now;
-    }
-
-private:
-    std::chrono::microseconds do_snapshot(
-        const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
-    ) override {
-        assert(this->break_interval.count());
-        auto const interval = difftimeval(now, this->start_break);
-        if (interval >= uint64_t(this->break_interval.count())) {
-            this->action(now);
-            this->start_break = now;
-        }
-        return this->break_interval;
-    }
-};
-
 struct NotifyNextVideo : private noncopyable
 {
     enum class reason { sequenced, external };
@@ -507,6 +465,43 @@ struct NotifyNextVideo : private noncopyable
 
 class SequencedVideoCaptureImpl
 {
+    class VideoSequencer : public gdi::CaptureApi
+    {
+        timeval start_break;
+        std::chrono::microseconds break_interval;
+
+    protected:
+        SequencedVideoCaptureImpl & impl;
+
+    public:
+        VideoSequencer(const timeval & now, std::chrono::microseconds break_interval, SequencedVideoCaptureImpl & impl)
+        : start_break(now)
+        , break_interval(break_interval)
+        , impl(impl)
+        {}
+
+        std::chrono::microseconds get_interval() const {
+            return this->break_interval;
+        }
+
+        void reset_now(const timeval& now) {
+            this->start_break = now;
+        }
+
+    private:
+        std::chrono::microseconds do_snapshot(
+            const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
+        ) override {
+            assert(this->break_interval.count());
+            auto const interval = difftimeval(now, this->start_break);
+            if (interval >= uint64_t(this->break_interval.count())) {
+                this->impl.next_video_impl(now, NotifyNextVideo::reason::sequenced);
+                this->start_break = now;
+            }
+            return this->break_interval;
+        }
+    };
+
     class VideoTransport final : public OutFilenameSequenceSeekableTransport
     {
         using transport_base = OutFilenameSequenceSeekableTransport;
@@ -627,17 +622,6 @@ class SequencedVideoCaptureImpl
         }
     };
 
-    struct VideoSequencerAction
-    {
-        SequencedVideoCaptureImpl & impl;
-
-        void operator()(const timeval& now) const {
-            this->impl.next_video_impl(now, NotifyNextVideo::reason::sequenced);
-        }
-    };
-
-    using VideoSequencer = SequencerCapture<VideoSequencerAction>;
-
     // first next_video is ignored
     struct FirstImage : gdi::CaptureApi
     {
@@ -732,8 +716,7 @@ public:
     , ic_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_path, basename, ".png", groupid)
     , ic(this->ic_trans, drawable, image_zoom)
     , video_sequencer(
-        now, video_interval > std::chrono::microseconds(0) ? video_interval : std::chrono::microseconds::max(),
-        VideoSequencerAction{*this})
+        now, video_interval > std::chrono::microseconds(0) ? video_interval : std::chrono::microseconds::max(), *this)
     , first_image(now, *this)
     , next_video_notifier(next_video_notifier)
     {}
