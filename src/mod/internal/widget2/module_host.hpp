@@ -20,8 +20,13 @@
 
 #pragma once
 
+#include "core/RDP/bitmapupdate.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "gdi/graphic_api.hpp"
 #include "mod/internal/widget2/widget.hpp"
@@ -275,6 +280,8 @@ private:
     {
         gdi::GraphicApi& drawable_ = this->get_drawable();
 
+        //LOG(LOG_INFO, "order_id=%u", unsigned(cmd.id()));
+
         drawable_.draw(cmd, clip.offset(this->x(), this->y()), args...);
     }
 
@@ -282,10 +289,51 @@ private:
     {
         gdi::GraphicApi& drawable_ = this->get_drawable();
 
-        drawable_.draw(bitmap_data, bmp);
+        RDPBitmapData new_bitmap_data = bitmap_data;
+
+        new_bitmap_data.move(this->x(), this->y());
+
+        drawable_.draw(new_bitmap_data, bmp);
     }
 
-    void draw(const RDPMemBlt& cmd, const Rect& clip, Bitmap const & bmp) override {
+    void draw_impl(const RDPDestBlt& cmd, const Rect& clip)
+    {
+        gdi::GraphicApi& drawable_ = this->get_drawable();
+
+        const Rect widget_rect = this->get_rect();
+
+        Rect new_clip = clip.offset(this->x(), this->y());
+        new_clip = new_clip.intersect(widget_rect);
+        if (new_clip.isempty()) { return; }
+
+        RDPDestBlt new_cmd = cmd;
+
+        new_cmd.move(this->x(), this->y());
+        new_cmd.rect = new_cmd.rect.intersect(widget_rect);
+        if (new_cmd.rect.isempty()) { return; }
+
+        drawable_.draw(new_cmd, new_clip);
+    }
+
+    void draw_impl(const RDPMem3Blt& cmd, const Rect& clip, const Bitmap& bmp) {
+        gdi::GraphicApi& drawable_ = this->get_drawable();
+
+        const Rect widget_rect = this->get_rect();
+
+        Rect new_clip = clip.offset(this->x(), this->y());
+        new_clip = new_clip.intersect(widget_rect);
+        if (new_clip.isempty()) { return; }
+
+        RDPMem3Blt new_cmd = cmd;
+
+        new_cmd.move(this->x(), this->y());
+        new_cmd.rect = new_cmd.rect.intersect(widget_rect);
+        if (new_cmd.rect.isempty()) { return; }
+
+        drawable_.draw(new_cmd, new_clip, bmp);
+    }
+
+    void draw_impl(const RDPMemBlt& cmd, const Rect& clip, const Bitmap& bmp) {
         gdi::GraphicApi& drawable_ = this->get_drawable();
 
         const Rect widget_rect = this->get_rect();
@@ -303,7 +351,25 @@ private:
         drawable_.draw(new_cmd, new_clip, bmp);
     }
 
-    void draw(const RDPOpaqueRect& cmd, const Rect& clip) override {
+    void draw_impl(const RDPMultiOpaqueRect& cmd, const Rect& clip) {
+        gdi::GraphicApi& drawable_ = this->get_drawable();
+
+        const Rect widget_rect = this->get_rect();
+
+        Rect new_clip = clip.offset(this->x(), this->y());
+        new_clip = new_clip.intersect(widget_rect);
+        if (new_clip.isempty()) { return; }
+
+        RDPMultiOpaqueRect new_cmd = cmd;
+
+        new_cmd.move(this->x(), this->y());
+//        new_cmd.rect = new_cmd.rect.intersect(widget_rect);
+//        if (new_cmd.rect.isempty()) { return; }
+
+        drawable_.draw(new_cmd, new_clip);
+    }
+
+    void draw_impl(const RDPOpaqueRect& cmd, const Rect& clip) {
         gdi::GraphicApi& drawable_ = this->get_drawable();
 
         const Rect widget_rect = this->get_rect();
@@ -321,7 +387,27 @@ private:
         drawable_.draw(new_cmd, new_clip);
     }
 
-    void draw(const RDPScrBlt& cmd, const Rect& clip) override {
+
+    void draw_impl(const RDPPatBlt& cmd, const Rect& clip)
+    {
+        gdi::GraphicApi& drawable_ = this->get_drawable();
+
+        const Rect widget_rect = this->get_rect();
+
+        Rect new_clip = clip.offset(this->x(), this->y());
+        new_clip = new_clip.intersect(widget_rect);
+        if (new_clip.isempty()) { return; }
+
+        RDPPatBlt new_cmd = cmd;
+
+        new_cmd.move(this->x(), this->y());
+        new_cmd.rect = new_cmd.rect.intersect(widget_rect);
+        if (new_cmd.rect.isempty()) { return; }
+
+        drawable_.draw(new_cmd, new_clip);
+    }
+
+    void draw_impl(const RDPScrBlt& cmd, const Rect& clip) {
         gdi::GraphicApi& drawable_ = this->get_drawable();
 
         const Rect widget_rect = this->get_rect();

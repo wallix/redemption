@@ -365,6 +365,13 @@ struct RDPBitmapData {
                );
         }
     }
+
+    void move(int offset_x, int offset_y) {
+        this->dest_left   += offset_x;
+        this->dest_top    += offset_y;
+        this->dest_right  += offset_x;
+        this->dest_bottom += offset_y;
+    }
 };  // struct RDPBitmapData
 
 // 2.2.9.1.1.3.1.2.3 Compressed Data Header (TS_CD_HEADER)
