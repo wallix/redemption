@@ -463,6 +463,12 @@ public:
 
     void removeDriveDevice(const FileSystemData::DeviceData *, const size_t);
 
+    virtual gdi::GraphicDepth const & order_depth() const override {
+        gdi::GraphicDepth graphicDepth;
+        return graphicDepth;
+    }
+
+    virtual void set_depths(gdi::GraphicDepth const & depths) override {}
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

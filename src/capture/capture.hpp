@@ -149,7 +149,7 @@ public:
     PngCapture(
         const timeval & now, auth_api * authentifier, Drawable & drawable,
         const char * record_tmp_path, const char * basename, int groupid,
-        const PngParams & png_params) 
+        const PngParams & png_params)
     : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_tmp_path, basename, ".png", groupid, authentifier)
     , start_capture(now)
     , frame_interval(png_params.png_interval)
@@ -254,7 +254,7 @@ public:
     OutFilenameSequenceTransport trans;
     uint32_t num_start = 0;
     unsigned png_limit;
-    
+
     unsigned zoom_factor;
     unsigned scaled_width;
     unsigned scaled_height;
@@ -265,13 +265,13 @@ public:
 
     timeval start_capture;
     std::chrono::microseconds frame_interval;
-    
+
     bool enable_rt_display = false;
 
     PngCaptureRT(
         const timeval & now, auth_api * authentifier, Drawable & drawable,
         const char * record_tmp_path, const char * basename, int groupid,
-        const PngParams & png_params) 
+        const PngParams & png_params)
     : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
         record_tmp_path, basename, ".png", groupid, authentifier)
     , png_limit(png_params.png_limit)
@@ -1073,17 +1073,17 @@ public:
                 , gdi::DumpPng24Api & dump_png24
                 , WrmCompressionAlgorithm wrm_compression_algorithm
                 , SendInput send_input = SendInput::NO
-                , Verbose verbose = Verbose::none) 
-            : GraphicToFile(now, trans, width, height, 
-                            capture_bpp, 
-                            bmp_cache, gly_cache, ptr_cache, 
-                            dump_png24, wrm_compression_algorithm, 
-                            send_input, verbose) 
+                , Verbose verbose = Verbose::none)
+            : GraphicToFile(now, trans, width, height,
+                            capture_bpp,
+                            bmp_cache, gly_cache, ptr_cache,
+                            dump_png24, wrm_compression_algorithm,
+                            send_input, verbose)
             , order_depth_(gdi::GraphicDepth::unspecified()) {};
 
         using GraphicToFile::GraphicToFile::draw;
         using GraphicToFile::GraphicToFile::capture_bpp;
-        
+
         virtual void set_depths(gdi::GraphicDepth const & depth) {
             this->order_depth_ = depth;
         }
@@ -1191,7 +1191,7 @@ public:
             }
             return std::chrono::microseconds{this->time_to_wait};
         }
-       
+
     } nc;
 
 //    template<>
@@ -1224,7 +1224,7 @@ public:
 
 public:
     WrmCaptureImpl(
-        const timeval & now, 
+        const timeval & now,
         const WrmParams wrm_params,
         uint8_t capture_bpp, TraceType trace_type,
         CryptoContext & cctx, Random & rnd,
@@ -1290,7 +1290,7 @@ public:
     bool kbd_input(const timeval& now, uint32_t) override {
         return this->graphic_to_file.kbd_input(now, '*');
     }
-    
+
     virtual void set_depths(gdi::GraphicDepth const & depth) {
         this->order_depth_ = depth;
     }
@@ -1424,8 +1424,8 @@ public:
         bool capture_png,
         const PngParams png_params,
         bool capture_pattern_checker,
-        
-        bool capture_ocr, OcrParams ocr_params,
+        bool capture_ocr,
+        OcrParams ocr_params,
         bool capture_flv,
         bool capture_flv_full,
         bool capture_meta,
@@ -1553,7 +1553,7 @@ public:
                     authentifier && ini.get<cfg::session_log::enable_session_log>()
                 ));
             }
-            
+
             if (this->capture_flv) {
                 std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
                 if (ini.get<cfg::globals::capture_chunk>() && this->pmc) {
@@ -1603,17 +1603,17 @@ public:
             this->pkc.reset(new Kbd(now, authentifier, ini));
         }
 
-            std::vector<std::reference_wrapper<gdi::GraphicApi>> * apis_register_graphic_list 
+            std::vector<std::reference_wrapper<gdi::GraphicApi>> * apis_register_graphic_list
                 = this->graphic_api ? &this->graphic_api->gds : nullptr;
-            std::vector<std::reference_wrapper<gdi::CaptureApi>> * apis_register_graphic_snapshot_list 
+            std::vector<std::reference_wrapper<gdi::CaptureApi>> * apis_register_graphic_snapshot_list
                 = this->graphic_api ? &this->graphic_api->snapshoters : nullptr;
-            std::vector<std::reference_wrapper<gdi::KbdInputApi>> & apis_register_kbd_input_list 
+            std::vector<std::reference_wrapper<gdi::KbdInputApi>> & apis_register_kbd_input_list
                 = this->kbd_input_api.kbds;
-            std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> & apis_register_capture_probe_list 
+            std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> & apis_register_capture_probe_list
                 = this->capture_probe_api.probes;
-            std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> & apis_register_external_capture_list 
+            std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> & apis_register_external_capture_list
                 = this->external_capture_api.objs;
-            std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> & apis_register_update_config_capture_list 
+            std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> & apis_register_update_config_capture_list
                 = this->update_config_capture_api.objs;
 
 
@@ -1641,7 +1641,7 @@ public:
             apis_register_update_config_capture_list.push_back(static_cast<gdi::UpdateConfigCaptureApi&>(*this->pscrt));
         }
 
-        if (this->psc) { 
+        if (this->psc) {
             this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
             apis_register_graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this->psc));
         }
@@ -1665,13 +1665,13 @@ public:
             }
         }
 
-        if (this->pvc) { 
+        if (this->pvc) {
             this->capture_api.caps.push_back(this->pvc->vc);
             apis_register_graphic_snapshot_list->push_back(this->pvc->preparing_vc);
             this->pvc->first_image.cap_elem = {this->capture_api.caps, this->pvc->first_image};
             this->pvc->first_image.gcap_elem = {*apis_register_graphic_snapshot_list, this->pvc->first_image};
         }
-        if (this->pvc_full) { 
+        if (this->pvc_full) {
             this->capture_api.caps.push_back(this->pvc_full->vc);
             apis_register_graphic_snapshot_list->push_back(this->pvc_full->preparing_vc);
         }
@@ -1686,7 +1686,7 @@ public:
                 apis_register_capture_probe_list.push_back(this->pmc->session_log_agent);
             }
         }
-        if (this->ptc) { 
+        if (this->ptc) {
             this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->ptc));
             apis_register_capture_probe_list.push_back(static_cast<gdi::CaptureProbeApi&>(*this->ptc));
         }
@@ -1843,7 +1843,7 @@ public:
     void possible_active_window_change() override {
         this->capture_probe_api.possible_active_window_change();
     }
-    
+
         virtual void set_depths(gdi::GraphicDepth const & depth) {
         this->order_depth_ = depth;
     }

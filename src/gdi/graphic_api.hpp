@@ -95,6 +95,8 @@ struct GraphicDepth
         };
     }
 
+    GraphicDepth() = default;
+
     constexpr GraphicDepth(GraphicDepth const &) = default;
     GraphicDepth & operator=(GraphicDepth const &) = default;
 
@@ -555,7 +557,7 @@ public:
 
     gdi::GraphicDepth order_depth_;
 
-    BlackoutGraphic(gdi::GraphicDepth const & depths) 
+    BlackoutGraphic(gdi::GraphicDepth const & depths)
         : GraphicBase<BlackoutGraphic>(depths)
         , order_depth_(depths) {}
 //    using base_type_::base_type_;
