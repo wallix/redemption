@@ -1234,7 +1234,6 @@ public:
                 mod_rdp_params.enable_krb                          = this->ini.get<cfg::mod_rdp::enable_kerberos>();
                 mod_rdp_params.enable_fastpath                     = this->ini.get<cfg::mod_rdp::fast_path>();
                 //mod_rdp_params.enable_mem3blt                      = true;
-                mod_rdp_params.enable_bitmap_update                = this->ini.get<cfg::globals::enable_bitmap_update>();
                 //mod_rdp_params.enable_new_pointer                  = true;
                 mod_rdp_params.enable_glyph_cache                  = this->ini.get<cfg::globals::glyph_cache>();
 

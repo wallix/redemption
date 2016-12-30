@@ -237,7 +237,6 @@ BOOST_AUTO_TEST_CASE(TestFront)
         //mod_rdp_params.enable_clipboard                = true;
         mod_rdp_params.enable_fastpath                 = false;
         mod_rdp_params.enable_mem3blt                  = false;
-        mod_rdp_params.enable_bitmap_update            = true;
         mod_rdp_params.enable_new_pointer              = false;
         //mod_rdp_params.rdp_compression                 = 0;
         //mod_rdp_params.error_message                   = nullptr;
@@ -422,7 +421,6 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         //mod_rdp_params.enable_clipboard                = true;
         mod_rdp_params.enable_fastpath                 = false;
         mod_rdp_params.enable_mem3blt                  = false;
-        mod_rdp_params.enable_bitmap_update            = true;
         mod_rdp_params.enable_new_pointer              = false;
         //mod_rdp_params.rdp_compression                 = 0;
         //mod_rdp_params.error_message                   = nullptr;
@@ -656,7 +654,6 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         //mod_rdp_params.enable_clipboard                = true;
         mod_rdp_params.enable_fastpath                 = false;
         mod_rdp_params.enable_mem3blt                  = false;
-        mod_rdp_params.enable_bitmap_update            = true;
         mod_rdp_params.enable_new_pointer              = false;
         //mod_rdp_params.rdp_compression                 = 0;
         //mod_rdp_params.error_message                   = nullptr;

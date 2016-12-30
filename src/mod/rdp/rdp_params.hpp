@@ -48,7 +48,6 @@ struct ModRDPParams {
     bool enable_krb = false;
     bool enable_fastpath = true;           // If true, fast-path must be supported.
     bool enable_mem3blt = true;
-    bool enable_bitmap_update = false;
     bool enable_new_pointer = true;
     bool enable_glyph_cache = false;
     bool enable_session_probe = false;
@@ -197,7 +196,6 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_krb);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_fastpath);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_mem3blt);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_bitmap_update);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_new_pointer);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_glyph_cache);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_session_probe);

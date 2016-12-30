@@ -37,9 +37,10 @@ public:
     WidgetTest(gdi::GraphicApi& drawable,
                int16_t left, int16_t top, int16_t width, int16_t height,
                Widget2& parent, NotifyApi* notifier,
-               std::unique_ptr<mod_api> managed_mod)
+               std::unique_ptr<mod_api> managed_mod, Font const & font,
+               Theme const & theme)
     : WidgetParent(drawable, parent, notifier)
-    , module_host(drawable, *this, this, std::move(managed_mod))
+    , module_host(drawable, *this, this, std::move(managed_mod), font, theme)
     {
         this->impl = &composite_array;
 

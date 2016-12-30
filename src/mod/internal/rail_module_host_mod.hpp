@@ -62,7 +62,8 @@ public:
                            client_execute, vars.get<cfg::theme>())
     , rail_module_host(front, widget_rect.x, widget_rect.y,
                        widget_rect.cx + 1, widget_rect.cy + 1,
-                       this->screen, this, std::move(managed_mod))
+                       this->screen, this, std::move(managed_mod),
+                       vars.get<cfg::font>(), vars.get<cfg::theme>())
     , vars(vars)
     , managed_mod_event_handler(*this)
     {

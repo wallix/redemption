@@ -98,5 +98,8 @@ public:
         (void)param1;
         (void)param2;
     }
+
+    Dimension get_dim() const override
+    { return Dimension(this->front_width, this->front_height); }
 };
 

@@ -200,6 +200,10 @@ class RDPLineTo {
         printf("%s", buffer);
     }
 
+    void move(int offset_x, int offset_y) {
+        this->startx += offset_x;
+        this->starty += offset_y;
+        this->endx   += offset_x;
+        this->endy   += offset_y;
+    }
 };
-
-
