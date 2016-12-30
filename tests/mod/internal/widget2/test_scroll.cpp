@@ -824,7 +824,7 @@ BOOST_AUTO_TEST_CASE(TestWidgetHScrollBar)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetHScrollBar wscroll(drawable.gd, parent, notifier, id,
+    WidgetScrollBar wscroll(drawable.gd, parent, notifier, true, id,
                           fg_color, bg_color, focus_color, font, 50);
     Dimension dim = wscroll.get_optimal_dim();
     wscroll.set_wh(200, dim.h);
@@ -839,7 +839,7 @@ BOOST_AUTO_TEST_CASE(TestWidgetHScrollBar)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xca\xa9\x13\x55\x4b\x9c\x9e\xd8\x76\xbe\xcc\xd1\xbd\x3e\xc7\x0d\x94\xa9\x3f\xeb"
+        "\xaf\x8d\xda\xea\xbe\x5c\x0b\x53\xf4\x28\xe3\xbc\x29\x49\xa1\x4c\x75\x7f\xc5\xbf"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -852,7 +852,59 @@ BOOST_AUTO_TEST_CASE(TestWidgetHScrollBar)
     //drawable.save_to_png(OUTPUT_FILE_PATH "scroll1.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xf8\x05\x82\xc3\x7f\xfd\xf9\xc0\x67\xcb\xab\x65\xde\x5d\x15\xa0\x20\x76\x3d\x4c"
+        "\x68\xec\xba\xe1\xbe\x41\x74\x31\x17\xd2\x89\x2c\x35\x1a\xa0\x6a\x10\x06\xa1\x9a"
+    )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TestWidgetVScrollBar)
+{
+    TestDraw drawable(800, 600);
+
+    Font font(FIXTURES_PATH "/dejavu_14.fv1");
+
+    // WidgetFlatButton is a button widget at position 0,0 in it's parent context
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
+    NotifyApi * notifier = nullptr;
+    int fg_color = RED;
+    int bg_color = YELLOW;
+    int focus_color = WINBLUE;
+    int id = 0;
+    int16_t x = 0;
+    int16_t y = 0;
+
+    WidgetScrollBar wscroll(drawable.gd, parent, notifier, false, id,
+                          fg_color, bg_color, focus_color, font, 50);
+    Dimension dim = wscroll.get_optimal_dim();
+    wscroll.set_wh(dim.w, 200);
+    wscroll.set_xy(x, y);
+
+    // ask to widget to redraw at it's current position
+    wscroll.rdp_input_invalidate(wscroll.get_rect());
+
+
+    //drawable.save_to_png(OUTPUT_FILE_PATH "scroll2.png");
+
+    char message[1024];
+
+    if (!check_sig(drawable.gd.impl(), message,
+        "\x35\x2b\x65\xcf\x60\x37\xc3\x4f\x19\x5e\xf5\xf7\x55\xb6\x87\x3b\x2b\x84\x52\x41"
+    )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    wscroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x + 5, y + 5, nullptr);
+
+    wscroll.rdp_input_invalidate(wscroll.get_rect());
+
+
+    //drawable.save_to_png(OUTPUT_FILE_PATH "scroll3.png");
+
+    if (!check_sig(drawable.gd.impl(), message,
+        "\x22\x74\x49\xb3\xe6\xc2\x89\x21\xf5\x98\xe0\x63\x21\xeb\x5f\xfd\xe2\xe4\x61\x02"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }

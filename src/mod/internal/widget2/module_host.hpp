@@ -199,11 +199,14 @@ private:
 
     gdi::GraphicApi& drawable_ref;
 
-    WidgetHScrollBar hscroll;
+    WidgetScrollBar hscroll;
+    WidgetScrollBar vscroll;
 
     unsigned int hscroll_height = 0;
+    unsigned int vscroll_width  = 0;
 
     bool hscroll_added = false;
+    bool vscroll_added = false;
 
     Rect mod_visible_rect;
 
@@ -218,7 +221,8 @@ public:
     , gdi::GraphicBase<WidgetModuleHost>(gdi::GraphicDepth::unspecified())
     , module_holder(*this, std::move(managed_mod))
     , drawable_ref(drawable)
-    , hscroll(drawable, *this, this, 0, theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font)
+    , hscroll(drawable, *this, this, true, 0, theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font)
+    , vscroll(drawable, *this, this, false, 0, theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font)
     , order_depth_(gdi::GraphicDepth::unspecified())
     {
         this->impl = &composite_array;
@@ -229,6 +233,10 @@ public:
         Dimension dim = this->hscroll.get_optimal_dim();
         this->hscroll_height = dim.h;
         this->hscroll.set_cy(this->hscroll_height);
+
+        dim = this->vscroll.get_optimal_dim();
+        this->vscroll_width = dim.w;
+        this->vscroll.set_cx(this->vscroll_width);
     }
 
     mod_api& get_managed_mod()
@@ -252,12 +260,12 @@ private:
 
         this->vision_rect = this->get_rect();
 
-        if ((this->cx() >= module_dim.w) && (this->cy() >= module_dim.h)) {
-            if (this->hscroll_added) {
-                this->remove_widget(&this->hscroll);
+        const bool old_hscroll_added = this->hscroll_added;
+        const bool old_vscroll_added = this->vscroll_added;
 
-                this->hscroll_added = false;
-            }
+        if ((this->cx() >= module_dim.w) && (this->cy() >= module_dim.h)) {
+            this->hscroll_added = false;
+            this->vscroll_added = false;
 
             this->mod_visible_rect = Rect(0, 0, module_dim.w, module_dim.h);
         }
@@ -265,15 +273,44 @@ private:
             if (this->vision_rect.cx < module_dim.w) {
                 this->vision_rect.cy -= this->hscroll_height;
 
-                if (!this->hscroll_added) {
-                    this->add_widget(&this->hscroll);
+                this->hscroll_added = true;
+            }
+            else {
+                this->hscroll_added = false;
+            }
 
-                    this->hscroll_added = true;
-                }
+            if (this->vision_rect.cy < module_dim.h) {
+                this->vision_rect.cx -= this->vscroll_width;
+
+                this->vscroll_added = true;
+            }
+            else {
+                this->vscroll_added = false;
             }
         }
 
-        this->mod_visible_rect.cx = std::min<uint16_t>(this->vision_rect.cx, module_dim.w);
+        if (old_hscroll_added != this->hscroll_added) {
+            if (this->hscroll_added) {
+                this->add_widget(&this->hscroll);
+            }
+            else {
+                this->remove_widget(&this->hscroll);
+            }
+
+        }
+        if (old_vscroll_added != this->vscroll_added) {
+            if (this->vscroll_added) {
+                this->add_widget(&this->vscroll);
+            }
+            else {
+                this->remove_widget(&this->vscroll);
+            }
+
+        }
+
+        this->mod_visible_rect.cx = std::min<uint16_t>(
+            this->vision_rect.cx - (this->vscroll_added ? this->vscroll_width : 0),
+            module_dim.w);
         this->mod_visible_rect.cy = std::min<uint16_t>(
             this->vision_rect.cy - (this->hscroll_added ? this->hscroll_height : 0),
             module_dim.h);
@@ -291,6 +328,20 @@ private:
 
             this->hscroll.set_xy(this->vision_rect.x, this->vision_rect.y + this->vision_rect.cy);
             this->hscroll.set_wh(this->vision_rect.cx, this->hscroll_height);
+        }
+        if (this->vscroll_added) {
+            const unsigned int new_max_value = module_dim.h - this->vision_rect.cy;
+
+            this->vscroll.set_max_value(new_max_value);
+
+            if (this->mod_visible_rect.y > new_max_value) {
+                this->mod_visible_rect.y = new_max_value;
+            }
+
+            this->vscroll.set_current_value(this->mod_visible_rect.y);
+
+            this->vscroll.set_xy(this->vision_rect.x + this->vision_rect.cx, this->vision_rect.y);
+            this->vscroll.set_wh(this->vscroll_width, this->vision_rect.cy);
         }
     }
 
@@ -353,6 +404,17 @@ public:
                 }
             }
         }
+        else if (event == NOTIFY_VSCROLL) {
+            if (this->vscroll_added) {
+                this->mod_visible_rect.y = this->vscroll.get_current_value();
+
+                Rect mod_update_rect = this->vision_rect.offset(
+                    -this->x() + this->mod_visible_rect.x, -this->y() + this->mod_visible_rect.y);
+                if (!mod_update_rect.isempty()) {
+                    this->module_holder.rdp_input_invalidate(mod_update_rect);
+                }
+            }
+        }
     }
 
     // RdpInput
@@ -372,6 +434,12 @@ public:
                 region.subtract_rect(hscroll_rect);
             }
         }
+        if (this->vscroll_added) {
+            Rect vscroll_rect = this->vscroll.get_rect();
+            if (!vscroll_rect.isempty()) {
+                region.subtract_rect(vscroll_rect);
+            }
+        }
 
         ::fill_region(this->drawable, region, 0x000000);
 
@@ -383,6 +451,9 @@ public:
 
         if (this->hscroll_added && r.has_intersection(this->hscroll.get_rect())) {
             this->hscroll.draw(r);
+        }
+        if (this->vscroll_added && r.has_intersection(this->vscroll.get_rect())) {
+            this->vscroll.draw(r);
         }
 
         this->end_update();
@@ -412,6 +483,9 @@ public:
     void draw(const Rect& clip) override {
         if (this->hscroll_added) {
             this->hscroll.draw(clip);
+        }
+        if (this->vscroll_added) {
+            this->vscroll.draw(clip);
         }
     }
 

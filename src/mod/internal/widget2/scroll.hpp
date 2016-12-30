@@ -555,6 +555,7 @@ public:
 };
 */
 
+/*
 class WidgetHScrollBar : public Widget2 {
     int fg_color;
     int bg_color;
@@ -832,6 +833,404 @@ public:
                 else {
                     this->current_value =
                         (x - min_x) * this->max_value / (max_x - min_x);
+                }
+
+                if (old_value != this->current_value) {
+                    this->update_cursor_button_rects();
+
+                    this->send_notify(this->event);
+                }
+
+                this->drawable.begin_update();
+                this->draw(this->get_rect());
+                this->drawable.end_update();
+            }
+        }
+        else
+            this->Widget2::rdp_input_mouse(device_flags, x, y, keymap);
+    }
+};
+*/
+
+
+class WidgetScrollBar : public Widget2 {
+    bool horizontal;
+
+    int fg_color;
+    int bg_color;
+    int focus_color;
+
+    Font const & font;
+
+    Rect left_or_top_button_rect;
+    Rect right_or_bottom_button_rect;
+    Rect scroll_bar_rect;
+    Rect cursor_button_rect;
+
+    int current_value = 0;
+    int max_value     = 100;
+
+    int step_value = 1;
+
+    bool mouse_down = false;
+
+    enum {
+        BUTTON_NONE,
+
+        BUTTON_LEFT_OR_TOP,
+        BUTTON_CURSOR,
+        BUTTON_RIGHT_OR_BOTTOM
+    } selected_button = BUTTON_NONE;
+
+    notify_event_t event;
+
+    int old_mouse_x_or_y         = 0;
+    int old_cursor_button_x_or_y = 0;
+
+    uint16_t button_width_or_height = 0;
+
+public:
+    WidgetScrollBar(gdi::GraphicApi & drawable, Widget2& parent,
+                    NotifyApi* notifier, bool horizontal,
+                    int group_id, int fgcolor, int bgcolor, int focuscolor,
+                    Font const & font, int maxvalue = 100)
+    : Widget2(drawable, parent, notifier, group_id)
+    , horizontal(horizontal)
+    , fg_color(fgcolor)
+    , bg_color(bgcolor)
+    , focus_color(focuscolor)
+    , font(font)
+    , max_value(maxvalue)
+    , event(horizontal ? NOTIFY_HSCROLL : NOTIFY_VSCROLL)
+    {
+        Dimension dim = this->get_optimal_button_dim();
+        this->button_width_or_height = (this->horizontal ? dim.w : dim.h);
+    }
+
+private:
+    void compute_step_value() {
+        this->step_value =
+            (this->horizontal ?
+             ((this->scroll_bar_rect.cx - cursor_button_rect.cx) / this->max_value) :
+             ((this->scroll_bar_rect.cy - cursor_button_rect.cy) / this->max_value));
+    }
+
+public:
+    unsigned int get_current_value() const {
+        return static_cast<unsigned int>(this->current_value);
+    }
+
+    void set_current_value(unsigned int cv) {
+        this->current_value = static_cast<int>(
+            std::min<int>(cv, this->max_value));
+    }
+
+    void set_max_value(unsigned int maxvalue) {
+        this->max_value = static_cast<int>(maxvalue);
+
+        this->compute_step_value();
+    }
+
+private:
+    void update_cursor_button_rects() {
+        if (this->horizontal) {
+            this->cursor_button_rect.x  = this->x() + this->button_width_or_height - 1 +
+                                              (this->cx() - this->button_width_or_height * 2 + 2 - this->button_width_or_height) *
+                                                  this->current_value / this->max_value;
+            this->cursor_button_rect.y  = this->y() + 1;
+            this->cursor_button_rect.cx = this->button_width_or_height;
+            this->cursor_button_rect.cy = this->cy() - 2;
+        }
+        else {
+            this->cursor_button_rect.x  = this->x() + 1;
+            this->cursor_button_rect.y  = this->y() + this->button_width_or_height - 1 +
+                                              (this->cy() - this->button_width_or_height * 2 + 2 - this->button_width_or_height) *
+                                                  this->current_value / this->max_value;
+            this->cursor_button_rect.cx = this->cx() - 2;
+            this->cursor_button_rect.cy = this->button_width_or_height;
+        }
+    }
+
+    void update_rects() {
+        if (this->horizontal) {
+            this->left_or_top_button_rect.x  = this->x();
+            this->left_or_top_button_rect.y  = this->y();
+            this->left_or_top_button_rect.cx = this->button_width_or_height;
+            this->left_or_top_button_rect.cy = this->cy();
+
+            this->right_or_bottom_button_rect.x  = this->x() + this->cx() - this->button_width_or_height;
+            this->right_or_bottom_button_rect.y  = this->y();
+            this->right_or_bottom_button_rect.cx = this->button_width_or_height;
+            this->right_or_bottom_button_rect.cy = this->cy();
+
+            this->scroll_bar_rect.x  = this->x() + this->button_width_or_height;
+            this->scroll_bar_rect.y  = this->y();
+            this->scroll_bar_rect.cx = this->cx() - this->button_width_or_height * 2;
+            this->scroll_bar_rect.cy = this->cy();
+        }
+        else {
+            this->left_or_top_button_rect.x  = this->x();
+            this->left_or_top_button_rect.y  = this->y();
+            this->left_or_top_button_rect.cx = this->cx();
+            this->left_or_top_button_rect.cy = this->button_width_or_height;
+
+            this->right_or_bottom_button_rect.x  = this->x();
+            this->right_or_bottom_button_rect.y  = this->y() + this->cy() - this->button_width_or_height;
+            this->right_or_bottom_button_rect.cx = this->cx();
+            this->right_or_bottom_button_rect.cy = this->button_width_or_height;
+
+            this->scroll_bar_rect.x  = this->x();
+            this->scroll_bar_rect.y  = this->y() + this->button_width_or_height;
+            this->scroll_bar_rect.cx = this->cx();
+            this->scroll_bar_rect.cy = this->cy() - this->button_width_or_height * 2;
+        }
+
+        this->update_cursor_button_rects();
+
+        this->compute_step_value();
+    }
+
+public:
+    // Widget2
+
+    void draw(const Rect& clip) override {
+        if (this->horizontal) {
+            WidgetFlatButton::draw(clip, this->left_or_top_button_rect, this->drawable,
+                false, (this->mouse_down && (this->selected_button == BUTTON_LEFT_OR_TOP)),
+                "◀", this->fg_color, this->bg_color, this->focus_color,
+                Rect(), 0, 2, this->font, 2, 1);
+
+            WidgetFlatButton::draw(clip, this->right_or_bottom_button_rect, this->drawable,
+                false, (this->mouse_down && (this->selected_button == BUTTON_RIGHT_OR_BOTTOM)),
+                "▶", this->fg_color, this->bg_color, this->focus_color,
+                Rect(), 0, 2, this->font, 2, 1);
+
+            this->drawable.draw(
+                    RDPOpaqueRect(
+                            clip.intersect(
+                                    Rect(this->scroll_bar_rect.x,
+                                         this->scroll_bar_rect.y + 1,
+                                         this->scroll_bar_rect.cx,
+                                         this->scroll_bar_rect.cy - 2)
+                                ),
+                            this->bg_color
+                        ),
+                    this->get_rect()
+                );
+
+            this->drawable.draw(
+                    RDPOpaqueRect(
+                            clip.intersect(
+                                    Rect(this->scroll_bar_rect.x,
+                                         this->scroll_bar_rect.y,
+                                         this->scroll_bar_rect.cx,
+                                         1)
+                                ),
+                            this->fg_color
+                        ),
+                    this->get_rect()
+                );
+
+            this->drawable.draw(
+                    RDPOpaqueRect(
+                            clip.intersect(
+                                    Rect(this->scroll_bar_rect.x,
+                                         this->scroll_bar_rect.y + this->cy() - 1,
+                                         this->scroll_bar_rect.cx,
+                                         1)
+                                ),
+                            this->fg_color
+                        ),
+                    this->get_rect()
+                );
+
+            WidgetFlatButton::draw(clip, this->cursor_button_rect, this->drawable,
+                false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)),
+                "▤", this->fg_color, this->bg_color, this->focus_color,
+                Rect(), 0, 1, this->font, 2, 1);
+        }
+        else {
+            WidgetFlatButton::draw(clip, this->left_or_top_button_rect, this->drawable,
+                false, (this->mouse_down && (this->selected_button == BUTTON_LEFT_OR_TOP)),
+                "▲", this->fg_color, this->bg_color, this->focus_color,
+                Rect(), 0, 2, this->font, 2, 1);
+
+            WidgetFlatButton::draw(clip, this->right_or_bottom_button_rect, this->drawable,
+                false, (this->mouse_down && (this->selected_button == BUTTON_RIGHT_OR_BOTTOM)),
+                "▼", this->fg_color, this->bg_color, this->focus_color,
+                Rect(), 0, 2, this->font, 2, 1);
+
+            this->drawable.draw(
+                    RDPOpaqueRect(
+                            clip.intersect(
+                                    Rect(this->scroll_bar_rect.x + 1,
+                                         this->scroll_bar_rect.y,
+                                         this->scroll_bar_rect.cx - 2,
+                                         this->scroll_bar_rect.cy)
+                                ),
+                            this->bg_color
+                        ),
+                    this->get_rect()
+                );
+
+            this->drawable.draw(
+                    RDPOpaqueRect(
+                            clip.intersect(
+                                    Rect(this->scroll_bar_rect.x,
+                                         this->scroll_bar_rect.y,
+                                         1,
+                                         this->scroll_bar_rect.cy)
+                                ),
+                            this->fg_color
+                        ),
+                    this->get_rect()
+                );
+
+            this->drawable.draw(
+                    RDPOpaqueRect(
+                            clip.intersect(
+                                    Rect(this->scroll_bar_rect.x + this->cx() - 1,
+                                         this->scroll_bar_rect.y,
+                                         1,
+                                         this->scroll_bar_rect.cy)
+                                ),
+                            this->fg_color
+                        ),
+                    this->get_rect()
+                );
+
+            WidgetFlatButton::draw(clip, this->cursor_button_rect, this->drawable,
+                false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)),
+                "▥", this->fg_color, this->bg_color, this->focus_color,
+                Rect(), 0, 1, this->font, 1, 2);
+        }
+    }
+
+    void set_x(int16_t x) override {
+        Widget2::set_x(x);
+        this->update_rects();
+    }
+
+    void set_y(int16_t y) override {
+        Widget2::set_y(y);
+        this->update_rects();
+    }
+
+    void set_cx(uint16_t cx) override {
+        Widget2::set_cx(cx);
+        this->update_rects();
+    }
+
+    void set_cy(uint16_t cy) override {
+        Widget2::set_cy(cy);
+        this->update_rects();
+    }
+
+private:
+    Dimension get_optimal_button_dim() {
+        if (this->horizontal) {
+            Dimension dim = WidgetFlatButton::get_optimal_dim(1, this->font, "▶", 3, 2);
+
+            dim.w += 1;
+            dim.h += 2;
+
+            return dim;
+        }
+        else {
+            Dimension dim = WidgetFlatButton::get_optimal_dim(1, this->font, "▶", 3, 2);
+
+            dim.w += 1;
+            dim.h += 2;
+
+            return dim;
+        }
+    }
+
+public:
+    Dimension get_optimal_dim() override {
+        return this->get_optimal_button_dim();
+    }
+
+    // RdpInput
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
+        if (device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
+            this->mouse_down = true;
+
+            if (this->left_or_top_button_rect.contains_pt(x, y)) {
+                this->selected_button = BUTTON_LEFT_OR_TOP;
+
+                const int old_value = this->current_value;
+
+                this->current_value -= this->step_value;
+
+                if (this->current_value < 0) {
+                    this->current_value = 0;
+                }
+
+                if (old_value != this->current_value) {
+                    this->update_cursor_button_rects();
+
+                    this->send_notify(this->event);
+                }
+            }
+            else if (this->cursor_button_rect.contains_pt(x, y)) {
+                this->selected_button = BUTTON_CURSOR;
+
+                this->old_mouse_x_or_y         = (this->horizontal ? x : y);
+                this->old_cursor_button_x_or_y = (this->horizontal ? this->cursor_button_rect.x : this->cursor_button_rect.y);
+            }
+            if (this->right_or_bottom_button_rect.contains_pt(x, y)) {
+                this->selected_button = BUTTON_RIGHT_OR_BOTTOM;
+
+                const int old_value = this->current_value;
+
+                this->current_value += this->step_value;
+
+                if (this->current_value > this->max_value) {
+                    this->current_value = this->max_value;
+                }
+
+                if (old_value != this->current_value) {
+                    this->update_cursor_button_rects();
+
+                    this->send_notify(this->event);
+                }
+            }
+
+            this->drawable.begin_update();
+            this->draw(this->get_rect());
+            this->drawable.end_update();
+        }
+        else if (device_flags == MOUSE_FLAG_BUTTON1) {
+            this->mouse_down               = false;
+            this->selected_button          = BUTTON_NONE;
+            this->old_mouse_x_or_y         = 0;
+            this->old_cursor_button_x_or_y = 0;
+
+            this->drawable.begin_update();
+            this->draw(this->get_rect());
+            this->drawable.end_update();
+        }
+        else if (device_flags == MOUSE_FLAG_MOVE) {
+            if (this->mouse_down && (BUTTON_CURSOR == this->selected_button)) {
+                const int old_value = this->current_value;
+
+                const int min_button_x_or_y = (this->horizontal ? this->x() : this->y()) + this->button_width_or_height - 1;
+                const int max_button_x_or_y = (this->horizontal ? this->x() : this->y()) + this->button_width_or_height - 1 +
+                                              ((this->horizontal ? this->cx() : this->cy()) - this->button_width_or_height * 2 + 2 - this->button_width_or_height);
+
+                const int min_x_or_y = min_button_x_or_y + (this->old_mouse_x_or_y - this->old_cursor_button_x_or_y);
+                const int max_x_or_y = max_button_x_or_y + (this->old_mouse_x_or_y - this->old_cursor_button_x_or_y);
+
+                if ((this->horizontal ? x : y) < min_x_or_y) {
+                    this->current_value = 0;
+                }
+                else if ((this->horizontal ? x : y) >= max_x_or_y) {
+                    this->current_value = this->max_value;
+                }
+                else {
+                    this->current_value =
+                        ((this->horizontal ? x : y) - min_x_or_y) * this->max_value / (max_x_or_y - min_x_or_y);
                 }
 
                 if (old_value != this->current_value) {
