@@ -584,7 +584,8 @@ class WidgetHScrollBar : public Widget2 {
 
     notify_event_t event;
 
-    int old_mouse_x = 0;
+    int old_mouse_x         = 0;
+    int old_cursor_button_x = 0;
 
     uint16_t button_width = 0;
 
@@ -616,9 +617,8 @@ public:
     }
 
     void set_current_value(unsigned int cv) {
-        this->current_value = static_cast<int>(cv);
-
-        REDASSERT(this->current_value <= this->max_value);
+        this->current_value = static_cast<int>(
+            std::min<int>(cv, this->max_value));
     }
 
     void set_max_value(unsigned int maxvalue) {
@@ -777,7 +777,8 @@ public:
             else if (this->cursor_button_rect.contains_pt(x, y)) {
                 this->selected_button = BUTTON_CURSOR;
 
-                this->old_mouse_x = x;
+                this->old_mouse_x         = x;
+                this->old_cursor_button_x = this->cursor_button_rect.x;
             }
             if (this->right_button_rect.contains_pt(x, y)) {
                 this->selected_button = BUTTON_RIGHT;
@@ -798,46 +799,52 @@ public:
             }
 
             this->drawable.begin_update();
-//LOG(LOG_INFO, "draw current_value=%d", this->current_value);
             this->draw(this->get_rect());
             this->drawable.end_update();
         }
         else if (device_flags == MOUSE_FLAG_BUTTON1) {
-            this->mouse_down      = false;
-            this->selected_button = BUTTON_NONE;
-            this->old_mouse_x     = 0;
+            this->mouse_down          = false;
+            this->selected_button     = BUTTON_NONE;
+            this->old_mouse_x         = 0;
+            this->old_cursor_button_x = 0;
 
             this->drawable.begin_update();
             this->draw(this->get_rect());
             this->drawable.end_update();
         }
-//         else if (device_flags == MOUSE_FLAG_MOVE) {
-// LOG(LOG_INFO, "MOUSE_FLAG_MOVE");
-//             if (this->mouse_down && (BUTTON_CURSOR == this->selected_button)) {
-//                 int offset = x - this->old_mouse_x;
+        else if (device_flags == MOUSE_FLAG_MOVE) {
+            if (this->mouse_down && (BUTTON_CURSOR == this->selected_button)) {
+                const int old_value = this->current_value;
 
-//                 const int old_value = this->current_value;
+                const int min_button_x = this->x() + this->button_width - 1;
+                const int max_button_x = this->x() + this->button_width - 1 +
+                                      (this->cx() - this->button_width * 2 + 2 - this->button_width);
 
-//                 this->current_value += offset;
+                const int min_x = min_button_x + (this->old_mouse_x - this->old_cursor_button_x);
+                const int max_x = max_button_x + (this->old_mouse_x - this->old_cursor_button_x);
 
-//                 if (this->current_value < 0) {
-//                     this->current_value = 0;
-//                 }
-//                 else if (this->current_value > this->max_value) {
-//                     this->current_value = this->max_value;
-//                 }
+                if (x < min_x) {
+                    this->current_value = 0;
+                }
+                else if (x >= max_x) {
+                    this->current_value = this->max_value;
+                }
+                else {
+                    this->current_value =
+                        (x - min_x) * this->max_value / (max_x - min_x);
+                }
 
-//                 if (old_value != this->current_value) {
-//                     this->update_cursor_button_rects();
+                if (old_value != this->current_value) {
+                    this->update_cursor_button_rects();
 
-//                     this->send_notify(this->event);
-//                 }
+                    this->send_notify(this->event);
+                }
 
-//                 this->drawable.begin_update();
-//                 this->draw(this->get_rect());
-//                 this->drawable.end_update();
-//             }
-//         }
+                this->drawable.begin_update();
+                this->draw(this->get_rect());
+                this->drawable.end_update();
+            }
+        }
         else
             this->Widget2::rdp_input_mouse(device_flags, x, y, keymap);
     }

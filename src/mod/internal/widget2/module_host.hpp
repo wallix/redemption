@@ -279,11 +279,14 @@ private:
             module_dim.h);
 
         if (this->hscroll_added) {
-            if (this->mod_visible_rect.x + this->mod_visible_rect.cx < this->vision_rect.cx) {
-                this->mod_visible_rect.x = this->vision_rect.cx - this->mod_visible_rect.cx;
+            const unsigned int new_max_value = module_dim.w - this->vision_rect.cx;
+
+            this->hscroll.set_max_value(new_max_value);
+
+            if (this->mod_visible_rect.x > new_max_value) {
+                this->mod_visible_rect.x = new_max_value;
             }
 
-            this->hscroll.set_max_value(module_dim.w - this->vision_rect.cx);
             this->hscroll.set_current_value(this->mod_visible_rect.x);
 
             this->hscroll.set_xy(this->vision_rect.x, this->vision_rect.y + this->vision_rect.cy);
@@ -390,9 +393,8 @@ public:
         if (this->vision_rect.contains_pt(x, y)) {
             this->module_holder.rdp_input_mouse(device_flags, x - this->x() + this->mod_visible_rect.x, y - this->y() + this->mod_visible_rect.y, keymap);
         }
-        else {
-            WidgetParent::rdp_input_mouse(device_flags, x, y, keymap);
-        }
+
+        WidgetParent::rdp_input_mouse(device_flags, x, y, keymap);
     }
 
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
