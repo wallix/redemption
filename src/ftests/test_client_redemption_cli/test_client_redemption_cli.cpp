@@ -156,9 +156,6 @@ int main(int argc, char** argv){
     , ModRDPParamsConfig(&(mod_rdp_params.enable_mem3blt) , true
         , "--mem3blt", "               "+dscr+"mem3blt"
         , "enable_mem3blt")
-    , ModRDPParamsConfig(&(mod_rdp_params.enable_bitmap_update), true
-        , "--bmp_upd", "               "+dscr+"bitmap update"
-        , "enable_bitmap_update")
     , ModRDPParamsConfig(&(mod_rdp_params.enable_new_pointer), true
         , "--new_pointer", "           "+dscr+"new pointer"
         , "enable_new_pointer")

@@ -40,6 +40,8 @@ enum NotifyEventType {
     NOTIFY_COPY,
     NOTIFY_PASTE,
     NOTIFY_CUT,
+    NOTIFY_HSCROLL,
+    NOTIFY_VSCROLL,
 };
 
 class Widget2 : public RdpInput, public NotifyApi

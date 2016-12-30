@@ -21,6 +21,10 @@
 
 #pragma once
 
+
+#include "mod/internal/widget2/flat_button.hpp"
+
+/*
 #include "widget.hpp"
 #include "utils/region.hpp"
 #include "gdi/graphic_api.hpp"
@@ -171,8 +175,9 @@ public:
         }
     }
 };
+*/
 
-
+/*
 class WidgetVScrollBar : public Widget2 {
 public:
     WidgetFrame * frame;
@@ -359,7 +364,9 @@ public:
         this->refresh(this->rect);
     }
 };
+*/
 
+/*
 class WidgetHScrollBar : public Widget2 {
 public:
     WidgetFrame * frame;
@@ -546,5 +553,292 @@ public:
         this->refresh(this->rect);
     }
 };
+*/
 
+class WidgetHScrollBar : public Widget2 {
+    int fg_color;
+    int bg_color;
+    int focus_color;
 
+    Font const & font;
+
+    Rect left_button_rect;
+    Rect right_button_rect;
+    Rect scroll_bar_rect;
+    Rect cursor_button_rect;
+
+    int current_value = 0;
+    int max_value     = 100;
+
+    int step_value = 1;
+
+    bool mouse_down = false;
+
+    enum {
+        BUTTON_NONE,
+
+        BUTTON_LEFT,
+        BUTTON_CURSOR,
+        BUTTON_RIGHT
+    } selected_button = BUTTON_NONE;
+
+    notify_event_t event;
+
+    int old_mouse_x = 0;
+
+    uint16_t button_width = 0;
+
+public:
+    WidgetHScrollBar(gdi::GraphicApi & drawable, Widget2& parent,
+                     NotifyApi* notifier,
+                     int group_id, int fgcolor, int bgcolor, int focuscolor,
+                     Font const & font, int maxvalue = 100)
+    : Widget2(drawable, parent, notifier, group_id)
+    , fg_color(fgcolor)
+    , bg_color(bgcolor)
+    , focus_color(focuscolor)
+    , font(font)
+    , max_value(maxvalue)
+    , event(NOTIFY_HSCROLL)
+    {
+        Dimension dim = this->get_optimal_button_dim();
+        this->button_width = dim.w;
+    }
+
+private:
+    void compute_step_value() {
+        this->step_value = (this->scroll_bar_rect.cx - cursor_button_rect.cx) / this->max_value;
+    }
+
+public:
+    unsigned int get_current_value() const {
+        return static_cast<unsigned int>(this->current_value);
+    }
+
+    void set_current_value(unsigned int cv) {
+        this->current_value = static_cast<int>(cv);
+
+        REDASSERT(this->current_value <= this->max_value);
+    }
+
+    void set_max_value(unsigned int maxvalue) {
+        this->max_value = static_cast<int>(maxvalue);
+
+        this->compute_step_value();
+    }
+
+private:
+    void update_cursor_button_rects() {
+        this->cursor_button_rect.x  = this->x() + this->button_width - 1 +
+                                          (this->cx() - this->button_width * 2 + 2 - this->button_width) *
+                                              this->current_value / this->max_value;
+        this->cursor_button_rect.y  = this->y() + 1;
+        this->cursor_button_rect.cx = this->button_width;
+        this->cursor_button_rect.cy = this->cy() - 2;
+    }
+
+    void update_rects() {
+        this->left_button_rect.x  = this->x();
+        this->left_button_rect.y  = this->y();
+        this->left_button_rect.cx = this->button_width;
+        this->left_button_rect.cy = this->cy();
+
+        this->right_button_rect.x  = this->x() + this->cx() - this->button_width;
+        this->right_button_rect.y  = this->y();
+        this->right_button_rect.cx = this->button_width;
+        this->right_button_rect.cy = this->cy();
+
+        this->scroll_bar_rect.x  = this->x() + this->button_width;
+        this->scroll_bar_rect.y  = this->y();
+        this->scroll_bar_rect.cx = this->cx() - this->button_width * 2;
+        this->scroll_bar_rect.cy = this->cy();
+
+        this->update_cursor_button_rects();
+
+        this->compute_step_value();
+    }
+
+public:
+    // Widget2
+
+    void draw(const Rect& clip) override {
+        WidgetFlatButton::draw(clip, this->left_button_rect, this->drawable,
+            false, (this->mouse_down && (this->selected_button == BUTTON_LEFT)),
+            "◀", this->fg_color, this->bg_color, this->focus_color,
+            Rect(), 0, 2, this->font, 2, 1);
+
+        WidgetFlatButton::draw(clip, this->right_button_rect, this->drawable,
+            false, (this->mouse_down && (this->selected_button == BUTTON_RIGHT)),
+            "▶", this->fg_color, this->bg_color, this->focus_color,
+            Rect(), 0, 2, this->font, 2, 1);
+
+        this->drawable.draw(
+                RDPOpaqueRect(
+                        clip.intersect(
+                                Rect(this->scroll_bar_rect.x,
+                                     this->scroll_bar_rect.y + 1,
+                                     this->scroll_bar_rect.cx,
+                                     this->scroll_bar_rect.cy - 2)
+                            ),
+                        this->bg_color
+                    ),
+                this->get_rect()
+            );
+
+        this->drawable.draw(
+                RDPOpaqueRect(
+                        clip.intersect(
+                                Rect(this->scroll_bar_rect.x,
+                                     this->scroll_bar_rect.y,
+                                     this->scroll_bar_rect.cx,
+                                     1)
+                            ),
+                        this->fg_color
+                    ),
+                this->get_rect()
+            );
+
+        this->drawable.draw(
+                RDPOpaqueRect(
+                        clip.intersect(
+                                Rect(this->scroll_bar_rect.x,
+                                     this->scroll_bar_rect.y + this->cy() - 1,
+                                     this->scroll_bar_rect.cx,
+                                     1)
+                            ),
+                        this->fg_color
+                    ),
+                this->get_rect()
+            );
+
+        WidgetFlatButton::draw(clip, this->cursor_button_rect, this->drawable,
+            false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)),
+            "≡", this->fg_color, this->bg_color, this->focus_color,
+            Rect(), 0, 1, this->font, 3, 1);
+    }
+
+    void set_x(int16_t x) override {
+        Widget2::set_x(x);
+        this->update_rects();
+    }
+
+    void set_y(int16_t y) override {
+        Widget2::set_y(y);
+        this->update_rects();
+    }
+
+    void set_cx(uint16_t cx) override {
+        Widget2::set_cx(cx);
+        this->update_rects();
+    }
+
+    void set_cy(uint16_t cy) override {
+        Widget2::set_cy(cy);
+        this->update_rects();
+    }
+
+private:
+    Dimension get_optimal_button_dim() {
+        Dimension dim = WidgetFlatButton::get_optimal_dim(1, this->font, "▶", 3, 2);
+
+        dim.w += 1;
+        dim.h += 2;
+
+        return dim;
+    }
+
+public:
+    Dimension get_optimal_dim() override {
+        return this->get_optimal_button_dim();
+    }
+
+    // RdpInput
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
+        if (device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
+            this->mouse_down = true;
+
+            if (this->left_button_rect.contains_pt(x, y)) {
+                this->selected_button = BUTTON_LEFT;
+
+                const int old_value = this->current_value;
+
+                this->current_value -= this->step_value;
+
+                if (this->current_value < 0) {
+                    this->current_value = 0;
+                }
+
+                if (old_value != this->current_value) {
+                    this->update_cursor_button_rects();
+
+                    this->send_notify(this->event);
+                }
+            }
+            else if (this->cursor_button_rect.contains_pt(x, y)) {
+                this->selected_button = BUTTON_CURSOR;
+
+                this->old_mouse_x = x;
+            }
+            if (this->right_button_rect.contains_pt(x, y)) {
+                this->selected_button = BUTTON_RIGHT;
+
+                const int old_value = this->current_value;
+
+                this->current_value += this->step_value;
+
+                if (this->current_value > this->max_value) {
+                    this->current_value = this->max_value;
+                }
+
+                if (old_value != this->current_value) {
+                    this->update_cursor_button_rects();
+
+                    this->send_notify(this->event);
+                }
+            }
+
+            this->drawable.begin_update();
+//LOG(LOG_INFO, "draw current_value=%d", this->current_value);
+            this->draw(this->get_rect());
+            this->drawable.end_update();
+        }
+        else if (device_flags == MOUSE_FLAG_BUTTON1) {
+            this->mouse_down      = false;
+            this->selected_button = BUTTON_NONE;
+            this->old_mouse_x     = 0;
+
+            this->drawable.begin_update();
+            this->draw(this->get_rect());
+            this->drawable.end_update();
+        }
+//         else if (device_flags == MOUSE_FLAG_MOVE) {
+// LOG(LOG_INFO, "MOUSE_FLAG_MOVE");
+//             if (this->mouse_down && (BUTTON_CURSOR == this->selected_button)) {
+//                 int offset = x - this->old_mouse_x;
+
+//                 const int old_value = this->current_value;
+
+//                 this->current_value += offset;
+
+//                 if (this->current_value < 0) {
+//                     this->current_value = 0;
+//                 }
+//                 else if (this->current_value > this->max_value) {
+//                     this->current_value = this->max_value;
+//                 }
+
+//                 if (old_value != this->current_value) {
+//                     this->update_cursor_button_rects();
+
+//                     this->send_notify(this->event);
+//                 }
+
+//                 this->drawable.begin_update();
+//                 this->draw(this->get_rect());
+//                 this->drawable.end_update();
+//             }
+//         }
+        else
+            this->Widget2::rdp_input_mouse(device_flags, x, y, keymap);
+    }
+};

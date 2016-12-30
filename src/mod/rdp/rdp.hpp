@@ -6997,4 +6997,7 @@ public:
 
         return nullptr;
     }
+
+    Dimension get_dim() const override
+    { return Dimension(this->front_width, this->front_height); }
 };

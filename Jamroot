@@ -623,7 +623,7 @@ test-canonical mod/internal/widget2/number_edit.hpp : <library>png <library>cryp
 test-canonical mod/internal/widget2/password.hpp : <library>png <library>crypto ;
 # TODO test-canonical mod/internal/widget2/radio_list.hpp ;
 test-canonical mod/internal/widget2/screen.hpp : <library>png <library>crypto ;
-# TODO test-canonical mod/internal/widget2/scroll.hpp ;
+test-canonical mod/internal/widget2/scroll.hpp : <library>png <library>crypto ;
 # TODO test-canonical mod/internal/widget2/stacklayout.hpp ;
 test-canonical mod/internal/widget2/tab.hpp ;
 test-canonical mod/internal/widget2/tooltip.hpp : <library>png <library>crypto ;

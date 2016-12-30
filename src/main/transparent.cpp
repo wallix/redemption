@@ -272,7 +272,6 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.enable_krb                          = ini.get<cfg::mod_rdp::enable_kerberos>();
             //mod_rdp_params.enable_fastpath                     = true;
             //mod_rdp_params.enable_mem3blt                      = true;
-            mod_rdp_params.enable_bitmap_update                = ini.get<cfg::globals::enable_bitmap_update>();
             //mod_rdp_params.enable_new_pointer                  = true;
             mod_rdp_params.enable_transparent_mode             = true;
             mod_rdp_params.output_filename                     = (output_filename.empty() ? "" : output_filename.c_str());
