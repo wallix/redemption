@@ -69,38 +69,7 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         fdr.emit(ou_stream_fileList);
 
         const uint8_t file_list_data[] =
-            "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x64\x40\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x04\xb5\x9f\x37\xa0\xe2\xd1\x01\x00\x00\x00\x00"
-            "\x11\x00\x00\x00\x61\x00\x62\x00\x63\x00\x64\x00\x65\x00\x2e\x00\x74\x00\x78\x00"
-            "\x74\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00";
-
+            "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00";
 
         std::string const out_data(reinterpret_cast<char *>(ou_stream_fileList.get_data()), 12);
         std::string const expected(reinterpret_cast<const char *>(file_list_data), 12);
@@ -228,7 +197,7 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
             // Records
             "\x04\x00\x00\x00" // RecordSize 4 = 8 bytes
             "\x03\x01"         // 0x0103 : META_SETMAPMODE
-            "\x08\x00"         // rdParam : record specific placeholder
+            "\x08\x00"         // mappingMode: record specific placeholder
 
             "\x05\x00\x00\x00" // RecordSize 0x5 = 5 * 2 =  10
             "\x0c\x02"         // META_SETWINDOWEXT
@@ -277,29 +246,29 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         BOOST_CHECK_EQUAL(fdr.xExt, width * ARBITRARY_SCALE);
         BOOST_CHECK_EQUAL(fdr.yExt, height * ARBITRARY_SCALE);
 
-        RDPECLIP::FormatDataResponsePDU_MetaFilePic::MetaHeader & metaHeader = fdr.metaHeader;
-        BOOST_CHECK_EQUAL(metaHeader.type, RDPECLIP::MEMORYMETAFILE);
-        BOOST_CHECK_EQUAL(metaHeader.headerSize, unsigned(RDPECLIP::FormatDataResponsePDU_MetaFilePic::MetaHeader::HEADER_SIZE));
-        BOOST_CHECK_EQUAL(metaHeader.version, RDPECLIP::METAVERSION300);
+        MFF::MetaHeader & metaHeader = fdr.metaHeader;
+        BOOST_CHECK_EQUAL(metaHeader.type, MFF::MEMORYMETAFILE);
+        BOOST_CHECK_EQUAL(metaHeader.headerSize, 9);
+        BOOST_CHECK_EQUAL(metaHeader.version, MFF::METAVERSION300);
         BOOST_CHECK_EQUAL(metaHeader.size, (data_lenght/2) + RDPECLIP::METAFILE_WORDS_HEADER_SIZE);
         BOOST_CHECK_EQUAL(metaHeader.numberOfObjects, 0);
         BOOST_CHECK_EQUAL(metaHeader.maxRecord, (data_lenght + RDPECLIP::META_DIBSTRETCHBLT_HEADER_SIZE)/2);
         BOOST_CHECK_EQUAL(metaHeader.numberOfMembers, 0);
 
-        RDPECLIP::FormatDataResponsePDU_MetaFilePic::MetaSetWindowExt & metaSetWindowExt = fdr.metaSetWindowExt;
+        MFF::MetaSetWindowExt & metaSetWindowExt = fdr.metaSetWindowExt;
         BOOST_CHECK_EQUAL(metaSetWindowExt.height, negative_height16);
         BOOST_CHECK_EQUAL(metaSetWindowExt.width, width);
 
-        RDPECLIP::FormatDataResponsePDU_MetaFilePic::MetaSetWindowOrg & metaSetWindowOrg = fdr.metaSetWindowOrg;
+        MFF::MetaSetWindowOrg & metaSetWindowOrg = fdr.metaSetWindowOrg;
         BOOST_CHECK_EQUAL(metaSetWindowOrg.yOrg, 0);
         BOOST_CHECK_EQUAL(metaSetWindowOrg.xOrg, 0);
 
-        RDPECLIP::FormatDataResponsePDU_MetaFilePic::MetaSetMepMod & metaSetMepMod = fdr.metaSetMepMod;
-        BOOST_CHECK_EQUAL(metaSetMepMod.mappingMode, RDPECLIP::MM_ANISOTROPIC);
+        MFF::MetaSetMapMod & metaSetMapMod = fdr.metaSetMapMod;
+        BOOST_CHECK_EQUAL(metaSetMapMod.mappingMode, RDPECLIP::MM_ANISOTROPIC);
 
-        RDPECLIP::FormatDataResponsePDU_MetaFilePic::DibStretchBLT & dibStretchBLT = fdr.dibStretchBLT;
+        MFF::DibStretchBLT & dibStretchBLT = fdr.dibStretchBLT;
         BOOST_CHECK_EQUAL(dibStretchBLT.recordSize, (data_lenght + RDPECLIP::META_DIBSTRETCHBLT_HEADER_SIZE)/2);
-        BOOST_CHECK_EQUAL(dibStretchBLT.recordFunction, RDPECLIP::META_DIBSTRETCHBLT);
+        BOOST_CHECK_EQUAL(dibStretchBLT.recordFunction, MFF::META_DIBSTRETCHBLT);
         BOOST_CHECK_EQUAL(dibStretchBLT.rasterOperation, RDPECLIP::SRCCOPY);
         BOOST_CHECK_EQUAL(dibStretchBLT.srcHeight, height);
         BOOST_CHECK_EQUAL(dibStretchBLT.srcWidth, width);
@@ -310,7 +279,7 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         BOOST_CHECK_EQUAL(dibStretchBLT.yDest, 0);
         BOOST_CHECK_EQUAL(dibStretchBLT.xDest, 0);
 
-        RDPECLIP::FormatDataResponsePDU_MetaFilePic::DibStretchBLT::BitmapInfoHeader & bitmapInfoHeader = dibStretchBLT.bitmapInfoHeader;
+        MFF::DibStretchBLT::BitmapInfoHeader & bitmapInfoHeader = dibStretchBLT.bitmapInfoHeader;
         BOOST_CHECK_EQUAL(bitmapInfoHeader.headerSize, 40);
         BOOST_CHECK_EQUAL(bitmapInfoHeader.height, negative_height32);
         BOOST_CHECK_EQUAL(bitmapInfoHeader.width, width);

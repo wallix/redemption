@@ -28,6 +28,8 @@
 #include "core/error.hpp"
 #include "core/FSCC/FileInformation.hpp"
 #include "utils/sugar/cast.hpp"
+#include "core/WMF/MetaFileFormat.hpp"
+
 
 namespace RDPECLIP {
 
@@ -644,6 +646,14 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     General Capability Set:");
+        LOG(LOG_INFO, "          * capabilitySetType = 0x%04x (2 bytes): CB_CAPSTYPE_GENERAL", this->capabilitySetType);
+        LOG(LOG_INFO, "          * lengthCapability  = 0x%04x (2 bytes)", this->lengthCapability);
+        LOG(LOG_INFO, "          * version           = 0x%08x (4 bytes)", this->version);
+        LOG(LOG_INFO, "          * generalFlags      = 0x%08x (4 bytes)", this->generalFlags_);
     }
 };  // GeneralCapabilitySet
 
@@ -1611,33 +1621,7 @@ public:
 
 
 
-// 2.1.1.18 MetafileType Enumeration
 
-// The MetafileType Enumeration specifies where the metafile is stored.
-
-enum {
-    MEMORYMETAFILE = 0x0001,
-    DISKMETAFILE   = 0x0002
-};
-
-// MEMORYMETAFILE:  Metafile is stored in memory.
-
-// DISKMETAFILE:  Metafile is stored on disk.
-
-
-
-// 2.1.1.19 MetafileVersion Enumeration
-
-// The MetafileVersion Enumeration defines values that specify support for device-independent bitmaps (DIBs) in metafiles.
-
-enum {
-    METAVERSION100 = 0x0100,
-    METAVERSION300 = 0x0300
-};
-
-// METAVERSION100:  DIBs are not supported.
-
-// METAVERSION300:  DIBs are supported.
 
 
 
@@ -1681,243 +1665,10 @@ enum {
 
 //metaFileData (variable): The variable sized contents of the metafile as specified in [MS-WMF] section 2
 
-// 2.1.1.1 RecordType Enumeration
 
-// The RecordType Enumeration defines the types of records that can be used in WMF metafiles.
 
 
-enum {
-   META_EOF                   = 0x0000,
-   META_REALIZEPALETTE        = 0x0035,
-   META_SETPALENTRIES         = 0x0037,
-   META_SETBKMODE             = 0x0102,
-   META_SETMAPMODE            = 0x0103,
-   META_SETROP2               = 0x0104,
-   META_SETRELABS             = 0x0105,
-   META_SETPOLYFILLMODE       = 0x0106,
-   META_SETSTRETCHBLTMODE     = 0x0107,
-   META_SETTEXTCHAREXTRA      = 0x0108,
-   META_RESTOREDC             = 0x0127,
-   META_RESIZEPALETTE         = 0x0139,
-   META_DIBCREATEPATTERNBRUSH = 0x0142,
-   META_SETLAYOUT             = 0x0149,
-   META_SETBKCOLOR            = 0x0201,
-   META_SETTEXTCOLOR          = 0x0209,
-   META_OFFSETVIEWPORTORG     = 0x0211,
-   META_LINETO                = 0x0213,
-   META_MOVETO                = 0x0214,
-   META_OFFSETCLIPRGN         = 0x0220,
-   META_FILLREGION            = 0x0228,
-   META_SETMAPPERFLAGS        = 0x0231,
-   META_SELECTPALETTE         = 0x0234,
-   META_POLYGON               = 0x0324,
-   META_POLYLINE              = 0x0325,
-   META_SETTEXTJUSTIFICATION  = 0x020A,
-   META_SETWINDOWORG          = 0x020B,
-   META_SETWINDOWEXT          = 0x020C,
-   META_SETVIEWPORTORG        = 0x020D,
-   META_SETVIEWPORTEXT        = 0x020E,
-   META_OFFSETWINDOWORG       = 0x020F,
-   META_SCALEWINDOWEXT        = 0x0410,
-   META_SCALEVIEWPORTEXT      = 0x0412,
-   META_EXCLUDECLIPRECT       = 0x0415,
-   META_INTERSECTCLIPRECT     = 0x0416,
-   META_ELLIPSE               = 0x0418,
-   META_FLOODFILL             = 0x0419,
-   META_FRAMEREGION           = 0x0429,
-   META_ANIMATEPALETTE        = 0x0436,
-   META_TEXTOUT               = 0x0521,
-   META_POLYPOLYGON           = 0x0538,
-   META_EXTFLOODFILL          = 0x0548,
-   META_RECTANGLE             = 0x041B,
-   META_SETPIXEL              = 0x041F,
-   META_ROUNDRECT             = 0x061C,
-   META_PATBLT                = 0x061D,
-   META_SAVEDC                = 0x001E,
-   META_PIE                   = 0x081A,
-   META_STRETCHBLT            = 0x0B23,
-   META_ESCAPE                = 0x0626,
-   META_INVERTREGION          = 0x012A,
-   META_PAINTREGION           = 0x012B,
-   META_SELECTCLIPREGION      = 0x012C,
-   META_SELECTOBJECT          = 0x012D,
-   META_SETTEXTALIGN          = 0x012E,
-   META_ARC                   = 0x0817,
-   META_CHORD                 = 0x0830,
-   META_BITBLT                = 0x0922,
-   META_EXTTEXTOUT            = 0x0a32,
-   META_SETDIBTODEV           = 0x0d33,
-   META_DIBBITBLT             = 0x0940,
-   META_DIBSTRETCHBLT         = 0x0b41,
-   META_STRETCHDIB            = 0x0f43,
-   META_DELETEOBJECT          = 0x01f0,
-   META_CREATEPALETTE         = 0x00f7,
-   META_CREATEPATTERNBRUSH    = 0x01F9,
-   META_CREATEPENINDIRECT     = 0x02FA,
-   META_CREATEFONTINDIRECT    = 0x02FB,
-   META_CREATEBRUSHINDIRECT   = 0x02FC,
-   META_CREATEREGION          = 0x06FF
- };
 
-// META_EOF:  This record specifies the end of the file, the last record in the metafile.
-
-// META_REALIZEPALETTE:  This record maps entries from the logical palette that is defined in the playback device context to the system palette.
-
-// META_SETPALENTRIES:  This record defines red green blue (RGB) color values in a range of entries in the logical palette that is defined in the playback device context.
-
-// META_SETBKMODE:  This record defines the background raster operation mix mode in the playback device context. The background mix mode is the mode for combining pens, text, hatched brushes, and interiors of filled objects with background colors on the output surface.
-
-// META_SETMAPMODE:  This record defines the mapping mode in the playback device context. The mapping mode defines the unit of measure used to transform page-space coordinates into coordinates of the output device, and also defines the orientation of the device's x and y axes.
-
-// META_SETROP2:  This record defines the foreground raster operation mix mode in the playback device context. The foreground mix mode is the mode for combining pens and interiors of filled objects with foreground colors on the output surface.
-
-// META_SETRELABS:  This record is undefined and MUST be ignored.
-
-// META_SETPOLYFILLMODE:  This record defines polygon fill mode in the playback device context for graphics operations that fill polygons.
-
-// META_SETSTRETCHBLTMODE:  This record defines the bitmap stretching mode in the playback device context.
-
-// META_SETTEXTCHAREXTRA:  This record defines inter-character spacing for text justification in the playback device context. Spacing is added to the white space between each character, including break characters, when a line of justified text is output.
-
-// META_RESTOREDC:  This record restores the playback device context from a previously saved device context.
-
-// META_RESIZEPALETTE:  This record redefines the size of the logical palette that is defined in the playback device context.
-
-// META_DIBCREATEPATTERNBRUSH:  This record defines a brush with a pattern specified by a device-independent bitmap (DIB).
-
-// META_SETLAYOUT:  This record defines the layout orientation in the playback device context.<2>
-
-// META_SETBKCOLOR:  This record sets the background color in the playback device context to a specified color, or to the nearest physical color if the device cannot represent the specified color.
-
-// META_SETTEXTCOLOR:  This record defines the text color in the playback device context.
-
-// META_OFFSETVIEWPORTORG:  This record moves the viewport origin in the playback device context by using specified horizontal and vertical offsets.
-
-// META_LINETO:  This record draws a line from the output position that is defined in the playback device context up to, but not including, a specified point.
-
-// META_MOVETO:  This record sets the output position in the playback device context to a specified point.
-
-// META_OFFSETCLIPRGN:  This record moves the clipping region that is defined in the playback device context by specified offsets.
-
-// META_FILLREGION:  This record fills a region by using a specified brush.
-
-// META_SETMAPPERFLAGS:  This record defines the algorithm that the font mapper uses when it maps logical fonts to physical fonts.
-
-// META_SELECTPALETTE:  This record specifies the logical palette in the playback device context.
-
-// META_POLYGON:  This record paints a polygon consisting of two or more vertices connected by straight lines. The polygon is outlined by using the pen and filled by using the brush and polygon fill mode; these are defined in the playback device context.
-
-// META_POLYLINE:  This record draws a series of line segments by connecting the points in a specified array.
-
-// META_SETTEXTJUSTIFICATION:  This record defines the amount of space to add to break characters in a string of justified text.
-
-// META_SETWINDOWORG:  This record defines the output window origin in the playback device context.
-
-// META_SETWINDOWEXT:  This record defines the horizontal and vertical extents of the output window in the playback device context.
-
-// META_SETVIEWPORTORG:  This record defines the viewport origin in the playback device context.
-
-// META_SETVIEWPORTEXT:  This record defines the horizontal and vertical extents of the viewport in the playback device context.
-
-// META_OFFSETWINDOWORG:  This record moves the output window origin in the playback device context by using specified horizontal and vertical offsets.
-
-// META_SCALEWINDOWEXT:  This record scales the horizontal and vertical extents of the output window that is defined in the playback device context by using the ratios formed by specified multiplicands and divisors.
-
-// META_SCALEVIEWPORTEXT:  This record scales the horizontal and vertical extents of the viewport that is defined in the playback device context by using the ratios formed by specified multiplicands and divisors.
-
-// META_EXCLUDECLIPRECT:  This record sets the clipping region that is defined in the playback device context to the existing clipping region minus a specified rectangle.
-
-// META_INTERSECTCLIPRECT:  This record sets the clipping region that is defined in the playback device context to the intersection of the existing clipping region and a specified rectangle.
-
-// META_ELLIPSE:  This record defines an ellipse. The center of the ellipse is the center of a specified bounding rectangle. The ellipse is outlined by using the pen and is filled by using the brush; these are defined in the playback device context.
-
-// META_FLOODFILL:  This record fills an area of the display surface with the brush that is defined in the playback device context.
-
-// META_FRAMEREGION:  This record defines a border around a specified region by using a specified brush.
-
-// META_ANIMATEPALETTE:  This record redefines entries in the logical palette that is defined in the playback device context.
-
-// META_TEXTOUT:  This record outputs a character string at a specified location using the font, background color, and text color; these are defined in the playback device context.
-
-// META_POLYPOLYGON:  This record paints a series of closed polygons. Each polygon is outlined by using the pen and filled by using the brush and polygon fill mode; these are defined in the playback device context. The polygons drawn in this operation can overlap.
-
-// META_EXTFLOODFILL:  This record fills an area with the brush that is defined in the playback device context.
-
-// META_RECTANGLE:  This record paints a rectangle. The rectangle is outlined by using the pen and filled by using the brush; these are defined in the playback device context.
-
-// META_SETPIXEL:  This record sets the pixel at specified coordinates to a specified color.
-
-// META_ROUNDRECT:  This record draws a rectangle with rounded corners. The rectangle is outlined by using the current pen and filled by using the current brush.
-
-// META_PATBLT:  This record paints the specified rectangle by using the brush that is currently selected into the playback device context. The brush color and the surface color or colors are combined using the specified raster operation.
-
-// META_SAVEDC:  This record saves the playback device context for later retrieval.
-
-// META_PIE:  This record draws a pie-shaped wedge bounded by the intersection of an ellipse and two radials. The pie is outlined by using the pen and filled by using the brush; these are defined in the playback device context.
-
-// META_STRETCHBLT:  This record specifies the transfer of a block of pixels according to a raster operation, with possible expansion or contraction.
-
-// META_ESCAPE:  This record makes it possible to access capabilities of a particular printing device that are not directly available through other WMF records.
-
-// META_INVERTREGION:  This record inverts the colors in a specified region.
-
-// META_PAINTREGION:  This record paints a specified region by using the brush that is defined in the playback device context.
-
-// META_SELECTCLIPREGION:  This record specifies the clipping region in the playback device context.
-
-// META_SELECTOBJECT:  This record specifies a graphics object in the playback device context. The new object replaces the previous object of the same type, if one is defined.
-
-// META_SETTEXTALIGN:  This record defines the text-alignment values in the playback device context.
-
-// META_ARC:  This record draws an elliptical arc.
-
-// META_CHORD:  This record draws a chord, which is a region bounded by the intersection of an ellipse and a line segment. The chord is outlined by using the pen and filled by using the brush; these are defined in the playback device context.
-
-// META_BITBLT:  This record specifies the transfer of a block of pixels according to a raster operation.
-
-// META_EXTTEXTOUT:  This record outputs a character string by using the font, background color, and text color; these are defined in the playback device context. Optionally, dimensions can be provided for clipping, opaquing, or both.
-
-// META_SETDIBTODEV:  This record sets a block of pixels using device-independent color data.
-
-// META_DIBBITBLT:  This record specifies the transfer of a block of pixels in device-independent format according to a raster operation.
-
-// META_DIBSTRETCHBLT:  This record specifies the transfer of a block of pixels in device-independent format according to a raster operation, with possible expansion or contraction.
-
-// META_STRETCHDIB:  This record specifies the transfer of color data from a block of pixels in device-independent format according to a raster operation, with possible expansion or contraction.
-
-// META_DELETEOBJECT:  This record deletes a graphics object, which can be a pen, brush, font, region, or palette.
-
-// META_CREATEPALETTE:  This record defines a logical palette.
-
-// META_CREATEPATTERNBRUSH:  This record defines a brush with a pattern specified by a DIB.
-
-// META_CREATEPENINDIRECT:  This record defines a pen with specified style, width, and color.
-
-// META_CREATEFONTINDIRECT:  This record defines a font with specified characteristics.
-
-// META_CREATEBRUSHINDIRECT:  This record defines a brush with specified style, color, and pattern.
-
-// META_CREATEREGION:  This record defines a region.
-
-// The high-order byte of the WMF record type values SHOULD be ignored for all record types except the following.<3>
-
-//     META_BITBLT
-
-//     META_DIBBITBLT
-
-//     META_DIBSTRETCHBLT
-
-//     META_POLYGON
-
-//     META_POLYLINE
-
-//     META_SETPALENTRIES
-
-//     META_STRETCHBLT
-
-// The meanings of the high-order bytes of these record type fields are specified in the respective sections that define them.
-
-// A record type is not defined for the WMF Header record, because only one can be present as the first record in the metafile.
 
 
 // [MS-RDPECLIP] 2.2.5.2 Format Data Response PDU (CLIPRDR_FORMAT_DATA_RESPONSE)
@@ -2116,576 +1867,11 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
     uint32_t xExt;
     uint32_t yExt;
 
-
-    struct MetaHeader {
-    // 3.2.1 META_HEADER Example
-
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // |             Type              |          HeaderSize           |
-    // +-------------------------------+-------------------------------+
-    // |           Version             |             Size              |
-    // +-------------------------------+-------------------------------+
-    // |             ...               |        NumberOfObjects        |
-    // +-------------------------------+-------------------------------+
-    // |                     metaFileData (variable)                   |
-    // +-------------------------------+-------------------------------+
-    // |       NumberOfMembers         |                               |
-    // +-------------------------------+-------------------------------+
-
-    // Type: 0x0001 specifies the type of metafile from the MetafileType Enumeration
-    // (section 2.1.1.18) to be a metafile stored in memory.
-
-    // HeaderSize: 0x0009 specifies the number of WORDs in this record, which is equivalent
-    // to 18 (0x0012) bytes.
-
-    // Version: 0x0300 specifies the metafile version from the MetafileVersion Enumeration
-    // (section 2.1.1.19) to be a WMF metafile that supports DIBs.
-
-    // Size: 0x00000036 specifies the number of WORDs in the entire metafile, which is
-    // equivalent to 108 (0x0000006C) bytes.
-
-    // NumberOfObjects: 0x0002 specifies the number of graphics objects that are defined in the metafile.
-
-    // MaxRecord: 0x0000000C specifies the size in WORDs of the largest record in the
-    // metafile, which is equivalent to 24 (0x00000018) bytes.
-
-    // NumberOfMembers: 0x0000 is not used.
-
-    // Note Based on the value of the NumberOfObjects field, a WMF Object Table (section 3.1.4.1)
-    // can be created that is large enough for 2 objects.
-
-        enum : uint16_t {
-            HEADER_SIZE = 9
-        };
-
-        uint16_t type;
-        uint16_t headerSize;
-        uint16_t version;
-        uint32_t size;
-        uint16_t numberOfObjects;
-        uint32_t maxRecord;
-        uint16_t numberOfMembers;
-
-        MetaHeader(const std::size_t data_length)
-          : type(MEMORYMETAFILE)
-          , headerSize(HEADER_SIZE)
-          , version(METAVERSION300)
-          , size((data_length/2) + METAFILE_WORDS_HEADER_SIZE)
-          , numberOfObjects(0)
-          , maxRecord((data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2)
-          , numberOfMembers(0)                              // Not used
-        {}
-
-        void emit(OutStream & stream) {
-            stream.out_uint16_le(this->type);
-            stream.out_uint16_le(this->headerSize);
-            stream.out_uint16_le(this->version);
-            stream.out_uint32_le(this->size);
-            stream.out_uint16_le(this->numberOfObjects);
-            stream.out_uint32_le(this->maxRecord);
-            stream.out_uint16_le(this->numberOfMembers);
-        }
-
-        void recv(InStream & stream) {
-            this->type = stream.in_uint16_le();
-            REDASSERT(this->type == MEMORYMETAFILE);
-            this->headerSize = stream.in_uint16_le();
-            REDASSERT(this->headerSize == HEADER_SIZE);
-            this->version = stream.in_uint16_le();
-            this->size = stream.in_uint32_le();
-            REDASSERT(this->size >=  METAFILE_WORDS_HEADER_SIZE);
-            this->numberOfObjects = stream.in_uint16_le();
-            this->maxRecord = stream.in_uint32_le();
-            REDASSERT(this->maxRecord >=  META_DIBSTRETCHBLT_HEADER_SIZE);
-            this->numberOfMembers = stream.in_uint16_le();
-            REDASSERT(this->numberOfMembers == 0);
-        }
-
-    } metaHeader;
-
-
-    struct Record {
-    // 2.3 WMF Records
-
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // |                           RecordSize                          |
-    // +-------------------------------+-------------------------------+
-    // |        RecordFunction         |           rdParam             |
-    // +-------------------------------+-------------------------------+
-    // |                              ...                              |
-    // +---------------------------------------------------------------+
-
-    // RecordSize (4 bytes): A 32-bit unsigned integer that defines the number of 16-bit WORDs
-    // in the record.
-
-    // RecordFunction (2 bytes): A 16-bit unsigned integer that defines the type of this record.
-    // The low-order byte MUST match the low-order byte of one of the values in the RecordType Enumeration.
-
-    // rdParam (variable): An optional place holder that is provided for record-specific fields.
-
-        uint32_t recordSize;
-        uint16_t recordFunction;
-
-        Record(const uint32_t recordSize, const uint16_t recordFunction)
-          : recordSize(recordSize)
-          , recordFunction(recordFunction)
-        {}
-
-        void emit(OutStream & stream) {
-            stream.out_uint32_le(this->recordSize);
-            stream.out_uint16_le(this->recordFunction);
-        }
-    };
-
-    struct MetaSetMepMod : Record {
-        enum : uint32_t { SIZE = 4 };
-
-        uint16_t mappingMode;
-
-        MetaSetMepMod()
-          : Record(SIZE, META_SETMAPMODE)
-          , mappingMode(0)
-        {}
-
-        MetaSetMepMod(const uint16_t mappingMode)
-          : Record(SIZE, META_SETMAPMODE)
-          , mappingMode(mappingMode)
-        {}
-
-        void emit(OutStream & stream) {
-            Record::emit(stream);
-            stream.out_uint16_le(this->mappingMode);
-        }
-
-        void recv(InStream & stream) {
-            this->mappingMode = stream.in_uint16_le();
-        }
-    } metaSetMepMod;
-
-    struct MetaSetWindowExt : Record {
-        enum : uint32_t { SIZE = 5 };
-
-        uint32_t height;
-        uint32_t width;
-
-        MetaSetWindowExt()
-          : Record(SIZE, META_SETWINDOWEXT)
-          , height(0)
-          , width(0)
-        {}
-
-        MetaSetWindowExt(const uint32_t height, const uint32_t width)
-          : Record(SIZE, META_SETWINDOWEXT)
-          , height( - height)
-          , width(width)
-        {}
-
-        void emit(OutStream & stream) {
-            Record::emit(stream);
-            stream.out_uint16_le(this->height);
-            stream.out_uint16_le(this->width);
-        }
-
-        void recv(InStream & stream) {
-            this->height = stream.in_uint16_le();
-            this->width = stream.in_uint16_le();
-        }
-
-    } metaSetWindowExt;
-
-    struct MetaSetWindowOrg : Record {
-        enum : uint32_t { SIZE = 5 };
-
-        uint16_t yOrg;
-        uint16_t xOrg;
-
-        MetaSetWindowOrg()
-          : Record(SIZE, META_SETWINDOWORG)
-          , yOrg(0)
-          , xOrg(0)
-        {}
-
-        MetaSetWindowOrg(const uint16_t yOrg, const uint16_t xOrg)
-          : Record(SIZE, META_SETWINDOWORG)
-          , yOrg(yOrg)
-          , xOrg(xOrg)
-        {}
-
-        void emit(OutStream & stream) {
-            Record::emit(stream);
-            stream.out_uint16_le(yOrg);
-            stream.out_uint16_le(xOrg);
-        }
-
-        void recv(InStream & stream) {
-            this->yOrg = stream.in_uint16_le();
-            this->xOrg = stream.in_uint16_le();
-        }
-    } metaSetWindowOrg;
-
-    struct DibStretchBLT {
-
-
-        // [MS-WMF]
-        // DeviceIndependentBitmap  2.2.2.9 DeviceIndependentBitmap Object
-
-        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-        // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        // |                     DIBHeaderInfo (variable)                  |
-        // +---------------------------------------------------------------+
-        // |                              ...                              |
-        // +---------------------------------------------------------------+
-        // |                        Colors (variable)                      |
-        // +---------------------------------------------------------------+
-        // |                              ...                              |
-        // +---------------------------------------------------------------+
-        // |                    BitmapBuffer (variable)                    |
-        // +---------------------------------------------------------------+
-        // |                              ...                              |
-        // +---------------------------------------------------------------+
-
-        // DIBHeaderInfo (variable): Either a BitmapCoreHeader Object (section 2.2.2.2) or a BitmapInfoHeader
-        // Object (section 2.2.2.3) that specifies information about the image.
-
-        // The first 32 bits of this field is the HeaderSize value. If it is 0x0000000C, then this is a
-        // BitmapCoreHeader; otherwise, this is a BitmapInfoHeader.
-
-        // Colors (variable): An optional array of either RGBQuad Objects (section 2.2.2.20) or 16-bit unsigned
-        // integers that define a color table.
-
-        // The size and contents of this field SHOULD be determined from the metafile record or object that
-        // contains this DeviceIndependentBitmap and from information in the DIBHeaderInfo field. See ColorUsage
-        // Enumeration (section 2.1.1.6) and BitCount Enumeration (section 2.1.1.3) for additional details.
-
-
-        // BitmapBuffer (variable): A buffer containing the image, which is not required to be contiguous with the
-        // DIB header, unless this is a packed bitmap.
-
-        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-        // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        // |                    UndefinedSpace (variable)                  |
-        // +---------------------------------------------------------------+
-        // |                              ...                              |
-        // +---------------------------------------------------------------+
-        // |                        aData (variable)                       |
-        // +---------------------------------------------------------------+
-        // |                              ...                              |
-        // +---------------------------------------------------------------+
-
-        // UndefinedSpace (variable): An optional field that MUST be ignored. If this DIB is a packed bitmap,
-        // this field MUST NOT be present.
-
-        // aData (variable): An array of bytes that define the image.
-
-        //      The size and format of this data is determined by information in the DIBHeaderInfo field.
-        // If it is a BitmapCoreHeader, the size in bytes MUST be calculated as follows:
-
-        //              (((Width * Planes * BitCount + 31) & ~31) / 8) * abs(Height)
-
-        //      This formula SHOULD also be used to calculate the size of aData when DIBHeaderInfo is a BitmapInfoHeader
-        // Object, using values from that object, but only if its Compression value is BI_RGB, BI_BITFIELDS, or BI_CMYK.
-
-        //      Otherwise, the size of aData MUST be the BitmapInfoHeader Object value ImageSize.
-
-
-        // 2.2.2.3 BitmapInfoHeader Object
-
-        // The BitmapInfoHeader Object contains information about the dimensions and color format of a device-independent
-        // bitmap (DIB).
-
-        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-        // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        // |                           HeaderSize                          |
-        // +---------------------------------------------------------------+
-        // |                             Width                             |
-        // +---------------------------------------------------------------+
-        // |                            Height                             |
-        // +-------------------------------+-------------------------------+
-        // |          Planes               |           BitCount            |
-        // +-------------------------------+-------------------------------+
-        // |                         Compression                           |
-        // +---------------------------------------------------------------+
-        // |                          ImageSize                            |
-        // +---------------------------------------------------------------+
-        // |                         XPelsPerMeter                         |
-        // +---------------------------------------------------------------+
-        // |                         YPelsPerMeter                         |
-        // +---------------------------------------------------------------+
-        // |                          ColorUsed                            |
-        // +---------------------------------------------------------------+
-        // |                        ColorImportant                         |
-        // +---------------------------------------------------------------+
-
-        // HeaderSize (4 bytes): A 32-bit unsigned integer that defines the size of this object, in bytes.
-
-        // Width (4 bytes): A 32-bit signed integer that defines the width of the DIB, in pixels. This value
-        // MUST be positive.
-
-        //          This field SHOULD specify the width of the decompressed image file, if the
-        //          Compression value specifies JPEG or PNG format.<44>
-
-        // Height (4 bytes): A 32-bit signed integer that defines the height of the DIB, in pixels. This value MUST NOT
-        // be zero.
-
-        // Planes (2 bytes): A 16-bit unsigned integer that defines the number of planes for the target device.
-        // This value MUST be 0x0001.
-
-        // BitCount (2 bytes): A 16-bit unsigned integer that defines the number of bits that define each pixel
-        // and the maximum number of colors in the DIB. This value MUST be in the BitCount Enumeration (section 2.1.1.3).
-
-        // Compression (4 bytes): A 32-bit unsigned integer that defines the compression mode of the DIB. This value
-        // MUST be in the Compression Enumeration (section 2.1.1.7).
-
-        //          This value MUST NOT specify a compressed format if the DIB is a top-down bitmap, as indicated by
-        //          the Height value.
-
-        // ImageSize (4 bytes): A 32-bit unsigned integer that defines the size, in bytes, of the image.
-
-        //          If the Compression value is BI_RGB, this value SHOULD be zero and MUST be ignored.<45>
-
-        //          If the Compression value is BI_JPEG or BI_PNG, this value MUST specify the size of the JPEG or PNG
-        //          image buffer, respectively.
-
-        // XPelsPerMeter (4 bytes): A 32-bit signed integer that defines the horizontal resolution, in pixels-per-meter,
-        // of the target device for the DIB.
-
-        // YPelsPerMeter (4 bytes): A 32-bit signed integer that defines the vertical resolution, in pixels-per-meter,
-        // of the target device for the DIB.
-
-        // ColorUsed (4 bytes): A 32-bit unsigned integer that specifies the number of indexes in the color table
-        // used by the DIB, as follows:
-
-        //           If this value is zero, the DIB uses the maximum number of colors that correspond to the BitCount value.
-
-        //           If this value is nonzero and the BitCount value is less than 16, this value specifies the number
-        //           of colors used by the DIB.
-
-        //           If this value is nonzero and the BitCount value is 16 or greater, this value specifies the size
-        //           of the color table used to optimize performance of the system palette.
-
-        //           Note If this value is nonzero and greater than the maximum possible size of the color table
-        //          based on the BitCount value, the maximum color table size SHOULD be assumed.
-
-        // ColorImportant (4 bytes): A 32-bit unsigned integer that defines the number of color indexes that are
-        // required for displaying the DIB. If this value is zero, all color indexes are required.
-
-        //           A DIB is specified by a DeviceIndependentBitmap Object (section 2.2.2.9).
-
-        //           When the array of pixels in the DIB immediately follows the BitmapInfoHeader, the DIB is a packed
-        //           bitmap. In a packed bitmap, the ColorUsed value MUST be either 0x00000000 or the actual size
-        //           of the color table.
-        struct BitmapInfoHeader {
-            enum : uint32_t {
-                SIZE = 40
-              , PLANES_NUMBER = 0x0001
-            };
-
-            uint32_t headerSize;
-            uint32_t height;
-            uint32_t width;
-            uint16_t planes;
-            uint16_t bitCount;
-            uint32_t compression;
-            uint32_t imageSize;
-            uint32_t xPelsPerMeter;
-            uint32_t yPelsPerMeter;
-            uint32_t colorUsed;
-            uint32_t colorImportant;
-
-            BitmapInfoHeader()
-              : headerSize(SIZE)
-              , height(0)
-              , width(0)
-              , planes(0)
-              , bitCount(0)
-              , compression(0)
-              , imageSize(0)
-              , xPelsPerMeter(0)
-              , yPelsPerMeter(0)
-              , colorUsed(0)
-              , colorImportant(0)
-            {}
-
-            BitmapInfoHeader(const std::size_t data_length, const uint16_t height, const uint16_t width, const uint16_t bitCount)
-              : headerSize(SIZE)
-              , height( - height)
-              , width(width)
-              , planes(PLANES_NUMBER)
-              , bitCount(bitCount)
-              , compression(0)
-              , imageSize(data_length)
-              , xPelsPerMeter(0)
-              , yPelsPerMeter(0)
-              , colorUsed(0)
-              , colorImportant(0)
-            {}
-
-            void emit(OutStream & stream) {
-                stream.out_uint32_le(this->headerSize);
-                stream.out_uint32_le(this->width);
-                stream.out_uint32_le(this->height);
-                stream.out_uint16_le(this->planes);
-                stream.out_uint16_le(this->bitCount);
-                stream.out_uint32_le(this->compression);
-                stream.out_uint32_le(this->imageSize);
-                stream.out_uint32_le(this->xPelsPerMeter);
-                stream.out_uint32_le(this->yPelsPerMeter);
-                stream.out_uint32_le(this->colorUsed);
-                stream.out_uint32_le(this->colorImportant);
-            }
-
-            void recv(InStream & stream) {
-                this->headerSize = stream.in_uint32_le();
-                REDASSERT(this->headerSize == SIZE);
-                this->width = stream.in_uint32_le();
-                this->height = stream.in_uint32_le();
-                this->planes = stream.in_uint16_le();
-                REDASSERT(this->planes = PLANES_NUMBER);
-                this->bitCount = stream.in_uint16_le();
-                this->compression = stream.in_uint32_le();
-                this->imageSize = stream.in_uint32_le();
-                this->xPelsPerMeter = stream.in_uint32_le();
-                this->yPelsPerMeter = stream.in_uint32_le();
-                this->colorUsed = stream.in_uint32_le();
-                this->colorImportant = stream.in_uint32_le();
-            }
-
-        } bitmapInfoHeader;
-
-
-
-        // 2.3.1.3.1 META_DIBSTRETCHBLT With Bitmap
-
-        // This section specifies the structure of the META_DIBSTRETCHBLT record when it contains an
-        // embedded device-independent bitmap (DIB).
-
-        // Fields not specified in this section are specified in the preceding META_DIBSTRETCHBLT section.
-
-        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-        // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        // |                           RecordSize                          |
-        // +-------------------------------+-------------------------------+
-        // |        RecordFunction         |           rdParam             |
-        // +-------------------------------+-------------------------------+
-        // |             ...               |          SrcHeight            |
-        // +-------------------------------+-------------------------------+
-        // |           SrcWidth            |             YSrc              |
-        // +-------------------------------+-------------------------------+
-        // |             XSrc              |         DestHeight            |
-        // +-------------------------------+-------------------------------+
-        // |          DestWidth            |             YDest             |
-        // +-------------------------------+-------------------------------+
-        // |            XDest              |      Target (variable)        |
-        // +-------------------------------+-------------------------------+
-        // |                              ...                              |
-        // +---------------------------------------------------------------+
-
-        // RecordFunction (2 bytes): A 16-bit unsigned integer that defines this WMF record type.
-        // The low-order byte MUST match the low-order byte of the RecordType enumeration (section 2.1.1.1)
-        // value META_DIBSTRETCHBLT. The high-order byte MUST contain a value equal to the number of 16-bit
-        // WORDs in the record minus the number of WORDs in the RecordSize and Target fields. That is:
-
-        //      RecordSize - (2 + (sizeof(Target)/2))
-
-        // Target (variable): A variable-sized DeviceIndependentBitmap Object (section 2.2.2.9) that defines
-        // image content. This object MUST be specified, even if the raster operation does not require a source.
-
-        uint32_t recordSize;
-        uint16_t recordFunction;
-        uint32_t rasterOperation;
-        uint16_t srcHeight;
-        uint16_t srcWidth;
-        uint16_t ySrc;
-        uint16_t xSrc;
-        uint16_t destHeight;
-        uint16_t destWidth;
-        uint16_t yDest;
-        uint16_t xDest;
-
-        DibStretchBLT()
-        : bitmapInfoHeader(0, 0, 0, 0)
-        , recordSize(0)
-        , recordFunction(META_DIBSTRETCHBLT)
-        , rasterOperation(0)
-        , srcHeight(0)
-        , srcWidth(0)
-        , ySrc(0)
-        , xSrc(0)
-        , destHeight(0)
-        , destWidth(0)
-        , yDest(0)
-        , xDest(0)
-        {}
-
-        DibStretchBLT(const std::size_t data_length, const uint16_t height, const uint16_t width, const uint16_t depth)
-        : bitmapInfoHeader(data_length, height, width, depth)
-        , recordSize((data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2)
-        , recordFunction(META_DIBSTRETCHBLT)
-        , rasterOperation(SRCCOPY)
-        , srcHeight(height)
-        , srcWidth(width)
-        , ySrc(0)
-        , xSrc(0)
-        , destHeight( - height)
-        , destWidth(width)
-        , yDest(0)
-        , xDest(0)
-        {
-            REDASSERT(this->recordSize >= META_DIBSTRETCHBLT_HEADER_SIZE/2);
-            REDASSERT( (this->srcHeight * this->srcWidth * this->bitmapInfoHeader.bitCount / 8) == int(this->bitmapInfoHeader.imageSize));
-            REDASSERT(uint16_t(this->bitmapInfoHeader.height) == this->destHeight);
-            REDASSERT(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
-        }
-
-        void emit(OutStream & stream) {
-            stream.out_uint32_le(this->recordSize);
-            stream.out_uint16_le(this->recordFunction);
-            stream.out_uint32_le(this->rasterOperation);
-            stream.out_uint16_le(this->srcHeight);
-            stream.out_uint16_le(this->srcWidth);
-            stream.out_uint16_le(this->ySrc);
-            stream.out_uint16_le(this->xSrc);
-            stream.out_uint16_le(this->destHeight);
-            stream.out_uint16_le(this->destWidth);
-            stream.out_uint16_le(this->yDest);
-            stream.out_uint16_le(this->xDest);
-
-            this->bitmapInfoHeader.emit(stream);
-        }
-
-        void recv(InStream & stream) {
-            REDASSERT(this->recordSize >= META_DIBSTRETCHBLT_HEADER_SIZE/2);
-            this->rasterOperation = stream.in_uint32_le();
-            this->srcHeight = stream.in_uint16_le();
-            this->srcWidth = stream.in_uint16_le();
-            this->ySrc = stream.in_uint16_le();
-            this->xSrc = stream.in_uint16_le();
-            this->destHeight = stream.in_uint16_le();
-            this->destWidth =  stream.in_uint16_le();
-            this->yDest =  stream.in_uint16_le();
-            this->xDest = stream.in_uint16_le();
-
-            this->bitmapInfoHeader.recv(stream);
-            REDASSERT( (this->srcHeight * this->srcWidth * this->bitmapInfoHeader.bitCount / 8) == int(this->bitmapInfoHeader.imageSize));
-            REDASSERT(uint16_t(this->bitmapInfoHeader.height) == this->destHeight);
-            REDASSERT(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
-        }
-
-    } dibStretchBLT;
+    MFF::MetaHeader metaHeader;
+    MFF::MetaSetMapMod metaSetMapMod;
+    MFF::MetaSetWindowExt metaSetWindowExt;
+    MFF::MetaSetWindowOrg metaSetWindowOrg;
+    MFF::DibStretchBLT dibStretchBLT;
 
 
     struct Ender {
@@ -2714,11 +1900,11 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
       , mappingMode(0)
       , xExt(0)
       , yExt(0)
-      , metaHeader(0)
-      , metaSetMepMod(0)
+      , metaHeader(0, 0, 0)
+      , metaSetMapMod(0)
       , metaSetWindowExt(0, 0)
       , metaSetWindowOrg(0, 0)
-      , dibStretchBLT(0, 0, 0, 0)
+      , dibStretchBLT(0, 0, 0, 0, SRCCOPY)
     {}
 
     explicit FormatDataResponsePDU_MetaFilePic( const std::size_t data_length
@@ -2730,11 +1916,11 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
       , mappingMode(MM_ANISOTROPIC)
       , xExt(int(double(width ) * ARBITRARY_SCALE))
       , yExt(int(double(height) * ARBITRARY_SCALE))
-      , metaHeader(data_length)
-      , metaSetMepMod(MM_ANISOTROPIC)
+      , metaHeader(MFF::MEMORYMETAFILE, MFF::METAVERSION300, data_length)
+      , metaSetMapMod(MM_ANISOTROPIC)
       , metaSetWindowExt(height, width)
       , metaSetWindowOrg(0, 0)
-      , dibStretchBLT(data_length, height, width, depth)
+      , dibStretchBLT(data_length, height, width, depth, SRCCOPY)
     {}
 
     void emit(OutStream & stream) {
@@ -2746,27 +1932,14 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
         stream.out_uint32_le(this->xExt);
         stream.out_uint32_le(this->yExt);
 
-        // 3.2.1 META_HEADER Example
-        // 18 bytes
         this->metaHeader.emit(stream);
 
-        // 2.3 WMF Records
-        //      META_SETMAPMODE
-        //      8 bytes
-        this->metaSetMepMod.emit(stream);
+        this->metaSetMapMod.emit(stream);
 
-        //      META_SETWINDOWEXT
-        //      10 bytes
         this->metaSetWindowExt.emit(stream);
 
-        //      META_SETWINDOWORG
-        //      10 bytes
         this->metaSetWindowOrg.emit(stream);
 
-        // 2.3.1.3.1 META_DIBSTRETCHBLT With Bitmap
-        // 26 bytes
-        //       The BitmapInfoHeader
-        //       40 bytes
         this->dibStretchBLT.emit(stream);
     }
 
@@ -2774,53 +1947,44 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
     void recv(InStream & stream) {
         this->header.recv(stream);
 
-        // 2.2.5.2.1 Packed Metafile Payload (cliboard.hpp)
         this->mappingMode = stream.in_uint32_le();
         this->xExt = stream.in_uint32_le();
         this->yExt = stream.in_uint32_le();
 
-        // 3.2.1 META_HEADER Example
         this->metaHeader.recv(stream);
 
         bool notEOF(true);
         while(notEOF) {
 
-            // 2.3 WMF Records
             int recordSize = stream.in_uint32_le();
             int type = stream.in_uint16_le();
 
             switch (type) {
 
-                case META_SETWINDOWEXT:
-                    //LOG(LOG_INFO, "META_SETWINDOWEXT");
+                case MFF::META_SETWINDOWEXT:
                     this->metaSetWindowExt.recv(stream);
-                    REDASSERT(recordSize == META_SETWINDOWEXT_WORDS_SIZE);
                     break;
 
-                case META_SETWINDOWORG:
-                    //LOG(LOG_INFO, "META_SETWINDOWORG");
+                case MFF::META_SETWINDOWORG:
                     this->metaSetWindowOrg.recv(stream);
-                    REDASSERT(recordSize == META_SETWINDOWORG_WORDS_SIZE);
                     break;
 
-                case META_SETMAPMODE:
-                    //LOG(LOG_INFO, "META_SETMAPMODE");
-                    this->metaSetMepMod.recv(stream);
-                    REDASSERT(recordSize == META_SETMAPMODE_WORDS_SIZE);
-                    REDASSERT(this->mappingMode == this->metaSetMepMod.mappingMode);
+                case MFF::META_SETMAPMODE:
+                    this->metaSetMapMod.recv(stream);
+                    REDASSERT(this->mappingMode == this->metaSetMapMod.mappingMode);
                     break;
 
-                case META_DIBSTRETCHBLT:
-                    //LOG(LOG_INFO, "META_DIBSTRETCHBLT");
-                    notEOF = false;
+                case MFF::META_DIBSTRETCHBLT:
+                    {
+                        notEOF = false;
 
-                    // 2.3.1.3.1 META_DIBSTRETCHBLT With Bitmap
-                    this->dibStretchBLT.recordSize = recordSize;
-                    this->dibStretchBLT.recv(stream);
+                        this->dibStretchBLT.recordSize = recordSize;
+                        this->dibStretchBLT.recv(stream);
 
-                    REDASSERT(this->metaHeader.maxRecord == this->dibStretchBLT.recordSize);
-                    REDASSERT(this->metaSetWindowExt.height == this->dibStretchBLT.destHeight);
-                    REDASSERT(this->metaSetWindowExt.width == this->dibStretchBLT.destWidth);
+                        REDASSERT(this->metaHeader.maxRecord == this->dibStretchBLT.recordSize);
+                        REDASSERT(this->metaSetWindowExt.height == this->dibStretchBLT.destHeight);
+                        REDASSERT(this->metaSetWindowExt.width == this->dibStretchBLT.destWidth);
+                    }
                     break;
 
                 default:
@@ -2830,6 +1994,8 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
             }
         }
     }
+
+
 };
 
 struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
@@ -2868,6 +2034,27 @@ struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
 
 };
 
+
+
+// 2.2.5.2.3 Packed File List (CLIPRDR_FILELIST)
+
+//  The CLIPRDR_FILELIST structure is used to describe a list of files, each file in the list being represented by a File Descriptor (section 2.2.5.2.3.1).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                            cItems                             |
+// +---------------------------------------------------------------+
+// |                 fileDescriptorArray (variable)                |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// cItems (4 bytes): An unsigned 32-bit integer that specifies the number of entries in the fileDescriptorArray field.
+
+// fileDescriptorArray (variable): An array of File Descriptors (section 2.2.5.2.3.1). The number of elements in the array is specified by the cItems field.
+
 struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
 
     int cItems;
@@ -2877,28 +2064,6 @@ struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
         LOG(LOG_INFO, "     Format Data Response File List PDU:");
         LOG(LOG_INFO, "          * cItems       = %d (4 bytes)", this->cItems);
     }
-
-
-    // 2.2.5.2.3 Packed File List (CLIPRDR_FILELIST)
-
-    //  The CLIPRDR_FILELIST structure is used to describe a list of files, each file in the list being represented by a File Descriptor (section 2.2.5.2.3.1).
-
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // |                            cItems                             |
-    // +---------------------------------------------------------------+
-    // |                 fileDescriptorArray (variable)                |
-    // +---------------------------------------------------------------+
-    // |                              ...                              |
-    // +---------------------------------------------------------------+
-
-    // cItems (4 bytes): An unsigned 32-bit integer that specifies the number of entries in the fileDescriptorArray field.
-
-    // fileDescriptorArray (variable): An array of File Descriptors (section 2.2.5.2.3.1). The number of elements in the array is specified by the cItems field.
-
-
 
     explicit FormatDataResponsePDU_FileList()
       : FormatDataResponsePDU()
@@ -2959,19 +2124,19 @@ public:
 
             switch (type) {
 
-                case META_SETWINDOWEXT:
+                case MFF::META_SETWINDOWEXT:
                     chunk.in_skip_bytes(4);
                 break;
 
-                case META_SETWINDOWORG:
+                case MFF::META_SETWINDOWORG:
                     chunk.in_skip_bytes(4);
                 break;
 
-                case META_SETMAPMODE:
+                case MFF::META_SETMAPMODE:
                     chunk.in_skip_bytes(2);
                 break;
 
-                case META_DIBSTRETCHBLT:
+                case MFF::META_DIBSTRETCHBLT:
                 {
                     notEOF = false;
                     this->recordSize = size;

@@ -1840,7 +1840,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
         const uint16_t server_message_type = chunk.in_uint16_le();
 
-       if (!this->_waiting_for_data) {
+        if (!this->_waiting_for_data) {
             switch (server_message_type) {
                 case RDPECLIP::CB_CLIP_CAPS:
                     if (this->verbose & RDPVerbose::cliprdr) {

@@ -529,7 +529,7 @@ public:
      };                                                     // +------+-------------------------------+
 
      struct Op_0x99 {
-         uchar op(const uchar src, const uchar dst) const { // +------+-------------------------------+
+        uchar op(const uchar src, const uchar dst) const {  // +------+-------------------------------+
             return ~(src ^ dst);                            // | 0x99 | ROP: 0x00990066               |
         }                                                   // |      | RPN: DSxn                     |
      };                                                     // +------+-------------------------------+
