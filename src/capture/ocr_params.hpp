@@ -23,5 +23,5 @@
 
 struct OcrParams
 {
-
+    int ocr_version;
 };

@@ -77,6 +77,7 @@ public:
     , drawable(width, height)
     , frame_start_count(0)
     , mod_palette_rgb(BGRPalette::classic_332())
+    , order_depth_(gdi::GraphicDepth::from_bpp(order_bpp))
     {
         REDASSERT(this->order_depth().is_defined());
     }
@@ -211,6 +212,17 @@ public:
         const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
         this->drawable.destblt(trect, cmd.rop);
     }
+
+    virtual void set_depths(gdi::GraphicDepth const & depths) {
+        this->order_depth_ = depths;
+    }
+
+    virtual gdi::GraphicDepth const & order_depth() const {
+        return this->order_depth_;
+    }
+
+    gdi::GraphicDepth order_depth_;
+
 
 private:
     // TODO removed when RDPMultiDstBlt and RDPMultiOpaqueRect contains a rect member

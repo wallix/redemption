@@ -63,6 +63,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
         DrawableToFileLocal(Transport & trans, const Drawable & drawable)
         : trans(trans)
         , drawable(drawable)
+        , order_depth_(gdi::GraphicDepth::unspecified())
         {
         }
 
@@ -76,13 +77,24 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
             this->dump24();
         }
 
-    private:
+    public:
         void dump24() const {
             ::transport_dump_png24(
                 this->trans, this->drawable.data(),
                 this->drawable.width(), this->drawable.height(),
                 this->drawable.rowsize(), true);
         }
+        
+        virtual void set_depths(gdi::GraphicDepth const & depth) {
+            this->order_depth_ = depth;
+        }
+
+        virtual gdi::GraphicDepth const & order_depth() const {
+            return this->order_depth_;
+        }
+
+        gdi::GraphicDepth order_depth_;
+        
     };
 
 
@@ -152,8 +164,21 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
 
         struct OSD : ProtectGraphics
         {
-            using ProtectGraphics::ProtectGraphics;
+            OSD(GraphicApi & drawable, Rect const & rect) 
+                : ProtectGraphics(drawable, rect) 
+                , order_depth_(gdi::GraphicDepth::unspecified())
+                {}
             void refresh_rects(array_view<Rect const>) override {}
+            virtual void set_depths(gdi::GraphicDepth const & depth) {
+                this->order_depth_ = depth;
+            }
+
+            virtual gdi::GraphicDepth const & order_depth() const {
+                return this->order_depth_;
+            }
+
+            gdi::GraphicDepth order_depth_;
+
         } osd(drawable, rect);
         osd.draw(RDPOpaqueRect(Rect(100, 100, 200, 200), GREEN), screen_rect);
         now.tv_sec++;

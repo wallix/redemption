@@ -28,6 +28,7 @@
 #include "core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "gdi/graphic_cmd_color_converter.hpp"
+#include "gdi/graphic_api.hpp"
 
 //#include <openssl/ssl.h>
 
@@ -194,7 +195,9 @@ public:
     , mouse_y(0)
     , notimestamp(true)
     , nomouse(true)
-    , gd(info.width, info.height, 24) {
+    , gd(info.width, info.height, 24) 
+    , order_depth_(gdi::GraphicDepth::from_bpp(this->mod_bpp))
+    {
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
         }
@@ -228,5 +231,15 @@ public:
         //SSL_library_init();
     }
 
+    virtual void set_depths(gdi::GraphicDepth const & depth) {
+        this->order_depth_ = depth;
+    }
+
+    virtual gdi::GraphicDepth const & order_depth() const {
+        return this->order_depth_;
+    }
+
+    gdi::GraphicDepth order_depth_;
+    
     void update_pointer_position(uint16_t, uint16_t) override {}
 };

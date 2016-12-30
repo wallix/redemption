@@ -293,6 +293,7 @@ public:
     , _info(info)
     , _callback(nullptr)
     , _running(false)
+    , order_depth_(gdi::GraphicDepth::unspecified())
     {
         this->_to_client_sender._front = this;
         this->_keymap.init_layout(this->_info.keylayout);
@@ -977,6 +978,15 @@ public:
         }
     }
 
+    virtual void set_depths(gdi::GraphicDepth const & depth) {
+        this->order_depth_ = depth;
+    }
+
+    virtual gdi::GraphicDepth const & order_depth() const {
+        return this->order_depth_;
+    }
+
+    gdi::GraphicDepth order_depth_;
 
 };
 

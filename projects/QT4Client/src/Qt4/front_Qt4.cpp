@@ -495,6 +495,7 @@ bool Front_Qt::connect() {
         this->_screen[0]->show();
 
         if (this->_record && !this->_replay) {
+            WrmParams wrmParams;
             Inifile ini;
                 ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
                 ini.set<cfg::video::png_limit>(0);
@@ -524,26 +525,37 @@ bool Front_Qt::connect() {
             auth_api * authentifier(nullptr);
             struct timeval time;
             gettimeofday(&time, nullptr);
-            PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0};
+            PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false, true};
             FlvParams flv_params = flv_params_from_ini(this->_info.width, this->_info.height, ini);
+            OcrParams ocr_params;
+            ocr_params.ocr_version = 1;
+            const char * record_path = "/replay";
 
-            this->_capture = new Capture( CaptureFlags::wrm
+            this->_capture = new Capture( true
+                                        , wrmParams
+                                        , false
+                                        , png_params
+                                        , false
+                                        , false
+                                        , ocr_params
+                                        , false
+                                        , false
+                                        , false
+                                        , false
                                         , time
                                         , this->_info.width
                                         , this->_info.height
                                         , this->_info.bpp
                                         , this->_info.bpp
-                                        , png_params
+                                        , record_path
+                                        , record_path
                                         , flv_params
                                         , enable_rt
-                                        , false
                                         , authentifier
                                         , ini
                                         , cctx
                                         , gen
-                                        , false
                                         , nullptr
-                                        , true
                                         );
             this->_graph_capture = this->_capture->get_graphic_api();
         }
@@ -2099,11 +2111,13 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     total_length = (RDPECLIP::FileDescriptor::size() * this->_clipboard_qt->_cItems) + 8 + PDU_HEADER_SIZE;
                                     int flag_first(CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
                                     ClipBoard_Qt::CB_out_File * file = this->_clipboard_qt->_items_list[0];
-                                    RDPECLIP::FormatDataResponsePDU_FileList fdr( this->_clipboard_qt->_cItems
-                                                                                , file->name
-                                                                                , file->size
-                                                                                );
+                                    RDPECLIP::FormatDataResponsePDU_FileList fdr(this->_clipboard_qt->_cItems);
                                     fdr.emit(out_stream_first_part);
+
+                                    RDPECLIP::FileDescriptor fdf( file->name
+                                                                , file->size
+                                                                , fscc::FILE_ATTRIBUTE_ARCHIVE
+                                                                );
 
                                     if (this->_clipboard_qt->_cItems == 1) {
                                         flag_first = flag_first | CHANNELS::CHANNEL_FLAG_LAST;
@@ -2124,23 +2138,16 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%d", data_sent, total_length);
                                     }
 
-                                    RDPECLIP::FileDescriptor fd;
-                                    for (int i = 1; i < this->_clipboard_qt->_cItems; i++) {
+                                    for (int i = 0; i < this->_clipboard_qt->_cItems; i++) {
 
                                         StaticOutStream<PDU_MAX_SIZE> out_stream_next_part;
                                         file = this->_clipboard_qt->_items_list[i];
+                                        RDPECLIP::FileDescriptor fdn( file->nameUTF8
+                                                                    , file->size
+                                                                    , fscc::FILE_ATTRIBUTE_ARCHIVE);
                                         int flag_next(CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
 
-                                        fd.flags          = RDPECLIP::FD_SHOWPROGRESSUI |
-                                                            RDPECLIP::FD_FILESIZE       |
-                                                            RDPECLIP::FD_WRITESTIME     |
-                                                            RDPECLIP::FD_ATTRIBUTES;
-                                        fd.fileAttributes = fscc::FILE_ATTRIBUTE_ARCHIVE;
-                                        fd.lastWriteTime  = RDPECLIP::TIME64_FILE_LIST;
-                                        fd.fileSizeHigh   = file->size >> 32;
-                                        fd.fileSizeLow    = file->size;
-                                        fd.file_name      = file->nameUTF8;
-                                        fd.emit(out_stream_next_part);
+                                        fdn.emit(out_stream_next_part);
 
                                         if (i == this->_clipboard_qt->_cItems - 1) {
                                             flag_next = flag_next | CHANNELS::CHANNEL_FLAG_LAST;
@@ -3311,7 +3318,7 @@ int main(int argc, char** argv){
 
     RDPVerbose verbose = to_verbose_flags(0);
 
-    Front_Qt front(argv, argc, verbose);
+    Front_Qt front_qt(argv, argc, verbose);
 
 
     app.exec();

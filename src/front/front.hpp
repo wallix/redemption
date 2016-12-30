@@ -116,6 +116,7 @@
 #include "capture/png_params.hpp"
 #include "capture/flv_params.hpp"
 #include "capture/wrm_params.hpp"
+#include "capture/ocr_params.hpp"
 
 
 class Front : public gdi::GraphicBase<Front, FrontAPI>, public ActivityChecker {
@@ -207,11 +208,18 @@ private:
               , verbose
             )
             , client_order_caps(client_order_caps)
+            , order_depth_(gdi::GraphicDepth::from_bpp(bpp))
             {
                 this->set_depths(gdi::GraphicDepth::from_bpp(bpp));
             }
 
-            using GraphicsUpdatePDU::set_depths;
+            virtual void set_depths(gdi::GraphicDepth const & depth) {
+                this->order_depth_ = depth;
+            }
+
+            virtual gdi::GraphicDepth const & order_depth() const {
+                return this->order_depth_;
+            }
 
             using GraphicsUpdatePDU::draw;
 
@@ -240,6 +248,9 @@ private:
             }
 
             OrderCaps & client_order_caps;
+
+            gdi::GraphicDepth order_depth_;
+
         } graphics_update_pdu;
 
         Graphics(
@@ -511,6 +522,7 @@ private:
             : GraphicConverter::base_type(depth)
             , color_converter(color_converter)
             , graphics(graphics)
+            , order_depth_(depth)
             {}
 
             ColorConverter const & get_color_converter() const {
@@ -523,6 +535,17 @@ private:
 
             ColorConverter color_converter;
             Graphics::PrivateGraphicsUpdatePDU & graphics;
+            
+            virtual void set_depths(gdi::GraphicDepth const & depth) {
+                this->order_depth_ = depth;
+            }
+
+            virtual gdi::GraphicDepth const & order_depth() const {
+                return this->order_depth_;
+            }
+
+            gdi::GraphicDepth order_depth_;
+
         };
 
         template<class Dec, class Enc>
@@ -715,6 +738,7 @@ public:
     , authentifier(nullptr)
     , auth_info_sent(false)
     , timeout(now, this->ini.get<cfg::globals::handshake_timeout>().count())
+    , order_depth_(gdi::GraphicDepth::unspecified())
     {
         // init TLS
         // --------------------------------------------------------
@@ -791,6 +815,16 @@ public:
 
         delete this->capture;
     }
+
+    virtual void set_depths(gdi::GraphicDepth const & depth) {
+        this->order_depth_ = depth;
+    }
+
+    virtual gdi::GraphicDepth const & order_depth() const {
+        return this->order_depth_;
+    }
+
+    gdi::GraphicDepth order_depth_;
 
     uint64_t get_total_received() const
     {
@@ -969,11 +1003,12 @@ public:
           : false
         ;
                 
-        
-        this->capture = new Capture(capture_pattern_checker
-                                    , capture_wrm
-                                    , capture_png
-                                    , capture_ocr
+        OcrParams ocr_params = {};
+
+        this->capture = new Capture(  capture_wrm, wrm_params
+                                    , capture_png, png_params
+                                    , capture_pattern_checker
+                                    , capture_ocr, ocr_params
                                     , capture_flv
                                     , capture_flv_full
                                     , capture_meta
@@ -984,7 +1019,7 @@ public:
                                     , this->mod_bpp, this->capture_bpp
                                     , record_tmp_path
                                     , record_path
-                                    , wrm_params, png_params, flv_params
+                                    , flv_params
                                     , false, authentifier
                                     , ini, this->cctx, this->gen
                                     , nullptr

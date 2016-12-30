@@ -62,10 +62,10 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         int UTF16nameSize = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(nameUTF8.c_str()), UTF16nameData, nameUTF8.size() *2);
         std::string nameUTF16 = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
         std::string name = nameUTF16 ;
-        uint64_t size = 17 ;
+        //uint64_t size = 17 ;
         const int cItems = 1;
 
-        RDPECLIP::FormatDataResponsePDU_FileList fdr(cItems, name, size);
+        RDPECLIP::FormatDataResponsePDU_FileList fdr(cItems);
         fdr.emit(ou_stream_fileList);
 
         const uint8_t file_list_data[] =
@@ -101,14 +101,9 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00\x00\x00\x00\x00";
 
-        RDPECLIP::FileDescriptor fd;
-        InStream in_stream_fileList(file_list_data, 608);
-        for (int i = 0; i < cItems; i++) {
-            fd.receive(in_stream_fileList);
-        }
 
-        std::string const out_data(reinterpret_cast<char *>(ou_stream_fileList.get_data()), 604);
-        std::string const expected(reinterpret_cast<const char *>(file_list_data), 604);
+        std::string const out_data(reinterpret_cast<char *>(ou_stream_fileList.get_data()), 12);
+        std::string const expected(reinterpret_cast<const char *>(file_list_data), 12);
         BOOST_CHECK_EQUAL(expected, out_data);
     }
 
@@ -121,7 +116,6 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         std::string nameUTF16 = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
 
         std::string name = nameUTF16 ;
-        uint64_t size = 17 ;
         const int cItems = 1;
 
         const uint8_t file_list_data[] =
@@ -162,11 +156,6 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         fdr_recv.recv(in_stream_fileList_to_recv);
 
         BOOST_CHECK_EQUAL(fdr_recv.cItems, cItems);
-        BOOST_CHECK_EQUAL(fdr_recv.size, size);
-        BOOST_CHECK_EQUAL(std::string(fdr_recv.name.c_str(), name.size()), name);
-        BOOST_CHECK_EQUAL(fdr_recv.flags, RDPECLIP::FD_SHOWPROGRESSUI |RDPECLIP::FD_FILESIZE | RDPECLIP::FD_WRITESTIME | RDPECLIP::FD_ATTRIBUTES);
-        BOOST_CHECK_EQUAL(fdr_recv.attribute, fscc::FILE_ATTRIBUTE_ARCHIVE);
-        BOOST_CHECK_EQUAL(fdr_recv.time, RDPECLIP::TIME64_FILE_LIST);
     }
 
 

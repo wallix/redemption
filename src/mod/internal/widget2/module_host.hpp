@@ -215,9 +215,11 @@ public:
                      std::unique_ptr<mod_api> managed_mod, Font const & font,
                      Theme const & theme, int group_id = 0)
     : WidgetParent(drawable, parent, notifier, group_id)
+    , gdi::GraphicBase<WidgetModuleHost>(gdi::GraphicDepth::unspecified())
     , module_holder(*this, std::move(managed_mod))
     , drawable_ref(drawable)
     , hscroll(drawable, *this, this, 0, theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font)
+    , order_depth_(gdi::GraphicDepth::unspecified())
     {
         this->impl = &composite_array;
 
@@ -323,6 +325,16 @@ public:
 
         this->rdp_input_invalidate(this->get_rect());
     }
+
+    virtual void set_depths(gdi::GraphicDepth const & depth) {
+        this->order_depth_ = depth;
+    }
+
+    virtual gdi::GraphicDepth const & order_depth() const {
+        return this->order_depth_;
+    }
+
+    gdi::GraphicDepth order_depth_;
 
 public:
     // NotifyApi

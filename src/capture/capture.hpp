@@ -30,14 +30,29 @@
 #include <unistd.h>
 #include <time.h> // localtime_r
 #include <memory>
+#include <ctime>
+#include <cassert>
+#include <chrono>
+#include <utility>
 
+#include "utils/log.hpp"
+
+#include "utils/difftimeval.hpp"
+#include "utils/drawable.hpp"
 #include "utils/sugar/array_view.hpp"
+
+#include "transport/transport.hpp"
+
+#include "gdi/capture_api.hpp"
+
 #include "capture/wrm_params.hpp"
 #include "capture/png_params.hpp"
 #include "capture/flv_params.hpp"
-#include "capture/sequencer.hpp"
-#include "capture/video_capture.hpp"
+#include "capture/ocr_params.hpp"
 #include "utils/pattutils.hpp"
+
+#include "video_recorder.hpp"
+
 
 template<class T>
 struct ApiRegisterElement
@@ -117,19 +132,6 @@ namespace gdi {
     class UpdateConfigCaptureApi;
 }
 
-struct ApisRegister
-{
-    std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list;
-    std::vector<std::reference_wrapper<gdi::CaptureApi>> * graphic_snapshot_list;
-    std::vector<std::reference_wrapper<gdi::CaptureApi>> & capture_list;
-    std::vector<std::reference_wrapper<gdi::KbdInputApi>> & kbd_input_list;
-    std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> & capture_probe_list;
-    std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> & external_capture_list;
-    std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> & update_config_capture_list;
-};
-
-
-
 class PngCapture : public gdi::UpdateConfigCaptureApi, public gdi::CaptureApi
 {
 public:
@@ -147,7 +149,7 @@ public:
     PngCapture(
         const timeval & now, auth_api * authentifier, Drawable & drawable,
         const char * record_tmp_path, const char * basename, int groupid,
-        const PngParams & png_params) 
+        const PngParams & png_params)
     : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_tmp_path, basename, ".png", groupid, authentifier)
     , start_capture(now)
     , frame_interval(png_params.png_interval)
@@ -252,7 +254,7 @@ public:
     OutFilenameSequenceTransport trans;
     uint32_t num_start = 0;
     unsigned png_limit;
-    
+
     unsigned zoom_factor;
     unsigned scaled_width;
     unsigned scaled_height;
@@ -263,13 +265,13 @@ public:
 
     timeval start_capture;
     std::chrono::microseconds frame_interval;
-    
+
     bool enable_rt_display = false;
 
     PngCaptureRT(
         const timeval & now, auth_api * authentifier, Drawable & drawable,
         const char * record_tmp_path, const char * basename, int groupid,
-        const PngParams & png_params) 
+        const PngParams & png_params)
     : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
         record_tmp_path, basename, ".png", groupid, authentifier)
     , png_limit(png_params.png_limit)
@@ -412,6 +414,137 @@ private:
     }
 };
 
+
+class VideoCapture : public gdi::CaptureApi
+{
+    Transport & trans;
+
+    FlvParams flv_params;
+
+    const Drawable & drawable;
+    std::unique_ptr<video_recorder> recorder;
+
+    timeval start_video_capture;
+    std::chrono::microseconds inter_frame_interval;
+    bool no_timestamp;
+
+public:
+    VideoCapture(
+        const timeval & now,
+        Transport & trans,
+        const Drawable & drawable,
+        bool no_timestamp,
+        FlvParams flv_params)
+    : trans(trans)
+    , flv_params(std::move(flv_params))
+    , drawable(drawable)
+    , start_video_capture(now)
+    , inter_frame_interval(1000000L / this->flv_params.frame_rate)
+    , no_timestamp(no_timestamp)
+    {
+        if (this->flv_params.verbosity) {
+            LOG(LOG_INFO, "Video recording %d x %d, rate: %d, qscale: %d, brate: %d, codec: %s",
+                this->flv_params.target_width, this->flv_params.target_height,
+                this->flv_params.frame_rate, this->flv_params.qscale, this->flv_params.bitrate,
+                this->flv_params.codec.c_str());
+        }
+
+        this->next_video();
+    }
+
+    void next_video() {
+        if (this->recorder) {
+            this->recorder.reset();
+            this->trans.next();
+        }
+
+        io_video_recorder_with_transport io{this->trans};
+        this->recorder.reset(new video_recorder(
+            io.write_fn(), io.seek_fn(), io.params(),
+            drawable.width(), drawable.height(),
+            drawable.pix_len(),
+            drawable.data(),
+            this->flv_params.bitrate,
+            this->flv_params.frame_rate,
+            this->flv_params.qscale,
+            this->flv_params.codec.c_str(),
+            this->flv_params.target_width,
+            this->flv_params.target_height,
+            this->flv_params.verbosity
+        ));
+    }
+
+    void preparing_video_frame() {
+        auto & drawable = const_cast<Drawable&>(this->drawable);
+        drawable.trace_mouse();
+        if (!this->no_timestamp) {
+            time_t rawtime = this->start_video_capture.tv_sec;
+            tm tm_result;
+            localtime_r(&rawtime, &tm_result);
+            drawable.trace_timestamp(tm_result);
+        }
+        this->recorder->preparing_video_frame(true);
+        if (!this->no_timestamp) { drawable.clear_timestamp(); }
+        drawable.clear_mouse();
+    }
+
+    void encoding_video_frame() {
+        this->recorder->encoding_video_frame();
+    }
+
+private:
+    std::chrono::microseconds do_snapshot(
+        const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool ignore_frame_in_timeval
+    ) override {
+        uint64_t tick = difftimeval(now, this->start_video_capture);
+        uint64_t const inter_frame_interval = this->inter_frame_interval.count();
+        if (tick >= inter_frame_interval) {
+            auto encoding_video_frame = [this](time_t rawtime){
+                auto & drawable = const_cast<Drawable&>(this->drawable);
+                drawable.trace_mouse();
+                if (!this->no_timestamp) {
+                    tm tm_result;
+                    localtime_r(&rawtime, &tm_result);
+                    drawable.trace_timestamp(tm_result);
+                    this->recorder->encoding_video_frame();
+                    drawable.clear_timestamp();
+                }
+                else {
+                    this->recorder->encoding_video_frame();
+                }
+                drawable.clear_mouse();
+            };
+
+            if (ignore_frame_in_timeval) {
+                auto const nframe = tick / inter_frame_interval;
+                encoding_video_frame(this->start_video_capture.tv_sec);
+                auto const usec = inter_frame_interval * nframe;
+                auto sec = usec / 1000000LL;
+                this->start_video_capture.tv_usec += usec - sec * inter_frame_interval;
+                if (this->start_video_capture.tv_usec >= 1000000LL){
+                    this->start_video_capture.tv_usec -= 1000000LL;
+                    ++sec;
+                }
+                this->start_video_capture.tv_sec += sec;
+                tick -= inter_frame_interval * nframe;
+            }
+            else {
+                do {
+                    encoding_video_frame(this->start_video_capture.tv_sec);
+                    this->start_video_capture.tv_usec += inter_frame_interval;
+                    if (this->start_video_capture.tv_usec >= 1000000LL){
+                        this->start_video_capture.tv_sec += 1;
+                        this->start_video_capture.tv_usec -= 1000000LL;
+                    }
+                    tick -= inter_frame_interval;
+                } while (tick >= inter_frame_interval);
+            }
+        }
+
+        return std::chrono::microseconds(inter_frame_interval - tick);
+    }
+};
+
 struct PreparingWhenFrameMarkerEnd final : gdi::CaptureApi
 {
     PreparingWhenFrameMarkerEnd(VideoCapture & vc)
@@ -461,7 +594,6 @@ public:
     }
 };
 
-
 struct NotifyNextVideo : private noncopyable
 {
     enum class reason { sequenced, external };
@@ -471,6 +603,43 @@ struct NotifyNextVideo : private noncopyable
 
 class SequencedVideoCaptureImpl
 {
+    class VideoSequencer : public gdi::CaptureApi
+    {
+        timeval start_break;
+        std::chrono::microseconds break_interval;
+
+    protected:
+        SequencedVideoCaptureImpl & impl;
+
+    public:
+        VideoSequencer(const timeval & now, std::chrono::microseconds break_interval, SequencedVideoCaptureImpl & impl)
+        : start_break(now)
+        , break_interval(break_interval)
+        , impl(impl)
+        {}
+
+        std::chrono::microseconds get_interval() const {
+            return this->break_interval;
+        }
+
+        void reset_now(const timeval& now) {
+            this->start_break = now;
+        }
+
+    private:
+        std::chrono::microseconds do_snapshot(
+            const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
+        ) override {
+            assert(this->break_interval.count());
+            auto const interval = difftimeval(now, this->start_break);
+            if (interval >= uint64_t(this->break_interval.count())) {
+                this->impl.next_video_impl(now, NotifyNextVideo::reason::sequenced);
+                this->start_break = now;
+            }
+            return this->break_interval;
+        }
+    };
+
     class VideoTransport final : public OutFilenameSequenceSeekableTransport
     {
         using transport_base = OutFilenameSequenceSeekableTransport;
@@ -591,17 +760,6 @@ class SequencedVideoCaptureImpl
         }
     };
 
-    struct VideoSequencerAction
-    {
-        SequencedVideoCaptureImpl & impl;
-
-        void operator()(const timeval& now) const {
-            this->impl.next_video_impl(now, NotifyNextVideo::reason::sequenced);
-        }
-    };
-
-    using VideoSequencer = SequencerCapture<VideoSequencerAction>;
-
     // first next_video is ignored
     struct FirstImage : gdi::CaptureApi
     {
@@ -696,8 +854,7 @@ public:
     , ic_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_path, basename, ".png", groupid)
     , ic(this->ic_trans, drawable, image_zoom)
     , video_sequencer(
-        now, video_interval > std::chrono::microseconds(0) ? video_interval : std::chrono::microseconds::max(),
-        VideoSequencerAction{*this})
+        now, video_interval > std::chrono::microseconds(0) ? video_interval : std::chrono::microseconds::max(), *this)
     , first_image(now, *this)
     , next_video_notifier(next_video_notifier)
     {}
@@ -905,10 +1062,36 @@ public:
 
 
     struct Serializer final : GraphicToFile {
-        using GraphicToFile::GraphicToFile;
+        Serializer(const timeval & now
+                , Transport & trans
+                , const uint16_t width
+                , const uint16_t height
+                , const uint8_t  capture_bpp
+                , BmpCache & bmp_cache
+                , GlyphCache & gly_cache
+                , PointerCache & ptr_cache
+                , gdi::DumpPng24Api & dump_png24
+                , WrmCompressionAlgorithm wrm_compression_algorithm
+                , SendInput send_input = SendInput::NO
+                , Verbose verbose = Verbose::none)
+            : GraphicToFile(now, trans, width, height,
+                            capture_bpp,
+                            bmp_cache, gly_cache, ptr_cache,
+                            dump_png24, wrm_compression_algorithm,
+                            send_input, verbose)
+            , order_depth_(gdi::GraphicDepth::unspecified()) {};
 
         using GraphicToFile::GraphicToFile::draw;
         using GraphicToFile::GraphicToFile::capture_bpp;
+
+        virtual void set_depths(gdi::GraphicDepth const & depth) {
+            this->order_depth_ = depth;
+        }
+
+        virtual gdi::GraphicDepth const & order_depth() const {
+            return this->order_depth_;
+        }
+
 
         void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
             auto compress_and_draw_bitmap_update = [&bitmap_data, this](const Bitmap & bmp) {
@@ -941,6 +1124,7 @@ public:
         void enable_kbd_input_mask(bool enable) override {
             this->impl->enable_kbd_input_mask(enable);
         }
+        gdi::GraphicDepth order_depth_ = gdi::GraphicDepth::unspecified();
     } graphic_to_file;
 
     class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi
@@ -1007,13 +1191,40 @@ public:
             }
             return std::chrono::microseconds{this->time_to_wait};
         }
+
     } nc;
 
-    ApiRegisterElement<gdi::KbdInputApi> kbd_element;
+//    template<>
+    struct ApiRegisterElement_KBD
+    {
+        using list_type = std::vector<std::reference_wrapper<gdi::KbdInputApi>>;
+
+        ApiRegisterElement_KBD() = default;
+
+        ApiRegisterElement_KBD(list_type & l, gdi::KbdInputApi & x)
+        : l(&l)
+        , i(l.size())
+        {
+            l.push_back(x);
+        }
+
+        ApiRegisterElement_KBD & operator = (ApiRegisterElement_KBD const &) = default;
+        ApiRegisterElement_KBD & operator = (gdi::KbdInputApi & x) { (*this->l)[this->i] = x; return *this; }
+
+        bool operator == (gdi::KbdInputApi const & x) const { return &this->get() == &x; }
+    //    bool operator != (gdi::KbdInputApi const & x) const { return !(this == x); }
+
+        gdi::KbdInputApi & get() { return (*this->l)[this->i]; }
+        gdi::KbdInputApi const & get() const { return (*this->l)[this->i]; }
+
+    private:
+        list_type * l = nullptr;
+        std::size_t i = ~std::size_t{};
+    } kbd_element;
 
 public:
     WrmCaptureImpl(
-        const timeval & now, 
+        const timeval & now,
         const WrmParams wrm_params,
         uint8_t capture_bpp, TraceType trace_type,
         CryptoContext & cctx, Random & rnd,
@@ -1044,6 +1255,7 @@ public:
             ? GraphicToFile::Verbose::bitmap_update    : GraphicToFile::Verbose::none)
     )
     , nc(this->graphic_to_file, now, ini.get<cfg::video::frame_interval>(), ini.get<cfg::video::break_interval>())
+    , order_depth_(gdi::GraphicDepth::unspecified())
     {}
 
 
@@ -1078,6 +1290,17 @@ public:
     bool kbd_input(const timeval& now, uint32_t) override {
         return this->graphic_to_file.kbd_input(now, '*');
     }
+
+    virtual void set_depths(gdi::GraphicDepth const & depth) {
+        this->order_depth_ = depth;
+    }
+
+    virtual gdi::GraphicDepth const & order_depth() const {
+        return this->order_depth_;
+    }
+
+    gdi::GraphicDepth order_depth_;
+
 };
 
 
@@ -1197,10 +1420,12 @@ private:
 public:
     Capture(
         bool capture_wrm,
+        const WrmParams wrm_params,
         bool capture_png,
+        const PngParams png_params,
         bool capture_pattern_checker,
-        
         bool capture_ocr,
+        OcrParams ocr_params,
         bool capture_flv,
         bool capture_flv_full,
         bool capture_meta,
@@ -1212,8 +1437,6 @@ public:
         int capture_bpp,
         const char * record_tmp_path,
         const char * record_path,
-        const WrmParams wrm_params,
-        const PngParams png_params,
         const FlvParams flv_params,
         bool no_timestamp,
         auth_api * authentifier,
@@ -1221,7 +1444,8 @@ public:
         CryptoContext & cctx,
         Random & rnd,
         UpdateProgressData * update_progress_data)
-    : is_replay_mod(!authentifier)
+    : gdi::GraphicBase<Capture>(gdi::GraphicDepth::unspecified())
+    , is_replay_mod(!authentifier)
     , capture_wrm(capture_wrm)
     , capture_png(capture_png)
     , capture_pattern_checker(capture_pattern_checker)
@@ -1231,6 +1455,7 @@ public:
     , capture_meta(capture_meta)
     , update_progress_data(update_progress_data)
     , capture_api(now, width / 2, height / 2)
+    , order_depth_(gdi::GraphicDepth::unspecified())
     {
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
 
@@ -1328,7 +1553,7 @@ public:
                     authentifier && ini.get<cfg::session_log::enable_session_log>()
                 ));
             }
-            
+
             if (this->capture_flv) {
                 std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
                 if (ini.get<cfg::globals::capture_chunk>() && this->pmc) {
@@ -1378,98 +1603,92 @@ public:
             this->pkc.reset(new Kbd(now, authentifier, ini));
         }
 
-//struct ApisRegister
-//{
-//    std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list;
-//    std::vector<std::reference_wrapper<gdi::CaptureApi>> * graphic_snapshot_list;
-//    std::vector<std::reference_wrapper<gdi::CaptureApi>> & capture_list;
-//    std::vector<std::reference_wrapper<gdi::KbdInputApi>> & kbd_input_list;
-//    std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> & capture_probe_list;
-//    std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> & external_capture_list;
-//    std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> & update_config_capture_list;
-//};
+            std::vector<std::reference_wrapper<gdi::GraphicApi>> * apis_register_graphic_list
+                = this->graphic_api ? &this->graphic_api->gds : nullptr;
+            std::vector<std::reference_wrapper<gdi::CaptureApi>> * apis_register_graphic_snapshot_list
+                = this->graphic_api ? &this->graphic_api->snapshoters : nullptr;
+            std::vector<std::reference_wrapper<gdi::KbdInputApi>> & apis_register_kbd_input_list
+                = this->kbd_input_api.kbds;
+            std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> & apis_register_capture_probe_list
+                = this->capture_probe_api.probes;
+            std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> & apis_register_external_capture_list
+                = this->external_capture_api.objs;
+            std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> & apis_register_update_config_capture_list
+                = this->update_config_capture_api.objs;
 
-        ApisRegister apis_register = {
-            this->graphic_api ? &this->graphic_api->gds : nullptr,
-            this->graphic_api ? &this->graphic_api->snapshoters : nullptr,
-            this->capture_api.caps,
-            this->kbd_input_api.kbds,
-            this->capture_probe_api.probes,
-            this->external_capture_api.objs,
-            this->update_config_capture_api.objs,
-        };
+
 
         if (this->gd ) {
-            assert(apis_register.graphic_list);
-            apis_register.graphic_list->push_back(this->gd->drawable);
+            assert(apis_register_graphic_list);
+            apis_register_graphic_list->push_back(this->gd->drawable);
         }
         if (this->pnc) {
-            apis_register.graphic_list->push_back(this->pnc->graphic_to_file);
-            apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this->pnc));
-            apis_register.external_capture_list.push_back(this->pnc->nc);
-            apis_register.capture_probe_list.push_back(this->pnc->graphic_to_file);
+            apis_register_graphic_list->push_back(this->pnc->graphic_to_file);
+            this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->pnc));
+            apis_register_external_capture_list.push_back(this->pnc->nc);
+            apis_register_capture_probe_list.push_back(this->pnc->graphic_to_file);
 
             if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm)) {
-                this->pnc->kbd_element = {apis_register.kbd_input_list, this->pnc->graphic_to_file};
+                this->pnc->kbd_element = {apis_register_kbd_input_list, this->pnc->graphic_to_file};
                 this->pnc->graphic_to_file.impl = this->pnc.get();
             }
         }
 
         if (this->pscrt) {
             this->pscrt->enable_rt_display = ini.get<cfg::video::rt_display>();
-            apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
-            apis_register.graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
-            apis_register.update_config_capture_list.push_back(static_cast<gdi::UpdateConfigCaptureApi&>(*this->pscrt));
+            this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
+            apis_register_graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
+            apis_register_update_config_capture_list.push_back(static_cast<gdi::UpdateConfigCaptureApi&>(*this->pscrt));
         }
 
-        if (this->psc) { 
-            apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
-            apis_register.graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this->psc));
+        if (this->psc) {
+            this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
+            apis_register_graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this->psc));
         }
 
         if (this->pkc) {
             if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)) {
-                apis_register.kbd_input_list.push_back(this->pkc->syslog_kbd);
-                apis_register.capture_list.push_back(this->pkc->syslog_kbd);
+                apis_register_kbd_input_list.push_back(this->pkc->syslog_kbd);
+                this->capture_api.caps.push_back(this->pkc->syslog_kbd);
             }
 
             if (this->pkc->authentifier && ini.get<cfg::session_log::enable_session_log>() &&
                 (ini.get<cfg::session_log::keyboard_input_masking_level>()
                  != ::KeyboardInputMaskingLevel::fully_masked)
             ) {
-                apis_register.kbd_input_list.push_back(this->pkc->session_log_kbd);
-                apis_register.capture_probe_list.push_back(this->pkc->session_log_kbd);
+                apis_register_kbd_input_list.push_back(this->pkc->session_log_kbd);
+                apis_register_capture_probe_list.push_back(this->pkc->session_log_kbd);
             }
 
             if (this->pkc->pattern_kbd.contains_pattern()) {
-                apis_register.kbd_input_list.push_back(this->pkc->pattern_kbd);
+                apis_register_kbd_input_list.push_back(this->pkc->pattern_kbd);
             }
         }
 
-        if (this->pvc) { 
-            apis_register.capture_list.push_back(this->pvc->vc);
-            apis_register.graphic_snapshot_list->push_back(this->pvc->preparing_vc);
-            this->pvc->first_image.cap_elem = {apis_register.capture_list, this->pvc->first_image};
-            this->pvc->first_image.gcap_elem = {*apis_register.graphic_snapshot_list, this->pvc->first_image};
+        if (this->pvc) {
+            this->capture_api.caps.push_back(this->pvc->vc);
+            apis_register_graphic_snapshot_list->push_back(this->pvc->preparing_vc);
+            this->pvc->first_image.cap_elem = {this->capture_api.caps, this->pvc->first_image};
+            this->pvc->first_image.gcap_elem = {*apis_register_graphic_snapshot_list, this->pvc->first_image};
         }
-        if (this->pvc_full) { 
-            apis_register.capture_list.push_back(this->pvc_full->vc);
-            apis_register.graphic_snapshot_list->push_back(this->pvc_full->preparing_vc);
+        if (this->pvc_full) {
+            this->capture_api.caps.push_back(this->pvc_full->vc);
+            apis_register_graphic_snapshot_list->push_back(this->pvc_full->preparing_vc);
         }
         if (this->pmc) {
-            apis_register.capture_list.push_back(this->pmc->meta);
+            this->capture_api.caps.push_back(this->pmc->meta);
             if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta)) {
-                apis_register.kbd_input_list.push_back(this->pmc->meta);
-                apis_register.capture_probe_list.push_back(this->pmc->meta);
+                apis_register_kbd_input_list.push_back(this->pmc->meta);
+                apis_register_capture_probe_list.push_back(this->pmc->meta);
             }
 
             if (this->pmc->enable_agent) {
-                apis_register.capture_probe_list.push_back(this->pmc->session_log_agent);
+                apis_register_capture_probe_list.push_back(this->pmc->session_log_agent);
             }
         }
-        if (this->ptc) { 
-            apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this->ptc));
-            apis_register.capture_probe_list.push_back(static_cast<gdi::CaptureProbeApi&>(*this->ptc));
+        if (this->ptc) {
+            this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->ptc));
+            apis_register_capture_probe_list.push_back(static_cast<gdi::CaptureProbeApi&>(*this->ptc));
         }
 
         if (this->gd) { this->gd->start(); }
@@ -1552,18 +1771,6 @@ public:
 
     void add_graphic(gdi::GraphicApi & gd) {
         if (this->graphic_api) {
-
-//struct ApisRegister
-//{
-//    std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list;
-//    std::vector<std::reference_wrapper<gdi::CaptureApi>> * graphic_snapshot_list;
-//    std::vector<std::reference_wrapper<gdi::CaptureApi>> & capture_list;
-//    std::vector<std::reference_wrapper<gdi::KbdInputApi>> & kbd_input_list;
-//    std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> & capture_probe_list;
-//    std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> & external_capture_list;
-//    std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> & update_config_capture_list;
-//};
-
             std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list = this->graphic_api ? &this->graphic_api->gds : nullptr;
             graphic_list->push_back(gd);
             // TODO
@@ -1636,6 +1843,16 @@ public:
     void possible_active_window_change() override {
         this->capture_probe_api.possible_active_window_change();
     }
+
+        virtual void set_depths(gdi::GraphicDepth const & depth) {
+        this->order_depth_ = depth;
+    }
+
+    virtual gdi::GraphicDepth const & order_depth() const {
+        return this->order_depth_;
+    }
+
+    gdi::GraphicDepth order_depth_;
 };
 
 

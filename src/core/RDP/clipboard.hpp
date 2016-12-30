@@ -15,7 +15,7 @@
 
     Product name: redemption, a FLOSS RDP proxy
     Copyright (C) Wallix 2013
-    Author(s): Christophe Grosjean, Raphael Zhou
+    Author(s): Christophe Grosjean, Raphael Zhou, Clément Moroldo
 */
 
 
@@ -308,10 +308,10 @@ public:
     }
 
     void log() {
-        LOG(LOG_INFO, "CliprdrHeader");
-        LOG(LOG_INFO, "     - MsgType  = 0x%x (%s)", this->msgType_, get_msgType_name(this->msgType_));
-        LOG(LOG_INFO, "     - MsgFlags = 0x%x (%s)", this->msgFlags_, get_msgFlag_name(this->msgFlags_));
-        LOG(LOG_INFO, "     - DataLen  = %d Byte(s)", this->dataLen_);
+        LOG(LOG_INFO, "     CliprdrHeader:");
+        LOG(LOG_INFO, "          * MsgType  = 0x%x (%s)", this->msgType_, get_msgType_name(this->msgType_));
+        LOG(LOG_INFO, "          * MsgFlags = 0x%x (%s)", this->msgFlags_, get_msgFlag_name(this->msgFlags_));
+        LOG(LOG_INFO, "          * DataLen  = %d Byte(s)", this->dataLen_);
     }
 
 
@@ -399,6 +399,13 @@ public:
         this->cCapabilitiesSets = stream.in_uint16_le();
 
         stream.in_skip_bytes(2);    // pad1(2)
+    }
+
+    void log() {
+        this->header.log();
+        LOG(LOG_INFO, "     Clipboard Capabilities PDU:");
+        LOG(LOG_INFO, "          * cCapabilitiesSets = %d (2 bytes)", this->cCapabilitiesSets);
+        LOG(LOG_INFO, "          * Padding - (2 byte) NOT USED");
     }
 };  // struct ClipboardCapabilitiesPDU
 
@@ -1362,6 +1369,10 @@ struct PacketFileList {
     /*variable fileDescriptorArray*/
 };
 
+enum : uint64_t {
+    TIME64_FILE_LIST = 0x01d1e2a0379fb504
+};
+
 // [MS-RDPECLIP] - 2.2.5.2.3.1 File Descriptor (CLIPRDR_FILEDESCRIPTOR)
 // ====================================================================
 
@@ -1373,17 +1384,7 @@ struct PacketFileList {
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // |                             flags                             |
 // +---------------------------------------------------------------+
-// |                           reserved1                           |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
+// |                      reserved1 (32 bytes)                     |
 // +---------------------------------------------------------------+
 // |                              ...                              |
 // +---------------------------------------------------------------+
@@ -1391,9 +1392,7 @@ struct PacketFileList {
 // +---------------------------------------------------------------+
 // |                         fileAttributes                        |
 // +---------------------------------------------------------------+
-// |                           reserved2                           |
-// +---------------------------------------------------------------+
-// |                              ...                              |
+// |                      reserved2 (16 bytes)                     |
 // +---------------------------------------------------------------+
 // |                              ...                              |
 // +---------------------------------------------------------------+
@@ -1403,27 +1402,15 @@ struct PacketFileList {
 // +---------------------------------------------------------------+
 // |                              ...                              |
 // +---------------------------------------------------------------+
-// |                          fileSizeHigh                         |
+// |                         fileSizeHigh                          |
 // +---------------------------------------------------------------+
-// |                          fileSizeLow                          |
+// |                         fileSizeLow                           |
 // +---------------------------------------------------------------+
-// |                            fileName                           |
-// +---------------------------------------------------------------+
-// |                              ...                              |
+// |                     fileName (520 bytes)                      |
 // +---------------------------------------------------------------+
 // |                              ...                              |
 // +---------------------------------------------------------------+
 // |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                 (fileName cont'd for 122 rows)                |
 // +---------------------------------------------------------------+
 
 // flags (4 bytes): An unsigned 32-bit integer that specifies which fields
@@ -1503,14 +1490,24 @@ enum {
 class FileDescriptor {
 
 public:
-    uint32_t flags;
-    uint32_t fileAttributes;
-    uint64_t lastWriteTime;
-    uint32_t fileSizeHigh;
-    uint32_t fileSizeLow;
+    uint32_t flags = 0;
+    uint32_t fileAttributes = 0;
+    uint64_t lastWriteTime = 0;
+    uint32_t fileSizeHigh = 0;
+    uint32_t fileSizeLow = 0;
     std::string file_name;
 
-public:
+    FileDescriptor() = default;
+
+    explicit FileDescriptor(std::string name, const uint64_t size, const uint32_t attribute)
+      : flags(FD_SHOWPROGRESSUI |FD_FILESIZE | FD_WRITESTIME | FD_ATTRIBUTES)
+      , fileAttributes(attribute)
+      , lastWriteTime(TIME64_FILE_LIST)
+      , fileSizeHigh(size >> 32)
+      , fileSizeLow(size)
+      , file_name(std::move(name))
+    {}
+
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->flags);
 
@@ -1576,7 +1573,6 @@ public:
         this->file_name = ::char_ptr_cast(fileName_utf8_string);
 
         stream.in_skip_bytes(520);       // fileName(520)
-
     }
 
     const char * fileName() const { return this->file_name.c_str(); }
@@ -1954,9 +1950,7 @@ enum {
 //  contents of this field MUST be one of the following types: generic, Packed
 //  Metafile Payload, or Packed Palette Payload.
 
-enum : uint64_t {
-    TIME64_FILE_LIST = 0x01d1e2a0379fb504
-};
+
 
 enum : uint32_t {
     SRCCOPY = 0x00CC0020
@@ -2869,7 +2863,7 @@ struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
 
     void log() {
         this->header.log();
-
+        LOG(LOG_INFO, "     Format Data Response Text PDU:");
     }
 
 };
@@ -2877,15 +2871,11 @@ struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
 struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
 
     int cItems;
-    std::string name;
-    uint64_t size;
-    uint32_t flags;
-    uint32_t attribute;
-    uint64_t time;
 
     void log() {
         this->header.log();
-
+        LOG(LOG_INFO, "     Format Data Response File List PDU:");
+        LOG(LOG_INFO, "          * cItems       = %d (4 bytes)", this->cItems);
     }
 
 
@@ -2908,57 +2898,26 @@ struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
 
     // fileDescriptorArray (variable): An array of File Descriptors (section 2.2.5.2.3.1). The number of elements in the array is specified by the cItems field.
 
+
+
     explicit FormatDataResponsePDU_FileList()
       : FormatDataResponsePDU()
       , cItems(0)
-      , size(0)
-      , flags(0)
-      , attribute(0)
-      , time(0)
     {}
 
-    explicit FormatDataResponsePDU_FileList(const std::size_t cItems, std::string name, const uint64_t size)
+    explicit FormatDataResponsePDU_FileList(const std::size_t cItems)
       : FormatDataResponsePDU((FileDescriptor::size() * cItems) + 4)
       , cItems(cItems)
-      , name(std::move(name))
-      , size(size)
-      , flags(FD_SHOWPROGRESSUI |FD_FILESIZE | FD_WRITESTIME | FD_ATTRIBUTES)
-      , attribute(fscc::FILE_ATTRIBUTE_ARCHIVE)
-      , time(TIME64_FILE_LIST)
     {}
 
     void emit(OutStream & stream) {
         this->header.emit(stream);
-
         stream.out_uint32_le(this->cItems);
-        stream.out_uint32_le(this->flags);
-        stream.out_clear_bytes(32);
-        stream.out_uint32_le(this->attribute);
-        stream.out_clear_bytes(16);
-        stream.out_uint64_le(this->time);
-        stream.out_uint32_le(this->size >> 32);
-        stream.out_uint32_le(this->size);
-        size_t sizeName(this->name.size());
-        if (sizeName > 520) {
-            sizeName = 520;
-        }
-        stream.out_copy_bytes(this->name.data(), sizeName);;
-        stream.out_clear_bytes(520 - sizeName);
     }
 
     void recv(InStream & stream) {
         this->header.recv(stream);
-
         this->cItems = stream.in_uint32_le();
-        this->flags = stream.in_uint32_le();
-        stream.in_skip_bytes(32);
-        this->attribute = stream.in_uint32_le();
-        stream.in_skip_bytes(16);
-        this->time = stream.in_uint64_le();
-        this->size = stream.in_uint32_le();
-        this->size = this->size << 32;
-        this->size += stream.in_uint32_le();
-        this->name =  std::string(reinterpret_cast<const char *>(stream.get_current()), 520);
     }
 };
 
@@ -3106,7 +3065,8 @@ struct LockClipboardDataPDU
 
     void log() {
         this->header.log();
-
+        LOG(LOG_INFO, "     Lock Clipboard Data PDU:");
+        LOG(LOG_INFO, "          * streamDataID = 0x%08x (4 bytes)", this->streamDataID);
     }
 
 };
@@ -3158,7 +3118,8 @@ struct UnlockClipboardDataPDU
 
     void log() {
         this->header.log();
-
+        LOG(LOG_INFO, "     Unlock Clipboard Data PDU:");
+        LOG(LOG_INFO, "          * streamDataID = 0x%08x (4 bytes)", this->streamDataID);
     }
 
 };
