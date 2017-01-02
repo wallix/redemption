@@ -82,7 +82,7 @@ public:
         REDASSERT(this->order_depth().is_defined());
     }
 
-    using gdi::GraphicApi::set_depths;
+//    using gdi::GraphicApi::set_depths;
 
     const uint8_t * data() const noexcept {
         return this->drawable.data();

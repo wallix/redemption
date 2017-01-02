@@ -155,11 +155,11 @@ constexpr bool operator >= (GraphicDepth const & depth1, GraphicDepth const & de
 
 struct GraphicApi : private noncopyable
 {
-    GraphicApi(GraphicDepth const & order_depths /* = GraphicDepth::unspecified() */)
-//    : order_depth_(order_depths)
-    {}
+    GraphicApi(GraphicDepth const & order_depths){}
 
     virtual ~GraphicApi() = default;
+
+    virtual GraphicDepth const & order_depth() const = 0;
 
     virtual void set_pointer(Pointer      const &) {}
     virtual void set_palette(BGRPalette   const &) {}
@@ -205,23 +205,6 @@ struct GraphicApi : private noncopyable
 
     // TODO berk, data within size
     virtual void set_row(std::size_t rownum, const uint8_t * data) { (void)rownum; (void)data; }
-
-    virtual GraphicDepth const & order_depth() const = 0;
-
-//    virtual GraphicDepth const & order_depth() const {
-//        return this->order_depth_;
-//    }
-
-public:
-//    GraphicDepth order_depth_;
-
-    virtual void set_depths(GraphicDepth const & depths) = 0;
-
-protected:
-private:
-//    virtual void set_depths(GraphicDepth const & depths) {
-//        this->order_depth_ = depths;
-//    }
 };
 
 
