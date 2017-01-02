@@ -1953,24 +1953,28 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
 
         this->metaHeader.recv(stream);
 
+        InStream stream_header = stream.clone();
         bool notEOF(true);
         while(notEOF) {
 
-            int recordSize = stream.in_uint32_le();
-            int type = stream.in_uint16_le();
+            int recordSize = stream_header.in_uint32_le();
+            int type = stream_header.in_uint16_le();
 
             switch (type) {
 
                 case MFF::META_SETWINDOWEXT:
+                    stream_header.in_skip_bytes(4);
                     this->metaSetWindowExt.recv(stream);
                     break;
 
                 case MFF::META_SETWINDOWORG:
+                    stream_header.in_skip_bytes(4);
                     this->metaSetWindowOrg.recv(stream);
                     break;
 
                 case MFF::META_SETMAPMODE:
                     this->metaSetMapMod.recv(stream);
+                    stream_header.in_skip_bytes(2);
                     REDASSERT(this->mappingMode == this->metaSetMapMod.mappingMode);
                     break;
 
@@ -1978,8 +1982,8 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
                     {
                         notEOF = false;
 
-                        this->dibStretchBLT.recordSize = recordSize;
                         this->dibStretchBLT.recv(stream);
+                        stream_header.in_skip_bytes(recordSize - 6);
 
                         REDASSERT(this->metaHeader.maxRecord == this->dibStretchBLT.recordSize);
                         REDASSERT(this->metaSetWindowExt.height == this->dibStretchBLT.destHeight);
