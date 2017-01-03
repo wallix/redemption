@@ -1090,7 +1090,7 @@ public:
             // Target informations
             this->session_probe_target_informations  = mod_rdp_params.target_application;
             this->session_probe_target_informations += ":";
-            this->session_probe_target_informations += mod_rdp_params.auth_user;
+            this->session_probe_target_informations += mod_rdp_params.primary_user_id;
 
             this->real_alternate_shell = std::move(alternate_shell);
             this->real_working_dir     = tmp_working_dir;
@@ -3222,7 +3222,10 @@ public:
                 this->end_session_reason.clear();
                 this->end_session_message.clear();
 
-                this->acl->disconnect_target();
+                if (!this->session_probe_virtual_channel_p ||
+                    !this->session_probe_virtual_channel_p->is_disconnection_reconnection_required()) {
+                    this->acl->disconnect_target();
+                }
                 this->acl->report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
                 if (!this->session_disconnection_logged) {
