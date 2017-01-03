@@ -40,7 +40,7 @@ struct ModRDPParams {
     const char * target_host;
     const char * client_address;
 
-    const char * auth_user = "";
+    const char * primary_user_id = "";
     const char * target_application = "";
 
     bool enable_tls = true;
@@ -188,7 +188,7 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    target_host);
         RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    client_address);
 
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             auth_user);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             primary_user_id);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             target_application);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_tls);

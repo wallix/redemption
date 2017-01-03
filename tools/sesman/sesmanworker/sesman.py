@@ -622,6 +622,7 @@ class Sesman():
                 real_wab_login = self.engine.get_username()
                 self.shared[u'login'] = self.shared.get(u'login').replace(wab_login,
                                                                           real_wab_login)
+
             self.language = self.engine.get_language()
             if self.engine.get_force_change_password():
                 self.send_data({u'rejected': TR(u'changepassword')})
@@ -1247,13 +1248,13 @@ class Sesman():
         extra_info = self.engine.get_target_extra_info()
         _status, _error = self.check_video_recording(
             extra_info.is_recorded,
-            mdecode(self.engine.get_username()) if self.engine.get_username() else self.shared.get(u'login'))
+            mdecode(self.engine.get_username()))
         if not _status:
             self.send_data({u'rejected': _error})
 
         _status, _error = self.check_session_log_redirection(
             self.shared[u'session_log_redirection'].lower() == u'true',
-            mdecode(self.engine.get_username()) if self.engine.get_username() else self.shared.get(u'login'))
+            mdecode(self.engine.get_username()))
         if not _status:
             self.send_data({u'rejected': _error})
 
@@ -1271,6 +1272,9 @@ class Sesman():
         if _status:
             kv['password'] = 'pass'
 
+            # id to recognize primary user for session probe
+            kv['primary_user_id'] = self.engine.get_username()
+
             # register signal
             signal.signal(signal.SIGUSR1, self.kill_handler)
             signal.signal(signal.SIGUSR2, self.check_handler)
@@ -1279,8 +1283,8 @@ class Sesman():
 
             # Add connection to the observer
             session_id = self.engine.start_session(selected_target, self.pid,
-                                               self.effective_login, 
-                                               session_log_path=self.full_log_path)
+                                                   self.effective_login,
+                                                   session_log_path=self.full_log_path)
             if session_id is None:
                 _status, _error = False, TR(u"start_session_failed")
                 self.send_data({u'rejected': TR(u'start_session_failed')})
