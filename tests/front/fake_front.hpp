@@ -32,10 +32,7 @@
 
 //#include <openssl/ssl.h>
 
-class FakeFront;
-using FakeFrontBase = gdi::GraphicBase<FakeFront, FrontAPI, gdi::GraphicColorConverterAccess>;
-
-class FakeFront : public FakeFrontBase
+class FakeFront : public FrontAPI
 {
 public:
     uint32_t                    verbose;
@@ -51,6 +48,70 @@ public:
     bool nomouse;
 
     RDPDrawable gd;
+
+    static_assert(std::is_base_of<GraphicApi, FrontAPI>::value, "FrontAPI isn't a GraphicApi");
+
+    friend gdi::GraphicColorConverterAccess;
+
+protected:
+    using base_type = FakeFront;
+
+public:
+    using FrontAPI::FrontAPI;
+
+    void draw(RDP::FrameMarker    const & order) override { this->draw_(order); }
+
+    void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPOpaqueRect       const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPScrBlt           const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPPolygonSC        const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPPolygonCB        const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPPolyline         const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPEllipseSC        const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPEllipseCB        const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+
+    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_(cmd, bmp); }
+
+    void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override {
+        this->draw_(cmd, clip, bmp);
+    }
+
+    void draw(RDPMem3Blt          const & cmd, Rect const & clip, Bitmap const & bmp) override {
+        this->draw_(cmd, clip, bmp);
+    }
+
+    void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) override {
+        this->draw_(cmd, clip, gly_cache);
+    }
+
+    void draw(const RDP::RAIL::NewOrExistingWindow            & order) override { this->draw_(order); }
+    void draw(const RDP::RAIL::WindowIcon                     & order) override { this->draw_(order); }
+    void draw(const RDP::RAIL::CachedIcon                     & order) override { this->draw_(order); }
+    void draw(const RDP::RAIL::DeletedWindow                  & order) override { this->draw_(order); }
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override { this->draw_(order); }
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & order) override { this->draw_(order); }
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & order) override { this->draw_(order); }
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & order) override { this->draw_(order); }
+
+    void draw(RDPColCache   const & cmd) override { this->draw_(cmd); }
+    void draw(RDPBrushCache const & cmd) override { this->draw_(cmd); }
+
+protected:
+    FakeFront & derived() {
+        return static_cast<FakeFront&>(*this);
+    }
+
+private:
+    template<class... Ts>
+    void draw_(Ts const & ... args) {
+        gdi::GraphicColorConverterAccess::draw(this->derived(), args...);
+    }
 
 private:
     struct ColorDecoder {
@@ -186,7 +247,7 @@ public:
     }
 
     FakeFront(ClientInfo & info, uint32_t verbose)
-    : FakeFrontBase(false, false)
+    : FrontAPI(false, false)
     , verbose(verbose)
     , info(info)
     , mod_bpp(info.bpp)
