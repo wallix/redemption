@@ -519,7 +519,11 @@ private:
                 Graphics::PrivateGraphicsUpdatePDU & graphics,
                 ColorConverter const & color_converter
             )
-            : GraphicConverter::base_type(depth)
+            : gdi::GraphicProxyBase<
+                GraphicConverter<ColorConverter>,
+                gdi::GraphicApi,
+                gdi::GraphicColorConverterAccess
+            >(depth)
             , color_converter(color_converter)
             , graphics(graphics)
             , order_depth_(depth)
@@ -709,7 +713,7 @@ public:
           , const char * server_capabilities_filename = ""
           , Transport * persistent_key_list_transport = nullptr
           )
-    : Front::base_type(ini.get<cfg::globals::notimestamp>(), ini.get<cfg::globals::nomouse>())
+    : gdi::GraphicBase<Front, FrontAPI>(ini.get<cfg::globals::notimestamp>(), ini.get<cfg::globals::nomouse>())
     , capture_state(CAPTURE_STATE_UNKNOWN)
     , capture(nullptr)
     , verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
