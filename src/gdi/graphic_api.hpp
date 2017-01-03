@@ -265,10 +265,6 @@ class GraphicBase : public InterfaceBase
 
     friend CoreAccess;
 
-protected:
-    using core_access = CoreAccess;
-    using base_type = GraphicBase;
-
 public:
     using InterfaceBase::InterfaceBase;
 
@@ -345,7 +341,6 @@ template<class Derived, class InterfaceBase = GraphicApi, class CoreAccess = Gra
 struct GraphicProxyBase : GraphicBase<Derived, InterfaceBase, CoreAccess>
 {
     using GraphicBase<Derived, InterfaceBase, CoreAccess>::GraphicBase;
-    using base_type = GraphicProxyBase;
     friend CoreAccess;
 
     void set_pointer(Pointer    const & pointer) override {
@@ -543,8 +538,6 @@ class BlackoutGraphic final : public GraphicBase<BlackoutGraphic>
     template<class... Args>
     void draw_impl(Args const & ...) {}
 
-//    using base_type_ = GraphicBase<BlackoutGraphic>;
-
 public:
 
     virtual void set_depths(gdi::GraphicDepth const & depths) {
@@ -560,7 +553,6 @@ public:
     BlackoutGraphic(gdi::GraphicDepth const & depths)
         : GraphicBase<BlackoutGraphic>(depths)
         , order_depth_(depths) {}
-//    using base_type_::base_type_;
 };
 
 

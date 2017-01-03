@@ -49,7 +49,7 @@ public:
         gdi::RngByBpp<std::vector<GdRef>::iterator> rng_by_bpp;
 
         Graphic(gdi::GraphicDepth const & depth, MouseTrace const & mouse)
-        : Graphic::base_type(depth)
+        : gdi::GraphicProxyBase<Graphic>(depth)
         , mouse(mouse)
         {}
 

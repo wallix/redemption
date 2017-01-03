@@ -439,7 +439,7 @@ public:
     void update_pointer_position(uint16_t, uint16_t) override {}
 
     Analyzer()
-    : base_type(false, false)
+    : gdi::GraphicProxyBase<Analyzer, FrontAPI>(false, false)
     , common(RDP::PATBLT, Rect(0, 0, 1, 1))
     , destblt(Rect(), 0)
     , patblt(Rect(), 0, 0, 0, RDPBrush())

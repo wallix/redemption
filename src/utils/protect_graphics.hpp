@@ -72,7 +72,7 @@ class ProtectGraphics : public gdi::GraphicProxyBase<ProtectGraphics>
 
 public:
     ProtectGraphics(GraphicApi & drawable, Rect const & rect)
-    : ProtectGraphics::base_type(drawable.order_depth())
+    : gdi::GraphicProxyBase<ProtectGraphics>(drawable.order_depth())
     , protected_rect(rect)
     , drawable(drawable)
     {}
