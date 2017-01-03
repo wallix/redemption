@@ -142,7 +142,7 @@ class Engine(object):
             else:
                 return self.wabuser.cn
         except Exception, e:
-            return ""
+            return self.wabuser.cn if self.wabuser else ""
 
     def check_license(self):
         res = self.wabengine.is_session_management_license()
