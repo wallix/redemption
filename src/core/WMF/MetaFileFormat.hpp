@@ -726,6 +726,13 @@ enum : int {
             this->yOrg = stream.in_uint16_le();
             this->xOrg = stream.in_uint16_le();
         }
+
+        void log() {
+            Record::log();
+            LOG(LOG_INFO, "     Meta Set Window Org:");
+            LOG(LOG_INFO, "          * yOrg = %d (2 bytes)", this->yOrg);
+            LOG(LOG_INFO, "          * xOrg = %d (2 bytes)", this->xOrg);
+        }
     };
 
 
@@ -961,6 +968,21 @@ enum : int {
                 this->colorImportant = stream.in_uint32_le();
             }
 
+            void log() {
+                LOG(LOG_INFO, "     Bitmap Info Header:");
+                LOG(LOG_INFO, "          * headerSize     = %d (4 bytes)", int(this->headerSize));
+                LOG(LOG_INFO, "          * width          = %d (4 bytes)", int(this->width));
+                LOG(LOG_INFO, "          * height         = %d (4 bytes)", int(this->height));
+                LOG(LOG_INFO, "          * planes         = 0x%04x (2 bytes)", this->planes);
+                LOG(LOG_INFO, "          * bitCount       = %d (2 bytes)", int(this->bitCount));
+                LOG(LOG_INFO, "          * compression    = 0x%08x (4 bytes)", this->compression);
+                LOG(LOG_INFO, "          * imageSize      = %d (4 bytes)", int(this->imageSize));
+                LOG(LOG_INFO, "          * xPelsPerMeter  = %d (4 bytes)", int(this->xPelsPerMeter));
+                LOG(LOG_INFO, "          * yPelsPerMeter  = %d (4 bytes)", int(this->yPelsPerMeter));
+                LOG(LOG_INFO, "          * colorUsed      = %d (4 bytes)", int(this->colorUsed));
+                LOG(LOG_INFO, "          * colorImportant = %d (4 bytes)", int(this->colorImportant));
+            }
+
         } bitmapInfoHeader;
 
 
@@ -1077,6 +1099,22 @@ enum : int {
             REDASSERT( (this->srcHeight * this->srcWidth * this->bitmapInfoHeader.bitCount / 8) == int(this->bitmapInfoHeader.imageSize));
             REDASSERT(uint16_t(this->bitmapInfoHeader.height) == this->destHeight);
             REDASSERT(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
+        }
+
+        void log() {
+            Record::log();
+            LOG(LOG_INFO, "     Dib Stretch BLT:");
+            LOG(LOG_INFO, "          * rasterOperation = 0x%08x (4 bytes)", this->rasterOperation);
+            LOG(LOG_INFO, "          * srcHeight       = %d (2 bytes)", this->srcHeight);
+            LOG(LOG_INFO, "          * srcWidth        = %d (2 bytes)", this->srcWidth);
+            LOG(LOG_INFO, "          * ySrc            = %d (2 bytes)", this->ySrc);
+            LOG(LOG_INFO, "          * xSrc            = %d (2 bytes)", this->xSrc);
+            LOG(LOG_INFO, "          * destHeight      = %d (2 bytes)", this->destHeight);
+            LOG(LOG_INFO, "          * destWidth       = %d (2 bytes)", this->destWidth);
+            LOG(LOG_INFO, "          * yDest           = %d (2 bytes)", this->yDest);
+            LOG(LOG_INFO, "          * xDest           = %d (2 bytes)", this->xDest);
+
+            this->bitmapInfoHeader.log();
         }
 
     };

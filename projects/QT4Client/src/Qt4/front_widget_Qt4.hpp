@@ -72,6 +72,9 @@ public:
     SocketTransport           * _sck;
     int                         _client_sck;
     TimeSystem                  _timeSystem;
+
+    LCGRandom gen;
+
     struct ModRDPParamsData
     {
         bool enable_tls                      = false;
@@ -86,6 +89,7 @@ public:
         , _callback(nullptr)
         , _sck(nullptr)
         , _client_sck(0)
+        , gen(0)
     {}
 
     ~Mod_Qt() {
@@ -170,7 +174,6 @@ public:
         mod_rdp_params.enable_nla                      = this->_modRDPParamsData.enable_nla;
         mod_rdp_params.enable_fastpath                 = false;
         mod_rdp_params.enable_mem3blt                  = true;
-        mod_rdp_params.enable_bitmap_update            = true;
         mod_rdp_params.enable_new_pointer              = true;
         mod_rdp_params.server_redirection_support      = true;
         mod_rdp_params.enable_new_pointer              = true;
@@ -180,14 +183,14 @@ public:
         //mod_rdp_params.bogus_refresh_rect              = true;
         mod_rdp_params.verbose = to_verbose_flags(0);                      //MODRDP_LOGLEVEL_CLIPRDR | 16;
 
-        LCGRandom gen(0); // To always get the same client random, in tests
+         // To always get the same client random, in tests
 
         try {
             this->_callback = new mod_rdp( *(this->_sck)
                                          , *(this->_front)
                                          , this->_front->_info
                                          , ini.get_ref<cfg::mod_rdp::redir_info>()
-                                         , gen
+                                         , this->gen
                                          , this->_timeSystem
                                          , mod_rdp_params
                                          );

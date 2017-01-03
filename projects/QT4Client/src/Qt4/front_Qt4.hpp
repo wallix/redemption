@@ -328,6 +328,7 @@ public:
     bool                        _waiting_for_data;
 
 
+
     struct ClipbrdFormatsList{
         enum : uint16_t {
               CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
