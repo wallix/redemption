@@ -23,9 +23,13 @@
 #include "test_client_redemption_cli.hpp"
 
 
-// bjam rdpheadless && bin/gcc-4.9.2/release/rdpheadless --user QA\\proxyuser --pwd $mdp --ip 10.10.46.88 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_keyboard
 
-// bjam rdpclientcli && bin/gcc-4.9.2/release/rdpclientcli --user admin --pwd $mdp --ip 10.10.40.22 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_keyboard
+
+// bjam rdpheadless && bin/gcc-4.9.2/release/link-static/rdpheadless --user admin --pwd $mdp --ip 10.10.47.90 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
+
+// bjam rdpheadless && bin/gcc-4.9.2/release/rdpheadless --user QA\\proxyuser --pwd $mdp --ip 10.10.46.88 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
+
+// bjam rdpheadless && bin/gcc-4.9.2/release/rdpheadless --user admin --pwd $mdp --ip 10.10.47.90 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
 
 
 
@@ -61,6 +65,7 @@ int main(int argc, char** argv){
     std::string localIP;
     int nbTry(3);
     int retryDelay(1000);
+    bool quick_connection_test = false;
     //=========================================================
 
 
@@ -111,9 +116,11 @@ int main(int argc, char** argv){
         } else if (word == "--menuanimations") {
             if (       std::string(argv[i+1]) ==  "off") {
                 info.rdp5_performanceflags -=  PERF_DISABLE_MENUANIMATIONS;
-            }//================================================================
+            }
+        } else if (word == "--quick") {
+            quick_connection_test = true;
         }
-    }
+    }//================================================================
 
 
 
@@ -138,7 +145,7 @@ int main(int argc, char** argv){
 
     mod_rdp_params.device_id = "device_id";
 
-    const size_t nb_mod_rdp_params_config(34);
+    const size_t nb_mod_rdp_params_config(33);
     std::string dscr(" Active/unactive ");
 
     // TODO What that ? See program_options
@@ -313,28 +320,30 @@ int main(int argc, char** argv){
 
 
 
-    std::cout << "\n" << "\n";
-    std::cout << " ================================" << "\n";
-    std::cout << " ========== Log Config ==========" << "\n";
-    std::cout << " ================================" << "\n";
-    std::cout << " SHOW_USER_AND_TARGET_PARAMS = " << bool(verbose & TestClientCLI::SHOW_USER_AND_TARGET_PARAMS) <<  "\n";
-    std::cout << " SHOW_MOD_RDP_PARAMS         = " << bool(verbose & TestClientCLI::SHOW_MOD_RDP_PARAMS) <<  "\n";
-    std::cout << " SHOW_DRAW_ORDERS            = " << bool(verbose & TestClientCLI::SHOW_DRAW_ORDERS_INFO) <<  "\n";
-    std::cout << " SHOW_CLPBRD_PDU_EXCHANGE    = " << bool(verbose & TestClientCLI::SHOW_CLPBRD_PDU_EXCHANGE) <<  "\n";
-    std::cout << " SHOW_CURSOR_STATE_CHANGE    = " << bool(verbose & TestClientCLI::SHOW_CURSOR_STATE_CHANGE) <<  "\n";
-    std::cout << " SHOW_CORE_SERVER_INFO       = " << bool(verbose & TestClientCLI::SHOW_CORE_SERVER_INFO) <<  "\n";
-    std::cout << " SHOW_SECURITY_SERVER_INFO   = " << bool(verbose & TestClientCLI::SHOW_SECURITY_SERVER_INFO) <<  "\n";
-    std::cout << " SHOW_KEYBOARD_EVENT         = " << bool(verbose & TestClientCLI::SHOW_KEYBOARD_EVENT) <<  "\n";
-    std::cout << " SHOW_FILE_SYSTEM_EXCHANGE   = " << bool(verbose & TestClientCLI::SHOW_FILE_SYSTEM_EXCHANGE) <<  "\n";
-    std::cout << " SHOW_CAPS                   = " << bool(verbose & TestClientCLI::SHOW_CAPS) <<  "\n";
-    std::cout << " SHOW_OUT_PDU                = " << bool(verbose & TestClientCLI::SHOW_OUT_PDU) <<  "\n";
-    std::cout << " SHOW_IN_PDU                 = " << bool(verbose & TestClientCLI::SHOW_IN_PDU) <<  "\n";
-    std::cout <<  std::endl;
+    if (input_connection_data_complete == TestClientCLI::INPUT_COMPLETE) {
 
+        std::cout << "\n";
+        std::cout << " ================================" << "\n";
+        std::cout << " ========== Log Config ==========" << "\n";
+        std::cout << " ================================" << "\n";
+        std::cout << " SHOW_USER_AND_TARGET_PARAMS = " << bool(verbose & TestClientCLI::SHOW_USER_AND_TARGET_PARAMS) <<  "\n";
+        std::cout << " SHOW_MOD_RDP_PARAMS         = " << bool(verbose & TestClientCLI::SHOW_MOD_RDP_PARAMS) <<  "\n";
+        std::cout << " SHOW_DRAW_ORDERS            = " << bool(verbose & TestClientCLI::SHOW_DRAW_ORDERS_INFO) <<  "\n";
+        std::cout << " SHOW_CLPBRD_PDU_EXCHANGE    = " << bool(verbose & TestClientCLI::SHOW_CLPBRD_PDU_EXCHANGE) <<  "\n";
+        std::cout << " SHOW_CURSOR_STATE_CHANGE    = " << bool(verbose & TestClientCLI::SHOW_CURSOR_STATE_CHANGE) <<  "\n";
+        std::cout << " SHOW_CORE_SERVER_INFO       = " << bool(verbose & TestClientCLI::SHOW_CORE_SERVER_INFO) <<  "\n";
+        std::cout << " SHOW_SECURITY_SERVER_INFO   = " << bool(verbose & TestClientCLI::SHOW_SECURITY_SERVER_INFO) <<  "\n";
+        std::cout << " SHOW_KEYBOARD_EVENT         = " << bool(verbose & TestClientCLI::SHOW_KEYBOARD_EVENT) <<  "\n";
+        std::cout << " SHOW_FILE_SYSTEM_EXCHANGE   = " << bool(verbose & TestClientCLI::SHOW_FILE_SYSTEM_EXCHANGE) <<  "\n";
+        std::cout << " SHOW_CAPS                   = " << bool(verbose & TestClientCLI::SHOW_CAPS) <<  "\n";
+        std::cout << " SHOW_OUT_PDU                = " << bool(verbose & TestClientCLI::SHOW_OUT_PDU) <<  "\n";
+        std::cout << " SHOW_IN_PDU                 = " << bool(verbose & TestClientCLI::SHOW_IN_PDU) <<  "\n";
+        std::cout <<  std::endl;
+    }
 
 
     if (verbose & TestClientCLI::SHOW_USER_AND_TARGET_PARAMS) {
-        std::cout <<  "\n";
+
         std::cout << " ================================" << "\n";
         std::cout << " == User And Target Parameters ==" << "\n";
         std::cout << " ================================" << "\n";
@@ -359,10 +368,8 @@ int main(int argc, char** argv){
     //===========================================
     //       Cmd line mod_rdp_param config
     //===========================================
-    for (int i = 0; i <  argc; i++) {
-
+    for (int i = 0; i < argc; i++) {
         std::string word(argv[i]);
-
         for (size_t j = 0; j < nb_mod_rdp_params_config; j++) {
             if (       word == mod_rdp_params_config[j].cmd) {
                 if (       std::string(argv[i+1]) ==  "on") {
@@ -379,7 +386,6 @@ int main(int argc, char** argv){
     }
 
     if (verbose & TestClientCLI::SHOW_MOD_RDP_PARAMS) {
-        std::cout <<  "\n";
         std::cout << " ================================" << "\n";
         std::cout << " ======= ModRDP Parameters ======" << "\n";
         std::cout << " ================================" << "\n";
@@ -403,7 +409,7 @@ int main(int argc, char** argv){
 
     if (input_connection_data_complete == TestClientCLI::INPUT_COMPLETE) {
         int sck(0);
-        std::unique_ptr<SocketTransport> socket;
+        SocketTransport * socket(nullptr);
         std::string error_message;
         bool connection_succed(false);
         const char * name(userName.c_str());
@@ -418,7 +424,7 @@ int main(int argc, char** argv){
 
         if (sck > 0) {
             try {
-                socket = std::make_unique<SocketTransport>( name
+                socket = new SocketTransport( name
                                                           , sck
                                                           , targetIP
                                                           , port
@@ -442,7 +448,7 @@ int main(int argc, char** argv){
             TimeSystem timeSystem;
 
             try {
-                mod = new mod_rdp( *(socket.get())
+                mod = new mod_rdp( *(socket)
                                  , front
                                  , info
                                  , ini.get_ref<cfg::mod_rdp::redir_info>()
@@ -467,7 +473,7 @@ int main(int argc, char** argv){
                     int i = 1;
                     while (!mod->is_up_and_running()) {
                         try {
-                            std::cout <<  " Early negociations step " << i << "\n";
+                            std::cout <<  " Early negociations... " <<"\n";
                             mod->draw_event(time(nullptr), front);
                             i++;
                          } catch (const Error & e) {
@@ -483,7 +489,6 @@ int main(int argc, char** argv){
             if (connection_succed) {
 
                 if (verbose & TestClientCLI::SHOW_CORE_SERVER_INFO) {
-                    std::cout <<  "\n";
                     std::cout << " ================================" << "\n";
                     std::cout << " ======= Server Core Info =======" << "\n";
                     std::cout << " ================================" << "\n";
@@ -493,7 +498,7 @@ int main(int argc, char** argv){
                     std::cout << " version = " << int(sc_core.version) << "\n";
                     std::cout << " clientRequestedProtocols = " << int(sc_core.clientRequestedProtocols) << "\n";
                     std::cout << " earlyCapabilityFlags = " << int(sc_core.earlyCapabilityFlags) << "\n";
-                    std::cout << "\n" << std::endl;
+                    std::cout << std::endl;
                 }
 
                 if (verbose & TestClientCLI::SHOW_SECURITY_SERVER_INFO) {
@@ -565,108 +570,119 @@ int main(int argc, char** argv){
                 }
 
 
+                if (quick_connection_test) {
+                    if (socket !=  nullptr) {
+                        delete (socket);
 
-                //===========================================
-                //             Scripted Events
-                //===========================================
-                EventList eventList;
-                if (script_on) {
-                    std::ifstream ifichier(script_file_path);
-                    if(ifichier) {
-                        std::string ligne;
-                        std::string delimiter = " ";
-
-                        while(std::getline(ifichier, ligne)) {
-                            auto pos(ligne.find(delimiter));
-                            std::string tag  = ligne.substr(0, pos);
-                            std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
-
-                            if (       tag == "wait") {
-                                eventList.wait(std::stoi(info));
-
-                            } else if (tag == "key_press") {
-                                pos = info.find(delimiter);
-                                uint32_t scanCode(std::stoi(info.substr(0, pos)));
-                                uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                                eventList.setKey_press(&front, scanCode, flag);
-
-                            } else if (tag == "key_release") {
-                                pos = info.find(delimiter);
-                                uint32_t scanCode(std::stoi(info.substr(0, pos)));
-                                uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                                eventList.setKey_release(&front, scanCode, flag);
-
-                            } else if (tag == "mouse_press") {
-                                pos = info.find(delimiter);
-                                uint8_t button(std::stoi(info.substr(0, pos)));
-                                info = info.substr(pos + delimiter.length(), info.length());
-                                pos = info.find(delimiter);
-                                uint32_t x(std::stoi(info.substr(0, pos)));
-                                uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                                eventList.setMouse_button(&front, button, x, y, true);
-
-                            } else if (tag == "mouse_release") {
-                                pos = info.find(delimiter);
-                                uint8_t button(std::stoi(info.substr(0, pos)));
-                                info = info.substr(pos + delimiter.length(), info.length());
-                                pos = info.find(delimiter);
-                                uint32_t x(std::stoi(info.substr(0, pos)));
-                                uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                                eventList.setMouse_button(&front, button, x, y, false);
-
-                            } else if (tag == "clpbrd_change") {
-                                // TODO dynamique data and format injection
-                                uint32_t formatIDs                 = RDPECLIP::CF_TEXT;
-                                std::string formatListDataLongName("\0\0", 2);
-
-                                // TODO { formatListDataLongName, 1 } -> array_view
-                                // TODO { formatIDs, 1 } -> array_view
-                                eventList.setClpbrd_change(&front, &formatIDs, &formatListDataLongName, 1);
-
-                            } else if (tag == "click") {
-                                pos = info.find(delimiter);
-                                uint8_t button(std::stoi(info.substr(0, pos)));
-                                info = info.substr(pos + delimiter.length(), info.length());
-                                pos = info.find(delimiter);
-                                uint32_t x(std::stoi(info.substr(0, pos)));
-                                uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                                eventList.setClick(&front, button, x, y);
-
-                            } else if (tag == "double_click") {
-                                pos = info.find(delimiter);
-                                uint32_t x(std::stoi(info.substr(0, pos)));
-                                uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                                eventList.setDouble_click(&front, x, y);
-
-                            } else if (tag ==  "key") {
-                                pos = info.find(delimiter);
-                                uint32_t scanCode(std::stoi(info.substr(0, pos)));
-                                uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                                eventList.setKey(&front, scanCode, flag);
-
-                            } else if (tag == "loop") {
-                                pos = info.find(delimiter);
-                                uint32_t jump_size(std::stoi(info.substr(0, pos)));
-                                uint32_t count_steps(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                                eventList.setLoop(jump_size, count_steps);
-                            }
+                        if (mod !=  nullptr) {
+                            delete (mod);
+                            std::cout << " Connection to [" << targetIP << "] closed.\n" << std::endl;
                         }
-                    } else {
-                        std::cout <<  "Can't find " << script_file_path << "\n";
+
                     }
+                } else {
+                    //===========================================
+                    //             Scripted Events
+                    //===========================================
+                    EventList eventList;
+                    if (script_on) {
+                        std::ifstream ifichier(script_file_path);
+                        if(ifichier) {
+                            std::string ligne;
+                            std::string delimiter = " ";
+
+                            while(std::getline(ifichier, ligne)) {
+                                auto pos(ligne.find(delimiter));
+                                std::string tag  = ligne.substr(0, pos);
+                                std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
+
+                                if (       tag == "wait") {
+                                    eventList.wait(std::stoi(info));
+
+                                } else if (tag == "key_press") {
+                                    pos = info.find(delimiter);
+                                    uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                                    uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                                    eventList.setKey_press(&front, scanCode, flag);
+
+                                } else if (tag == "key_release") {
+                                    pos = info.find(delimiter);
+                                    uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                                    uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                                    eventList.setKey_release(&front, scanCode, flag);
+
+                                } else if (tag == "mouse_press") {
+                                    pos = info.find(delimiter);
+                                    uint8_t button(std::stoi(info.substr(0, pos)));
+                                    info = info.substr(pos + delimiter.length(), info.length());
+                                    pos = info.find(delimiter);
+                                    uint32_t x(std::stoi(info.substr(0, pos)));
+                                    uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                                    eventList.setMouse_button(&front, button, x, y, true);
+
+                                } else if (tag == "mouse_release") {
+                                    pos = info.find(delimiter);
+                                    uint8_t button(std::stoi(info.substr(0, pos)));
+                                    info = info.substr(pos + delimiter.length(), info.length());
+                                    pos = info.find(delimiter);
+                                    uint32_t x(std::stoi(info.substr(0, pos)));
+                                    uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                                    eventList.setMouse_button(&front, button, x, y, false);
+
+                                } else if (tag == "clpbrd_change") {
+                                    // TODO dynamique data and format injection
+                                    uint32_t formatIDs                 = RDPECLIP::CF_TEXT;
+                                    std::string formatListDataLongName("\0\0", 2);
+
+                                    // TODO { formatListDataLongName, 1 } -> array_view
+                                    // TODO { formatIDs, 1 } -> array_view
+                                    eventList.setClpbrd_change(&front, &formatIDs, &formatListDataLongName, 1);
+
+                                } else if (tag == "click") {
+                                    pos = info.find(delimiter);
+                                    uint8_t button(std::stoi(info.substr(0, pos)));
+                                    info = info.substr(pos + delimiter.length(), info.length());
+                                    pos = info.find(delimiter);
+                                    uint32_t x(std::stoi(info.substr(0, pos)));
+                                    uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                                    eventList.setClick(&front, button, x, y);
+
+                                } else if (tag == "double_click") {
+                                    pos = info.find(delimiter);
+                                    uint32_t x(std::stoi(info.substr(0, pos)));
+                                    uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                                    eventList.setDouble_click(&front, x, y);
+
+                                } else if (tag ==  "key") {
+                                    pos = info.find(delimiter);
+                                    uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                                    uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                                    eventList.setKey(&front, scanCode, flag);
+
+                                } else if (tag == "loop") {
+                                    pos = info.find(delimiter);
+                                    uint32_t jump_size(std::stoi(info.substr(0, pos)));
+                                    uint32_t count_steps(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                                    eventList.setLoop(jump_size, count_steps);
+                                }
+                            }
+                        } else {
+                            std::cout <<  "Can't find " << script_file_path << "\n";
+                        }
+                    }
+
+
+                    run_mod(mod, front, socket, eventList);
+
                 }
-
-
-                run_mod(mod, front, socket.get(), eventList);
-
             }
         }
     }
@@ -700,6 +716,7 @@ void print_help(ModRDPParamsConfig * mod_rdp_params_config, size_t nb_mod_rdp_pa
     std::cout << "  --show_pdu                Show both sent and received PDU content from shown channels" << "\n";
     std::cout << "  --show_caps               Show capabilities PDU exchange" <<  "\n";
     std::cout << "  --script [file_path]      Set a test PDU file script" << "\n";
+    std::cout << "  --quick                   Set the client to disconnect right after connection" << "\n";
     std::cout << "\n";
     std::cout << "  ========= USER =========" << "\n";
     std::cout << "  --user [user_name]        Set session user name" << "\n";
@@ -730,6 +747,8 @@ void print_help(ModRDPParamsConfig * mod_rdp_params_config, size_t nb_mod_rdp_pa
 void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, EventList & al) {
     struct      timeval time_mark = { 0, 50000 };
     bool        run_session       = true;
+
+
 
     while (run_session) {
         try {
