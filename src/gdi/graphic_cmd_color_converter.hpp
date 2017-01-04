@@ -264,31 +264,5 @@ void draw_cmd_color_convert(
     Cmd const & cmd, Ts const & ... args
 ) { return draw_cmd_color_convert(graphic_draw_fn{}, order_depth, rng, cmd, args...); }
 
-
-struct GraphicColorConverterAccess : GraphicCoreAccess
-{
-    template<class Derived, class... Ts>
-    static void draw(Derived & gd, Ts const & ... args) {
-        static_assert(sizeof(GraphicCoreAccess::color_converter(gd)), "unimplemented");
-        encode_cmd(1, gd, args...);
-    }
-
-private:
-    template<class Gd, class Cmd, class... Ts>
-    static auto encode_cmd(int, Gd & gd, Cmd const & cmd, Ts const & ... args)
-    -> decltype(void(GraphicCmdColor::encode_cmd_color(
-        GraphicCoreAccess::color_converter(gd), std::declval<Cmd&>())
-    )) {
-        auto new_cmd = cmd;
-        GraphicCmdColor::encode_cmd_color(GraphicCoreAccess::color_converter(gd), new_cmd);
-        GraphicCoreAccess::draw(gd, new_cmd, args...);
-    }
-
-    template<class Gd, class Cmd, class... Ts>
-    static void encode_cmd(unsigned, Gd & gd, Cmd const & cmd, Ts const & ... args) {
-        GraphicCoreAccess::draw(gd, cmd, args...);
-    }
-};
-
 }
 

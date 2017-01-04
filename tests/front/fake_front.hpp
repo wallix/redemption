@@ -54,143 +54,137 @@ public:
 public:
     using FrontAPI::FrontAPI;
 
-    void draw(RDP::FrameMarker    const & cmd) override {
-        gdi::GraphicCoreAccess::draw(*this, cmd);
-    }
+    void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd);}
 
-    void draw(RDPDestBlt          const & cmd, Rect const & clip) override {
-        gdi::GraphicCoreAccess::draw(*this, cmd, clip);
-    }
+    void draw(RDPDestBlt          const & cmd, Rect const & clip) override {this->draw_impl( cmd, clip);}
     
-    void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override {
-        gdi::GraphicCoreAccess::draw(*this, cmd, clip);
-    }
+    void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override {this->draw_impl( cmd, clip);}
     
     void draw(RDPPatBlt           const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
-        gdi::GraphicCmdColor::encode_cmd_color(gdi::GraphicCoreAccess::color_converter(*this), new_cmd);
-        gdi::GraphicCoreAccess::draw(*this, new_cmd, clip);
+        gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+        this->draw_impl( new_cmd, clip);
     }
     
     void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
-        gdi::GraphicCmdColor::encode_cmd_color(gdi::GraphicCoreAccess::color_converter(*this), new_cmd);
-        gdi::GraphicCoreAccess::draw(*this, new_cmd, clip);
+        gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+        this->draw_impl( new_cmd, clip);
     }
     
     void draw(RDPOpaqueRect       const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
-        gdi::GraphicCmdColor::encode_cmd_color(gdi::GraphicCoreAccess::color_converter(*this), new_cmd);
-        gdi::GraphicCoreAccess::draw(*this, new_cmd, clip);
+        gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+        this->draw_impl( new_cmd, clip);
     }
     
     void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
-        gdi::GraphicCmdColor::encode_cmd_color(gdi::GraphicCoreAccess::color_converter(*this), new_cmd);
-        gdi::GraphicCoreAccess::draw(*this, new_cmd, clip);
+        gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+        this->draw_impl( new_cmd, clip);
     }
     
     void draw(RDPScrBlt           const & cmd, Rect const & clip) override {
-        gdi::GraphicCoreAccess::draw(*this, cmd, clip);
+        this->draw_impl( cmd, clip);
     }
     
     void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override {
-        gdi::GraphicCoreAccess::draw(*this, cmd, clip);
+        this->draw_impl( cmd, clip);
     }
     
     void draw(RDPLineTo           const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
-        gdi::GraphicCmdColor::encode_cmd_color(gdi::GraphicCoreAccess::color_converter(*this), new_cmd);
-        gdi::GraphicCoreAccess::draw(*this, new_cmd, clip);
+        gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+        this->draw_impl( new_cmd, clip);
     }
 
     void draw(RDPPolygonSC        const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
-        gdi::GraphicCmdColor::encode_cmd_color(gdi::GraphicCoreAccess::color_converter(*this), new_cmd);
-        gdi::GraphicCoreAccess::draw(*this, new_cmd, clip);
+        gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+        this->draw_impl( new_cmd, clip);
     }
     
     void draw(RDPPolygonCB        const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
-        gdi::GraphicCmdColor::encode_cmd_color(gdi::GraphicCoreAccess::color_converter(*this), new_cmd);
-        gdi::GraphicCoreAccess::draw(*this, new_cmd, clip);
+        gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+        this->draw_impl( new_cmd, clip);
     }
     
     void draw(RDPPolyline         const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
-        gdi::GraphicCmdColor::encode_cmd_color(gdi::GraphicCoreAccess::color_converter(*this), new_cmd);
-        gdi::GraphicCoreAccess::draw(*this, new_cmd, clip);
+        gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+        this->draw_impl( new_cmd, clip);
     }
     
     void draw(RDPEllipseSC        const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
-        gdi::GraphicCmdColor::encode_cmd_color(gdi::GraphicCoreAccess::color_converter(*this), new_cmd);
-        gdi::GraphicCoreAccess::draw(*this, new_cmd, clip);
+        gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+        this->draw_impl( new_cmd, clip);
     }
     
     void draw(RDPEllipseCB        const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
-        gdi::GraphicCmdColor::encode_cmd_color(gdi::GraphicCoreAccess::color_converter(*this), new_cmd);
-        gdi::GraphicCoreAccess::draw(*this, new_cmd, clip);
+        gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+        this->draw_impl( new_cmd, clip);
     }
 
     void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override {
-        gdi::GraphicCoreAccess::draw(*this, cmd, bmp);
+        this->draw_impl( cmd, bmp);
     }
 
     void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override {
-        gdi::GraphicCoreAccess::draw(*this, cmd, clip, bmp);
+        this->draw_impl( cmd, clip, bmp);
     }
 
     void draw(RDPMem3Blt          const & cmd, Rect const & clip, Bitmap const & bmp) override {
         auto new_cmd = cmd;
-        gdi::GraphicCmdColor::encode_cmd_color(gdi::GraphicCoreAccess::color_converter(*this), new_cmd);
-        gdi::GraphicCoreAccess::draw(*this, new_cmd, clip, bmp);
+        gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+        this->draw_impl( new_cmd, clip, bmp);
     }
 
     void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) override {
         auto new_cmd = cmd;
-        gdi::GraphicCmdColor::encode_cmd_color(gdi::GraphicCoreAccess::color_converter(*this), new_cmd);
-        gdi::GraphicCoreAccess::draw(*this, new_cmd, clip, gly_cache);
+        gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+        this->draw_impl( new_cmd, clip, gly_cache);
     }
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override {
-        gdi::GraphicCoreAccess::draw(*this, cmd);
+        this->draw_impl( cmd);
     }
     void draw(const RDP::RAIL::WindowIcon                     & cmd) override {
-        gdi::GraphicCoreAccess::draw(*this, cmd);
+        this->draw_impl( cmd);
     }
     
     void draw(const RDP::RAIL::CachedIcon                     & cmd) override {
-        gdi::GraphicCoreAccess::draw(*this, cmd);
+        this->draw_impl( cmd);
     }
 
     void draw(const RDP::RAIL::DeletedWindow                  & cmd) override {
-        gdi::GraphicCoreAccess::draw(*this, cmd);
+        this->draw_impl( cmd);
     }
 
     void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override {
-        gdi::GraphicCoreAccess::draw(*this, cmd);
+        this->draw_impl( cmd);
     }
     
     void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override {
-        gdi::GraphicCoreAccess::draw(*this, cmd);
+        this->draw_impl( cmd);
     }
     
     void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override {
-        gdi::GraphicCoreAccess::draw(*this, cmd);
+        this->draw_impl( cmd);
     }
 
     void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override {
-        gdi::GraphicCoreAccess::draw(*this, cmd);
+        this->draw_impl( cmd);
     }
 
     void draw(RDPColCache   const & cmd) override {
-        gdi::GraphicCoreAccess::draw(*this, cmd);
+        this->draw_impl( cmd);
     }
     
     void draw(RDPBrushCache const & cmd) override {
-        gdi::GraphicCoreAccess::draw(*this, cmd);
+        this->draw_impl( cmd);
     }
 
 private:
@@ -200,8 +194,6 @@ private:
             return color_decode_opaquerect(c, this->mod_bpp, BGRPalette::classic_332());
         }
     };
-
-    friend gdi::GraphicCoreAccess;
 
     ColorDecoder get_color_converter() const {
         return {this->mod_bpp};

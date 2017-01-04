@@ -55,7 +55,6 @@ struct TestDraw : mod_api
     }
 
 private:
-    friend gdi::GraphicCoreAccess;
     RDPDrawable & get_graphic_proxy() { return this->gd; }
 };
 
