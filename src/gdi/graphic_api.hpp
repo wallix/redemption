@@ -278,50 +278,6 @@ private:
 };
 
 
-template<class Graphic>
-struct GraphicUniformDistribution
-{
-    Graphic graphic_;
-
-    template<class... Ts>
-    void operator()(draw_tag, Ts const & ... args) {
-        this->graphic_.draw(args...);
-    }
-
-    void operator()(set_tag, Pointer const & pointer) {
-        this->graphic_.set_pointer(pointer);
-    }
-
-    void operator()(set_tag, BGRPalette const & palette) {
-        this->graphic_.set_palette(palette);
-    }
-
-    void operator()(sync_tag) {
-        this->graphic_.sync();
-    }
-
-    void operator()(set_row_tag, std::size_t rownum, const uint8_t * data) {
-        this->graphic_.set_row(rownum, data);
-    }
-
-    void operator()(begin_update_tag) {
-        this->graphic_.begin_update();
-    }
-
-    void operator()(end_update_tag) {
-        this->graphic_.end_update();
-    }
-};
-
-
-struct self_fn
-{
-    template<class T> T & operator()(T & x) const { return x; }
-    template<class T> T operator()(T && x) const { return std::move(x); }
-
-    template<class T> T & operator()(std::reference_wrapper<T> x) const { return x; }
-};
-
 
 
 
