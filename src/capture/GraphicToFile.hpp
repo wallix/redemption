@@ -729,16 +729,16 @@ public:
     void possible_active_window_change() override {}
 
     using RDPSerializer::set_pointer;
-    
-    virtual void set_depths(gdi::GraphicDepth const & depth) {
+
+    void set_depths(gdi::GraphicDepth const & depth) override {
         this->order_depth_ = depth;
     }
 
-    virtual gdi::GraphicDepth const & order_depth() const {
+    gdi::GraphicDepth const & order_depth() const override {
         return this->order_depth_;
     }
 
     gdi::GraphicDepth order_depth_;
-    
+
 };  // struct GraphicToFile
 

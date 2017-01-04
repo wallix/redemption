@@ -322,11 +322,11 @@ private:
 
 public:
 
-    virtual void set_depths(gdi::GraphicDepth const & depths) {
+    void set_depths(gdi::GraphicDepth const & depths) override {
         this->order_depth_ = depths;
     }
 
-    virtual GraphicDepth const & order_depth() const {
+    GraphicDepth const & order_depth() const override {
         return this->order_depth_;
     }
 

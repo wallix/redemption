@@ -59,7 +59,7 @@ public:
                 bool showform = false, uint32_t flag = 0)
         : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
         , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->wait_widget, front, front, this->font(), this->theme())
-        , wait_widget(front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1, this->screen, this, caption, message, 0,
+        , wait_widget(front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy, this->screen, this, caption, message, 0,
                       &this->language_button,
                       vars.get<cfg::font>(),
                       vars.get<cfg::theme>(),
@@ -155,6 +155,6 @@ public:
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
-        this->wait_widget.move_size_widget(left, top, width + 1, height + 1);
+        this->wait_widget.move_size_widget(left, top, width, height);
     }
 };

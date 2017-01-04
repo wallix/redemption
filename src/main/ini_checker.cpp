@@ -31,12 +31,12 @@
 
 int main(int ac, char ** av)
 {
-    if (ac != 2) {
-        std::cerr << "Usage: " << av[0] << " inifile" << std::endl;
+    if (ac > 2 || (ac == 2 && (!strcmp(av[1], "-h") || !strcmp(av[1], "--help") || !strcmp(av[1], "-?")))) {
+        std::cerr << "Usage: " << av[0] << " [inifile = " CFG_PATH "/" RDPPROXY_INI "]" << std::endl;
         return 1;
     }
 
-    if (std::ifstream inifile{av[1]}) {
+    if (std::ifstream inifile{ac == 2 ? av[1] : CFG_PATH "/" RDPPROXY_INI}) {
         Inifile ini;
         (void)ConfigurationLoader(ini.configuration_holder(), inifile);
         if (!inifile.eof()) {

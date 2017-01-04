@@ -23,8 +23,9 @@
 
 #include "widget.hpp"
 #include "keyboard/keymap2.hpp"
-#include "utils/region.hpp"
 #include "utils/colors.hpp"
+#include "utils/log.hpp"
+#include "utils/region.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
 

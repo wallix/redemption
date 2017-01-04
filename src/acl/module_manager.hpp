@@ -344,11 +344,11 @@ private:
         , order_depth_(gdi::GraphicDepth::unspecified())
         {}
 
-        virtual void set_depths(gdi::GraphicDepth const & depth) {
+        void set_depths(gdi::GraphicDepth const & depth) override {
             this->order_depth_ = depth;
         }
 
-        virtual gdi::GraphicDepth const & order_depth() const {
+        gdi::GraphicDepth const & order_depth() const override {
             return this->order_depth_;
         }
 
@@ -1336,6 +1336,20 @@ public:
                 try {
                     const char * const name = "RDP Target";
 
+                    Rect adjusted_client_execute_rect =
+                        this->client_execute.adjust_rect(get_widget_rect(
+                                client_info.width,
+                                client_info.height,
+                                this->front.client_info.cs_monitor
+                            ));
+
+                    if (this->front.client_info.remote_program &&
+                        (!mod_rdp_params.target_application ||
+                         !(*mod_rdp_params.target_application))) {
+                        client_info.width  = adjusted_client_execute_rect.cx / 4 * 4;
+                        client_info.height = adjusted_client_execute_rect.cy;
+                    }
+
                     ModWithSocket<mod_rdp>* new_mod =
                         new ModWithSocket<mod_rdp>(
                                 *this,
@@ -1360,13 +1374,6 @@ public:
                         (!mod_rdp_params.target_application ||
                          !(*mod_rdp_params.target_application))) {
                         LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
-
-                        Rect adjusted_client_execute_rect =
-                            this->client_execute.adjust_rect(get_widget_rect(
-                                    this->front.client_info.width,
-                                    this->front.client_info.height,
-                                    this->front.client_info.cs_monitor
-                                ));
 
                         this->set_mod(
                                 new RailModuleHostMod(

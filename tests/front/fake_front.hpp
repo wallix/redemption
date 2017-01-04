@@ -57,41 +57,41 @@ public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd);}
 
     void draw(RDPDestBlt          const & cmd, Rect const & clip) override {this->draw_impl( cmd, clip);}
-    
+
     void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override {this->draw_impl( cmd, clip);}
-    
+
     void draw(RDPPatBlt           const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
         this->draw_impl( new_cmd, clip);
     }
-    
+
     void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
         this->draw_impl( new_cmd, clip);
     }
-    
+
     void draw(RDPOpaqueRect       const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
         this->draw_impl( new_cmd, clip);
     }
-    
+
     void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
         this->draw_impl( new_cmd, clip);
     }
-    
+
     void draw(RDPScrBlt           const & cmd, Rect const & clip) override {
         this->draw_impl( cmd, clip);
     }
-    
+
     void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override {
         this->draw_impl( cmd, clip);
     }
-    
+
     void draw(RDPLineTo           const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
@@ -103,25 +103,25 @@ public:
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
         this->draw_impl( new_cmd, clip);
     }
-    
+
     void draw(RDPPolygonCB        const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
         this->draw_impl( new_cmd, clip);
     }
-    
+
     void draw(RDPPolyline         const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
         this->draw_impl( new_cmd, clip);
     }
-    
+
     void draw(RDPEllipseSC        const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
         this->draw_impl( new_cmd, clip);
     }
-    
+
     void draw(RDPEllipseCB        const & cmd, Rect const & clip) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
@@ -154,7 +154,7 @@ public:
     void draw(const RDP::RAIL::WindowIcon                     & cmd) override {
         this->draw_impl( cmd);
     }
-    
+
     void draw(const RDP::RAIL::CachedIcon                     & cmd) override {
         this->draw_impl( cmd);
     }
@@ -166,11 +166,11 @@ public:
     void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override {
         this->draw_impl( cmd);
     }
-    
+
     void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override {
         this->draw_impl( cmd);
     }
-    
+
     void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override {
         this->draw_impl( cmd);
     }
@@ -182,7 +182,7 @@ public:
     void draw(RDPColCache   const & cmd) override {
         this->draw_impl( cmd);
     }
-    
+
     void draw(RDPBrushCache const & cmd) override {
         this->draw_impl( cmd);
     }
@@ -328,7 +328,7 @@ public:
     , mouse_y(0)
     , notimestamp(true)
     , nomouse(true)
-    , gd(info.width, info.height, 24) 
+    , gd(info.width, info.height, 24)
     , order_depth_(gdi::GraphicDepth::from_bpp(this->mod_bpp))
     {
         if (this->mod_bpp == 8) {
@@ -364,15 +364,15 @@ public:
         //SSL_library_init();
     }
 
-    virtual void set_depths(gdi::GraphicDepth const & depth) {
+    void set_depths(gdi::GraphicDepth const & depth) override {
         this->order_depth_ = depth;
     }
 
-    virtual gdi::GraphicDepth const & order_depth() const {
+    gdi::GraphicDepth const & order_depth() const override {
         return this->order_depth_;
     }
 
     gdi::GraphicDepth order_depth_;
-    
+
     void update_pointer_position(uint16_t, uint16_t) override {}
 };
