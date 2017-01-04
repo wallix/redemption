@@ -35,11 +35,74 @@ public:
     using PtrColorConverter = std::unique_ptr<gdi::GraphicApi>;
     using GdRef = std::reference_wrapper<gdi::GraphicApi>;
 
-    struct Graphic final
-    : gdi::GraphicProxyBase<Graphic>
+    struct Graphic final : public gdi::GraphicApi
     {
+    public:
         friend gdi::GraphicCoreAccess;
 
+        void draw(RDP::FrameMarker    const & cmd) override { gdi::GraphicCoreAccess::draw(*this, cmd); }
+        void draw(RDPDestBlt          const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+        void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+        void draw(RDPPatBlt           const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+        void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+        void draw(RDPOpaqueRect       const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+        void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+        void draw(RDPScrBlt           const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+        void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+        void draw(RDPLineTo           const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+        void draw(RDPPolygonSC        const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+        void draw(RDPPolygonCB        const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+        void draw(RDPPolyline         const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+        void draw(RDPEllipseSC        const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+        void draw(RDPEllipseCB        const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+        void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { gdi::GraphicCoreAccess::draw(*this,cmd, bmp); }
+        void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip, bmp);}
+        void draw(RDPMem3Blt          const & cmd, Rect const & clip, Bitmap const & bmp) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip, bmp); }
+        void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip, gly_cache); }
+
+        void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+        void draw(const RDP::RAIL::WindowIcon                     & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+        void draw(const RDP::RAIL::CachedIcon                     & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+        void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+        void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+        void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+        void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+        void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+
+        void draw(RDPColCache   const & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+        void draw(RDPBrushCache const & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+
+        void set_pointer(Pointer    const & pointer) override {
+            gdi::GraphicCoreAccess::graphic_proxy(*this).set_pointer(pointer);
+        }
+
+        void set_palette(BGRPalette const & palette) override {
+            gdi::GraphicCoreAccess::graphic_proxy(*this).set_palette(palette);
+        }
+
+        void sync() override {
+            gdi::GraphicCoreAccess::graphic_proxy(*this).sync();
+        }
+
+        void set_row(std::size_t rownum, const uint8_t * data) override {
+            gdi::GraphicCoreAccess::graphic_proxy(*this).set_row(rownum, data);
+        }
+
+        void begin_update() override {
+            gdi::GraphicCoreAccess::graphic_proxy(*this).begin_update();
+        }
+
+        void end_update() override {
+            gdi::GraphicCoreAccess::graphic_proxy(*this).end_update();
+        }
+
+    protected:
+        template<class... Ts>
+        void draw_impl(Ts const & ... args) {
+            gdi::GraphicCoreAccess::graphic_proxy(*this).draw(args...);
+        }
+
+    public:
         PtrColorConverter cmd_color_distributor;
         MouseTrace const & mouse;
         std::vector<GdRef> gds;
@@ -49,7 +112,7 @@ public:
         gdi::RngByBpp<std::vector<GdRef>::iterator> rng_by_bpp;
 
         Graphic(gdi::GraphicDepth const & depth, MouseTrace const & mouse)
-        : gdi::GraphicProxyBase<Graphic>(depth)
+        : gdi::GraphicApi(depth)
         , mouse(mouse)
         {}
 
