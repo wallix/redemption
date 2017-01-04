@@ -1303,15 +1303,15 @@ public:
 
 };
 
-
 class Capture final
-: public gdi::GraphicBase<Capture>
+: public gdi::GraphicApi
 , public gdi::CaptureApi
 , public gdi::KbdInputApi
 , public gdi::CaptureProbeApi
 , public gdi::ExternalCaptureApi
 , public gdi::UpdateConfigCaptureApi
 {
+
     using Graphic = GraphicCaptureImpl;
 
     using Image = PngCapture;
@@ -1332,10 +1332,44 @@ class Capture final
 
     const bool is_replay_mod;
 
-    // Title changed
-    //@{
     using string_view = array_view_const_char;
 
+    friend gdi::GraphicCoreAccess;
+public:
+    void draw(RDP::FrameMarker    const & cmd) override { gdi::GraphicCoreAccess::draw(*this, cmd); }
+    void draw(RDPDestBlt          const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPOpaqueRect       const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPScrBlt           const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPPolygonSC        const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPPolygonCB        const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPPolyline         const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPEllipseSC        const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPEllipseCB        const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { gdi::GraphicCoreAccess::draw(*this,cmd, bmp); }
+    void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip, bmp);}
+    void draw(RDPMem3Blt          const & cmd, Rect const & clip, Bitmap const & bmp) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip, bmp); }
+    void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip, gly_cache); }
+
+    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+    void draw(const RDP::RAIL::WindowIcon                     & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+    void draw(const RDP::RAIL::CachedIcon                     & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+    void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+
+    void draw(RDPColCache   const & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+    void draw(RDPBrushCache const & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+private:
+    // Title changed
+    //@{
     struct TitleChangedFunctions final : NotifyTitleChanged
     {
         Capture & capture;
@@ -1444,7 +1478,7 @@ public:
         CryptoContext & cctx,
         Random & rnd,
         UpdateProgressData * update_progress_data)
-    : gdi::GraphicBase<Capture>(gdi::GraphicDepth::unspecified())
+    : gdi::GraphicApi(gdi::GraphicDepth::unspecified())
     , is_replay_mod(!authentifier)
     , capture_wrm(capture_wrm)
     , capture_png(capture_png)
