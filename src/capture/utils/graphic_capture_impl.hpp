@@ -189,12 +189,12 @@ public:
                 }
             }
         }
-        
-        virtual void set_depths(gdi::GraphicDepth const & depth) {
+
+        void set_depths(gdi::GraphicDepth const & depth) override {
             this->order_depth_ = depth;
         }
 
-        virtual gdi::GraphicDepth const & order_depth() const {
+        gdi::GraphicDepth const & order_depth() const override {
             return this->order_depth_;
         }
 
@@ -211,7 +211,6 @@ public:
     : graphic_api(gdi::GraphicDepth::unspecified(), mouse)
     , drawable(width, height, order_bpp)
     , order_bpp(order_bpp)
-    , order_depth_(gdi::GraphicDepth::unspecified())
     {
     }
 
@@ -235,16 +234,5 @@ public:
 
     Drawable & impl() { return this->drawable.impl(); }
     RDPDrawable & rdp_drawable() { return this->drawable; }
-    
-    virtual void set_depths(gdi::GraphicDepth const & depth) {
-        this->order_depth_ = depth;
-    }
-
-    virtual gdi::GraphicDepth const & order_depth() const {
-        return this->order_depth_;
-    }
-
-    gdi::GraphicDepth order_depth_;
-    
 };
 

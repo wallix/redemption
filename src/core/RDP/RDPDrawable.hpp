@@ -212,11 +212,11 @@ public:
         this->drawable.destblt(trect, cmd.rop);
     }
 
-    virtual void set_depths(gdi::GraphicDepth const & depths) {
+    void set_depths(gdi::GraphicDepth const & depths) override {
         this->order_depth_ = depths;
     }
 
-    virtual gdi::GraphicDepth const & order_depth() const {
+    gdi::GraphicDepth const & order_depth() const override {
         return this->order_depth_;
     }
 

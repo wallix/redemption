@@ -802,7 +802,7 @@ class SequencedVideoCaptureImpl
                 }
             }
             else {
-                ret = microseconds(interval - duration);
+                ret = interval - duration;
             }
 
             return std::min(ret, this->impl.video_sequencer.snapshot(now, x, y, ignore_frame_in_timeval));
@@ -1079,16 +1079,17 @@ public:
                             bmp_cache, gly_cache, ptr_cache,
                             dump_png24, wrm_compression_algorithm,
                             send_input, verbose)
-            , order_depth_(gdi::GraphicDepth::unspecified()) {};
+            , order_depth_(gdi::GraphicDepth::unspecified())
+        {}
 
         using GraphicToFile::GraphicToFile::draw;
         using GraphicToFile::GraphicToFile::capture_bpp;
 
-        virtual void set_depths(gdi::GraphicDepth const & depth) {
+        void set_depths(gdi::GraphicDepth const & depth) override {
             this->order_depth_ = depth;
         }
 
-        virtual gdi::GraphicDepth const & order_depth() const {
+        gdi::GraphicDepth const & order_depth() const override {
             return this->order_depth_;
         }
 
@@ -1875,11 +1876,11 @@ public:
         this->capture_probe_api.possible_active_window_change();
     }
 
-        virtual void set_depths(gdi::GraphicDepth const & depth) {
+    void set_depths(gdi::GraphicDepth const & depth) override {
         this->order_depth_ = depth;
     }
 
-    virtual gdi::GraphicDepth const & order_depth() const {
+    gdi::GraphicDepth const & order_depth() const override {
         return this->order_depth_;
     }
 

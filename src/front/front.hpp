@@ -213,11 +213,11 @@ private:
                 this->set_depths(gdi::GraphicDepth::from_bpp(bpp));
             }
 
-            virtual void set_depths(gdi::GraphicDepth const & depth) {
+            void set_depths(gdi::GraphicDepth const & depth) override {
                 this->order_depth_ = depth;
             }
 
-            virtual gdi::GraphicDepth const & order_depth() const {
+            gdi::GraphicDepth const & order_depth() const override {
                 return this->order_depth_;
             }
 
@@ -512,41 +512,41 @@ private:
             void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd);}
 
             void draw(RDPDestBlt          const & cmd, Rect const & clip) override {this->draw_impl( cmd, clip);}
-            
+
             void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override {this->draw_impl( cmd, clip);}
-            
+
             void draw(RDPPatBlt           const & cmd, Rect const & clip) override {
                 auto new_cmd = cmd;
                 gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
                 this->draw_impl( new_cmd, clip);
             }
-            
+
             void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) override {
                 auto new_cmd = cmd;
                 gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
                 this->draw_impl( new_cmd, clip);
             }
-            
+
             void draw(RDPOpaqueRect       const & cmd, Rect const & clip) override {
                 auto new_cmd = cmd;
                 gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
                 this->draw_impl( new_cmd, clip);
             }
-            
+
             void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip) override {
                 auto new_cmd = cmd;
                 gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
                 this->draw_impl( new_cmd, clip);
             }
-            
+
             void draw(RDPScrBlt           const & cmd, Rect const & clip) override {
                 this->draw_impl( cmd, clip);
             }
-            
+
             void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override {
                 this->draw_impl( cmd, clip);
             }
-            
+
             void draw(RDPLineTo           const & cmd, Rect const & clip) override {
                 auto new_cmd = cmd;
                 gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
@@ -558,25 +558,25 @@ private:
                 gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
                 this->draw_impl( new_cmd, clip);
             }
-            
+
             void draw(RDPPolygonCB        const & cmd, Rect const & clip) override {
                 auto new_cmd = cmd;
                 gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
                 this->draw_impl( new_cmd, clip);
             }
-            
+
             void draw(RDPPolyline         const & cmd, Rect const & clip) override {
                 auto new_cmd = cmd;
                 gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
                 this->draw_impl( new_cmd, clip);
             }
-            
+
             void draw(RDPEllipseSC        const & cmd, Rect const & clip) override {
                 auto new_cmd = cmd;
                 gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
                 this->draw_impl( new_cmd, clip);
             }
-            
+
             void draw(RDPEllipseCB        const & cmd, Rect const & clip) override {
                 auto new_cmd = cmd;
                 gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
@@ -609,7 +609,7 @@ private:
             void draw(const RDP::RAIL::WindowIcon                     & cmd) override {
                 this->draw_impl( cmd);
             }
-            
+
             void draw(const RDP::RAIL::CachedIcon                     & cmd) override {
                 this->draw_impl( cmd);
             }
@@ -621,11 +621,11 @@ private:
             void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override {
                 this->draw_impl( cmd);
             }
-            
+
             void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override {
                 this->draw_impl( cmd);
             }
-            
+
             void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override {
                 this->draw_impl( cmd);
             }
@@ -637,7 +637,7 @@ private:
             void draw(RDPColCache   const & cmd) override {
                 this->draw_impl( cmd);
             }
-            
+
             void draw(RDPBrushCache const & cmd) override {
                 this->draw_impl( cmd);
             }
@@ -693,12 +693,12 @@ private:
 
             ColorConverter color_converter;
             Graphics::PrivateGraphicsUpdatePDU & graphics;
-            
-            virtual void set_depths(gdi::GraphicDepth const & depth) {
+
+            void set_depths(gdi::GraphicDepth const & depth) override {
                 this->order_depth_ = depth;
             }
 
-            virtual gdi::GraphicDepth const & order_depth() const {
+            gdi::GraphicDepth const & order_depth() const override {
                 return this->order_depth_;
             }
 
@@ -1007,11 +1007,11 @@ public:
         delete this->capture;
     }
 
-    virtual void set_depths(gdi::GraphicDepth const & depth) {
+    void set_depths(gdi::GraphicDepth const & depth) override {
         this->order_depth_ = depth;
     }
 
-    virtual gdi::GraphicDepth const & order_depth() const {
+    gdi::GraphicDepth const & order_depth() const override {
         return this->order_depth_;
     }
 
@@ -1164,7 +1164,7 @@ public:
         PngParams png_params = {
                 0, 0,
                 ini.get<cfg::video::png_interval>(),
-                100u, 
+                100u,
                 ini.get<cfg::video::png_limit>(),
                 false,
                 true
@@ -1174,14 +1174,14 @@ public:
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
         const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
-        
+
         bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        bool capture_png = bool(capture_flags & CaptureFlags::png) 
+        bool capture_png = bool(capture_flags & CaptureFlags::png)
                         && (!authentifier || png_params.png_limit > 0);
-        bool capture_pattern_checker = authentifier 
+        bool capture_pattern_checker = authentifier
             && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
                 || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
-                
+
         bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
         bool capture_flv = bool(capture_flags & CaptureFlags::flv);
         bool capture_flv_full = full_video;
@@ -1193,7 +1193,7 @@ public:
           || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
           : false
         ;
-                
+
         OcrParams ocr_params = {};
 
         this->capture = new Capture(  capture_wrm, wrm_params

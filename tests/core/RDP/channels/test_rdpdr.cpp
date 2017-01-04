@@ -401,7 +401,6 @@ BOOST_AUTO_TEST_CASE(DeviceAnnounceHeaderEmit)
             "\x00\x00\x00\x00";
 
     StaticOutStream<128> stream;
-    uint32_t DeviceIds[] = {1, 2, 3};
     rdpdr::DeviceAnnounceHeader pdu(rdpdr::RDPDR_DTYP_SMARTCARD, 01, "SCARD", nullptr, 0);
     pdu.emit(stream);
 
