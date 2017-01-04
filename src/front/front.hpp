@@ -535,7 +535,7 @@ private:
 
             ColorConverter color_converter;
             Graphics::PrivateGraphicsUpdatePDU & graphics;
-            
+
             virtual void set_depths(gdi::GraphicDepth const & depth) {
                 this->order_depth_ = depth;
             }
@@ -862,8 +862,9 @@ public:
             }
         }
 
-        if (this->client_info.width != width
-        || this->client_info.height != height) {
+        if ((this->client_info.width != width
+        || this->client_info.height != height)
+        && !this->client_info.remote_program) {
             /* older client can't resize */
             if (client_info.build <= 419) {
                 LOG(LOG_WARNING, "Resizing is not available on older RDP clients");
@@ -973,7 +974,7 @@ public:
         PngParams png_params = {
                 0, 0,
                 ini.get<cfg::video::png_interval>(),
-                100u, 
+                100u,
                 ini.get<cfg::video::png_limit>(),
                 false,
                 true
@@ -983,14 +984,14 @@ public:
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
         const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
-        
+
         bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        bool capture_png = bool(capture_flags & CaptureFlags::png) 
+        bool capture_png = bool(capture_flags & CaptureFlags::png)
                         && (!authentifier || png_params.png_limit > 0);
-        bool capture_pattern_checker = authentifier 
+        bool capture_pattern_checker = authentifier
             && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
                 || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
-                
+
         bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
         bool capture_flv = bool(capture_flags & CaptureFlags::flv);
         bool capture_flv_full = full_video;
@@ -1002,7 +1003,7 @@ public:
           || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
           : false
         ;
-                
+
         OcrParams ocr_params = {};
 
         this->capture = new Capture(  capture_wrm, wrm_params

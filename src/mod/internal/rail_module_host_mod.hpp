@@ -61,7 +61,7 @@ public:
     : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(),
                            client_execute, vars.get<cfg::theme>())
     , rail_module_host(front, widget_rect.x, widget_rect.y,
-                       widget_rect.cx + 1, widget_rect.cy + 1,
+                       widget_rect.cx, widget_rect.cy,
                        this->screen, this, std::move(managed_mod),
                        vars.get<cfg::font>(), vars.get<cfg::theme>())
     , vars(vars)
@@ -90,12 +90,6 @@ public:
 
 public:
     // RdpInput
-
-    void rdp_input_invalidate(const Rect& r) override {
-        LocallyIntegrableMod::rdp_input_invalidate(r);
-
-        this->rail_module_host.rdp_input_invalidate(r);
-    }
 
     void rdp_input_scancode(long param1, long param2, long param3,
                             long param4, Keymap2 * keymap) {
@@ -162,7 +156,7 @@ public:
     void move_size_widget(int16_t left, int16_t top, uint16_t width,
                           uint16_t height) override
     {
-        this->rail_module_host.move_size_widget(left, top, width + 1, height + 1);
+        this->rail_module_host.move_size_widget(left, top, width, height);
 
         this->rdp_input_invalidate(Rect(left, top, width, height));
     }

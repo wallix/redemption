@@ -934,6 +934,10 @@ public:
 private:
     void update_cursor_button_rects() {
         if (this->horizontal) {
+            if (!this->cx()) {
+                return;
+            }
+
             this->cursor_button_rect.x  = this->x() + this->button_width_or_height - 1 +
                                               (this->cx() - this->button_width_or_height * 2 + 2 - this->button_width_or_height) *
                                                   this->current_value / this->max_value;
@@ -942,6 +946,10 @@ private:
             this->cursor_button_rect.cy = this->cy() - 2;
         }
         else {
+            if (!this->cy()) {
+                return;
+            }
+
             this->cursor_button_rect.x  = this->x() + 1;
             this->cursor_button_rect.y  = this->y() + this->button_width_or_height - 1 +
                                               (this->cy() - this->button_width_or_height * 2 + 2 - this->button_width_or_height) *
