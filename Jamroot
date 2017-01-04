@@ -57,7 +57,7 @@ alias install :
     install-etc-ppocr
     install-share
 ;
-alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient rdpheadless ;
+alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient rdpheadless rdpinichecker ;
 alias libs    : libredrec ;
 
 alias ocr_tools : display_learning extract_text ppocr_extract_text ;
@@ -286,7 +286,7 @@ exe rdpheadless
         $(EXE_DEPENDENCIES)
     ;
 
-exe ini_checker
+exe rdpinichecker
     :
         $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp
     :
