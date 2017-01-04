@@ -364,8 +364,8 @@ private:
 
             this->hscroll.set_max_value(new_max_value);
 
-            if (this->mod_visible_rect.x > new_max_value) {
-                this->mod_visible_rect.x = new_max_value;
+            if (this->mod_visible_rect.x > static_cast<int>(new_max_value)) {
+                this->mod_visible_rect.x = static_cast<int>(new_max_value);
             }
 
             this->hscroll.set_current_value(this->mod_visible_rect.x);
@@ -378,8 +378,8 @@ private:
 
             this->vscroll.set_max_value(new_max_value);
 
-            if (this->mod_visible_rect.y > new_max_value) {
-                this->mod_visible_rect.y = new_max_value;
+            if (this->mod_visible_rect.y > static_cast<int>(new_max_value)) {
+                this->mod_visible_rect.y = static_cast<int>(new_max_value);
             }
 
             this->vscroll.set_current_value(this->mod_visible_rect.y);
@@ -437,25 +437,82 @@ public:
     void notify(Widget2* /*widget*/, NotifyApi::notify_event_t event) override {
         gdi::GraphicApi& drawable_ = this->get_drawable();
 
+        Widget2* parentWidget = &this->parent;
+        while (&parentWidget->parent != &parentWidget->parent.parent) {
+            parentWidget = &parentWidget->parent;
+        }
+
         if (event == NOTIFY_HSCROLL) {
             if (this->hscroll_added) {
+                int16_t old_mod_visible_rect_x = this->mod_visible_rect.x;
+
                 this->mod_visible_rect.x = this->hscroll.get_current_value();
 
-                Rect mod_update_rect = this->vision_rect.offset(
-                    -this->x() + this->mod_visible_rect.x, -this->y() + this->mod_visible_rect.y);
-                if (!mod_update_rect.isempty()) {
-                    this->module_holder.rdp_input_invalidate(mod_update_rect);
+                Rect visible_vision_rect = this->vision_rect.intersect(parentWidget->get_rect());
+                int16_t offset_x = old_mod_visible_rect_x - this->mod_visible_rect.x;
+
+                Rect dest_rect = visible_vision_rect.offset(offset_x, 0).intersect(visible_vision_rect);
+                Rect src_rect  = dest_rect.offset(-offset_x, 0);
+
+                if (src_rect.intersect(dest_rect).isempty()) {
+                    this->module_holder.rdp_input_invalidate(dest_rect.offset(
+                            -this->x() + this->mod_visible_rect.x,
+                            -this->y() + this->mod_visible_rect.y
+                        ));
+                }
+                else {
+                    RDPScrBlt cmd(dest_rect, 0xCC, src_rect.x, src_rect.y);
+
+                    drawable_.draw(cmd, visible_vision_rect);
+
+                    SubRegion region;
+
+                    region.rects.push_back(visible_vision_rect);
+                    region.subtract_rect(dest_rect);
+
+                    REDASSERT(region.rects.size() == 1);
+
+                    this->module_holder.rdp_input_invalidate(region.rects[0].offset(
+                            -this->x() + this->mod_visible_rect.x,
+                            -this->y() + this->mod_visible_rect.y
+                        ));
                 }
             }
         }
         else if (event == NOTIFY_VSCROLL) {
             if (this->vscroll_added) {
+                int16_t old_mod_visible_rect_y = this->mod_visible_rect.y;
+
                 this->mod_visible_rect.y = this->vscroll.get_current_value();
 
-                Rect mod_update_rect = this->vision_rect.offset(
-                    -this->x() + this->mod_visible_rect.x, -this->y() + this->mod_visible_rect.y);
-                if (!mod_update_rect.isempty()) {
-                    this->module_holder.rdp_input_invalidate(mod_update_rect);
+                Rect visible_vision_rect = this->vision_rect.intersect(parentWidget->get_rect());
+                int16_t offset_y = old_mod_visible_rect_y - this->mod_visible_rect.y;
+
+                Rect dest_rect = visible_vision_rect.offset(0, offset_y).intersect(visible_vision_rect);
+                Rect src_rect  = dest_rect.offset(0, -offset_y);
+
+                if (src_rect.intersect(dest_rect).isempty()) {
+                    this->module_holder.rdp_input_invalidate(dest_rect.offset(
+                            -this->x() + this->mod_visible_rect.x,
+                            -this->y() + this->mod_visible_rect.y
+                        ));
+                }
+                else {
+                    RDPScrBlt cmd(dest_rect, 0xCC, src_rect.x, src_rect.y);
+
+                    drawable_.draw(cmd, visible_vision_rect);
+
+                    SubRegion region;
+
+                    region.rects.push_back(visible_vision_rect);
+                    region.subtract_rect(dest_rect);
+
+                    REDASSERT(region.rects.size() == 1);
+
+                    this->module_holder.rdp_input_invalidate(region.rects[0].offset(
+                            -this->x() + this->mod_visible_rect.x,
+                            -this->y() + this->mod_visible_rect.y
+                        ));
                 }
             }
         }

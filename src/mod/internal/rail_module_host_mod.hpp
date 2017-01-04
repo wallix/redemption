@@ -92,7 +92,7 @@ public:
     // RdpInput
 
     void rdp_input_scancode(long param1, long param2, long param3,
-                            long param4, Keymap2 * keymap) {
+                            long param4, Keymap2 * keymap) override {
         LocallyIntegrableMod::rdp_input_scancode(param1, param2, param3,
             param4, keymap);
 
