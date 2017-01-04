@@ -73,8 +73,7 @@ class RDPDrawable
 
 public:
     RDPDrawable(const uint16_t width, const uint16_t height, int order_bpp)
-    : GraphicApi(gdi::GraphicDepth::from_bpp(order_bpp))
-    , drawable(width, height)
+    : drawable(width, height)
     , frame_start_count(0)
     , mod_palette_rgb(BGRPalette::classic_332())
     , order_depth_(gdi::GraphicDepth::from_bpp(order_bpp))

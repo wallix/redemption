@@ -172,8 +172,7 @@ public:
                  , const bool use_compact_packets
                  , size_t max_bitmap_size
                  , Verbose verbose)
-    : GraphicApi(gdi::GraphicDepth::unspecified())
-    , stream_orders(stream_orders)
+    : stream_orders(stream_orders)
     , stream_bitmaps(stream_bitmaps)
     , capture_bpp(bpp)
     , bitmap_cache_version(bitmap_cache_version)

@@ -250,7 +250,6 @@ public:
                      std::unique_ptr<mod_api> managed_mod, Font const & font,
                      Theme const & theme, int group_id = 0)
     : WidgetParent(drawable, parent, notifier, group_id)
-    , gdi::GraphicApi(gdi::GraphicDepth::unspecified())
     , module_holder(*this, std::move(managed_mod))
     , drawable_ref(drawable)
     , hscroll(drawable, *this, this, true, 0, theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font)

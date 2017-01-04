@@ -135,8 +135,7 @@ protected:
 
 public:
     ProtectGraphics(gdi::GraphicApi & drawable, Rect const & rect)
-    : gdi::GraphicApi(drawable.order_depth())
-    , protected_rect(rect)
+    : protected_rect(rect)
     , drawable(drawable)
     {}
 

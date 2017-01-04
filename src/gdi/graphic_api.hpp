@@ -155,9 +155,7 @@ constexpr bool operator >= (GraphicDepth const & depth1, GraphicDepth const & de
 
 struct GraphicApi : private noncopyable
 {
-    GraphicApi(GraphicDepth const & order_depths /* = GraphicDepth::unspecified() */)
-//    : order_depth_(order_depths)
-    {}
+    GraphicApi() {}
 
     virtual ~GraphicApi() = default;
 
@@ -379,8 +377,7 @@ public:
     gdi::GraphicDepth order_depth_;
 
     BlackoutGraphic(gdi::GraphicDepth const & depths)
-        : GraphicApi(depths)
-        , order_depth_(depths) {}
+        : order_depth_(depths) {}
 };
 
 

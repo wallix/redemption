@@ -678,8 +678,7 @@ private:
                 Graphics::PrivateGraphicsUpdatePDU & graphics,
                 ColorConverter const & color_converter
             )
-            : gdi::GraphicApi(depth)
-            , color_converter(color_converter)
+            : color_converter(color_converter)
             , graphics(graphics)
             , order_depth_(depth)
             {}

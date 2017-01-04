@@ -124,8 +124,7 @@ public:
                                  uint16_t front_width, uint16_t front_height,
                                  Font const & font, Theme const & theme, auth_api* acl,
                                  char const* session_probe_window_title, RDPVerbose verbose)
-    : gdi::GraphicApi(gdi::GraphicDepth::unspecified())
-    , front(front)
+    : front(front)
     , mod(mod)
     , lang(lang)
     , front_width(front_width)

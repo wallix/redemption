@@ -153,8 +153,7 @@ public:
         gdi::RngByBpp<std::vector<GdRef>::iterator> rng_by_bpp;
 
         Graphic(gdi::GraphicDepth const & depth, MouseTrace const & mouse)
-        : gdi::GraphicApi(depth)
-        , mouse(mouse)
+        : mouse(mouse)
         {}
 
         gdi::GraphicDispatcherList<std::vector<GdRef>>

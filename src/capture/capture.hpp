@@ -1477,8 +1477,7 @@ public:
         CryptoContext & cctx,
         Random & rnd,
         UpdateProgressData * update_progress_data)
-    : gdi::GraphicApi(gdi::GraphicDepth::unspecified())
-    , is_replay_mod(!authentifier)
+    : is_replay_mod(!authentifier)
     , capture_wrm(capture_wrm)
     , capture_png(capture_png)
     , capture_pattern_checker(capture_pattern_checker)
