@@ -65,7 +65,7 @@
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/front_api.hpp"
 #include "core/channel_list.hpp"
-#include "mod/mod_api.hpp"
+//#include "mod/mod_api.hpp"
 #include "utils/bitmap.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
@@ -295,6 +295,9 @@ public:
     , _running(false)
     , order_depth_(gdi::GraphicDepth::unspecified())
     {
+        SSL_load_error_strings();
+        SSL_library_init();
+
         this->_to_client_sender._front = this;
         this->_keymap.init_layout(this->_info.keylayout);
 
@@ -978,11 +981,11 @@ public:
         }
     }
 
-    virtual void set_depths(gdi::GraphicDepth const & depth) {
+    void set_depths(gdi::GraphicDepth const & depth) override {
         this->order_depth_ = depth;
     }
 
-    virtual gdi::GraphicDepth const & order_depth() const {
+    gdi::GraphicDepth const & order_depth() const override {
         return this->order_depth_;
     }
 

@@ -802,7 +802,7 @@ class SequencedVideoCaptureImpl
                 }
             }
             else {
-                ret = microseconds(interval - duration);
+                ret = interval - duration;
             }
 
             return std::min(ret, this->impl.video_sequencer.snapshot(now, x, y, ignore_frame_in_timeval));
@@ -1079,16 +1079,17 @@ public:
                             bmp_cache, gly_cache, ptr_cache,
                             dump_png24, wrm_compression_algorithm,
                             send_input, verbose)
-            , order_depth_(gdi::GraphicDepth::unspecified()) {};
+            , order_depth_(gdi::GraphicDepth::unspecified())
+        {}
 
         using GraphicToFile::GraphicToFile::draw;
         using GraphicToFile::GraphicToFile::capture_bpp;
 
-        virtual void set_depths(gdi::GraphicDepth const & depth) {
+        void set_depths(gdi::GraphicDepth const & depth) override {
             this->order_depth_ = depth;
         }
 
-        virtual gdi::GraphicDepth const & order_depth() const {
+        gdi::GraphicDepth const & order_depth() const override {
             return this->order_depth_;
         }
 
@@ -1303,15 +1304,15 @@ public:
 
 };
 
-
 class Capture final
-: public gdi::GraphicBase<Capture>
+: public gdi::GraphicApi
 , public gdi::CaptureApi
 , public gdi::KbdInputApi
 , public gdi::CaptureProbeApi
 , public gdi::ExternalCaptureApi
 , public gdi::UpdateConfigCaptureApi
 {
+
     using Graphic = GraphicCaptureImpl;
 
     using Image = PngCapture;
@@ -1332,10 +1333,43 @@ class Capture final
 
     const bool is_replay_mod;
 
-    // Title changed
-    //@{
     using string_view = array_view_const_char;
 
+public:
+    void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
+    void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPOpaqueRect       const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPScrBlt           const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPolygonSC        const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPolygonCB        const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPolyline         const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPEllipseSC        const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPEllipseCB        const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_impl(cmd, bmp); }
+    void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
+    void draw(RDPMem3Blt          const & cmd, Rect const & clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp); }
+    void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, gly_cache); }
+
+    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::CachedIcon                     & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override { this->draw_impl(cmd); }
+
+    void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
+    void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
+private:
+    // Title changed
+    //@{
     struct TitleChangedFunctions final : NotifyTitleChanged
     {
         Capture & capture;
@@ -1444,8 +1478,7 @@ public:
         CryptoContext & cctx,
         Random & rnd,
         UpdateProgressData * update_progress_data)
-    : gdi::GraphicBase<Capture>(gdi::GraphicDepth::unspecified())
-    , is_replay_mod(!authentifier)
+    : is_replay_mod(!authentifier)
     , capture_wrm(capture_wrm)
     , capture_png(capture_png)
     , capture_pattern_checker(capture_pattern_checker)
@@ -1801,7 +1834,6 @@ protected:
         this->capture_api.resume_capture(now);
     }
 
-    friend gdi::GraphicCoreAccess;
     template<class... Ts>
     void draw_impl(const Ts & ... args) {
         if (this->graphic_api) {
@@ -1844,11 +1876,11 @@ public:
         this->capture_probe_api.possible_active_window_change();
     }
 
-        virtual void set_depths(gdi::GraphicDepth const & depth) {
+    void set_depths(gdi::GraphicDepth const & depth) override {
         this->order_depth_ = depth;
     }
 
-    virtual gdi::GraphicDepth const & order_depth() const {
+    gdi::GraphicDepth const & order_depth() const override {
         return this->order_depth_;
     }
 
