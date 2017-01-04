@@ -119,7 +119,7 @@
 #include "capture/ocr_params.hpp"
 
 
-class Front : public gdi::GraphicBase<Front, FrontAPI>, public ActivityChecker {
+class Front : public FrontAPI, public ActivityChecker {
     using FrontAPI::draw;
 
     bool has_activity = true;
@@ -703,6 +703,41 @@ private:
     bool client_support_monitor_layout_pdu = false;
 
 public:
+    friend gdi::GraphicCoreAccess;
+
+    void draw(RDP::FrameMarker    const & cmd) override { gdi::GraphicCoreAccess::draw(*this, cmd); }
+    void draw(RDPDestBlt          const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPOpaqueRect       const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPScrBlt           const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPPolygonSC        const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPPolygonCB        const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPPolyline         const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPEllipseSC        const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPEllipseCB        const & cmd, Rect const & clip) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip); }
+    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { gdi::GraphicCoreAccess::draw(*this,cmd, bmp); }
+    void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip, bmp);}
+    void draw(RDPMem3Blt          const & cmd, Rect const & clip, Bitmap const & bmp) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip, bmp); }
+    void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) override { gdi::GraphicCoreAccess::draw(*this,cmd, clip, gly_cache); }
+
+    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+    void draw(const RDP::RAIL::WindowIcon                     & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+    void draw(const RDP::RAIL::CachedIcon                     & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+    void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+
+    void draw(RDPColCache   const & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+    void draw(RDPBrushCache const & cmd) override { gdi::GraphicCoreAccess::draw(*this,cmd); }
+
+public:
     Front(  Transport & trans
           , Random & gen
           , Inifile & ini
@@ -713,7 +748,7 @@ public:
           , const char * server_capabilities_filename = ""
           , Transport * persistent_key_list_transport = nullptr
           )
-    : gdi::GraphicBase<Front, FrontAPI>(ini.get<cfg::globals::notimestamp>(), ini.get<cfg::globals::nomouse>())
+    : FrontAPI(ini.get<cfg::globals::notimestamp>(), ini.get<cfg::globals::nomouse>())
     , capture_state(CAPTURE_STATE_UNKNOWN)
     , capture(nullptr)
     , verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))

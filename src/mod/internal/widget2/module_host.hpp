@@ -522,8 +522,6 @@ public:
     }
 
 private:
-    friend gdi::GraphicCoreAccess;
-
     void begin_update() override
     {
         gdi::GraphicApi& drawable_ = this->get_drawable();
