@@ -225,26 +225,6 @@ private:
 };
 
 
-struct GraphicCoreAccess
-{
-    template<class Derived, class... Ts>
-    static void draw(Derived & derived, Ts const & ... args) {
-        derived.draw_impl(args...);
-    }
-
-    template<class Derived>
-    static auto graphic_proxy(Derived & derived)
-    -> decltype(derived.get_graphic_proxy()) {
-        return derived.get_graphic_proxy();
-    }
-
-    template<class Derived>
-    static auto color_converter(Derived const & derived)
-    -> decltype(derived.get_color_converter()) {
-        return derived.get_color_converter();
-    }
-};
-
 struct draw_tag {};
 struct set_tag {};
 struct sync_tag {};
@@ -379,8 +359,6 @@ struct GraphicUniformProjection
  * private:
  *   std::vector<std::reference_wrapper<gdi::GraphicApi>> graphics;
  *
- *   friend gdi::GraphicCoreAccess;
- *
  *   GraphicDispatcherList<std::vector<std::reference_wrapper<gdi::GraphicApi>>>
  *   get_graphic_proxy() { return this->graphics; }
  * };
@@ -403,7 +381,6 @@ struct GraphicDispatcherList
 
 class BlackoutGraphic final : public GraphicApi
 {
-    friend GraphicCoreAccess;
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
     void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
