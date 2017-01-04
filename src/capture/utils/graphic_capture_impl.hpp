@@ -29,6 +29,49 @@
 #include "utils/sugar/range.hpp"
 
 
+namespace gdi {
+    template<class Projection>
+    struct GraphicUniformProjection
+    {
+        Projection projection_;
+
+        template<class Graphic>
+        auto operator()(Graphic & graphic)
+        -> GraphicUniformDistribution<decltype(projection_(graphic))>
+        {
+            return {this->projection_(graphic)};
+        }
+    };
+
+    template<class GraphicList, class Projection = self_fn>
+    struct GraphicUniformDispatcherList
+    {
+        GraphicList & graphics_;
+        Projection projection_;
+
+        template<class Tag, class... Ts>
+        void operator()(Tag tag, Ts const & ... args) {
+            for (auto && graphic : this->graphics_) {
+                this->projection_(graphic)(tag, args...);
+            }
+        }
+    };
+
+    template<class GraphicList, class Projection = self_fn>
+    struct GraphicDispatcherList
+    : GraphicUniformProxy<
+        GraphicUniformDispatcherList<
+            GraphicList,
+            GraphicUniformProjection<Projection>
+        >
+    >
+    {
+        GraphicDispatcherList(GraphicList & graphic_list, Projection proj = Projection{})
+        : GraphicDispatcherList::proxy_type{{graphic_list, GraphicUniformProjection<Projection>{proj}}}
+        {}
+    };
+}
+
 class GraphicCaptureImpl
 {
 public:

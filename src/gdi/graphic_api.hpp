@@ -324,59 +324,7 @@ struct self_fn
     template<class T> T & operator()(std::reference_wrapper<T> x) const { return x; }
 };
 
-template<class GraphicList, class Projection = self_fn>
-struct GraphicUniformDispatcherList
-{
-    GraphicList & graphics_;
-    Projection projection_;
 
-    template<class Tag, class... Ts>
-    void operator()(Tag tag, Ts const & ... args) {
-        for (auto && graphic : this->graphics_) {
-            this->projection_(graphic)(tag, args...);
-        }
-    }
-};
-
-
-template<class Projection>
-struct GraphicUniformProjection
-{
-    Projection projection_;
-
-    template<class Graphic>
-    auto operator()(Graphic & graphic)
-    -> GraphicUniformDistribution<decltype(projection_(graphic))>
-    {
-        return {this->projection_(graphic)};
-    }
-};
-
-/**
- * \code
- * struct GraphicDispatcher : gdi::GraphicProxyBase<Graphic>
- * {
- * private:
- *   std::vector<std::reference_wrapper<gdi::GraphicApi>> graphics;
- *
- *   GraphicDispatcherList<std::vector<std::reference_wrapper<gdi::GraphicApi>>>
- *   get_graphic_proxy() { return this->graphics; }
- * };
- * \endcode
- */
-template<class GraphicList, class Projection = self_fn>
-struct GraphicDispatcherList
-: GraphicUniformProxy<
-    GraphicUniformDispatcherList<
-        GraphicList,
-        GraphicUniformProjection<Projection>
-    >
->
-{
-    GraphicDispatcherList(GraphicList & graphic_list, Projection proj = Projection{})
-    : GraphicDispatcherList::proxy_type{{graphic_list, GraphicUniformProjection<Projection>{proj}}}
-    {}
-};
 
 
 class BlackoutGraphic final : public GraphicApi
