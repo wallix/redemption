@@ -5488,6 +5488,8 @@ public:
     void process_save_session_info(InStream & stream) {
         RDP::SaveSessionInfoPDUData_Recv ssipdudata(stream);
 
+        this->logged_on = CLIENT_LOGGED_ON;
+
         switch (ssipdudata.infoType) {
         case RDP::INFOTYPE_LOGON:
         {
@@ -5549,6 +5551,7 @@ public:
             if (lie.FieldsPresent & RDP::LOGON_EX_LOGONERRORS) {
                 LOG(LOG_INFO, "process save session info : Logon Errors Info");
 
+                this->logged_on = CLIENT_LOGGED_OFF;
                 RDP::LogonErrorsInfo_Recv lei(lif.payload);
 
                 if ((RDP::LOGON_MSG_SESSION_CONTINUE != lei.ErrorNotificationType) &&
@@ -5950,6 +5953,10 @@ public:
     }
 
 public:
+
+    BackEvent_t get_signal_event() {
+        return this->event.signal;
+    }
 
     void send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2) {
         if (this->verbose & RDPVerbose::basic_trace3){

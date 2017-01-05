@@ -85,6 +85,14 @@ protected:
     wait_obj event;
 
 public:
+     enum : uint8_t {
+         CLIENT_LOGGED_ON,
+         CLIENT_LOGGED_OFF,
+         CLIENT_LOGGING
+     };
+
+    uint8_t logged_on = CLIENT_LOGGING;
+
     mod_api()
     {
         this->event.set(0);
