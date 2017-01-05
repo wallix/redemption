@@ -155,8 +155,6 @@ public:
         }
 
         Rect result_rect = this->window_rect.shrink(1);
-        result_rect.cx--;
-        result_rect.cy--;
 
         result_rect.y  += TITLE_BAR_HEIGHT;
         result_rect.cy -= TITLE_BAR_HEIGHT;
@@ -835,8 +833,6 @@ public:
 
                     {
                         Rect result_rect = this->window_rect.shrink(1);
-                        result_rect.cx--;
-                        result_rect.cy--;
 
                         result_rect.y  += 24;
                         result_rect.cy -= 24;
@@ -1194,8 +1190,6 @@ public:
                 if (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button) {
                     {
                         Rect result_rect = this->window_rect.shrink(1);
-                        result_rect.cx--;
-                        result_rect.cy--;
 
                         result_rect.y  += 24;
                         result_rect.cy -= 24;
@@ -1258,8 +1252,6 @@ public:
 
                 {
                     Rect result_rect = this->window_rect.shrink(1);
-                    result_rect.cx--;
-                    result_rect.cy--;
 
                     result_rect.y  += 24;
                     result_rect.cy -= 24;
@@ -1333,8 +1325,6 @@ public:
 
             {
                 Rect result_rect = this->window_rect.shrink(1);
-                result_rect.cx--;
-                result_rect.cy--;
 
                 result_rect.y  += 24;
                 result_rect.cy -= 24;
@@ -1402,8 +1392,6 @@ public:
 
             {
                 Rect result_rect = this->window_rect.shrink(1);
-                result_rect.cx--;
-                result_rect.cy--;
 
                 result_rect.y  += 24;
                 result_rect.cy -= 24;
@@ -2458,8 +2446,6 @@ protected:
 
             {
                 Rect result_rect = this->window_rect.shrink(1);
-                result_rect.cx--;
-                result_rect.cy--;
 
                 result_rect.y  += 24;
                 result_rect.cy -= 24;

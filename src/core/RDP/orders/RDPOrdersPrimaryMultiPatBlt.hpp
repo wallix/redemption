@@ -428,6 +428,10 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         printf("%s\n", buffer);
     }
+
+    void move(int offset_x, int offset_y) {
+        this->rect = this->rect.offset(offset_x, offset_y);
+    }
 };  // class RDPMultiPatBlt
 
 }   // namespace RDP

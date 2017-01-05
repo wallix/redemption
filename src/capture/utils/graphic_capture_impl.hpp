@@ -30,10 +30,53 @@
 
 
 namespace gdi {
-    template<class Projection>
+
+    template<class Graphic>
+    struct GraphicUniformDistribution
+    {
+        Graphic graphic_;
+
+        template<class... Ts>
+        void operator()(draw_tag, Ts const & ... args) {
+            this->graphic_.draw(args...);
+        }
+
+        void operator()(set_tag, Pointer const & pointer) {
+            this->graphic_.set_pointer(pointer);
+        }
+
+        void operator()(set_tag, BGRPalette const & palette) {
+            this->graphic_.set_palette(palette);
+        }
+
+        void operator()(sync_tag) {
+            this->graphic_.sync();
+        }
+
+        void operator()(set_row_tag, std::size_t rownum, const uint8_t * data) {
+            this->graphic_.set_row(rownum, data);
+        }
+
+        void operator()(begin_update_tag) {
+            this->graphic_.begin_update();
+        }
+
+        void operator()(end_update_tag) {
+            this->graphic_.end_update();
+        }
+    };
+
+    struct self_fn
+    {
+        template<class T> T & operator()(T & x) const { return x; }
+        template<class T> T operator()(T && x) const { return std::move(x); }
+
+        template<class T> T & operator()(std::reference_wrapper<T> x) const { return x; }
+    };
+
     struct GraphicUniformProjection
     {
-        Projection projection_;
+        self_fn projection_;
 
         template<class Graphic>
         auto operator()(Graphic & graphic)
@@ -43,11 +86,11 @@ namespace gdi {
         }
     };
 
-    template<class GraphicList, class Projection = self_fn>
+    template<class GraphicList>
     struct GraphicUniformDispatcherList
     {
         GraphicList & graphics_;
-        Projection projection_;
+        GraphicUniformProjection projection_;
 
         template<class Tag, class... Ts>
         void operator()(Tag tag, Ts const & ... args) {
@@ -57,17 +100,11 @@ namespace gdi {
         }
     };
 
-    template<class GraphicList, class Projection = self_fn>
-    struct GraphicDispatcherList
-    : GraphicUniformProxy<
-        GraphicUniformDispatcherList<
-            GraphicList,
-            GraphicUniformProjection<Projection>
-        >
-    >
+    template<class GraphicList>
+    struct GraphicDispatcherList : GraphicUniformProxy<GraphicUniformDispatcherList<GraphicList>>
     {
-        GraphicDispatcherList(GraphicList & graphic_list, Projection proj = Projection{})
-        : GraphicDispatcherList::proxy_type{{graphic_list, GraphicUniformProjection<Projection>{proj}}}
+        GraphicDispatcherList(GraphicList & graphic_list, self_fn proj = self_fn{})
+        : GraphicDispatcherList::proxy_type{{graphic_list, GraphicUniformProjection{proj}}}
         {}
     };
 }

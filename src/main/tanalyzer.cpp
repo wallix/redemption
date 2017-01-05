@@ -56,11 +56,25 @@
 #include "main/version.hpp"
 #include "program_options/program_options.hpp"
 
+struct GraphicNull
+{
+    GraphicNull() = default;
+
+    template<class... Ts>
+    void draw(Ts const & ...) {}
+
+    void set_pointer(Pointer    const &) {}
+    void set_palette(BGRPalette const &) {}
+    void sync() {}
+    void set_row(std::size_t, const uint8_t *) {}
+    void begin_update() {}
+    void end_update() {}
+};
+
 
 class Analyzer : public FrontAPI
 {
-    struct NullFn { template<class... Ts> void operator()(Ts const & ...) {} };
-    gdi::GraphicUniformProxy<NullFn> get_graphic_proxy() { return {}; }
+    GraphicNull get_graphic_proxy() { return {}; }
 
 private:
     CHANNELS::ChannelDefArray channel_list;

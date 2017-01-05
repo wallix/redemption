@@ -1053,8 +1053,9 @@ public:
             }
         }
 
-        if (this->client_info.width != width
-        || this->client_info.height != height) {
+        if ((this->client_info.width != width
+        || this->client_info.height != height)
+        && !this->client_info.remote_program) {
             /* older client can't resize */
             if (client_info.build <= 419) {
                 LOG(LOG_WARNING, "Resizing is not available on older RDP clients");

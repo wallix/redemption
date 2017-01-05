@@ -62,7 +62,7 @@ public:
         , ask_password((this->ask_login || vars.is_asked<cfg::context::target_password>()))
         , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->challenge, front, front, this->font(), this->theme())
         , challenge(
-            front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1,
+            front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
             this->screen, this,
             this->ask_device, this->ask_login, this->ask_password,
             vars.get<cfg::theme>(),
@@ -143,6 +143,6 @@ public:
     bool is_up_and_running() override { return true; }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
-        this->challenge.move_size_widget(left, top, width + 1, height + 1);
+        this->challenge.move_size_widget(left, top, width, height);
     }
 };
