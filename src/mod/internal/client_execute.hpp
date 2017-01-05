@@ -75,6 +75,7 @@ class ClientExecute : public windowing_api
     Rect window_rect;
     Rect window_rect_saved;
     Rect window_rect_normal;
+    Rect window_rect_old;
 
     Rect title_bar_icon_rect;
     Rect title_bar_rect;
@@ -191,64 +192,64 @@ private:
             this->title_bar_rect.x  += 3 + 16 + 2;
             this->title_bar_rect.cx -= 3 + 16 + 2;
 
-            this->north.x  = this->window_rect.x + 24;
+            this->north.x  = this->window_rect.x + TITLE_BAR_HEIGHT;
             this->north.y  = this->window_rect.y;
-            this->north.cx = this->window_rect.cx - 24 * 2;
+            this->north.cx = this->window_rect.cx - TITLE_BAR_HEIGHT * 2;
             this->north.cy = 4;
 
             this->north_west_north.x  = this->window_rect.x;
             this->north_west_north.y  = this->window_rect.y;
-            this->north_west_north.cx = 24;
+            this->north_west_north.cx = TITLE_BAR_HEIGHT;
             this->north_west_north.cy = 4;
 
             this->north_west_west.x  = this->window_rect.x;
             this->north_west_west.y  = this->window_rect.y;
             this->north_west_west.cx = 4;
-            this->north_west_west.cy = 24;
+            this->north_west_west.cy = TITLE_BAR_HEIGHT;
 
             this->west.x  = this->window_rect.x;
-            this->west.y  = this->window_rect.y + 24;
+            this->west.y  = this->window_rect.y + TITLE_BAR_HEIGHT;
             this->west.cx = 4;
-            this->west.cy = this->window_rect.cy - 24 * 2;
+            this->west.cy = this->window_rect.cy - TITLE_BAR_HEIGHT * 2;
 
             this->south_west_west.x  = this->window_rect.x;
-            this->south_west_west.y  = this->window_rect.y + this->window_rect.cy - 24;
+            this->south_west_west.y  = this->window_rect.y + this->window_rect.cy - TITLE_BAR_HEIGHT;
             this->south_west_west.cx = 4;
-            this->south_west_west.cy = 24;
+            this->south_west_west.cy = TITLE_BAR_HEIGHT;
 
             this->south_west_south.x  = this->window_rect.x;
             this->south_west_south.y  = this->window_rect.y + this->window_rect.cy - 4;
-            this->south_west_south.cx = 24;
+            this->south_west_south.cx = TITLE_BAR_HEIGHT;
             this->south_west_south.cy = 4;
 
-            this->south.x  = this->window_rect.x + 24;
+            this->south.x  = this->window_rect.x + TITLE_BAR_HEIGHT;
             this->south.y  = this->window_rect.y + this->window_rect.cy -4;
-            this->south.cx = this->window_rect.cx - 24 * 2;
+            this->south.cx = this->window_rect.cx - TITLE_BAR_HEIGHT * 2;
             this->south.cy = 4;
 
-            this->south_east_south.x  = this->window_rect.x + this->window_rect.cx - 24;
+            this->south_east_south.x  = this->window_rect.x + this->window_rect.cx - TITLE_BAR_HEIGHT;
             this->south_east_south.y  = this->window_rect.y + this->window_rect.cy - 4;
-            this->south_east_south.cx = 24;
+            this->south_east_south.cx = TITLE_BAR_HEIGHT;
             this->south_east_south.cy = 4;
 
             this->south_east_east.x  = this->window_rect.x + this->window_rect.cx - 4;
-            this->south_east_east.y  = this->window_rect.y + this->window_rect.cy - 24;
+            this->south_east_east.y  = this->window_rect.y + this->window_rect.cy - TITLE_BAR_HEIGHT;
             this->south_east_east.cx = 4;
-            this->south_east_east.cy = 24;
+            this->south_east_east.cy = TITLE_BAR_HEIGHT;
 
             this->east.x  = this->window_rect.x + this->window_rect.cx - 4;
-            this->east.y  = this->window_rect.y + 24;
+            this->east.y  = this->window_rect.y + TITLE_BAR_HEIGHT;
             this->east.cx = 4;
-            this->east.cy = this->window_rect.cy - 24 * 2;
+            this->east.cy = this->window_rect.cy - TITLE_BAR_HEIGHT * 2;
 
             this->north_east_east.x  = this->window_rect.x + this->window_rect.cx - 4;
             this->north_east_east.y  = this->window_rect.y;
             this->north_east_east.cx = 4;
-            this->north_east_east.cy = 24;
+            this->north_east_east.cy = TITLE_BAR_HEIGHT;
 
-            this->north_east_north.x  = this->window_rect.x + this->window_rect.cx - 24;
+            this->north_east_north.x  = this->window_rect.x + this->window_rect.cx - TITLE_BAR_HEIGHT;
             this->north_east_north.y  = this->window_rect.y;
-            this->north_east_north.cx = 24;
+            this->north_east_north.cx = TITLE_BAR_HEIGHT;
             this->north_east_north.cy = 4;
         }   // update_rects
 
@@ -840,16 +841,7 @@ public:
                         this->front_->set_pointer(cursor);
                     }
 
-                    {
-                        Rect result_rect = this->window_rect.shrink(1);
-
-                        result_rect.y  += 24;
-                        result_rect.cy -= 24;
-
-                        this->mod_->move_size_widget(result_rect.x, result_rect.y, result_rect.cx, result_rect.cy);
-                    }
-
-                    this->mod_->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
+                    this->update_widget();
                 }   // if (this->full_window_drag_enabled)
             }
             else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button) {
@@ -1028,11 +1020,11 @@ public:
                     order.VisibleOffsetX(0);
                     order.VisibleOffsetY(800);
                     order.WindowWidth(160);
-                    order.WindowHeight(24);
+                    order.WindowHeight(TITLE_BAR_HEIGHT);
                     order.WindowOffsetX(0);
                     order.WindowOffsetY(800);
                     order.NumVisibilityRects(1);
-                    order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, 160, 24));
+                    order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, 160, TITLE_BAR_HEIGHT));
                     order.ShowState(2);
                     order.Style(0x34EE0000);
                     order.ExtendedStyle(0x40310);
@@ -1203,16 +1195,7 @@ public:
                 }   // if (0 != move_size_type)
 
                 if (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button) {
-                    {
-                        Rect result_rect = this->window_rect.shrink(1);
-
-                        result_rect.y  += 24;
-                        result_rect.cy -= 24;
-
-                        this->mod_->move_size_widget(result_rect.x, result_rect.y, result_rect.cx, result_rect.cy);
-                    }
-
-                    this->mod_->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
+                    this->update_widget();
                 }   // if (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button)
 
                 if (0 != move_size_type) {
@@ -1265,16 +1248,7 @@ public:
                     this->front_->draw(order);
                 }
 
-                {
-                    Rect result_rect = this->window_rect.shrink(1);
-
-                    result_rect.y  += 24;
-                    result_rect.cy -= 24;
-
-                    this->mod_->move_size_widget(result_rect.x, result_rect.y, result_rect.cx, result_rect.cy);
-                }
-
-                this->mod_->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
+                this->update_widget();
             }   // if (this->south.contains_pt(xPos, yPos))
             else if (this->title_bar_rect.contains_pt(xPos, yPos)) {
                 this->maximize_restore_window();
@@ -1338,16 +1312,7 @@ public:
                 this->front_->draw(order);
             }
 
-            {
-                Rect result_rect = this->window_rect.shrink(1);
-
-                result_rect.y  += 24;
-                result_rect.cy -= 24;
-
-                this->mod_->move_size_widget(result_rect.x, result_rect.y, result_rect.cx, result_rect.cy);
-            }
-
-            this->mod_->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
+            this->update_widget();
         }   // if (this->maximized)
         else {
             this->maximized = true;
@@ -1405,16 +1370,7 @@ public:
                 this->front_->draw(order);
             }
 
-            {
-                Rect result_rect = this->window_rect.shrink(1);
-
-                result_rect.y  += 24;
-                result_rect.cy -= 24;
-
-                this->mod_->move_size_widget(result_rect.x, result_rect.y, result_rect.cx, result_rect.cy);
-            }
-
-            this->mod_->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
+            this->update_widget();
         }   // if (!this->maximized)
     }   // maximize_restore_window
 
@@ -1856,11 +1812,11 @@ protected:
                         order.VisibleOffsetX(0);
                         order.VisibleOffsetY(800);
                         order.WindowWidth(160);
-                        order.WindowHeight(24);
+                        order.WindowHeight(TITLE_BAR_HEIGHT);
                         order.WindowOffsetX(0);
                         order.WindowOffsetY(800);
                         order.NumVisibilityRects(1);
-                        order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, 160, 24));
+                        order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, 160, TITLE_BAR_HEIGHT));
                         order.ShowState(2);
                         order.Style(0x34EE0000);
                         order.ExtendedStyle(0x40310);
@@ -2459,16 +2415,7 @@ protected:
 
             this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
 
-            {
-                Rect result_rect = this->window_rect.shrink(1);
-
-                result_rect.y  += 24;
-                result_rect.cy -= 24;
-
-                this->mod_->move_size_widget(result_rect.x, result_rect.y, result_rect.cx, result_rect.cy);
-            }
-
-            this->mod_->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
+            this->update_widget();
         }
     }   // process_client_window_move_pdu
 
@@ -2752,5 +2699,50 @@ public:
         }
 
         this->auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
+    }
+
+private:
+    void update_widget() {
+        Rect widget_rect_new = this->window_rect.shrink(1);
+        widget_rect_new.y  += TITLE_BAR_HEIGHT;
+        widget_rect_new.cy -= TITLE_BAR_HEIGHT;
+
+        this->mod_->move_size_widget(widget_rect_new.x, widget_rect_new.y,
+            widget_rect_new.cx, widget_rect_new.cy);
+
+        if (!this->window_rect_old.isempty()) {
+            Rect widget_rect_old = this->window_rect_old.shrink(1);
+            widget_rect_old.y  += TITLE_BAR_HEIGHT;
+            widget_rect_old.cy -= TITLE_BAR_HEIGHT;
+
+            SubRegion region;
+
+            region.rects.push_back(widget_rect_new);
+
+            Rect widget_rect_intersect = widget_rect_old.intersect(widget_rect_new);
+            if (!widget_rect_intersect.isempty()) {
+                region.subtract_rect(widget_rect_intersect);
+            }
+
+            for (const Rect & rect : region.rects) {
+                this->mod_->rdp_input_invalidate(rect);
+            }
+        } else {
+            this->mod_->rdp_input_invalidate(widget_rect_new);
+        }
+
+        this->window_rect_old = this->window_rect;
+
+        {
+            SubRegion region;
+
+            region.rects.push_back(Rect(0, 0, this->front_width, this->front_height));
+
+            region.subtract_rect(widget_rect_new);
+
+            for (const Rect & rect : region.rects) {
+                this->mod_->rdp_input_invalidate(rect);
+            }
+        }
     }
 };  // class ClientExecute
