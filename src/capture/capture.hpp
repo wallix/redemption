@@ -38,11 +38,24 @@
 
 #include "utils/log.hpp"
 
+
+#include "utils/sugar/array_view.hpp"
+#include "utils/sugar/local_fd.hpp"
+
 #include "utils/difftimeval.hpp"
 #include "utils/drawable.hpp"
-#include "utils/sugar/array_view.hpp"
+#include "utils/apps/recording_progress.hpp"
+#include "utils/difftimeval.hpp"
+#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
+#include "utils/urandom_read.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/bitmap_shrink.hpp"
+#include "utils/sugar/range.hpp"
 
 #include "transport/transport.hpp"
+
+#include "configs/config.hpp"
+
 
 #include "gdi/capture_api.hpp"
 
@@ -53,6 +66,48 @@
 #include "utils/pattutils.hpp"
 
 #include "video_recorder.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
+
+#include "core/RDP/caches/bmpcache.hpp"
+#include "core/RDP/caches/glyphcache.hpp"
+#include "core/RDP/caches/pointercache.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
+#include "capture/GraphicToFile.hpp"
+#include "gdi/capture_api.hpp"
+#include "gdi/dump_png24.hpp"
+
+#include "capture/session_log_agent.hpp"
+#include "capture/title_extractors/agent_title_extractor.hpp"
+#include "capture/title_extractors/ocr_title_filter.hpp"
+#include "capture/title_extractors/ocr_titles_extractor.hpp"
+#include "capture/title_extractors/ppocr_titles_extractor.hpp"
+#include "capture/title_extractors/ocr_title_extractor_builder.hpp"
+#include "capture/utils/pattern_checker.hpp"
+#include "capture/session_meta.hpp"
+
+#include "utils/difftimeval.hpp"
+#include "transport/transport.hpp"
+
+#include "openssl_crypto.hpp"
+
+#include "transport/out_file_transport.hpp"
+#include "capture/cryptofile.hpp"
+#include "core/RDP/RDPDrawable.hpp"
+#include "gdi/capture_api.hpp"
+
+#include "gdi/graphic_cmd_color_converter.hpp"
+#include "gdi/graphic_api.hpp"
+#include "gdi/capture_api.hpp"
+#include "gdi/capture_api.hpp"
+#include "gdi/capture_probe_api.hpp"
+#include "gdi/kbd_input_api.hpp"
+
+#include "utils/drawable.hpp"
+#include "core/wait_obj.hpp"
+#include "capture/new_kbdcapture.hpp"
+#include "gdi/capture_api.hpp"
+#include "gdi/kbd_input_api.hpp"
+#include "gdi/capture_probe_api.hpp"
 
 
 template<class T>
@@ -83,61 +138,7 @@ private:
     std::size_t i = ~std::size_t{};
 };
 
-#include "configs/config.hpp"
 
-#include "transport/out_meta_sequence_transport.hpp"
-#include "utils/apps/recording_progress.hpp"
-#include "utils/difftimeval.hpp"
-#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
-#include "utils/urandom_read.hpp"
-#include "utils/fileutils.hpp"
-#include "utils/sugar/local_fd.hpp"
-
-#include "capture/utils/kbd_capture_impl.hpp"
-#include "core/RDP/caches/bmpcache.hpp"
-#include "core/RDP/caches/glyphcache.hpp"
-#include "core/RDP/caches/pointercache.hpp"
-#include "transport/out_meta_sequence_transport.hpp"
-#include "capture/utils/kbd_capture_impl.hpp"
-#include "capture/GraphicToFile.hpp"
-#include "gdi/capture_api.hpp"
-#include "gdi/dump_png24.hpp"
-#include "capture/session_log_agent.hpp"
-#include "capture/title_extractors/agent_title_extractor.hpp"
-#include "capture/title_extractors/ocr_title_filter.hpp"
-#include "capture/title_extractors/ocr_titles_extractor.hpp"
-#include "capture/title_extractors/ppocr_titles_extractor.hpp"
-#include "capture/title_extractors/ocr_title_extractor_builder.hpp"
-#include "capture/utils/pattern_checker.hpp"
-
-#include "capture/session_meta.hpp"
-#include "utils/difftimeval.hpp"
-#include "transport/transport.hpp"
-#include "utils/bitmap_shrink.hpp"
-#include "utils/sugar/range.hpp"
-
-#include "openssl_crypto.hpp"
-
-#include "utils/log.hpp"
-#include "transport/out_file_transport.hpp"
-#include "capture/cryptofile.hpp"
-#include "core/RDP/RDPDrawable.hpp"
-#include "gdi/capture_api.hpp"
-
-#include "gdi/graphic_cmd_color_converter.hpp"
-#include "gdi/graphic_api.hpp"
-#include "gdi/capture_api.hpp"
-#include "gdi/capture_api.hpp"
-#include "gdi/capture_probe_api.hpp"
-#include "gdi/kbd_input_api.hpp"
-
-#include <sys/time.h> // timeval
-
-#include <vector>
-#include <functional> // reference_wrapper
-
-#include "utils/drawable.hpp"
-#include "core/wait_obj.hpp"
 
 
 namespace gdi {
@@ -149,6 +150,25 @@ namespace gdi {
     class UpdateConfigCaptureApi;
 }
 
+
+class KbdCaptureImpl
+{
+public:
+    auth_api * authentifier;
+    SyslogKbd syslog_kbd;
+    SessionLogKbd session_log_kbd;
+    PatternKbd pattern_kbd;
+
+    KbdCaptureImpl(const timeval & now, auth_api * authentifier, const Inifile & ini)
+    : authentifier(authentifier)
+    , syslog_kbd(now)
+    , session_log_kbd(*authentifier)
+    , pattern_kbd(authentifier,
+        ini.get<cfg::context::pattern_kill>().c_str(),
+        ini.get<cfg::context::pattern_notify>().c_str(),
+        ini.get<cfg::debug::capture>())
+    {}
+};
 
 struct MouseTrace
 {
