@@ -66,7 +66,7 @@ public:
         }
     }
 
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
+    void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -75,10 +75,10 @@ public:
 
         RDPOpaqueRect new_cmd24 = cmd;
         new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip);
+        this->gd.draw(new_cmd24, clip, color_ctx);
     }
 
-    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
+    void draw(const RDPScrBlt & cmd, Rect clip) override {
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -88,7 +88,7 @@ public:
         this->gd.draw(cmd, clip);
     }
 
-    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
+    void draw(const RDPDestBlt & cmd, Rect clip) override {
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -98,7 +98,7 @@ public:
         this->gd.draw(cmd, clip);
     }
 
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
+    void draw(const RDPMultiDstBlt & cmd, Rect clip) override {
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -108,7 +108,27 @@ public:
         this->gd.draw(cmd, clip);
     }
 
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
+    void draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip, color_ctx);
+    }
+
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip, color_ctx);
+    }
+
+    void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override {
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -118,27 +138,7 @@ public:
         this->gd.draw(cmd, clip);
     }
 
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        if (this->verbose) {
-            LOG(LOG_INFO, "--------- ClientFront ------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        if (this->verbose) {
-            LOG(LOG_INFO, "--------- ClientFront ------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        this->gd.draw(cmd, clip);
-    }
-
-    void draw(const RDPPatBlt & cmd, const Rect & clip) override {
+    void draw(RDPPatBlt const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -148,10 +148,10 @@ public:
         RDPPatBlt new_cmd24 = cmd;
         new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
         new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip);
+        this->gd.draw(new_cmd24, clip, color_ctx);
     }
 
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override {
+    void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override {
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -161,17 +161,17 @@ public:
         this->gd.draw(cmd, clip, bitmap);
     }
 
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
+    void draw(RDPMem3Blt const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, const Bitmap & bitmap) override {
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->gd.draw(cmd, clip, bitmap);
+        this->gd.draw(cmd, clip, color_ctx, bitmap);
     }
 
-    void draw(const RDPLineTo & cmd, const Rect & clip) override {
+    void draw(RDPLineTo const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -181,10 +181,10 @@ public:
         RDPLineTo new_cmd24 = cmd;
         new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
         new_cmd24.pen.color  = color_decode_opaquerect(cmd.pen.color,  this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip);
+        this->gd.draw(new_cmd24, clip, color_ctx);
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
+    void draw(RDPGlyphIndex const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, const GlyphCache & gly_cache) override {
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -194,10 +194,10 @@ public:
         RDPGlyphIndex new_cmd24 = cmd;
         new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
         new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip, gly_cache);
+        this->gd.draw(new_cmd24, clip, color_ctx, gly_cache);
     }
 
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
+    void draw(RDPPolygonSC const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -206,10 +206,10 @@ public:
 
         RDPPolygonSC new_cmd24 = cmd;
         new_cmd24.BrushColor  = color_decode_opaquerect(cmd.BrushColor,  this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip);
+        this->gd.draw(new_cmd24, clip, color_ctx);
     }
 
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
+    void draw(RDPPolygonCB const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -219,10 +219,10 @@ public:
         RDPPolygonCB new_cmd24 = cmd;
         new_cmd24.foreColor  = color_decode_opaquerect(cmd.foreColor,  this->mod_bpp, this->mod_palette);
         new_cmd24.backColor  = color_decode_opaquerect(cmd.backColor,  this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip);
+        this->gd.draw(new_cmd24, clip, color_ctx);
     }
 
-    void draw(const RDPPolyline & cmd, const Rect & clip) override {
+    void draw(RDPPolyline const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -231,10 +231,10 @@ public:
 
         RDPPolyline new_cmd24 = cmd;
         new_cmd24.PenColor  = color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip);
+        this->gd.draw(new_cmd24, clip, color_ctx);
     }
 
-    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
+    void draw(RDPEllipseSC const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -243,10 +243,10 @@ public:
 
         RDPEllipseSC new_cmd24 = cmd;
         new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip);
+        this->gd.draw(new_cmd24, clip, color_ctx);
     }
 
-    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
+    void draw(RDPEllipseCB const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             cmd.log(LOG_INFO, clip);
@@ -256,7 +256,7 @@ public:
         RDPEllipseCB new_cmd24 = cmd;
         new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
         new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
-        this->gd.draw(new_cmd24, clip);
+        this->gd.draw(new_cmd24, clip, color_ctx);
     }
 
     void draw(const RDPColCache   & cmd) override {
@@ -456,12 +456,12 @@ public:
     }
 
     void update_pointer_position(uint16_t, uint16_t) override {}
-    
-    virtual void set_depths(gdi::GraphicDepth const & depth) {
+
+    void set_depths(gdi::GraphicDepth const & depth) override {
         this->order_depth_ = depth;
     }
 
-    virtual gdi::GraphicDepth const & order_depth() const {
+    gdi::GraphicDepth const & order_depth() const override {
         return this->order_depth_;
     }
 

@@ -86,7 +86,7 @@ public:
                     ClientExecute & client_execute, bool showtimer = false, bool back_selector = false)
         : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
         , close_widget(
-            front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1,
+            front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
             this->screen, this,
             vars.get<cfg::context::auth_error_message>().c_str(),
             (vars.is_asked<cfg::globals::auth_user>()
@@ -161,6 +161,6 @@ public:
     bool is_up_and_running() override { return true; }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
-        this->close_widget.move_size_widget(left, top, width + 1, height + 1);
+        this->close_widget.move_size_widget(left, top, width, height);
     }
 };

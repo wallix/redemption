@@ -34,14 +34,28 @@
 #include <cassert>
 #include <chrono>
 #include <utility>
+#include <sys/time.h>
 
 #include "utils/log.hpp"
 
+
+#include "utils/sugar/array_view.hpp"
+#include "utils/sugar/local_fd.hpp"
+
 #include "utils/difftimeval.hpp"
 #include "utils/drawable.hpp"
-#include "utils/sugar/array_view.hpp"
+#include "utils/apps/recording_progress.hpp"
+#include "utils/difftimeval.hpp"
+#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
+#include "utils/urandom_read.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/bitmap_shrink.hpp"
+#include "utils/sugar/range.hpp"
 
 #include "transport/transport.hpp"
+
+#include "configs/config.hpp"
+
 
 #include "gdi/capture_api.hpp"
 
@@ -52,6 +66,48 @@
 #include "utils/pattutils.hpp"
 
 #include "video_recorder.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
+
+#include "core/RDP/caches/bmpcache.hpp"
+#include "core/RDP/caches/glyphcache.hpp"
+#include "core/RDP/caches/pointercache.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
+#include "capture/GraphicToFile.hpp"
+#include "gdi/capture_api.hpp"
+#include "gdi/dump_png24.hpp"
+
+#include "capture/session_log_agent.hpp"
+#include "capture/title_extractors/agent_title_extractor.hpp"
+#include "capture/title_extractors/ocr_title_filter.hpp"
+#include "capture/title_extractors/ocr_titles_extractor.hpp"
+#include "capture/title_extractors/ppocr_titles_extractor.hpp"
+#include "capture/title_extractors/ocr_title_extractor_builder.hpp"
+#include "capture/utils/pattern_checker.hpp"
+#include "capture/session_meta.hpp"
+
+#include "utils/difftimeval.hpp"
+#include "transport/transport.hpp"
+
+#include "openssl_crypto.hpp"
+
+#include "transport/out_file_transport.hpp"
+#include "capture/cryptofile.hpp"
+#include "core/RDP/RDPDrawable.hpp"
+#include "gdi/capture_api.hpp"
+
+#include "gdi/graphic_cmd_color_converter.hpp"
+#include "gdi/graphic_api.hpp"
+#include "gdi/capture_api.hpp"
+#include "gdi/capture_api.hpp"
+#include "gdi/capture_probe_api.hpp"
+#include "gdi/kbd_input_api.hpp"
+
+#include "utils/drawable.hpp"
+#include "core/wait_obj.hpp"
+#include "capture/new_kbdcapture.hpp"
+#include "gdi/capture_api.hpp"
+#include "gdi/kbd_input_api.hpp"
+#include "gdi/capture_probe_api.hpp"
 
 
 template<class T>
@@ -82,46 +138,8 @@ private:
     std::size_t i = ~std::size_t{};
 };
 
-#include "configs/config.hpp"
 
-#include "transport/out_meta_sequence_transport.hpp"
-#include "utils/apps/recording_progress.hpp"
-#include "utils/difftimeval.hpp"
-#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 
-#include "capture/utils/graphic_capture_impl.hpp"
-#include "capture/utils/kbd_capture_impl.hpp"
-#include "capture/utils/capture_apis_impl.hpp"
-#include "core/RDP/caches/bmpcache.hpp"
-#include "core/RDP/caches/glyphcache.hpp"
-#include "core/RDP/caches/pointercache.hpp"
-#include "transport/out_meta_sequence_transport.hpp"
-#include "capture/utils/kbd_capture_impl.hpp"
-#include "capture/GraphicToFile.hpp"
-#include "gdi/capture_api.hpp"
-#include "gdi/dump_png24.hpp"
-#include "capture/session_log_agent.hpp"
-#include "capture/title_extractors/agent_title_extractor.hpp"
-#include "capture/title_extractors/ocr_title_filter.hpp"
-#include "capture/title_extractors/ocr_titles_extractor.hpp"
-#include "capture/title_extractors/ppocr_titles_extractor.hpp"
-#include "capture/title_extractors/ocr_title_extractor_builder.hpp"
-#include "capture/utils/pattern_checker.hpp"
-
-#include "capture/session_meta.hpp"
-#include "utils/difftimeval.hpp"
-#include "transport/transport.hpp"
-#include "gdi/capture_api.hpp"
-#include "utils/bitmap_shrink.hpp"
-
-#include "openssl_crypto.hpp"
-
-#include "utils/log.hpp"
-#include "transport/out_file_transport.hpp"
-#include "capture/cryptofile.hpp"
-#include "utils/urandom_read.hpp"
-#include "utils/fileutils.hpp"
-#include "utils/sugar/local_fd.hpp"
 
 namespace gdi {
     class GraphicApi;
@@ -131,6 +149,344 @@ namespace gdi {
     class ExternalCaptureApi;
     class UpdateConfigCaptureApi;
 }
+
+
+class KbdCaptureImpl
+{
+public:
+    auth_api * authentifier;
+    SyslogKbd syslog_kbd;
+    SessionLogKbd session_log_kbd;
+    PatternKbd pattern_kbd;
+
+    KbdCaptureImpl(const timeval & now, auth_api * authentifier, const Inifile & ini)
+    : authentifier(authentifier)
+    , syslog_kbd(now)
+    , session_log_kbd(*authentifier)
+    , pattern_kbd(authentifier,
+        ini.get<cfg::context::pattern_kill>().c_str(),
+        ini.get<cfg::context::pattern_notify>().c_str(),
+        ini.get<cfg::debug::capture>())
+    {}
+};
+
+struct MouseTrace
+{
+    timeval last_now;
+    int     last_x;
+    int     last_y;
+};
+
+struct CaptureApisImpl
+{
+    struct Capture : gdi::CaptureApi
+    {
+        Capture(const timeval & now, int cursor_x, int cursor_y)
+        : mouse_info{now, cursor_x, cursor_y}
+        , capture_event{}
+        {}
+
+        void set_drawable(Drawable * drawable) {
+            this->drawable = drawable;
+        }
+
+        MouseTrace const & mouse_trace() const noexcept {
+            return this->mouse_info;
+        }
+
+        wait_obj & get_capture_event() {
+            return this->capture_event;
+        }
+
+        std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
+
+    private:
+        std::chrono::microseconds do_snapshot(
+            timeval const & now,
+            int cursor_x, int cursor_y,
+            bool ignore_frame_in_timeval
+        ) override {
+            this->capture_event.reset();
+
+            if (this->drawable) {
+                this->drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
+            }
+
+            this->mouse_info = {now, cursor_x, cursor_y};
+
+            std::chrono::microseconds time = std::chrono::microseconds::max();
+            if (!this->caps.empty()) {
+                for (gdi::CaptureApi & cap : this->caps) {
+                    time = std::min(time, cap.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
+                }
+                this->capture_event.update(time.count());
+            }
+            return time;
+        }
+
+        void do_pause_capture(const timeval& now) override {
+            for (gdi::CaptureApi & cap : this->caps) {
+                cap.pause_capture(now);
+            }
+            this->capture_event.reset();
+        }
+
+        void do_resume_capture(const timeval& now) override {
+            for (gdi::CaptureApi & cap : this->caps) {
+                cap.resume_capture(now);
+            }
+            this->capture_event.set();
+        }
+
+        Drawable * drawable = nullptr;
+        MouseTrace mouse_info;
+        wait_obj capture_event;
+    };
+
+
+    struct KbdInput : gdi::KbdInputApi
+    {
+        bool kbd_input(const timeval & now, uint32_t uchar) override {
+            bool ret = true;
+            for (gdi::KbdInputApi & kbd : this->kbds) {
+                ret &= kbd.kbd_input(now, uchar);
+            }
+            return ret;
+        }
+
+        void enable_kbd_input_mask(bool enable) override {
+            for (gdi::KbdInputApi & kbd : this->kbds) {
+                kbd.enable_kbd_input_mask(enable);
+            }
+        }
+
+        std::vector<std::reference_wrapper<gdi::KbdInputApi>> kbds;
+    };
+
+
+    struct CaptureProbe : gdi::CaptureProbeApi
+    {
+        void possible_active_window_change() override {
+            for (gdi::CaptureProbeApi & cap_prob : this->probes) {
+                cap_prob.possible_active_window_change();
+            }
+        }
+
+        void session_update(const timeval& now, array_view_const_char message) override {
+            for (gdi::CaptureProbeApi & cap_prob : this->probes) {
+                cap_prob.session_update(now, message);
+            }
+        }
+
+        std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
+    };
+
+
+    struct ExternalCapture : gdi::ExternalCaptureApi
+    {
+        void external_breakpoint() override {
+            for (gdi::ExternalCaptureApi & obj : this->objs) {
+                obj.external_breakpoint();
+            }
+        }
+
+        void external_time(const timeval& now) override {
+            for (gdi::ExternalCaptureApi & obj : this->objs) {
+                obj.external_time(now);
+            }
+        }
+
+        std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> objs;
+    };
+
+
+    struct UpdateConfigCapture : gdi::UpdateConfigCaptureApi
+    {
+        void update_config(const Inifile & ini) override {
+            for (gdi::UpdateConfigCaptureApi & obj : this->objs) {
+                obj.update_config(ini);
+            }
+        }
+
+        std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> objs;
+    };
+};
+
+class GraphicCaptureImpl
+{
+public:
+    using PtrColorConverter = std::unique_ptr<gdi::GraphicApi>;
+    using GdRef = std::reference_wrapper<gdi::GraphicApi>;
+
+    struct Graphic final : public gdi::GraphicApi
+    {
+    public:
+        void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd); }
+        void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+        void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+        void draw(RDPPatBlt           const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+        void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+        void draw(RDPOpaqueRect       const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+        void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+        void draw(RDPScrBlt           const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+        void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+        void draw(RDPLineTo           const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+        void draw(RDPPolygonSC        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+        void draw(RDPPolygonCB        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+        void draw(RDPPolyline         const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+        void draw(RDPEllipseSC        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+        void draw(RDPEllipseCB        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+        void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_impl(cmd, bmp); }
+        void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
+        void draw(RDPMem3Blt          const & cmd, Rect const & clip, gdi::GraphicDepth depth, Bitmap const & bmp) override { this->draw_impl(cmd, clip, depth, bmp); }
+        void draw(RDPGlyphIndex       const & cmd, Rect const & clip, gdi::GraphicDepth depth, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, depth, gly_cache); }
+
+        void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
+        void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
+        void draw(const RDP::RAIL::CachedIcon                     & cmd) override { this->draw_impl(cmd); }
+        void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { this->draw_impl(cmd); }
+        void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override { this->draw_impl(cmd); }
+        void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override { this->draw_impl(cmd); }
+        void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override { this->draw_impl(cmd); }
+        void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override { this->draw_impl(cmd); }
+
+        void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
+        void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
+
+        void set_pointer(Pointer    const & pointer) override {
+            for (gdi::GraphicApi & gd : this->gds){ 
+                gd.set_pointer(pointer);
+            }
+        }
+
+        void set_palette(BGRPalette const & palette) override {
+            for (gdi::GraphicApi & gd : this->gds){ 
+                gd.set_palette(palette);
+            }
+        }
+
+        void sync() override {
+            for (gdi::GraphicApi & gd : this->gds){ 
+                gd.sync();
+            }
+        }
+
+        void set_row(std::size_t rownum, const uint8_t * data) override {
+            for (gdi::GraphicApi & gd : this->gds){ 
+                gd.set_row(rownum, data);
+            }
+        }
+
+        void begin_update() override {
+            for (gdi::GraphicApi & gd : this->gds){ 
+                gd.begin_update();
+            }
+        }
+
+        void end_update() override {
+            for (gdi::GraphicApi & gd : this->gds){ 
+                gd.end_update();
+            }
+        }
+
+    protected:
+        template<class... Ts>
+        void draw_impl(Ts const & ... args) {
+            for (gdi::GraphicApi & gd : this->gds){ 
+                gd.draw(args...);
+            }
+        }
+
+    public:
+        PtrColorConverter cmd_color_distributor;
+        MouseTrace const & mouse;
+        std::vector<GdRef> gds;
+        std::vector<std::reference_wrapper<gdi::CaptureApi>> snapshoters;
+
+        gdi::GraphicDepth order_depth_ = gdi::GraphicDepth::unspecified();
+        gdi::RngByBpp<std::vector<GdRef>::iterator> rng_by_bpp;
+
+        Graphic(MouseTrace const & mouse)
+        : mouse(mouse)
+        {}
+
+        template<class Cmd, class... Ts>
+        void draw_impl(Cmd const & cmd, Ts const & ... args)
+        {
+            if (gdi::GraphicCmdColor::is_encodable_cmd_color(cmd)) {
+                assert(gdi::GraphicDepth::unspecified() != this->order_depth_);
+                gdi::draw_cmd_color_convert(this->order_depth_, this->rng_by_bpp, cmd, args...);
+            }
+            else {
+                for (gdi::GraphicApi & gd : this->gds){ 
+                    gd.draw(cmd, args...);
+                }
+            }
+        }
+
+        void draw_impl(RDP::FrameMarker const & cmd) {
+            for (gdi::GraphicApi & gd : this->gds) {
+                gd.draw(cmd);
+            }
+
+            if (cmd.action == RDP::FrameMarker::FrameEnd) {
+                for (gdi::CaptureApi & cap : this->snapshoters) {
+                    cap.snapshot(
+                        this->mouse.last_now,
+                        this->mouse.last_x,
+                        this->mouse.last_y,
+                        false
+                    );
+                }
+            }
+        }
+
+        void set_depths(gdi::GraphicDepth const & depth) override {
+            this->order_depth_ = depth;
+        }
+
+        gdi::GraphicDepth const & order_depth() const override {
+            return this->order_depth_;
+        }
+
+    };
+
+    Graphic graphic_api;
+    RDPDrawable drawable;
+    uint8_t order_bpp;
+
+public:
+    using GraphicApi = Graphic;
+
+    GraphicCaptureImpl(uint16_t width, uint16_t height, uint8_t order_bpp, MouseTrace const & mouse)
+    : graphic_api(mouse)
+    , drawable(width, height, order_bpp)
+    , order_bpp(order_bpp)
+    {
+    }
+
+    void update_order_bpp(uint8_t order_bpp) {
+        if (this->order_bpp != order_bpp) {
+            this->order_bpp = order_bpp;
+            this->drawable.set_depths(gdi::GraphicDepth::from_bpp(order_bpp));
+            this->start();
+        }
+    }
+
+    void start()
+    {
+        auto const order_depth = gdi::GraphicDepth::from_bpp(this->order_bpp);
+        auto & gds = this->graphic_api.gds;
+        this->graphic_api.rng_by_bpp = {order_depth, gds.begin(), gds.end()};
+        this->graphic_api.order_depth_ = order_depth;
+    }
+
+    Graphic & get_graphic_api() { return this->graphic_api; }
+
+    Drawable & impl() { return this->drawable.impl(); }
+    RDPDrawable & rdp_drawable() { return this->drawable; }
+};
+
 
 class PngCapture : public gdi::UpdateConfigCaptureApi, public gdi::CaptureApi
 {
@@ -802,7 +1158,7 @@ class SequencedVideoCaptureImpl
                 }
             }
             else {
-                ret = microseconds(interval - duration);
+                ret = interval - duration;
             }
 
             return std::min(ret, this->impl.video_sequencer.snapshot(now, x, y, ignore_frame_in_timeval));
@@ -1079,16 +1435,17 @@ public:
                             bmp_cache, gly_cache, ptr_cache,
                             dump_png24, wrm_compression_algorithm,
                             send_input, verbose)
-            , order_depth_(gdi::GraphicDepth::unspecified()) {};
+            , order_depth_(gdi::GraphicDepth::unspecified())
+        {}
 
         using GraphicToFile::GraphicToFile::draw;
         using GraphicToFile::GraphicToFile::capture_bpp;
 
-        virtual void set_depths(gdi::GraphicDepth const & depth) {
+        void set_depths(gdi::GraphicDepth const & depth) override {
             this->order_depth_ = depth;
         }
 
-        virtual gdi::GraphicDepth const & order_depth() const {
+        gdi::GraphicDepth const & order_depth() const override {
             return this->order_depth_;
         }
 
@@ -1303,15 +1660,15 @@ public:
 
 };
 
-
 class Capture final
-: public gdi::GraphicBase<Capture>
+: public gdi::GraphicApi
 , public gdi::CaptureApi
 , public gdi::KbdInputApi
 , public gdi::CaptureProbeApi
 , public gdi::ExternalCaptureApi
 , public gdi::UpdateConfigCaptureApi
 {
+
     using Graphic = GraphicCaptureImpl;
 
     using Image = PngCapture;
@@ -1332,10 +1689,43 @@ class Capture final
 
     const bool is_replay_mod;
 
-    // Title changed
-    //@{
     using string_view = array_view_const_char;
 
+public:
+    void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
+    void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPScrBlt           const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolyline         const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_impl(cmd, bmp); }
+    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
+    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
+    void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
+
+    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::CachedIcon                     & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override { this->draw_impl(cmd); }
+
+    void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
+    void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
+private:
+    // Title changed
+    //@{
     struct TitleChangedFunctions final : NotifyTitleChanged
     {
         Capture & capture;
@@ -1444,8 +1834,7 @@ public:
         CryptoContext & cctx,
         Random & rnd,
         UpdateProgressData * update_progress_data)
-    : gdi::GraphicBase<Capture>(gdi::GraphicDepth::unspecified())
-    , is_replay_mod(!authentifier)
+    : is_replay_mod(!authentifier)
     , capture_wrm(capture_wrm)
     , capture_png(capture_png)
     , capture_pattern_checker(capture_pattern_checker)
@@ -1801,7 +2190,6 @@ protected:
         this->capture_api.resume_capture(now);
     }
 
-    friend gdi::GraphicCoreAccess;
     template<class... Ts>
     void draw_impl(const Ts & ... args) {
         if (this->graphic_api) {
@@ -1844,11 +2232,11 @@ public:
         this->capture_probe_api.possible_active_window_change();
     }
 
-        virtual void set_depths(gdi::GraphicDepth const & depth) {
+    void set_depths(gdi::GraphicDepth const & depth) override {
         this->order_depth_ = depth;
     }
 
-    virtual gdi::GraphicDepth const & order_depth() const {
+    gdi::GraphicDepth const & order_depth() const override {
         return this->order_depth_;
     }
 

@@ -26,6 +26,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
@@ -34,8 +35,7 @@
 #include "mod/internal/widget2/scroll.hpp"
 #include "mod/mod_api.hpp"
 
-class WidgetModuleHost : public WidgetParent,
-    public gdi::GraphicBase<WidgetModuleHost>
+class WidgetModuleHost : public WidgetParent, public gdi::GraphicApi
 {
 private:
     class ModuleHolder : public mod_api
@@ -213,12 +213,44 @@ private:
     Rect vision_rect;
 
 public:
+    void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd); }
+    void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPScrBlt           const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolyline         const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_impl(cmd, bmp); }
+    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
+    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
+    void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
+
+    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::CachedIcon                     & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override { this->draw_impl(cmd); }
+
+    void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
+    void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
+
+
     WidgetModuleHost(gdi::GraphicApi& drawable, Widget2& parent,
                      NotifyApi* notifier,
                      std::unique_ptr<mod_api> managed_mod, Font const & font,
                      Theme const & theme, int group_id = 0)
     : WidgetParent(drawable, parent, notifier, group_id)
-    , gdi::GraphicBase<WidgetModuleHost>(gdi::GraphicDepth::unspecified())
     , module_holder(*this, std::move(managed_mod))
     , drawable_ref(drawable)
     , hscroll(drawable, *this, this, true, 0, theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font)
@@ -287,6 +319,18 @@ private:
             else {
                 this->vscroll_added = false;
             }
+
+            if ((this->vision_rect.cx < module_dim.w) && !this->hscroll_added) {
+                this->vision_rect.cy -= this->hscroll_height;
+
+                this->hscroll_added = true;
+            }
+
+            if ((this->vision_rect.cy < module_dim.h) && !this->vscroll_added) {
+                this->vision_rect.cx -= this->vscroll_width;
+
+                this->vscroll_added = true;
+            }
         }
 
         if (old_hscroll_added != this->hscroll_added) {
@@ -320,8 +364,8 @@ private:
 
             this->hscroll.set_max_value(new_max_value);
 
-            if (this->mod_visible_rect.x > new_max_value) {
-                this->mod_visible_rect.x = new_max_value;
+            if (this->mod_visible_rect.x > static_cast<int>(new_max_value)) {
+                this->mod_visible_rect.x = static_cast<int>(new_max_value);
             }
 
             this->hscroll.set_current_value(this->mod_visible_rect.x);
@@ -334,8 +378,8 @@ private:
 
             this->vscroll.set_max_value(new_max_value);
 
-            if (this->mod_visible_rect.y > new_max_value) {
-                this->mod_visible_rect.y = new_max_value;
+            if (this->mod_visible_rect.y > static_cast<int>(new_max_value)) {
+                this->mod_visible_rect.y = static_cast<int>(new_max_value);
             }
 
             this->vscroll.set_current_value(this->mod_visible_rect.y);
@@ -346,8 +390,6 @@ private:
     }
 
 public:
-    using gdi::GraphicBase<WidgetModuleHost>::draw;
-
     void set_cx(uint16_t cx) override {
         WidgetParent::set_cx(cx);
 
@@ -380,11 +422,11 @@ public:
         this->rdp_input_invalidate(this->get_rect());
     }
 
-    virtual void set_depths(gdi::GraphicDepth const & depth) {
+    void set_depths(gdi::GraphicDepth const & depth) override {
         this->order_depth_ = depth;
     }
 
-    virtual gdi::GraphicDepth const & order_depth() const {
+    gdi::GraphicDepth const & order_depth() const override {
         return this->order_depth_;
     }
 
@@ -393,25 +435,84 @@ public:
 public:
     // NotifyApi
     void notify(Widget2* /*widget*/, NotifyApi::notify_event_t event) override {
+        gdi::GraphicApi& drawable_ = this->get_drawable();
+
+        Widget2* parentWidget = &this->parent;
+        while (&parentWidget->parent != &parentWidget->parent.parent) {
+            parentWidget = &parentWidget->parent;
+        }
+
         if (event == NOTIFY_HSCROLL) {
             if (this->hscroll_added) {
+                int16_t old_mod_visible_rect_x = this->mod_visible_rect.x;
+
                 this->mod_visible_rect.x = this->hscroll.get_current_value();
 
-                Rect mod_update_rect = this->vision_rect.offset(
-                    -this->x() + this->mod_visible_rect.x, -this->y() + this->mod_visible_rect.y);
-                if (!mod_update_rect.isempty()) {
-                    this->module_holder.rdp_input_invalidate(mod_update_rect);
+                Rect visible_vision_rect = this->vision_rect.intersect(parentWidget->get_rect());
+                int16_t offset_x = old_mod_visible_rect_x - this->mod_visible_rect.x;
+
+                Rect dest_rect = visible_vision_rect.offset(offset_x, 0).intersect(visible_vision_rect);
+                Rect src_rect  = dest_rect.offset(-offset_x, 0);
+
+                if (src_rect.intersect(dest_rect).isempty()) {
+                    this->module_holder.rdp_input_invalidate(dest_rect.offset(
+                            -this->x() + this->mod_visible_rect.x,
+                            -this->y() + this->mod_visible_rect.y
+                        ));
+                }
+                else {
+                    RDPScrBlt cmd(dest_rect, 0xCC, src_rect.x, src_rect.y);
+
+                    drawable_.draw(cmd, visible_vision_rect);
+
+                    SubRegion region;
+
+                    region.rects.push_back(visible_vision_rect);
+                    region.subtract_rect(dest_rect);
+
+                    REDASSERT(region.rects.size() == 1);
+
+                    this->module_holder.rdp_input_invalidate(region.rects[0].offset(
+                            -this->x() + this->mod_visible_rect.x,
+                            -this->y() + this->mod_visible_rect.y
+                        ));
                 }
             }
         }
         else if (event == NOTIFY_VSCROLL) {
             if (this->vscroll_added) {
+                int16_t old_mod_visible_rect_y = this->mod_visible_rect.y;
+
                 this->mod_visible_rect.y = this->vscroll.get_current_value();
 
-                Rect mod_update_rect = this->vision_rect.offset(
-                    -this->x() + this->mod_visible_rect.x, -this->y() + this->mod_visible_rect.y);
-                if (!mod_update_rect.isempty()) {
-                    this->module_holder.rdp_input_invalidate(mod_update_rect);
+                Rect visible_vision_rect = this->vision_rect.intersect(parentWidget->get_rect());
+                int16_t offset_y = old_mod_visible_rect_y - this->mod_visible_rect.y;
+
+                Rect dest_rect = visible_vision_rect.offset(0, offset_y).intersect(visible_vision_rect);
+                Rect src_rect  = dest_rect.offset(0, -offset_y);
+
+                if (src_rect.intersect(dest_rect).isempty()) {
+                    this->module_holder.rdp_input_invalidate(dest_rect.offset(
+                            -this->x() + this->mod_visible_rect.x,
+                            -this->y() + this->mod_visible_rect.y
+                        ));
+                }
+                else {
+                    RDPScrBlt cmd(dest_rect, 0xCC, src_rect.x, src_rect.y);
+
+                    drawable_.draw(cmd, visible_vision_rect);
+
+                    SubRegion region;
+
+                    region.rects.push_back(visible_vision_rect);
+                    region.subtract_rect(dest_rect);
+
+                    REDASSERT(region.rects.size() == 1);
+
+                    this->module_holder.rdp_input_invalidate(region.rects[0].offset(
+                            -this->x() + this->mod_visible_rect.x,
+                            -this->y() + this->mod_visible_rect.y
+                        ));
                 }
             }
         }
@@ -424,9 +525,12 @@ public:
         this->begin_update();
 
         SubRegion region;
+
         region.rects.push_back(r.intersect(this->get_rect()));
-        if (!this->vision_rect.isempty()) {
-            region.subtract_rect(this->vision_rect);
+        if (!this->mod_visible_rect.isempty()) {
+            Rect mod_vision_rect(this->vision_rect.x, this->vision_rect.y,
+                this->mod_visible_rect.cx, this->mod_visible_rect.cy);
+            region.subtract_rect(mod_vision_rect);
         }
         if (this->hscroll_added) {
             Rect hscroll_rect = this->hscroll.get_rect();
@@ -490,10 +594,6 @@ public:
     }
 
 private:
-    // gdi::GraphicBase
-
-    friend gdi::GraphicCoreAccess;
-
     void begin_update() override
     {
         gdi::GraphicApi& drawable_ = this->get_drawable();
@@ -559,7 +659,7 @@ private:
         drawable_.draw(new_cmd, new_clip);
     }
 
-    void draw_impl(const RDPLineTo& cmd, Rect const & clip) {
+    void draw_impl(const RDPLineTo& cmd, Rect clip) {
         gdi::GraphicApi& drawable_ = this->get_drawable();
 
         Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
@@ -570,7 +670,7 @@ private:
 
         new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
 
-        drawable_.draw(new_cmd, new_clip);
+        drawable_.draw(new_cmd, new_clip, gdi::GraphicColorCtx::depth24());
     }
 
     void draw_impl(const RDPMem3Blt& cmd, const Rect& clip, const Bitmap& bmp) {
@@ -584,7 +684,7 @@ private:
 
         new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
 
-        drawable_.draw(new_cmd, new_clip, bmp);
+        drawable_.draw(new_cmd, new_clip, gdi::GraphicColorCtx::depth24(), bmp);
     }
 
     void draw_impl(const RDPMemBlt& cmd, const Rect& clip, const Bitmap& bmp) {
@@ -612,7 +712,21 @@ private:
 
         new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
 
-        drawable_.draw(new_cmd, new_clip);
+        drawable_.draw(new_cmd, new_clip, gdi::GraphicColorCtx::depth24());
+    }
+
+    void draw_impl(const RDP::RDPMultiPatBlt& cmd, const Rect& clip) {
+        gdi::GraphicApi& drawable_ = this->get_drawable();
+
+        Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
+        new_clip = new_clip.intersect(this->vision_rect);
+        if (new_clip.isempty()) { return; }
+
+        RDP::RDPMultiPatBlt new_cmd = cmd;
+
+        new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
+
+        drawable_.draw(new_cmd, new_clip, gdi::GraphicColorCtx::depth24());
     }
 
     void draw_impl(const RDPOpaqueRect& cmd, const Rect& clip) {
@@ -626,7 +740,7 @@ private:
 
         new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
 
-        drawable_.draw(new_cmd, new_clip);
+        drawable_.draw(new_cmd, new_clip, gdi::GraphicColorCtx::depth24());
     }
 
 
@@ -642,7 +756,7 @@ private:
 
         new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
 
-        drawable_.draw(new_cmd, new_clip);
+        drawable_.draw(new_cmd, new_clip, gdi::GraphicColorCtx::depth24());
     }
 
     void draw_impl(const RDPScrBlt& cmd, const Rect& clip) {

@@ -254,8 +254,6 @@ protected:
 
     char client_name[128];
 
-    uint8_t bpp;
-
     int encryptionLevel;
     int encryptionMethod;
 
@@ -753,7 +751,6 @@ public:
                 , mod_rdp_params.persist_bitmap_cache_on_disk, mod_rdp_params.verbose)
         , share_id(0)
         , userid(0)
-        , bpp(0)
         , encryptionLevel(0)
         , key_flags(mod_rdp_params.key_flags)
         , server_public_key_len(0)
@@ -1090,7 +1087,7 @@ public:
             // Target informations
             this->session_probe_target_informations  = mod_rdp_params.target_application;
             this->session_probe_target_informations += ":";
-            this->session_probe_target_informations += mod_rdp_params.auth_user;
+            this->session_probe_target_informations += mod_rdp_params.primary_user_id;
 
             this->real_alternate_shell = std::move(alternate_shell);
             this->real_working_dir     = tmp_working_dir;
@@ -3111,8 +3108,9 @@ public:
                 switch (static_cast<FastPath::UpdateType>(upd.updateCode)) {
                 case FastPath::UpdateType::ORDERS:
                     this->front.begin_update();
-                    this->orders.process_orders(this->bpp, upd.payload, true, drawable,
-                                                this->front_width, this->front_height);
+                    this->orders.process_orders(
+                        upd.payload, true, drawable,
+                        this->front_width, this->front_height);
                     this->front.end_update();
                     break;
 
@@ -3222,7 +3220,10 @@ public:
                 this->end_session_reason.clear();
                 this->end_session_message.clear();
 
-                this->acl->disconnect_target();
+                if (!this->session_probe_virtual_channel_p ||
+                    !this->session_probe_virtual_channel_p->is_disconnection_reconnection_required()) {
+                    this->acl->disconnect_target();
+                }
                 this->acl->report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
                 if (!this->session_disconnection_logged) {
@@ -3353,12 +3354,12 @@ public:
                                     }
                                 }
                                 else {
-                                    LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->bpp);
+                                    LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->orders.bpp);
                                     if (this->transparent_recorder) {
                                         this->transparent_recorder->server_resize(this->front_width,
-                                            this->front_height, this->bpp);
+                                            this->front_height, this->orders.bpp);
                                     }
-                                    if (FrontAPI::ResizeResult::fail == this->front.server_resize(this->front_width, this->front_height, this->bpp)){
+                                    if (FrontAPI::ResizeResult::fail == this->front.server_resize(this->front_width, this->front_height, this->orders.bpp)){
                                         LOG(LOG_ERR, "Resize not available on older clients,"
                                             " change client resolution to match server resolution");
                                         throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
@@ -3478,7 +3479,7 @@ public:
                                         case RDP_UPDATE_ORDERS:
                                             if (this->verbose & RDPVerbose::basic_trace4){ LOG(LOG_INFO, "RDP_UPDATE_ORDERS"); }
                                             this->front.begin_update();
-                                            this->orders.process_orders(this->bpp, sdata.payload, false,
+                                            this->orders.process_orders(sdata.payload, false,
                                                 drawable,this->front_width, this->front_height);
                                             this->front.end_update();
                                             break;
@@ -3639,12 +3640,12 @@ public:
                             this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
 
 /*
-                            LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->bpp);
+                            LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->orders.bpp);
                             if (this->transparent_recorder) {
                                 this->transparent_recorder->server_resize(this->front_width,
-                                    this->front_height, this->bpp);
+                                    this->front_height, this->orders.bpp);
                             }
-                            if (-1 == this->front.server_resize(this->front_width, this->front_height, this->bpp)){
+                            if (-1 == this->front.server_resize(this->front_width, this->front_height, this->orders.bpp)){
                                 LOG(LOG_ERR, "Resize not available on older clients,"
                                     " change client resolution to match server resolution");
                                 throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
@@ -3696,7 +3697,7 @@ public:
         //LOG(LOG_INFO, "mod_rdp::draw_event()");
 
         if (this->remote_programs_session_manager) {
-            this->remote_programs_session_manager->set_drawable(&drawable_, this->bpp);
+            this->remote_programs_session_manager->set_drawable(&drawable_, this->orders.bpp);
         }
 
         gdi::GraphicApi & drawable =
@@ -3943,7 +3944,7 @@ public:
 
                 BitmapCaps bitmap_caps;
                 // TODO Client SHOULD set this field to the color depth requested in the Client Core Data
-                bitmap_caps.preferredBitsPerPixel = this->bpp;
+                bitmap_caps.preferredBitsPerPixel = this->orders.bpp;
                 //bitmap_caps.preferredBitsPerPixel = this->front_bpp;
                 bitmap_caps.desktopWidth          = this->front_width;
                 bitmap_caps.desktopHeight         = this->front_height;
@@ -4049,11 +4050,11 @@ public:
 
                 BmpCacheCaps bmpcache_caps;
                 bmpcache_caps.cache0Entries         = 0x258;
-                bmpcache_caps.cache0MaximumCellSize = nbbytes(this->bpp) * 0x100;
+                bmpcache_caps.cache0MaximumCellSize = nbbytes(this->orders.bpp) * 0x100;
                 bmpcache_caps.cache1Entries         = 0x12c;
-                bmpcache_caps.cache1MaximumCellSize = nbbytes(this->bpp) * 0x400;
+                bmpcache_caps.cache1MaximumCellSize = nbbytes(this->orders.bpp) * 0x400;
                 bmpcache_caps.cache2Entries         = 0x106;
-                bmpcache_caps.cache2MaximumCellSize = nbbytes(this->bpp) * 0x1000;
+                bmpcache_caps.cache2MaximumCellSize = nbbytes(this->orders.bpp) * 0x1000;
 
                 BmpCache2Caps bmpcache2_caps;
                 bmpcache2_caps.cacheFlags           = PERSISTENT_KEYS_EXPECTED_FLAG | (this->enable_cache_waiting_list ? ALLOW_CACHE_WAITING_LIST_FLAG : 0);
@@ -4081,10 +4082,10 @@ public:
                     confirm_active_pdu.emit_capability_set(bmpcache2_caps);
 
                     if (!this->enable_transparent_mode && !this->deactivation_reactivation_in_progress) {
-                        this->orders.create_cache_bitmap(this->bpp,
-                            120,   nbbytes(this->bpp) * 16 * 16, false,
-                            120,   nbbytes(this->bpp) * 32 * 32, false,
-                            2553,  nbbytes(this->bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
+                        this->orders.create_cache_bitmap(
+                            120,   nbbytes(this->orders.bpp) * 16 * 16, false,
+                            120,   nbbytes(this->orders.bpp) * 32 * 32, false,
+                            2553,  nbbytes(this->orders.bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
                             this->enable_cache_waiting_list,
                             this->cache_verbose);
                     }
@@ -4096,10 +4097,10 @@ public:
                     confirm_active_pdu.emit_capability_set(bmpcache_caps);
 
                     if (!this->enable_transparent_mode && !this->deactivation_reactivation_in_progress) {
-                        this->orders.create_cache_bitmap(this->bpp,
-                            0x258, nbbytes(this->bpp) * 0x100,   false,
-                            0x12c, nbbytes(this->bpp) * 0x400,   false,
-                            0x106, nbbytes(this->bpp) * 0x1000,  false,
+                        this->orders.create_cache_bitmap(
+                            0x258, nbbytes(this->orders.bpp) * 0x100,   false,
+                            0x12c, nbbytes(this->orders.bpp) * 0x400,   false,
+                            0x106, nbbytes(this->orders.bpp) * 0x1000,  false,
                             false,
                             this->cache_verbose);
                     }
@@ -5643,7 +5644,7 @@ public:
                     if (output_file) {
                         bitmap_caps.dump(output_file);
                     }
-                    this->bpp = bitmap_caps.preferredBitsPerPixel;
+                    this->orders.bpp = bitmap_caps.preferredBitsPerPixel;
                     this->front_width = bitmap_caps.desktopWidth;
                     this->front_height = bitmap_caps.desktopHeight;
                 }
@@ -6443,8 +6444,9 @@ public:
         }
 
         size_t out_data_len = 3 * (
-            (bpp == 1) ? (cursor.width * cursor.height) / 8 :
-            (bpp == 4) ? (cursor.width * cursor.height) / 2 :
+            // BUG TODO cursor.bpp is always 24
+            (cursor.bpp == 1) ? (cursor.width * cursor.height) / 8 :
+            (cursor.bpp == 4) ? (cursor.width * cursor.height) / 2 :
             (dlen / nbbytes(data_bpp)));
 
         if ((mlen > sizeof(cursor.mask)) ||
@@ -6647,7 +6649,7 @@ private:
                 //                    bufsize, bitmap.bmp_size, width, height, bpp);
                 //            }
                 const uint8_t * data = stream.in_uint8p(bmpdata.bitmap_size());
-            Bitmap bitmap( this->bpp
+            Bitmap bitmap( this->orders.bpp
                            , bmpdata.bits_per_pixel
                            , &this->orders.global_palette
                            , bmpdata.width

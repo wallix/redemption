@@ -344,11 +344,11 @@ private:
         , order_depth_(gdi::GraphicDepth::unspecified())
         {}
 
-        virtual void set_depths(gdi::GraphicDepth const & depth) {
+        void set_depths(gdi::GraphicDepth const & depth) override {
             this->order_depth_ = depth;
         }
 
-        virtual gdi::GraphicDepth const & order_depth() const {
+        gdi::GraphicDepth const & order_depth() const override {
             return this->order_depth_;
         }
 
@@ -493,7 +493,9 @@ private:
                 return ;
             }
 
-            drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip);
+            auto const color_ctx = gdi::GraphicColorCtx::from_bpp(this->mm.front.client_info.bpp, this->mm.front.get_palette());
+
+            drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip, color_ctx);
 
             StaticOutStream<256> deltaPoints;
             deltaPoints.out_sint16_le(this->clip.cx - 1);
@@ -509,13 +511,13 @@ private:
 
             // TODO Not supported on MAC OS with Microsoft Remote Desktop 8.0.15 (Build 25886)
             RDPPolyline polyline_box(this->clip.x, this->clip.y, 0x0D, 0, BLACK, 4, in_deltaPoints);
-            drawable.draw(polyline_box, this->clip);
+            drawable.draw(polyline_box, this->clip, color_ctx);
 
             gdi::server_draw_text(
                 drawable, this->mm.ini.get<cfg::font>(),
                 this->get_protected_rect().x + padw, padh,
                 this->osd_message.c_str(),
-                this->color, this->background_color, this->clip
+                this->color, this->background_color, color_ctx, this->clip
             );
 
             this->clip = Rect();
@@ -1221,7 +1223,7 @@ public:
                                            );
                 mod_rdp_params.device_id                           = this->ini.get<cfg::globals::device_id>().c_str();
 
-                mod_rdp_params.auth_user                           = this->ini.get<cfg::globals::auth_user>().c_str();
+                mod_rdp_params.primary_user_id                     = this->ini.get<cfg::globals::primary_user_id>().c_str();
                 mod_rdp_params.target_application                  = this->ini.get<cfg::globals::target_application>().c_str();
 
                 //mod_rdp_params.enable_tls                          = true;
@@ -1336,6 +1338,20 @@ public:
                 try {
                     const char * const name = "RDP Target";
 
+                    Rect adjusted_client_execute_rect =
+                        this->client_execute.adjust_rect(get_widget_rect(
+                                client_info.width,
+                                client_info.height,
+                                this->front.client_info.cs_monitor
+                            ));
+
+                    if (this->front.client_info.remote_program &&
+                        (!mod_rdp_params.target_application ||
+                         !(*mod_rdp_params.target_application))) {
+                        client_info.width  = adjusted_client_execute_rect.cx / 4 * 4;
+                        client_info.height = adjusted_client_execute_rect.cy;
+                    }
+
                     ModWithSocket<mod_rdp>* new_mod =
                         new ModWithSocket<mod_rdp>(
                                 *this,
@@ -1360,13 +1376,6 @@ public:
                         (!mod_rdp_params.target_application ||
                          !(*mod_rdp_params.target_application))) {
                         LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
-
-                        Rect adjusted_client_execute_rect =
-                            this->client_execute.adjust_rect(get_widget_rect(
-                                    this->front.client_info.width,
-                                    this->front.client_info.height,
-                                    this->front.client_info.cs_monitor
-                                ));
 
                         this->set_mod(
                                 new RailModuleHostMod(

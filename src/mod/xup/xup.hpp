@@ -244,7 +244,7 @@ enum {
                          drawable.draw(RDPPatBlt(r, this->rop, BLACK, WHITE,
                             RDPBrush(r.x, r.y, 3, 0xaa,
                             reinterpret_cast<const uint8_t *>("\xaa\x55\xaa\x55\xaa\x55\xaa\x55"))
-                            ), r);
+                            ), r, gdi::GraphicColorCtx::from_bpp(this->bpp, this->palette332));
                     }
                     break;
                     case 4:
@@ -317,7 +317,7 @@ enum {
                         const RDPLineTo lineto(1, x1, y1, x2, y2, WHITE,
                                                this->rop,
                                                RDPPen(this->pen.style, this->pen.width, this->fgcolor));
-                        drawable.draw(lineto, Rect(0,0,1,1));
+                        drawable.draw(lineto, Rect(0,0,1,1), gdi::GraphicColorCtx::from_bpp(this->bpp, this->palette332));
                     }
                     break;
                     case 19:

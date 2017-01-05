@@ -39,7 +39,7 @@
 #include <set>
 #include <string>
 
-class RemoteProgramsSessionManager : public gdi::GraphicBase<RemoteProgramsSessionManager>,
+class RemoteProgramsSessionManager : public gdi::GraphicApi,
     public RemoteProgramsWindowIdManager,
     public windowing_api {
 
@@ -88,12 +88,43 @@ private:
     uint32_t auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
 public:
+    void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
+    void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPScrBlt           const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolyline         const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_impl(cmd, bmp); }
+    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
+    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
+    void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
+
+    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::CachedIcon                     & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override { this->draw_impl(cmd); }
+
+    void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
+    void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
+
     RemoteProgramsSessionManager(FrontAPI& front, mod_api& mod, Translation::language_t lang,
                                  uint16_t front_width, uint16_t front_height,
                                  Font const & font, Theme const & theme, auth_api* acl,
                                  char const* session_probe_window_title, RDPVerbose verbose)
-    : gdi::GraphicBase<RemoteProgramsSessionManager>(gdi::GraphicDepth::unspecified())
-    , front(front)
+    : front(front)
     , mod(mod)
     , lang(lang)
     , front_width(front_width)
@@ -103,16 +134,16 @@ public:
     , verbose(verbose)
     , dialog_box_rect((front_width - 640) / 2, (front_height - 480) / 2, 640, 480)
     , acl(acl)
-    , session_probe_window_title(session_probe_window_title) 
+    , session_probe_window_title(session_probe_window_title)
     , order_depth_(gdi::GraphicDepth::unspecified())
     {}
 
 
-    virtual void set_depths(gdi::GraphicDepth const & depth) {
+    void set_depths(gdi::GraphicDepth const & depth) override {
         this->order_depth_ = depth;
     }
 
-    virtual gdi::GraphicDepth const & order_depth() const {
+    gdi::GraphicDepth const & order_depth() const override {
         return this->order_depth_;
     }
 
@@ -190,7 +221,6 @@ public:
     }
 
 private:
-    friend gdi::GraphicCoreAccess;
 
     void begin_update() override
     {
@@ -214,7 +244,7 @@ private:
     }
 
     template<class Cmd, class... Args>
-    void draw_impl(Cmd const & cmd, Rect const & clip, Args const &... args) {
+    void draw_impl(Cmd const & cmd, Rect clip, Args const &... args) {
         if (this->drawable) {
             Rect const rect = ::clip_from_cmd(cmd).intersect(clip);
             if (this->protected_rect.contains(rect) || rect.isempty()) {
@@ -586,7 +616,7 @@ private:
         {
             RDPOpaqueRect order(this->protected_rect, 0x000000);
 
-            this->drawable->draw(order, this->protected_rect);
+            this->drawable->draw(order, this->protected_rect, gdi::GraphicColorCtx::from_bpp(this->bpp, BGRPalette::classic_332()));
         }
 
         {
@@ -595,7 +625,7 @@ private:
             RDPOpaqueRect order(rect, color_encode(this->theme.global.bgcolor, this->bpp));
             order.log(LOG_INFO, rect);
 
-            this->drawable->draw(order, rect);
+            this->drawable->draw(order, rect, gdi::GraphicColorCtx::from_bpp(this->bpp, BGRPalette::classic_332()));
         }
 
         gdi::TextMetrics tm(this->font, TR("starting_remoteapp", this->lang));
@@ -606,6 +636,7 @@ private:
                               TR("starting_remoteapp", this->lang),
                               color_encode(this->theme.global.fgcolor, this->bpp),
                               color_encode(this->theme.global.bgcolor, this->bpp),
+                              gdi::GraphicColorCtx::from_bpp(this->bpp, BGRPalette::classic_332()),
                               this->protected_rect
                               );
 
@@ -620,7 +651,7 @@ private:
         {
             RDPOpaqueRect order(this->protected_rect, 0x000000);
 
-            this->drawable->draw(order, this->protected_rect);
+            this->drawable->draw(order, this->protected_rect, gdi::GraphicColorCtx::from_bpp(this->bpp, BGRPalette::classic_332()));
         }
 
         {
@@ -629,7 +660,7 @@ private:
             RDPOpaqueRect order(rect, color_encode(this->theme.global.bgcolor, this->bpp));
             order.log(LOG_INFO, rect);
 
-            this->drawable->draw(order, rect);
+            this->drawable->draw(order, rect, gdi::GraphicColorCtx::from_bpp(this->bpp, BGRPalette::classic_332()));
         }
 
         const gdi::TextMetrics tm_msg(this->font, TR("closing_remoteapp", this->lang));
@@ -652,6 +683,7 @@ private:
                               TR("closing_remoteapp", this->lang),
                               color_encode(this->theme.global.fgcolor, this->bpp),
                               color_encode(this->theme.global.bgcolor, this->bpp),
+                              gdi::GraphicColorCtx::from_bpp(this->bpp, BGRPalette::classic_332()),
                               this->protected_rect
                               );
 

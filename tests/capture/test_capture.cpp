@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
         CaptureFlags capture_flags = CaptureFlags::wrm | CaptureFlags::png;
-        
+
         ini.set<cfg::globals::trace_type>(TraceType::localfile);
 
         ini.set<cfg::video::record_tmp_path>("./");
@@ -78,18 +78,18 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         // TODO remove this after unifying capture interface
         auth_api * authentifier = nullptr;
         // TODO remove this after unifying capture interface
-        
+
         WrmParams wrm_params = {};
         PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true, false};
 
         FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
-        
+
         bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        bool capture_png = bool(capture_flags & CaptureFlags::png) 
+        bool capture_png = bool(capture_flags & CaptureFlags::png)
                         && (!authentifier || png_params.png_limit > 0);
-        bool capture_pattern_checker = authentifier 
+        bool capture_pattern_checker = authentifier
             && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
                 || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
 
@@ -121,37 +121,38 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
                         , flv_params
                         , no_timestamp, authentifier
                         , ini, cctx, rnd, nullptr);
+        auto const color_cxt = gdi::GraphicColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
 
-        capture.draw(RDPOpaqueRect(scr, GREEN), scr);
+        capture.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
         now.tv_sec++;
         capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr);
+        capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
         now.tv_sec++;
         capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr);
-        now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr);
-        now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr);
-        now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr);
+        capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
         now.tv_sec++;
         capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
-        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr);
+        capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
+        now.tv_sec++;
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
+        now.tv_sec++;
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
+        now.tv_sec++;
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        // ------------------------------ BREAKPOINT ------------------------------
+
+        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
         now.tv_sec++;
         capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
@@ -279,9 +280,9 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
     const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
     bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-    bool capture_png = bool(capture_flags & CaptureFlags::png) 
+    bool capture_png = bool(capture_flags & CaptureFlags::png)
                     && (!authentifier || png_params.png_limit > 0);
-    bool capture_pattern_checker = authentifier 
+    bool capture_pattern_checker = authentifier
         && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
             || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
 
@@ -307,20 +308,20 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , capture_flv_full
                    , capture_meta
                    , capture_kbd
-                   
+
                    , now, scr.cx, scr.cy, 16, 16
                    , record_tmp_path
                    , record_path
                    , flv_params
                    , no_timestamp, authentifier
                    , ini, cctx, rnd, nullptr);
-
+    auto const color_cxt = gdi::GraphicColorCtx::depth24();
     Pointer pointer1(Pointer::POINTER_EDIT);
     capture.set_pointer(pointer1);
 
     bool ignore_frame_in_timeval = true;
 
-    capture.draw(RDPOpaqueRect(scr, color_encode(BLUE, 16)), scr);
+    capture.draw(RDPOpaqueRect(scr, color_encode(BLUE, 16)), scr, color_cxt);
     now.tv_sec++;
     capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
@@ -359,13 +360,14 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
         bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression
     );
     WrmCaptureImpl::NativeCaptureLocal consumer(graphic_to_file, now, std::chrono::seconds{1}, std::chrono::seconds{5});
+    auto const color_cxt = gdi::GraphicColorCtx::depth24();
 
     drawable.show_mouse_cursor(false);
 
     bool ignore_frame_in_timeval = false;
 
-    drawable.draw(RDPOpaqueRect(scr, RED), scr);
-    graphic_to_file.draw(RDPOpaqueRect(scr, RED), scr);
+    drawable.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
+    graphic_to_file.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
     consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
     now.tv_sec += 6;
     consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
@@ -540,10 +542,10 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureMP4)
     // values below depends on current embedded ffmpeg version
     const char * filename;
     filename = (file_gen.get(0));
-    BOOST_CHECK((15663 == filesize(filename))||(15649 == filesize(filename)));
+    BOOST_CHECK_EQUAL(15505, filesize(filename));
     ::unlink(filename);
     filename = (file_gen.get(1));
-    BOOST_CHECK((16090 == filesize(filename))||(16076 == filesize(filename)));
+    BOOST_CHECK_EQUAL(14928, filesize(filename));
     ::unlink(filename);
     filename = (file_gen.get(2));
     BOOST_CHECK_EQUAL(262, filesize(filename));

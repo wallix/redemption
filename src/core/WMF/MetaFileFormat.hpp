@@ -388,12 +388,12 @@ enum {
 enum : int {
       METAFILE_HEADERS_SIZE          = 130
     , META_DIBSTRETCHBLT_HEADER_SIZE = 66
-    , METAFILE_WORDS_HEADER_SIZE     = (METAFILE_HEADERS_SIZE/2) -6
+    , METAFILE_WORDS_HEADER_SIZE     = 59                   //(METAFILE_HEADERS_SIZE/2) -6
     , META_HEADER_SIZE               = 9
 
-    , META_SETMAPMODE_WORDS_SIZE   = 4
+    /*, META_SETMAPMODE_WORDS_SIZE   = 4
     , META_SETWINDOWEXT_WORDS_SIZE = 5
-    , META_SETWINDOWORG_WORDS_SIZE = 5
+    , META_SETWINDOWORG_WORDS_SIZE = 5*/
     , BITMAPINFO_HEADER_SIZE       = 40
 
 };
@@ -441,13 +441,16 @@ enum : int {
 
     struct MetaHeader {
 
-        uint16_t type;
-        uint16_t headerSize;
-        uint16_t version;
-        uint32_t size;
-        uint16_t numberOfObjects;
-        uint32_t maxRecord;
-        uint16_t numberOfMembers;
+        uint16_t type = 0;
+        uint16_t headerSize = 0;
+        uint16_t version = 0;
+        uint32_t size = 0;
+        uint16_t numberOfObjects = 0;
+        uint32_t maxRecord = 0;
+        uint16_t numberOfMembers = 0;
+
+
+        MetaHeader() = default;
 
         MetaHeader(uint16_t type, uint16_t version, const std::size_t data_length)
           : type(type)
@@ -589,8 +592,8 @@ enum : int {
         }
 
         void recv(InStream & stream) {
-            //Record::recv(stream);
-            REDASSERT(this->recordSize == META_SETMAPMODE_WORDS_SIZE);
+            Record::recv(stream);
+            REDASSERT(this->recordSize == 4);
             this->mappingMode = stream.in_uint16_le();
         }
 
@@ -653,8 +656,8 @@ enum : int {
         }
 
         void recv(InStream & stream) {
-            //Record::recv(stream);
-            REDASSERT(this->recordSize == META_SETWINDOWEXT_WORDS_SIZE);
+            Record::recv(stream);
+            REDASSERT(this->recordSize == 5);
             this->height = stream.in_uint16_le();
             this->width = stream.in_uint16_le();
         }
@@ -718,10 +721,17 @@ enum : int {
         }
 
         void recv(InStream & stream) {
-            //Record::recv(stream);
-            REDASSERT(this->recordSize == META_SETWINDOWORG_WORDS_SIZE);
+            Record::recv(stream);
+            REDASSERT(this->recordSize == 5);
             this->yOrg = stream.in_uint16_le();
             this->xOrg = stream.in_uint16_le();
+        }
+
+        void log() {
+            Record::log();
+            LOG(LOG_INFO, "     Meta Set Window Org:");
+            LOG(LOG_INFO, "          * yOrg = %d (2 bytes)", this->yOrg);
+            LOG(LOG_INFO, "          * xOrg = %d (2 bytes)", this->xOrg);
         }
     };
 
@@ -882,7 +892,7 @@ enum : int {
     //           bitmap. In a packed bitmap, the ColorUsed value MUST be either 0x00000000 or the actual size
     //           of the color table.
 
-    struct DibStretchBLT {
+    struct DibStretchBLT : public Record {
 
         struct BitmapInfoHeader {
             enum : uint32_t {
@@ -958,6 +968,21 @@ enum : int {
                 this->colorImportant = stream.in_uint32_le();
             }
 
+            void log() {
+                LOG(LOG_INFO, "     Bitmap Info Header:");
+                LOG(LOG_INFO, "          * headerSize     = %d (4 bytes)", int(this->headerSize));
+                LOG(LOG_INFO, "          * width          = %d (4 bytes)", int(this->width));
+                LOG(LOG_INFO, "          * height         = %d (4 bytes)", int(this->height));
+                LOG(LOG_INFO, "          * planes         = 0x%04x (2 bytes)", this->planes);
+                LOG(LOG_INFO, "          * bitCount       = %d (2 bytes)", int(this->bitCount));
+                LOG(LOG_INFO, "          * compression    = 0x%08x (4 bytes)", this->compression);
+                LOG(LOG_INFO, "          * imageSize      = %d (4 bytes)", int(this->imageSize));
+                LOG(LOG_INFO, "          * xPelsPerMeter  = %d (4 bytes)", int(this->xPelsPerMeter));
+                LOG(LOG_INFO, "          * yPelsPerMeter  = %d (4 bytes)", int(this->yPelsPerMeter));
+                LOG(LOG_INFO, "          * colorUsed      = %d (4 bytes)", int(this->colorUsed));
+                LOG(LOG_INFO, "          * colorImportant = %d (4 bytes)", int(this->colorImportant));
+            }
+
         } bitmapInfoHeader;
 
 
@@ -1000,8 +1025,6 @@ enum : int {
         // Target (variable): A variable-sized DeviceIndependentBitmap Object (section 2.2.2.9) that defines
         // image content. This object MUST be specified, even if the raster operation does not require a source.
 
-        uint32_t recordSize;
-        uint16_t recordFunction;
         uint32_t rasterOperation;
         uint16_t srcHeight;
         uint16_t srcWidth;
@@ -1013,9 +1036,8 @@ enum : int {
         uint16_t xDest;
 
         DibStretchBLT()
-        : bitmapInfoHeader(0, 0, 0, 0)
-        , recordSize(0)
-        , recordFunction(MFF::META_DIBSTRETCHBLT)
+        : Record(META_DIBSTRETCHBLT_HEADER_SIZE/2, MFF::META_DIBSTRETCHBLT)
+        , bitmapInfoHeader(0, 0, 0, 0)
         , rasterOperation(0)
         , srcHeight(0)
         , srcWidth(0)
@@ -1028,9 +1050,8 @@ enum : int {
         {}
 
         DibStretchBLT(const std::size_t data_length, const uint16_t height, const uint16_t width, const uint16_t depth, uint32_t op)
-        : bitmapInfoHeader(data_length, height, width, depth)
-        , recordSize((data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2)
-        , recordFunction(MFF::META_DIBSTRETCHBLT)
+        : Record((data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2, MFF::META_DIBSTRETCHBLT)
+        , bitmapInfoHeader(data_length, height, width, depth)
         , rasterOperation(op)
         , srcHeight(height)
         , srcWidth(width)
@@ -1047,8 +1068,7 @@ enum : int {
         }
 
         void emit(OutStream & stream) {
-            stream.out_uint32_le(this->recordSize);
-            stream.out_uint16_le(this->recordFunction);
+            Record::emit(stream);
             stream.out_uint32_le(this->rasterOperation);
             stream.out_uint16_le(this->srcHeight);
             stream.out_uint16_le(this->srcWidth);
@@ -1063,6 +1083,7 @@ enum : int {
         }
 
         void recv(InStream & stream) {
+            Record::recv(stream);
             REDASSERT(this->recordSize >= META_DIBSTRETCHBLT_HEADER_SIZE/2);
             this->rasterOperation = stream.in_uint32_le();
             this->srcHeight = stream.in_uint16_le();
@@ -1078,6 +1099,22 @@ enum : int {
             REDASSERT( (this->srcHeight * this->srcWidth * this->bitmapInfoHeader.bitCount / 8) == int(this->bitmapInfoHeader.imageSize));
             REDASSERT(uint16_t(this->bitmapInfoHeader.height) == this->destHeight);
             REDASSERT(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
+        }
+
+        void log() {
+            Record::log();
+            LOG(LOG_INFO, "     Dib Stretch BLT:");
+            LOG(LOG_INFO, "          * rasterOperation = 0x%08x (4 bytes)", this->rasterOperation);
+            LOG(LOG_INFO, "          * srcHeight       = %d (2 bytes)", this->srcHeight);
+            LOG(LOG_INFO, "          * srcWidth        = %d (2 bytes)", this->srcWidth);
+            LOG(LOG_INFO, "          * ySrc            = %d (2 bytes)", this->ySrc);
+            LOG(LOG_INFO, "          * xSrc            = %d (2 bytes)", this->xSrc);
+            LOG(LOG_INFO, "          * destHeight      = %d (2 bytes)", this->destHeight);
+            LOG(LOG_INFO, "          * destWidth       = %d (2 bytes)", this->destWidth);
+            LOG(LOG_INFO, "          * yDest           = %d (2 bytes)", this->yDest);
+            LOG(LOG_INFO, "          * xDest           = %d (2 bytes)", this->xDest);
+
+            this->bitmapInfoHeader.log();
         }
 
     };

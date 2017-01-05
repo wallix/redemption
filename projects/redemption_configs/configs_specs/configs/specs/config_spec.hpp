@@ -80,6 +80,7 @@ void config_spec_definition(Writer && W)
         W.member(type_<std::string>(), "target", sesman::name{"ip_target"}, rw);
         W.member(type_<std::string>(), "target_device", r);
         W.member(type_<std::string>(), "device_id", r);
+        W.member(type_<std::string>(), "primary_user_id", r);
         W.member(type_<std::string>(), "target_user", sesman::name{"target_login"}, rw);
         W.member(type_<std::string>(), "target_application", r);
         W.member(type_<std::string>(), "target_application_account", r);

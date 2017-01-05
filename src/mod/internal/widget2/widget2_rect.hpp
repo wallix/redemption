@@ -45,7 +45,9 @@ public:
             RDPOpaqueRect(
                 clip,
                 this->color
-            ), this->get_rect()
+            ),
+            this->get_rect(),
+            gdi::GraphicColorCtx::depth24()
         );
     }
 };

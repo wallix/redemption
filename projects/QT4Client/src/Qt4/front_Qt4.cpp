@@ -75,6 +75,9 @@ Front_Qt::Front_Qt(char* argv[], int argc, RDPVerbose verbose)
     , _cb_filesList()
     , _cb_buffers()
 {
+    SSL_load_error_strings();
+    SSL_library_init();
+
     this->fileSystemData.drives[0].name[0] = 'R';
     this->fileSystemData.drives[0].name[1] = 'D';
     this->fileSystemData.drives[0].name[2] = 'P';

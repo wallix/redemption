@@ -976,7 +976,12 @@ struct FormatListPDU_LongName : public FormatListPDU {
 
     void log() {
         this->header.log();
-
+        LOG(LOG_INFO, "     Format List PDU Long Name:");
+        LOG(LOG_INFO, "          * formatListDataSize = %d (4 bytes)", int(this->formatListDataSize));
+        for (size_t i = 0; i < this->formatListDataSize; i++) {
+        LOG(LOG_INFO, "          * formatListDataName = %s", this->formatListDataName[i].c_str());
+        LOG(LOG_INFO, "          * formatListDataIDs  = 0x%08x (4 bytes)", this->formatListDataIDs[i]);
+        }
     }
 
 };
@@ -1008,10 +1013,16 @@ struct FormatListPDU_ShortName : public FormatListPDU {
 
     void log() {
         this->header.log();
-
+        LOG(LOG_INFO, "     Format List PDU Short Name:");
+        LOG(LOG_INFO, "          * formatListDataSize = %d (4 bytes)", int(this->formatListDataSize));
+        for (size_t i = 0; i < this->formatListDataSize; i++) {
+        LOG(LOG_INFO, "          * formatListDataName = %s (8 bytes)", this->formatListDataName[i].c_str());
+        LOG(LOG_INFO, "          * formatListDataIDs  = 0x%08x (4 bytes)", this->formatListDataIDs[i]);
+        }
     }
-
 };
+
+
 
 // [MS-RDPECLIP] 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
 // =====================================================================
@@ -1120,7 +1131,8 @@ struct FormatDataRequestPDU
 
     void log() {
         this->header.log();
-
+        LOG(LOG_INFO, "     Format Data Request PDU:");
+        LOG(LOG_INFO, "          * requestedFormatId = 0x%08x (4 bytes)", this->requestedFormatId);
     }
 
 };  // struct FormatDataRequestPDU
@@ -1252,7 +1264,11 @@ struct FileContentsRequestPDU     // Resquest RANGE
 
     void log() {
         this->header.log();
-
+        LOG(LOG_INFO, "     File Contents Request PDU:");
+        LOG(LOG_INFO, "          * streamID      = %08x (4 bytes)", this->streamID);
+        LOG(LOG_INFO, "          * flag          = %08x (4 bytes)", this->flag);
+        LOG(LOG_INFO, "          * lindex        = %08x (4 bytes)", this->lindex);
+        LOG(LOG_INFO, "          * sizeRequested = %" PRIu64 " (8 bytes)", this->sizeRequested);
     }
 
 };
@@ -1308,11 +1324,6 @@ struct FileContentsResponse
         this->header.emit(stream);
     }
 
-    void log() {
-        this->header.log();
-
-    }
-
 };
 
 struct FileContentsResponse_Size : FileContentsResponse {
@@ -1340,7 +1351,10 @@ struct FileContentsResponse_Size : FileContentsResponse {
 
     void log() {
         this->header.log();
-
+        LOG(LOG_INFO, "     File Contents Response Size:");
+        LOG(LOG_INFO, "          * size     = %" PRIu64 " (8 bytes)", this->size);
+        LOG(LOG_INFO, "          * streamID = 0X%08x (4 bytes)", this->streamID);
+        LOG(LOG_INFO, "          * Padding - (4 byte) NOT USED");
     }
 
 
@@ -1368,7 +1382,8 @@ struct FileContentsResponse_Range : FileContentsResponse {
 
     void log() {
         this->header.log();
-
+        LOG(LOG_INFO, "     File Contents Response Range:");
+        LOG(LOG_INFO, "          * streamID = 0X%08x (4 bytes)", this->streamID);
     }
 
 };
@@ -1892,7 +1907,15 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
 
     void log() {
         this->header.log();
-
+        LOG(LOG_INFO, "     Packed Metafile Payload:");
+        LOG(LOG_INFO, "          * mappingMode = 0x%08x (4 bytes)", this->mappingMode);
+        LOG(LOG_INFO, "          * xExt        = %d (4 bytes)", int(this->xExt));
+        LOG(LOG_INFO, "          * yExt        = %d (4 bytes)", int(this->yExt));
+        this->metaHeader.log();
+        this->metaSetMapMod.log();
+        this->metaSetWindowExt.log();
+        this->metaSetWindowOrg.log();
+        this->dibStretchBLT.log();
     }
 
     explicit FormatDataResponsePDU_MetaFilePic()
@@ -1953,24 +1976,28 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
 
         this->metaHeader.recv(stream);
 
+        InStream stream_header = stream.clone();
         bool notEOF(true);
         while(notEOF) {
 
-            int recordSize = stream.in_uint32_le();
-            int type = stream.in_uint16_le();
+            int recordSize = stream_header.in_uint32_le();
+            int type = stream_header.in_uint16_le();
 
             switch (type) {
 
                 case MFF::META_SETWINDOWEXT:
+                    stream_header.in_skip_bytes(4);
                     this->metaSetWindowExt.recv(stream);
                     break;
 
                 case MFF::META_SETWINDOWORG:
+                    stream_header.in_skip_bytes(4);
                     this->metaSetWindowOrg.recv(stream);
                     break;
 
                 case MFF::META_SETMAPMODE:
                     this->metaSetMapMod.recv(stream);
+                    stream_header.in_skip_bytes(2);
                     REDASSERT(this->mappingMode == this->metaSetMapMod.mappingMode);
                     break;
 
@@ -1978,7 +2005,6 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
                     {
                         notEOF = false;
 
-                        this->dibStretchBLT.recordSize = recordSize;
                         this->dibStretchBLT.recv(stream);
 
                         REDASSERT(this->metaHeader.maxRecord == this->dibStretchBLT.recordSize);

@@ -191,13 +191,13 @@ namespace detail
 
     template<class Fn, class Iterator, class Cmd, class... Ts>
     void draw_cmd_color_convert(
-        std::false_type, Fn & apply, GraphicDepth, RngByBpp<Iterator> const & rng_by_bpp,
+        std::false_type, Fn & apply, gdi::GraphicDepth, RngByBpp<Iterator> const & rng_by_bpp,
         Cmd const & cmd, Ts const & ... args
     ) { draw_rng(apply, rng_by_bpp.rng_all(), cmd, args...); }
 
     template<class Fn, class Iterator, class Cmd, class... Ts>
     void draw_cmd_color_convert(
-        std::true_type, Fn & apply, GraphicDepth order_depth, RngByBpp<Iterator> const & rng_by_bpp,
+        std::true_type, Fn & apply, gdi::GraphicDepth order_depth, RngByBpp<Iterator> const & rng_by_bpp,
         Cmd const & cmd, Ts const & ... args
     ) {
         for (std::size_t i = rng_by_bpp.count_range(); i > 0; --i) {
@@ -248,7 +248,7 @@ namespace detail
 
 template<class Fn, class Iterator, class Cmd, class... Ts>
 void draw_cmd_color_convert(
-    Fn apply, GraphicDepth order_depth, RngByBpp<Iterator> rng,
+    Fn apply, gdi::GraphicDepth order_depth, RngByBpp<Iterator> rng,
     Cmd const & cmd, Ts const & ... args
 ) {
     detail::draw_cmd_color_convert(
@@ -263,32 +263,6 @@ void draw_cmd_color_convert(
     GraphicDepth order_depth, RngByBpp<Iterator> rng,
     Cmd const & cmd, Ts const & ... args
 ) { return draw_cmd_color_convert(graphic_draw_fn{}, order_depth, rng, cmd, args...); }
-
-
-struct GraphicColorConverterAccess : GraphicCoreAccess
-{
-    template<class Derived, class... Ts>
-    static void draw(Derived & gd, Ts const & ... args) {
-        static_assert(sizeof(GraphicCoreAccess::color_converter(gd)), "unimplemented");
-        encode_cmd(1, gd, args...);
-    }
-
-private:
-    template<class Gd, class Cmd, class... Ts>
-    static auto encode_cmd(int, Gd & gd, Cmd const & cmd, Ts const & ... args)
-    -> decltype(void(GraphicCmdColor::encode_cmd_color(
-        GraphicCoreAccess::color_converter(gd), std::declval<Cmd&>())
-    )) {
-        auto new_cmd = cmd;
-        GraphicCmdColor::encode_cmd_color(GraphicCoreAccess::color_converter(gd), new_cmd);
-        GraphicCoreAccess::draw(gd, new_cmd, args...);
-    }
-
-    template<class Gd, class Cmd, class... Ts>
-    static void encode_cmd(unsigned, Gd & gd, Cmd const & cmd, Ts const & ... args) {
-        GraphicCoreAccess::draw(gd, cmd, args...);
-    }
-};
 
 }
 

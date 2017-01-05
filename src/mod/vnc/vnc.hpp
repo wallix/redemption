@@ -671,7 +671,7 @@ public:
                 LOG(LOG_INFO, "VNC connection complete, connected ok\n");
                 this->front.begin_update();
                 RDPOpaqueRect orect(Rect(0, 0, this->width, this->height), 0);
-                drawable.draw(orect, Rect(0, 0, this->width, this->height));
+                drawable.draw(orect, Rect(0, 0, this->width, this->height), gdi::GraphicColorCtx::from_bpp(this->bpp, this->palette));
                 this->front.end_update();
 
                 this->state = UP_AND_RUNNING;

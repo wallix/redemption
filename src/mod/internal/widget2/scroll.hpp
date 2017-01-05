@@ -934,6 +934,10 @@ public:
 private:
     void update_cursor_button_rects() {
         if (this->horizontal) {
+            if (!this->cx()) {
+                return;
+            }
+
             this->cursor_button_rect.x  = this->x() + this->button_width_or_height - 1 +
                                               (this->cx() - this->button_width_or_height * 2 + 2 - this->button_width_or_height) *
                                                   this->current_value / this->max_value;
@@ -942,6 +946,10 @@ private:
             this->cursor_button_rect.cy = this->cy() - 2;
         }
         else {
+            if (!this->cy()) {
+                return;
+            }
+
             this->cursor_button_rect.x  = this->x() + 1;
             this->cursor_button_rect.y  = this->y() + this->button_width_or_height - 1 +
                                               (this->cy() - this->button_width_or_height * 2 + 2 - this->button_width_or_height) *
@@ -1007,41 +1015,44 @@ public:
 
             this->drawable.draw(
                     RDPOpaqueRect(
-                            clip.intersect(
-                                    Rect(this->scroll_bar_rect.x,
-                                         this->scroll_bar_rect.y + 1,
-                                         this->scroll_bar_rect.cx,
-                                         this->scroll_bar_rect.cy - 2)
-                                ),
-                            this->bg_color
-                        ),
-                    this->get_rect()
+                        clip.intersect(
+                                Rect(this->scroll_bar_rect.x,
+                                        this->scroll_bar_rect.y + 1,
+                                        this->scroll_bar_rect.cx,
+                                        this->scroll_bar_rect.cy - 2)
+                            ),
+                        this->bg_color
+                    ),
+                    this->get_rect(),
+                    gdi::GraphicColorCtx::depth24()
                 );
 
             this->drawable.draw(
                     RDPOpaqueRect(
-                            clip.intersect(
-                                    Rect(this->scroll_bar_rect.x,
-                                         this->scroll_bar_rect.y,
-                                         this->scroll_bar_rect.cx,
-                                         1)
-                                ),
-                            this->fg_color
-                        ),
-                    this->get_rect()
+                        clip.intersect(
+                                Rect(this->scroll_bar_rect.x,
+                                        this->scroll_bar_rect.y,
+                                        this->scroll_bar_rect.cx,
+                                        1)
+                            ),
+                        this->fg_color
+                    ),
+                    this->get_rect(),
+                    gdi::GraphicColorCtx::depth24()
                 );
 
             this->drawable.draw(
                     RDPOpaqueRect(
-                            clip.intersect(
-                                    Rect(this->scroll_bar_rect.x,
-                                         this->scroll_bar_rect.y + this->cy() - 1,
-                                         this->scroll_bar_rect.cx,
-                                         1)
-                                ),
-                            this->fg_color
-                        ),
-                    this->get_rect()
+                        clip.intersect(
+                                Rect(this->scroll_bar_rect.x,
+                                        this->scroll_bar_rect.y + this->cy() - 1,
+                                        this->scroll_bar_rect.cx,
+                                        1)
+                            ),
+                        this->fg_color
+                    ),
+                    this->get_rect(),
+                    gdi::GraphicColorCtx::depth24()
                 );
 
             WidgetFlatButton::draw(clip, this->cursor_button_rect, this->drawable,
@@ -1062,41 +1073,44 @@ public:
 
             this->drawable.draw(
                     RDPOpaqueRect(
-                            clip.intersect(
-                                    Rect(this->scroll_bar_rect.x + 1,
-                                         this->scroll_bar_rect.y,
-                                         this->scroll_bar_rect.cx - 2,
-                                         this->scroll_bar_rect.cy)
-                                ),
-                            this->bg_color
-                        ),
-                    this->get_rect()
+                        clip.intersect(
+                                Rect(this->scroll_bar_rect.x + 1,
+                                        this->scroll_bar_rect.y,
+                                        this->scroll_bar_rect.cx - 2,
+                                        this->scroll_bar_rect.cy)
+                            ),
+                        this->bg_color
+                    ),
+                    this->get_rect(),
+                    gdi::GraphicColorCtx::depth24()
                 );
 
             this->drawable.draw(
                     RDPOpaqueRect(
-                            clip.intersect(
-                                    Rect(this->scroll_bar_rect.x,
-                                         this->scroll_bar_rect.y,
-                                         1,
-                                         this->scroll_bar_rect.cy)
-                                ),
-                            this->fg_color
-                        ),
-                    this->get_rect()
+                        clip.intersect(
+                                Rect(this->scroll_bar_rect.x,
+                                        this->scroll_bar_rect.y,
+                                        1,
+                                        this->scroll_bar_rect.cy)
+                            ),
+                        this->fg_color
+                    ),
+                    this->get_rect(),
+                    gdi::GraphicColorCtx::depth24()
                 );
 
             this->drawable.draw(
                     RDPOpaqueRect(
-                            clip.intersect(
-                                    Rect(this->scroll_bar_rect.x + this->cx() - 1,
-                                         this->scroll_bar_rect.y,
-                                         1,
-                                         this->scroll_bar_rect.cy)
-                                ),
-                            this->fg_color
-                        ),
-                    this->get_rect()
+                        clip.intersect(
+                                Rect(this->scroll_bar_rect.x + this->cx() - 1,
+                                        this->scroll_bar_rect.y,
+                                        1,
+                                        this->scroll_bar_rect.cy)
+                            ),
+                        this->fg_color
+                    ),
+                    this->get_rect(),
+                    gdi::GraphicColorCtx::depth24()
                 );
 
             WidgetFlatButton::draw(clip, this->cursor_button_rect, this->drawable,

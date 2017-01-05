@@ -20,12 +20,14 @@
 
 #pragma once
 
+#include "utils/log.hpp"
+
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/local_fd.hpp"
-#include "utils/log.hpp"
 
 #include <cassert>
 #include <ctime>
+#include <iostream>
 
 /**
  * Format (JSON):

@@ -45,6 +45,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
 {
     Rect screen_rect(0, 0, 800, 600);
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
+    auto const color_cxt = gdi::GraphicColorCtx::depth24();
 
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test", ".png", groupid);
@@ -53,53 +54,10 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
     now.tv_sec = 1350998222;
     now.tv_usec = 0;
 
-    class DrawableToFileLocal
+    class ImageCaptureLocal
     {
-    protected:
         Transport & trans;
         const Drawable & drawable;
-
-    public:
-        DrawableToFileLocal(Transport & trans, const Drawable & drawable)
-        : trans(trans)
-        , drawable(drawable)
-        , order_depth_(gdi::GraphicDepth::unspecified())
-        {
-        }
-
-        ~DrawableToFileLocal() = default;
-
-        bool logical_frame_ended() const {
-            return this->drawable.logical_frame_ended;
-        }
-
-        void flush() {
-            this->dump24();
-        }
-
-    public:
-        void dump24() const {
-            ::transport_dump_png24(
-                this->trans, this->drawable.data(),
-                this->drawable.width(), this->drawable.height(),
-                this->drawable.rowsize(), true);
-        }
-        
-        virtual void set_depths(gdi::GraphicDepth const & depth) {
-            this->order_depth_ = depth;
-        }
-
-        virtual gdi::GraphicDepth const & order_depth() const {
-            return this->order_depth_;
-        }
-
-        gdi::GraphicDepth order_depth_;
-        
-    };
-
-
-    class ImageCaptureLocal : private DrawableToFileLocal
-    {
         timeval start_capture;
         std::chrono::microseconds frame_interval;
 
@@ -107,7 +65,8 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
         ImageCaptureLocal (
             const timeval & now, const Drawable & drawable, Transport & trans,
             std::chrono::microseconds png_interval)
-        : DrawableToFileLocal(trans, drawable)
+        : trans(trans)
+        , drawable(drawable)
         , start_capture(now)
         , frame_interval(png_interval)
         {}
@@ -139,6 +98,22 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
             }
             return microseconds(interval - duration);
         }
+
+        void dump24() const {
+            ::transport_dump_png24(
+                this->trans, this->drawable.data(),
+                this->drawable.width(), this->drawable.height(),
+                this->drawable.rowsize(), true);
+        }
+
+    private:
+        bool logical_frame_ended() const {
+            return this->drawable.logical_frame_ended;
+        }
+
+        void flush() {
+            this->dump24();
+        }
     };
 
 
@@ -146,9 +121,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
 
     drawable.show_mouse_cursor(false);
 
-    bool ignore_frame_in_timeval = false;
-
-    drawable.draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), RED), screen_rect);
+    drawable.draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), RED), screen_rect, color_cxt);
     now.tv_sec++;
 
     {
@@ -164,23 +137,24 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
 
         struct OSD : ProtectGraphics
         {
-            OSD(GraphicApi & drawable, Rect const & rect) 
-                : ProtectGraphics(drawable, rect) 
+            OSD(GraphicApi & drawable, Rect const & rect)
+                : ProtectGraphics(drawable, rect)
                 , order_depth_(gdi::GraphicDepth::unspecified())
                 {}
             void refresh_rects(array_view<Rect const>) override {}
-            virtual void set_depths(gdi::GraphicDepth const & depth) {
+
+            void set_depths(gdi::GraphicDepth const & depth) override {
                 this->order_depth_ = depth;
             }
 
-            virtual gdi::GraphicDepth const & order_depth() const {
+            gdi::GraphicDepth const & order_depth() const override {
                 return this->order_depth_;
             }
 
             gdi::GraphicDepth order_depth_;
 
         } osd(drawable, rect);
-        osd.draw(RDPOpaqueRect(Rect(100, 100, 200, 200), GREEN), screen_rect);
+        osd.draw(RDPOpaqueRect(Rect(100, 100, 200, 200), GREEN), screen_rect, color_cxt);
         now.tv_sec++;
         consumer.do_snapshot(now);
     }
