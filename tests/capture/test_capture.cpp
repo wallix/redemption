@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
         CaptureFlags capture_flags = CaptureFlags::wrm | CaptureFlags::png;
-        
+
         ini.set<cfg::globals::trace_type>(TraceType::localfile);
 
         ini.set<cfg::video::record_tmp_path>("./");
@@ -78,18 +78,18 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         // TODO remove this after unifying capture interface
         auth_api * authentifier = nullptr;
         // TODO remove this after unifying capture interface
-        
+
         WrmParams wrm_params = {};
         PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true, false};
 
         FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
-        
+
         bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        bool capture_png = bool(capture_flags & CaptureFlags::png) 
+        bool capture_png = bool(capture_flags & CaptureFlags::png)
                         && (!authentifier || png_params.png_limit > 0);
-        bool capture_pattern_checker = authentifier 
+        bool capture_pattern_checker = authentifier
             && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
                 || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
 
@@ -279,9 +279,9 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
     const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
     bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-    bool capture_png = bool(capture_flags & CaptureFlags::png) 
+    bool capture_png = bool(capture_flags & CaptureFlags::png)
                     && (!authentifier || png_params.png_limit > 0);
-    bool capture_pattern_checker = authentifier 
+    bool capture_pattern_checker = authentifier
         && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
             || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
 
@@ -307,7 +307,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , capture_flv_full
                    , capture_meta
                    , capture_kbd
-                   
+
                    , now, scr.cx, scr.cy, 16, 16
                    , record_tmp_path
                    , record_path
@@ -540,10 +540,10 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureMP4)
     // values below depends on current embedded ffmpeg version
     const char * filename;
     filename = (file_gen.get(0));
-    BOOST_CHECK((15663 == filesize(filename))||(15649 == filesize(filename)));
+    BOOST_CHECK_EQUAL(15505, filesize(filename));
     ::unlink(filename);
     filename = (file_gen.get(1));
-    BOOST_CHECK((16090 == filesize(filename))||(16076 == filesize(filename)));
+    BOOST_CHECK_EQUAL(14928, filesize(filename));
     ::unlink(filename);
     filename = (file_gen.get(2));
     BOOST_CHECK_EQUAL(262, filesize(filename));
