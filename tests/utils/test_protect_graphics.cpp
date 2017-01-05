@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
 {
     Rect screen_rect(0, 0, 800, 600);
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
-    auto const depth = gdi::GraphicDepth::depth24();
+    auto const color_cxt = gdi::GraphicColorCtx::depth24();
 
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test", ".png", groupid);
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
 
     drawable.show_mouse_cursor(false);
 
-    drawable.draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), RED), screen_rect, depth);
+    drawable.draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), RED), screen_rect, color_cxt);
     now.tv_sec++;
 
     {
@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
             gdi::GraphicDepth order_depth_;
 
         } osd(drawable, rect);
-        osd.draw(RDPOpaqueRect(Rect(100, 100, 200, 200), GREEN), screen_rect, depth);
+        osd.draw(RDPOpaqueRect(Rect(100, 100, 200, 200), GREEN), screen_rect, color_cxt);
         now.tv_sec++;
         consumer.do_snapshot(now);
     }

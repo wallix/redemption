@@ -56,96 +56,96 @@ public:
 
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd);}
 
-    void draw(RDPDestBlt          const & cmd, Rect const & clip) override {this->draw_impl( cmd, clip);}
+    void draw(RDPDestBlt          const & cmd, Rect clip) override {this->draw_impl( cmd, clip);}
 
-    void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override {this->draw_impl( cmd, clip);}
+    void draw(RDPMultiDstBlt      const & cmd, Rect clip) override {this->draw_impl( cmd, clip);}
 
-    void draw(RDPPatBlt           const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+    void draw(RDPPatBlt           const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
-        this->draw_impl( new_cmd, clip, depth);
+        this->draw_impl( new_cmd, clip, color_ctx);
     }
 
-    void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
-        this->draw_impl( new_cmd, clip, depth);
+        this->draw_impl( new_cmd, clip, color_ctx);
     }
 
-    void draw(RDPOpaqueRect       const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+    void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
-        this->draw_impl( new_cmd, clip, depth);
+        this->draw_impl( new_cmd, clip, color_ctx);
     }
 
-    void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
-        this->draw_impl( new_cmd, clip, depth);
+        this->draw_impl( new_cmd, clip, color_ctx);
     }
 
-    void draw(RDPScrBlt           const & cmd, Rect const & clip) override {
+    void draw(RDPScrBlt           const & cmd, Rect clip) override {
         this->draw_impl( cmd, clip);
     }
 
-    void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override {
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override {
         this->draw_impl( cmd, clip);
     }
 
-    void draw(RDPLineTo           const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+    void draw(RDPLineTo           const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
-        this->draw_impl( new_cmd, clip, depth);
+        this->draw_impl( new_cmd, clip, color_ctx);
     }
 
-    void draw(RDPPolygonSC        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+    void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
-        this->draw_impl( new_cmd, clip, depth);
+        this->draw_impl( new_cmd, clip, color_ctx);
     }
 
-    void draw(RDPPolygonCB        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+    void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
-        this->draw_impl( new_cmd, clip, depth);
+        this->draw_impl( new_cmd, clip, color_ctx);
     }
 
-    void draw(RDPPolyline         const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+    void draw(RDPPolyline         const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
-        this->draw_impl( new_cmd, clip, depth);
+        this->draw_impl( new_cmd, clip, color_ctx);
     }
 
-    void draw(RDPEllipseSC        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+    void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
-        this->draw_impl( new_cmd, clip, depth);
+        this->draw_impl( new_cmd, clip, color_ctx);
     }
 
-    void draw(RDPEllipseCB        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+    void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
-        this->draw_impl( new_cmd, clip, depth);
+        this->draw_impl( new_cmd, clip, color_ctx);
     }
 
     void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override {
         this->draw_impl( cmd, bmp);
     }
 
-    void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override {
+    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override {
         this->draw_impl( cmd, clip, bmp);
     }
 
-    void draw(RDPMem3Blt          const & cmd, Rect const & clip, gdi::GraphicDepth depth, Bitmap const & bmp) override {
+    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, Bitmap const & bmp) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
-        this->draw_impl( new_cmd, clip, depth, bmp);
+        this->draw_impl( new_cmd, clip, color_ctx, bmp);
     }
 
-    void draw(RDPGlyphIndex       const & cmd, Rect const & clip, gdi::GraphicDepth depth, GlyphCache const & gly_cache) override {
+    void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, GlyphCache const & gly_cache) override {
         auto new_cmd = cmd;
         gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
-        this->draw_impl( new_cmd, clip, depth, gly_cache);
+        this->draw_impl( new_cmd, clip, color_ctx, gly_cache);
     }
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override {
@@ -210,7 +210,7 @@ private:
     }
 
     template<class Cmd, class... Ts>
-    void draw_impl(Cmd const & cmd, Rect const & clip, Ts const & ... args) {
+    void draw_impl(Cmd const & cmd, Rect clip, Ts const & ... args) {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);

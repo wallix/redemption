@@ -77,16 +77,16 @@ public:
 
         const Rect & clip = this->get_screen_rect();
 
-        auto const depth = gdi::GraphicDepth::depth24();
+        auto const color_ctx = gdi::GraphicColorCtx::depth24();
 
-        this->front.draw(RDPOpaqueRect(this->get_screen_rect(), WHITE), clip, depth);
-        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(5), RED), clip, depth);
-        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(10), GREEN), clip, depth);
-        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(15), BLUE), clip, depth);
-        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(20), BLACK), clip, depth);
+        this->front.draw(RDPOpaqueRect(this->get_screen_rect(), WHITE), clip, color_ctx);
+        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(5), RED), clip, color_ctx);
+        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(10), GREEN), clip, color_ctx);
+        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(15), BLUE), clip, color_ctx);
+        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(20), BLACK), clip, color_ctx);
 
         Rect winrect = this->get_screen_rect().shrink(30);
-        this->front.draw(RDPOpaqueRect(winrect, WINBLUE), clip, depth);
+        this->front.draw(RDPOpaqueRect(winrect, WINBLUE), clip, color_ctx);
 
 
         Bitmap bitmap = bitmap_from_file(SHARE_PATH "/" "Philips_PM5544_640.png");
@@ -101,41 +101,41 @@ public:
         //  lineTo mix_mode=1 startx=200 starty=1198 endx=200 endy=145 bg_color=0 rop2=13 clip=(200, 145, 1, 110)
         this->front.draw(
             RDPLineTo(1, 200, 1198, 200, 145, 0, 13, RDPPen(0, 1, 0x0000FF)),
-            Rect(200, 145, 1, 110), depth);
+            Rect(200, 145, 1, 110), color_ctx);
 
         this->front.draw(
             RDPLineTo(1, 200, 145, 200, 1198, 0, 13, RDPPen(0, 1, 0x0000FF)),
-            Rect(200, 145, 1, 110), depth);
+            Rect(200, 145, 1, 110), color_ctx);
 
         this->front.draw(
             RDPLineTo(1, 201, 1198, 200, 145, 0, 13, RDPPen(0, 1, 0x0000FF)),
-            Rect(200, 145, 1, 110), depth);
+            Rect(200, 145, 1, 110), color_ctx);
 
         this->front.draw(
             RDPLineTo(1, 200, 145, 201, 1198, 0, 13, RDPPen(0, 1, 0x0000FF)),
-            Rect(200, 145, 1, 110), depth);
+            Rect(200, 145, 1, 110), color_ctx);
 
         this->front.draw(
             RDPLineTo(1, 1198, 200, 145, 200, 0, 13, RDPPen(0, 1, 0x0000FF)),
-            Rect(145, 200, 110, 1), depth);
+            Rect(145, 200, 110, 1), color_ctx);
 
         this->front.draw(
             RDPLineTo(1, 145, 200, 1198, 200, 0, 13, RDPPen(0, 1, 0x0000FF)),
-            Rect(145, 200, 110, 1), depth);
+            Rect(145, 200, 110, 1), color_ctx);
 
         this->front.draw(
             RDPLineTo(1, 1198, 201, 145, 200, 0, 13, RDPPen(0, 1, 0x0000FF)),
-            Rect(145, 200, 110, 1), depth);
+            Rect(145, 200, 110, 1), color_ctx);
 
         this->front.draw(
             RDPLineTo(1, 145, 200, 1198, 201, 0, 13, RDPPen(0, 1, 0x0000FF)),
-            Rect(145, 200, 110, 1), depth);
+            Rect(145, 200, 110, 1), color_ctx);
 
-        gdi::server_draw_text(drawable, this->font, 30, 30, "White", WHITE, BLACK, depth, clip);
-        gdi::server_draw_text(drawable, this->font, 30, 50, "Red  ", RED, BLACK, depth, clip);
-        gdi::server_draw_text(drawable, this->font, 30, 70, "Green", GREEN, BLACK, depth, clip);
-        gdi::server_draw_text(drawable, this->font, 30, 90, "Blue ", BLUE, BLACK, depth, clip);
-        gdi::server_draw_text(drawable, this->font, 30, 110, "Black", BLACK, WHITE, depth, clip);
+        gdi::server_draw_text(drawable, this->font, 30, 30, "White", WHITE, BLACK, color_ctx, clip);
+        gdi::server_draw_text(drawable, this->font, 30, 50, "Red  ", RED, BLACK, color_ctx, clip);
+        gdi::server_draw_text(drawable, this->font, 30, 70, "Green", GREEN, BLACK, color_ctx, clip);
+        gdi::server_draw_text(drawable, this->font, 30, 90, "Blue ", BLUE, BLACK, color_ctx, clip);
+        gdi::server_draw_text(drawable, this->font, 30, 110, "Black", BLACK, WHITE, color_ctx, clip);
 
         Bitmap card = bitmap_from_file(SHARE_PATH "/" REDEMPTION_LOGO24);
         this->front.draw(RDPMemBlt(0,

@@ -86,6 +86,7 @@ class rdp_orders
     RDPEllipseSC       ellipseSC;
 
 public:
+    uint8_t bpp = 0;
     BGRPalette global_palette;
 
     BmpCache * bmp_cache;
@@ -214,14 +215,14 @@ private:
     }
 
 public:
-    void create_cache_bitmap(const uint8_t bpp,
+    void create_cache_bitmap(
         uint16_t small_entries, uint16_t small_size, bool small_persistent,
         uint16_t medium_entries, uint16_t medium_size, bool medium_persistent,
         uint16_t big_entries, uint16_t big_size, bool big_persistent,
         bool enable_waiting_list, BmpCache::Verbose verbose)
     {
         if (this->bmp_cache) {
-            if (this->bmp_cache->bpp == bpp) {
+            if (this->bmp_cache->bpp == this->bpp) {
                 return;
             }
 
@@ -230,7 +231,7 @@ public:
             this->bmp_cache = nullptr;
         }
 
-        this->bmp_cache = new BmpCache(BmpCache::Mod_rdp, bpp, 3, false,
+        this->bmp_cache = new BmpCache(BmpCache::Mod_rdp, this->bpp, 3, false,
                                        BmpCache::CacheOption(small_entries + (enable_waiting_list ? 1 : 0), small_size, small_persistent),
                                        BmpCache::CacheOption(medium_entries + (enable_waiting_list ? 1 : 0), medium_size, medium_persistent),
                                        BmpCache::CacheOption(big_entries + (enable_waiting_list ? 1 : 0), big_size, big_persistent),
@@ -410,13 +411,13 @@ private:
         }
     }
 
-    void process_bmpcache(InStream & stream, const RDPSecondaryOrderHeader & header, uint8_t bpp)
+    void process_bmpcache(InStream & stream, const RDPSecondaryOrderHeader & header)
     {
         if (this->verbose & RDPVerbose::graphics) {
-            LOG(LOG_INFO, "rdp_orders_process_bmpcache bpp=%u", bpp);
+            LOG(LOG_INFO, "rdp_orders_process_bmpcache bpp=%u", this->bpp);
         }
         RDPBmpCache bmp(this->verbose);
-        bmp.receive(stream, header, this->global_palette, bpp);
+        bmp.receive(stream, header, this->global_palette, this->bpp);
 
         this->recv_bmp_cache_count++;
 
@@ -427,7 +428,7 @@ private:
             LOG( LOG_ERR
                , "rdp_orders_process_bmpcache bitmap id=%d idx=%d cx=%" PRIu16 " cy=%" PRIu16
                  " bmp_size=%zu original_bpp=%" PRIu8 " bpp=%" PRIu8
-               , bmp.id, bmp.idx, bmp.bmp.cx(), bmp.bmp.cy(), bmp.bmp.bmp_size(), bmp.bmp.bpp(), bpp);
+               , bmp.id, bmp.idx, bmp.bmp.cx(), bmp.bmp.cy(), bmp.bmp.bmp_size(), bmp.bmp.bpp(), this->bpp);
         }
     }
 
@@ -480,10 +481,12 @@ private:
 
 public:
     /*****************************************************************************/
-    int process_orders(uint8_t bpp, InStream & stream, bool fast_path, gdi::GraphicApi & gd,
-                       uint16_t front_width, uint16_t front_height) {
+    int process_orders(
+        InStream & stream, bool fast_path, gdi::GraphicApi & gd,
+        uint16_t front_width, uint16_t front_height
+    ) {
         if (this->verbose & RDPVerbose::graphics) {
-            LOG(LOG_INFO, "process_orders bpp=%u", bpp);
+            LOG(LOG_INFO, "process_orders bpp=%u", this->bpp);
         }
 
         using namespace RDP;
@@ -522,7 +525,7 @@ public:
                 case TS_CACHE_BITMAP_UNCOMPRESSED:
                 case TS_CACHE_BITMAP_COMPRESSED_REV2:
                 case TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
-                    this->process_bmpcache(stream, header, bpp);
+                    this->process_bmpcache(stream, header);
                     break;
                 case TS_CACHE_COLOR_TABLE:
                     this->process_colormap(stream, header, gd);
@@ -553,7 +556,7 @@ public:
                 case GLYPHINDEX:
                     this->glyph_index.receive(stream, header);
                     //this->glyph_index.log(LOG_INFO, cmd_clip);
-                    gd.draw(this->glyph_index, cmd_clip, gdi::GraphicDepth::from_bpp(bpp), this->gly_cache);
+                    gd.draw(this->glyph_index, cmd_clip, gdi::GraphicColorCtx::from_bpp(this->bpp, this->global_palette), this->gly_cache);
                     break;
                 case DESTBLT:
                     this->destblt.receive(stream, header);
@@ -567,12 +570,12 @@ public:
                     break;
                 case MULTIOPAQUERECT:
                     this->multiopaquerect.receive(stream, header);
-                    gd.draw(this->multiopaquerect, cmd_clip, gdi::GraphicDepth::from_bpp(bpp));
+                    gd.draw(this->multiopaquerect, cmd_clip, gdi::GraphicColorCtx::from_bpp(this->bpp, this->global_palette));
                     //this->multiopaquerect.log(LOG_INFO, cmd_clip);
                     break;
                 case MULTIPATBLT:
                     this->multipatblt.receive(stream, header);
-                    gd.draw(this->multipatblt, cmd_clip, gdi::GraphicDepth::from_bpp(bpp));
+                    gd.draw(this->multipatblt, cmd_clip, gdi::GraphicColorCtx::from_bpp(this->bpp, this->global_palette));
                     //this->multipatblt.log(LOG_INFO, cmd_clip);
                     break;
                 case MULTISCRBLT:
@@ -582,7 +585,7 @@ public:
                     break;
                 case PATBLT:
                     this->patblt.receive(stream, header);
-                    gd.draw(this->patblt, cmd_clip, gdi::GraphicDepth::from_bpp(bpp));
+                    gd.draw(this->patblt, cmd_clip, gdi::GraphicColorCtx::from_bpp(this->bpp, this->global_palette));
                     //this->patblt.log(LOG_INFO, cmd_clip);
                     break;
                 case SCREENBLT:
@@ -592,12 +595,12 @@ public:
                     break;
                 case LINE:
                     this->lineto.receive(stream, header);
-                    gd.draw(this->lineto, cmd_clip, gdi::GraphicDepth::from_bpp(bpp));
+                    gd.draw(this->lineto, cmd_clip, gdi::GraphicColorCtx::from_bpp(this->bpp, this->global_palette));
                     //this->lineto.log(LOG_INFO, cmd_clip);
                     break;
                 case RECT:
                     this->opaquerect.receive(stream, header);
-                    gd.draw(this->opaquerect, cmd_clip, gdi::GraphicDepth::from_bpp(bpp));
+                    gd.draw(this->opaquerect, cmd_clip, gdi::GraphicColorCtx::from_bpp(this->bpp, this->global_palette));
                     //this->opaquerect.log(LOG_INFO, cmd_clip);
                     break;
                 case MEMBLT:
@@ -637,7 +640,7 @@ public:
                         // TODO CGR: check if bitmap has the right palette...
                         // TODO CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps
                         if (bitmap.is_valid()) {
-                            gd.draw(this->mem3blt, cmd_clip, gdi::GraphicDepth::from_bpp(bpp), bitmap);
+                            gd.draw(this->mem3blt, cmd_clip, gdi::GraphicColorCtx::from_bpp(this->bpp, this->global_palette), bitmap);
                         }
                         else {
                             LOG(LOG_ERR, "rdp_orders::process_orders: MEM3BLT - Bitmap is not found in cache! cache_id=%u cache_index=%u",
@@ -648,12 +651,12 @@ public:
                     break;
                 case POLYLINE:
                     this->polyline.receive(stream, header);
-                    gd.draw(this->polyline, cmd_clip, gdi::GraphicDepth::from_bpp(bpp));
+                    gd.draw(this->polyline, cmd_clip, gdi::GraphicColorCtx::from_bpp(this->bpp, this->global_palette));
                     //this->polyline.log(LOG_INFO, cmd_clip);
                     break;
                 case ELLIPSESC:
                     this->ellipseSC.receive(stream, header);
-                    gd.draw(this->ellipseSC, cmd_clip, gdi::GraphicDepth::from_bpp(bpp));
+                    gd.draw(this->ellipseSC, cmd_clip, gdi::GraphicColorCtx::from_bpp(this->bpp, this->global_palette));
                     //this->ellipseSC.log(LOG_INFO, cmd_clip);
                     break;
                 default:
