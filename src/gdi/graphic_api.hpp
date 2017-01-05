@@ -237,75 +237,7 @@ struct GraphicApi : private noncopyable
 
     virtual GraphicDepth const & order_depth() const = 0;
 
-//    virtual GraphicDepth const & order_depth() const {
-//        return this->order_depth_;
-//    }
-
-public:
-//    GraphicDepth order_depth_;
-
     virtual void set_depths(GraphicDepth const & depths) = 0;
-
-protected:
-private:
-//    virtual void set_depths(GraphicDepth const & depths) {
-//        this->order_depth_ = depths;
-//    }
-};
-
-
-struct draw_tag {};
-struct set_tag {};
-struct sync_tag {};
-struct set_row_tag {};
-struct begin_update_tag{};
-struct end_update_tag{};
-
-template<class Graphic>
-struct GraphicUniformProxy
-{
-    using proxy_type = GraphicUniformProxy;
-
-    GraphicUniformProxy() = default;
-    GraphicUniformProxy(Graphic && graphic) : graphic_(std::move(graphic)) {}
-    GraphicUniformProxy(Graphic const & graphic) : graphic_(graphic) {}
-
-    template<class Graphic_>
-    GraphicUniformProxy(Graphic_ && graphic)
-    : graphic_(std::forward<Graphic_>(graphic))
-    {}
-
-    template<class... Ts>
-    void draw(Ts const & ... args) {
-        this->graphic_(draw_tag{}, args...);
-    }
-
-    void set_pointer(Pointer    const & pointer) {
-        this->graphic_(set_tag{}, pointer);
-    }
-
-    void set_palette(BGRPalette const & palette) {
-        this->graphic_(set_tag{}, palette);
-    }
-
-    void sync() {
-        this->graphic_(sync_tag{});
-    }
-
-    void set_row(std::size_t rownum, const uint8_t * data) {
-        this->graphic_(set_row_tag{}, rownum, data);
-    }
-
-    void begin_update() {
-        this->graphic_(begin_update_tag{});
-    }
-
-    void end_update() {
-        this->graphic_(end_update_tag{});
-    }
-
-private:
-    Graphic graphic_;
 };
 
 

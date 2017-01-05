@@ -29,86 +29,6 @@
 #include "utils/sugar/range.hpp"
 
 
-namespace gdi {
-
-    template<class Graphic>
-    struct GraphicUniformDistribution
-    {
-        Graphic graphic_;
-
-        template<class... Ts>
-        void operator()(draw_tag, Ts const & ... args) {
-            this->graphic_.draw(args...);
-        }
-
-        void operator()(set_tag, Pointer const & pointer) {
-            this->graphic_.set_pointer(pointer);
-        }
-
-        void operator()(set_tag, BGRPalette const & palette) {
-            this->graphic_.set_palette(palette);
-        }
-
-        void operator()(sync_tag) {
-            this->graphic_.sync();
-        }
-
-        void operator()(set_row_tag, std::size_t rownum, const uint8_t * data) {
-            this->graphic_.set_row(rownum, data);
-        }
-
-        void operator()(begin_update_tag) {
-            this->graphic_.begin_update();
-        }
-
-        void operator()(end_update_tag) {
-            this->graphic_.end_update();
-        }
-    };
-
-    struct self_fn
-    {
-        template<class T> T & operator()(T & x) const { return x; }
-        template<class T> T operator()(T && x) const { return std::move(x); }
-
-        template<class T> T & operator()(std::reference_wrapper<T> x) const { return x; }
-    };
-
-    struct GraphicUniformProjection
-    {
-        self_fn projection_;
-
-        template<class Graphic>
-        auto operator()(Graphic & graphic)
-        -> GraphicUniformDistribution<decltype(projection_(graphic))>
-        {
-            return {this->projection_(graphic)};
-        }
-    };
-
-    template<class GraphicList>
-    struct GraphicUniformDispatcherList
-    {
-        GraphicList & graphics_;
-        GraphicUniformProjection projection_;
-
-        template<class Tag, class... Ts>
-        void operator()(Tag tag, Ts const & ... args) {
-            for (auto && graphic : this->graphics_) {
-                this->projection_(graphic)(tag, args...);
-            }
-        }
-    };
-
-    template<class GraphicList>
-    struct GraphicDispatcherList : GraphicUniformProxy<GraphicUniformDispatcherList<GraphicList>>
-    {
-        GraphicDispatcherList(GraphicList & graphic_list, self_fn proj = self_fn{})
-        : GraphicDispatcherList::proxy_type{{graphic_list, GraphicUniformProjection{proj}}}
-        {}
-    };
-}
-
 class GraphicCaptureImpl
 {
 public:
@@ -151,33 +71,47 @@ public:
         void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
         void set_pointer(Pointer    const & pointer) override {
-            this->get_graphic_proxy().set_pointer(pointer);
+            for (gdi::GraphicApi & gd : this->gds){ 
+                gd.set_pointer(pointer);
+            }
         }
 
         void set_palette(BGRPalette const & palette) override {
-            this->get_graphic_proxy().set_palette(palette);
+            for (gdi::GraphicApi & gd : this->gds){ 
+                gd.set_palette(palette);
+            }
         }
 
         void sync() override {
-            this->get_graphic_proxy().sync();
+            for (gdi::GraphicApi & gd : this->gds){ 
+                gd.sync();
+            }
         }
 
         void set_row(std::size_t rownum, const uint8_t * data) override {
-            this->get_graphic_proxy().set_row(rownum, data);
+            for (gdi::GraphicApi & gd : this->gds){ 
+                gd.set_row(rownum, data);
+            }
         }
 
         void begin_update() override {
-            this->get_graphic_proxy().begin_update();
+            for (gdi::GraphicApi & gd : this->gds){ 
+                gd.begin_update();
+            }
         }
 
         void end_update() override {
-            this->get_graphic_proxy().end_update();
+            for (gdi::GraphicApi & gd : this->gds){ 
+                gd.end_update();
+            }
         }
 
     protected:
         template<class... Ts>
         void draw_impl(Ts const & ... args) {
-            this->get_graphic_proxy().draw(args...);
+            for (gdi::GraphicApi & gd : this->gds){ 
+                gd.draw(args...);
+            }
         }
 
     public:
@@ -189,14 +123,9 @@ public:
         gdi::GraphicDepth order_depth_ = gdi::GraphicDepth::unspecified();
         gdi::RngByBpp<std::vector<GdRef>::iterator> rng_by_bpp;
 
-        Graphic(gdi::GraphicDepth const & depth, MouseTrace const & mouse)
+        Graphic(MouseTrace const & mouse)
         : mouse(mouse)
         {}
-
-        gdi::GraphicDispatcherList<std::vector<GdRef>>
-        get_graphic_proxy() {
-            return {this->gds};
-        }
 
         template<class Cmd, class... Ts>
         void draw_impl(Cmd const & cmd, Ts const & ... args)
@@ -206,7 +135,9 @@ public:
                 gdi::draw_cmd_color_convert(this->order_depth_, this->rng_by_bpp, cmd, args...);
             }
             else {
-                this->get_graphic_proxy().draw(cmd, args...);
+                for (gdi::GraphicApi & gd : this->gds){ 
+                    gd.draw(cmd, args...);
+                }
             }
         }
 
@@ -245,7 +176,7 @@ public:
     using GraphicApi = Graphic;
 
     GraphicCaptureImpl(uint16_t width, uint16_t height, uint8_t order_bpp, MouseTrace const & mouse)
-    : graphic_api(gdi::GraphicDepth::unspecified(), mouse)
+    : graphic_api(mouse)
     , drawable(width, height, order_bpp)
     , order_bpp(order_bpp)
     {
@@ -267,7 +198,7 @@ public:
         this->graphic_api.order_depth_ = order_depth;
     }
 
-    GraphicApi & get_graphic_api() { return this->graphic_api; }
+    Graphic & get_graphic_api() { return this->graphic_api; }
 
     Drawable & impl() { return this->drawable.impl(); }
     RDPDrawable & rdp_drawable() { return this->drawable; }
