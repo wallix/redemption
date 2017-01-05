@@ -61,7 +61,7 @@ public:
     : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(),
                            client_execute, vars.get<cfg::theme>())
     , widget_test(front, widget_rect.x, widget_rect.y,
-                  widget_rect.cx + 1, widget_rect.cy + 1,
+                  widget_rect.cx, widget_rect.cy,
                   this->screen, this, std::move(managed_mod),
                   vars.get<cfg::font>(), vars.get<cfg::theme>())
     , vars(vars)
@@ -150,7 +150,7 @@ public:
     void move_size_widget(int16_t left, int16_t top, uint16_t width,
                           uint16_t height) override
     {
-        this->widget_test.move_size_widget(left, top, width + 1, height + 1);
+        this->widget_test.move_size_widget(left, top, width, height);
 
         this->rdp_input_invalidate(Rect(left, top, width, height));
     }

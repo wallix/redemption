@@ -71,8 +71,7 @@ protected:
     wait_obj event;
 
     FrontAPI(bool notimestamp, bool nomouse)
-        : gdi::GraphicApi(gdi::GraphicDepth::unspecified())
-        , mouse_x(0)
+        : mouse_x(0)
         , mouse_y(0)
         , notimestamp(notimestamp)
         , nomouse(nomouse) {}

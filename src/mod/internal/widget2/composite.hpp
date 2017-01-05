@@ -23,14 +23,15 @@
 
 #include "widget.hpp"
 #include "keyboard/keymap2.hpp"
-#include "utils/region.hpp"
 #include "utils/colors.hpp"
+#include "utils/log.hpp"
+#include "utils/region.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
 
 inline void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, int bg_color) {
     for (const Rect & rect : region.rects) {
-        drawable.draw(RDPOpaqueRect(rect, bg_color), rect);
+        drawable.draw(RDPOpaqueRect(rect, bg_color), rect, gdi::GraphicDepth::depth24());
     }
 }
 

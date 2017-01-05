@@ -42,9 +42,9 @@ extern "C" {
     #endif
 
     #include <libavutil/avutil.h>
+    #include <libavutil/dict.h>
     #include <libavutil/imgutils.h>
     #include <libavcodec/avcodec.h>
-    #include <libavutil/mathematics.h>
     #include <libavformat/avformat.h>
     #include <libswscale/swscale.h>
 }
@@ -279,10 +279,23 @@ public:
         // and allocate the necessary encode buffers
         // find the video encoder
 
-        // open the codec
-        if (avcodec_open2(this->video_st->codec, codec, nullptr) < 0) {
-            LOG(LOG_ERR, "video recorder error : failed to open codec");
-            throw Error(ERR_RECORDER_FAILED_TO_OPEN_CODEC);
+        {
+            struct AVDict {
+                void add(char const * k, char const * v) { av_dict_set(&this->d, k, v, 0); }
+                ~AVDict() { av_dict_free(&this->d); }
+                AVDictionary *d = nullptr;
+            } av_dict;
+
+            if (this->video_st->codec->codec_id == AV_CODEC_ID_H264) {
+                // low quality  (baseline, main, hight, ...)
+                av_dict.add("profile", "baseline");
+            }
+
+            // open the codec
+            if (avcodec_open2(this->video_st->codec, codec, &av_dict.d) < 0) {
+                LOG(LOG_ERR, "video recorder error : failed to open codec");
+                throw Error(ERR_RECORDER_FAILED_TO_OPEN_CODEC);
+            }
         }
 
         struct avcodec_not_close_if_success

@@ -106,10 +106,13 @@ private:
 
 public:
     // This should come from BACK!
-    void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override {
+    void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override
+    {
+        auto const depth = gdi::GraphicDepth::depth24();
+
         if (this->draw_green_carpet) {
             drawable.begin_update();
-            drawable.draw(RDPOpaqueRect(this->screen.get_rect(), 0x00FF00), this->screen.get_rect());
+            drawable.draw(RDPOpaqueRect(this->screen.get_rect(), 0x00FF00), this->screen.get_rect(), depth);
             drawable.end_update();
 
             this->draw_green_carpet = false;
@@ -138,7 +141,7 @@ public:
 
         drawable.begin_update();
         // Drawing the RECT
-        drawable.draw(RDPOpaqueRect(this->dancing_rect, 0x0000FF), this->screen.get_rect());
+        drawable.draw(RDPOpaqueRect(this->dancing_rect, 0x0000FF), this->screen.get_rect(), depth);
 
         // And erase
         this->wipe(oldrect, this->dancing_rect, 0x00FF00, this->screen.get_rect(), drawable);
@@ -153,7 +156,7 @@ public:
 private:
     void wipe(Rect oldrect, Rect newrect, int color, const Rect & clip, gdi::GraphicApi & drawable) {
         oldrect.difference(newrect, [&](const Rect & a) {
-            drawable.draw(RDPOpaqueRect(a, color), clip);
+            drawable.draw(RDPOpaqueRect(a, color), clip, gdi::GraphicDepth::depth24());
         });
     }
 };

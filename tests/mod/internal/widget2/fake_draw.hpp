@@ -40,12 +40,6 @@ struct TestDraw : mod_api
     void rdp_input_synchronize(uint32_t, uint16_t, int16_t, int16_t) override {}
     void send_to_front_channel(const char * const, const uint8_t*, size_t, size_t, int) override {}
 
-    void server_draw_text_deprecated(Font const & font, int16_t x, int16_t y, const char * text,
-                          uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
-    {
-        gdi::server_draw_text(this->gd, font, x, y, text, fgcolor, bgcolor, clip);
-    }
-
     void save_to_png(const char * filename)
     {
         std::FILE * file = fopen(filename, "w+");
@@ -55,7 +49,6 @@ struct TestDraw : mod_api
     }
 
 private:
-    friend gdi::GraphicCoreAccess;
     RDPDrawable & get_graphic_proxy() { return this->gd; }
 };
 

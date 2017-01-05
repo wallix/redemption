@@ -119,7 +119,7 @@
 #include "capture/ocr_params.hpp"
 
 
-class Front : public gdi::GraphicBase<Front, FrontAPI>, public ActivityChecker {
+class Front : public FrontAPI, public ActivityChecker {
     using FrontAPI::draw;
 
     bool has_activity = true;
@@ -213,11 +213,11 @@ private:
                 this->set_depths(gdi::GraphicDepth::from_bpp(bpp));
             }
 
-            virtual void set_depths(gdi::GraphicDepth const & depth) {
+            void set_depths(gdi::GraphicDepth const & depth) override {
                 this->order_depth_ = depth;
             }
 
-            virtual gdi::GraphicDepth const & order_depth() const {
+            gdi::GraphicDepth const & order_depth() const override {
                 return this->order_depth_;
             }
 
@@ -507,20 +507,178 @@ private:
         }
 
         template<class ColorConverter>
-        struct GraphicConverter : gdi::GraphicProxyBase<
-            GraphicConverter<ColorConverter>,
-            gdi::GraphicApi,
-            gdi::GraphicColorConverterAccess
-        > {
-            friend gdi::GraphicCoreAccess;
+        struct GraphicConverter : gdi::GraphicApi {
+        public:
+            void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd);}
 
+            void draw(RDPDestBlt          const & cmd, Rect const & clip) override {this->draw_impl( cmd, clip);}
+
+            void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override {this->draw_impl( cmd, clip);}
+
+            void draw(RDPPatBlt           const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+                auto new_cmd = cmd;
+                gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+                this->draw_impl( new_cmd, clip, depth);
+            }
+
+            void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+                auto new_cmd = cmd;
+                gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+                this->draw_impl( new_cmd, clip, depth);
+            }
+
+            void draw(RDPOpaqueRect       const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+                auto new_cmd = cmd;
+                gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+                this->draw_impl( new_cmd, clip, depth);
+            }
+
+            void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+                auto new_cmd = cmd;
+                gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+                this->draw_impl( new_cmd, clip, depth);
+            }
+
+            void draw(RDPScrBlt           const & cmd, Rect const & clip) override {
+                this->draw_impl( cmd, clip);
+            }
+
+            void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override {
+                this->draw_impl( cmd, clip);
+            }
+
+            void draw(RDPLineTo           const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+                auto new_cmd = cmd;
+                gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+                this->draw_impl( new_cmd, clip, depth);
+            }
+
+            void draw(RDPPolygonSC        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+                auto new_cmd = cmd;
+                gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+                this->draw_impl( new_cmd, clip, depth);
+            }
+
+            void draw(RDPPolygonCB        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+                auto new_cmd = cmd;
+                gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+                this->draw_impl( new_cmd, clip, depth);
+            }
+
+            void draw(RDPPolyline         const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+                auto new_cmd = cmd;
+                gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+                this->draw_impl( new_cmd, clip, depth);
+            }
+
+            void draw(RDPEllipseSC        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+                auto new_cmd = cmd;
+                gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+                this->draw_impl( new_cmd, clip, depth);
+            }
+
+            void draw(RDPEllipseCB        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override {
+                auto new_cmd = cmd;
+                gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+                this->draw_impl( new_cmd, clip, depth);
+            }
+
+            void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override {
+                this->draw_impl( cmd, bmp);
+            }
+
+            void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override {
+                this->draw_impl( cmd, clip, bmp);
+            }
+
+            void draw(RDPMem3Blt          const & cmd, Rect const & clip, gdi::GraphicDepth depth, Bitmap const & bmp) override {
+                auto new_cmd = cmd;
+                gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+                this->draw_impl( new_cmd, clip, depth, bmp);
+            }
+
+            void draw(RDPGlyphIndex       const & cmd, Rect const & clip, gdi::GraphicDepth depth, GlyphCache const & gly_cache) override {
+                auto new_cmd = cmd;
+                gdi::GraphicCmdColor::encode_cmd_color(this->get_color_converter(), new_cmd);
+                this->draw_impl( new_cmd, clip, depth, gly_cache);
+            }
+
+            void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override {
+                this->draw_impl( cmd);
+            }
+            void draw(const RDP::RAIL::WindowIcon                     & cmd) override {
+                this->draw_impl( cmd);
+            }
+
+            void draw(const RDP::RAIL::CachedIcon                     & cmd) override {
+                this->draw_impl( cmd);
+            }
+
+            void draw(const RDP::RAIL::DeletedWindow                  & cmd) override {
+                this->draw_impl( cmd);
+            }
+
+            void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override {
+                this->draw_impl( cmd);
+            }
+
+            void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override {
+                this->draw_impl( cmd);
+            }
+
+            void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override {
+                this->draw_impl( cmd);
+            }
+
+            void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override {
+                this->draw_impl( cmd);
+            }
+
+            void draw(RDPColCache   const & cmd) override {
+                this->draw_impl( cmd);
+            }
+
+            void draw(RDPBrushCache const & cmd) override {
+                this->draw_impl( cmd);
+            }
+
+            void set_pointer(Pointer    const & pointer) override {
+                this->get_graphic_proxy().set_pointer(pointer);
+            }
+
+            void set_palette(BGRPalette const & palette) override {
+                this->get_graphic_proxy().set_palette(palette);
+            }
+
+            void sync() override {
+                this->get_graphic_proxy().sync();
+            }
+
+            void set_row(std::size_t rownum, const uint8_t * data) override {
+                this->get_graphic_proxy().set_row(rownum, data);
+            }
+
+            void begin_update() override {
+                this->get_graphic_proxy().begin_update();
+            }
+
+            void end_update() override {
+                this->get_graphic_proxy().end_update();
+            }
+
+        protected:
+            template<class... Ts>
+            void draw_impl(Ts const & ... args) {
+                this->get_graphic_proxy().draw(args...);
+            }
+
+        public:
             GraphicConverter(
                 gdi::GraphicDepth depth,
                 Graphics::PrivateGraphicsUpdatePDU & graphics,
                 ColorConverter const & color_converter
             )
-            : GraphicConverter::base_type(depth)
-            , color_converter(color_converter)
+            : color_converter(color_converter)
             , graphics(graphics)
             , order_depth_(depth)
             {}
@@ -535,12 +693,12 @@ private:
 
             ColorConverter color_converter;
             Graphics::PrivateGraphicsUpdatePDU & graphics;
-            
-            virtual void set_depths(gdi::GraphicDepth const & depth) {
+
+            void set_depths(gdi::GraphicDepth const & depth) override {
                 this->order_depth_ = depth;
             }
 
-            virtual gdi::GraphicDepth const & order_depth() const {
+            gdi::GraphicDepth const & order_depth() const override {
                 return this->order_depth_;
             }
 
@@ -699,6 +857,39 @@ private:
     bool client_support_monitor_layout_pdu = false;
 
 public:
+    void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
+    void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+    void draw(RDPOpaqueRect       const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+    void draw(RDPScrBlt           const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+    void draw(RDPPolygonSC        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+    void draw(RDPPolygonCB        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+    void draw(RDPPolyline         const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+    void draw(RDPEllipseSC        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+    void draw(RDPEllipseCB        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_impl(cmd, bmp); }
+    void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
+    void draw(RDPMem3Blt          const & cmd, Rect const & clip, gdi::GraphicDepth depth, Bitmap const & bmp) override { this->draw_impl(cmd, clip, depth, bmp); }
+    void draw(RDPGlyphIndex       const & cmd, Rect const & clip, gdi::GraphicDepth depth, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, depth, gly_cache); }
+
+    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::CachedIcon                     & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override { this->draw_impl(cmd); }
+
+    void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
+    void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
+
+public:
     Front(  Transport & trans
           , Random & gen
           , Inifile & ini
@@ -709,7 +900,7 @@ public:
           , const char * server_capabilities_filename = ""
           , Transport * persistent_key_list_transport = nullptr
           )
-    : Front::base_type(ini.get<cfg::globals::notimestamp>(), ini.get<cfg::globals::nomouse>())
+    : FrontAPI(ini.get<cfg::globals::notimestamp>(), ini.get<cfg::globals::nomouse>())
     , capture_state(CAPTURE_STATE_UNKNOWN)
     , capture(nullptr)
     , verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
@@ -816,11 +1007,11 @@ public:
         delete this->capture;
     }
 
-    virtual void set_depths(gdi::GraphicDepth const & depth) {
+    void set_depths(gdi::GraphicDepth const & depth) override {
         this->order_depth_ = depth;
     }
 
-    virtual gdi::GraphicDepth const & order_depth() const {
+    gdi::GraphicDepth const & order_depth() const override {
         return this->order_depth_;
     }
 
@@ -862,8 +1053,9 @@ public:
             }
         }
 
-        if (this->client_info.width != width
-        || this->client_info.height != height) {
+        if ((this->client_info.width != width
+        || this->client_info.height != height)
+        && !this->client_info.remote_program) {
             /* older client can't resize */
             if (client_info.build <= 419) {
                 LOG(LOG_WARNING, "Resizing is not available on older RDP clients");
@@ -973,7 +1165,7 @@ public:
         PngParams png_params = {
                 0, 0,
                 ini.get<cfg::video::png_interval>(),
-                100u, 
+                100u,
                 ini.get<cfg::video::png_limit>(),
                 false,
                 true
@@ -983,14 +1175,14 @@ public:
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
         const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
-        
+
         bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        bool capture_png = bool(capture_flags & CaptureFlags::png) 
+        bool capture_png = bool(capture_flags & CaptureFlags::png)
                         && (!authentifier || png_params.png_limit > 0);
-        bool capture_pattern_checker = authentifier 
+        bool capture_pattern_checker = authentifier
             && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
                 || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
-                
+
         bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
         bool capture_flv = bool(capture_flags & CaptureFlags::flv);
         bool capture_flv_full = full_video;
@@ -1002,7 +1194,7 @@ public:
           || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
           : false
         ;
-                
+
         OcrParams ocr_params = {};
 
         this->capture = new Capture(  capture_wrm, wrm_params
@@ -4291,12 +4483,10 @@ private:
     }
 
 protected:
-    friend gdi::GraphicCoreAccess;
-
-    template<class Cmd>
-    void draw_impl(Cmd const & cmd, Rect const & clip) {
+    template<class Cmd, class... Args>
+    void draw_impl(Cmd const & cmd, Rect const & clip, Args && ... args) {
         if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
-            this->graphics_update->draw(cmd, clip);
+            this->graphics_update->draw(cmd, clip, args...);
         }
     }
 
@@ -4304,20 +4494,20 @@ protected:
         this->priv_draw_memblt(cmd, clip, bitmap);
     }
 
-    void draw_impl(RDPMem3Blt const & cmd, Rect const & clip, Bitmap const & bitmap) {
+    void draw_impl(RDPMem3Blt const & cmd, Rect const & clip, gdi::GraphicDepth depth, Bitmap const & bitmap) {
         this->priv_draw_memblt(cmd, clip, bitmap);
     }
 
-    void draw_impl(RDPPatBlt const & cmd, Rect const & clip) {
-        this->priv_draw_and_update_cache_brush(cmd, clip);
+    void draw_impl(RDPPatBlt const & cmd, Rect const & clip, gdi::GraphicDepth depth) {
+        this->priv_draw_and_update_cache_brush(cmd, clip, depth);
     }
 
-    void draw_impl(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) {
-        this->priv_draw_and_update_cache_brush(cmd, clip);
+    void draw_impl(RDP::RDPMultiPatBlt const & cmd, Rect const & clip, gdi::GraphicDepth depth) {
+        this->priv_draw_and_update_cache_brush(cmd, clip, depth);
     }
 
-    void draw_impl(RDPGlyphIndex const & cmd, Rect const & clip, GlyphCache const & gly_cache) {
-        this->priv_draw_and_update_cache_brush(cmd, clip, gly_cache);
+    void draw_impl(RDPGlyphIndex const & cmd, Rect const & clip, gdi::GraphicDepth depth, GlyphCache const & gly_cache) {
+        this->priv_draw_and_update_cache_brush(cmd, clip, depth, gly_cache);
     }
 
     void draw_impl(RDPBitmapData const & bitmap_data, Bitmap const & bmp) {
@@ -4481,7 +4671,7 @@ private:
         // this may change the brush add send it to to remote cache
         //this->cache_brush(cmd2.brush);
 
-        this->graphics_update->draw(cmd2, clip, tiled_bmp);
+        this->graphics_update->draw(cmd2, clip, gdi::GraphicDepth::from_bpp(this->client_info.bpp), tiled_bmp);
     }
 
     bool updatable_cache_brush(RDPBrush const & brush) const {
