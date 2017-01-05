@@ -74,6 +74,14 @@ public:
         , polyline()
         , ellipseSC()
     {}
+    
+    void recv(InStream & stream, uint8_t info_version) {
+        this->send_recv(stream, info_version);
+    }
+
+    void send(OutStream & stream) {
+        this->send_recv(stream, ~0);
+    }
 
 private:
     static void io_uint8(InStream & stream, uint8_t & value) { value = stream.in_uint8(); }
@@ -288,14 +296,5 @@ private:
                 this->multiscrblt.nDeltaEntries
             });
         }
-    }
-
-public:
-    void recv(InStream & stream, uint8_t info_version) {
-        this->send_recv(stream, info_version);
-    }
-
-    void send(OutStream & stream) {
-        this->send_recv(stream, ~0);
     }
 };

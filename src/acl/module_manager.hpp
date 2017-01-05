@@ -493,7 +493,9 @@ private:
                 return ;
             }
 
-            drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip);
+            auto const depth = gdi::GraphicDepth::from_bpp(this->mm.front.client_info.bpp);
+
+            drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip, depth);
 
             StaticOutStream<256> deltaPoints;
             deltaPoints.out_sint16_le(this->clip.cx - 1);
@@ -509,13 +511,13 @@ private:
 
             // TODO Not supported on MAC OS with Microsoft Remote Desktop 8.0.15 (Build 25886)
             RDPPolyline polyline_box(this->clip.x, this->clip.y, 0x0D, 0, BLACK, 4, in_deltaPoints);
-            drawable.draw(polyline_box, this->clip);
+            drawable.draw(polyline_box, this->clip, depth);
 
             gdi::server_draw_text(
                 drawable, this->mm.ini.get<cfg::font>(),
                 this->get_protected_rect().x + padw, padh,
                 this->osd_message.c_str(),
-                this->color, this->background_color, this->clip
+                this->color, this->background_color, depth, this->clip
             );
 
             this->clip = Rect();

@@ -121,37 +121,38 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
                         , flv_params
                         , no_timestamp, authentifier
                         , ini, cctx, rnd, nullptr);
+        auto const depth = gdi::GraphicDepth::depth24();
         bool ignore_frame_in_timeval = false;
 
-        capture.draw(RDPOpaqueRect(scr, GREEN), scr);
+        capture.draw(RDPOpaqueRect(scr, GREEN), scr, depth);
         now.tv_sec++;
         capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr);
+        capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, depth);
         now.tv_sec++;
         capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr);
-        now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr);
-        now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr);
-        now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr);
+        capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, depth);
         now.tv_sec++;
         capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
-        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr);
+        capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, depth);
+        now.tv_sec++;
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, depth);
+        now.tv_sec++;
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, depth);
+        now.tv_sec++;
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        // ------------------------------ BREAKPOINT ------------------------------
+
+        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, depth);
         now.tv_sec++;
         capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
@@ -314,13 +315,13 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , flv_params
                    , no_timestamp, authentifier
                    , ini, cctx, rnd, nullptr);
-
+    auto const depth = gdi::GraphicDepth::depth24();
     Pointer pointer1(Pointer::POINTER_EDIT);
     capture.set_pointer(pointer1);
 
     bool ignore_frame_in_timeval = true;
 
-    capture.draw(RDPOpaqueRect(scr, color_encode(BLUE, 16)), scr);
+    capture.draw(RDPOpaqueRect(scr, color_encode(BLUE, 16)), scr, depth);
     now.tv_sec++;
     capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
@@ -359,13 +360,14 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
         bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression
     );
     WrmCaptureImpl::NativeCaptureLocal consumer(graphic_to_file, now, std::chrono::seconds{1}, std::chrono::seconds{5});
+    auto const depth = gdi::GraphicDepth::depth24();
 
     drawable.show_mouse_cursor(false);
 
     bool ignore_frame_in_timeval = false;
 
-    drawable.draw(RDPOpaqueRect(scr, RED), scr);
-    graphic_to_file.draw(RDPOpaqueRect(scr, RED), scr);
+    drawable.draw(RDPOpaqueRect(scr, RED), scr, depth);
+    graphic_to_file.draw(RDPOpaqueRect(scr, RED), scr, depth);
     consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
     now.tv_sec += 6;
     consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);

@@ -155,7 +155,7 @@ public:
 
         uint16_t x = this->x();
         Rect rectRow(x, y, this->cx(), this->row_height[row_index] + this->border * 2);
-        this->drawable.draw(RDPOpaqueRect(rectRow, bg_color), clip);
+        this->drawable.draw(RDPOpaqueRect(rectRow, bg_color), clip, gdi::GraphicDepth::depth24());
 
         x += this->border;
         y += this->border;

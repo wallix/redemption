@@ -257,9 +257,11 @@ public:
     void draw_maximize_box(bool mouse_over, const Rect& r) {
         unsigned int bg_color = (mouse_over ? 0xCBCACA : 0xFFFFFF);
 
+        auto const depth = gdi::GraphicDepth::depth24();
+
         RDPOpaqueRect order(this->maximize_box_rect, bg_color);
 
-        this->front_->draw(order, r);
+        this->front_->draw(order, r, gdi::GraphicDepth::depth24());
 
         if (this->maximized) {
             Rect rect = this->maximize_box_rect;
@@ -272,7 +274,7 @@ public:
             {
                 RDPOpaqueRect order(rect, 0x000000);
 
-                this->front_->draw(order, r);
+                this->front_->draw(order, r, gdi::GraphicDepth::depth24());
             }
 
             rect = rect.shrink(1);
@@ -280,7 +282,7 @@ public:
             {
                 RDPOpaqueRect order(rect, bg_color);
 
-                this->front_->draw(order, r);
+                this->front_->draw(order, r, gdi::GraphicDepth::depth24());
             }
 
             rect = this->maximize_box_rect;
@@ -293,7 +295,7 @@ public:
             {
                 RDPOpaqueRect order(rect, 0x000000);
 
-                this->front_->draw(order, r);
+                this->front_->draw(order, r, gdi::GraphicDepth::depth24());
             }
 
             rect = rect.shrink(1);
@@ -301,7 +303,7 @@ public:
             {
                 RDPOpaqueRect order(rect, bg_color);
 
-                this->front_->draw(order, r);
+                this->front_->draw(order, r, gdi::GraphicDepth::depth24());
             }
         }
         else {
@@ -315,7 +317,7 @@ public:
             {
                 RDPOpaqueRect order(rect, 0x000000);
 
-                this->front_->draw(order, r);
+                this->front_->draw(order, r, gdi::GraphicDepth::depth24());
             }
 
             rect = rect.shrink(1);
@@ -323,7 +325,7 @@ public:
             {
                 RDPOpaqueRect order(rect, bg_color);
 
-                this->front_->draw(order, r);
+                this->front_->draw(order, r, gdi::GraphicDepth::depth24());
             }
         }
     }   // draw_maximize_box
@@ -333,12 +335,14 @@ public:
 
         if (!this->channel_) return;
 
+        auto const depth = gdi::GraphicDepth::depth24();
+
         if (!r.has_intersection(this->title_bar_rect)) return;
 
         {
             RDPOpaqueRect order(this->title_bar_icon_rect, 0xFFFFFF);
 
-            this->front_->draw(order, r);
+            this->front_->draw(order, r, gdi::GraphicDepth::depth24());
 
             this->front_->draw(
                 RDPMemBlt(
@@ -358,7 +362,7 @@ public:
         {
             RDPOpaqueRect order(this->title_bar_rect, 0xFFFFFF);
 
-            this->front_->draw(order, r);
+            this->front_->draw(order, r, gdi::GraphicDepth::depth24());
 
             if (this->font_) {
                 gdi::server_draw_text(*this->front_,
@@ -368,6 +372,7 @@ public:
                                       INTERNAL_MODULE_WINDOW_TITLE,
                                       0x000000,
                                       0xFFFFFF,
+                                      depth,
                                       r
                                       );
             }
@@ -376,7 +381,7 @@ public:
         {
             RDPOpaqueRect order(this->minimize_box_rect, 0xFFFFFF);
 
-            this->front_->draw(order, r);
+            this->front_->draw(order, r, gdi::GraphicDepth::depth24());
 
             if (this->font_) {
                 gdi::server_draw_text(*this->front_,
@@ -386,6 +391,7 @@ public:
                                       "−",
                                       0x000000,
                                       0xFFFFFF,
+                                      depth,
                                       r
                                       );
             }
@@ -396,7 +402,7 @@ public:
         {
             RDPOpaqueRect order(this->close_box_rect, 0xFFFFFF);
 
-            this->front_->draw(order, r);
+            this->front_->draw(order, r, gdi::GraphicDepth::depth24());
 
             if (this->font_) {
                 gdi::server_draw_text(*this->front_,
@@ -406,6 +412,7 @@ public:
                                       "x",
                                       0x000000,
                                       0xFFFFFF,
+                                      depth,
                                       r
                                       );
             }
@@ -471,7 +478,7 @@ public:
                 else if (this->minimize_box_rect.contains_pt(xPos, yPos)) {
                     RDPOpaqueRect order(this->minimize_box_rect, 0xCBCACA);
 
-                    this->front_->draw(order, this->minimize_box_rect);
+                    this->front_->draw(order, this->minimize_box_rect, gdi::GraphicDepth::depth24());
 
                     if (this->font_) {
                         gdi::server_draw_text(*this->front_,
@@ -481,6 +488,7 @@ public:
                                               "−",
                                               0x000000,
                                               0xCBCACA,
+                                              gdi::GraphicDepth::depth24(),
                                               this->minimize_box_rect
                                               );
                     }
@@ -499,7 +507,7 @@ public:
                 else if (this->close_box_rect.contains_pt(xPos, yPos)) {
                     RDPOpaqueRect order(this->close_box_rect, 0x2311E8);
 
-                    this->front_->draw(order, this->close_box_rect);
+                    this->front_->draw(order, this->close_box_rect, gdi::GraphicDepth::depth24());
 
                     if (this->font_) {
                         gdi::server_draw_text(*this->front_,
@@ -509,6 +517,7 @@ public:
                                               "x",
                                               0xFFFFFF,
                                               0x2311E8,
+                                              gdi::GraphicDepth::depth24(),
                                               this->close_box_rect
                                               );
                     }
@@ -847,7 +856,7 @@ public:
                 if (this->minimize_box_rect.contains_pt(xPos, yPos)) {
                     RDPOpaqueRect order(this->minimize_box_rect, 0xCBCACA);
 
-                    this->front_->draw(order, this->minimize_box_rect);
+                    this->front_->draw(order, this->minimize_box_rect, gdi::GraphicDepth::depth24());
 
                     if (this->font_) {
                         gdi::server_draw_text(*this->front_,
@@ -857,6 +866,7 @@ public:
                                               "−",
                                               0x000000,
                                               0xCBCACA,
+                                              gdi::GraphicDepth::depth24(),
                                               this->minimize_box_rect
                                               );
                     }
@@ -866,7 +876,7 @@ public:
                 else {
                     RDPOpaqueRect order(this->minimize_box_rect, 0xFFFFFF);
 
-                    this->front_->draw(order, this->minimize_box_rect);
+                    this->front_->draw(order, this->minimize_box_rect, gdi::GraphicDepth::depth24());
 
                     if (this->font_) {
                         gdi::server_draw_text(*this->front_,
@@ -876,6 +886,7 @@ public:
                                               "−",
                                               0x000000,
                                               0xFFFFFF,
+                                              gdi::GraphicDepth::depth24(),
                                               this->minimize_box_rect
                                               );
                     }
@@ -892,7 +903,7 @@ public:
                 if (this->close_box_rect.contains_pt(xPos, yPos)) {
                     RDPOpaqueRect order(this->close_box_rect, 0x2311E8);
 
-                    this->front_->draw(order, this->close_box_rect);
+                    this->front_->draw(order, this->close_box_rect, gdi::GraphicDepth::depth24());
 
                     if (this->font_) {
                         gdi::server_draw_text(*this->front_,
@@ -902,6 +913,7 @@ public:
                                               "x",
                                               0xFFFFFF,
                                               0x2311E8,
+                                              gdi::GraphicDepth::depth24(),
                                               this->close_box_rect
                                               );
                     }
@@ -911,7 +923,7 @@ public:
                 else {
                     RDPOpaqueRect order(this->close_box_rect, 0xFFFFFF);
 
-                    this->front_->draw(order, this->close_box_rect);
+                    this->front_->draw(order, this->close_box_rect, gdi::GraphicDepth::depth24());
 
                     if (this->font_) {
                         gdi::server_draw_text(*this->front_,
@@ -921,6 +933,7 @@ public:
                                               "x",
                                               0x000000,
                                               0xFFFFFF,
+                                              gdi::GraphicDepth::depth24(),
                                               this->close_box_rect
                                               );
                     }
@@ -971,7 +984,7 @@ public:
                 {
                     RDPOpaqueRect order(this->minimize_box_rect, 0xFFFFFF);
 
-                    this->front_->draw(order, this->minimize_box_rect);
+                    this->front_->draw(order, this->minimize_box_rect, gdi::GraphicDepth::depth24());
 
                     if (this->font_) {
                         gdi::server_draw_text(*this->front_,
@@ -981,6 +994,7 @@ public:
                                               "−",
                                               0x000000,
                                               0xFFFFFF,
+                                              gdi::GraphicDepth::depth24(),
                                               this->minimize_box_rect
                                               );
                     }
@@ -1058,7 +1072,7 @@ public:
                 {
                     RDPOpaqueRect order(this->close_box_rect, 0xFFFFFF);
 
-                    this->front_->draw(order, this->close_box_rect);
+                    this->front_->draw(order, this->close_box_rect, gdi::GraphicDepth::depth24());
 
                     if (this->font_) {
                         gdi::server_draw_text(*this->front_,
@@ -1068,6 +1082,7 @@ public:
                                               "x",
                                               0x000000,
                                               0xFFFFFF,
+                                              gdi::GraphicDepth::depth24(),
                                               this->close_box_rect
                                               );
                     }
