@@ -214,24 +214,24 @@ private:
 
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd); }
-    void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPPatBlt           const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPOpaqueRect       const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPScrBlt           const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPLineTo           const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPPolygonSC        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPPolygonCB        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPPolyline         const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPEllipseSC        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPEllipseCB        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+    void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPScrBlt           const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolyline         const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
     void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_impl(cmd, bmp); }
-    void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
-    void draw(RDPMem3Blt          const & cmd, Rect const & clip, gdi::GraphicDepth depth, Bitmap const & bmp) override { this->draw_impl(cmd, clip, depth, bmp); }
-    void draw(RDPGlyphIndex       const & cmd, Rect const & clip, gdi::GraphicDepth depth, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, depth, gly_cache); }
+    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
+    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
+    void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
     void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
@@ -659,7 +659,7 @@ private:
         drawable_.draw(new_cmd, new_clip);
     }
 
-    void draw_impl(const RDPLineTo& cmd, Rect const & clip) {
+    void draw_impl(const RDPLineTo& cmd, Rect clip) {
         gdi::GraphicApi& drawable_ = this->get_drawable();
 
         Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
@@ -670,7 +670,7 @@ private:
 
         new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
 
-        drawable_.draw(new_cmd, new_clip, gdi::GraphicDepth::depth24());
+        drawable_.draw(new_cmd, new_clip, gdi::GraphicColorCtx::depth24());
     }
 
     void draw_impl(const RDPMem3Blt& cmd, const Rect& clip, const Bitmap& bmp) {
@@ -684,7 +684,7 @@ private:
 
         new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
 
-        drawable_.draw(new_cmd, new_clip, gdi::GraphicDepth::depth24(), bmp);
+        drawable_.draw(new_cmd, new_clip, gdi::GraphicColorCtx::depth24(), bmp);
     }
 
     void draw_impl(const RDPMemBlt& cmd, const Rect& clip, const Bitmap& bmp) {
@@ -712,7 +712,7 @@ private:
 
         new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
 
-        drawable_.draw(new_cmd, new_clip, gdi::GraphicDepth::depth24());
+        drawable_.draw(new_cmd, new_clip, gdi::GraphicColorCtx::depth24());
     }
 
     void draw_impl(const RDP::RDPMultiPatBlt& cmd, const Rect& clip) {
@@ -726,7 +726,7 @@ private:
 
         new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
 
-        drawable_.draw(new_cmd, new_clip, gdi::GraphicDepth::depth24());
+        drawable_.draw(new_cmd, new_clip, gdi::GraphicColorCtx::depth24());
     }
 
     void draw_impl(const RDPOpaqueRect& cmd, const Rect& clip) {
@@ -740,7 +740,7 @@ private:
 
         new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
 
-        drawable_.draw(new_cmd, new_clip, gdi::GraphicDepth::depth24());
+        drawable_.draw(new_cmd, new_clip, gdi::GraphicColorCtx::depth24());
     }
 
 
@@ -756,7 +756,7 @@ private:
 
         new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
 
-        drawable_.draw(new_cmd, new_clip, gdi::GraphicDepth::depth24());
+        drawable_.draw(new_cmd, new_clip, gdi::GraphicColorCtx::depth24());
     }
 
     void draw_impl(const RDPScrBlt& cmd, const Rect& clip) {

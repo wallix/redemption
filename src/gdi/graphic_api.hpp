@@ -23,6 +23,7 @@
 #include <type_traits>
 #include <utility>
 
+#include <cassert>
 #include <cstdint>
 #include <iostream>
 
@@ -90,7 +91,7 @@ struct GraphicDepth
             bpp == 15 ? depth15() :
             bpp == 16 ? depth16() :
             bpp == 24 ? depth24() :
-            bpp == 32 ? depth24() :
+            bpp == 32 ? depth24() : // TODO useless ?
             unspecified()
         };
     }
@@ -153,6 +154,35 @@ constexpr bool operator >= (GraphicDepth const & depth1, GraphicDepth const & de
 }
 
 
+struct GraphicColorCtx
+{
+    GraphicColorCtx(GraphicDepth depth, BGRPalette const * palette)
+    : depth(depth)
+    , palette(palette)
+    {
+        assert(depth == GraphicDepth::depth8() ? bool(palette) : true);
+    }
+
+    static GraphicColorCtx depth8(BGRPalette && palette) = delete;
+    static GraphicColorCtx depth8(BGRPalette const & palette) { return {GraphicDepth::depth8(), &palette}; }
+
+    static GraphicColorCtx depth15() { return {GraphicDepth::depth15(), nullptr}; }
+    static GraphicColorCtx depth16() { return {GraphicDepth::depth16(), nullptr}; }
+    static GraphicColorCtx depth24() { return {GraphicDepth::depth24(), nullptr}; }
+
+    static GraphicColorCtx from_bpp(uint8_t bpp, BGRPalette const * palette)
+    { return {GraphicDepth::from_bpp(bpp), palette}; }
+
+    static GraphicColorCtx from_bpp(uint8_t bpp, BGRPalette const & palette)
+    { return {GraphicDepth::from_bpp(bpp), &palette}; }
+
+    static GraphicColorCtx from_bpp(uint8_t bpp, BGRPalette const && palette) = delete;
+
+    GraphicDepth depth;
+    BGRPalette const * palette;
+};
+
+
 struct GraphicApi : private noncopyable
 {
     GraphicApi() {}
@@ -163,25 +193,25 @@ struct GraphicApi : private noncopyable
     virtual void set_palette(BGRPalette   const &) {}
 
     virtual void draw(RDP::FrameMarker    const & cmd) = 0;
-    virtual void draw(RDPDestBlt          const & cmd, Rect const & clip) = 0;
-    virtual void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) = 0;
-    virtual void draw(RDPScrBlt           const & cmd, Rect const & clip) = 0;
-    virtual void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) = 0;
-    virtual void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) = 0;
+    virtual void draw(RDPDestBlt          const & cmd, Rect clip) = 0;
+    virtual void draw(RDPMultiDstBlt      const & cmd, Rect clip) = 0;
+    virtual void draw(RDPScrBlt           const & cmd, Rect clip) = 0;
+    virtual void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) = 0;
+    virtual void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) = 0;
     virtual void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) = 0;
 
-    virtual void draw(RDPPatBlt           const & cmd, Rect const & clip, GraphicDepth depth) = 0;
-    virtual void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip, GraphicDepth depth) = 0;
-    virtual void draw(RDPOpaqueRect       const & cmd, Rect const & clip, GraphicDepth depth) = 0;
-    virtual void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip, GraphicDepth depth) = 0;
-    virtual void draw(RDPLineTo           const & cmd, Rect const & clip, GraphicDepth depth) = 0;
-    virtual void draw(RDPPolygonSC        const & cmd, Rect const & clip, GraphicDepth depth) = 0;
-    virtual void draw(RDPPolygonCB        const & cmd, Rect const & clip, GraphicDepth depth) = 0;
-    virtual void draw(RDPPolyline         const & cmd, Rect const & clip, GraphicDepth depth) = 0;
-    virtual void draw(RDPEllipseSC        const & cmd, Rect const & clip, GraphicDepth depth) = 0;
-    virtual void draw(RDPEllipseCB        const & cmd, Rect const & clip, GraphicDepth depth) = 0;
-    virtual void draw(RDPMem3Blt          const & cmd, Rect const & clip, GraphicDepth depth, Bitmap const & bmp) = 0;
-    virtual void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GraphicDepth depth, GlyphCache const & gly_cache) = 0;
+    virtual void draw(RDPPatBlt           const & cmd, Rect clip, GraphicColorCtx color_ctx) = 0;
+    virtual void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, GraphicColorCtx color_ctx) = 0;
+    virtual void draw(RDPOpaqueRect       const & cmd, Rect clip, GraphicColorCtx color_ctx) = 0;
+    virtual void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, GraphicColorCtx color_ctx) = 0;
+    virtual void draw(RDPLineTo           const & cmd, Rect clip, GraphicColorCtx color_ctx) = 0;
+    virtual void draw(RDPPolygonSC        const & cmd, Rect clip, GraphicColorCtx color_ctx) = 0;
+    virtual void draw(RDPPolygonCB        const & cmd, Rect clip, GraphicColorCtx color_ctx) = 0;
+    virtual void draw(RDPPolyline         const & cmd, Rect clip, GraphicColorCtx color_ctx) = 0;
+    virtual void draw(RDPEllipseSC        const & cmd, Rect clip, GraphicColorCtx color_ctx) = 0;
+    virtual void draw(RDPEllipseCB        const & cmd, Rect clip, GraphicColorCtx color_ctx) = 0;
+    virtual void draw(RDPMem3Blt          const & cmd, Rect clip, GraphicColorCtx color_ctx, Bitmap const & bmp) = 0;
+    virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, GraphicColorCtx color_ctx, GlyphCache const & gly_cache) = 0;
 
     // NOTE maybe in an other interface
     virtual void draw(const RDP::RAIL::NewOrExistingWindow            &) {}
@@ -279,31 +309,28 @@ private:
 };
 
 
-
-
-
 class BlackoutGraphic final : public GraphicApi
 {
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
-    void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPPatBlt           const & cmd, Rect const & clip, GraphicDepth depth) override { this->draw_impl(cmd, clip); }
-    void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip, GraphicDepth depth) override { this->draw_impl(cmd, clip); }
-    void draw(RDPOpaqueRect       const & cmd, Rect const & clip, GraphicDepth depth) override { this->draw_impl(cmd, clip); }
-    void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip, GraphicDepth depth) override { this->draw_impl(cmd, clip); }
-    void draw(RDPScrBlt           const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPLineTo           const & cmd, Rect const & clip, GraphicDepth depth) override { this->draw_impl(cmd, clip); }
-    void draw(RDPPolygonSC        const & cmd, Rect const & clip, GraphicDepth depth) override { this->draw_impl(cmd, clip); }
-    void draw(RDPPolygonCB        const & cmd, Rect const & clip, GraphicDepth depth) override { this->draw_impl(cmd, clip); }
-    void draw(RDPPolyline         const & cmd, Rect const & clip, GraphicDepth depth) override { this->draw_impl(cmd, clip); }
-    void draw(RDPEllipseSC        const & cmd, Rect const & clip, GraphicDepth depth) override { this->draw_impl(cmd, clip); }
-    void draw(RDPEllipseCB        const & cmd, Rect const & clip, GraphicDepth depth) override { this->draw_impl(cmd, clip); }
+    void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect clip, GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPOpaqueRect       const & cmd, Rect clip, GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPScrBlt           const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect clip, GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonSC        const & cmd, Rect clip, GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonCB        const & cmd, Rect clip, GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolyline         const & cmd, Rect clip, GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseSC        const & cmd, Rect clip, GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseCB        const & cmd, Rect clip, GraphicColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
     void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_impl(cmd, bmp); }
-    void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
-    void draw(RDPMem3Blt          const & cmd, Rect const & clip, GraphicDepth depth, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp); }
-    void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GraphicDepth depth, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, gly_cache); }
+    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
+    void draw(RDPMem3Blt          const & cmd, Rect clip, GraphicColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
+    void draw(RDPGlyphIndex       const & cmd, Rect clip, GraphicColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
     void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
@@ -367,8 +394,9 @@ struct TextMetrics
 static inline void server_draw_text(
     GraphicApi & drawable, Font const & font,
     int16_t x, int16_t y, const char * text,
-    uint32_t fgcolor, uint32_t bgcolor, GraphicDepth depth,
-    const Rect & clip
+    uint32_t fgcolor, uint32_t bgcolor,
+    GraphicColorCtx color_ctx,
+    Rect clip
 ) {
     // BUG TODO static not const is a bad idea
     static GlyphCache mod_glyph_cache;
@@ -434,7 +462,7 @@ static inline void server_draw_text(
 
         x += total_width;
 
-        drawable.draw(glyphindex, clip, depth, mod_glyph_cache);
+        drawable.draw(glyphindex, clip, color_ctx, mod_glyph_cache);
     }
 }
 

@@ -527,7 +527,7 @@ public:
                     this->statistics.GlyphIndex++;
                     this->ssc.glyphindex.receive(this->stream, header);
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.glyphindex, clip, gdi::GraphicDepth::from_bpp(this->info_bpp), this->gly_cache);
+                        gd->draw(this->ssc.glyphindex, clip, gdi::GraphicColorCtx::from_bpp(this->info_bpp, this->palette), this->gly_cache);
                     }
                     break;
                 case RDP::DESTBLT:
@@ -557,7 +557,7 @@ public:
                         this->ssc.multiopaquerect.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.multiopaquerect, clip, gdi::GraphicDepth::from_bpp(this->info_bpp));
+                        gd->draw(this->ssc.multiopaquerect, clip, gdi::GraphicColorCtx::from_bpp(this->info_bpp, this->palette));
                     }
                     break;
                 case RDP::MULTIPATBLT:
@@ -567,7 +567,7 @@ public:
                         this->ssc.multipatblt.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.multipatblt, clip, gdi::GraphicDepth::from_bpp(this->info_bpp));
+                        gd->draw(this->ssc.multipatblt, clip, gdi::GraphicColorCtx::from_bpp(this->info_bpp, this->palette));
                     }
                     break;
                 case RDP::MULTISCRBLT:
@@ -587,7 +587,7 @@ public:
                         this->ssc.patblt.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.patblt, clip, gdi::GraphicDepth::from_bpp(this->info_bpp));
+                        gd->draw(this->ssc.patblt, clip, gdi::GraphicColorCtx::from_bpp(this->info_bpp, this->palette));
                     }
                     break;
                 case RDP::SCREENBLT:
@@ -607,7 +607,7 @@ public:
                         this->ssc.lineto.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.lineto, clip, gdi::GraphicDepth::from_bpp(this->info_bpp));
+                        gd->draw(this->ssc.lineto, clip, gdi::GraphicColorCtx::from_bpp(this->info_bpp, this->palette));
                     }
                     break;
                 case RDP::RECT:
@@ -617,7 +617,7 @@ public:
                         this->ssc.opaquerect.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.opaquerect, clip, gdi::GraphicDepth::from_bpp(this->info_bpp));
+                        gd->draw(this->ssc.opaquerect, clip, gdi::GraphicColorCtx::from_bpp(this->info_bpp, this->palette));
                     }
                     break;
                 case RDP::MEMBLT:
@@ -653,7 +653,7 @@ public:
                         }
                         else {
                             for (gdi::GraphicApi * gd : this->graphic_consumers){
-                                gd->draw(this->ssc.mem3blt, clip, gdi::GraphicDepth::from_bpp(this->info_bpp), bmp);
+                                gd->draw(this->ssc.mem3blt, clip, gdi::GraphicColorCtx::from_bpp(this->info_bpp, this->palette), bmp);
                             }
                         }
                     }
@@ -665,7 +665,7 @@ public:
                         this->ssc.polyline.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.polyline, clip, gdi::GraphicDepth::from_bpp(this->info_bpp));
+                        gd->draw(this->ssc.polyline, clip, gdi::GraphicColorCtx::from_bpp(this->info_bpp, this->palette));
                     }
                     break;
                 case RDP::ELLIPSESC:
@@ -675,7 +675,7 @@ public:
                         this->ssc.ellipseSC.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.ellipseSC, clip, gdi::GraphicDepth::from_bpp(this->info_bpp));
+                        gd->draw(this->ssc.ellipseSC, clip, gdi::GraphicColorCtx::from_bpp(this->info_bpp, this->palette));
                     }
                     break;
                 default:
