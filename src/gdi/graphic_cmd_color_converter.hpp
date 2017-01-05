@@ -191,13 +191,13 @@ namespace detail
 
     template<class Fn, class Iterator, class Cmd, class... Ts>
     void draw_cmd_color_convert(
-        std::false_type, Fn & apply, GraphicDepth, RngByBpp<Iterator> const & rng_by_bpp,
+        std::false_type, Fn & apply, gdi::GraphicDepth, RngByBpp<Iterator> const & rng_by_bpp,
         Cmd const & cmd, Ts const & ... args
     ) { draw_rng(apply, rng_by_bpp.rng_all(), cmd, args...); }
 
     template<class Fn, class Iterator, class Cmd, class... Ts>
     void draw_cmd_color_convert(
-        std::true_type, Fn & apply, GraphicDepth order_depth, RngByBpp<Iterator> const & rng_by_bpp,
+        std::true_type, Fn & apply, gdi::GraphicDepth order_depth, RngByBpp<Iterator> const & rng_by_bpp,
         Cmd const & cmd, Ts const & ... args
     ) {
         for (std::size_t i = rng_by_bpp.count_range(); i > 0; --i) {
@@ -248,7 +248,7 @@ namespace detail
 
 template<class Fn, class Iterator, class Cmd, class... Ts>
 void draw_cmd_color_convert(
-    Fn apply, GraphicDepth order_depth, RngByBpp<Iterator> rng,
+    Fn apply, gdi::GraphicDepth order_depth, RngByBpp<Iterator> rng,
     Cmd const & cmd, Ts const & ... args
 ) {
     detail::draw_cmd_color_convert(

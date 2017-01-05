@@ -553,7 +553,7 @@ public:
                 case GLYPHINDEX:
                     this->glyph_index.receive(stream, header);
                     //this->glyph_index.log(LOG_INFO, cmd_clip);
-                    gd.draw(this->glyph_index, cmd_clip, this->gly_cache);
+                    gd.draw(this->glyph_index, cmd_clip, gdi::GraphicDepth::from_bpp(bpp), this->gly_cache);
                     break;
                 case DESTBLT:
                     this->destblt.receive(stream, header);
@@ -567,12 +567,12 @@ public:
                     break;
                 case MULTIOPAQUERECT:
                     this->multiopaquerect.receive(stream, header);
-                    gd.draw(this->multiopaquerect, cmd_clip);
+                    gd.draw(this->multiopaquerect, cmd_clip, gdi::GraphicDepth::from_bpp(bpp));
                     //this->multiopaquerect.log(LOG_INFO, cmd_clip);
                     break;
                 case MULTIPATBLT:
                     this->multipatblt.receive(stream, header);
-                    gd.draw(this->multipatblt, cmd_clip);
+                    gd.draw(this->multipatblt, cmd_clip, gdi::GraphicDepth::from_bpp(bpp));
                     //this->multipatblt.log(LOG_INFO, cmd_clip);
                     break;
                 case MULTISCRBLT:
@@ -582,7 +582,7 @@ public:
                     break;
                 case PATBLT:
                     this->patblt.receive(stream, header);
-                    gd.draw(this->patblt, cmd_clip);
+                    gd.draw(this->patblt, cmd_clip, gdi::GraphicDepth::from_bpp(bpp));
                     //this->patblt.log(LOG_INFO, cmd_clip);
                     break;
                 case SCREENBLT:
@@ -592,12 +592,12 @@ public:
                     break;
                 case LINE:
                     this->lineto.receive(stream, header);
-                    gd.draw(this->lineto, cmd_clip);
+                    gd.draw(this->lineto, cmd_clip, gdi::GraphicDepth::from_bpp(bpp));
                     //this->lineto.log(LOG_INFO, cmd_clip);
                     break;
                 case RECT:
                     this->opaquerect.receive(stream, header);
-                    gd.draw(this->opaquerect, cmd_clip);
+                    gd.draw(this->opaquerect, cmd_clip, gdi::GraphicDepth::from_bpp(bpp));
                     //this->opaquerect.log(LOG_INFO, cmd_clip);
                     break;
                 case MEMBLT:
@@ -637,7 +637,7 @@ public:
                         // TODO CGR: check if bitmap has the right palette...
                         // TODO CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps
                         if (bitmap.is_valid()) {
-                            gd.draw(this->mem3blt, cmd_clip, bitmap);
+                            gd.draw(this->mem3blt, cmd_clip, gdi::GraphicDepth::from_bpp(bpp), bitmap);
                         }
                         else {
                             LOG(LOG_ERR, "rdp_orders::process_orders: MEM3BLT - Bitmap is not found in cache! cache_id=%u cache_index=%u",
@@ -648,12 +648,12 @@ public:
                     break;
                 case POLYLINE:
                     this->polyline.receive(stream, header);
-                    gd.draw(this->polyline, cmd_clip);
+                    gd.draw(this->polyline, cmd_clip, gdi::GraphicDepth::from_bpp(bpp));
                     //this->polyline.log(LOG_INFO, cmd_clip);
                     break;
                 case ELLIPSESC:
                     this->ellipseSC.receive(stream, header);
-                    gd.draw(this->ellipseSC, cmd_clip);
+                    gd.draw(this->ellipseSC, cmd_clip, gdi::GraphicDepth::from_bpp(bpp));
                     //this->ellipseSC.log(LOG_INFO, cmd_clip);
                     break;
                 default:

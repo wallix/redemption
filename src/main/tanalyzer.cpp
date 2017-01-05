@@ -451,22 +451,22 @@ public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
     void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPPatBlt           const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPOpaqueRect       const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip); }
+    void draw(RDPOpaqueRect       const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip); }
     void draw(RDPScrBlt           const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
     void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPLineTo           const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPPolygonSC        const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPPolygonCB        const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPPolyline         const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPEllipseSC        const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPEllipseCB        const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPolygonSC        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPolygonCB        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPolyline         const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip); }
+    void draw(RDPEllipseSC        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip); }
+    void draw(RDPEllipseCB        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip); }
     void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_impl(cmd, bmp); }
     void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
-    void draw(RDPMem3Blt          const & cmd, Rect const & clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp); }
-    void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, gly_cache); }
+    void draw(RDPMem3Blt          const & cmd, Rect const & clip, gdi::GraphicDepth depth, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp); }
+    void draw(RDPGlyphIndex       const & cmd, Rect const & clip, gdi::GraphicDepth depth, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, gly_cache); }
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
     void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }

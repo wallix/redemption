@@ -31,7 +31,7 @@
 
 inline void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, int bg_color) {
     for (const Rect & rect : region.rects) {
-        drawable.draw(RDPOpaqueRect(rect, bg_color), rect);
+        drawable.draw(RDPOpaqueRect(rect, bg_color), rect, gdi::GraphicDepth::depth24());
     }
 }
 

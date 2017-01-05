@@ -706,7 +706,7 @@ public:
     //       DRAW FUNCTIONS
     //-----------------------------
 
-    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
+    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip, gdi::GraphicDepth depth) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPOpaqueRect color=" << int(cmd.color);
             std::cout << " clip x=" << int(clip.x) <<  std::endl;
@@ -728,7 +728,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPLineTo & cmd, const Rect & clip) override {
+    virtual void draw(const RDPLineTo & cmd, const Rect & clip, gdi::GraphicDepth depth) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPLineTo " << std::endl;
@@ -736,14 +736,14 @@ public:
         }
     }
 
-    virtual void draw(const RDPPatBlt & cmd, const Rect & clip) override {
+    virtual void draw(const RDPPatBlt & cmd, const Rect & clip, gdi::GraphicDepth depth) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPatBlt rop=" << int(cmd.rop);
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
 
-    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
+    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, gdi::GraphicDepth depth, const Bitmap & bitmap) override {
         (void)bitmap;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMem3Blt rop=" << int(cmd.rop);
@@ -774,7 +774,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
+    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip, gdi::GraphicDepth depth) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMultiOpaqueRect " << std::endl;
@@ -782,7 +782,7 @@ public:
         }
     }
 
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
+    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip, gdi::GraphicDepth depth) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMultiPatBlt " << std::endl;
@@ -798,7 +798,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, gdi::GraphicDepth depth, const GlyphCache & gly_cache) override {
         (void)cmd;
         (void)gly_cache;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
@@ -807,7 +807,7 @@ public:
         }
     }
 
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
+    void draw(const RDPPolygonSC & cmd, const Rect & clip, gdi::GraphicDepth depth) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPolygonSC " << std::endl;
@@ -815,7 +815,7 @@ public:
         }
     }
 
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
+    void draw(const RDPPolygonCB & cmd, const Rect & clip, gdi::GraphicDepth depth) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPolygonCB " << std::endl;
@@ -823,7 +823,7 @@ public:
         }
     }
 
-    void draw(const RDPPolyline & cmd, const Rect & clip) override {
+    void draw(const RDPPolyline & cmd, const Rect & clip, gdi::GraphicDepth depth) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPolyline " << std::endl;
@@ -831,7 +831,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
+    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip, gdi::GraphicDepth depth) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPEllipseSC " << std::endl;
@@ -839,7 +839,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
+    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip, gdi::GraphicDepth depth) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPEllipseCB " << std::endl;

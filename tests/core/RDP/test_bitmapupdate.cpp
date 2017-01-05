@@ -41,7 +41,8 @@ BOOST_AUTO_TEST_CASE(TestDrawBitmapUpdate)
     Rect screen_rect(0, 0, width, height);
 
     RDPDrawable gd(width, height, 16);
-    gd.draw(RDPOpaqueRect(screen_rect, color_encode(0x2F2F2F, 16)), screen_rect);
+    auto const depth = gdi::GraphicDepth::depth24();
+    gd.draw(RDPOpaqueRect(screen_rect, color_encode(0x2F2F2F, 16)), screen_rect, depth);
 
     uint8_t raw_palette[] = {
 /* 0000 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................
