@@ -183,11 +183,16 @@ public:
     ClientInfo        _info;
     mod_api         * _callback;
     enum : int {
-        INPUT_COMPLETE = 12
+        LOG_COMPLETE   = 3
+      , INPUT_COMPLETE = 12
       , NAME           = 1
       , PWD            = 2
       , IP             = 4
       , PORT           = 8
+    };
+
+    enum : long {
+        DEFAULT_MAX_TIMEOUT_RESPONSE = 5
     };
 
 
