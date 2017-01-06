@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
 {
     Rect screen_rect(0, 0, 800, 600);
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
 
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test", ".png", groupid);
@@ -139,19 +139,19 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
         {
             OSD(GraphicApi & drawable, Rect const rect)
                 : ProtectGraphics(drawable, rect)
-                , order_depth_(gdi::GraphicDepth::unspecified())
+                , order_depth_(gdi::Depth::unspecified())
                 {}
             void refresh_rects(array_view<Rect const>) override {}
 
-            void set_depths(gdi::GraphicDepth const & depth) override {
+            void set_depths(gdi::Depth const & depth) override {
                 this->order_depth_ = depth;
             }
 
-            gdi::GraphicDepth const & order_depth() const override {
+            gdi::Depth const & order_depth() const override {
                 return this->order_depth_;
             }
 
-            gdi::GraphicDepth order_depth_;
+            gdi::Depth order_depth_;
 
         } osd(drawable, rect);
         osd.draw(RDPOpaqueRect(Rect(100, 100, 200, 200), GREEN), screen_rect, color_cxt);

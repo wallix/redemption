@@ -40,7 +40,7 @@ using GraphicsColor = gdi::BlackoutGraphic;
 using Color4 = std::array<uint32_t, 4>;
 
 inline Color4 get_colors(
-    gdi::GraphicDepth order_depth, uint32_t color,
+    gdi::Depth order_depth, uint32_t color,
     GraphicsColor const & gd1, GraphicsColor const & gd2, GraphicsColor const & gd3
 ) {
     Color4 colors {{}};
@@ -61,9 +61,9 @@ BOOST_AUTO_TEST_CASE(TestGdCmdConverter)
     BOOST_CHECK_EQUAL(gdi::GraphicCmdColor::is_encodable_cmd_color(RDPOpaqueRect({}, 0)).value, true);
     BOOST_CHECK_EQUAL(gdi::GraphicCmdColor::is_encodable_cmd_color(GlyphCache{}).value, false);
 
-    gdi::GraphicDepth const depth15 = gdi::GraphicDepth::depth15();
-    gdi::GraphicDepth const depth16 = gdi::GraphicDepth::depth16();
-    gdi::GraphicDepth const depth24 = gdi::GraphicDepth::depth24();
+    gdi::Depth const depth15 = gdi::Depth::depth15();
+    gdi::Depth const depth16 = gdi::Depth::depth16();
+    gdi::Depth const depth24 = gdi::Depth::depth24();
 
     decode_color15_opaquerect dec15;
     decode_color16_opaquerect dec16;

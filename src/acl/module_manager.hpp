@@ -341,18 +341,18 @@ private:
         explicit ModOSD(ModuleManager & mm)
         : ProtectGraphics(mm.front, Rect{})
         , mm(mm)
-        , order_depth_(gdi::GraphicDepth::unspecified())
+        , order_depth_(gdi::Depth::unspecified())
         {}
 
-        void set_depths(gdi::GraphicDepth const & depth) override {
+        void set_depths(gdi::Depth const & depth) override {
             this->order_depth_ = depth;
         }
 
-        gdi::GraphicDepth const & order_depth() const override {
+        gdi::Depth const & order_depth() const override {
             return this->order_depth_;
         }
 
-        gdi::GraphicDepth order_depth_;
+        gdi::Depth order_depth_;
 
 
         bool is_input_owner() const { return this->is_disable_by_input; }
@@ -493,7 +493,7 @@ private:
                 return ;
             }
 
-            auto const color_ctx = gdi::GraphicColorCtx::from_bpp(this->mm.front.client_info.bpp, this->mm.front.get_palette());
+            auto const color_ctx = gdi::ColorCtx::from_bpp(this->mm.front.client_info.bpp, this->mm.front.get_palette());
 
             drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip, color_ctx);
 

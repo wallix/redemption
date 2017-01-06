@@ -557,7 +557,7 @@ public:
                 case GLYPHINDEX:
                     this->glyph_index.receive(stream, header);
                     //this->glyph_index.log(LOG_INFO, cmd_clip);
-                    gd.draw(this->glyph_index, cmd_clip, gdi::GraphicColorCtx::from_bpp(this->bpp, this->global_palette), this->gly_cache);
+                    gd.draw(this->glyph_index, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette), this->gly_cache);
                     break;
                 case DESTBLT:
                     this->destblt.receive(stream, header);
@@ -571,12 +571,12 @@ public:
                     break;
                 case MULTIOPAQUERECT:
                     this->multiopaquerect.receive(stream, header);
-                    gd.draw(this->multiopaquerect, cmd_clip, gdi::GraphicColorCtx::from_bpp(this->bpp, this->global_palette));
+                    gd.draw(this->multiopaquerect, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette));
                     //this->multiopaquerect.log(LOG_INFO, cmd_clip);
                     break;
                 case MULTIPATBLT:
                     this->multipatblt.receive(stream, header);
-                    gd.draw(this->multipatblt, cmd_clip, gdi::GraphicColorCtx::from_bpp(this->bpp, this->global_palette));
+                    gd.draw(this->multipatblt, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette));
                     //this->multipatblt.log(LOG_INFO, cmd_clip);
                     break;
                 case MULTISCRBLT:
@@ -586,7 +586,7 @@ public:
                     break;
                 case PATBLT:
                     this->patblt.receive(stream, header);
-                    gd.draw(this->patblt, cmd_clip, gdi::GraphicColorCtx::from_bpp(this->bpp, this->global_palette));
+                    gd.draw(this->patblt, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette));
                     //this->patblt.log(LOG_INFO, cmd_clip);
                     break;
                 case SCREENBLT:
@@ -596,12 +596,12 @@ public:
                     break;
                 case LINE:
                     this->lineto.receive(stream, header);
-                    gd.draw(this->lineto, cmd_clip, gdi::GraphicColorCtx::from_bpp(this->bpp, this->global_palette));
+                    gd.draw(this->lineto, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette));
                     //this->lineto.log(LOG_INFO, cmd_clip);
                     break;
                 case RECT:
                     this->opaquerect.receive(stream, header);
-                    gd.draw(this->opaquerect, cmd_clip, gdi::GraphicColorCtx::from_bpp(this->bpp, this->global_palette));
+                    gd.draw(this->opaquerect, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette));
                     //this->opaquerect.log(LOG_INFO, cmd_clip);
                     break;
                 case MEMBLT:
@@ -641,7 +641,7 @@ public:
                         // TODO CGR: check if bitmap has the right palette...
                         // TODO CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps
                         if (bitmap.is_valid()) {
-                            gd.draw(this->mem3blt, cmd_clip, gdi::GraphicColorCtx::from_bpp(this->bpp, this->global_palette), bitmap);
+                            gd.draw(this->mem3blt, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette), bitmap);
                         }
                         else {
                             LOG(LOG_ERR, "rdp_orders::process_orders: MEM3BLT - Bitmap is not found in cache! cache_id=%u cache_index=%u",
@@ -652,12 +652,12 @@ public:
                     break;
                 case POLYLINE:
                     this->polyline.receive(stream, header);
-                    gd.draw(this->polyline, cmd_clip, gdi::GraphicColorCtx::from_bpp(this->bpp, this->global_palette));
+                    gd.draw(this->polyline, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette));
                     //this->polyline.log(LOG_INFO, cmd_clip);
                     break;
                 case ELLIPSESC:
                     this->ellipseSC.receive(stream, header);
-                    gd.draw(this->ellipseSC, cmd_clip, gdi::GraphicColorCtx::from_bpp(this->bpp, this->global_palette));
+                    gd.draw(this->ellipseSC, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette));
                     //this->ellipseSC.log(LOG_INFO, cmd_clip);
                     break;
                 default:

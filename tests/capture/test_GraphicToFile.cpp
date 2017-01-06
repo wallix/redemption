@@ -275,7 +275,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
     DumpPng24FromRDPDrawableAdapter dump_png24(drawable);
     GraphicToFile consumer(now, trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, WrmCompressionAlgorithm::no_compression);
-    auto const color_ctx = gdi::GraphicColorCtx::depth24();
+    auto const color_ctx = gdi::ColorCtx::depth24();
 
     consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect, color_ctx);
 
@@ -452,7 +452,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
     DumpPng24FromRDPDrawableAdapter dump_png24(drawable);
     GraphicToFile consumer(now, trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, WrmCompressionAlgorithm::no_compression);
-    auto const color_ctx = gdi::GraphicColorCtx::depth24();
+    auto const color_ctx = gdi::ColorCtx::depth24();
 
     consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect, color_ctx);
     consumer.draw(RDPOpaqueRect(Rect(0, 50, 700, 30), BLUE), screen_rect, color_ctx);
@@ -504,7 +504,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
     DumpPng24FromRDPDrawableAdapter dump_png24_api(drawable);
     GraphicToFile consumer(now, trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24_api, WrmCompressionAlgorithm::no_compression);
-    auto const color_ctx = gdi::GraphicColorCtx::depth24();
+    auto const color_ctx = gdi::ColorCtx::depth24();
     BOOST_CHECK_EQUAL(0, 0);
     RDPOpaqueRect cmd0(screen_rect, GREEN);
     consumer.draw(cmd0, screen_rect, color_ctx);
@@ -658,7 +658,7 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
     RDPDrawable drawable(scr.cx, scr.cy, 24);
     DumpPng24FromRDPDrawableAdapter dump_png(drawable);
     GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression);
-    auto const color_ctx = gdi::GraphicColorCtx::depth24();
+    auto const color_ctx = gdi::ColorCtx::depth24();
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, BLUE), scr, color_ctx);
@@ -800,7 +800,7 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
     RDPDrawable drawable(scr.cx, scr.cy, 24);
     DumpPng24FromRDPDrawableAdapter dump_png(drawable);
     GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression);
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
@@ -986,7 +986,7 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
     RDPDrawable drawable(scr.cx, scr.cy, 24);
     DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
     GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, WrmCompressionAlgorithm::no_compression);
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr, color_cxt);
@@ -1061,7 +1061,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     RDPDrawable drawable(scr.cx, scr.cy, 24);
     DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
     GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, WrmCompressionAlgorithm::no_compression);
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr, color_cxt);
@@ -1146,7 +1146,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     RDPDrawable drawable(scr.cx, scr.cy, 24);
     DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
     GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, WrmCompressionAlgorithm::no_compression);
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr, color_cxt);

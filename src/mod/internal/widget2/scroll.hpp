@@ -1024,7 +1024,7 @@ public:
                         this->bg_color
                     ),
                     this->get_rect(),
-                    gdi::GraphicColorCtx::depth24()
+                    gdi::ColorCtx::depth24()
                 );
 
             this->drawable.draw(
@@ -1038,7 +1038,7 @@ public:
                         this->fg_color
                     ),
                     this->get_rect(),
-                    gdi::GraphicColorCtx::depth24()
+                    gdi::ColorCtx::depth24()
                 );
 
             this->drawable.draw(
@@ -1052,7 +1052,7 @@ public:
                         this->fg_color
                     ),
                     this->get_rect(),
-                    gdi::GraphicColorCtx::depth24()
+                    gdi::ColorCtx::depth24()
                 );
 
             WidgetFlatButton::draw(clip, this->cursor_button_rect, this->drawable,
@@ -1082,7 +1082,7 @@ public:
                         this->bg_color
                     ),
                     this->get_rect(),
-                    gdi::GraphicColorCtx::depth24()
+                    gdi::ColorCtx::depth24()
                 );
 
             this->drawable.draw(
@@ -1096,7 +1096,7 @@ public:
                         this->fg_color
                     ),
                     this->get_rect(),
-                    gdi::GraphicColorCtx::depth24()
+                    gdi::ColorCtx::depth24()
                 );
 
             this->drawable.draw(
@@ -1110,7 +1110,7 @@ public:
                         this->fg_color
                     ),
                     this->get_rect(),
-                    gdi::GraphicColorCtx::depth24()
+                    gdi::ColorCtx::depth24()
                 );
 
             WidgetFlatButton::draw(clip, this->cursor_button_rect, this->drawable,

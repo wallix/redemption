@@ -74,7 +74,7 @@ public:
         auto wlabel = text_margin * 2 + tm2.width;
         auto y = this->y() + tm1.height / 2;
 
-        auto const color_ctx = gdi::GraphicColorCtx::depth24();
+        auto const color_ctx = gdi::ColorCtx::depth24();
 
         // Top Line and Label
         auto rect1 = Rect(px, y, text_indentation - text_margin - border + 2, 1);

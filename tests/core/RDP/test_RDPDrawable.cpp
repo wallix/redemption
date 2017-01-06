@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(TestDrawGlyphIndex)
     Rect screen_rect(0, 0, width, height);
     RDPDrawable gd(width, height, 24);
 
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
 
     gd.draw(RDPOpaqueRect(screen_rect, BLACK), screen_rect, color_cxt);
 
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
     RDPDrawable gd(width, height, 24);
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect, color_cxt);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), BLACK), screen_rect, color_cxt);
 
@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
     RDPDrawable gd(width, height, 24);
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect, color_cxt);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), GREEN), screen_rect, color_cxt);
 
@@ -276,7 +276,7 @@ BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
     RDPDrawable gd(width, height, 24);
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect, color_cxt);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), GREEN), screen_rect, color_cxt);
 
@@ -498,7 +498,7 @@ BOOST_AUTO_TEST_CASE(TestTransportPngOneRedScreen)
     // will look as a string
 
     RDPDrawable d(800, 600, 24);
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     d.draw(cmd, screen_rect, color_cxt);
@@ -510,7 +510,7 @@ BOOST_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
 {
     CheckTransport trans(expected_red, sizeof(expected_red)-1);
     RDPDrawable drawable(800, 600, 24);
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect, color_cxt);
@@ -533,7 +533,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
 
     OutFileTransport trans(fd);
     RDPDrawable drawable(800, 600, 24);
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect, color_cxt);
@@ -548,7 +548,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
     RDPDrawable drawable(800, 600, 24);
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect, color_cxt);
@@ -671,7 +671,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     drawable.impl().dont_show_mouse_cursor = true;
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(cmd, screen_rect, color_cxt);
 
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
@@ -716,7 +716,7 @@ BOOST_AUTO_TEST_CASE(TestSmallImage)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid);
     Rect scr(0, 0, 20, 10);
     RDPDrawable drawable(20, 10, 24);
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr, color_cxt);
     drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr, color_cxt);
@@ -775,7 +775,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600, 24);
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
 
 
@@ -904,7 +904,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600, 24);
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
 
     uint8_t source32x1[] =

@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(TestDrawBitmapUpdate)
     Rect screen_rect(0, 0, width, height);
 
     RDPDrawable gd(width, height, 16);
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
     gd.draw(RDPOpaqueRect(screen_rect, color_encode(0x2F2F2F, 16)), screen_rect, color_cxt);
 
     uint8_t raw_palette[] = {

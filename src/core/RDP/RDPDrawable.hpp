@@ -76,7 +76,7 @@ public:
     : drawable(width, height)
     , frame_start_count(0)
     , mod_palette_rgb(BGRPalette::classic_332())
-    , order_depth_(gdi::GraphicDepth::from_bpp(order_bpp))
+    , order_depth_(gdi::Depth::from_bpp(order_bpp))
     {
         REDASSERT(this->order_depth().is_defined());
     }
@@ -132,7 +132,7 @@ private:
     }
 
     Color u32rgb_to_color(BGRColor color) const {
-        using Depths = gdi::GraphicDepth;
+        using Depths = gdi::Depth;
 
         switch (this->order_depth()){
             case Depths::depth8():  color = decode_color8_opaquerect()(color, this->mod_palette_rgb); break;
@@ -146,7 +146,7 @@ private:
     }
 
     std::pair<Color, Color> u32rgb_to_color(BGRColor color1, BGRColor color2) const {
-        using Depths = gdi::GraphicDepth;
+        using Depths = gdi::Depth;
 
         switch (this->order_depth()) {
             case Depths::depth8():
@@ -179,19 +179,19 @@ public:
     void draw(RDPBrushCache const &) override {
     }
 
-    void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
         this->drawable.opaquerect(trect, this->u32rgb_to_color(cmd.color));
     }
 
-    void draw(RDPEllipseSC const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDPEllipseSC const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         // TODO clip is not used
         (void)clip;
         this->drawable.ellipse(cmd.el, cmd.bRop2, cmd.fillMode, this->u32rgb_to_color(cmd.color));
     }
 
     // TODO This will draw a standard ellipse without brush style
-    void draw(RDPEllipseCB const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDPEllipseCB const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         // TODO clip is not used
         (void)clip;
         this->drawable.ellipse(cmd.el, cmd.brop2, cmd.fill_mode, this->u32rgb_to_color(cmd.back_color));
@@ -212,15 +212,15 @@ public:
         this->drawable.destblt(trect, cmd.rop);
     }
 
-    void set_depths(gdi::GraphicDepth const & depths) override {
+    void set_depths(gdi::Depth const & depths) override {
         this->order_depth_ = depths;
     }
 
-    gdi::GraphicDepth const & order_depth() const override {
+    gdi::Depth const & order_depth() const override {
         return this->order_depth_;
     }
 
-    gdi::GraphicDepth order_depth_;
+    gdi::Depth order_depth_;
 
 
 private:
@@ -264,14 +264,14 @@ public:
         });
     }
 
-    void draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         const Color color = this->u32rgb_to_color(cmd._Color);
         this->draw_multi(cmd, clip, [color, this](const Rect & trect) {
             this->drawable.opaquerect(trect, color);
         });
     }
 
-    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         // TODO PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.
         if (cmd.brush.style == 0x03 && (cmd.bRop == 0xF0 || cmd.bRop == 0x5A)) {
             enum { BackColor, ForeColor };
@@ -303,7 +303,7 @@ public:
         });
     }
 
-    void draw(RDPPatBlt const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
         // TODO PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.
 
@@ -365,7 +365,7 @@ public:
         }
     }
 
-    void draw(RDPMem3Blt const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, const Bitmap & bmp) override {
+    void draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bmp) override {
         const Rect rect = clip.intersect(cmd.rect);
         if (rect.isempty()){
             return ;
@@ -395,7 +395,7 @@ public:
      *                 y
      *  Anyway, we base the line drawing on bresenham's algorithm
      */
-    void draw(const RDPLineTo & lineto, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(const RDPLineTo & lineto, Rect clip, gdi::ColorCtx color_ctx) override {
         this->drawable.draw_line(
             lineto.back_mode,
             lineto.startx, lineto.starty,
@@ -744,7 +744,7 @@ public:
 
 
 
-    void draw(RDPGlyphIndex const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, const GlyphCache & gly_cache) override {
+    void draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
         Rect screen_rect = clip.intersect(this->drawable.width(), this->drawable.height());
         if (screen_rect.isempty()){
             return ;
@@ -776,7 +776,7 @@ public:
             clipped_glyph_fragment_rect, cmd.cache_id, gly_cache);
     }
 
-    void draw(RDPPolyline const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDPPolyline const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         int16_t startx = cmd.xStart;
         int16_t starty = cmd.yStart;
 
@@ -797,7 +797,7 @@ public:
     }
 
     // TODO this functions only draw polygon borders but do not fill them with solid color.
-    void draw(RDPPolygonSC const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDPPolygonSC const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         int16_t startx = cmd.xStart;
         int16_t starty = cmd.yStart;
 
@@ -822,7 +822,7 @@ public:
     }
 
     // TODO this functions only draw polygon borders but do not fill them with brush color.
-    void draw(RDPPolygonCB const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDPPolygonCB const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         int16_t startx = cmd.xStart;
         int16_t starty = cmd.yStart;
 

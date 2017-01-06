@@ -108,7 +108,7 @@ public:
     // This should come from BACK!
     void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override
     {
-        auto const color_ctx = gdi::GraphicColorCtx::depth24();
+        auto const color_ctx = gdi::ColorCtx::depth24();
 
         if (this->draw_green_carpet) {
             drawable.begin_update();
@@ -156,7 +156,7 @@ public:
 private:
     void wipe(Rect const oldrect, Rect newrect, int color, const Rect clip, gdi::GraphicApi & drawable) {
         oldrect.difference(newrect, [&](const Rect & a) {
-            drawable.draw(RDPOpaqueRect(a, color), clip, gdi::GraphicColorCtx::depth24());
+            drawable.draw(RDPOpaqueRect(a, color), clip, gdi::ColorCtx::depth24());
         });
     }
 };

@@ -133,7 +133,7 @@ struct RngByBpp
 
     RngByBpp() = default;
 
-    RngByBpp(gdi::GraphicDepth order_depth, iterator first, iterator last)
+    RngByBpp(gdi::Depth order_depth, iterator first, iterator last)
     : its{first, first, first, first, last}
     {
         assert(order_depth.is_defined());
@@ -143,17 +143,17 @@ struct RngByBpp
         });
 
         struct ge {
-            gdi::GraphicDepth order_depth;
-            gdi::GraphicDepth bpp;
+            gdi::Depth order_depth;
+            gdi::Depth bpp;
             bool operator()(gdi::GraphicApi const & x) const {
                 return x.order_depth().depth_or(order_depth).id() >= this->bpp.id();
             }
         };
 
-        this->its[0] = std::find_if(this->its[0], this->its[4], ge{order_depth, gdi::GraphicDepth::depth8()});
-        this->its[1] = std::find_if(this->its[0], this->its[4], ge{order_depth, gdi::GraphicDepth::depth15()});
-        this->its[2] = std::find_if(this->its[1], this->its[4], ge{order_depth, gdi::GraphicDepth::depth16()});
-        this->its[3] = std::find_if(this->its[2], this->its[4], ge{order_depth, gdi::GraphicDepth::depth24()});
+        this->its[0] = std::find_if(this->its[0], this->its[4], ge{order_depth, gdi::Depth::depth8()});
+        this->its[1] = std::find_if(this->its[0], this->its[4], ge{order_depth, gdi::Depth::depth15()});
+        this->its[2] = std::find_if(this->its[1], this->its[4], ge{order_depth, gdi::Depth::depth16()});
+        this->its[3] = std::find_if(this->its[2], this->its[4], ge{order_depth, gdi::Depth::depth24()});
     }
 
     range<iterator> rng8() const { return {this->its[0], this->its[1]}; }
@@ -191,13 +191,13 @@ namespace detail
 
     template<class Fn, class Iterator, class Cmd, class... Ts>
     void draw_cmd_color_convert(
-        std::false_type, Fn & apply, gdi::GraphicDepth, RngByBpp<Iterator> const & rng_by_bpp,
+        std::false_type, Fn & apply, gdi::Depth, RngByBpp<Iterator> const & rng_by_bpp,
         Cmd const & cmd, Ts const & ... args
     ) { draw_rng(apply, rng_by_bpp.rng_all(), cmd, args...); }
 
     template<class Fn, class Iterator, class Cmd, class... Ts>
     void draw_cmd_color_convert(
-        std::true_type, Fn & apply, gdi::GraphicDepth order_depth, RngByBpp<Iterator> const & rng_by_bpp,
+        std::true_type, Fn & apply, gdi::Depth order_depth, RngByBpp<Iterator> const & rng_by_bpp,
         Cmd const & cmd, Ts const & ... args
     ) {
         for (std::size_t i = rng_by_bpp.count_range(); i > 0; --i) {
@@ -215,29 +215,29 @@ namespace detail
 
         using dec8 = with_color8_palette<decode_color8_opaquerect>;
         switch (order_depth) {
-            case GraphicDepth::depth24() : /*new_cmd_colors_ref.encode(decode_color24_opaquerect{});*/ break;
-            case GraphicDepth::depth16() : new_cmd_colors_ref.encode(decode_color16_opaquerect{}); break;
-            case GraphicDepth::depth15() : new_cmd_colors_ref.encode(decode_color15_opaquerect{}); break;
-            case GraphicDepth::depth8() : new_cmd_colors_ref.encode(dec8{BGRPalette::classic_332_rgb()}); break;
-            case GraphicDepth::unspecified() : assert(false && "unknown value in order_bpp"); break;
+            case Depth::depth24() : /*new_cmd_colors_ref.encode(decode_color24_opaquerect{});*/ break;
+            case Depth::depth16() : new_cmd_colors_ref.encode(decode_color16_opaquerect{}); break;
+            case Depth::depth15() : new_cmd_colors_ref.encode(decode_color15_opaquerect{}); break;
+            case Depth::depth8() : new_cmd_colors_ref.encode(dec8{BGRPalette::classic_332_rgb()}); break;
+            case Depth::unspecified() : assert(false && "unknown value in order_bpp"); break;
         }
 
-        if (GraphicDepth::depth24() != order_depth) {
+        if (Depth::depth24() != order_depth) {
             draw_rng(apply, rng_by_bpp.rng24(), new_cmd, args...);
         }
 
         auto decoded_colors = new_cmd_colors_ref.to_colors();
 
-        if (GraphicDepth::depth16() != order_depth) {
+        if (Depth::depth16() != order_depth) {
             new_cmd_colors_ref.encode(encode_color16{});
             draw_rng(apply, rng_by_bpp.rng16(), new_cmd, args...);
         }
-        if (GraphicDepth::depth15() != order_depth) {
+        if (Depth::depth15() != order_depth) {
             new_cmd_colors_ref.assign(decoded_colors);
             new_cmd_colors_ref.encode(encode_color15{});
             draw_rng(apply, rng_by_bpp.rng15(), new_cmd, args...);
         }
-        if (GraphicDepth::depth8() != order_depth) {
+        if (Depth::depth8() != order_depth) {
             new_cmd_colors_ref.assign(decoded_colors);
             new_cmd_colors_ref.encode(encode_color8{});
             draw_rng(apply, rng_by_bpp.rng8(), new_cmd, args...);
@@ -248,7 +248,7 @@ namespace detail
 
 template<class Fn, class Iterator, class Cmd, class... Ts>
 void draw_cmd_color_convert(
-    Fn apply, gdi::GraphicDepth order_depth, RngByBpp<Iterator> rng,
+    Fn apply, gdi::Depth order_depth, RngByBpp<Iterator> rng,
     Cmd const & cmd, Ts const & ... args
 ) {
     detail::draw_cmd_color_convert(
@@ -260,7 +260,7 @@ void draw_cmd_color_convert(
 
 template<class Iterator, class Cmd, class... Ts>
 void draw_cmd_color_convert(
-    GraphicDepth order_depth, RngByBpp<Iterator> rng,
+    Depth order_depth, RngByBpp<Iterator> rng,
     Cmd const & cmd, Ts const & ... args
 ) { return draw_cmd_color_convert(graphic_draw_fn{}, order_depth, rng, cmd, args...); }
 

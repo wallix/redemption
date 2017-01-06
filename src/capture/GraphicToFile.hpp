@@ -436,7 +436,7 @@ public:
     , dump_png24_api(dump_png24)
     , keyboard_buffer_32(keyboard_buffer_32_buf)
     , wrm_format_version(bool(this->compression_bullder.get_algorithm()) ? 4 : 3)
-    , order_depth_(gdi::GraphicDepth::unspecified())
+    , order_depth_(gdi::Depth::unspecified())
     {
         if (wrm_compression_algorithm != this->compression_bullder.get_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
@@ -730,15 +730,15 @@ public:
 
     using RDPSerializer::set_pointer;
 
-    void set_depths(gdi::GraphicDepth const & depth) override {
+    void set_depths(gdi::Depth const & depth) override {
         this->order_depth_ = depth;
     }
 
-    gdi::GraphicDepth const & order_depth() const override {
+    gdi::Depth const & order_depth() const override {
         return this->order_depth_;
     }
 
-    gdi::GraphicDepth order_depth_;
+    gdi::Depth order_depth_;
 
 };  // struct GraphicToFile
 

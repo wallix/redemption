@@ -47,7 +47,7 @@ public:
                 this->color
             ),
             this->get_rect(),
-            gdi::GraphicColorCtx::depth24()
+            gdi::ColorCtx::depth24()
         );
     }
 };

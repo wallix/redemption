@@ -77,7 +77,7 @@ public:
 
         const Rect clip = this->get_screen_rect();
 
-        auto const color_ctx = gdi::GraphicColorCtx::depth24();
+        auto const color_ctx = gdi::ColorCtx::depth24();
 
         this->front.draw(RDPOpaqueRect(this->get_screen_rect(), WHITE), clip, color_ctx);
         this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(5), RED), clip, color_ctx);

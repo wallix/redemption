@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
                         , flv_params
                         , no_timestamp, authentifier
                         , ini, cctx, rnd, nullptr);
-        auto const color_cxt = gdi::GraphicColorCtx::depth24();
+        auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
 
         capture.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
@@ -315,7 +315,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , flv_params
                    , no_timestamp, authentifier
                    , ini, cctx, rnd, nullptr);
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
     Pointer pointer1(Pointer::POINTER_EDIT);
     capture.set_pointer(pointer1);
 
@@ -360,7 +360,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
         bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression
     );
     WrmCaptureImpl::NativeCaptureLocal consumer(graphic_to_file, now, std::chrono::seconds{1}, std::chrono::seconds{5});
-    auto const color_cxt = gdi::GraphicColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
 
     drawable.show_mouse_cursor(false);
 

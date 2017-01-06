@@ -293,7 +293,7 @@ public:
     , _info(info)
     , _callback(nullptr)
     , _running(false)
-    , order_depth_(gdi::GraphicDepth::unspecified())
+    , order_depth_(gdi::Depth::unspecified())
     {
         SSL_load_error_strings();
         SSL_library_init();
@@ -706,7 +706,7 @@ public:
     //       DRAW FUNCTIONS
     //-----------------------------
 
-    virtual void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    virtual void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPOpaqueRect color=" << int(cmd.color);
             std::cout << " clip x=" << int(clip.x) <<  std::endl;
@@ -728,7 +728,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPLineTo & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    virtual void draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPLineTo " << std::endl;
@@ -736,14 +736,14 @@ public:
         }
     }
 
-    virtual void draw(const RDPPatBlt & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    virtual void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPatBlt rop=" << int(cmd.rop);
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
 
-    virtual void draw(const RDPMem3Blt & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, const Bitmap & bitmap) override {
+    virtual void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override {
         (void)bitmap;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMem3Blt rop=" << int(cmd.rop);
@@ -774,7 +774,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    virtual void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMultiOpaqueRect " << std::endl;
@@ -782,7 +782,7 @@ public:
         }
     }
 
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    virtual void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMultiPatBlt " << std::endl;
@@ -798,7 +798,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, const GlyphCache & gly_cache) override {
+    virtual void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
         (void)cmd;
         (void)gly_cache;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
@@ -807,7 +807,7 @@ public:
         }
     }
 
-    void draw(const RDPPolygonSC & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(const RDPPolygonSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPolygonSC " << std::endl;
@@ -815,7 +815,7 @@ public:
         }
     }
 
-    void draw(const RDPPolygonCB & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(const RDPPolygonCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPolygonCB " << std::endl;
@@ -823,7 +823,7 @@ public:
         }
     }
 
-    void draw(const RDPPolyline & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(const RDPPolyline & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPolyline " << std::endl;
@@ -831,7 +831,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPEllipseSC & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    virtual void draw(const RDPEllipseSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPEllipseSC " << std::endl;
@@ -839,7 +839,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPEllipseCB & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    virtual void draw(const RDPEllipseCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPEllipseCB " << std::endl;
@@ -981,15 +981,15 @@ public:
         }
     }
 
-    void set_depths(gdi::GraphicDepth const & depth) override {
+    void set_depths(gdi::Depth const & depth) override {
         this->order_depth_ = depth;
     }
 
-    gdi::GraphicDepth const & order_depth() const override {
+    gdi::Depth const & order_depth() const override {
         return this->order_depth_;
     }
 
-    gdi::GraphicDepth order_depth_;
+    gdi::Depth order_depth_;
 
 };
 

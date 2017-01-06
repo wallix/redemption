@@ -239,7 +239,7 @@ public:
         //LOG(LOG_INFO, "RDPSerializer::reserve_order done");
     }
 
-    void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         //LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect");
         this->reserve_order(23);
         RDPOrderCommon newcommon(RDP::RECT, clip);
@@ -286,7 +286,7 @@ public:
         }
     }
 
-    void draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         this->reserve_order(397 * 2);
         RDPOrderCommon newcommon(RDP::MULTIOPAQUERECT, clip);
         cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.multiopaquerect);
@@ -297,7 +297,7 @@ public:
         }
     }
 
-    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         this->reserve_order(412 * 2);
         RDPOrderCommon newcommon(RDP::MULTIPATBLT, clip);
         cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.multipatblt);
@@ -319,7 +319,7 @@ public:
         }
     }
 
-    void draw(RDPPatBlt const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         this->reserve_order(29);
         RDPOrderCommon newcommon(RDP::PATBLT, clip);
         cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.patblt);
@@ -413,11 +413,11 @@ public:
         this->draw_memblt(cmd, this->ssc.memblt, clip, oldbmp);
     }
 
-    void draw(RDPMem3Blt const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, const Bitmap & oldbmp) override {
+    void draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & oldbmp) override {
         this->draw_memblt(cmd, this->ssc.mem3blt, clip, oldbmp);
     }
 
-    void draw(RDPLineTo const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         this->reserve_order(32);
         RDPOrderCommon newcommon(RDP::LINE, clip);
         cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.lineto);
@@ -428,7 +428,7 @@ public:
         }
     }
 
-    void draw(RDPGlyphIndex const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, const GlyphCache & gly_cache) override {
+    void draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
         auto get_delta = [] (RDPGlyphIndex & cmd, uint8_t & i) -> uint16_t {
             uint16_t delta = cmd.data[i++];
             if (delta == 0x80) {
@@ -544,7 +544,7 @@ public:
         cmd.emit(this->stream_orders);
     }
 
-    void draw(RDPPolygonSC const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDPPolygonSC const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         this->reserve_order(256);
         RDPOrderCommon newcommon(RDP::POLYGONSC, clip);
         cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->polygonSC);
@@ -552,7 +552,7 @@ public:
         this->polygonSC = cmd;
     }
 
-    void draw(RDPPolygonCB const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDPPolygonCB const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         this->reserve_order(256);
         RDPOrderCommon newcommon(RDP::POLYGONCB, clip);
         cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->polygonCB);
@@ -560,7 +560,7 @@ public:
         this->polygonCB = cmd;
     }
 
-    void draw(RDPPolyline const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDPPolyline const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         this->reserve_order(256);
         RDPOrderCommon newcommon(RDP::POLYLINE, clip);
         cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.polyline);
@@ -571,7 +571,7 @@ public:
         }
     }
 
-    void draw(RDPEllipseSC const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDPEllipseSC const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         this->reserve_order(26);
         RDPOrderCommon newcommon(RDP::ELLIPSESC, clip);
         cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.ellipseSC);
@@ -579,7 +579,7 @@ public:
         this->ssc.ellipseSC = cmd;
     }
 
-    void draw(RDPEllipseCB const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx) override {
+    void draw(RDPEllipseCB const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         this->reserve_order(54);
         RDPOrderCommon newcommon(RDP::ELLIPSECB, clip);
         cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ellipseCB);
