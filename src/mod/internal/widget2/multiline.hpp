@@ -117,7 +117,7 @@ public:
         return this->lines[num].str;
     }
 
-    void draw(const Rect& clip) override {
+    void draw(const Rect clip) override {
         int dy = this->y() + this->y_text;
         this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->get_rect(), gdi::GraphicColorCtx::depth24());
         for (line_t * line = this->lines; line->str; ++line) {

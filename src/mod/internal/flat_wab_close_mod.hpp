@@ -82,7 +82,7 @@ class FlatWabCloseMod : public LocallyIntegrableMod, public NotifyApi
 
 public:
     FlatWabCloseMod(FlatWabCloseModVariables vars,
-                    FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect, time_t now,
+                    FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, time_t now,
                     ClientExecute & client_execute, bool showtimer = false, bool back_selector = false)
         : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
         , close_widget(

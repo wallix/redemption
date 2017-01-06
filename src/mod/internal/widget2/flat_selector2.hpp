@@ -109,8 +109,10 @@ public:
 
 public:
     WidgetSelectorFlat2(gdi::GraphicApi & drawable,
-                        const char * device_name, int16_t left, int16_t top, uint16_t width,
-                        uint16_t height, Widget2 & parent, NotifyApi* notifier,
+                        const char * device_name,
+                        // TODO use Rect
+                        int16_t left, int16_t top, uint16_t width, uint16_t height,
+                        Widget2 & parent, NotifyApi* notifier,
                         const char * current_page, const char * number_of_page,
                         const char * filter_target_group, const char * filter_target,
                         const char * filter_protocol,
@@ -463,7 +465,7 @@ public:
     }
 
     void show_tooltip(Widget2 * widget, const char * text, int x, int y,
-                      Rect const & preferred_display_rect, int iter) override {
+                      Rect const preferred_display_rect, int iter) override {
         WidgetParent::show_tooltip(widget, text, x, y,
             (preferred_display_rect.isempty() ? this->get_rect() : preferred_display_rect),
             iter);

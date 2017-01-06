@@ -143,7 +143,7 @@ public:
         }
     }
 
-    void draw(const Rect& clip) override {
+    void draw(const Rect clip) override {
         this->editbox->draw(clip);
         if (this->label && this->use_label_) {
             if (this->editbox->num_chars == 0) {
@@ -164,7 +164,7 @@ public:
         }
     }
 
-    void draw_border(const Rect& clip, int color)
+    void draw_border(const Rect clip, int color)
     {
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(

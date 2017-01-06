@@ -105,7 +105,7 @@ public:
     //    return this->masked_text.buffer;
     //}
 
-    void draw(const Rect& clip) override {
+    void draw(const Rect clip) override {
         this->masked_text.draw(clip);
         if (this->has_focus) {
             this->draw_cursor(this->get_cursor_rect());

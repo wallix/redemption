@@ -565,7 +565,7 @@ public:
     } // rdp_input_synchronize
 
 private:
-    void update_screen(const Rect & r, uint8_t incr = 1) {
+    void update_screen(Rect r, uint8_t incr = 1) {
         StaticOutStream<10> stream;
         /* FramebufferUpdateRequest */
         stream.out_uint8(3);
@@ -578,7 +578,7 @@ private:
     } // rdp_input_invalidate
 
 public:
-    void rdp_input_invalidate(const Rect & r) override {
+    void rdp_input_invalidate(Rect r) override {
 
         if (this->state == WAIT_PASSWORD) {
             this->screen.rdp_input_invalidate(r);
@@ -2774,7 +2774,7 @@ private:
         return (UP_AND_RUNNING == this->state);
     }
 
-    void draw_tile(const Rect & rect, const uint8_t * raw, gdi::GraphicApi & drawable)
+    void draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawable)
     {
         const uint16_t TILE_CX = 32;
         const uint16_t TILE_CY = 32;

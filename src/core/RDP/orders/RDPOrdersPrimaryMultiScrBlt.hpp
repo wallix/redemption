@@ -131,7 +131,7 @@ public:
 
     RDPMultiScrBlt() = default;
 
-    RDPMultiScrBlt( const Rect & _rect, uint8_t bRop, int16_t nXSrc, int16_t nYSrc, uint8_t nDeltaEntries
+    RDPMultiScrBlt( const Rect _rect, uint8_t bRop, int16_t nXSrc, int16_t nYSrc, uint8_t nDeltaEntries
                   , InStream & deltaEncodedRectangles)
     : rect(_rect)
     , bRop(bRop)
@@ -338,14 +338,14 @@ public:
         return lg;
     }
 
-    void log(int level, const Rect & clip) const {
+    void log(int level, const Rect clip) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
 
-    void print(const Rect & clip) const {
+    void print(const Rect clip) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;

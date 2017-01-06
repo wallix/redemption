@@ -412,7 +412,7 @@ public:
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override {
         Rect rectBmp(cmd.rect);
-        const Rect& rect = clip.intersect(rectBmp);
+        const +Rect rect = clip.intersect(rectBmp);
         if (rect.isempty()){
             return ;
         }
@@ -651,7 +651,7 @@ public:
 
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
-        const Rect& drect = clip.intersect(cmd.rect);
+        const +Rect drect = clip.intersect(cmd.rect);
         if (drect.isempty() || bitmap.cx() <= 0 || bitmap.cy() <= 0){
             return ;
         }

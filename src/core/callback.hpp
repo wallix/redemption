@@ -92,7 +92,7 @@ struct RdpInput : noncopyable
     virtual void rdp_input_unicode(uint16_t unicode, uint8_t flag) { (void)unicode; (void)flag; }
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) = 0;
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
-    virtual void rdp_input_invalidate(const Rect & r) = 0;
+    virtual void rdp_input_invalidate(Rect r) = 0;
     virtual void rdp_input_invalidate2(array_view<Rect const> vr) {
         for (Rect const & rect : vr) {
             if (!rect.isempty()) {

@@ -34,7 +34,7 @@ struct TestDraw : mod_api
     TestDraw(uint16_t w, uint16_t h) : gd(w, h, 24) {}
 
     void draw_event(time_t now, gdi::GraphicApi&) override { (void)now; }
-    void rdp_input_invalidate(const Rect&) override {}
+    void rdp_input_invalidate(Rect) override {}
     void rdp_input_mouse(int, int, int, Keymap2*) override {}
     void rdp_input_scancode(long, long, long, long, Keymap2*) override {}
     void rdp_input_synchronize(uint32_t, uint16_t, int16_t, int16_t) override {}
@@ -42,10 +42,10 @@ struct TestDraw : mod_api
 
     void save_to_png(const char * filename)
     {
-        std::FILE * file = fopen(filename, "w+");
+        std::FILE * file = std::fopen(filename, "w+");
         dump_png24(file, this->gd.data(), this->gd.width(),
                    this->gd.height(), this->gd.rowsize(), true);
-        fclose(file);
+        std::fclose(file);
     }
 
 private:

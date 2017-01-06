@@ -547,10 +547,11 @@ public:
             }
             else if (class_ == STANDARD) {
                 RDPPrimaryOrderHeader header = this->common.receive(stream, drawing_order.control_flags);
-                const Rect & cmd_clip = ( (drawing_order.control_flags & BOUNDS)
-                                        ? this->common.clip
-                                        : Rect(0, 0, front_width, front_height)
-                                        );
+                const Rect cmd_clip =
+                    (drawing_order.control_flags & BOUNDS)
+                    ? this->common.clip
+                    : Rect(0, 0, front_width, front_height)
+                ;
                 //LOG(LOG_INFO, "/* order=%d ordername=%s */", this->common.order, ordernames[this->common.order]);
                 switch (this->common.order) {
                 case GLYPHINDEX:

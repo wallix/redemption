@@ -53,7 +53,7 @@ public:
         this->screen.clear();
     }
 
-    void rdp_input_invalidate(const Rect & /*rect*/) override {
+    void rdp_input_invalidate(const Rect /*rect*/) override {
         this->draw_green_carpet = true;
     }
 
@@ -154,7 +154,7 @@ public:
     bool is_up_and_running() override { return true; }
 
 private:
-    void wipe(Rect oldrect, Rect newrect, int color, const Rect & clip, gdi::GraphicApi & drawable) {
+    void wipe(Rect const oldrect, Rect newrect, int color, const Rect clip, gdi::GraphicApi & drawable) {
         oldrect.difference(newrect, [&](const Rect & a) {
             drawable.draw(RDPOpaqueRect(a, color), clip, gdi::GraphicColorCtx::depth24());
         });

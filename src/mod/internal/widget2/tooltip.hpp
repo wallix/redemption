@@ -68,7 +68,7 @@ public:
         this->set_cy(this->desc.cy() + 2 * h_border);
     }
 
-    void draw(const Rect& clip) override {
+    void draw(const Rect clip) override {
         this->drawable.draw(RDPOpaqueRect(this->get_rect(), desc.bg_color), clip, gdi::GraphicColorCtx::depth24());
         this->desc.draw(clip);
         this->draw_border(clip);
@@ -94,7 +94,7 @@ public:
         this->desc.set_cy(cy - 2 * h_border);
     }
 
-    void draw_border(const Rect& clip)
+    void draw_border(const Rect clip)
     {
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(

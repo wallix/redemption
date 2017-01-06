@@ -1276,7 +1276,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         LOG(LOG_INFO, "========================================\n");
     }
     //std::cout << "RDPMemBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" <<  std::dec <<  std::endl;
-    const Rect& drect = clip.intersect(cmd.rect);
+    const +Rect drect = clip.intersect(cmd.rect);
     if (drect.isempty()){
         return ;
     }
@@ -1340,7 +1340,7 @@ void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bi
         LOG(LOG_INFO, "========================================\n");
     }
     //std::cout << "RDPMem3Blt " << std::hex << int(cmd.rop) << std::dec <<  std::endl;
-    const Rect& drect = clip.intersect(cmd.rect);
+    const +Rect drect = clip.intersect(cmd.rect);
     if (drect.isempty()){
         return ;
     }

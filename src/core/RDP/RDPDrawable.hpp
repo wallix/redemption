@@ -232,10 +232,10 @@ private:
     static Rect to_rect(RDPMultiOpaqueRect const & cmd)
     { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
 
-    static Rect const & to_rect(RDP::RDPMultiPatBlt const & cmd)
+    static Rect to_rect(RDP::RDPMultiPatBlt const & cmd)
     { return cmd.rect; }
 
-    static Rect const & to_rect(RDP::RDPMultiScrBlt const & cmd)
+    static Rect to_rect(RDP::RDPMultiScrBlt const & cmd)
     { return cmd.rect; }
     //@}
 
@@ -326,7 +326,7 @@ public:
     }
 
     void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bmp) override {
-        const Rect& rect = clip.intersect(cmd.rect);
+        const Rect rect = clip.intersect(cmd.rect);
         if (rect.isempty()){
             return ;
         }
@@ -366,7 +366,7 @@ public:
     }
 
     void draw(RDPMem3Blt const & cmd, Rect clip, gdi::GraphicColorCtx color_ctx, const Bitmap & bmp) override {
-        const Rect& rect = clip.intersect(cmd.rect);
+        const Rect rect = clip.intersect(cmd.rect);
         if (rect.isempty()){
             return ;
         }

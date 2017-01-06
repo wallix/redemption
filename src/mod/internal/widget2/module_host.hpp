@@ -136,7 +136,7 @@ private:
 
         // RdpInput
 
-        void rdp_input_invalidate(const Rect& r) override
+        void rdp_input_invalidate(const Rect r) override
         {
             if (this->managed_mod)
             {
@@ -520,7 +520,7 @@ public:
 
     // RdpInput
 
-    void rdp_input_invalidate(const Rect & r) override
+    void rdp_input_invalidate(const Rect r) override
     {
         this->begin_update();
 
@@ -584,7 +584,7 @@ public:
 
     // Widget2
 
-    void draw(const Rect& clip) override {
+    void draw(const Rect clip) override {
         if (this->hscroll_added) {
             this->hscroll.draw(clip);
         }
@@ -616,7 +616,7 @@ private:
     }
 
     template<class Cmd, class... Args>
-    void draw_impl(const Cmd& cmd, const Rect& clip, const Args&... args)
+    void draw_impl(const Cmd& cmd, const Rect clip, const Args&... args)
     {
         gdi::GraphicApi& drawable_ = this->get_drawable();
 
@@ -644,7 +644,7 @@ private:
         this->draw_impl(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bmp);
     }
 
-    void draw_impl(const RDPDestBlt& cmd, const Rect& clip)
+    void draw_impl(const RDPDestBlt& cmd, const Rect clip)
     {
         gdi::GraphicApi& drawable_ = this->get_drawable();
 
@@ -673,7 +673,7 @@ private:
         drawable_.draw(new_cmd, new_clip, gdi::GraphicColorCtx::depth24());
     }
 
-    void draw_impl(const RDPMem3Blt& cmd, const Rect& clip, const Bitmap& bmp) {
+    void draw_impl(const RDPMem3Blt& cmd, const Rect clip, const Bitmap& bmp) {
         gdi::GraphicApi& drawable_ = this->get_drawable();
 
         Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
@@ -687,7 +687,7 @@ private:
         drawable_.draw(new_cmd, new_clip, gdi::GraphicColorCtx::depth24(), bmp);
     }
 
-    void draw_impl(const RDPMemBlt& cmd, const Rect& clip, const Bitmap& bmp) {
+    void draw_impl(const RDPMemBlt& cmd, const Rect clip, const Bitmap& bmp) {
         gdi::GraphicApi& drawable_ = this->get_drawable();
 
         Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
@@ -701,7 +701,7 @@ private:
         drawable_.draw(new_cmd, new_clip, bmp);
     }
 
-    void draw_impl(const RDPMultiOpaqueRect& cmd, const Rect& clip) {
+    void draw_impl(const RDPMultiOpaqueRect& cmd, const Rect clip) {
         gdi::GraphicApi& drawable_ = this->get_drawable();
 
         Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
@@ -715,7 +715,7 @@ private:
         drawable_.draw(new_cmd, new_clip, gdi::GraphicColorCtx::depth24());
     }
 
-    void draw_impl(const RDP::RDPMultiPatBlt& cmd, const Rect& clip) {
+    void draw_impl(const RDP::RDPMultiPatBlt& cmd, const Rect clip) {
         gdi::GraphicApi& drawable_ = this->get_drawable();
 
         Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
@@ -729,7 +729,7 @@ private:
         drawable_.draw(new_cmd, new_clip, gdi::GraphicColorCtx::depth24());
     }
 
-    void draw_impl(const RDPOpaqueRect& cmd, const Rect& clip) {
+    void draw_impl(const RDPOpaqueRect& cmd, const Rect clip) {
         gdi::GraphicApi& drawable_ = this->get_drawable();
 
         Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
@@ -744,7 +744,7 @@ private:
     }
 
 
-    void draw_impl(const RDPPatBlt& cmd, const Rect& clip)
+    void draw_impl(const RDPPatBlt& cmd, const Rect clip)
     {
         gdi::GraphicApi& drawable_ = this->get_drawable();
 
@@ -759,7 +759,7 @@ private:
         drawable_.draw(new_cmd, new_clip, gdi::GraphicColorCtx::depth24());
     }
 
-    void draw_impl(const RDPScrBlt& cmd, const Rect& clip) {
+    void draw_impl(const RDPScrBlt& cmd, const Rect clip) {
         gdi::GraphicApi& drawable_ = this->get_drawable();
 
         Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);

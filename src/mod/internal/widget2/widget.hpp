@@ -97,9 +97,9 @@ public:
         return false;
     }
 
-    virtual void draw(const Rect& clip) = 0;
+    virtual void draw(Rect clip) = 0;
 
-    void refresh(const Rect& clip)
+    void refresh(Rect const clip)
     {
         if (!clip.isempty()){
             this->drawable.begin_update();
@@ -114,7 +114,7 @@ public:
     }
 
     virtual void show_tooltip(Widget2 * widget, const char * text, int x, int y,
-                              Rect const & preferred_display_rect, int iter = 10) {
+                              Rect preferred_display_rect, int iter = 10) {
         if (iter > 0) {
             this->parent.show_tooltip(widget, text, x, y, preferred_display_rect, iter - 1);
         }
@@ -167,7 +167,7 @@ public:
     }
 
     // - part of screen should be redrawn
-    void rdp_input_invalidate(const Rect & r) override {
+    void rdp_input_invalidate(Rect r) override {
         this->refresh(r);
     }
 
@@ -292,7 +292,7 @@ public:
         return this->rect.bottom();
     }
 
-    Rect const&  get_rect() const {
+    Rect get_rect() const {
         return this->rect;
     }
 };

@@ -157,7 +157,7 @@ public:
 
     RDPMultiPatBlt(RDPMultiPatBlt const &) = default;
 
-    RDPMultiPatBlt( const Rect & _rect, uint8_t bRop, uint32_t BackColor, uint32_t ForeColor, const RDPBrush & _brush
+    RDPMultiPatBlt( const Rect _rect, uint8_t bRop, uint32_t BackColor, uint32_t ForeColor, const RDPBrush & _brush
                   , uint8_t nDeltaEntries, InStream & deltaEncodedRectangles)
     : rect(_rect)
     , bRop(bRop)
@@ -415,14 +415,14 @@ public:
         return lg;
     }
 
-    void log(int level, const Rect & clip) const {
+    void log(int level, const Rect clip) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
 
-    void print(const Rect & clip) const {
+    void print(const Rect clip) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;

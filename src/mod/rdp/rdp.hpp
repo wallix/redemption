@@ -6027,7 +6027,7 @@ public:
         }
     }
 
-    void rdp_input_invalidate(const Rect & r) override {
+    void rdp_input_invalidate(const Rect r) override {
         if (this->verbose & RDPVerbose::basic_trace3){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
         }

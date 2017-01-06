@@ -50,7 +50,7 @@
 
 
 using subrect4_t = std::array<Rect, 4>;
-inline subrect4_t subrect4(const Rect & rect, const Rect & protected_rect)
+inline subrect4_t subrect4(const Rect rect, const Rect & protected_rect)
 {
     const Rect inter = rect.intersect(protected_rect);
     return {{
@@ -134,15 +134,15 @@ protected:
     }
 
 public:
-    ProtectGraphics(gdi::GraphicApi & drawable, Rect const & rect)
+    ProtectGraphics(gdi::GraphicApi & drawable, Rect const rect)
     : protected_rect(rect)
     , drawable(drawable)
     {}
 
-    Rect const & get_protected_rect() const
+    Rect get_protected_rect() const
     { return this->protected_rect; }
 
-    void set_protected_rect(Rect const & rect)
+    void set_protected_rect(Rect const rect)
     { this->protected_rect = rect; }
 
 protected:
@@ -201,7 +201,7 @@ private:
         }
     }
 
-    void draw_impl(const RDPScrBlt & cmd, const Rect & clip)
+    void draw_impl(const RDPScrBlt & cmd, const Rect clip)
     {
         const Rect drect = cmd.rect.intersect(clip);
         const int deltax = cmd.srcx - cmd.rect.x;

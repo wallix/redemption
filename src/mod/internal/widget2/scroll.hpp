@@ -38,7 +38,7 @@ public:
 
     // LAMBDA = (widget_y - frame_y) / (frame_height - widget_height)
 
-    WidgetFrame(gdi::GraphicApi & drawable, const Rect& rect, Widget2 & parent,
+    WidgetFrame(gdi::GraphicApi & drawable, const Rect rect, Widget2 & parent,
                 NotifyApi * notifier, int group_id = 0)
         : Widget2(drawable, rect, parent, notifier, group_id)
         , wid(nullptr)
@@ -91,7 +91,7 @@ public:
         }
     }
 
-    virtual void draw(const Rect& clip) {
+    virtual void draw(const Rect clip) {
         if (this->wid) {
             int src_x = this->rect.x;
             int src_y = this->rect.y;
@@ -259,7 +259,7 @@ public:
         }
     }
 
-    virtual void draw(const Rect& clip) {
+    virtual void draw(const Rect clip) {
         // bar
         this->drawable.draw(RDPOpaqueRect(this->rect,
                                           this->bg_color),
@@ -448,7 +448,7 @@ public:
         }
     }
 
-    virtual void draw(const Rect& clip) {
+    virtual void draw(const Rect clip) {
         // bar
         this->drawable.draw(RDPOpaqueRect(this->rect,
                                           this->bg_color),
@@ -662,7 +662,7 @@ private:
 public:
     // Widget2
 
-    void draw(const Rect& clip) override {
+    void draw(const Rect clip) override {
         WidgetFlatButton::draw(clip, this->left_button_rect, this->drawable,
             false, (this->mouse_down && (this->selected_button == BUTTON_LEFT)),
             "◀", this->fg_color, this->bg_color, this->focus_color,
@@ -1001,7 +1001,7 @@ private:
 public:
     // Widget2
 
-    void draw(const Rect& clip) override {
+    void draw(const Rect clip) override {
         if (this->horizontal) {
             WidgetFlatButton::draw(clip, this->left_or_top_button_rect, this->drawable,
                 false, (this->mouse_down && (this->selected_button == BUTTON_LEFT_OR_TOP)),

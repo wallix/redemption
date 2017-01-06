@@ -63,7 +63,7 @@ public:
 
     ~InternalMod() override {}
 
-    const Rect & get_screen_rect() const
+    Rect get_screen_rect() const
     {
         return this->screen.get_rect();
     }
@@ -80,7 +80,7 @@ public:
         }
     }
 
-    void rdp_input_invalidate(const Rect& r) override {
+    void rdp_input_invalidate(const Rect r) override {
         this->screen.rdp_input_invalidate(r);
     }
 

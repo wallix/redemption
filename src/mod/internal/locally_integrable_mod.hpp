@@ -89,7 +89,7 @@ struct LocallyIntegrableMod : public InternalMod {
         }
     }
 
-    void rdp_input_invalidate(const Rect& r) override {
+    void rdp_input_invalidate(const Rect r) override {
         InternalMod::rdp_input_invalidate(r);
 
         this->client_execute.input_invalidate(r);

@@ -66,7 +66,7 @@ public:
     FlatLoginMod(
         FlatLoginModVariables vars,
         char const * username, char const * password,
-        FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect, time_t now,
+        FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, time_t now,
         ClientExecute & client_execute
     )
         : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())

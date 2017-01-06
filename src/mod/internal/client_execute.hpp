@@ -255,7 +255,7 @@ private:
 
 public:
 
-    void draw_maximize_box(bool mouse_over, const Rect& r) {
+    void draw_maximize_box(bool mouse_over, const Rect r) {
         unsigned int bg_color = (mouse_over ? 0xCBCACA : 0xFFFFFF);
 
         auto const depth = gdi::GraphicColorCtx::depth24();
@@ -331,7 +331,7 @@ public:
         }
     }   // draw_maximize_box
 
-    void input_invalidate(const Rect& r) {
+    void input_invalidate(const Rect r) {
         //LOG(LOG_INFO, "ClientExecute::input_invalidate");
 
         if (!this->channel_) return;
@@ -2623,7 +2623,7 @@ public:
 
     const char * Arguments() const { return this->client_execute_arguments.c_str(); }
 
-    void create_auxiliary_window(Rect const& window_rect) override {
+    void create_auxiliary_window(Rect const window_rect) override {
         if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != this->auxiliary_window_id) return;
 
         this->auxiliary_window_id = AUXILIARY_WINDOW_ID;

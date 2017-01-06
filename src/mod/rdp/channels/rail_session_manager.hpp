@@ -290,7 +290,7 @@ private:
         }
     }
 
-    void draw_impl(const RDPScrBlt & cmd, const Rect & clip) {
+    void draw_impl(const RDPScrBlt & cmd, Rect clip) {
         const Rect drect = cmd.rect.intersect(clip);
         const int deltax = cmd.srcx - cmd.rect.x;
         const int deltay = cmd.srcy - cmd.rect.y;
@@ -307,7 +307,7 @@ private:
         else {
             this->drawable->begin_update();
             subrect4_t rects = subrect4(drect, this->protected_rect);
-            auto e = std::remove_if(rects.begin(), rects.end(), [](const Rect & rect) { return !rect.isempty(); });
+            auto e = std::remove_if(rects.begin(), rects.end(), [](Rect const & rect) { return !rect.isempty(); });
             auto av = make_array_view(rects.begin(), e);
             this->mod.rdp_input_invalidate2(av);
             this->drawable->end_update();
@@ -719,7 +719,7 @@ private:
     //
 
 public:
-    void create_auxiliary_window(Rect const& window_rect) override {
+    void create_auxiliary_window(Rect const window_rect) override {
         if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != this->auxiliary_window_id) return;
 
         this->auxiliary_window_id = this->register_client_window();

@@ -48,7 +48,7 @@ inline Color4 get_colors(
     GdRef graphics[3] {gd1, gd2, gd3, };
     gdi::RngByBpp<GdRef*> rng_by_bpp{order_depth, std::begin(graphics), std::end(graphics)};
     gdi::draw_cmd_color_convert(
-        [&](GraphicsColor const & gdc, const RDPOpaqueRect& cmd, const Rect&) {
+        [&](GraphicsColor const & gdc, const RDPOpaqueRect& cmd, const Rect &) {
             colors[gdc.order_depth().id()-1] = cmd.color;
         }, order_depth, rng_by_bpp, RDPOpaqueRect({}, color), Rect{}
     );

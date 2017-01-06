@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
 
         struct OSD : ProtectGraphics
         {
-            OSD(GraphicApi & drawable, Rect const & rect)
+            OSD(GraphicApi & drawable, Rect const rect)
                 : ProtectGraphics(drawable, rect)
                 , order_depth_(gdi::GraphicDepth::unspecified())
                 {}

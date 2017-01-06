@@ -55,7 +55,7 @@ public:
         this->clear();
     }
 
-    void draw(const Rect & clip) override {
+    void draw(Rect const clip) override {
         Rect rect_intersect = clip.intersect(this->get_rect());
         WidgetParent::draw_inner_free(rect_intersect, this->bg_color);
 

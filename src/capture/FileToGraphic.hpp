@@ -521,7 +521,7 @@ public:
             }
             else if (class_ == RDP::STANDARD) {
                 RDPPrimaryOrderHeader header = this->ssc.common.receive(this->stream, control);
-                const Rect & clip = (control & RDP::BOUNDS)?this->ssc.common.clip:this->screen_rect;
+                const Rect clip = (control & RDP::BOUNDS) ? this->ssc.common.clip : this->screen_rect;
                 switch (this->ssc.common.order) {
                 case RDP::GLYPHINDEX:
                     this->statistics.GlyphIndex++;

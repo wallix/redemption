@@ -197,7 +197,7 @@ public:
         this->label.set_cy(cy - 2);
     }
 
-    void draw(const Rect& clip) override {
+    void draw(const Rect clip) override {
         this->label.draw(clip);
         if (this->has_focus) {
             this->draw_cursor(this->get_cursor_rect());
@@ -246,7 +246,7 @@ public:
             this->draw_cursor(this->get_cursor_rect());
         }
     }
-    void draw_cursor(const Rect& clip)
+    void draw_cursor(const Rect clip)
     {
         if (!clip.isempty()) {
             this->drawable.draw(RDPOpaqueRect(clip, this->cursor_color), clip, gdi::GraphicColorCtx::depth24());

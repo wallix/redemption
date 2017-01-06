@@ -446,7 +446,7 @@ private:
             return false;
         }
 
-        bool try_input_invalidate(const Rect & r)
+        bool try_input_invalidate(const Rect r)
         {
             if (!this->get_protected_rect().isempty() && r.has_intersection(this->get_protected_rect())) {
                 auto rects = subrect4(r, this->get_protected_rect());
@@ -542,7 +542,7 @@ private:
             }
         }
 
-        void rdp_input_invalidate(const Rect & r) override
+        void rdp_input_invalidate(const Rect r) override
         {
             if (!this->try_input_invalidate(r)) {
                 this->mm.internal_mod->rdp_input_invalidate(r);
@@ -676,7 +676,7 @@ private:
             Mod::rdp_input_mouse(device_flags, x, y, keymap);
         }
 
-        void rdp_input_invalidate(const Rect & r) override
+        void rdp_input_invalidate(const Rect r) override
         {
             if (this->mm.mod_osd.try_input_invalidate(r)) {
                 return ;

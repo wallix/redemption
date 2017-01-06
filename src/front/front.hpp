@@ -4566,7 +4566,7 @@ private:
         }
     }
 
-    void draw_tile(const Rect & dst_tile, const Rect & src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, const Rect & clip)
+    void draw_tile(Rect dst_tile, Rect src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, Rect clip)
     {
         if (this->verbose & Verbose::graphic) {
             LOG(LOG_INFO, "front::draw:draw_tile((%u, %u, %u, %u) (%u, %u, %u, %u))",
@@ -4580,18 +4580,18 @@ private:
         this->graphics_update->draw(cmd2, clip, tiled_bmp);
     }
 
-    void priv_draw_tile(const Rect & dst_tile, const Rect & src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, const Rect & clip)
+    void priv_draw_tile(Rect dst_tile, Rect src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, Rect clip)
     {
         this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
     }
 
-    void priv_draw_tile(const Rect & dst_tile, const Rect & src_tile, const RDPMem3Blt & cmd, const Bitmap & bitmap, const Rect & clip)
+    void priv_draw_tile(Rect dst_tile, Rect src_tile, const RDPMem3Blt & cmd, const Bitmap & bitmap, Rect clip)
     {
         this->draw_tile3(dst_tile, src_tile, cmd, bitmap, clip);
     }
 
     template<class MemBlt>
-    void priv_draw_memblt(const MemBlt & cmd, const Rect & clip, const Bitmap & bitmap)
+    void priv_draw_memblt(const MemBlt & cmd, Rect clip, const Bitmap & bitmap)
     {
         if (bitmap.cx() < cmd.srcx || bitmap.cy() < cmd.srcy) {
             return;
@@ -4651,7 +4651,7 @@ private:
         }
     }
 
-    void draw_tile3(const Rect & dst_tile, const Rect & src_tile, const RDPMem3Blt & cmd, const Bitmap & bitmap, const Rect & clip)
+    void draw_tile3(Rect dst_tile, Rect src_tile, const RDPMem3Blt & cmd, const Bitmap & bitmap, Rect clip)
     {
         if (this->verbose & Verbose::graphic) {
             LOG(LOG_INFO, "front::draw:draw_tile3((%u, %u, %u, %u) (%u, %u, %u, %u)",

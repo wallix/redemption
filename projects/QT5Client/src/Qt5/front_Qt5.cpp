@@ -920,7 +920,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
     }
     //std::cout << "RDPMemBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
     //Rect rectBmp();
-    const Rect& drect = clip.intersect(cmd.rect);
+    const +Rect drect = clip.intersect(cmd.rect);
     if (drect.isempty()){
         return ;
     }
@@ -1158,7 +1158,7 @@ void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bi
     }
     //std::cout << "RDPMem3Blt" << std::endl;
     Rect rectBmp(cmd.rect);
-    const Rect& drect = clip.intersect(rectBmp);
+    const +Rect drect = clip.intersect(rectBmp);
     if (drect.isempty()){
         return ;
     }

@@ -302,7 +302,7 @@ public:
 
     RDPGlyphIndex( uint8_t cache_id, uint8_t fl_accel, uint8_t ui_charinc
                  , uint8_t f_op_redundant, uint32_t back_color, uint32_t fore_color
-                 , const Rect & bk, const Rect & op, const RDPBrush & brush
+                 , const Rect bk, const Rect op, const RDPBrush & brush
                  , int16_t glyph_x, int16_t glyph_y
                  , uint8_t data_len, const uint8_t * data)
     : cache_id(cache_id)
@@ -560,14 +560,14 @@ public:
         return lg;
     }
 
-    void log(int level, const Rect & clip) const {
+    void log(int level, const Rect clip) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
 
-    void print(const Rect & clip) const {
+    void print(const Rect clip) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;

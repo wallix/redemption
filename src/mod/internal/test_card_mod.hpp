@@ -44,7 +44,7 @@ public:
     , unit_test(unit_test)
     {}
 
-    void rdp_input_invalidate(const Rect & /*rect*/) override {}
+    void rdp_input_invalidate(const Rect /*rect*/) override {}
 
     void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/) override {}
 
@@ -75,7 +75,7 @@ public:
     {
         this->front.begin_update();
 
-        const Rect & clip = this->get_screen_rect();
+        const Rect clip = this->get_screen_rect();
 
         auto const color_ctx = gdi::GraphicColorCtx::depth24();
 
