@@ -41,6 +41,7 @@
 
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/local_fd.hpp"
+#include "utils/sugar/range.hpp"
 
 #include "utils/difftimeval.hpp"
 #include "utils/drawable.hpp"
@@ -50,64 +51,52 @@
 #include "utils/urandom_read.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/bitmap_shrink.hpp"
-#include "utils/sugar/range.hpp"
-
-#include "transport/transport.hpp"
-
-#include "configs/config.hpp"
-
-
-#include "gdi/capture_api.hpp"
-
-#include "capture/wrm_params.hpp"
-#include "capture/png_params.hpp"
-#include "capture/flv_params.hpp"
-#include "capture/ocr_params.hpp"
 #include "utils/pattutils.hpp"
 
-#include "video_recorder.hpp"
+#include "transport/transport.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
+#include "transport/out_file_transport.hpp"
 
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/caches/pointercache.hpp"
-#include "transport/out_meta_sequence_transport.hpp"
-#include "capture/GraphicToFile.hpp"
-#include "gdi/capture_api.hpp"
-#include "gdi/dump_png24.hpp"
-
-#include "capture/session_log_agent.hpp"
-#include "capture/title_extractors/agent_title_extractor.hpp"
-#include "capture/title_extractors/ocr_title_filter.hpp"
-#include "capture/title_extractors/ocr_titles_extractor.hpp"
-#include "capture/title_extractors/ppocr_titles_extractor.hpp"
-#include "capture/title_extractors/ocr_title_extractor_builder.hpp"
-#include "capture/utils/pattern_checker.hpp"
-#include "capture/session_meta.hpp"
-
-#include "utils/difftimeval.hpp"
-#include "transport/transport.hpp"
-
-#include "openssl_crypto.hpp"
-
-#include "transport/out_file_transport.hpp"
-#include "capture/cryptofile.hpp"
 #include "core/RDP/RDPDrawable.hpp"
-#include "gdi/capture_api.hpp"
+#include "core/wait_obj.hpp"
 
+#include "configs/config.hpp"
+
+#include "gdi/capture_api.hpp"
 #include "gdi/graphic_cmd_color_converter.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/capture_probe_api.hpp"
 #include "gdi/kbd_input_api.hpp"
+#include "gdi/dump_png24.hpp"
 
-#include "utils/drawable.hpp"
-#include "core/wait_obj.hpp"
+#include "acl/auth_api.hpp"
+
+#include "capture/utils/match_finder.hpp"
+#include "capture/title_extractors/agent_title_extractor.hpp"
+#include "capture/title_extractors/ocr_title_filter.hpp"
+#include "capture/title_extractors/ocr_titles_extractor.hpp"
+#include "capture/title_extractors/ppocr_titles_extractor.hpp"
+#include "capture/title_extractors/ocr_title_extractor_builder.hpp"
+
+#include "capture/wrm_params.hpp"
+#include "capture/png_params.hpp"
+#include "capture/flv_params.hpp"
+#include "capture/ocr_params.hpp"
+
+#include "capture/cryptofile.hpp"
+
+#include "capture/video_recorder.hpp"
+#include "capture/GraphicToFile.hpp"
+#include "capture/session_log_agent.hpp"
+#include "capture/session_meta.hpp"
 #include "capture/new_kbdcapture.hpp"
-#include "gdi/capture_api.hpp"
-#include "gdi/kbd_input_api.hpp"
-#include "gdi/capture_probe_api.hpp"
+
+#include "openssl_crypto.hpp"
 
 
 template<class T>
@@ -139,6 +128,54 @@ private:
 };
 
 
+class PatternsChecker : noncopyable
+{
+    utils::MatchFinder::NamedRegexArray regexes_filter_kill;
+    utils::MatchFinder::NamedRegexArray regexes_filter_notify;
+    auth_api & authentifier;
+
+public:
+    PatternsChecker(
+        auth_api & authentifier,
+        const char * const filters_kill,
+        const char * const filters_notify,
+        int verbose = 0
+    )
+    : authentifier(authentifier)
+    {
+        utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
+            filters_kill, this->regexes_filter_kill, verbose);
+
+        utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
+            filters_notify, this->regexes_filter_notify, verbose);
+    }
+
+    bool contains_pattern() const {
+        return !this->regexes_filter_kill.empty() || !this->regexes_filter_notify.empty();
+    }
+
+    void operator()(array_view_const_char str) {
+        assert(str.data() && str.size());
+        this->check_filter(this->regexes_filter_kill, str.data());
+        this->check_filter(this->regexes_filter_notify, str.data());
+    }
+
+private:
+    void check_filter(utils::MatchFinder::NamedRegexArray & regexes_filter, char const * str) {
+        if (regexes_filter.begin()) {
+            utils::MatchFinder::NamedRegexArray::iterator first = regexes_filter.begin();
+            utils::MatchFinder::NamedRegexArray::iterator last = regexes_filter.end();
+            for (; first != last; ++first) {
+                if (first->regex.search(str)) {
+                    utils::MatchFinder::report(this->authentifier,
+                        &regexes_filter == &this->regexes_filter_kill, // pattern_kill = FINDPATTERN_KILL
+                        utils::MatchFinder::ConfigureRegexes::OCR,
+                        first->name.c_str(), str);
+                }
+            }
+        }
+    }
+};
 
 
 namespace gdi {

@@ -678,3 +678,37 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
     BOOST_CHECK_EQUAL(734469, filesize(filename));
     ::unlink(filename);
 }
+
+BOOST_AUTO_TEST_CASE(TestPattern)
+{
+    for (int i = 0; i < 2; ++i) {
+        struct Auth : NullAuthentifier
+        {
+            std::string reason;
+            std::string message;
+
+            void report(const char * reason, const char * message) override {
+                this->reason = reason;
+                this->message = message;
+            }
+        } authentifier;
+        PatternsChecker checker(authentifier, i ? ".de." : nullptr, i ? nullptr : ".de.");
+
+        auto const reason = i ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY";
+
+        checker(cstr_array_view("Gestionnaire"));
+
+        BOOST_CHECK(authentifier.reason.empty());
+        BOOST_CHECK(authentifier.message.empty());
+
+        checker(cstr_array_view("Gestionnaire de serveur"));
+
+        BOOST_CHECK_EQUAL(authentifier.reason,  reason);
+        BOOST_CHECK_EQUAL(authentifier.message, "$ocr:.de.|Gestionnaire de serveur");
+
+        checker(cstr_array_view("Gestionnaire de licences TS"));
+
+        BOOST_CHECK_EQUAL(authentifier.reason,  reason);
+        BOOST_CHECK_EQUAL(authentifier.message, "$ocr:.de.|Gestionnaire de licences TS");
+    }
+}
