@@ -237,8 +237,6 @@ struct GraphicApi : private noncopyable
     // TODO berk, data within size
     virtual void set_row(std::size_t rownum, const uint8_t * data) { (void)rownum; (void)data; }
 
-    virtual GraphicDepth const & order_depth() const = 0;
-
     virtual void set_depths(GraphicDepth const & depths) = 0;
 };
 
