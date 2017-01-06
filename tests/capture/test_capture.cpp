@@ -543,11 +543,17 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureMP4)
     // that's why there are two possible values allowed
     const char * filename = (file_gen.get(0));
     int fsize = filesize(filename);
-    BOOST_CHECK((15505 == fsize) or (15491 == fsize));
+    switch (fsize) {
+        case 12999: break;
+        default: BOOST_CHECK_EQUAL(-2, fsize);
+    }
     ::unlink(filename);
     filename = (file_gen.get(1));
     fsize = filesize(filename);
-    BOOST_CHECK((14928 == fsize) or (14914 == fsize));
+    switch (fsize) {
+        case 11726: break;
+        default: BOOST_CHECK_EQUAL(-2, fsize);
+    }
     ::unlink(filename);
     filename = (file_gen.get(2));
     BOOST_CHECK_EQUAL(262, filesize(filename));
