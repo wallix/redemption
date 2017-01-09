@@ -157,11 +157,15 @@ constexpr bool operator >= (Depth const & depth1, Depth const & depth2) {
 struct ColorCtx
 {
     ColorCtx(Depth depth, BGRPalette const * palette)
-    : depth(depth)
-    , palette(palette)
+    : depth_(depth)
+    , palette_(palette)
     {
         assert(depth == Depth::depth8() ? bool(palette) : true);
     }
+
+    Depth depth() const { return this->depth_; }
+    BGRPalette const * palette() const { return this->palette_; }
+
 
     static ColorCtx depth8(BGRPalette && palette) = delete;
     static ColorCtx depth8(BGRPalette const & palette) { return {Depth::depth8(), &palette}; }
@@ -173,13 +177,13 @@ struct ColorCtx
     static ColorCtx from_bpp(uint8_t bpp, BGRPalette const * palette)
     { return {Depth::from_bpp(bpp), palette}; }
 
+    static ColorCtx from_bpp(uint8_t bpp, BGRPalette const && palette) = delete;
     static ColorCtx from_bpp(uint8_t bpp, BGRPalette const & palette)
     { return {Depth::from_bpp(bpp), &palette}; }
 
-    static ColorCtx from_bpp(uint8_t bpp, BGRPalette const && palette) = delete;
-
-    Depth depth;
-    BGRPalette const * palette;
+private:
+    Depth depth_;
+    BGRPalette const * palette_;
 };
 
 

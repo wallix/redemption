@@ -65,7 +65,7 @@ inline subrect4_t subrect4(const Rect rect, const Rect & protected_rect)
     }};
 }
 
-class ProtectGraphics : public gdi::GraphicApi
+class ProtectedGraphics : public gdi::GraphicApi
 {
     Rect protected_rect;
     gdi::GraphicApi & drawable;
@@ -134,7 +134,7 @@ protected:
     }
 
 public:
-    ProtectGraphics(gdi::GraphicApi & drawable, Rect const rect)
+    ProtectedGraphics(gdi::GraphicApi & drawable, Rect const rect)
     : protected_rect(rect)
     , drawable(drawable)
     {}

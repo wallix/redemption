@@ -26,12 +26,12 @@
 #include "core/RDP/remote_programs.hpp"
 #include "gdi/clip_from_cmd.hpp"
 #include "gdi/graphic_api.hpp"
+#include "gdi/protected_graphics.hpp"
 #include "mod/internal/widget2/flat_button.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/rdp_log.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/windowing_api.hpp"
-#include "utils/protect_graphics.hpp"
 #include "utils/rect.hpp"
 #include "utils/theme.hpp"
 #include "utils/translation.hpp"
@@ -69,7 +69,7 @@ private:
     gdi::GraphicApi * drawable = nullptr;
     int               bpp      = 0;
 
-    enum DialogBoxType {
+    enum class DialogBoxType {
         SPLASH_SCREEN,
         WAITING_SCREEN,
 
@@ -252,7 +252,7 @@ private:
             }
             else if (rect.has_intersection(this->protected_rect)) {
                 this->drawable->begin_update();
-                // TODO used multi orders
+                // PERF used multi orders
                 for (const Rect & subrect : subrect4(rect, this->protected_rect)) {
                     if (!subrect.isempty()) {
                         this->drawable->draw(cmd, subrect, args...);
@@ -602,7 +602,7 @@ private:
 
         this->dialog_box_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
-        this->dialog_box_type = RemoteProgramsSessionManager::NONE;
+        this->dialog_box_type = DialogBoxType::NONE;
 
         this->disconnect_now_button_rect    = Rect();
         this->disconnect_now_button_clicked = false;

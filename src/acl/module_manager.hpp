@@ -52,7 +52,7 @@
 #include "mod/internal/rail_module_host_mod.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 
-#include "utils/protect_graphics.hpp"
+#include "gdi/protected_graphics.hpp"
 #include "mm_api.hpp"
 
 inline Rect get_widget_rect(uint16_t width, uint16_t height,
