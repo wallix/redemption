@@ -68,8 +68,8 @@ public:
         this->set_cy(this->desc.cy() + 2 * h_border);
     }
 
-    void draw(const Rect& clip) override {
-        this->drawable.draw(RDPOpaqueRect(this->get_rect(), desc.bg_color), clip, gdi::GraphicDepth::depth24());
+    void draw(const Rect clip) override {
+        this->drawable.draw(RDPOpaqueRect(this->get_rect(), desc.bg_color), clip, gdi::ColorCtx::depth24());
         this->desc.draw(clip);
         this->draw_border(clip);
     }
@@ -94,23 +94,23 @@ public:
         this->desc.set_cy(cy - 2 * h_border);
     }
 
-    void draw_border(const Rect& clip)
+    void draw_border(const Rect clip)
     {
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x(), this->y(), this->cx() - 1, 1
-        )), this->border_color), this->get_rect(), gdi::GraphicDepth::depth24());
+        )), this->border_color), clip, gdi::ColorCtx::depth24());
         //left
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x(), this->y() + 1, 1, this->cy() - 2
-        )), this->border_color), this->get_rect(), gdi::GraphicDepth::depth24());
+        )), this->border_color), clip, gdi::ColorCtx::depth24());
         //right
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x() + this->cx() - 1, this->y(), 1, this->cy()
-        )), this->border_color), this->get_rect(), gdi::GraphicDepth::depth24());
+        )), this->border_color), clip, gdi::ColorCtx::depth24());
         //bottom
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x(), this->y() + this->cy() - 1, this->cx() - 1, 1
-        )), this->border_color), this->get_rect(), gdi::GraphicDepth::depth24());
+        )), this->border_color), clip, gdi::ColorCtx::depth24());
     }
 };

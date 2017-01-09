@@ -426,7 +426,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
         , event(0)
         {}
 
-        virtual void draw(const Rect&)
+        virtual void draw(const Rect)
         {}
 
         virtual void notify(Widget2* sender, NotifyApi::notify_event_t event)

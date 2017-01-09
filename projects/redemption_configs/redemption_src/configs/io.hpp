@@ -27,6 +27,7 @@
 #include <algorithm>
 
 #include <cstdlib>
+#include <cerrno>
 
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"

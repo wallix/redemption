@@ -71,7 +71,7 @@ class RDPDestBlt {
         return RDP::DESTBLT;
     }
 
-    RDPDestBlt(const Rect & r, uint8_t rop) :
+    RDPDestBlt(const Rect r, uint8_t rop) :
         rect(r), rop(rop)
         {}
 
@@ -151,13 +151,13 @@ class RDPDestBlt {
         return lg;
     }
 
-    void log(int level, const Rect & clip) const {
+    void log(int level, const Rect clip) const {
         char buffer[1024];
         this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
         LOG(level, "%s", buffer);
     }
 
-    void print(const Rect & clip) const {
+    void print(const Rect clip) const {
         char buffer[1024];
         this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
         printf("%s", buffer);

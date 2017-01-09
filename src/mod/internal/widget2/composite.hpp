@@ -30,8 +30,8 @@
 #include "gdi/graphic_api.hpp"
 
 inline void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, int bg_color) {
-    for (const Rect & rect : region.rects) {
-        drawable.draw(RDPOpaqueRect(rect, bg_color), rect, gdi::GraphicDepth::depth24());
+    for (Rect const & rect : region.rects) {
+        drawable.draw(RDPOpaqueRect(rect, bg_color), rect, gdi::ColorCtx::depth24());
     }
 }
 
@@ -317,13 +317,13 @@ public:
         this->current_focus = nullptr;
     }
 
-    void draw(const Rect & clip) override {
+    void draw(Rect const clip) override {
         Rect rect_intersect = clip.intersect(this->get_rect());
         this->draw_inner_free(rect_intersect, this->get_bg_color());
         this->draw_children(rect_intersect);
     }
 
-    virtual void draw_children(const Rect & clip) {
+    virtual void draw_children(Rect clip) {
         CompositeContainer::iterator iter_w_current = this->impl->get_first();
         while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
             Widget2 * w = this->impl->get(iter_w_current);
@@ -334,7 +334,7 @@ public:
             iter_w_current = this->impl->get_next(iter_w_current);
         }
     }
-    virtual void draw_inner_free(const Rect & clip, int bg_color) {
+    virtual void draw_inner_free(Rect clip, int bg_color) {
         SubRegion region;
         region.rects.push_back(clip.intersect(this->get_rect()));
 
@@ -354,7 +354,7 @@ public:
         ::fill_region(this->drawable, region, bg_color);
     }
 
-    //virtual void hide_child(const Rect & clip, int bg_color) {
+    //virtual void hide_child(Rect clip, int bg_color) {
     //    SubRegion region;
     //
     //    CompositeContainer::iterator iter_w_current = this->impl->get_first();
@@ -466,7 +466,7 @@ public:
         return nullptr;
     }
 
-    void rdp_input_invalidate(const Rect& r) override {
+    void rdp_input_invalidate(Rect r) override {
         Rect rect_intersect = r.intersect(this->get_rect());
         this->draw_inner_free(rect_intersect, this->get_bg_color());
 
@@ -559,7 +559,7 @@ public:
 
     ~WidgetComposite() override {}
 
-    void draw(const Rect & clip) override {
+    void draw(Rect const clip) override {
         Rect rect_intersect = clip.intersect(this->get_rect());
         this->draw_children(rect_intersect);
     }

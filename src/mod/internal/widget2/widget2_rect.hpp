@@ -40,14 +40,14 @@ public:
         this->focus_flag = IGNORE_FOCUS;
     }
 
-    void draw(const Rect& clip) override {
+    void draw(const Rect clip) override {
         this->drawable.draw(
             RDPOpaqueRect(
                 clip,
                 this->color
             ),
             this->get_rect(),
-            gdi::GraphicDepth::depth24()
+            gdi::ColorCtx::depth24()
         );
     }
 };

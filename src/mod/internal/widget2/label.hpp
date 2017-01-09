@@ -87,15 +87,15 @@ public:
         return this->buffer;
     }
 
-    void draw(const Rect& clip) override {
+    void draw(const Rect clip) override {
         this->draw(clip, this->get_rect(), this->drawable, this->buffer,
             this->fg_color, this->bg_color, this->font, this->x_text, this->y_text);
     }
 
-    static void draw(Rect const& clip, Rect const& rect, gdi::GraphicApi& drawable,
+    static void draw(Rect const clip, Rect const rect, gdi::GraphicApi& drawable,
                      char const* text, uint32_t fgcolor, uint32_t bgcolor,
-                     Font const& font, int xtext, int ytext) {
-        drawable.draw(RDPOpaqueRect(rect, bgcolor), clip, gdi::GraphicDepth::depth24());
+                     Font const & font, int xtext, int ytext) {
+        drawable.draw(RDPOpaqueRect(rect, bgcolor), clip, gdi::ColorCtx::depth24());
         gdi::server_draw_text(drawable,
                               font,
                               xtext + rect.x,
@@ -103,7 +103,7 @@ public:
                               text,
                               fgcolor,
                               bgcolor,
-                              gdi::GraphicDepth::depth24(),
+                              gdi::ColorCtx::depth24(),
                               rect.intersect(clip)
                               );
     }
@@ -113,7 +113,7 @@ public:
         return Dimension(tm.width + this->x_text * 2, tm.height + this->y_text * 2);
     }
 
-    static Dimension get_optimal_dim(Font const& font, char const* text, int xtext, int ytext) {
+    static Dimension get_optimal_dim(Font const & font, char const* text, int xtext, int ytext) {
         char buffer[buffer_size];
 
         buffer[0] = 0;

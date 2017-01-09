@@ -48,7 +48,7 @@ public:
         return Ellipse(centerx - radiusx, centery - radiusy, centerx + radiusx, centery + radiusy);
     }
 
-    explicit Ellipse(const Rect & r)
+    explicit Ellipse(const Rect r)
     : Ellipse(r.x, r.y, r.right(), r.bottom())
     {}
 

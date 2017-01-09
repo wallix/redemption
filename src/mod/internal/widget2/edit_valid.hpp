@@ -143,7 +143,7 @@ public:
         }
     }
 
-    void draw(const Rect& clip) override {
+    void draw(const Rect clip) override {
         this->editbox->draw(clip);
         if (this->label && this->use_label_) {
             if (this->editbox->num_chars == 0) {
@@ -158,30 +158,30 @@ public:
         else {
             this->drawable.draw(
                 RDPOpaqueRect(clip.intersect(this->button.get_rect()), this->button.fg_color),
-                clip, gdi::GraphicDepth::depth24()
+                clip, gdi::ColorCtx::depth24()
             );
             this->draw_border(clip, this->border_none_color);
         }
     }
 
-    void draw_border(const Rect& clip, int color)
+    void draw_border(const Rect clip, int color)
     {
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x(), this->y(), this->cx() - 1, 1
-        )), color), this->get_rect(), gdi::GraphicDepth::depth24());
+        )), color), clip, gdi::ColorCtx::depth24());
         //left
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x(), this->y() + 1, 1, this->cy() - /*2*/1
-        )), color), this->get_rect(), gdi::GraphicDepth::depth24());
+        )), color), clip, gdi::ColorCtx::depth24());
         //right
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x() + this->cx() - 1, this->y(), 1, this->cy()
-        )), color), this->get_rect(), gdi::GraphicDepth::depth24());
+        )), color), clip, gdi::ColorCtx::depth24());
         //bottom
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x(), this->y() + this->cy() - 1, this->cx(), 1
-        )), color), this->get_rect(), gdi::GraphicDepth::depth24());
+        )), color), clip, gdi::ColorCtx::depth24());
     }
 
     void focus(int reason) override {

@@ -23,6 +23,7 @@
 #include "widget.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
+#include "utils/colors.hpp"
 
 class WidgetMultiLine : public Widget2
 {
@@ -116,9 +117,9 @@ public:
         return this->lines[num].str;
     }
 
-    void draw(const Rect& clip) override {
+    void draw(const Rect clip) override {
         int dy = this->y() + this->y_text;
-        this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->get_rect(), gdi::GraphicDepth::depth24());
+        this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->get_rect(), gdi::ColorCtx::depth24());
         for (line_t * line = this->lines; line->str; ++line) {
             dy += this->y_text;
             gdi::server_draw_text(this->drawable
@@ -128,7 +129,7 @@ public:
                                  , line->str
                                  , this->fg_color
                                  , this->bg_color
-                                 , gdi::GraphicDepth::depth24()
+                                 , gdi::ColorCtx::depth24()
                                  , clip.intersect(Rect(this->x()
                                  , dy
                                  , this->cx()

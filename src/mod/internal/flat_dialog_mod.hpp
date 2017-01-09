@@ -55,7 +55,7 @@ class FlatDialogMod : public LocallyIntegrableMod, public NotifyApi
     CopyPaste copy_paste;
 
 public:
-    FlatDialogMod(FlatDialogModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect,
+    FlatDialogMod(FlatDialogModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect,
                   const char * caption, const char * message, const char * cancel_text,
                   time_t now, ClientExecute & client_execute, ChallengeOpt has_challenge = NO_CHALLENGE)
         : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())

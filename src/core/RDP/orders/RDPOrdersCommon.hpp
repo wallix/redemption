@@ -551,7 +551,7 @@ class Bounds {
     int16_t absolute_bounds[4];
     int16_t delta_bounds[4];
 
-    Bounds(const Rect & oldclip, const Rect & newclip)
+    Bounds(const Rect oldclip, const Rect newclip)
     {
         int16_t old_bounds[4];
 
@@ -638,7 +638,7 @@ class RDPPrimaryOrderHeader
         }
     }
 
-    void emit_rect(OutStream & stream, uint32_t base, const Rect & rect, const Rect & oldr) const
+    void emit_rect(OutStream & stream, uint32_t base, const Rect rect, const Rect oldr) const
     {
         using namespace RDP;
 
@@ -860,7 +860,7 @@ class RDPOrderCommon {
     uint8_t order;
     Rect clip;
 
-    RDPOrderCommon(int order, const Rect & clip) :
+    RDPOrderCommon(int order, const Rect clip) :
         order(order), clip(clip)
     {
     }

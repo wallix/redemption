@@ -68,7 +68,7 @@ public:
     }
 
     void show_tooltip(Widget2 * widget, const char * text, int x, int y,
-                      Rect const & preferred_display_rect, int = 10) override {
+                      Rect const preferred_display_rect, int = 10) override {
         if (text == nullptr) {
             if (this->tooltip) {
                 this->remove_widget(this->tooltip);

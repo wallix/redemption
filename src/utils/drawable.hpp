@@ -437,7 +437,7 @@ public:
         return this->data_ + (y * this->width_ + x) * Bpp;
     }
 
-    uint8_t * first_pixel(const Rect & rect) const noexcept {
+    uint8_t * first_pixel(Rect rect) const noexcept {
         return this->first_pixel(rect.x, rect.y);
     }
 
@@ -456,7 +456,7 @@ private:
     struct Invert;
 
 public:
-    void opaque_rect(const Rect & rect, const color_t color)
+    void opaque_rect(Rect rect, const color_t color)
     {
         P const base = this->first_pixel(rect);
 
@@ -476,7 +476,7 @@ public:
     }
 
     template<class Op, class... Col>
-    void mem_blt(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy, Op op, Col... c)
+    void mem_blt(Rect rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy, Op op, Col... c)
     {
         P dest = this->first_pixel(rect);
         const size_t bmp_Bpp = ::nbbytes(bmp.bpp());
@@ -527,12 +527,12 @@ private:
     }
 
 public:
-    void draw_bitmap(const Rect & rect, const Bitmap & bmp)
+    void draw_bitmap(Rect rect, const Bitmap & bmp)
     {
         this->mem_blt(rect, bmp, 0, 0, Ops::CopySrc{});
     }
 
-    void component_rect(const Rect & rect, uint8_t c)
+    void component_rect(Rect rect, uint8_t c)
     {
         P p = this->first_pixel(rect);
         const size_t step = this->rowsize();
@@ -666,7 +666,7 @@ private:
 public:
     template <typename Op>
     void patblt_op_ex(
-        const Rect & rect, const uint8_t * brush_data, int8_t org_x, int8_t org_y,
+        Rect rect, const uint8_t * brush_data, int8_t org_x, int8_t org_y,
         const color_t back_color, const color_t fore_color)
     {
         // TODO org_x is not used
@@ -695,7 +695,7 @@ public:
     }
 
     template <typename Op>
-    void scr_blt_op(const Rect & rect, uint16_t srcx, uint16_t srcy)
+    void scr_blt_op(Rect rect, uint16_t srcx, uint16_t srcy)
     {
         const int16_t deltax = static_cast<int16_t>(srcx - rect.x);
         const int16_t deltay = static_cast<int16_t>(srcy - rect.y);
@@ -736,7 +736,7 @@ public:
     }
 
 private:
-    void scr_blt_op_overlap(Rect const & rect_dest, size_t srcx, size_t srcy, Ops::CopySrc)
+    void scr_blt_op_overlap(Rect const rect_dest, size_t srcx, size_t srcy, Ops::CopySrc)
     {
         this->scr_blt_impl(rect_dest, srcx, srcy, [](P dest, cP src, size_t n) {
             memmove(dest, src, n);
@@ -744,7 +744,7 @@ private:
     }
 
     template <typename Op>
-    void scr_blt_op_overlap(Rect const & rect_dest, size_t srcx, size_t srcy, Op op)
+    void scr_blt_op_overlap(Rect const rect_dest, size_t srcx, size_t srcy, Op op)
     {
         P dest = this->first_pixel(rect_dest);
         cP src = this->first_pixel(srcx, srcy);
@@ -776,7 +776,7 @@ private:
     }
 
     template <typename Op>
-    void scr_blt_op_nooverlap(Rect const & rect_dest, size_t srcx, size_t srcy, Op op)
+    void scr_blt_op_nooverlap(Rect const rect_dest, size_t srcx, size_t srcy, Op op)
     {
         this->scr_blt_impl(rect_dest, srcx, srcy, [this, op](P dest, cP src, size_t n) {
             this->copy(dest, src, n, op);
@@ -784,7 +784,7 @@ private:
     }
 
     template <typename F>
-    void scr_blt_impl(Rect const & rect_dest, size_t srcx, size_t srcy, F f)
+    void scr_blt_impl(Rect const rect_dest, size_t srcx, size_t srcy, F f)
     {
         this->scr_blt_impl(this->first_pixel(rect_dest), this->first_pixel(srcx, srcy), rect_dest.cx * Bpp, rect_dest.cy, f);
     }
@@ -853,22 +853,22 @@ public:
     }
 
     template <typename Op>
-    void patblt_op(const Rect & rect, color_t color, Op)
+    void patblt_op(Rect rect, color_t color, Op)
     {
         this->apply_for_rect(rect, AssignOp<Op>{color});
     }
 
-    void patblt_op(const Rect & rect, color_t color, Ops::InvertSrc)
+    void patblt_op(Rect rect, color_t color, Ops::InvertSrc)
     {
         this->apply_for_rect(rect, Assign{~color});
     }
 
-    void patblt_op(const Rect & rect, color_t color, Ops::CopySrc)
+    void patblt_op(Rect rect, color_t color, Ops::CopySrc)
     {
         this->apply_for_rect(rect, Assign{color});
     }
 
-    void invert_color(const Rect & rect)
+    void invert_color(Rect rect)
     {
         this->apply_for_rect(rect, Invert{});
     }
@@ -929,7 +929,7 @@ private:
     }
 
     template<class F>
-    void apply_for_rect(const Rect & rect, F f)
+    void apply_for_rect(Rect rect, F f)
     {
         P p = this->first_pixel(rect);
         const size_t line_size = this->rowsize();
@@ -1714,17 +1714,17 @@ public:
      * a cache (data) and insert a subpart (srcx, srcy) to the local
      * image cache (this->impl().first_pixel()) a the given position (rect).
      */
-    void mem_blt(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy) {
+    void mem_blt(Rect rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy) {
         this->mem_blt_op<Ops::CopySrc>(rect, bmp, srcx, srcy);
     }
 
-    void mem_blt_invert(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy) {
+    void mem_blt_invert(Rect rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy) {
         this->mem_blt_op<Ops::InvertSrc>(rect, bmp, srcx, srcy);
     }
 
 private:
     template <typename Op, class... Color>
-    void mem_blt_op( const Rect & rect
+    void mem_blt_op( Rect rect
                    , const Bitmap & bmp
                    , const uint16_t srcx
                    , const uint16_t srcy
@@ -1749,7 +1749,7 @@ private:
     }
 
 public:
-    void mem_blt_ex( const Rect & rect
+    void mem_blt_ex( Rect rect
                    , const Bitmap & bmp
                    , const uint16_t srcx
                    , const uint16_t srcy
@@ -1797,11 +1797,11 @@ public:
         }
     }
 
-    void draw_bitmap(const Rect & rect, const Bitmap & bmp) {
+    void draw_bitmap(Rect rect, const Bitmap & bmp) {
         this->mem_blt_op<Ops::CopySrc>(rect, bmp, 0, 0);
     }
 
-    void mem_3_blt( const Rect & rect
+    void mem_3_blt( Rect rect
                   , const Bitmap & bmp
                   , const uint16_t srcx
                   , const uint16_t srcy
@@ -1822,7 +1822,7 @@ public:
         }
     }
 
-    void black_color(const Rect & rect)
+    void black_color(Rect rect)
     {
         const Rect trect = rect.intersect(this->width(), this->height());
 
@@ -1833,7 +1833,7 @@ public:
         this->impl().component_rect(trect, 0);
     }
 
-    void white_color(const Rect & rect)
+    void white_color(Rect rect)
     {
         const Rect trect = rect.intersect(this->width(), this->height());
 
@@ -1845,7 +1845,7 @@ public:
     }
 
 private:
-    void invert_color(const Rect & rect)
+    void invert_color(Rect rect)
     {
         const Rect trect = rect.intersect(this->width(), this->height());
 
@@ -1926,7 +1926,7 @@ public:
     // low level opaquerect,
     // mostly avoid clipping because we already took care of it
     // also we already swapped color if we are using BGR instead of RGB
-    void opaquerect(const Rect & rect, const Color color)
+    void opaquerect(Rect rect, const Color color)
     {
         if (this->tracked_area.has_intersection(rect)) {
             this->tracked_area_changed = true;
@@ -1944,7 +1944,7 @@ public:
 
 private:
     template <typename Op>
-    void patblt_op(const Rect & rect, const Color color)
+    void patblt_op(Rect rect, const Color color)
     {
         if (this->tracked_area.has_intersection(rect)) {
             this->tracked_area_changed = true;
@@ -1955,7 +1955,7 @@ private:
 public:
     // low level patblt,
     // mostly avoid clipping because we already took care of it
-    void patblt(const Rect & rect, const uint8_t rop, const Color color)
+    void patblt(Rect rect, const uint8_t rop, const Color color)
     {
         switch (rop) {
             // +------+-------------------------------+
@@ -2070,7 +2070,7 @@ public:
 
 private:
     template <typename Op>
-    void patblt_op_ex(const Rect & rect, const uint8_t * brush_data, int8_t org_x, int8_t org_y,
+    void patblt_op_ex(Rect rect, const uint8_t * brush_data, int8_t org_x, int8_t org_y,
         const Color back_color, const Color fore_color)
     {
         if (this->tracked_area.has_intersection(rect)) {
@@ -2081,7 +2081,7 @@ private:
     }
 
 public:
-    void patblt_ex(const Rect & rect, const uint8_t rop,
+    void patblt_ex(Rect rect, const uint8_t rop,
         const Color back_color, const Color fore_color,
         const uint8_t * brush_data, int8_t org_x, int8_t org_y)
     {
@@ -2111,7 +2111,7 @@ public:
 
     // low level destblt,
     // mostly avoid clipping because we already took care of it
-    void destblt(const Rect & rect, const uint8_t rop)
+    void destblt(Rect rect, const uint8_t rop)
     {
         switch (rop) {
             case 0x00: // blackness
@@ -2132,7 +2132,7 @@ public:
     }
 
     template <typename Op>
-    void scr_blt_op(uint16_t srcx, uint16_t srcy, const Rect & drect)
+    void scr_blt_op(uint16_t srcx, uint16_t srcy, Rect drect)
     {
         if (this->tracked_area.has_intersection(drect)) {
             this->tracked_area_changed = true;
@@ -2144,7 +2144,7 @@ public:
 public:
     // low level scrblt, mostly avoid considering clipping
     // because we already took care of it
-    void scrblt(unsigned srcx, unsigned srcy, const Rect & drect, uint8_t rop)
+    void scrblt(unsigned srcx, unsigned srcy, Rect drect, uint8_t rop)
     {
         switch (rop) {
             // +------+-------------------------------+
@@ -2269,7 +2269,7 @@ public:
         int mix_mode,
         int16_t xStart, int16_t yStart,
         int16_t xEnd, int16_t yEnd,
-        uint8_t rop, Color color, const Rect & clip
+        uint8_t rop, Color color, Rect clip
     ) {
         LineEquation equa(xStart, yStart, xEnd, yEnd);
 

@@ -281,7 +281,11 @@ public:
 
         {
             struct AVDict {
-                void add(char const * k, char const * v) { av_dict_set(&this->d, k, v, 0); }
+                void add(char const * k, char const * v) {
+                    if (av_dict_set(&this->d, k, v, 0) < 0) {
+                        LOG(LOG_ERR, "av_dict_set error on '%s' with '%s'", k, v);
+                    }
+                }
                 ~AVDict() { av_dict_free(&this->d); }
                 AVDictionary *d = nullptr;
             } av_dict;
@@ -289,6 +293,7 @@ public:
             if (this->video_st->codec->codec_id == AV_CODEC_ID_H264) {
                 // low quality  (baseline, main, hight, ...)
                 av_dict.add("profile", "baseline");
+                av_dict.add("preset", "ultrafast");
             }
 
             // open the codec
@@ -407,14 +412,14 @@ public:
         // write last frame : we must ensure writing at least one frame to avoid empty movies
         encoding_video_frame();
 
-        // write the last second for mp4
-        if (bool(this->video_st->codec->flags & AVFMT_NOTIMESTAMPS)) {
-            auto const frame_rate = 1000u / this->duration_frame.count();
-            int const loop = frame_rate - this->frame_key % frame_rate;
-            for (int i = 0; i < loop; ++i) {
-                encoding_video_frame();
-            }
-        }
+        // write the last second for mp4 (if preset != ultrafast ...)
+        //if (bool(this->video_st->codec->flags & AVFMT_NOTIMESTAMPS)) {
+        //    auto const frame_rate = 1000u / this->duration_frame.count();
+        //    int const loop = frame_rate - this->frame_key % frame_rate;
+        //    for (int i = 0; i < loop; ++i) {
+        //        encoding_video_frame();
+        //    }
+        //}
 
         /* write the trailer, if any.  the trailer must be written
          * before you close the CodecContexts open when you wrote the

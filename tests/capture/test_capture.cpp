@@ -29,6 +29,9 @@
 #define LOGNULL
 // #define LOGPRINT
 
+#include "utils/log.hpp"
+#include "transport/test_transport.hpp"
+
 #include "capture/capture.hpp"
 #include "check_sig.hpp"
 #include "get_file_contents.hpp"
@@ -121,38 +124,38 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
                         , flv_params
                         , no_timestamp, authentifier
                         , ini, cctx, rnd, nullptr);
-        auto const depth = gdi::GraphicDepth::depth24();
+        auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
 
-        capture.draw(RDPOpaqueRect(scr, GREEN), scr, depth);
+        capture.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
         now.tv_sec++;
         capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, depth);
+        capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
         now.tv_sec++;
         capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, depth);
-        now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, depth);
-        now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, depth);
-        now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, depth);
+        capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
         now.tv_sec++;
         capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
-        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, depth);
+        capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
+        now.tv_sec++;
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
+        now.tv_sec++;
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
+        now.tv_sec++;
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        // ------------------------------ BREAKPOINT ------------------------------
+
+        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
         now.tv_sec++;
         capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
@@ -315,25 +318,23 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , flv_params
                    , no_timestamp, authentifier
                    , ini, cctx, rnd, nullptr);
-    auto const depth = gdi::GraphicDepth::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth16();
     Pointer pointer1(Pointer::POINTER_EDIT);
     capture.set_pointer(pointer1);
 
     bool ignore_frame_in_timeval = true;
 
-    capture.draw(RDPOpaqueRect(scr, color_encode(BLUE, 16)), scr, depth);
+    capture.draw(RDPOpaqueRect(scr, color_encode(BLUE, 16)), scr, color_cxt);
     now.tv_sec++;
     capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     const char * filename = "./capture-000000.png";
 
     auto s = get_file_contents<std::string>(filename);
-    char message[1024];
-    if (!check_sig(reinterpret_cast<const uint8_t*>(s.data()), s.size(), message,
+    CHECK_SIG2(
+        reinterpret_cast<const uint8_t*>(s.data()), s.size(),
         "\x39\xb2\x11\x9d\x25\x64\x8d\x7b\xce\x3e\xf1\xf0\xad\x29\x50\xea\xa3\x01\x5c\x27"
-    )) {
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    );
     ::unlink(filename);
 }
 
@@ -353,21 +354,21 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
                        BmpCache::CacheOption(262, 12288, false));
     GlyphCache gly_cache;
     PointerCache ptr_cache;
-    RDPDrawable drawable(800, 600, 24);
+    RDPDrawable drawable(800, 600);
     DumpPng24FromRDPDrawableAdapter dump_png{drawable};
     GraphicToFile graphic_to_file(
         now, trans, 800, 600, 24,
         bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression
     );
     WrmCaptureImpl::NativeCaptureLocal consumer(graphic_to_file, now, std::chrono::seconds{1}, std::chrono::seconds{5});
-    auto const depth = gdi::GraphicDepth::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth24();
 
     drawable.show_mouse_cursor(false);
 
     bool ignore_frame_in_timeval = false;
 
-    drawable.draw(RDPOpaqueRect(scr, RED), scr, depth);
-    graphic_to_file.draw(RDPOpaqueRect(scr, RED), scr, depth);
+    drawable.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
+    graphic_to_file.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
     consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
     now.tv_sec += 6;
     consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
@@ -540,12 +541,20 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureMP4)
 
     // actual generated files depends on ffmpeg version
     // values below depends on current embedded ffmpeg version
-    const char * filename;
-    filename = (file_gen.get(0));
-    BOOST_CHECK_EQUAL(15505, filesize(filename));
+    // that's why there are two possible values allowed
+    const char * filename = (file_gen.get(0));
+    int fsize = filesize(filename);
+    switch (fsize) {
+        case 12999: break;
+        default: BOOST_CHECK_EQUAL(-2, fsize);
+    }
     ::unlink(filename);
     filename = (file_gen.get(1));
-    BOOST_CHECK_EQUAL(14928, filesize(filename));
+    fsize = filesize(filename);
+    switch (fsize) {
+        case 11726: break;
+        default: BOOST_CHECK_EQUAL(-2, fsize);
+    }
     ::unlink(filename);
     filename = (file_gen.get(2));
     BOOST_CHECK_EQUAL(262, filesize(filename));
@@ -669,4 +678,123 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
     const char * filename = (file_gen.get(0));
     BOOST_CHECK_EQUAL(734469, filesize(filename));
     ::unlink(filename);
+}
+
+BOOST_AUTO_TEST_CASE(TestPattern)
+{
+    for (int i = 0; i < 2; ++i) {
+        struct Auth : NullAuthentifier
+        {
+            std::string reason;
+            std::string message;
+
+            void report(const char * reason, const char * message) override {
+                this->reason = reason;
+                this->message = message;
+            }
+        } authentifier;
+        PatternsChecker checker(authentifier, i ? ".de." : nullptr, i ? nullptr : ".de.");
+
+        auto const reason = i ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY";
+
+        checker(cstr_array_view("Gestionnaire"));
+
+        BOOST_CHECK(authentifier.reason.empty());
+        BOOST_CHECK(authentifier.message.empty());
+
+        checker(cstr_array_view("Gestionnaire de serveur"));
+
+        BOOST_CHECK_EQUAL(authentifier.reason,  reason);
+        BOOST_CHECK_EQUAL(authentifier.message, "$ocr:.de.|Gestionnaire de serveur");
+
+        checker(cstr_array_view("Gestionnaire de licences TS"));
+
+        BOOST_CHECK_EQUAL(authentifier.reason,  reason);
+        BOOST_CHECK_EQUAL(authentifier.message, "$ocr:.de.|Gestionnaire de licences TS");
+    }
+}
+
+
+BOOST_AUTO_TEST_CASE(TestSessionMeta)
+{
+    char const out_data[] =
+        "1970-01-01 01:16:40 - [Kbd]ABCDABCDABCDABCDABCDABCDABCDABCDABCD\n"
+        "1970-01-01 01:16:49 - [Kbd]ABCD\n"
+        "1970-01-01 01:16:50 + Blah1\n"
+        "1970-01-01 01:16:51 + Blah2[Kbd]ABCDABCD\n"
+        "1970-01-01 01:16:54 + Blah3\n"
+    ;
+    CheckTransport trans(out_data, sizeof(out_data) - 1);
+
+    timeval now;
+    now.tv_sec  = 1000;
+    now.tv_usec = 0;
+
+    {
+        SessionMeta meta(now, trans);
+
+        auto send_kbd = [&]{
+            meta.kbd_input(now, 'A');
+            meta.kbd_input(now, 'B');
+            meta.kbd_input(now, 'C');
+            meta.kbd_input(now, 'D');
+        };
+
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        meta.snapshot(now, 0, 0, 0);
+        send_kbd(); now.tv_sec += 1;
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
+        meta.snapshot(now, 0, 0, 0);
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        meta.snapshot(now, 0, 0, 0);
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
+        meta.snapshot(now, 0, 0, 0);
+    }
+}
+
+
+BOOST_AUTO_TEST_CASE(TestSessionMeta2)
+{
+    char const out_data[] =
+        "1970-01-01 01:16:40 + Blah1\n"
+        "1970-01-01 01:16:41 + Blah2[Kbd]ABCDABCD\n"
+        "1970-01-01 01:16:44 + Blah3\n"
+        "1970-01-01 01:16:45 + (break)\n"
+    ;
+    CheckTransport trans(out_data, sizeof(out_data) - 1);
+
+    timeval now;
+    now.tv_sec  = 1000;
+    now.tv_usec = 0;
+
+    {
+        SessionMeta meta(now, trans);
+
+        auto send_kbd = [&]{
+            meta.kbd_input(now, 'A');
+            meta.kbd_input(now, 'B');
+            meta.kbd_input(now, 'C');
+            meta.kbd_input(now, 'D');
+        };
+
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
+        meta.snapshot(now, 0, 0, 0);
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        meta.snapshot(now, 0, 0, 0);
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
+        meta.snapshot(now, 0, 0, 0);
+        meta.send_line(now.tv_sec, cstr_array_view("(break)"));
+    }
 }

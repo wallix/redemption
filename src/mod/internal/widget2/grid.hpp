@@ -127,13 +127,13 @@ public:
     }
 
 
-    void draw(const Rect & clip) override {
+    void draw(Rect const clip) override {
         for (uint16_t row_index = 0; row_index < this->nb_rows; row_index++) {
             this->draw_row(row_index, clip);
         }
     }
 
-    void draw_row(uint16_t row_index, const Rect & clip) {
+    void draw_row(uint16_t row_index, Rect const clip) {
         uint32_t bg_color;
         uint32_t fg_color;
 
@@ -155,7 +155,7 @@ public:
 
         uint16_t x = this->x();
         Rect rectRow(x, y, this->cx(), this->row_height[row_index] + this->border * 2);
-        this->drawable.draw(RDPOpaqueRect(rectRow, bg_color), clip, gdi::GraphicDepth::depth24());
+        this->drawable.draw(RDPOpaqueRect(rectRow, bg_color), clip, gdi::ColorCtx::depth24());
 
         x += this->border;
         y += this->border;

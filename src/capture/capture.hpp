@@ -34,25 +34,73 @@
 #include <cassert>
 #include <chrono>
 #include <utility>
+#include <sys/time.h>
+#include <cstdio>
+#include <string>
+#include <chrono>
 
 #include "utils/log.hpp"
 
+
+#include "utils/sugar/array_view.hpp"
+#include "utils/sugar/local_fd.hpp"
+#include "utils/sugar/range.hpp"
+#include "utils/sugar/bytes_t.hpp"
+#include "utils/sugar/noncopyable.hpp"
+
 #include "utils/difftimeval.hpp"
 #include "utils/drawable.hpp"
-#include "utils/sugar/array_view.hpp"
+#include "utils/apps/recording_progress.hpp"
+#include "utils/difftimeval.hpp"
+#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
+#include "utils/urandom_read.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/bitmap_shrink.hpp"
+#include "utils/pattutils.hpp"
 
 #include "transport/transport.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
+#include "transport/out_file_transport.hpp"
+
+#include "core/RDP/caches/bmpcache.hpp"
+#include "core/RDP/caches/glyphcache.hpp"
+#include "core/RDP/caches/pointercache.hpp"
+#include "core/RDP/RDPDrawable.hpp"
+#include "core/wait_obj.hpp"
+
+#include "configs/config.hpp"
 
 #include "gdi/capture_api.hpp"
+#include "gdi/graphic_cmd_color_converter.hpp"
+#include "gdi/graphic_api.hpp"
+#include "gdi/capture_probe_api.hpp"
+#include "gdi/kbd_input_api.hpp"
+#include "gdi/dump_png24.hpp"
+
+#include "acl/auth_api.hpp"
+
+#include "capture/utils/match_finder.hpp"
+#include "capture/title_extractors/agent_title_extractor.hpp"
+#include "capture/title_extractors/ocr_title_filter.hpp"
+#include "capture/title_extractors/ocr_titles_extractor.hpp"
+#include "capture/title_extractors/ppocr_titles_extractor.hpp"
+#include "capture/title_extractors/ocr_title_extractor_builder.hpp"
 
 #include "capture/wrm_params.hpp"
 #include "capture/png_params.hpp"
 #include "capture/flv_params.hpp"
 #include "capture/ocr_params.hpp"
-#include "utils/pattutils.hpp"
 
-#include "video_recorder.hpp"
+#include "capture/cryptofile.hpp"
 
+#include "capture/video_recorder.hpp"
+#include "capture/GraphicToFile.hpp"
+#include "capture/new_kbdcapture.hpp"
+
+#include "openssl_crypto.hpp"
+
+using std::begin;
+using std::end;
 
 template<class T>
 struct ApiRegisterElement
@@ -82,46 +130,56 @@ private:
     std::size_t i = ~std::size_t{};
 };
 
-#include "configs/config.hpp"
 
-#include "transport/out_meta_sequence_transport.hpp"
-#include "utils/apps/recording_progress.hpp"
-#include "utils/difftimeval.hpp"
-#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
+class PatternsChecker : noncopyable
+{
+    utils::MatchFinder::NamedRegexArray regexes_filter_kill;
+    utils::MatchFinder::NamedRegexArray regexes_filter_notify;
+    auth_api & authentifier;
 
-#include "capture/utils/graphic_capture_impl.hpp"
-#include "capture/utils/kbd_capture_impl.hpp"
-#include "capture/utils/capture_apis_impl.hpp"
-#include "core/RDP/caches/bmpcache.hpp"
-#include "core/RDP/caches/glyphcache.hpp"
-#include "core/RDP/caches/pointercache.hpp"
-#include "transport/out_meta_sequence_transport.hpp"
-#include "capture/utils/kbd_capture_impl.hpp"
-#include "capture/GraphicToFile.hpp"
-#include "gdi/capture_api.hpp"
-#include "gdi/dump_png24.hpp"
-#include "capture/session_log_agent.hpp"
-#include "capture/title_extractors/agent_title_extractor.hpp"
-#include "capture/title_extractors/ocr_title_filter.hpp"
-#include "capture/title_extractors/ocr_titles_extractor.hpp"
-#include "capture/title_extractors/ppocr_titles_extractor.hpp"
-#include "capture/title_extractors/ocr_title_extractor_builder.hpp"
-#include "capture/utils/pattern_checker.hpp"
+public:
+    PatternsChecker(
+        auth_api & authentifier,
+        const char * const filters_kill,
+        const char * const filters_notify,
+        int verbose = 0
+    )
+    : authentifier(authentifier)
+    {
+        utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
+            filters_kill, this->regexes_filter_kill, verbose);
 
-#include "capture/session_meta.hpp"
-#include "utils/difftimeval.hpp"
-#include "transport/transport.hpp"
-#include "gdi/capture_api.hpp"
-#include "utils/bitmap_shrink.hpp"
+        utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
+            filters_notify, this->regexes_filter_notify, verbose);
+    }
 
-#include "openssl_crypto.hpp"
+    bool contains_pattern() const {
+        return !this->regexes_filter_kill.empty() || !this->regexes_filter_notify.empty();
+    }
 
-#include "utils/log.hpp"
-#include "transport/out_file_transport.hpp"
-#include "capture/cryptofile.hpp"
-#include "utils/urandom_read.hpp"
-#include "utils/fileutils.hpp"
-#include "utils/sugar/local_fd.hpp"
+    void operator()(array_view_const_char str) {
+        assert(str.data() && str.size());
+        this->check_filter(this->regexes_filter_kill, str.data());
+        this->check_filter(this->regexes_filter_notify, str.data());
+    }
+
+private:
+    void check_filter(utils::MatchFinder::NamedRegexArray & regexes_filter, char const * str) {
+        if (regexes_filter.begin()) {
+            utils::MatchFinder::NamedRegexArray::iterator first = regexes_filter.begin();
+            utils::MatchFinder::NamedRegexArray::iterator last = regexes_filter.end();
+            for (; first != last; ++first) {
+                if (first->regex.search(str)) {
+                    utils::MatchFinder::report(this->authentifier,
+                        &regexes_filter == &this->regexes_filter_kill, // pattern_kill = FINDPATTERN_KILL
+                        utils::MatchFinder::ConfigureRegexes::OCR,
+                        first->name.c_str(), str);
+                }
+            }
+        }
+    }
+};
+
 
 namespace gdi {
     class GraphicApi;
@@ -131,6 +189,344 @@ namespace gdi {
     class ExternalCaptureApi;
     class UpdateConfigCaptureApi;
 }
+
+
+class KbdCaptureImpl
+{
+public:
+    auth_api * authentifier;
+    SyslogKbd syslog_kbd;
+    SessionLogKbd session_log_kbd;
+    PatternKbd pattern_kbd;
+
+    KbdCaptureImpl(const timeval & now, auth_api * authentifier, const Inifile & ini)
+    : authentifier(authentifier)
+    , syslog_kbd(now)
+    , session_log_kbd(*authentifier)
+    , pattern_kbd(authentifier,
+        ini.get<cfg::context::pattern_kill>().c_str(),
+        ini.get<cfg::context::pattern_notify>().c_str(),
+        ini.get<cfg::debug::capture>())
+    {}
+};
+
+struct MouseTrace
+{
+    timeval last_now;
+    int     last_x;
+    int     last_y;
+};
+
+struct CaptureApisImpl
+{
+    struct Capture : gdi::CaptureApi
+    {
+        Capture(const timeval & now, int cursor_x, int cursor_y)
+        : mouse_info{now, cursor_x, cursor_y}
+        , capture_event{}
+        {}
+
+        void set_drawable(Drawable * drawable) {
+            this->drawable = drawable;
+        }
+
+        MouseTrace const & mouse_trace() const noexcept {
+            return this->mouse_info;
+        }
+
+        wait_obj & get_capture_event() {
+            return this->capture_event;
+        }
+
+        std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
+
+    private:
+        std::chrono::microseconds do_snapshot(
+            timeval const & now,
+            int cursor_x, int cursor_y,
+            bool ignore_frame_in_timeval
+        ) override {
+            this->capture_event.reset();
+
+            if (this->drawable) {
+                this->drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
+            }
+
+            this->mouse_info = {now, cursor_x, cursor_y};
+
+            std::chrono::microseconds time = std::chrono::microseconds::max();
+            if (!this->caps.empty()) {
+                for (gdi::CaptureApi & cap : this->caps) {
+                    time = std::min(time, cap.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
+                }
+                this->capture_event.update(time.count());
+            }
+            return time;
+        }
+
+        void do_pause_capture(const timeval& now) override {
+            for (gdi::CaptureApi & cap : this->caps) {
+                cap.pause_capture(now);
+            }
+            this->capture_event.reset();
+        }
+
+        void do_resume_capture(const timeval& now) override {
+            for (gdi::CaptureApi & cap : this->caps) {
+                cap.resume_capture(now);
+            }
+            this->capture_event.set();
+        }
+
+        Drawable * drawable = nullptr;
+        MouseTrace mouse_info;
+        wait_obj capture_event;
+    };
+
+
+    struct KbdInput : gdi::KbdInputApi
+    {
+        bool kbd_input(const timeval & now, uint32_t uchar) override {
+            bool ret = true;
+            for (gdi::KbdInputApi & kbd : this->kbds) {
+                ret &= kbd.kbd_input(now, uchar);
+            }
+            return ret;
+        }
+
+        void enable_kbd_input_mask(bool enable) override {
+            for (gdi::KbdInputApi & kbd : this->kbds) {
+                kbd.enable_kbd_input_mask(enable);
+            }
+        }
+
+        std::vector<std::reference_wrapper<gdi::KbdInputApi>> kbds;
+    };
+
+
+    struct CaptureProbe : gdi::CaptureProbeApi
+    {
+        void possible_active_window_change() override {
+            for (gdi::CaptureProbeApi & cap_prob : this->probes) {
+                cap_prob.possible_active_window_change();
+            }
+        }
+
+        void session_update(const timeval& now, array_view_const_char message) override {
+            for (gdi::CaptureProbeApi & cap_prob : this->probes) {
+                cap_prob.session_update(now, message);
+            }
+        }
+
+        std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
+    };
+
+
+    struct ExternalCapture : gdi::ExternalCaptureApi
+    {
+        void external_breakpoint() override {
+            for (gdi::ExternalCaptureApi & obj : this->objs) {
+                obj.external_breakpoint();
+            }
+        }
+
+        void external_time(const timeval& now) override {
+            for (gdi::ExternalCaptureApi & obj : this->objs) {
+                obj.external_time(now);
+            }
+        }
+
+        std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> objs;
+    };
+
+
+    struct UpdateConfigCapture : gdi::UpdateConfigCaptureApi
+    {
+        void update_config(const Inifile & ini) override {
+            for (gdi::UpdateConfigCaptureApi & obj : this->objs) {
+                obj.update_config(ini);
+            }
+        }
+
+        std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> objs;
+    };
+};
+
+class GraphicCaptureImpl
+{
+public:
+    using PtrColorConverter = std::unique_ptr<gdi::GraphicApi>;
+    using GdRef = std::reference_wrapper<gdi::GraphicApi>;
+
+    struct Graphic final : public gdi::GraphicApi
+    {
+    public:
+        void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd); }
+        void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+        void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+        void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+        void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+        void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+        void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+        void draw(RDPScrBlt           const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+        void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+        void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+        void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+        void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+        void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+        void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+        void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+        void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_impl(cmd, bmp); }
+        void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
+        void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
+        void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
+
+        void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
+        void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
+        void draw(const RDP::RAIL::CachedIcon                     & cmd) override { this->draw_impl(cmd); }
+        void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { this->draw_impl(cmd); }
+        void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override { this->draw_impl(cmd); }
+        void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override { this->draw_impl(cmd); }
+        void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override { this->draw_impl(cmd); }
+        void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override { this->draw_impl(cmd); }
+
+        void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
+        void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
+
+        void set_pointer(Pointer    const & pointer) override {
+            for (gdi::GraphicApi & gd : this->gds){
+                gd.set_pointer(pointer);
+            }
+        }
+
+        void set_palette(BGRPalette const & palette) override {
+            for (gdi::GraphicApi & gd : this->gds){
+                gd.set_palette(palette);
+            }
+        }
+
+        void sync() override {
+            for (gdi::GraphicApi & gd : this->gds){
+                gd.sync();
+            }
+        }
+
+        void set_row(std::size_t rownum, const uint8_t * data) override {
+            for (gdi::GraphicApi & gd : this->gds){
+                gd.set_row(rownum, data);
+            }
+        }
+
+        void begin_update() override {
+            for (gdi::GraphicApi & gd : this->gds){
+                gd.begin_update();
+            }
+        }
+
+        void end_update() override {
+            for (gdi::GraphicApi & gd : this->gds){
+                gd.end_update();
+            }
+        }
+
+    protected:
+        template<class... Ts>
+        void draw_impl(Ts const & ... args) {
+            for (gdi::GraphicApi & gd : this->gds){
+                gd.draw(args...);
+            }
+        }
+
+    public:
+        PtrColorConverter cmd_color_distributor;
+        MouseTrace const & mouse;
+        std::vector<GdRef> gds;
+        std::vector<std::reference_wrapper<gdi::CaptureApi>> snapshoters;
+
+        gdi::Depth order_depth_ = gdi::Depth::unspecified();
+        gdi::RngByBpp<std::vector<GdRef>::iterator> rng_by_bpp;
+
+        Graphic(MouseTrace const & mouse)
+        : mouse(mouse)
+        {}
+
+        template<class Cmd, class... Ts>
+        void draw_impl(Cmd const & cmd, Ts const & ... args)
+        {
+            if (gdi::GraphicCmdColor::is_encodable_cmd_color(cmd)) {
+                assert(gdi::Depth::unspecified() != this->order_depth_);
+                gdi::draw_cmd_color_convert(this->order_depth_, this->rng_by_bpp, cmd, args...);
+            }
+            else {
+                for (gdi::GraphicApi & gd : this->gds){
+                    gd.draw(cmd, args...);
+                }
+            }
+        }
+
+        void draw_impl(RDP::FrameMarker const & cmd) {
+            for (gdi::GraphicApi & gd : this->gds) {
+                gd.draw(cmd);
+            }
+
+            if (cmd.action == RDP::FrameMarker::FrameEnd) {
+                for (gdi::CaptureApi & cap : this->snapshoters) {
+                    cap.snapshot(
+                        this->mouse.last_now,
+                        this->mouse.last_x,
+                        this->mouse.last_y,
+                        false
+                    );
+                }
+            }
+        }
+
+        void set_depths(gdi::Depth const & depth) override {
+            this->order_depth_ = depth;
+        }
+
+        gdi::Depth const & order_depth() const override {
+            return this->order_depth_;
+        }
+
+    };
+
+    Graphic graphic_api;
+    RDPDrawable drawable;
+    uint8_t order_bpp;
+
+public:
+    using GraphicApi = Graphic;
+
+    GraphicCaptureImpl(uint16_t width, uint16_t height, uint8_t order_bpp, MouseTrace const & mouse)
+    : graphic_api(mouse)
+    , drawable(width, height)
+    , order_bpp(order_bpp)
+    {
+    }
+
+    void update_order_bpp(uint8_t order_bpp) {
+        if (this->order_bpp != order_bpp) {
+            this->order_bpp = order_bpp;
+            this->drawable.set_depths(gdi::Depth::from_bpp(order_bpp));
+            this->start();
+        }
+    }
+
+    void start()
+    {
+        auto const order_depth = gdi::Depth::from_bpp(this->order_bpp);
+        auto & gds = this->graphic_api.gds;
+        this->graphic_api.rng_by_bpp = {order_depth, gds.begin(), gds.end()};
+        this->graphic_api.order_depth_ = order_depth;
+    }
+
+    Graphic & get_graphic_api() { return this->graphic_api; }
+
+    Drawable & impl() { return this->drawable.impl(); }
+    RDPDrawable & rdp_drawable() { return this->drawable; }
+};
+
 
 class PngCapture : public gdi::UpdateConfigCaptureApi, public gdi::CaptureApi
 {
@@ -873,6 +1269,281 @@ public:
     }
 };
 
+namespace {
+    template<std::size_t N>
+    inline bool cstr_equal(char const (&s1)[N], array_view_const_char s2) {
+        return N - 1 == s2.size() && std::equal(s1, s1 + N - 1, begin(s2));
+    }
+
+    template<std::size_t N>
+    void str_append(std::string & s, char const (&s2)[N]) {
+        s.append(s2, N-1);
+    }
+
+    inline void str_append(std::string & s, array_view_const_char const & s2) {
+        s.append(s2.data(), s2.size());
+    }
+
+    template<class... S>
+    void str_append(std::string & s, S const & ... strings) {
+        (void)std::initializer_list<int>{
+            (str_append(s, strings), 0)...
+        };
+    }
+}
+
+inline void agent_data_extractor(std::string & line, array_view_const_char data)
+{
+    using Av = array_view_const_char;
+
+    auto find = [](Av & s, char c) {
+        auto p = std::find(begin(s), end(s), c);
+        return p == end(s) ? nullptr : p;
+    };
+
+    auto separator = find(data, '=');
+
+    if (separator) {
+        auto right = [](Av s, char const * pos) { return Av(begin(s), pos - begin(s)); };
+        auto left = [](Av s, char const * pos) { return Av(pos + 1, begin(s) - (pos + 1)); };
+
+        auto order = left(data, separator);
+        auto parameters = right(data, separator);
+
+        auto line_with_1_var = [&](Av var1) {
+            str_append(
+                line,
+                "type=\"", order, "\" ",
+                Av(var1.data(), var1.size()-1), "=\"", parameters, "\""
+            );
+        };
+        auto line_with_2_var = [&](Av var1, Av var2) {
+            if (auto subitem_separator = find(parameters, '\x01')) {
+                str_append(
+                    line,
+                    "type=\"", order, "\" ",
+                    Av(var1.data(), var1.size()-1), "=\"", left(parameters, subitem_separator), "\" ",
+                    Av(var2.data(), var2.size()-1), "=\"", right(parameters, subitem_separator), "\""
+                );
+            }
+        };
+        auto line_with_3_var = [&](Av var1, Av var2, Av var3) {
+            if (auto subitem_separator = find(parameters, '\x01')) {
+                auto text = left(parameters, subitem_separator);
+                auto remaining = right(parameters, subitem_separator);
+                if (auto subitem_separator2 = find(remaining, '\x01')) {
+                    str_append(
+                        line,
+                        "type=\"", order, "\" ",
+                        Av(var1.data(), var1.size()-1), "=\"", text, "\" ",
+                        Av(var2.data(), var2.size()-1), "=\"", left(remaining, subitem_separator2), "\" ",
+                        Av(var3.data(), var3.size()-1), "=\"", right(remaining, subitem_separator2), "\""
+                    );
+                }
+            }
+        };
+
+        // TODO used string_id: switch (sid(order)) { case "string"_sid: ... }
+        if (cstr_equal("PASSWORD_TEXT_BOX_GET_FOCUS", order)
+         || cstr_equal("UAC_PROMPT_BECOME_VISIBLE", order)) {
+            line_with_1_var("status");
+        }
+        else if (cstr_equal("INPUT_LANGUAGE", order)) {
+            line_with_2_var("identifier", "display_name");
+        }
+        else if (cstr_equal("NEW_PROCESS", order)
+              || cstr_equal("COMPLETED_PROCESS", order)) {
+            line_with_1_var("command_line");
+        }
+        else if (cstr_equal("OUTBOUND_CONNECTION_BLOCKED", order)) {
+            line_with_2_var("rule", "application_name");
+        }
+        else if (cstr_equal("FOREGROUND_WINDOW_CHANGED", order)) {
+            line_with_3_var("windows", "class", "command_line");
+        }
+        else if (cstr_equal("BUTTON_CLICKED", order)) {
+            line_with_2_var("windows", "button");
+        }
+        else if (cstr_equal("EDIT_CHANGED", order)) {
+            line_with_2_var("windows", "edit");
+        }
+        else {
+            LOG(LOG_WARNING,
+                "MetaDataExtractor(): Unexpected order. Data=\"%*s\"",
+                int(data.size()), data.data());
+            return;
+        }
+    }
+
+    if (line.empty()) {
+        LOG(LOG_WARNING,
+            "MetaDataExtractor(): Invalid data format. Data=\"%*s\"",
+            int(data.size()), data.data());
+        return;
+    }
+}
+
+namespace {
+    constexpr array_view_const_char session_meta_kbd_prefix() { return cstr_array_view("[Kbd]"); }
+    constexpr array_view_const_char session_meta_kbd_suffix() { return cstr_array_view("\n"); }
+}
+
+/*
+* Format:
+*
+* $date ' - [Kbd]' $kbd
+* $date ' ' [+-] ' ' $title? '[Kbd]' $kbd
+* $date ' - ' $line
+*/
+class SessionMeta final : public TextKbd<SessionMeta>, public gdi::CaptureApi, public gdi::CaptureProbeApi
+{
+    uint8_t kbd_buffer[1024];
+    timeval last_snapshot;
+    time_t last_flush;
+    Transport & trans;
+    std::string title;
+    bool require_kbd = false;
+    char current_seperator = '-';
+    bool is_probe_enabled_session = false;
+
+public:
+    SessionMeta(const timeval & now, Transport & trans)
+    : TextKbd<SessionMeta>({
+        this->kbd_buffer + session_meta_kbd_prefix().size(),
+        sizeof(this->kbd_buffer) - session_meta_kbd_prefix().size() - session_meta_kbd_suffix().size()
+    })
+    , last_snapshot(now)
+    , last_flush(now.tv_sec)
+    , trans(trans)
+    {
+        OutStream(this->kbd_buffer).out_copy_bytes(session_meta_kbd_prefix().data(), session_meta_kbd_prefix().size());
+
+        // force file creation even if no text recognized
+        this->trans.send("", 0);
+    }
+
+    ~SessionMeta() {
+        this->send_kbd();
+    }
+
+    bool kbd_input(const timeval& /*now*/, uint32_t uchar) override {
+        if (this->keyboard_input_mask_enabled) {
+            if (this->is_probe_enabled_session) {
+                this->write_shadow_keys();
+            }
+        }
+        else {
+            this->write_keys(uchar);
+        }
+        return true;
+    }
+
+    void title_changed(time_t rawtime, array_view_const_char title) {
+        this->send_kbd();
+        this->send_date(rawtime, '+');
+        this->trans.send(title.data(), title.size());
+        this->last_flush = rawtime;
+
+        this->title.assign(title.data(), title.size());
+        this->require_kbd = true;
+    }
+
+    void send_line(time_t rawtime, array_view_const_char line) {
+        this->send_kbd();
+        this->send_date(rawtime, '+');
+        this->trans.send(line.data(), line.size());
+        this->trans.send("\n", 1);
+        this->last_flush = rawtime;
+    }
+
+    void session_update(const timeval& /*now*/, array_view_const_char message) override {
+        this->is_probe_enabled_session = (::strcmp(message.data(), "Probe.Status=Unknown") != 0);
+    }
+
+    void possible_active_window_change() override {
+    }
+
+private:
+    std::chrono::microseconds do_snapshot(
+        const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
+    ) override {
+        std::chrono::microseconds const time_to_wait = std::chrono::seconds{2};
+        std::chrono::microseconds const diff {difftimeval(now, this->last_snapshot)};
+
+        if (diff < time_to_wait && this->kbd_stream.get_offset() < 8 * sizeof(uint32_t)) {
+            return time_to_wait;
+        }
+
+        this->send_kbd();
+
+        this->last_snapshot = now;
+        this->last_flush = this->last_snapshot.tv_sec;
+
+        return time_to_wait;
+    }
+
+    friend TextKbd<SessionMeta>;
+    void flush() {
+        this->send_kbd();
+    }
+
+    void send_date(time_t rawtime, char sep) {
+        tm ptm;
+        localtime_r(&rawtime, &ptm);
+
+        char string_date[256];
+
+        auto const data_sz = std::sprintf(
+            string_date, "%4d-%02d-%02d %02d:%02d:%02d %c ",
+            ptm.tm_year+1900, ptm.tm_mon+1, ptm.tm_mday,
+            ptm.tm_hour, ptm.tm_min, ptm.tm_sec, sep
+        );
+
+        this->trans.send(string_date, data_sz);
+    }
+
+    void send_kbd() {
+        if (this->kbd_stream.get_offset()) {
+            if (!this->require_kbd) {
+                this->send_date(this->last_flush, this->current_seperator);
+                this->trans.send(this->title.data(), this->title.size());
+            }
+            auto end = this->kbd_stream.get_current();
+            memcpy(end, session_meta_kbd_suffix().data(), session_meta_kbd_suffix().size());
+            end += session_meta_kbd_suffix().size();
+            this->trans.send(this->kbd_buffer, std::size_t(end - this->kbd_buffer));
+            this->kbd_stream.rewind();
+            this->require_kbd = false;
+        }
+        else if (this->require_kbd) {
+            this->trans.send("\n", 1);
+            this->require_kbd = false;
+        }
+        this->current_seperator = '-';
+    }
+};
+
+class SessionLogAgent : public gdi::CaptureProbeApi
+{
+    std::string line;
+    SessionMeta & session_meta;
+
+public:
+    SessionLogAgent(SessionMeta & session_meta)
+    : session_meta(session_meta)
+    {}
+
+    void session_update(const timeval& now, array_view_const_char message) override {
+        line.clear();
+        agent_data_extractor(this->line, message);
+        if (!this->line.empty()) {
+            this->session_meta.send_line(now.tv_sec, this->line);
+        }
+    }
+
+    void possible_active_window_change() override {
+    }
+};
 
 class MetaCaptureImpl
 {
@@ -1079,17 +1750,17 @@ public:
                             bmp_cache, gly_cache, ptr_cache,
                             dump_png24, wrm_compression_algorithm,
                             send_input, verbose)
-            , order_depth_(gdi::GraphicDepth::unspecified())
+            , order_depth_(gdi::Depth::unspecified())
         {}
 
         using GraphicToFile::GraphicToFile::draw;
         using GraphicToFile::GraphicToFile::capture_bpp;
 
-        void set_depths(gdi::GraphicDepth const & depth) override {
+        void set_depths(gdi::Depth const & depth) override {
             this->order_depth_ = depth;
         }
 
-        gdi::GraphicDepth const & order_depth() const override {
+        gdi::Depth const & order_depth() const override {
             return this->order_depth_;
         }
 
@@ -1125,7 +1796,7 @@ public:
         void enable_kbd_input_mask(bool enable) override {
             this->impl->enable_kbd_input_mask(enable);
         }
-        gdi::GraphicDepth order_depth_ = gdi::GraphicDepth::unspecified();
+        gdi::Depth order_depth_ = gdi::Depth::unspecified();
     } graphic_to_file;
 
     class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi
@@ -1256,7 +1927,7 @@ public:
             ? GraphicToFile::Verbose::bitmap_update    : GraphicToFile::Verbose::none)
     )
     , nc(this->graphic_to_file, now, ini.get<cfg::video::frame_interval>(), ini.get<cfg::video::break_interval>())
-    , order_depth_(gdi::GraphicDepth::unspecified())
+    , order_depth_(gdi::Depth::unspecified())
     {}
 
 
@@ -1292,15 +1963,15 @@ public:
         return this->graphic_to_file.kbd_input(now, '*');
     }
 
-    virtual void set_depths(gdi::GraphicDepth const & depth) {
+    virtual void set_depths(gdi::Depth const & depth) {
         this->order_depth_ = depth;
     }
 
-    virtual gdi::GraphicDepth const & order_depth() const {
+    virtual gdi::Depth const & order_depth() const {
         return this->order_depth_;
     }
 
-    gdi::GraphicDepth order_depth_;
+    gdi::Depth order_depth_;
 
 };
 
@@ -1337,24 +2008,24 @@ class Capture final
 
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
-    void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPPatBlt           const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPOpaqueRect       const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPScrBlt           const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPLineTo           const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPPolygonSC        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPPolygonCB        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPPolyline         const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPEllipseSC        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPEllipseCB        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+    void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPScrBlt           const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
     void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_impl(cmd, bmp); }
-    void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
-    void draw(RDPMem3Blt          const & cmd, Rect const & clip, gdi::GraphicDepth depth, Bitmap const & bmp) override { this->draw_impl(cmd, clip, depth, bmp); }
-    void draw(RDPGlyphIndex       const & cmd, Rect const & clip, gdi::GraphicDepth depth, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, depth, gly_cache); }
+    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
+    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
+    void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
     void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
@@ -1488,7 +2159,7 @@ public:
     , capture_meta(capture_meta)
     , update_progress_data(update_progress_data)
     , capture_api(now, width / 2, height / 2)
-    , order_depth_(gdi::GraphicDepth::unspecified())
+    , order_depth_(gdi::Depth::unspecified())
     {
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
 
@@ -1876,15 +2547,15 @@ public:
         this->capture_probe_api.possible_active_window_change();
     }
 
-    void set_depths(gdi::GraphicDepth const & depth) override {
+    void set_depths(gdi::Depth const & depth) override {
         this->order_depth_ = depth;
     }
 
-    gdi::GraphicDepth const & order_depth() const override {
+    gdi::Depth const & order_depth() const override {
         return this->order_depth_;
     }
 
-    gdi::GraphicDepth order_depth_;
+    gdi::Depth order_depth_;
 };
 
 

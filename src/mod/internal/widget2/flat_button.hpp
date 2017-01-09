@@ -116,21 +116,20 @@ public:
         }
     }
 
-    void draw(const Rect& clip) override
+    void draw(const Rect clip) override
     {
         this->draw(clip, this->get_rect(), this->drawable, this->logo, this->has_focus,
             this->buffer, this->fg_color, this->bg_color, this->focus_color,
             this->label_rect, this->state, this->border_width, this->font, this->x_text, this->y_text);
     }
 
-    static void draw(Rect const& clip, Rect const& rect, gdi::GraphicApi& drawable,
+    static void draw(Rect const clip, Rect const rect, gdi::GraphicApi& drawable,
                      bool logo, bool has_focus, char const* text,
                      uint32_t fgcolor, uint32_t bgcolor, uint32_t focuscolor,
-                     Rect const& optional_label_rect, int state, unsigned border_width, Font const& font, int xtext, int ytext) {
+                     Rect label_rect, int state, unsigned border_width, Font const& font, int xtext, int ytext) {
         uint32_t fg_color = fgcolor;
         uint32_t bg_color = bgcolor;
 
-        Rect label_rect = optional_label_rect;
         if (label_rect.isempty()) {
             label_rect = rect;
             label_rect.x = label_rect.x + (border_width - 1);
@@ -157,7 +156,7 @@ public:
             }
         }
         // background
-        drawable.draw(RDPOpaqueRect(clip.intersect(rect), bg_color), rect, gdi::GraphicDepth::depth24());
+        drawable.draw(RDPOpaqueRect(clip.intersect(rect), bg_color), rect, gdi::ColorCtx::depth24());
 
         if (state & 1)  {
             Rect temp_rect = label_rect.offset(1, 1);
@@ -176,19 +175,19 @@ public:
         //top
         drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
               rect.x, rect.y, rect.cx - border_width, border_width
-              )), fg_color), rect, gdi::GraphicDepth::depth24());
+              )), fg_color), rect, gdi::ColorCtx::depth24());
         //left
         drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
               rect.x, rect.y + border_width, border_width, rect.cy - border_width
-              )), fg_color), rect, gdi::GraphicDepth::depth24());
+              )), fg_color), rect, gdi::ColorCtx::depth24());
         //right
         drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
               rect.x + rect.cx - border_width, rect.y, border_width, rect.cy
-              )), fg_color), rect, gdi::GraphicDepth::depth24());
+              )), fg_color), rect, gdi::ColorCtx::depth24());
         //bottom
         drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
               rect.x, rect.y + rect.cy - border_width, rect.cx, border_width
-              )), fg_color), rect, gdi::GraphicDepth::depth24());
+              )), fg_color), rect, gdi::ColorCtx::depth24());
     }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {

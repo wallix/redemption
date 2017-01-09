@@ -40,7 +40,7 @@ public:
 
     ~WidgetImage() override {}
 
-    void draw(const Rect& clip) override {
+    void draw(const Rect clip) override {
         int16_t mx = std::max<int16_t>(clip.x, 0);
         int16_t my = std::max<int16_t>(clip.y, 0);
         this->drawable.draw(

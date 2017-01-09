@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(TestRect)
 //     {
 //         /* from a rect we can get subrects of 1 pixel for each sides */
 //         Rect r(10, 110, 10, 10);
-//         const Rect & inner = r.upper_side();
+//         const Rect inner = r.upper_side();
 //         BOOST_CHECK_EQUAL(10, inner.x);
 //         BOOST_CHECK_EQUAL(110, inner.y);
 //         BOOST_CHECK_EQUAL(20, inner.right());

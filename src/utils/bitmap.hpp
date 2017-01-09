@@ -332,7 +332,7 @@ public:
         }
     }
 
-    Bitmap(const Bitmap & src_bmp, const Rect & r)
+    Bitmap(const Bitmap & src_bmp, const Rect r)
     : data_bitmap(src_bmp.data_bitmap)
     {
         //LOG(LOG_INFO, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, bpp);

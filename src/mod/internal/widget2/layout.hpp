@@ -30,7 +30,7 @@ struct WidgetLayout : public Widget2 {
     Widget2 * items[LAYOUT_SIZE_MAX];
     size_t    nb_items;
 
-    WidgetLayout(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetLayout(gdi::GraphicApi & drawable, const Rect rect, Widget2 & parent,
                  NotifyApi * notifier, int group_id = 0)
         : Widget2(drawable, rect, parent, notifier, group_id)
         , nb_items(0)
@@ -39,7 +39,7 @@ struct WidgetLayout : public Widget2 {
 
     virtual ~WidgetLayout() {
     }
-    virtual void draw(const Rect& clip) {
+    virtual void draw(const Rect clip) {
         for (size_t i = 0; i < this->nb_items; ++i) {
             Widget2 *w = this->items[i];
             w->refresh(clip.intersect(this->rect));

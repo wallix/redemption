@@ -167,7 +167,7 @@ public:
         this->screen.clear();
     }
 
-    void rdp_input_invalidate(const Rect & /*rect*/) override {
+    void rdp_input_invalidate(const Rect /*rect*/) override {
     }
 
     void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/) override {

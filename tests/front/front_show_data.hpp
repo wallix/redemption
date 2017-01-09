@@ -149,15 +149,15 @@ public:
     //       DRAW FUNCTIONS
     //-----------------------------
 
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
+    void draw(const RDPOpaqueRect & cmd, const Rect clip) override {
         fichier << "front.draw(RDPOpaqueRect(Rect("<< int(cmd.rect.x) << ", " << int(cmd.rect.y) << ", " << int(cmd.rect.cx) << ", " << int(cmd.rect.cy) << "), "<< int(cmd.color) << "), Rect(" << int(clip.x) << ", " << int(clip.y) << ", " << int(clip.cx) << ", " << int(clip.cy) << "));" << std::endl;
     }
 
-    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
+    void draw(const RDPScrBlt & cmd, const Rect clip) override {
         fichier << "front.draw(RDPScrBlt(Rect("<< int(cmd.rect.x) << ", " << int(cmd.rect.y) << ", " << int(cmd.rect.cx) << ", " << int(cmd.rect.cy) << "), " << int(cmd.rop) << ", " << int(cmd.srcx) << ", " << int(cmd.srcy) << ")," << "Rect(" << int(clip.x) << ", " << int(clip.y) << ", " << int(clip.cx) << ", " << int(clip.cy) << "));" << std::endl;
     }
 
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override {
+    void draw(const RDPMemBlt & cmd, const Rect clip, const Bitmap & bitmap) override {
         fichier << "{" << std::endl;
         fichier << "const uint8_t * data = {" << std::endl;
         for (int i = 0; i < int(bitmap.bmp_size()) - 1; i++) {
@@ -170,16 +170,16 @@ public:
         fichier << "}" << std::endl;
     }
 
-    void draw(const RDPLineTo & cmd, const Rect & clip) override {
+    void draw(const RDPLineTo & cmd, const Rect clip) override {
         fichier << "front.draw(RDPLineTo(" << int(cmd.back_mode) << ", " << int(cmd.startx) << ", " << int(cmd.starty) << ", " << int(cmd.endx) << ", " << int(cmd.endy) << ", " << int(cmd.back_color) << ", " << int(cmd.rop2) << ", " << "RDPPen(" << int(cmd.pen.style) << ", " << int(cmd.pen.width) << ", " << int(cmd.pen.color) << ")), Rect(" << int(clip.x) << ", " << int(clip.y) << ", " << int(clip.cx) << ", " << int(clip.cy) << "));" << std::endl;
     }
 
-    void draw(const RDPPatBlt & cmd, const Rect & clip) override {
+    void draw(const RDPPatBlt & cmd, const Rect clip) override {
         //fichier << "RDPPatBlt" << std::endl;
         fichier << "front.draw(RDPPatBlt( Rect(" << int(cmd.rect.x) << ", " << int(cmd.rect.y) << ", " << int(cmd.rect.cx) << ", " << int(cmd.rect.cy) << "), " <<  int(cmd.rop) << ", " << int(cmd.back_color) <<  ", " << int(cmd.fore_color) << ",  RDPBrush(" << int(cmd.brush.org_x) <<  ", " << int(cmd.brush.org_y) <<  ", " << int(cmd.brush.style) <<   ", " << int(cmd.brush.hatch) << ") ), Rect(" << int(clip.x) << ", " << int(clip.y) << ", " << int(clip.cx) << ", " << int(clip.cy) << "));" <<  std::endl;
     }
 
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
+    void draw(const RDPMem3Blt & cmd, const Rect clip, const Bitmap & bitmap) override {
         fichier << "{" << std::endl;
         fichier << "const uint8_t * data = {" << std::endl;
         for (int i = 0; i < bitmap.bmp_size() - 1; i++) {
@@ -219,32 +219,32 @@ public:
         fichier << "}" << std::endl;
     }
 
-    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
+    void draw(const RDPDestBlt & cmd, const Rect clip) override {
         //fichier << "RDPDestBlt" << std::endl;
         fichier << "front.draw(RDPScrBlt(Rect("<< int(cmd.rect.x) << ", " << int(cmd.rect.y) << ", " << int(cmd.rect.cx) << ", " << int(cmd.rect.cy) << "), " << int(cmd.rop) << "), Rect(" << int(clip.x) << ", " << int(clip.y) << ", " << int(clip.cx) << ", " << int(clip.cy) << "));" << std::endl;
     }
 
 
 
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {}
+    void draw(const RDPMultiDstBlt & cmd, const Rect clip) override {}
 
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {}
+    void draw(const RDPMultiOpaqueRect & cmd, const Rect clip) override {}
 
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {}
+    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect clip) override {}
 
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {}
+    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect clip) override {}
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {}
+    void draw(const RDPGlyphIndex & cmd, const Rect clip, const GlyphCache & gly_cache) override {}
 
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {}
+    void draw(const RDPPolygonSC & cmd, const Rect clip) override {}
 
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {}
+    void draw(const RDPPolygonCB & cmd, const Rect clip) override {}
 
-    void draw(const RDPPolyline & cmd, const Rect & clip) override {}
+    void draw(const RDPPolyline & cmd, const Rect clip) override {}
 
-    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {}
+    void draw(const RDPEllipseSC & cmd, const Rect clip) override {}
 
-    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {}
+    void draw(const RDPEllipseCB & cmd, const Rect clip) override {}
 
     void draw(const RDP::FrameMarker & order) override {}
 

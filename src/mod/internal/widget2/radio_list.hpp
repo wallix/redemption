@@ -47,7 +47,7 @@ public:
 
     virtual ~WidgetRadioButton() {}
 
-    virtual void draw(const Rect& clip)
+    virtual void draw(const Rect clip)
     {
         this->drawable.draw(RDPOpaqueRect(Rect(this->x(), this->y(),
                                                this->label.cy() + 1, this->cy()),
@@ -156,7 +156,7 @@ public:
         return this->selected;
     }
 
-    virtual void draw(const Rect& clip) {
+    virtual void draw(const Rect clip) {
         if (this->size > 0) {
             this->drawable.draw(RDPOpaqueRect(this->rect,
                                               this->child_list[0]->label.bg_color),

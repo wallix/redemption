@@ -41,9 +41,9 @@ public:
     , color(0x27642F)
     {}
 
-    void draw(const Rect& clip) override
+    void draw(const Rect clip) override
     {
-        this->drawable.draw(RDPOpaqueRect(clip, color), this->get_rect(), gdi::GraphicDepth::depth24());
+        this->drawable.draw(RDPOpaqueRect(clip, color), this->get_rect(), gdi::ColorCtx::depth24());
         this->WidgetComposite::draw(clip);
     }
 };

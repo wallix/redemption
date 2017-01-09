@@ -52,7 +52,7 @@
 #include "mod/internal/rail_module_host_mod.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 
-#include "utils/protect_graphics.hpp"
+#include "gdi/protected_graphics.hpp"
 #include "mm_api.hpp"
 
 inline Rect get_widget_rect(uint16_t width, uint16_t height,
@@ -326,7 +326,7 @@ class ModuleManager : public MMIni
     } accounts;
 
 private:
-    class ModOSD : public ProtectGraphics, public mod_api
+    class ModOSD : public gdi::ProtectedGraphics, public mod_api
     {
         ModuleManager & mm;
 
@@ -339,20 +339,20 @@ private:
 
     public:
         explicit ModOSD(ModuleManager & mm)
-        : ProtectGraphics(mm.front, Rect{})
+        : gdi::ProtectedGraphics(mm.front, Rect{})
         , mm(mm)
-        , order_depth_(gdi::GraphicDepth::unspecified())
+        , order_depth_(gdi::Depth::unspecified())
         {}
 
-        void set_depths(gdi::GraphicDepth const & depth) override {
+        void set_depths(gdi::Depth const & depth) override {
             this->order_depth_ = depth;
         }
 
-        gdi::GraphicDepth const & order_depth() const override {
+        gdi::Depth const & order_depth() const override {
             return this->order_depth_;
         }
 
-        gdi::GraphicDepth order_depth_;
+        gdi::Depth order_depth_;
 
 
         bool is_input_owner() const { return this->is_disable_by_input; }
@@ -446,10 +446,10 @@ private:
             return false;
         }
 
-        bool try_input_invalidate(const Rect & r)
+        bool try_input_invalidate(const Rect r)
         {
             if (!this->get_protected_rect().isempty() && r.has_intersection(this->get_protected_rect())) {
-                auto rects = subrect4(r, this->get_protected_rect());
+                auto rects = gdi::subrect4(r, this->get_protected_rect());
                 auto p = std::begin(rects);
                 auto e = std::remove_if(p, std::end(rects), [](Rect const & rect) {
                     return rect.isempty();
@@ -493,9 +493,9 @@ private:
                 return ;
             }
 
-            auto const depth = gdi::GraphicDepth::from_bpp(this->mm.front.client_info.bpp);
+            auto const color_ctx = gdi::ColorCtx::from_bpp(this->mm.front.client_info.bpp, this->mm.front.get_palette());
 
-            drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip, depth);
+            drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip, color_ctx);
 
             StaticOutStream<256> deltaPoints;
             deltaPoints.out_sint16_le(this->clip.cx - 1);
@@ -511,13 +511,13 @@ private:
 
             // TODO Not supported on MAC OS with Microsoft Remote Desktop 8.0.15 (Build 25886)
             RDPPolyline polyline_box(this->clip.x, this->clip.y, 0x0D, 0, BLACK, 4, in_deltaPoints);
-            drawable.draw(polyline_box, this->clip, depth);
+            drawable.draw(polyline_box, this->clip, color_ctx);
 
             gdi::server_draw_text(
                 drawable, this->mm.ini.get<cfg::font>(),
                 this->get_protected_rect().x + padw, padh,
                 this->osd_message.c_str(),
-                this->color, this->background_color, depth, this->clip
+                this->color, this->background_color, color_ctx, this->clip
             );
 
             this->clip = Rect();
@@ -542,7 +542,7 @@ private:
             }
         }
 
-        void rdp_input_invalidate(const Rect & r) override
+        void rdp_input_invalidate(const Rect r) override
         {
             if (!this->try_input_invalidate(r)) {
                 this->mm.internal_mod->rdp_input_invalidate(r);
@@ -676,7 +676,7 @@ private:
             Mod::rdp_input_mouse(device_flags, x, y, keymap);
         }
 
-        void rdp_input_invalidate(const Rect & r) override
+        void rdp_input_invalidate(const Rect r) override
         {
             if (this->mm.mod_osd.try_input_invalidate(r)) {
                 return ;

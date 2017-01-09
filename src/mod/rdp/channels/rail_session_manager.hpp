@@ -26,22 +26,23 @@
 #include "core/RDP/remote_programs.hpp"
 #include "gdi/clip_from_cmd.hpp"
 #include "gdi/graphic_api.hpp"
+#include "gdi/protected_graphics.hpp"
 #include "mod/internal/widget2/flat_button.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/rdp_log.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/windowing_api.hpp"
-#include "utils/protect_graphics.hpp"
 #include "utils/rect.hpp"
 #include "utils/theme.hpp"
 #include "utils/translation.hpp"
 
-#include <set>
 #include <string>
 
-class RemoteProgramsSessionManager : public gdi::GraphicApi,
-    public RemoteProgramsWindowIdManager,
-    public windowing_api {
+class RemoteProgramsSessionManager
+: public gdi::GraphicApi
+, public RemoteProgramsWindowIdManager
+, public windowing_api
+{
 
 private:
     FrontAPI & front;
@@ -69,7 +70,7 @@ private:
     gdi::GraphicApi * drawable = nullptr;
     int               bpp      = 0;
 
-    enum DialogBoxType {
+    enum class DialogBoxType {
         SPLASH_SCREEN,
         WAITING_SCREEN,
 
@@ -87,35 +88,28 @@ private:
 
     uint32_t auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
+    gdi::Depth order_depth_;
+
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
-    void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPPatBlt           const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPOpaqueRect       const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPScrBlt           const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override { this->draw_impl(cmd, clip); }
-    void draw(RDPLineTo           const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPPolygonSC        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPPolygonCB        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPPolyline         const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPEllipseSC        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
-    void draw(RDPEllipseCB        const & cmd, Rect const & clip, gdi::GraphicDepth depth) override { this->draw_impl(cmd, clip, depth); }
+    void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPScrBlt           const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
     void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_impl(cmd, bmp); }
-    void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
-    void draw(RDPMem3Blt          const & cmd, Rect const & clip, gdi::GraphicDepth depth, Bitmap const & bmp) override { this->draw_impl(cmd, clip, depth, bmp); }
-    void draw(RDPGlyphIndex       const & cmd, Rect const & clip, gdi::GraphicDepth depth, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, depth, gly_cache); }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
-    void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
-    void draw(const RDP::RAIL::CachedIcon                     & cmd) override { this->draw_impl(cmd); }
-    void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { this->draw_impl(cmd); }
-    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override { this->draw_impl(cmd); }
-    void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override { this->draw_impl(cmd); }
-    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override { this->draw_impl(cmd); }
-    void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override { this->draw_impl(cmd); }
+    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
+    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
+    void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
 
     void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
@@ -135,19 +129,31 @@ public:
     , dialog_box_rect((front_width - 640) / 2, (front_height - 480) / 2, 640, 480)
     , acl(acl)
     , session_probe_window_title(session_probe_window_title)
-    , order_depth_(gdi::GraphicDepth::unspecified())
+    , order_depth_(gdi::Depth::unspecified())
     {}
 
 
-    void set_depths(gdi::GraphicDepth const & depth) override {
+    void set_depths(gdi::Depth const & depth) override {
         this->order_depth_ = depth;
     }
 
-    gdi::GraphicDepth const & order_depth() const override {
+    gdi::Depth const & order_depth() const override {
         return this->order_depth_;
     }
 
-    gdi::GraphicDepth order_depth_;
+    void begin_update() override
+    {
+        if (this->drawable) {
+            this->drawable->begin_update();
+        }
+    }
+
+    void end_update() override
+    {
+        if (this->drawable) {
+            this->drawable->end_update();
+        }
+    }
 
     void disable_graphics_update(bool disable) {
         this->graphics_update_disabled = disable;
@@ -221,100 +227,31 @@ public:
     }
 
 private:
-
-    void begin_update() override
+    struct InternalProtectedGraphics final : gdi::ProtectedGraphics
     {
-        if (this->drawable) {
-            this->drawable->begin_update();
-        }
-    }
+        RemoteProgramsSessionManager & self_;
 
-    void end_update() override
-    {
-        if (this->drawable) {
-            this->drawable->end_update();
-        }
-    }
+        InternalProtectedGraphics(RemoteProgramsSessionManager & self)
+        : gdi::ProtectedGraphics(*self.drawable, self.protected_rect)
+        , self_(self)
+        {}
 
-    template<class Cmd>
-    void draw_impl(Cmd const & cmd) {
-        if (this->drawable) {
-            this->drawable->draw(cmd);
-        }
-    }
+        void refresh_rects(array_view<Rect const> av) override
+        { this->self_.mod.rdp_input_invalidate2(av); }
+
+        void set_depths(gdi::Depth const & depths) override { this->self_.drawable->set_depths(depths); }
+        gdi::Depth const & order_depth() const override { return this->self_.drawable->order_depth(); }
+    };
 
     template<class Cmd, class... Args>
-    void draw_impl(Cmd const & cmd, Rect const & clip, Args const &... args) {
+    void draw_impl(Cmd const & cmd, Args const &... args) {
         if (this->drawable) {
-            Rect const rect = ::clip_from_cmd(cmd).intersect(clip);
-            if (this->protected_rect.contains(rect) || rect.isempty()) {
-                //nada
-            }
-            else if (rect.has_intersection(this->protected_rect)) {
-                this->drawable->begin_update();
-                // TODO used multi orders
-                for (const Rect & subrect : subrect4(rect, this->protected_rect)) {
-                    if (!subrect.isempty()) {
-                        this->drawable->draw(cmd, subrect, args...);
-                    }
-                }
-                this->drawable->end_update();
-            }
-            else {
-                this->drawable->draw(cmd, clip, args...);
-            }
+            InternalProtectedGraphics(*this).draw(cmd, args...);
         }
     }
 
-    void draw_impl(RDPBitmapData const & bitmap_data, Bitmap const & bmp) {
-        if (this->drawable) {
-            Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top
-                        , bitmap_data.dest_right - bitmap_data.dest_left + 1
-                        , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
-
-            if (rectBmp.has_intersection(this->protected_rect)) {
-                this->drawable->begin_update();
-                for (const Rect & subrect : subrect4(rectBmp, this->protected_rect)) {
-                    if (!subrect.isempty()) {
-                        this->drawable->draw(
-                            RDPMemBlt(0, subrect, 0xCC, subrect.x - rectBmp.x, subrect.y - rectBmp.y, 0),
-                            subrect, bmp
-                        );
-                    }
-                }
-                this->drawable->end_update();
-            }
-            else {
-                this->drawable->draw(bitmap_data, bmp);
-            }
-        }
-    }
-
-    void draw_impl(const RDPScrBlt & cmd, const Rect & clip) {
-        const Rect drect = cmd.rect.intersect(clip);
-        const int deltax = cmd.srcx - cmd.rect.x;
-        const int deltay = cmd.srcy - cmd.rect.y;
-        const int srcx = drect.x + deltax;
-        const int srcy = drect.y + deltay;
-        const Rect srect(srcx, srcy, drect.cx, drect.cy);
-
-        const bool has_dest_intersec_fg = drect.has_intersection(this->protected_rect);
-        const bool has_src_intersec_fg = srect.has_intersection(this->protected_rect);
-
-        if (!has_dest_intersec_fg && !has_src_intersec_fg) {
-            this->drawable->draw(cmd, clip);
-        }
-        else {
-            this->drawable->begin_update();
-            subrect4_t rects = subrect4(drect, this->protected_rect);
-            auto e = std::remove_if(rects.begin(), rects.end(), [](const Rect & rect) { return !rect.isempty(); });
-            auto av = make_array_view(rects.begin(), e);
-            this->mod.rdp_input_invalidate2(av);
-            this->drawable->end_update();
-        }
-    }
-
-    void draw_impl(RDP::RAIL::WindowIcon const & order) {
+public:
+    void draw(RDP::RAIL::WindowIcon const & order) override {
         if (this->drawable) {
             if (order.header.WindowId() != this->blocked_server_window_id) {
                 order.map_window_id(*this);
@@ -326,7 +263,7 @@ private:
         }
     }
 
-    void draw_impl(RDP::RAIL::CachedIcon const & order) {
+    void draw(RDP::RAIL::CachedIcon const & order) override {
         if (this->drawable) {
             if (order.header.WindowId() != this->blocked_server_window_id) {
                 order.map_window_id(*this);
@@ -338,7 +275,7 @@ private:
         }
     }
 
-    void draw_impl(RDP::RAIL::DeletedWindow const & order) {
+    void draw(RDP::RAIL::DeletedWindow const & order) override {
         const uint32_t window_id         = order.header.WindowId();
         const bool     window_is_blocked = (window_id == this->blocked_server_window_id);
 
@@ -361,7 +298,7 @@ private:
         }
     }
 
-    void draw_impl(RDP::RAIL::NewOrExistingWindow const & order) {
+    void draw(RDP::RAIL::NewOrExistingWindow const & order) override {
         const char *   title_info        = order.TitleInfo();
         const uint32_t window_id         = order.header.WindowId();
               bool     window_is_blocked = (window_id == this->blocked_server_window_id);
@@ -420,7 +357,7 @@ private:
 
                 LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(NewOrExistingWindow): Window 0x%X is blocked.", window_id);
 
-                this->dialog_box_create(RemoteProgramsSessionManager::SPLASH_SCREEN);
+                this->dialog_box_create(DialogBoxType::SPLASH_SCREEN);
 
                 this->splash_screen_draw();
             }
@@ -437,7 +374,7 @@ private:
         }
     }
 
-    void draw_impl(RDP::RAIL::NewOrExistingNotificationIcons const & order) {
+    void draw(RDP::RAIL::NewOrExistingNotificationIcons const & order) override {
         if (this->drawable) {
             if (order.header.WindowId() != this->blocked_server_window_id) {
                 order.map_window_id(*this);
@@ -449,7 +386,7 @@ private:
         }
     }
 
-    void draw_impl(RDP::RAIL::DeletedNotificationIcons const & order) {
+    void draw(RDP::RAIL::DeletedNotificationIcons const & order) override {
         if (this->drawable) {
             if (order.header.WindowId() != this->blocked_server_window_id) {
                 order.map_window_id(*this);
@@ -461,7 +398,7 @@ private:
         }
     }
 
-    void draw_impl(RDP::RAIL::ActivelyMonitoredDesktop const & order) {
+    void draw(RDP::RAIL::ActivelyMonitoredDesktop const & order) override {
         bool has_not_window =
             ((RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER & order.header.FieldsPresentFlags()) &&
              !order.NumWindowIds());
@@ -494,6 +431,10 @@ private:
         }
     }
 
+    void draw(const RDP::RAIL::NonMonitoredDesktop & cmd) override
+    {}
+
+private:
     void dialog_box_create(DialogBoxType type) {
         if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != this->dialog_box_window_id) return;
 
@@ -602,7 +543,7 @@ private:
 
         this->dialog_box_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
-        this->dialog_box_type = RemoteProgramsSessionManager::NONE;
+        this->dialog_box_type = DialogBoxType::NONE;
 
         this->disconnect_now_button_rect    = Rect();
         this->disconnect_now_button_clicked = false;
@@ -616,7 +557,7 @@ private:
         {
             RDPOpaqueRect order(this->protected_rect, 0x000000);
 
-            this->drawable->draw(order, this->protected_rect, gdi::GraphicDepth::from_bpp(this->bpp));
+            this->drawable->draw(order, this->protected_rect, gdi::ColorCtx::from_bpp(this->bpp, BGRPalette::classic_332()));
         }
 
         {
@@ -625,7 +566,7 @@ private:
             RDPOpaqueRect order(rect, color_encode(this->theme.global.bgcolor, this->bpp));
             order.log(LOG_INFO, rect);
 
-            this->drawable->draw(order, rect, gdi::GraphicDepth::from_bpp(this->bpp));
+            this->drawable->draw(order, rect, gdi::ColorCtx::from_bpp(this->bpp, BGRPalette::classic_332()));
         }
 
         gdi::TextMetrics tm(this->font, TR("starting_remoteapp", this->lang));
@@ -636,7 +577,7 @@ private:
                               TR("starting_remoteapp", this->lang),
                               color_encode(this->theme.global.fgcolor, this->bpp),
                               color_encode(this->theme.global.bgcolor, this->bpp),
-                              gdi::GraphicDepth::from_bpp(this->bpp),
+                              gdi::ColorCtx::from_bpp(this->bpp, BGRPalette::classic_332()),
                               this->protected_rect
                               );
 
@@ -651,7 +592,7 @@ private:
         {
             RDPOpaqueRect order(this->protected_rect, 0x000000);
 
-            this->drawable->draw(order, this->protected_rect, gdi::GraphicDepth::from_bpp(this->bpp));
+            this->drawable->draw(order, this->protected_rect, gdi::ColorCtx::from_bpp(this->bpp, BGRPalette::classic_332()));
         }
 
         {
@@ -660,7 +601,7 @@ private:
             RDPOpaqueRect order(rect, color_encode(this->theme.global.bgcolor, this->bpp));
             order.log(LOG_INFO, rect);
 
-            this->drawable->draw(order, rect, gdi::GraphicDepth::from_bpp(this->bpp));
+            this->drawable->draw(order, rect, gdi::ColorCtx::from_bpp(this->bpp, BGRPalette::classic_332()));
         }
 
         const gdi::TextMetrics tm_msg(this->font, TR("closing_remoteapp", this->lang));
@@ -683,7 +624,7 @@ private:
                               TR("closing_remoteapp", this->lang),
                               color_encode(this->theme.global.fgcolor, this->bpp),
                               color_encode(this->theme.global.bgcolor, this->bpp),
-                              gdi::GraphicDepth::from_bpp(this->bpp),
+                              gdi::ColorCtx::from_bpp(this->bpp, BGRPalette::classic_332()),
                               this->protected_rect
                               );
 
@@ -719,7 +660,7 @@ private:
     //
 
 public:
-    void create_auxiliary_window(Rect const& window_rect) override {
+    void create_auxiliary_window(Rect const window_rect) override {
         if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != this->auxiliary_window_id) return;
 
         this->auxiliary_window_id = this->register_client_window();
