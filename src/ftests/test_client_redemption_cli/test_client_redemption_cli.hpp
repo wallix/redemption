@@ -192,8 +192,9 @@ public:
     };
 
     enum : long {
-        DEFAULT_MAX_TIMEOUT_RESPONSE = 5
+        DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE = 2000
     };
+
 
 
     // Keyboard Controllers members

@@ -733,7 +733,7 @@ enum {
 // |                              | SHOULD be directed to the WinLogon screen. |
 // +------------------------------+--------------------------------------------+
 // | LOGON_FAILED_OTHER           | The logon process failed. The user's focus |
-// |                              | SHOULD be directed to the WinLogon screen. |
+// | 0x00000002                   | SHOULD be directed to the WinLogon screen. |
 // +------------------------------+--------------------------------------------+
 // | LOGON_WARNING                | The logon process has displayed a warning. |
 // | 0x00000003                   | The user's focus SHOULD be directed to the |

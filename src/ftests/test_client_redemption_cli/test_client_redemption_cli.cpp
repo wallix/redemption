@@ -33,7 +33,7 @@
 
 
 
-void run_mod(mod_api *, TestClientCLI &, SocketTransport *, EventList &, bool, int);
+void run_mod(mod_api *, TestClientCLI &, SocketTransport *, EventList &, bool, struct timeval &);
 void print_help(ModRDPParamsConfig *, size_t);
 void disconnect(mod_api *, SocketTransport *);
 
@@ -65,7 +65,7 @@ int main(int argc, char** argv){
     std::string localIP;
     int nbTry(3);
     int retryDelay(1000);
-    bool quick_connection_test = false;
+    bool quick_connection_test = true;
     //=========================================================
 
 
@@ -119,8 +119,8 @@ int main(int argc, char** argv){
             }
         }
 
-        if (word == "--quick") {
-            quick_connection_test = true;
+        if (word == "--persist") {
+            quick_connection_test = false;
         } else if (word == "--mon_count") {
             info.cs_monitor.monitorCount = std::stoi(std::string(argv[i+1]));
         }
@@ -257,7 +257,17 @@ int main(int argc, char** argv){
     };//========================================================================================
 
 
-    int time_out_response(TestClientCLI::DEFAULT_MAX_TIMEOUT_RESPONSE);
+    std::cout << "\n " <<  std::endl;
+    std::cout << "\n ********************************\n";
+    std::cout << "\n ====== RDPHEADLESS CLIENT ======\n";
+    std::cout << "\n ********************************" <<  std::endl;
+
+    if (argc == 1) {
+        std::cout << " Version 4.2.3" << "\n";
+        print_help(mod_rdp_params_config, nb_mod_rdp_params_config);
+    }
+
+    struct timeval time_out_response = { TestClientCLI::DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE / 1000, TestClientCLI::DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE % 1000 };
     bool script_on(false);
     for (int i = 0; i <  argc; i++) {
 
@@ -266,7 +276,6 @@ int main(int argc, char** argv){
         //            TOOLS
         //================================
         if (word == "-v" || word == "--version") {
-            std::cout << "\n RdpHeadless Client" <<  std::endl;
             std::cout << "\n Version 5.1.0" << "\n";
         } else if (word == "--help" || word == "-h") {
             print_help(mod_rdp_params_config, nb_mod_rdp_params_config);
@@ -321,7 +330,8 @@ int main(int argc, char** argv){
                               | TestClientCLI::SHOW_CLPBRD_PDU_EXCHANGE;
         } else if (word == "--timeout") {
              if (i+1 < argc) {
-                time_out_response = std::stoi(std::string(argv[i+1]));
+                long time = std::stol(std::string(argv[i+1]));
+                time_out_response = { time/1000, time % 1000 };
             }
         }
     } //==============================================================
@@ -444,6 +454,8 @@ int main(int argc, char** argv){
 
             } catch (const std::exception &) { // TODO no throwing exception to SocketTransport ctor
                 std::cout << errorMsg << " Socket error. " << std::endl;
+                disconnect(nullptr, socket);
+                exit(9);
             }
         } else {
             std::cout << errorMsg << " ip_connect error." << std::endl;
@@ -485,8 +497,7 @@ int main(int argc, char** argv){
                             mod->draw_event(time(nullptr), front);
                          } catch (const Error & e) {
                             std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
-                            connection_succed = false;
-                            break;
+                            exit(1);
                         }
                     }
                     if (connection_succed) {
@@ -697,7 +708,7 @@ int main(int argc, char** argv){
 void print_help(ModRDPParamsConfig * mod_rdp_params_config, size_t nb_mod_rdp_params_config) {
     std::cout << "\n";
 
-    std::cout << "Command Line Interface RDP Redemption Client help:" << "\n";
+    std::cout << " COMMAND LINE HELPER:" << "\n\n";
     std::cout << "  ========= TOOLS =========" << "\n";
     std::cout << "  -h or --help              Show help" << "\n";
     std::cout << "  -v or --version           Show version" <<  "\n";
@@ -718,8 +729,8 @@ void print_help(ModRDPParamsConfig * mod_rdp_params_config, size_t nb_mod_rdp_pa
     std::cout << "  --show_pdu                Show both sent and received PDU content from shown channels" << "\n";
     std::cout << "  --show_caps               Show capabilities PDU exchange" <<  "\n";
     std::cout << "  --script [file_path]      Set a test PDU file script" << "\n";
-    std::cout << "  --quick                   Set the client to disconnect right after connection" << "\n";
-    std::cout << "  --timeout [time]          Set timeout response before close in second" << "\n";
+    std::cout << "  --persist                 Set connection to persist" << "\n";
+    std::cout << "  --timeout [time]          Set timeout response before to disconnect in milisecond" << "\n";
     std::cout << "\n";
     std::cout << "  ========= USER =========" << "\n";
     std::cout << "  --user [user_name]        Set session user name" << "\n";
@@ -747,53 +758,49 @@ void print_help(ModRDPParamsConfig * mod_rdp_params_config, size_t nb_mod_rdp_pa
 
 
 
-void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, EventList & al, bool quick_connection_test, int time_out_response) {
+void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, EventList & al, bool quick_connection_test, struct timeval &  time_out_response) {
     struct timeval time_start;
     gettimeofday(&time_start, nullptr);
     struct      timeval time_mark = { 0, 50000 };
     bool        run_session       = true;
-    bool        not_logged = true;
-    int iterationCount(0);
 
 
     while (run_session) {
 
-        if (quick_connection_test) {
-            struct timeval time;
-            gettimeofday(&time, nullptr);
+        switch (mod->logged_on) {
+            case mod_api::CLIENT_LOGGED:
+                mod->logged_on = 0;
 
-            if (time.tv_sec - time_start.tv_sec > time_out_response) {
-                disconnect(mod, st_mod);
+                std::cout << " RDP Session Log On." <<  std::endl;
+                if (quick_connection_test) {
+                    disconnect(mod, st_mod);
+                    exit(0);
+                }
                 break;
-            }
+            default: break;
         }
 
-        if (not_logged) {
+        if (quick_connection_test) {
 
-            switch (mod->logged_on) {
-                case mod_api::CLIENT_LOGGED_ON:
-                    not_logged = false;
-                    std::cout << " RDP Session Log On." <<  std::endl;
-                    if (quick_connection_test) {
-                        disconnect(mod, st_mod);
+            struct timeval time;
+            if (!gettimeofday(&time, nullptr)) {
 
-                        return;
-                    }
-                    break;
-                case mod_api::CLIENT_LOGGED_OFF:
-                    not_logged = false;
-                    front._running = false;
-                    std::cout << " RDP Session Log Error." <<  std::endl;
-                    if (quick_connection_test) {
-                        disconnect(mod, st_mod);
+                long usec(time.tv_usec - time_start.tv_usec);
+                long sec(time.tv_sec - time_start.tv_sec);
 
-                        return;
-                    }
-                    break;
-                default: break;
+                if ( sec > time_out_response.tv_sec) {
+                    std::cout <<  " Exit timeout (timeout = " << time_out_response.tv_sec << " sec " <<  time_out_response.tv_usec << " µsec)" << std::endl;
+                    disconnect(mod, st_mod);
+                    exit(8);
+                } else if (sec == time_out_response.tv_sec && usec > time_out_response.tv_usec) {
+                    std::cout <<  " Exit timeout (timeout = " << time_out_response.tv_sec << " sec " <<  time_out_response.tv_usec << " µsec)" << std::endl;
+                    disconnect(mod, st_mod);
+                    exit(8);
+                }
+            } else {
+                std::cout << "error usec = " << time.tv_usec - time_start.tv_usec << std::endl;
             }
         }
-
         try {
             unsigned max = 0;
             fd_set   rfds;
@@ -826,7 +833,6 @@ void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, Eve
             if (mod->get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
                 LOG(LOG_INFO, "RDP CLIENT :: draw_event");
                 mod->draw_event(time(nullptr), front);
-                iterationCount++;
             }
 
             if (front.is_running()) {
@@ -844,10 +850,15 @@ void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, Eve
 }
 
 void disconnect(mod_api * mod, SocketTransport * socket) {
-    delete (socket);
 
     if (mod !=  nullptr) {
+        TimeSystem timeobj;
+        mod->disconnect(timeobj.get_time().tv_sec);
         delete (mod);
+        mod = nullptr;
         std::cout << " Connection closed.\n" << std::endl;
     }
+
+    delete (socket);
+    socket = nullptr;
 }

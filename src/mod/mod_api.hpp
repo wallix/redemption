@@ -86,12 +86,10 @@ protected:
 
 public:
      enum : uint8_t {
-         CLIENT_LOGGED_ON,
-         CLIENT_LOGGED_OFF,
-         CLIENT_LOGGING
+         CLIENT_UNLOGGED,
+         CLIENT_LOGGED
      };
-
-    uint8_t logged_on = CLIENT_LOGGING;
+    uint8_t logged_on = CLIENT_UNLOGGED;
 
     mod_api()
     {

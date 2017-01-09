@@ -465,8 +465,7 @@ public:
     void removeDriveDevice(const FileSystemData::DeviceData *, const size_t);
 
     virtual gdi::GraphicDepth const & order_depth() const override {
-        gdi::GraphicDepth graphicDepth;
-        return graphicDepth;
+        return gdi::GraphicDepth::from_bpp(0);
     }
 
     virtual void set_depths(gdi::GraphicDepth const & depths) override {}
@@ -577,29 +576,29 @@ public:
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
 
-    virtual void draw(const RDPScrBlt & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
+    virtual void draw(const RDPScrBlt & cmd, const Rect & clip) override;
 
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap, gdi::GraphicDepth depth) override;
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override;
 
     virtual void draw(const RDPLineTo & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
 
     virtual void draw(const RDPPatBlt & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
 
-    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap, gdi::GraphicDepth depth) override;
+    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, gdi::GraphicDepth depth, const Bitmap & bitmap) override;
 
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override;
 
     virtual void draw(const RDPDestBlt & cmd, const Rect & clip) override;
 
-    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
+    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override;
 
     virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
 
     virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
 
-    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
+    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override;
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache, gdi::GraphicDepth depth) override;
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, gdi::GraphicDepth depth, const GlyphCache & gly_cache) override;
 
     void draw(const RDPPolygonSC & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
 
