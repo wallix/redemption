@@ -71,14 +71,16 @@ class RDPDrawable
 
     uint8_t fragment_cache[MAXIMUM_NUMBER_OF_FRAGMENT_CACHE_ENTRIES][1 /* size */ + MAXIMUM_SIZE_OF_FRAGMENT_CACHE_ENTRIE];
 
+    gdi::Depth order_depth_; // TODO deprecated
+
 public:
-    RDPDrawable(const uint16_t width, const uint16_t height, int order_bpp)
+    RDPDrawable(const uint16_t width, const uint16_t height)
     : drawable(width, height)
     , frame_start_count(0)
     , mod_palette_rgb(BGRPalette::classic_332())
-    , order_depth_(gdi::Depth::from_bpp(order_bpp))
+    , order_depth_(gdi::Depth::unspecified())
     {
-        REDASSERT(this->order_depth().is_defined());
+        //REDASSERT(this->order_depth().is_defined());
     }
 
 //    using gdi::GraphicApi::set_depths;
@@ -131,38 +133,40 @@ private:
         return this->drawable.u32bgr_to_color(color);
     }
 
-    Color u32rgb_to_color(BGRColor color) const {
-        using Depths = gdi::Depth;
+    Color u32rgb_to_color(gdi::ColorCtx color_ctx, BGRColor color) const {
+        using gdi::Depth;
 
-        switch (this->order_depth()){
-            case Depths::depth8():  color = decode_color8_opaquerect()(color, this->mod_palette_rgb); break;
-            case Depths::depth15(): color = decode_color15_opaquerect()(color); break;
-            case Depths::depth16(): color = decode_color16_opaquerect()(color); break;
-            case Depths::depth24(): break;
-            case Depths::unspecified(): default: REDASSERT(false);
+        switch (color_ctx.depth()){
+            // TODO color_ctx.palette()
+            case Depth::depth8():  color = decode_color8_opaquerect()(color, this->mod_palette_rgb); break;
+            case Depth::depth15(): color = decode_color15_opaquerect()(color); break;
+            case Depth::depth16(): color = decode_color16_opaquerect()(color); break;
+            case Depth::depth24(): break;
+            case Depth::unspecified(): default: REDASSERT(false);
         }
 
         return this->u32_to_color(color);
     }
 
-    std::pair<Color, Color> u32rgb_to_color(BGRColor color1, BGRColor color2) const {
-        using Depths = gdi::Depth;
+    std::pair<Color, Color> u32rgb_to_color(gdi::ColorCtx color_ctx, BGRColor color1, BGRColor color2) const {
+        using gdi::Depth;
 
-        switch (this->order_depth()) {
-            case Depths::depth8():
+        switch (color_ctx.depth()){
+            case Depth::depth8():
+                // TODO color_ctx.palette()
                 color1 = decode_color8_opaquerect()(color1, this->mod_palette_rgb);
                 color2 = decode_color8_opaquerect()(color2, this->mod_palette_rgb);
                 break;
-            case Depths::depth15():
+            case Depth::depth15():
                 color1 = decode_color15_opaquerect()(color1);
                 color2 = decode_color15_opaquerect()(color2);
                 break;
-            case Depths::depth16():
+            case Depth::depth16():
                 color1 = decode_color16_opaquerect()(color1);
                 color2 = decode_color16_opaquerect()(color2);
                 break;
-            case Depths::depth24(): break;
-            case Depths::unspecified(): default: REDASSERT(false);
+            case Depth::depth24(): break;
+            case Depth::unspecified(): default: REDASSERT(false);
         }
 
         return std::pair<Color, Color>{this->u32_to_color(color1), this->u32_to_color(color2)};
@@ -181,20 +185,20 @@ public:
 
     void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
-        this->drawable.opaquerect(trect, this->u32rgb_to_color(cmd.color));
+        this->drawable.opaquerect(trect, this->u32rgb_to_color(color_ctx, cmd.color));
     }
 
     void draw(RDPEllipseSC const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         // TODO clip is not used
         (void)clip;
-        this->drawable.ellipse(cmd.el, cmd.bRop2, cmd.fillMode, this->u32rgb_to_color(cmd.color));
+        this->drawable.ellipse(cmd.el, cmd.bRop2, cmd.fillMode, this->u32rgb_to_color(color_ctx, cmd.color));
     }
 
     // TODO This will draw a standard ellipse without brush style
     void draw(RDPEllipseCB const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         // TODO clip is not used
         (void)clip;
-        this->drawable.ellipse(cmd.el, cmd.brop2, cmd.fill_mode, this->u32rgb_to_color(cmd.back_color));
+        this->drawable.ellipse(cmd.el, cmd.brop2, cmd.fill_mode, this->u32rgb_to_color(color_ctx, cmd.back_color));
     }
 
     void draw(const RDPScrBlt & cmd, Rect clip) override {
@@ -219,8 +223,6 @@ public:
     gdi::Depth const & order_depth() const override {
         return this->order_depth_;
     }
-
-    gdi::Depth order_depth_;
 
 
 private:
@@ -265,7 +267,7 @@ public:
     }
 
     void draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        const Color color = this->u32rgb_to_color(cmd._Color);
+        const Color color = this->u32rgb_to_color(color_ctx, cmd._Color);
         this->draw_multi(cmd, clip, [color, this](const Rect & trect) {
             this->drawable.opaquerect(trect, color);
         });
@@ -275,7 +277,7 @@ public:
         // TODO PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.
         if (cmd.brush.style == 0x03 && (cmd.bRop == 0xF0 || cmd.bRop == 0x5A)) {
             enum { BackColor, ForeColor };
-            auto colors = this->u32rgb_to_color(cmd.BackColor, cmd.ForeColor);
+            auto colors = this->u32rgb_to_color(color_ctx, cmd.BackColor, cmd.ForeColor);
             uint8_t brush_data[8];
             memcpy(brush_data, cmd.brush.extra, 7);
             brush_data[7] = cmd.brush.hatch;
@@ -288,7 +290,7 @@ public:
             });
         }
         else {
-            const Color color = this->u32rgb_to_color(cmd.BackColor);
+            const Color color = this->u32rgb_to_color(color_ctx, cmd.BackColor);
             this->draw_multi(cmd, clip, [&](const Rect & trect) {
                 this->drawable.patblt(trect, cmd.bRop, color);
             });
@@ -309,7 +311,7 @@ public:
 
         if (cmd.brush.style == 0x03 && (cmd.rop == 0xF0 || cmd.rop == 0x5A)) {
             enum { BackColor, ForeColor };
-            auto colors = this->u32rgb_to_color(cmd.back_color, cmd.fore_color);
+            auto colors = this->u32rgb_to_color(color_ctx, cmd.back_color, cmd.fore_color);
             uint8_t brush_data[8];
             memcpy(brush_data, cmd.brush.extra, 7);
             brush_data[7] = cmd.brush.hatch;
@@ -321,7 +323,7 @@ public:
             );
         }
         else {
-            this->drawable.patblt(trect, cmd.rop, this->u32rgb_to_color(cmd.back_color));
+            this->drawable.patblt(trect, cmd.rop, this->u32rgb_to_color(color_ctx, cmd.back_color));
         }
     }
 
@@ -375,7 +377,7 @@ public:
             , cmd.srcx + (rect.x  - cmd.rect.x)
             , cmd.srcy + (rect.y  - cmd.rect.y)
             , cmd.rop
-            , this->u32rgb_to_color(cmd.fore_color)
+            , this->u32rgb_to_color(color_ctx, cmd.fore_color)
         );
     }
 
@@ -400,7 +402,7 @@ public:
             lineto.back_mode,
             lineto.startx, lineto.starty,
             lineto.endx, lineto.endy,
-            lineto.rop2, this->u32rgb_to_color(lineto.pen.color), clip
+            lineto.rop2, this->u32rgb_to_color(color_ctx, lineto.pen.color), clip
         );
     }
 
@@ -760,12 +762,12 @@ public:
             Rect ajusted = cmd.f_op_redundant ? cmd.bk : cmd.op;
             if ((ajusted.cx > 1) && (ajusted.cy > 1)) {
                 ajusted.cy--;
-                this->drawable.opaquerect(ajusted.intersect(screen_rect), this->u32rgb_to_color(cmd.fore_color));
+                this->drawable.opaquerect(ajusted.intersect(screen_rect), this->u32rgb_to_color(color_ctx, cmd.fore_color));
             }
         }
 
         bool has_delta_bytes = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
-        const Color color = this->u32rgb_to_color(cmd.back_color);
+        const Color color = this->u32rgb_to_color(color_ctx, cmd.back_color);
         const int16_t offset_y = /*cmd.bk.cy - (*/cmd.glyph_y - cmd.bk.y/* + 1)*/;
         const int16_t offset_x = cmd.glyph_x - cmd.bk.x;
 
@@ -783,7 +785,7 @@ public:
         int16_t endx;
         int16_t endy;
 
-        const Color color = this->u32rgb_to_color(cmd.PenColor);
+        const Color color = this->u32rgb_to_color(color_ctx, cmd.PenColor);
 
         for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
             endx = startx + cmd.deltaEncodedPoints[i].xDelta;
@@ -804,7 +806,7 @@ public:
         int16_t endx;
         int16_t endy;
 
-        const Color BrushColor = this->u32rgb_to_color(cmd.BrushColor);
+        const Color BrushColor = this->u32rgb_to_color(color_ctx, cmd.BrushColor);
 
         for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
             endx = startx + cmd.deltaPoints[i].xDelta;
@@ -829,7 +831,7 @@ public:
         int16_t endx;
         int16_t endy;
 
-        const Color foreColor = this->u32rgb_to_color(cmd.foreColor);
+        const Color foreColor = this->u32rgb_to_color(color_ctx, cmd.foreColor);
 
         for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
             endx = startx + cmd.deltaPoints[i].xDelta;

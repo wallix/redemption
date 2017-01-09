@@ -394,37 +394,37 @@ public:
         void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
         void set_pointer(Pointer    const & pointer) override {
-            for (gdi::GraphicApi & gd : this->gds){ 
+            for (gdi::GraphicApi & gd : this->gds){
                 gd.set_pointer(pointer);
             }
         }
 
         void set_palette(BGRPalette const & palette) override {
-            for (gdi::GraphicApi & gd : this->gds){ 
+            for (gdi::GraphicApi & gd : this->gds){
                 gd.set_palette(palette);
             }
         }
 
         void sync() override {
-            for (gdi::GraphicApi & gd : this->gds){ 
+            for (gdi::GraphicApi & gd : this->gds){
                 gd.sync();
             }
         }
 
         void set_row(std::size_t rownum, const uint8_t * data) override {
-            for (gdi::GraphicApi & gd : this->gds){ 
+            for (gdi::GraphicApi & gd : this->gds){
                 gd.set_row(rownum, data);
             }
         }
 
         void begin_update() override {
-            for (gdi::GraphicApi & gd : this->gds){ 
+            for (gdi::GraphicApi & gd : this->gds){
                 gd.begin_update();
             }
         }
 
         void end_update() override {
-            for (gdi::GraphicApi & gd : this->gds){ 
+            for (gdi::GraphicApi & gd : this->gds){
                 gd.end_update();
             }
         }
@@ -432,7 +432,7 @@ public:
     protected:
         template<class... Ts>
         void draw_impl(Ts const & ... args) {
-            for (gdi::GraphicApi & gd : this->gds){ 
+            for (gdi::GraphicApi & gd : this->gds){
                 gd.draw(args...);
             }
         }
@@ -458,7 +458,7 @@ public:
                 gdi::draw_cmd_color_convert(this->order_depth_, this->rng_by_bpp, cmd, args...);
             }
             else {
-                for (gdi::GraphicApi & gd : this->gds){ 
+                for (gdi::GraphicApi & gd : this->gds){
                     gd.draw(cmd, args...);
                 }
             }
@@ -500,7 +500,7 @@ public:
 
     GraphicCaptureImpl(uint16_t width, uint16_t height, uint8_t order_bpp, MouseTrace const & mouse)
     : graphic_api(mouse)
-    , drawable(width, height, order_bpp)
+    , drawable(width, height)
     , order_bpp(order_bpp)
     {
     }

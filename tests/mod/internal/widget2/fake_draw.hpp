@@ -31,7 +31,7 @@ struct TestDraw : mod_api
 {
     RDPDrawable gd;
 
-    TestDraw(uint16_t w, uint16_t h) : gd(w, h, 24) {}
+    TestDraw(uint16_t w, uint16_t h) : gd(w, h) {}
 
     void draw_event(time_t now, gdi::GraphicApi&) override { (void)now; }
     void rdp_input_invalidate(Rect) override {}

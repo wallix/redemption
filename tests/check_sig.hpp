@@ -81,6 +81,14 @@ inline bool check_sig(const uint8_t * data, size_t length, char * message, const
         }                                        \
     }
 
+#define CHECK_SIG2(buf, sz, sig)                    \
+    {                                               \
+        char message[1024];                         \
+        if (!check_sig(buf, 1, sz, message, sig)) { \
+            BOOST_CHECK_MESSAGE(false, message);    \
+        }                                           \
+    }
+
 
 inline void get_sig(const uint8_t * data, size_t length, uint8_t * sig)
 {

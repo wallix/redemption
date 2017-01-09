@@ -44,7 +44,7 @@
 BOOST_AUTO_TEST_CASE(TestModOSD)
 {
     Rect screen_rect(0, 0, 800, 600);
-    RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
+    RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
     auto const color_cxt = gdi::ColorCtx::depth24();
 
     const int groupid = 0;

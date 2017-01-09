@@ -272,7 +272,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
                        BmpCache::CacheOption(262, 4096, false));
     GlyphCache gly_cache;
     PointerCache ptr_cache;
-    RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
+    RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
     DumpPng24FromRDPDrawableAdapter dump_png24(drawable);
     GraphicToFile consumer(now, trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
@@ -449,7 +449,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
                        BmpCache::CacheOption(262, 4096, false));
     GlyphCache gly_cache;
     PointerCache ptr_cache;
-    RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
+    RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
     DumpPng24FromRDPDrawableAdapter dump_png24(drawable);
     GraphicToFile consumer(now, trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
@@ -501,7 +501,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
                        BmpCache::CacheOption(262, 4096, false));
     GlyphCache gly_cache;
     PointerCache ptr_cache;
-    RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
+    RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
     DumpPng24FromRDPDrawableAdapter dump_png24_api(drawable);
     GraphicToFile consumer(now, trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24_api, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
@@ -548,7 +548,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
-    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
+    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable1.impl(), 100);
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
 
@@ -655,7 +655,7 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
                        BmpCache::CacheOption(2, 4096, false));
     GlyphCache gly_cache;
     PointerCache ptr_cache;
-    RDPDrawable drawable(scr.cx, scr.cy, 24);
+    RDPDrawable drawable(scr.cx, scr.cy);
     DumpPng24FromRDPDrawableAdapter dump_png(drawable);
     GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
@@ -694,7 +694,7 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png", groupid);
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
@@ -797,7 +797,7 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
                        BmpCache::CacheOption(2, 4096, false));
     GlyphCache gly_cache;
     PointerCache ptr_cache;
-    RDPDrawable drawable(scr.cx, scr.cy, 24);
+    RDPDrawable drawable(scr.cx, scr.cy);
     DumpPng24FromRDPDrawableAdapter dump_png(drawable);
     GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression);
     auto const color_cxt = gdi::ColorCtx::depth24();
@@ -828,7 +828,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png", groupid);
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
@@ -921,7 +921,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid);
     const FilenameGenerator * seq = out_png_trans.seqgen();
     BOOST_CHECK(seq);
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
@@ -983,7 +983,7 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
                         BmpCache::CacheOption(262, 4096, false));
     PointerCache ptr_cache;
     GlyphCache gly_cache;
-    RDPDrawable drawable(scr.cx, scr.cy, 24);
+    RDPDrawable drawable(scr.cx, scr.cy);
     DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
     GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, WrmCompressionAlgorithm::no_compression);
     auto const color_cxt = gdi::ColorCtx::depth24();
@@ -1058,7 +1058,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
                        BmpCache::CacheOption(262, 4096, false));
     GlyphCache gly_cache;
     PointerCache ptr_cache;
-    RDPDrawable drawable(scr.cx, scr.cy, 24);
+    RDPDrawable drawable(scr.cx, scr.cy);
     DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
     GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, WrmCompressionAlgorithm::no_compression);
     auto const color_cxt = gdi::ColorCtx::depth24();
@@ -1143,7 +1143,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
                        BmpCache::CacheOption(262, 4096, false));
     GlyphCache gly_cache;
     PointerCache ptr_cache;
-    RDPDrawable drawable(scr.cx, scr.cy, 24);
+    RDPDrawable drawable(scr.cx, scr.cy);
     DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
     GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, WrmCompressionAlgorithm::no_compression);
     auto const color_cxt = gdi::ColorCtx::depth24();
@@ -1178,7 +1178,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
         "\xae\x42\x60\x82"                                                 //.B`.
     ;
 
-    RDPDrawable d(20, 10, 24);
+    RDPDrawable d(20, 10);
     GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);
     ::transport_read_png24(&in_png_trans, d.data(),
                  d.width(), d.height(),
@@ -1249,7 +1249,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
@@ -1320,7 +1320,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
+    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable1.impl(), 100);
 
     OutFilenameSequenceTransport second_out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid);
@@ -1402,7 +1402,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);

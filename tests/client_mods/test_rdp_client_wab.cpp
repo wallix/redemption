@@ -30,7 +30,7 @@
 // Comment the code block below to generate testing data.
 #define LOGNULL
 // Uncomment the code block below to generate testing data.
-//#define LOGPRINT
+// #define LOGPRINT
 
 #include "check_sig.hpp"
 #include "configs/config.hpp"
@@ -40,8 +40,7 @@
 #include "mod/rdp/rdp.hpp"
 #include "../front/fake_front.hpp"
 // Uncomment the code block below to generate testing data.
-//#include "utils/netutils.hpp"
-//#include "transport/socket_transport.hpp"
+
 
 BOOST_AUTO_TEST_CASE(TestDecodePacket)
 {
@@ -114,8 +113,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     // To always get the same client random, in tests
     LCGRandom gen(0);
     LCGTime timeobj;
-    mod_rdp   mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj, mod_rdp_params);
-    mod_api * mod = &mod_;
+    mod_rdp   mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj, mod_rdp_params);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -127,22 +125,16 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     time_t now = 1450864840;
 
-    while (!mod->is_up_and_running())
-            mod->draw_event(now, front);
+    while (!mod.is_up_and_running())
+            mod.draw_event(now, front);
 
     uint32_t    count = 0;
-    BackEvent_t res   = BACK_EVENT_NONE;
-    while (res == BACK_EVENT_NONE) {
+    for (;;) {
         LOG(LOG_INFO, "===================> count = %u", count);
         if (count++ >= 8) break;
-        mod->draw_event(time(nullptr), front);
+        mod.draw_event(time(nullptr), front);
     }
 
-    char message[1024];
-    if (!check_sig( front.gd.impl(), message
-                  , "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29"
-                  )) {
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(front.gd.impl(), "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29");
     //front.dump_png("trace_wab_");
 }

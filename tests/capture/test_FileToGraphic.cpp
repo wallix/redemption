@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid);
-    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
+    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable1.impl(), 100);
 
 //    png_recorder.update_config(ini);
@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
 
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DumpPng24FromRDPDrawableAdapter dump_png{drawable};
     GraphicToFile graphic_to_file(
         player.record_now,
@@ -258,7 +258,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     InChunkedImageTransport chunk_trans(chunk_type, chunk_size, &in_png_trans);
 
 
-    RDPDrawable d(20, 10, 24);
+    RDPDrawable d(20, 10);
     ::transport_read_png24(&chunk_trans, d.data(),
                  d.width(), d.height(),
                  d.rowsize()

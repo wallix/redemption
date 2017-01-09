@@ -33,8 +33,8 @@
 #include "check_sig.hpp"
 #include "fake_draw.hpp"
 
-#undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "./"
+// #undef OUTPUT_FILE_PATH
+//#define OUTPUT_FILE_PATH "./"
 
 /*
 BOOST_AUTO_TEST_CASE(TraceWidgetFrame)

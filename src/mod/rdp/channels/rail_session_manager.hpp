@@ -36,7 +36,6 @@
 #include "utils/theme.hpp"
 #include "utils/translation.hpp"
 
-#include <set>
 #include <string>
 
 class RemoteProgramsSessionManager
@@ -240,8 +239,8 @@ private:
         void refresh_rects(array_view<Rect const> av) override
         { this->self_.mod.rdp_input_invalidate2(av); }
 
-        void set_depths(const gdi::Depth& depths) override { this->self_.drawable->set_depths(depths); }
-        const gdi::Depth& order_depth() const { return this->self_.drawable->order_depth(); }
+        void set_depths(gdi::Depth const & depths) override { this->self_.drawable->set_depths(depths); }
+        gdi::Depth const & order_depth() const override { return this->self_.drawable->order_depth(); }
     };
 
     template<class Cmd, class... Args>

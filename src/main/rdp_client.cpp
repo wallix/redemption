@@ -445,7 +445,7 @@ public:
     , info(info)
     , mod_bpp(info.bpp)
     , mod_palette(BGRPalette::no_init())
-    , gd(info.width, info.height, 24)
+    , gd(info.width, info.height)
     , order_depth_(gdi::Depth::unspecified())
     {
         if (this->mod_bpp == 8) {

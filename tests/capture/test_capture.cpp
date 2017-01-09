@@ -318,7 +318,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , flv_params
                    , no_timestamp, authentifier
                    , ini, cctx, rnd, nullptr);
-    auto const color_cxt = gdi::ColorCtx::depth24();
+    auto const color_cxt = gdi::ColorCtx::depth16();
     Pointer pointer1(Pointer::POINTER_EDIT);
     capture.set_pointer(pointer1);
 
@@ -331,12 +331,10 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     const char * filename = "./capture-000000.png";
 
     auto s = get_file_contents<std::string>(filename);
-    char message[1024];
-    if (!check_sig(reinterpret_cast<const uint8_t*>(s.data()), s.size(), message,
+    CHECK_SIG2(
+        reinterpret_cast<const uint8_t*>(s.data()), s.size(),
         "\x39\xb2\x11\x9d\x25\x64\x8d\x7b\xce\x3e\xf1\xf0\xad\x29\x50\xea\xa3\x01\x5c\x27"
-    )) {
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    );
     ::unlink(filename);
 }
 
@@ -356,7 +354,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
                        BmpCache::CacheOption(262, 12288, false));
     GlyphCache gly_cache;
     PointerCache ptr_cache;
-    RDPDrawable drawable(800, 600, 24);
+    RDPDrawable drawable(800, 600);
     DumpPng24FromRDPDrawableAdapter dump_png{drawable};
     GraphicToFile graphic_to_file(
         now, trans, 800, 600, 24,

@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(TestDrawGlyphIndex)
     uint16_t width = 1024;
     uint16_t height = 768;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height, 24);
+    RDPDrawable gd(width, height);
 
     auto const color_cxt = gdi::ColorCtx::depth24();
 
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height, 24);
+    RDPDrawable gd(width, height);
     auto const color_cxt = gdi::ColorCtx::depth24();
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect, color_cxt);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), BLACK), screen_rect, color_cxt);
@@ -235,7 +235,7 @@ BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height, 24);
+    RDPDrawable gd(width, height);
     auto const color_cxt = gdi::ColorCtx::depth24();
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect, color_cxt);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), GREEN), screen_rect, color_cxt);
@@ -275,7 +275,7 @@ BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height, 24);
+    RDPDrawable gd(width, height);
     auto const color_cxt = gdi::ColorCtx::depth24();
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect, color_cxt);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), GREEN), screen_rect, color_cxt);
@@ -497,7 +497,7 @@ BOOST_AUTO_TEST_CASE(TestTransportPngOneRedScreen)
     // This is how the expected raw PNG (a big flat RED 800x600 screen)
     // will look as a string
 
-    RDPDrawable d(800, 600, 24);
+    RDPDrawable d(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
@@ -509,7 +509,7 @@ BOOST_AUTO_TEST_CASE(TestTransportPngOneRedScreen)
 BOOST_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
 {
     CheckTransport trans(expected_red, sizeof(expected_red)-1);
-    RDPDrawable drawable(800, 600, 24);
+    RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
@@ -532,7 +532,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
     }
 
     OutFileTransport trans(fd);
-    RDPDrawable drawable(800, 600, 24);
+    RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
@@ -547,7 +547,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
 {
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
-    RDPDrawable drawable(800, 600, 24);
+    RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
@@ -602,7 +602,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
         unsigned num_start = 0;
         unsigned png_limit = 3;
     } trans;
-    RDPDrawable drawable(800, 600, 24);
+    RDPDrawable drawable(800, 600);
 
     class ImageCaptureLocal
     {
@@ -715,7 +715,7 @@ BOOST_AUTO_TEST_CASE(TestSmallImage)
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid);
     Rect scr(0, 0, 20, 10);
-    RDPDrawable drawable(20, 10, 24);
+    RDPDrawable drawable(20, 10);
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr, color_cxt);
@@ -733,7 +733,7 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid);
     Rect scr(0, 0, width, height);
-    RDPDrawable drawable(scr.cx, scr.cy, 24);
+    RDPDrawable drawable(scr.cx, scr.cy);
 
     {
         const char * filename = FIXTURES_PATH "/win2008capture10.png";
@@ -774,7 +774,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid);
     Rect scr(0, 0, 800, 600);
-    RDPDrawable drawable(800, 600, 24);
+    RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
 
@@ -903,7 +903,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid);
     Rect scr(0, 0, 800, 600);
-    RDPDrawable drawable(800, 600, 24);
+    RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
 
