@@ -262,7 +262,7 @@ public:
 
         RDPOpaqueRect order(this->maximize_box_rect, bg_color);
 
-        this->front_->draw(order, r, gdi::ColorCtx::depth24());
+        this->front_->draw(order, r, depth);
 
         if (this->maximized) {
             Rect rect = this->maximize_box_rect;
@@ -275,7 +275,7 @@ public:
             {
                 RDPOpaqueRect order(rect, 0x000000);
 
-                this->front_->draw(order, r, gdi::ColorCtx::depth24());
+                this->front_->draw(order, r, depth);
             }
 
             rect = rect.shrink(1);
@@ -283,7 +283,7 @@ public:
             {
                 RDPOpaqueRect order(rect, bg_color);
 
-                this->front_->draw(order, r, gdi::ColorCtx::depth24());
+                this->front_->draw(order, r, depth);
             }
 
             rect = this->maximize_box_rect;
@@ -296,7 +296,7 @@ public:
             {
                 RDPOpaqueRect order(rect, 0x000000);
 
-                this->front_->draw(order, r, gdi::ColorCtx::depth24());
+                this->front_->draw(order, r, depth);
             }
 
             rect = rect.shrink(1);
@@ -304,7 +304,7 @@ public:
             {
                 RDPOpaqueRect order(rect, bg_color);
 
-                this->front_->draw(order, r, gdi::ColorCtx::depth24());
+                this->front_->draw(order, r, depth);
             }
         }
         else {
@@ -318,7 +318,7 @@ public:
             {
                 RDPOpaqueRect order(rect, 0x000000);
 
-                this->front_->draw(order, r, gdi::ColorCtx::depth24());
+                this->front_->draw(order, r, depth);
             }
 
             rect = rect.shrink(1);
@@ -326,7 +326,7 @@ public:
             {
                 RDPOpaqueRect order(rect, bg_color);
 
-                this->front_->draw(order, r, gdi::ColorCtx::depth24());
+                this->front_->draw(order, r, depth);
             }
         }
     }   // draw_maximize_box

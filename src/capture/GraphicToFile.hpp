@@ -422,7 +422,7 @@ public:
                 , SendInput send_input = SendInput::NO
                 , Verbose verbose = Verbose::none)
     : RDPSerializer( this->buffer_stream_orders, this->buffer_stream_bitmaps, capture_bpp
-                   , bmp_cache, gly_cache, ptr_cache, 0, 1, 1, 32 * 1024, verbose)
+                   , bmp_cache, gly_cache, ptr_cache, 0, true, true, 32 * 1024, verbose)
     , compression_bullder(trans, wrm_compression_algorithm)
     , trans_target(trans)
     , trans(this->compression_bullder.get())
@@ -729,10 +729,6 @@ public:
     void possible_active_window_change() override {}
 
     using RDPSerializer::set_pointer;
-
-    void set_depths(gdi::Depth const & depth) override {
-        this->order_depth_ = depth;
-    }
 
     gdi::Depth const & order_depth() const override {
         return this->order_depth_;

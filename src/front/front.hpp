@@ -209,13 +209,7 @@ private:
             )
             , client_order_caps(client_order_caps)
             , order_depth_(gdi::Depth::from_bpp(bpp))
-            {
-                this->set_depths(gdi::Depth::from_bpp(bpp));
-            }
-
-            void set_depths(gdi::Depth const & depth) override {
-                this->order_depth_ = depth;
-            }
+            {}
 
             gdi::Depth const & order_depth() const override {
                 return this->order_depth_;
@@ -694,10 +688,6 @@ private:
             ColorConverter color_converter;
             Graphics::PrivateGraphicsUpdatePDU & graphics;
 
-            void set_depths(gdi::Depth const & depth) override {
-                this->order_depth_ = depth;
-            }
-
             gdi::Depth const & order_depth() const override {
                 return this->order_depth_;
             }
@@ -1007,10 +997,6 @@ public:
         }
 
         delete this->capture;
-    }
-
-    void set_depths(gdi::Depth const & depth) override {
-        this->order_depth_ = depth;
     }
 
     gdi::Depth const & order_depth() const override {

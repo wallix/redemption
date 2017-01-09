@@ -240,8 +240,6 @@ struct GraphicApi : private noncopyable
 
     // TODO berk, data within size
     virtual void set_row(std::size_t rownum, const uint8_t * data) { (void)rownum; (void)data; }
-
-    virtual void set_depths(Depth const & depths) = 0;
 };
 
 
@@ -285,11 +283,6 @@ private:
     void draw_impl(Args const & ...) {}
 
 public:
-
-    void set_depths(gdi::Depth const & depths) override {
-        this->order_depth_ = depths;
-    }
-
     Depth const & order_depth() const override {
         return this->order_depth_;
     }

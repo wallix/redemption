@@ -143,10 +143,6 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
                 {}
             void refresh_rects(array_view<Rect const>) override {}
 
-            void set_depths(gdi::Depth const & depth) override {
-                this->order_depth_ = depth;
-            }
-
             gdi::Depth const & order_depth() const override {
                 return this->order_depth_;
             }
