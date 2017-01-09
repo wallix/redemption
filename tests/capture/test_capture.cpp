@@ -29,6 +29,9 @@
 #define LOGNULL
 // #define LOGPRINT
 
+#include "utils/log.hpp"
+#include "transport/test_transport.hpp"
+
 #include "capture/capture.hpp"
 #include "check_sig.hpp"
 #include "get_file_contents.hpp"
@@ -710,5 +713,90 @@ BOOST_AUTO_TEST_CASE(TestPattern)
 
         BOOST_CHECK_EQUAL(authentifier.reason,  reason);
         BOOST_CHECK_EQUAL(authentifier.message, "$ocr:.de.|Gestionnaire de licences TS");
+    }
+}
+
+
+BOOST_AUTO_TEST_CASE(TestSessionMeta)
+{
+    char const out_data[] =
+        "1970-01-01 01:16:40 - [Kbd]ABCDABCDABCDABCDABCDABCDABCDABCDABCD\n"
+        "1970-01-01 01:16:49 - [Kbd]ABCD\n"
+        "1970-01-01 01:16:50 + Blah1\n"
+        "1970-01-01 01:16:51 + Blah2[Kbd]ABCDABCD\n"
+        "1970-01-01 01:16:54 + Blah3\n"
+    ;
+    CheckTransport trans(out_data, sizeof(out_data) - 1);
+
+    timeval now;
+    now.tv_sec  = 1000;
+    now.tv_usec = 0;
+
+    {
+        SessionMeta meta(now, trans);
+
+        auto send_kbd = [&]{
+            meta.kbd_input(now, 'A');
+            meta.kbd_input(now, 'B');
+            meta.kbd_input(now, 'C');
+            meta.kbd_input(now, 'D');
+        };
+
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        meta.snapshot(now, 0, 0, 0);
+        send_kbd(); now.tv_sec += 1;
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
+        meta.snapshot(now, 0, 0, 0);
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        meta.snapshot(now, 0, 0, 0);
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
+        meta.snapshot(now, 0, 0, 0);
+    }
+}
+
+
+BOOST_AUTO_TEST_CASE(TestSessionMeta2)
+{
+    char const out_data[] =
+        "1970-01-01 01:16:40 + Blah1\n"
+        "1970-01-01 01:16:41 + Blah2[Kbd]ABCDABCD\n"
+        "1970-01-01 01:16:44 + Blah3\n"
+        "1970-01-01 01:16:45 + (break)\n"
+    ;
+    CheckTransport trans(out_data, sizeof(out_data) - 1);
+
+    timeval now;
+    now.tv_sec  = 1000;
+    now.tv_usec = 0;
+
+    {
+        SessionMeta meta(now, trans);
+
+        auto send_kbd = [&]{
+            meta.kbd_input(now, 'A');
+            meta.kbd_input(now, 'B');
+            meta.kbd_input(now, 'C');
+            meta.kbd_input(now, 'D');
+        };
+
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
+        meta.snapshot(now, 0, 0, 0);
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        meta.snapshot(now, 0, 0, 0);
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
+        meta.snapshot(now, 0, 0, 0);
+        meta.send_line(now.tv_sec, cstr_array_view("(break)"));
     }
 }
