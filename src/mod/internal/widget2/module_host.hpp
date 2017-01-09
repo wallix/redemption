@@ -35,6 +35,8 @@
 #include "mod/internal/widget2/scroll.hpp"
 #include "mod/mod_api.hpp"
 
+#include <type_traits>
+
 class WidgetModuleHost : public WidgetParent, public gdi::GraphicApi
 {
 private:
@@ -615,7 +617,39 @@ private:
         drawable_.draw(cmd);
     }
 
-    template<class Cmd, class... Args>
+    template<class Cmd>
+    using cmd_not_implementing_move = std::integral_constant<bool,
+            std::is_same<Cmd, RDPBitmapData       >::value ||
+            std::is_same<Cmd, RDPEllipseCB        >::value ||
+            std::is_same<Cmd, RDPEllipseSC        >::value ||
+            std::is_same<Cmd, RDPPolygonCB        >::value ||
+            std::is_same<Cmd, RDPPolygonSC        >::value ||
+            std::is_same<Cmd, RDPPolyline         >::value ||
+            std::is_same<Cmd, RDPGlyphIndex       >::value ||
+            std::is_same<Cmd, RDP::RDPMultiScrBlt>::value
+        >;
+
+    template<class Cmd, class... Args, typename std::enable_if<
+            !cmd_not_implementing_move<Cmd>::value, bool
+        >::type = 1>
+    void draw_impl(const Cmd& cmd, const Rect clip, const Args&... args)
+    {
+        gdi::GraphicApi& drawable_ = this->get_drawable();
+
+        Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
+        new_clip = new_clip.intersect(this->vision_rect);
+        if (new_clip.isempty()) { return; }
+
+        Cmd new_cmd = cmd;
+
+        new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
+
+        drawable_.draw(new_cmd, new_clip, args...);
+    }
+
+    template<class Cmd, class... Args, typename std::enable_if<
+            cmd_not_implementing_move<Cmd>::value, bool
+        >::type = 1>
     void draw_impl(const Cmd& cmd, const Rect clip, const Args&... args)
     {
         gdi::GraphicApi& drawable_ = this->get_drawable();
@@ -642,134 +676,5 @@ private:
                      );
 
         this->draw_impl(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bmp);
-    }
-
-    void draw_impl(const RDPDestBlt& cmd, const Rect clip)
-    {
-        gdi::GraphicApi& drawable_ = this->get_drawable();
-
-        Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
-        new_clip = new_clip.intersect(this->vision_rect);
-        if (new_clip.isempty()) { return; }
-
-        RDPDestBlt new_cmd = cmd;
-
-        new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
-
-        drawable_.draw(new_cmd, new_clip);
-    }
-
-    void draw_impl(const RDPLineTo& cmd, Rect clip) {
-        gdi::GraphicApi& drawable_ = this->get_drawable();
-
-        Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
-        new_clip = new_clip.intersect(this->vision_rect);
-        if (new_clip.isempty()) { return; }
-
-        RDPLineTo new_cmd = cmd;
-
-        new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
-
-        drawable_.draw(new_cmd, new_clip, gdi::ColorCtx::depth24());
-    }
-
-    void draw_impl(const RDPMem3Blt& cmd, const Rect clip, const Bitmap& bmp) {
-        gdi::GraphicApi& drawable_ = this->get_drawable();
-
-        Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
-        new_clip = new_clip.intersect(this->vision_rect);
-        if (new_clip.isempty()) { return; }
-
-        RDPMem3Blt new_cmd = cmd;
-
-        new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
-
-        drawable_.draw(new_cmd, new_clip, gdi::ColorCtx::depth24(), bmp);
-    }
-
-    void draw_impl(const RDPMemBlt& cmd, const Rect clip, const Bitmap& bmp) {
-        gdi::GraphicApi& drawable_ = this->get_drawable();
-
-        Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
-        new_clip = new_clip.intersect(this->vision_rect);
-        if (new_clip.isempty()) { return; }
-
-        RDPMemBlt new_cmd = cmd;
-
-        new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
-
-        drawable_.draw(new_cmd, new_clip, bmp);
-    }
-
-    void draw_impl(const RDPMultiOpaqueRect& cmd, const Rect clip) {
-        gdi::GraphicApi& drawable_ = this->get_drawable();
-
-        Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
-        new_clip = new_clip.intersect(this->vision_rect);
-        if (new_clip.isempty()) { return; }
-
-        RDPMultiOpaqueRect new_cmd = cmd;
-
-        new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
-
-        drawable_.draw(new_cmd, new_clip, gdi::ColorCtx::depth24());
-    }
-
-    void draw_impl(const RDP::RDPMultiPatBlt& cmd, const Rect clip) {
-        gdi::GraphicApi& drawable_ = this->get_drawable();
-
-        Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
-        new_clip = new_clip.intersect(this->vision_rect);
-        if (new_clip.isempty()) { return; }
-
-        RDP::RDPMultiPatBlt new_cmd = cmd;
-
-        new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
-
-        drawable_.draw(new_cmd, new_clip, gdi::ColorCtx::depth24());
-    }
-
-    void draw_impl(const RDPOpaqueRect& cmd, const Rect clip) {
-        gdi::GraphicApi& drawable_ = this->get_drawable();
-
-        Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
-        new_clip = new_clip.intersect(this->vision_rect);
-        if (new_clip.isempty()) { return; }
-
-        RDPOpaqueRect new_cmd = cmd;
-
-        new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
-
-        drawable_.draw(new_cmd, new_clip, gdi::ColorCtx::depth24());
-    }
-
-
-    void draw_impl(const RDPPatBlt& cmd, const Rect clip)
-    {
-        gdi::GraphicApi& drawable_ = this->get_drawable();
-
-        Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
-        new_clip = new_clip.intersect(this->vision_rect);
-        if (new_clip.isempty()) { return; }
-
-        RDPPatBlt new_cmd = cmd;
-
-        new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
-
-        drawable_.draw(new_cmd, new_clip, gdi::ColorCtx::depth24());
-    }
-
-    void draw_impl(const RDPScrBlt& cmd, const Rect clip) {
-        gdi::GraphicApi& drawable_ = this->get_drawable();
-
-        Rect new_clip = clip.offset(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
-        new_clip = new_clip.intersect(this->vision_rect);
-        if (new_clip.isempty()) { return; }
-
-        RDPScrBlt new_cmd = cmd;
-
-        new_cmd.move(this->x() - this->mod_visible_rect.x, this->y() - this->mod_visible_rect.y);
-
-        drawable_.draw(new_cmd, new_clip);
     }
 };
