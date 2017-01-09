@@ -579,7 +579,7 @@ public:
         LOG(LOG_INFO, "****************************************");
     }
 
-    virtual gdi::Depth const & order_depth() const {
+    gdi::Depth const & order_depth() const override {
         return this->order_depth_;
     }
 

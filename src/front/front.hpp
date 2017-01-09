@@ -4483,7 +4483,7 @@ protected:
     }
 
     void draw_impl(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bitmap) {
-        this->priv_draw_memblt(cmd, clip, bitmap);
+        this->priv_draw_memblt(cmd, clip, bitmap, color_ctx);
     }
 
     void draw_impl(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) {
@@ -4566,18 +4566,33 @@ private:
         this->graphics_update->draw(cmd2, clip, tiled_bmp);
     }
 
-    void priv_draw_tile(Rect dst_tile, Rect src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, Rect clip)
+    void draw_tile(Rect dst_tile, Rect src_tile, const RDPMem3Blt & cmd, const Bitmap & bitmap, Rect clip, gdi::ColorCtx color_ctx)
     {
-        this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
+        if (this->verbose & Verbose::graphic) {
+            LOG(LOG_INFO, "front::draw:draw_tile3((%u, %u, %u, %u) (%u, %u, %u, %u)",
+                 dst_tile.x, dst_tile.y, dst_tile.cx, dst_tile.cy,
+                 src_tile.x, src_tile.y, src_tile.cx, src_tile.cy);
+        }
+
+        const Bitmap tiled_bmp(bitmap, src_tile);
+        RDPMem3Blt cmd2(0, dst_tile, cmd.rop, 0, 0, cmd.back_color, cmd.fore_color, cmd.brush, 0);
+
+        if (this->client_info.bpp != this->mod_bpp) {
+            const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+            const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+
+            cmd2.back_color= color_encode(back_color24, this->client_info.bpp);
+            cmd2.fore_color= color_encode(fore_color24, this->client_info.bpp);
+        }
+
+        // this may change the brush add send it to to remote cache
+        //this->cache_brush(cmd2.brush);
+
+        this->graphics_update->draw(cmd2, clip, color_ctx, tiled_bmp);
     }
 
-    void priv_draw_tile(Rect dst_tile, Rect src_tile, const RDPMem3Blt & cmd, const Bitmap & bitmap, Rect clip)
-    {
-        this->draw_tile3(dst_tile, src_tile, cmd, bitmap, clip);
-    }
-
-    template<class MemBlt>
-    void priv_draw_memblt(const MemBlt & cmd, Rect clip, const Bitmap & bitmap)
+    template<class MemBlt, class... ColorCtx>
+    void priv_draw_memblt(const MemBlt & cmd, Rect clip, const Bitmap & bitmap, ColorCtx... color_ctx)
     {
         if (bitmap.cx() < cmd.srcx || bitmap.cy() < cmd.srcy) {
             return;
@@ -4616,7 +4631,7 @@ private:
             // clip dst as it can be larger than source bitmap
             const Rect dst_tile(dst_x, dst_y, dst_cx, dst_cy);
             const Rect src_tile(cmd.srcx, cmd.srcy, dst_cx, dst_cy);
-            this->priv_draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
+            this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip, color_ctx...);
         }
         else {
             // if not we have to split it
@@ -4631,35 +4646,10 @@ private:
 
                     const Rect dst_tile(dst_x + x, dst_y + y, cx, cy);
                     const Rect src_tile(cmd.srcx + x, cmd.srcy + y, cx, cy);
-                    this->priv_draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
+                    this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip, color_ctx...);
                 }
             }
         }
-    }
-
-    void draw_tile3(Rect dst_tile, Rect src_tile, const RDPMem3Blt & cmd, const Bitmap & bitmap, Rect clip)
-    {
-        if (this->verbose & Verbose::graphic) {
-            LOG(LOG_INFO, "front::draw:draw_tile3((%u, %u, %u, %u) (%u, %u, %u, %u)",
-                 dst_tile.x, dst_tile.y, dst_tile.cx, dst_tile.cy,
-                 src_tile.x, src_tile.y, src_tile.cx, src_tile.cy);
-        }
-
-        const Bitmap tiled_bmp(bitmap, src_tile);
-        RDPMem3Blt cmd2(0, dst_tile, cmd.rop, 0, 0, cmd.back_color, cmd.fore_color, cmd.brush, 0);
-
-        if (this->client_info.bpp != this->mod_bpp) {
-            const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-            const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
-
-            cmd2.back_color= color_encode(back_color24, this->client_info.bpp);
-            cmd2.fore_color= color_encode(fore_color24, this->client_info.bpp);
-        }
-
-        // this may change the brush add send it to to remote cache
-        //this->cache_brush(cmd2.brush);
-
-        this->graphics_update->draw(cmd2, clip, gdi::ColorCtx::from_bpp(this->client_info.bpp, this->mod_palette_rgb), tiled_bmp);
     }
 
     bool updatable_cache_brush(RDPBrush const & brush) const {
