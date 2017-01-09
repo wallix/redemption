@@ -25,17 +25,17 @@
 
 
 
-// bjam rdpheadless && bin/gcc-4.9.2/release/link-static/rdpheadless --user admin --pwd $mdp --ip 10.10.47.90 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
+// bjam debug rdpheadless && bin/gcc-4.9.2/debug/link-static/rdpheadless --user admin --pwd $mdp --ip 10.10.47.90 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
 
-// bjam rdpheadless && bin/gcc-4.9.2/release/rdpheadless --user QA\\proxyuser --pwd $mdp --ip 10.10.46.88 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
+// bjam debug rdpheadless && bin/gcc-4.9.2/debug/rdpheadless --user QA\\proxyuser --pwd $mdp --ip 10.10.46.88 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
 
-// bjam rdpheadless && bin/gcc-4.9.2/release/rdpheadless --user admin --pwd $mdp --ip 10.10.47.90 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
+// bjam debug rdpheadless && bin/gcc-4.9.2/debug/rdpheadless --user admin --pwd $mdp --ip 10.10.47.90 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
 
 
 
-void run_mod(mod_api *, TestClientCLI &, SocketTransport *, EventList &);
+void run_mod(mod_api *, TestClientCLI &, SocketTransport *, EventList &, bool, struct timeval &);
 void print_help(ModRDPParamsConfig *, size_t);
-
+void disconnect(mod_api *, SocketTransport *);
 
 ///////////////////////////////
 // APPLICATION
@@ -65,7 +65,7 @@ int main(int argc, char** argv){
     std::string localIP;
     int nbTry(3);
     int retryDelay(1000);
-    bool quick_connection_test = false;
+    bool quick_connection_test = true;
     //=========================================================
 
 
@@ -80,45 +80,49 @@ int main(int argc, char** argv){
         //================================
         //     Cmd lines User config
         //================================
-        if (       word == "--user") {
-            userName = std::string(argv[i+1]);
-            input_connection_data_complete += TestClientCLI::NAME;
+        if (i+1 < argc) {
+            if (       word == "--user") {
+                userName = std::string(argv[i+1]);
+                input_connection_data_complete |= TestClientCLI::NAME;
 
-        } else if (word == "--pwd") {
-            userPwd = std::string(argv[i+1]);
-            input_connection_data_complete += TestClientCLI::PWD;
-        } else if (word == "--ip") {
-            ip = std::string(argv[i+1]);
-            input_connection_data_complete += TestClientCLI::IP;
-        } else if (word == "--port") {
-            port = std::stoi(std::string(argv[i+1]));
-            input_connection_data_complete += TestClientCLI::PORT;
-        } else if (word == "--local_ip") {
-            localIP = std::string(argv[i+1]);
-        } else if (word == "--keylayout") {
-            info.keylayout = std::stoi(std::string(argv[i+1]));
-        } else if (word == "--bpp") {
-            info.bpp = std::stoi(std::string(argv[i+1]));
-        } else if (word == "--width") {
-            info.width = std::stoi(std::string(argv[i+1]));
-        } else if (word == "--height") {
-            info.height = std::stoi(std::string(argv[i+1]));
+            } else if (word == "--pwd") {
+                userPwd = std::string(argv[i+1]);
+                input_connection_data_complete |= TestClientCLI::PWD;
+            } else if (word == "--ip") {
+                ip = std::string(argv[i+1]);
+                input_connection_data_complete |= TestClientCLI::IP;
+            } else if (word == "--port") {
+                port = std::stoi(std::string(argv[i+1]));
+                input_connection_data_complete |= TestClientCLI::PORT;
+            } else if (word == "--local_ip") {
+                localIP = std::string(argv[i+1]);
+            } else if (word == "--keylayout") {
+                info.keylayout = std::stoi(std::string(argv[i+1]));
+            } else if (word == "--bpp") {
+                info.bpp = std::stoi(std::string(argv[i+1]));
+            } else if (word == "--width") {
+                info.width = std::stoi(std::string(argv[i+1]));
+            } else if (word == "--height") {
+                info.height = std::stoi(std::string(argv[i+1]));
+            } else if (word == "--wallpaper") {
+                if (       std::string(argv[i+1]) ==  "off") {
+                    info.rdp5_performanceflags -=  PERF_DISABLE_WALLPAPER;
+                }
+            } else if (word == "--fullwindowdrag") {
+                if (       std::string(argv[i+1]) ==  "off") {
+                    info.rdp5_performanceflags -=  PERF_DISABLE_FULLWINDOWDRAG;
+                }
+            } else if (word == "--menuanimations") {
+                if (       std::string(argv[i+1]) ==  "off") {
+                    info.rdp5_performanceflags -=  PERF_DISABLE_MENUANIMATIONS;
+                }
+            }
+        }
+
+        if (word == "--persist") {
+            quick_connection_test = false;
         } else if (word == "--mon_count") {
             info.cs_monitor.monitorCount = std::stoi(std::string(argv[i+1]));
-        } else if (word == "--wallpaper") {
-            if (       std::string(argv[i+1]) ==  "off") {
-                info.rdp5_performanceflags -=  PERF_DISABLE_WALLPAPER;
-            }
-        } else if (word == "--fullwindowdrag") {
-            if (       std::string(argv[i+1]) ==  "off") {
-                info.rdp5_performanceflags -=  PERF_DISABLE_FULLWINDOWDRAG;
-            }
-        } else if (word == "--menuanimations") {
-            if (       std::string(argv[i+1]) ==  "off") {
-                info.rdp5_performanceflags -=  PERF_DISABLE_MENUANIMATIONS;
-            }
-        } else if (word == "--quick") {
-            quick_connection_test = true;
         }
     }//================================================================
 
@@ -253,6 +257,17 @@ int main(int argc, char** argv){
     };//========================================================================================
 
 
+    std::cout << "\n " <<  std::endl;
+    std::cout << "\n ********************************\n";
+    std::cout << "\n ====== RDPHEADLESS CLIENT ======\n";
+    std::cout << "\n ********************************" <<  std::endl;
+
+    if (argc == 1) {
+        std::cout << " Version 4.2.3" << "\n";
+        print_help(mod_rdp_params_config, nb_mod_rdp_params_config);
+    }
+
+    struct timeval time_out_response = { TestClientCLI::DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE / 1000, TestClientCLI::DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE % 1000 };
     bool script_on(false);
     for (int i = 0; i <  argc; i++) {
 
@@ -260,19 +275,17 @@ int main(int argc, char** argv){
         //================================
         //            TOOLS
         //================================
-        if (word == "--help") {
-            print_help(mod_rdp_params_config, nb_mod_rdp_params_config);
-        } else if (word == "-h") {
+        if (word == "-v" || word == "--version") {
+            std::cout << "\n Version 5.1.0" << "\n";
+        } else if (word == "--help" || word == "-h") {
             print_help(mod_rdp_params_config, nb_mod_rdp_params_config);
         } else if (word == "--script_help") {
             // TODO show all script cmd
-        } else if (word == "-v") {
-            std::cout << "version 1.0" << "\n";
         } else if (word ==  "--script") {
-            script_file_path = std::string(argv[i+1]);
-            script_on = true;
-        } else if (word == "--version") {
-            std::cout << "version 1.0" << "\n";
+            if (i+1 < argc) {
+                script_file_path = std::string(argv[i+1]);
+                script_on = true;
+            }
         } else if (word == "--show_user_params") {
             verbose = verbose | TestClientCLI::SHOW_USER_AND_TARGET_PARAMS;
         } else if (word == "--show_rdp_params") {
@@ -315,12 +328,17 @@ int main(int argc, char** argv){
         } else if (word == "--show_channels") {
             verbose = verbose | TestClientCLI::SHOW_FILE_SYSTEM_EXCHANGE
                               | TestClientCLI::SHOW_CLPBRD_PDU_EXCHANGE;
+        } else if (word == "--timeout") {
+             if (i+1 < argc) {
+                long time = std::stol(std::string(argv[i+1]));
+                time_out_response = { time/1000, time % 1000 };
+            }
         }
     } //==============================================================
 
 
 
-    if (input_connection_data_complete == TestClientCLI::INPUT_COMPLETE) {
+    if (verbose != 0) {
 
         std::cout << "\n";
         std::cout << " ================================" << "\n";
@@ -368,13 +386,13 @@ int main(int argc, char** argv){
     //===========================================
     //       Cmd line mod_rdp_param config
     //===========================================
-    for (int i = 0; i < argc; i++) {
+    for (int i = 0; i < argc - 1; i++) {
         std::string word(argv[i]);
         for (size_t j = 0; j < nb_mod_rdp_params_config; j++) {
             if (       word == mod_rdp_params_config[j].cmd) {
                 if (       std::string(argv[i+1]) ==  "on") {
                     *(mod_rdp_params_config[j].param) = true;
-                } else if (std::string(argv[i+1]) ==  "off") {
+                } else if (std::string(argv[i+1]) ==  "off"){
                     *(mod_rdp_params_config[j].param) = false;
                 }
             }
@@ -403,11 +421,11 @@ int main(int argc, char** argv){
 
 
 
-    TestClientCLI front(info, verbose);
+    TestClientCLI front(info, 0);
 
 
 
-    if (input_connection_data_complete == TestClientCLI::INPUT_COMPLETE) {
+    if (input_connection_data_complete & TestClientCLI::INPUT_COMPLETE) {
         int sck(0);
         SocketTransport * socket(nullptr);
         std::string error_message;
@@ -425,16 +443,19 @@ int main(int argc, char** argv){
         if (sck > 0) {
             try {
                 socket = new SocketTransport( name
-                                                          , sck
-                                                          , targetIP
-                                                          , port
-                                                          , to_verbose_flags(verbose)
-                                                          , &error_message
-                                                          );
+                                            , sck
+                                            , targetIP
+                                            , port
+                                            , to_verbose_flags(verbose)
+                                            , &error_message
+                                            );
                 connection_succed = true;
+                std::cout << " Connected to [" << targetIP <<  "]." << std::endl;
 
             } catch (const std::exception &) { // TODO no throwing exception to SocketTransport ctor
                 std::cout << errorMsg << " Socket error. " << std::endl;
+                disconnect(nullptr, socket);
+                exit(9);
             }
         } else {
             std::cout << errorMsg << " ip_connect error." << std::endl;
@@ -461,7 +482,7 @@ int main(int argc, char** argv){
                 front._callback = mod;
                 GCC::UserData::CSSecurity & cs_security = mod->cs_security;
                 cs_security.encryptionMethods = encryptionMethods;
-                std::cout << " Connected to [" << targetIP <<  "]." << std::endl;
+
 
             } catch (const Error & e) {
                 std::cout << " Error: RDP Initialization failed. " << e.errmsg() << std::endl;
@@ -470,18 +491,18 @@ int main(int argc, char** argv){
 
             if (connection_succed) {
                 if (mod !=  nullptr) {
-                    int i = 1;
                     while (!mod->is_up_and_running()) {
                         try {
                             std::cout <<  " Early negociations... " <<"\n";
                             mod->draw_event(time(nullptr), front);
-                            i++;
                          } catch (const Error & e) {
-                            std::cout << " Error: Failed during RDP early negociations step " << i << ". " << e.errmsg() << "\n";
-                            connection_succed = false;
+                            std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
+                            exit(1);
                         }
                     }
-                    std::cout << " Early negociations complete." <<  "\n";
+                    if (connection_succed) {
+                        std::cout << " Early negociations completes." <<  "\n";
+                    }
                     std::cout << std::endl;
                 }
             }
@@ -570,118 +591,110 @@ int main(int argc, char** argv){
                 }
 
 
-                if (quick_connection_test) {
-                    if (socket !=  nullptr) {
-                        delete (socket);
+                //===========================================
+                //             Scripted Events
+                //===========================================
+                EventList eventList;
+                if (script_on) {
+                    std::ifstream ifichier(script_file_path);
+                    if(ifichier) {
+                        std::string ligne;
+                        std::string delimiter = " ";
 
-                        if (mod !=  nullptr) {
-                            delete (mod);
-                            std::cout << " Connection to [" << targetIP << "] closed.\n" << std::endl;
-                        }
+                        while(std::getline(ifichier, ligne)) {
+                            auto pos(ligne.find(delimiter));
+                            std::string tag  = ligne.substr(0, pos);
+                            std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
 
-                    }
-                } else {
-                    //===========================================
-                    //             Scripted Events
-                    //===========================================
-                    EventList eventList;
-                    if (script_on) {
-                        std::ifstream ifichier(script_file_path);
-                        if(ifichier) {
-                            std::string ligne;
-                            std::string delimiter = " ";
+                            if (       tag == "wait") {
+                                eventList.wait(std::stoi(info));
 
-                            while(std::getline(ifichier, ligne)) {
-                                auto pos(ligne.find(delimiter));
-                                std::string tag  = ligne.substr(0, pos);
-                                std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
+                            } else if (tag == "key_press") {
+                                pos = info.find(delimiter);
+                                uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                                uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                                if (       tag == "wait") {
-                                    eventList.wait(std::stoi(info));
+                                eventList.setKey_press(&front, scanCode, flag);
 
-                                } else if (tag == "key_press") {
-                                    pos = info.find(delimiter);
-                                    uint32_t scanCode(std::stoi(info.substr(0, pos)));
-                                    uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                            } else if (tag == "key_release") {
+                                pos = info.find(delimiter);
+                                uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                                uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                                    eventList.setKey_press(&front, scanCode, flag);
+                                eventList.setKey_release(&front, scanCode, flag);
 
-                                } else if (tag == "key_release") {
-                                    pos = info.find(delimiter);
-                                    uint32_t scanCode(std::stoi(info.substr(0, pos)));
-                                    uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                            } else if (tag == "mouse_press") {
+                                pos = info.find(delimiter);
+                                uint8_t button(std::stoi(info.substr(0, pos)));
+                                info = info.substr(pos + delimiter.length(), info.length());
+                                pos = info.find(delimiter);
+                                uint32_t x(std::stoi(info.substr(0, pos)));
+                                uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                                    eventList.setKey_release(&front, scanCode, flag);
+                                eventList.setMouse_button(&front, button, x, y, true);
 
-                                } else if (tag == "mouse_press") {
-                                    pos = info.find(delimiter);
-                                    uint8_t button(std::stoi(info.substr(0, pos)));
-                                    info = info.substr(pos + delimiter.length(), info.length());
-                                    pos = info.find(delimiter);
-                                    uint32_t x(std::stoi(info.substr(0, pos)));
-                                    uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                            } else if (tag == "mouse_release") {
+                                pos = info.find(delimiter);
+                                uint8_t button(std::stoi(info.substr(0, pos)));
+                                info = info.substr(pos + delimiter.length(), info.length());
+                                pos = info.find(delimiter);
+                                uint32_t x(std::stoi(info.substr(0, pos)));
+                                uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                                    eventList.setMouse_button(&front, button, x, y, true);
+                                eventList.setMouse_button(&front, button, x, y, false);
 
-                                } else if (tag == "mouse_release") {
-                                    pos = info.find(delimiter);
-                                    uint8_t button(std::stoi(info.substr(0, pos)));
-                                    info = info.substr(pos + delimiter.length(), info.length());
-                                    pos = info.find(delimiter);
-                                    uint32_t x(std::stoi(info.substr(0, pos)));
-                                    uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                            } else if (tag == "clpbrd_change") {
+                                // TODO dynamique data and format injection
+                                uint32_t formatIDs                 = RDPECLIP::CF_TEXT;
+                                std::string formatListDataLongName("\0\0", 2);
 
-                                    eventList.setMouse_button(&front, button, x, y, false);
+                                // TODO { formatListDataLongName, 1 } -> array_view
+                                // TODO { formatIDs, 1 } -> array_view
+                                eventList.setClpbrd_change(&front, &formatIDs, &formatListDataLongName, 1);
 
-                                } else if (tag == "clpbrd_change") {
-                                    // TODO dynamique data and format injection
-                                    uint32_t formatIDs                 = RDPECLIP::CF_TEXT;
-                                    std::string formatListDataLongName("\0\0", 2);
+                            } else if (tag == "click") {
+                                pos = info.find(delimiter);
+                                uint8_t button(std::stoi(info.substr(0, pos)));
+                                info = info.substr(pos + delimiter.length(), info.length());
+                                pos = info.find(delimiter);
+                                uint32_t x(std::stoi(info.substr(0, pos)));
+                                uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                                    // TODO { formatListDataLongName, 1 } -> array_view
-                                    // TODO { formatIDs, 1 } -> array_view
-                                    eventList.setClpbrd_change(&front, &formatIDs, &formatListDataLongName, 1);
+                                eventList.setClick(&front, button, x, y);
 
-                                } else if (tag == "click") {
-                                    pos = info.find(delimiter);
-                                    uint8_t button(std::stoi(info.substr(0, pos)));
-                                    info = info.substr(pos + delimiter.length(), info.length());
-                                    pos = info.find(delimiter);
-                                    uint32_t x(std::stoi(info.substr(0, pos)));
-                                    uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                            } else if (tag == "double_click") {
+                                pos = info.find(delimiter);
+                                uint32_t x(std::stoi(info.substr(0, pos)));
+                                uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                                    eventList.setClick(&front, button, x, y);
+                                eventList.setDouble_click(&front, x, y);
 
-                                } else if (tag == "double_click") {
-                                    pos = info.find(delimiter);
-                                    uint32_t x(std::stoi(info.substr(0, pos)));
-                                    uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                            } else if (tag ==  "key") {
+                                pos = info.find(delimiter);
+                                uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                                uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                                    eventList.setDouble_click(&front, x, y);
+                                eventList.setKey(&front, scanCode, flag);
 
-                                } else if (tag ==  "key") {
-                                    pos = info.find(delimiter);
-                                    uint32_t scanCode(std::stoi(info.substr(0, pos)));
-                                    uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                            } else if (tag == "loop") {
+                                pos = info.find(delimiter);
+                                uint32_t jump_size(std::stoi(info.substr(0, pos)));
+                                uint32_t count_steps(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                                    eventList.setKey(&front, scanCode, flag);
-
-                                } else if (tag == "loop") {
-                                    pos = info.find(delimiter);
-                                    uint32_t jump_size(std::stoi(info.substr(0, pos)));
-                                    uint32_t count_steps(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                                    eventList.setLoop(jump_size, count_steps);
-                                }
+                                eventList.setLoop(jump_size, count_steps);
                             }
-                        } else {
-                            std::cout <<  "Can't find " << script_file_path << "\n";
                         }
+                    } else {
+                        std::cout <<  "Can't find " << script_file_path << "\n";
                     }
+                }
 
-
-                    run_mod(mod, front, socket, eventList);
-
+                if (!(input_connection_data_complete & TestClientCLI::LOG_COMPLETE) && quick_connection_test) {
+                    disconnect(mod, socket);
+                } else {
+                    if (connection_succed) {
+                        run_mod(mod, front, socket, eventList, quick_connection_test, time_out_response);
+                    }
                 }
             }
         }
@@ -695,7 +708,7 @@ int main(int argc, char** argv){
 void print_help(ModRDPParamsConfig * mod_rdp_params_config, size_t nb_mod_rdp_params_config) {
     std::cout << "\n";
 
-    std::cout << "Command Line Interface RDP Redemption Client help:" << "\n";
+    std::cout << " COMMAND LINE HELPER:" << "\n\n";
     std::cout << "  ========= TOOLS =========" << "\n";
     std::cout << "  -h or --help              Show help" << "\n";
     std::cout << "  -v or --version           Show version" <<  "\n";
@@ -716,7 +729,8 @@ void print_help(ModRDPParamsConfig * mod_rdp_params_config, size_t nb_mod_rdp_pa
     std::cout << "  --show_pdu                Show both sent and received PDU content from shown channels" << "\n";
     std::cout << "  --show_caps               Show capabilities PDU exchange" <<  "\n";
     std::cout << "  --script [file_path]      Set a test PDU file script" << "\n";
-    std::cout << "  --quick                   Set the client to disconnect right after connection" << "\n";
+    std::cout << "  --persist                 Set connection to persist" << "\n";
+    std::cout << "  --timeout [time]          Set timeout response before to disconnect in milisecond" << "\n";
     std::cout << "\n";
     std::cout << "  ========= USER =========" << "\n";
     std::cout << "  --user [user_name]        Set session user name" << "\n";
@@ -744,13 +758,49 @@ void print_help(ModRDPParamsConfig * mod_rdp_params_config, size_t nb_mod_rdp_pa
 
 
 
-void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, EventList & al) {
+void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, EventList & al, bool quick_connection_test, struct timeval &  time_out_response) {
+    struct timeval time_start;
+    gettimeofday(&time_start, nullptr);
     struct      timeval time_mark = { 0, 50000 };
     bool        run_session       = true;
 
 
-
     while (run_session) {
+
+        switch (mod->logged_on) {
+            case mod_api::CLIENT_LOGGED:
+                mod->logged_on = 0;
+
+                std::cout << " RDP Session Log On." <<  std::endl;
+                if (quick_connection_test) {
+                    disconnect(mod, st_mod);
+                    exit(0);
+                }
+                break;
+            default: break;
+        }
+
+        if (quick_connection_test) {
+
+            struct timeval time;
+            if (!gettimeofday(&time, nullptr)) {
+
+                long usec(time.tv_usec - time_start.tv_usec);
+                long sec(time.tv_sec - time_start.tv_sec);
+
+                if ( sec > time_out_response.tv_sec) {
+                    std::cout <<  " Exit timeout (timeout = " << time_out_response.tv_sec << " sec " <<  time_out_response.tv_usec << " µsec)" << std::endl;
+                    disconnect(mod, st_mod);
+                    exit(8);
+                } else if (sec == time_out_response.tv_sec && usec > time_out_response.tv_usec) {
+                    std::cout <<  " Exit timeout (timeout = " << time_out_response.tv_sec << " sec " <<  time_out_response.tv_usec << " µsec)" << std::endl;
+                    disconnect(mod, st_mod);
+                    exit(8);
+                }
+            } else {
+                std::cout << "error usec = " << time.tv_usec - time_start.tv_usec << std::endl;
+            }
+        }
         try {
             unsigned max = 0;
             fd_set   rfds;
@@ -797,4 +847,18 @@ void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, Eve
     }
 
     return;
+}
+
+void disconnect(mod_api * mod, SocketTransport * socket) {
+
+    if (mod !=  nullptr) {
+        TimeSystem timeobj;
+        mod->disconnect(timeobj.get_time().tv_sec);
+        delete (mod);
+        mod = nullptr;
+        std::cout << " Connection closed.\n" << std::endl;
+    }
+
+    delete (socket);
+    socket = nullptr;
 }

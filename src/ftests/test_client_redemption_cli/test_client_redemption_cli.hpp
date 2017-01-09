@@ -183,12 +183,18 @@ public:
     ClientInfo        _info;
     mod_api         * _callback;
     enum : int {
-        INPUT_COMPLETE = 15
+        LOG_COMPLETE   = 3
+      , INPUT_COMPLETE = 12
       , NAME           = 1
       , PWD            = 2
       , IP             = 4
       , PORT           = 8
     };
+
+    enum : long {
+        DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE = 2000
+    };
+
 
 
     // Keyboard Controllers members
@@ -680,8 +686,9 @@ public:
                                             , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |
                                             CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                             );
-
-        std::cout << "client >> Format List PDU" << std::endl;
+        if (this->_verbose & SHOW_CLPBRD_PDU_EXCHANGE) {
+            std::cout << "client >> Format List PDU" << std::endl;
+        }
     }
 
     void send_to_clipboard_Buffer(InStream & chunk) { (void)chunk; }

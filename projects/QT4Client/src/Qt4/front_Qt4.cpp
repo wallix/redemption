@@ -955,12 +955,13 @@ void Front_Qt::draw_RDPPatBlt(const Rect & rect, const QPainter::CompositionMode
 //       DRAW FUNCTIONS
 //-----------------------------
 
-void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
+void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip, gdi::GraphicDepth depth) {
     if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
+    (void) depth;
     //std::cout << "RDPPatBlt " << std::hex << static_cast<int>(cmd.rop) << std::endl;
     RDPPatBlt new_cmd24 = cmd;
     new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
@@ -1112,7 +1113,7 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
     }
 
     if (this->_record && !this->_replay) {
-        this->_graph_capture->draw(cmd, clip);
+        this->_graph_capture->draw(cmd, clip, gdi::GraphicDepth::from_bpp(this->_info.bpp));
         struct timeval time;
         gettimeofday(&time, nullptr);
         this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
@@ -1120,12 +1121,13 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
 }
 
 
-void Front_Qt::draw(const RDPOpaqueRect & cmd, const Rect & clip) {
+void Front_Qt::draw(const RDPOpaqueRect & cmd, const Rect & clip, gdi::GraphicDepth depth) {
     if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
+    (void) depth;
     //std::cout << "RDPOpaqueRect" << std::endl;
     RDPOpaqueRect new_cmd24 = cmd;
     new_cmd24.color = color_decode_opaquerect(cmd.color, this->_info.bpp, this->mod_palette);
@@ -1135,7 +1137,7 @@ void Front_Qt::draw(const RDPOpaqueRect & cmd, const Rect & clip) {
     this->_screen[0]->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, qcolor);
 
     if (this->_record && !this->_replay) {
-        this->_graph_capture->draw(cmd, clip);
+        this->_graph_capture->draw(cmd, clip, gdi::GraphicDepth::from_bpp(this->_info.bpp));
         struct timeval time;
         gettimeofday(&time, nullptr);
         this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
@@ -1197,12 +1199,13 @@ void Front_Qt::draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
 }
 
 
-void Front_Qt::draw(const RDPLineTo & cmd, const Rect & clip) {
+void Front_Qt::draw(const RDPLineTo & cmd, const Rect & clip, gdi::GraphicDepth depth) {
     if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
+    (void) depth;
     //std::cout << "RDPLineTo" << std::endl;
     RDPLineTo new_cmd24 = cmd;
     new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, 24, this->mod_palette);
@@ -1214,7 +1217,7 @@ void Front_Qt::draw(const RDPLineTo & cmd, const Rect & clip) {
     this->_screen[0]->paintCache().drawLine(new_cmd24.startx, new_cmd24.starty, new_cmd24.endx, new_cmd24.endy);
 
     if (this->_record && !this->_replay) {
-        this->_graph_capture->draw(cmd, clip);
+        this->_graph_capture->draw(cmd, clip, gdi::GraphicDepth::from_bpp(this->_info.bpp));
         struct timeval time;
         gettimeofday(&time, nullptr);
         this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
@@ -1333,12 +1336,13 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
 }
 
 
-void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) {
+void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, gdi::GraphicDepth depth, const Bitmap & bitmap) {
     if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
+    (void) depth;
     //std::cout << "RDPMem3Blt " << std::hex << int(cmd.rop) << std::dec <<  std::endl;
     const +Rect drect = clip.intersect(cmd.rect);
     if (drect.isempty()){
@@ -1399,7 +1403,7 @@ void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bi
     }
 
     if (this->_record && !this->_replay) {
-        this->_graph_capture->draw(cmd, clip, bitmap);
+        this->_graph_capture->draw(cmd, clip, gdi::GraphicDepth::from_bpp(this->_info.bpp), bitmap);
         struct timeval time;
         gettimeofday(&time, nullptr);
         this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
@@ -1452,23 +1456,23 @@ void Front_Qt::draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
     LOG(LOG_WARNING, "DEFAULT: RDPMultiDstBlt");
 }
 
-void Front_Qt::draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+void Front_Qt::draw(const RDPMultiOpaqueRect & cmd, const Rect & clip, gdi::GraphicDepth depth) {
     if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
-
+    (void) depth;
     LOG(LOG_WARNING, "DEFAULT: RDPMultiOpaqueRect");
 }
 
-void Front_Qt::draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) {
+void Front_Qt::draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip, gdi::GraphicDepth depth) {
     if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
-
+    (void) depth;
     LOG(LOG_WARNING, "DEFAULT: RDPMultiPatBlt");
 }
 
@@ -1482,13 +1486,13 @@ void Front_Qt::draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
     LOG(LOG_WARNING, "DEFAULT: RDPMultiScrBlt");
 }
 
-void Front_Qt::draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) {
+void Front_Qt::draw(const RDPGlyphIndex & cmd, const Rect & clip, gdi::GraphicDepth depth, const GlyphCache & gly_cache) {
     if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
-
+    (void) depth;
     Rect screen_rect = clip.intersect(this->_info.width, this->_info.height);
     if (screen_rect.isempty()){
         return ;
@@ -1584,20 +1588,20 @@ void Front_Qt::draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCac
         //draw_pos, offset_y, color, cmd.bk.x + offset_x, cmd.bk.y,
         //clipped_glyph_fragment_rect, cmd.cache_id, gly_cache);
     if (this->_record && !this->_replay) {
-        this->_graph_capture->draw(cmd, clip, gly_cache);
+        this->_graph_capture->draw(cmd, clip, gdi::GraphicDepth::from_bpp(this->_info.bpp), gly_cache);
         struct timeval time;
         gettimeofday(&time, nullptr);
         this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
     }
 }
 
-void Front_Qt::draw(const RDPPolygonSC & cmd, const Rect & clip) {
+void Front_Qt::draw(const RDPPolygonSC & cmd, const Rect & clip, gdi::GraphicDepth depth) {
     if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
-
+    (void) depth;
     LOG(LOG_WARNING, "DEFAULT: RDPPolygonSC");
 
     /*RDPPolygonSC new_cmd24 = cmd;
@@ -1605,13 +1609,13 @@ void Front_Qt::draw(const RDPPolygonSC & cmd, const Rect & clip) {
     //this->gd.draw(new_cmd24, clip);
 }
 
-void Front_Qt::draw(const RDPPolygonCB & cmd, const Rect & clip) {
+void Front_Qt::draw(const RDPPolygonCB & cmd, const Rect & clip, gdi::GraphicDepth depth) {
     if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
-
+    (void) depth;
     LOG(LOG_WARNING, "DEFAULT: RDPPolygonCB");
 
     /*RDPPolygonCB new_cmd24 = cmd;
@@ -1620,26 +1624,26 @@ void Front_Qt::draw(const RDPPolygonCB & cmd, const Rect & clip) {
     //this->gd.draw(new_cmd24, clip);
 }
 
-void Front_Qt::draw(const RDPPolyline & cmd, const Rect & clip) {
+void Front_Qt::draw(const RDPPolyline & cmd, const Rect & clip, gdi::GraphicDepth depth) {
     if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
-
+    (void) depth;
     LOG(LOG_WARNING, "DEFAULT: RDPPolyline");
     /*RDPPolyline new_cmd24 = cmd;
     new_cmd24.PenColor  = color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette);*/
     //this->gd.draw(new_cmd24, clip);
 }
 
-void Front_Qt::draw(const RDPEllipseSC & cmd, const Rect & clip) {
+void Front_Qt::draw(const RDPEllipseSC & cmd, const Rect & clip, gdi::GraphicDepth depth) {
     if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
-
+    (void) depth;
     LOG(LOG_WARNING, "DEFAULT: RDPEllipseSC");
 
     /*RDPEllipseSC new_cmd24 = cmd;
@@ -1647,13 +1651,13 @@ void Front_Qt::draw(const RDPEllipseSC & cmd, const Rect & clip) {
     //this->gd.draw(new_cmd24, clip);
 }
 
-void Front_Qt::draw(const RDPEllipseCB & cmd, const Rect & clip) {
+void Front_Qt::draw(const RDPEllipseCB & cmd, const Rect & clip, gdi::GraphicDepth depth) {
     if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
-
+    (void) depth;
     LOG(LOG_WARNING, "DEFAULT: RDPEllipseCB");
 /*
     RDPEllipseCB new_cmd24 = cmd;
