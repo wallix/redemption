@@ -37,8 +37,8 @@
 #include "utils/difftimeval.hpp"
 #include "transport/transport.hpp"
 #include "gdi/capture_api.hpp"
+#include "gdi/protected_graphics.hpp"
 #include "core/RDP/RDPDrawable.hpp"
-#include "utils/protect_graphics.hpp"
 #include "utils/bitmap_with_png.hpp"
 
 BOOST_AUTO_TEST_CASE(TestModOSD)
@@ -135,10 +135,10 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
         now.tv_sec++;
         consumer.do_snapshot(now);
 
-        struct OSD : ProtectGraphics
+        struct OSD : gdi::ProtectedGraphics
         {
             OSD(GraphicApi & drawable, Rect const rect)
-                : ProtectGraphics(drawable, rect)
+                : gdi::ProtectedGraphics(drawable, rect)
                 , order_depth_(gdi::Depth::unspecified())
                 {}
             void refresh_rects(array_view<Rect const>) override {}

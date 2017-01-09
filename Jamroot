@@ -578,7 +578,6 @@ test-canonical utils/parse_ip_conntrack.hpp ;
 test-canonical utils/parser.hpp ;
 test-canonical utils/pattutils.hpp ;
 test-canonical utils/png.hpp : <library>png ;
-test-canonical utils/protect_graphics.hpp : <library>bitmap <library>png ;
 test-canonical utils/rdtsc.hpp ;
 test-canonical utils/rect.hpp ;
 test-canonical utils/redirection_info.hpp ;
@@ -1025,6 +1024,7 @@ test-canonical keyboard/keymap2.hpp ;
 test-canonical keyboard/keymapSym.hpp ;
 
 test-canonical gdi/graphic_cmd_color_converter.hpp ;
+test-canonical gdi/protected_graphics.hpp : <library>bitmap <library>png ;
 
 
 #explicit test_show_data.o bitmap_data_allocator.o test_data_draw ; #

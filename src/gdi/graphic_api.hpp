@@ -300,7 +300,6 @@ public:
         : order_depth_(depths) {}
 };
 
-
 inline gdi::GraphicApi & null_gd() {
     static gdi::BlackoutGraphic gd(gdi::Depth::unspecified());
     return gd;

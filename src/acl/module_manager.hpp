@@ -326,7 +326,7 @@ class ModuleManager : public MMIni
     } accounts;
 
 private:
-    class ModOSD : public ProtectGraphics, public mod_api
+    class ModOSD : public gdi::ProtectedGraphics, public mod_api
     {
         ModuleManager & mm;
 
@@ -339,7 +339,7 @@ private:
 
     public:
         explicit ModOSD(ModuleManager & mm)
-        : ProtectGraphics(mm.front, Rect{})
+        : gdi::ProtectedGraphics(mm.front, Rect{})
         , mm(mm)
         , order_depth_(gdi::Depth::unspecified())
         {}
@@ -449,7 +449,7 @@ private:
         bool try_input_invalidate(const Rect r)
         {
             if (!this->get_protected_rect().isempty() && r.has_intersection(this->get_protected_rect())) {
-                auto rects = subrect4(r, this->get_protected_rect());
+                auto rects = gdi::subrect4(r, this->get_protected_rect());
                 auto p = std::begin(rects);
                 auto e = std::remove_if(p, std::end(rects), [](Rect const & rect) {
                     return rect.isempty();

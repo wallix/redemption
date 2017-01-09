@@ -48,6 +48,8 @@
 
 #include "gdi/clip_from_cmd.hpp"
 
+namespace gdi
+{
 
 using subrect4_t = std::array<Rect, 4>;
 inline subrect4_t subrect4(const Rect rect, const Rect & protected_rect)
@@ -226,3 +228,5 @@ private:
         }
     }
 };
+
+}
