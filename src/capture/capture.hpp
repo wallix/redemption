@@ -500,7 +500,7 @@ public:
 };
 
 
-class PngCapture : public gdi::UpdateConfigCaptureApi, public gdi::CaptureApi
+class PngCapture : public gdi::CaptureApi
 {
 public:
     OutFilenameSequenceTransport trans;
@@ -528,9 +528,6 @@ public:
     {}
 
 private:
-    void update_config(Inifile const & ini) override {
-    }
-
     std::chrono::microseconds do_snapshot(
         timeval const & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
