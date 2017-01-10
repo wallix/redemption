@@ -540,7 +540,7 @@ private:
                 case 15: this->build_graphics(encode_color15{}); break;
                 case 16: this->build_graphics(encode_color16{}); break;
                 case 24:
-                case 32: this->gd = &this->graphics_update_pdu(); break;
+                case 32: this->build_graphics(encode_color24{}); break;
             }
 
             assert(this->gd);
