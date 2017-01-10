@@ -1023,7 +1023,7 @@ test-canonical front/front.hpp
 test-canonical keyboard/keymap2.hpp ;
 test-canonical keyboard/keymapSym.hpp ;
 
-test-canonical gdi/graphic_cmd_color_converter.hpp ;
+test-canonical gdi/graphic_cmd_color.hpp ;
 test-canonical gdi/protected_graphics.hpp : <library>bitmap <library>png ;
 
 

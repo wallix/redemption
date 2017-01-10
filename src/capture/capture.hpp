@@ -71,7 +71,7 @@
 #include "configs/config.hpp"
 
 #include "gdi/capture_api.hpp"
-#include "gdi/graphic_cmd_color_converter.hpp"
+#include "gdi/graphic_cmd_color.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/capture_probe_api.hpp"
 #include "gdi/kbd_input_api.hpp"
@@ -429,38 +429,11 @@ public:
             }
         }
 
-    protected:
+    private:
         template<class... Ts>
         void draw_impl(Ts const & ... args) {
             for (gdi::GraphicApi & gd : this->gds){
                 gd.draw(args...);
-            }
-        }
-
-    public:
-        PtrColorConverter cmd_color_distributor;
-        MouseTrace const & mouse;
-        std::vector<GdRef> gds;
-        std::vector<std::reference_wrapper<gdi::CaptureApi>> snapshoters;
-
-        gdi::Depth order_depth_ = gdi::Depth::unspecified();
-        gdi::RngByBpp<std::vector<GdRef>::iterator> rng_by_bpp;
-
-        Graphic(MouseTrace const & mouse)
-        : mouse(mouse)
-        {}
-
-        template<class Cmd, class... Ts>
-        void draw_impl(Cmd const & cmd, Ts const & ... args)
-        {
-            if (gdi::GraphicCmdColor::is_encodable_cmd_color(cmd)) {
-                assert(gdi::Depth::unspecified() != this->order_depth_);
-                gdi::draw_cmd_color_convert(this->order_depth_, this->rng_by_bpp, cmd, args...);
-            }
-            else {
-                for (gdi::GraphicApi & gd : this->gds){
-                    gd.draw(cmd, args...);
-                }
             }
         }
 
@@ -480,6 +453,18 @@ public:
                 }
             }
         }
+
+    public:
+        PtrColorConverter cmd_color_distributor;
+        MouseTrace const & mouse;
+        std::vector<GdRef> gds;
+        std::vector<std::reference_wrapper<gdi::CaptureApi>> snapshoters;
+
+        gdi::Depth order_depth_ = gdi::Depth::unspecified();
+
+        Graphic(MouseTrace const & mouse)
+        : mouse(mouse)
+        {}
 
         gdi::Depth const & order_depth() const override {
             return this->order_depth_;
@@ -512,7 +497,6 @@ public:
     {
         auto const order_depth = gdi::Depth::from_bpp(this->order_bpp);
         auto & gds = this->graphic_api.gds;
-        this->graphic_api.rng_by_bpp = {order_depth, gds.begin(), gds.end()};
         this->graphic_api.order_depth_ = order_depth;
     }
 
