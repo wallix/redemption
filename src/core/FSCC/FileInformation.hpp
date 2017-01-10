@@ -322,7 +322,7 @@ enum : uint32_t {
 
 
 static inline
-const char * get_FileAttributes_name(uint32_t fileAttribute) {
+std::string get_FileAttributes_name(uint32_t fileAttribute) {
 
     std::string str;
     (fileAttribute & FILE_ATTRIBUTE_READONLY) ? str+="FILE_ATTRIBUTE_READONLY " :str;
@@ -341,7 +341,7 @@ const char * get_FileAttributes_name(uint32_t fileAttribute) {
     (fileAttribute & FILE_ATTRIBUTE_INTEGRITY_STREAM) ? str+="FILE_ATTRIBUTE_INTEGRITY_STREAM " : str;
     (fileAttribute & FILE_ATTRIBUTE_NO_SCRUB_DATA) ? str+="FILE_ATTRIBUTE_NO_SCRUB_DATA " : str;
 
-    return str.c_str();
+    return str;
 }
 
 
@@ -778,7 +778,7 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Attribute Tag Information:");
-        LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
+        LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes).c_str());
         LOG(LOG_INFO, "          * ReparseTag     = 0x%08x (4 bytes)", this->ReparseTag);
     }
 };
@@ -960,7 +960,7 @@ public:
         LOG(LOG_INFO, "          * LastAccessTime = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime_);
         LOG(LOG_INFO, "          * LastWriteTime  = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime_);
         LOG(LOG_INFO, "          * ChangeTime     = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
-        LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes): %s", this->FileAttributes_, get_FileAttributes_name(this->FileAttributes_));
+        LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes): %s", this->FileAttributes_, get_FileAttributes_name(this->FileAttributes_).c_str());
     }
 };  // FileBasicInformation
 
@@ -1311,7 +1311,7 @@ public:
         LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime);
         LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime);
         LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
-        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
+        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes).c_str());
         LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->file_name.size()));
         LOG(LOG_INFO, "          * EaSize          = %d (4 bytes)", int(this->EaSize));
         LOG(LOG_INFO, "          * ShortNameLength = %d (1 byte)", int(this->short_name.size()));
@@ -1481,7 +1481,7 @@ public:
         LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime_);
         LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime_);
         LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
-        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes_, get_FileAttributes_name(this->FileAttributes_));
+        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes_, get_FileAttributes_name(this->FileAttributes_).c_str());
         LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->FileName.size()));
         LOG(LOG_INFO, "          * FileName        = \"%s\"", this->FileName.c_str());
     }
@@ -1970,7 +1970,7 @@ public:
         LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime);
         LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime);
         LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
-        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
+        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes).c_str());
         LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->file_name.size()));
         LOG(LOG_INFO, "          * EaSize          = %d (4 bytes)", int(this->EaSize));
         LOG(LOG_INFO, "          * FileName        = \"%s\"", this->file_name.c_str());

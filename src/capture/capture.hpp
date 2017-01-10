@@ -1520,7 +1520,7 @@ public:
 class MetaCaptureImpl
 {
 public:
-    local_fd fd;
+    local_fd file;
     OutFileTransport meta_trans;
     SessionMeta meta;
     SessionLogAgent session_log_agent;
@@ -1531,7 +1531,7 @@ public:
         std::string record_path,
         const char * const basename,
         bool enable_agent)
-    : fd([](const char * filename){
+    : file([](const char * filename){
         int fd = ::open(filename, O_CREAT | O_TRUNC | O_WRONLY, 0440);
         if (fd < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
@@ -1539,7 +1539,7 @@ public:
         }
         return fd;
     }(record_path.append(basename).append(".meta").c_str()))
-    , meta_trans(this->fd.get())
+    , meta_trans(this->file.fd())
     , meta(now, this->meta_trans)
     , session_log_agent(this->meta)
     , enable_agent(enable_agent)

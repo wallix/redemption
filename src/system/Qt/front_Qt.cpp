@@ -136,13 +136,14 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
             commandIsValid += PORT_GOTTEN;
         }
     }
-    CHANNELS::ChannelDef * channel = new CHANNELS::ChannelDef(channel_names::cliprdr,
-                                                              GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                                              GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                                              GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL,
-                                                              1601);
-    this->_to_client_sender._channel = *channel;
-    this->_cl.push_back(*channel);
+
+    this->_to_client_sender._channel = CHANNELS::ChannelDef(
+        channel_names::cliprdr,
+        GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+        GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+        GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL,
+        1601);
+    this->_cl.push_back(this->_to_client_sender._channel);
 
     if (this->mod_bpp == this->_info.bpp) {
         this->mod_palette = BGRPalette::classic_332();
@@ -2216,11 +2217,12 @@ void Front_Qt::send_imageBuffer_to_clipboard() {
 }
 
 void Front_Qt::send_textBuffer_to_clipboard(bool isTextHtml) {
-    uint8_t * utf8_string = new uint8_t[this->_bufferRDPClipboardChannelSizeTotal/2];
+    std::string str;
+    str.resize(this->_bufferRDPClipboardChannelSizeTotal/2);
     size_t length_of_utf8_string = ::UTF16toUTF8(
         this->_bufferRDPClipboardChannel, this->_bufferRDPClipboardChannelSizeTotal,
-        utf8_string, this->_bufferRDPClipboardChannelSizeTotal/2);
-    std::string str(reinterpret_cast<const char*>(utf8_string), length_of_utf8_string);
+        reinterpret_cast<uint8_t*>(&str[0]), this->_bufferRDPClipboardChannelSizeTotal/2);
+    str.resize(length_of_utf8_string);
 
     if (isTextHtml) {
        str = this->HTMLtoText(str);
@@ -2231,7 +2233,6 @@ void Front_Qt::send_textBuffer_to_clipboard(bool isTextHtml) {
     this->_connector->_local_clipboard_stream = true;
 
     this->empty_buffer();
-    delete (utf8_string);
 }
 
 void Front_Qt::empty_buffer() {

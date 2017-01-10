@@ -83,7 +83,7 @@ struct Rect {
     // special cases: contains returns true
     // - if both rects are empty
     // - if inner rect is empty
-    bool contains(const Rect inner) const {
+    bool contains(Rect inner) const {
         return (inner.x >= this->x
               && inner.y >= this->y
               && inner.right() <= this->right()
@@ -166,7 +166,7 @@ struct Rect {
         return this->intersect(Rect(0, 0, width, height));
     }
 
-    Rect intersect(const Rect in) const
+    Rect intersect(Rect in) const
     {
         int max_x = std::max(in.x, this->x);
         int max_y = std::max(in.y, this->y);
@@ -176,7 +176,7 @@ struct Rect {
         return Rect(max_x, max_y, min_right - max_x, min_bottom - max_y);
     }
 
-    bool has_intersection(const Rect in) const
+    bool has_intersection(Rect in) const
     {
         return (this->cx && this->cx && !in.isempty()
         && ((in.x >= this->x && in.x < this->right()) || (this->x >= in.x && this->x < in.right()))
@@ -187,7 +187,7 @@ struct Rect {
 
     // Ensemblist difference
     template<class Fn>
-    void difference(const Rect a, Fn fn) const
+    void difference(Rect a, Fn fn) const
     {
         const Rect intersect = this->intersect(a);
 
@@ -327,7 +327,7 @@ struct LineEquation {
         return (this->dY*x + this->c) / this->dX;
     }
 
-    bool compute_intersection(const Rect rect, int region, int & x, int & y) const {
+    bool compute_intersection(Rect rect, int region, int & x, int & y) const {
         int interX = 0;
         int interY = 0;
         bool found = false;
@@ -374,7 +374,7 @@ struct LineEquation {
         return found;
     }
 
-    bool resolve(const Rect rect) {
+    bool resolve(Rect rect) {
         int aPosition = rect.region_pt(this->seg.a.x, this->seg.a.y);
         int bPosition = rect.region_pt(this->seg.b.x, this->seg.b.y);
 
@@ -409,7 +409,7 @@ class DeltaRect {
     int dheight;
     int dwidth;
 
-    DeltaRect(const Rect r1, const Rect r2)
+    DeltaRect(Rect r1, Rect r2)
     : dleft(r1.x - r2.x)
     , dtop(r1.y - r2.y)
     , dheight(r1.cy - r2.cy)

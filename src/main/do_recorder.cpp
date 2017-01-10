@@ -913,7 +913,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
               || end_cap != begin_cap);
 
             if (test){
-                auth_api * authentifier = nullptr;      
+                auth_api * authentifier = nullptr;
                 for (unsigned i = 1; i < file_count ; i++) {
                     in_wrm_trans.next();
                 }
@@ -951,8 +951,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                       );
 
                         if (verbose) {
-                            std::cout << "Output file path: " 
-                                      << outfile_path << outfile_basename << outfile_extension 
+                            std::cout << "Output file path: "
+                                      << outfile_path << outfile_basename << outfile_extension
                                       << '\n' << std::endl;
                         }
 
@@ -1007,13 +1007,13 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
 
                             bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-                            bool capture_png = bool(capture_flags & CaptureFlags::png) 
+                            bool capture_png = bool(capture_flags & CaptureFlags::png)
                                             && (!authentifier || png_params.png_limit > 0);
-                            bool capture_pattern_checker = authentifier 
+                            bool capture_pattern_checker = authentifier
                                 && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
                                     || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
-                                    
-                            bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) 
+
+                            bool capture_ocr = bool(capture_flags & CaptureFlags::ocr)
                                                 || capture_pattern_checker;
                             bool capture_flv = bool(capture_flags & CaptureFlags::flv);
                             bool capture_flv_full = full_video;
@@ -1028,7 +1028,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                             OcrParams ocr_params = {};
 
-                                    
+
                             Capture capture(capture_wrm, wrm_params
                                     , capture_png, png_params
                                     , capture_pattern_checker
@@ -1681,8 +1681,10 @@ extern "C" {
         break;
         default: // DECrypter
             try {
-                int fd  = open(rp.full_path.c_str(), O_RDONLY);
-                if (fd == -1) {
+                // TODO file is unused
+                local_fd file(rp.full_path, O_RDONLY);
+
+                if (!file.is_open()) {
                     std::cerr << "can't open file " << rp.full_path << "\n\n";
                     std::puts("decrypt failed\n");
                     return -1;
@@ -1696,14 +1698,14 @@ extern "C" {
                 ifile_read_encrypted in_t(cctx, 1);
 
                 ssize_t res = -1;
-                const int fd1 = open(rp.output_filename.c_str(), O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
+                local_fd fd1(rp.output_filename, O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
 
-                if (fd1 != -1) {
-                    OutFileTransport out_t(fd1);
-
-                    char mem[4096];
+                if (fd1.is_open()) {
+                    OutFileTransport out_t(fd1.fd());
 
                     try {
+                        char mem[4096];
+
                         in_t.open(rp.full_path.c_str());
                         while (1) {
                             res = in_t.read(mem, sizeof(mem));
@@ -1720,7 +1722,6 @@ extern "C" {
                         LOG(LOG_INFO, "Exited on exception");
                         res = -1;
                     }
-                    close(fd);
                 }
                 else {
                     std::cerr << strerror(errno) << std::endl << std::endl;
