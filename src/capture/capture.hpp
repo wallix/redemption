@@ -38,6 +38,7 @@
 #include <cstdio>
 #include <string>
 #include <chrono>
+#include <algorithm>
 
 #include "utils/log.hpp"
 
@@ -82,6 +83,7 @@
 
 #include "acl/auth_api.hpp"
 
+#include "capture/utils/save_state_chunk.hpp"
 #include "capture/utils/match_finder.hpp"
 #include "capture/title_extractors/agent_title_extractor.hpp"
 #include "capture/title_extractors/ocr_title_filter.hpp"
@@ -94,6 +96,7 @@
 #include "capture/flv_params.hpp"
 #include "capture/ocr_params.hpp"
 #include "capture/wrm_label.hpp"
+#include "capture/FileToGraphic.hpp"
 
 #include "capture/cryptofile.hpp"
 
@@ -101,19 +104,477 @@
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/RDPSerializer.hpp"
 #include "core/RDP/share.hpp"
+#include "capture/RDPChunkedDevice.hpp"
 
-#include "gdi/dump_png24.hpp"
-#include "gdi/kbd_input_api.hpp"
-#include "gdi/capture_probe_api.hpp"
-
-#include "RDPChunkedDevice.hpp"
-
-#include "capture/utils/save_state_chunk.hpp"
 #include "capture/wrm_label.hpp"
 
-#include "capture/new_kbdcapture.hpp"
-
 #include "openssl_crypto.hpp"
+
+#include "utils/match_finder.hpp"
+#include "utils/sugar/cast.hpp"
+
+#include "gdi/kbd_input_api.hpp"
+#include "gdi/capture_api.hpp"
+#include "gdi/capture_probe_api.hpp"
+
+#include "utils/sugar/array_view.hpp"
+#include "utils/sugar/bytes_t.hpp"
+#include "utils/sugar/make_unique.hpp"
+
+
+class PatternSearcher
+{
+    struct TextSearcher
+    {
+        re::Regex::PartOfText searcher;
+        re::Regex::range_matches matches;
+
+        void reset(re::Regex & rgx) {
+            this->searcher = rgx.part_of_text_search(false);
+        }
+
+        bool next(uint8_t const * uchar) {
+            return re::Regex::match_success == this->searcher.next(char_ptr_cast(uchar));
+        }
+
+        re::Regex::range_matches const & match_result(re::Regex & rgx) {
+            this->matches.clear();
+            return rgx.match_result(this->matches, false);
+        }
+    };
+
+    class Utf8KbdData
+    {
+        static constexpr const size_t buf_len = 128;
+
+        uint8_t kbd_data[buf_len] = { 0 };
+        uint8_t * p = kbd_data;
+        uint8_t * beg = p;
+
+        uint8_t * data_begin() {
+            using std::begin;
+            return begin(this->kbd_data);
+        }
+        uint8_t * data_end() {
+            using std::end;
+            return end(this->kbd_data);
+        }
+
+    public:
+        uint8_t const * get_data() const {
+            return this->beg;
+        }
+
+        void reset() {
+            this->p = this->kbd_data;
+            this->beg = this->p;
+        }
+
+        void push_utf8_char(uint8_t const * c, size_t char_len) {
+            assert(c && char_len <= 4);
+
+            if (static_cast<size_t>(this->data_end() - this->beg) < char_len + 1u) {
+                std::size_t pchar_len = 0;
+                do {
+                    size_t const len = get_utf8_char_size(this->beg);
+                    size_t const tailroom = this->data_end() - this->beg;
+                    if (tailroom < len) {
+                        this->beg = this->data_begin() + (len - tailroom);
+                    }
+                    else {
+                        this->beg += len;
+                    }
+                    pchar_len += len;
+                } while (pchar_len < char_len + 1);
+            }
+
+            auto ec = c + char_len;
+            for (; c != ec; ++c) {
+                *this->p = *c;
+                ++this->p;
+                if (this->p == this->data_end()) {
+                    this->p = this->data_begin();
+                }
+            }
+            *this->p = 0;
+        }
+
+        void linearize() {
+            if (!this->is_linearized()) {
+                std::rotate(this->data_begin(), this->beg, this->data_end());
+                auto const diff = this->beg - this->p;
+                this->p = this->data_end() - diff;
+                this->beg = this->data_begin();
+            }
+        }
+
+        bool is_linearized() const {
+            return this->beg <= this->p;
+        }
+    };
+
+    utils::MatchFinder::NamedRegexArray regexes_filter;
+    std::unique_ptr<TextSearcher[]> regexes_searcher;
+    Utf8KbdData utf8_kbd_data;
+
+public:
+    PatternSearcher(utils::MatchFinder::ConfigureRegexes conf_regex, char const * filters, int verbose = 0) {
+        utils::MatchFinder::configure_regexes(conf_regex, filters, this->regexes_filter, verbose, true);
+        auto const count_regex = this->regexes_filter.size();
+        if (count_regex) {
+            this->regexes_searcher = std::make_unique<TextSearcher[]>(count_regex);
+            auto searcher_it = this->regexes_searcher.get();
+            for (auto & named_regex : this->regexes_filter) {
+                searcher_it->reset(named_regex.regex);
+                ++searcher_it;
+            }
+        }
+    }
+
+    void rewind_search() {
+        TextSearcher * test_searcher_it = this->regexes_searcher.get();
+        for (utils::MatchFinder::NamedRegex & named_regex : this->regexes_filter) {
+            test_searcher_it->reset(named_regex.regex);
+            ++test_searcher_it;
+        }
+    }
+
+    template<class Report>
+    bool test_uchar(uint8_t const * const utf8_char, size_t const char_len, Report report)
+    {
+        if (char_len == 0) {
+            return false;
+        }
+
+        bool has_notify = false;
+
+        utf8_kbd_data.push_utf8_char(utf8_char, char_len);
+        TextSearcher * test_searcher_it = this->regexes_searcher.get();
+
+        for (utils::MatchFinder::NamedRegex & named_regex : this->regexes_filter) {
+            if (test_searcher_it->next(utf8_char)) {
+                utf8_kbd_data.linearize();
+                char const * char_kbd_data = ::char_ptr_cast(utf8_kbd_data.get_data());
+                test_searcher_it->reset(named_regex.regex);
+
+                if (named_regex.regex.search_with_matches(char_kbd_data)) {
+                    auto & match_result = test_searcher_it->match_result(named_regex.regex);
+                    auto str = (!match_result.empty() && match_result[0].first)
+                        ? match_result[0].first
+                        : char_kbd_data;
+                    report(named_regex.name.c_str(), str);
+                    has_notify = true;
+                }
+            }
+
+            ++test_searcher_it;
+        }
+        if (has_notify) {
+            utf8_kbd_data.reset();
+        }
+
+        return has_notify;
+    }
+
+    template<class Report>
+    bool test_uchar(uint32_t uchar, Report report)
+    {
+        uint8_t utf8_char[5];
+        size_t const char_len = UTF32toUTF8(uchar, utf8_char, 4u);
+        return this->test_uchar(utf8_char, char_len, report);
+    }
+
+    bool is_empty() const {
+        return this->regexes_filter.empty();
+    }
+};
+
+
+template<class Utf8CharFn, class NoPrintableFn>
+void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn, NoPrintableFn no_printable_fn)
+{
+    constexpr struct {
+        uint32_t uchar;
+        array_view_const_char str;
+        // for std::sort and std::lower_bound
+        operator uint32_t () const { return this->uchar; }
+    } noprintable_table[] = {
+        {0x00000008, cstr_array_view("/<backspace>")},
+        {0x00000009, cstr_array_view("/<tab>")},
+        {0x0000000D, cstr_array_view("/<enter>")},
+        {0x0000001B, cstr_array_view("/<escape>")},
+        {0x0000007F, cstr_array_view("/<delete>")},
+        {0x00002190, cstr_array_view("/<left>")},
+        {0x00002191, cstr_array_view("/<up>")},
+        {0x00002192, cstr_array_view("/<right>")},
+        {0x00002193, cstr_array_view("/<down>")},
+        {0x00002196, cstr_array_view("/<home>")},
+        {0x00002198, cstr_array_view("/<end>")},
+    };
+    using std::begin;
+    using std::end;
+    // TODO used static_assert
+    assert(std::is_sorted(begin(noprintable_table), end(noprintable_table)));
+
+    auto p = std::lower_bound(begin(noprintable_table), end(noprintable_table), uchar);
+    if (p != end(noprintable_table) && *p == uchar) {
+        no_printable_fn(p->str);
+    }
+    else {
+        utf32_char_fn(uchar);
+    }
+}
+
+
+class PatternKbd : public gdi::KbdInputApi
+{
+    auth_api * authentifier;
+    PatternSearcher pattern_kill;
+    PatternSearcher pattern_notify;
+
+public:
+    PatternKbd(
+        auth_api * authentifier,
+        char const * str_pattern_kill, char const * str_pattern_notify,
+        int verbose = 0)
+    : authentifier(authentifier)
+    , pattern_kill(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
+                   str_pattern_kill && authentifier ? str_pattern_kill : nullptr, verbose)
+    , pattern_notify(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
+                     str_pattern_notify && authentifier ? str_pattern_notify : nullptr, verbose)
+    {}
+
+    bool contains_pattern() const {
+        return !this->pattern_kill.is_empty() || !this->pattern_notify.is_empty();
+    }
+
+    bool kbd_input(const timeval& /*now*/, uint32_t uchar) override {
+        bool can_be_sent_to_server = true;
+
+        filtering_kbd_input(
+            uchar,
+            [this, &can_be_sent_to_server](uint32_t uchar) {
+                uint8_t buf_char[5];
+                size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char));
+
+                if (char_len > 0) {
+                    buf_char[char_len] = '\0';
+                    if (!this->pattern_kill.is_empty()) {
+                        can_be_sent_to_server &= !this->test_pattern(
+                            buf_char, char_len, this->pattern_kill, true
+                        );
+                    }
+                    if (!this->pattern_notify.is_empty()) {
+                        this->test_pattern(
+                            buf_char, char_len, this->pattern_notify, false
+                        );
+                    }
+                }
+            },
+            [this](array_view_const_char const &) {
+                this->pattern_kill.rewind_search();
+                this->pattern_notify.rewind_search();
+            }
+        );
+
+        return can_be_sent_to_server;
+    }
+
+    void enable_kbd_input_mask(bool /*enable*/) override {
+    }
+
+private:
+    bool test_pattern(
+        uint8_t const * uchar, size_t char_len,
+        PatternSearcher & searcher, bool is_pattern_kill
+    ) {
+        return searcher.test_uchar(
+            uchar, char_len,
+            [&, this](std::string const & pattern, char const * str) {
+                assert(this->authentifier);
+                utils::MatchFinder::report(
+                    *this->authentifier,
+                    is_pattern_kill,
+                    utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
+                    pattern.c_str(),
+                    str
+                );
+            }
+        );
+    }
+};
+
+
+template<class Inherit>
+class TextKbd : public gdi::KbdInputApi
+{
+protected:
+    OutStream kbd_stream;
+    bool keyboard_input_mask_enabled = false;
+
+    explicit TextKbd(array_view_u8 buffer)
+    : kbd_stream(buffer)
+    {}
+
+public:
+    void enable_kbd_input_mask(bool enable) override {
+        if (this->keyboard_input_mask_enabled != enable) {
+            this->inherit_flush();
+            this->keyboard_input_mask_enabled = enable;
+        }
+    }
+
+protected:
+    void write_shadow_keys() {
+        if (!this->kbd_stream.has_room(1)) {
+            this->inherit_flush();
+        }
+        this->kbd_stream.out_uint8('*');
+    }
+
+    void write_keys(uint32_t uchar) {
+        filtering_kbd_input(
+            uchar,
+            [this](uint32_t uchar) {
+                uint8_t buf_char[5];
+                if (uchar == '/') {
+                    this->copy_bytes({"//", 2});
+                }
+                else if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
+                    this->copy_bytes({buf_char, char_len});
+                }
+            },
+            [this](array_view_const_char no_printable_str) {
+                this->copy_bytes(no_printable_str);
+            }
+        );
+    }
+
+private:
+    void copy_bytes(const_bytes_array bytes) {
+        if (this->kbd_stream.tailroom() < bytes.size()) {
+            this->inherit_flush();
+        }
+        this->kbd_stream.out_copy_bytes(bytes.data(), std::min(this->kbd_stream.tailroom(), bytes.size()));
+    }
+
+    void inherit_flush() {
+        static_cast<Inherit&>(*this).flush();
+    }
+};
+
+
+class SyslogKbd : public TextKbd<SyslogKbd>, public gdi::CaptureApi
+{
+    uint8_t kbd_buffer[1024];
+    timeval last_snapshot;
+
+public:
+    explicit SyslogKbd(timeval const & now)
+    : TextKbd<SyslogKbd>(this->kbd_buffer)
+    , last_snapshot(now)
+    {}
+
+    ~SyslogKbd() {
+        this->flush();
+    }
+
+    bool kbd_input(const timeval& /*now*/, uint32_t keys) override {
+        if (this->keyboard_input_mask_enabled) {
+            this->write_shadow_keys();
+        }
+        else {
+            this->write_keys(keys);
+        }
+        return true;
+    }
+
+    void flush() {
+        if (this->kbd_stream.get_offset()) {
+            LOG(LOG_INFO, R"x(type="KBD input" data="%*s")x",
+                int(this->kbd_stream.get_offset()),
+                reinterpret_cast<char const *>(this->kbd_stream.get_data()));
+            this->kbd_stream.rewind();
+        }
+    }
+
+private:
+    std::chrono::microseconds do_snapshot(
+        const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval
+    ) override {
+        (void)cursor_x;
+        (void)cursor_y;
+        (void)ignore_frame_in_timeval;
+        std::chrono::microseconds const time_to_wait = std::chrono::seconds{2};
+        std::chrono::microseconds const diff {difftimeval(now, this->last_snapshot)};
+
+        if (diff < time_to_wait && this->kbd_stream.get_offset() < 8 * sizeof(uint32_t)) {
+            return time_to_wait;
+        }
+
+        this->flush();
+
+        this->last_snapshot = now;
+
+        return time_to_wait;
+    }
+};
+
+
+namespace {
+    constexpr array_view_const_char session_log_prefix() { return cstr_array_view("data='"); }
+    constexpr array_view_const_char session_log_suffix() { return cstr_array_view("'"); }
+}
+
+class SessionLogKbd : public TextKbd<SessionLogKbd>, public gdi::CaptureProbeApi
+{
+    static const std::size_t buffer_size = 64;
+    uint8_t buffer[buffer_size + session_log_prefix().size() + session_log_suffix().size() + 1];
+    bool is_probe_enabled_session = false;
+    auth_api & authentifier;
+
+public:
+    explicit SessionLogKbd(auth_api & authentifier)
+    : TextKbd<SessionLogKbd>({this->buffer + session_log_prefix().size(), buffer_size})
+    , authentifier(authentifier)
+    {
+        memcpy(this->buffer, session_log_prefix().data(), session_log_prefix().size());
+    }
+
+    ~SessionLogKbd() {
+        this->flush();
+    }
+
+    bool kbd_input(const timeval& /*now*/, uint32_t uchar) override {
+        if (this->keyboard_input_mask_enabled) {
+            if (this->is_probe_enabled_session) {
+                this->write_shadow_keys();
+            }
+        }
+        else {
+            this->write_keys(uchar);
+        }
+        return true;
+    }
+
+    void flush() {
+        if (this->kbd_stream.get_offset()) {
+            memcpy(this->kbd_stream.get_current(), session_log_suffix().data(), session_log_suffix().size() + 1);
+            this->authentifier.log4(false, "KBD_INPUT", reinterpret_cast<char const *>(this->buffer));
+            this->kbd_stream.rewind();
+        }
+    }
+
+    void session_update(const timeval& /*now*/, array_view_const_char message) override {
+        this->is_probe_enabled_session = (::strcmp(message.data(), "Probe.Status=Unknown") != 0);
+        this->flush();
+    }
+
+    void possible_active_window_change() override {
+        this->flush();
+    }
+};
+
 
 using std::begin;
 using std::end;
@@ -144,6 +605,225 @@ struct ApiRegisterElement
 private:
     list_type * l = nullptr;
     std::size_t i = ~std::size_t{};
+};
+
+
+class FileToChunk
+{
+    unsigned char stream_buf[65536];
+    InStream stream;
+
+    CompressionInTransportBuilder compression_builder;
+
+    Transport * trans_source;
+    Transport * trans;
+
+    // variables used to read batch of orders "chunks"
+    uint32_t chunk_size;
+    uint16_t chunk_type;
+    uint16_t chunk_count;
+
+    uint16_t nbconsumers;
+
+    RDPChunkedDevice * consumers[10];
+
+public:
+    timeval record_now;
+
+    bool meta_ok;
+
+    uint16_t info_version;
+    uint16_t info_width;
+    uint16_t info_height;
+    uint16_t info_bpp;
+    uint16_t info_number_of_cache;
+    bool     info_use_waiting_list;
+    uint16_t info_cache_0_entries;
+    uint16_t info_cache_0_size;
+    bool     info_cache_0_persistent;
+    uint16_t info_cache_1_entries;
+    uint16_t info_cache_1_size;
+    bool     info_cache_1_persistent;
+    uint16_t info_cache_2_entries;
+    uint16_t info_cache_2_size;
+    bool     info_cache_2_persistent;
+    uint16_t info_cache_3_entries;
+    uint16_t info_cache_3_size;
+    bool     info_cache_3_persistent;
+    uint16_t info_cache_4_entries;
+    uint16_t info_cache_4_size;
+    bool     info_cache_4_persistent;
+    WrmCompressionAlgorithm info_compression_algorithm;
+
+    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    {
+        none,
+        end_of_transport = 1,
+    };
+
+    FileToChunk(Transport * trans, Verbose verbose)
+        : stream(this->stream_buf)
+        , compression_builder(*trans, WrmCompressionAlgorithm::no_compression)
+        , trans_source(trans)
+        , trans(trans)
+        // variables used to read batch of orders "chunks"
+        , chunk_size(0)
+        , chunk_type(0)
+        , chunk_count(0)
+        , nbconsumers(0)
+        , consumers()
+        , meta_ok(false)
+        , info_version(0)
+        , info_width(0)
+        , info_height(0)
+        , info_bpp(0)
+        , info_number_of_cache(0)
+        , info_use_waiting_list(true)
+        , info_cache_0_entries(0)
+        , info_cache_0_size(0)
+        , info_cache_0_persistent(false)
+        , info_cache_1_entries(0)
+        , info_cache_1_size(0)
+        , info_cache_1_persistent(false)
+        , info_cache_2_entries(0)
+        , info_cache_2_size(0)
+        , info_cache_2_persistent(false)
+        , info_cache_3_entries(0)
+        , info_cache_3_size(0)
+        , info_cache_3_persistent(false)
+        , info_cache_4_entries(0)
+        , info_cache_4_size(0)
+        , info_cache_4_persistent(false)
+        , info_compression_algorithm(WrmCompressionAlgorithm::no_compression)
+        , verbose(verbose)
+    {
+        while (this->next_chunk()) {
+            this->interpret_chunk();
+            if (this->meta_ok) {
+                break;
+            }
+        }
+    }
+
+    void add_consumer(RDPChunkedDevice * chunk_device) {
+        REDASSERT(nbconsumers < (sizeof(consumers) / sizeof(consumers[0]) - 1));
+        this->consumers[this->nbconsumers++] = chunk_device;
+    }
+
+    bool next_chunk() {
+        try {
+            {
+                auto const buf_sz = FileToGraphic::HEADER_SIZE;
+                unsigned char buf[buf_sz];
+                auto * p = buf;
+                this->trans->recv(&p, buf_sz);
+                InStream header(buf);
+                this->chunk_type  = header.in_uint16_le();
+                this->chunk_size  = header.in_uint32_le();
+                this->chunk_count = header.in_uint16_le();
+            }
+
+            if (this->chunk_size > 65536) {
+                LOG(LOG_INFO,"chunk_size (%d) > 65536", this->chunk_size);
+                return false;
+            }
+            this->stream = InStream(this->stream_buf, 0);   // empty stream
+            if (this->chunk_size - FileToGraphic::HEADER_SIZE > 0) {
+                auto * p = this->stream_buf;
+                this->trans->recv(&p, this->chunk_size - FileToGraphic::HEADER_SIZE);
+                this->stream = InStream(this->stream_buf, p - this->stream_buf);
+            }
+        }
+        catch (Error const & e) {
+            if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
+                throw;
+            }
+
+            if (this->verbose) {
+                LOG(LOG_INFO, "receive error %u : end of transport", e.id);
+            }
+            // receive error, end of transport
+            return false;
+        }
+
+        return true;
+    }
+
+    void interpret_chunk() {
+        switch (this->chunk_type) {
+        case META_FILE:
+            this->info_version                   = this->stream.in_uint16_le();
+            this->info_width                     = this->stream.in_uint16_le();
+            this->info_height                    = this->stream.in_uint16_le();
+            this->info_bpp                       = this->stream.in_uint16_le();
+            this->info_cache_0_entries           = this->stream.in_uint16_le();
+            this->info_cache_0_size              = this->stream.in_uint16_le();
+            this->info_cache_1_entries           = this->stream.in_uint16_le();
+            this->info_cache_1_size              = this->stream.in_uint16_le();
+            this->info_cache_2_entries           = this->stream.in_uint16_le();
+            this->info_cache_2_size              = this->stream.in_uint16_le();
+
+            if (this->info_version <= 3) {
+                this->info_number_of_cache       = 3;
+                this->info_use_waiting_list      = false;
+
+                this->info_cache_0_persistent    = false;
+                this->info_cache_1_persistent    = false;
+                this->info_cache_2_persistent    = false;
+            }
+            else {
+                this->info_number_of_cache       = this->stream.in_uint8();
+                this->info_use_waiting_list      = (this->stream.in_uint8() ? true : false);
+
+                this->info_cache_0_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_1_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_2_persistent    = (this->stream.in_uint8() ? true : false);
+
+                this->info_cache_3_entries       = this->stream.in_uint16_le();
+                this->info_cache_3_size          = this->stream.in_uint16_le();
+                this->info_cache_3_persistent    = (this->stream.in_uint8() ? true : false);
+
+                this->info_cache_4_entries       = this->stream.in_uint16_le();
+                this->info_cache_4_size          = this->stream.in_uint16_le();
+                this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
+
+                this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
+                REDASSERT(is_valid_enum_value(this->info_compression_algorithm));
+                if (!is_valid_enum_value(this->info_compression_algorithm)) {
+                    this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+                }
+
+                // re-init
+                this->trans = &this->compression_builder.reset(
+                    *this->trans_source, this->info_compression_algorithm
+                );
+            }
+
+            this->stream.rewind();
+
+            if (!this->meta_ok) {
+                this->meta_ok = true;
+            }
+            break;
+        case RESET_CHUNK:
+            this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+
+            this->trans = this->trans_source;
+            break;
+        }
+
+        for (size_t i = 0; i < this->nbconsumers ; i++) {
+            if (this->consumers[i]) {
+                this->consumers[i]->chunk(this->chunk_type, this->chunk_count, this->stream.clone());
+            }
+        }
+    }   // void interpret_chunk()
+
+    void play(bool const & requested_to_stop) {
+        while (!requested_to_stop && this->next_chunk()) {
+            this->interpret_chunk();
+        }
+    }
 };
 
 
@@ -215,14 +895,14 @@ public:
     SessionLogKbd session_log_kbd;
     PatternKbd pattern_kbd;
 
-    KbdCaptureImpl(const timeval & now, auth_api * authentifier, const Inifile & ini)
+    KbdCaptureImpl(const timeval & now, auth_api * authentifier, const char * pattern_kill, const char * pattern_notify, int verbose)
     : authentifier(authentifier)
     , syslog_kbd(now)
     , session_log_kbd(*authentifier)
     , pattern_kbd(authentifier,
-        ini.get<cfg::context::pattern_kill>().c_str(),
-        ini.get<cfg::context::pattern_notify>().c_str(),
-        ini.get<cfg::debug::capture>())
+        pattern_kill,
+        pattern_notify,
+        verbose)
     {}
 };
 
@@ -235,9 +915,9 @@ struct MouseTrace
 
 struct CaptureApisImpl
 {
-    struct Capture : gdi::CaptureApi
+    struct CaptureInternal : gdi::CaptureApi
     {
-        Capture(const timeval & now, int cursor_x, int cursor_y)
+        CaptureInternal(const timeval & now, int cursor_x, int cursor_y)
         : mouse_info{now, cursor_x, cursor_y}
         , capture_event{}
         {}
@@ -1037,93 +1717,6 @@ class SequencedVideoCaptureImpl
     };
 
 
-    struct ImageToFile
-    {
-        Transport & trans;
-        unsigned zoom_factor;
-        unsigned scaled_width;
-        unsigned scaled_height;
-
-        const Drawable & drawable;
-
-    private:
-        std::unique_ptr<uint8_t[]> scaled_buffer;
-
-    public:
-        ImageToFile(Transport & trans, const Drawable & drawable, unsigned zoom)
-        : trans(trans)
-        , zoom_factor(std::min(zoom, 100u))
-        , scaled_width(drawable.width())
-        , scaled_height(drawable.height())
-        , drawable(drawable)
-        {
-            const unsigned zoom_width = (this->drawable.width() * this->zoom_factor) / 100;
-            const unsigned zoom_height = (this->drawable.height() * this->zoom_factor) / 100;
-            this->scaled_width = (zoom_width + 3) & 0xFFC;
-            this->scaled_height = zoom_height;
-            if (this->zoom_factor != 100) {
-                this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
-            }
-        }
-
-        ~ImageToFile() = default;
-
-        /// \param  percent  0 to 100 or 100 if greater
-        void zoom(unsigned percent) {
-            percent = std::min(percent, 100u);
-            const unsigned zoom_width = (this->drawable.width() * percent) / 100;
-            const unsigned zoom_height = (this->drawable.height() * percent) / 100;
-            this->zoom_factor = percent;
-            this->scaled_width = (zoom_width + 3) & 0xFFC;
-            this->scaled_height = zoom_height;
-            if (this->zoom_factor != 100) {
-                this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
-            }
-        }
-
-        void flush() {
-            if (this->zoom_factor == 100) {
-                this->dump24();
-            }
-            else {
-                this->scale_dump24();
-            }
-        }
-
-        void dump24() const {
-            ::transport_dump_png24(
-                this->trans, this->drawable.data(),
-                this->drawable.width(), this->drawable.height(),
-                this->drawable.rowsize(), true);
-        }
-
-        void scale_dump24() const {
-            scale_data(
-                this->scaled_buffer.get(), this->drawable.data(),
-                this->scaled_width, this->drawable.width(),
-                this->scaled_height, this->drawable.height(),
-                this->drawable.rowsize());
-            ::transport_dump_png24(
-                this->trans, this->scaled_buffer.get(),
-                this->scaled_width, this->scaled_height,
-                this->scaled_width * 3, false);
-        }
-
-        bool has_first_img = false;
-
-        void breakpoint_image(const timeval& now)
-        {
-            tm ptm;
-            localtime_r(&now.tv_sec, &ptm);
-            //const_cast<Drawable&>(this->drawable).trace_mouse();
-            const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
-            this->flush();
-            const_cast<Drawable&>(this->drawable).clear_timestamp();
-            //const_cast<Drawable&>(this->drawable).clear_mouse();
-            this->has_first_img = true;
-            this->trans.next();
-        }
-    };
 
     // first next_video is ignored
     struct FirstImage : gdi::CaptureApi
@@ -1153,8 +1746,8 @@ class SequencedVideoCaptureImpl
             auto const interval = microseconds(seconds(3))/2;
             if (duration >= interval) {
                 auto video_interval = this->impl.video_sequencer.get_interval();
-                if (this->impl.ic.drawable.logical_frame_ended || duration > seconds(2) || duration >= video_interval) {
-                    this->impl.ic.breakpoint_image(now);
+                if (this->impl.ic_drawable.logical_frame_ended || duration > seconds(2) || duration >= video_interval) {
+                    this->impl.ic_breakpoint_image(now);
                     assert(this->cap_elem == *this);
                     assert(this->gcap_elem == *this);
                     this->cap_elem = this->impl.video_sequencer;
@@ -1183,7 +1776,69 @@ public:
     PreparingWhenFrameMarkerEnd preparing_vc{vc};
 
     OutFilenameSequenceTransport ic_trans;
-    ImageToFile ic;
+    
+    unsigned ic_zoom_factor;
+    unsigned ic_scaled_width;
+    unsigned ic_scaled_height;
+
+    /* const */ Drawable & ic_drawable;
+
+    private:
+        std::unique_ptr<uint8_t[]> ic_scaled_buffer;
+
+    public:
+    void zoom(unsigned percent) {
+        percent = std::min(percent, 100u);
+        const unsigned zoom_width = (this->ic_drawable.width() * percent) / 100;
+        const unsigned zoom_height = (this->ic_drawable.height() * percent) / 100;
+        this->ic_zoom_factor = percent;
+        this->ic_scaled_width = (zoom_width + 3) & 0xFFC;
+        this->ic_scaled_height = zoom_height;
+        if (this->ic_zoom_factor != 100) {
+            this->ic_scaled_buffer.reset(new uint8_t[this->ic_scaled_width * this->ic_scaled_height * 3]);
+        }
+    }
+
+    void ic_flush() {
+        if (this->ic_zoom_factor == 100) {
+            this->dump24();
+        }
+        else {
+            this->scale_dump24();
+        }
+    }
+
+    void dump24() {
+        ::transport_dump_png24(
+            this->ic_trans, this->ic_drawable.data(),
+            this->ic_drawable.width(), this->ic_drawable.height(),
+            this->ic_drawable.rowsize(), true);
+    }
+
+    void scale_dump24() {
+        scale_data(
+            this->ic_scaled_buffer.get(), this->ic_drawable.data(),
+            this->ic_scaled_width, this->ic_drawable.width(),
+            this->ic_scaled_height, this->ic_drawable.height(),
+            this->ic_drawable.rowsize());
+        ::transport_dump_png24(
+            this->ic_trans, this->ic_scaled_buffer.get(),
+            this->ic_scaled_width, this->ic_scaled_height,
+            this->ic_scaled_width * 3, false);
+    }
+
+    bool ic_has_first_img = false;
+
+    void ic_breakpoint_image(const timeval& now)
+    {
+        tm ptm;
+        localtime_r(&now.tv_sec, &ptm);
+        this->ic_drawable.trace_timestamp(ptm);
+        this->ic_flush();
+        this->ic_drawable.clear_timestamp();
+        this->ic_has_first_img = true;
+        this->ic_trans.next();
+    }
 
     VideoSequencer video_sequencer;
     FirstImage first_image;
@@ -1192,13 +1847,13 @@ public:
 
     void next_video_impl(const timeval& now, NotifyNextVideo::reason reason) {
         this->video_sequencer.reset_now(now);
-        if (!this->ic.has_first_img) {
-            this->ic.breakpoint_image(now);
+        if (!this->ic_has_first_img) {
+            this->ic_breakpoint_image(now);
             this->first_image.cap_elem = this->video_sequencer;
             this->first_image.gcap_elem = this->video_sequencer;
         }
         this->vc.next_video();
-        this->ic.breakpoint_image(now);
+        this->ic_breakpoint_image(now);
         this->next_video_notifier.notify_next_video(now, reason);
     }
 
@@ -1210,19 +1865,30 @@ public:
         const int groupid,
         bool no_timestamp,
         unsigned image_zoom,
-        const Drawable & drawable,
+        /* const */Drawable & drawable,
         FlvParams flv_params,
         std::chrono::microseconds video_interval,
         NotifyNextVideo & next_video_notifier)
     : vc_trans(record_path, basename, ("." + flv_params.codec).c_str(), groupid)
     , vc(now, this->vc_trans, drawable, no_timestamp, std::move(flv_params))
     , ic_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_path, basename, ".png", groupid)
-    , ic(this->ic_trans, drawable, image_zoom)
+    , ic_zoom_factor(std::min(image_zoom, 100u))
+    , ic_scaled_width(drawable.width())
+    , ic_scaled_height(drawable.height())
+    , ic_drawable(drawable)
     , video_sequencer(
         now, video_interval > std::chrono::microseconds(0) ? video_interval : std::chrono::microseconds::max(), *this)
     , first_image(now, *this)
     , next_video_notifier(next_video_notifier)
-    {}
+    {
+        const unsigned zoom_width = (this->ic_drawable.width() * this->ic_zoom_factor) / 100;
+        const unsigned zoom_height = (this->ic_drawable.height() * this->ic_zoom_factor) / 100;
+        this->ic_scaled_width = (zoom_width + 3) & 0xFFC;
+        this->ic_scaled_height = zoom_height;
+        if (this->ic_zoom_factor != 100) {
+            this->ic_scaled_buffer.reset(new uint8_t[this->ic_scaled_width * this->ic_scaled_height * 3]);
+        }
+    }
 
     void next_video(const timeval& now) {
         this->next_video_impl(now, NotifyNextVideo::reason::external);
@@ -2698,10 +3364,6 @@ private:
             }
         }
 
-        bool has_notifier()
-        {
-            return this->capture.patterns_checker || this->capture.pmc || this->capture.pvc;
-        }
     } notifier_title_changed{*this};
     //@}
 
@@ -2740,7 +3402,7 @@ private:
     std::unique_ptr<Native> pnc;
     std::unique_ptr<Image> psc;
     std::unique_ptr<ImageRT> pscrt;
-    std::unique_ptr<Kbd> pkc;
+    std::unique_ptr<KbdCaptureImpl> pkc;
     std::unique_ptr<Video> pvc;
     std::unique_ptr<FullVideo> pvc_full;
     std::unique_ptr<Meta> pmc;
@@ -2749,7 +3411,7 @@ private:
 
     UpdateProgressData * update_progress_data;
 
-    CaptureApisImpl::Capture capture_api;
+    CaptureApisImpl::CaptureInternal capture_api;
     CaptureApisImpl::KbdInput kbd_input_api;
     CaptureApisImpl::CaptureProbe capture_probe_api;
     CaptureApisImpl::ExternalCapture external_capture_api;
@@ -2915,7 +3577,8 @@ public:
                 this->patterns_checker.reset(new PatternsChecker(
                     *authentifier,
                     ini.get<cfg::context::pattern_kill>().c_str(),
-                    ini.get<cfg::context::pattern_notify>().c_str())
+                    ini.get<cfg::context::pattern_notify>().c_str(),
+                    ini.get<cfg::debug::capture>())
                 );
                 if (!this->patterns_checker->contains_pattern()) {
                     LOG(LOG_WARNING, "Disable pattern_checker");
@@ -2924,7 +3587,7 @@ public:
             }
 
             if (this->capture_ocr) {
-                if (this->notifier_title_changed.has_notifier()) {
+                if (this->patterns_checker || this->pmc || this->pvc) {
                     this->ptc.reset(new Title(
                         now, authentifier, this->gd->impl(), ini,
                         this->notifier_title_changed
@@ -2938,7 +3601,7 @@ public:
 
         // TODO this->pkc = Kbd::construct(now, authentifier, ini); ?
         if (capture_kbd) {
-            this->pkc.reset(new Kbd(now, authentifier, ini));
+            this->pkc.reset(new KbdCaptureImpl(now, authentifier, ini.get<cfg::context::pattern_kill>().c_str(), ini.get<cfg::context::pattern_notify>().c_str(), ini.get<cfg::debug::capture>()));
         }
 
             std::vector<std::reference_wrapper<gdi::GraphicApi>> * apis_register_graphic_list
