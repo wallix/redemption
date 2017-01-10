@@ -416,7 +416,7 @@ public:
         }
     }
 
-    void draw(const RDP::RAIL::NonMonitoredDesktop & cmd) override
+    void draw(const RDP::RAIL::NonMonitoredDesktop & /*cmd*/) override
     {}
 
 private:
