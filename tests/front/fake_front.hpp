@@ -48,8 +48,6 @@ public:
 
     RDPDrawable gd;
 
-    gdi::Depth order_depth_;
-
 public:
     using FrontAPI::FrontAPI;
 
@@ -293,7 +291,6 @@ public:
     , notimestamp(true)
     , nomouse(true)
     , gd(info.width, info.height)
-    , order_depth_(gdi::Depth::from_bpp(this->mod_bpp))
     {
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
@@ -325,10 +322,6 @@ public:
         // of OpenSSL should call OpenSSL_add_all_algorithms() as well.
 
         //SSL_library_init();
-    }
-
-    gdi::Depth const & order_depth() const override {
-        return this->order_depth_;
     }
 
     void update_pointer_position(uint16_t, uint16_t) override {}

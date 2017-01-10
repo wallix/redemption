@@ -341,15 +341,7 @@ private:
         explicit ModOSD(ModuleManager & mm)
         : gdi::ProtectedGraphics(mm.front, Rect{})
         , mm(mm)
-        , order_depth_(gdi::Depth::unspecified())
         {}
-
-        gdi::Depth const & order_depth() const override {
-            return this->order_depth_;
-        }
-
-        gdi::Depth order_depth_;
-
 
         bool is_input_owner() const { return this->is_disable_by_input; }
 

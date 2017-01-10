@@ -71,16 +71,12 @@ class RDPDrawable
 
     uint8_t fragment_cache[MAXIMUM_NUMBER_OF_FRAGMENT_CACHE_ENTRIES][1 /* size */ + MAXIMUM_SIZE_OF_FRAGMENT_CACHE_ENTRIE];
 
-    gdi::Depth order_depth_; // TODO deprecated
-
 public:
     RDPDrawable(const uint16_t width, const uint16_t height)
     : drawable(width, height)
     , frame_start_count(0)
     , mod_palette_rgb(BGRPalette::classic_332())
-    , order_depth_(gdi::Depth::unspecified())
     {
-        //REDASSERT(this->order_depth_.is_defined());
     }
 
     const uint8_t * data() const noexcept {
@@ -213,11 +209,6 @@ public:
         const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
         this->drawable.destblt(trect, cmd.rop);
     }
-
-    gdi::Depth const & order_depth() const override {
-        return this->order_depth_;
-    }
-
 
 private:
     // TODO removed when RDPMultiDstBlt and RDPMultiOpaqueRect contains a rect member

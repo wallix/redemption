@@ -460,44 +460,21 @@ public:
         std::vector<GdRef> gds;
         std::vector<std::reference_wrapper<gdi::CaptureApi>> snapshoters;
 
-        gdi::Depth order_depth_ = gdi::Depth::unspecified();
-
         Graphic(MouseTrace const & mouse)
         : mouse(mouse)
         {}
-
-        gdi::Depth const & order_depth() const override {
-            return this->order_depth_;
-        }
-
     };
 
     Graphic graphic_api;
     RDPDrawable drawable;
-    uint8_t order_bpp;
 
 public:
     using GraphicApi = Graphic;
 
-    GraphicCaptureImpl(uint16_t width, uint16_t height, uint8_t order_bpp, MouseTrace const & mouse)
+    GraphicCaptureImpl(uint16_t width, uint16_t height, MouseTrace const & mouse)
     : graphic_api(mouse)
     , drawable(width, height)
-    , order_bpp(order_bpp)
     {
-    }
-
-    void update_order_bpp(uint8_t order_bpp) {
-        if (this->order_bpp != order_bpp) {
-            this->order_bpp = order_bpp;
-            this->start();
-        }
-    }
-
-    void start()
-    {
-        auto const order_depth = gdi::Depth::from_bpp(this->order_bpp);
-        auto & gds = this->graphic_api.gds;
-        this->graphic_api.order_depth_ = order_depth;
     }
 
     Graphic & get_graphic_api() { return this->graphic_api; }
@@ -1729,16 +1706,10 @@ public:
                             bmp_cache, gly_cache, ptr_cache,
                             dump_png24, wrm_compression_algorithm,
                             send_input, verbose)
-            , order_depth_(gdi::Depth::unspecified())
         {}
 
-        using GraphicToFile::GraphicToFile::draw;
-        using GraphicToFile::GraphicToFile::capture_bpp;
-
-        gdi::Depth const & order_depth() const override {
-            return this->order_depth_;
-        }
-
+        using GraphicToFile::draw;
+        using GraphicToFile::capture_bpp;
 
         void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
             auto compress_and_draw_bitmap_update = [&bitmap_data, this](const Bitmap & bmp) {
@@ -1771,7 +1742,6 @@ public:
         void enable_kbd_input_mask(bool enable) override {
             this->impl->enable_kbd_input_mask(enable);
         }
-        gdi::Depth order_depth_ = gdi::Depth::unspecified();
     } graphic_to_file;
 
     class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi
@@ -2122,7 +2092,6 @@ public:
     , capture_meta(capture_meta)
     , update_progress_data(update_progress_data)
     , capture_api(now, width / 2, height / 2)
-    , order_depth_(gdi::Depth::unspecified())
     {
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
 
@@ -2177,7 +2146,7 @@ public:
 
 
         if (capture_drawable) {
-            this->gd.reset(new Graphic(width, height, order_bpp, this->capture_api.mouse_trace()));
+            this->gd.reset(new Graphic(width, height, this->capture_api.mouse_trace()));
             this->graphic_api = &this->gd->get_graphic_api();
             this->capture_api.set_drawable(&this->gd->impl());
 
@@ -2357,8 +2326,6 @@ public:
             this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->ptc));
             apis_register_capture_probe_list.push_back(static_cast<gdi::CaptureProbeApi&>(*this->ptc));
         }
-
-        if (this->gd) { this->gd->start(); }
     }
 
     ~Capture() {
@@ -2440,14 +2407,6 @@ public:
         if (this->graphic_api) {
             std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list = this->graphic_api ? &this->graphic_api->gds : nullptr;
             graphic_list->push_back(gd);
-            // TODO
-            this->gd->start();
-        }
-    }
-
-    void set_order_bpp(uint8_t order_bpp) {
-        if (this->graphic_api) {
-            this->gd->update_order_bpp(order_bpp);
         }
     }
 
@@ -2509,10 +2468,4 @@ public:
     void possible_active_window_change() override {
         this->capture_probe_api.possible_active_window_change();
     }
-
-    gdi::Depth const & order_depth() const override {
-        return this->order_depth_;
-    }
-
-    gdi::Depth order_depth_;
 };

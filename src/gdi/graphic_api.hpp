@@ -193,8 +193,6 @@ struct GraphicApi : private noncopyable
 
     virtual ~GraphicApi() = default;
 
-    virtual Depth const & order_depth() const = 0;
-
     virtual void set_pointer(Pointer      const &) {}
     virtual void set_palette(BGRPalette   const &) {}
 
@@ -278,24 +276,23 @@ public:
     void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
+    static gdi::BlackoutGraphic & instance()
+    {
+        static gdi::BlackoutGraphic gd;
+        return gd;
+    }
+
 private:
     template<class... Args>
     void draw_impl(Args const & ...) {}
 
 public:
-    Depth const & order_depth() const override {
-        return this->order_depth_;
-    }
-
-    gdi::Depth order_depth_;
-
-    BlackoutGraphic(gdi::Depth const & depths)
-        : order_depth_(depths) {}
+    BlackoutGraphic()
+    {}
 };
 
 inline gdi::GraphicApi & null_gd() {
-    static gdi::BlackoutGraphic gd(gdi::Depth::unspecified());
-    return gd;
+    return gdi::BlackoutGraphic::instance();
 }
 
 

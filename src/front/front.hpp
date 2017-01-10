@@ -208,12 +208,7 @@ private:
               , verbose
             )
             , client_order_caps(client_order_caps)
-            , order_depth_(gdi::Depth::from_bpp(bpp))
             {}
-
-            gdi::Depth const & order_depth() const override {
-                return this->order_depth_;
-            }
 
             using GraphicsUpdatePDU::draw;
 
@@ -242,9 +237,6 @@ private:
             }
 
             OrderCaps & client_order_caps;
-
-            gdi::Depth order_depth_;
-
         } graphics_update_pdu;
 
         Graphics(
@@ -514,11 +506,6 @@ private:
             GraphicConverter(Graphics::PrivateGraphicsUpdatePDU & graphics)
             : graphics(graphics)
             {}
-
-            gdi::Depth order_depth_ = gdi::Depth::unspecified();
-            gdi::Depth const & order_depth() const override {
-                return this->order_depth_;
-            }
         };
 
         template<class Enc>
@@ -760,7 +747,6 @@ public:
     , authentifier(nullptr)
     , auth_info_sent(false)
     , timeout(now, this->ini.get<cfg::globals::handshake_timeout>().count())
-    , order_depth_(gdi::Depth::unspecified())
     {
         // init TLS
         // --------------------------------------------------------
@@ -838,12 +824,6 @@ public:
         delete this->capture;
     }
 
-    gdi::Depth const & order_depth() const override {
-        return this->order_depth_;
-    }
-
-    gdi::Depth order_depth_;
-
     uint64_t get_total_received() const
     {
         return this->trans.get_total_received();
@@ -863,10 +843,7 @@ public:
         {
             gdi::GraphicApi & gd_orders = this->orders.initialize_drawable(this->client_info.bpp);
 
-            if (this->capture) {
-                this->capture->set_order_bpp(this->mod_bpp);
-            }
-            else {
+            if (!this->capture) {
                 this->set_gd(gd_orders);
             }
         }
