@@ -36,9 +36,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "utils/stream.hpp"
-
-class SaveStateChunk {
-public:
+struct StateChunk {
     RDPOrderCommon          common;
     RDPDestBlt              destblt;
     RDPMultiDstBlt          multidstblt;
@@ -55,8 +53,7 @@ public:
     RDPPolyline             polyline;
     RDPEllipseSC            ellipseSC;
 
-public:
-    SaveStateChunk()
+    StateChunk()    
         : common(RDP::PATBLT, Rect(0, 0, 1, 1))
         , destblt(Rect(), 0)
         , multidstblt()
@@ -73,14 +70,19 @@ public:
                     , reinterpret_cast<const uint8_t *>(""))
         , polyline()
         , ellipseSC()
-    {}
+        {}
+};
+
+class SaveStateChunk {
+public:
+    SaveStateChunk() {}
     
-    void recv(InStream & stream, uint8_t info_version) {
-        this->send_recv(stream, info_version);
+    void recv(InStream & stream, StateChunk & sc, uint8_t info_version) {
+        this->send_recv(stream, sc, info_version);
     }
 
-    void send(OutStream & stream) {
-        this->send_recv(stream, ~0);
+    void send(OutStream & stream, StateChunk & sc) {
+        this->send_recv(stream, sc, ~0);
     }
 
 private:
@@ -120,6 +122,7 @@ private:
 
     template<class Stream>
     static void io_delta_encoded_rects(Stream & stream, array_view<RDP::DeltaEncodedRectangle> delta_rectangles) {
+        // TODO: check room to write or enough data to read, another io unified function necessary io_avail()
         for (RDP::DeltaEncodedRectangle & delta_rectangle : delta_rectangles) {
             io_sint16_le(stream, delta_rectangle.leftDelta);
             io_sint16_le(stream, delta_rectangle.topDelta);
@@ -146,7 +149,7 @@ private:
     }
 
     template<class Stream>
-    void send_recv(Stream & stream, uint8_t info_version) {
+    void send_recv(Stream & stream, StateChunk & sc, uint8_t info_version) {
         const bool mem3blt_support         = (info_version > 1);
         const bool polyline_support        = (info_version > 2);
         const bool multidstblt_support     = (info_version > 3);
@@ -155,145 +158,146 @@ private:
         const bool multiscrblt_support     = (info_version > 3);
 
         // RDPOrderCommon common;
-        io_uint8(stream, this->common.order);
-        io_rect(stream, this->common.clip);
+        io_uint8(stream, sc.common.order);
+        io_rect(stream, sc.common.clip);
 
         // RDPDestBlt destblt;
-        io_rect(stream, this->destblt.rect);
-        io_uint8(stream, this->destblt.rop);
+        io_rect(stream, sc.destblt.rect);
+        io_uint8(stream, sc.destblt.rop);
 
         // RDPPatBlt patblt;
-        io_rect(stream, this->patblt.rect);
-        io_uint8(stream, this->patblt.rop);
-        io_uint32_le(stream, this->patblt.back_color);
-        io_uint32_le(stream, this->patblt.fore_color);
-        io_brush(stream, this->patblt.brush);
+        io_rect(stream, sc.patblt.rect);
+        io_uint8(stream, sc.patblt.rop);
+        io_uint32_le(stream, sc.patblt.back_color);
+        io_uint32_le(stream, sc.patblt.fore_color);
+        io_brush(stream, sc.patblt.brush);
 
         // RDPScrBlt scrblt;
-        io_rect(stream, this->scrblt.rect);
-        io_uint8(stream, this->scrblt.rop);
-        io_uint16_le(stream, this->scrblt.srcx);
-        io_uint16_le(stream, this->scrblt.srcy);
+        io_rect(stream, sc.scrblt.rect);
+        io_uint8(stream, sc.scrblt.rop);
+        io_uint16_le(stream, sc.scrblt.srcx);
+        io_uint16_le(stream, sc.scrblt.srcy);
 
         // RDPOpaqueRect opaquerect;
-        io_rect(stream, this->opaquerect.rect);
-        io_color(stream, this->opaquerect.color);
+        io_rect(stream, sc.opaquerect.rect);
+        io_color(stream, sc.opaquerect.color);
 
         // RDPMemBlt memblt;
-        io_uint16_le(stream, this->memblt.cache_id);
-        io_rect(stream, this->memblt.rect);
-        io_uint8(stream, this->memblt.rop);
+        io_uint16_le(stream, sc.memblt.cache_id);
+        io_rect(stream, sc.memblt.rect);
+        io_uint8(stream, sc.memblt.rop);
         // TODO bad length
-        io_uint8_unsafe(stream, this->memblt.srcx);
-        io_uint8_unsafe(stream, this->memblt.srcy);
-        io_uint16_le(stream, this->memblt.cache_idx);
+        io_uint8_unsafe(stream, sc.memblt.srcx);
+        io_uint8_unsafe(stream, sc.memblt.srcy);
+        io_uint16_le(stream, sc.memblt.cache_idx);
 
         // RDPMem3Blt memblt;
         if (mem3blt_support) {
-            io_uint16_le(stream, this->mem3blt.cache_id);
-            io_rect(stream, this->mem3blt.rect);
-            io_uint8(stream, this->mem3blt.rop);
-            io_uint8_unsafe(stream, this->mem3blt.srcx);
-            io_uint8_unsafe(stream, this->mem3blt.srcy);
-            io_uint32_le(stream, this->mem3blt.back_color);
-            io_uint32_le(stream, this->mem3blt.fore_color);
-            io_brush(stream, this->mem3blt.brush);
-            io_uint16_le(stream, this->mem3blt.cache_idx);
+            io_uint16_le(stream, sc.mem3blt.cache_id);
+            io_rect(stream, sc.mem3blt.rect);
+            io_uint8(stream, sc.mem3blt.rop);
+            io_uint8_unsafe(stream, sc.mem3blt.srcx);
+            io_uint8_unsafe(stream, sc.mem3blt.srcy);
+            io_uint32_le(stream, sc.mem3blt.back_color);
+            io_uint32_le(stream, sc.mem3blt.fore_color);
+            io_brush(stream, sc.mem3blt.brush);
+            io_uint16_le(stream, sc.mem3blt.cache_idx);
         }
 
         // RDPLineTo lineto;
-        io_uint8(stream, this->lineto.back_mode);
-        io_sint16_le(stream, this->lineto.startx);
-        io_sint16_le(stream, this->lineto.starty);
-        io_sint16_le(stream, this->lineto.endx);
-        io_sint16_le(stream, this->lineto.endy);
-        io_uint32_le(stream, this->lineto.back_color);
-        io_uint8(stream, this->lineto.rop2);
-        io_uint8(stream, this->lineto.pen.style);
-        io_uint8(stream, this->lineto.pen.width);
-        io_uint32_le(stream, this->lineto.pen.color);
+        io_uint8(stream, sc.lineto.back_mode);
+        io_sint16_le(stream, sc.lineto.startx);
+        io_sint16_le(stream, sc.lineto.starty);
+        io_sint16_le(stream, sc.lineto.endx);
+        io_sint16_le(stream, sc.lineto.endy);
+        io_uint32_le(stream, sc.lineto.back_color);
+        io_uint8(stream, sc.lineto.rop2);
+        io_uint8(stream, sc.lineto.pen.style);
+        io_uint8(stream, sc.lineto.pen.width);
+        io_uint32_le(stream, sc.lineto.pen.color);
 
         // RDPGlyphIndex glyphindex;
-        io_uint8(stream, this->glyphindex.cache_id);
-        io_sint16_le(stream, this->glyphindex.fl_accel);
-        io_sint16_le(stream, this->glyphindex.ui_charinc);
-        io_sint16_le(stream, this->glyphindex.f_op_redundant);
-        io_uint32_le(stream, this->glyphindex.back_color);
-        io_uint32_le(stream, this->glyphindex.fore_color);
-        io_rect(stream, this->glyphindex.bk);
-        io_rect(stream, this->glyphindex.op);
-        io_brush(stream, this->glyphindex.brush);
-        io_sint16_le(stream, this->glyphindex.glyph_x);
-        io_sint16_le(stream, this->glyphindex.glyph_y);
-        io_uint8(stream, this->glyphindex.data_len);
-        io_copy_bytes(stream, this->glyphindex.data, 256);
+        io_uint8(stream, sc.glyphindex.cache_id);
+        io_sint16_le(stream, sc.glyphindex.fl_accel);
+        io_sint16_le(stream, sc.glyphindex.ui_charinc);
+        io_sint16_le(stream, sc.glyphindex.f_op_redundant);
+        io_uint32_le(stream, sc.glyphindex.back_color);
+        io_uint32_le(stream, sc.glyphindex.fore_color);
+        io_rect(stream, sc.glyphindex.bk);
+        io_rect(stream, sc.glyphindex.op);
+        io_brush(stream, sc.glyphindex.brush);
+        io_sint16_le(stream, sc.glyphindex.glyph_x);
+        io_sint16_le(stream, sc.glyphindex.glyph_y);
+        io_uint8(stream, sc.glyphindex.data_len);
+        io_copy_bytes(stream, sc.glyphindex.data, 256);
 
         // RDPPolyine polyline;
         if (polyline_support) {
-            io_sint16_le(stream, this->polyline.xStart);
-            io_sint16_le(stream, this->polyline.yStart);
-            io_uint8(stream, this->polyline.bRop2);
-            io_uint16_le(stream, this->polyline.BrushCacheEntry);
-            io_uint32_le(stream, this->polyline.PenColor);
-            io_uint8(stream, this->polyline.NumDeltaEntries);
-            for (uint8_t i = 0; i < this->polyline.NumDeltaEntries; i++) {
-                io_sint16_le(stream, this->polyline.deltaEncodedPoints[i].xDelta);
-                io_sint16_le(stream, this->polyline.deltaEncodedPoints[i].yDelta);
+            io_sint16_le(stream, sc.polyline.xStart);
+            io_sint16_le(stream, sc.polyline.yStart);
+            io_uint8(stream, sc.polyline.bRop2);
+            io_uint16_le(stream, sc.polyline.BrushCacheEntry);
+            io_uint32_le(stream, sc.polyline.PenColor);
+            io_uint8(stream, sc.polyline.NumDeltaEntries);
+            // TODO: check room to write or enough data to read, another io unified function necessary io_avail()
+            for (uint8_t i = 0; i < sc.polyline.NumDeltaEntries; i++) {
+                io_sint16_le(stream, sc.polyline.deltaEncodedPoints[i].xDelta);
+                io_sint16_le(stream, sc.polyline.deltaEncodedPoints[i].yDelta);
             }
         }
 
         // RDPMultiDstBlt multidstblt;
         if (multidstblt_support) {
-            io_sint16_le(stream, this->multidstblt.nLeftRect);
-            io_sint16_le(stream, this->multidstblt.nTopRect);
-            io_sint16_le(stream, this->multidstblt.nWidth);
-            io_sint16_le(stream, this->multidstblt.nHeight);
-            io_uint8(stream, this->multidstblt.bRop);
-            io_uint8(stream, this->multidstblt.nDeltaEntries);
+            io_sint16_le(stream, sc.multidstblt.nLeftRect);
+            io_sint16_le(stream, sc.multidstblt.nTopRect);
+            io_sint16_le(stream, sc.multidstblt.nWidth);
+            io_sint16_le(stream, sc.multidstblt.nHeight);
+            io_uint8(stream, sc.multidstblt.bRop);
+            io_uint8(stream, sc.multidstblt.nDeltaEntries);
             io_delta_encoded_rects(stream, {
-                this->multidstblt.deltaEncodedRectangles,
-                this->multidstblt.nDeltaEntries
+                sc.multidstblt.deltaEncodedRectangles,
+                sc.multidstblt.nDeltaEntries
             });
         }
 
         // RDPMultiOpaqueRect multiopaquerect;
         if (multiopaquerect_support) {
-            io_sint16_le(stream, this->multiopaquerect.nLeftRect);
-            io_sint16_le(stream, this->multiopaquerect.nTopRect);
-            io_sint16_le(stream, this->multiopaquerect.nWidth);
-            io_sint16_le(stream, this->multiopaquerect.nHeight);
-            io_color(stream, this->multiopaquerect._Color);
-            io_uint8(stream, this->multiopaquerect.nDeltaEntries);
+            io_sint16_le(stream, sc.multiopaquerect.nLeftRect);
+            io_sint16_le(stream, sc.multiopaquerect.nTopRect);
+            io_sint16_le(stream, sc.multiopaquerect.nWidth);
+            io_sint16_le(stream, sc.multiopaquerect.nHeight);
+            io_color(stream, sc.multiopaquerect._Color);
+            io_uint8(stream, sc.multiopaquerect.nDeltaEntries);
             io_delta_encoded_rects(stream, {
-                this->multiopaquerect.deltaEncodedRectangles,
-                this->multiopaquerect.nDeltaEntries
+                sc.multiopaquerect.deltaEncodedRectangles,
+                sc.multiopaquerect.nDeltaEntries
             });
         }
 
         // RDPMultiPatBlt multipatblt;
         if (multipatblt_support) {
-            io_rect(stream, this->multipatblt.rect);
-            io_uint8(stream, this->multipatblt.bRop);
-            io_uint32_le(stream, this->multipatblt.BackColor);
-            io_uint32_le(stream, this->multipatblt.ForeColor);
-            io_brush(stream, this->multipatblt.brush);
-            io_uint8(stream, this->multipatblt.nDeltaEntries);
+            io_rect(stream, sc.multipatblt.rect);
+            io_uint8(stream, sc.multipatblt.bRop);
+            io_uint32_le(stream, sc.multipatblt.BackColor);
+            io_uint32_le(stream, sc.multipatblt.ForeColor);
+            io_brush(stream, sc.multipatblt.brush);
+            io_uint8(stream, sc.multipatblt.nDeltaEntries);
             io_delta_encoded_rects(stream, {
-                this->multipatblt.deltaEncodedRectangles,
-                this->multipatblt.nDeltaEntries
+                sc.multipatblt.deltaEncodedRectangles,
+                sc.multipatblt.nDeltaEntries
             });
         }
 
         // RDPMultiScrBlt multiscrblt;
         if (multiscrblt_support) {
-            io_rect(stream, this->multiscrblt.rect);
-            io_uint8(stream, this->multiscrblt.bRop);
-            io_sint16_le(stream, this->multiscrblt.nXSrc);
-            io_sint16_le(stream, this->multiscrblt.nYSrc);
-            io_uint8(stream, this->multiscrblt.nDeltaEntries);
+            io_rect(stream, sc.multiscrblt.rect);
+            io_uint8(stream, sc.multiscrblt.bRop);
+            io_sint16_le(stream, sc.multiscrblt.nXSrc);
+            io_sint16_le(stream, sc.multiscrblt.nYSrc);
+            io_uint8(stream, sc.multiscrblt.nDeltaEntries);
             io_delta_encoded_rects(stream, {
-                this->multiscrblt.deltaEncodedRectangles,
-                this->multiscrblt.nDeltaEntries
+                sc.multiscrblt.deltaEncodedRectangles,
+                sc.multiscrblt.nDeltaEntries
             });
         }
     }

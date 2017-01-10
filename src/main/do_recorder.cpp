@@ -55,7 +55,6 @@
 #include "capture/capture.hpp"
 #include "capture/cryptofile.hpp"
 #include "capture/FileToChunk.hpp"
-#include "capture/GraphicToFile.hpp"
 #include "utils/apps/recording_progress.hpp"
 
 #include "capture/png_params.hpp"
