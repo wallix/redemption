@@ -61,7 +61,7 @@ int main(int argc, char** argv){
     std::string userName;
     std::string ip;
     std::string userPwd;
-    int port{};
+    int port(3389);
     std::string localIP;
     int nbTry(3);
     int retryDelay(1000);
