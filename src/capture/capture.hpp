@@ -1759,93 +1759,6 @@ class SequencedVideoCaptureImpl
     };
 
 
-    struct ImageToFile
-    {
-        Transport & trans;
-        unsigned zoom_factor;
-        unsigned scaled_width;
-        unsigned scaled_height;
-
-        const Drawable & drawable;
-
-    private:
-        std::unique_ptr<uint8_t[]> scaled_buffer;
-
-    public:
-        ImageToFile(Transport & trans, const Drawable & drawable, unsigned zoom)
-        : trans(trans)
-        , zoom_factor(std::min(zoom, 100u))
-        , scaled_width(drawable.width())
-        , scaled_height(drawable.height())
-        , drawable(drawable)
-        {
-            const unsigned zoom_width = (this->drawable.width() * this->zoom_factor) / 100;
-            const unsigned zoom_height = (this->drawable.height() * this->zoom_factor) / 100;
-            this->scaled_width = (zoom_width + 3) & 0xFFC;
-            this->scaled_height = zoom_height;
-            if (this->zoom_factor != 100) {
-                this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
-            }
-        }
-
-        ~ImageToFile() = default;
-
-        /// \param  percent  0 to 100 or 100 if greater
-        void zoom(unsigned percent) {
-            percent = std::min(percent, 100u);
-            const unsigned zoom_width = (this->drawable.width() * percent) / 100;
-            const unsigned zoom_height = (this->drawable.height() * percent) / 100;
-            this->zoom_factor = percent;
-            this->scaled_width = (zoom_width + 3) & 0xFFC;
-            this->scaled_height = zoom_height;
-            if (this->zoom_factor != 100) {
-                this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
-            }
-        }
-
-        void flush() {
-            if (this->zoom_factor == 100) {
-                this->dump24();
-            }
-            else {
-                this->scale_dump24();
-            }
-        }
-
-        void dump24() const {
-            ::transport_dump_png24(
-                this->trans, this->drawable.data(),
-                this->drawable.width(), this->drawable.height(),
-                this->drawable.rowsize(), true);
-        }
-
-        void scale_dump24() const {
-            scale_data(
-                this->scaled_buffer.get(), this->drawable.data(),
-                this->scaled_width, this->drawable.width(),
-                this->scaled_height, this->drawable.height(),
-                this->drawable.rowsize());
-            ::transport_dump_png24(
-                this->trans, this->scaled_buffer.get(),
-                this->scaled_width, this->scaled_height,
-                this->scaled_width * 3, false);
-        }
-
-        bool has_first_img = false;
-
-        void breakpoint_image(const timeval& now)
-        {
-            tm ptm;
-            localtime_r(&now.tv_sec, &ptm);
-            //const_cast<Drawable&>(this->drawable).trace_mouse();
-            const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
-            this->flush();
-            const_cast<Drawable&>(this->drawable).clear_timestamp();
-            //const_cast<Drawable&>(this->drawable).clear_mouse();
-            this->has_first_img = true;
-            this->trans.next();
-        }
-    };
 
     // first next_video is ignored
     struct FirstImage : gdi::CaptureApi
@@ -1875,8 +1788,8 @@ class SequencedVideoCaptureImpl
             auto const interval = microseconds(seconds(3))/2;
             if (duration >= interval) {
                 auto video_interval = this->impl.video_sequencer.get_interval();
-                if (this->impl.ic.drawable.logical_frame_ended || duration > seconds(2) || duration >= video_interval) {
-                    this->impl.ic.breakpoint_image(now);
+                if (this->impl.ic_drawable.logical_frame_ended || duration > seconds(2) || duration >= video_interval) {
+                    this->impl.ic_breakpoint_image(now);
                     assert(this->cap_elem == *this);
                     assert(this->gcap_elem == *this);
                     this->cap_elem = this->impl.video_sequencer;
@@ -1905,7 +1818,69 @@ public:
     PreparingWhenFrameMarkerEnd preparing_vc{vc};
 
     OutFilenameSequenceTransport ic_trans;
-    ImageToFile ic;
+    
+    unsigned ic_zoom_factor;
+    unsigned ic_scaled_width;
+    unsigned ic_scaled_height;
+
+    /* const */ Drawable & ic_drawable;
+
+    private:
+        std::unique_ptr<uint8_t[]> ic_scaled_buffer;
+
+    public:
+    void zoom(unsigned percent) {
+        percent = std::min(percent, 100u);
+        const unsigned zoom_width = (this->ic_drawable.width() * percent) / 100;
+        const unsigned zoom_height = (this->ic_drawable.height() * percent) / 100;
+        this->ic_zoom_factor = percent;
+        this->ic_scaled_width = (zoom_width + 3) & 0xFFC;
+        this->ic_scaled_height = zoom_height;
+        if (this->ic_zoom_factor != 100) {
+            this->ic_scaled_buffer.reset(new uint8_t[this->ic_scaled_width * this->ic_scaled_height * 3]);
+        }
+    }
+
+    void ic_flush() {
+        if (this->ic_zoom_factor == 100) {
+            this->dump24();
+        }
+        else {
+            this->scale_dump24();
+        }
+    }
+
+    void dump24() {
+        ::transport_dump_png24(
+            this->ic_trans, this->ic_drawable.data(),
+            this->ic_drawable.width(), this->ic_drawable.height(),
+            this->ic_drawable.rowsize(), true);
+    }
+
+    void scale_dump24() {
+        scale_data(
+            this->ic_scaled_buffer.get(), this->ic_drawable.data(),
+            this->ic_scaled_width, this->ic_drawable.width(),
+            this->ic_scaled_height, this->ic_drawable.height(),
+            this->ic_drawable.rowsize());
+        ::transport_dump_png24(
+            this->ic_trans, this->ic_scaled_buffer.get(),
+            this->ic_scaled_width, this->ic_scaled_height,
+            this->ic_scaled_width * 3, false);
+    }
+
+    bool ic_has_first_img = false;
+
+    void ic_breakpoint_image(const timeval& now)
+    {
+        tm ptm;
+        localtime_r(&now.tv_sec, &ptm);
+        this->ic_drawable.trace_timestamp(ptm);
+        this->ic_flush();
+        this->ic_drawable.clear_timestamp();
+        this->ic_has_first_img = true;
+        this->ic_trans.next();
+    }
 
     VideoSequencer video_sequencer;
     FirstImage first_image;
@@ -1914,13 +1889,13 @@ public:
 
     void next_video_impl(const timeval& now, NotifyNextVideo::reason reason) {
         this->video_sequencer.reset_now(now);
-        if (!this->ic.has_first_img) {
-            this->ic.breakpoint_image(now);
+        if (!this->ic_has_first_img) {
+            this->ic_breakpoint_image(now);
             this->first_image.cap_elem = this->video_sequencer;
             this->first_image.gcap_elem = this->video_sequencer;
         }
         this->vc.next_video();
-        this->ic.breakpoint_image(now);
+        this->ic_breakpoint_image(now);
         this->next_video_notifier.notify_next_video(now, reason);
     }
 
@@ -1932,19 +1907,30 @@ public:
         const int groupid,
         bool no_timestamp,
         unsigned image_zoom,
-        const Drawable & drawable,
+        /* const */Drawable & drawable,
         FlvParams flv_params,
         std::chrono::microseconds video_interval,
         NotifyNextVideo & next_video_notifier)
     : vc_trans(record_path, basename, ("." + flv_params.codec).c_str(), groupid)
     , vc(now, this->vc_trans, drawable, no_timestamp, std::move(flv_params))
     , ic_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_path, basename, ".png", groupid)
-    , ic(this->ic_trans, drawable, image_zoom)
+    , ic_zoom_factor(std::min(image_zoom, 100u))
+    , ic_scaled_width(drawable.width())
+    , ic_scaled_height(drawable.height())
+    , ic_drawable(drawable)
     , video_sequencer(
         now, video_interval > std::chrono::microseconds(0) ? video_interval : std::chrono::microseconds::max(), *this)
     , first_image(now, *this)
     , next_video_notifier(next_video_notifier)
-    {}
+    {
+        const unsigned zoom_width = (this->ic_drawable.width() * this->ic_zoom_factor) / 100;
+        const unsigned zoom_height = (this->ic_drawable.height() * this->ic_zoom_factor) / 100;
+        this->ic_scaled_width = (zoom_width + 3) & 0xFFC;
+        this->ic_scaled_height = zoom_height;
+        if (this->ic_zoom_factor != 100) {
+            this->ic_scaled_buffer.reset(new uint8_t[this->ic_scaled_width * this->ic_scaled_height * 3]);
+        }
+    }
 
     void next_video(const timeval& now) {
         this->next_video_impl(now, NotifyNextVideo::reason::external);
