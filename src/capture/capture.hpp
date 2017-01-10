@@ -75,7 +75,7 @@
 #include "configs/config.hpp"
 
 #include "gdi/capture_api.hpp"
-#include "gdi/graphic_cmd_color_converter.hpp"
+#include "gdi/graphic_cmd_color.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/capture_probe_api.hpp"
 #include "gdi/kbd_input_api.hpp"
@@ -1125,38 +1125,11 @@ public:
             }
         }
 
-    protected:
+    private:
         template<class... Ts>
         void draw_impl(Ts const & ... args) {
             for (gdi::GraphicApi & gd : this->gds){
                 gd.draw(args...);
-            }
-        }
-
-    public:
-        PtrColorConverter cmd_color_distributor;
-        MouseTrace const & mouse;
-        std::vector<GdRef> gds;
-        std::vector<std::reference_wrapper<gdi::CaptureApi>> snapshoters;
-
-        gdi::Depth order_depth_ = gdi::Depth::unspecified();
-        gdi::RngByBpp<std::vector<GdRef>::iterator> rng_by_bpp;
-
-        Graphic(MouseTrace const & mouse)
-        : mouse(mouse)
-        {}
-
-        template<class Cmd, class... Ts>
-        void draw_impl(Cmd const & cmd, Ts const & ... args)
-        {
-            if (gdi::GraphicCmdColor::is_encodable_cmd_color(cmd)) {
-                assert(gdi::Depth::unspecified() != this->order_depth_);
-                gdi::draw_cmd_color_convert(this->order_depth_, this->rng_by_bpp, cmd, args...);
-            }
-            else {
-                for (gdi::GraphicApi & gd : this->gds){
-                    gd.draw(cmd, args...);
-                }
             }
         }
 
@@ -1177,39 +1150,27 @@ public:
             }
         }
 
-        gdi::Depth const & order_depth() const override {
-            return this->order_depth_;
-        }
+    public:
+        PtrColorConverter cmd_color_distributor;
+        MouseTrace const & mouse;
+        std::vector<GdRef> gds;
+        std::vector<std::reference_wrapper<gdi::CaptureApi>> snapshoters;
 
+        Graphic(MouseTrace const & mouse)
+        : mouse(mouse)
+        {}
     };
 
     Graphic graphic_api;
     RDPDrawable drawable;
-    uint8_t order_bpp;
 
 public:
     using GraphicApi = Graphic;
 
-    GraphicCaptureImpl(uint16_t width, uint16_t height, uint8_t order_bpp, MouseTrace const & mouse)
+    GraphicCaptureImpl(uint16_t width, uint16_t height, MouseTrace const & mouse)
     : graphic_api(mouse)
     , drawable(width, height)
-    , order_bpp(order_bpp)
     {
-    }
-
-    void update_order_bpp(uint8_t order_bpp) {
-        if (this->order_bpp != order_bpp) {
-            this->order_bpp = order_bpp;
-            this->start();
-        }
-    }
-
-    void start()
-    {
-        auto const order_depth = gdi::Depth::from_bpp(this->order_bpp);
-        auto & gds = this->graphic_api.gds;
-        this->graphic_api.rng_by_bpp = {order_depth, gds.begin(), gds.end()};
-        this->graphic_api.order_depth_ = order_depth;
     }
 
     Graphic & get_graphic_api() { return this->graphic_api; }
@@ -2225,7 +2186,7 @@ public:
 class MetaCaptureImpl
 {
 public:
-    local_fd fd;
+    local_fd file;
     OutFileTransport meta_trans;
     SessionMeta meta;
     SessionLogAgent session_log_agent;
@@ -2236,7 +2197,7 @@ public:
         std::string record_path,
         const char * const basename,
         bool enable_agent)
-    : fd([](const char * filename){
+    : file([](const char * filename){
         int fd = ::open(filename, O_CREAT | O_TRUNC | O_WRONLY, 0440);
         if (fd < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
@@ -2244,7 +2205,7 @@ public:
         }
         return fd;
     }(record_path.append(basename).append(".meta").c_str()))
-    , meta_trans(this->fd.get())
+    , meta_trans(this->file.fd())
     , meta(now, this->meta_trans)
     , session_log_agent(this->meta)
     , enable_agent(enable_agent)
@@ -2732,7 +2693,6 @@ public:
     , dump_png24_api(dump_png24)
     , keyboard_buffer_32(keyboard_buffer_32_buf)
     , wrm_format_version(bool(this->compression_bullder.get_algorithm()) ? 4 : 3)
-    , order_depth_(gdi::Depth::unspecified())
     {
         if (wrm_compression_algorithm != this->compression_bullder.get_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
@@ -3026,13 +2986,6 @@ public:
     void possible_active_window_change() override {}
 
     using RDPSerializer::set_pointer;
-
-    gdi::Depth const & order_depth() const override {
-        return this->order_depth_;
-    }
-
-    gdi::Depth order_depth_;
-
 };  // struct GraphicToFile
 
 
@@ -3124,16 +3077,10 @@ public:
                             bmp_cache, gly_cache, ptr_cache,
                             dump_png24, wrm_compression_algorithm,
                             send_input, verbose)
-            , order_depth_(gdi::Depth::unspecified())
         {}
 
-        using GraphicToFile::GraphicToFile::draw;
-        using GraphicToFile::GraphicToFile::capture_bpp;
-
-        gdi::Depth const & order_depth() const override {
-            return this->order_depth_;
-        }
-
+        using GraphicToFile::draw;
+        using GraphicToFile::capture_bpp;
 
         void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
             auto compress_and_draw_bitmap_update = [&bitmap_data, this](const Bitmap & bmp) {
@@ -3166,7 +3113,6 @@ public:
         void enable_kbd_input_mask(bool enable) override {
             this->impl->enable_kbd_input_mask(enable);
         }
-        gdi::Depth order_depth_ = gdi::Depth::unspecified();
     } graphic_to_file;
 
     class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi
@@ -3513,7 +3459,6 @@ public:
     , capture_meta(capture_meta)
     , update_progress_data(update_progress_data)
     , capture_api(now, width / 2, height / 2)
-    , order_depth_(gdi::Depth::unspecified())
     {
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
 
@@ -3568,7 +3513,7 @@ public:
 
 
         if (capture_drawable) {
-            this->gd.reset(new Graphic(width, height, order_bpp, this->capture_api.mouse_trace()));
+            this->gd.reset(new Graphic(width, height, this->capture_api.mouse_trace()));
             this->graphic_api = &this->gd->get_graphic_api();
             this->capture_api.set_drawable(&this->gd->impl());
 
@@ -3749,8 +3694,6 @@ public:
             this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->ptc));
             apis_register_capture_probe_list.push_back(static_cast<gdi::CaptureProbeApi&>(*this->ptc));
         }
-
-        if (this->gd) { this->gd->start(); }
     }
 
     ~Capture() {
@@ -3832,14 +3775,6 @@ public:
         if (this->graphic_api) {
             std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list = this->graphic_api ? &this->graphic_api->gds : nullptr;
             graphic_list->push_back(gd);
-            // TODO
-            this->gd->start();
-        }
-    }
-
-    void set_order_bpp(uint8_t order_bpp) {
-        if (this->graphic_api) {
-            this->gd->update_order_bpp(order_bpp);
         }
     }
 
@@ -3901,10 +3836,4 @@ public:
     void possible_active_window_change() override {
         this->capture_probe_api.possible_active_window_change();
     }
-
-    gdi::Depth const & order_depth() const override {
-        return this->order_depth_;
-    }
-
-    gdi::Depth order_depth_;
 };

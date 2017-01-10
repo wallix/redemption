@@ -526,7 +526,6 @@ public:
     , multipatblt()
     , multiscrblt()
     , polyline()
-    , order_depth_(gdi::Depth::unspecified())
     {
         InitializeVirtualChannelList();
     }
@@ -578,13 +577,6 @@ public:
         LOG(LOG_INFO, "polyline count=%u",        this->statistic.polyline_count);
         LOG(LOG_INFO, "****************************************");
     }
-
-    gdi::Depth const & order_depth() const override {
-        return this->order_depth_;
-    }
-
-    gdi::Depth order_depth_;
-
 };  // class Analyzer
 
 int main(int argc, char * argv[]) {

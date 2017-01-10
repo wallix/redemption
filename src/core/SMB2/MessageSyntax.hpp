@@ -184,14 +184,14 @@ enum : uint32_t {
 };
 
 static inline
-const char * get_ShareAccess_name(uint32_t shareAccess) {
+std::string get_ShareAccess_name(uint32_t shareAccess) {
 
     std::string str;
     (shareAccess & FILE_SHARE_READ) ? str+="FILE_SHARE_READ ":str;
     (shareAccess & FILE_SHARE_WRITE) ? str+="FILE_SHARE_WRITE ":str;
     (shareAccess & FILE_SHARE_DELETE) ? str+="FILE_SHARE_DELETE ":str;
 
-    return str.c_str();
+    return str;
 }
 
 
@@ -434,7 +434,7 @@ enum {
 };
 
 static inline
-const char * get_CreateOptions_name(uint32_t createOptions) {
+std::string get_CreateOptions_name(uint32_t createOptions) {
 
     std::string str;
 
@@ -460,7 +460,7 @@ const char * get_CreateOptions_name(uint32_t createOptions) {
     (createOptions & FILE_OPEN_NO_RECALL) ? str+="FILE_OPEN_NO_RECALL " : str;
     (createOptions & FILE_OPEN_FOR_FREE_SPACE_QUERY) ? str+="FILE_OPEN_FOR_FREE_SPACE_QUERY " : str;
 
-    return str.c_str();
+    return str;
 }
 
 
@@ -632,7 +632,7 @@ enum {
 };
 
 static inline
-const char * get_File_Pipe_Printer_Access_Mask_name(uint32_t File_Pipe_Printer_Access_Mask) {
+std::string get_File_Pipe_Printer_Access_Mask_name(uint32_t File_Pipe_Printer_Access_Mask) {
 
     std::string str;
     (File_Pipe_Printer_Access_Mask & FILE_READ_DATA) ? str+="FILE_READ_DATA " :str;
@@ -656,7 +656,7 @@ const char * get_File_Pipe_Printer_Access_Mask_name(uint32_t File_Pipe_Printer_A
     (File_Pipe_Printer_Access_Mask & GENERIC_WRITE) ? str+="GENERIC_WRITE " : str;
     (File_Pipe_Printer_Access_Mask & GENERIC_READ) ? str+="GENERIC_READ " : str;
 
-    return str.c_str();
+    return str;
 }
 
 static inline
@@ -822,7 +822,7 @@ enum : uint32_t {
 };
 
 static inline
-const char * get_Directory_Access_Mask_name(uint32_t Directory_Access_Mask) {
+std::string get_Directory_Access_Mask_name(uint32_t Directory_Access_Mask) {
 
     std::string str;
     (Directory_Access_Mask & FILE_LIST_DIRECTORY) ? str+="FILE_LIST_DIRECTORY " :str;
@@ -846,7 +846,7 @@ const char * get_Directory_Access_Mask_name(uint32_t Directory_Access_Mask) {
     (Directory_Access_Mask & GENERIC_WRITE) ? str+="GENERIC_WRITE " : str;
     (Directory_Access_Mask & GENERIC_READ) ? str+="GENERIC_READ " : str;
 
-    return str.c_str();
+    return str;
 }
 
 

@@ -257,7 +257,6 @@ public:
     , drawable_ref(drawable)
     , hscroll(drawable, *this, this, true, 0, theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font)
     , vscroll(drawable, *this, this, false, 0, theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font)
-    , order_depth_(gdi::Depth::unspecified())
     {
         this->impl = &composite_array;
 
@@ -423,12 +422,6 @@ public:
 
         this->rdp_input_invalidate(this->get_rect());
     }
-
-    gdi::Depth const & order_depth() const override {
-        return this->order_depth_;
-    }
-
-    gdi::Depth order_depth_;
 
 public:
     // NotifyApi

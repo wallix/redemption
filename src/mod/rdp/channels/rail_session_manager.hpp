@@ -88,8 +88,6 @@ private:
 
     uint32_t auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
-    gdi::Depth order_depth_;
-
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
     void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
@@ -129,12 +127,7 @@ public:
     , dialog_box_rect((front_width - 640) / 2, (front_height - 480) / 2, 640, 480)
     , acl(acl)
     , session_probe_window_title(session_probe_window_title)
-    , order_depth_(gdi::Depth::unspecified())
     {}
-
-    gdi::Depth const & order_depth() const override {
-        return this->order_depth_;
-    }
 
     void begin_update() override
     {
@@ -224,17 +217,15 @@ public:
 private:
     struct InternalProtectedGraphics final : gdi::ProtectedGraphics
     {
-        RemoteProgramsSessionManager & self_;
+        RemoteProgramsSessionManager & manager_;
 
         InternalProtectedGraphics(RemoteProgramsSessionManager & self)
         : gdi::ProtectedGraphics(*self.drawable, self.protected_rect)
-        , self_(self)
+        , manager_(self)
         {}
 
         void refresh_rects(array_view<Rect const> av) override
-        { this->self_.mod.rdp_input_invalidate2(av); }
-
-        gdi::Depth const & order_depth() const override { return this->self_.drawable->order_depth(); }
+        { this->manager_.mod.rdp_input_invalidate2(av); }
     };
 
     template<class Cmd, class... Args>
@@ -425,7 +416,7 @@ public:
         }
     }
 
-    void draw(const RDP::RAIL::NonMonitoredDesktop & cmd) override
+    void draw(const RDP::RAIL::NonMonitoredDesktop & /*cmd*/) override
     {}
 
 private:
