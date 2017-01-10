@@ -141,7 +141,7 @@ public:
     Rect screen_rect;
 
     // Internal state of orders
-    SaveStateChunk ssc;
+    StateChunk ssc;
 
     BmpCache     * bmp_cache;
     PointerCache   ptr_cache;
@@ -865,7 +865,10 @@ public:
             }
             break;
             case SAVE_STATE:
-                this->ssc.recv(this->stream, this->info_version);
+            {
+                SaveStateChunk ssc;
+                ssc.recv(this->stream, this->ssc, this->info_version);
+            }
             break;
             case LAST_IMAGE_CHUNK:
             case PARTIAL_IMAGE_CHUNK:

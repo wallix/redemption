@@ -464,11 +464,11 @@ public:
 
     void removeDriveDevice(const FileSystemData::DeviceData *, const size_t);
 
-    virtual gdi::GraphicDepth const & order_depth() const override {
-        return gdi::GraphicDepth::from_bpp(0);
+    virtual gdi::Depth const & order_depth() const override {
+        return gdi::Depth::from_bpp(0);
     }
 
-    virtual void set_depths(gdi::GraphicDepth const & depths) override {}
+    virtual void set_depths(gdi::Depth const & depths) override {}
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -574,41 +574,41 @@ public:
     //       DRAW FUNCTIONS
     //-----------------------------
 
-    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
+    virtual void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDPScrBlt & cmd, const Rect & clip) override;
+    virtual void draw(const RDPScrBlt & cmd, Rect clip) override;
 
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override;
+    virtual void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override;
 
-    virtual void draw(const RDPLineTo & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
+    virtual void draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDPPatBlt & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
+    virtual void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, gdi::GraphicDepth depth, const Bitmap & bitmap) override;
+    virtual void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override;
 
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override;
 
-    virtual void draw(const RDPDestBlt & cmd, const Rect & clip) override;
+    virtual void draw(const RDPDestBlt & cmd, Rect clip) override;
 
-    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override;
+    virtual void draw(const RDPMultiDstBlt & cmd, Rect clip) override;
 
-    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
+    virtual void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
+    virtual void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override;
+    virtual void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override;
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, gdi::GraphicDepth depth, const GlyphCache & gly_cache) override;
+    virtual void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override;
 
-    void draw(const RDPPolygonSC & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
+    void draw(const RDPPolygonSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    void draw(const RDPPolygonCB & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
+    void draw(const RDPPolygonCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    void draw(const RDPPolyline & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
+    void draw(const RDPPolyline & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
+    virtual void draw(const RDPEllipseSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip, gdi::GraphicDepth depth) override;
+    virtual void draw(const RDPEllipseCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
     virtual void draw(const RDP::FrameMarker & order) override;
 

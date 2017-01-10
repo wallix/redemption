@@ -137,7 +137,7 @@ protected:
     RDPPolygonCB polygonCB;
     RDPEllipseCB ellipseCB;
 
-    SaveStateChunk ssc;
+    StateChunk ssc;
 
     // state variables for gathering batch of orders
     size_t order_count;
