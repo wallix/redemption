@@ -481,10 +481,6 @@ public:
             }
         }
 
-        void set_depths(gdi::Depth const & depth) override {
-            this->order_depth_ = depth;
-        }
-
         gdi::Depth const & order_depth() const override {
             return this->order_depth_;
         }
@@ -508,7 +504,6 @@ public:
     void update_order_bpp(uint8_t order_bpp) {
         if (this->order_bpp != order_bpp) {
             this->order_bpp = order_bpp;
-            this->drawable.set_depths(gdi::Depth::from_bpp(order_bpp));
             this->start();
         }
     }
@@ -1756,10 +1751,6 @@ public:
         using GraphicToFile::GraphicToFile::draw;
         using GraphicToFile::GraphicToFile::capture_bpp;
 
-        void set_depths(gdi::Depth const & depth) override {
-            this->order_depth_ = depth;
-        }
-
         gdi::Depth const & order_depth() const override {
             return this->order_depth_;
         }
@@ -1927,7 +1918,6 @@ public:
             ? GraphicToFile::Verbose::bitmap_update    : GraphicToFile::Verbose::none)
     )
     , nc(this->graphic_to_file, now, ini.get<cfg::video::frame_interval>(), ini.get<cfg::video::break_interval>())
-    , order_depth_(gdi::Depth::unspecified())
     {}
 
 
@@ -1962,17 +1952,6 @@ public:
     bool kbd_input(const timeval& now, uint32_t) override {
         return this->graphic_to_file.kbd_input(now, '*');
     }
-
-    virtual void set_depths(gdi::Depth const & depth) {
-        this->order_depth_ = depth;
-    }
-
-    virtual gdi::Depth const & order_depth() const {
-        return this->order_depth_;
-    }
-
-    gdi::Depth order_depth_;
-
 };
 
 class Capture final
@@ -2547,15 +2526,9 @@ public:
         this->capture_probe_api.possible_active_window_change();
     }
 
-    void set_depths(gdi::Depth const & depth) override {
-        this->order_depth_ = depth;
-    }
-
     gdi::Depth const & order_depth() const override {
         return this->order_depth_;
     }
 
     gdi::Depth order_depth_;
 };
-
-

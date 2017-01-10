@@ -48,6 +48,8 @@ public:
 
     RDPDrawable gd;
 
+    gdi::Depth order_depth_;
+
 public:
     using FrontAPI::FrontAPI;
 
@@ -161,17 +163,6 @@ public:
     }
 
 private:
-    struct ColorDecoder {
-        uint8_t    mod_bpp;
-        uint32_t operator()(uint32_t c) const {
-            return color_decode_opaquerect(c, this->mod_bpp, BGRPalette::classic_332());
-        }
-    };
-
-    ColorDecoder get_color_converter() const {
-        return {this->mod_bpp};
-    }
-
     void draw_impl(const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -307,7 +298,6 @@ public:
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
         }
-        this->set_depths(gdi::Depth::from_bpp(this->mod_bpp));
         // -------- Start of system wide SSL_Ctx option ------------------------------
 
         // ERR_load_crypto_strings() registers the error strings for all libcrypto
@@ -337,15 +327,9 @@ public:
         //SSL_library_init();
     }
 
-    void set_depths(gdi::Depth const & depth) override {
-        this->order_depth_ = depth;
-    }
-
     gdi::Depth const & order_depth() const override {
         return this->order_depth_;
     }
-
-    gdi::Depth order_depth_;
 
     void update_pointer_position(uint16_t, uint16_t) override {}
 };

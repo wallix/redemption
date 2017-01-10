@@ -80,10 +80,8 @@ public:
     , mod_palette_rgb(BGRPalette::classic_332())
     , order_depth_(gdi::Depth::unspecified())
     {
-        //REDASSERT(this->order_depth().is_defined());
+        //REDASSERT(this->order_depth_.is_defined());
     }
-
-//    using gdi::GraphicApi::set_depths;
 
     const uint8_t * data() const noexcept {
         return this->drawable.data();
@@ -214,10 +212,6 @@ public:
     void draw(const RDPDestBlt & cmd, Rect clip) override {
         const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
         this->drawable.destblt(trect, cmd.rop);
-    }
-
-    void set_depths(gdi::Depth const & depths) override {
-        this->order_depth_ = depths;
     }
 
     gdi::Depth const & order_depth() const override {

@@ -457,10 +457,6 @@ public:
 
     void update_pointer_position(uint16_t, uint16_t) override {}
 
-    void set_depths(gdi::Depth const & depth) override {
-        this->order_depth_ = depth;
-    }
-
     gdi::Depth const & order_depth() const override {
         return this->order_depth_;
     }

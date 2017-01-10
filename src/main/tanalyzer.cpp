@@ -579,11 +579,7 @@ public:
         LOG(LOG_INFO, "****************************************");
     }
 
-    virtual void set_depths(gdi::Depth const & depth) {
-        this->order_depth_ = depth;
-    }
-
-    virtual gdi::Depth const & order_depth() const {
+    gdi::Depth const & order_depth() const override {
         return this->order_depth_;
     }
 
