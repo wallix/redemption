@@ -120,11 +120,12 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ocr::locale::LocaleId ocr_locale(
                     static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()));
         bool ocr_on_title_bar_only = ini.get<cfg::ocr::on_title_bar_only>();
+        uint8_t max_unrecog_char_rate = ini.get<cfg::ocr::max_unrecog_char_rate>();
 
         Capture capture(  capture_wrm, wrm_params
                         , capture_png, png_params
                         , capture_pattern_checker
-                        , capture_ocr, ocr_version, ocr_locale, ocr_on_title_bar_only, ocr_params
+                        , capture_ocr, ocr_version, ocr_locale, ocr_on_title_bar_only, max_unrecog_char_rate, ocr_params
                         , capture_flv
                         , capture_flv_full
                         , capture_meta
@@ -317,11 +318,12 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     ocr::locale::LocaleId ocr_locale(
                     static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()));
     bool ocr_on_title_bar_only = ini.get<cfg::ocr::on_title_bar_only>();
+    uint8_t max_unrecog_char_rate = ini.get<cfg::ocr::max_unrecog_char_rate>();
 
     Capture capture( capture_wrm, wrm_params
                    , capture_png, png_params
                    , capture_pattern_checker
-                   , capture_ocr, ocr_version, ocr_locale, ocr_on_title_bar_only, ocr_params
+                   , capture_ocr, ocr_version, ocr_locale, ocr_on_title_bar_only, max_unrecog_char_rate, ocr_params
                    , capture_flv
                    , capture_flv_full
                    , capture_meta
@@ -561,6 +563,7 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureMP4)
     int fsize = filesize(filename);
     switch (fsize) {
         case 12999: break;
+        case 12985: break;
         default: BOOST_CHECK_EQUAL(-2, fsize);
     }
     ::unlink(filename);
@@ -568,6 +571,7 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureMP4)
     fsize = filesize(filename);
     switch (fsize) {
         case 11726: break;
+        case 11712: break;
         default: BOOST_CHECK_EQUAL(-2, fsize);
     }
     ::unlink(filename);

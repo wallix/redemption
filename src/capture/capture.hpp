@@ -3642,13 +3642,14 @@ public:
         OcrVersion ocr_version,
         ocr::locale::LocaleId ocr_locale,
         bool ocr_on_title_bar_only,
+        uint8_t max_unrecog_char_rate,
         NotifyTitleChanged & notify_title_changed)
     : ocr_title_extractor_builder(
         drawable, authentifier != nullptr,
         ocr_version,
         ocr_locale,
         ocr_on_title_bar_only,
-        ini.get<cfg::ocr::max_unrecog_char_rate>())
+        max_unrecog_char_rate)
     , title_extractor(this->ocr_title_extractor_builder.get_title_extractor())
     , last_ocr(now)
     , usec_ocr_interval(ini.get<cfg::ocr::interval>())
@@ -4817,6 +4818,7 @@ public:
         OcrVersion ocr_version, // ini.get<cfg::ocr::version>()
         ocr::locale::LocaleId ocr_locale, // static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())
         bool ocr_on_title_bar_only, // ini.get<cfg::ocr::on_title_bar_only>(),
+        uint8_t max_unrecog_char_rate, // = ini.get<cfg::ocr::max_unrecog_char_rate>()
         OcrParams ocr_params,
         bool capture_flv,
         bool capture_flv_full,
@@ -4980,7 +4982,7 @@ public:
                 if (this->patterns_checker || this->pmc || this->pvc) {
                     this->ptc.reset(new TitleCaptureImpl(
                         now, authentifier, this->gd->impl(), ini, 
-                        ocr_version, ocr_locale, ocr_on_title_bar_only,
+                        ocr_version, ocr_locale, ocr_on_title_bar_only, max_unrecog_char_rate,
                         this->notifier_title_changed
                     ));
                 }
