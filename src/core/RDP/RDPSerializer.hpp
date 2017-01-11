@@ -755,7 +755,7 @@ public:
         bitmap_data.emit(this->stream_bitmaps);
         this->stream_bitmaps.out_copy_bytes(data_compressed.data(), data_compressed.size());
         if (this->verbose & Verbose::bitmap_update) {
-            bitmap_data.log(LOG_INFO, "RDPSerializer");
+            bitmap_data.log(LOG_INFO);
         }
     }
 

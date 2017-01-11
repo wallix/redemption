@@ -1255,7 +1255,7 @@ public:
                              );
 
                 if (this->verbose & Verbose::rdp_orders){
-                    bitmap_data.log(LOG_INFO, "         ");
+                    bitmap_data.log(LOG_INFO);
                 }
 
                 for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -2455,20 +2455,6 @@ struct CaptureApisImpl
             return time;
         }
 
-        void do_pause_capture(const timeval& now) override {
-            for (gdi::CaptureApi & cap : this->caps) {
-                cap.pause_capture(now);
-            }
-            this->capture_event.reset();
-        }
-
-        void do_resume_capture(const timeval& now) override {
-            for (gdi::CaptureApi & cap : this->caps) {
-                cap.resume_capture(now);
-            }
-            this->capture_event.set();
-        }
-
         Drawable * drawable = nullptr;
         MouseTrace mouse_info;
         wait_obj capture_event;
@@ -2744,35 +2730,6 @@ private:
         }
         return std::chrono::microseconds(interval - duration);
     }
-
-    void do_pause_capture(timeval const & now) override {
-        // Draw Pause message
-        time_t rawtime = now.tv_sec;
-        tm ptm;
-        localtime_r(&rawtime, &ptm);
-        this->drawable.trace_pausetimestamp(ptm);
-        if (this->zoom_factor == 100) {
-            ::transport_dump_png24(
-                this->trans, this->drawable.data(),
-                this->drawable.width(), this->drawable.height(),
-                this->drawable.rowsize(), true);
-        }
-        else {
-            scale_data(
-                this->scaled_buffer.get(), this->drawable.data(),
-                this->scaled_width, this->drawable.width(),
-                this->scaled_height, this->drawable.height(),
-                this->drawable.rowsize());
-            ::transport_dump_png24(
-                this->trans, this->scaled_buffer.get(),
-                this->scaled_width, this->scaled_height,
-                this->scaled_width * 3, false);
-        }
-        this->trans.next();
-        this->drawable.clear_pausetimestamp();
-        this->start_capture = now;
-    }
-
 };
 
 class PngCaptureRT : public gdi::CaptureApi
@@ -2902,43 +2859,6 @@ private:
             return std::chrono::microseconds(interval - duration);
         }
         return this->frame_interval;
-    }
-
-    void do_pause_capture(timeval const & now) override {
-        if (this->enable_rt_display) {
-            // Draw Pause message
-            time_t rawtime = now.tv_sec;
-            tm ptm;
-            localtime_r(&rawtime, &ptm);
-            this->drawable.trace_pausetimestamp(ptm);
-            if (this->zoom_factor == 100) {
-                ::transport_dump_png24(
-                    this->trans, this->drawable.data(),
-                    this->drawable.width(), this->drawable.height(),
-                    this->drawable.rowsize(), true);
-            }
-            else {
-                scale_data(
-                    this->scaled_buffer.get(), this->drawable.data(),
-                    this->scaled_width, this->drawable.width(),
-                    this->scaled_height, this->drawable.height(),
-                    this->drawable.rowsize());
-                ::transport_dump_png24(
-                    this->trans, this->scaled_buffer.get(),
-                    this->scaled_width, this->scaled_height,
-                    this->scaled_width * 3, false);
-            }
-            if (this->png_limit && this->trans.get_seqno() >= this->png_limit) {
-                // unlink may fail, for instance if file does not exist, just don't care
-                ::unlink(this->trans.seqgen()->get(this->trans.get_seqno() - this->png_limit));
-            }
-            this->trans.next();
-            this->drawable.clear_pausetimestamp();
-            this->start_capture = now;
-        }
-    }
-
-    void do_resume_capture(timeval const & now) override {
     }
 };
 
@@ -3244,8 +3164,6 @@ class SequencedVideoCaptureImpl
             return std::min(ret, first_image_impl.video_sequencer.snapshot(now, x, y, ignore_frame_in_timeval));
         }
 
-        void do_resume_capture(const timeval& now) override { first_image_impl.video_sequencer.resume_capture(now); }
-        void do_pause_capture(const timeval& now) override { first_image_impl.video_sequencer.pause_capture(now); }
     };
 
 public:
@@ -3721,10 +3639,11 @@ public:
         auth_api * authentifier,
         const Drawable & drawable,
         const Inifile & ini,
+        OcrVersion ocr_version,
         NotifyTitleChanged & notify_title_changed)
     : ocr_title_extractor_builder(
         drawable, authentifier != nullptr,
-        ini.get<cfg::ocr::version>(),
+        ocr_version,
         static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
         ini.get<cfg::ocr::on_title_bar_only>(),
         ini.get<cfg::ocr::max_unrecog_char_rate>())
@@ -4740,11 +4659,6 @@ public:
         return this->nc.snapshot(now, x, y, ignore_frame_in_timeval);
     }
 
-    void do_resume_capture(const timeval& now) override {
-        this->trans_variant.trans->next();
-        this->send_timestamp_chunk(now, true);
-    }
-
     // shadow text
     bool kbd_input(const timeval& now, uint32_t) override {
         return this->graphic_to_file.kbd_input(now, '*');
@@ -4774,8 +4688,6 @@ class Capture final
     using FullVideo = FullVideoCaptureImpl;
 
     using Meta = MetaCaptureImpl;
-
-    using Title = TitleCaptureImpl;
 
     const bool is_replay_mod;
 
@@ -4880,7 +4792,7 @@ private:
     std::unique_ptr<Video> pvc;
     std::unique_ptr<FullVideo> pvc_full;
     std::unique_ptr<Meta> pmc;
-    std::unique_ptr<Title> ptc;
+    std::unique_ptr<TitleCaptureImpl> ptc;
     std::unique_ptr<PatternsChecker> patterns_checker;
 
     UpdateProgressData * update_progress_data;
@@ -4900,6 +4812,7 @@ public:
         const PngParams png_params,
         bool capture_pattern_checker,
         bool capture_ocr,
+        OcrVersion ocr_version, // ini.get<cfg::ocr::version>()
         OcrParams ocr_params,
         bool capture_flv,
         bool capture_flv_full,
@@ -4940,7 +4853,7 @@ public:
                 this->capture_flv ?"flv ":"",
                 this->capture_flv_full ?"flv_full ":"",
                 this->capture_pattern_checker ?"pattern ":"",
-                this->capture_ocr ? (ini.get<cfg::ocr::version>() == OcrVersion::v2 ? 2 : 1) : 0,
+                this->capture_ocr ? (ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
                 this->capture_meta?"meta ":""
             );
         }
@@ -5061,8 +4974,8 @@ public:
 
             if (this->capture_ocr) {
                 if (this->patterns_checker || this->pmc || this->pvc) {
-                    this->ptc.reset(new Title(
-                        now, authentifier, this->gd->impl(), ini,
+                    this->ptc.reset(new TitleCaptureImpl(
+                        now, authentifier, this->gd->impl(), ini, ocr_version,
                         this->notifier_title_changed
                     ));
                 }
@@ -5256,14 +5169,6 @@ protected:
         bool ignore_frame_in_timeval
     ) override {
         return this->capture_api.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
-    }
-
-    void do_pause_capture(timeval const & now) override {
-        this->capture_api.pause_capture(now);
-    }
-
-    void do_resume_capture(timeval const & now) override {
-        this->capture_api.resume_capture(now);
     }
 
     template<class... Ts>

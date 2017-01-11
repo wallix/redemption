@@ -1007,11 +1007,12 @@ public:
         ;
 
         OcrParams ocr_params = {};
+        OcrVersion ocr_version = ini.get<cfg::ocr::version>();
 
         this->capture = new Capture(  capture_wrm, wrm_params
                                     , capture_png, png_params
                                     , capture_pattern_checker
-                                    , capture_ocr, ocr_params
+                                    , capture_ocr, ocr_version, ocr_params
                                     , capture_flv
                                     , capture_flv_full
                                     , capture_meta
@@ -1041,36 +1042,6 @@ public:
 
         this->authentifier = authentifier;
 
-        return true;
-    }
-
-    bool can_be_pause_capture() override
-    {
-        LOG(LOG_INFO, "---<>  Front::pause_capture  <>---");
-        if (this->capture_state != CAPTURE_STATE_STARTED) {
-            return false;
-        }
-
-        timeval now = tvtime();
-        this->capture->pause_capture(now);
-        this->capture_state = CAPTURE_STATE_PAUSED;
-        this->set_gd(this->orders.graphics_update_pdu());
-        return true;
-    }
-
-    bool can_be_resume_capture() override
-    {
-        LOG(LOG_INFO, "---<>  Front::resume_capture <>---");
-        if (this->capture_state != CAPTURE_STATE_PAUSED) {
-            return false;
-        }
-
-        timeval now = tvtime();
-        this->capture->resume_capture(now);
-        this->capture_state = CAPTURE_STATE_STARTED;
-        if (this->capture->get_graphic_api()) {
-            this->set_gd(this->capture->get_graphic_api());
-        }
         return true;
     }
 

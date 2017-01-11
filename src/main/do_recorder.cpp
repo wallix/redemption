@@ -1025,12 +1025,13 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         ;
 
                         OcrParams ocr_params = {};
+                        OcrVersion ocr_version = ini.get<cfg::ocr::version>();
 
 
                         Capture capture(capture_wrm, wrm_params
                                 , capture_png, png_params
                                 , capture_pattern_checker
-                                , capture_ocr, ocr_params
+                                , capture_ocr, ocr_version, ocr_params
                                 , capture_flv
                                 , capture_flv_full
                                 , capture_meta
