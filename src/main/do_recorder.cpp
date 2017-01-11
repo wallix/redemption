@@ -1026,12 +1026,15 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         OcrParams ocr_params = {};
                         OcrVersion ocr_version = ini.get<cfg::ocr::version>();
+                        ocr::locale::LocaleId ocr_locale(
+                            static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()));
+                        bool ocr_on_title_bar_only = ini.get<cfg::ocr::on_title_bar_only>();
 
 
                         Capture capture(capture_wrm, wrm_params
                                 , capture_png, png_params
                                 , capture_pattern_checker
-                                , capture_ocr, ocr_version, ocr_params
+                                , capture_ocr, ocr_version, ocr_locale, ocr_on_title_bar_only, ocr_params
                                 , capture_flv
                                 , capture_flv_full
                                 , capture_meta
