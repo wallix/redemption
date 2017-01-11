@@ -1090,10 +1090,10 @@ public:
         return false;
     }
 
-    void update_config(Inifile & ini) {
+    void update_config(bool enable_rt_display) {
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->update_config(ini);
+            this->capture->update_config(enable_rt_display);
         }
     }
 

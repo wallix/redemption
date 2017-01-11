@@ -78,13 +78,5 @@ struct ExternalCaptureApi : private noncopyable
     virtual ~ExternalCaptureApi() = default;
 };
 
-
-struct UpdateConfigCaptureApi : private noncopyable
-{
-    virtual void update_config(Inifile const & ini) = 0;
-
-    virtual ~UpdateConfigCaptureApi() = default;
-};
-
 }
 

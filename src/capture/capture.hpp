@@ -2379,7 +2379,6 @@ namespace gdi {
     class CaptureProbeApi;
     class KbdInputApi;
     class ExternalCaptureApi;
-    class UpdateConfigCaptureApi;
 }
 
 
@@ -2529,18 +2528,6 @@ struct CaptureApisImpl
         }
 
         std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> objs;
-    };
-
-
-    struct UpdateConfigCapture : gdi::UpdateConfigCaptureApi
-    {
-        void update_config(const Inifile & ini) override {
-            for (gdi::UpdateConfigCaptureApi & obj : this->objs) {
-                obj.update_config(ini);
-            }
-        }
-
-        std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> objs;
     };
 };
 
@@ -2788,7 +2775,7 @@ private:
 
 };
 
-class PngCaptureRT : public gdi::UpdateConfigCaptureApi, public gdi::CaptureApi
+class PngCaptureRT : public gdi::CaptureApi
 {
 public:
     OutFilenameSequenceTransport trans;
@@ -2839,27 +2826,29 @@ public:
         }
     }
 
-private:
-    void update_config(Inifile const & ini) override {
+    void update_config(bool enable_rt_display) {
         auto const old_enable_rt_display = this->enable_rt_display;
-        this->enable_rt_display = ini.get<cfg::video::rt_display>();
+        this->enable_rt_display = enable_rt_display;
 
         if (old_enable_rt_display == this->enable_rt_display) {
             return ;
         }
 
-        if (ini.get<cfg::debug::capture>()) {
-            LOG(LOG_INFO, "Enable real time: %d", int(this->enable_rt_display));
-        }
+        // TODO: add back verbose state of png capture later
+        LOG(LOG_INFO, "Enable real time: %d", int(this->enable_rt_display));
 
         if (!this->enable_rt_display) {
-            for(uint32_t until_num = this->trans.get_seqno() + 1; this->num_start < until_num; ++this->num_start){
+            for(uint32_t until_num = this->trans.get_seqno() + 1 ;
+                this->num_start < until_num ;
+                ++this->num_start)
+            {
                 // unlink may fail, for instance if file does not exist, just don't care
                 ::unlink(this->trans.seqgen()->get(this->num_start));
             }
         }
     }
 
+private:
     std::chrono::microseconds do_snapshot(
         timeval const & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
@@ -4768,7 +4757,6 @@ class Capture final
 , public gdi::KbdInputApi
 , public gdi::CaptureProbeApi
 , public gdi::ExternalCaptureApi
-, public gdi::UpdateConfigCaptureApi
 {
 
     using Graphic = GraphicCaptureImpl;
@@ -4901,7 +4889,6 @@ private:
     CaptureApisImpl::KbdInput kbd_input_api;
     CaptureApisImpl::CaptureProbe capture_probe_api;
     CaptureApisImpl::ExternalCapture external_capture_api;
-    CaptureApisImpl::UpdateConfigCapture update_config_capture_api;
     Graphic::GraphicApi * graphic_api = nullptr;
 
 
@@ -5100,8 +5087,6 @@ public:
                 = this->capture_probe_api.probes;
             std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> & apis_register_external_capture_list
                 = this->external_capture_api.objs;
-            std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> & apis_register_update_config_capture_list
-                = this->update_config_capture_api.objs;
 
 
 
@@ -5125,7 +5110,6 @@ public:
             this->pscrt->enable_rt_display = ini.get<cfg::video::rt_display>();
             this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
             apis_register_graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
-            apis_register_update_config_capture_list.push_back(static_cast<gdi::UpdateConfigCaptureApi&>(*this->pscrt));
         }
 
         if (this->psc) {
@@ -5225,8 +5209,12 @@ public:
         return this->capture_api.get_capture_event();
     }
 
-    void update_config(Inifile const & ini) override {
-        this->update_config_capture_api.update_config(ini);
+    public:
+    // TODO: this could be done directly in external pscrt object
+    void update_config(bool enable_rt_display) {
+        if (this->pscrt) {
+            this->pscrt->update_config(enable_rt_display);
+        }
     }
 
     void set_row(size_t rownum, const uint8_t * data) override {
