@@ -1217,7 +1217,6 @@ private:
         (void)x;
         (void)y;
         (void)ignore_frame_in_timeval;
-        using std::chrono::microseconds;
         uint64_t const duration = difftimeval(now, this->start_capture);
         uint64_t const interval = this->frame_interval.count();
         if (duration >= interval) {
@@ -1256,14 +1255,14 @@ private:
                 this->start_capture = now;
                 this->drawable.clear_mouse();
 
-                return microseconds(interval ? interval - duration % interval : 0u);
+                return std::chrono::microseconds(interval ? interval - duration % interval : 0u);
             }
             else {
                 // Wait 0.3 x frame_interval.
                 return this->frame_interval / 3;
             }
         }
-        return microseconds(interval - duration);
+        return std::chrono::microseconds(interval - duration);
     }
 
     void do_pause_capture(timeval const & now) override {
@@ -1375,7 +1374,6 @@ private:
             (void)x;
             (void)y;
             (void)ignore_frame_in_timeval;
-            using std::chrono::microseconds;
             uint64_t const duration = difftimeval(now, this->start_capture);
             uint64_t const interval = this->frame_interval.count();
             if (duration >= interval) {
@@ -1412,14 +1410,14 @@ private:
                     this->start_capture = now;
                     this->drawable.clear_mouse();
 
-                    return microseconds(interval ? interval - duration % interval : 0u);
+                    return std::chrono::microseconds(interval ? interval - duration % interval : 0u);
                 }
                 else {
                     // Wait 0.3 x frame_interval.
                     return this->frame_interval / 3;
                 }
             }
-            return microseconds(interval - duration);
+            return std::chrono::microseconds(interval - duration);
         }
         return this->frame_interval;
     }
@@ -1724,35 +1722,32 @@ class SequencedVideoCaptureImpl
     // first next_video is ignored
     struct FirstImage : gdi::CaptureApi
     {
-        SequencedVideoCaptureImpl & impl;
-        ApiRegisterElement<gdi::CaptureApi> cap_elem;
-        ApiRegisterElement<gdi::CaptureApi> gcap_elem;
+        SequencedVideoCaptureImpl & first_image_impl;
+        ApiRegisterElement<gdi::CaptureApi> first_image_cap_elem;
+        ApiRegisterElement<gdi::CaptureApi> first_image_gcap_elem;
 
-        using seconds = std::chrono::seconds;
-        using microseconds = std::chrono::microseconds;
-
-        const timeval start_capture;
+        const timeval first_image_start_capture;
 
         FirstImage(timeval const & now, SequencedVideoCaptureImpl & impl)
-        : impl(impl)
-        , start_capture(now)
+        : first_image_impl(impl)
+        , first_image_start_capture(now)
         {}
 
         std::chrono::microseconds do_snapshot(
             const timeval& now, int x, int y, bool ignore_frame_in_timeval
         ) override {
-            microseconds ret;
+            std::chrono::microseconds ret;
 
-            auto const duration = microseconds(difftimeval(now, this->start_capture));
-            auto const interval = microseconds(seconds(3))/2;
+            auto const duration = std::chrono::microseconds(difftimeval(now, this->first_image_start_capture));
+            auto const interval = std::chrono::microseconds(std::chrono::seconds(3))/2;
             if (duration >= interval) {
-                auto video_interval = this->impl.video_sequencer.get_interval();
-                if (this->impl.ic_drawable.logical_frame_ended || duration > seconds(2) || duration >= video_interval) {
-                    this->impl.ic_breakpoint_image(now);
-                    assert(this->cap_elem == *this);
-                    assert(this->gcap_elem == *this);
-                    this->cap_elem = this->impl.video_sequencer;
-                    this->gcap_elem = this->impl.video_sequencer;
+                auto video_interval = first_image_impl.video_sequencer.get_interval();
+                if (first_image_impl.ic_drawable.logical_frame_ended || duration > std::chrono::seconds(2) || duration >= video_interval) {
+                    first_image_impl.ic_breakpoint_image(now);
+                    assert(this->first_image_cap_elem == *this);
+                    assert(this->first_image_gcap_elem == *this);
+                    this->first_image_cap_elem = first_image_impl.video_sequencer;
+                    this->first_image_gcap_elem = first_image_impl.video_sequencer;
 
                     ret = video_interval;
                 }
@@ -1764,11 +1759,11 @@ class SequencedVideoCaptureImpl
                 ret = interval - duration;
             }
 
-            return std::min(ret, this->impl.video_sequencer.snapshot(now, x, y, ignore_frame_in_timeval));
+            return std::min(ret, first_image_impl.video_sequencer.snapshot(now, x, y, ignore_frame_in_timeval));
         }
 
-        void do_resume_capture(const timeval& now) override { this->impl.video_sequencer.resume_capture(now); }
-        void do_pause_capture(const timeval& now) override { this->impl.video_sequencer.pause_capture(now); }
+        void do_resume_capture(const timeval& now) override { first_image_impl.video_sequencer.resume_capture(now); }
+        void do_pause_capture(const timeval& now) override { first_image_impl.video_sequencer.pause_capture(now); }
     };
 
 public:
@@ -1850,8 +1845,8 @@ public:
         this->video_sequencer.reset_now(now);
         if (!this->ic_has_first_img) {
             this->ic_breakpoint_image(now);
-            this->first_image.cap_elem = this->video_sequencer;
-            this->first_image.gcap_elem = this->video_sequencer;
+            this->first_image.first_image_cap_elem = this->video_sequencer;
+            this->first_image.first_image_gcap_elem = this->video_sequencer;
         }
         this->vc.next_video();
         this->ic_breakpoint_image(now);
@@ -2263,9 +2258,6 @@ public:
         const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
     ) override {
         std::chrono::microseconds const diff {difftimeval(now, this->last_ocr)};
-
-        using std::chrono::milliseconds;
-        using std::chrono::duration_cast;
 
         if (diff >= this->usec_ocr_interval) {
             this->last_ocr = now;
@@ -3670,8 +3662,8 @@ public:
         if (this->pvc) {
             this->capture_api.caps.push_back(this->pvc->vc);
             apis_register_graphic_snapshot_list->push_back(this->pvc->preparing_vc);
-            this->pvc->first_image.cap_elem = {this->capture_api.caps, this->pvc->first_image};
-            this->pvc->first_image.gcap_elem = {*apis_register_graphic_snapshot_list, this->pvc->first_image};
+            this->pvc->first_image.first_image_cap_elem = {this->capture_api.caps, this->pvc->first_image};
+            this->pvc->first_image.first_image_gcap_elem = {*apis_register_graphic_snapshot_list, this->pvc->first_image};
         }
         if (this->pvc_full) {
             this->capture_api.caps.push_back(this->pvc_full->vc);
