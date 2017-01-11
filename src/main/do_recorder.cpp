@@ -886,252 +886,249 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
         return -1;
     };
 
-    {
-        InMetaSequenceTransport in_wrm_trans(
-            &cctx, infile_prefix,
-            infile_extension.c_str(),
-            infile_is_encrypted?1:0
-        );
+    InMetaSequenceTransport in_wrm_trans(
+        &cctx, infile_prefix,
+        infile_extension.c_str(),
+        infile_is_encrypted?1:0
+    );
 
-        timeval begin_capture = {0, 0};
-        timeval end_capture = {0, 0};
+    timeval begin_capture = {0, 0};
+    timeval end_capture = {0, 0};
 
-        int result = -1;
-        try {
-            bool test = (
-                 bool(capture_flags & CaptureFlags::flv)
-              || bool(capture_flags & CaptureFlags::ocr)
-              || bool(capture_flags & CaptureFlags::png)
-              || full_video
-              || wrm_color_depth != static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)
-              || show_file_metadata
-              || show_statistics
-              || file_count > 1
-              || order_count
-              || begin_cap != begin_record.tv_sec
-              || end_cap != begin_cap);
+    int result = -1;
+    try {
+        bool test = (
+                bool(capture_flags & CaptureFlags::flv)
+            || bool(capture_flags & CaptureFlags::ocr)
+            || bool(capture_flags & CaptureFlags::png)
+            || full_video
+            || wrm_color_depth != static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)
+            || show_file_metadata
+            || show_statistics
+            || file_count > 1
+            || order_count
+            || begin_cap != begin_record.tv_sec
+            || end_cap != begin_cap);
 
-            if (test){
-                auth_api * authentifier = nullptr;
-                for (unsigned i = 1; i < file_count ; i++) {
-                    in_wrm_trans.next();
-                }
+        if (test){
+            auth_api * authentifier = nullptr;
+            for (unsigned i = 1; i < file_count ; i++) {
+                in_wrm_trans.next();
+            }
 
-                FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(verbose));
+            FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(verbose));
 
-                if (show_file_metadata) {
-                    show_metadata(player);
-                    std::cout << "Duration (in seconds) : " << (end_record.tv_sec - begin_record.tv_sec + 1) << std::endl;
-                }
+            if (show_file_metadata) {
+                show_metadata(player);
+                std::cout << "Duration (in seconds) : " << (end_record.tv_sec - begin_record.tv_sec + 1) << std::endl;
+            }
 
-                if (show_file_metadata && !show_statistics && !output_filename.length()) {
-                    result = 0;
-                }
-                else {
-                    player.max_order_count = order_count;
+            if (show_file_metadata && !show_statistics && !output_filename.length()) {
+                result = 0;
+            }
+            else {
+                player.max_order_count = order_count;
 
-                    int return_code = 0;
+                int return_code = 0;
 
-                    if (output_filename.length()) {
-                //        char outfile_pid[32];
-                //        std::snprintf(outfile_pid, sizeof(outfile_pid), "%06u", getpid());
+                if (output_filename.length()) {
+            //        char outfile_pid[32];
+            //        std::snprintf(outfile_pid, sizeof(outfile_pid), "%06u", getpid());
 
-                        char outfile_path     [1024] = {};
-                        char outfile_basename [1024] = {};
-                        char outfile_extension[1024] = {};
+                    char outfile_path     [1024] = {};
+                    char outfile_basename [1024] = {};
+                    char outfile_extension[1024] = {};
 
-                        canonical_path( output_filename.c_str()
-                                      , outfile_path
-                                      , sizeof(outfile_path)
-                                      , outfile_basename
-                                      , sizeof(outfile_basename)
-                                      , outfile_extension
-                                      , sizeof(outfile_extension)
-                                      );
+                    canonical_path( output_filename.c_str()
+                                    , outfile_path
+                                    , sizeof(outfile_path)
+                                    , outfile_basename
+                                    , sizeof(outfile_basename)
+                                    , outfile_extension
+                                    , sizeof(outfile_extension)
+                                    );
 
-                        if (verbose) {
-                            std::cout << "Output file path: "
-                                      << outfile_path << outfile_basename << outfile_extension
-                                      << '\n' << std::endl;
-                        }
+                    if (verbose) {
+                        std::cout << "Output file path: "
+                                    << outfile_path << outfile_basename << outfile_extension
+                                    << '\n' << std::endl;
+                    }
 
-                        if (clear == 1) {
-                            clear_files_flv_meta_png(outfile_path, outfile_basename);
-                        }
+                    if (clear == 1) {
+                        clear_files_flv_meta_png(outfile_path, outfile_basename);
+                    }
 
-                        ini.set<cfg::video::wrm_compression_algorithm>(
-                            (wrm_compression_algorithm == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM))
-                            ? player.info_compression_algorithm
-                            : static_cast<WrmCompressionAlgorithm>(wrm_compression_algorithm)
+                    ini.set<cfg::video::wrm_compression_algorithm>(
+                        (wrm_compression_algorithm == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM))
+                        ? player.info_compression_algorithm
+                        : static_cast<WrmCompressionAlgorithm>(wrm_compression_algorithm)
+                    );
+
+                    if (wrm_color_depth == static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)) {
+                        wrm_color_depth = player.info_bpp;
+                    }
+
+                    {
+                        ini.set<cfg::video::hash_path>(outfile_path);
+                        ini.set<cfg::video::record_tmp_path>(outfile_path);
+                        ini.set<cfg::video::record_path>(outfile_path);
+
+                        ini.set<cfg::globals::movie_path>(&output_filename[0]);
+
+                        char progress_filename[4096];
+                        std::snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
+                                , outfile_path, outfile_basename);
+                        UpdateProgressData update_progress_data(
+                            pgs_format, progress_filename,
+                            begin_record.tv_sec, end_record.tv_sec,
+                            begin_capture.tv_sec, end_capture.tv_sec
                         );
 
-                        if (wrm_color_depth == static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)) {
-                            wrm_color_depth = player.info_bpp;
+                        if (png_params.png_width && png_params.png_height) {
+                            auto get_percent = [](unsigned target_dim, unsigned source_dim) -> unsigned {
+                                return ((target_dim * 100 / source_dim) + ((target_dim * 100 % source_dim) ? 1 : 0));
+                            };
+                            png_params.zoom = std::max<unsigned>(
+                                    get_percent(png_params.png_width, player.screen_rect.cx),
+                                    get_percent(png_params.png_height, player.screen_rect.cy)
+                                );
+                            //std::cout << "zoom: " << zoom << '%' << std::endl;
                         }
 
-                        {
-                            ini.set<cfg::video::hash_path>(outfile_path);
-                            ini.set<cfg::video::record_tmp_path>(outfile_path);
-                            ini.set<cfg::video::record_path>(outfile_path);
+                        ini.set<cfg::globals::video_quality>(flv_params.video_quality);
+                        ini.set<cfg::globals::codec_id>(flv_params.codec);
+                        flv_params = flv_params_from_ini(
+                            player.screen_rect.cx, player.screen_rect.cy, ini);
 
-                            ini.set<cfg::globals::movie_path>(&output_filename[0]);
+                        WrmParams wrm_params = {};
+                        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
+                        const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
 
-                            char progress_filename[4096];
-                            std::snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
-                                    , outfile_path, outfile_basename);
-                            UpdateProgressData update_progress_data(
-                                pgs_format, progress_filename,
-                                begin_record.tv_sec, end_record.tv_sec,
-                                begin_capture.tv_sec, end_capture.tv_sec
-                            );
+                        bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
+                        bool capture_png = bool(capture_flags & CaptureFlags::png)
+                                        && (!authentifier || png_params.png_limit > 0);
+                        bool capture_pattern_checker = authentifier
+                            && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+                                || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
 
-                            if (png_params.png_width && png_params.png_height) {
-                                auto get_percent = [](unsigned target_dim, unsigned source_dim) -> unsigned {
-                                    return ((target_dim * 100 / source_dim) + ((target_dim * 100 % source_dim) ? 1 : 0));
-                                };
-                                png_params.zoom = std::max<unsigned>(
-                                        get_percent(png_params.png_width, player.screen_rect.cx),
-                                        get_percent(png_params.png_height, player.screen_rect.cy)
-                                    );
-                                //std::cout << "zoom: " << zoom << '%' << std::endl;
-                            }
+                        bool capture_ocr = bool(capture_flags & CaptureFlags::ocr)
+                                            || capture_pattern_checker;
+                        bool capture_flv = bool(capture_flags & CaptureFlags::flv);
+                        bool capture_flv_full = full_video;
+                        bool capture_meta = capture_ocr;
+                        bool capture_kbd = authentifier
+                            ? !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
+                            || ini.get<cfg::session_log::enable_session_log>()
+                            || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+                            || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
+                            : false
+                        ;
 
-                            ini.set<cfg::globals::video_quality>(flv_params.video_quality);
-                            ini.set<cfg::globals::codec_id>(flv_params.codec);
-                            flv_params = flv_params_from_ini(
-                                player.screen_rect.cx, player.screen_rect.cy, ini);
-
-                            WrmParams wrm_params = {};
-                            const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-                            const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
-
-                            bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-                            bool capture_png = bool(capture_flags & CaptureFlags::png)
-                                            && (!authentifier || png_params.png_limit > 0);
-                            bool capture_pattern_checker = authentifier
-                                && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-                                    || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
-
-                            bool capture_ocr = bool(capture_flags & CaptureFlags::ocr)
-                                                || capture_pattern_checker;
-                            bool capture_flv = bool(capture_flags & CaptureFlags::flv);
-                            bool capture_flv_full = full_video;
-                            bool capture_meta = capture_ocr;
-                            bool capture_kbd = authentifier
-                              ? !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
-                              || ini.get<cfg::session_log::enable_session_log>()
-                              || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-                              || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
-                              : false
-                            ;
-
-                            OcrParams ocr_params = {};
+                        OcrParams ocr_params = {};
 
 
-                            Capture capture(capture_wrm, wrm_params
-                                    , capture_png, png_params
-                                    , capture_pattern_checker
-                                    , capture_ocr, ocr_params
-                                    , capture_flv
-                                    , capture_flv_full
-                                    , capture_meta
-                                    , capture_kbd
-                                    , ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
-                                    , player.screen_rect.cx
-                                    , player.screen_rect.cy
-                                    , player.info_bpp
-                                    , wrm_color_depth
-                                    , record_tmp_path
-                                    , record_path
-                                    , flv_params
-                                    , no_timestamp
-                                    , authentifier
-                                    , ini
-                                    , cctx
-                                    , rnd
-                                    , &update_progress_data);
+                        Capture capture(capture_wrm, wrm_params
+                                , capture_png, png_params
+                                , capture_pattern_checker
+                                , capture_ocr, ocr_params
+                                , capture_flv
+                                , capture_flv_full
+                                , capture_meta
+                                , capture_kbd
+                                , ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
+                                , player.screen_rect.cx
+                                , player.screen_rect.cy
+                                , player.info_bpp
+                                , wrm_color_depth
+                                , record_tmp_path
+                                , record_path
+                                , flv_params
+                                , no_timestamp
+                                , authentifier
+                                , ini
+                                , cctx
+                                , rnd
+                                , &update_progress_data);
 
-                            player.add_consumer(&capture, &capture, &capture, &capture, &capture);
+                        player.add_consumer(&capture, &capture, &capture, &capture, &capture);
 
-                            if (update_progress_data.is_valid()) {
-                                try {
-                                    player.play(std::ref(update_progress_data), program_requested_to_shutdown);
+                        if (update_progress_data.is_valid()) {
+                            try {
+                                player.play(std::ref(update_progress_data), program_requested_to_shutdown);
 
-                                    if (program_requested_to_shutdown) {
-                                        update_progress_data.raise_error(65537, "Program requested to shutdown");
-                                    }
-                                }
-                                catch (Error const & e) {
-                                    const bool msg_with_error_id = false;
-                                    update_progress_data.raise_error(e.id, e.errmsg(msg_with_error_id));
-
-                                    return_code = -1;
-                                }
-                                catch (...) {
-                                    update_progress_data.raise_error(65536, "Unknown error");
-
-                                    return_code = -1;
+                                if (program_requested_to_shutdown) {
+                                    update_progress_data.raise_error(65537, "Program requested to shutdown");
                                 }
                             }
-                            else {
+                            catch (Error const & e) {
+                                const bool msg_with_error_id = false;
+                                update_progress_data.raise_error(e.id, e.errmsg(msg_with_error_id));
+
+                                return_code = -1;
+                            }
+                            catch (...) {
+                                update_progress_data.raise_error(65536, "Unknown error");
+
                                 return_code = -1;
                             }
                         }
-
-                        if (!return_code && program_requested_to_shutdown) {
-                            clear_files_flv_meta_png(outfile_path, outfile_basename);
-                        }
-                    }
-                    else {
-                        try {
-                            player.play(program_requested_to_shutdown);
-                        }
-                        catch (Error const &) {
+                        else {
                             return_code = -1;
                         }
                     }
 
-                    if (show_statistics && return_code == 0) {
-                      ::show_statistics(player.statistics);
+                    if (!return_code && program_requested_to_shutdown) {
+                        clear_files_flv_meta_png(outfile_path, outfile_basename);
                     }
-
-                    result = return_code;
                 }
+                else {
+                    try {
+                        player.play(program_requested_to_shutdown);
+                    }
+                    catch (Error const &) {
+                        return_code = -1;
+                    }
+                }
+
+                if (show_statistics && return_code == 0) {
+                    ::show_statistics(player.statistics);
+                }
+
+                result = return_code;
             }
-            else {
-                result = do_recompress(
-                    cctx,
-                    rnd,
-                    in_wrm_trans,
-                    begin_record,
-                    wrm_compression_algorithm,
-                    output_filename,
-                    ini,
-                    verbose);
-            }
         }
-        catch (const Error & e) {
-            const bool msg_with_error_id = false;
-            raise_error(pgs_format, output_filename, e.id, e.errmsg(msg_with_error_id));
+        else {
+            result = do_recompress(
+                cctx,
+                rnd,
+                in_wrm_trans,
+                begin_record,
+                wrm_compression_algorithm,
+                output_filename,
+                ini,
+                verbose);
         }
-
-        if (!result && remove_input_file) {
-            InMetaSequenceTransport in_wrm_trans_tmp(
-                &cctx,
-                infile_prefix,
-                infile_extension.c_str(),
-                infile_is_encrypted?1:0);
-
-            remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>().c_str(), infile_path.c_str()
-                        , input_basename.c_str(), infile_extension.c_str()
-                        , infile_is_encrypted);
-        }
-
-        std::cout << std::endl;
-
-        return result;
     }
-    return -1;
+    catch (const Error & e) {
+        const bool msg_with_error_id = false;
+        raise_error(pgs_format, output_filename, e.id, e.errmsg(msg_with_error_id));
+    }
+
+    if (!result && remove_input_file) {
+        InMetaSequenceTransport in_wrm_trans_tmp(
+            &cctx,
+            infile_prefix,
+            infile_extension.c_str(),
+            infile_is_encrypted?1:0);
+
+        remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>().c_str(), infile_path.c_str()
+                    , input_basename.c_str(), infile_extension.c_str()
+                    , infile_is_encrypted);
+    }
+
+    std::cout << std::endl;
+
+    return result;
 }
 
 struct RecorderParams {
@@ -1718,7 +1715,7 @@ extern "C" {
                         }
                     }
                     catch (Error const & e) {
-                        LOG(LOG_INFO, "Exited on exception");
+                        LOG(LOG_INFO, "Exited on exception: %s", e.errmsg());
                         res = -1;
                     }
                 }
