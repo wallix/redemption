@@ -3697,17 +3697,8 @@ public:
         //LOG(LOG_INFO, "mod_rdp::draw_event()");
 
         if (this->remote_programs_session_manager) {
-            this->remote_programs_session_manager->set_drawable(&drawable_, this->orders.bpp);
+            this->remote_programs_session_manager->set_drawable(&drawable_);
         }
-
-        gdi::GraphicApi & drawable =
-            ( this->remote_programs_session_manager
-            ? (*this->remote_programs_session_manager)
-            : ( this->graphics_update_disabled
-              ? gdi::null_gd()
-              : drawable_
-              )
-            );
 
         if (!this->event.waked_up_by_time
         || ((this->state == MOD_RDP_NEGO)
@@ -3733,6 +3724,13 @@ public:
                     break;
 
                 case MOD_RDP_CONNECTED:
+                    gdi::GraphicApi & drawable =
+                        ( this->remote_programs_session_manager
+                        ? (*this->remote_programs_session_manager)
+                        : ( this->graphics_update_disabled
+                            ? gdi::null_gd()
+                            : drawable_
+                        ));
                     this->connected(now, drawable);
                     break;
                 }

@@ -488,7 +488,8 @@ private:
             template<class Cmd, class... Ts>
             void draw_impl(Cmd const & cmd, Rect clip, gdi::ColorCtx color_ctx, Ts const & ... args)
             {
-                Cmd const & new_cmd = (gdi::Depth::from_bpp(Enc::bpp) == color_ctx.depth())
+                constexpr auto depth = gdi::Depth::from_bpp(Enc::bpp);
+                Cmd const & new_cmd = (depth == color_ctx.depth())
                     ? cmd
                     : [&cmd, &color_ctx]() {
                         auto color_convertor = [&color_ctx](BGRColor c) {
@@ -506,7 +507,7 @@ private:
                         gdi::GraphicCmdColor::encode_cmd_color(color_convertor, new_cmd);
                         return new_cmd;
                     }();
-                this->graphics.draw(new_cmd, clip, color_ctx, args...);
+                this->graphics.draw(new_cmd, clip, gdi::ColorCtx{depth, color_ctx.palette()}, args...);
             }
 
             Graphics::PrivateGraphicsUpdatePDU & graphics;
