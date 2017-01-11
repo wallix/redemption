@@ -110,7 +110,6 @@
 
 #include "acl/auth_api.hpp"
 
-#include "capture/utils/save_state_chunk.hpp"
 #include "capture/utils/match_finder.hpp"
 #include "capture/title_extractors/agent_title_extractor.hpp"
 #include "capture/title_extractors/ocr_title_filter.hpp"
