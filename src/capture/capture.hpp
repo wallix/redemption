@@ -1724,8 +1724,6 @@ class SequencedVideoCaptureImpl
     // first next_video is ignored
     struct FirstImage : gdi::CaptureApi
     {
-        using capture_list_t = std::vector<std::reference_wrapper<gdi::CaptureApi>>;
-
         SequencedVideoCaptureImpl & impl;
         ApiRegisterElement<gdi::CaptureApi> cap_elem;
         ApiRegisterElement<gdi::CaptureApi> gcap_elem;
