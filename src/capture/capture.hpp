@@ -4832,6 +4832,7 @@ public:
         const char * record_tmp_path,
         const char * record_path,
         const int groupid,
+        const char * hash_path,
         const FlvParams flv_params,
         bool no_timestamp,
         auth_api * authentifier,
@@ -4855,7 +4856,6 @@ public:
         const bool capture_drawable = this->capture_wrm || this->capture_flv
                                    || this->capture_ocr || this->capture_png
                                    || this->capture_flv_full;
-        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
 
         if (this->capture_png || (authentifier && (this->capture_flv || this->capture_ocr))) {
             if (recursive_create_directory(record_tmp_path, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {

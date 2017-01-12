@@ -1028,6 +1028,8 @@ public:
 
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
 
+        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
+
         this->capture = new Capture(  capture_wrm, wrm_params
                                     , capture_png, png_params
                                     , capture_pattern_checker
@@ -1043,6 +1045,7 @@ public:
                                     , record_tmp_path
                                     , record_path
                                     , groupid
+                                    , hash_path
                                     , flv_params
                                     , false, authentifier
                                     , ini, this->cctx, this->gen

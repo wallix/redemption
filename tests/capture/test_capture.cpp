@@ -136,6 +136,8 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         }
 
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
+
 
         Capture capture(  capture_wrm, wrm_params
                         , capture_png, png_params
@@ -149,6 +151,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
                         , record_tmp_path
                         , record_path
                         , groupid
+                        , hash_path
                         , flv_params
                         , no_timestamp, authentifier
                         , ini, cctx, rnd, nullptr);
@@ -350,6 +353,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     }
 
     const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+    const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
 
     Capture capture( capture_wrm, wrm_params
                    , capture_png, png_params
@@ -364,6 +368,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , record_tmp_path
                    , record_path
                    , groupid
+                   , hash_path
                    , flv_params
                    , no_timestamp, authentifier
                    , ini, cctx, rnd, nullptr);

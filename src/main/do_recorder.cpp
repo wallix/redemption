@@ -1032,6 +1032,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         uint8_t max_unrecog_char_rate = ini.get<cfg::ocr::max_unrecog_char_rate>();
 
                         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+                        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
 
                         if (ini.get<cfg::debug::capture>()) {
                             LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
@@ -1062,6 +1063,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , record_tmp_path
                                 , record_path
                                 , groupid
+                                , hash_path
                                 , flv_params
                                 , no_timestamp
                                 , authentifier
