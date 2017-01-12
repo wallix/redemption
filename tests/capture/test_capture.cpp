@@ -86,34 +86,23 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         // TODO remove this after unifying capture interface
         bool no_timestamp = false;
         // TODO remove this after unifying capture interface
-        auth_api * authentifier = nullptr;
-        // TODO remove this after unifying capture interface
 
         WrmParams wrm_params = {};
         PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true, false};
 
         FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-        const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
+        const char * record_path = record_tmp_path;
 
         bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        bool capture_png = bool(capture_flags & CaptureFlags::png)
-                        && (!authentifier || png_params.png_limit > 0);
-        bool capture_pattern_checker = authentifier
-            && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-                || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
+        bool capture_png = bool(capture_flags & CaptureFlags::png);
+        bool capture_pattern_checker = false;
 
         bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
         bool capture_flv = bool(capture_flags & CaptureFlags::flv);
         bool capture_flv_full = full_video;
         bool capture_meta = capture_ocr;
-        bool capture_kbd = authentifier
-          ? !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
-          || ini.get<cfg::session_log::enable_session_log>()
-          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
-          : false
-        ;
+        bool capture_kbd = false;
 
         OcrParams ocr_params = {};
         OcrVersion ocr_version = ini.get<cfg::ocr::version>();
@@ -139,11 +128,6 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
         const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
 
-        if (authentifier) {
-            cctx.set_master_key(ini.get<cfg::crypto::key0>());
-            cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
-        }
-
         Capture capture(  capture_wrm, wrm_params
                         , capture_png, png_params
                         , capture_pattern_checker
@@ -159,7 +143,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
                         , hash_path
                         , movie_path
                         , flv_params
-                        , no_timestamp, authentifier
+                        , no_timestamp, nullptr
                         , ini, cctx, rnd, nullptr);
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
@@ -311,32 +295,21 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     bool full_video = false;
     // TODO remove this after unifying capture interface
     bool no_timestamp = false;
-    // TODO remove this after unifying capture interface
-    auth_api * authentifier = nullptr;
 
     WrmParams wrm_params = {};
     PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true, false };
     FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
     const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-    const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
+    const char * record_path = record_tmp_path;
     bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-    bool capture_png = bool(capture_flags & CaptureFlags::png)
-                    && (!authentifier || png_params.png_limit > 0);
-    bool capture_pattern_checker = authentifier
-        && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-            || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
+    bool capture_png = bool(capture_flags & CaptureFlags::png);
+    bool capture_pattern_checker = false;
 
     bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
     bool capture_flv = bool(capture_flags & CaptureFlags::flv);
     bool capture_flv_full = full_video;
     bool capture_meta = capture_ocr;
-    bool capture_kbd = authentifier
-      ? !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
-      || ini.get<cfg::session_log::enable_session_log>()
-      || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-      || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
-      : false
-    ;
+    bool capture_kbd = false;
 
     OcrParams ocr_params = {};
     OcrVersion ocr_version = ini.get<cfg::ocr::version>();
@@ -362,11 +335,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
     const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
 
-    if (authentifier) {
-        cctx.set_master_key(ini.get<cfg::crypto::key0>());
-        cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
-    }
-
+    // TODO remove this after unifying capture interface
     Capture capture( capture_wrm, wrm_params
                    , capture_png, png_params
                    , capture_pattern_checker
@@ -383,7 +352,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , hash_path
                    , movie_path
                    , flv_params
-                   , no_timestamp, authentifier
+                   , no_timestamp, nullptr
                    , ini, cctx, rnd, nullptr);
     auto const color_cxt = gdi::ColorCtx::depth16();
     Pointer pointer1(Pointer::POINTER_EDIT);
