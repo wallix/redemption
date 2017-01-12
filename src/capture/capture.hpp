@@ -4851,19 +4851,6 @@ public:
     {
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
 
-        if (ini.get<cfg::debug::capture>()) {
-            LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
-                this->capture_wrm ?"wrm ":"",
-                this->capture_png ?"png ":"",
-                capture_kbd ? 1 : 0,
-                this->capture_flv ?"flv ":"",
-                this->capture_flv_full ?"flv_full ":"",
-                this->capture_pattern_checker ?"pattern ":"",
-                this->capture_ocr ? (ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
-                this->capture_meta?"meta ":""
-            );
-        }
-
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const bool capture_drawable = this->capture_wrm || this->capture_flv
                                    || this->capture_ocr || this->capture_png

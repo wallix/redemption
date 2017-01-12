@@ -1013,6 +1013,20 @@ public:
         bool ocr_on_title_bar_only = ini.get<cfg::ocr::on_title_bar_only>();
         uint8_t max_unrecog_char_rate = ini.get<cfg::ocr::max_unrecog_char_rate>();
 
+        if (ini.get<cfg::debug::capture>()) {
+            LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
+                capture_wrm ?"wrm ":"",
+                capture_png ?"png ":"",
+                capture_kbd ? 1 : 0,
+                capture_flv ?"flv ":"",
+                capture_flv_full ?"flv_full ":"",
+                capture_pattern_checker ?"pattern ":"",
+                capture_ocr ? (ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
+                capture_meta?"meta ":""
+            );
+        }
+
+
         this->capture = new Capture(  capture_wrm, wrm_params
                                     , capture_png, png_params
                                     , capture_pattern_checker
