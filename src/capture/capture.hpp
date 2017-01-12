@@ -4806,7 +4806,6 @@ private:
     CaptureApisImpl::ExternalCapture external_capture_api;
     Graphic::GraphicApi * graphic_api = nullptr;
 
-
 public:
     Capture(
         bool capture_wrm,
@@ -4833,6 +4832,7 @@ public:
         const char * record_path,
         const int groupid,
         const char * hash_path,
+        const char * movie_path,
         const FlvParams flv_params,
         bool no_timestamp,
         auth_api * authentifier,
@@ -4867,26 +4867,16 @@ public:
         char basename[1024];
         char extension[128];
         strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
-        strcpy(basename, ini.get<cfg::globals::movie_path>().c_str());
+        strcpy(basename, movie_path);
         strcpy(extension, "");          // extension is currently ignored
 
-        if (!canonical_path(
-            ini.get<cfg::globals::movie_path>().c_str()
-          , path, sizeof(path)
-          , basename, sizeof(basename)
-          , extension, sizeof(extension))
+        if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
         ) {
             LOG(LOG_ERR, "Buffer Overflowed: Path too long");
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
 
         LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
-
-        if (authentifier) {
-            cctx.set_master_key(ini.get<cfg::crypto::key0>());
-            cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
-        }
-
 
         if (capture_drawable) {
             this->gd.reset(new Graphic(width, height, this->capture_api.mouse_trace()));

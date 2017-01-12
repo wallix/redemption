@@ -1031,9 +1031,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         bool ocr_on_title_bar_only = ini.get<cfg::ocr::on_title_bar_only>();
                         uint8_t max_unrecog_char_rate = ini.get<cfg::ocr::max_unrecog_char_rate>();
 
-                        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-                        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
-
                         if (ini.get<cfg::debug::capture>()) {
                             LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
                                 capture_wrm ?"wrm ":"",
@@ -1045,6 +1042,15 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 capture_ocr ? (ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
                                 capture_meta?"meta ":""
                             );
+                        }
+
+                        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+                        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
+                        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
+
+                        if (authentifier) {
+                            cctx.set_master_key(ini.get<cfg::crypto::key0>());
+                            cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
                         }
 
                         Capture capture(capture_wrm, wrm_params
@@ -1064,6 +1070,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , record_path
                                 , groupid
                                 , hash_path
+                                , movie_path
                                 , flv_params
                                 , no_timestamp
                                 , authentifier
