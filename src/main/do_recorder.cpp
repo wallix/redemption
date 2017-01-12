@@ -1014,13 +1014,14 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         bool capture_meta = capture_ocr;
                         bool capture_kbd = false;
 
-                        OcrParams ocr_params = {};
-                        OcrVersion ocr_version = ini.get<cfg::ocr::version>();
-                        ocr::locale::LocaleId ocr_locale(
-                            static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()));
-                        bool ocr_on_title_bar_only = ini.get<cfg::ocr::on_title_bar_only>();
-                        uint8_t max_unrecog_char_rate = ini.get<cfg::ocr::max_unrecog_char_rate>();
-                        std::chrono::microseconds usec_ocr_interval = ini.get<cfg::ocr::interval>();
+                        OcrParams ocr_params = {
+                                ini.get<cfg::ocr::version>(),
+                                ocr::locale::LocaleId(
+                                    static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
+                                ini.get<cfg::ocr::on_title_bar_only>(),
+                                ini.get<cfg::ocr::max_unrecog_char_rate>(),
+                                ini.get<cfg::ocr::interval>()
+                        };
 
                         if (ini.get<cfg::debug::capture>()) {
                             LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
@@ -1030,7 +1031,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 capture_flv ?"flv ":"",
                                 capture_flv_full ?"flv_full ":"",
                                 capture_pattern_checker ?"pattern ":"",
-                                capture_ocr ? (ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
+                                capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
                                 capture_meta?"meta ":""
                             );
                         }
@@ -1042,7 +1043,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         Capture capture(capture_wrm, wrm_params
                                 , capture_png, png_params
                                 , capture_pattern_checker
-                                , capture_ocr, ocr_version, ocr_locale, ocr_on_title_bar_only, max_unrecog_char_rate, usec_ocr_interval, ocr_params
+                                , capture_ocr, ocr_params
                                 , capture_flv
                                 , capture_flv_full
                                 , capture_meta

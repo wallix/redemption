@@ -3401,21 +3401,17 @@ public:
         auth_api * authentifier,
         const Drawable & drawable,
         const Inifile & ini,
-        OcrVersion ocr_version,
-        ocr::locale::LocaleId ocr_locale,
-        bool ocr_on_title_bar_only,
-        uint8_t max_unrecog_char_rate,
-        std::chrono::microseconds usec_ocr_interval,
+        OcrParams ocr_params,
         NotifyTitleChanged & notify_title_changed)
     : ocr_title_extractor_builder(
         drawable, authentifier != nullptr,
-        ocr_version,
-        ocr_locale,
-        ocr_on_title_bar_only,
-        max_unrecog_char_rate)
+        ocr_params.ocr_version,
+        ocr_params.ocr_locale,
+        ocr_params.ocr_on_title_bar_only,
+        ocr_params.max_unrecog_char_rate)
     , title_extractor(this->ocr_title_extractor_builder.get_title_extractor())
     , last_ocr(now)
-    , usec_ocr_interval(usec_ocr_interval)
+    , usec_ocr_interval(ocr_params.usec_ocr_interval)
     , notify_title_changed(notify_title_changed)
     {
     }
@@ -4532,7 +4528,10 @@ public:
     const bool capture_flv_full; // capturewab only
     const bool capture_meta; // capturewab only
 
+    RDPDrawable * gd_drawable;
+
 private:
+
     class GraphicCaptureImpl
     {
     public:
@@ -4643,14 +4642,10 @@ private:
             {}
         } graphic_api;
 
-        RDPDrawable drawable;
-
     public:
         using GraphicApi = Graphic;
 
-        GraphicCaptureImpl(uint16_t width, uint16_t height, MouseTrace const & mouse)
-        : graphic_api(mouse)
-        , drawable(width, height)
+        GraphicCaptureImpl(MouseTrace const & mouse) : graphic_api(mouse)
         {
         }
 
@@ -4689,11 +4684,6 @@ public:
         const PngParams png_params,
         bool capture_pattern_checker,
         bool capture_ocr,
-        OcrVersion ocr_version, // ini.get<cfg::ocr::version>()
-        ocr::locale::LocaleId ocr_locale, // static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())
-        bool ocr_on_title_bar_only, // ini.get<cfg::ocr::on_title_bar_only>(),
-        uint8_t max_unrecog_char_rate, // = ini.get<cfg::ocr::max_unrecog_char_rate>()
-        std::chrono::microseconds usec_ocr_interval, // ini.get<cfg::ocr::interval>()
         OcrParams ocr_params,
         bool capture_flv,
         bool capture_flv_full,
@@ -4724,6 +4714,7 @@ public:
     , capture_flv(capture_flv)
     , capture_flv_full(capture_flv_full)
     , capture_meta(capture_meta)
+    , gd_drawable(nullptr)
     , update_progress_data(update_progress_data)
     , drawable{nullptr}
     , mouse_info{now, width / 2, height / 2}
@@ -4758,20 +4749,21 @@ public:
         LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
 
         if (this->capture_drawable) {
-            this->gd = new GraphicCaptureImpl(width, height, this->mouse_info);
-            this->drawable = &this->gd->drawable.impl();
+            this->gd_drawable = new RDPDrawable(width, height);
+            this->gd = new GraphicCaptureImpl(this->mouse_info);
+            this->drawable = &this->gd_drawable->impl();
 
             if (this->capture_png) {
                 if (png_params.real_time_image_capture) {
                     this->pscrt.reset(new PngCaptureRT(
-                        now, authentifier, this->gd->drawable.impl(),
+                        now, authentifier, this->gd_drawable->impl(),
                         record_tmp_path, basename, groupid,
                         png_params
                     ));
                 }
                 else if (png_params.force_capture_png_if_enable) {
                     this->psc.reset(new PngCapture(
-                        now, authentifier, this->gd->drawable.impl(),
+                        now, authentifier, this->gd_drawable->impl(),
                         record_tmp_path, basename, groupid,
                         png_params));
                 }
@@ -4790,7 +4782,7 @@ public:
                 this->pnc.reset(new WrmCaptureImpl(
                     now, wrm_params, capture_bpp, ini.get<cfg::globals::trace_type>(),
                     cctx, rnd, record_path, hash_path, basename,
-                    groupid, authentifier, this->gd->drawable, ini
+                    groupid, authentifier, *this->gd_drawable, ini
                 ));
             }
 
@@ -4808,7 +4800,7 @@ public:
                     notifier = this->notifier_next_video;
                 }
                 this->pvc.reset(new SequencedVideoCaptureImpl(
-                    now, record_path, basename, groupid, no_timestamp, png_params.zoom, this->gd->drawable.impl(),
+                    now, record_path, basename, groupid, no_timestamp, png_params.zoom, this->gd_drawable->impl(),
                     flv_params,
                     ini.get<cfg::video::flv_break_interval>(), notifier
                 ));
@@ -4816,7 +4808,7 @@ public:
 
             if (this->capture_flv_full) {
                 this->pvc_full.reset(new FullVideoCaptureImpl(
-                    now, record_path, basename, groupid, no_timestamp, this->gd->drawable.impl(),
+                    now, record_path, basename, groupid, no_timestamp, this->gd_drawable->impl(),
                     flv_params));
             }
 
@@ -4836,8 +4828,8 @@ public:
             if (this->capture_ocr) {
                 if (this->patterns_checker || this->pmc || this->pvc) {
                     this->ptc.reset(new TitleCaptureImpl(
-                        now, authentifier, this->gd->drawable.impl(), ini, 
-                        ocr_version, ocr_locale, ocr_on_title_bar_only, max_unrecog_char_rate, usec_ocr_interval,
+                        now, authentifier, this->gd_drawable->impl(), ini, 
+                        ocr_params,
                         this->notifier_title_changed
                     ));
                 }
@@ -4853,7 +4845,7 @@ public:
         }
 
         if (this->gd ) {
-            this->gd->get_graphic_api().gds.push_back(this->gd->drawable);
+            this->gd->get_graphic_api().gds.push_back(*this->gd_drawable);
         }
         if (this->pnc) {
             this->gd->get_graphic_api().gds.push_back(this->pnc->graphic_to_file);
@@ -4980,7 +4972,7 @@ public:
 
     void set_row(size_t rownum, const uint8_t * data) override {
         if (this->gd) {
-            this->gd->drawable.set_row(rownum, data);
+            this->gd_drawable->set_row(rownum, data);
         }
     }
 
@@ -5060,7 +5052,7 @@ public:
 
     void set_pointer_display() {
         if (this->capture_drawable) {
-            this->gd->drawable.show_mouse_cursor(false);
+            this->gd_drawable->show_mouse_cursor(false);
         }
     }
 
