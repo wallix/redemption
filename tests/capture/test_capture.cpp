@@ -135,6 +135,8 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
             );
         }
 
+        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+
         Capture capture(  capture_wrm, wrm_params
                         , capture_png, png_params
                         , capture_pattern_checker
@@ -146,6 +148,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
                         , now, scr.cx, scr.cy, 24, 24
                         , record_tmp_path
                         , record_path
+                        , groupid
                         , flv_params
                         , no_timestamp, authentifier
                         , ini, cctx, rnd, nullptr);
@@ -346,6 +349,8 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         );
     }
 
+    const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+
     Capture capture( capture_wrm, wrm_params
                    , capture_png, png_params
                    , capture_pattern_checker
@@ -358,6 +363,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , now, scr.cx, scr.cy, 16, 16
                    , record_tmp_path
                    , record_path
+                   , groupid
                    , flv_params
                    , no_timestamp, authentifier
                    , ini, cctx, rnd, nullptr);

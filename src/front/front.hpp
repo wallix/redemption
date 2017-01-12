@@ -1026,6 +1026,7 @@ public:
             );
         }
 
+        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
 
         this->capture = new Capture(  capture_wrm, wrm_params
                                     , capture_png, png_params
@@ -1041,6 +1042,7 @@ public:
                                     , this->mod_bpp, this->capture_bpp
                                     , record_tmp_path
                                     , record_path
+                                    , groupid
                                     , flv_params
                                     , false, authentifier
                                     , ini, this->cctx, this->gen

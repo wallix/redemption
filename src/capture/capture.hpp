@@ -4831,6 +4831,7 @@ public:
         int capture_bpp,
         const char * record_tmp_path,
         const char * record_path,
+        const int groupid,
         const FlvParams flv_params,
         bool no_timestamp,
         auth_api * authentifier,
@@ -4851,7 +4852,6 @@ public:
     {
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
 
-        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const bool capture_drawable = this->capture_wrm || this->capture_flv
                                    || this->capture_ocr || this->capture_png
                                    || this->capture_flv_full;

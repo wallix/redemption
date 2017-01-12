@@ -1031,6 +1031,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         bool ocr_on_title_bar_only = ini.get<cfg::ocr::on_title_bar_only>();
                         uint8_t max_unrecog_char_rate = ini.get<cfg::ocr::max_unrecog_char_rate>();
 
+                        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+
                         if (ini.get<cfg::debug::capture>()) {
                             LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
                                 capture_wrm ?"wrm ":"",
@@ -1059,6 +1061,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , wrm_color_depth
                                 , record_tmp_path
                                 , record_path
+                                , groupid
                                 , flv_params
                                 , no_timestamp
                                 , authentifier
