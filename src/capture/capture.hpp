@@ -47,7 +47,10 @@
 #include "utils/sugar/range.hpp"
 #include "utils/sugar/bytes_t.hpp"
 #include "utils/sugar/noncopyable.hpp"
+#include "utils/sugar/cast.hpp"
+#include "utils/sugar/make_unique.hpp"
 
+#include "utils/match_finder.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/drawable.hpp"
 #include "utils/apps/recording_progress.hpp"
@@ -59,6 +62,8 @@
 #include "utils/colors.hpp"
 #include "utils/compression_transport_builder.hpp"
 #include "utils/stream.hpp"
+#include "utils/verbose_flags.hpp"
+#include "utils/png.hpp"
 
 #include "cxx/attributes.hpp"
 
@@ -66,24 +71,44 @@
 #include "transport/out_meta_sequence_transport.hpp"
 #include "transport/out_file_transport.hpp"
 
+#include "core/RDP/RDPDrawable.hpp"
+#include "core/RDP/bitmapupdate.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/caches/pointercache.hpp"
-#include "core/RDP/RDPDrawable.hpp"
+#include "core/RDP/share.hpp"
+#include "core/RDP/RDPSerializer.hpp"
+
+#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
+
 #include "core/wait_obj.hpp"
 
 #include "configs/config.hpp"
 
+#include "gdi/capture_probe_api.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/graphic_cmd_color.hpp"
-#include "gdi/graphic_api.hpp"
-#include "gdi/capture_probe_api.hpp"
 #include "gdi/kbd_input_api.hpp"
 #include "gdi/dump_png24.hpp"
 
 #include "acl/auth_api.hpp"
 
-#include "capture/utils/save_state_chunk.hpp"
 #include "capture/utils/match_finder.hpp"
 #include "capture/title_extractors/agent_title_extractor.hpp"
 #include "capture/title_extractors/ocr_title_filter.hpp"
@@ -96,30 +121,1500 @@
 #include "capture/flv_params.hpp"
 #include "capture/ocr_params.hpp"
 #include "capture/wrm_label.hpp"
-#include "capture/FileToGraphic.hpp"
-
 #include "capture/cryptofile.hpp"
-
 #include "capture/video_recorder.hpp"
-#include "core/RDP/caches/bmpcache.hpp"
-#include "core/RDP/RDPSerializer.hpp"
-#include "core/RDP/share.hpp"
-#include "capture/RDPChunkedDevice.hpp"
 
-#include "capture/wrm_label.hpp"
+#include "capture/RDPChunkedDevice.hpp"
 
 #include "openssl_crypto.hpp"
 
-#include "utils/match_finder.hpp"
-#include "utils/sugar/cast.hpp"
+class SaveStateChunk {
+public:
+    SaveStateChunk() {}
+    
+    void recv(InStream & stream, StateChunk & sc, uint8_t info_version) {
+        this->send_recv(stream, sc, info_version);
+    }
 
-#include "gdi/kbd_input_api.hpp"
-#include "gdi/capture_api.hpp"
-#include "gdi/capture_probe_api.hpp"
+    void send(OutStream & stream, StateChunk & sc) {
+        this->send_recv(stream, sc, ~0);
+    }
 
-#include "utils/sugar/array_view.hpp"
-#include "utils/sugar/bytes_t.hpp"
-#include "utils/sugar/make_unique.hpp"
+private:
+    static void io_uint8(InStream & stream, uint8_t & value) { value = stream.in_uint8(); }
+    static void io_uint8(OutStream & stream, uint8_t value) { stream.out_uint8(value); }
+
+    static void io_sint8(InStream & stream, int8_t & value) { value = stream.in_sint8(); }
+    static void io_sint8(OutStream & stream, int8_t value) { stream.out_sint8(value); }
+
+    // TODO BUG this is an error
+    static void io_uint8_unsafe(InStream & stream, uint16_t & value) { value = stream.in_uint8(); }
+    static void io_uint8_unsafe(OutStream & stream, uint16_t value) { stream.out_uint8(value); }
+
+    static void io_uint16_le(InStream & stream, uint16_t & value) { value = stream.in_uint16_le(); }
+    static void io_uint16_le(OutStream & stream, uint16_t value) { stream.out_uint16_le(value); }
+
+    static void io_sint16_le(InStream & stream, int16_t & value) { value = stream.in_sint16_le(); }
+    static void io_sint16_le(OutStream & stream, int16_t value) { stream.out_sint16_le(value); }
+
+    static void io_uint32_le(InStream & stream, uint32_t & value) { value = stream.in_uint32_le(); }
+    static void io_uint32_le(OutStream & stream, uint32_t value) { stream.out_uint32_le(value); }
+
+    static void io_color(InStream & stream, uint32_t & color) {
+        uint8_t const red   = stream.in_uint8();
+        uint8_t const green = stream.in_uint8();
+        uint8_t const blue  = stream.in_uint8();
+        color = red | green << 8 | blue << 16;
+    }
+    static void io_color(OutStream & stream, uint32_t color) {
+        stream.out_uint8(color);
+        stream.out_uint8(color >> 8);
+        stream.out_uint8(color >> 16);
+    }
+
+    static void io_copy_bytes(InStream & stream, uint8_t * buf, unsigned n) { stream.in_copy_bytes(buf, n); }
+    static void io_copy_bytes(OutStream & stream, uint8_t * buf, unsigned n) { stream.out_copy_bytes(buf, n); }
+
+    template<class Stream>
+    static void io_delta_encoded_rects(Stream & stream, array_view<RDP::DeltaEncodedRectangle> delta_rectangles) {
+        // TODO: check room to write or enough data to read, another io unified function necessary io_avail()
+        for (RDP::DeltaEncodedRectangle & delta_rectangle : delta_rectangles) {
+            io_sint16_le(stream, delta_rectangle.leftDelta);
+            io_sint16_le(stream, delta_rectangle.topDelta);
+            io_sint16_le(stream, delta_rectangle.width);
+            io_sint16_le(stream, delta_rectangle.height);
+        }
+    }
+
+    template<class Stream>
+    static void io_brush(Stream & stream, RDPBrush & brush) {
+        io_sint8(stream, brush.org_x);
+        io_sint8(stream, brush.org_y);
+        io_uint8(stream, brush.style);
+        io_uint8(stream, brush.hatch);
+        io_copy_bytes(stream, brush.extra, 7);
+    }
+
+    template<class Stream>
+    static void io_rect(Stream & stream, Rect & rect) {
+        io_sint16_le(stream, rect.x);
+        io_sint16_le(stream, rect.y);
+        io_uint16_le(stream, rect.cx);
+        io_uint16_le(stream, rect.cy);
+    }
+
+    template<class Stream>
+    void send_recv(Stream & stream, StateChunk & sc, uint8_t info_version) {
+        const bool mem3blt_support         = (info_version > 1);
+        const bool polyline_support        = (info_version > 2);
+        const bool multidstblt_support     = (info_version > 3);
+        const bool multiopaquerect_support = (info_version > 3);
+        const bool multipatblt_support     = (info_version > 3);
+        const bool multiscrblt_support     = (info_version > 3);
+
+        // RDPOrderCommon common;
+        io_uint8(stream, sc.common.order);
+        io_rect(stream, sc.common.clip);
+
+        // RDPDestBlt destblt;
+        io_rect(stream, sc.destblt.rect);
+        io_uint8(stream, sc.destblt.rop);
+
+        // RDPPatBlt patblt;
+        io_rect(stream, sc.patblt.rect);
+        io_uint8(stream, sc.patblt.rop);
+        io_uint32_le(stream, sc.patblt.back_color);
+        io_uint32_le(stream, sc.patblt.fore_color);
+        io_brush(stream, sc.patblt.brush);
+
+        // RDPScrBlt scrblt;
+        io_rect(stream, sc.scrblt.rect);
+        io_uint8(stream, sc.scrblt.rop);
+        io_uint16_le(stream, sc.scrblt.srcx);
+        io_uint16_le(stream, sc.scrblt.srcy);
+
+        // RDPOpaqueRect opaquerect;
+        io_rect(stream, sc.opaquerect.rect);
+        io_color(stream, sc.opaquerect.color);
+
+        // RDPMemBlt memblt;
+        io_uint16_le(stream, sc.memblt.cache_id);
+        io_rect(stream, sc.memblt.rect);
+        io_uint8(stream, sc.memblt.rop);
+        // TODO bad length
+        io_uint8_unsafe(stream, sc.memblt.srcx);
+        io_uint8_unsafe(stream, sc.memblt.srcy);
+        io_uint16_le(stream, sc.memblt.cache_idx);
+
+        // RDPMem3Blt memblt;
+        if (mem3blt_support) {
+            io_uint16_le(stream, sc.mem3blt.cache_id);
+            io_rect(stream, sc.mem3blt.rect);
+            io_uint8(stream, sc.mem3blt.rop);
+            io_uint8_unsafe(stream, sc.mem3blt.srcx);
+            io_uint8_unsafe(stream, sc.mem3blt.srcy);
+            io_uint32_le(stream, sc.mem3blt.back_color);
+            io_uint32_le(stream, sc.mem3blt.fore_color);
+            io_brush(stream, sc.mem3blt.brush);
+            io_uint16_le(stream, sc.mem3blt.cache_idx);
+        }
+
+        // RDPLineTo lineto;
+        io_uint8(stream, sc.lineto.back_mode);
+        io_sint16_le(stream, sc.lineto.startx);
+        io_sint16_le(stream, sc.lineto.starty);
+        io_sint16_le(stream, sc.lineto.endx);
+        io_sint16_le(stream, sc.lineto.endy);
+        io_uint32_le(stream, sc.lineto.back_color);
+        io_uint8(stream, sc.lineto.rop2);
+        io_uint8(stream, sc.lineto.pen.style);
+        io_uint8(stream, sc.lineto.pen.width);
+        io_uint32_le(stream, sc.lineto.pen.color);
+
+        // RDPGlyphIndex glyphindex;
+        io_uint8(stream, sc.glyphindex.cache_id);
+        io_sint16_le(stream, sc.glyphindex.fl_accel);
+        io_sint16_le(stream, sc.glyphindex.ui_charinc);
+        io_sint16_le(stream, sc.glyphindex.f_op_redundant);
+        io_uint32_le(stream, sc.glyphindex.back_color);
+        io_uint32_le(stream, sc.glyphindex.fore_color);
+        io_rect(stream, sc.glyphindex.bk);
+        io_rect(stream, sc.glyphindex.op);
+        io_brush(stream, sc.glyphindex.brush);
+        io_sint16_le(stream, sc.glyphindex.glyph_x);
+        io_sint16_le(stream, sc.glyphindex.glyph_y);
+        io_uint8(stream, sc.glyphindex.data_len);
+        io_copy_bytes(stream, sc.glyphindex.data, 256);
+
+        // RDPPolyine polyline;
+        if (polyline_support) {
+            io_sint16_le(stream, sc.polyline.xStart);
+            io_sint16_le(stream, sc.polyline.yStart);
+            io_uint8(stream, sc.polyline.bRop2);
+            io_uint16_le(stream, sc.polyline.BrushCacheEntry);
+            io_uint32_le(stream, sc.polyline.PenColor);
+            io_uint8(stream, sc.polyline.NumDeltaEntries);
+            // TODO: check room to write or enough data to read, another io unified function necessary io_avail()
+            for (uint8_t i = 0; i < sc.polyline.NumDeltaEntries; i++) {
+                io_sint16_le(stream, sc.polyline.deltaEncodedPoints[i].xDelta);
+                io_sint16_le(stream, sc.polyline.deltaEncodedPoints[i].yDelta);
+            }
+        }
+
+        // RDPMultiDstBlt multidstblt;
+        if (multidstblt_support) {
+            io_sint16_le(stream, sc.multidstblt.nLeftRect);
+            io_sint16_le(stream, sc.multidstblt.nTopRect);
+            io_sint16_le(stream, sc.multidstblt.nWidth);
+            io_sint16_le(stream, sc.multidstblt.nHeight);
+            io_uint8(stream, sc.multidstblt.bRop);
+            io_uint8(stream, sc.multidstblt.nDeltaEntries);
+            io_delta_encoded_rects(stream, {
+                sc.multidstblt.deltaEncodedRectangles,
+                sc.multidstblt.nDeltaEntries
+            });
+        }
+
+        // RDPMultiOpaqueRect multiopaquerect;
+        if (multiopaquerect_support) {
+            io_sint16_le(stream, sc.multiopaquerect.nLeftRect);
+            io_sint16_le(stream, sc.multiopaquerect.nTopRect);
+            io_sint16_le(stream, sc.multiopaquerect.nWidth);
+            io_sint16_le(stream, sc.multiopaquerect.nHeight);
+            io_color(stream, sc.multiopaquerect._Color);
+            io_uint8(stream, sc.multiopaquerect.nDeltaEntries);
+            io_delta_encoded_rects(stream, {
+                sc.multiopaquerect.deltaEncodedRectangles,
+                sc.multiopaquerect.nDeltaEntries
+            });
+        }
+
+        // RDPMultiPatBlt multipatblt;
+        if (multipatblt_support) {
+            io_rect(stream, sc.multipatblt.rect);
+            io_uint8(stream, sc.multipatblt.bRop);
+            io_uint32_le(stream, sc.multipatblt.BackColor);
+            io_uint32_le(stream, sc.multipatblt.ForeColor);
+            io_brush(stream, sc.multipatblt.brush);
+            io_uint8(stream, sc.multipatblt.nDeltaEntries);
+            io_delta_encoded_rects(stream, {
+                sc.multipatblt.deltaEncodedRectangles,
+                sc.multipatblt.nDeltaEntries
+            });
+        }
+
+        // RDPMultiScrBlt multiscrblt;
+        if (multiscrblt_support) {
+            io_rect(stream, sc.multiscrblt.rect);
+            io_uint8(stream, sc.multiscrblt.bRop);
+            io_sint16_le(stream, sc.multiscrblt.nXSrc);
+            io_sint16_le(stream, sc.multiscrblt.nYSrc);
+            io_uint8(stream, sc.multiscrblt.nDeltaEntries);
+            io_delta_encoded_rects(stream, {
+                sc.multiscrblt.deltaEncodedRectangles,
+                sc.multiscrblt.nDeltaEntries
+            });
+        }
+    }
+};
+
+class InChunkedImageTransport : public Transport
+{
+    uint16_t chunk_type;
+    uint32_t chunk_size;
+    uint16_t chunk_count;
+    Transport * trans;
+    char buf[65536];
+    InStream in_stream;
+
+public:
+    InChunkedImageTransport(uint16_t chunk_type, uint32_t chunk_size, Transport * trans)
+        : chunk_type(chunk_type)
+        , chunk_size(chunk_size)
+        , chunk_count(1)
+        , trans(trans)
+        , in_stream(this->buf, this->chunk_size - 8)
+    {
+        auto * p = this->buf;
+        this->trans->recv(&p, this->in_stream.get_capacity());
+    }
+
+private:
+    void do_recv(uint8_t ** pbuffer, size_t len) override {
+        size_t total_len = 0;
+        while (total_len < len){
+            size_t remaining = in_stream.in_remain();
+            if (remaining >= (len - total_len)){
+                in_stream.in_copy_bytes(*pbuffer + total_len, len - total_len);
+                *pbuffer += len;
+                return;
+            }
+            in_stream.in_copy_bytes(*pbuffer + total_len, remaining);
+            total_len += remaining;
+            switch (this->chunk_type){
+            case PARTIAL_IMAGE_CHUNK:
+            {
+                const size_t header_sz = 8;
+                char header_buf[header_sz];
+                InStream header(header_buf);
+                auto * p = header_buf;
+                this->trans->recv(&p, header_sz);
+                this->chunk_type = header.in_uint16_le();
+                this->chunk_size = header.in_uint32_le();
+                this->chunk_count = header.in_uint16_le();
+                this->in_stream = InStream(this->buf, this->chunk_size - 8);
+                p = this->buf;
+                this->trans->recv(&p, this->chunk_size - 8);
+            }
+            break;
+            case LAST_IMAGE_CHUNK:
+                LOG(LOG_ERR, "Failed to read embedded image from WRM (transport closed)");
+                throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+            default:
+                LOG(LOG_ERR, "Failed to read embedded image from WRM");
+                throw Error(ERR_TRANSPORT_READ_FAILED);
+            }
+        }
+    }
+};
+
+struct FileToGraphic
+{
+    enum {
+        HEADER_SIZE = 8
+    };
+
+private:
+    uint8_t stream_buf[65536];
+    InStream stream;
+
+    CompressionInTransportBuilder compression_builder;
+
+    Transport * trans_source;
+    Transport * trans;
+
+public:
+    Rect screen_rect;
+
+    // Internal state of orders
+    StateChunk ssc;
+
+    BmpCache     * bmp_cache;
+    PointerCache   ptr_cache;
+    GlyphCache     gly_cache;
+
+    // variables used to read batch of orders "chunks"
+    uint32_t chunk_size;
+    uint16_t chunk_type;
+    uint16_t chunk_count;
+private:
+    uint16_t remaining_order_count;
+
+public:
+    // total number of RDP orders read from the start of the movie
+    // (non orders chunks are counted as 1 order)
+    uint32_t total_orders_count;
+
+    timeval record_now;
+
+private:
+    timeval start_record_now;
+    timeval start_synctime_now;
+
+public:
+    template<class T, std::size_t N>
+    struct fixed_ptr_array
+    {
+        fixed_ptr_array() : last(arr) {}
+
+        void push_back(T * p) {
+            if (p) {
+                assert(this->size() < N);
+                *this->last = p;
+                ++this->last;
+            }
+        }
+
+        T * * begin() { return this->arr; }
+        T * * end() { return this->last; }
+
+        std::size_t size() const noexcept {
+            return static_cast<std::size_t>(this->last - this->arr);
+        }
+
+    private:
+        T * arr[N];
+        T * * last = arr;
+    };
+
+    fixed_ptr_array<gdi::GraphicApi, 10> graphic_consumers;
+    fixed_ptr_array<gdi::CaptureApi, 10> capture_consumers;
+    fixed_ptr_array<gdi::KbdInputApi, 10> kbd_input_consumers;
+    fixed_ptr_array<gdi::CaptureProbeApi, 10> capture_probe_consumers;
+    fixed_ptr_array<gdi::ExternalCaptureApi, 10> external_event_consumers;
+
+    bool meta_ok;
+    bool timestamp_ok;
+    uint16_t mouse_x;
+    uint16_t mouse_y;
+    bool real_time;
+
+    const BGRPalette & palette = BGRPalette::classic_332(); // We don't really care movies are always 24 bits for now
+
+    const timeval begin_capture;
+    const timeval end_capture;
+    uint32_t max_order_count;
+
+    uint16_t info_version;
+    uint16_t info_width;
+    uint16_t info_height;
+    uint16_t info_bpp;
+    uint16_t info_number_of_cache;
+    bool     info_use_waiting_list;
+    uint16_t info_cache_0_entries;
+    uint16_t info_cache_0_size;
+    bool     info_cache_0_persistent;
+    uint16_t info_cache_1_entries;
+    uint16_t info_cache_1_size;
+    bool     info_cache_1_persistent;
+    uint16_t info_cache_2_entries;
+    uint16_t info_cache_2_size;
+    bool     info_cache_2_persistent;
+    uint16_t info_cache_3_entries;
+    uint16_t info_cache_3_size;
+    bool     info_cache_3_persistent;
+    uint16_t info_cache_4_entries;
+    uint16_t info_cache_4_size;
+    bool     info_cache_4_persistent;
+    WrmCompressionAlgorithm info_compression_algorithm;
+
+    bool ignore_frame_in_timeval;
+
+    struct Statistics {
+        uint32_t DstBlt;
+        uint32_t MultiDstBlt;
+        uint32_t PatBlt;
+        uint32_t MultiPatBlt;
+        uint32_t OpaqueRect;
+        uint32_t MultiOpaqueRect;
+        uint32_t ScrBlt;
+        uint32_t MultiScrBlt;
+        uint32_t MemBlt;
+        uint32_t Mem3Blt;
+        uint32_t LineTo;
+        uint32_t GlyphIndex;
+        uint32_t Polyline;
+        uint32_t EllipseSC;
+
+        uint32_t CacheBitmap;
+        uint32_t CacheColorTable;
+        uint32_t CacheGlyph;
+
+        uint32_t FrameMarker;
+
+        uint32_t BitmapUpdate;
+
+        uint32_t CachePointer;
+        uint32_t PointerIndex;
+
+        uint32_t graphics_update_chunk;
+        uint32_t bitmap_update_chunk;
+        uint32_t timestamp_chunk;
+    } statistics;
+
+    bool break_privplay_qt;
+    uint64_t movie_elapsed_qt;
+
+    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    {
+        none,
+        play        = 8,
+        timestamp   = 16,
+        rdp_orders  = 32,
+        probe       = 64,
+    };
+
+    FileToGraphic(Transport & trans, const timeval begin_capture, const timeval end_capture, bool real_time, Verbose verbose)
+        : stream(stream_buf)
+        , compression_builder(trans, WrmCompressionAlgorithm::no_compression)
+        , trans_source(&trans)
+        , trans(&trans)
+        , bmp_cache(nullptr)
+        // variables used to read batch of orders "chunks"
+        , chunk_size(0)
+        , chunk_type(0)
+        , chunk_count(0)
+        , remaining_order_count(0)
+        , total_orders_count(0)
+        , meta_ok(false)
+        , timestamp_ok(false)
+        , mouse_x(0)
+        , mouse_y(0)
+        , real_time(real_time)
+        , begin_capture(begin_capture)
+        , end_capture(end_capture)
+        , max_order_count(0)
+        , info_version(0)
+        , info_width(0)
+        , info_height(0)
+        , info_bpp(0)
+        , info_number_of_cache(0)
+        , info_use_waiting_list(true)
+        , info_cache_0_entries(0)
+        , info_cache_0_size(0)
+        , info_cache_0_persistent(false)
+        , info_cache_1_entries(0)
+        , info_cache_1_size(0)
+        , info_cache_1_persistent(false)
+        , info_cache_2_entries(0)
+        , info_cache_2_size(0)
+        , info_cache_2_persistent(false)
+        , info_cache_3_entries(0)
+        , info_cache_3_size(0)
+        , info_cache_3_persistent(false)
+        , info_cache_4_entries(0)
+        , info_cache_4_size(0)
+        , info_cache_4_persistent(false)
+        , info_compression_algorithm(WrmCompressionAlgorithm::no_compression)
+        , ignore_frame_in_timeval(false)
+        , statistics()
+        , break_privplay_qt(false)
+        , movie_elapsed_qt(0)
+        , verbose(verbose)
+    {
+        while (this->next_order()){
+            this->interpret_order();
+            if (this->meta_ok && this->timestamp_ok){
+                break;
+            }
+        }
+    }
+
+    ~FileToGraphic()
+    {
+        delete this->bmp_cache;
+    }
+
+    void add_consumer(
+        gdi::GraphicApi * graphic_ptr,
+        gdi::CaptureApi * capture_ptr,
+        gdi::KbdInputApi * kbd_input_ptr,
+        gdi::CaptureProbeApi * capture_probe_ptr,
+        gdi::ExternalCaptureApi * external_event_ptr
+    ) {
+        this->graphic_consumers.push_back(graphic_ptr);
+        this->capture_consumers.push_back(capture_ptr);
+        this->kbd_input_consumers.push_back(kbd_input_ptr);
+        this->capture_probe_consumers.push_back(capture_probe_ptr);
+        this->external_event_consumers.push_back(external_event_ptr);
+    }
+
+    /* order count set this->stream.p to the beginning of the next order.
+     * Most of the times it means not changing it, except when it must read next chunk
+     * when remaining order count is 0.
+     * It update chunk headers (merely remaining orders count) and
+     * reads the next chunk if necessary.
+     */
+    bool next_order()
+    {
+        if (this->chunk_type != LAST_IMAGE_CHUNK
+         && this->chunk_type != PARTIAL_IMAGE_CHUNK) {
+            if (this->stream.get_current() == this->stream.get_data_end()
+             && this->remaining_order_count) {
+                LOG(LOG_ERR, "Incomplete order batch at chunk %" PRIu16 " "
+                             "order [%u/%" PRIu16 "] "
+                             "remaining [%zu/%" PRIu32 "]",
+                             this->chunk_type,
+                             (this->chunk_count-this->remaining_order_count), this->chunk_count,
+                             this->stream.in_remain(), this->chunk_size);
+                return false;
+            }
+        }
+        if (!this->remaining_order_count){
+            for (gdi::GraphicApi * gd : this->graphic_consumers){
+                gd->sync();
+            }
+
+            try {
+                uint8_t buf[HEADER_SIZE];
+                {
+                    auto end = buf;
+                    this->trans->recv(&end, HEADER_SIZE);
+                }
+                InStream header(buf);
+                this->chunk_type = header.in_uint16_le();
+                this->chunk_size = header.in_uint32_le();
+                this->remaining_order_count = this->chunk_count = header.in_uint16_le();
+
+                if (this->chunk_type != LAST_IMAGE_CHUNK && this->chunk_type != PARTIAL_IMAGE_CHUNK) {
+                    switch (this->chunk_type) {
+                        case RDP_UPDATE_ORDERS:
+                            this->statistics.graphics_update_chunk++; break;
+                        case RDP_UPDATE_BITMAP:
+                            this->statistics.bitmap_update_chunk++;   break;
+                        case TIMESTAMP:
+                            this->statistics.timestamp_chunk++;       break;
+                    }
+                    if (this->chunk_size > 65536){
+                        LOG(LOG_INFO,"chunk_size (%d) > 65536", this->chunk_size);
+                        return false;
+                    }
+                    this->stream = InStream(this->stream_buf);
+                    if (this->chunk_size - HEADER_SIZE > 0) {
+                        this->stream = InStream(this->stream_buf, this->chunk_size - HEADER_SIZE);
+                        auto end = this->stream_buf;
+                        this->trans->recv(&end, this->chunk_size - HEADER_SIZE);
+                    }
+                }
+            }
+            catch (Error & e){
+                if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
+                    throw;
+                }
+
+                if (this->verbose) {
+                    LOG(LOG_INFO,"receive error %u : end of transport", e.id);
+                }
+                // receive error, end of transport
+                return false;
+            }
+        }
+        if (this->remaining_order_count > 0){this->remaining_order_count--;}
+        return true;
+    }
+
+    void interpret_order()
+    {
+        this->total_orders_count++;
+        switch (this->chunk_type){
+        case RDP_UPDATE_ORDERS:
+        {
+            if (!this->meta_ok){
+                LOG(LOG_ERR, "Drawing orders chunk must be preceded by a META chunk to get drawing device size");
+                throw Error(ERR_WRM);
+            }
+            if (!this->timestamp_ok){
+                LOG(LOG_ERR, "Drawing orders chunk must be preceded by a TIMESTAMP chunk to get drawing timing\n");
+                throw Error(ERR_WRM);
+            }
+            uint8_t control = this->stream.in_uint8();
+            uint8_t class_ = (control & (RDP::STANDARD | RDP::SECONDARY));
+            if (class_ == RDP::SECONDARY) {
+                RDP::AltsecDrawingOrderHeader header(control);
+                switch (header.orderType) {
+                    case RDP::AltsecDrawingOrderHeader::FrameMarker:
+                    {
+                        this->statistics.FrameMarker++;
+                        RDP::FrameMarker order;
+
+                        order.receive(stream, header);
+                        if (this->verbose & Verbose::rdp_orders){
+                            order.log(LOG_INFO);
+                        }
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
+                            gd->draw(order);
+                        }
+                    }
+                    break;
+                    case RDP::AltsecDrawingOrderHeader::Window:
+                        this->process_windowing(stream, header);
+                    break;
+                    default:
+                        LOG(LOG_ERR, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
+                        /* error, unknown order */
+                    break;
+                }
+            }
+            else if (class_ == (RDP::STANDARD | RDP::SECONDARY)) {
+                RDPSecondaryOrderHeader header(this->stream);
+                uint8_t const *next_order = this->stream.get_current() + header.order_data_length();
+                switch (header.type) {
+                case RDP::TS_CACHE_BITMAP_COMPRESSED:
+                case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
+                {
+                    this->statistics.CacheBitmap++;
+                    RDPBmpCache cmd;
+                    cmd.receive(this->stream, header, this->palette, this->info_bpp);
+                    if (this->verbose & Verbose::rdp_orders){
+                        cmd.log(LOG_INFO);
+                    }
+                    this->bmp_cache->put(cmd.id, cmd.idx, cmd.bmp, cmd.key1, cmd.key2);
+                }
+                break;
+                case RDP::TS_CACHE_COLOR_TABLE:
+                    this->statistics.CacheColorTable++;
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_COLOR_TABLE (%d)", header.type);
+                    break;
+                case RDP::TS_CACHE_GLYPH:
+                {
+                    this->statistics.CacheGlyph++;
+                    RDPGlyphCache cmd;
+                    cmd.receive(this->stream, header);
+                    if (this->verbose & Verbose::rdp_orders){
+                        cmd.log(LOG_INFO);
+                    }
+                    this->gly_cache.set_glyph(
+                        FontChar(std::move(cmd.aj), cmd.x, cmd.y, cmd.cx, cmd.cy, -1),
+                        cmd.cacheId, cmd.cacheIndex
+                    );
+                }
+                break;
+                case RDP::TS_CACHE_BITMAP_COMPRESSED_REV2:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV2 (%d)", header.type);
+                  break;
+                case RDP::TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_UNCOMPRESSED_REV2 (%d)", header.type);
+                  break;
+                case RDP::TS_CACHE_BITMAP_COMPRESSED_REV3:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV3 (%d)", header.type);
+                  break;
+                default:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER (%d)", header.type);
+                    /* error, unknown order */
+                    break;
+                }
+                this->stream.in_skip_bytes(next_order - this->stream.get_current());
+            }
+            else if (class_ == RDP::STANDARD) {
+                RDPPrimaryOrderHeader header = this->ssc.common.receive(this->stream, control);
+                const Rect clip = (control & RDP::BOUNDS) ? this->ssc.common.clip : this->screen_rect;
+                switch (this->ssc.common.order) {
+                case RDP::GLYPHINDEX:
+                    this->statistics.GlyphIndex++;
+                    this->ssc.glyphindex.receive(this->stream, header);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.glyphindex, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette), this->gly_cache);
+                    }
+                    break;
+                case RDP::DESTBLT:
+                    this->statistics.DstBlt++;
+                    this->ssc.destblt.receive(this->stream, header);
+                    if (this->verbose & Verbose::rdp_orders){
+                        this->ssc.destblt.log(LOG_INFO, clip);
+                    }
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.destblt, clip);
+                    }
+                    break;
+                case RDP::MULTIDSTBLT:
+                    this->statistics.MultiDstBlt++;
+                    this->ssc.multidstblt.receive(this->stream, header);
+                    if (this->verbose & Verbose::rdp_orders){
+                        this->ssc.multidstblt.log(LOG_INFO, clip);
+                    }
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.multidstblt, clip);
+                    }
+                    break;
+                case RDP::MULTIOPAQUERECT:
+                    this->statistics.MultiOpaqueRect++;
+                    this->ssc.multiopaquerect.receive(this->stream, header);
+                    if (this->verbose & Verbose::rdp_orders){
+                        this->ssc.multiopaquerect.log(LOG_INFO, clip);
+                    }
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.multiopaquerect, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                    }
+                    break;
+                case RDP::MULTIPATBLT:
+                    this->statistics.MultiPatBlt++;
+                    this->ssc.multipatblt.receive(this->stream, header);
+                    if (this->verbose & Verbose::rdp_orders){
+                        this->ssc.multipatblt.log(LOG_INFO, clip);
+                    }
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.multipatblt, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                    }
+                    break;
+                case RDP::MULTISCRBLT:
+                    this->statistics.MultiScrBlt++;
+                    this->ssc.multiscrblt.receive(this->stream, header);
+                    if (this->verbose & Verbose::rdp_orders){
+                        this->ssc.multiscrblt.log(LOG_INFO, clip);
+                    }
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.multiscrblt, clip);
+                    }
+                    break;
+                case RDP::PATBLT:
+                    this->statistics.PatBlt++;
+                    this->ssc.patblt.receive(this->stream, header);
+                    if (this->verbose & Verbose::rdp_orders){
+                        this->ssc.patblt.log(LOG_INFO, clip);
+                    }
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.patblt, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                    }
+                    break;
+                case RDP::SCREENBLT:
+                    this->statistics.ScrBlt++;
+                    this->ssc.scrblt.receive(this->stream, header);
+                    if (this->verbose & Verbose::rdp_orders){
+                        this->ssc.scrblt.log(LOG_INFO, clip);
+                    }
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.scrblt, clip);
+                    }
+                    break;
+                case RDP::LINE:
+                    this->statistics.LineTo++;
+                    this->ssc.lineto.receive(this->stream, header);
+                    if (this->verbose & Verbose::rdp_orders){
+                        this->ssc.lineto.log(LOG_INFO, clip);
+                    }
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.lineto, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                    }
+                    break;
+                case RDP::RECT:
+                    this->statistics.OpaqueRect++;
+                    this->ssc.opaquerect.receive(this->stream, header);
+                    if (this->verbose & Verbose::rdp_orders){
+                        this->ssc.opaquerect.log(LOG_INFO, clip);
+                    }
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.opaquerect, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                    }
+                    break;
+                case RDP::MEMBLT:
+                    {
+                        this->statistics.MemBlt++;
+                        this->ssc.memblt.receive(this->stream, header);
+                        if (this->verbose & Verbose::rdp_orders){
+                            this->ssc.memblt.log(LOG_INFO, clip);
+                        }
+                        const Bitmap & bmp = this->bmp_cache->get(this->ssc.memblt.cache_id, this->ssc.memblt.cache_idx);
+                        if (!bmp.is_valid()){
+                            LOG(LOG_ERR, "Memblt bitmap not found in cache at (%u, %u)", this->ssc.memblt.cache_id, this->ssc.memblt.cache_idx);
+                            throw Error(ERR_WRM);
+                        }
+                        else {
+                            for (gdi::GraphicApi * gd : this->graphic_consumers){
+                                gd->draw(this->ssc.memblt, clip, bmp);
+                            }
+                        }
+                    }
+                    break;
+                case RDP::MEM3BLT:
+                    {
+                        this->statistics.Mem3Blt++;
+                        this->ssc.mem3blt.receive(this->stream, header);
+                        if (this->verbose & Verbose::rdp_orders){
+                            this->ssc.mem3blt.log(LOG_INFO, clip);
+                        }
+                        const Bitmap & bmp = this->bmp_cache->get(this->ssc.mem3blt.cache_id, this->ssc.mem3blt.cache_idx);
+                        if (!bmp.is_valid()){
+                            LOG(LOG_ERR, "Mem3blt bitmap not found in cache at (%u, %u)", this->ssc.mem3blt.cache_id, this->ssc.mem3blt.cache_idx);
+                            throw Error(ERR_WRM);
+                        }
+                        else {
+                            for (gdi::GraphicApi * gd : this->graphic_consumers){
+                                gd->draw(this->ssc.mem3blt, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette), bmp);
+                            }
+                        }
+                    }
+                    break;
+                case RDP::POLYLINE:
+                    this->statistics.Polyline++;
+                    this->ssc.polyline.receive(this->stream, header);
+                    if (this->verbose & Verbose::rdp_orders){
+                        this->ssc.polyline.log(LOG_INFO, clip);
+                    }
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.polyline, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                    }
+                    break;
+                case RDP::ELLIPSESC:
+                    this->statistics.EllipseSC++;
+                    this->ssc.ellipseSC.receive(this->stream, header);
+                    if (this->verbose & Verbose::rdp_orders){
+                        this->ssc.ellipseSC.log(LOG_INFO, clip);
+                    }
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.ellipseSC, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                    }
+                    break;
+                default:
+                    /* error unknown order */
+                    LOG(LOG_ERR, "unsupported PRIMARY ORDER (%d)", this->ssc.common.order);
+                    throw Error(ERR_WRM);
+                }
+            }
+            else {
+                /* error, this should always be set */
+                LOG(LOG_ERR, "Unsupported drawing order detected : protocol error");
+                throw Error(ERR_WRM);
+            }
+            }
+            break;
+            case TIMESTAMP:
+            {
+                this->stream.in_timeval_from_uint64le_usec(this->record_now);
+
+                for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
+                    obj->external_time(this->record_now);
+                }
+
+                // If some data remains, it is input data : mouse_x, mouse_y and decoded keyboard keys (utf8)
+                if (this->stream.in_remain() > 0){
+                    if (this->stream.in_remain() < 4){
+                        LOG(LOG_WARNING, "Input data truncated");
+                        hexdump_d(stream.get_data(), stream.in_remain());
+                    }
+
+                    this->mouse_x = this->stream.in_uint16_le();
+                    this->mouse_y = this->stream.in_uint16_le();
+
+                    if (  (this->info_version > 1)
+                       && this->stream.in_uint8()) {
+                        this->ignore_frame_in_timeval = true;
+                    }
+
+                    if (this->verbose & Verbose::timestamp) {
+                        LOG( LOG_INFO, "TIMESTAMP %lu.%lu mouse (x=%" PRIu16 ", y=%" PRIu16 ")\n"
+                           , static_cast<unsigned long>(this->record_now.tv_sec)
+                           , static_cast<unsigned long>(this->record_now.tv_usec)
+                           , this->mouse_x
+                           , this->mouse_y);
+                    }
+
+
+                    auto const input_data = this->stream.get_current();
+                    auto const input_len = this->stream.in_remain();
+                    this->stream.in_skip_bytes(input_len);
+                    for (gdi::KbdInputApi * kbd : this->kbd_input_consumers){
+                        InStream input(input_data, input_len);
+                        while (input.in_remain()) {
+                            kbd->kbd_input(this->record_now, input.in_uint32_le());
+                        }
+                    }
+
+                    if (this->verbose & Verbose::timestamp) {
+                        for (auto data = input_data, end = data + input_len/4; data != end; data += 4) {
+                            uint8_t         key8[6];
+                            const size_t    len = UTF32toUTF8(data, 4, key8, sizeof(key8)-1);
+                            key8[len] = 0;
+
+                            LOG( LOG_INFO, "TIMESTAMP %lu.%lu keyboard '%s'"
+                                , static_cast<unsigned long>(this->record_now.tv_sec)
+                                , static_cast<unsigned long>(this->record_now.tv_usec)
+                                , key8);
+                        }
+                    }
+                }
+
+                if (!this->timestamp_ok) {
+                   if (this->real_time) {
+                        this->start_record_now   = this->record_now;
+                        this->start_synctime_now = tvtime();
+                    }
+                    this->timestamp_ok = true;
+                }
+                else {
+                   if (this->real_time) {
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
+                            gd->sync();
+                        }
+
+                        this->movie_elapsed_qt = difftimeval(this->record_now, this->start_record_now);
+
+                        /*struct timeval now     = tvtime();
+                        uint64_t       elapsed = difftimeval(now, this->start_synctime_now);
+
+                        uint64_t movie_elapsed = difftimeval(this->record_now, this->start_record_now);
+                        this->movie_elapsed_qt = movie_elapsed;
+
+                        if (elapsed < movie_elapsed) {
+                            struct timespec wtime     = {
+                                  static_cast<time_t>( (movie_elapsed - elapsed) / 1000000LL)
+                                , static_cast<time_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
+                                };
+                            struct timespec wtime_rem = { 0, 0 };*/
+
+                            /*while ((nanosleep(&wtime, &wtime_rem) == -1) && (errno == EINTR)) {
+                                wtime = wtime_rem;
+                            }
+                        } */
+                    }
+                }
+            }
+            break;
+            case META_FILE:
+            // TODO Cache meta_data (sizes, number of entries) should be put in META chunk
+            {
+                this->info_version                   = this->stream.in_uint16_le();
+                this->info_width                     = this->stream.in_uint16_le();
+                this->info_height                    = this->stream.in_uint16_le();
+                this->info_bpp                       = this->stream.in_uint16_le();
+                this->info_cache_0_entries           = this->stream.in_uint16_le();
+                this->info_cache_0_size              = this->stream.in_uint16_le();
+                this->info_cache_1_entries           = this->stream.in_uint16_le();
+                this->info_cache_1_size              = this->stream.in_uint16_le();
+                this->info_cache_2_entries           = this->stream.in_uint16_le();
+                this->info_cache_2_size              = this->stream.in_uint16_le();
+
+                if (this->info_version <= 3) {
+                    this->info_number_of_cache       = 3;
+                    this->info_use_waiting_list      = false;
+
+                    this->info_cache_0_persistent    = false;
+                    this->info_cache_1_persistent    = false;
+                    this->info_cache_2_persistent    = false;
+                }
+                else {
+                    this->info_number_of_cache       = this->stream.in_uint8();
+                    this->info_use_waiting_list      = (this->stream.in_uint8() ? true : false);
+
+                    this->info_cache_0_persistent    = (this->stream.in_uint8() ? true : false);
+                    this->info_cache_1_persistent    = (this->stream.in_uint8() ? true : false);
+                    this->info_cache_2_persistent    = (this->stream.in_uint8() ? true : false);
+
+                    this->info_cache_3_entries       = this->stream.in_uint16_le();
+                    this->info_cache_3_size          = this->stream.in_uint16_le();
+                    this->info_cache_3_persistent    = (this->stream.in_uint8() ? true : false);
+
+                    this->info_cache_4_entries       = this->stream.in_uint16_le();
+                    this->info_cache_4_size          = this->stream.in_uint16_le();
+                    this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
+
+                    this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
+                    REDASSERT(is_valid_enum_value(this->info_compression_algorithm));
+                    if (!is_valid_enum_value(this->info_compression_algorithm)) {
+                        this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+                    }
+
+                    this->trans = &this->compression_builder.reset(
+                        *this->trans_source, this->info_compression_algorithm
+                    );
+                }
+
+                this->stream.in_skip_bytes(this->stream.in_remain());
+
+                if (!this->meta_ok) {
+                    this->bmp_cache = new BmpCache(BmpCache::Recorder, this->info_bpp, this->info_number_of_cache,
+                        this->info_use_waiting_list,
+                        BmpCache::CacheOption(
+                            this->info_cache_0_entries, this->info_cache_0_size, this->info_cache_0_persistent),
+                        BmpCache::CacheOption(
+                            this->info_cache_1_entries, this->info_cache_1_size, this->info_cache_1_persistent),
+                        BmpCache::CacheOption(
+                            this->info_cache_2_entries, this->info_cache_2_size, this->info_cache_2_persistent),
+                        BmpCache::CacheOption(
+                            this->info_cache_3_entries, this->info_cache_3_size, this->info_cache_3_persistent),
+                        BmpCache::CacheOption(
+                            this->info_cache_4_entries, this->info_cache_4_size, this->info_cache_4_persistent));
+                    this->screen_rect = Rect(0, 0, this->info_width, this->info_height);
+                    this->meta_ok = true;
+                }
+                else {
+                    if (this->screen_rect.cx != this->info_width ||
+                        this->screen_rect.cy != this->info_height) {
+                        LOG( LOG_ERR,"Inconsistant redundant meta chunk: (%u x %u) -> (%u x %u)"
+                           , this->screen_rect.cx, this->screen_rect.cy, this->info_width, this->info_height);
+                        throw Error(ERR_WRM);
+                    }
+                }
+
+                for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
+                    obj->external_breakpoint();
+                }
+            }
+            break;
+            case SAVE_STATE:
+            {
+                SaveStateChunk ssc;
+                ssc.recv(this->stream, this->ssc, this->info_version);
+            }
+            break;
+            case LAST_IMAGE_CHUNK:
+            case PARTIAL_IMAGE_CHUNK:
+            {
+                if (this->graphic_consumers.size()) {
+
+                    InChunkedImageTransport chunk_trans(this->chunk_type, this->chunk_size, this->trans);
+
+                    png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+                    png_set_read_fn(ppng, &chunk_trans, &png_read_data_fn);
+                    png_info * pinfo = png_create_info_struct(ppng);
+                    png_read_info(ppng, pinfo);
+
+                    size_t height = png_get_image_height(ppng, pinfo);
+                    const size_t width = screen_rect.cx;
+                    // TODO check png row_size is identical to drawable rowsize
+
+                    uint32_t tmp[8192];
+                    assert(sizeof(tmp) / sizeof(tmp[0]) >= width);
+                    for (size_t k = 0; k < height; ++k) {
+                        png_read_row(ppng, reinterpret_cast<uint8_t*>(tmp), nullptr);
+
+                        uint32_t bgrtmp[8192];
+                        const uint32_t * s = reinterpret_cast<const uint32_t*>(tmp);
+                        uint32_t * t = bgrtmp;
+                        for (size_t n = 0; n < (width / 4); n++){
+                            unsigned bRGB = *s++;
+                            unsigned GBrg = *s++;
+                            unsigned rgbR = *s++;
+                            *t++ = ((GBrg << 16) & 0xFF000000)
+                                 | ((bRGB << 16) & 0x00FF0000)
+                                 | (bRGB         & 0x0000FF00)
+                                 | ((bRGB >> 16) & 0x000000FF);
+                            *t++ = (GBrg         & 0xFF000000)
+                                 | ((rgbR << 16) & 0x00FF0000)
+                                 | ((bRGB >> 16) & 0x0000FF00)
+                                 | ( GBrg        & 0x000000FF);
+                            *t++ = ((rgbR << 16) & 0xFF000000)
+                                 | (rgbR         & 0x00FF0000)
+                                 | ((rgbR >> 16) & 0x0000FF00)
+                                 | ((GBrg >> 16) & 0x000000FF);
+                        }
+
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
+                            gd->set_row(k, reinterpret_cast<uint8_t*>(bgrtmp));
+                        }
+                    }
+                    png_read_end(ppng, pinfo);
+                    png_destroy_read_struct(&ppng, &pinfo, nullptr);
+                }
+                else {
+                    // If no drawable is available ignore images chunks
+                    this->stream.rewind();
+                    std::size_t sz = this->chunk_size - HEADER_SIZE;
+                    auto end = this->stream_buf;
+                    this->trans->recv(&end, sz);
+                    this->stream = InStream(this->stream_buf, sz, sz);
+                }
+                this->remaining_order_count = 0;
+            }
+            break;
+            case RDP_UPDATE_BITMAP:
+            {
+                if (!this->meta_ok) {
+                    LOG(LOG_ERR, "Drawing orders chunk must be preceded by a META chunk to get drawing device size");
+                    throw Error(ERR_WRM);
+                }
+                if (!this->timestamp_ok) {
+                    LOG(LOG_ERR, "Drawing orders chunk must be preceded by a TIMESTAMP chunk to get drawing timing");
+                    throw Error(ERR_WRM);
+                }
+
+                this->statistics.BitmapUpdate++;
+                RDPBitmapData bitmap_data;
+                bitmap_data.receive(this->stream);
+
+                const uint8_t * data = this->stream.in_uint8p(bitmap_data.bitmap_size());
+
+                Bitmap bitmap( this->info_bpp
+                             , bitmap_data.bits_per_pixel
+                             , /*0*/&this->palette
+                             , bitmap_data.width
+                             , bitmap_data.height
+                             , data
+                             , bitmap_data.bitmap_size()
+                             , (bitmap_data.flags & BITMAP_COMPRESSION)
+                             );
+
+                if (this->verbose & Verbose::rdp_orders){
+                    bitmap_data.log(LOG_INFO);
+                }
+
+                for (gdi::GraphicApi * gd : this->graphic_consumers){
+                    gd->draw(bitmap_data, bitmap);
+                }
+
+            }
+            break;
+            case POINTER:
+            {
+                uint8_t          cache_idx;
+
+                this->mouse_x = this->stream.in_uint16_le();
+                this->mouse_y = this->stream.in_uint16_le();
+                cache_idx     = this->stream.in_uint8();
+
+                if (  chunk_size - 8 /*header(8)*/
+                    > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
+                    this->statistics.CachePointer++;
+                    struct Pointer cursor(Pointer::POINTER_NULL);
+                    cursor.width = 32;
+                    cursor.height = 32;
+                    cursor.bpp = 24;
+                    cursor.x = this->stream.in_uint8();
+                    cursor.y = this->stream.in_uint8();
+                    stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
+                    stream.in_copy_bytes(cursor.mask, 128);
+
+                    this->ptr_cache.add_pointer_static(cursor, cache_idx);
+
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->set_pointer(cursor);
+                    }
+                }
+                else {
+                    this->statistics.PointerIndex++;
+                    Pointer & pi = this->ptr_cache.Pointers[cache_idx];
+                    Pointer cursor(Pointer::POINTER_NULL);
+                    cursor.width = 32;
+                    cursor.height = 32;
+                    cursor.bpp = 24;
+                    cursor.x = pi.x;
+                    cursor.y = pi.y;
+                    memcpy(cursor.data, pi.data, sizeof(pi.data));
+                    memcpy(cursor.mask, pi.mask, sizeof(pi.mask));
+
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->set_pointer(cursor);
+                    }
+                }
+            }
+            break;
+            case RESET_CHUNK:
+                this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+
+                this->trans = this->trans_source;
+            break;
+            case SESSION_UPDATE:
+                this->stream.in_timeval_from_uint64le_usec(this->record_now);
+
+                for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
+                    obj->external_time(this->record_now);
+                }
+
+                {
+                    uint16_t message_length = this->stream.in_uint16_le();
+
+                    const char * message =  ::char_ptr_cast(this->stream.get_current()); // Null-terminator is included.
+
+                    this->stream.in_skip_bytes(message_length);
+
+                    for (gdi::CaptureProbeApi * cap_probe : this->capture_probe_consumers){
+                        cap_probe->session_update(this->record_now, {message, message_length});
+                    }
+                }
+
+                if (!this->timestamp_ok) {
+                   if (this->real_time) {
+                        this->start_record_now   = this->record_now;
+                        this->start_synctime_now = tvtime();
+                    }
+                    this->timestamp_ok = true;
+                }
+                else {
+                   if (this->real_time) {
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
+                            gd->sync();
+                        }
+
+                        this->movie_elapsed_qt = difftimeval(this->record_now, this->start_record_now);
+
+                        /*struct timeval now     = tvtime();
+                        uint64_t       elapsed = difftimeval(now, this->start_synctime_now);
+
+                        uint64_t movie_elapsed = difftimeval(this->record_now, this->start_record_now);
+
+
+                        if (elapsed < movie_elapsed) {
+                            struct timespec wtime     = {
+                                  static_cast<time_t>( (movie_elapsed - elapsed) / 1000000LL)
+                                , static_cast<time_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
+                                };
+                            struct timespec wtime_rem = { 0, 0 };*/
+
+                            /*while ((nanosleep(&wtime, &wtime_rem) == -1) && (errno == EINTR)) {
+                                wtime = wtime_rem;
+                            }
+                        }*/
+                    }
+                }
+            break;
+            default:
+                LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
+                throw Error(ERR_WRM);
+        }
+    }
+
+
+    void process_windowing( InStream & stream, const RDP::AltsecDrawingOrderHeader & header) {
+        if (this->verbose & Verbose::probe) {
+            LOG(LOG_INFO, "rdp_orders::process_windowing");
+        }
+
+        const uint32_t FieldsPresentFlags = [&]{
+            InStream stream2(stream.get_current(), stream.in_remain());
+            stream2.in_skip_bytes(2);    // OrderSize(2)
+            return stream2.in_uint32_le();
+        }();
+
+        switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                                      | RDP::RAIL::WINDOW_ORDER_TYPE_NOTIFY
+                                      | RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP)) {
+            case RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW:
+                this->process_window_information(stream, header, FieldsPresentFlags);
+                break;
+
+            case RDP::RAIL::WINDOW_ORDER_TYPE_NOTIFY:
+                this->process_notification_icon_information(stream, header, FieldsPresentFlags);
+                break;
+
+            case RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP:
+                this->process_desktop_information(stream, header, FieldsPresentFlags);
+                break;
+
+            default:
+                LOG(LOG_INFO,
+                    "rdp_orders::process_windowing: "
+                        "unsupported Windowing Alternate Secondary Drawing Orders! "
+                        "FieldsPresentFlags=0x%08X",
+                    FieldsPresentFlags);
+                break;
+        }
+    }
+
+    void process_window_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
+                                   , uint32_t FieldsPresentFlags) {
+        if (this->verbose & Verbose::probe) {
+            LOG(LOG_INFO, "rdp_orders::process_window_information");
+        }
+
+        switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_STATE_NEW
+                                      | RDP::RAIL::WINDOW_ORDER_ICON
+                                      | RDP::RAIL::WINDOW_ORDER_CACHEDICON
+                                      | RDP::RAIL::WINDOW_ORDER_STATE_DELETED))
+        {
+            case RDP::RAIL::WINDOW_ORDER_ICON: {
+                    RDP::RAIL::WindowIcon order;
+                    order.receive(stream);
+                    order.log(LOG_INFO);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(order);
+                    }
+                }
+                break;
+
+            case RDP::RAIL::WINDOW_ORDER_CACHEDICON: {
+                    RDP::RAIL::CachedIcon order;
+                    order.receive(stream);
+                    order.log(LOG_INFO);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(order);
+                    }
+                }
+                break;
+
+            case RDP::RAIL::WINDOW_ORDER_STATE_DELETED: {
+                    RDP::RAIL::DeletedWindow order;
+                    order.receive(stream);
+                    order.log(LOG_INFO);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(order);
+                    }
+                }
+                break;
+
+            case 0:
+            case RDP::RAIL::WINDOW_ORDER_STATE_NEW: {
+                    RDP::RAIL::NewOrExistingWindow order;
+                    order.receive(stream);
+                    order.log(LOG_INFO);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(order);
+                    }
+                }
+                break;
+        }
+    }
+
+    void process_notification_icon_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
+                                              , uint32_t FieldsPresentFlags) {
+        if (this->verbose & Verbose::probe) {
+            LOG(LOG_INFO, "rdp_orders::process_notification_icon_information");
+        }
+
+        switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_STATE_NEW
+                                      | RDP::RAIL::WINDOW_ORDER_STATE_DELETED))
+        {
+            case RDP::RAIL::WINDOW_ORDER_STATE_DELETED: {
+                    RDP::RAIL::DeletedNotificationIcons order;
+                    order.receive(stream);
+                    order.log(LOG_INFO);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(order);
+                    }
+                }
+                break;
+
+            case 0:
+            case RDP::RAIL::WINDOW_ORDER_STATE_NEW: {
+                    RDP::RAIL::NewOrExistingNotificationIcons order;
+                    order.receive(stream);
+                    order.log(LOG_INFO);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(order);
+                    }
+                }
+                break;
+        }
+    }
+
+    void process_desktop_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
+                                    , uint32_t FieldsPresentFlags) {
+        if (this->verbose & Verbose::probe) {
+            LOG(LOG_INFO, "rdp_orders::process_desktop_information");
+        }
+
+        if (FieldsPresentFlags & RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_NONE) {
+            RDP::RAIL::NonMonitoredDesktop order;
+            order.receive(stream);
+            order.log(LOG_INFO);
+            for (gdi::GraphicApi * gd : this->graphic_consumers){
+                gd->draw(order);
+            }
+        }
+        else {
+            RDP::RAIL::ActivelyMonitoredDesktop order;
+            order.receive(stream);
+            order.log(LOG_INFO);
+            for (gdi::GraphicApi * gd : this->graphic_consumers){
+                gd->draw(order);
+            }
+        }
+    }
+
+    void play(bool const & requested_to_stop) {
+        this->privplay([](time_t){}, requested_to_stop);
+    }
+
+    bool play_qt() {
+        return this->privplay_qt([](time_t){});
+    }
+
+    template<class CbUpdateProgress>
+    void play(CbUpdateProgress update_progess, bool const & requested_to_stop) {
+        time_t last_sent_record_now = 0;
+        this->privplay([&](time_t record_now) {
+            if (last_sent_record_now != record_now) {
+                update_progess(record_now);
+                last_sent_record_now = record_now;
+            }
+        }, requested_to_stop);
+    }
+
+private:
+    template<class CbUpdateProgress>
+    void privplay(CbUpdateProgress update_progess, bool const & requested_to_stop) {
+        while (!requested_to_stop && this->next_order()) {
+            if (this->verbose & Verbose::play) {
+                LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
+                   , unsigned(this->record_now.tv_sec), unsigned(this->total_orders_count));
+            }
+            this->interpret_order();
+            if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
+                for (gdi::CaptureApi * cap : this->capture_consumers){
+                    cap->snapshot(
+                        this->record_now, this->mouse_x, this->mouse_y
+                      , this->ignore_frame_in_timeval
+                    );
+                }
+
+                this->ignore_frame_in_timeval = false;
+
+                update_progess(this->record_now.tv_sec);
+            }
+            if (this->max_order_count && this->max_order_count <= this->total_orders_count) {
+                break;
+            }
+            if (this->end_capture.tv_sec && this->end_capture < this->record_now) {
+                break;
+            }
+        }
+    }
+
+    template<class CbUpdateProgress>
+    bool privplay_qt(CbUpdateProgress update_progess) {
+
+        struct timeval now     = tvtime();
+        uint64_t       elapsed = difftimeval(now, this->start_synctime_now);
+
+        bool res(false);
+
+        if (elapsed >= this->movie_elapsed_qt) {
+            if (this->next_order()) {
+                if (this->verbose & Verbose::play) {
+                    LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
+                    , unsigned(this->record_now.tv_sec), unsigned(this->total_orders_count));
+                }
+
+                if (this->remaining_order_count > 0) {
+                    res = true;
+                }
+
+                this->interpret_order();
+
+                if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
+                    for (gdi::CaptureApi * cap : this->capture_consumers){
+                        cap->snapshot(
+                            this->record_now, this->mouse_x, this->mouse_y
+                        , this->ignore_frame_in_timeval
+                        );
+                    }
+
+                    this->ignore_frame_in_timeval = false;
+
+                    update_progess(this->record_now.tv_sec);
+                }
+                if (this->max_order_count && this->max_order_count <= this->total_orders_count) {
+                    break_privplay_qt = true;
+                }
+                if (this->end_capture.tv_sec && this->end_capture < this->record_now) {
+                    break_privplay_qt = true;
+                }
+            } else {
+                break_privplay_qt = true;
+            }
+        }
+
+        return res;
+    }
+};
 
 
 class PatternSearcher
@@ -883,7 +2378,6 @@ namespace gdi {
     class CaptureProbeApi;
     class KbdInputApi;
     class ExternalCaptureApi;
-    class UpdateConfigCaptureApi;
 }
 
 
@@ -913,140 +2407,6 @@ struct MouseTrace
     int     last_y;
 };
 
-struct CaptureApisImpl
-{
-    struct CaptureInternal : gdi::CaptureApi
-    {
-        CaptureInternal(const timeval & now, int cursor_x, int cursor_y)
-        : mouse_info{now, cursor_x, cursor_y}
-        , capture_event{}
-        {}
-
-        void set_drawable(Drawable * drawable) {
-            this->drawable = drawable;
-        }
-
-        MouseTrace const & mouse_trace() const noexcept {
-            return this->mouse_info;
-        }
-
-        wait_obj & get_capture_event() {
-            return this->capture_event;
-        }
-
-        std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
-
-    private:
-        std::chrono::microseconds do_snapshot(
-            timeval const & now,
-            int cursor_x, int cursor_y,
-            bool ignore_frame_in_timeval
-        ) override {
-            this->capture_event.reset();
-
-            if (this->drawable) {
-                this->drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
-            }
-
-            this->mouse_info = {now, cursor_x, cursor_y};
-
-            std::chrono::microseconds time = std::chrono::microseconds::max();
-            if (!this->caps.empty()) {
-                for (gdi::CaptureApi & cap : this->caps) {
-                    time = std::min(time, cap.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
-                }
-                this->capture_event.update(time.count());
-            }
-            return time;
-        }
-
-        void do_pause_capture(const timeval& now) override {
-            for (gdi::CaptureApi & cap : this->caps) {
-                cap.pause_capture(now);
-            }
-            this->capture_event.reset();
-        }
-
-        void do_resume_capture(const timeval& now) override {
-            for (gdi::CaptureApi & cap : this->caps) {
-                cap.resume_capture(now);
-            }
-            this->capture_event.set();
-        }
-
-        Drawable * drawable = nullptr;
-        MouseTrace mouse_info;
-        wait_obj capture_event;
-    };
-
-
-    struct KbdInput : gdi::KbdInputApi
-    {
-        bool kbd_input(const timeval & now, uint32_t uchar) override {
-            bool ret = true;
-            for (gdi::KbdInputApi & kbd : this->kbds) {
-                ret &= kbd.kbd_input(now, uchar);
-            }
-            return ret;
-        }
-
-        void enable_kbd_input_mask(bool enable) override {
-            for (gdi::KbdInputApi & kbd : this->kbds) {
-                kbd.enable_kbd_input_mask(enable);
-            }
-        }
-
-        std::vector<std::reference_wrapper<gdi::KbdInputApi>> kbds;
-    };
-
-
-    struct CaptureProbe : gdi::CaptureProbeApi
-    {
-        void possible_active_window_change() override {
-            for (gdi::CaptureProbeApi & cap_prob : this->probes) {
-                cap_prob.possible_active_window_change();
-            }
-        }
-
-        void session_update(const timeval& now, array_view_const_char message) override {
-            for (gdi::CaptureProbeApi & cap_prob : this->probes) {
-                cap_prob.session_update(now, message);
-            }
-        }
-
-        std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
-    };
-
-
-    struct ExternalCapture : gdi::ExternalCaptureApi
-    {
-        void external_breakpoint() override {
-            for (gdi::ExternalCaptureApi & obj : this->objs) {
-                obj.external_breakpoint();
-            }
-        }
-
-        void external_time(const timeval& now) override {
-            for (gdi::ExternalCaptureApi & obj : this->objs) {
-                obj.external_time(now);
-            }
-        }
-
-        std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> objs;
-    };
-
-
-    struct UpdateConfigCapture : gdi::UpdateConfigCaptureApi
-    {
-        void update_config(const Inifile & ini) override {
-            for (gdi::UpdateConfigCaptureApi & obj : this->objs) {
-                obj.update_config(ini);
-            }
-        }
-
-        std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> objs;
-    };
-};
 
 class GraphicCaptureImpl
 {
@@ -1159,9 +2519,8 @@ public:
         Graphic(MouseTrace const & mouse)
         : mouse(mouse)
         {}
-    };
+    } graphic_api;
 
-    Graphic graphic_api;
     RDPDrawable drawable;
 
 public:
@@ -1214,7 +2573,6 @@ private:
         (void)x;
         (void)y;
         (void)ignore_frame_in_timeval;
-        using std::chrono::microseconds;
         uint64_t const duration = difftimeval(now, this->start_capture);
         uint64_t const interval = this->frame_interval.count();
         if (duration >= interval) {
@@ -1253,47 +2611,18 @@ private:
                 this->start_capture = now;
                 this->drawable.clear_mouse();
 
-                return microseconds(interval ? interval - duration % interval : 0u);
+                return std::chrono::microseconds(interval ? interval - duration % interval : 0u);
             }
             else {
                 // Wait 0.3 x frame_interval.
                 return this->frame_interval / 3;
             }
         }
-        return microseconds(interval - duration);
+        return std::chrono::microseconds(interval - duration);
     }
-
-    void do_pause_capture(timeval const & now) override {
-        // Draw Pause message
-        time_t rawtime = now.tv_sec;
-        tm ptm;
-        localtime_r(&rawtime, &ptm);
-        this->drawable.trace_pausetimestamp(ptm);
-        if (this->zoom_factor == 100) {
-            ::transport_dump_png24(
-                this->trans, this->drawable.data(),
-                this->drawable.width(), this->drawable.height(),
-                this->drawable.rowsize(), true);
-        }
-        else {
-            scale_data(
-                this->scaled_buffer.get(), this->drawable.data(),
-                this->scaled_width, this->drawable.width(),
-                this->scaled_height, this->drawable.height(),
-                this->drawable.rowsize());
-            ::transport_dump_png24(
-                this->trans, this->scaled_buffer.get(),
-                this->scaled_width, this->scaled_height,
-                this->scaled_width * 3, false);
-        }
-        this->trans.next();
-        this->drawable.clear_pausetimestamp();
-        this->start_capture = now;
-    }
-
 };
 
-class PngCaptureRT : public gdi::UpdateConfigCaptureApi, public gdi::CaptureApi
+class PngCaptureRT : public gdi::CaptureApi
 {
 public:
     OutFilenameSequenceTransport trans;
@@ -1344,27 +2673,29 @@ public:
         }
     }
 
-private:
-    void update_config(Inifile const & ini) override {
+    void update_config(bool enable_rt_display) {
         auto const old_enable_rt_display = this->enable_rt_display;
-        this->enable_rt_display = ini.get<cfg::video::rt_display>();
+        this->enable_rt_display = enable_rt_display;
 
         if (old_enable_rt_display == this->enable_rt_display) {
             return ;
         }
 
-        if (ini.get<cfg::debug::capture>()) {
-            LOG(LOG_INFO, "Enable real time: %d", int(this->enable_rt_display));
-        }
+        // TODO: add back verbose state of png capture later
+        LOG(LOG_INFO, "Enable real time: %d", int(this->enable_rt_display));
 
         if (!this->enable_rt_display) {
-            for(uint32_t until_num = this->trans.get_seqno() + 1; this->num_start < until_num; ++this->num_start){
+            for(uint32_t until_num = this->trans.get_seqno() + 1 ;
+                this->num_start < until_num ;
+                ++this->num_start)
+            {
                 // unlink may fail, for instance if file does not exist, just don't care
                 ::unlink(this->trans.seqgen()->get(this->num_start));
             }
         }
     }
 
+private:
     std::chrono::microseconds do_snapshot(
         timeval const & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
@@ -1372,7 +2703,6 @@ private:
             (void)x;
             (void)y;
             (void)ignore_frame_in_timeval;
-            using std::chrono::microseconds;
             uint64_t const duration = difftimeval(now, this->start_capture);
             uint64_t const interval = this->frame_interval.count();
             if (duration >= interval) {
@@ -1409,53 +2739,16 @@ private:
                     this->start_capture = now;
                     this->drawable.clear_mouse();
 
-                    return microseconds(interval ? interval - duration % interval : 0u);
+                    return std::chrono::microseconds(interval ? interval - duration % interval : 0u);
                 }
                 else {
                     // Wait 0.3 x frame_interval.
                     return this->frame_interval / 3;
                 }
             }
-            return microseconds(interval - duration);
+            return std::chrono::microseconds(interval - duration);
         }
         return this->frame_interval;
-    }
-
-    void do_pause_capture(timeval const & now) override {
-        if (this->enable_rt_display) {
-            // Draw Pause message
-            time_t rawtime = now.tv_sec;
-            tm ptm;
-            localtime_r(&rawtime, &ptm);
-            this->drawable.trace_pausetimestamp(ptm);
-            if (this->zoom_factor == 100) {
-                ::transport_dump_png24(
-                    this->trans, this->drawable.data(),
-                    this->drawable.width(), this->drawable.height(),
-                    this->drawable.rowsize(), true);
-            }
-            else {
-                scale_data(
-                    this->scaled_buffer.get(), this->drawable.data(),
-                    this->scaled_width, this->drawable.width(),
-                    this->scaled_height, this->drawable.height(),
-                    this->drawable.rowsize());
-                ::transport_dump_png24(
-                    this->trans, this->scaled_buffer.get(),
-                    this->scaled_width, this->scaled_height,
-                    this->scaled_width * 3, false);
-            }
-            if (this->png_limit && this->trans.get_seqno() >= this->png_limit) {
-                // unlink may fail, for instance if file does not exist, just don't care
-                ::unlink(this->trans.seqgen()->get(this->trans.get_seqno() - this->png_limit));
-            }
-            this->trans.next();
-            this->drawable.clear_pausetimestamp();
-            this->start_capture = now;
-        }
-    }
-
-    void do_resume_capture(timeval const & now) override {
     }
 };
 
@@ -1721,37 +3014,32 @@ class SequencedVideoCaptureImpl
     // first next_video is ignored
     struct FirstImage : gdi::CaptureApi
     {
-        using capture_list_t = std::vector<std::reference_wrapper<gdi::CaptureApi>>;
+        SequencedVideoCaptureImpl & first_image_impl;
+        ApiRegisterElement<gdi::CaptureApi> first_image_cap_elem;
+        ApiRegisterElement<gdi::CaptureApi> first_image_gcap_elem;
 
-        SequencedVideoCaptureImpl & impl;
-        ApiRegisterElement<gdi::CaptureApi> cap_elem;
-        ApiRegisterElement<gdi::CaptureApi> gcap_elem;
-
-        using seconds = std::chrono::seconds;
-        using microseconds = std::chrono::microseconds;
-
-        const timeval start_capture;
+        const timeval first_image_start_capture;
 
         FirstImage(timeval const & now, SequencedVideoCaptureImpl & impl)
-        : impl(impl)
-        , start_capture(now)
+        : first_image_impl(impl)
+        , first_image_start_capture(now)
         {}
 
         std::chrono::microseconds do_snapshot(
             const timeval& now, int x, int y, bool ignore_frame_in_timeval
         ) override {
-            microseconds ret;
+            std::chrono::microseconds ret;
 
-            auto const duration = microseconds(difftimeval(now, this->start_capture));
-            auto const interval = microseconds(seconds(3))/2;
+            auto const duration = std::chrono::microseconds(difftimeval(now, this->first_image_start_capture));
+            auto const interval = std::chrono::microseconds(std::chrono::seconds(3))/2;
             if (duration >= interval) {
-                auto video_interval = this->impl.video_sequencer.get_interval();
-                if (this->impl.ic_drawable.logical_frame_ended || duration > seconds(2) || duration >= video_interval) {
-                    this->impl.ic_breakpoint_image(now);
-                    assert(this->cap_elem == *this);
-                    assert(this->gcap_elem == *this);
-                    this->cap_elem = this->impl.video_sequencer;
-                    this->gcap_elem = this->impl.video_sequencer;
+                auto video_interval = first_image_impl.video_sequencer.get_interval();
+                if (first_image_impl.ic_drawable.logical_frame_ended || duration > std::chrono::seconds(2) || duration >= video_interval) {
+                    first_image_impl.ic_breakpoint_image(now);
+                    assert(this->first_image_cap_elem == *this);
+                    assert(this->first_image_gcap_elem == *this);
+                    this->first_image_cap_elem = first_image_impl.video_sequencer;
+                    this->first_image_gcap_elem = first_image_impl.video_sequencer;
 
                     ret = video_interval;
                 }
@@ -1763,11 +3051,9 @@ class SequencedVideoCaptureImpl
                 ret = interval - duration;
             }
 
-            return std::min(ret, this->impl.video_sequencer.snapshot(now, x, y, ignore_frame_in_timeval));
+            return std::min(ret, first_image_impl.video_sequencer.snapshot(now, x, y, ignore_frame_in_timeval));
         }
 
-        void do_resume_capture(const timeval& now) override { this->impl.video_sequencer.resume_capture(now); }
-        void do_pause_capture(const timeval& now) override { this->impl.video_sequencer.pause_capture(now); }
     };
 
 public:
@@ -1849,8 +3135,8 @@ public:
         this->video_sequencer.reset_now(now);
         if (!this->ic_has_first_img) {
             this->ic_breakpoint_image(now);
-            this->first_image.cap_elem = this->video_sequencer;
-            this->first_image.gcap_elem = this->video_sequencer;
+            this->first_image.first_image_cap_elem = this->video_sequencer;
+            this->first_image.first_image_gcap_elem = this->video_sequencer;
         }
         this->vc.next_video();
         this->ic_breakpoint_image(now);
@@ -2243,16 +3529,21 @@ public:
         auth_api * authentifier,
         const Drawable & drawable,
         const Inifile & ini,
+        OcrVersion ocr_version,
+        ocr::locale::LocaleId ocr_locale,
+        bool ocr_on_title_bar_only,
+        uint8_t max_unrecog_char_rate,
+        std::chrono::microseconds usec_ocr_interval,
         NotifyTitleChanged & notify_title_changed)
     : ocr_title_extractor_builder(
         drawable, authentifier != nullptr,
-        ini.get<cfg::ocr::version>(),
-        static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
-        ini.get<cfg::ocr::on_title_bar_only>(),
-        ini.get<cfg::ocr::max_unrecog_char_rate>())
+        ocr_version,
+        ocr_locale,
+        ocr_on_title_bar_only,
+        max_unrecog_char_rate)
     , title_extractor(this->ocr_title_extractor_builder.get_title_extractor())
     , last_ocr(now)
-    , usec_ocr_interval(ini.get<cfg::ocr::interval>())
+    , usec_ocr_interval(usec_ocr_interval)
     , notify_title_changed(notify_title_changed)
     {
     }
@@ -2262,9 +3553,6 @@ public:
         const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
     ) override {
         std::chrono::microseconds const diff {difftimeval(now, this->last_ocr)};
-
-        using std::chrono::milliseconds;
-        using std::chrono::duration_cast;
 
         if (diff >= this->usec_ocr_interval) {
             this->last_ocr = now;
@@ -3265,11 +4553,6 @@ public:
         return this->nc.snapshot(now, x, y, ignore_frame_in_timeval);
     }
 
-    void do_resume_capture(const timeval& now) override {
-        this->trans_variant.trans->next();
-        this->send_timestamp_chunk(now, true);
-    }
-
     // shadow text
     bool kbd_input(const timeval& now, uint32_t) override {
         return this->graphic_to_file.kbd_input(now, '*');
@@ -3282,27 +4565,7 @@ class Capture final
 , public gdi::KbdInputApi
 , public gdi::CaptureProbeApi
 , public gdi::ExternalCaptureApi
-, public gdi::UpdateConfigCaptureApi
 {
-
-    using Graphic = GraphicCaptureImpl;
-
-    using Image = PngCapture;
-
-    using ImageRT = PngCaptureRT;
-
-    using Native = WrmCaptureImpl;
-
-    using Kbd = KbdCaptureImpl;
-
-    using Video = SequencedVideoCaptureImpl;
-
-    using FullVideo = FullVideoCaptureImpl;
-
-    using Meta = MetaCaptureImpl;
-
-    using Title = TitleCaptureImpl;
-
     const bool is_replay_mod;
 
     using string_view = array_view_const_char;
@@ -3398,25 +4661,29 @@ public:
     const bool capture_meta; // capturewab only
 
 private:
-    std::unique_ptr<Graphic> gd;
-    std::unique_ptr<Native> pnc;
-    std::unique_ptr<Image> psc;
-    std::unique_ptr<ImageRT> pscrt;
+    std::unique_ptr<GraphicCaptureImpl> gd;
+    std::unique_ptr<WrmCaptureImpl> pnc;
+    std::unique_ptr<PngCapture> psc;
+    std::unique_ptr<PngCaptureRT> pscrt;
     std::unique_ptr<KbdCaptureImpl> pkc;
-    std::unique_ptr<Video> pvc;
-    std::unique_ptr<FullVideo> pvc_full;
-    std::unique_ptr<Meta> pmc;
-    std::unique_ptr<Title> ptc;
+    std::unique_ptr<SequencedVideoCaptureImpl> pvc;
+    std::unique_ptr<FullVideoCaptureImpl> pvc_full;
+    std::unique_ptr<MetaCaptureImpl> pmc;
+    std::unique_ptr<TitleCaptureImpl> ptc;
     std::unique_ptr<PatternsChecker> patterns_checker;
 
     UpdateProgressData * update_progress_data;
 
-    CaptureApisImpl::CaptureInternal capture_api;
-    CaptureApisImpl::KbdInput kbd_input_api;
-    CaptureApisImpl::CaptureProbe capture_probe_api;
-    CaptureApisImpl::ExternalCapture external_capture_api;
-    CaptureApisImpl::UpdateConfigCapture update_config_capture_api;
-    Graphic::GraphicApi * graphic_api = nullptr;
+    Drawable * drawable = nullptr;
+    MouseTrace mouse_info;
+    wait_obj capture_event;
+
+    std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
+    std::vector<std::reference_wrapper<gdi::KbdInputApi>> kbds;
+    std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
+    std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> objs;
+    
+    bool capture_drawable = false;
 
 
 public:
@@ -3427,6 +4694,11 @@ public:
         const PngParams png_params,
         bool capture_pattern_checker,
         bool capture_ocr,
+        OcrVersion ocr_version, // ini.get<cfg::ocr::version>()
+        ocr::locale::LocaleId ocr_locale, // static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())
+        bool ocr_on_title_bar_only, // ini.get<cfg::ocr::on_title_bar_only>(),
+        uint8_t max_unrecog_char_rate, // = ini.get<cfg::ocr::max_unrecog_char_rate>()
+        std::chrono::microseconds usec_ocr_interval, // ini.get<cfg::ocr::interval>()
         OcrParams ocr_params,
         bool capture_flv,
         bool capture_flv_full,
@@ -3439,6 +4711,9 @@ public:
         int capture_bpp,
         const char * record_tmp_path,
         const char * record_path,
+        const int groupid,
+        const char * hash_path,
+        const char * movie_path,
         const FlvParams flv_params,
         bool no_timestamp,
         auth_api * authentifier,
@@ -3455,28 +4730,16 @@ public:
     , capture_flv_full(capture_flv_full)
     , capture_meta(capture_meta)
     , update_progress_data(update_progress_data)
-    , capture_api(now, width / 2, height / 2)
+    , drawable{nullptr}
+    , mouse_info{now, width / 2, height / 2}
+    , capture_event{}
+    , capture_drawable(this->capture_wrm 
+                    || this->capture_flv
+                    || this->capture_ocr 
+                    || this->capture_png
+                    || this->capture_flv_full)
     {
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
-
-        if (ini.get<cfg::debug::capture>()) {
-            LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
-                this->capture_wrm ?"wrm ":"",
-                this->capture_png ?"png ":"",
-                capture_kbd ? 1 : 0,
-                this->capture_flv ?"flv ":"",
-                this->capture_flv_full ?"flv_full ":"",
-                this->capture_pattern_checker ?"pattern ":"",
-                this->capture_ocr ? (ini.get<cfg::ocr::version>() == OcrVersion::v2 ? 2 : 1) : 0,
-                this->capture_meta?"meta ":""
-            );
-        }
-
-        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-        const bool capture_drawable = this->capture_wrm || this->capture_flv
-                                   || this->capture_ocr || this->capture_png
-                                   || this->capture_flv_full;
-        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
 
         if (this->capture_png || (authentifier && (this->capture_flv || this->capture_ocr))) {
             if (recursive_create_directory(record_tmp_path, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {
@@ -3488,14 +4751,10 @@ public:
         char basename[1024];
         char extension[128];
         strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
-        strcpy(basename, ini.get<cfg::globals::movie_path>().c_str());
+        strcpy(basename, movie_path);
         strcpy(extension, "");          // extension is currently ignored
 
-        if (!canonical_path(
-            ini.get<cfg::globals::movie_path>().c_str()
-          , path, sizeof(path)
-          , basename, sizeof(basename)
-          , extension, sizeof(extension))
+        if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
         ) {
             LOG(LOG_ERR, "Buffer Overflowed: Path too long");
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
@@ -3503,27 +4762,20 @@ public:
 
         LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
 
-        if (authentifier) {
-            cctx.set_master_key(ini.get<cfg::crypto::key0>());
-            cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
-        }
-
-
-        if (capture_drawable) {
-            this->gd.reset(new Graphic(width, height, this->capture_api.mouse_trace()));
-            this->graphic_api = &this->gd->get_graphic_api();
-            this->capture_api.set_drawable(&this->gd->impl());
+        if (this->capture_drawable) {
+            this->gd.reset(new GraphicCaptureImpl(width, height, this->mouse_info));
+            this->drawable = &this->gd->impl();
 
             if (this->capture_png) {
                 if (png_params.real_time_image_capture) {
-                    this->pscrt.reset(new ImageRT(
+                    this->pscrt.reset(new PngCaptureRT(
                         now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,
                         png_params
                     ));
                 }
                 else if (png_params.force_capture_png_if_enable) {
-                    this->psc.reset(new Image(
+                    this->psc.reset(new PngCapture(
                         now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,
                         png_params));
@@ -3540,7 +4792,7 @@ public:
                         LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
                     }
                 }
-                this->pnc.reset(new Native(
+                this->pnc.reset(new WrmCaptureImpl(
                     now, wrm_params, capture_bpp, ini.get<cfg::globals::trace_type>(),
                     cctx, rnd, record_path, hash_path, basename,
                     groupid, authentifier, this->gd->rdp_drawable(), ini
@@ -3548,7 +4800,7 @@ public:
             }
 
             if (this->capture_ocr) {
-                this->pmc.reset(new Meta(
+                this->pmc.reset(new MetaCaptureImpl(
                     now, record_tmp_path, basename,
                     authentifier && ini.get<cfg::session_log::enable_session_log>()
                 ));
@@ -3560,7 +4812,7 @@ public:
                     this->notifier_next_video.session_meta = &this->pmc->get_session_meta();
                     notifier = this->notifier_next_video;
                 }
-                this->pvc.reset(new Video(
+                this->pvc.reset(new SequencedVideoCaptureImpl(
                     now, record_path, basename, groupid, no_timestamp, png_params.zoom, this->gd->impl(),
                     flv_params,
                     ini.get<cfg::video::flv_break_interval>(), notifier
@@ -3568,7 +4820,7 @@ public:
             }
 
             if (this->capture_flv_full) {
-                this->pvc_full.reset(new FullVideo(
+                this->pvc_full.reset(new FullVideoCaptureImpl(
                     now, record_path, basename, groupid, no_timestamp, this->gd->impl(),
                     flv_params));
             }
@@ -3588,8 +4840,9 @@ public:
 
             if (this->capture_ocr) {
                 if (this->patterns_checker || this->pmc || this->pvc) {
-                    this->ptc.reset(new Title(
-                        now, authentifier, this->gd->impl(), ini,
+                    this->ptc.reset(new TitleCaptureImpl(
+                        now, authentifier, this->gd->impl(), ini, 
+                        ocr_version, ocr_locale, ocr_on_title_bar_only, max_unrecog_char_rate, usec_ocr_interval,
                         this->notifier_title_changed
                     ));
                 }
@@ -3604,92 +4857,75 @@ public:
             this->pkc.reset(new KbdCaptureImpl(now, authentifier, ini.get<cfg::context::pattern_kill>().c_str(), ini.get<cfg::context::pattern_notify>().c_str(), ini.get<cfg::debug::capture>()));
         }
 
-            std::vector<std::reference_wrapper<gdi::GraphicApi>> * apis_register_graphic_list
-                = this->graphic_api ? &this->graphic_api->gds : nullptr;
-            std::vector<std::reference_wrapper<gdi::CaptureApi>> * apis_register_graphic_snapshot_list
-                = this->graphic_api ? &this->graphic_api->snapshoters : nullptr;
-            std::vector<std::reference_wrapper<gdi::KbdInputApi>> & apis_register_kbd_input_list
-                = this->kbd_input_api.kbds;
-            std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> & apis_register_capture_probe_list
-                = this->capture_probe_api.probes;
-            std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> & apis_register_external_capture_list
-                = this->external_capture_api.objs;
-            std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> & apis_register_update_config_capture_list
-                = this->update_config_capture_api.objs;
-
-
-
         if (this->gd ) {
-            assert(apis_register_graphic_list);
-            apis_register_graphic_list->push_back(this->gd->drawable);
+            this->gd->get_graphic_api().gds.push_back(this->gd->drawable);
         }
         if (this->pnc) {
-            apis_register_graphic_list->push_back(this->pnc->graphic_to_file);
-            this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->pnc));
-            apis_register_external_capture_list.push_back(this->pnc->nc);
-            apis_register_capture_probe_list.push_back(this->pnc->graphic_to_file);
+            this->gd->get_graphic_api().gds.push_back(this->pnc->graphic_to_file);
+            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->pnc));
+            this->objs.push_back(this->pnc->nc);
+            this->probes.push_back(this->pnc->graphic_to_file);
 
             if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm)) {
-                this->pnc->kbd_element = {apis_register_kbd_input_list, this->pnc->graphic_to_file};
+                this->pnc->kbd_element = {this->kbds, this->pnc->graphic_to_file};
                 this->pnc->graphic_to_file.impl = this->pnc.get();
             }
         }
 
-        if (this->pscrt) {
+        if (this->capture_drawable && this->pscrt) {
             this->pscrt->enable_rt_display = ini.get<cfg::video::rt_display>();
-            this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
-            apis_register_graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
-            apis_register_update_config_capture_list.push_back(static_cast<gdi::UpdateConfigCaptureApi&>(*this->pscrt));
+            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
+            this->gd->get_graphic_api().snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
         }
 
-        if (this->psc) {
-            this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
-            apis_register_graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this->psc));
+        if (this->capture_drawable && this->psc) {
+            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
+            this->gd->get_graphic_api().snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
         }
 
         if (this->pkc) {
             if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)) {
-                apis_register_kbd_input_list.push_back(this->pkc->syslog_kbd);
-                this->capture_api.caps.push_back(this->pkc->syslog_kbd);
+                this->kbds.push_back(this->pkc->syslog_kbd);
+                this->caps.push_back(this->pkc->syslog_kbd);
             }
 
             if (this->pkc->authentifier && ini.get<cfg::session_log::enable_session_log>() &&
                 (ini.get<cfg::session_log::keyboard_input_masking_level>()
                  != ::KeyboardInputMaskingLevel::fully_masked)
             ) {
-                apis_register_kbd_input_list.push_back(this->pkc->session_log_kbd);
-                apis_register_capture_probe_list.push_back(this->pkc->session_log_kbd);
+                this->kbds.push_back(this->pkc->session_log_kbd);
+                this->probes.push_back(this->pkc->session_log_kbd);
             }
 
             if (this->pkc->pattern_kbd.contains_pattern()) {
-                apis_register_kbd_input_list.push_back(this->pkc->pattern_kbd);
+                this->kbds.push_back(this->pkc->pattern_kbd);
             }
         }
 
-        if (this->pvc) {
-            this->capture_api.caps.push_back(this->pvc->vc);
-            apis_register_graphic_snapshot_list->push_back(this->pvc->preparing_vc);
-            this->pvc->first_image.cap_elem = {this->capture_api.caps, this->pvc->first_image};
-            this->pvc->first_image.gcap_elem = {*apis_register_graphic_snapshot_list, this->pvc->first_image};
+        if (this->capture_drawable && this->pvc) {
+            this->caps.push_back(this->pvc->vc);
+            this->gd->get_graphic_api().snapshoters.push_back(this->pvc->preparing_vc);
+            this->pvc->first_image.first_image_cap_elem = {this->caps, this->pvc->first_image};
+            this->pvc->first_image.first_image_gcap_elem = {this->gd->get_graphic_api().snapshoters, this->pvc->first_image};
         }
-        if (this->pvc_full) {
-            this->capture_api.caps.push_back(this->pvc_full->vc);
-            apis_register_graphic_snapshot_list->push_back(this->pvc_full->preparing_vc);
+        if (this->capture_drawable && this->pvc_full) {
+            this->caps.push_back(this->pvc_full->vc);
+            this->gd->get_graphic_api().snapshoters.push_back(this->pvc_full->preparing_vc);
         }
         if (this->pmc) {
-            this->capture_api.caps.push_back(this->pmc->meta);
+            this->caps.push_back(this->pmc->meta);
             if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta)) {
-                apis_register_kbd_input_list.push_back(this->pmc->meta);
-                apis_register_capture_probe_list.push_back(this->pmc->meta);
+                this->kbds.push_back(this->pmc->meta);
+                this->probes.push_back(this->pmc->meta);
             }
 
             if (this->pmc->enable_agent) {
-                apis_register_capture_probe_list.push_back(this->pmc->session_log_agent);
+                this->probes.push_back(this->pmc->session_log_agent);
             }
         }
         if (this->ptc) {
-            this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->ptc));
-            apis_register_capture_probe_list.push_back(static_cast<gdi::CaptureProbeApi&>(*this->ptc));
+            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->ptc));
+            this->probes.push_back(static_cast<gdi::CaptureProbeApi&>(*this->ptc));
         }
     }
 
@@ -3736,11 +4972,15 @@ public:
     }
 
     wait_obj & get_capture_event() {
-        return this->capture_api.get_capture_event();
+        return this->capture_event;
     }
 
-    void update_config(Inifile const & ini) override {
-        this->update_config_capture_api.update_config(ini);
+    public:
+    // TODO: this could be done directly in external pscrt object
+    void update_config(bool enable_rt_display) {
+        if (this->pscrt) {
+            this->pscrt->update_config(enable_rt_display);
+        }
     }
 
     void set_row(size_t rownum, const uint8_t * data) override {
@@ -3751,27 +4991,32 @@ public:
 
     void sync() override
     {
-        if (this->graphic_api) {
-            this->graphic_api->sync();
+        if (this->capture_drawable) {
+            this->gd->get_graphic_api().sync();
         }
     }
 
     bool kbd_input(timeval const & now, uint32_t uchar) override {
-        return this->kbd_input_api.kbd_input(now, uchar);
+        bool ret = true;
+        for (gdi::KbdInputApi & kbd : this->kbds) {
+            ret &= kbd.kbd_input(now, uchar);
+        }
+        return ret;
     }
 
     void enable_kbd_input_mask(bool enable) override {
-        this->kbd_input_api.enable_kbd_input_mask(enable);
+        for (gdi::KbdInputApi & kbd : this->kbds) {
+            kbd.enable_kbd_input_mask(enable);
+        }
     }
 
     gdi::GraphicApi * get_graphic_api() const {
-        return this->graphic_api;
+        return &this->gd->get_graphic_api();
     }
 
     void add_graphic(gdi::GraphicApi & gd) {
-        if (this->graphic_api) {
-            std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list = this->graphic_api ? &this->graphic_api->gds : nullptr;
-            graphic_list->push_back(gd);
+        if (this->capture_drawable) {
+            this->gd->get_graphic_api().gds.push_back(gd);
         }
     }
 
@@ -3781,56 +5026,70 @@ protected:
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
     ) override {
-        return this->capture_api.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
-    }
+        this->capture_event.reset();
 
-    void do_pause_capture(timeval const & now) override {
-        this->capture_api.pause_capture(now);
-    }
+        if (this->drawable) {
+            this->drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
+        }
+        this->mouse_info = {now, cursor_x, cursor_y};
 
-    void do_resume_capture(timeval const & now) override {
-        this->capture_api.resume_capture(now);
+        std::chrono::microseconds time = std::chrono::microseconds::max();
+        if (!this->caps.empty()) {
+            for (gdi::CaptureApi & cap : this->caps) {
+                time = std::min(time, cap.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
+            }
+            this->capture_event.update(time.count());
+        }
+        return time;
     }
 
     template<class... Ts>
     void draw_impl(const Ts & ... args) {
-        if (this->graphic_api) {
-            this->graphic_api->draw(args...);
+        if (this->capture_drawable) {
+            this->gd->get_graphic_api().draw(args...);
         }
     }
 
 public:
     void set_pointer(const Pointer & cursor) override {
-        if (this->graphic_api) {
-            this->graphic_api->set_pointer(cursor);
+        if (this->capture_drawable) {
+            this->gd->get_graphic_api().set_pointer(cursor);
         }
     }
 
     void set_palette(const BGRPalette & palette) override {
-        if (this->graphic_api) {
-            this->graphic_api->set_palette(palette);
+        if (this->capture_drawable) {
+            this->gd->get_graphic_api().set_palette(palette);
         }
     }
 
     void set_pointer_display() {
-        if (this->gd) {
+        if (this->capture_drawable) {
             this->gd->rdp_drawable().show_mouse_cursor(false);
         }
     }
 
     void external_breakpoint() override {
-        this->external_capture_api.external_breakpoint();
+        for (gdi::ExternalCaptureApi & obj : this->objs) {
+            obj.external_breakpoint();
+        }
     }
 
     void external_time(timeval const & now) override {
-        this->external_capture_api.external_time(now);
+        for (gdi::ExternalCaptureApi & obj : this->objs) {
+            obj.external_time(now);
+        }
     }
 
     void session_update(const timeval & now, array_view_const_char message) override {
-        this->capture_probe_api.session_update(now, message);
+        for (gdi::CaptureProbeApi & cap_prob : this->probes) {
+            cap_prob.session_update(now, message);
+        }
     }
 
     void possible_active_window_change() override {
-        this->capture_probe_api.possible_active_window_change();
+        for (gdi::CaptureProbeApi & cap_prob : this->probes) {
+            cap_prob.possible_active_window_change();
+        }
     }
 };

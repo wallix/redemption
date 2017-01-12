@@ -1008,11 +1008,40 @@ public:
         ;
 
         OcrParams ocr_params = {};
+        OcrVersion ocr_version = ini.get<cfg::ocr::version>();
+        ocr::locale::LocaleId ocr_locale(
+                    static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()));
+        bool ocr_on_title_bar_only = ini.get<cfg::ocr::on_title_bar_only>();
+        uint8_t max_unrecog_char_rate = ini.get<cfg::ocr::max_unrecog_char_rate>();
+        std::chrono::microseconds usec_ocr_interval = ini.get<cfg::ocr::interval>();
+
+
+        if (ini.get<cfg::debug::capture>()) {
+            LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
+                capture_wrm ?"wrm ":"",
+                capture_png ?"png ":"",
+                capture_kbd ? 1 : 0,
+                capture_flv ?"flv ":"",
+                capture_flv_full ?"flv_full ":"",
+                capture_pattern_checker ?"pattern ":"",
+                capture_ocr ? (ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
+                capture_meta?"meta ":""
+            );
+        }
+
+        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
+        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
+
+        if (authentifier) {
+            cctx.set_master_key(ini.get<cfg::crypto::key0>());
+            cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
+        }
 
         this->capture = new Capture(  capture_wrm, wrm_params
                                     , capture_png, png_params
                                     , capture_pattern_checker
-                                    , capture_ocr, ocr_params
+                                    , capture_ocr, ocr_version, ocr_locale, ocr_on_title_bar_only, max_unrecog_char_rate, usec_ocr_interval, ocr_params
                                     , capture_flv
                                     , capture_flv_full
                                     , capture_meta
@@ -1023,6 +1052,9 @@ public:
                                     , this->mod_bpp, this->capture_bpp
                                     , record_tmp_path
                                     , record_path
+                                    , groupid
+                                    , hash_path
+                                    , movie_path
                                     , flv_params
                                     , false, authentifier
                                     , ini, this->cctx, this->gen
@@ -1045,36 +1077,6 @@ public:
         return true;
     }
 
-    bool can_be_pause_capture() override
-    {
-        LOG(LOG_INFO, "---<>  Front::pause_capture  <>---");
-        if (this->capture_state != CAPTURE_STATE_STARTED) {
-            return false;
-        }
-
-        timeval now = tvtime();
-        this->capture->pause_capture(now);
-        this->capture_state = CAPTURE_STATE_PAUSED;
-        this->set_gd(this->orders.graphics_update_pdu());
-        return true;
-    }
-
-    bool can_be_resume_capture() override
-    {
-        LOG(LOG_INFO, "---<>  Front::resume_capture <>---");
-        if (this->capture_state != CAPTURE_STATE_PAUSED) {
-            return false;
-        }
-
-        timeval now = tvtime();
-        this->capture->resume_capture(now);
-        this->capture_state = CAPTURE_STATE_STARTED;
-        if (this->capture->get_graphic_api()) {
-            this->set_gd(this->capture->get_graphic_api());
-        }
-        return true;
-    }
-
     bool must_be_stop_capture() override
     {
         if (this->capture) {
@@ -1091,10 +1093,10 @@ public:
         return false;
     }
 
-    void update_config(Inifile & ini) {
+    void update_config(bool enable_rt_display) {
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->update_config(ini);
+            this->capture->update_config(enable_rt_display);
         }
     }
 

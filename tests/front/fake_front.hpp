@@ -161,14 +161,14 @@ public:
     }
 
 private:
-    void draw_impl(const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
+    void draw_impl(const RDPBitmapData & cmd, const Bitmap & bmp) {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
-            bitmap_data.log(LOG_INFO, "FakeFront");
+            cmd.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->gd.draw(bitmap_data, bmp);
+        this->gd.draw(cmd, bmp);
     }
 
     template<class Cmd, class... Ts>
@@ -195,8 +195,6 @@ private:
 
 public:
     bool can_be_start_capture(auth_api*) override { return false; }
-    bool can_be_pause_capture() override { return false; }
-    bool can_be_resume_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
 
     void set_palette(const BGRPalette &) override {

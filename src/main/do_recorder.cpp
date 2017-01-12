@@ -911,7 +911,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
             || end_cap != begin_cap);
 
         if (test){
-            auth_api * authentifier = nullptr;
             for (unsigned i = 1; i < file_count ; i++) {
                 in_wrm_trans.next();
             }
@@ -1002,35 +1001,48 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         WrmParams wrm_params = {};
                         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-                        const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
+                        const char * record_path = record_tmp_path;
 
                         bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-                        bool capture_png = bool(capture_flags & CaptureFlags::png)
-                                        && (!authentifier || png_params.png_limit > 0);
-                        bool capture_pattern_checker = authentifier
-                            && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-                                || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
+                        bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
+                        bool capture_pattern_checker = false;
 
                         bool capture_ocr = bool(capture_flags & CaptureFlags::ocr)
                                             || capture_pattern_checker;
                         bool capture_flv = bool(capture_flags & CaptureFlags::flv);
                         bool capture_flv_full = full_video;
                         bool capture_meta = capture_ocr;
-                        bool capture_kbd = authentifier
-                            ? !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
-                            || ini.get<cfg::session_log::enable_session_log>()
-                            || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-                            || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
-                            : false
-                        ;
+                        bool capture_kbd = false;
 
                         OcrParams ocr_params = {};
+                        OcrVersion ocr_version = ini.get<cfg::ocr::version>();
+                        ocr::locale::LocaleId ocr_locale(
+                            static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()));
+                        bool ocr_on_title_bar_only = ini.get<cfg::ocr::on_title_bar_only>();
+                        uint8_t max_unrecog_char_rate = ini.get<cfg::ocr::max_unrecog_char_rate>();
+                        std::chrono::microseconds usec_ocr_interval = ini.get<cfg::ocr::interval>();
 
+                        if (ini.get<cfg::debug::capture>()) {
+                            LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
+                                capture_wrm ?"wrm ":"",
+                                capture_png ?"png ":"",
+                                capture_kbd ? 1 : 0,
+                                capture_flv ?"flv ":"",
+                                capture_flv_full ?"flv_full ":"",
+                                capture_pattern_checker ?"pattern ":"",
+                                capture_ocr ? (ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
+                                capture_meta?"meta ":""
+                            );
+                        }
+
+                        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+                        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
+                        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
 
                         Capture capture(capture_wrm, wrm_params
                                 , capture_png, png_params
                                 , capture_pattern_checker
-                                , capture_ocr, ocr_params
+                                , capture_ocr, ocr_version, ocr_locale, ocr_on_title_bar_only, max_unrecog_char_rate, usec_ocr_interval, ocr_params
                                 , capture_flv
                                 , capture_flv_full
                                 , capture_meta
@@ -1042,9 +1054,12 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , wrm_color_depth
                                 , record_tmp_path
                                 , record_path
+                                , groupid
+                                , hash_path
+                                , movie_path
                                 , flv_params
                                 , no_timestamp
-                                , authentifier
+                                , nullptr
                                 , ini
                                 , cctx
                                 , rnd
