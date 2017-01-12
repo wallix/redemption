@@ -1122,25 +1122,17 @@ LOG(LOG_INFO, "WidgetScrollBar::draw clip(%d %d %u %u) r(%d %d %u %u)", clip.x, 
         }
     }
 
-    void set_x(int16_t x) override {
-        Widget2::set_x(x);
+    void set_xy(int16_t x, int16_t y) override {
+        Widget2::set_xy(x, y);
         this->update_rects();
     }
 
-    void set_y(int16_t y) override {
-        Widget2::set_y(y);
+    void set_wh(uint16_t w, uint16_t h) override {
+        Widget2::set_wh(w, h);
         this->update_rects();
     }
 
-    void set_cx(uint16_t cx) override {
-        Widget2::set_cx(cx);
-        this->update_rects();
-    }
-
-    void set_cy(uint16_t cy) override {
-        Widget2::set_cy(cy);
-        this->update_rects();
-    }
+    using Widget2::set_wh;
 
 private:
     Dimension get_optimal_button_dim() {

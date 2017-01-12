@@ -277,11 +277,11 @@ public:
 
         Dimension dim = this->hscroll.get_optimal_dim();
         this->hscroll_height = dim.h;
-        this->hscroll.set_cy(this->hscroll_height);
+        this->hscroll.set_wh(this->hscroll.cx(), this->hscroll_height);
 
         dim = this->vscroll.get_optimal_dim();
         this->vscroll_width = dim.w;
-        this->vscroll.set_cx(this->vscroll_width);
+        this->vscroll.set_wh(this->vscroll_width, this->vscroll.cy());
     }
 
     mod_api& get_managed_mod()
@@ -403,37 +403,19 @@ private:
     }
 
 public:
-    void set_cx(uint16_t cx) override {
-        WidgetParent::set_cx(cx);
+    void set_xy(int16_t x, int16_t y) override {
+        WidgetParent::set_xy(x, y);
 
         this->update_rects();
-
-//        this->rdp_input_invalidate(this->get_rect());
     }
 
-    void set_cy(uint16_t cy) override {
-        WidgetParent::set_cy(cy);
+    void set_wh(uint16_t w, uint16_t h) override {
+        WidgetParent::set_wh(w, h);
 
         this->update_rects();
-
-//        this->rdp_input_invalidate(this->get_rect());
     }
 
-    void set_x(int16_t x) override {
-        WidgetParent::set_x(x);
-
-        this->update_rects();
-
-//        this->rdp_input_invalidate(this->get_rect());
-    }
-
-    void set_y(int16_t y) override {
-        WidgetParent::set_y(y);
-
-        this->update_rects();
-
-//        this->rdp_input_invalidate(this->get_rect());
-    }
+    using WidgetParent::set_wh;
 
 public:
     // NotifyApi

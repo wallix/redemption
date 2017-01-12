@@ -176,26 +176,18 @@ public:
         return this->label.get_text();
     }
 
-    void set_x(int16_t x) override {
-        Widget2::set_x(x);
-        this->label.set_x(x + 1);
+    void set_xy(int16_t x, int16_t y) override {
+        Widget2::set_xy(x, y);
+        this->label.set_xy(x + 1, y + 1);
     }
 
-    void set_y(int16_t y) override {
-        Widget2::set_y(y);
-        this->label.set_y(y + 1);
-    }
-
-    void set_cx(uint16_t cx) override
+    void set_wh(uint16_t w, uint16_t h) override
     {
-        Widget2::set_cx(cx);
-        this->label.set_cx(cx - 2);
+        Widget2::set_wh(w, h);
+        this->label.set_wh(w - 2, h - 2);
     }
 
-    void set_cy(uint16_t cy) override {
-        Widget2::set_cy(cy);
-        this->label.set_cy(cy - 2);
-    }
+    using Widget2::set_wh;
 
     void draw(const Rect clip) override {
         this->label.draw(clip);

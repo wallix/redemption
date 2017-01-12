@@ -136,7 +136,7 @@ public:
 
         y += this->goselector.cy() + 20;
 
-        this->groupbox.set_cy(y - top);
+        this->groupbox.set_wh(this->groupbox.cx(), y - top);
         this->groupbox.move_xy(0, (height - (y - top)) / 2);
 
         if (this->extra_button) {

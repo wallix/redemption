@@ -256,15 +256,17 @@ public:
             this->password_edit.set_xy(left + x_cbloc + margin_w + 20, y - this->password_edit.get_border_height());
         }
 
-        this->device_label.set_y(this->device_label.y() + (device_show->cy() - this->device_label.cy()) / 2);
-        this->login_label.set_y(this->login_label.y() + (login_show->cy() - this->login_label.cy()) / 2);
+        this->device_label.set_xy(this->device_label.x(),
+            this->device_label.y() + (device_show->cy() - this->device_label.cy()) / 2);
+        this->login_label.set_xy(this->login_label.x(),
+            this->login_label.y() + (login_show->cy() - this->login_label.cy()) / 2);
         if (this->ask_password) {
-            this->password_label.set_y(this->password_label.y() + (this->password_edit.cy() - this->password_label.cy()) / 2);
+            this->password_label.set_xy(this->password_label.x(),
+                this->password_label.y() + (this->password_edit.cy() - this->password_label.cy()) / 2);
         }
 
         if (this->extra_button) {
-           this->extra_button->set_x(left + 60);
-           this->extra_button->set_y(top + height - 60);
+           this->extra_button->set_xy(left + 60, top + height - 60);
         }
     }
 

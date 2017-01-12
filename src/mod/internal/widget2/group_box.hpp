@@ -111,8 +111,7 @@ public:
     }
 
     void move_xy(int16_t x, int16_t y) {
-        this->set_x(this->x() + x);
-        this->set_y(this->y() + y);
+        this->set_xy(this->x() + x, this->y() + y);
         this->WidgetParent::move_xy(x,y);
     }
 

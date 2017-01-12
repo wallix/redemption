@@ -223,7 +223,7 @@ public:
 
         this->img.set_xy(left + (width - this->img.cx()) / 2, top + y_bbloc);
         if (this->img.y() + this->img.cy() > top + height) {
-            this->img.set_y(top);
+            this->img.set_xy(this->img.x(), top);
         }
         this->version_label.set_xy(left + (width - this->version_label.cx()) / 2,
                                    top + y_bbloc + this->img.cy() + 10);

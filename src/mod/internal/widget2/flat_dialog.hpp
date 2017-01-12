@@ -207,7 +207,7 @@ public:
         this->img.set_xy(left + (width - this->img.cx()) / 2,
                          top + (3 * (height - total_height) / 2 - this->img.cy()) / 2 + total_height);
         if (this->img.y() + this->img.cy() > top + height) {
-            this->img.set_y(top);
+            this->img.set_xy(this->img.x(), top);
         }
 
         if (this->challenge && this->extra_button) {

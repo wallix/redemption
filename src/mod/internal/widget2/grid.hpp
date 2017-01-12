@@ -482,7 +482,7 @@ void apply_format(WidgetGrid & grid, uint16_t * row_height, uint16_t * column_wi
         grid.set_row_height(row_index, row_height[row_index]);
         height += row_height[row_index] + grid.border * 2;
     }
-    grid.set_cy(height);
+    grid.set_wh(grid.cx(), height);
     for (uint16_t column_index = 0; column_index < grid.nb_columns; column_index++) {
         grid.set_column_width(column_index, column_width[column_index]);
     }

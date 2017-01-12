@@ -189,22 +189,21 @@ public:
         return nullptr;
     }
 
-    void set_xy(int16_t x, int16_t y)
+    virtual void set_xy(int16_t x, int16_t y)
     {
-        this->set_x(x);
-        this->set_y(y);
+        this->rect.x = x;
+        this->rect.y = y;
     }
 
-    void set_wh(int16_t w, int16_t h)
+    virtual void set_wh(uint16_t w, uint16_t h)
     {
-        this->set_cx(w);
-        this->set_cy(h);
+        this->rect.cx = w;
+        this->rect.cy = h;
     }
 
     void set_wh(Dimension dim)
     {
-        this->set_cx(dim.w);
-        this->set_cy(dim.h);
+        this->set_wh(dim.w, dim.h);
     }
 
     virtual void set_color(uint32_t bg_color, uint32_t fg_color) {
@@ -246,18 +245,10 @@ public:
         return this->rect.x;
     }
 
-    virtual void set_x(int16_t x) {
-        this->rect.x = x;
-    }
-
     ///Return y position in it's screen
     int16_t y() const
     {
         return this->rect.y;
-    }
-
-    virtual void set_y(int16_t y) {
-        this->rect.y = y;
     }
 
     ///Return width
@@ -266,18 +257,10 @@ public:
         return this->rect.cx;
     }
 
-    virtual void set_cx(uint16_t cx) {
-        this->rect.cx = cx;
-    }
-
     ///Return height
     uint16_t cy() const
     {
         return this->rect.cy;
-    }
-
-    virtual void set_cy(uint16_t cy) {
-        this->rect.cy = cy;
     }
 
     ///Return x()+cx()
