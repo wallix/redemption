@@ -2519,9 +2519,8 @@ public:
         Graphic(MouseTrace const & mouse)
         : mouse(mouse)
         {}
-    };
+    } graphic_api;
 
-    Graphic graphic_api;
     RDPDrawable drawable;
 
 public:
@@ -4679,7 +4678,7 @@ public:
     const bool capture_meta; // capturewab only
 
 private:
-    std::unique_ptr<Graphic> gd;
+    std::unique_ptr<GraphicCaptureImpl> gd;
     std::unique_ptr<Native> pnc;
     std::unique_ptr<Image> psc;
     std::unique_ptr<ImageRT> pscrt;
@@ -4692,7 +4691,9 @@ private:
 
     UpdateProgressData * update_progress_data;
 
-        struct CaptureInternal : gdi::CaptureApi
+    MouseTrace mouse_info;
+
+    struct CaptureInternal : gdi::CaptureApi
     {
         CaptureInternal(const timeval & now, int cursor_x, int cursor_y)
         : mouse_info{now, cursor_x, cursor_y}
@@ -4743,11 +4744,11 @@ private:
     } capture_api;
     
     std::vector<std::reference_wrapper<gdi::KbdInputApi>> kbds;
-    
     std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
     std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> objs;
     
-    Graphic::GraphicApi * graphic_api = nullptr;
+    bool capture_drawable = false;
+
 
 public:
     Capture(
@@ -4793,13 +4794,15 @@ public:
     , capture_flv_full(capture_flv_full)
     , capture_meta(capture_meta)
     , update_progress_data(update_progress_data)
+    , mouse_info{now, width / 2, height / 2}
     , capture_api(now, width / 2, height / 2)
+    , capture_drawable(this->capture_wrm 
+                    || this->capture_flv
+                    || this->capture_ocr 
+                    || this->capture_png
+                    || this->capture_flv_full)
     {
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
-
-        const bool capture_drawable = this->capture_wrm || this->capture_flv
-                                   || this->capture_ocr || this->capture_png
-                                   || this->capture_flv_full;
 
         if (this->capture_png || (authentifier && (this->capture_flv || this->capture_ocr))) {
             if (recursive_create_directory(record_tmp_path, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {
@@ -4822,9 +4825,8 @@ public:
 
         LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
 
-        if (capture_drawable) {
-            this->gd.reset(new Graphic(width, height, this->capture_api.mouse_trace()));
-            this->graphic_api = &this->gd->get_graphic_api();
+        if (this->capture_drawable) {
+            this->gd.reset(new GraphicCaptureImpl(width, height, this->mouse_info));
             this->capture_api.set_drawable(&this->gd->impl());
 
             if (this->capture_png) {
@@ -4919,10 +4921,10 @@ public:
         }
 
         if (this->gd ) {
-            this->graphic_api->gds.push_back(this->gd->drawable);
+            this->gd->get_graphic_api().gds.push_back(this->gd->drawable);
         }
         if (this->pnc) {
-            this->graphic_api->gds.push_back(this->pnc->graphic_to_file);
+            this->gd->get_graphic_api().gds.push_back(this->pnc->graphic_to_file);
             this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->pnc));
             this->objs.push_back(this->pnc->nc);
             this->probes.push_back(this->pnc->graphic_to_file);
@@ -4933,15 +4935,15 @@ public:
             }
         }
 
-        if (this->pscrt) {
+        if (this->capture_drawable && this->pscrt) {
             this->pscrt->enable_rt_display = ini.get<cfg::video::rt_display>();
             this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
-            this->graphic_api->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
+            this->gd->get_graphic_api().snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
         }
 
-        if (this->psc) {
+        if (this->capture_drawable && this->psc) {
             this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
-            this->graphic_api->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
+            this->gd->get_graphic_api().snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
         }
 
         if (this->pkc) {
@@ -4963,15 +4965,15 @@ public:
             }
         }
 
-        if (this->pvc) {
+        if (this->capture_drawable && this->pvc) {
             this->capture_api.caps.push_back(this->pvc->vc);
-            this->graphic_api->snapshoters.push_back(this->pvc->preparing_vc);
+            this->gd->get_graphic_api().snapshoters.push_back(this->pvc->preparing_vc);
             this->pvc->first_image.first_image_cap_elem = {this->capture_api.caps, this->pvc->first_image};
-            this->pvc->first_image.first_image_gcap_elem = {this->graphic_api->snapshoters, this->pvc->first_image};
+            this->pvc->first_image.first_image_gcap_elem = {this->gd->get_graphic_api().snapshoters, this->pvc->first_image};
         }
-        if (this->pvc_full) {
+        if (this->capture_drawable && this->pvc_full) {
             this->capture_api.caps.push_back(this->pvc_full->vc);
-            this->graphic_api->snapshoters.push_back(this->pvc_full->preparing_vc);
+            this->gd->get_graphic_api().snapshoters.push_back(this->pvc_full->preparing_vc);
         }
         if (this->pmc) {
             this->capture_api.caps.push_back(this->pmc->meta);
@@ -5052,8 +5054,8 @@ public:
 
     void sync() override
     {
-        if (this->graphic_api) {
-            this->graphic_api->sync();
+        if (this->capture_drawable) {
+            this->gd->get_graphic_api().sync();
         }
     }
 
@@ -5072,13 +5074,12 @@ public:
     }
 
     gdi::GraphicApi * get_graphic_api() const {
-        return this->graphic_api;
+        return &this->gd->get_graphic_api();
     }
 
     void add_graphic(gdi::GraphicApi & gd) {
-        if (this->graphic_api) {
-            std::vector<std::reference_wrapper<gdi::GraphicApi>> * graphic_list = this->graphic_api ? &this->graphic_api->gds : nullptr;
-            graphic_list->push_back(gd);
+        if (this->capture_drawable) {
+            this->gd->get_graphic_api().gds.push_back(gd);
         }
     }
 
@@ -5093,26 +5094,26 @@ protected:
 
     template<class... Ts>
     void draw_impl(const Ts & ... args) {
-        if (this->graphic_api) {
-            this->graphic_api->draw(args...);
+        if (this->capture_drawable) {
+            this->gd->get_graphic_api().draw(args...);
         }
     }
 
 public:
     void set_pointer(const Pointer & cursor) override {
-        if (this->graphic_api) {
-            this->graphic_api->set_pointer(cursor);
+        if (this->capture_drawable) {
+            this->gd->get_graphic_api().set_pointer(cursor);
         }
     }
 
     void set_palette(const BGRPalette & palette) override {
-        if (this->graphic_api) {
-            this->graphic_api->set_palette(palette);
+        if (this->capture_drawable) {
+            this->gd->get_graphic_api().set_palette(palette);
         }
     }
 
     void set_pointer_display() {
-        if (this->gd) {
+        if (this->capture_drawable) {
             this->gd->rdp_drawable().show_mouse_cursor(false);
         }
     }
