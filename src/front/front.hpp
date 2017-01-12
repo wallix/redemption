@@ -1012,6 +1012,8 @@ public:
                     static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()));
         bool ocr_on_title_bar_only = ini.get<cfg::ocr::on_title_bar_only>();
         uint8_t max_unrecog_char_rate = ini.get<cfg::ocr::max_unrecog_char_rate>();
+        std::chrono::microseconds usec_ocr_interval = ini.get<cfg::ocr::interval>();
+
 
         if (ini.get<cfg::debug::capture>()) {
             LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
@@ -1038,7 +1040,7 @@ public:
         this->capture = new Capture(  capture_wrm, wrm_params
                                     , capture_png, png_params
                                     , capture_pattern_checker
-                                    , capture_ocr, ocr_version, ocr_locale, ocr_on_title_bar_only, max_unrecog_char_rate, ocr_params
+                                    , capture_ocr, ocr_version, ocr_locale, ocr_on_title_bar_only, max_unrecog_char_rate, usec_ocr_interval, ocr_params
                                     , capture_flv
                                     , capture_flv_full
                                     , capture_meta
