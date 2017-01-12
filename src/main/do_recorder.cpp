@@ -629,7 +629,7 @@ inline void shutdown(int sig)
     program_requested_to_shutdown = true;
 }
 
-inline void init_signals(void)
+inline void init_signals()
 {
     struct sigaction sa;
 
