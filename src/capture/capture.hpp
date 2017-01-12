@@ -106,7 +106,6 @@
 #include "gdi/graphic_cmd_color.hpp"
 #include "gdi/kbd_input_api.hpp"
 #include "gdi/dump_png24.hpp"
-#include "gdi/kbd_input_api.hpp"
 
 #include "acl/auth_api.hpp"
 
@@ -2408,114 +2407,6 @@ struct MouseTrace
     int     last_y;
 };
 
-struct CaptureApisImpl
-{
-    struct CaptureInternal : gdi::CaptureApi
-    {
-        CaptureInternal(const timeval & now, int cursor_x, int cursor_y)
-        : mouse_info{now, cursor_x, cursor_y}
-        , capture_event{}
-        {}
-
-        void set_drawable(Drawable * drawable) {
-            this->drawable = drawable;
-        }
-
-        MouseTrace const & mouse_trace() const noexcept {
-            return this->mouse_info;
-        }
-
-        wait_obj & get_capture_event() {
-            return this->capture_event;
-        }
-
-        std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
-
-    private:
-        std::chrono::microseconds do_snapshot(
-            timeval const & now,
-            int cursor_x, int cursor_y,
-            bool ignore_frame_in_timeval
-        ) override {
-            this->capture_event.reset();
-
-            if (this->drawable) {
-                this->drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
-            }
-
-            this->mouse_info = {now, cursor_x, cursor_y};
-
-            std::chrono::microseconds time = std::chrono::microseconds::max();
-            if (!this->caps.empty()) {
-                for (gdi::CaptureApi & cap : this->caps) {
-                    time = std::min(time, cap.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
-                }
-                this->capture_event.update(time.count());
-            }
-            return time;
-        }
-
-        Drawable * drawable = nullptr;
-        MouseTrace mouse_info;
-        wait_obj capture_event;
-    };
-
-
-    struct KbdInput : gdi::KbdInputApi
-    {
-        bool kbd_input(const timeval & now, uint32_t uchar) override {
-            bool ret = true;
-            for (gdi::KbdInputApi & kbd : this->kbds) {
-                ret &= kbd.kbd_input(now, uchar);
-            }
-            return ret;
-        }
-
-        void enable_kbd_input_mask(bool enable) override {
-            for (gdi::KbdInputApi & kbd : this->kbds) {
-                kbd.enable_kbd_input_mask(enable);
-            }
-        }
-
-        std::vector<std::reference_wrapper<gdi::KbdInputApi>> kbds;
-    };
-
-
-    struct CaptureProbe : gdi::CaptureProbeApi
-    {
-        void possible_active_window_change() override {
-            for (gdi::CaptureProbeApi & cap_prob : this->probes) {
-                cap_prob.possible_active_window_change();
-            }
-        }
-
-        void session_update(const timeval& now, array_view_const_char message) override {
-            for (gdi::CaptureProbeApi & cap_prob : this->probes) {
-                cap_prob.session_update(now, message);
-            }
-        }
-
-        std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
-    };
-
-
-    struct ExternalCapture : gdi::ExternalCaptureApi
-    {
-        void external_breakpoint() override {
-            for (gdi::ExternalCaptureApi & obj : this->objs) {
-                obj.external_breakpoint();
-            }
-        }
-
-        void external_time(const timeval& now) override {
-            for (gdi::ExternalCaptureApi & obj : this->objs) {
-                obj.external_time(now);
-            }
-        }
-
-        std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> objs;
-    };
-};
 
 class GraphicCaptureImpl
 {
@@ -4801,10 +4692,61 @@ private:
 
     UpdateProgressData * update_progress_data;
 
-    CaptureApisImpl::CaptureInternal capture_api;
-    CaptureApisImpl::KbdInput kbd_input_api;
-    CaptureApisImpl::CaptureProbe capture_probe_api;
-    CaptureApisImpl::ExternalCapture external_capture_api;
+        struct CaptureInternal : gdi::CaptureApi
+    {
+        CaptureInternal(const timeval & now, int cursor_x, int cursor_y)
+        : mouse_info{now, cursor_x, cursor_y}
+        , capture_event{}
+        {}
+
+        void set_drawable(Drawable * drawable) {
+            this->drawable = drawable;
+        }
+
+        MouseTrace const & mouse_trace() const noexcept {
+            return this->mouse_info;
+        }
+
+        wait_obj & get_capture_event() {
+            return this->capture_event;
+        }
+
+        std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
+
+    private:
+        std::chrono::microseconds do_snapshot(
+            timeval const & now,
+            int cursor_x, int cursor_y,
+            bool ignore_frame_in_timeval
+        ) override {
+            this->capture_event.reset();
+
+            if (this->drawable) {
+                this->drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
+            }
+
+            this->mouse_info = {now, cursor_x, cursor_y};
+
+            std::chrono::microseconds time = std::chrono::microseconds::max();
+            if (!this->caps.empty()) {
+                for (gdi::CaptureApi & cap : this->caps) {
+                    time = std::min(time, cap.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
+                }
+                this->capture_event.update(time.count());
+            }
+            return time;
+        }
+
+        Drawable * drawable = nullptr;
+        MouseTrace mouse_info;
+        wait_obj capture_event;
+    } capture_api;
+    
+    std::vector<std::reference_wrapper<gdi::KbdInputApi>> kbds;
+    
+    std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
+    std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> objs;
+    
     Graphic::GraphicApi * graphic_api = nullptr;
 
 public:
@@ -4976,31 +4918,17 @@ public:
             this->pkc.reset(new KbdCaptureImpl(now, authentifier, ini.get<cfg::context::pattern_kill>().c_str(), ini.get<cfg::context::pattern_notify>().c_str(), ini.get<cfg::debug::capture>()));
         }
 
-            std::vector<std::reference_wrapper<gdi::GraphicApi>> * apis_register_graphic_list
-                = this->graphic_api ? &this->graphic_api->gds : nullptr;
-            std::vector<std::reference_wrapper<gdi::CaptureApi>> * apis_register_graphic_snapshot_list
-                = this->graphic_api ? &this->graphic_api->snapshoters : nullptr;
-            std::vector<std::reference_wrapper<gdi::KbdInputApi>> & apis_register_kbd_input_list
-                = this->kbd_input_api.kbds;
-            std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> & apis_register_capture_probe_list
-                = this->capture_probe_api.probes;
-            std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> & apis_register_external_capture_list
-                = this->external_capture_api.objs;
-
-
-
         if (this->gd ) {
-            assert(apis_register_graphic_list);
-            apis_register_graphic_list->push_back(this->gd->drawable);
+            this->graphic_api->gds.push_back(this->gd->drawable);
         }
         if (this->pnc) {
-            apis_register_graphic_list->push_back(this->pnc->graphic_to_file);
+            this->graphic_api->gds.push_back(this->pnc->graphic_to_file);
             this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->pnc));
-            apis_register_external_capture_list.push_back(this->pnc->nc);
-            apis_register_capture_probe_list.push_back(this->pnc->graphic_to_file);
+            this->objs.push_back(this->pnc->nc);
+            this->probes.push_back(this->pnc->graphic_to_file);
 
             if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm)) {
-                this->pnc->kbd_element = {apis_register_kbd_input_list, this->pnc->graphic_to_file};
+                this->pnc->kbd_element = {this->kbds, this->pnc->graphic_to_file};
                 this->pnc->graphic_to_file.impl = this->pnc.get();
             }
         }
@@ -5008,17 +4936,17 @@ public:
         if (this->pscrt) {
             this->pscrt->enable_rt_display = ini.get<cfg::video::rt_display>();
             this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
-            apis_register_graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
+            this->graphic_api->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
         }
 
         if (this->psc) {
             this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
-            apis_register_graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this->psc));
+            this->graphic_api->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
         }
 
         if (this->pkc) {
             if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)) {
-                apis_register_kbd_input_list.push_back(this->pkc->syslog_kbd);
+                this->kbds.push_back(this->pkc->syslog_kbd);
                 this->capture_api.caps.push_back(this->pkc->syslog_kbd);
             }
 
@@ -5026,39 +4954,39 @@ public:
                 (ini.get<cfg::session_log::keyboard_input_masking_level>()
                  != ::KeyboardInputMaskingLevel::fully_masked)
             ) {
-                apis_register_kbd_input_list.push_back(this->pkc->session_log_kbd);
-                apis_register_capture_probe_list.push_back(this->pkc->session_log_kbd);
+                this->kbds.push_back(this->pkc->session_log_kbd);
+                this->probes.push_back(this->pkc->session_log_kbd);
             }
 
             if (this->pkc->pattern_kbd.contains_pattern()) {
-                apis_register_kbd_input_list.push_back(this->pkc->pattern_kbd);
+                this->kbds.push_back(this->pkc->pattern_kbd);
             }
         }
 
         if (this->pvc) {
             this->capture_api.caps.push_back(this->pvc->vc);
-            apis_register_graphic_snapshot_list->push_back(this->pvc->preparing_vc);
+            this->graphic_api->snapshoters.push_back(this->pvc->preparing_vc);
             this->pvc->first_image.first_image_cap_elem = {this->capture_api.caps, this->pvc->first_image};
-            this->pvc->first_image.first_image_gcap_elem = {*apis_register_graphic_snapshot_list, this->pvc->first_image};
+            this->pvc->first_image.first_image_gcap_elem = {this->graphic_api->snapshoters, this->pvc->first_image};
         }
         if (this->pvc_full) {
             this->capture_api.caps.push_back(this->pvc_full->vc);
-            apis_register_graphic_snapshot_list->push_back(this->pvc_full->preparing_vc);
+            this->graphic_api->snapshoters.push_back(this->pvc_full->preparing_vc);
         }
         if (this->pmc) {
             this->capture_api.caps.push_back(this->pmc->meta);
             if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta)) {
-                apis_register_kbd_input_list.push_back(this->pmc->meta);
-                apis_register_capture_probe_list.push_back(this->pmc->meta);
+                this->kbds.push_back(this->pmc->meta);
+                this->probes.push_back(this->pmc->meta);
             }
 
             if (this->pmc->enable_agent) {
-                apis_register_capture_probe_list.push_back(this->pmc->session_log_agent);
+                this->probes.push_back(this->pmc->session_log_agent);
             }
         }
         if (this->ptc) {
             this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->ptc));
-            apis_register_capture_probe_list.push_back(static_cast<gdi::CaptureProbeApi&>(*this->ptc));
+            this->probes.push_back(static_cast<gdi::CaptureProbeApi&>(*this->ptc));
         }
     }
 
@@ -5130,11 +5058,17 @@ public:
     }
 
     bool kbd_input(timeval const & now, uint32_t uchar) override {
-        return this->kbd_input_api.kbd_input(now, uchar);
+        bool ret = true;
+        for (gdi::KbdInputApi & kbd : this->kbds) {
+            ret &= kbd.kbd_input(now, uchar);
+        }
+        return ret;
     }
 
     void enable_kbd_input_mask(bool enable) override {
-        this->kbd_input_api.enable_kbd_input_mask(enable);
+        for (gdi::KbdInputApi & kbd : this->kbds) {
+            kbd.enable_kbd_input_mask(enable);
+        }
     }
 
     gdi::GraphicApi * get_graphic_api() const {
@@ -5184,18 +5118,26 @@ public:
     }
 
     void external_breakpoint() override {
-        this->external_capture_api.external_breakpoint();
+        for (gdi::ExternalCaptureApi & obj : this->objs) {
+            obj.external_breakpoint();
+        }
     }
 
     void external_time(timeval const & now) override {
-        this->external_capture_api.external_time(now);
+        for (gdi::ExternalCaptureApi & obj : this->objs) {
+            obj.external_time(now);
+        }
     }
 
     void session_update(const timeval & now, array_view_const_char message) override {
-        this->capture_probe_api.session_update(now, message);
+        for (gdi::CaptureProbeApi & cap_prob : this->probes) {
+            cap_prob.session_update(now, message);
+        }
     }
 
     void possible_active_window_change() override {
-        this->capture_probe_api.possible_active_window_change();
+        for (gdi::CaptureProbeApi & cap_prob : this->probes) {
+            cap_prob.possible_active_window_change();
+        }
     }
 };
