@@ -87,9 +87,18 @@ public:
         return this->buffer;
     }
 
-    void draw(const Rect clip) override {
-        this->draw(clip, this->get_rect(), this->drawable, this->buffer,
-            this->fg_color, this->bg_color, this->font, this->x_text, this->y_text);
+//    void draw(const Rect clip) override {
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            this->draw(rect_intersect, this->get_rect(), this->drawable, this->buffer,
+                this->fg_color, this->bg_color, this->font, this->x_text, this->y_text);
+
+            this->drawable.end_update();
+        }
     }
 
     static void draw(Rect const clip, Rect const rect, gdi::GraphicApi& drawable,

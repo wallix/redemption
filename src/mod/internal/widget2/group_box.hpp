@@ -55,55 +55,63 @@ public:
         this->clear();
     }
 
-    void draw(Rect const clip) override {
+//    void draw(Rect const clip) override {
+    void rdp_input_invalidate(Rect clip) override {
         Rect rect_intersect = clip.intersect(this->get_rect());
-        WidgetParent::draw_inner_free(rect_intersect, this->bg_color);
 
-        // Box.
-        const uint16_t border           = 6;
-        const uint16_t text_margin      = 6;
-        const uint16_t text_indentation = border + text_margin + 4;
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
 
-        gdi::TextMetrics tm1(this->font, "bp");
-        gdi::TextMetrics tm2(this->font, this->buffer);
+            WidgetParent::draw_inner_free(rect_intersect, this->bg_color);
 
-        auto gcy = this->cy() - tm1.height / 2 - border;
-        auto gcx = this->cx() - border * 2 + 1;
-        auto px = this->x() + border - 1;
+            // Box.
+            const uint16_t border           = 6;
+            const uint16_t text_margin      = 6;
+            const uint16_t text_indentation = border + text_margin + 4;
 
-        auto wlabel = text_margin * 2 + tm2.width;
-        auto y = this->y() + tm1.height / 2;
+            gdi::TextMetrics tm1(this->font, "bp");
+            gdi::TextMetrics tm2(this->font, this->buffer);
 
-        auto const color_ctx = gdi::ColorCtx::depth24();
+            auto gcy = this->cy() - tm1.height / 2 - border;
+            auto gcx = this->cx() - border * 2 + 1;
+            auto px = this->x() + border - 1;
 
-        // Top Line and Label
-        auto rect1 = Rect(px, y, text_indentation - text_margin - border + 2, 1);
-        this->drawable.draw(RDPOpaqueRect(rect1, this->fg_color), clip, color_ctx);
-        gdi::server_draw_text(this->drawable, this->font
-                           , this->x() + text_indentation
-                           , this->y()
-                           , this->buffer
-                           , this->fg_color
-                           , this->bg_color
-                           , color_ctx
-                           , rect_intersect
-                           );
-        auto rect2 = Rect(px + wlabel + 4, y, gcx + 1 - wlabel - 4, 1);
-        this->drawable.draw(RDPOpaqueRect(rect2, this->fg_color), clip, color_ctx);
-        // Bottom line
-        auto rect3 = Rect(px, y + gcy, gcx + 1, 1);
-        this->drawable.draw(RDPOpaqueRect(rect3, this->fg_color), clip, color_ctx);
+            auto wlabel = text_margin * 2 + tm2.width;
+            auto y = this->y() + tm1.height / 2;
 
-        // Left border
-        auto rect4 = Rect(px, y + 1, 1, gcy - 1);
-        this->drawable.draw(RDPOpaqueRect(rect4, this->fg_color), clip, color_ctx);
+            auto const color_ctx = gdi::ColorCtx::depth24();
 
-        // Right Border
-        auto rect5 = Rect(px + gcx, y, 1, gcy);
-        this->drawable.draw(RDPOpaqueRect(rect5, this->fg_color), clip, color_ctx);
+            // Top Line and Label
+            auto rect1 = Rect(px, y, text_indentation - text_margin - border + 2, 1);
+            this->drawable.draw(RDPOpaqueRect(rect1, this->fg_color), rect_intersect, color_ctx);
+            gdi::server_draw_text(this->drawable, this->font
+                               , this->x() + text_indentation
+                               , this->y()
+                               , this->buffer
+                               , this->fg_color
+                               , this->bg_color
+                               , color_ctx
+                               , rect_intersect
+                               );
+            auto rect2 = Rect(px + wlabel + 4, y, gcx + 1 - wlabel - 4, 1);
+            this->drawable.draw(RDPOpaqueRect(rect2, this->fg_color), rect_intersect, color_ctx);
+            // Bottom line
+            auto rect3 = Rect(px, y + gcy, gcx + 1, 1);
+            this->drawable.draw(RDPOpaqueRect(rect3, this->fg_color), rect_intersect, color_ctx);
+
+            // Left border
+            auto rect4 = Rect(px, y + 1, 1, gcy - 1);
+            this->drawable.draw(RDPOpaqueRect(rect4, this->fg_color), rect_intersect, color_ctx);
+
+            // Right Border
+            auto rect5 = Rect(px + gcx, y, 1, gcy);
+            this->drawable.draw(RDPOpaqueRect(rect5, this->fg_color), rect_intersect, color_ctx);
 
 
-        WidgetParent::draw_children(rect_intersect);
+            WidgetParent::draw_children(rect_intersect);
+
+            this->drawable.end_update();
+        }
     }
 
     int get_bg_color() const override {

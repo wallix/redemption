@@ -505,47 +505,52 @@ public:
 
     // RdpInput
 
-    void rdp_input_invalidate(const Rect r) override
+    void rdp_input_invalidate(const Rect clip) override
     {
-        this->begin_update();
+        Rect rect_intersect = clip.intersect(this->get_rect());
 
-        SubRegion region;
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
 
-        region.rects.push_back(r.intersect(this->get_rect()));
-        if (!this->mod_visible_rect.isempty()) {
-            Rect mod_vision_rect(this->vision_rect.x, this->vision_rect.y,
-                this->mod_visible_rect.cx, this->mod_visible_rect.cy);
-            region.subtract_rect(mod_vision_rect);
-        }
-        if (this->hscroll_added) {
-            Rect hscroll_rect = this->hscroll.get_rect();
-            if (!hscroll_rect.isempty()) {
-                region.subtract_rect(hscroll_rect);
+            SubRegion region;
+
+            region.rects.push_back(rect_intersect);
+            if (!this->mod_visible_rect.isempty()) {
+                Rect mod_vision_rect(this->vision_rect.x, this->vision_rect.y,
+                    this->mod_visible_rect.cx, this->mod_visible_rect.cy);
+                region.subtract_rect(mod_vision_rect);
             }
-        }
-        if (this->vscroll_added) {
-            Rect vscroll_rect = this->vscroll.get_rect();
-            if (!vscroll_rect.isempty()) {
-                region.subtract_rect(vscroll_rect);
+            if (this->hscroll_added) {
+                Rect hscroll_rect = this->hscroll.get_rect();
+                if (!hscroll_rect.isempty()) {
+                    region.subtract_rect(hscroll_rect);
+                }
             }
-        }
+            if (this->vscroll_added) {
+                Rect vscroll_rect = this->vscroll.get_rect();
+                if (!vscroll_rect.isempty()) {
+                    region.subtract_rect(vscroll_rect);
+                }
+            }
 
-        ::fill_region(this->drawable, region, 0x000000);
+            ::fill_region(this->drawable, region, 0x000000);
 
-        Rect mod_update_rect = r.intersect(this->vision_rect);
-        mod_update_rect = mod_update_rect.offset(-this->x() + this->mod_visible_rect.x, -this->y() + this->mod_visible_rect.y);
-        if (!mod_update_rect.isempty()) {
-            this->module_holder.rdp_input_invalidate(mod_update_rect);
-        }
 
-        if (this->hscroll_added && r.has_intersection(this->hscroll.get_rect())) {
-            this->hscroll.draw(r);
-        }
-        if (this->vscroll_added && r.has_intersection(this->vscroll.get_rect())) {
-            this->vscroll.draw(r);
-        }
+            Rect mod_update_rect = clip.intersect(this->vision_rect);
+            mod_update_rect = mod_update_rect.offset(-this->x() + this->mod_visible_rect.x, -this->y() + this->mod_visible_rect.y);
+            if (!mod_update_rect.isempty()) {
+                this->module_holder.rdp_input_invalidate(mod_update_rect);
+            }
 
-        this->end_update();
+            if (this->hscroll_added) {
+                this->hscroll.rdp_input_invalidate(rect_intersect);
+            }
+            if (this->vscroll_added) {
+                this->vscroll.rdp_input_invalidate(rect_intersect);
+            }
+
+            this->drawable.end_update();
+        }
     }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
@@ -568,15 +573,6 @@ public:
     }
 
     // Widget2
-
-    void draw(const Rect clip) override {
-        if (this->hscroll_added) {
-            this->hscroll.draw(clip);
-        }
-        if (this->vscroll_added) {
-            this->vscroll.draw(clip);
-        }
-    }
 
 private:
     void begin_update() override

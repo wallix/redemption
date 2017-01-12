@@ -68,10 +68,19 @@ public:
                      this->desc.cy() + 2 * h_border);
     }
 
-    void draw(const Rect clip) override {
-        this->drawable.draw(RDPOpaqueRect(this->get_rect(), desc.bg_color), clip, gdi::ColorCtx::depth24());
-        this->desc.draw(clip);
-        this->draw_border(clip);
+//    void draw(const Rect clip) override {
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            this->drawable.draw(RDPOpaqueRect(this->get_rect(), desc.bg_color), rect_intersect, gdi::ColorCtx::depth24());
+            this->desc.rdp_input_invalidate(rect_intersect);
+            this->draw_border(rect_intersect);
+
+            this->drawable.end_update();
+        }
     }
 
     void set_xy(int16_t x, int16_t y) override {

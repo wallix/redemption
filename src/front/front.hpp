@@ -1254,6 +1254,7 @@ public:
             LOG(LOG_INFO, "Front::begin_update");
         }
         this->order_level++;
+LOG(LOG_INFO, "Front::begin_update level=%d", this->order_level);
     }
 
     void end_update() override {
@@ -1268,6 +1269,7 @@ public:
         if (this->order_level == 0) {
             this->sync();
         }
+LOG(LOG_INFO, "Front::end_update level=%d", this->order_level);
     }
 
     void disconnect()

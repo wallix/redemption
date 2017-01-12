@@ -312,7 +312,13 @@ public:
         }
     }
 
-    void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bmp) override {
+    void draw(const RDPMemBlt & cmd_, Rect clip, const Bitmap & bmp) override {
+        RDPMemBlt cmd(cmd_);
+
+        cmd.rect = cmd_.rect.intersect(Rect(0, 0, this->drawable.width(), this->drawable.height()));
+        cmd.srcx += (cmd.rect.x - cmd_.rect.x);
+        cmd.srcy += (cmd.rect.y - cmd_.rect.y);
+
         const Rect rect = clip.intersect(cmd.rect);
         if (rect.isempty()){
             return ;

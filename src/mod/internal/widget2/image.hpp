@@ -40,21 +40,28 @@ public:
 
     ~WidgetImage() override {}
 
-    void draw(const Rect clip) override {
-        int16_t mx = std::max<int16_t>(clip.x, 0);
-        int16_t my = std::max<int16_t>(clip.y, 0);
-        this->drawable.draw(
-            RDPMemBlt(
-                0,
-                Rect(mx, my, clip.cx, clip.cy),
-                0xCC,
-                mx - this->x(),
-                my - this->y(),
-                0
-            ),
-            this->get_rect(),
-            this->bmp
-        );
+//    void draw(const Rect clip) override {
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            this->drawable.draw(
+                RDPMemBlt(
+                    0,
+                    rect_intersect,
+                    0xCC,
+                    rect_intersect.x - this->x(),
+                    rect_intersect.y - this->y(),
+                    0
+                ),
+                rect_intersect,
+                this->bmp
+            );
+
+            this->drawable.end_update();
+        }
     }
 
     Dimension get_optimal_dim() override {

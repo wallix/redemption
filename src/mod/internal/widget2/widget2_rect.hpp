@@ -40,14 +40,23 @@ public:
         this->focus_flag = IGNORE_FOCUS;
     }
 
-    void draw(const Rect clip) override {
-        this->drawable.draw(
-            RDPOpaqueRect(
-                clip,
-                this->color
-            ),
-            this->get_rect(),
-            gdi::ColorCtx::depth24()
-        );
+//    void draw(const Rect clip) override {
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            this->drawable.draw(
+                RDPOpaqueRect(
+                    rect_intersect,
+                    this->color
+                ),
+                rect_intersect,
+                gdi::ColorCtx::depth24()
+            );
+
+            this->drawable.end_update();
+        }
     }
 };

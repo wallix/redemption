@@ -121,25 +121,36 @@ public:
         return this->lines[num].str;
     }
 
-    void draw(const Rect clip) override {
-        int dy = this->y() + this->y_text;
-        this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->get_rect(), gdi::ColorCtx::depth24());
-        for (line_t * line = this->lines; line->str; ++line) {
-            dy += this->y_text;
-            gdi::server_draw_text(this->drawable
-                                 , this->font
-                                 , this->x_text + this->x()
-                                 , dy
-                                 , line->str
-                                 , this->fg_color
-                                 , this->bg_color
-                                 , gdi::ColorCtx::depth24()
-                                 , clip.intersect(Rect(this->x()
-                                 , dy
-                                 , this->cx()
-                                 , this->cy_text))
-            );
-            dy += this->y_text + this->cy_text;
+//    void draw(const Rect clip) override {
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            int dy = this->y() + this->y_text;
+            this->drawable.draw(RDPOpaqueRect(rect_intersect, this->bg_color), this->get_rect(), gdi::ColorCtx::depth24());
+            for (line_t * line = this->lines; line->str; ++line) {
+                dy += this->y_text;
+                gdi::server_draw_text(this->drawable
+                                     , this->font
+                                     , this->x_text + this->x()
+                                     , dy
+                                     , line->str
+                                     , this->fg_color
+                                     , this->bg_color
+                                     , gdi::ColorCtx::depth24()
+                                     , rect_intersect.intersect(
+                                                Rect(this->x(),
+                                                     dy,
+                                                     this->cx(),
+                                                     this->cy_text
+                                            ))
+                    );
+                dy += this->y_text + this->cy_text;
+            }
+
+            this->drawable.end_update();
         }
     }
 

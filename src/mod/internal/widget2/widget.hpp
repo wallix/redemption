@@ -97,6 +97,7 @@ public:
         return false;
     }
 
+/*
     virtual void draw(Rect clip) = 0;
 
     void refresh(Rect const clip)
@@ -107,6 +108,7 @@ public:
             this->drawable.end_update();
         }
     }
+*/
 
     bool is_root() {
         // The root widget is defined as the parent of itself (screen widget only)
@@ -167,9 +169,16 @@ public:
     }
 
     // - part of screen should be redrawn
+/*
     void rdp_input_invalidate(Rect r) override {
-        this->refresh(r);
+//        this->refresh(r);
+        if (!clip.isempty()){
+            this->drawable.begin_update();
+            this->draw(clip);
+            this->drawable.end_update();
+        }
     }
+*/
 
     void send_notify(NotifyApi::notify_event_t event)
     {
@@ -222,7 +231,7 @@ public:
         if (!this->has_focus){
             this->has_focus = true;
             this->send_notify(NOTIFY_FOCUS_BEGIN);
-            this->refresh(this->rect);
+            this->rdp_input_invalidate(this->rect);
         }
     }
 
@@ -231,7 +240,7 @@ public:
         if (this->has_focus){
             this->has_focus = false;
             this->send_notify(NOTIFY_FOCUS_END);
-            this->refresh(this->rect);
+            this->rdp_input_invalidate(this->rect);
         }
     }
 

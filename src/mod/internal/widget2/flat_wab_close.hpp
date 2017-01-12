@@ -305,13 +305,13 @@ public:
             Rect old = this->timeleft_value.get_rect();
             this->drawable.begin_update();
             this->timeleft_value.set_text(nullptr);
-            this->draw(old);
+            this->rdp_input_invalidate(old);
             this->timeleft_value.set_text(buff);
 
             Dimension dim = this->timeleft_value.get_optimal_dim();
             this->timeleft_value.set_wh(dim);
 
-            this->draw(this->timeleft_value.get_rect());
+            this->rdp_input_invalidate(this->timeleft_value.get_rect());
             this->drawable.end_update();
 
             this->prev_time = tl;

@@ -127,25 +127,37 @@ public:
 
     using Widget2::set_wh;
 
-    void draw(const Rect clip) override {
-        this->editbox->draw(clip);
-        if (this->label && this->use_label_) {
-            if (this->editbox->num_chars == 0) {
-                this->label->draw(clip);
-                this->editbox->draw_current_cursor();
+//    void draw(const Rect clip) override {
+    void rdp_input_invalidate(Rect clip) override {
+LOG(LOG_INFO, "WidgetEditValid::rdp_input_invalidate ...");
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+LOG(LOG_INFO, "WidgetEditValid::rdp_input_invalidate not empty");
+            this->drawable.begin_update();
+
+            this->editbox->rdp_input_invalidate(rect_intersect);
+            if (this->label && this->use_label_) {
+                if (this->editbox->num_chars == 0) {
+                    this->label->rdp_input_invalidate(rect_intersect);
+                    this->editbox->draw_current_cursor();
+                }
             }
+            if (this->has_focus) {
+                this->button.rdp_input_invalidate(rect_intersect);
+                this->draw_border(rect_intersect, this->button.focus_color);
+            }
+            else {
+                this->drawable.draw(
+                    RDPOpaqueRect(rect_intersect.intersect(this->button.get_rect()), this->button.fg_color),
+                    rect_intersect, gdi::ColorCtx::depth24()
+                );
+                this->draw_border(rect_intersect, this->border_none_color);
+            }
+
+            this->drawable.end_update();
         }
-        if (this->has_focus) {
-            this->button.draw(clip);
-            this->draw_border(clip, this->button.focus_color);
-        }
-        else {
-            this->drawable.draw(
-                RDPOpaqueRect(clip.intersect(this->button.get_rect()), this->button.fg_color),
-                clip, gdi::ColorCtx::depth24()
-            );
-            this->draw_border(clip, this->border_none_color);
-        }
+LOG(LOG_INFO, "WidgetEditValid::rdp_input_invalidate done");
     }
 
     void draw_border(const Rect clip, int color)
@@ -191,13 +203,13 @@ public:
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
         if (x > this->editbox->right()) {
             this->button.rdp_input_mouse(device_flags, x, y, keymap);
-            this->refresh(this->button.get_rect());
+            this->rdp_input_invalidate(this->button.get_rect());
         }
         else {
             if ((device_flags == MOUSE_FLAG_BUTTON1)
                 && this->button.state) {
                 this->button.state = 0;
-                this->refresh(this->button.get_rect());
+                this->rdp_input_invalidate(this->button.get_rect());
             }
             this->editbox->rdp_input_mouse(device_flags, x, y, keymap);
         }
@@ -216,7 +228,7 @@ public:
             (widget == this->editbox) &&
             this->label && this->use_label_) {
             if (this->editbox->num_chars == 1) {
-                this->editbox->draw(this->get_rect());
+                this->editbox->rdp_input_invalidate(this->get_rect());
             }
         }
         if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {

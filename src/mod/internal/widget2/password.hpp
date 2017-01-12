@@ -90,31 +90,40 @@ public:
     void insert_text(const char* text) override {
         WidgetEdit::insert_text(text);
         this->set_masked_text();
-        this->refresh(this->get_rect());
+        this->rdp_input_invalidate(this->get_rect());
     }
 
     //const char * show_text() {
     //    return this->masked_text.buffer;
     //}
 
-    void draw(const Rect clip) override {
-        this->masked_text.draw(clip);
-        if (this->has_focus) {
-            this->draw_cursor(this->get_cursor_rect());
-            if (this->draw_border_focus) {
-                this->draw_border(clip, this->focus_color);
+//    void draw(const Rect clip) override {
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            this->masked_text.rdp_input_invalidate(rect_intersect);
+            if (this->has_focus) {
+                this->draw_cursor(this->get_cursor_rect());
+                if (this->draw_border_focus) {
+                    this->draw_border(rect_intersect, this->focus_color);
+                }
+                else {
+                    this->draw_border(rect_intersect, this->label.bg_color);
+                }
             }
             else {
-                this->draw_border(clip, this->label.bg_color);
+                this->draw_border(rect_intersect, this->label.bg_color);
             }
-        }
-        else {
-            this->draw_border(clip, this->label.bg_color);
+
+            this->drawable.end_update();
         }
     }
     void update_draw_cursor(Rect old_cursor) override {
         this->drawable.begin_update();
-        this->masked_text.draw(old_cursor);
+        this->masked_text.rdp_input_invalidate(old_cursor);
         this->draw_cursor(this->get_cursor_rect());
         this->drawable.end_update();
     }
@@ -188,7 +197,7 @@ public:
             case Keymap2::KEVENT_HOME:
                 this->masked_text.shift_text(this->edit_pos * this->w_char);
 
-                this->refresh(this->get_rect());
+                this->rdp_input_invalidate(this->get_rect());
                 break;
             default:
                 break;

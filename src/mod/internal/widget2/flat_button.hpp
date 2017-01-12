@@ -110,11 +110,19 @@ public:
         }
     }
 
-    void draw(const Rect clip) override
-    {
-        this->draw(clip, this->get_rect(), this->drawable, this->logo, this->has_focus,
-            this->buffer, this->fg_color, this->bg_color, this->focus_color,
-            this->label_rect, this->state, this->border_width, this->font, this->x_text, this->y_text);
+//    void draw(const Rect clip) override
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            this->draw(rect_intersect, this->get_rect(), this->drawable, this->logo, this->has_focus,
+                this->buffer, this->fg_color, this->bg_color, this->focus_color,
+                this->label_rect, this->state, this->border_width, this->font, this->x_text, this->y_text);
+
+            this->drawable.end_update();
+        }
     }
 
     static void draw(Rect const clip, Rect const rect, gdi::GraphicApi& drawable,
@@ -187,15 +195,15 @@ public:
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
         if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN) && (this->state & 1) == 0) {
             this->state |= 1;
-            this->drawable.begin_update();
-            this->draw(this->get_rect());
-            this->drawable.end_update();
+//            this->drawable.begin_update();
+            this->rdp_input_invalidate(this->get_rect());
+//            this->drawable.end_update();
         }
         else if (device_flags == MOUSE_FLAG_BUTTON1 && this->state & 1) {
             this->state &= ~1;
-            this->drawable.begin_update();
-            this->draw(this->get_rect());
-            this->drawable.end_update();
+//            this->drawable.begin_update();
+            this->rdp_input_invalidate(this->get_rect());
+//            this->drawable.end_update();
             if (this->get_rect().contains_pt(x, y)) {
                 this->send_notify(this->event);
             }

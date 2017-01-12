@@ -72,7 +72,7 @@ public:
         this->screen.set_widget_focus(&this->rail_module_host,
             Widget2::focus_reason_tabkey);
 
-        this->screen.refresh(this->screen.get_rect());
+        this->screen.rdp_input_invalidate(this->screen.get_rect());
     }
 
     ~RailModuleHostMod() override

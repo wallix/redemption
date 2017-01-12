@@ -642,7 +642,7 @@ public:
 
             this->challenge.set_widget_focus(&this->challenge.password_edit, Widget2::focus_reason_tabkey);
 
-            this->screen.refresh(this->screen.get_rect());
+            this->screen.rdp_input_invalidate(this->screen.get_rect());
 
             this->state = WAIT_PASSWORD;
             break;

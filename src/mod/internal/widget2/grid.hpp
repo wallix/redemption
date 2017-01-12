@@ -127,9 +127,18 @@ public:
     }
 
 
-    void draw(Rect const clip) override {
-        for (uint16_t row_index = 0; row_index < this->nb_rows; row_index++) {
-            this->draw_row(row_index, clip);
+//    void draw(Rect const clip) override {
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            for (uint16_t row_index = 0; row_index < this->nb_rows; row_index++) {
+                this->draw_row(row_index, rect_intersect);
+            }
+
+            this->drawable.end_update();
         }
     }
 
@@ -171,7 +180,7 @@ public:
 
                 Rect destRect = clip.intersect(rectCell);
                 if (!destRect.isempty()) {
-                    w->draw(destRect);
+                    w->rdp_input_invalidate(destRect);
                 }
             }
 
