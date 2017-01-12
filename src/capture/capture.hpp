@@ -4691,58 +4691,11 @@ private:
 
     UpdateProgressData * update_progress_data;
 
+    Drawable * drawable = nullptr;
     MouseTrace mouse_info;
+    wait_obj capture_event;
 
-    struct CaptureInternal : gdi::CaptureApi
-    {
-        CaptureInternal(const timeval & now, int cursor_x, int cursor_y)
-        : mouse_info{now, cursor_x, cursor_y}
-        , capture_event{}
-        {}
-
-        void set_drawable(Drawable * drawable) {
-            this->drawable = drawable;
-        }
-
-        MouseTrace const & mouse_trace() const noexcept {
-            return this->mouse_info;
-        }
-
-        wait_obj & get_capture_event() {
-            return this->capture_event;
-        }
-
-        std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
-
-    private:
-        std::chrono::microseconds do_snapshot(
-            timeval const & now,
-            int cursor_x, int cursor_y,
-            bool ignore_frame_in_timeval
-        ) override {
-            this->capture_event.reset();
-
-            if (this->drawable) {
-                this->drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
-            }
-
-            this->mouse_info = {now, cursor_x, cursor_y};
-
-            std::chrono::microseconds time = std::chrono::microseconds::max();
-            if (!this->caps.empty()) {
-                for (gdi::CaptureApi & cap : this->caps) {
-                    time = std::min(time, cap.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
-                }
-                this->capture_event.update(time.count());
-            }
-            return time;
-        }
-
-        Drawable * drawable = nullptr;
-        MouseTrace mouse_info;
-        wait_obj capture_event;
-    } capture_api;
-    
+    std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
     std::vector<std::reference_wrapper<gdi::KbdInputApi>> kbds;
     std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
     std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> objs;
@@ -4794,8 +4747,9 @@ public:
     , capture_flv_full(capture_flv_full)
     , capture_meta(capture_meta)
     , update_progress_data(update_progress_data)
+    , drawable{nullptr}
     , mouse_info{now, width / 2, height / 2}
-    , capture_api(now, width / 2, height / 2)
+    , capture_event{}
     , capture_drawable(this->capture_wrm 
                     || this->capture_flv
                     || this->capture_ocr 
@@ -4827,7 +4781,7 @@ public:
 
         if (this->capture_drawable) {
             this->gd.reset(new GraphicCaptureImpl(width, height, this->mouse_info));
-            this->capture_api.set_drawable(&this->gd->impl());
+            this->drawable = &this->gd->impl();
 
             if (this->capture_png) {
                 if (png_params.real_time_image_capture) {
@@ -4925,7 +4879,7 @@ public:
         }
         if (this->pnc) {
             this->gd->get_graphic_api().gds.push_back(this->pnc->graphic_to_file);
-            this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->pnc));
+            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->pnc));
             this->objs.push_back(this->pnc->nc);
             this->probes.push_back(this->pnc->graphic_to_file);
 
@@ -4937,19 +4891,19 @@ public:
 
         if (this->capture_drawable && this->pscrt) {
             this->pscrt->enable_rt_display = ini.get<cfg::video::rt_display>();
-            this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
+            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
             this->gd->get_graphic_api().snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
         }
 
         if (this->capture_drawable && this->psc) {
-            this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
+            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
             this->gd->get_graphic_api().snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
         }
 
         if (this->pkc) {
             if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)) {
                 this->kbds.push_back(this->pkc->syslog_kbd);
-                this->capture_api.caps.push_back(this->pkc->syslog_kbd);
+                this->caps.push_back(this->pkc->syslog_kbd);
             }
 
             if (this->pkc->authentifier && ini.get<cfg::session_log::enable_session_log>() &&
@@ -4966,17 +4920,17 @@ public:
         }
 
         if (this->capture_drawable && this->pvc) {
-            this->capture_api.caps.push_back(this->pvc->vc);
+            this->caps.push_back(this->pvc->vc);
             this->gd->get_graphic_api().snapshoters.push_back(this->pvc->preparing_vc);
-            this->pvc->first_image.first_image_cap_elem = {this->capture_api.caps, this->pvc->first_image};
+            this->pvc->first_image.first_image_cap_elem = {this->caps, this->pvc->first_image};
             this->pvc->first_image.first_image_gcap_elem = {this->gd->get_graphic_api().snapshoters, this->pvc->first_image};
         }
         if (this->capture_drawable && this->pvc_full) {
-            this->capture_api.caps.push_back(this->pvc_full->vc);
+            this->caps.push_back(this->pvc_full->vc);
             this->gd->get_graphic_api().snapshoters.push_back(this->pvc_full->preparing_vc);
         }
         if (this->pmc) {
-            this->capture_api.caps.push_back(this->pmc->meta);
+            this->caps.push_back(this->pmc->meta);
             if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta)) {
                 this->kbds.push_back(this->pmc->meta);
                 this->probes.push_back(this->pmc->meta);
@@ -4987,7 +4941,7 @@ public:
             }
         }
         if (this->ptc) {
-            this->capture_api.caps.push_back(static_cast<gdi::CaptureApi&>(*this->ptc));
+            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->ptc));
             this->probes.push_back(static_cast<gdi::CaptureProbeApi&>(*this->ptc));
         }
     }
@@ -5035,7 +4989,7 @@ public:
     }
 
     wait_obj & get_capture_event() {
-        return this->capture_api.get_capture_event();
+        return this->capture_event;
     }
 
     public:
@@ -5089,7 +5043,21 @@ protected:
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
     ) override {
-        return this->capture_api.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        this->capture_event.reset();
+
+        if (this->drawable) {
+            this->drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
+        }
+        this->mouse_info = {now, cursor_x, cursor_y};
+
+        std::chrono::microseconds time = std::chrono::microseconds::max();
+        if (!this->caps.empty()) {
+            for (gdi::CaptureApi & cap : this->caps) {
+                time = std::min(time, cap.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
+            }
+            this->capture_event.update(time.count());
+        }
+        return time;
     }
 
     template<class... Ts>
