@@ -579,7 +579,7 @@ private:
 
 public:
     void rdp_input_invalidate(Rect r) override {
-
+LOG(LOG_INFO, "mod_vnc::rdp_input_invalidate r(%d %d %u %u)", r.x, r.y, r.cx, r.cy);
         if (this->state == WAIT_PASSWORD) {
             this->screen.rdp_input_invalidate(r);
             return;
@@ -2811,6 +2811,11 @@ public:
 
             this->acl->log4(false, "SESSION_DISCONNECTION", extra);
         }
+    }
+
+    bool is_content_laid_out() override {
+LOG(LOG_INFO, "mod_vnc::is_content_laid_out");
+        return false;
     }
 };
 

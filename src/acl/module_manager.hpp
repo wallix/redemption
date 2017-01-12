@@ -586,6 +586,16 @@ private:
 
         void display_osd_message(std::string const & message) override
         { this->mm.internal_mod->display_osd_message(message); }
+
+        Dimension get_dim() const override
+        {
+            return this->mm.internal_mod->get_dim();
+        }
+
+        bool is_content_laid_out() override
+        {
+            return this->mm.internal_mod->is_content_laid_out();
+        }
     };
 
 public:

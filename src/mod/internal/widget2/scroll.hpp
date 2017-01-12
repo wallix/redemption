@@ -1002,6 +1002,8 @@ public:
     // Widget2
 
     void draw(const Rect clip) override {
+Rect r = this->get_rect();
+LOG(LOG_INFO, "WidgetScrollBar::draw clip(%d %d %u %u) r(%d %d %u %u)", clip.x, clip.y, clip.cx, clip.cy, r.x, r.y, r.cx, r.cy);
         if (this->horizontal) {
             WidgetFlatButton::draw(clip, this->left_or_top_button_rect, this->drawable,
                 false, (this->mouse_down && (this->selected_button == BUTTON_LEFT_OR_TOP)),

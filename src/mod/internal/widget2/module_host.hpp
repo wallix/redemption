@@ -142,7 +142,9 @@ private:
         {
             if (this->managed_mod)
             {
+LOG(LOG_INFO, "WidgetModuleHost::rdp_input_invalidate ...");
                 this->managed_mod->rdp_input_invalidate(r);
+LOG(LOG_INFO, "WidgetModuleHost::rdp_input_invalidate done.");
             }
         }
 
@@ -192,6 +194,16 @@ private:
             }
 
             return mod_api::get_dim();
+        }
+
+        bool is_content_laid_out() override
+        {
+            if (this->managed_mod)
+            {
+                return this->managed_mod->is_content_laid_out();
+            }
+
+            return mod_api::is_content_laid_out();
         }
     } module_holder;
 
@@ -396,7 +408,7 @@ public:
 
         this->update_rects();
 
-        this->rdp_input_invalidate(this->get_rect());
+//        this->rdp_input_invalidate(this->get_rect());
     }
 
     void set_cy(uint16_t cy) override {
@@ -404,7 +416,7 @@ public:
 
         this->update_rects();
 
-        this->rdp_input_invalidate(this->get_rect());
+//        this->rdp_input_invalidate(this->get_rect());
     }
 
     void set_x(int16_t x) override {
@@ -412,7 +424,7 @@ public:
 
         this->update_rects();
 
-        this->rdp_input_invalidate(this->get_rect());
+//        this->rdp_input_invalidate(this->get_rect());
     }
 
     void set_y(int16_t y) override {
@@ -420,7 +432,7 @@ public:
 
         this->update_rects();
 
-        this->rdp_input_invalidate(this->get_rect());
+//        this->rdp_input_invalidate(this->get_rect());
     }
 
 public:

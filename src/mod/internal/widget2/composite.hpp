@@ -467,6 +467,7 @@ public:
     }
 
     void rdp_input_invalidate(Rect r) override {
+LOG(LOG_INFO, "WidgetParent::rdp_input_invalidate ...");
         Rect rect_intersect = r.intersect(this->get_rect());
         this->draw_inner_free(rect_intersect, this->get_bg_color());
 
@@ -485,6 +486,7 @@ public:
 
             iter_w_current = this->impl->get_next(iter_w_current);
         }
+LOG(LOG_INFO, "WidgetParent::rdp_input_invalidate done.");
     }
 
     void rdp_input_scancode( long param1, long param2, long param3

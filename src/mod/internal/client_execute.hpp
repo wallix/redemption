@@ -26,6 +26,7 @@
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/pointer.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "mod/internal/internal_mod.hpp"
@@ -1038,6 +1039,7 @@ public:
 
                     this->front_->draw(order);
 
+LOG(LOG_INFO, "ClientExecute: mod_->rdp_input_invalidate (1)");
                     this->mod_->rdp_input_invalidate(
                         Rect(
                                 this->window_rect.x,
@@ -1831,6 +1833,7 @@ protected:
                         this->front_->draw(order);
                     }
 
+LOG(LOG_INFO, "ClientExecute: mod_->rdp_input_invalidate (2)");
                     this->mod_->rdp_input_invalidate(
                         Rect(
                                 this->window_rect.x,
@@ -1887,6 +1890,7 @@ protected:
 
                     this->front_->draw(order);
 
+LOG(LOG_INFO, "ClientExecute: mod_->rdp_input_invalidate (3)");
                     this->mod_->rdp_input_invalidate(
                         Rect(
                                 this->window_rect.x,
@@ -2257,6 +2261,7 @@ protected:
                 this->front_->draw(order);
             }
 
+LOG(LOG_INFO, "ClientExecute: mod_->rdp_input_invalidate (4)");
             this->mod_->rdp_input_invalidate(
                 Rect(
                         this->window_rect.x,
@@ -2710,25 +2715,50 @@ private:
         this->mod_->move_size_widget(widget_rect_new.x, widget_rect_new.y,
             widget_rect_new.cx, widget_rect_new.cy);
 
-        if (!this->window_rect_old.isempty()) {
+        if (this->mod_->is_content_laid_out() ||
+            this->window_rect_old.isempty()) {
+LOG(LOG_INFO, "ClientExecute::update_widget rdp_input_invalidate (1) is_content_laid_out=%s window_rect_old=(%d %d %u %u)",
+    (this->mod_->is_content_laid_out() ? "yes" : "no"),
+    this->window_rect_old.x,
+    this->window_rect_old.y,
+    this->window_rect_old.cx,
+    this->window_rect_old.cy);
+            this->mod_->rdp_input_invalidate(widget_rect_new);
+        }
+        else {
             Rect widget_rect_old = this->window_rect_old.shrink(1);
             widget_rect_old.y  += TITLE_BAR_HEIGHT;
             widget_rect_old.cy -= TITLE_BAR_HEIGHT;
+
+            Rect src_rect = widget_rect_old.intersect(Rect(
+                    widget_rect_old.x,
+                    widget_rect_old.y,
+                    widget_rect_new.cx,
+                    widget_rect_new.cy
+                ));
+            Rect dest_rect(
+                    widget_rect_new.x,
+                    widget_rect_new.y,
+                    src_rect.cx,
+                    src_rect.cy
+                );
+
+            if (!src_rect.isempty()) {
+                RDPScrBlt cmd(dest_rect, 0xCC, src_rect.x, src_rect.y);
+
+                this->front_->draw(cmd, widget_rect_new);
+            }
 
             SubRegion region;
 
             region.rects.push_back(widget_rect_new);
 
-            Rect widget_rect_intersect = widget_rect_old.intersect(widget_rect_new);
-            if (!widget_rect_intersect.isempty()) {
-                region.subtract_rect(widget_rect_intersect);
-            }
+            region.subtract_rect(dest_rect);
 
             for (const Rect & rect : region.rects) {
+LOG(LOG_INFO, "ClientExecute::update_widget rdp_input_invalidate (2)");
                 this->mod_->rdp_input_invalidate(rect);
             }
-        } else {
-            this->mod_->rdp_input_invalidate(widget_rect_new);
         }
 
         this->window_rect_old = this->window_rect;
