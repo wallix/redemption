@@ -45,7 +45,7 @@
         ...                                                                     \
     )                                                                           \
     LOGCHECK__REDEMPTION__INTERNAL((                                            \
-        LOG_FORMAT_CHECK(format, __VA_ARGS__),                                  \
+        LOG_REDEMPTION_FORMAT_CHECK(format, __VA_ARGS__),                       \
         LOGSYSLOG_REDEMPTION_SESSION_INTERNAL(                                  \
             normal_log,                                                         \
             session_log,                                                        \

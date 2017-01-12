@@ -614,32 +614,7 @@ struct CSCore {
             LOG(LOG_INFO, "cs_core::earlyCapabilityFlags:Unknown early capability flag");
         }
         if (this->length < 210) { return; }
-        const uint8_t (& cdpid)[64] = this->clientDigProductId;
-        LOG(LOG_INFO, "cs_core::clientDigProductId=["
-        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
-        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
-        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
-        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-        cdpid[0x00], cdpid[0x01], cdpid[0x02], cdpid[0x03],
-        cdpid[0x04], cdpid[0x05], cdpid[0x06], cdpid[0x07],
-        cdpid[0x08], cdpid[0x09], cdpid[0x0A], cdpid[0x0B],
-        cdpid[0x0C], cdpid[0x0D], cdpid[0x0E], cdpid[0x0F],
-
-        cdpid[0x10], cdpid[0x11], cdpid[0x12], cdpid[0x13],
-        cdpid[0x14], cdpid[0x15], cdpid[0x16], cdpid[0x17],
-        cdpid[0x18], cdpid[0x19], cdpid[0x1A], cdpid[0x1B],
-        cdpid[0x1C], cdpid[0x1D], cdpid[0x1E], cdpid[0x1F],
-
-        cdpid[0x20], cdpid[0x21], cdpid[0x22], cdpid[0x23],
-        cdpid[0x24], cdpid[0x25], cdpid[0x26], cdpid[0x27],
-        cdpid[0x28], cdpid[0x29], cdpid[0x2A], cdpid[0x2B],
-        cdpid[0x2C], cdpid[0x2D], cdpid[0x2E], cdpid[0x2F],
-
-        cdpid[0x30], cdpid[0x31], cdpid[0x32], cdpid[0x33],
-        cdpid[0x34], cdpid[0x35], cdpid[0x36], cdpid[0x37],
-        cdpid[0x38], cdpid[0x39], cdpid[0x3A], cdpid[0x3B],
-        cdpid[0x3C], cdpid[0x3D], cdpid[0x3E], cdpid[0x3F]
-        );
+        LOG(LOG_INFO, "cs_core::clientDigProductId=[%s", log_array_02x_format(this->clientDigProductId));
         if (this->length < 211) { return; }
         LOG(LOG_INFO, "cs_core::connectionType  = %u", this->connectionType);
         if (this->length < 212) { return; }

@@ -25,8 +25,9 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <stdlib.h>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 // #include <wctype.h>
 
 #include "utils/log.hpp"
