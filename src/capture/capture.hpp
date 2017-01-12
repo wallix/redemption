@@ -4566,23 +4566,6 @@ class Capture final
 , public gdi::CaptureProbeApi
 , public gdi::ExternalCaptureApi
 {
-
-    using Graphic = GraphicCaptureImpl;
-
-    using Image = PngCapture;
-
-    using ImageRT = PngCaptureRT;
-
-    using Native = WrmCaptureImpl;
-
-    using Kbd = KbdCaptureImpl;
-
-    using Video = SequencedVideoCaptureImpl;
-
-    using FullVideo = FullVideoCaptureImpl;
-
-    using Meta = MetaCaptureImpl;
-
     const bool is_replay_mod;
 
     using string_view = array_view_const_char;
@@ -4679,13 +4662,13 @@ public:
 
 private:
     std::unique_ptr<GraphicCaptureImpl> gd;
-    std::unique_ptr<Native> pnc;
-    std::unique_ptr<Image> psc;
-    std::unique_ptr<ImageRT> pscrt;
+    std::unique_ptr<WrmCaptureImpl> pnc;
+    std::unique_ptr<PngCapture> psc;
+    std::unique_ptr<PngCaptureRT> pscrt;
     std::unique_ptr<KbdCaptureImpl> pkc;
-    std::unique_ptr<Video> pvc;
-    std::unique_ptr<FullVideo> pvc_full;
-    std::unique_ptr<Meta> pmc;
+    std::unique_ptr<SequencedVideoCaptureImpl> pvc;
+    std::unique_ptr<FullVideoCaptureImpl> pvc_full;
+    std::unique_ptr<MetaCaptureImpl> pmc;
     std::unique_ptr<TitleCaptureImpl> ptc;
     std::unique_ptr<PatternsChecker> patterns_checker;
 
@@ -4785,14 +4768,14 @@ public:
 
             if (this->capture_png) {
                 if (png_params.real_time_image_capture) {
-                    this->pscrt.reset(new ImageRT(
+                    this->pscrt.reset(new PngCaptureRT(
                         now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,
                         png_params
                     ));
                 }
                 else if (png_params.force_capture_png_if_enable) {
-                    this->psc.reset(new Image(
+                    this->psc.reset(new PngCapture(
                         now, authentifier, this->gd->impl(),
                         record_tmp_path, basename, groupid,
                         png_params));
@@ -4809,7 +4792,7 @@ public:
                         LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
                     }
                 }
-                this->pnc.reset(new Native(
+                this->pnc.reset(new WrmCaptureImpl(
                     now, wrm_params, capture_bpp, ini.get<cfg::globals::trace_type>(),
                     cctx, rnd, record_path, hash_path, basename,
                     groupid, authentifier, this->gd->rdp_drawable(), ini
@@ -4817,7 +4800,7 @@ public:
             }
 
             if (this->capture_ocr) {
-                this->pmc.reset(new Meta(
+                this->pmc.reset(new MetaCaptureImpl(
                     now, record_tmp_path, basename,
                     authentifier && ini.get<cfg::session_log::enable_session_log>()
                 ));
@@ -4829,7 +4812,7 @@ public:
                     this->notifier_next_video.session_meta = &this->pmc->get_session_meta();
                     notifier = this->notifier_next_video;
                 }
-                this->pvc.reset(new Video(
+                this->pvc.reset(new SequencedVideoCaptureImpl(
                     now, record_path, basename, groupid, no_timestamp, png_params.zoom, this->gd->impl(),
                     flv_params,
                     ini.get<cfg::video::flv_break_interval>(), notifier
@@ -4837,7 +4820,7 @@ public:
             }
 
             if (this->capture_flv_full) {
-                this->pvc_full.reset(new FullVideo(
+                this->pvc_full.reset(new FullVideoCaptureImpl(
                     now, record_path, basename, groupid, no_timestamp, this->gd->impl(),
                     flv_params));
             }
