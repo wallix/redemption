@@ -4643,8 +4643,6 @@ private:
         } graphic_api;
 
     public:
-        using GraphicApi = Graphic;
-
         GraphicCaptureImpl(MouseTrace const & mouse) : graphic_api(mouse)
         {
         }
