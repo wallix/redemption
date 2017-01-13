@@ -2408,13 +2408,11 @@ struct MouseTrace
 };
 
 
-
-
-
 class PngCapture : public gdi::CaptureApi
 {
 public:
     OutFilenameSequenceTransport trans;
+    Drawable & drawable;
     timeval start_capture;
     std::chrono::microseconds frame_interval;
 
@@ -2422,7 +2420,6 @@ public:
     unsigned scaled_width;
     unsigned scaled_height;
 
-    Drawable & drawable;
     std::unique_ptr<uint8_t[]> scaled_buffer;
 
     PngCapture(
@@ -2430,15 +2427,48 @@ public:
         const char * record_tmp_path, const char * basename, int groupid,
         const PngParams & png_params)
     : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_tmp_path, basename, ".png", groupid, authentifier)
+    , drawable(drawable)
     , start_capture(now)
     , frame_interval(png_params.png_interval)
     , zoom_factor(png_params.zoom)
-    , scaled_width(drawable.width())
-    , scaled_height(drawable.height())
-    , drawable(drawable)
-    {}
+    , scaled_width{(((this->drawable.width() * this->zoom_factor) / 100)+3) & 0xFFC}
+    , scaled_height{((this->drawable.height() * this->zoom_factor) / 100)}
+    {
+        if (this->zoom_factor != 100) {
+            this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
+        }
+    }
 
-private:
+    void dump(void)
+    {
+        if (this->zoom_factor == 100) {
+            ::transport_dump_png24(
+                this->trans, this->drawable.data(),
+                this->drawable.width(), this->drawable.height(),
+                this->drawable.rowsize(), true);
+        }
+        else {
+            scale_data(
+                this->scaled_buffer.get(), this->drawable.data(),
+                this->scaled_width, this->drawable.width(),
+                this->scaled_height, this->drawable.height(),
+                this->drawable.rowsize());
+            ::transport_dump_png24(
+                this->trans, this->scaled_buffer.get(),
+                this->scaled_width, this->scaled_height,
+                this->scaled_width * 3, false);
+        }
+    }
+
+     virtual void clear_old() {}
+
+     void clear_png_interval(uint32_t num_start, uint32_t num_end){
+        for(uint32_t num = num_start ; num < num_end ; num++) {
+            // unlink may fail, for instance if file does not exist, just don't care
+            ::unlink(this->trans.seqgen()->get(num));
+        }
+     }
+    
     std::chrono::microseconds do_snapshot(
         timeval const & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
@@ -2448,37 +2478,17 @@ private:
         uint64_t const duration = difftimeval(now, this->start_capture);
         uint64_t const interval = this->frame_interval.count();
         if (duration >= interval) {
-            if (this->drawable.logical_frame_ended
-                // Force snapshot if diff_time_val >= 1.5 x frame_interval.
-                || (duration >= interval * 3 / 2)) {
+             // Snapshot at end of Frame or force snapshot if diff_time_val >= 1.5 x frame_interval.
+            if (this->drawable.logical_frame_ended || (duration >= interval * 3 / 2)) {
                 this->drawable.trace_mouse();
                 tm ptm;
                 localtime_r(&now.tv_sec, &ptm);
                 this->drawable.trace_timestamp(ptm);
-                if (this->zoom_factor == 100) {
-                    // TODO we should have a variant of ::transport_dump_png24
-                    // taking a Drawable as input
-                    ::transport_dump_png24(
-                        this->trans, this->drawable.data(),
-                        this->drawable.width(), this->drawable.height(),
-                        this->drawable.rowsize(), true);
-                }
-                else {
-                    // TODO all the zoom thing could be hidden behind a
-                    // special type of Drawable
-                    scale_data(
-                        this->scaled_buffer.get(), this->drawable.data(),
-                        this->scaled_width, this->drawable.width(),
-                        this->scaled_height, this->drawable.height(),
-                        this->drawable.rowsize());
-                    ::transport_dump_png24(
-                        this->trans, this->scaled_buffer.get(),
-                        this->scaled_width, this->scaled_height,
-                        this->scaled_width * 3, false);
-                }
-                // TODO: showing hiding mouse/timestamp should be hidden
-                // behind a special type of Drawable
+
+                this->dump();
+                this->clear_old();
                 this->trans.next();
+
                 this->drawable.clear_timestamp();
                 this->start_capture = now;
                 this->drawable.clear_mouse();
@@ -2494,23 +2504,11 @@ private:
     }
 };
 
-class PngCaptureRT : public gdi::CaptureApi
+class PngCaptureRT : public PngCapture
 {
 public:
-    OutFilenameSequenceTransport trans;
-    uint32_t num_start = 0;
+    uint32_t num_start;
     unsigned png_limit;
-
-    unsigned zoom_factor;
-    unsigned scaled_width;
-    unsigned scaled_height;
-
-    Drawable & drawable;
-
-    std::unique_ptr<uint8_t[]> scaled_buffer;
-
-    timeval start_capture;
-    std::chrono::microseconds frame_interval;
 
     bool enable_rt_display = false;
 
@@ -2518,112 +2516,33 @@ public:
         const timeval & now, auth_api * authentifier, Drawable & drawable,
         const char * record_tmp_path, const char * basename, int groupid,
         const PngParams & png_params)
-    : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-        record_tmp_path, basename, ".png", groupid, authentifier)
+    : PngCapture(now, authentifier, drawable, record_tmp_path, basename, groupid, png_params)
+    , num_start(this->trans.get_seqno())
     , png_limit(png_params.png_limit)
-    , zoom_factor(std::min(png_params.zoom, 100u))
-    , scaled_width(drawable.width())
-    , scaled_height(drawable.height())
-    , drawable(drawable)
-    , start_capture(now)
-    , frame_interval(png_params.png_interval)
     {
-        const unsigned zoom_width = (this->drawable.width() * this->zoom_factor) / 100;
-        const unsigned zoom_height = (this->drawable.height() * this->zoom_factor) / 100;
-        this->scaled_width = (zoom_width + 3) & 0xFFC;
-        this->scaled_height = zoom_height;
-        if (this->zoom_factor != 100) {
-            this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
-        }
     }
 
-    ~PngCaptureRT()
-    {
-        for(uint32_t until_num = this->trans.get_seqno() + 1; this->num_start < until_num; ++this->num_start){
-            // unlink may fail, for instance if file does not exist, just don't care
-            ::unlink(this->trans.seqgen()->get(this->num_start));
-        }
+    ~PngCaptureRT(){
+        this->clear_png_interval(this->num_start, this->trans.get_seqno() + 1);
     }
 
     void update_config(bool enable_rt_display) {
-        auto const old_enable_rt_display = this->enable_rt_display;
-        this->enable_rt_display = enable_rt_display;
-
-        if (old_enable_rt_display == this->enable_rt_display) {
-            return ;
-        }
-
-        // TODO: add back verbose state of png capture later
-        LOG(LOG_INFO, "Enable real time: %d", int(this->enable_rt_display));
-
-        if (!this->enable_rt_display) {
-            for(uint32_t until_num = this->trans.get_seqno() + 1 ;
-                this->num_start < until_num ;
-                ++this->num_start)
-            {
-                // unlink may fail, for instance if file does not exist, just don't care
-                ::unlink(this->trans.seqgen()->get(this->num_start));
+        if (enable_rt_display != this->enable_rt_display){
+            this->enable_rt_display = enable_rt_display;
+            // clear files if we go from RT to non-RT
+            if (!this->enable_rt_display) {
+                this->clear_png_interval(this->num_start, this->trans.get_seqno() + 1);
             }
         }
     }
 
-private:
-    std::chrono::microseconds do_snapshot(
-        timeval const & now, int x, int y, bool ignore_frame_in_timeval
-    ) override {
-        if (this->enable_rt_display) {
-            (void)x;
-            (void)y;
-            (void)ignore_frame_in_timeval;
-            uint64_t const duration = difftimeval(now, this->start_capture);
-            uint64_t const interval = this->frame_interval.count();
-            if (duration >= interval) {
-                if (this->drawable.logical_frame_ended
-                    // Force snapshot if diff_time_val >= 1.5 x frame_interval.
-                    || (duration >= interval * 3 / 2)) {
-                    this->drawable.trace_mouse();
-                    tm ptm;
-                    localtime_r(&now.tv_sec, &ptm);
-                    this->drawable.trace_timestamp(ptm);
-                    if (this->zoom_factor == 100) {
-                        ::transport_dump_png24(
-                            this->trans, this->drawable.data(),
-                            this->drawable.width(), this->drawable.height(),
-                            this->drawable.rowsize(), true);
-                    }
-                    else {
-                        scale_data(
-                            this->scaled_buffer.get(), this->drawable.data(),
-                            this->scaled_width, this->drawable.width(),
-                            this->scaled_height, this->drawable.height(),
-                            this->drawable.rowsize());
-                        ::transport_dump_png24(
-                            this->trans, this->scaled_buffer.get(),
-                            this->scaled_width, this->scaled_height,
-                            this->scaled_width * 3, false);
-                    }
-                    if (this->png_limit && this->trans.get_seqno() >= this->png_limit) {
-                        // unlink may fail, for instance if file does not exist, just don't care
-                        ::unlink(this->trans.seqgen()->get(this->trans.get_seqno() - this->png_limit));
-                    }
-                    this->trans.next();
-                    this->drawable.clear_timestamp();
-                    this->start_capture = now;
-                    this->drawable.clear_mouse();
-
-                    return std::chrono::microseconds(interval ? interval - duration % interval : 0u);
-                }
-                else {
-                    // Wait 0.3 x frame_interval.
-                    return this->frame_interval / 3;
-                }
-            }
-            return std::chrono::microseconds(interval - duration);
-        }
-        return this->frame_interval;
+     virtual void clear_old() {
+        uint32_t num_start = this->trans.get_seqno() >= this->png_limit 
+                           ? this->trans.get_seqno() - this->png_limit 
+                           : 0;
+        this->clear_png_interval(num_start, num_start + 1); 
     }
 };
-
 
 class VideoCapture : public gdi::CaptureApi
 {
