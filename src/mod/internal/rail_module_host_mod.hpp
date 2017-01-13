@@ -159,23 +159,12 @@ public:
     void move_size_widget(int16_t left, int16_t top, uint16_t width,
                           uint16_t height) override
     {
-LOG(LOG_INFO, "RailModuleHostMod::move_size_widget ...");
         this->rail_module_host.move_size_widget(left, top, width, height);
-
-LOG(LOG_INFO, "RailModuleHostMod::move_size_widget ---");
-
-//        this->rdp_input_invalidate(Rect(left, top, width, height));
-
-LOG(LOG_INFO, "RailModuleHostMod::move_size_widget done.");
     }
 
     bool is_content_laid_out() override
     {
-LOG(LOG_INFO, "RailModuleHostMod::is_content_laid_out ...");
-
         mod_api& mod = this->rail_module_host.get_managed_mod();
-
-LOG(LOG_INFO, "RailModuleHostMod::is_content_laid_out got");
 
         return mod.is_content_laid_out();
     }

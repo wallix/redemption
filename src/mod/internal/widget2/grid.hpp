@@ -126,8 +126,6 @@ public:
         this->selection_y = static_cast<uint16_t>(-1);
     }
 
-
-//    void draw(Rect const clip) override {
     void rdp_input_invalidate(Rect clip) override {
         Rect rect_intersect = clip.intersect(this->get_rect());
 
@@ -495,6 +493,4 @@ void apply_format(WidgetGrid & grid, uint16_t * row_height, uint16_t * column_wi
     for (uint16_t column_index = 0; column_index < grid.nb_columns; column_index++) {
         grid.set_column_width(column_index, column_width[column_index]);
     }
-
 }
-

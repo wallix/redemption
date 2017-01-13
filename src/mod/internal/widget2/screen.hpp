@@ -173,4 +173,3 @@ public:
         WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 };
-

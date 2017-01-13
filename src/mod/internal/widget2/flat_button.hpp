@@ -110,7 +110,6 @@ public:
         }
     }
 
-//    void draw(const Rect clip) override
     void rdp_input_invalidate(Rect clip) override {
         Rect rect_intersect = clip.intersect(this->get_rect());
 
@@ -195,15 +194,11 @@ public:
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
         if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN) && (this->state & 1) == 0) {
             this->state |= 1;
-//            this->drawable.begin_update();
             this->rdp_input_invalidate(this->get_rect());
-//            this->drawable.end_update();
         }
         else if (device_flags == MOUSE_FLAG_BUTTON1 && this->state & 1) {
             this->state &= ~1;
-//            this->drawable.begin_update();
             this->rdp_input_invalidate(this->get_rect());
-//            this->drawable.end_update();
             if (this->get_rect().contains_pt(x, y)) {
                 this->send_notify(this->event);
             }

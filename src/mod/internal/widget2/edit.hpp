@@ -189,13 +189,10 @@ public:
 
     using Widget2::set_wh;
 
-//    void draw(const Rect clip) override {
     void rdp_input_invalidate(Rect clip) override {
-LOG(LOG_INFO, "WidgetEdit::rdp_input_invalidate ...");
         Rect rect_intersect = clip.intersect(this->get_rect());
 
         if (!rect_intersect.isempty()) {
-LOG(LOG_INFO, "WidgetEdit::rdp_input_invalidate not empty.");
             this->drawable.begin_update();
 
             this->label.rdp_input_invalidate(rect_intersect);
@@ -214,7 +211,6 @@ LOG(LOG_INFO, "WidgetEdit::rdp_input_invalidate not empty.");
 
             this->drawable.end_update();
         }
-LOG(LOG_INFO, "WidgetEdit::rdp_input_invalidate done.");
     }
 
     void draw_border(Rect clip, int color)
@@ -616,4 +612,3 @@ LOG(LOG_INFO, "WidgetEdit::rdp_input_invalidate done.");
         }
     }
 };
-

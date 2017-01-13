@@ -1251,15 +1251,14 @@ private:
 public:
     void begin_update() override {
         if (this->verbose & Verbose::graphic) {
-            LOG(LOG_INFO, "Front::begin_update");
+            LOG(LOG_INFO, "Front::begin_update level=%d", this->order_level);
         }
         this->order_level++;
-LOG(LOG_INFO, "Front::begin_update level=%d", this->order_level);
     }
 
     void end_update() override {
         if (this->verbose & Verbose::graphic) {
-            LOG(LOG_INFO, "Front::end_update");
+            LOG(LOG_INFO, "Front::end_update level=%d", this->order_level);
         }
         this->order_level--;
         if (!this->up_and_running) {
@@ -1269,7 +1268,6 @@ LOG(LOG_INFO, "Front::begin_update level=%d", this->order_level);
         if (this->order_level == 0) {
             this->sync();
         }
-LOG(LOG_INFO, "Front::end_update level=%d", this->order_level);
     }
 
     void disconnect()

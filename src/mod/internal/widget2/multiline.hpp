@@ -121,7 +121,6 @@ public:
         return this->lines[num].str;
     }
 
-//    void draw(const Rect clip) override {
     void rdp_input_invalidate(Rect clip) override {
         Rect rect_intersect = clip.intersect(this->get_rect());
 
@@ -171,4 +170,3 @@ public:
             (max_line_height + this->y_text * 2) * (line - &this->lines[0]));
     }
 };
-

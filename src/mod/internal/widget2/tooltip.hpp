@@ -32,6 +32,7 @@ class WidgetTooltip : public Widget2
     uint h_border;
     WidgetMultiLine desc;
     int border_color;
+
 public:
     WidgetTooltip(gdi::GraphicApi & drawable, Widget2 & parent,
                   NotifyApi* notifier, const char * text,
@@ -68,7 +69,6 @@ public:
                      this->desc.cy() + 2 * h_border);
     }
 
-//    void draw(const Rect clip) override {
     void rdp_input_invalidate(Rect clip) override {
         Rect rect_intersect = clip.intersect(this->get_rect());
 

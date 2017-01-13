@@ -87,7 +87,6 @@ public:
         return this->buffer;
     }
 
-//    void draw(const Rect clip) override {
     void rdp_input_invalidate(Rect clip) override {
         Rect rect_intersect = clip.intersect(this->get_rect());
 
@@ -175,4 +174,3 @@ public:
         this->set_wh(dim);
     }
 };
-

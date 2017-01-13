@@ -97,19 +97,6 @@ public:
         return false;
     }
 
-/*
-    virtual void draw(Rect clip) = 0;
-
-    void refresh(Rect const clip)
-    {
-        if (!clip.isempty()){
-            this->drawable.begin_update();
-            this->draw(clip);
-            this->drawable.end_update();
-        }
-    }
-*/
-
     bool is_root() {
         // The root widget is defined as the parent of itself (screen widget only)
         return (&this->parent == this);
@@ -167,18 +154,6 @@ public:
         (void)param1;
         (void)param2;
     }
-
-    // - part of screen should be redrawn
-/*
-    void rdp_input_invalidate(Rect r) override {
-//        this->refresh(r);
-        if (!clip.isempty()){
-            this->drawable.begin_update();
-            this->draw(clip);
-            this->drawable.end_update();
-        }
-    }
-*/
 
     void refresh(Rect clip) override {
         this->rdp_input_invalidate(clip);
@@ -292,4 +267,3 @@ public:
         return this->rect;
     }
 };
-

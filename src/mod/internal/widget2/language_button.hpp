@@ -115,4 +115,3 @@ class LanguageButton : public WidgetFlatButton
         }
     }
 };
-

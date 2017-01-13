@@ -206,4 +206,3 @@ public:
         this->front.end_update();
     }
 };
-

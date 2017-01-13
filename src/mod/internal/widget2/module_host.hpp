@@ -512,6 +512,7 @@ public:
 
 public:
     // NotifyApi
+
     void notify(Widget2* /*widget*/, NotifyApi::notify_event_t event) override {
         Widget2* parentWidget = &this->parent;
         while (&parentWidget->parent != &parentWidget->parent.parent) {

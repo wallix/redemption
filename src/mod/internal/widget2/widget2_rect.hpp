@@ -40,7 +40,6 @@ public:
         this->focus_flag = IGNORE_FOCUS;
     }
 
-//    void draw(const Rect clip) override {
     void rdp_input_invalidate(Rect clip) override {
         Rect rect_intersect = clip.intersect(this->get_rect());
 

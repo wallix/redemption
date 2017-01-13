@@ -101,6 +101,3 @@ struct WidgetLabelGrid : public WidgetGrid {
     }
 
 };
-
-
-

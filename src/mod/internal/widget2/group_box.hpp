@@ -55,7 +55,6 @@ public:
         this->clear();
     }
 
-//    void draw(Rect const clip) override {
     void rdp_input_invalidate(Rect clip) override {
         Rect rect_intersect = clip.intersect(this->get_rect());
 
@@ -138,4 +137,3 @@ public:
         }
     }
 };
-

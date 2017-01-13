@@ -279,4 +279,3 @@ public:
         WidgetParent::rdp_input_mouse(device_flags, x, y, keymap);
     }
 };
-
