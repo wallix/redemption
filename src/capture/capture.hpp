@@ -2408,13 +2408,11 @@ struct MouseTrace
 };
 
 
-
-
-
 class PngCapture : public gdi::CaptureApi
 {
 public:
     OutFilenameSequenceTransport trans;
+    Drawable & drawable;
     timeval start_capture;
     std::chrono::microseconds frame_interval;
 
@@ -2422,7 +2420,6 @@ public:
     unsigned scaled_width;
     unsigned scaled_height;
 
-    Drawable & drawable;
     std::unique_ptr<uint8_t[]> scaled_buffer;
 
     PngCapture(
@@ -2430,15 +2427,48 @@ public:
         const char * record_tmp_path, const char * basename, int groupid,
         const PngParams & png_params)
     : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_tmp_path, basename, ".png", groupid, authentifier)
+    , drawable(drawable)
     , start_capture(now)
     , frame_interval(png_params.png_interval)
     , zoom_factor(png_params.zoom)
-    , scaled_width(drawable.width())
-    , scaled_height(drawable.height())
-    , drawable(drawable)
-    {}
+    , scaled_width{(((this->drawable.width() * this->zoom_factor) / 100)+3) & 0xFFC}
+    , scaled_height{((this->drawable.height() * this->zoom_factor) / 100)}
+    {
+        if (this->zoom_factor != 100) {
+            this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
+        }
+    }
 
-private:
+    void dump(void)
+    {
+        if (this->zoom_factor == 100) {
+            ::transport_dump_png24(
+                this->trans, this->drawable.data(),
+                this->drawable.width(), this->drawable.height(),
+                this->drawable.rowsize(), true);
+        }
+        else {
+            scale_data(
+                this->scaled_buffer.get(), this->drawable.data(),
+                this->scaled_width, this->drawable.width(),
+                this->scaled_height, this->drawable.height(),
+                this->drawable.rowsize());
+            ::transport_dump_png24(
+                this->trans, this->scaled_buffer.get(),
+                this->scaled_width, this->scaled_height,
+                this->scaled_width * 3, false);
+        }
+    }
+
+     virtual void clear_old() {}
+
+     void clear_png_interval(uint32_t num_start, uint32_t num_end){
+        for(uint32_t num = num_start ; num < num_end ; num++) {
+            // unlink may fail, for instance if file does not exist, just don't care
+            ::unlink(this->trans.seqgen()->get(num));
+        }
+     }
+    
     std::chrono::microseconds do_snapshot(
         timeval const & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
@@ -2448,37 +2478,17 @@ private:
         uint64_t const duration = difftimeval(now, this->start_capture);
         uint64_t const interval = this->frame_interval.count();
         if (duration >= interval) {
-            if (this->drawable.logical_frame_ended
-                // Force snapshot if diff_time_val >= 1.5 x frame_interval.
-                || (duration >= interval * 3 / 2)) {
+             // Snapshot at end of Frame or force snapshot if diff_time_val >= 1.5 x frame_interval.
+            if (this->drawable.logical_frame_ended || (duration >= interval * 3 / 2)) {
                 this->drawable.trace_mouse();
                 tm ptm;
                 localtime_r(&now.tv_sec, &ptm);
                 this->drawable.trace_timestamp(ptm);
-                if (this->zoom_factor == 100) {
-                    // TODO we should have a variant of ::transport_dump_png24
-                    // taking a Drawable as input
-                    ::transport_dump_png24(
-                        this->trans, this->drawable.data(),
-                        this->drawable.width(), this->drawable.height(),
-                        this->drawable.rowsize(), true);
-                }
-                else {
-                    // TODO all the zoom thing could be hidden behind a
-                    // special type of Drawable
-                    scale_data(
-                        this->scaled_buffer.get(), this->drawable.data(),
-                        this->scaled_width, this->drawable.width(),
-                        this->scaled_height, this->drawable.height(),
-                        this->drawable.rowsize());
-                    ::transport_dump_png24(
-                        this->trans, this->scaled_buffer.get(),
-                        this->scaled_width, this->scaled_height,
-                        this->scaled_width * 3, false);
-                }
-                // TODO: showing hiding mouse/timestamp should be hidden
-                // behind a special type of Drawable
+
+                this->dump();
+                this->clear_old();
                 this->trans.next();
+
                 this->drawable.clear_timestamp();
                 this->start_capture = now;
                 this->drawable.clear_mouse();
@@ -2494,23 +2504,11 @@ private:
     }
 };
 
-class PngCaptureRT : public gdi::CaptureApi
+class PngCaptureRT : public PngCapture
 {
 public:
-    OutFilenameSequenceTransport trans;
-    uint32_t num_start = 0;
+    uint32_t num_start;
     unsigned png_limit;
-
-    unsigned zoom_factor;
-    unsigned scaled_width;
-    unsigned scaled_height;
-
-    Drawable & drawable;
-
-    std::unique_ptr<uint8_t[]> scaled_buffer;
-
-    timeval start_capture;
-    std::chrono::microseconds frame_interval;
 
     bool enable_rt_display = false;
 
@@ -2518,112 +2516,33 @@ public:
         const timeval & now, auth_api * authentifier, Drawable & drawable,
         const char * record_tmp_path, const char * basename, int groupid,
         const PngParams & png_params)
-    : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-        record_tmp_path, basename, ".png", groupid, authentifier)
+    : PngCapture(now, authentifier, drawable, record_tmp_path, basename, groupid, png_params)
+    , num_start(this->trans.get_seqno())
     , png_limit(png_params.png_limit)
-    , zoom_factor(std::min(png_params.zoom, 100u))
-    , scaled_width(drawable.width())
-    , scaled_height(drawable.height())
-    , drawable(drawable)
-    , start_capture(now)
-    , frame_interval(png_params.png_interval)
     {
-        const unsigned zoom_width = (this->drawable.width() * this->zoom_factor) / 100;
-        const unsigned zoom_height = (this->drawable.height() * this->zoom_factor) / 100;
-        this->scaled_width = (zoom_width + 3) & 0xFFC;
-        this->scaled_height = zoom_height;
-        if (this->zoom_factor != 100) {
-            this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
-        }
     }
 
-    ~PngCaptureRT()
-    {
-        for(uint32_t until_num = this->trans.get_seqno() + 1; this->num_start < until_num; ++this->num_start){
-            // unlink may fail, for instance if file does not exist, just don't care
-            ::unlink(this->trans.seqgen()->get(this->num_start));
-        }
+    ~PngCaptureRT(){
+        this->clear_png_interval(this->num_start, this->trans.get_seqno() + 1);
     }
 
     void update_config(bool enable_rt_display) {
-        auto const old_enable_rt_display = this->enable_rt_display;
-        this->enable_rt_display = enable_rt_display;
-
-        if (old_enable_rt_display == this->enable_rt_display) {
-            return ;
-        }
-
-        // TODO: add back verbose state of png capture later
-        LOG(LOG_INFO, "Enable real time: %d", int(this->enable_rt_display));
-
-        if (!this->enable_rt_display) {
-            for(uint32_t until_num = this->trans.get_seqno() + 1 ;
-                this->num_start < until_num ;
-                ++this->num_start)
-            {
-                // unlink may fail, for instance if file does not exist, just don't care
-                ::unlink(this->trans.seqgen()->get(this->num_start));
+        if (enable_rt_display != this->enable_rt_display){
+            this->enable_rt_display = enable_rt_display;
+            // clear files if we go from RT to non-RT
+            if (!this->enable_rt_display) {
+                this->clear_png_interval(this->num_start, this->trans.get_seqno() + 1);
             }
         }
     }
 
-private:
-    std::chrono::microseconds do_snapshot(
-        timeval const & now, int x, int y, bool ignore_frame_in_timeval
-    ) override {
-        if (this->enable_rt_display) {
-            (void)x;
-            (void)y;
-            (void)ignore_frame_in_timeval;
-            uint64_t const duration = difftimeval(now, this->start_capture);
-            uint64_t const interval = this->frame_interval.count();
-            if (duration >= interval) {
-                if (this->drawable.logical_frame_ended
-                    // Force snapshot if diff_time_val >= 1.5 x frame_interval.
-                    || (duration >= interval * 3 / 2)) {
-                    this->drawable.trace_mouse();
-                    tm ptm;
-                    localtime_r(&now.tv_sec, &ptm);
-                    this->drawable.trace_timestamp(ptm);
-                    if (this->zoom_factor == 100) {
-                        ::transport_dump_png24(
-                            this->trans, this->drawable.data(),
-                            this->drawable.width(), this->drawable.height(),
-                            this->drawable.rowsize(), true);
-                    }
-                    else {
-                        scale_data(
-                            this->scaled_buffer.get(), this->drawable.data(),
-                            this->scaled_width, this->drawable.width(),
-                            this->scaled_height, this->drawable.height(),
-                            this->drawable.rowsize());
-                        ::transport_dump_png24(
-                            this->trans, this->scaled_buffer.get(),
-                            this->scaled_width, this->scaled_height,
-                            this->scaled_width * 3, false);
-                    }
-                    if (this->png_limit && this->trans.get_seqno() >= this->png_limit) {
-                        // unlink may fail, for instance if file does not exist, just don't care
-                        ::unlink(this->trans.seqgen()->get(this->trans.get_seqno() - this->png_limit));
-                    }
-                    this->trans.next();
-                    this->drawable.clear_timestamp();
-                    this->start_capture = now;
-                    this->drawable.clear_mouse();
-
-                    return std::chrono::microseconds(interval ? interval - duration % interval : 0u);
-                }
-                else {
-                    // Wait 0.3 x frame_interval.
-                    return this->frame_interval / 3;
-                }
-            }
-            return std::chrono::microseconds(interval - duration);
-        }
-        return this->frame_interval;
+     virtual void clear_old() {
+        uint32_t num_start = this->trans.get_seqno() >= this->png_limit 
+                           ? this->trans.get_seqno() - this->png_limit 
+                           : 0;
+        this->clear_png_interval(num_start, num_start + 1); 
     }
 };
-
 
 class VideoCapture : public gdi::CaptureApi
 {
@@ -4266,6 +4185,10 @@ public:
         void enable_kbd_input_mask(bool enable) override {
             this->impl->enable_kbd_input_mask(enable);
         }
+        
+        bool kbd_input(const timeval & now, uint32_t uchar) override {
+            return this->GraphicToFile::kbd_input(now, uchar);
+        }
     } graphic_to_file;
 
     class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi
@@ -4335,33 +4258,7 @@ public:
 
     } nc;
 
-//    template<>
-    struct ApiRegisterElement_KBD
-    {
-        using list_type = std::vector<std::reference_wrapper<gdi::KbdInputApi>>;
-
-        ApiRegisterElement_KBD() = default;
-
-        ApiRegisterElement_KBD(list_type & l, gdi::KbdInputApi & x)
-        : l(&l)
-        , i(l.size())
-        {
-            l.push_back(x);
-        }
-
-        ApiRegisterElement_KBD & operator = (ApiRegisterElement_KBD const &) = default;
-        ApiRegisterElement_KBD & operator = (gdi::KbdInputApi & x) { (*this->l)[this->i] = x; return *this; }
-
-        bool operator == (gdi::KbdInputApi const & x) const { return &this->get() == &x; }
-    //    bool operator != (gdi::KbdInputApi const & x) const { return !(this == x); }
-
-        gdi::KbdInputApi & get() { return (*this->l)[this->i]; }
-        gdi::KbdInputApi const & get() const { return (*this->l)[this->i]; }
-
-    private:
-        list_type * l = nullptr;
-        std::size_t i = ~std::size_t{};
-    } kbd_element;
+    bool kbd_input_mask_enabled;
 
 public:
     WrmCaptureImpl(
@@ -4396,14 +4293,16 @@ public:
             ? GraphicToFile::Verbose::bitmap_update    : GraphicToFile::Verbose::none)
     )
     , nc(this->graphic_to_file, now, ini.get<cfg::video::frame_interval>(), ini.get<cfg::video::break_interval>())
+    , kbd_input_mask_enabled{false}
     {}
 
+    // shadow text
+    bool kbd_input(const timeval& now, uint32_t uchar) override {
+        return this->graphic_to_file.kbd_input(now, this->kbd_input_mask_enabled?'*':uchar);
+    }
 
     void enable_kbd_input_mask(bool enable) override {
-        assert(this->kbd_element == *this || this->kbd_element == this->graphic_to_file);
-        this->kbd_element = enable
-            ? static_cast<gdi::KbdInputApi&>(*this)
-            : static_cast<gdi::KbdInputApi&>(this->graphic_to_file);
+        this->kbd_input_mask_enabled = enable;
     }
 
     void send_timestamp_chunk(timeval const & now, bool ignore_time_interval) {
@@ -4421,10 +4320,6 @@ public:
         return this->nc.snapshot(now, x, y, ignore_frame_in_timeval);
     }
 
-    // shadow text
-    bool kbd_input(const timeval& now, uint32_t) override {
-        return this->graphic_to_file.kbd_input(now, '*');
-    }
 };
 
 class Capture final
@@ -4484,11 +4379,11 @@ private:
             if (this->capture.patterns_checker) {
                 this->capture.patterns_checker->operator()(title);
             }
-            if (this->capture.pmc) {
-                this->capture.pmc->get_session_meta().title_changed(now.tv_sec, title);
+            if (this->capture.meta_capture_obj) {
+                this->capture.meta_capture_obj->get_session_meta().title_changed(now.tv_sec, title);
             }
-            if (this->capture.pvc) {
-                this->capture.pvc->next_video(now);
+            if (this->capture.sequenced_video_capture_obj) {
+                this->capture.sequenced_video_capture_obj->next_video(now);
             }
             if (this->capture.update_progress_data) {
                 this->capture.update_progress_data->next_video(now.tv_sec);
@@ -4642,14 +4537,14 @@ private:
         {}
     } * graphic_api;
     
-    std::unique_ptr<WrmCaptureImpl> pnc;
-    std::unique_ptr<PngCapture> psc;
-    std::unique_ptr<PngCaptureRT> pscrt;
-    std::unique_ptr<KbdCaptureImpl> pkc;
-    std::unique_ptr<SequencedVideoCaptureImpl> pvc;
-    std::unique_ptr<FullVideoCaptureImpl> pvc_full;
-    std::unique_ptr<MetaCaptureImpl> pmc;
-    std::unique_ptr<TitleCaptureImpl> ptc;
+    std::unique_ptr<WrmCaptureImpl> wrm_capture_obj;
+    std::unique_ptr<PngCapture> png_capture_obj;
+    std::unique_ptr<PngCaptureRT> png_capture_real_time_obj;
+    std::unique_ptr<KbdCaptureImpl> kbd_capture_obj;
+    std::unique_ptr<SequencedVideoCaptureImpl> sequenced_video_capture_obj;
+    std::unique_ptr<FullVideoCaptureImpl> full_video_capture_obj;
+    std::unique_ptr<MetaCaptureImpl> meta_capture_obj;
+    std::unique_ptr<TitleCaptureImpl> title_capture_obj;
     std::unique_ptr<PatternsChecker> patterns_checker;
 
     UpdateProgressData * update_progress_data;
@@ -4747,14 +4642,14 @@ public:
 
             if (this->capture_png) {
                 if (png_params.real_time_image_capture) {
-                    this->pscrt.reset(new PngCaptureRT(
+                    this->png_capture_real_time_obj.reset(new PngCaptureRT(
                         now, authentifier, this->gd_drawable->impl(),
                         record_tmp_path, basename, groupid,
                         png_params
                     ));
                 }
-                else if (png_params.force_capture_png_if_enable) {
-                    this->psc.reset(new PngCapture(
+                else {
+                    this->png_capture_obj.reset(new PngCapture(
                         now, authentifier, this->gd_drawable->impl(),
                         record_tmp_path, basename, groupid,
                         png_params));
@@ -4771,7 +4666,7 @@ public:
                         LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
                     }
                 }
-                this->pnc.reset(new WrmCaptureImpl(
+                this->wrm_capture_obj.reset(new WrmCaptureImpl(
                     now, wrm_params, capture_bpp, ini.get<cfg::globals::trace_type>(),
                     cctx, rnd, record_path, hash_path, basename,
                     groupid, authentifier, *this->gd_drawable, ini
@@ -4779,7 +4674,7 @@ public:
             }
 
             if (this->capture_ocr) {
-                this->pmc.reset(new MetaCaptureImpl(
+                this->meta_capture_obj.reset(new MetaCaptureImpl(
                     now, record_tmp_path, basename,
                     authentifier && ini.get<cfg::session_log::enable_session_log>()
                 ));
@@ -4787,11 +4682,11 @@ public:
 
             if (this->capture_flv) {
                 std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
-                if (ini.get<cfg::globals::capture_chunk>() && this->pmc) {
-                    this->notifier_next_video.session_meta = &this->pmc->get_session_meta();
+                if (ini.get<cfg::globals::capture_chunk>() && this->meta_capture_obj) {
+                    this->notifier_next_video.session_meta = &this->meta_capture_obj->get_session_meta();
                     notifier = this->notifier_next_video;
                 }
-                this->pvc.reset(new SequencedVideoCaptureImpl(
+                this->sequenced_video_capture_obj.reset(new SequencedVideoCaptureImpl(
                     now, record_path, basename, groupid, no_timestamp, png_params.zoom, this->gd_drawable->impl(),
                     flv_params,
                     ini.get<cfg::video::flv_break_interval>(), notifier
@@ -4799,7 +4694,7 @@ public:
             }
 
             if (this->capture_flv_full) {
-                this->pvc_full.reset(new FullVideoCaptureImpl(
+                this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
                     now, record_path, basename, groupid, no_timestamp, this->gd_drawable->impl(),
                     flv_params));
             }
@@ -4818,8 +4713,8 @@ public:
             }
 
             if (this->capture_ocr) {
-                if (this->patterns_checker || this->pmc || this->pvc) {
-                    this->ptc.reset(new TitleCaptureImpl(
+                if (this->patterns_checker || this->meta_capture_obj || this->sequenced_video_capture_obj) {
+                    this->title_capture_obj.reset(new TitleCaptureImpl(
                         now, authentifier, this->gd_drawable->impl(), ini, 
                         ocr_params,
                         this->notifier_title_changed
@@ -4831,121 +4726,120 @@ public:
             }
         }
 
-        // TODO this->pkc = Kbd::construct(now, authentifier, ini); ?
+        // TODO this->kbd_capture_obj = Kbd::construct(now, authentifier, ini); ?
         if (capture_kbd) {
-            this->pkc.reset(new KbdCaptureImpl(now, authentifier, ini.get<cfg::context::pattern_kill>().c_str(), ini.get<cfg::context::pattern_notify>().c_str(), ini.get<cfg::debug::capture>()));
+            this->kbd_capture_obj.reset(new KbdCaptureImpl(now, authentifier, ini.get<cfg::context::pattern_kill>().c_str(), ini.get<cfg::context::pattern_notify>().c_str(), ini.get<cfg::debug::capture>()));
         }
 
         if (this->capture_drawable) {
             this->gds.push_back(*this->gd_drawable);
         }
-        if (this->pnc) {
-            this->gds.push_back(this->pnc->graphic_to_file);
-            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->pnc));
-            this->objs.push_back(this->pnc->nc);
-            this->probes.push_back(this->pnc->graphic_to_file);
+        if (this->capture_wrm) {
+            this->gds.push_back(this->wrm_capture_obj->graphic_to_file);
+            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->wrm_capture_obj));
+            this->objs.push_back(this->wrm_capture_obj->nc);
+            this->probes.push_back(this->wrm_capture_obj->graphic_to_file);
 
             if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm)) {
-                this->pnc->kbd_element = {this->kbds, this->pnc->graphic_to_file};
-                this->pnc->graphic_to_file.impl = this->pnc.get();
+                this->wrm_capture_obj->graphic_to_file.impl = this->wrm_capture_obj.get();
             }
         }
 
-        if (this->capture_drawable && this->pscrt) {
-            this->pscrt->enable_rt_display = ini.get<cfg::video::rt_display>();
-            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
-            this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
+        if (this->capture_drawable && this->png_capture_real_time_obj) {
+            this->png_capture_real_time_obj->enable_rt_display = ini.get<cfg::video::rt_display>();
+            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_real_time_obj));
+            this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_real_time_obj));
         }
 
-        if (this->capture_drawable && this->psc) {
-            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
-            this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
+        if (this->capture_drawable && this->png_capture_obj) {
+            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_obj));
+            this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_obj));
         }
 
-        if (this->pkc) {
+        if (this->kbd_capture_obj) {
             if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)) {
-                this->kbds.push_back(this->pkc->syslog_kbd);
-                this->caps.push_back(this->pkc->syslog_kbd);
+                this->kbds.push_back(this->kbd_capture_obj->syslog_kbd);
+                this->caps.push_back(this->kbd_capture_obj->syslog_kbd);
             }
 
-            if (this->pkc->authentifier && ini.get<cfg::session_log::enable_session_log>() &&
+            if (this->kbd_capture_obj->authentifier && ini.get<cfg::session_log::enable_session_log>() &&
                 (ini.get<cfg::session_log::keyboard_input_masking_level>()
                  != ::KeyboardInputMaskingLevel::fully_masked)
             ) {
-                this->kbds.push_back(this->pkc->session_log_kbd);
-                this->probes.push_back(this->pkc->session_log_kbd);
+                this->kbds.push_back(this->kbd_capture_obj->session_log_kbd);
+                this->probes.push_back(this->kbd_capture_obj->session_log_kbd);
             }
 
-            if (this->pkc->pattern_kbd.contains_pattern()) {
-                this->kbds.push_back(this->pkc->pattern_kbd);
+            if (this->kbd_capture_obj->pattern_kbd.contains_pattern()) {
+                this->kbds.push_back(this->kbd_capture_obj->pattern_kbd);
             }
         }
 
-        if (this->capture_drawable && this->pvc) {
-            this->caps.push_back(this->pvc->vc);
-            this->snapshoters.push_back(this->pvc->preparing_vc);
-            this->pvc->first_image.first_image_cap_elem = {this->caps, this->pvc->first_image};
-            this->pvc->first_image.first_image_gcap_elem = {this->snapshoters, this->pvc->first_image};
+        if (this->capture_drawable && this->sequenced_video_capture_obj) {
+            this->caps.push_back(this->sequenced_video_capture_obj->vc);
+            this->snapshoters.push_back(this->sequenced_video_capture_obj->preparing_vc);
+            this->sequenced_video_capture_obj->first_image.first_image_cap_elem = {this->caps, this->sequenced_video_capture_obj->first_image};
+            this->sequenced_video_capture_obj->first_image.first_image_gcap_elem = {this->snapshoters, this->sequenced_video_capture_obj->first_image};
         }
-        if (this->capture_drawable && this->pvc_full) {
-            this->caps.push_back(this->pvc_full->vc);
-            this->snapshoters.push_back(this->pvc_full->preparing_vc);
+        if (this->capture_drawable && this->full_video_capture_obj) {
+            this->caps.push_back(this->full_video_capture_obj->vc);
+            this->snapshoters.push_back(this->full_video_capture_obj->preparing_vc);
         }
-        if (this->pmc) {
-            this->caps.push_back(this->pmc->meta);
+        if (this->meta_capture_obj) {
+            this->caps.push_back(this->meta_capture_obj->meta);
             if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta)) {
-                this->kbds.push_back(this->pmc->meta);
-                this->probes.push_back(this->pmc->meta);
+                this->kbds.push_back(this->meta_capture_obj->meta);
+                this->probes.push_back(this->meta_capture_obj->meta);
             }
 
-            if (this->pmc->enable_agent) {
-                this->probes.push_back(this->pmc->session_log_agent);
+            if (this->meta_capture_obj->enable_agent) {
+                this->probes.push_back(this->meta_capture_obj->session_log_agent);
             }
         }
-        if (this->ptc) {
-            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->ptc));
-            this->probes.push_back(static_cast<gdi::CaptureProbeApi&>(*this->ptc));
+        if (this->title_capture_obj) {
+            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->title_capture_obj));
+            this->probes.push_back(static_cast<gdi::CaptureProbeApi&>(*this->title_capture_obj));
         }
     }
 
     ~Capture() {
         if (this->is_replay_mod) {
-            this->psc.reset();
-            if (this->pscrt) { this->pscrt.reset(); }
-            this->pnc.reset();
-            if (this->pvc) {
+            this->png_capture_obj.reset();
+            if (this->png_capture_real_time_obj) { this->png_capture_real_time_obj.reset(); }
+            this->wrm_capture_obj.reset();
+            if (this->sequenced_video_capture_obj) {
                 try {
-                    this->pvc->encoding_video_frame();
+                    this->sequenced_video_capture_obj->encoding_video_frame();
                 }
                 catch (Error const &) {
-                    this->pvc->request_full_cleaning();
-                    if (this->pmc) {
-                        this->pmc->request_full_cleaning();
+                    this->sequenced_video_capture_obj->request_full_cleaning();
+                    if (this->meta_capture_obj) {
+                        this->meta_capture_obj->request_full_cleaning();
                     }
                 }
-                this->pvc.reset();
+                this->sequenced_video_capture_obj.reset();
             }
-            if (this->pvc_full) {
+            if (this->full_video_capture_obj) {
                 try {
-                    this->pvc_full->encoding_video_frame();
+                    this->full_video_capture_obj->encoding_video_frame();
                 }
                 catch (Error const &) {
-                    this->pvc_full->request_full_cleaning();
+                    this->full_video_capture_obj->request_full_cleaning();
                 }
-                this->pvc_full.reset();
+                this->full_video_capture_obj.reset();
             }
         }
         else {
-            this->ptc.reset();
-            this->pkc.reset();
-            this->pvc.reset();
-            this->psc.reset();
-            if (this->pscrt) { this->pscrt.reset(); }
+            this->title_capture_obj.reset();
+            this->kbd_capture_obj.reset();
+            this->sequenced_video_capture_obj.reset();
+            this->png_capture_obj.reset();
+            if (this->png_capture_real_time_obj) { this->png_capture_real_time_obj.reset(); }
 
-            if (this->pnc) {
+            if (this->capture_wrm) {
                 timeval now = tvtime();
-                this->pnc->send_timestamp_chunk(now, false);
-                this->pnc.reset();
+                this->wrm_capture_obj->send_timestamp_chunk(now, false);
+                this->wrm_capture_obj.reset();
             }
         }
     }
@@ -4955,10 +4849,10 @@ public:
     }
 
     public:
-    // TODO: this could be done directly in external pscrt object
+    // TODO: this could be done directly in external png_capture_real_time_obj object
     void update_config(bool enable_rt_display) {
-        if (this->pscrt) {
-            this->pscrt->update_config(enable_rt_display);
+        if (this->png_capture_real_time_obj) {
+            this->png_capture_real_time_obj->update_config(enable_rt_display);
         }
     }
 
