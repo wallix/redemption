@@ -80,7 +80,7 @@ public:
         }
     }
 
-    void rdp_input_invalidate(const Rect r) override {
+    void rdp_input_invalidate(Rect r) override {
         this->screen.rdp_input_invalidate(r);
     }
 
@@ -97,6 +97,10 @@ public:
         (void)device_flags;
         (void)param1;
         (void)param2;
+    }
+
+    void refresh(Rect clip) override {
+        this->screen.refresh(clip);
     }
 
     Dimension get_dim() const override

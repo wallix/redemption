@@ -594,6 +594,10 @@ LOG(LOG_INFO, "mod_vnc::rdp_input_invalidate r(%d %d %u %u)", r.x, r.y, r.cx, r.
         }
     } // rdp_input_invalidate
 
+    void refresh(Rect r) override {
+        this->rdp_input_invalidate(r);
+    }
+
 protected:
     static void fill_encoding_types_buffer(const char * encodings, OutStream & stream, uint16_t & number_of_encodings, uint32_t verbose)
     {

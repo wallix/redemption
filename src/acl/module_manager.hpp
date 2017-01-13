@@ -530,7 +530,7 @@ private:
             }
         }
 
-        void rdp_input_invalidate(const Rect r) override
+        void rdp_input_invalidate(Rect r) override
         {
             if (!this->try_input_invalidate(r)) {
                 this->mm.internal_mod->rdp_input_invalidate(r);
@@ -555,6 +555,11 @@ private:
 
         void rdp_suppress_display_updates() override
         { this->mm.internal_mod->rdp_suppress_display_updates(); }
+
+        void refresh(Rect r) override
+        {
+            this->mm.internal_mod->refresh(r);
+        }
 
         void send_to_mod_channel(
             const char * const front_channel_name, InStream & chunk,
@@ -834,7 +839,8 @@ public:
                     this->front.client_info.height,
                     adjusted_client_execute_rect,
                     std::move(managed_mod),
-                    this->client_execute
+                    this->client_execute,
+                    this->front.client_info.cs_monitor
                 ));
                 LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
             }
@@ -1383,7 +1389,8 @@ public:
                                         this->front.client_info.height,
                                         adjusted_client_execute_rect,
                                         std::move(managed_mod),
-                                        this->client_execute
+                                        this->client_execute,
+                                        this->front.client_info.cs_monitor
                                     ),
                                 &this->client_execute
                             );
@@ -1503,7 +1510,8 @@ public:
                                 this->front.client_info.height,
                                 adjusted_client_execute_rect,
                                 std::move(managed_mod),
-                                this->client_execute
+                                this->client_execute,
+                                this->front.client_info.cs_monitor
                             ));
                         LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
                     }

@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "mod/internal/internal_mod.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget2/notify_api.hpp"
@@ -57,13 +58,15 @@ public:
         RailModuleHostModVariables vars,
         FrontAPI& front, uint16_t width, uint16_t height,
         Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
-        ClientExecute& client_execute)
+        ClientExecute& client_execute,
+        const GCC::UserData::CSMonitor& cs_monitor)
     : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(),
                            client_execute, vars.get<cfg::theme>())
     , rail_module_host(front, widget_rect.x, widget_rect.y,
                        widget_rect.cx, widget_rect.cy,
                        this->screen, this, std::move(managed_mod),
-                       vars.get<cfg::font>(), vars.get<cfg::theme>())
+                       vars.get<cfg::font>(), vars.get<cfg::theme>(),
+                       cs_monitor, width, height)
     , vars(vars)
     , managed_mod_event_handler(*this)
     {

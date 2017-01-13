@@ -53,7 +53,7 @@ public:
         this->screen.clear();
     }
 
-    void rdp_input_invalidate(const Rect /*rect*/) override {
+    void rdp_input_invalidate(Rect /*rect*/) override {
         this->draw_green_carpet = true;
     }
 
@@ -73,6 +73,10 @@ public:
         }
 
         this->interaction();
+    }
+
+    void refresh(Rect clip) override {
+        this->rdp_input_invalidate(clip);
     }
 
 private:

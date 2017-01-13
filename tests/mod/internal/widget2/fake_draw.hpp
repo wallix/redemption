@@ -40,6 +40,8 @@ struct TestDraw : mod_api
     void rdp_input_synchronize(uint32_t, uint16_t, int16_t, int16_t) override {}
     void send_to_front_channel(const char * const, const uint8_t*, size_t, size_t, int) override {}
 
+    void refresh(Rect) override {}
+
     void save_to_png(const char * filename)
     {
         std::FILE * file = std::fopen(filename, "w+");

@@ -89,7 +89,7 @@ struct LocallyIntegrableMod : public InternalMod {
         }
     }
 
-    void rdp_input_invalidate(const Rect r) override {
+    void rdp_input_invalidate(Rect r) override {
         InternalMod::rdp_input_invalidate(r);
 
         this->client_execute.input_invalidate(r);
@@ -175,6 +175,12 @@ struct LocallyIntegrableMod : public InternalMod {
                 throw Error(ERR_WIDGET);    // F4 key pressed
             }
         }
+    }
+
+    void refresh(Rect r) override {
+        InternalMod::refresh(r);
+
+        this->client_execute.input_invalidate(r);
     }
 
     void draw_event(time_t, gdi::GraphicApi &) override {

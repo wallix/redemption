@@ -6033,7 +6033,7 @@ public:
         }
     }
 
-    void rdp_input_invalidate(const Rect r) override {
+    void rdp_input_invalidate(Rect r) override {
         if (this->verbose & RDPVerbose::basic_trace3){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
         }
@@ -6117,6 +6117,10 @@ public:
         if (this->verbose & RDPVerbose::basic_trace){
             LOG(LOG_INFO, "mod_rdp::rdp_suppress_display_updates done");
         }
+    }
+
+    void refresh(Rect r) override {
+        this->rdp_input_invalidate(r);
     }
 
     // [referenced from 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE) ]

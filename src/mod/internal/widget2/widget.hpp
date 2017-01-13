@@ -180,6 +180,10 @@ public:
     }
 */
 
+    void refresh(Rect clip) override {
+        this->rdp_input_invalidate(clip);
+    }
+
     void send_notify(NotifyApi::notify_event_t event)
     {
         if (this->notifier)

@@ -1039,7 +1039,6 @@ public:
 
                     this->front_->draw(order);
 
-LOG(LOG_INFO, "ClientExecute: mod_->rdp_input_invalidate (1)");
                     this->mod_->rdp_input_invalidate(
                         Rect(
                                 this->window_rect.x,
@@ -1833,7 +1832,6 @@ protected:
                         this->front_->draw(order);
                     }
 
-LOG(LOG_INFO, "ClientExecute: mod_->rdp_input_invalidate (2)");
                     this->mod_->rdp_input_invalidate(
                         Rect(
                                 this->window_rect.x,
@@ -1890,7 +1888,6 @@ LOG(LOG_INFO, "ClientExecute: mod_->rdp_input_invalidate (2)");
 
                     this->front_->draw(order);
 
-LOG(LOG_INFO, "ClientExecute: mod_->rdp_input_invalidate (3)");
                     this->mod_->rdp_input_invalidate(
                         Rect(
                                 this->window_rect.x,
@@ -2261,7 +2258,6 @@ LOG(LOG_INFO, "ClientExecute: mod_->rdp_input_invalidate (3)");
                 this->front_->draw(order);
             }
 
-LOG(LOG_INFO, "ClientExecute: mod_->rdp_input_invalidate (4)");
             this->mod_->rdp_input_invalidate(
                 Rect(
                         this->window_rect.x,
@@ -2715,64 +2711,8 @@ private:
         this->mod_->move_size_widget(widget_rect_new.x, widget_rect_new.y,
             widget_rect_new.cx, widget_rect_new.cy);
 
-        if (this->mod_->is_content_laid_out() ||
-            this->window_rect_old.isempty()) {
-LOG(LOG_INFO, "ClientExecute::update_widget rdp_input_invalidate (1) is_content_laid_out=%s window_rect_old=(%d %d %u %u)",
-    (this->mod_->is_content_laid_out() ? "yes" : "no"),
-    this->window_rect_old.x,
-    this->window_rect_old.y,
-    this->window_rect_old.cx,
-    this->window_rect_old.cy);
-            this->mod_->rdp_input_invalidate(widget_rect_new);
-        }
-        else {
-            Rect widget_rect_old = this->window_rect_old.shrink(1);
-            widget_rect_old.y  += TITLE_BAR_HEIGHT;
-            widget_rect_old.cy -= TITLE_BAR_HEIGHT;
-
-            Rect src_rect = widget_rect_old.intersect(Rect(
-                    widget_rect_old.x,
-                    widget_rect_old.y,
-                    widget_rect_new.cx,
-                    widget_rect_new.cy
-                ));
-            Rect dest_rect(
-                    widget_rect_new.x,
-                    widget_rect_new.y,
-                    src_rect.cx,
-                    src_rect.cy
-                );
-
-            if (!src_rect.isempty()) {
-                RDPScrBlt cmd(dest_rect, 0xCC, src_rect.x, src_rect.y);
-
-                this->front_->draw(cmd, widget_rect_new);
-            }
-
-            SubRegion region;
-
-            region.rects.push_back(widget_rect_new);
-
-            region.subtract_rect(dest_rect);
-
-            for (const Rect & rect : region.rects) {
-LOG(LOG_INFO, "ClientExecute::update_widget rdp_input_invalidate (2)");
-                this->mod_->rdp_input_invalidate(rect);
-            }
-        }
+        this->mod_->refresh(this->window_rect);
 
         this->window_rect_old = this->window_rect;
-
-        {
-            SubRegion region;
-
-            region.rects.push_back(Rect(0, 0, this->front_width, this->front_height));
-
-            region.subtract_rect(widget_rect_new);
-
-            for (const Rect & rect : region.rects) {
-                this->mod_->rdp_input_invalidate(rect);
-            }
-        }
     }
 };  // class ClientExecute

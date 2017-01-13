@@ -108,7 +108,7 @@ public:
             this->drawable.draw(RDPOpaqueRect(rect5, this->fg_color), rect_intersect, color_ctx);
 
 
-            WidgetParent::draw_children(rect_intersect);
+            WidgetParent::invalidate_children(rect_intersect);
 
             this->drawable.end_update();
         }

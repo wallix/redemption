@@ -317,15 +317,7 @@ public:
         this->current_focus = nullptr;
     }
 
-/*
-    void draw(Rect const clip) override {
-        Rect rect_intersect = clip.intersect(this->get_rect());
-        this->draw_inner_free(rect_intersect, this->get_bg_color());
-        this->draw_children(rect_intersect);
-    }
-*/
-
-    virtual void draw_children(Rect clip) {
+    virtual void invalidate_children(Rect clip) {
         CompositeContainer::iterator iter_w_current = this->impl->get_first();
         while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
             Widget2 * w = this->impl->get(iter_w_current);
@@ -335,6 +327,22 @@ public:
 
             if (!newr.isempty()) {
                 w->rdp_input_invalidate(newr);
+            }
+
+            iter_w_current = this->impl->get_next(iter_w_current);
+        }
+    }
+
+    virtual void refresh_children(Rect clip) {
+        CompositeContainer::iterator iter_w_current = this->impl->get_first();
+        while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
+            Widget2 * w = this->impl->get(iter_w_current);
+            REDASSERT(w);
+
+            Rect newr = clip.intersect(w->get_rect());
+
+            if (!newr.isempty()) {
+                w->refresh(newr);
             }
 
             iter_w_current = this->impl->get_next(iter_w_current);
@@ -474,36 +482,29 @@ public:
     }
 
     void rdp_input_invalidate(Rect clip) override {
-LOG(LOG_INFO, "WidgetParent::rdp_input_invalidate ...");
         Rect rect_intersect = clip.intersect(this->get_rect());
 
         if (!rect_intersect.isempty()) {
             this->drawable.begin_update();
 
             this->draw_inner_free(rect_intersect, this->get_bg_color());
-            this->draw_children(rect_intersect);
+            this->invalidate_children(rect_intersect);
 
             this->drawable.end_update();
         }
+    }
 
-/*
-        Widget2::rdp_input_invalidate(r);
+    void refresh(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
 
-        CompositeContainer::iterator iter_w_current = this->impl->get_first();
-        while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
-            Widget2 * w = this->impl->get(iter_w_current);
-            REDASSERT(w);
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
 
-            Rect newr = rect_intersect.intersect(w->get_rect());
+            this->draw_inner_free(rect_intersect, this->get_bg_color());
+            this->refresh_children(rect_intersect);
 
-            if (!newr.isempty()) {
-                w->rdp_input_invalidate(newr);
-            }
-
-            iter_w_current = this->impl->get_next(iter_w_current);
+            this->drawable.end_update();
         }
-*/
-LOG(LOG_INFO, "WidgetParent::rdp_input_invalidate done.");
     }
 
     void rdp_input_scancode( long param1, long param2, long param3
@@ -577,11 +578,4 @@ public:
     }
 
     ~WidgetComposite() override {}
-
-/*
-    void draw(Rect const clip) override {
-        Rect rect_intersect = clip.intersect(this->get_rect());
-        this->draw_children(rect_intersect);
-    }
-*/
 };
