@@ -4623,7 +4623,7 @@ private:
     std::unique_ptr<PngCaptureRT> png_capture_real_time_obj;
     std::unique_ptr<KbdCaptureImpl> kbd_capture_obj;
     std::unique_ptr<SequencedVideoCaptureImpl> sequenced_video_capture_obj;
-    std::unique_ptr<FullVideoCaptureImpl> sequenced_video_capture_obj_full;
+    std::unique_ptr<FullVideoCaptureImpl> full_video_capture_obj;
     std::unique_ptr<MetaCaptureImpl> meta_capture_obj;
     std::unique_ptr<TitleCaptureImpl> title_capture_obj;
     std::unique_ptr<PatternsChecker> patterns_checker;
@@ -4775,7 +4775,7 @@ public:
             }
 
             if (this->capture_flv_full) {
-                this->sequenced_video_capture_obj_full.reset(new FullVideoCaptureImpl(
+                this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
                     now, record_path, basename, groupid, no_timestamp, this->gd_drawable->impl(),
                     flv_params));
             }
@@ -4862,9 +4862,9 @@ public:
             this->sequenced_video_capture_obj->first_image.first_image_cap_elem = {this->caps, this->sequenced_video_capture_obj->first_image};
             this->sequenced_video_capture_obj->first_image.first_image_gcap_elem = {this->snapshoters, this->sequenced_video_capture_obj->first_image};
         }
-        if (this->capture_drawable && this->sequenced_video_capture_obj_full) {
-            this->caps.push_back(this->sequenced_video_capture_obj_full->vc);
-            this->snapshoters.push_back(this->sequenced_video_capture_obj_full->preparing_vc);
+        if (this->capture_drawable && this->full_video_capture_obj) {
+            this->caps.push_back(this->full_video_capture_obj->vc);
+            this->snapshoters.push_back(this->full_video_capture_obj->preparing_vc);
         }
         if (this->meta_capture_obj) {
             this->caps.push_back(this->meta_capture_obj->meta);
@@ -4900,14 +4900,14 @@ public:
                 }
                 this->sequenced_video_capture_obj.reset();
             }
-            if (this->sequenced_video_capture_obj_full) {
+            if (this->full_video_capture_obj) {
                 try {
-                    this->sequenced_video_capture_obj_full->encoding_video_frame();
+                    this->full_video_capture_obj->encoding_video_frame();
                 }
                 catch (Error const &) {
-                    this->sequenced_video_capture_obj_full->request_full_cleaning();
+                    this->full_video_capture_obj->request_full_cleaning();
                 }
-                this->sequenced_video_capture_obj_full.reset();
+                this->full_video_capture_obj.reset();
             }
         }
         else {
