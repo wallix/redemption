@@ -48,8 +48,6 @@ public:
 
     RDPDrawable gd;
 
-    gdi::Depth order_depth_;
-
 public:
     using FrontAPI::FrontAPI;
 
@@ -163,14 +161,14 @@ public:
     }
 
 private:
-    void draw_impl(const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
+    void draw_impl(const RDPBitmapData & cmd, const Bitmap & bmp) {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
-            bitmap_data.log(LOG_INFO, "FakeFront");
+            cmd.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->gd.draw(bitmap_data, bmp);
+        this->gd.draw(cmd, bmp);
     }
 
     template<class Cmd, class... Ts>
@@ -197,8 +195,6 @@ private:
 
 public:
     bool can_be_start_capture(auth_api*) override { return false; }
-    bool can_be_pause_capture() override { return false; }
-    bool can_be_resume_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
 
     void set_palette(const BGRPalette &) override {
@@ -293,7 +289,6 @@ public:
     , notimestamp(true)
     , nomouse(true)
     , gd(info.width, info.height)
-    , order_depth_(gdi::Depth::from_bpp(this->mod_bpp))
     {
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
@@ -325,10 +320,6 @@ public:
         // of OpenSSL should call OpenSSL_add_all_algorithms() as well.
 
         //SSL_library_init();
-    }
-
-    gdi::Depth const & order_depth() const override {
-        return this->order_depth_;
     }
 
     void update_pointer_position(uint16_t, uint16_t) override {}

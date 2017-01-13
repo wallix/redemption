@@ -170,7 +170,6 @@ public:
         unsigned int bits = 0;
         int nbits = 0;
         char base64tbl[256];
-        char v;
         size_t nbytes = 0;
 
         memset(base64tbl, -1, sizeof base64tbl);
@@ -184,7 +183,8 @@ public:
         base64tbl[int('_')] = 63;
 
         while (*txt) {
-            if ((v = base64tbl[static_cast<unsigned char>(*txt)]) >= 0) {
+            char const v = base64tbl[static_cast<unsigned char>(*txt)];
+            if (v >= 0) {
                 bits <<= 6;
                 bits += v;
                 nbits += 6;

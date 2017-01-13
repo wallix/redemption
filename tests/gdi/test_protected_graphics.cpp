@@ -138,17 +138,10 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
         struct OSD : gdi::ProtectedGraphics
         {
             OSD(GraphicApi & drawable, Rect const rect)
-                : gdi::ProtectedGraphics(drawable, rect)
-                , order_depth_(gdi::Depth::unspecified())
-                {}
+            : gdi::ProtectedGraphics(drawable, rect)
+            {}
+            
             void refresh_rects(array_view<Rect const>) override {}
-
-            gdi::Depth const & order_depth() const override {
-                return this->order_depth_;
-            }
-
-            gdi::Depth order_depth_;
-
         } osd(drawable, rect);
         osd.draw(RDPOpaqueRect(Rect(100, 100, 200, 200), GREEN), screen_rect, color_cxt);
         now.tv_sec++;

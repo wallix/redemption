@@ -74,30 +74,30 @@ inline Bitmap bitmap_from_file_impl(const char * filename)
 {
     png_byte type1[8];
 
-    local_fd fd_{filename, O_RDONLY};
+    local_fd file{filename, O_RDONLY};
 
-    if (!fd_) {
+    if (!file) {
         LOG(LOG_ERR, "Bitmap: error loading bitmap from file [%s] %s(%u)",
             filename, strerror(errno), errno);
         // TODO see value returned, maybe we should return open error
         return Bitmap{};
     }
 
-    if (not read_all(fd_.get(), type1, 2)) {
+    if (not read_all(file.fd(), type1, 2)) {
         LOG(LOG_ERR, "Bitmap: error bitmap file [%s] read error", filename);
         return Bitmap{};
     }
     if (type1[0] == 'B' && type1[1] == 'M') {
         LOG(LOG_INFO, "Bitmap: image file [%s] is BMP file\n", filename);
-        return bitmap_from_bmp_without_sig(fd_.get(), filename);
+        return bitmap_from_bmp_without_sig(file.fd(), filename);
     }
-    if (not read_all(fd_.get(), type1 + 2, 6)) {
+    if (not read_all(file.fd(), type1 + 2, 6)) {
         LOG(LOG_ERR, "Bitmap: error bitmap file [%s] read error", filename);
         return Bitmap{};
     }
     if (png_sig_cmp(type1, 0, 8) == 0) {
         //LOG(LOG_INFO, "Bitmap: image file [%s] is PNG file\n", filename);
-        return bitmap_from_png_without_sig(fd_.get(), filename);
+        return bitmap_from_png_without_sig(file.fd(), filename);
     }
 
     LOG(LOG_ERR, "Bitmap: error bitmap file [%s] not BMP or PNG file\n", filename);

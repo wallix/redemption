@@ -452,17 +452,12 @@ test-canonical capture/ocr/locale/latin_to_cyrillic.hpp : <library>ocr ;
 
 ## Capture tests
 ## @{
-test-canonical capture/FileToChunk.hpp : <library>png ;
-test-canonical capture/FileToGraphic.hpp : <library>bitmap <library>snappy <library>crypto <library>png ;
-test-canonical capture/GraphicToFile.hpp : <library>bitmap <library>snappy <library>crypto <library>png ;
 test-canonical capture/RDPChunkedDevice.hpp ;
 test-canonical capture/capture.hpp : <library>bitmap <library>png <library>crypto <library>dl <library>z <library>snappy <library>ppocr_test <library>ocr <library>ffmpeg ;
-test-canonical capture/new_kbdcapture.hpp ;
 test-canonical capture/transparentchunk.hpp ;
 test-canonical capture/transparentplayer.hpp ;
 test-canonical capture/transparentrecorder.hpp ;
 test-canonical capture/utils/match_finder.hpp : <covflag>nocover ;
-test-canonical capture/utils/save_state_chunk.hpp ;
 test-canonical capture/wrm_label.hpp ;
 ## @}
 
@@ -1023,7 +1018,7 @@ test-canonical front/front.hpp
 test-canonical keyboard/keymap2.hpp ;
 test-canonical keyboard/keymapSym.hpp ;
 
-test-canonical gdi/graphic_cmd_color_converter.hpp ;
+test-canonical gdi/graphic_cmd_color.hpp ;
 test-canonical gdi/protected_graphics.hpp : <library>bitmap <library>png ;
 
 

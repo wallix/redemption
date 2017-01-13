@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(TestLocalFd)
 
     local_fd fd(unknown_file, O_RDONLY | O_CREAT, 0666);
     BOOST_CHECK(fd.is_open());
-    BOOST_CHECK_GE(fd.get(), 0);
+    BOOST_CHECK_GE(fd.fd(), 0);
 
     unlink(unknown_file.c_str());
 }

@@ -278,9 +278,10 @@ public:
                             && this->front->capture) {
                             pause_record.check(now, *this->front);
                         }
+
                         // new value incomming from acl
                         if (this->ini.check_from_acl()) {
-                            this->front->update_config(this->ini);
+                            this->front->update_config(ini.get<cfg::video::rt_display>());
                             mm.check_module();
                         }
 

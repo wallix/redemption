@@ -664,7 +664,7 @@ public:
             if (!this->stop_record_inactivity &&
                 (now > this->last_record_activity_time + this->stop_record_time)) {
                 this->stop_record_inactivity = true;
-                front.can_be_pause_capture();
+//                front.can_be_pause_capture();
             }
         }
         else {
@@ -677,16 +677,16 @@ public:
             // quantum received when checking for inactivity
             if (this->stop_record_inactivity) {
                 this->stop_record_inactivity = false;
-                if (front.can_be_resume_capture()) {
-                    if (this->ini.get<cfg::globals::bogus_refresh_rect>() &&
-                        this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
-                        (this->front.client_info.cs_monitor.monitorCount > 1)) {
-                        this->mm.mod->rdp_suppress_display_updates();
-                        this->mm.mod->rdp_allow_display_updates(0, 0,
-                            this->front.client_info.width, this->front.client_info.height);
-                    }
-                    this->mm.mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
-                }
+//                if (front.can_be_resume_capture()) {
+//                    if (this->ini.get<cfg::globals::bogus_refresh_rect>() &&
+//                        this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+//                        (this->front.client_info.cs_monitor.monitorCount > 1)) {
+//                        this->mm.mod->rdp_suppress_display_updates();
+//                        this->mm.mod->rdp_allow_display_updates(0, 0,
+//                            this->front.client_info.width, this->front.client_info.height);
+//                    }
+//                    this->mm.mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
+//                }
             }
         }
     }

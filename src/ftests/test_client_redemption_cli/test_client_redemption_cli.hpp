@@ -299,7 +299,6 @@ public:
     , _info(info)
     , _callback(nullptr)
     , _running(false)
-    , order_depth_(gdi::Depth::unspecified())
     {
         SSL_load_error_strings();
         SSL_library_init();
@@ -355,8 +354,6 @@ public:
     }
 
     virtual bool can_be_start_capture(auth_api *) override { return true; }
-    virtual bool can_be_pause_capture() override { return true; }
-    virtual bool can_be_resume_capture() override { return true; }
     virtual bool must_be_stop_capture() override { return true; }
     virtual void begin_update() override {}
     virtual void end_update() override {}
@@ -716,6 +713,7 @@ public:
     virtual void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPOpaqueRect color=" << int(cmd.color);
+            std::cout << " bpp: " << color_ctx.depth().to_bpp();
             std::cout << " clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -739,6 +737,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPLineTo " << std::endl;
+            std::cout << " bpp: " << color_ctx.depth().to_bpp();
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -746,6 +745,7 @@ public:
     virtual void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPatBlt rop=" << int(cmd.rop);
+            std::cout << " bpp: " << color_ctx.depth().to_bpp();
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -754,6 +754,7 @@ public:
         (void)bitmap;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMem3Blt rop=" << int(cmd.rop);
+            std::cout << " bpp: " << color_ctx.depth().to_bpp();
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -785,6 +786,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMultiOpaqueRect " << std::endl;
+            std::cout << " bpp: " << color_ctx.depth().to_bpp();
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -793,6 +795,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMultiPatBlt " << std::endl;
+            std::cout << " bpp: " << color_ctx.depth().to_bpp();
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -810,6 +813,7 @@ public:
         (void)gly_cache;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPGlyphIndex " << std::endl;
+            std::cout << " bpp: " << color_ctx.depth().to_bpp();
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -818,6 +822,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPolygonSC " << std::endl;
+            std::cout << " bpp: " << color_ctx.depth().to_bpp();
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -826,6 +831,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPolygonCB " << std::endl;
+            std::cout << " bpp: " << color_ctx.depth().to_bpp();
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -834,6 +840,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPolyline " << std::endl;
+            std::cout << " bpp: " << color_ctx.depth().to_bpp();
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -842,6 +849,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPEllipseSC " << std::endl;
+            std::cout << " bpp: " << color_ctx.depth().to_bpp();
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -850,6 +858,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPEllipseCB " << std::endl;
+            std::cout << " bpp: " << color_ctx.depth().to_bpp();
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -987,17 +996,7 @@ public:
             this->_callback->rdp_input_scancode(scanCode, 0, flag | KBD_FLAG_UP, this->_timer, &(this->_keymap));
         }
     }
-
-    gdi::Depth const & order_depth() const override {
-        return this->order_depth_;
-    }
-
-    gdi::Depth order_depth_;
-
 };
-
-
-
 
 
 

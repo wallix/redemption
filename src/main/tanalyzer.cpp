@@ -142,8 +142,6 @@ private:
 public:
     // DrawApi
     bool can_be_start_capture(auth_api*) override { REDASSERT(false); return false; }
-    bool can_be_pause_capture() override { REDASSERT(false); return false; }
-    bool can_be_resume_capture() override { REDASSERT(false); return false; }
     bool must_be_stop_capture() override { REDASSERT(false); return false; }
 
     // FrontAPI
@@ -526,7 +524,6 @@ public:
     , multipatblt()
     , multiscrblt()
     , polyline()
-    , order_depth_(gdi::Depth::unspecified())
     {
         InitializeVirtualChannelList();
     }
@@ -578,13 +575,6 @@ public:
         LOG(LOG_INFO, "polyline count=%u",        this->statistic.polyline_count);
         LOG(LOG_INFO, "****************************************");
     }
-
-    gdi::Depth const & order_depth() const override {
-        return this->order_depth_;
-    }
-
-    gdi::Depth order_depth_;
-
 };  // class Analyzer
 
 int main(int argc, char * argv[]) {

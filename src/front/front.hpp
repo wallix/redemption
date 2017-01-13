@@ -208,12 +208,7 @@ private:
               , verbose
             )
             , client_order_caps(client_order_caps)
-            , order_depth_(gdi::Depth::from_bpp(bpp))
             {}
-
-            gdi::Depth const & order_depth() const override {
-                return this->order_depth_;
-            }
 
             using GraphicsUpdatePDU::draw;
 
@@ -242,9 +237,6 @@ private:
             }
 
             OrderCaps & client_order_caps;
-
-            gdi::Depth order_depth_;
-
         } graphics_update_pdu;
 
         Graphics(
@@ -464,6 +456,15 @@ private:
             void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
             void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
 
+            void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
+            void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
+            void draw(const RDP::RAIL::CachedIcon                     & cmd) override { this->draw_impl(cmd); }
+            void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { this->draw_impl(cmd); }
+            void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override { this->draw_impl(cmd); }
+            void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override { this->draw_impl(cmd); }
+            void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override { this->draw_impl(cmd); }
+            void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override { this->draw_impl(cmd); }
+
             void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
             void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
@@ -514,11 +515,6 @@ private:
             GraphicConverter(Graphics::PrivateGraphicsUpdatePDU & graphics)
             : graphics(graphics)
             {}
-
-            gdi::Depth order_depth_ = gdi::Depth::unspecified();
-            gdi::Depth const & order_depth() const override {
-                return this->order_depth_;
-            }
         };
 
         template<class Enc>
@@ -760,7 +756,6 @@ public:
     , authentifier(nullptr)
     , auth_info_sent(false)
     , timeout(now, this->ini.get<cfg::globals::handshake_timeout>().count())
-    , order_depth_(gdi::Depth::unspecified())
     {
         // init TLS
         // --------------------------------------------------------
@@ -838,12 +833,6 @@ public:
         delete this->capture;
     }
 
-    gdi::Depth const & order_depth() const override {
-        return this->order_depth_;
-    }
-
-    gdi::Depth order_depth_;
-
     uint64_t get_total_received() const
     {
         return this->trans.get_total_received();
@@ -863,10 +852,7 @@ public:
         {
             gdi::GraphicApi & gd_orders = this->orders.initialize_drawable(this->client_info.bpp);
 
-            if (this->capture) {
-                this->capture->set_order_bpp(this->mod_bpp);
-            }
-            else {
+            if (!this->capture) {
                 this->set_gd(gd_orders);
             }
         }
@@ -1020,7 +1006,36 @@ public:
           : false
         ;
 
-        OcrParams ocr_params = {};
+        OcrParams ocr_params = {
+                ini.get<cfg::ocr::version>(),
+                ocr::locale::LocaleId(
+                    static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
+                ini.get<cfg::ocr::on_title_bar_only>(),
+                ini.get<cfg::ocr::max_unrecog_char_rate>(),
+                ini.get<cfg::ocr::interval>()
+        };
+
+        if (ini.get<cfg::debug::capture>()) {
+            LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
+                capture_wrm ?"wrm ":"",
+                capture_png ?"png ":"",
+                capture_kbd ? 1 : 0,
+                capture_flv ?"flv ":"",
+                capture_flv_full ?"flv_full ":"",
+                capture_pattern_checker ?"pattern ":"",
+                capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
+                capture_meta?"meta ":""
+            );
+        }
+
+        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
+        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
+
+        if (authentifier) {
+            cctx.set_master_key(ini.get<cfg::crypto::key0>());
+            cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
+        }
 
         this->capture = new Capture(  capture_wrm, wrm_params
                                     , capture_png, png_params
@@ -1036,6 +1051,9 @@ public:
                                     , this->mod_bpp, this->capture_bpp
                                     , record_tmp_path
                                     , record_path
+                                    , groupid
+                                    , hash_path
+                                    , movie_path
                                     , flv_params
                                     , false, authentifier
                                     , ini, this->cctx, this->gen
@@ -1058,36 +1076,6 @@ public:
         return true;
     }
 
-    bool can_be_pause_capture() override
-    {
-        LOG(LOG_INFO, "---<>  Front::pause_capture  <>---");
-        if (this->capture_state != CAPTURE_STATE_STARTED) {
-            return false;
-        }
-
-        timeval now = tvtime();
-        this->capture->pause_capture(now);
-        this->capture_state = CAPTURE_STATE_PAUSED;
-        this->set_gd(this->orders.graphics_update_pdu());
-        return true;
-    }
-
-    bool can_be_resume_capture() override
-    {
-        LOG(LOG_INFO, "---<>  Front::resume_capture <>---");
-        if (this->capture_state != CAPTURE_STATE_PAUSED) {
-            return false;
-        }
-
-        timeval now = tvtime();
-        this->capture->resume_capture(now);
-        this->capture_state = CAPTURE_STATE_STARTED;
-        if (this->capture->get_graphic_api()) {
-            this->set_gd(this->capture->get_graphic_api());
-        }
-        return true;
-    }
-
     bool must_be_stop_capture() override
     {
         if (this->capture) {
@@ -1104,10 +1092,10 @@ public:
         return false;
     }
 
-    void update_config(Inifile & ini) {
+    void update_config(bool enable_rt_display) {
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->update_config(ini);
+            this->capture->update_config(enable_rt_display);
         }
     }
 

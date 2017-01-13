@@ -88,30 +88,80 @@
 //   primary, secondary, or alternate secondary drawing order. The controlFlags
 //   field of the Drawing Order identifies the type of drawing order.
 
-#include "bitmapupdate.hpp"
+#include "utils/sugar/finally.hpp"
+#include "utils/verbose_flags.hpp"
+
+#include "core/RDP/bitmapupdate.hpp"
+
+#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
+
+#include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/caches/pointercache.hpp"
-#include "caches/glyphcache.hpp"
+#include "core/RDP/caches/glyphcache.hpp"
 
-#include "orders/RDPOrdersPrimaryPolygonSC.hpp"
-#include "orders/RDPOrdersPrimaryPolygonCB.hpp"
-#include "orders/RDPOrdersPrimaryEllipseCB.hpp"
-#include "orders/RDPOrdersSecondaryColorCache.hpp"
-#include "orders/RDPOrdersSecondaryGlyphCache.hpp"
-#include "orders/RDPOrdersSecondaryBrushCache.hpp"
-#include "orders/RDPOrdersSecondaryFrameMarker.hpp"
-#include "orders/AlternateSecondaryWindowing.hpp"
-
+#include "utils/stream.hpp"
 #include "transport/transport.hpp"
 
-#include "utils/sugar/finally.hpp"
-#include "utils/stream.hpp"
-#include "utils/verbose_flags.hpp"
-
-#include "capture/utils/save_state_chunk.hpp"
-
 #include "gdi/graphic_api.hpp"
+
+struct StateChunk {
+    RDPOrderCommon          common;
+    RDPDestBlt              destblt;
+    RDPMultiDstBlt          multidstblt;
+    RDPMultiOpaqueRect      multiopaquerect;
+    RDP::RDPMultiPatBlt     multipatblt;
+    RDP::RDPMultiScrBlt     multiscrblt;
+    RDPPatBlt               patblt;
+    RDPScrBlt               scrblt;
+    RDPOpaqueRect           opaquerect;
+    RDPMemBlt               memblt;
+    RDPMem3Blt              mem3blt;
+    RDPLineTo               lineto;
+    RDPGlyphIndex           glyphindex;
+    RDPPolyline             polyline;
+    RDPEllipseSC            ellipseSC;
+
+    StateChunk()    
+        : common(RDP::PATBLT, Rect(0, 0, 1, 1))
+        , destblt(Rect(), 0)
+        , multidstblt()
+        , multiopaquerect()
+        , multipatblt()
+        , multiscrblt()
+        , patblt(Rect(), 0, 0, 0, RDPBrush())
+        , scrblt(Rect(), 0, 0, 0)
+        , opaquerect(Rect(), 0)
+        , memblt(0, Rect(), 0, 0, 0, 0)
+        , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
+        , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
+        , glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
+                    , reinterpret_cast<const uint8_t *>(""))
+        , polyline()
+        , ellipseSC()
+        {}
+};
 
 struct RDPSerializer
 : public gdi::GraphicApi
@@ -132,17 +182,22 @@ private:
     const size_t max_bitmap_size;
 
 protected:
+
+    // TODO: these 3 orders should be in next movie format and moved to StateChunk
+    // until then it will lead to subtile recording bugs if these orders are enabled
+    // (order state not propagated between movie parts).
     // Internal state of orders
     RDPPolygonSC polygonSC;
     RDPPolygonCB polygonCB;
     RDPEllipseCB ellipseCB;
 
-    SaveStateChunk ssc;
+    StateChunk ssc;
 
     // state variables for gathering batch of orders
     size_t order_count;
     size_t bitmap_count;
 
+    // TODO: check how caches are managed by recording layer
     BmpCache      & bmp_cache;
     GlyphCache    & glyph_cache;
     PointerCache  & pointer_cache;
@@ -700,7 +755,7 @@ public:
         bitmap_data.emit(this->stream_bitmaps);
         this->stream_bitmaps.out_copy_bytes(data_compressed.data(), data_compressed.size());
         if (this->verbose & Verbose::bitmap_update) {
-            bitmap_data.log(LOG_INFO, "RDPSerializer");
+            bitmap_data.log(LOG_INFO);
         }
     }
 

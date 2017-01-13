@@ -54,8 +54,6 @@ class ClientFront : public FrontAPI
 
 public:
     bool can_be_start_capture(auth_api*) override { return false; }
-    bool can_be_pause_capture() override { return false; }
-    bool can_be_resume_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
 
     void flush() {
@@ -368,7 +366,7 @@ public:
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
-            bitmap_data.log(LOG_INFO, "ClientFront");
+            bitmap_data.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
         }
 
@@ -446,7 +444,6 @@ public:
     , mod_bpp(info.bpp)
     , mod_palette(BGRPalette::no_init())
     , gd(info.width, info.height)
-    , order_depth_(gdi::Depth::unspecified())
     {
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
@@ -456,13 +453,6 @@ public:
     }
 
     void update_pointer_position(uint16_t, uint16_t) override {}
-
-    gdi::Depth const & order_depth() const override {
-        return this->order_depth_;
-    }
-
-    gdi::Depth order_depth_;
-
 };
 
 void run_mod(mod_api & mod, ClientFront & front, wait_obj & front_event, SocketTransport * st_mod, SocketTransport * st_front);

@@ -864,7 +864,6 @@ public:
     }
 
     bool connect() {
-        const char * name(this->_front->_userName.c_str());
         const char * targetIP(this->_front->_targetIP.c_str());
         const std::string errorMsg("Cannot connect to [" + this->_front->_targetIP +  "].");
 
@@ -875,11 +874,13 @@ public:
         if (this->_client_sck > 0) {
             try {
                 std::string error_message;
+                const char * name(this->_front->_userName.c_str());
                 this->_sck = new SocketTransport( name
                                                 , this->_client_sck
                                                 , targetIP
                                                 , this->_front->_port
                                                 , this->_front->verbose
+                                                // TODO error_message life time is too short
                                                 , &error_message
                                                 );
                 std::cout << "Connected to [" << targetIP <<  "]." << std::endl;

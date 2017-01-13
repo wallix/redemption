@@ -87,7 +87,7 @@ static inline int file_start_hmac_sha256(const char * filename,
 {
     // TODO: use ifile_read
     local_fd file(filename, O_RDONLY);
-    int fd = file.get();
+    int fd = file.fd();
     if (fd < 0) {
         return fd;
     }
@@ -346,7 +346,7 @@ public:
             next_line(); // checksum or nochecksum
         }
         this->header.has_checksum
-          = encrypted 
+          = encrypted
           || ((this->header.version > 1) && (this->line_reader.get_buf()[0] == 'c'));
         // else v1
         next_line(); // blank
@@ -441,7 +441,7 @@ public:
 
 //        LOG(LOG_INFO, "read_meta_file [8] %*s", static_cast<int>(eol-cur), cur);
         // TODO: check the whole line has been consumed (or it's an error)
-//        LOG(LOG_INFO, "read_meta_file: done %s", this->line_reader.get_buf().begin());        
+//        LOG(LOG_INFO, "read_meta_file: done %s", this->line_reader.get_buf().begin());
         return true;
     }
 };
@@ -785,12 +785,7 @@ static inline int encryption_type(const std::string & full_filename, CryptoConte
     }
 
     {
-        struct fdbuf
-        {
-            int fd;
-            explicit fdbuf(int fd) noexcept : fd(fd){}
-            ~fdbuf() {::close(this->fd);}
-        } file(fd);
+        local_fd file(fd);
 
         const size_t len = sizeof(tmp_buf);
         size_t remaining_len = len;
