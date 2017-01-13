@@ -1174,7 +1174,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false, false };
+    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false };
     FlvParams flv_params = {};
 
     // flv output options

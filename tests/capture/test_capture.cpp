@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         // TODO remove this after unifying capture interface
 
         WrmParams wrm_params = {};
-        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true, false};
+        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false};
 
         FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
@@ -299,7 +299,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     bool no_timestamp = false;
 
     WrmParams wrm_params = {};
-    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true, false };
+    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false };
     FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
     const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
     const char * record_path = record_tmp_path;
