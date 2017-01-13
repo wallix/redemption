@@ -731,10 +731,10 @@ public:
         LOG(LOG_INFO, "          * DeviceType       = 0x%08x (4 bytes): %s", this->DeviceType_, get_DeviceType_name(this->DeviceType_));
         LOG(LOG_INFO, "          * DeviceId         = 0x%08x (4 bytes)", this->DeviceId_);
         std::string DeviceName(reinterpret_cast<char *>(this->PreferredDosName_), 8);
-        LOG(LOG_INFO, "          * DeviceName       = \"%s\" (8 bytes)", DeviceName.c_str());
+        LOG(LOG_INFO, "          * DeviceName       = \"%s\" (8 bytes)", DeviceName);
         LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->device_data.sz));
         std::string DeviceData(reinterpret_cast<const char *>(this->device_data.p), this->device_data.sz);
-        LOG(LOG_INFO, "          * DeviceData       = \"%s\" (%d byte(s))", DeviceData.c_str(), int(this->device_data.sz));
+        LOG(LOG_INFO, "          * DeviceData       = \"%s\" (%d byte(s))", DeviceData, int(this->device_data.sz));
     }
 };  // DeviceAnnounceHeader
 
@@ -1201,17 +1201,17 @@ public:
     void log() {
         LOG(LOG_INFO, "     Device Create Request:");
         if (this->CreateOptions_ & smb2::FILE_DIRECTORY_FILE) {
-            LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes): %s", this->DesiredAccess_, smb2::get_Directory_Access_Mask_name(this->DesiredAccess_).c_str());
+            LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes): %s", this->DesiredAccess_, smb2::get_Directory_Access_Mask_name(this->DesiredAccess_));
         } else {
-            LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes): %s", this->DesiredAccess_, smb2::get_File_Pipe_Printer_Access_Mask_name(this->DesiredAccess_).c_str());
+            LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes): %s", this->DesiredAccess_, smb2::get_File_Pipe_Printer_Access_Mask_name(this->DesiredAccess_));
         }
         LOG(LOG_INFO, "          * AllocationSize    = %" PRIu64 " (8 bytes)", this->AllocationSize);
-        LOG(LOG_INFO, "          * FileAttributes    = 0x%08x (4 bytes): %s", this->FileAttributes, fscc::get_FileAttributes_name(this->FileAttributes).c_str());
-        LOG(LOG_INFO, "          * SharedAccess      = 0x%08x (4 bytes): %s", this->SharedAccess,  smb2::get_ShareAccess_name(this->SharedAccess).c_str());
+        LOG(LOG_INFO, "          * FileAttributes    = 0x%08x (4 bytes): %s", this->FileAttributes, fscc::get_FileAttributes_name(this->FileAttributes));
+        LOG(LOG_INFO, "          * SharedAccess      = 0x%08x (4 bytes): %s", this->SharedAccess,  smb2::get_ShareAccess_name(this->SharedAccess));
         LOG(LOG_INFO, "          * CreateDisposition = 0x%08x (4 bytes): %s", this->CreateDisposition_, smb2::get_CreateDisposition_name(this->CreateDisposition_));
-        LOG(LOG_INFO, "          * CreateOptions     = 0x%08x (4 bytes): %s", this->CreateOptions_, smb2::get_CreateOptions_name(this->CreateOptions_).c_str());
+        LOG(LOG_INFO, "          * CreateOptions     = 0x%08x (4 bytes): %s", this->CreateOptions_, smb2::get_CreateOptions_name(this->CreateOptions_));
         LOG(LOG_INFO, "          * PathLength        = %d (4 bytes)", int(this->path.size()));
-        LOG(LOG_INFO, "          * Path              = \"%s\" (%d byte(s))", this->path.c_str(), int(this->path.size()));
+        LOG(LOG_INFO, "          * Path              = \"%s\" (%d byte(s))", this->path, int(this->path.size()));
     }
 
 };  // DeviceCreateRequest
@@ -1539,8 +1539,9 @@ struct DeviceWriteRequest {
         LOG(LOG_INFO, "          * Offset = 0x%" PRIx64 " (8 bytes)", this->Offset);
         LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
         //LOG(LOG_INFO, "          * WriteData: array size = Length: %d byte(s)", int(this->Length));
-        std::string str(reinterpret_cast<char const *>(this->WriteData), this->Length);
-        LOG(LOG_INFO, "          * ReadData = \"%s\" (%d byte(s))", str.c_str(), int(this->Length));
+        auto s = reinterpret_cast<char const *>(this->WriteData);
+        int len = int(this->Length);
+        LOG(LOG_INFO, "          * ReadData = \"%*s\" (%d byte(s))", len, s, len);
         //hexdump_c(this->WriteData,  this->Length);
 
     }
@@ -2177,7 +2178,7 @@ struct DeviceReadResponse {
     void log() {
         LOG(LOG_INFO, "     Device Read Response:");
         LOG(LOG_INFO, "          * Length   = %d (4 bytes)", int(this->ReadData.size()));
-        LOG(LOG_INFO, "          * ReadData = \"%s\" (%d byte(s))", this->ReadData.c_str(), int(this->ReadData.size()));
+        LOG(LOG_INFO, "          * ReadData = \"%s\" (%d byte(s))", this->ReadData, int(this->ReadData.size()));
     }
 };
 
@@ -2724,7 +2725,7 @@ public:
         LOG(LOG_INFO, "          * UnicodeFlag     = 0x%08x (4 bytes)", this->UnicodeFlag);
         LOG(LOG_INFO, "          * CodePage        = 0x%08x (4 bytes)", this->CodePage);
         LOG(LOG_INFO, "          * ComputerNameLen = %d (4 bytes)", int(this->computer_name.size()));
-        LOG(LOG_INFO, "          * ComputerName    = \"%s\" (%d byte(s))", this->computer_name.c_str(), int(this->computer_name.size()));
+        LOG(LOG_INFO, "          * ComputerName    = \"%s\" (%d byte(s))", this->computer_name, int(this->computer_name.size()));
     }
 
 };  // ClientNameRequest
@@ -4175,7 +4176,7 @@ public:
         LOG(LOG_INFO, "          * InitialQuery = 0x%02x (1 byte)", this->InitialQuery_);
         LOG(LOG_INFO, "          * PathLength   = %d (4 bytes)", int(this->path.size()));
         LOG(LOG_INFO, "          * Padding - (23 byte) NOT USED");
-        LOG(LOG_INFO, "          * path         = \"%s\" (%d byte(s))", this->path.c_str(), int(this->path.size()));
+        LOG(LOG_INFO, "          * path         = \"%s\" (%d byte(s))", this->path, int(this->path.size()));
     }
 };  // ServerDriveQueryDirectoryRequest
 

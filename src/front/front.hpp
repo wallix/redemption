@@ -964,11 +964,11 @@ public:
         struct timeval now = tvtime();
 
         if (this->verbose & Verbose::basic_trace) {
-            LOG(LOG_INFO, "movie_path    = %s\n", ini.get<cfg::globals::movie_path>().c_str());
-            LOG(LOG_INFO, "auth_user     = %s\n", ini.get<cfg::globals::auth_user>().c_str());
-            LOG(LOG_INFO, "host          = %s\n", ini.get<cfg::globals::host>().c_str());
-            LOG(LOG_INFO, "target_device = %s\n", ini.get<cfg::globals::target_device>().c_str());
-            LOG(LOG_INFO, "target_user   = %s\n", ini.get<cfg::globals::target_user>().c_str());
+            LOG(LOG_INFO, "movie_path    = %s\n", ini.get<cfg::globals::movie_path>());
+            LOG(LOG_INFO, "auth_user     = %s\n", ini.get<cfg::globals::auth_user>());
+            LOG(LOG_INFO, "host          = %s\n", ini.get<cfg::globals::host>());
+            LOG(LOG_INFO, "target_device = %s\n", ini.get<cfg::globals::target_device>());
+            LOG(LOG_INFO, "target_user   = %s\n", ini.get<cfg::globals::target_user>());
         }
 
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16) ? 16 : 24);

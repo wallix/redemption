@@ -1611,7 +1611,7 @@ public:
             drive.assign(begin(trimmed_range), end(trimmed_range));
 
             if (this->verbose & RDPVerbose::basic_trace) {
-                LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive.c_str());
+                LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive);
             }
             this->file_system_drive_manager.EnableDrive(drive.c_str(), this->verbose);
         }
@@ -6836,7 +6836,7 @@ private:
 
         std::string auth_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
 
-        LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message.c_str());
+        LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message);
 
         this->auth_channel_flags  = flags;
         this->auth_channel_chanid = auth_channel.chanid;

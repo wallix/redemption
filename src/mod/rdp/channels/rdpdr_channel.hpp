@@ -284,7 +284,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                         LOG(LOG_INFO,
                             "FileSystemVirtualChannel::DeviceRedirectionManager::remove_known_device: "
                                 "Remove \"%s\"(DeviceId=%u) from known device list.",
-                            iter->preferred_dos_name.c_str(),
+                            iter->preferred_dos_name,
                             DeviceId);
                     }
 
@@ -928,7 +928,7 @@ public:
                     "for_writing=%s",
                 target_info.device_id,
                 target_info.file_id,
-                target_info.file_path.c_str(),
+                target_info.file_path,
                 target_info.for_reading ? "yes" : "no",
                 target_info.for_writing ? "yes" : "no"
             );
@@ -1511,7 +1511,7 @@ public:
                                 "FileSystemVirtualChannel::process_client_drive_io_response: "
                                     "Add \"%s\" to known file list. "
                                     "DeviceId=%u FileId=%u",
-                                target_file_name.c_str(),
+                                target_file_name,
                                 device_io_response.DeviceId(),
                                 device_create_response.FileId());
                         }
@@ -1552,7 +1552,7 @@ public:
                             "FileSystemVirtualChannel::process_client_drive_io_response: "
                                 "Remove \"%s\" from known file list. "
                                 "DeviceId=%u FileId=%u",
-                            target_iter->file_path.c_str(),
+                            target_iter->file_path,
                             device_io_response.DeviceId(),
                             FileId);
                     }

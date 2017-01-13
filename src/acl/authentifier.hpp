@@ -356,7 +356,7 @@ public:
         // Close by rejeted message received
         if (!this->ini.get<cfg::context::rejected>().empty()) {
             this->ini.set<cfg::context::auth_error_message>(this->ini.get<cfg::context::rejected>());
-            LOG(LOG_INFO, "Close by Rejected message received : %s", this->ini.get<cfg::context::rejected>().c_str());
+            LOG(LOG_INFO, "Close by Rejected message received : %s", this->ini.get<cfg::context::rejected>());
             this->ini.set_acl<cfg::context::rejected>("");
             mm.invoke_close_box(nullptr, signal, now);
             return true;

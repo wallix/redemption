@@ -47,28 +47,44 @@ namespace { namespace compiler_aux_ {
 # endif
 #endif
 
-#include <cstdio> // std::printf family
-
-#include <syslog.h>
-
 #include <sys/types.h> // getpid
 #include <unistd.h> // getpid
 
 #include "cxx/diagnostic.hpp"
 
-#include <string>
 #include <type_traits>
 
-// no enum type
-template<class T, typename std::enable_if<std::is_enum<T>::value, bool>::type = 1>
-typename std::underlying_type<T>::type
- log_value(T const & e) { return static_cast<typename std::underlying_type<T>::type>(e); }
+#include <cstdint>
+#include <cstdio> // std::printf family
+
+#include <syslog.h>
 
 // enum type
-template<class T, typename std::enable_if<!std::is_enum<T>::value, bool>::type = 1>
-T const & log_value(T const & x) { return x; }
+template<class T, typename std::enable_if<std::is_enum<T>::value, bool>::type = 1>
+typename std::underlying_type<T>::type
+log_value(T const & e) { return static_cast<typename std::underlying_type<T>::type>(e); }
 
-inline char const * log_value(std::string const & x) { return x.c_str(); }
+namespace detail_ {
+    // has c_str() member
+    template<class T>
+    auto log_value(T const & x, int)
+    -> typename std::enable_if<
+        std::is_same<char const *, decltype(x.c_str())>::value ||
+        std::is_same<char       *, decltype(x.c_str())>::value,
+        char const *
+    >::type
+    { return x.c_str(); }
+
+    template<class T>
+    T const & log_value(T const & x, char)
+    { return x; }
+}
+
+// not enum type
+template<class T, typename std::enable_if<!std::is_enum<T>::value, bool>::type = 1>
+auto log_value(T const & x)
+-> decltype(detail_::log_value(x, 1))
+{ return detail_::log_value(x, 1); }
 
 namespace {
     template<std::size_t n>
