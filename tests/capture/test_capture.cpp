@@ -39,21 +39,15 @@
 
 #include "transport/transport.hpp"
 #include "transport/test_transport.hpp"
-#include "transport/test_transport.hpp"
 #include "transport/out_file_transport.hpp"
 #include "transport/in_file_transport.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
-#include "capture/FileToGraphic.hpp"
 
 #include "capture/capture.hpp"
 #include "check_sig.hpp"
 #include "get_file_contents.hpp"
-#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
-#include "transport/out_meta_sequence_transport.hpp"
-#include "core/RDP/caches/bmpcache.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/bitmap_shrink.hpp"
-
 
 BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 {
@@ -92,36 +86,49 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         // TODO remove this after unifying capture interface
         bool no_timestamp = false;
         // TODO remove this after unifying capture interface
-        auth_api * authentifier = nullptr;
-        // TODO remove this after unifying capture interface
 
         WrmParams wrm_params = {};
-        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true, false};
+        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false};
 
         FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-        const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
+        const char * record_path = record_tmp_path;
 
         bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        bool capture_png = bool(capture_flags & CaptureFlags::png)
-                        && (!authentifier || png_params.png_limit > 0);
-        bool capture_pattern_checker = authentifier
-            && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-                || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
+        bool capture_png = bool(capture_flags & CaptureFlags::png);
+        bool capture_pattern_checker = false;
 
         bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
         bool capture_flv = bool(capture_flags & CaptureFlags::flv);
         bool capture_flv_full = full_video;
         bool capture_meta = capture_ocr;
-        bool capture_kbd = authentifier
-          ? !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
-          || ini.get<cfg::session_log::enable_session_log>()
-          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
-          : false
-        ;
+        bool capture_kbd = false;
 
-        OcrParams ocr_params = {};
+        OcrParams ocr_params = {
+                ini.get<cfg::ocr::version>(),
+                ocr::locale::LocaleId(
+                    static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
+                ini.get<cfg::ocr::on_title_bar_only>(),
+                ini.get<cfg::ocr::max_unrecog_char_rate>(),
+                ini.get<cfg::ocr::interval>()
+        };
+
+        if (ini.get<cfg::debug::capture>()) {
+            LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
+                capture_wrm ?"wrm ":"",
+                capture_png ?"png ":"",
+                capture_kbd ? 1 : 0,
+                capture_flv ?"flv ":"",
+                capture_flv_full ?"flv_full ":"",
+                capture_pattern_checker ?"pattern ":"",
+                capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
+                capture_meta?"meta ":""
+            );
+        }
+
+        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
+        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
 
         Capture capture(  capture_wrm, wrm_params
                         , capture_png, png_params
@@ -134,8 +141,11 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
                         , now, scr.cx, scr.cy, 24, 24
                         , record_tmp_path
                         , record_path
+                        , groupid
+                        , hash_path
+                        , movie_path
                         , flv_params
-                        , no_timestamp, authentifier
+                        , no_timestamp, nullptr
                         , ini, cctx, rnd, nullptr);
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
@@ -287,35 +297,49 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     bool full_video = false;
     // TODO remove this after unifying capture interface
     bool no_timestamp = false;
-    // TODO remove this after unifying capture interface
-    auth_api * authentifier = nullptr;
 
     WrmParams wrm_params = {};
-    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true, false };
+    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false };
     FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
     const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-    const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
+    const char * record_path = record_tmp_path;
     bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-    bool capture_png = bool(capture_flags & CaptureFlags::png)
-                    && (!authentifier || png_params.png_limit > 0);
-    bool capture_pattern_checker = authentifier
-        && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-            || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
+    bool capture_png = bool(capture_flags & CaptureFlags::png);
+    bool capture_pattern_checker = false;
 
     bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
     bool capture_flv = bool(capture_flags & CaptureFlags::flv);
     bool capture_flv_full = full_video;
     bool capture_meta = capture_ocr;
-    bool capture_kbd = authentifier
-      ? !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
-      || ini.get<cfg::session_log::enable_session_log>()
-      || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-      || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
-      : false
-    ;
+    bool capture_kbd = false;
 
-    OcrParams ocr_params = {};
+    OcrParams ocr_params = {
+            ini.get<cfg::ocr::version>(),
+            ocr::locale::LocaleId(
+                static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
+            ini.get<cfg::ocr::on_title_bar_only>(),
+            ini.get<cfg::ocr::max_unrecog_char_rate>(),
+            ini.get<cfg::ocr::interval>()
+    };
 
+    if (ini.get<cfg::debug::capture>()) {
+        LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
+            capture_wrm ?"wrm ":"",
+            capture_png ?"png ":"",
+            capture_kbd ? 1 : 0,
+            capture_flv ?"flv ":"",
+            capture_flv_full ?"flv_full ":"",
+            capture_pattern_checker ?"pattern ":"",
+            capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
+            capture_meta?"meta ":""
+        );
+    }
+
+    const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+    const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
+    const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
+
+    // TODO remove this after unifying capture interface
     Capture capture( capture_wrm, wrm_params
                    , capture_png, png_params
                    , capture_pattern_checker
@@ -328,8 +352,11 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , now, scr.cx, scr.cy, 16, 16
                    , record_tmp_path
                    , record_path
+                   , groupid
+                   , hash_path
+                   , movie_path
                    , flv_params
-                   , no_timestamp, authentifier
+                   , no_timestamp, nullptr
                    , ini, cctx, rnd, nullptr);
     auto const color_cxt = gdi::ColorCtx::depth16();
     Pointer pointer1(Pointer::POINTER_EDIT);
@@ -559,6 +586,7 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureMP4)
     int fsize = filesize(filename);
     switch (fsize) {
         case 12999: break;
+        case 12985: break;
         default: BOOST_CHECK_EQUAL(-2, fsize);
     }
     ::unlink(filename);
@@ -566,6 +594,7 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureMP4)
     fsize = filesize(filename);
     switch (fsize) {
         case 11726: break;
+        case 11712: break;
         default: BOOST_CHECK_EQUAL(-2, fsize);
     }
     ::unlink(filename);
@@ -890,7 +919,6 @@ private:
             this->scaled_width * 3, false);
     }
 };
-
 
 const char expected_stripped_wrm[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=28 0001: 1 order
@@ -2306,3 +2334,162 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternKill)
     BOOST_CHECK_EQUAL(1, pattern_count);
     BOOST_CHECK_EQUAL(auth.is_killed, true);
 }
+
+
+
+
+BOOST_AUTO_TEST_CASE(TestSample0WRM)
+{
+    const char * input_filename = FIXTURES_PATH "/sample0.wrm";
+
+    int fd = ::open(input_filename, O_RDONLY);
+    if (fd == -1){
+        LOG(LOG_INFO, "open '%s' failed with error : %s", input_filename, strerror(errno));
+        BOOST_CHECK(false);
+        return;
+    }
+
+    InFileTransport in_wrm_trans(fd);
+    timeval begin_capture;
+    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
+    timeval end_capture;
+    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
+
+    const int groupid = 0;
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid);
+    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
+    DrawableToFile png_recorder(out_png_trans, drawable1.impl(), 100);
+
+//    png_recorder.update_config(ini);
+    player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
+
+    OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid);
+
+    const struct ToCacheOption {
+        ToCacheOption(){}
+        BmpCache::CacheOption operator()(const BmpCache::cache_ & cache) const {
+            return BmpCache::CacheOption(cache.entries(), cache.bmp_size(), cache.persistent());
+        }
+    } to_cache_option;
+
+    BmpCache bmp_cache(
+        BmpCache::Recorder,
+        player.bmp_cache->bpp,
+        player.bmp_cache->number_of_cache,
+        player.bmp_cache->use_waiting_list,
+        to_cache_option(player.bmp_cache->get_cache(0)),
+        to_cache_option(player.bmp_cache->get_cache(1)),
+        to_cache_option(player.bmp_cache->get_cache(2)),
+        to_cache_option(player.bmp_cache->get_cache(3)),
+        to_cache_option(player.bmp_cache->get_cache(4))
+    );
+    GlyphCache gly_cache;
+    PointerCache ptr_cache;
+
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
+    DumpPng24FromRDPDrawableAdapter dump_png{drawable};
+    GraphicToFile graphic_to_file(
+        player.record_now,
+        out_wrm_trans,
+        player.screen_rect.cx,
+        player.screen_rect.cy,
+        24,
+        bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression
+    );
+    WrmCaptureImpl::NativeCaptureLocal wrm_recorder(graphic_to_file, player.record_now, std::chrono::seconds{1}, std::chrono::seconds{20});
+
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
+    player.add_consumer(&graphic_to_file, &wrm_recorder, nullptr, nullptr, &wrm_recorder);
+
+    bool requested_to_stop = false;
+
+    BOOST_CHECK_EQUAL(1352304810u, static_cast<unsigned>(player.record_now.tv_sec));
+    player.play(requested_to_stop);
+
+    png_recorder.flush();
+    BOOST_CHECK_EQUAL(1352304870u, static_cast<unsigned>(player.record_now.tv_sec));
+
+    graphic_to_file.sync();
+    const char * filename;
+
+    out_png_trans.disconnect();
+    out_wrm_trans.disconnect();
+
+    filename = out_png_trans.seqgen()->get(0);
+    BOOST_CHECK_EQUAL(21280, ::filesize(filename));
+    ::unlink(filename);
+
+    filename = out_wrm_trans.seqgen()->get(0);
+    BOOST_CHECK_EQUAL(490454, ::filesize(filename));
+    ::unlink(filename);
+    filename = out_wrm_trans.seqgen()->get(1);
+    BOOST_CHECK_EQUAL(1008253, ::filesize(filename));
+    ::unlink(filename);
+    filename = out_wrm_trans.seqgen()->get(2);
+    BOOST_CHECK_EQUAL(195756, ::filesize(filename));
+    ::unlink(filename);
+}
+
+BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
+{
+    const char source_png[] =
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x00\x00\x00\x14\x00\x00\x00\x0a"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x08\x02\x00\x00\x00\x3b\x37\xe9"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\xb1\x00\x00\x00\x32\x49\x44\x41"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x54\x28\x91\x63\xfc\xcf\x80\x17"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\xfc\xff\xcf\xc0\xc8\x88\x4b\x92"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x09\xbf\x5e\xfc\x60\x88\x6a\x66"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x41\xe3\x33\x32\xa0\x84\xe0\x7f"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x54\x91\xff\x0c\x28\x81\x37\x70"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\xce\x66\x1c\xb0\x78\x06\x00\x69"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\xdc\x0a\x12\x86\x4a\x0c\x44\x00"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x00\x00\x00\x49\x45\x4e\x44\xae"
+    /* 0000 */ "\x00\x10\x0b\x00\x00\x00\x01\x00" // 0x1000: FINAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x42\x60\x82"
+    ;
+
+    GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);
+    constexpr std::size_t sz_buf = 8;
+    uint8_t buf[sz_buf];
+    auto end = buf;
+    in_png_trans.recv(&end, sz_buf); // skip first chunk header
+    InStream stream(buf);
+
+//    in_png_trans.recv(&stream.end, 107); // skip first chunk header
+
+    uint16_t chunk_type = stream.in_uint16_le();
+    uint32_t chunk_size = stream.in_uint32_le();
+    uint16_t chunk_count = stream.in_uint16_le();
+    (void)chunk_count;
+
+    InChunkedImageTransport chunk_trans(chunk_type, chunk_size, &in_png_trans);
+
+
+    RDPDrawable d(20, 10);
+    ::transport_read_png24(&chunk_trans, d.data(),
+                 d.width(), d.height(),
+                 d.rowsize()
+                 );
+    const int groupid = 0;
+    OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
+    DumpPng24FromRDPDrawableAdapter(d).dump_png24(png_trans, true);
+//    d.dump_png24(png_trans, true);
+    ::unlink(png_trans.seqgen()->get(0));
+}
+

@@ -1372,7 +1372,7 @@ public:
                                 mod_rdp_params
                             );
 
-                    windowing_api* winapi = (new_mod ? new_mod->get_windowing_api() : nullptr);
+                    windowing_api* winapi = new_mod->get_windowing_api();
 
                     std::unique_ptr<mod_api> managed_mod(new_mod);
 

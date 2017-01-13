@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "capture/FileToGraphic.hpp"
+#include "capture/capture.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "internal_mod.hpp"
 

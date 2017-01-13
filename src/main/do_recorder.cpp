@@ -348,7 +348,7 @@ static inline int check_encrypted_or_checksumed(
         std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
         std::string const full_part_filename = mwrm_path + meta_line_wrm_filename;
 
-//        LOG(LOG_INFO, "checking part %s", full_part_filename.c_str());
+//        LOG(LOG_INFO, "checking part %s", full_part_filename);
 
 
         bool has_mismatch_stat_mwrm = false;
@@ -403,13 +403,13 @@ static inline int check_encrypted_or_checksumed(
         // out_meta_sequence_filename_buf_impl ctor
         transbuf::ofile_buf_out mwrm_file_cp;
         if (mwrm_file_cp.open(full_mwrm_filename_tmp.c_str(), S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
-            LOG(LOG_ERR, "Failed to open meta file %s", full_mwrm_filename_tmp.c_str());
+            LOG(LOG_ERR, "Failed to open meta file %s", full_mwrm_filename_tmp);
             throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
         }
         local_auto_remove auto_remove{full_mwrm_filename_tmp.c_str()};
         if (chmod(full_mwrm_filename_tmp.c_str(), S_IRUSR | S_IRGRP) == -1) {
             LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                , full_mwrm_filename_tmp.c_str()
+                , full_mwrm_filename_tmp
                 , "u+r, g+r"
                 , strerror(errno), errno);
             return 1;
@@ -629,7 +629,7 @@ inline void shutdown(int sig)
     program_requested_to_shutdown = true;
 }
 
-inline void init_signals(void)
+inline void init_signals()
 {
     struct sigaction sa;
 
@@ -911,7 +911,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
             || end_cap != begin_cap);
 
         if (test){
-            auth_api * authentifier = nullptr;
             for (unsigned i = 1; i < file_count ; i++) {
                 in_wrm_trans.next();
             }
@@ -1002,30 +1001,44 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         WrmParams wrm_params = {};
                         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-                        const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
+                        const char * record_path = record_tmp_path;
 
                         bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-                        bool capture_png = bool(capture_flags & CaptureFlags::png)
-                                        && (!authentifier || png_params.png_limit > 0);
-                        bool capture_pattern_checker = authentifier
-                            && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-                                || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
+                        bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
+                        bool capture_pattern_checker = false;
 
                         bool capture_ocr = bool(capture_flags & CaptureFlags::ocr)
                                             || capture_pattern_checker;
                         bool capture_flv = bool(capture_flags & CaptureFlags::flv);
                         bool capture_flv_full = full_video;
                         bool capture_meta = capture_ocr;
-                        bool capture_kbd = authentifier
-                            ? !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
-                            || ini.get<cfg::session_log::enable_session_log>()
-                            || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-                            || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
-                            : false
-                        ;
+                        bool capture_kbd = false;
 
-                        OcrParams ocr_params = {};
+                        OcrParams ocr_params = {
+                                ini.get<cfg::ocr::version>(),
+                                ocr::locale::LocaleId(
+                                    static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
+                                ini.get<cfg::ocr::on_title_bar_only>(),
+                                ini.get<cfg::ocr::max_unrecog_char_rate>(),
+                                ini.get<cfg::ocr::interval>()
+                        };
 
+                        if (ini.get<cfg::debug::capture>()) {
+                            LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
+                                capture_wrm ?"wrm ":"",
+                                capture_png ?"png ":"",
+                                capture_kbd ? 1 : 0,
+                                capture_flv ?"flv ":"",
+                                capture_flv_full ?"flv_full ":"",
+                                capture_pattern_checker ?"pattern ":"",
+                                capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
+                                capture_meta?"meta ":""
+                            );
+                        }
+
+                        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+                        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
+                        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
 
                         Capture capture(capture_wrm, wrm_params
                                 , capture_png, png_params
@@ -1042,9 +1055,12 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , wrm_color_depth
                                 , record_tmp_path
                                 , record_path
+                                , groupid
+                                , hash_path
+                                , movie_path
                                 , flv_params
                                 , no_timestamp
-                                , authentifier
+                                , nullptr
                                 , ini
                                 , cctx
                                 , rnd
@@ -1158,7 +1174,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false, false };
+    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false };
     FlvParams flv_params = {};
 
     // flv output options
@@ -1453,10 +1469,10 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
     recorder.full_path = recorder.mwrm_path + recorder.input_filename;
 
     if (verbose) {
-        LOG(LOG_INFO, "Input file full_path=\"%s\"", recorder.full_path.c_str());
-        LOG(LOG_INFO, "Input file base name=\"%s\"", recorder.input_filename.c_str());
-        LOG(LOG_INFO, "hash_path=\"%s\"", recorder.hash_path.c_str());
-        LOG(LOG_INFO, "mwrm_path=\"%s\"", recorder.mwrm_path.c_str());
+        LOG(LOG_INFO, "Input file full_path=\"%s\"", recorder.full_path);
+        LOG(LOG_INFO, "Input file base name=\"%s\"", recorder.input_filename);
+        LOG(LOG_INFO, "hash_path=\"%s\"", recorder.hash_path);
+        LOG(LOG_INFO, "mwrm_path=\"%s\"", recorder.mwrm_path);
     }
 
     if (is_encrypted_file(recorder.full_path.c_str(), recorder.infile_is_encrypted) == -1) {

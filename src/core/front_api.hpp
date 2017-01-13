@@ -44,8 +44,6 @@ class FrontAPI : public gdi::GraphicApi
 {
 public:
     virtual bool can_be_start_capture(auth_api * auth) = 0;
-    virtual bool can_be_pause_capture() = 0;
-    virtual bool can_be_resume_capture() = 0;
     virtual bool must_be_stop_capture() = 0;
 
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const = 0;
@@ -58,7 +56,6 @@ public:
         fail    = -1
     };
     virtual ResizeResult server_resize(int width, int height, int bpp) = 0;
-    //virtual void update_config(const timeval & now, const Inifile & ini) {}
 
     virtual void update_pointer_position(uint16_t, uint16_t) {}
 

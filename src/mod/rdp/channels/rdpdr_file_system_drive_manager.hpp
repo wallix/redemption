@@ -45,7 +45,7 @@
 #include <string>
 #include <algorithm>
 
-template<typename T> T Flag(bool condition, T value) 
+template<typename T> T Flag(bool condition, T value)
 {
     return (condition) ? value : T(0);
 }
@@ -863,7 +863,7 @@ public:
             LOG(LOG_INFO,
                 "ManagedDirectory::ProcessServerCreateDriveRequest: "
                     "<%p> full_path=\"%s\" drive_access_mode=%s(%d)",
-                static_cast<void*>(this), this->full_path.c_str(), get_open_flag_name(drive_access_mode),
+                static_cast<void*>(this), this->full_path, get_open_flag_name(drive_access_mode),
                 drive_access_mode);
         }
 
@@ -1052,7 +1052,7 @@ public:
             LOG(LOG_INFO,
                 "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest: "
                     "full_path=\"%s\" pattern=\"%s\"",
-                this->full_path.c_str(), this->pattern.c_str());
+                this->full_path, this->pattern);
         }
 
         long     name_max = pathconf(this->full_path.c_str(), _PC_NAME_MAX);
@@ -1093,7 +1093,7 @@ public:
                 LOG(LOG_INFO,
                     "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest: "
                         "<%p> full_path=\"%s\"",
-                    static_cast<void*>(this), file_full_path.c_str());
+                    static_cast<void*>(this), file_full_path);
             }
 
             struct stat64 sb;
@@ -1116,7 +1116,7 @@ public:
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_ctime),
                         sb.st_size, sb.st_blocks * 512 /* Block size */,
-                        Flag(S_ISDIR(sb.st_mode),fscc::FILE_ATTRIBUTE_DIRECTORY) 
+                        Flag(S_ISDIR(sb.st_mode),fscc::FILE_ATTRIBUTE_DIRECTORY)
                         | Flag(!(sb.st_mode & S_IWUSR),fscc::FILE_ATTRIBUTE_READONLY),
                         result->d_name
                         );
@@ -1147,7 +1147,7 @@ public:
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_ctime),
                         sb.st_size, sb.st_blocks * 512 /* Block size */,
-                        Flag(S_ISDIR(sb.st_mode),fscc::FILE_ATTRIBUTE_DIRECTORY) 
+                        Flag(S_ISDIR(sb.st_mode),fscc::FILE_ATTRIBUTE_DIRECTORY)
                         | Flag(!(sb.st_mode & S_IWUSR), fscc::FILE_ATTRIBUTE_READONLY),
                         result->d_name
                         );
@@ -1267,7 +1267,7 @@ public:
             LOG(LOG_INFO,
                 "ManagedFile::ProcessServerCreateDriveRequest: "
                     "<%p> full_path=\"%s\" drive_access_mode=%s(%d)",
-                static_cast<void*>(this), this->full_path.c_str(),
+                static_cast<void*>(this), this->full_path,
                 get_open_flag_name(drive_access_mode), drive_access_mode);
         }
 
@@ -1850,7 +1850,7 @@ private:
             LOG(LOG_INFO,
                 "FileSystemDriveManager::ProcessServerCreateDriveRequest: "
                     "full_path=\"%s\" drive_access_mode=%s(%d)",
-                full_path.c_str(),
+                full_path,
                 ManagedFileSystemObject::get_open_flag_name(drive_access_mode),
                 drive_access_mode);
         }

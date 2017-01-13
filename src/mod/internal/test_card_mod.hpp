@@ -196,7 +196,7 @@ public:
                     bitmap_data.flags           = 0;
                     bitmap_data.bitmap_length   = tile.bmp_size();
 
-                    bitmap_data.log(LOG_INFO, "replay");
+                    bitmap_data.log(LOG_INFO);
 
                     this->front.draw(bitmap_data, tile);
                 }

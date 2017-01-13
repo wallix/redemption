@@ -778,7 +778,7 @@ public:
 
     void log() {
         LOG(LOG_INFO, "     File Attribute Tag Information:");
-        LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes).c_str());
+        LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
         LOG(LOG_INFO, "          * ReparseTag     = 0x%08x (4 bytes)", this->ReparseTag);
     }
 };
@@ -960,7 +960,7 @@ public:
         LOG(LOG_INFO, "          * LastAccessTime = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime_);
         LOG(LOG_INFO, "          * LastWriteTime  = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime_);
         LOG(LOG_INFO, "          * ChangeTime     = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
-        LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes): %s", this->FileAttributes_, get_FileAttributes_name(this->FileAttributes_).c_str());
+        LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes): %s", this->FileAttributes_, get_FileAttributes_name(this->FileAttributes_));
     }
 };  // FileBasicInformation
 
@@ -1311,13 +1311,13 @@ public:
         LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime);
         LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime);
         LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
-        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes).c_str());
+        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
         LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->file_name.size()));
         LOG(LOG_INFO, "          * EaSize          = %d (4 bytes)", int(this->EaSize));
         LOG(LOG_INFO, "          * ShortNameLength = %d (1 byte)", int(this->short_name.size()));
         LOG(LOG_INFO, "          * Reserved - (1 byte) NOT USED");
-        LOG(LOG_INFO, "          * short_name      = \"%s\"", this->short_name.c_str());
-        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->file_name.c_str());
+        LOG(LOG_INFO, "          * short_name      = \"%s\"", this->short_name);
+        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->file_name);
     }
 };  // FileBothDirectoryInformation
 
@@ -1481,9 +1481,9 @@ public:
         LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime_);
         LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime_);
         LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
-        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes_, get_FileAttributes_name(this->FileAttributes_).c_str());
+        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes_, get_FileAttributes_name(this->FileAttributes_));
         LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->FileName.size()));
-        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->FileName.c_str());
+        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->FileName);
     }
 };  //FileDirectoryInformation
 
@@ -1677,7 +1677,7 @@ struct FileFsLabelInformation {
     void log() {
         LOG(LOG_INFO, "     File Fs Label Information:");
         LOG(LOG_INFO, "          * VolumeLabelLength = %d (4 bytes)", int(this->VolumeLabel.size()));
-        LOG(LOG_INFO, "          * VolumeLabel       = \"%s\"", this->VolumeLabel.c_str());
+        LOG(LOG_INFO, "          * VolumeLabel       = \"%s\"", this->VolumeLabel);
     }
 
 };
@@ -1970,10 +1970,10 @@ public:
         LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime);
         LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime);
         LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
-        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes).c_str());
+        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
         LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->file_name.size()));
         LOG(LOG_INFO, "          * EaSize          = %d (4 bytes)", int(this->EaSize));
-        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->file_name.c_str());
+        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->file_name);
     }
 };  // FileFullDirectoryInformation
 
@@ -2142,7 +2142,7 @@ public:
         LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
         LOG(LOG_INFO, "          * FileIndex       = 0x%08x (4 bytes)", this->FileIndex);
         LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->file_name.size()));
-        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->file_name.c_str());
+        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->file_name);
     }
 };
 
@@ -2263,7 +2263,7 @@ struct FileRenameInformation {
         LOG(LOG_INFO, "          * Padding - (7 byte) NOT USED");
         LOG(LOG_INFO, "          * RootDirectory   = %" PRIx64 " (8 bytes)", this->RootDirectory);
         LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->FileName.size()));
-        LOG(LOG_INFO, "          * VolumeLabel     = \"%s\"", this->FileName.c_str());
+        LOG(LOG_INFO, "          * VolumeLabel     = \"%s\"", this->FileName);
     }
 };
 
@@ -2725,7 +2725,7 @@ public:
         LOG(LOG_INFO, "          * FileSystemAttributes       = 0x%08x (4 bytes): %s", this->FileSystemAttributes_, get_FileSystemAttributes_name(this->FileSystemAttributes_));
         LOG(LOG_INFO, "          * MaximumComponentNameLength = %d (4 bytes)", int(this->MaximumComponentNameLength));
         LOG(LOG_INFO, "          * FileSystemNameLength       = %d (4 bytes)", int(this->file_system_name.size()));
-        LOG(LOG_INFO, "          * FileSystemName             = \"%s\"", this->file_system_name.c_str());
+        LOG(LOG_INFO, "          * FileSystemName             = \"%s\"", this->file_system_name);
     }
 };  // FileFsAttributeInformation
 
@@ -3209,7 +3209,7 @@ public:
         LOG(LOG_INFO, "          * VolumeLabelLength  = %d (4 bytes)", int(this->volume_label.size()));
         LOG(LOG_INFO, "          * SupportsObjects    = 0x%02x (1 byte)", this->SupportsObjects);
         LOG(LOG_INFO, "          * Padding - (1 byte) NOT USED");
-        LOG(LOG_INFO, "          * VolumeLabel        = \"%s\"", this->volume_label.c_str());
+        LOG(LOG_INFO, "          * VolumeLabel        = \"%s\"", this->volume_label);
     }
 };  // FileFsVolumeInformation
 
@@ -3594,7 +3594,7 @@ struct FileNotifyInformation {
         LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
         LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes): %s", this->Action, get_Action_name(this->Action));
         LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->FileName.size()));
-        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->FileName.c_str());
+        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->FileName);
     }
 };
 

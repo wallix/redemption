@@ -488,16 +488,17 @@ private:
             template<class Cmd, class... Ts>
             void draw_impl(Cmd const & cmd, Rect clip, gdi::ColorCtx color_ctx, Ts const & ... args)
             {
-                Cmd const & new_cmd = (gdi::Depth::from_bpp(Enc::bpp) == color_ctx.depth())
+                constexpr auto depth = gdi::Depth::from_bpp(Enc::bpp);
+                Cmd const & new_cmd = (depth == color_ctx.depth())
                     ? cmd
                     : [&cmd, &color_ctx]() {
                         auto color_convertor = [&color_ctx](BGRColor c) {
                             Enc enc;
                             switch (color_ctx.depth()) {
-                                case gdi::Depth::depth8() : return enc(decode_color8()(c, *color_ctx.palette()));
-                                case gdi::Depth::depth15(): return enc(decode_color15()(c));
-                                case gdi::Depth::depth16(): return enc(decode_color16()(c));
-                                case gdi::Depth::depth24(): return enc(decode_color24()(c));
+                                case gdi::Depth::depth8() : return enc(decode_color8_opaquerect()(c, *color_ctx.palette()));
+                                case gdi::Depth::depth15(): return enc(decode_color15_opaquerect()(c));
+                                case gdi::Depth::depth16(): return enc(decode_color16_opaquerect()(c));
+                                case gdi::Depth::depth24(): return enc(decode_color24_opaquerect()(c));
                                 case gdi::Depth::unspecified(): default: assert(!"unknown depth");
                             }
                             return RGBColor{};
@@ -506,7 +507,7 @@ private:
                         gdi::GraphicCmdColor::encode_cmd_color(color_convertor, new_cmd);
                         return new_cmd;
                     }();
-                this->graphics.draw(new_cmd, clip, color_ctx, args...);
+                this->graphics.draw(new_cmd, clip, gdi::ColorCtx{depth, color_ctx.palette()}, args...);
             }
 
             Graphics::PrivateGraphicsUpdatePDU & graphics;
@@ -963,11 +964,11 @@ public:
         struct timeval now = tvtime();
 
         if (this->verbose & Verbose::basic_trace) {
-            LOG(LOG_INFO, "movie_path    = %s\n", ini.get<cfg::globals::movie_path>().c_str());
-            LOG(LOG_INFO, "auth_user     = %s\n", ini.get<cfg::globals::auth_user>().c_str());
-            LOG(LOG_INFO, "host          = %s\n", ini.get<cfg::globals::host>().c_str());
-            LOG(LOG_INFO, "target_device = %s\n", ini.get<cfg::globals::target_device>().c_str());
-            LOG(LOG_INFO, "target_user   = %s\n", ini.get<cfg::globals::target_user>().c_str());
+            LOG(LOG_INFO, "movie_path    = %s\n", ini.get<cfg::globals::movie_path>());
+            LOG(LOG_INFO, "auth_user     = %s\n", ini.get<cfg::globals::auth_user>());
+            LOG(LOG_INFO, "host          = %s\n", ini.get<cfg::globals::host>());
+            LOG(LOG_INFO, "target_device = %s\n", ini.get<cfg::globals::target_device>());
+            LOG(LOG_INFO, "target_user   = %s\n", ini.get<cfg::globals::target_user>());
         }
 
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16) ? 16 : 24);
@@ -978,7 +979,6 @@ public:
                 ini.get<cfg::video::png_interval>(),
                 100u,
                 ini.get<cfg::video::png_limit>(),
-                false,
                 true
         };
         FlvParams flv_params = flv_params_from_ini(this->client_info.width, this->client_info.height, ini);
@@ -1006,7 +1006,36 @@ public:
           : false
         ;
 
-        OcrParams ocr_params = {};
+        OcrParams ocr_params = {
+                ini.get<cfg::ocr::version>(),
+                ocr::locale::LocaleId(
+                    static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
+                ini.get<cfg::ocr::on_title_bar_only>(),
+                ini.get<cfg::ocr::max_unrecog_char_rate>(),
+                ini.get<cfg::ocr::interval>()
+        };
+
+        if (ini.get<cfg::debug::capture>()) {
+            LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
+                capture_wrm ?"wrm ":"",
+                capture_png ?"png ":"",
+                capture_kbd ? 1 : 0,
+                capture_flv ?"flv ":"",
+                capture_flv_full ?"flv_full ":"",
+                capture_pattern_checker ?"pattern ":"",
+                capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
+                capture_meta?"meta ":""
+            );
+        }
+
+        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
+        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
+
+        if (authentifier) {
+            cctx.set_master_key(ini.get<cfg::crypto::key0>());
+            cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
+        }
 
         this->capture = new Capture(  capture_wrm, wrm_params
                                     , capture_png, png_params
@@ -1022,6 +1051,9 @@ public:
                                     , this->mod_bpp, this->capture_bpp
                                     , record_tmp_path
                                     , record_path
+                                    , groupid
+                                    , hash_path
+                                    , movie_path
                                     , flv_params
                                     , false, authentifier
                                     , ini, this->cctx, this->gen
@@ -1044,36 +1076,6 @@ public:
         return true;
     }
 
-    bool can_be_pause_capture() override
-    {
-        LOG(LOG_INFO, "---<>  Front::pause_capture  <>---");
-        if (this->capture_state != CAPTURE_STATE_STARTED) {
-            return false;
-        }
-
-        timeval now = tvtime();
-        this->capture->pause_capture(now);
-        this->capture_state = CAPTURE_STATE_PAUSED;
-        this->set_gd(this->orders.graphics_update_pdu());
-        return true;
-    }
-
-    bool can_be_resume_capture() override
-    {
-        LOG(LOG_INFO, "---<>  Front::resume_capture <>---");
-        if (this->capture_state != CAPTURE_STATE_PAUSED) {
-            return false;
-        }
-
-        timeval now = tvtime();
-        this->capture->resume_capture(now);
-        this->capture_state = CAPTURE_STATE_STARTED;
-        if (this->capture->get_graphic_api()) {
-            this->set_gd(this->capture->get_graphic_api());
-        }
-        return true;
-    }
-
     bool must_be_stop_capture() override
     {
         if (this->capture) {
@@ -1090,10 +1092,10 @@ public:
         return false;
     }
 
-    void update_config(Inifile & ini) {
+    void update_config(bool enable_rt_display) {
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->update_config(ini);
+            this->capture->update_config(enable_rt_display);
         }
     }
 

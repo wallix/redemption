@@ -141,20 +141,10 @@ public:
 
         // Label color
         if (logo) {
-            if (has_focus) {
-                fg_color = focuscolor;
-            }
-            else {
-                fg_color = fgcolor;
-            }
+            fg_color = has_focus ? focuscolor : fgcolor;
         }
         else {
-            if (has_focus) {
-                bg_color = focuscolor;
-            }
-            else {
-                bg_color = bgcolor;
-            }
+            bg_color = has_focus ? focuscolor : bgcolor;
         }
         // background
         drawable.draw(RDPOpaqueRect(clip.intersect(rect), bg_color), rect, gdi::ColorCtx::depth24());
