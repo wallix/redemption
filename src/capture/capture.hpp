@@ -4629,13 +4629,16 @@ private:
         }
 
     public:
-        std::unique_ptr<gdi::GraphicApi> cmd_color_distributor;
         MouseTrace const & mouse;
-        std::vector<std::reference_wrapper<gdi::GraphicApi>> gds;
-        std::vector<std::reference_wrapper<gdi::CaptureApi>> snapshoters;
+        const std::vector<std::reference_wrapper<gdi::GraphicApi>> & gds;
+        const std::vector<std::reference_wrapper<gdi::CaptureApi>> & snapshoters;
 
-        Graphic(MouseTrace const & mouse)
+        Graphic(MouseTrace const & mouse,
+                const std::vector<std::reference_wrapper<gdi::GraphicApi>> & gds,
+                const std::vector<std::reference_wrapper<gdi::CaptureApi>> & snapshoters)
         : mouse(mouse)
+        , gds(gds)
+        , snapshoters(snapshoters)
         {}
     } * graphic_api;
     
@@ -4655,6 +4658,8 @@ private:
     MouseTrace mouse_info;
     wait_obj capture_event;
 
+    std::vector<std::reference_wrapper<gdi::GraphicApi>> gds;
+    std::vector<std::reference_wrapper<gdi::CaptureApi>> snapshoters;
     std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
     std::vector<std::reference_wrapper<gdi::KbdInputApi>> kbds;
     std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
@@ -4737,7 +4742,7 @@ public:
 
         if (this->capture_drawable) {
             this->gd_drawable = new RDPDrawable(width, height);
-            this->graphic_api = new Graphic(this->mouse_info);
+            this->graphic_api = new Graphic(this->mouse_info, this->gds, this->snapshoters);
             this->drawable = &this->gd_drawable->impl();
 
             if (this->capture_png) {
@@ -4832,10 +4837,10 @@ public:
         }
 
         if (this->capture_drawable) {
-            this->graphic_api->gds.push_back(*this->gd_drawable);
+            this->gds.push_back(*this->gd_drawable);
         }
         if (this->pnc) {
-            this->graphic_api->gds.push_back(this->pnc->graphic_to_file);
+            this->gds.push_back(this->pnc->graphic_to_file);
             this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->pnc));
             this->objs.push_back(this->pnc->nc);
             this->probes.push_back(this->pnc->graphic_to_file);
@@ -4849,12 +4854,12 @@ public:
         if (this->capture_drawable && this->pscrt) {
             this->pscrt->enable_rt_display = ini.get<cfg::video::rt_display>();
             this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
-            this->graphic_api->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
+            this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
         }
 
         if (this->capture_drawable && this->psc) {
             this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
-            this->graphic_api->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
+            this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
         }
 
         if (this->pkc) {
@@ -4878,13 +4883,13 @@ public:
 
         if (this->capture_drawable && this->pvc) {
             this->caps.push_back(this->pvc->vc);
-            this->graphic_api->snapshoters.push_back(this->pvc->preparing_vc);
+            this->snapshoters.push_back(this->pvc->preparing_vc);
             this->pvc->first_image.first_image_cap_elem = {this->caps, this->pvc->first_image};
-            this->pvc->first_image.first_image_gcap_elem = {this->graphic_api->snapshoters, this->pvc->first_image};
+            this->pvc->first_image.first_image_gcap_elem = {this->snapshoters, this->pvc->first_image};
         }
         if (this->capture_drawable && this->pvc_full) {
             this->caps.push_back(this->pvc_full->vc);
-            this->graphic_api->snapshoters.push_back(this->pvc_full->preparing_vc);
+            this->snapshoters.push_back(this->pvc_full->preparing_vc);
         }
         if (this->pmc) {
             this->caps.push_back(this->pmc->meta);
@@ -4990,7 +4995,7 @@ public:
 
     void add_graphic(gdi::GraphicApi & gd) {
         if (this->capture_drawable) {
-            this->graphic_api->gds.push_back(gd);
+            this->gds.push_back(gd);
         }
     }
 
