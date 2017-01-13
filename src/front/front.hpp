@@ -495,10 +495,10 @@ private:
                         auto color_convertor = [&color_ctx](BGRColor c) {
                             Enc enc;
                             switch (color_ctx.depth()) {
-                                case gdi::Depth::depth8() : return enc(decode_color8()(c, *color_ctx.palette()));
-                                case gdi::Depth::depth15(): return enc(decode_color15()(c));
-                                case gdi::Depth::depth16(): return enc(decode_color16()(c));
-                                case gdi::Depth::depth24(): return enc(decode_color24()(c));
+                                case gdi::Depth::depth8() : return enc(decode_color8_opaquerect()(c, *color_ctx.palette()));
+                                case gdi::Depth::depth15(): return enc(decode_color15_opaquerect()(c));
+                                case gdi::Depth::depth16(): return enc(decode_color16_opaquerect()(c));
+                                case gdi::Depth::depth24(): return enc(decode_color24_opaquerect()(c));
                                 case gdi::Depth::unspecified(): default: assert(!"unknown depth");
                             }
                             return RGBColor{};
