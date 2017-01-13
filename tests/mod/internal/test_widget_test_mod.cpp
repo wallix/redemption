@@ -25,6 +25,7 @@
 
 #define LOGNULL
 
+#include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 #include "../../front/fake_front.hpp"
@@ -52,8 +53,12 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     std::unique_ptr<mod_api> managed_mod(
         new Bouncer2Mod(front, 800, 600, font, true));
 
+    GCC::UserData::CSMonitor cs_monitor;
+
+    cs_monitor.monitorCount = 0;
+
     WidgetTestMod d(ini, front, 800, 600, Rect(0, 0, 799, 599),
-        std::move(managed_mod), client_execute);
+        std::move(managed_mod), client_execute, cs_monitor);
     d.draw_event(100001, front);
 /*
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
