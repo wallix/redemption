@@ -978,7 +978,6 @@ public:
                 ini.get<cfg::video::png_interval>(),
                 100u,
                 ini.get<cfg::video::png_limit>(),
-                false,
                 true
         };
         FlvParams flv_params = flv_params_from_ini(this->client_info.width, this->client_info.height, ini);

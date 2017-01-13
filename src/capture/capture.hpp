@@ -4643,8 +4643,8 @@ private:
     } * graphic_api;
     
     std::unique_ptr<WrmCaptureImpl> wrm_capture_obj;
-    std::unique_ptr<PngCapture> psc;
-    std::unique_ptr<PngCaptureRT> pscrt;
+    std::unique_ptr<PngCapture> png_capture_obj;
+    std::unique_ptr<PngCaptureRT> png_capture_real_time_obj;
     std::unique_ptr<KbdCaptureImpl> pkc;
     std::unique_ptr<SequencedVideoCaptureImpl> pvc;
     std::unique_ptr<FullVideoCaptureImpl> pvc_full;
@@ -4747,14 +4747,14 @@ public:
 
             if (this->capture_png) {
                 if (png_params.real_time_image_capture) {
-                    this->pscrt.reset(new PngCaptureRT(
+                    this->png_capture_real_time_obj.reset(new PngCaptureRT(
                         now, authentifier, this->gd_drawable->impl(),
                         record_tmp_path, basename, groupid,
                         png_params
                     ));
                 }
-                else if (png_params.force_capture_png_if_enable) {
-                    this->psc.reset(new PngCapture(
+                else {
+                    this->png_capture_obj.reset(new PngCapture(
                         now, authentifier, this->gd_drawable->impl(),
                         record_tmp_path, basename, groupid,
                         png_params));
@@ -4851,15 +4851,15 @@ public:
             }
         }
 
-        if (this->capture_drawable && this->pscrt) {
-            this->pscrt->enable_rt_display = ini.get<cfg::video::rt_display>();
-            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
-            this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->pscrt));
+        if (this->capture_drawable && this->png_capture_real_time_obj) {
+            this->png_capture_real_time_obj->enable_rt_display = ini.get<cfg::video::rt_display>();
+            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_real_time_obj));
+            this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_real_time_obj));
         }
 
-        if (this->capture_drawable && this->psc) {
-            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
-            this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->psc));
+        if (this->capture_drawable && this->png_capture_obj) {
+            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_obj));
+            this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_obj));
         }
 
         if (this->pkc) {
@@ -4910,8 +4910,8 @@ public:
 
     ~Capture() {
         if (this->is_replay_mod) {
-            this->psc.reset();
-            if (this->pscrt) { this->pscrt.reset(); }
+            this->png_capture_obj.reset();
+            if (this->png_capture_real_time_obj) { this->png_capture_real_time_obj.reset(); }
             this->wrm_capture_obj.reset();
             if (this->pvc) {
                 try {
@@ -4939,8 +4939,8 @@ public:
             this->ptc.reset();
             this->pkc.reset();
             this->pvc.reset();
-            this->psc.reset();
-            if (this->pscrt) { this->pscrt.reset(); }
+            this->png_capture_obj.reset();
+            if (this->png_capture_real_time_obj) { this->png_capture_real_time_obj.reset(); }
 
             if (this->capture_wrm) {
                 timeval now = tvtime();
@@ -4955,10 +4955,10 @@ public:
     }
 
     public:
-    // TODO: this could be done directly in external pscrt object
+    // TODO: this could be done directly in external png_capture_real_time_obj object
     void update_config(bool enable_rt_display) {
-        if (this->pscrt) {
-            this->pscrt->update_config(enable_rt_display);
+        if (this->png_capture_real_time_obj) {
+            this->png_capture_real_time_obj->update_config(enable_rt_display);
         }
     }
 
