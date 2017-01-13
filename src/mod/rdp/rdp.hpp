@@ -3215,6 +3215,7 @@ public:
             MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
             const char * reason = MCS::get_reason(mcs.reason);
             LOG(LOG_ERR, "mod::rdp::DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
+            this->front.recv_disconnect_provider_ultimatum();
 
             if (this->acl) {
                 this->end_session_reason.clear();

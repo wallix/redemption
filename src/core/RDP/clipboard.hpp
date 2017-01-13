@@ -2183,7 +2183,7 @@ public:
                     chunk.in_skip_bytes(4);
 
                     this->imageSize   = chunk.in_uint32_le();
-                    REDASSERT(this->imageSize == ((this->bpp/8) * this->height * this->width));
+                    //REDASSERT(this->imageSize == ((this->bpp/8) * this->height * this->width));
                     chunk.in_skip_bytes(8);
 
                     int skip(0);

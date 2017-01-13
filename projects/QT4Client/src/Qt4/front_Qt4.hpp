@@ -184,6 +184,7 @@ public:
     bool                 _replay;
     int                  _delta_time;
     int                  _current_screen_index;
+    bool                 _recv_disconnect_ultimatum;
 
 
     Front_Qt_API( bool param1
@@ -210,6 +211,7 @@ public:
     , _replay(false)
     , _delta_time(1000000)
     , _current_screen_index(0)
+    , _recv_disconnect_ultimatum(false)
     {
         this->_to_client_sender._front = this;
     }
@@ -285,7 +287,7 @@ public:
     };
 
     enum : int {
-        PASTE_TEXT_CONTENT_SIZE = PDU_MAX_SIZE
+        PASTE_TEXT_CONTENT_SIZE = PDU_MAX_SIZE - PDU_HEADER_SIZE
       , PASTE_PIC_CONTENT_SIZE  = PDU_MAX_SIZE - RDPECLIP::METAFILE_HEADERS_SIZE - PDU_HEADER_SIZE
     };
 
@@ -406,7 +408,7 @@ public:
 
         bool fileSystemCapacity[5] = { false };
 
-        const size_t drivesCount = 2;
+        const size_t drivesCount = 1;
 
         DeviceData drives[2];
 
@@ -465,10 +467,12 @@ public:
     void removeDriveDevice(const FileSystemData::DeviceData *, const size_t);
 
     virtual gdi::Depth const & order_depth() const override {
-        return gdi::Depth::from_bpp(0);
+        return gdi::Depth::from_bpp(this->mod_bpp);
     }
 
-    virtual void set_depths(gdi::Depth const & depths) override {}
+    virtual void recv_disconnect_provider_ultimatum() override;
+
+//     virtual void set_depths(gdi::Depth const & depths) override {}
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -511,9 +515,9 @@ public:
      };                                                     // +------+-------------------------------+
 
     struct Op_0x66 {
-        uchar op(const uchar src, const uchar dst) const {  // +------+-------------------------------+
+         uchar op(const uchar src, const uchar dst) const { // +------+-------------------------------+
             return (src ^ dst);                             // | 0x66 | ROP: 0x00660046 (SRCINVERT)   |
-        }                                                   // |      | RPN: DSx                      |
+         }                                                  // |      | RPN: DSx                      |
      };                                                     // +------+-------------------------------+
 
      struct Op_0x77 {
@@ -523,9 +527,9 @@ public:
      };                                                     // +------+-------------------------------+
 
     struct Op_0x88 {
-        uchar op(const uchar src, const uchar dst) const {  // +------+-------------------------------+
+         uchar op(const uchar src, const uchar dst) const { // +------+-------------------------------+
             return (src & dst);                             // | 0x88 | ROP: 0x008800C6 (SRCAND)      |
-        }                                                   // |      | RPN: DSa                      |
+         }                                                  // |      | RPN: DSa                      |
      };                                                     // +------+-------------------------------+
 
      struct Op_0x99 {
@@ -612,21 +616,21 @@ public:
 
     virtual void draw(const RDP::FrameMarker & order) override;
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) override;
-
-    virtual void draw(const RDP::RAIL::WindowIcon & order) override;
-
-    virtual void draw(const RDP::RAIL::CachedIcon & order) override;
-
-    virtual void draw(const RDP::RAIL::DeletedWindow & order) override;
-
-    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override;
-
-    virtual void draw(const RDP::RAIL::DeletedNotificationIcons & order) override;
-
-    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override;
-
-    virtual void draw(const RDP::RAIL::NonMonitoredDesktop & order) override;
+//     virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) override;
+//
+//     virtual void draw(const RDP::RAIL::WindowIcon & order) override;
+//
+//     virtual void draw(const RDP::RAIL::CachedIcon & order) override;
+//
+//     virtual void draw(const RDP::RAIL::DeletedWindow & order) override;
+//
+//     virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override;
+//
+//     virtual void draw(const RDP::RAIL::DeletedNotificationIcons & order) override;
+//
+//     virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override;
+//
+//     virtual void draw(const RDP::RAIL::NonMonitoredDesktop & order) override;
 
     virtual void draw(const RDPColCache   & cmd) override;
 

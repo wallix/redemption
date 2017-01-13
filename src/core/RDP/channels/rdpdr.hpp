@@ -887,6 +887,7 @@ class DeviceIORequest {
     uint32_t MajorFunction_ = 0;
     uint32_t MinorFunction_ = 0;
 
+
 public:
 
     DeviceIORequest()
@@ -2171,7 +2172,7 @@ struct DeviceReadResponse {
         }
         uint8_t data[0xffff];
         stream.in_copy_bytes(data, Length);
-        this->ReadData = std::string(reinterpret_cast<char *>(data), Length);
+        this->ReadData = std::string(reinterpret_cast<char *>(data), Length/2);
     }
 
     void log() {
@@ -4172,10 +4173,10 @@ public:
     void log() {
         LOG(LOG_INFO, "     Server Drive Query Directory Request:");
         LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes): %s", this->FsInformationClass_, this->get_FsInformationClass_name(this->FsInformationClass_));
-        LOG(LOG_INFO, "          * InitialQuery = 0x%02x (1 byte)", this->InitialQuery_);
-        LOG(LOG_INFO, "          * PathLength   = %d (4 bytes)", int(this->path.size()));
+        LOG(LOG_INFO, "          * InitialQuery       = 0x%02x (1 byte)", this->InitialQuery_);
+        LOG(LOG_INFO, "          * PathLength         = %d (4 bytes)", int(this->path.size()));
         LOG(LOG_INFO, "          * Padding - (23 byte) NOT USED");
-        LOG(LOG_INFO, "          * path         = \"%s\" (%d byte(s))", this->path.c_str(), int(this->path.size()));
+        LOG(LOG_INFO, "          * path               = \"%s\" (%d byte(s))", this->path.c_str(), int(this->path.size()));
     }
 };  // ServerDriveQueryDirectoryRequest
 
@@ -5003,11 +5004,13 @@ struct RdpDrStatus
         uint32_t MinorFunction() {
             return this->request.MinorFunction();
         }
+
+        uint32_t FileId() {
+            return this->request.FileId();
+        }
     };
 
     std::vector<DeviceIORequestData> requestList;
-
-
 
     void SetFsInformationClass(uint32_t FsInformationClass) {
         this->requestList[this->requestList.size()-1].FsInformationClass = FsInformationClass;
@@ -5021,33 +5024,42 @@ struct RdpDrStatus
         if (this->requestList.size() >=  10) {
             this->requestList.erase(this->requestList.begin());
         }
+
+        for (int i = 0; i < this->requestList.size(); i++) {
+            if (this->requestList[i].DeviceId() == request.DeviceId() && this->requestList[i].CompletionId() == request.CompletionId()) {
+                LOG(LOG_ERR, " Request %s has same ID than back received Request(%s)", request.MajorFunction(), this->requestList[i].MajorFunction());
+            }
+        }
         this->requestList.emplace_back<DeviceIORequestData>(request);
     }
 
     DeviceIORequestData get_completion_resquest(uint32_t deviceId, uint32_t completionId) {
-
         DeviceIORequestData res;
 
-        int index = -1;
         int size(this->requestList.size());
-
+        LOG(LOG_INFO, "**********************************");
+        LOG(LOG_INFO, "     Request List Size = %d", size);
+        LOG(LOG_INFO, "**********************************");
         for (int i = 0; i < size; i++) {
+            this->requestList[i].request.log();
             if (this->requestList[i].DeviceId() == deviceId && this->requestList[i].CompletionId() == completionId) {
                 res = this->requestList[i];
-                index = i;
+                this->requestList.erase(this->requestList.begin()+i);
+
+                //return res;
             }
         }
-
-        if (index != -1) {
-            this->requestList.erase(this->requestList.begin()+index);
-        }
+        LOG(LOG_INFO, "Can't find corresponding Request for this Response (DeviceId = %d, CompletionId = %d", deviceId, completionId);
 
         return res;
     }
 
+
+
     ~RdpDrStatus() {
         this->requestList.clear();
     }
+
 };
 
 
@@ -5059,7 +5071,9 @@ void streamLog( InStream & stream , RdpDrStatus & status)
 
     SharedHeader sharedHeader;
     sharedHeader.receive(s);
-    sharedHeader.log();
+    if (sharedHeader.packet_id != PacketId::PAKID_CORE_DEVICE_IOCOMPLETION) {
+        sharedHeader.log();
+    }
 
     switch (sharedHeader.component) {
 
@@ -5348,21 +5362,38 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                 }
                                 break;
                         }
+
+                        /*RdpDrStatus::DeviceIOResponseData back_response = status.get_completion_response(dior.DeviceId(), dior.CompletionId());
+                        if (back_response.DeviceId > 0) {
+                            streamLog(back_response.stream, status);
+                        }*/
                     }
+
                     break;
 
                 case PacketId::PAKID_CORE_DEVICE_IOCOMPLETION:
                     {
                         DeviceIOResponse dior;
                         dior.receive(s);
-                        dior.log();
 
+//                         LOG(LOG_INFO, "******************************************************");
+//                         LOG(LOG_INFO, "status.requestList.size = %d", status.requestList.size());
+//                         LOG(LOG_INFO, "******************************************************");
                         RdpDrStatus::DeviceIORequestData status_dior = status.get_completion_resquest(dior.DeviceId(), dior.CompletionId());
+//                         LOG(LOG_INFO, "******************************************************");
+//                         LOG(LOG_INFO, "status.requestList.size = %d", status.requestList.size());
+//                         LOG(LOG_INFO, "******************************************************");
 
                         if (status_dior.DeviceId() == 0) {
                             LOG(LOG_INFO, "Can't find corresponding Request for this Response (DeviceId = %d, CompletionId = %d", dior.DeviceId(), dior.CompletionId());
+                            /*RdpDrStatus::DeviceIOResponseData resp(stream.clone(), dior.DeviceId(), dior.CompletionId());
+                            status.setDeviceIOResponse(resp);*/
+
                             return;
                         }
+
+                        sharedHeader.log();
+                        dior.log();
 
                         switch (status_dior.MajorFunction()) {
                         case IRP_MJ_CREATE:
@@ -5414,7 +5445,7 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                 cdqvir.receive(s);
                                 cdqvir.log();
 
-                                if (dior.IoStatus() ==  0) {
+                                //if (dior.IoStatus() ==  0) {
                                     switch (status_dior.FsInformationClass) {
                                         case FileFsVolumeInformation:
                                             {
@@ -5451,7 +5482,7 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                             }
                                             break;
                                     }
-                                }
+                                //}
                             }
                             break;
                         case IRP_MJ_SET_VOLUME_INFORMATION:
@@ -5546,6 +5577,8 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                         break;
                                     case IRP_MN_NOTIFY_CHANGE_DIRECTORY:
                                         {
+                                            //std::cout << "DeviceId = " << status_dior.DeviceId() << " FileId = " << status_dior.FileId() << " CompletionId = " << status_dior.CompletionId() << " MajorFunction = " << status_dior.MajorFunction() << " MinorFunction = " << status_dior.MinorFunction() << std::endl;
+
                                             ClientDriveNotifyChangeDirectoryResponse cdncdr;
                                             cdncdr.receive(s);
                                             cdncdr.log();

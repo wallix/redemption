@@ -99,17 +99,20 @@ public:
 
     void drop_connexion() {
         this->_front->emptyLocalBuffer();
-        TimeSystem timeobj;
+
+        if (this->_sckRead != nullptr) {
+            delete (this->_sckRead);
+            this->_sckRead = nullptr;
+        }
+
         if (this->_callback != nullptr) {
+            TimeSystem timeobj;
             static_cast<mod_api*>(this->_callback)->disconnect(timeobj.get_time().tv_sec);
             delete (this->_callback);
             this->_callback = nullptr;
             this->_front->_callback = nullptr;
         }
-        if (this->_sckRead != nullptr) {
-            delete (this->_sckRead);
-            this->_sckRead = nullptr;
-        }
+
         if (this->_sck != nullptr) {
             delete (this->_sck);
             this->_sck = nullptr;
