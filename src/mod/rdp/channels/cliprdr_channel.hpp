@@ -312,7 +312,7 @@ private:
                     const std::string data_to_dump(
                         ::char_ptr_cast(chunk.get_current()),
                         length_of_data_to_dump);
-                    LOG(LOG_INFO, "%s", data_to_dump.c_str());
+                    LOG(LOG_INFO, "%s", data_to_dump);
                 }
                 break;
 */
@@ -959,7 +959,7 @@ public:
                         max_length_of_data_to_dump);
                     const std::string data_to_dump(::char_ptr_cast(
                         chunk.get_current()), length_of_data_to_dump);
-                    LOG(LOG_INFO, "%s", data_to_dump.c_str());
+                    LOG(LOG_INFO, "%s", data_to_dump);
                 }
                 break;
 */
@@ -983,7 +983,7 @@ public:
                         utf8_string, size_of_utf8_string);
                     const std::string data_to_dump(
                         ::char_ptr_cast(utf8_string), length_of_utf8_string);
-                    LOG(LOG_INFO, "%s", data_to_dump.c_str());
+                    LOG(LOG_INFO, "%s", data_to_dump);
                 }
                 break;
 

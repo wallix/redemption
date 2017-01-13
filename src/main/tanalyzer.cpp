@@ -54,6 +54,7 @@
 #include "core/RDP/SaveSessionInfoPDU.hpp"
 #include "capture/transparentplayer.hpp"
 #include "main/version.hpp"
+#include "utils/sugar/local_fd.hpp"
 #include "program_options/program_options.hpp"
 
 struct GraphicNull
@@ -145,7 +146,7 @@ public:
     bool must_be_stop_capture() override { REDASSERT(false); return false; }
 
     // FrontAPI
-    const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
+    const CHANNELS::ChannelDefArray & get_channel_list() const override {
         return this->channel_list;
     }
     void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * /*data*/
@@ -616,21 +617,17 @@ int main(int argc, char * argv[]) {
         return 1;
     }
 
-    int fd = open(input_filename.c_str(), O_RDONLY);
-    if (fd != -1) {
-        {
-            InFileTransport trans(fd);
-            Analyzer        analyzer;
+    local_fd file(input_filename.c_str(), O_RDONLY);
+    if (file.is_open()) {
+        InFileTransport trans(file.fd());
+        Analyzer        analyzer;
 
-            TransparentPlayer player(&trans, &analyzer);
+        TransparentPlayer player(&trans, &analyzer);
 
-            while (player.interpret_chunk(/*real_time = */false));
+        while (player.interpret_chunk(/*real_time = */false));
 
-            LOG(LOG_INFO, "");
-            analyzer.show_statistic();
-        }
-
-        close(fd);
+        std::cout << "\n";
+        analyzer.show_statistic();
     }
     else {
         std::cout << "Failed to open input file: " << input_filename << "\n\n";

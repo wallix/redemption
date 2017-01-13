@@ -181,7 +181,7 @@ private:
                 if (this->verbose & Verbose::bmp_info) {
                     LOG( LOG_INFO
                        , "BmpCachePersister::preload_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                       , key.str().c_str(), original_bpp, cx, cy, bmp_size);
+                       , key.str(), original_bpp, cx, cy, bmp_size);
                 }
 
                 REDASSERT(this->bmp_map[cache_id][key].is_valid() == false);
@@ -227,7 +227,7 @@ public:
             container_type::iterator it = this->bmp_map[cache_id].find(key);
             if (it != this->bmp_map[cache_id].end()) {
                 if (this->verbose & Verbose::bmp_info) {
-                    LOG(LOG_INFO, "BmpCachePersister: bitmap found. key=\"%s\"", key.str().c_str());
+                    LOG(LOG_INFO, "BmpCachePersister: bitmap found. key=\"%s\"", key.str());
                 }
 
                 if (this->bmp_cache.get_cache(cache_id).size() > cache_index) {
@@ -237,7 +237,7 @@ public:
                 this->bmp_map[cache_id].erase(it);
             }
             else if (this->verbose & Verbose::bmp_info) {
-                LOG(LOG_WARNING, "BmpCachePersister: bitmap not found!!! key=\"%s\"", key.str().c_str());
+                LOG(LOG_WARNING, "BmpCachePersister: bitmap not found!!! key=\"%s\"", key.str());
             }
         }
     }
@@ -329,7 +329,7 @@ private:
                     map_key key(sig.sig_8);
                     LOG( LOG_INFO
                         , "BmpCachePersister::load_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                        , key.str().c_str(), original_bpp, cx, cy, bmp_size);
+                        , key.str(), original_bpp, cx, cy, bmp_size);
                 }
 
                 Bitmap bmp(bmp_cache.bpp, original_bpp, &original_palette, cx, cy, stream.get_data(), stream.get_data() - end);
@@ -416,7 +416,7 @@ private:
                 if (bool(verbose & Verbose::bmp_info)) {
                     LOG( LOG_INFO
                        , "BmpCachePersister::save_to_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                       , key.str().c_str(), bmp.bpp(), bmp.cx(), bmp.cy(), bmp_size);
+                       , key.str(), bmp.bpp(), bmp.cx(), bmp.cy(), bmp_size);
                 }
 
                 stream.out_copy_bytes(sig, 8);

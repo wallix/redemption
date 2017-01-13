@@ -348,7 +348,7 @@ static inline int check_encrypted_or_checksumed(
         std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
         std::string const full_part_filename = mwrm_path + meta_line_wrm_filename;
 
-//        LOG(LOG_INFO, "checking part %s", full_part_filename.c_str());
+//        LOG(LOG_INFO, "checking part %s", full_part_filename);
 
 
         bool has_mismatch_stat_mwrm = false;
@@ -403,13 +403,13 @@ static inline int check_encrypted_or_checksumed(
         // out_meta_sequence_filename_buf_impl ctor
         transbuf::ofile_buf_out mwrm_file_cp;
         if (mwrm_file_cp.open(full_mwrm_filename_tmp.c_str(), S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
-            LOG(LOG_ERR, "Failed to open meta file %s", full_mwrm_filename_tmp.c_str());
+            LOG(LOG_ERR, "Failed to open meta file %s", full_mwrm_filename_tmp);
             throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
         }
         local_auto_remove auto_remove{full_mwrm_filename_tmp.c_str()};
         if (chmod(full_mwrm_filename_tmp.c_str(), S_IRUSR | S_IRGRP) == -1) {
             LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                , full_mwrm_filename_tmp.c_str()
+                , full_mwrm_filename_tmp
                 , "u+r, g+r"
                 , strerror(errno), errno);
             return 1;
@@ -629,7 +629,7 @@ inline void shutdown(int sig)
     program_requested_to_shutdown = true;
 }
 
-inline void init_signals(void)
+inline void init_signals()
 {
     struct sigaction sa;
 
@@ -1469,10 +1469,10 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
     recorder.full_path = recorder.mwrm_path + recorder.input_filename;
 
     if (verbose) {
-        LOG(LOG_INFO, "Input file full_path=\"%s\"", recorder.full_path.c_str());
-        LOG(LOG_INFO, "Input file base name=\"%s\"", recorder.input_filename.c_str());
-        LOG(LOG_INFO, "hash_path=\"%s\"", recorder.hash_path.c_str());
-        LOG(LOG_INFO, "mwrm_path=\"%s\"", recorder.mwrm_path.c_str());
+        LOG(LOG_INFO, "Input file full_path=\"%s\"", recorder.full_path);
+        LOG(LOG_INFO, "Input file base name=\"%s\"", recorder.input_filename);
+        LOG(LOG_INFO, "hash_path=\"%s\"", recorder.hash_path);
+        LOG(LOG_INFO, "mwrm_path=\"%s\"", recorder.mwrm_path);
     }
 
     if (is_encrypted_file(recorder.full_path.c_str(), recorder.infile_is_encrypted) == -1) {

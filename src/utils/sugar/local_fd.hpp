@@ -33,7 +33,7 @@ struct local_fd
     local_fd(local_fd const &) = delete;
     local_fd & operator=(local_fd const &) = delete;
 
-    local_fd(int fd) noexcept : fd_(fd) {}
+    explicit local_fd(int fd) noexcept : fd_(fd) {}
 
     local_fd(char const * pathname, int flags) noexcept
     : fd_(::open(pathname, flags))

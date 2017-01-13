@@ -608,13 +608,13 @@ private:
 
     template<class Cmd>
     using cmd_not_implementing_move = std::integral_constant<bool,
-            std::is_same<Cmd, RDPBitmapData       >::value ||
-            std::is_same<Cmd, RDPEllipseCB        >::value ||
-            std::is_same<Cmd, RDPEllipseSC        >::value ||
-            std::is_same<Cmd, RDPPolygonCB        >::value ||
-            std::is_same<Cmd, RDPPolygonSC        >::value ||
-            std::is_same<Cmd, RDPPolyline         >::value ||
-            std::is_same<Cmd, RDPGlyphIndex       >::value ||
+            std::is_same<Cmd, RDPBitmapData      >::value ||
+            std::is_same<Cmd, RDPEllipseCB       >::value ||
+            std::is_same<Cmd, RDPEllipseSC       >::value ||
+            std::is_same<Cmd, RDPPolygonCB       >::value ||
+            std::is_same<Cmd, RDPPolygonSC       >::value ||
+            std::is_same<Cmd, RDPPolyline        >::value ||
+            std::is_same<Cmd, RDPGlyphIndex      >::value ||
             std::is_same<Cmd, RDP::RDPMultiScrBlt>::value
         >;
 
