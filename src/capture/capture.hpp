@@ -4143,7 +4143,7 @@ public:
                 , gdi::DumpPng24Api & dump_png24
                 , WrmCompressionAlgorithm wrm_compression_algorithm
                 , SendInput send_input = SendInput::NO
-                , Verbose verbose = Verbose::none)
+                , GraphicToFile::Verbose verbose = GraphicToFile::Verbose::none)
             : GraphicToFile(now, trans, width, height,
                             capture_bpp,
                             bmp_cache, gly_cache, ptr_cache,
@@ -4268,7 +4268,9 @@ public:
         CryptoContext & cctx, Random & rnd,
         const char * record_path, const char * hash_path, const char * basename,
         int groupid, auth_api * authentifier,
-        RDPDrawable & drawable, const Inifile & ini
+        RDPDrawable & drawable, const Inifile & ini,
+        WrmCompressionAlgorithm wrm_compression_algorithm,
+        GraphicToFile::Verbose wrm_verbose = GraphicToFile::Verbose::none
     )
     : bmp_cache(
         BmpCache::Recorder, capture_bpp, 3, false,
@@ -4283,14 +4285,8 @@ public:
     , graphic_to_file(
         now, *this->trans_variant.trans, drawable.width(), drawable.height(), capture_bpp,
         this->bmp_cache, this->gly_cache, this->ptr_cache, this->dump_png24_api,
-        ini.get<cfg::video::wrm_compression_algorithm>(), GraphicToFile::SendInput::YES,
-        to_verbose_flags(ini.get<cfg::debug::capture>())
-        | (ini.get<cfg::debug::primary_orders>()
-            ? GraphicToFile::Verbose::primary_orders   : GraphicToFile::Verbose::none)
-        | (ini.get<cfg::debug::secondary_orders>()
-            ? GraphicToFile::Verbose::secondary_orders : GraphicToFile::Verbose::none)
-        | (ini.get<cfg::debug::bitmap_update>()
-            ? GraphicToFile::Verbose::bitmap_update    : GraphicToFile::Verbose::none)
+        wrm_compression_algorithm, GraphicToFile::SendInput::YES,
+        wrm_verbose
     )
     , nc(this->graphic_to_file, now, ini.get<cfg::video::frame_interval>(), ini.get<cfg::video::break_interval>())
     , kbd_input_mask_enabled{false}
@@ -4668,10 +4664,19 @@ public:
                         LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
                     }
                 }
+                
+                GraphicToFile::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
+                    | (ini.get<cfg::debug::primary_orders>() ?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
+                    | (ini.get<cfg::debug::secondary_orders>() ?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
+                    | (ini.get<cfg::debug::bitmap_update>() ?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
+                    
+                WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
+
                 this->wrm_capture_obj.reset(new WrmCaptureImpl(
                     now, wrm_params, capture_bpp, ini.get<cfg::globals::trace_type>(),
                     cctx, rnd, record_path, hash_path, basename,
-                    groupid, authentifier, *this->gd_drawable, ini
+                    groupid, authentifier, *this->gd_drawable, 
+                    ini, wrm_compression_algorithm, wrm_verbose
                 ));
             }
 
