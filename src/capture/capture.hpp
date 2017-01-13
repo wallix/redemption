@@ -4642,7 +4642,7 @@ private:
         {}
     } * graphic_api;
     
-    std::unique_ptr<WrmCaptureImpl> pnc;
+    std::unique_ptr<WrmCaptureImpl> wrm_capture_obj;
     std::unique_ptr<PngCapture> psc;
     std::unique_ptr<PngCaptureRT> pscrt;
     std::unique_ptr<KbdCaptureImpl> pkc;
@@ -4771,7 +4771,7 @@ public:
                         LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
                     }
                 }
-                this->pnc.reset(new WrmCaptureImpl(
+                this->wrm_capture_obj.reset(new WrmCaptureImpl(
                     now, wrm_params, capture_bpp, ini.get<cfg::globals::trace_type>(),
                     cctx, rnd, record_path, hash_path, basename,
                     groupid, authentifier, *this->gd_drawable, ini
@@ -4839,15 +4839,15 @@ public:
         if (this->capture_drawable) {
             this->gds.push_back(*this->gd_drawable);
         }
-        if (this->pnc) {
-            this->gds.push_back(this->pnc->graphic_to_file);
-            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->pnc));
-            this->objs.push_back(this->pnc->nc);
-            this->probes.push_back(this->pnc->graphic_to_file);
+        if (this->capture_wrm) {
+            this->gds.push_back(this->wrm_capture_obj->graphic_to_file);
+            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->wrm_capture_obj));
+            this->objs.push_back(this->wrm_capture_obj->nc);
+            this->probes.push_back(this->wrm_capture_obj->graphic_to_file);
 
             if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm)) {
-                this->pnc->kbd_element = {this->kbds, this->pnc->graphic_to_file};
-                this->pnc->graphic_to_file.impl = this->pnc.get();
+                this->wrm_capture_obj->kbd_element = {this->kbds, this->wrm_capture_obj->graphic_to_file};
+                this->wrm_capture_obj->graphic_to_file.impl = this->wrm_capture_obj.get();
             }
         }
 
@@ -4912,7 +4912,7 @@ public:
         if (this->is_replay_mod) {
             this->psc.reset();
             if (this->pscrt) { this->pscrt.reset(); }
-            this->pnc.reset();
+            this->wrm_capture_obj.reset();
             if (this->pvc) {
                 try {
                     this->pvc->encoding_video_frame();
@@ -4942,10 +4942,10 @@ public:
             this->psc.reset();
             if (this->pscrt) { this->pscrt.reset(); }
 
-            if (this->pnc) {
+            if (this->capture_wrm) {
                 timeval now = tvtime();
-                this->pnc->send_timestamp_chunk(now, false);
-                this->pnc.reset();
+                this->wrm_capture_obj->send_timestamp_chunk(now, false);
+                this->wrm_capture_obj.reset();
             }
         }
     }
