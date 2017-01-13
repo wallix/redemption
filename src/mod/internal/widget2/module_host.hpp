@@ -465,9 +465,9 @@ public:
 
         this->update_rects();
 
-        Rect new_rect = this->get_rect();
-
         if (!old_rect.isempty()) {
+            Rect new_rect = this->get_rect();
+
             this->screen_copy(old_rect, new_rect);
         }
         else {
@@ -476,7 +476,8 @@ public:
     }
 
     void set_wh(uint16_t w, uint16_t h) override {
-        Rect old_rect = this->get_rect();
+        Rect old_mod_visible_rect = this->mod_visible_rect;
+        Rect old_rect             = this->get_rect();
 
         if (this->hscroll_added) {
             old_rect.cy -= this->hscroll.cy();
@@ -489,15 +490,33 @@ public:
 
         this->update_rects();
 
+        Rect new_mod_visible_rect = this->mod_visible_rect;
         Rect new_rect = this->get_rect();
+
+        Rect intersect_mod_visible_rect = new_mod_visible_rect.intersect(old_mod_visible_rect);
+
+        old_rect.x  += intersect_mod_visible_rect.x - old_mod_visible_rect.x;
+        old_rect.y  += intersect_mod_visible_rect.y - old_mod_visible_rect.y;
+        old_rect.cx  = intersect_mod_visible_rect.cx;
+        old_rect.cy  = intersect_mod_visible_rect.cy;
+
+        new_rect.x  += intersect_mod_visible_rect.x - new_mod_visible_rect.x;
+        new_rect.y  += intersect_mod_visible_rect.y - new_mod_visible_rect.y;
+        new_rect.cx  = intersect_mod_visible_rect.cx;
+        new_rect.cy  = intersect_mod_visible_rect.cy;
 
         SubRegion region;
 
-        region.rects.push_back(new_rect);
-        region.subtract_rect(old_rect);
+        region.rects.push_back(this->get_rect());
+
+        if (!old_rect.isempty()) {
+            this->screen_copy(old_rect, new_rect);
+
+            region.subtract_rect(new_rect);
+        }
 
         for (const Rect & rect : region.rects) {
-            this->rdp_input_invalidate(rect.offset(new_rect.x - old_rect.x, new_rect.y - old_rect.y));
+            this->rdp_input_invalidate(rect/*.offset(new_rect.x - old_rect.x, new_rect.y - old_rect.y)*/);
         }
 
         if (this->hscroll_added) {
