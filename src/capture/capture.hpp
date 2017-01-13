@@ -4648,7 +4648,7 @@ private:
         {
         }
 
-        Graphic & get_graphic_api() { return this->graphic_api; }
+//        Graphic & get_graphic_api() { return this->graphic_api; }
     } * gd;
     
     std::unique_ptr<WrmCaptureImpl> pnc;
