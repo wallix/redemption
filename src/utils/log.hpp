@@ -132,15 +132,11 @@ char const * log_value(redemption_log_s<n> && x) { return x.data; }
 #else
 
 # ifndef REDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING
-    REDEMPTION_DIAGNOSTIC_PUSH
-#   ifdef __clang__
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wpedantic")
-#       warning Cannot checked format in "LOG" (no boost preprocessor)
+#   if defined __GNUC__ || defined __clang__
+#       pragma GCC warning "Cannot checked format in \"LOG\" (no boost preprocessor)"
 #   else
-        REDEMPTION_DIAGNOSTIC_GCC_WARNING("-Wunknown-pragmas")
-#       pragma warning Cannot checked format in "LOG" (no boost/preprocessor)
+#       warning "Cannot checked format in \"LOG\" (no boost preprocessor)"
 #   endif
-    REDEMPTION_DIAGNOSTIC_POP
 # endif
 
 # define LOG_REDEMPTION_FORMAT_CHECK(...) void()
