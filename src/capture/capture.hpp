@@ -4535,7 +4535,9 @@ private:
         , gds(gds)
         , snapshoters(snapshoters)
         {}
-    } * graphic_api;
+    };
+    
+    std::unique_ptr<Graphic> graphic_api;
     
     std::unique_ptr<WrmCaptureImpl> wrm_capture_obj;
     std::unique_ptr<PngCapture> png_capture_obj;
@@ -4637,7 +4639,7 @@ public:
 
         if (this->capture_drawable) {
             this->gd_drawable = new RDPDrawable(width, height);
-            this->graphic_api = new Graphic(this->mouse_info, this->gds, this->snapshoters);
+            this->graphic_api.reset(new Graphic(this->mouse_info, this->gds, this->snapshoters));
             this->drawable = &this->gd_drawable->impl();
 
             if (this->capture_png) {
@@ -4884,7 +4886,7 @@ public:
     }
 
     gdi::GraphicApi * get_graphic_api() const {
-        return this->graphic_api;
+        return this->graphic_api.get();
     }
 
     void add_graphic(gdi::GraphicApi & gd) {
