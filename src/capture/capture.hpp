@@ -1900,29 +1900,19 @@ private:
 };
 
 
-template<class Inherit>
-class TextKbd : public gdi::KbdInputApi
+
+
+class SyslogKbd : public gdi::KbdInputApi, public gdi::CaptureApi
 {
-protected:
+    uint8_t kbd_buffer[1024];
     OutStream kbd_stream;
     bool keyboard_input_mask_enabled = false;
+    timeval last_snapshot;
 
-    explicit TextKbd(array_view_u8 buffer)
-    : kbd_stream(buffer)
-    {}
-
-public:
-    void enable_kbd_input_mask(bool enable) override {
-        if (this->keyboard_input_mask_enabled != enable) {
-            this->inherit_flush();
-            this->keyboard_input_mask_enabled = enable;
-        }
-    }
-
-protected:
+private:
     void write_shadow_keys() {
         if (!this->kbd_stream.has_room(1)) {
-            this->inherit_flush();
+            this->flush();
         }
         this->kbd_stream.out_uint8('*');
     }
@@ -1945,33 +1935,28 @@ protected:
         );
     }
 
-private:
     void copy_bytes(const_bytes_array bytes) {
         if (this->kbd_stream.tailroom() < bytes.size()) {
-            this->inherit_flush();
+            this->flush();
         }
         this->kbd_stream.out_copy_bytes(bytes.data(), std::min(this->kbd_stream.tailroom(), bytes.size()));
     }
 
-    void inherit_flush() {
-        static_cast<Inherit&>(*this).flush();
-    }
-};
-
-
-class SyslogKbd : public TextKbd<SyslogKbd>, public gdi::CaptureApi
-{
-    uint8_t kbd_buffer[1024];
-    timeval last_snapshot;
-
 public:
     explicit SyslogKbd(timeval const & now)
-    : TextKbd<SyslogKbd>(this->kbd_buffer)
+    : kbd_stream(this->kbd_buffer)
     , last_snapshot(now)
     {}
 
     ~SyslogKbd() {
         this->flush();
+    }
+
+    void enable_kbd_input_mask(bool enable) override {
+        if (this->keyboard_input_mask_enabled != enable) {
+            this->flush();
+            this->keyboard_input_mask_enabled = enable;
+        }
     }
 
     bool kbd_input(const timeval& /*now*/, uint32_t keys) override {
@@ -2008,7 +1993,6 @@ private:
         }
 
         this->flush();
-
         this->last_snapshot = now;
 
         return time_to_wait;
@@ -2021,16 +2005,51 @@ namespace {
     constexpr array_view_const_char session_log_suffix() { return cstr_array_view("'"); }
 }
 
-class SessionLogKbd : public TextKbd<SessionLogKbd>, public gdi::CaptureProbeApi
+
+class SessionLogKbd : public gdi::KbdInputApi, public gdi::CaptureProbeApi
 {
+    OutStream kbd_stream;
+    bool keyboard_input_mask_enabled = false;
     static const std::size_t buffer_size = 64;
     uint8_t buffer[buffer_size + session_log_prefix().size() + session_log_suffix().size() + 1];
     bool is_probe_enabled_session = false;
     auth_api & authentifier;
 
+    void copy_bytes(const_bytes_array bytes) {
+        if (this->kbd_stream.tailroom() < bytes.size()) {
+            this->flush();
+        }
+        this->kbd_stream.out_copy_bytes(bytes.data(), std::min(this->kbd_stream.tailroom(), bytes.size()));
+    }
+
+    void write_shadow_keys() {
+        if (!this->kbd_stream.has_room(1)) {
+            this->flush();
+        }
+        this->kbd_stream.out_uint8('*');
+    }
+
+    void write_keys(uint32_t uchar) {
+        filtering_kbd_input(
+            uchar,
+            [this](uint32_t uchar) {
+                uint8_t buf_char[5];
+                if (uchar == '/') {
+                    this->copy_bytes({"//", 2});
+                }
+                else if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
+                    this->copy_bytes({buf_char, char_len});
+                }
+            },
+            [this](array_view_const_char no_printable_str) {
+                this->copy_bytes(no_printable_str);
+            }
+        );
+    }
+
 public:
     explicit SessionLogKbd(auth_api & authentifier)
-    : TextKbd<SessionLogKbd>({this->buffer + session_log_prefix().size(), buffer_size})
+    : kbd_stream{this->buffer + session_log_prefix().size(), buffer_size}
     , authentifier(authentifier)
     {
         memcpy(this->buffer, session_log_prefix().data(), session_log_prefix().size());
@@ -2050,6 +2069,13 @@ public:
             this->write_keys(uchar);
         }
         return true;
+    }
+
+    void enable_kbd_input_mask(bool enable) override {
+        if (this->keyboard_input_mask_enabled != enable) {
+            this->flush();
+            this->keyboard_input_mask_enabled = enable;
+        }
     }
 
     void flush() {
@@ -2381,24 +2407,6 @@ namespace gdi {
 }
 
 
-class KbdCaptureImpl
-{
-public:
-    auth_api * authentifier;
-    SyslogKbd syslog_kbd;
-    SessionLogKbd session_log_kbd;
-    PatternKbd pattern_kbd;
-
-    KbdCaptureImpl(const timeval & now, auth_api * authentifier, const char * pattern_kill, const char * pattern_notify, int verbose)
-    : authentifier(authentifier)
-    , syslog_kbd(now)
-    , session_log_kbd(*authentifier)
-    , pattern_kbd(authentifier,
-        pattern_kill,
-        pattern_notify,
-        verbose)
-    {}
-};
 
 struct MouseTrace
 {
@@ -3107,8 +3115,11 @@ namespace {
 * $date ' ' [+-] ' ' $title? '[Kbd]' $kbd
 * $date ' - ' $line
 */
-class SessionMeta final : public TextKbd<SessionMeta>, public gdi::CaptureApi, public gdi::CaptureProbeApi
+
+class SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureApi, public gdi::CaptureProbeApi
 {
+    OutStream kbd_stream;
+    bool keyboard_input_mask_enabled = false;
     uint8_t kbd_buffer[1024];
     timeval last_snapshot;
     time_t last_flush;
@@ -3118,12 +3129,43 @@ class SessionMeta final : public TextKbd<SessionMeta>, public gdi::CaptureApi, p
     char current_seperator = '-';
     bool is_probe_enabled_session = false;
 
+    void write_shadow_keys() {
+        if (!this->kbd_stream.has_room(1)) {
+            this->flush();
+        }
+        this->kbd_stream.out_uint8('*');
+    }
+
+    void write_keys(uint32_t uchar) {
+        filtering_kbd_input(
+            uchar,
+            [this](uint32_t uchar) {
+                uint8_t buf_char[5];
+                if (uchar == '/') {
+                    this->copy_bytes({"//", 2});
+                }
+                else if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
+                    this->copy_bytes({buf_char, char_len});
+                }
+            },
+            [this](array_view_const_char no_printable_str) {
+                this->copy_bytes(no_printable_str);
+            }
+        );
+    }
+
+    void copy_bytes(const_bytes_array bytes) {
+        if (this->kbd_stream.tailroom() < bytes.size()) {
+            this->flush();
+        }
+        this->kbd_stream.out_copy_bytes(bytes.data(), std::min(this->kbd_stream.tailroom(), bytes.size()));
+    }
+
 public:
     SessionMeta(const timeval & now, Transport & trans)
-    : TextKbd<SessionMeta>({
+    : kbd_stream{
         this->kbd_buffer + session_meta_kbd_prefix().size(),
-        sizeof(this->kbd_buffer) - session_meta_kbd_prefix().size() - session_meta_kbd_suffix().size()
-    })
+        sizeof(this->kbd_buffer) - session_meta_kbd_prefix().size() - session_meta_kbd_suffix().size()}
     , last_snapshot(now)
     , last_flush(now.tv_sec)
     , trans(trans)
@@ -3136,6 +3178,13 @@ public:
 
     ~SessionMeta() {
         this->send_kbd();
+    }
+
+    void enable_kbd_input_mask(bool enable) override {
+        if (this->keyboard_input_mask_enabled != enable) {
+            this->flush();
+            this->keyboard_input_mask_enabled = enable;
+        }
     }
 
     bool kbd_input(const timeval& /*now*/, uint32_t uchar) override {
@@ -3194,7 +3243,6 @@ private:
         return time_to_wait;
     }
 
-    friend TextKbd<SessionMeta>;
     void flush() {
         this->send_kbd();
     }
@@ -4538,7 +4586,11 @@ private:
     std::unique_ptr<WrmCaptureImpl> wrm_capture_obj;
     std::unique_ptr<PngCapture> png_capture_obj;
     std::unique_ptr<PngCaptureRT> png_capture_real_time_obj;
-    std::unique_ptr<KbdCaptureImpl> kbd_capture_obj;
+
+    std::unique_ptr<SyslogKbd> syslog_kbd_capture_obj;
+    std::unique_ptr<SessionLogKbd> session_log_kbd_capture_obj;
+    std::unique_ptr<PatternKbd> pattern_kbd_capture_obj;
+
     std::unique_ptr<SequencedVideoCaptureImpl> sequenced_video_capture_obj;
     std::unique_ptr<FullVideoCaptureImpl> full_video_capture_obj;
     std::unique_ptr<MetaCaptureImpl> meta_capture_obj;
@@ -4635,6 +4687,8 @@ public:
 
         if (this->capture_drawable) {
             this->gd_drawable = new RDPDrawable(width, height);
+            this->gds.push_back(*this->gd_drawable);
+
             this->graphic_api.reset(new Graphic(this->mouse_info, this->gds, this->snapshoters));
             this->drawable = &this->gd_drawable->impl();
 
@@ -4733,14 +4787,12 @@ public:
             }
         }
 
-        // TODO this->kbd_capture_obj = Kbd::construct(now, authentifier, ini); ?
         if (capture_kbd) {
-            this->kbd_capture_obj.reset(new KbdCaptureImpl(now, authentifier, ini.get<cfg::context::pattern_kill>().c_str(), ini.get<cfg::context::pattern_notify>().c_str(), ini.get<cfg::debug::capture>()));
+            this->syslog_kbd_capture_obj.reset(new SyslogKbd(now));
+            this->session_log_kbd_capture_obj.reset(new SessionLogKbd(*authentifier));
+            this->pattern_kbd_capture_obj.reset(new PatternKbd(authentifier, ini.get<cfg::context::pattern_kill>().c_str(), ini.get<cfg::context::pattern_notify>().c_str(), ini.get<cfg::debug::capture>()));
         }
 
-        if (this->capture_drawable) {
-            this->gds.push_back(*this->gd_drawable);
-        }
         if (this->capture_wrm) {
             this->gds.push_back(this->wrm_capture_obj->graphic_to_file);
             this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->wrm_capture_obj));
@@ -4763,22 +4815,27 @@ public:
             this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_obj));
         }
 
-        if (this->kbd_capture_obj) {
+        if (this->syslog_kbd_capture_obj.get()) {
             if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)) {
-                this->kbds.push_back(this->kbd_capture_obj->syslog_kbd);
-                this->caps.push_back(this->kbd_capture_obj->syslog_kbd);
+                this->kbds.push_back(*this->syslog_kbd_capture_obj.get());
+                this->caps.push_back(*this->syslog_kbd_capture_obj.get());
             }
-
-            if (this->kbd_capture_obj->authentifier && ini.get<cfg::session_log::enable_session_log>() &&
+        }
+        
+        if (this->session_log_kbd_capture_obj.get())
+        {
+            if (authentifier && ini.get<cfg::session_log::enable_session_log>() &&
                 (ini.get<cfg::session_log::keyboard_input_masking_level>()
                  != ::KeyboardInputMaskingLevel::fully_masked)
             ) {
-                this->kbds.push_back(this->kbd_capture_obj->session_log_kbd);
-                this->probes.push_back(this->kbd_capture_obj->session_log_kbd);
+                this->kbds.push_back(*this->session_log_kbd_capture_obj.get());
+                this->probes.push_back(*this->session_log_kbd_capture_obj.get());
             }
+        }
 
-            if (this->kbd_capture_obj->pattern_kbd.contains_pattern()) {
-                this->kbds.push_back(this->kbd_capture_obj->pattern_kbd);
+        if (this->pattern_kbd_capture_obj.get()){
+            if (this->pattern_kbd_capture_obj->contains_pattern()) {
+                this->kbds.push_back(*this->pattern_kbd_capture_obj.get());
             }
         }
 
@@ -4838,7 +4895,9 @@ public:
         }
         else {
             this->title_capture_obj.reset();
-            this->kbd_capture_obj.reset();
+            this->session_log_kbd_capture_obj.reset();
+            this->syslog_kbd_capture_obj.reset();
+            this->pattern_kbd_capture_obj.reset();
             this->sequenced_video_capture_obj.reset();
             this->png_capture_obj.reset();
             if (this->png_capture_real_time_obj) { this->png_capture_real_time_obj.reset(); }
