@@ -4317,6 +4317,8 @@ public:
         const char * record_path, const char * hash_path, const char * basename,
         int groupid, auth_api * authentifier,
         RDPDrawable & drawable, const Inifile & ini,
+        std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval,
+        std::chrono::seconds break_interval,
         WrmCompressionAlgorithm wrm_compression_algorithm,
         GraphicToFile::Verbose wrm_verbose = GraphicToFile::Verbose::none
     )
@@ -4336,7 +4338,7 @@ public:
         wrm_compression_algorithm, GraphicToFile::SendInput::YES,
         wrm_verbose
     )
-    , nc(this->graphic_to_file, now, ini.get<cfg::video::frame_interval>(), ini.get<cfg::video::break_interval>())
+    , nc(this->graphic_to_file, now, frame_interval, break_interval)
     , kbd_input_mask_enabled{false}
     {}
 
@@ -4729,8 +4731,11 @@ public:
                 this->wrm_capture_obj.reset(new WrmCaptureImpl(
                     now, wrm_params, capture_bpp, ini.get<cfg::globals::trace_type>(),
                     cctx, rnd, record_path, hash_path, basename,
-                    groupid, authentifier, *this->gd_drawable, 
-                    ini, wrm_compression_algorithm, wrm_verbose
+                    groupid, authentifier, *this->gd_drawable,
+                    ini,
+                    ini.get<cfg::video::frame_interval>(), 
+                    ini.get<cfg::video::break_interval>(), 
+                    wrm_compression_algorithm, wrm_verbose
                 ));
             }
 
