@@ -1046,6 +1046,14 @@ public:
         if (authentifier) {
             cctx.set_master_key(ini.get<cfg::crypto::key0>());
             cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
+
+            if (recursive_create_directory(record_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+                LOG(LOG_ERR, "Failed to create directory: \"%s\"", record_path);
+            }
+
+            if (recursive_create_directory(hash_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+                LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
+            }
         }
 
         this->capture = new Capture(  capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params

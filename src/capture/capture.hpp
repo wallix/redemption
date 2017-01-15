@@ -3367,7 +3367,6 @@ public:
         const timeval & now,
         auth_api * authentifier,
         const Drawable & drawable,
-        const Inifile & ini,
         OcrParams ocr_params,
         NotifyTitleChanged & notify_title_changed)
     : ocr_title_extractor_builder(
@@ -4716,16 +4715,6 @@ public:
             }
 
             if (this->capture_wrm) {
-                if (authentifier) {
-                    if (recursive_create_directory(record_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
-                        LOG(LOG_ERR, "Failed to create directory: \"%s\"", record_path);
-                    }
-
-                    if (recursive_create_directory(hash_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
-                        LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
-                    }
-                }
-                
                 this->wrm_capture_obj.reset(new WrmCaptureImpl(
                     now, wrm_params, capture_bpp, wrm_trace_type,
                     cctx, rnd, record_path, hash_path, basename,
@@ -4778,7 +4767,7 @@ public:
             if (this->capture_ocr) {
                 if (this->patterns_checker || this->meta_capture_obj || this->sequenced_video_capture_obj) {
                     this->title_capture_obj.reset(new TitleCaptureImpl(
-                        now, authentifier, this->gd_drawable->impl(), ini, 
+                        now, authentifier, this->gd_drawable->impl(), 
                         ocr_params,
                         this->notifier_title_changed
                     ));
