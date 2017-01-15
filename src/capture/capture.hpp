@@ -4618,6 +4618,11 @@ private:
 public:
     Capture(
         bool capture_wrm,
+        GraphicToFile::Verbose wrm_verbose,
+        WrmCompressionAlgorithm wrm_compression_algorithm,
+        std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval,
+        std::chrono::seconds wrm_break_interval,
+        TraceType wrm_trace_type,
         const WrmParams wrm_params,
         bool capture_png,
         const PngParams png_params,
