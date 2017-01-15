@@ -4726,16 +4726,6 @@ public:
                     }
                 }
                 
-                GraphicToFile::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
-                    | (ini.get<cfg::debug::primary_orders>() ?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
-                    | (ini.get<cfg::debug::secondary_orders>() ?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
-                    | (ini.get<cfg::debug::bitmap_update>() ?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
-                    
-                WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
-                std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
-                std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
-                TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
-
                 this->wrm_capture_obj.reset(new WrmCaptureImpl(
                     now, wrm_params, capture_bpp, wrm_trace_type,
                     cctx, rnd, record_path, hash_path, basename,
