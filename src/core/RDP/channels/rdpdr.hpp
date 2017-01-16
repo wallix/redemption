@@ -2134,18 +2134,19 @@ public:
 
 struct DeviceReadResponse {
 
+    uint32_t Length = 0;
     std::string ReadData;
 
     DeviceReadResponse() = default;
 
-    DeviceReadResponse( uint32_t Length
-                    , uint8_t * ReadData)
-                      : ReadData(reinterpret_cast<char *>(ReadData), Length)
+    DeviceReadResponse( uint32_t Length)
+      : Length(Length)
+                      //: ReadData(reinterpret_cast<char *>(ReadData), Length)
     {}
 
     void emit(OutStream & stream) {
-        stream.out_uint32_le(this->ReadData.size());
-        stream.out_copy_bytes(reinterpret_cast<const uint8_t *>(this->ReadData.data()), this->ReadData.size());
+        stream.out_uint32_le(Length);
+        //stream.out_copy_bytes(reinterpret_cast<const uint8_t *>(this->ReadData.data()), this->ReadData.size());
     }
 
     void receive(InStream & stream) {
@@ -2158,7 +2159,7 @@ struct DeviceReadResponse {
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
         }
-         int Length = stream.in_uint32_le();
+        this->Length = stream.in_uint32_le();
 //         {
 //             const unsigned expected = Length;
 //             if (!stream.in_check_rem(expected)) {
@@ -2176,7 +2177,7 @@ struct DeviceReadResponse {
     void log() {
         LOG(LOG_INFO, "     Device Read Response:");
         LOG(LOG_INFO, "          * Length   = %d (4 bytes)", int(this->ReadData.size()));
-        LOG(LOG_INFO, "          * ReadData = \"%s\" (%d byte(s))", this->ReadData, int(this->ReadData.size()));
+        LOG(LOG_INFO, "          * ReadData - (%d byte(s))", int(this->ReadData.size()));
     }
 };
 
