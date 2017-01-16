@@ -75,25 +75,19 @@ public:
 
     ~WidgetFlatButton() override {}
 
-    void set_x(int16_t x) override {
-        Widget2::set_x(x);
+    void set_xy(int16_t x, int16_t y) override {
+        Widget2::set_xy(x, y);
         this->label_rect.x = x + (this->border_width - 1);
-    }
-
-    void set_y(int16_t y) override {
-        Widget2::set_y(y);
         this->label_rect.y = y + (this->border_width - 1);
     }
 
-    void set_cx(uint16_t cx) override {
-        Widget2::set_cx(cx);
-        this->label_rect.cx = cx - (this->border_width * 2 - 1);
+    void set_wh(uint16_t w, uint16_t h) override {
+        Widget2::set_wh(w, h);
+        this->label_rect.cx = w - (this->border_width * 2 - 1);
+        this->label_rect.cy = h - (this->border_width * 2 - 1);
     }
 
-    void set_cy(uint16_t cy) override {
-        Widget2::set_cy(cy);
-        this->label_rect.cy = cy - (this->border_width * 2 - 1);
-    }
+    using Widget2::set_wh;
 
     void set_text(char const* text) {
         this->buffer[0] = 0;
@@ -110,17 +104,24 @@ public:
                 this->label_rect.cx = dm.w;
                 this->label_rect.cy = dm.h;
 
-                this->set_cx(this->label_rect.cx + (this->border_width * 2 - 1));
-                this->set_cy(this->label_rect.cy + (this->border_width * 2 - 1));
+                this->set_wh(this->label_rect.cx + (this->border_width * 2 - 1),
+                             this->label_rect.cy + (this->border_width * 2 - 1));
             }
         }
     }
 
-    void draw(const Rect clip) override
-    {
-        this->draw(clip, this->get_rect(), this->drawable, this->logo, this->has_focus,
-            this->buffer, this->fg_color, this->bg_color, this->focus_color,
-            this->label_rect, this->state, this->border_width, this->font, this->x_text, this->y_text);
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            this->draw(rect_intersect, this->get_rect(), this->drawable, this->logo, this->has_focus,
+                this->buffer, this->fg_color, this->bg_color, this->focus_color,
+                this->label_rect, this->state, this->border_width, this->font, this->x_text, this->y_text);
+
+            this->drawable.end_update();
+        }
     }
 
     static void draw(Rect const clip, Rect const rect, gdi::GraphicApi& drawable,
@@ -140,20 +141,10 @@ public:
 
         // Label color
         if (logo) {
-            if (has_focus) {
-                fg_color = focuscolor;
-            }
-            else {
-                fg_color = fgcolor;
-            }
+            fg_color = has_focus ? focuscolor : fgcolor;
         }
         else {
-            if (has_focus) {
-                bg_color = focuscolor;
-            }
-            else {
-                bg_color = bgcolor;
-            }
+            bg_color = has_focus ? focuscolor : bgcolor;
         }
         // background
         drawable.draw(RDPOpaqueRect(clip.intersect(rect), bg_color), rect, gdi::ColorCtx::depth24());
@@ -172,36 +163,34 @@ public:
             return;
 
         // border
-        //top
-        drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-              rect.x, rect.y, rect.cx - border_width, border_width
-              )), fg_color), rect, gdi::ColorCtx::depth24());
-        //left
-        drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-              rect.x, rect.y + border_width, border_width, rect.cy - border_width
-              )), fg_color), rect, gdi::ColorCtx::depth24());
-        //right
-        drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-              rect.x + rect.cx - border_width, rect.y, border_width, rect.cy
-              )), fg_color), rect, gdi::ColorCtx::depth24());
-        //bottom
-        drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-              rect.x, rect.y + rect.cy - border_width, rect.cx, border_width
-              )), fg_color), rect, gdi::ColorCtx::depth24());
+        if (border_width) {
+            //top
+            drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+                  rect.x, rect.y, rect.cx - border_width, border_width
+                  )), fg_color), rect, gdi::ColorCtx::depth24());
+            //left
+            drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+                  rect.x, rect.y + border_width, border_width, rect.cy - border_width
+                  )), fg_color), rect, gdi::ColorCtx::depth24());
+            //right
+            drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+                  rect.x + rect.cx - border_width, rect.y, border_width, rect.cy
+                  )), fg_color), rect, gdi::ColorCtx::depth24());
+            //bottom
+            drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+                  rect.x, rect.y + rect.cy - border_width, rect.cx, border_width
+                  )), fg_color), rect, gdi::ColorCtx::depth24());
+        }
     }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
         if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN) && (this->state & 1) == 0) {
             this->state |= 1;
-            this->drawable.begin_update();
-            this->draw(this->get_rect());
-            this->drawable.end_update();
+            this->rdp_input_invalidate(this->get_rect());
         }
         else if (device_flags == MOUSE_FLAG_BUTTON1 && this->state & 1) {
             this->state &= ~1;
-            this->drawable.begin_update();
-            this->draw(this->get_rect());
-            this->drawable.end_update();
+            this->rdp_input_invalidate(this->get_rect());
             if (this->get_rect().contains_pt(x, y)) {
                 this->send_notify(this->event);
             }

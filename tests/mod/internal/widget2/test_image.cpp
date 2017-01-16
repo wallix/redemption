@@ -24,7 +24,8 @@
 #define BOOST_TEST_MODULE TestWidgetImage
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
+//#define LOGNULL
+#define LOGPRINT
 
 #include "core/font.hpp"
 #include "mod/internal/widget2/image.hpp"
@@ -257,7 +258,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-    "\x6d\xd7\xa9\xaa\xa3\x9b\x54\x39\xdd\x35\x66\x3c\x3e\xdd\x5c\xf8\xc2\xe7\xc8\x5f"
+    "\xa9\x9b\x0f\x65\x5b\xd3\xd0\x70\xee\xd2\xad\xa8\x61\x38\x5e\x9e\x95\x7a\x24\xa2"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }

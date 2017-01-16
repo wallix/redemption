@@ -530,7 +530,7 @@ private:
             }
         }
 
-        void rdp_input_invalidate(const Rect r) override
+        void rdp_input_invalidate(Rect r) override
         {
             if (!this->try_input_invalidate(r)) {
                 this->mm.internal_mod->rdp_input_invalidate(r);
@@ -555,6 +555,11 @@ private:
 
         void rdp_suppress_display_updates() override
         { this->mm.internal_mod->rdp_suppress_display_updates(); }
+
+        void refresh(Rect r) override
+        {
+            this->mm.internal_mod->refresh(r);
+        }
 
         void send_to_mod_channel(
             const char * const front_channel_name, InStream & chunk,
@@ -586,6 +591,16 @@ private:
 
         void display_osd_message(std::string const & message) override
         { this->mm.internal_mod->display_osd_message(message); }
+
+        Dimension get_dim() const override
+        {
+            return this->mm.internal_mod->get_dim();
+        }
+
+        bool is_content_laid_out() override
+        {
+            return this->mm.internal_mod->is_content_laid_out();
+        }
     };
 
 public:
@@ -824,7 +839,8 @@ public:
                     this->front.client_info.height,
                     adjusted_client_execute_rect,
                     std::move(managed_mod),
-                    this->client_execute
+                    this->client_execute,
+                    this->front.client_info.cs_monitor
                 ));
                 LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
             }
@@ -1356,7 +1372,7 @@ public:
                                 mod_rdp_params
                             );
 
-                    windowing_api* winapi = (new_mod ? new_mod->get_windowing_api() : nullptr);
+                    windowing_api* winapi = new_mod->get_windowing_api();
 
                     std::unique_ptr<mod_api> managed_mod(new_mod);
 
@@ -1373,7 +1389,8 @@ public:
                                         this->front.client_info.height,
                                         adjusted_client_execute_rect,
                                         std::move(managed_mod),
-                                        this->client_execute
+                                        this->client_execute,
+                                        this->front.client_info.cs_monitor
                                     ),
                                 &this->client_execute
                             );
@@ -1493,7 +1510,8 @@ public:
                                 this->front.client_info.height,
                                 adjusted_client_execute_rect,
                                 std::move(managed_mod),
-                                this->client_execute
+                                this->client_execute,
+                                this->front.client_info.cs_monitor
                             ));
                         LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
                     }

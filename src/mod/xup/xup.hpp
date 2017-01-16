@@ -172,7 +172,7 @@ enum {
         return;
     }
 
-    void rdp_input_invalidate(const Rect r) override {
+    void rdp_input_invalidate(Rect r) override {
         LOG(LOG_INFO, "rdp_input_invalidate");
         if (!r.isempty()) {
             this->x_input_event(XUPWM_INVALIDATE,
@@ -180,6 +180,10 @@ enum {
                 ((r.cx & 0xffff) << 16) | (r.cy & 0xffff),
                 0, 0);
         }
+    }
+
+    void refresh(Rect r) override {
+        this->rdp_input_invalidate(r);
     }
 
     void x_input_event(const int msg, const long param1, const long param2, const long param3, const long param4)

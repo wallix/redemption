@@ -299,7 +299,7 @@ public:
                           this->ini.get<cfg::context::session_id>().c_str());
         }
         if (this->verbose & Verbose::buffer){
-            LOG(LOG_INFO, "SESSION_ID = %s", this->ini.get<cfg::context::session_id>().c_str());
+            LOG(LOG_INFO, "SESSION_ID = %s", this->ini.get<cfg::context::session_id>());
         }
     }
 

@@ -579,7 +579,6 @@ private:
 
 public:
     void rdp_input_invalidate(Rect r) override {
-
         if (this->state == WAIT_PASSWORD) {
             this->screen.rdp_input_invalidate(r);
             return;
@@ -593,6 +592,10 @@ public:
             this->update_screen(r, 0);
         }
     } // rdp_input_invalidate
+
+    void refresh(Rect r) override {
+        this->rdp_input_invalidate(r);
+    }
 
 protected:
     static void fill_encoding_types_buffer(const char * encodings, OutStream & stream, uint16_t & number_of_encodings, uint32_t verbose)
@@ -642,7 +645,7 @@ public:
 
             this->challenge.set_widget_focus(&this->challenge.password_edit, Widget2::focus_reason_tabkey);
 
-            this->screen.refresh(this->screen.get_rect());
+            this->screen.rdp_input_invalidate(this->screen.get_rect());
 
             this->state = WAIT_PASSWORD;
             break;
@@ -2811,6 +2814,11 @@ public:
 
             this->acl->log4(false, "SESSION_DISCONNECTION", extra);
         }
+    }
+
+    bool is_content_laid_out() override {
+LOG(LOG_INFO, "mod_vnc::is_content_laid_out");
+        return false;
     }
 };
 

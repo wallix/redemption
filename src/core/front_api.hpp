@@ -56,7 +56,6 @@ public:
         fail    = -1
     };
     virtual ResizeResult server_resize(int width, int height, int bpp) = 0;
-    //virtual void update_config(const timeval & now, const Inifile & ini) {}
 
     virtual void update_pointer_position(uint16_t, uint16_t) {}
 

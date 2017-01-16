@@ -18,17 +18,13 @@
 *   Author(s): Jonathan Poelen
 */
 
-
 #pragma once
 
-#include <chrono>
+#ifdef __has_include
+# define CXX_HAS_INCLUDE_ENABLE 1
+# define CXX_HAS_SYSTEM_INCLUDE(path) __has_include(<path>)
+#else
+# define CXX_HAS_INCLUDE_ENABLE 0
+# define CXX_HAS_SYSTEM_INCLUDE(path) 0
+#endif
 
-struct PngParams
-{
-    unsigned png_width;
-    unsigned png_height;
-    std::chrono::milliseconds png_interval;
-    unsigned zoom;
-    uint32_t png_limit;
-    bool real_time_image_capture;
-};

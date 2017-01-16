@@ -91,7 +91,8 @@ public:
         }
     }
 
-    virtual void draw(const Rect clip) {
+//    virtual void draw(const Rect clip) {
+    void rdp_input_invalidate(Rect clip) override {
         if (this->wid) {
             int src_x = this->rect.x;
             int src_y = this->rect.y;
@@ -259,7 +260,8 @@ public:
         }
     }
 
-    virtual void draw(const Rect clip) {
+//    virtual void draw(const Rect clip) {
+    void rdp_input_invalidate(Rect clip) override {
         // bar
         this->drawable.draw(RDPOpaqueRect(this->rect,
                                           this->bg_color),
@@ -448,7 +450,8 @@ public:
         }
     }
 
-    virtual void draw(const Rect clip) {
+//    virtual void draw(const Rect clip) {
+    void rdp_input_invalidate(Rect clip) override {
         // bar
         this->drawable.draw(RDPOpaqueRect(this->rect,
                                           this->bg_color),
@@ -662,7 +665,8 @@ private:
 public:
     // Widget2
 
-    void draw(const Rect clip) override {
+//    void draw(const Rect clip) override {
+    void rdp_input_invalidate(Rect clip) override {
         WidgetFlatButton::draw(clip, this->left_button_rect, this->drawable,
             false, (this->mouse_down && (this->selected_button == BUTTON_LEFT)),
             "◀", this->fg_color, this->bg_color, this->focus_color,
@@ -852,7 +856,6 @@ public:
 };
 */
 
-
 class WidgetScrollBar : public Widget2 {
     bool horizontal;
 
@@ -1001,144 +1004,144 @@ private:
 public:
     // Widget2
 
-    void draw(const Rect clip) override {
-        if (this->horizontal) {
-            WidgetFlatButton::draw(clip, this->left_or_top_button_rect, this->drawable,
-                false, (this->mouse_down && (this->selected_button == BUTTON_LEFT_OR_TOP)),
-                "◀", this->fg_color, this->bg_color, this->focus_color,
-                Rect(), 0, 2, this->font, 2, 1);
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
 
-            WidgetFlatButton::draw(clip, this->right_or_bottom_button_rect, this->drawable,
-                false, (this->mouse_down && (this->selected_button == BUTTON_RIGHT_OR_BOTTOM)),
-                "▶", this->fg_color, this->bg_color, this->focus_color,
-                Rect(), 0, 2, this->font, 2, 1);
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
 
-            this->drawable.draw(
-                    RDPOpaqueRect(
-                        clip.intersect(
-                                Rect(this->scroll_bar_rect.x,
-                                        this->scroll_bar_rect.y + 1,
-                                        this->scroll_bar_rect.cx,
-                                        this->scroll_bar_rect.cy - 2)
-                            ),
-                        this->bg_color
-                    ),
-                    this->get_rect(),
-                    gdi::ColorCtx::depth24()
-                );
+            if (this->horizontal) {
+                WidgetFlatButton::draw(rect_intersect, this->left_or_top_button_rect, this->drawable,
+                    false, (this->mouse_down && (this->selected_button == BUTTON_LEFT_OR_TOP)),
+                    "◀", this->fg_color, this->bg_color, this->focus_color,
+                    Rect(), 0, 2, this->font, 2, 1);
 
-            this->drawable.draw(
-                    RDPOpaqueRect(
-                        clip.intersect(
-                                Rect(this->scroll_bar_rect.x,
-                                        this->scroll_bar_rect.y,
-                                        this->scroll_bar_rect.cx,
-                                        1)
-                            ),
-                        this->fg_color
-                    ),
-                    this->get_rect(),
-                    gdi::ColorCtx::depth24()
-                );
+                WidgetFlatButton::draw(rect_intersect, this->right_or_bottom_button_rect, this->drawable,
+                    false, (this->mouse_down && (this->selected_button == BUTTON_RIGHT_OR_BOTTOM)),
+                    "▶", this->fg_color, this->bg_color, this->focus_color,
+                    Rect(), 0, 2, this->font, 2, 1);
 
-            this->drawable.draw(
-                    RDPOpaqueRect(
-                        clip.intersect(
-                                Rect(this->scroll_bar_rect.x,
-                                        this->scroll_bar_rect.y + this->cy() - 1,
-                                        this->scroll_bar_rect.cx,
-                                        1)
-                            ),
-                        this->fg_color
-                    ),
-                    this->get_rect(),
-                    gdi::ColorCtx::depth24()
-                );
+                this->drawable.draw(
+                        RDPOpaqueRect(
+                            rect_intersect.intersect(
+                                    Rect(this->scroll_bar_rect.x,
+                                            this->scroll_bar_rect.y + 1,
+                                            this->scroll_bar_rect.cx,
+                                            this->scroll_bar_rect.cy - 2)
+                                ),
+                            this->bg_color
+                        ),
+                        this->get_rect(),
+                        gdi::ColorCtx::depth24()
+                    );
 
-            WidgetFlatButton::draw(clip, this->cursor_button_rect, this->drawable,
-                false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)),
-                "▤", this->fg_color, this->bg_color, this->focus_color,
-                Rect(), 0, 1, this->font, 2, 1);
+                this->drawable.draw(
+                        RDPOpaqueRect(
+                            rect_intersect.intersect(
+                                    Rect(this->scroll_bar_rect.x,
+                                            this->scroll_bar_rect.y,
+                                            this->scroll_bar_rect.cx,
+                                            1)
+                                ),
+                            this->fg_color
+                        ),
+                        this->get_rect(),
+                        gdi::ColorCtx::depth24()
+                    );
+
+                this->drawable.draw(
+                        RDPOpaqueRect(
+                            rect_intersect.intersect(
+                                    Rect(this->scroll_bar_rect.x,
+                                            this->scroll_bar_rect.y + this->cy() - 1,
+                                            this->scroll_bar_rect.cx,
+                                            1)
+                                ),
+                            this->fg_color
+                        ),
+                        this->get_rect(),
+                        gdi::ColorCtx::depth24()
+                    );
+
+                WidgetFlatButton::draw(rect_intersect, this->cursor_button_rect, this->drawable,
+                    false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)),
+                    "▤", this->fg_color, this->bg_color, this->focus_color,
+                    Rect(), 0, 1, this->font, 2, 1);
+            }
+            else {
+                WidgetFlatButton::draw(rect_intersect, this->left_or_top_button_rect, this->drawable,
+                    false, (this->mouse_down && (this->selected_button == BUTTON_LEFT_OR_TOP)),
+                    "▲", this->fg_color, this->bg_color, this->focus_color,
+                    Rect(), 0, 2, this->font, 2, 1);
+
+                WidgetFlatButton::draw(rect_intersect, this->right_or_bottom_button_rect, this->drawable,
+                    false, (this->mouse_down && (this->selected_button == BUTTON_RIGHT_OR_BOTTOM)),
+                    "▼", this->fg_color, this->bg_color, this->focus_color,
+                    Rect(), 0, 2, this->font, 2, 1);
+
+                this->drawable.draw(
+                        RDPOpaqueRect(
+                            rect_intersect.intersect(
+                                    Rect(this->scroll_bar_rect.x + 1,
+                                            this->scroll_bar_rect.y,
+                                            this->scroll_bar_rect.cx - 2,
+                                            this->scroll_bar_rect.cy)
+                                ),
+                            this->bg_color
+                        ),
+                        this->get_rect(),
+                        gdi::ColorCtx::depth24()
+                    );
+
+                this->drawable.draw(
+                        RDPOpaqueRect(
+                            rect_intersect.intersect(
+                                    Rect(this->scroll_bar_rect.x,
+                                            this->scroll_bar_rect.y,
+                                            1,
+                                            this->scroll_bar_rect.cy)
+                                ),
+                            this->fg_color
+                        ),
+                        this->get_rect(),
+                        gdi::ColorCtx::depth24()
+                    );
+
+                this->drawable.draw(
+                        RDPOpaqueRect(
+                            rect_intersect.intersect(
+                                    Rect(this->scroll_bar_rect.x + this->cx() - 1,
+                                            this->scroll_bar_rect.y,
+                                            1,
+                                            this->scroll_bar_rect.cy)
+                                ),
+                            this->fg_color
+                        ),
+                        this->get_rect(),
+                        gdi::ColorCtx::depth24()
+                    );
+
+                WidgetFlatButton::draw(rect_intersect, this->cursor_button_rect, this->drawable,
+                    false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)),
+                    "▥", this->fg_color, this->bg_color, this->focus_color,
+                    Rect(), 0, 1, this->font, 1, 2);
+            }
+
+            this->drawable.end_update();
         }
-        else {
-            WidgetFlatButton::draw(clip, this->left_or_top_button_rect, this->drawable,
-                false, (this->mouse_down && (this->selected_button == BUTTON_LEFT_OR_TOP)),
-                "▲", this->fg_color, this->bg_color, this->focus_color,
-                Rect(), 0, 2, this->font, 2, 1);
-
-            WidgetFlatButton::draw(clip, this->right_or_bottom_button_rect, this->drawable,
-                false, (this->mouse_down && (this->selected_button == BUTTON_RIGHT_OR_BOTTOM)),
-                "▼", this->fg_color, this->bg_color, this->focus_color,
-                Rect(), 0, 2, this->font, 2, 1);
-
-            this->drawable.draw(
-                    RDPOpaqueRect(
-                        clip.intersect(
-                                Rect(this->scroll_bar_rect.x + 1,
-                                        this->scroll_bar_rect.y,
-                                        this->scroll_bar_rect.cx - 2,
-                                        this->scroll_bar_rect.cy)
-                            ),
-                        this->bg_color
-                    ),
-                    this->get_rect(),
-                    gdi::ColorCtx::depth24()
-                );
-
-            this->drawable.draw(
-                    RDPOpaqueRect(
-                        clip.intersect(
-                                Rect(this->scroll_bar_rect.x,
-                                        this->scroll_bar_rect.y,
-                                        1,
-                                        this->scroll_bar_rect.cy)
-                            ),
-                        this->fg_color
-                    ),
-                    this->get_rect(),
-                    gdi::ColorCtx::depth24()
-                );
-
-            this->drawable.draw(
-                    RDPOpaqueRect(
-                        clip.intersect(
-                                Rect(this->scroll_bar_rect.x + this->cx() - 1,
-                                        this->scroll_bar_rect.y,
-                                        1,
-                                        this->scroll_bar_rect.cy)
-                            ),
-                        this->fg_color
-                    ),
-                    this->get_rect(),
-                    gdi::ColorCtx::depth24()
-                );
-
-            WidgetFlatButton::draw(clip, this->cursor_button_rect, this->drawable,
-                false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)),
-                "▥", this->fg_color, this->bg_color, this->focus_color,
-                Rect(), 0, 1, this->font, 1, 2);
-        }
     }
 
-    void set_x(int16_t x) override {
-        Widget2::set_x(x);
+    void set_xy(int16_t x, int16_t y) override {
+        Widget2::set_xy(x, y);
         this->update_rects();
     }
 
-    void set_y(int16_t y) override {
-        Widget2::set_y(y);
+    void set_wh(uint16_t w, uint16_t h) override {
+        Widget2::set_wh(w, h);
         this->update_rects();
     }
 
-    void set_cx(uint16_t cx) override {
-        Widget2::set_cx(cx);
-        this->update_rects();
-    }
-
-    void set_cy(uint16_t cy) override {
-        Widget2::set_cy(cy);
-        this->update_rects();
-    }
+    using Widget2::set_wh;
 
 private:
     Dimension get_optimal_button_dim() {
@@ -1151,7 +1154,7 @@ private:
             return dim;
         }
         else {
-            Dimension dim = WidgetFlatButton::get_optimal_dim(1, this->font, "▶", 3, 2);
+            Dimension dim = WidgetFlatButton::get_optimal_dim(1, this->font, "▲", 3, 2);
 
             dim.w += 1;
             dim.h += 2;
@@ -1211,9 +1214,7 @@ public:
                 }
             }
 
-            this->drawable.begin_update();
-            this->draw(this->get_rect());
-            this->drawable.end_update();
+            this->rdp_input_invalidate(this->get_rect());
         }
         else if (device_flags == MOUSE_FLAG_BUTTON1) {
             this->mouse_down               = false;
@@ -1221,9 +1222,7 @@ public:
             this->old_mouse_x_or_y         = 0;
             this->old_cursor_button_x_or_y = 0;
 
-            this->drawable.begin_update();
-            this->draw(this->get_rect());
-            this->drawable.end_update();
+            this->rdp_input_invalidate(this->get_rect());
         }
         else if (device_flags == MOUSE_FLAG_MOVE) {
             if (this->mouse_down && (BUTTON_CURSOR == this->selected_button)) {
@@ -1253,9 +1252,7 @@ public:
                     this->send_notify(this->event);
                 }
 
-                this->drawable.begin_update();
-                this->draw(this->get_rect());
-                this->drawable.end_update();
+                this->rdp_input_invalidate(this->get_rect());
             }
         }
         else

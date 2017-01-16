@@ -126,10 +126,17 @@ public:
         this->selection_y = static_cast<uint16_t>(-1);
     }
 
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
 
-    void draw(Rect const clip) override {
-        for (uint16_t row_index = 0; row_index < this->nb_rows; row_index++) {
-            this->draw_row(row_index, clip);
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            for (uint16_t row_index = 0; row_index < this->nb_rows; row_index++) {
+                this->draw_row(row_index, rect_intersect);
+            }
+
+            this->drawable.end_update();
         }
     }
 
@@ -171,7 +178,7 @@ public:
 
                 Rect destRect = clip.intersect(rectCell);
                 if (!destRect.isempty()) {
-                    w->draw(destRect);
+                    w->rdp_input_invalidate(destRect);
                 }
             }
 
@@ -482,10 +489,8 @@ void apply_format(WidgetGrid & grid, uint16_t * row_height, uint16_t * column_wi
         grid.set_row_height(row_index, row_height[row_index]);
         height += row_height[row_index] + grid.border * 2;
     }
-    grid.set_cy(height);
+    grid.set_wh(grid.cx(), height);
     for (uint16_t column_index = 0; column_index < grid.nb_columns; column_index++) {
         grid.set_column_width(column_index, column_width[column_index]);
     }
-
 }
-

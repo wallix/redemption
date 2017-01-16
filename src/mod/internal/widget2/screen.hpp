@@ -72,7 +72,7 @@ public:
         if (text == nullptr) {
             if (this->tooltip) {
                 this->remove_widget(this->tooltip);
-                this->refresh(this->tooltip->get_rect());
+                this->rdp_input_invalidate(this->tooltip->get_rect());
                 delete this->tooltip;
                 this->tooltip = nullptr;
             }
@@ -101,7 +101,7 @@ public:
             this->tooltip->set_xy(posx, posy);
 
             this->add_widget(this->tooltip);
-            this->refresh(this->tooltip->get_rect());
+            this->rdp_input_invalidate(this->tooltip->get_rect());
         }
     }
 
@@ -173,4 +173,3 @@ public:
         WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 };
-

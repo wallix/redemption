@@ -68,7 +68,6 @@ private:
     uint32_t dialog_box_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
     gdi::GraphicApi * drawable = nullptr;
-    int               bpp      = 0;
 
     enum class DialogBoxType {
         SPLASH_SCREEN,
@@ -167,9 +166,8 @@ public:
         return (this->blocked_server_window_id == window_id);
     }
 
-    void set_drawable(gdi::GraphicApi * drawable, int bpp) {
+    void set_drawable(gdi::GraphicApi * drawable) {
         this->drawable = drawable;
-        this->bpp      = bpp;
     }
 
     void input_mouse(int device_flags, int x, int y) {
@@ -542,16 +540,16 @@ private:
         {
             RDPOpaqueRect order(this->protected_rect, 0x000000);
 
-            this->drawable->draw(order, this->protected_rect, gdi::ColorCtx::from_bpp(this->bpp, BGRPalette::classic_332()));
+            this->drawable->draw(order, this->protected_rect, gdi::ColorCtx::depth24());
         }
 
         {
             Rect rect = this->protected_rect.shrink(1);
 
-            RDPOpaqueRect order(rect, color_encode(this->theme.global.bgcolor, this->bpp));
+            RDPOpaqueRect order(rect, this->theme.global.bgcolor);
             order.log(LOG_INFO, rect);
 
-            this->drawable->draw(order, rect, gdi::ColorCtx::from_bpp(this->bpp, BGRPalette::classic_332()));
+            this->drawable->draw(order, rect, gdi::ColorCtx::depth24());
         }
 
         gdi::TextMetrics tm(this->font, TR("starting_remoteapp", this->lang));
@@ -560,9 +558,9 @@ private:
                               (this->front_width - tm.width) / 2,
                               (this->front_height - tm.height) / 2,
                               TR("starting_remoteapp", this->lang),
-                              color_encode(this->theme.global.fgcolor, this->bpp),
-                              color_encode(this->theme.global.bgcolor, this->bpp),
-                              gdi::ColorCtx::from_bpp(this->bpp, BGRPalette::classic_332()),
+                              this->theme.global.fgcolor,
+                              this->theme.global.bgcolor,
+                              gdi::ColorCtx::depth24(),
                               this->protected_rect
                               );
 
@@ -577,16 +575,16 @@ private:
         {
             RDPOpaqueRect order(this->protected_rect, 0x000000);
 
-            this->drawable->draw(order, this->protected_rect, gdi::ColorCtx::from_bpp(this->bpp, BGRPalette::classic_332()));
+            this->drawable->draw(order, this->protected_rect, gdi::ColorCtx::depth24());
         }
 
         {
             Rect rect = this->protected_rect.shrink(1);
 
-            RDPOpaqueRect order(rect, color_encode(this->theme.global.bgcolor, this->bpp));
+            RDPOpaqueRect order(rect, this->theme.global.bgcolor);
             order.log(LOG_INFO, rect);
 
-            this->drawable->draw(order, rect, gdi::ColorCtx::from_bpp(this->bpp, BGRPalette::classic_332()));
+            this->drawable->draw(order, rect, gdi::ColorCtx::depth24());
         }
 
         const gdi::TextMetrics tm_msg(this->font, TR("closing_remoteapp", this->lang));
@@ -607,9 +605,9 @@ private:
                               (this->front_width - tm_msg.width) / 2,
                               ypos,
                               TR("closing_remoteapp", this->lang),
-                              color_encode(this->theme.global.fgcolor, this->bpp),
-                              color_encode(this->theme.global.bgcolor, this->bpp),
-                              gdi::ColorCtx::from_bpp(this->bpp, BGRPalette::classic_332()),
+                              this->theme.global.fgcolor,
+                              this->theme.global.bgcolor,
+                              gdi::ColorCtx::depth24(),
                               this->protected_rect
                               );
 
@@ -626,9 +624,9 @@ private:
                                false,   // logo
                                true,    // has_focus
                                TR("disconnect_now", this->lang),
-                               color_encode(this->theme.global.fgcolor, this->bpp),
-                               color_encode(this->theme.global.bgcolor, this->bpp),
-                               color_encode(this->theme.global.focus_color, this->bpp),
+                               this->theme.global.fgcolor,
+                               this->theme.global.bgcolor,
+                               this->theme.global.focus_color,
                                Rect(),
                                state,
                                2,

@@ -70,8 +70,7 @@ public:
     void set_text(const char * text)
     {
         if (this->auto_resize) {
-            this->set_cx(0);
-            this->set_cy(0);
+            this->set_wh(0, 0);
         }
 
         const char * str = nullptr;
@@ -92,12 +91,15 @@ public:
                 this->cy_text = tm.height;
             }
             if (this->auto_resize) {
-                if (line->cx > this->cx()){
-                    this->set_cx(line->cx);
+                uint16_t w = this->cx();
+                if (line->cx > w){
+                    w = line->cx;
                 }
-                if (tm.height > this->cy()){
-                    this->set_cy(tm.height);
+                uint16_t h = this->cy();
+                if (tm.height > h){
+                    h = tm.height;
                 }
+                this->set_wh(w, h);
             }
             ++line;
         } while (str && pbuf < &this->buffer[this->buffer_size] && line != &this->lines[this->max_line-1]);
@@ -105,8 +107,10 @@ public:
         line->str = nullptr;
 
         if (this->auto_resize) {
-            this->set_cx(this->cx() + this->x_text * 2);
-            this->set_cy((this->cy() + this->y_text * 2) * (line - &this->lines[0]));
+            uint16_t w = this->cx();
+            uint16_t h = this->cy();
+            this->set_wh(w + this->x_text * 2,
+                         (h + this->y_text * 2) * (line - &this->lines[0]));
         }
     }
 
@@ -117,25 +121,35 @@ public:
         return this->lines[num].str;
     }
 
-    void draw(const Rect clip) override {
-        int dy = this->y() + this->y_text;
-        this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->get_rect(), gdi::ColorCtx::depth24());
-        for (line_t * line = this->lines; line->str; ++line) {
-            dy += this->y_text;
-            gdi::server_draw_text(this->drawable
-                                 , this->font
-                                 , this->x_text + this->x()
-                                 , dy
-                                 , line->str
-                                 , this->fg_color
-                                 , this->bg_color
-                                 , gdi::ColorCtx::depth24()
-                                 , clip.intersect(Rect(this->x()
-                                 , dy
-                                 , this->cx()
-                                 , this->cy_text))
-            );
-            dy += this->y_text + this->cy_text;
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            int dy = this->y() + this->y_text;
+            this->drawable.draw(RDPOpaqueRect(rect_intersect, this->bg_color), this->get_rect(), gdi::ColorCtx::depth24());
+            for (line_t * line = this->lines; line->str; ++line) {
+                dy += this->y_text;
+                gdi::server_draw_text(this->drawable
+                                     , this->font
+                                     , this->x_text + this->x()
+                                     , dy
+                                     , line->str
+                                     , this->fg_color
+                                     , this->bg_color
+                                     , gdi::ColorCtx::depth24()
+                                     , rect_intersect.intersect(
+                                                Rect(this->x(),
+                                                     dy,
+                                                     this->cx(),
+                                                     this->cy_text
+                                            ))
+                    );
+                dy += this->y_text + this->cy_text;
+            }
+
+            this->drawable.end_update();
         }
     }
 
@@ -156,4 +170,3 @@ public:
             (max_line_height + this->y_text * 2) * (line - &this->lines[0]));
     }
 };
-

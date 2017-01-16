@@ -176,40 +176,40 @@ public:
         return this->label.get_text();
     }
 
-    void set_x(int16_t x) override {
-        Widget2::set_x(x);
-        this->label.set_x(x + 1);
+    void set_xy(int16_t x, int16_t y) override {
+        Widget2::set_xy(x, y);
+        this->label.set_xy(x + 1, y + 1);
     }
 
-    void set_y(int16_t y) override {
-        Widget2::set_y(y);
-        this->label.set_y(y + 1);
-    }
-
-    void set_cx(uint16_t cx) override
+    void set_wh(uint16_t w, uint16_t h) override
     {
-        Widget2::set_cx(cx);
-        this->label.set_cx(cx - 2);
+        Widget2::set_wh(w, h);
+        this->label.set_wh(w - 2, h - 2);
     }
 
-    void set_cy(uint16_t cy) override {
-        Widget2::set_cy(cy);
-        this->label.set_cy(cy - 2);
-    }
+    using Widget2::set_wh;
 
-    void draw(const Rect clip) override {
-        this->label.draw(clip);
-        if (this->has_focus) {
-            this->draw_cursor(this->get_cursor_rect());
-            if (this->draw_border_focus) {
-                this->draw_border(clip, this->focus_color);
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            this->label.rdp_input_invalidate(rect_intersect);
+            if (this->has_focus) {
+                this->draw_cursor(this->get_cursor_rect());
+                if (this->draw_border_focus) {
+                    this->draw_border(rect_intersect, this->focus_color);
+                }
+                else {
+                    this->draw_border(rect_intersect, this->label.bg_color);
+                }
             }
             else {
-                this->draw_border(clip, this->label.bg_color);
+                this->draw_border(rect_intersect, this->label.bg_color);
             }
-        }
-        else {
-            this->draw_border(clip, this->label.bg_color);
+
+            this->drawable.end_update();
         }
     }
 
@@ -304,14 +304,16 @@ public:
     virtual void update_draw_cursor(Rect old_cursor)
     {
         this->drawable.begin_update();
+
         if (this->drawall) {
             this->drawall = false;
-            this->draw(this->get_rect());
+            this->rdp_input_invalidate(this->get_rect());
         }
         else {
-            this->label.draw(old_cursor);
+            this->label.rdp_input_invalidate(old_cursor);
             this->draw_cursor(this->get_cursor_rect());
         }
+
         this->drawable.end_update();
     }
 
@@ -449,7 +451,8 @@ public:
                         UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
                         this->buffer_size += this->edit_buffer_pos - ebpos;
                         this->drawable.begin_update();
-                        this->draw(Rect(this->x() + this->cursor_px_pos + this->label.x_text,
+                        this->rdp_input_invalidate(
+                                   Rect(this->x() + this->cursor_px_pos + this->label.x_text,
                                         this->y() + this->label.y_text + 1,
                                         this->w_text - this->cursor_px_pos + 3,
                                         this->h_text
@@ -468,7 +471,8 @@ public:
                                 UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
                                 this->buffer_size += this->edit_buffer_pos - ebpos;
                                 this->drawable.begin_update();
-                                this->draw(Rect(this->x() + this->cursor_px_pos + this->label.x_text,
+                                this->rdp_input_invalidate(
+                                   Rect(this->x() + this->cursor_px_pos + this->label.x_text,
                                         this->y() + this->label.y_text + 1,
                                         this->w_text - this->cursor_px_pos + 3,
                                         this->h_text
@@ -497,7 +501,8 @@ public:
                         this->buffer_size -= len;
                         this->num_chars--;
                         this->drawable.begin_update();
-                        this->draw(Rect(this->x() + this->cursor_px_pos + this->label.x_text,
+                        this->rdp_input_invalidate(
+                                   Rect(this->x() + this->cursor_px_pos + this->label.x_text,
                                         this->y() + this->label.y_text + 1,
                                         this->w_text - this->cursor_px_pos + 3,
                                         this->h_text
@@ -522,7 +527,8 @@ public:
                                 this->buffer_size -= len;
                                 this->num_chars--;
                                 this->drawable.begin_update();
-                                this->draw(Rect(this->x() + this->cursor_px_pos + this->label.x_text,
+                                this->rdp_input_invalidate(
+                                           Rect(this->x() + this->cursor_px_pos + this->label.x_text,
                                                 this->y() + this->label.y_text + 1,
                                                 this->w_text - this->cursor_px_pos + 3,
                                                 this->h_text
@@ -590,7 +596,7 @@ public:
                     this->send_notify(NOTIFY_CUT);
                     {
                         this->drawable.begin_update();
-                        this->label.draw(this->label.get_rect());
+                        this->label.rdp_input_invalidate(this->label.get_rect());
                         this->draw_cursor(this->get_cursor_rect());
                         this->drawable.end_update();
                     }
@@ -606,4 +612,3 @@ public:
         }
     }
 };
-

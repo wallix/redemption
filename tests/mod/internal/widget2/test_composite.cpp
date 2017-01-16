@@ -25,6 +25,7 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
+//#define LOGPRINT
 
 #include "mod/internal/widget2/widget2_rect.hpp"
 #include "mod/internal/widget2/composite.hpp"
@@ -41,10 +42,8 @@ public:
     , color(0x27642F)
     {}
 
-    void draw(const Rect clip) override
-    {
-        this->drawable.draw(RDPOpaqueRect(clip, color), this->get_rect(), gdi::ColorCtx::depth24());
-        this->WidgetComposite::draw(clip);
+    int get_bg_color() const override {
+        return this->color;
     }
 };
 
@@ -112,7 +111,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
                                          wcomposite.cx(),
                                          wcomposite.cy()));
 
-    //drawable.save_to_png("/tmp/composite.png");
+    drawable.save_to_png("/tmp/composite.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
@@ -150,4 +149,3 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     }
     wcomposite.clear();
 }
-

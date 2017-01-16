@@ -109,10 +109,9 @@ class LanguageButton : public WidgetFlatButton
 
             rect.cx = std::max(rect.cx, this->cx());
             rect.cy = std::max(rect.cy, this->cy());
-            this->parent.draw(rect);
+            this->parent.rdp_input_invalidate(rect);
 
             front.set_keylayout(this->locales[this->selected_language].LCID);
         }
     }
 };
-

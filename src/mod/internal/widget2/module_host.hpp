@@ -21,6 +21,7 @@
 #pragma once
 
 #include "core/RDP/bitmapupdate.hpp"
+#include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
@@ -138,7 +139,7 @@ private:
 
         // RdpInput
 
-        void rdp_input_invalidate(const Rect r) override
+        void rdp_input_invalidate(Rect r) override
         {
             if (this->managed_mod)
             {
@@ -184,6 +185,14 @@ private:
             }
         }
 
+        void refresh(Rect r) override
+        {
+            if (this->managed_mod)
+            {
+                this->managed_mod->refresh(r);
+            }
+        }
+
         Dimension get_dim() const override
         {
             if (this->managed_mod)
@@ -192,6 +201,16 @@ private:
             }
 
             return mod_api::get_dim();
+        }
+
+        bool is_content_laid_out() override
+        {
+            if (this->managed_mod)
+            {
+                return this->managed_mod->is_content_laid_out();
+            }
+
+            return mod_api::is_content_laid_out();
         }
     } module_holder;
 
@@ -213,6 +232,10 @@ private:
     Rect mod_visible_rect;
 
     Rect vision_rect;
+
+    GCC::UserData::CSMonitor monitors;
+
+    GCC::UserData::CSMonitor monitor_one;
 
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd); }
@@ -251,12 +274,16 @@ public:
     WidgetModuleHost(gdi::GraphicApi& drawable, Widget2& parent,
                      NotifyApi* notifier,
                      std::unique_ptr<mod_api> managed_mod, Font const & font,
-                     Theme const & theme, int group_id = 0)
+                     Theme const & theme,
+                     const GCC::UserData::CSMonitor& cs_monitor,
+                     uint16_t front_width, uint16_t front_height,
+                     int group_id = 0)
     : WidgetParent(drawable, parent, notifier, group_id)
     , module_holder(*this, std::move(managed_mod))
     , drawable_ref(drawable)
     , hscroll(drawable, *this, this, true, 0, theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font)
     , vscroll(drawable, *this, this, false, 0, theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font)
+    , monitors(cs_monitor)
     {
         this->impl = &composite_array;
 
@@ -265,11 +292,17 @@ public:
 
         Dimension dim = this->hscroll.get_optimal_dim();
         this->hscroll_height = dim.h;
-        this->hscroll.set_cy(this->hscroll_height);
+        this->hscroll.set_wh(this->hscroll.cx(), this->hscroll_height);
 
         dim = this->vscroll.get_optimal_dim();
         this->vscroll_width = dim.w;
-        this->vscroll.set_cx(this->vscroll_width);
+        this->vscroll.set_wh(this->vscroll_width, this->vscroll.cy());
+
+        this->monitor_one.monitorCount              = 1;
+        this->monitor_one.monitorDefArray[0].left   = 0;
+        this->monitor_one.monitorDefArray[0].top    = 0;
+        this->monitor_one.monitorDefArray[0].right  = front_width - 1;
+        this->monitor_one.monitorDefArray[0].bottom = front_height - 1;
     }
 
     mod_api& get_managed_mod()
@@ -390,44 +423,116 @@ private:
         }
     }
 
+private:
+    void screen_copy(Rect old_rect, Rect new_rect) {
+        gdi::GraphicApi& drawable_ = this->get_drawable();
+
+        RDPScrBlt cmd(new_rect, 0xCC, old_rect.x, old_rect.y);
+
+        drawable_.draw(cmd, new_rect);
+
+        GCC::UserData::CSMonitor& cs_monitor = this->monitors;
+        if (!cs_monitor.monitorCount) {
+            cs_monitor = this->monitor_one;
+        }
+
+        SubRegion region;
+
+        region.rects.push_back(old_rect);
+
+        for (uint32_t i = 0; i < cs_monitor.monitorCount; ++i) {
+            Rect intersect_rect = old_rect.intersect(
+                    Rect(cs_monitor.monitorDefArray[i].left,
+                         cs_monitor.monitorDefArray[i].top,
+                         cs_monitor.monitorDefArray[i].right  - cs_monitor.monitorDefArray[i].left + 1,
+                         cs_monitor.monitorDefArray[i].bottom - cs_monitor.monitorDefArray[i].top  + 1)
+                );
+            if (!intersect_rect.isempty()) {
+                region.subtract_rect(intersect_rect);
+            }
+        }
+
+        for (const Rect & rect : region.rects) {
+            this->rdp_input_invalidate(rect.offset(new_rect.x - old_rect.x, new_rect.y - old_rect.y));
+        }
+    }
+
 public:
-    void set_cx(uint16_t cx) override {
-        WidgetParent::set_cx(cx);
+    void set_xy(int16_t x, int16_t y) override {
+        Rect old_rect = this->get_rect();
+
+        WidgetParent::set_xy(x, y);
 
         this->update_rects();
 
-        this->rdp_input_invalidate(this->get_rect());
+        if (!old_rect.isempty()) {
+            Rect new_rect = this->get_rect();
+
+            this->screen_copy(old_rect, new_rect);
+        }
+        else {
+            this->rdp_input_invalidate(this->get_rect());
+        }
     }
 
-    void set_cy(uint16_t cy) override {
-        WidgetParent::set_cy(cy);
+    void set_wh(uint16_t w, uint16_t h) override {
+        Rect old_mod_visible_rect = this->mod_visible_rect;
+        Rect old_rect             = this->get_rect();
+
+        if (this->hscroll_added) {
+            old_rect.cy -= this->hscroll.cy();
+        }
+        if (this->vscroll_added) {
+            old_rect.cx -= this->vscroll.cx();
+        }
+
+        WidgetParent::set_wh(w, h);
 
         this->update_rects();
 
-        this->rdp_input_invalidate(this->get_rect());
+        Rect new_mod_visible_rect = this->mod_visible_rect;
+        Rect new_rect = this->get_rect();
+
+        Rect intersect_mod_visible_rect = new_mod_visible_rect.intersect(old_mod_visible_rect);
+
+        old_rect.x  += intersect_mod_visible_rect.x - old_mod_visible_rect.x;
+        old_rect.y  += intersect_mod_visible_rect.y - old_mod_visible_rect.y;
+        old_rect.cx  = intersect_mod_visible_rect.cx;
+        old_rect.cy  = intersect_mod_visible_rect.cy;
+
+        new_rect.x  += intersect_mod_visible_rect.x - new_mod_visible_rect.x;
+        new_rect.y  += intersect_mod_visible_rect.y - new_mod_visible_rect.y;
+        new_rect.cx  = intersect_mod_visible_rect.cx;
+        new_rect.cy  = intersect_mod_visible_rect.cy;
+
+        SubRegion region;
+
+        region.rects.push_back(this->get_rect());
+
+        if (!old_rect.isempty()) {
+            this->screen_copy(old_rect, new_rect);
+
+            region.subtract_rect(new_rect);
+        }
+
+        for (const Rect & rect : region.rects) {
+            this->rdp_input_invalidate(rect/*.offset(new_rect.x - old_rect.x, new_rect.y - old_rect.y)*/);
+        }
+
+        if (this->hscroll_added) {
+            this->hscroll.rdp_input_invalidate(this->hscroll.get_rect());
+        }
+        if (this->vscroll_added) {
+            this->vscroll.rdp_input_invalidate(this->vscroll.get_rect());
+        }
     }
 
-    void set_x(int16_t x) override {
-        WidgetParent::set_x(x);
-
-        this->update_rects();
-
-        this->rdp_input_invalidate(this->get_rect());
-    }
-
-    void set_y(int16_t y) override {
-        WidgetParent::set_y(y);
-
-        this->update_rects();
-
-        this->rdp_input_invalidate(this->get_rect());
-    }
+    using WidgetParent::set_wh;
 
 public:
     // NotifyApi
-    void notify(Widget2* /*widget*/, NotifyApi::notify_event_t event) override {
-        gdi::GraphicApi& drawable_ = this->get_drawable();
 
+    void notify(Widget2* /*widget*/, NotifyApi::notify_event_t event) override {
         Widget2* parentWidget = &this->parent;
         while (&parentWidget->parent != &parentWidget->parent.parent) {
             parentWidget = &parentWidget->parent;
@@ -452,9 +557,7 @@ public:
                         ));
                 }
                 else {
-                    RDPScrBlt cmd(dest_rect, 0xCC, src_rect.x, src_rect.y);
-
-                    drawable_.draw(cmd, visible_vision_rect);
+                    this->screen_copy(src_rect, dest_rect);
 
                     SubRegion region;
 
@@ -489,9 +592,7 @@ public:
                         ));
                 }
                 else {
-                    RDPScrBlt cmd(dest_rect, 0xCC, src_rect.x, src_rect.y);
-
-                    drawable_.draw(cmd, visible_vision_rect);
+                    this->screen_copy(src_rect, dest_rect);
 
                     SubRegion region;
 
@@ -511,47 +612,52 @@ public:
 
     // RdpInput
 
-    void rdp_input_invalidate(const Rect r) override
+    void rdp_input_invalidate(Rect clip) override
     {
-        this->begin_update();
+        Rect rect_intersect = clip.intersect(this->get_rect());
 
-        SubRegion region;
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
 
-        region.rects.push_back(r.intersect(this->get_rect()));
-        if (!this->mod_visible_rect.isempty()) {
-            Rect mod_vision_rect(this->vision_rect.x, this->vision_rect.y,
-                this->mod_visible_rect.cx, this->mod_visible_rect.cy);
-            region.subtract_rect(mod_vision_rect);
-        }
-        if (this->hscroll_added) {
-            Rect hscroll_rect = this->hscroll.get_rect();
-            if (!hscroll_rect.isempty()) {
-                region.subtract_rect(hscroll_rect);
+            SubRegion region;
+
+            region.rects.push_back(rect_intersect);
+            if (!this->mod_visible_rect.isempty()) {
+                Rect mod_vision_rect(this->vision_rect.x, this->vision_rect.y,
+                    this->mod_visible_rect.cx, this->mod_visible_rect.cy);
+                region.subtract_rect(mod_vision_rect);
             }
-        }
-        if (this->vscroll_added) {
-            Rect vscroll_rect = this->vscroll.get_rect();
-            if (!vscroll_rect.isempty()) {
-                region.subtract_rect(vscroll_rect);
+            if (this->hscroll_added) {
+                Rect hscroll_rect = this->hscroll.get_rect();
+                if (!hscroll_rect.isempty()) {
+                    region.subtract_rect(hscroll_rect);
+                }
             }
-        }
+            if (this->vscroll_added) {
+                Rect vscroll_rect = this->vscroll.get_rect();
+                if (!vscroll_rect.isempty()) {
+                    region.subtract_rect(vscroll_rect);
+                }
+            }
 
-        ::fill_region(this->drawable, region, 0x000000);
+            ::fill_region(this->drawable, region, 0x000000);
 
-        Rect mod_update_rect = r.intersect(this->vision_rect);
-        mod_update_rect = mod_update_rect.offset(-this->x() + this->mod_visible_rect.x, -this->y() + this->mod_visible_rect.y);
-        if (!mod_update_rect.isempty()) {
-            this->module_holder.rdp_input_invalidate(mod_update_rect);
-        }
 
-        if (this->hscroll_added && r.has_intersection(this->hscroll.get_rect())) {
-            this->hscroll.draw(r);
-        }
-        if (this->vscroll_added && r.has_intersection(this->vscroll.get_rect())) {
-            this->vscroll.draw(r);
-        }
+            Rect mod_update_rect = clip.intersect(this->vision_rect);
+            mod_update_rect = mod_update_rect.offset(-this->x() + this->mod_visible_rect.x, -this->y() + this->mod_visible_rect.y);
+            if (!mod_update_rect.isempty()) {
+                this->module_holder.rdp_input_invalidate(mod_update_rect);
+            }
 
-        this->end_update();
+            if (this->hscroll_added) {
+                this->hscroll.rdp_input_invalidate(rect_intersect);
+            }
+            if (this->vscroll_added) {
+                this->vscroll.rdp_input_invalidate(rect_intersect);
+            }
+
+            this->drawable.end_update();
+        }
     }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
@@ -575,14 +681,7 @@ public:
 
     // Widget2
 
-    void draw(const Rect clip) override {
-        if (this->hscroll_added) {
-            this->hscroll.draw(clip);
-        }
-        if (this->vscroll_added) {
-            this->vscroll.draw(clip);
-        }
-    }
+    void refresh(Rect/* clip*/) override {}
 
 private:
     void begin_update() override
@@ -608,13 +707,13 @@ private:
 
     template<class Cmd>
     using cmd_not_implementing_move = std::integral_constant<bool,
-            std::is_same<Cmd, RDPBitmapData       >::value ||
-            std::is_same<Cmd, RDPEllipseCB        >::value ||
-            std::is_same<Cmd, RDPEllipseSC        >::value ||
-            std::is_same<Cmd, RDPPolygonCB        >::value ||
-            std::is_same<Cmd, RDPPolygonSC        >::value ||
-            std::is_same<Cmd, RDPPolyline         >::value ||
-            std::is_same<Cmd, RDPGlyphIndex       >::value ||
+            std::is_same<Cmd, RDPBitmapData      >::value ||
+            std::is_same<Cmd, RDPEllipseCB       >::value ||
+            std::is_same<Cmd, RDPEllipseSC       >::value ||
+            std::is_same<Cmd, RDPPolygonCB       >::value ||
+            std::is_same<Cmd, RDPPolygonSC       >::value ||
+            std::is_same<Cmd, RDPPolyline        >::value ||
+            std::is_same<Cmd, RDPGlyphIndex      >::value ||
             std::is_same<Cmd, RDP::RDPMultiScrBlt>::value
         >;
 

@@ -75,7 +75,7 @@ public:
         this->screen.add_widget(&this->dialog_widget);
         this->dialog_widget.set_widget_focus(&this->dialog_widget.ok, Widget2::focus_reason_tabkey);
         this->screen.set_widget_focus(&this->dialog_widget, Widget2::focus_reason_tabkey);
-        this->screen.refresh(this->screen.get_rect());
+        this->screen.rdp_input_invalidate(this->screen.get_rect());
 
         if (this->dialog_widget.challenge) {
             this->dialog_widget.set_widget_focus(this->dialog_widget.challenge, Widget2::focus_reason_tabkey);

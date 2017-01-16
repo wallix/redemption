@@ -181,31 +181,35 @@ public:
         if (this->username_value.buffer[0]) {
             dim = this->username_label.get_optimal_dim();
             this->username_label.set_wh(dim);
-            this->username_label.set_x(left + (width - 600) / 2);
+            this->username_label.set_xy(left + (width - 600) / 2,
+                this->username_label.y());
             x = std::max<uint16_t>(this->username_label.cx(), x);
 
             dim = this->target_label.get_optimal_dim();
             this->target_label.set_wh(dim);
-            this->target_label.set_x(left + (width - 600) / 2);
+            this->target_label.set_xy(left + (width - 600) / 2,
+                this->target_label.y());
             x = std::max<uint16_t>(this->target_label.cx(), x);
         }
 
         dim = this->diagnostic_label.get_optimal_dim();
         this->diagnostic_label.set_wh(dim);
-        this->diagnostic_label.set_x(left + (width - 600) / 2);
+        this->diagnostic_label.set_xy(left + (width - 600) / 2,
+            this->diagnostic_label.y());
         x = std::max<uint16_t>(this->diagnostic_label.cx(), x);
 
         if (this->showtimer) {
             dim = this->timeleft_label.get_optimal_dim();
             this->timeleft_label.set_wh(dim);
-            this->timeleft_label.set_x(left + (width - 600) / 2);
+            this->timeleft_label.set_xy(left + (width - 600) / 2,
+                this->timeleft_label.y());
             x = std::max<uint16_t>(this->timeleft_label.cx(), x);
         }
 
         x += this->diagnostic_label.x() + 10;
 
         if (this->username_value.buffer[0]) {
-            this->username_label.set_y(top + y);
+            this->username_label.set_xy(this->username_label.x(), top + y);
 
             dim = this->username_value.get_optimal_dim();
             this->username_value.set_wh(dim);
@@ -213,7 +217,7 @@ public:
 
             y += this->username_label.cy() + 20;
 
-            this->target_label.set_y(top + y);
+            this->target_label.set_xy(this->target_label.x(), top + y);
 
             dim = this->target_value.get_optimal_dim();
             this->target_value.set_wh(dim);
@@ -222,7 +226,7 @@ public:
             y += this->target_label.cy() + 20;
         }
 
-        this->diagnostic_label.set_y(top + y);
+        this->diagnostic_label.set_xy(this->diagnostic_label.x(), top + y);
 
         dim = this->diagnostic_value.get_optimal_dim();
         this->diagnostic_value.set_wh(dim);
@@ -230,7 +234,7 @@ public:
         if (this->diagnostic_label.cx() > this->cx() - (x + 10)) {
             y += this->diagnostic_label.cy() + 10;
 
-            this->diagnostic_value.set_y(top + y);
+            this->diagnostic_value.set_xy(this->diagnostic_value.x(), top + y);
             y += this->diagnostic_value.cy() + 20;
         }
         else {
@@ -239,7 +243,7 @@ public:
         }
 
         if (this->showtimer) {
-            this->timeleft_label.set_y(top + y);
+            this->timeleft_label.set_xy(this->timeleft_label.x(), top + y);
 
             dim = this->timeleft_value.get_optimal_dim();
             this->timeleft_value.set_wh(dim);
@@ -275,7 +279,7 @@ public:
         this->img.set_xy(left + (this->cx() - this->img.cx()) / 2,
                          top + (3*(height - y) / 2 - this->img.cy()) / 2 + y);
         if (this->img.y() + this->img.cy() > top + height) {
-            this->img.set_y(top);
+            this->img.set_xy(this->img.x(), top);
         }
     }
 
@@ -301,13 +305,13 @@ public:
             Rect old = this->timeleft_value.get_rect();
             this->drawable.begin_update();
             this->timeleft_value.set_text(nullptr);
-            this->draw(old);
+            this->rdp_input_invalidate(old);
             this->timeleft_value.set_text(buff);
 
             Dimension dim = this->timeleft_value.get_optimal_dim();
             this->timeleft_value.set_wh(dim);
 
-            this->draw(this->timeleft_value.get_rect());
+            this->rdp_input_invalidate(this->timeleft_value.get_rect());
             this->drawable.end_update();
 
             this->prev_time = tl;
@@ -340,4 +344,3 @@ public:
         }
     }
 };
-

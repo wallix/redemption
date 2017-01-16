@@ -26,6 +26,7 @@
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/pointer.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "mod/internal/internal_mod.hpp"
@@ -2710,39 +2711,8 @@ private:
         this->mod_->move_size_widget(widget_rect_new.x, widget_rect_new.y,
             widget_rect_new.cx, widget_rect_new.cy);
 
-        if (!this->window_rect_old.isempty()) {
-            Rect widget_rect_old = this->window_rect_old.shrink(1);
-            widget_rect_old.y  += TITLE_BAR_HEIGHT;
-            widget_rect_old.cy -= TITLE_BAR_HEIGHT;
-
-            SubRegion region;
-
-            region.rects.push_back(widget_rect_new);
-
-            Rect widget_rect_intersect = widget_rect_old.intersect(widget_rect_new);
-            if (!widget_rect_intersect.isempty()) {
-                region.subtract_rect(widget_rect_intersect);
-            }
-
-            for (const Rect & rect : region.rects) {
-                this->mod_->rdp_input_invalidate(rect);
-            }
-        } else {
-            this->mod_->rdp_input_invalidate(widget_rect_new);
-        }
+        this->mod_->refresh(this->window_rect);
 
         this->window_rect_old = this->window_rect;
-
-        {
-            SubRegion region;
-
-            region.rects.push_back(Rect(0, 0, this->front_width, this->front_height));
-
-            region.subtract_rect(widget_rect_new);
-
-            for (const Rect & rect : region.rects) {
-                this->mod_->rdp_input_invalidate(rect);
-            }
-        }
     }
 };  // class ClientExecute

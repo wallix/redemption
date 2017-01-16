@@ -389,7 +389,7 @@ public:
             (this->duration_edit.num_chars == 0)) {
             this->set_warning_buffer(this->field_duration, this->generic_warning);
             this->set_widget_focus(&this->duration_edit, focus_reason_mousebutton1);
-            this->draw(this->get_rect());
+            this->rdp_input_invalidate(this->get_rect());
             return;
         }
         if (((this->flags & DURATION_DISPLAY) == DURATION_DISPLAY) &&
@@ -405,7 +405,7 @@ public:
                     this->set_warning_buffer(this->field_duration, this->toohigh_warning);
                 }
                 this->set_widget_focus(&this->duration_edit, focus_reason_mousebutton1);
-                this->draw(this->get_rect());
+                this->rdp_input_invalidate(this->get_rect());
                 return;
             }
         }
@@ -414,7 +414,7 @@ public:
             (this->ticket_edit.num_chars == 0)) {
             this->set_warning_buffer(this->field_ticket, this->generic_warning);
             this->set_widget_focus(&this->ticket_edit, focus_reason_mousebutton1);
-            this->draw(this->get_rect());
+            this->rdp_input_invalidate(this->get_rect());
             return;
         }
         if (((this->flags & COMMENT_DISPLAY) == COMMENT_DISPLAY) &&
@@ -422,7 +422,7 @@ public:
             (this->comment_edit.num_chars == 0)) {
             this->set_warning_buffer(this->field_comment, this->generic_warning);
             this->set_widget_focus(&this->comment_edit, focus_reason_mousebutton1);
-            this->draw(this->get_rect());
+            this->rdp_input_invalidate(this->get_rect());
             return;
         }
 

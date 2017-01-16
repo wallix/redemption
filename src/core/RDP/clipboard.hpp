@@ -979,7 +979,7 @@ struct FormatListPDU_LongName : public FormatListPDU {
         LOG(LOG_INFO, "     Format List PDU Long Name:");
         LOG(LOG_INFO, "          * formatListDataSize = %d (4 bytes)", int(this->formatListDataSize));
         for (size_t i = 0; i < this->formatListDataSize; i++) {
-        LOG(LOG_INFO, "          * formatListDataName = %s", this->formatListDataName[i].c_str());
+        LOG(LOG_INFO, "          * formatListDataName = %s", this->formatListDataName[i]);
         LOG(LOG_INFO, "          * formatListDataIDs  = 0x%08x (4 bytes)", this->formatListDataIDs[i]);
         }
     }
@@ -1016,7 +1016,7 @@ struct FormatListPDU_ShortName : public FormatListPDU {
         LOG(LOG_INFO, "     Format List PDU Short Name:");
         LOG(LOG_INFO, "          * formatListDataSize = %d (4 bytes)", int(this->formatListDataSize));
         for (size_t i = 0; i < this->formatListDataSize; i++) {
-        LOG(LOG_INFO, "          * formatListDataName = %s (8 bytes)", this->formatListDataName[i].c_str());
+        LOG(LOG_INFO, "          * formatListDataName = %s (8 bytes)", this->formatListDataName[i]);
         LOG(LOG_INFO, "          * formatListDataIDs  = 0x%08x (4 bytes)", this->formatListDataIDs[i]);
         }
     }

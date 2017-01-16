@@ -38,9 +38,12 @@ public:
                int16_t left, int16_t top, int16_t width, int16_t height,
                Widget2& parent, NotifyApi* notifier,
                std::unique_ptr<mod_api> managed_mod, Font const & font,
-               Theme const & theme)
+               Theme const & theme,
+               const GCC::UserData::CSMonitor& cs_monitor,
+               uint16_t front_width, uint16_t front_height)
     : WidgetParent(drawable, parent, notifier)
-    , module_host(drawable, *this, this, std::move(managed_mod), font, theme)
+    , module_host(drawable, *this, this, std::move(managed_mod), font, theme,
+                  cs_monitor, front_width, front_height)
     {
         this->impl = &composite_array;
 

@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     WidgetScreen wscreen(drawable.gd, font, nullptr, Theme{});
     wscreen.set_wh(drawable.gd.width(), drawable.gd.height());
 
-    wscreen.refresh(wscreen.get_rect());
+    wscreen.rdp_input_invalidate(wscreen.get_rect());
     wscreen.tab_flag = Widget2::NORMAL_TAB;
     Notify notifier1;
     Notify notifier2;
@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
 
     wscreen.set_widget_focus(&wbutton2, Widget2::focus_reason_tabkey);
 
-    wscreen.refresh(wscreen.get_rect());
+    wscreen.rdp_input_invalidate(wscreen.get_rect());
 
     char message[1024];
 

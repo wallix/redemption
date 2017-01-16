@@ -97,17 +97,6 @@ public:
         return false;
     }
 
-    virtual void draw(Rect clip) = 0;
-
-    void refresh(Rect const clip)
-    {
-        if (!clip.isempty()){
-            this->drawable.begin_update();
-            this->draw(clip);
-            this->drawable.end_update();
-        }
-    }
-
     bool is_root() {
         // The root widget is defined as the parent of itself (screen widget only)
         return (&this->parent == this);
@@ -166,9 +155,8 @@ public:
         (void)param2;
     }
 
-    // - part of screen should be redrawn
-    void rdp_input_invalidate(Rect r) override {
-        this->refresh(r);
+    void refresh(Rect clip) override {
+        this->rdp_input_invalidate(clip);
     }
 
     void send_notify(NotifyApi::notify_event_t event)
@@ -189,22 +177,21 @@ public:
         return nullptr;
     }
 
-    void set_xy(int16_t x, int16_t y)
+    virtual void set_xy(int16_t x, int16_t y)
     {
-        this->set_x(x);
-        this->set_y(y);
+        this->rect.x = x;
+        this->rect.y = y;
     }
 
-    void set_wh(int16_t w, int16_t h)
+    virtual void set_wh(uint16_t w, uint16_t h)
     {
-        this->set_cx(w);
-        this->set_cy(h);
+        this->rect.cx = w;
+        this->rect.cy = h;
     }
 
     void set_wh(Dimension dim)
     {
-        this->set_cx(dim.w);
-        this->set_cy(dim.h);
+        this->set_wh(dim.w, dim.h);
     }
 
     virtual void set_color(uint32_t bg_color, uint32_t fg_color) {
@@ -223,7 +210,7 @@ public:
         if (!this->has_focus){
             this->has_focus = true;
             this->send_notify(NOTIFY_FOCUS_BEGIN);
-            this->refresh(this->rect);
+            this->rdp_input_invalidate(this->rect);
         }
     }
 
@@ -232,7 +219,7 @@ public:
         if (this->has_focus){
             this->has_focus = false;
             this->send_notify(NOTIFY_FOCUS_END);
-            this->refresh(this->rect);
+            this->rdp_input_invalidate(this->rect);
         }
     }
 
@@ -246,18 +233,10 @@ public:
         return this->rect.x;
     }
 
-    virtual void set_x(int16_t x) {
-        this->rect.x = x;
-    }
-
     ///Return y position in it's screen
     int16_t y() const
     {
         return this->rect.y;
-    }
-
-    virtual void set_y(int16_t y) {
-        this->rect.y = y;
     }
 
     ///Return width
@@ -266,18 +245,10 @@ public:
         return this->rect.cx;
     }
 
-    virtual void set_cx(uint16_t cx) {
-        this->rect.cx = cx;
-    }
-
     ///Return height
     uint16_t cy() const
     {
         return this->rect.cy;
-    }
-
-    virtual void set_cy(uint16_t cy) {
-        this->rect.cy = cy;
     }
 
     ///Return x()+cx()
@@ -296,4 +267,3 @@ public:
         return this->rect;
     }
 };
-

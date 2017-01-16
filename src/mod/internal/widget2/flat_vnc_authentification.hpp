@@ -96,7 +96,8 @@ public:
         this->password_edit.set_xy(x_cbloc + this->password_label.cx() + 10,
             y_cbloc + this->message_label.cy() + 20 - this->password_edit.get_border_height());
 
-        this->password_label.set_y(this->password_label.y() + (this->password_edit.cy() - this->password_label.cy()) / 2);
+        this->password_label.set_xy(this->password_label.x(),
+            this->password_label.y() + (this->password_edit.cy() - this->password_label.cy()) / 2);
 
         dim = this->img.get_optimal_dim();
         this->img.set_wh(dim);
@@ -108,7 +109,7 @@ public:
             :(height/2 + cbloc_h/2 + bottom_height/2);
         this->img.set_xy((width - this->img.cx()) / 2, y_bbloc);
         if (this->img.y() + this->img.cy() > height) {
-            this->img.set_y(0);
+            this->img.set_xy(this->img.x(), 0);
         }
     }
 
@@ -141,5 +142,3 @@ public:
         }
     }
 };
-
-

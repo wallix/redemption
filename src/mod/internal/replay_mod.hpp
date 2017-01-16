@@ -105,8 +105,7 @@ private:
             this->front_width  = this->reader.info_width;
             this->front_height = this->reader.info_height;
 
-            this->screen.set_cx(this->reader.info_width);
-            this->screen.set_cy(this->reader.info_height);
+            this->screen.set_wh(this->reader.info_width, this->reader.info_height);
 
             break;
         case FrontAPI::ResizeResult::fail:
@@ -167,11 +166,9 @@ public:
         this->screen.clear();
     }
 
-    void rdp_input_invalidate(const Rect /*rect*/) override {
-    }
+    void rdp_input_invalidate(Rect /*rect*/) override {}
 
-    void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/) override {
-    }
+    void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/) override {}
 
     void rdp_input_scancode(long /*param1*/, long /*param2*/,
                             long /*param3*/, long /*param4*/, Keymap2 * keymap) override {
@@ -185,6 +182,8 @@ public:
     void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
                                int16_t /*param1*/, int16_t /*param2*/) override {
     }
+
+    void refresh(Rect /*rect*/) override {}
 
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue
@@ -231,4 +230,3 @@ public:
 
     bool is_up_and_running() override { return true; }
 };
-

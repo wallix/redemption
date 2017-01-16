@@ -107,6 +107,8 @@ struct RdpInput : noncopyable
     { (void)left; (void)top; (void)right; (void)bottom; }
 
     virtual void rdp_suppress_display_updates() {}
+
+    virtual void refresh(Rect clip) = 0;
 };
 
 struct Callback : RdpInput

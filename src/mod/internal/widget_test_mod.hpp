@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "mod/internal/internal_mod.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget2/notify_api.hpp"
@@ -57,13 +58,15 @@ public:
         WidgetTestModVariables vars,
         FrontAPI& front, uint16_t width, uint16_t height,
         Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
-        ClientExecute& client_execute)
+        ClientExecute& client_execute,
+        const GCC::UserData::CSMonitor& cs_monitor)
     : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(),
                            client_execute, vars.get<cfg::theme>())
     , widget_test(front, widget_rect.x, widget_rect.y,
                   widget_rect.cx, widget_rect.cy,
                   this->screen, this, std::move(managed_mod),
-                  vars.get<cfg::font>(), vars.get<cfg::theme>())
+                  vars.get<cfg::font>(), vars.get<cfg::theme>(),
+                  cs_monitor, width, height)
     , vars(vars)
     , managed_mod_event_handler(*this)
     {
@@ -72,7 +75,7 @@ public:
         this->screen.set_widget_focus(&this->widget_test,
             Widget2::focus_reason_tabkey);
 
-        this->screen.refresh(this->screen.get_rect());
+        this->screen.rdp_input_invalidate(this->screen.get_rect());
     }
 
     ~WidgetTestMod() override
@@ -91,7 +94,7 @@ public:
 public:
     // RdpInput
 
-    void rdp_input_invalidate(const Rect r) override {
+    void rdp_input_invalidate(Rect r) override {
         LocallyIntegrableMod::rdp_input_invalidate(r);
 
         this->widget_test.rdp_input_invalidate(r);

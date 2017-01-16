@@ -32,6 +32,7 @@ class WidgetTooltip : public Widget2
     uint h_border;
     WidgetMultiLine desc;
     int border_color;
+
 public:
     WidgetTooltip(gdi::GraphicApi & drawable, Widget2 & parent,
                   NotifyApi* notifier, const char * text,
@@ -64,35 +65,35 @@ public:
         Dimension dim = this->desc.get_optimal_dim();
         this->desc.set_wh(dim);
 
-        this->set_cx(this->desc.cx() + 2 * w_border);
-        this->set_cy(this->desc.cy() + 2 * h_border);
+        this->set_wh(this->desc.cx() + 2 * w_border,
+                     this->desc.cy() + 2 * h_border);
     }
 
-    void draw(const Rect clip) override {
-        this->drawable.draw(RDPOpaqueRect(this->get_rect(), desc.bg_color), clip, gdi::ColorCtx::depth24());
-        this->desc.draw(clip);
-        this->draw_border(clip);
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            this->drawable.draw(RDPOpaqueRect(this->get_rect(), desc.bg_color), rect_intersect, gdi::ColorCtx::depth24());
+            this->desc.rdp_input_invalidate(rect_intersect);
+            this->draw_border(rect_intersect);
+
+            this->drawable.end_update();
+        }
     }
 
-    void set_x(int16_t x) override {
-        Widget2::set_x(x);
-        this->desc.set_x(x + w_border);
+    void set_xy(int16_t x, int16_t y) override {
+        Widget2::set_xy(x, y);
+        this->desc.set_xy(x + w_border, y + h_border);
     }
 
-    void set_y(int16_t y) override {
-        Widget2::set_y(y);
-        this->desc.set_y(y + h_border);
+    void set_wh(uint16_t w, uint16_t h) override {
+        Widget2::set_wh(w, h);
+        this->desc.set_wh(w -  2 * w_border, h - 2 * h_border);
     }
 
-    void set_cx(uint16_t cx) override {
-        Widget2::set_cx(cx);
-        this->desc.set_cx(cx -  2 * w_border);
-    }
-
-    void set_cy(uint16_t cy) override {
-        Widget2::set_cy(cy);
-        this->desc.set_cy(cy - 2 * h_border);
-    }
+    using Widget2::set_wh;
 
     void draw_border(const Rect clip)
     {

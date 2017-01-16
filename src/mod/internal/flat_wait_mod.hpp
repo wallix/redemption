@@ -76,7 +76,7 @@ public:
             this->wait_widget.set_widget_focus(&this->wait_widget.goselector, Widget2::focus_reason_tabkey);
         }
         this->screen.set_widget_focus(&this->wait_widget, Widget2::focus_reason_tabkey);
-        this->screen.refresh(this->screen.get_rect());
+        this->screen.rdp_input_invalidate(this->screen.get_rect());
     }
 
     ~FlatWaitMod() override {

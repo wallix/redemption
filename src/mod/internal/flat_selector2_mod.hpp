@@ -116,7 +116,7 @@ public:
         this->selector_lines_per_page_saved = available_height / line_height;
         this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
         this->ask_page();
-        this->selector.refresh(this->selector.get_rect());
+        this->selector.rdp_input_invalidate(this->selector.get_rect());
     }
 
     ~FlatSelector2Mod() override {
@@ -239,10 +239,10 @@ public:
 
         this->refresh_device();
 
-        this->selector.refresh(this->selector.get_rect());
+        this->selector.rdp_input_invalidate(this->selector.get_rect());
 
-        this->selector.current_page.refresh(this->selector.current_page.get_rect());
-        this->selector.number_page.refresh(this->selector.number_page.get_rect());
+        this->selector.current_page.rdp_input_invalidate(this->selector.current_page.get_rect());
+        this->selector.number_page.rdp_input_invalidate(this->selector.number_page.get_rect());
         this->event.reset();
     }
 
@@ -387,7 +387,7 @@ public:
 
             this->vars.set_acl<cfg::context::selector_lines_per_page>(available_height / line_height);
             this->ask_page();
-            this->selector.refresh(this->selector.get_rect());
+            this->selector.rdp_input_invalidate(this->selector.get_rect());
         }
     }
 };

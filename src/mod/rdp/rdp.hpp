@@ -1611,7 +1611,7 @@ public:
             drive.assign(begin(trimmed_range), end(trimmed_range));
 
             if (this->verbose & RDPVerbose::basic_trace) {
-                LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive.c_str());
+                LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive);
             }
             this->file_system_drive_manager.EnableDrive(drive.c_str(), this->verbose);
         }
@@ -3702,17 +3702,8 @@ public:
         //LOG(LOG_INFO, "mod_rdp::draw_event()");
 
         if (this->remote_programs_session_manager) {
-            this->remote_programs_session_manager->set_drawable(&drawable_, this->orders.bpp);
+            this->remote_programs_session_manager->set_drawable(&drawable_);
         }
-
-        gdi::GraphicApi & drawable =
-            ( this->remote_programs_session_manager
-            ? (*this->remote_programs_session_manager)
-            : ( this->graphics_update_disabled
-              ? gdi::null_gd()
-              : drawable_
-              )
-            );
 
         if (!this->event.waked_up_by_time
         || ((this->state == MOD_RDP_NEGO)
@@ -3738,6 +3729,13 @@ public:
                     break;
 
                 case MOD_RDP_CONNECTED:
+                    gdi::GraphicApi & drawable =
+                        ( this->remote_programs_session_manager
+                        ? (*this->remote_programs_session_manager)
+                        : ( this->graphics_update_disabled
+                            ? gdi::null_gd()
+                            : drawable_
+                        ));
                     this->connected(now, drawable);
                     break;
                 }
@@ -6038,7 +6036,7 @@ public:
         }
     }
 
-    void rdp_input_invalidate(const Rect r) override {
+    void rdp_input_invalidate(Rect r) override {
         if (this->verbose & RDPVerbose::basic_trace3){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
         }
@@ -6122,6 +6120,10 @@ public:
         if (this->verbose & RDPVerbose::basic_trace){
             LOG(LOG_INFO, "mod_rdp::rdp_suppress_display_updates done");
         }
+    }
+
+    void refresh(Rect r) override {
+        this->rdp_input_invalidate(r);
     }
 
     // [referenced from 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE) ]
@@ -6843,7 +6845,7 @@ private:
 
         std::string auth_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
 
-        LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message.c_str());
+        LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message);
 
         this->auth_channel_flags  = flags;
         this->auth_channel_chanid = auth_channel.chanid;
@@ -7013,4 +7015,9 @@ public:
 
     Dimension get_dim() const override
     { return Dimension(this->front_width, this->front_height); }
+
+    bool is_content_laid_out() override {
+LOG(LOG_INFO, "mod_rdp::is_content_laid_out");
+        return false;
+    }
 };

@@ -488,16 +488,17 @@ private:
             template<class Cmd, class... Ts>
             void draw_impl(Cmd const & cmd, Rect clip, gdi::ColorCtx color_ctx, Ts const & ... args)
             {
-                Cmd const & new_cmd = (gdi::Depth::from_bpp(Enc::bpp) == color_ctx.depth())
+                constexpr auto depth = gdi::Depth::from_bpp(Enc::bpp);
+                Cmd const & new_cmd = (depth == color_ctx.depth())
                     ? cmd
                     : [&cmd, &color_ctx]() {
                         auto color_convertor = [&color_ctx](BGRColor c) {
                             Enc enc;
                             switch (color_ctx.depth()) {
-                                case gdi::Depth::depth8() : return enc(decode_color8()(c, *color_ctx.palette()));
-                                case gdi::Depth::depth15(): return enc(decode_color15()(c));
-                                case gdi::Depth::depth16(): return enc(decode_color16()(c));
-                                case gdi::Depth::depth24(): return enc(decode_color24()(c));
+                                case gdi::Depth::depth8() : return enc(decode_color8_opaquerect()(c, *color_ctx.palette()));
+                                case gdi::Depth::depth15(): return enc(decode_color15_opaquerect()(c));
+                                case gdi::Depth::depth16(): return enc(decode_color16_opaquerect()(c));
+                                case gdi::Depth::depth24(): return enc(decode_color24_opaquerect()(c));
                                 case gdi::Depth::unspecified(): default: assert(!"unknown depth");
                             }
                             return RGBColor{};
@@ -506,7 +507,7 @@ private:
                         gdi::GraphicCmdColor::encode_cmd_color(color_convertor, new_cmd);
                         return new_cmd;
                     }();
-                this->graphics.draw(new_cmd, clip, color_ctx, args...);
+                this->graphics.draw(new_cmd, clip, gdi::ColorCtx{depth, color_ctx.palette()}, args...);
             }
 
             Graphics::PrivateGraphicsUpdatePDU & graphics;
@@ -963,11 +964,11 @@ public:
         struct timeval now = tvtime();
 
         if (this->verbose & Verbose::basic_trace) {
-            LOG(LOG_INFO, "movie_path    = %s\n", ini.get<cfg::globals::movie_path>().c_str());
-            LOG(LOG_INFO, "auth_user     = %s\n", ini.get<cfg::globals::auth_user>().c_str());
-            LOG(LOG_INFO, "host          = %s\n", ini.get<cfg::globals::host>().c_str());
-            LOG(LOG_INFO, "target_device = %s\n", ini.get<cfg::globals::target_device>().c_str());
-            LOG(LOG_INFO, "target_user   = %s\n", ini.get<cfg::globals::target_user>().c_str());
+            LOG(LOG_INFO, "movie_path    = %s\n", ini.get<cfg::globals::movie_path>());
+            LOG(LOG_INFO, "auth_user     = %s\n", ini.get<cfg::globals::auth_user>());
+            LOG(LOG_INFO, "host          = %s\n", ini.get<cfg::globals::host>());
+            LOG(LOG_INFO, "target_device = %s\n", ini.get<cfg::globals::target_device>());
+            LOG(LOG_INFO, "target_user   = %s\n", ini.get<cfg::globals::target_user>());
         }
 
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16) ? 16 : 24);
@@ -978,7 +979,6 @@ public:
                 ini.get<cfg::video::png_interval>(),
                 100u,
                 ini.get<cfg::video::png_limit>(),
-                false,
                 true
         };
         FlvParams flv_params = flv_params_from_ini(this->client_info.width, this->client_info.height, ini);
@@ -1253,14 +1253,14 @@ private:
 public:
     void begin_update() override {
         if (this->verbose & Verbose::graphic) {
-            LOG(LOG_INFO, "Front::begin_update");
+            LOG(LOG_INFO, "Front::begin_update level=%d", this->order_level);
         }
         this->order_level++;
     }
 
     void end_update() override {
         if (this->verbose & Verbose::graphic) {
-            LOG(LOG_INFO, "Front::end_update");
+            LOG(LOG_INFO, "Front::end_update level=%d", this->order_level);
         }
         this->order_level--;
         if (!this->up_and_running) {

@@ -44,7 +44,7 @@ public:
     , unit_test(unit_test)
     {}
 
-    void rdp_input_invalidate(const Rect /*rect*/) override {}
+    void rdp_input_invalidate(Rect /*rect*/) override {}
 
     void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/) override {}
 
@@ -59,6 +59,8 @@ public:
 
     void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
                                        int16_t /*param1*/, int16_t /*param2*/) override {}
+
+    void refresh(Rect /*rect*/) override {}
 
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue
@@ -204,4 +206,3 @@ public:
         this->front.end_update();
     }
 };
-
