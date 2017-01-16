@@ -923,13 +923,13 @@ BOOST_AUTO_TEST_CASE(DeviceWriteResponseReceive)
 
 BOOST_AUTO_TEST_CASE(DeviceReadResponseEmit)
 {
-    const size_t len = 8;
+    const size_t len = 4;
     const char data[] =
-            "\x04\x00\x00\x00\x01\x02\x03\x04";
+            "\x04\x00\x00\x00";
 
     StaticOutStream<128> stream;
-    uint8_t readData[] = {1, 2, 3, 4};
-    rdpdr::DeviceReadResponse pdu(4, readData);
+    //uint8_t readData[] = {1, 2, 3, 4};
+    rdpdr::DeviceReadResponse pdu(4);
     pdu.emit(stream);
 
     std::string const out_data(data, len);
@@ -939,17 +939,14 @@ BOOST_AUTO_TEST_CASE(DeviceReadResponseEmit)
 
 BOOST_AUTO_TEST_CASE(DeviceReadResponseReceive)
 {
-    const size_t len = 8;
+    const size_t len = 4;
     const char data[] =
-            "\x04\x00\x00\x00\x01\x02\x03\x04";
+            "\x04\x00\x00\x00";
 
     InStream in_stream(data, len);
     rdpdr::DeviceReadResponse pdu;
     pdu.receive(in_stream);
 
-    BOOST_CHECK_EQUAL(pdu.ReadData.size(), 4);
-    BOOST_CHECK_EQUAL(pdu.ReadData.data()[0], 1);
-    BOOST_CHECK_EQUAL(pdu.ReadData.data()[1], 2);
-    BOOST_CHECK_EQUAL(pdu.ReadData.data()[2], 3);
-    BOOST_CHECK_EQUAL(pdu.ReadData.data()[3], 4);
+    BOOST_CHECK_EQUAL(pdu.Length, 4);
+
 }

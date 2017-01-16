@@ -87,6 +87,16 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         bool no_timestamp = false;
         // TODO remove this after unifying capture interface
 
+        GraphicToFile::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
+            | (ini.get<cfg::debug::primary_orders>() ?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
+            | (ini.get<cfg::debug::secondary_orders>() ?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
+            | (ini.get<cfg::debug::bitmap_update>() ?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
+            
+        WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
+        std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
+        std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
+        TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
+
         WrmParams wrm_params = {};
         PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false};
 
@@ -130,7 +140,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
         const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
 
-        Capture capture(  capture_wrm, wrm_params
+        Capture capture( capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
                         , capture_png, png_params
                         , capture_pattern_checker
                         , capture_ocr, ocr_params
@@ -298,7 +308,17 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     // TODO remove this after unifying capture interface
     bool no_timestamp = false;
 
+    GraphicToFile::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
+        | (ini.get<cfg::debug::primary_orders>() ?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
+        | (ini.get<cfg::debug::secondary_orders>() ?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
+        | (ini.get<cfg::debug::bitmap_update>() ?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
+        
+    WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
+    std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
+    std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
+    TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
     WrmParams wrm_params = {};
+
     PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false };
     FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
     const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
@@ -340,7 +360,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
 
     // TODO remove this after unifying capture interface
-    Capture capture( capture_wrm, wrm_params
+    Capture capture( capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
                    , capture_png, png_params
                    , capture_pattern_checker
                    , capture_ocr, ocr_params
