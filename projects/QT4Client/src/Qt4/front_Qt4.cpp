@@ -625,6 +625,7 @@ void Front_Qt::disconnect(std::string const & error) {
     if (this->_mod_qt != nullptr) {
         this->_mod_qt->drop_connexion();
     }
+
     this->_monitorCountNegociated = false;
 
     this->_form->set_IPField(this->_targetIP);
