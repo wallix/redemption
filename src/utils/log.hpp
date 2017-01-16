@@ -51,6 +51,7 @@ namespace { namespace compiler_aux_ {
 #include <unistd.h> // getpid
 
 #include "cxx/diagnostic.hpp"
+#include "cxx/keywords.hpp"
 
 #include <type_traits>
 
@@ -111,7 +112,7 @@ log_array_02x_format(uint8_t (&d)[n])
 template<std::size_t n>
 char const * log_value(redemption_log_s<n> && x) { return x.data; }
 
-#if ! defined(IN_IDE_PARSER) && defined(__has_include) && __has_include(<boost/preprocessor/variadic/to_list.hpp>)
+#if ! defined(IN_IDE_PARSER) && CXX_HAS_SYSTEM_INCLUDE(boost/preprocessor/variadic/to_list.hpp)
 
 # include <boost/preprocessor/cat.hpp>
 # include <boost/preprocessor/comparison/greater.hpp>

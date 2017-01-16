@@ -84,15 +84,15 @@ Front_Qt::Front_Qt(char* argv[], int argc, RDPVerbose verbose)
     this->fileSystemData.drives[0].name[3] = ' ';
     this->fileSystemData.drives[0].name[4] = 'C';
     this->fileSystemData.drives[0].name[5] = ':';
-    this->fileSystemData.drives[0].ID = 3;
+    this->fileSystemData.drives[0].ID = 1;
 
-    this->fileSystemData.drives[1].name[0] = 'R';
-    this->fileSystemData.drives[1].name[1] = 'D';
-    this->fileSystemData.drives[1].name[2] = 'P';
-    this->fileSystemData.drives[1].name[3] = ' ';
-    this->fileSystemData.drives[1].name[4] = 'D';
-    this->fileSystemData.drives[1].name[5] = ':';
-    this->fileSystemData.drives[1].ID = 4;
+//     this->fileSystemData.drives[1].name[0] = 'R';
+//     this->fileSystemData.drives[1].name[1] = 'D';
+//     this->fileSystemData.drives[1].name[2] = 'P';
+//     this->fileSystemData.drives[1].name[3] = ' ';
+//     this->fileSystemData.drives[1].name[4] = 'D';
+//     this->fileSystemData.drives[1].name[5] = ':';
+//     this->fileSystemData.drives[1].ID = 2;
 
     // Windows and socket contrainer
     this->_mod_qt = new Mod_Qt(this, this->_form);
@@ -134,7 +134,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, RDPVerbose verbose)
                                          , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                            GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
                                            GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                         , PDU_MAX_SIZE+1
+                                         , CHANNELS::CHANNEL_CHUNK_LENGTH+1
                                          };
     this->_to_client_sender._channel = channel_cliprdr;
     this->_cl.push_back(channel_cliprdr);
@@ -158,7 +158,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, RDPVerbose verbose)
     CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
                                       , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                         GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
-                                      , PDU_MAX_SIZE+1
+                                      , CHANNELS::CHANNEL_CHUNK_LENGTH+2
                                       };
     this->_cl.push_back(channel_rdpdr);
 
@@ -560,6 +560,7 @@ bool Front_Qt::connect() {
                                         , gen
                                         , nullptr
                                         );
+
             this->_graph_capture = this->_capture->get_graphic_api();
         }
 
@@ -610,6 +611,7 @@ void Front_Qt::load_replay_mod(std::string const & movie_name) {
                                          , true
                                          , to_verbose_flags(0)
                                          ));
+
     this->_replay_mod->add_consumer(nullptr, &this->snapshoter, nullptr, nullptr, nullptr);
 }
 
@@ -796,6 +798,11 @@ void Front_Qt::send_rdp_scanCode(int keyCode, int flag) {
 
 void Front_Qt::setMainScreenOnTopRelease() {
     this->_screen[0]->activateWindow();
+}
+
+void Front_Qt::recv_disconnect_provider_ultimatum() {
+    LOG(LOG_INFO, "SERVER >> disconnect provider ultimatum");
+    this->_recv_disconnect_ultimatum = true;
 }
 
 
@@ -1684,94 +1691,94 @@ void Front_Qt::draw(const RDP::FrameMarker & order) {
     //this->gd.draw(order);
 }
 
-void Front_Qt::draw(const RDP::RAIL::NewOrExistingWindow & order) {
-    if (this->verbose & RDPVerbose::graphics) {
-        LOG(LOG_INFO, "--------- FRONT ------------------------");
-        order.log(LOG_INFO);
-        LOG(LOG_INFO, "========================================\n");
-    }
-
-    LOG(LOG_WARNING, "DEFAULT: NewOrExistingWindow");
-    //this->gd.draw(order);
-}
-
-void Front_Qt::draw(const RDP::RAIL::WindowIcon & order) {
-    if (this->verbose & RDPVerbose::graphics) {
-        LOG(LOG_INFO, "--------- FRONT ------------------------");
-        order.log(LOG_INFO);
-        LOG(LOG_INFO, "========================================\n");
-    }
-
-    LOG(LOG_WARNING, "DEFAULT: WindowIcon");
-    //this->gd.draw(order);
-}
-
-void Front_Qt::draw(const RDP::RAIL::CachedIcon & order) {
-    if (this->verbose & RDPVerbose::graphics) {
-        LOG(LOG_INFO, "--------- FRONT ------------------------");
-        order.log(LOG_INFO);
-        LOG(LOG_INFO, "========================================\n");
-    }
-
-    LOG(LOG_INFO, "DEFAULT: CachedIcon");
-    //this->gd.draw(order);
-}
-
-void Front_Qt::draw(const RDP::RAIL::DeletedWindow & order) {
-    if (this->verbose & RDPVerbose::graphics) {
-        LOG(LOG_INFO, "--------- FRONT ------------------------");
-        order.log(LOG_INFO);
-        LOG(LOG_INFO, "========================================\n");
-    }
-
-    LOG(LOG_INFO, "DEFAULT: DeletedWindow");
-
-    //this->gd.draw(order);
-}
-
-void Front_Qt::draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) {
-    if (this->verbose & RDPVerbose::graphics) {
-        LOG(LOG_INFO, "--------- FRONT ------------------------");
-        order.log(LOG_INFO);
-        LOG(LOG_INFO, "========================================\n");
-    }
-
-    LOG(LOG_WARNING, "DEFAULT: NewOrExistingNotificationIcons");
-    //this->gd.draw(order);
-}
-
-void Front_Qt::draw(const RDP::RAIL::DeletedNotificationIcons & order) {
-    if (this->verbose & RDPVerbose::graphics) {
-        LOG(LOG_INFO, "--------- FRONT ------------------------");
-        order.log(LOG_INFO);
-        LOG(LOG_INFO, "========================================\n");
-    }
-
-    LOG(LOG_INFO, "DEFAULT: DeletedNotificationIcons");
-    //this->gd.draw(order);
-}
-
-void Front_Qt::draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) {
-    if (this->verbose & RDPVerbose::graphics) {
-        LOG(LOG_INFO, "--------- FRONT ------------------------");
-        order.log(LOG_INFO);
-        LOG(LOG_INFO, "========================================\n");
-    }
-
-    LOG(LOG_INFO, "DEFAULT: ActivelyMonitoredDesktop");
-    //this->gd.draw(order);
-}
-
-void Front_Qt::draw(const RDP::RAIL::NonMonitoredDesktop & order) {
-    if (this->verbose & RDPVerbose::graphics) {
-        LOG(LOG_INFO, "--------- FRONT ------------------------");
-        order.log(LOG_INFO);
-        LOG(LOG_INFO, "========================================\n");
-    }
-
-    LOG(LOG_WARNING, "DEFAULT: NonMonitoredDesktop");
-    //this->gd.draw(order);
-}
+// void Front_Qt::draw(const RDP::RAIL::NewOrExistingWindow & order) {
+//     if (this->verbose & RDPVerbose::graphics) {
+//         LOG(LOG_INFO, "--------- FRONT ------------------------");
+//         order.log(LOG_INFO);
+//         LOG(LOG_INFO, "========================================\n");
+//     }
+//
+//     LOG(LOG_WARNING, "DEFAULT: NewOrExistingWindow");
+//     //this->gd.draw(order);
+// }
+//
+// void Front_Qt::draw(const RDP::RAIL::WindowIcon & order) {
+//     if (this->verbose & RDPVerbose::graphics) {
+//         LOG(LOG_INFO, "--------- FRONT ------------------------");
+//         order.log(LOG_INFO);
+//         LOG(LOG_INFO, "========================================\n");
+//     }
+//
+//     LOG(LOG_WARNING, "DEFAULT: WindowIcon");
+//     //this->gd.draw(order);
+// }
+//
+// void Front_Qt::draw(const RDP::RAIL::CachedIcon & order) {
+//     if (this->verbose & RDPVerbose::graphics) {
+//         LOG(LOG_INFO, "--------- FRONT ------------------------");
+//         order.log(LOG_INFO);
+//         LOG(LOG_INFO, "========================================\n");
+//     }
+//
+//     LOG(LOG_INFO, "DEFAULT: CachedIcon");
+//     //this->gd.draw(order);
+// }
+//
+// void Front_Qt::draw(const RDP::RAIL::DeletedWindow & order) {
+//     if (this->verbose & RDPVerbose::graphics) {
+//         LOG(LOG_INFO, "--------- FRONT ------------------------");
+//         order.log(LOG_INFO);
+//         LOG(LOG_INFO, "========================================\n");
+//     }
+//
+//     LOG(LOG_INFO, "DEFAULT: DeletedWindow");
+//
+//     //this->gd.draw(order);
+// }
+//
+// void Front_Qt::draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) {
+//     if (this->verbose & RDPVerbose::graphics) {
+//         LOG(LOG_INFO, "--------- FRONT ------------------------");
+//         order.log(LOG_INFO);
+//         LOG(LOG_INFO, "========================================\n");
+//     }
+//
+//     LOG(LOG_WARNING, "DEFAULT: NewOrExistingNotificationIcons");
+//     //this->gd.draw(order);
+// }
+//
+// void Front_Qt::draw(const RDP::RAIL::DeletedNotificationIcons & order) {
+//     if (this->verbose & RDPVerbose::graphics) {
+//         LOG(LOG_INFO, "--------- FRONT ------------------------");
+//         order.log(LOG_INFO);
+//         LOG(LOG_INFO, "========================================\n");
+//     }
+//
+//     LOG(LOG_INFO, "DEFAULT: DeletedNotificationIcons");
+//     //this->gd.draw(order);
+// }
+//
+// void Front_Qt::draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) {
+//     if (this->verbose & RDPVerbose::graphics) {
+//         LOG(LOG_INFO, "--------- FRONT ------------------------");
+//         order.log(LOG_INFO);
+//         LOG(LOG_INFO, "========================================\n");
+//     }
+//
+//     LOG(LOG_INFO, "DEFAULT: ActivelyMonitoredDesktop");
+//     //this->gd.draw(order);
+// }
+//
+// void Front_Qt::draw(const RDP::RAIL::NonMonitoredDesktop & order) {
+//     if (this->verbose & RDPVerbose::graphics) {
+//         LOG(LOG_INFO, "--------- FRONT ------------------------");
+//         order.log(LOG_INFO);
+//         LOG(LOG_INFO, "========================================\n");
+//     }
+//
+//     LOG(LOG_WARNING, "DEFAULT: NonMonitoredDesktop");
+//     //this->gd.draw(order);
+// }
 
 void Front_Qt::draw(const RDPColCache   & cmd) {
     LOG(LOG_WARNING, "DEFAULT: RDPColCache cacheIndex = %d", cmd.cacheIndex);
@@ -2094,13 +2101,12 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     first_part_data_size = this->_clipboard_qt->_cliboard_data_length;
                                     if (first_part_data_size > PASTE_TEXT_CONTENT_SIZE ) {
                                         first_part_data_size = PASTE_TEXT_CONTENT_SIZE;
+                                        this->_clipboard_qt->_cliboard_data_length += PDU_HEADER_SIZE;
                                     }
 
                                     RDPECLIP::FormatDataResponsePDU_Text fdr(this->_clipboard_qt->_cliboard_data_length);
 
                                     fdr.emit(out_stream_first_part);
-
-
 
                                     this->process_client_clipboard_out_data( total_length
                                                                            , out_stream_first_part
@@ -2121,10 +2127,11 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     RDPECLIP::FormatDataResponsePDU_FileList fdr(this->_clipboard_qt->_cItems);
                                     fdr.emit(out_stream_first_part);
 
-                                    RDPECLIP::FileDescriptor fdf( file->name
+                                    RDPECLIP::FileDescriptor fdf( file->nameUTF8
                                                                 , file->size
                                                                 , fscc::FILE_ATTRIBUTE_ARCHIVE
                                                                 );
+                                    fdf.emit(out_stream_first_part);
 
                                     if (this->_clipboard_qt->_cItems == 1) {
                                         flag_first = flag_first | CHANNELS::CHANNEL_FLAG_LAST;
@@ -2145,7 +2152,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%d", data_sent, total_length);
                                     }
 
-                                    for (int i = 0; i < this->_clipboard_qt->_cItems; i++) {
+                                    for (int i = 1; i < this->_clipboard_qt->_cItems; i++) {
 
                                         StaticOutStream<PDU_MAX_SIZE> out_stream_next_part;
                                         file = this->_clipboard_qt->_items_list[i];
@@ -3134,16 +3141,20 @@ void Front_Qt::process_client_clipboard_out_data(const uint64_t total_length, Ou
     // copied into the reassembly buffer in the order in which they are received. Upon receiving the
     // last chunk of virtual channel data, the reassembled data is processed by the virtual channel endpoint.
 
+
     if (data_len > first_part_data_size ) {
 
-        const int cmpt_PDU_part(data_len / PDU_MAX_SIZE);
-        const int remains_PDU  (data_len % PDU_MAX_SIZE);
+        const int cmpt_PDU_part(data_len  / PDU_MAX_SIZE);
+        const int remains_PDU  (data_len  % PDU_MAX_SIZE);
         int data_sent(0);
 
         // First Part
             out_stream_first_part.out_copy_bytes(data, first_part_data_size);
+
             data_sent += first_part_data_size;
             InStream chunk_first(out_stream_first_part.get_data(), out_stream_first_part.get_offset());
+
+
 
             this->_callback->send_to_mod_channel( channel_names::cliprdr
                                                 , chunk_first
@@ -3157,8 +3168,10 @@ void Front_Qt::process_client_clipboard_out_data(const uint64_t total_length, Ou
         // Next Part
             StaticOutStream<PDU_MAX_SIZE> out_stream_next_part;
             out_stream_next_part.out_copy_bytes(data + data_sent, PDU_MAX_SIZE);
+
             data_sent += PDU_MAX_SIZE;
             InStream chunk_next(out_stream_next_part.get_data(), out_stream_next_part.get_offset());
+
 
 
             this->_callback->send_to_mod_channel( channel_names::cliprdr
@@ -3174,6 +3187,8 @@ void Front_Qt::process_client_clipboard_out_data(const uint64_t total_length, Ou
 
             data_sent += remains_PDU;
             InStream chunk_last(out_stream_last_part.get_data(), out_stream_last_part.get_offset());
+
+
 
             this->_callback->send_to_mod_channel( channel_names::cliprdr
                                                 , chunk_last
@@ -3228,6 +3243,17 @@ void Front_Qt::end_update() {
 //--------------------------------
 
 void Front_Qt::call_Draw() {
+    if (this->_recv_disconnect_ultimatum) {
+        this->dropScreen();
+        std::string labelErrorMsg("<font color='Red'>Disconnected by server</font>");
+        this->disconnect(labelErrorMsg);
+        this->_cache = nullptr;
+        this->_trans_cache = nullptr;
+        delete(this->_capture);
+        this->_capture = nullptr;
+        this->_graph_capture = nullptr;
+        this->_recv_disconnect_ultimatum = false;
+    }
     if (this->_callback != nullptr && this->_cache != nullptr) {
         try {
             this->_callback->draw_event(time(nullptr), *(this));
@@ -3325,7 +3351,7 @@ int main(int argc, char** argv){
 
     RDPVerbose verbose = to_verbose_flags(0);
 
-    Front_Qt front_qt(argv, argc, verbose);
+    Front_Qt front_qt(argv, argc, RDPVerbose::cliprdr);
 
 
     app.exec();

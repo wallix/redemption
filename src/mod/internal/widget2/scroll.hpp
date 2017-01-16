@@ -1154,7 +1154,7 @@ private:
             return dim;
         }
         else {
-            Dimension dim = WidgetFlatButton::get_optimal_dim(1, this->font, "▶", 3, 2);
+            Dimension dim = WidgetFlatButton::get_optimal_dim(1, this->font, "▲", 3, 2);
 
             dim.w += 1;
             dim.h += 2;

@@ -2558,7 +2558,6 @@ public:
 
                     uint32_t length = sec.payload.in_uint32_le();
                     uint32_t flags  = sec.payload.in_uint32_le();
-
                     size_t chunk_size = sec.payload.in_remain();
 
                     if (this->up_and_running) {
