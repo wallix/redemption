@@ -134,7 +134,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, RDPVerbose verbose)
                                          , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                            GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
                                            GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                         , PDU_MAX_SIZE+1
+                                         , CHANNELS::CHANNEL_CHUNK_LENGTH+1
                                          };
     this->_to_client_sender._channel = channel_cliprdr;
     this->_cl.push_back(channel_cliprdr);
@@ -158,7 +158,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, RDPVerbose verbose)
     CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
                                       , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                         GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
-                                      , PDU_MAX_SIZE+1
+                                      , CHANNELS::CHANNEL_CHUNK_LENGTH+2
                                       };
     this->_cl.push_back(channel_rdpdr);
 
