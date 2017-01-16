@@ -834,7 +834,7 @@ BOOST_AUTO_TEST_CASE(TestWidgetHScrollBar)
     wscroll.rdp_input_invalidate(wscroll.get_rect());
 
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "scroll0.png");
+    drawable.save_to_png("scroll0.png");
 
     char message[1024];
 
@@ -849,7 +849,7 @@ BOOST_AUTO_TEST_CASE(TestWidgetHScrollBar)
     wscroll.rdp_input_invalidate(wscroll.get_rect());
 
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "scroll1.png");
+    drawable.save_to_png("scroll1.png");
 
     if (!check_sig(drawable.gd.impl(), message,
         "\x68\xec\xba\xe1\xbe\x41\x74\x31\x17\xd2\x89\x2c\x35\x1a\xa0\x6a\x10\x06\xa1\x9a"
@@ -886,7 +886,7 @@ BOOST_AUTO_TEST_CASE(TestWidgetVScrollBar)
     wscroll.rdp_input_invalidate(wscroll.get_rect());
 
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "scroll2.png");
+    drawable.save_to_png("scroll2.png");
 
     char message[1024];
 
@@ -901,7 +901,7 @@ BOOST_AUTO_TEST_CASE(TestWidgetVScrollBar)
     wscroll.rdp_input_invalidate(wscroll.get_rect());
 
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "scroll3.png");
+    drawable.save_to_png("scroll3.png");
 
     if (!check_sig(drawable.gd.impl(), message,
         "\x22\x74\x49\xb3\xe6\xc2\x89\x21\xf5\x98\xe0\x63\x21\xeb\x5f\xfd\xe2\xe4\x61\x02"

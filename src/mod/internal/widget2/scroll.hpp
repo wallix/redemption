@@ -1014,12 +1014,12 @@ public:
                 WidgetFlatButton::draw(rect_intersect, this->left_or_top_button_rect, this->drawable,
                     false, (this->mouse_down && (this->selected_button == BUTTON_LEFT_OR_TOP)),
                     "◀", this->fg_color, this->bg_color, this->focus_color,
-                    Rect(), 0, 2, this->font, 2, 1);
+                    Rect(), 0, 2, this->font, 0, -1);
 
                 WidgetFlatButton::draw(rect_intersect, this->right_or_bottom_button_rect, this->drawable,
                     false, (this->mouse_down && (this->selected_button == BUTTON_RIGHT_OR_BOTTOM)),
                     "▶", this->fg_color, this->bg_color, this->focus_color,
-                    Rect(), 0, 2, this->font, 2, 1);
+                    Rect(), 0, 2, this->font, 0, -1);
 
                 this->drawable.draw(
                         RDPOpaqueRect(
@@ -1066,18 +1066,18 @@ public:
                 WidgetFlatButton::draw(rect_intersect, this->cursor_button_rect, this->drawable,
                     false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)),
                     "▤", this->fg_color, this->bg_color, this->focus_color,
-                    Rect(), 0, 1, this->font, 2, 1);
+                    Rect(), 0, 1, this->font, 0, -1);
             }
             else {
                 WidgetFlatButton::draw(rect_intersect, this->left_or_top_button_rect, this->drawable,
                     false, (this->mouse_down && (this->selected_button == BUTTON_LEFT_OR_TOP)),
                     "▲", this->fg_color, this->bg_color, this->focus_color,
-                    Rect(), 0, 2, this->font, 2, 1);
+                    Rect(), 0, 2, this->font, 0, -1);
 
                 WidgetFlatButton::draw(rect_intersect, this->right_or_bottom_button_rect, this->drawable,
                     false, (this->mouse_down && (this->selected_button == BUTTON_RIGHT_OR_BOTTOM)),
                     "▼", this->fg_color, this->bg_color, this->focus_color,
-                    Rect(), 0, 2, this->font, 2, 1);
+                    Rect(), 0, 2, this->font, 0, -1);
 
                 this->drawable.draw(
                         RDPOpaqueRect(
@@ -1124,7 +1124,7 @@ public:
                 WidgetFlatButton::draw(rect_intersect, this->cursor_button_rect, this->drawable,
                     false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)),
                     "▥", this->fg_color, this->bg_color, this->focus_color,
-                    Rect(), 0, 1, this->font, 1, 2);
+                    Rect(), 0, 1, this->font, -1, 0);
             }
 
             this->drawable.end_update();
