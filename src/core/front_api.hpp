@@ -104,6 +104,8 @@ public:
     // RemoteApp.
     virtual void send_savesessioninfo() {}
 
+    virtual void recv_disconnect_provider_ultimatum() {}
+
     virtual void send_auto_reconnect_packet(RDP::ServerAutoReconnectPacket const & auto_reconnect) {
         (void)auto_reconnect;
     }

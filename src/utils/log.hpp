@@ -51,6 +51,7 @@ namespace { namespace compiler_aux_ {
 #include <unistd.h> // getpid
 
 #include "cxx/diagnostic.hpp"
+#include "cxx/keywords.hpp"
 
 #include <type_traits>
 
@@ -111,41 +112,47 @@ log_array_02x_format(uint8_t (&d)[n])
 template<std::size_t n>
 char const * log_value(redemption_log_s<n> && x) { return x.data; }
 
-#if ! defined(IN_IDE_PARSER) && defined(__has_include) && __has_include(<boost/preprocessor/variadic/to_list.hpp>)
+#if ! defined(IN_IDE_PARSER) && CXX_HAS_SYSTEM_INCLUDE(boost/preprocessor/config/config.hpp)
+# include <boost/preprocessor/config/config.hpp>
 
-# include <boost/preprocessor/cat.hpp>
-# include <boost/preprocessor/comparison/greater.hpp>
-# include <boost/preprocessor/array/pop_front.hpp>
-# include <boost/preprocessor/array/pop_back.hpp>
-# include <boost/preprocessor/array/to_list.hpp>
-# include <boost/preprocessor/array/elem.hpp>
-# include <boost/preprocessor/list/for_each.hpp>
-# include <boost/preprocessor/variadic/elem.hpp>
-# include <boost/preprocessor/variadic/to_list.hpp>
+# if BOOST_PP_VARIADICS
 
-# define REDEMPTION_LOG_VALUE_PARAM_0(elem)
-# define REDEMPTION_LOG_VALUE_PARAM_1(elem) , log_value(elem)
+#  include <boost/preprocessor/cat.hpp>
+#  include <boost/preprocessor/comparison/greater.hpp>
+#  include <boost/preprocessor/array/pop_front.hpp>
+#  include <boost/preprocessor/array/pop_back.hpp>
+#  include <boost/preprocessor/array/to_list.hpp>
+#  include <boost/preprocessor/array/elem.hpp>
+#  include <boost/preprocessor/list/for_each.hpp>
+#  include <boost/preprocessor/variadic/elem.hpp>
+#  include <boost/preprocessor/variadic/to_list.hpp>
 
-# define REDEMPTION_LOG_VALUE_PARAM(r, data, elem) \
+#  define REDEMPTION_LOG_VALUE_PARAM_0(elem)
+#  define REDEMPTION_LOG_VALUE_PARAM_1(elem) , log_value(elem)
+
+#  define REDEMPTION_LOG_VALUE_PARAM(r, data, elem) \
     BOOST_PP_CAT(REDEMPTION_LOG_VALUE_PARAM_, BOOST_PP_BOOL(BOOST_PP_GREATER(r, 2)))(elem)
 
-# define LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(...) \
-    " " BOOST_PP_VARIADIC_ELEM(0, __VA_ARGS__)          \
-    BOOST_PP_LIST_FOR_EACH(                             \
-        REDEMPTION_LOG_VALUE_PARAM,                     \
-        BOOST_PP_NIL,                                   \
-        BOOST_PP_VARIADIC_TO_LIST(__VA_ARGS__)          \
+#  define LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(...) \
+    " " BOOST_PP_VARIADIC_ELEM(0, __VA_ARGS__)           \
+    BOOST_PP_LIST_FOR_EACH(                              \
+        REDEMPTION_LOG_VALUE_PARAM,                      \
+        BOOST_PP_NIL,                                    \
+        BOOST_PP_VARIADIC_TO_LIST(__VA_ARGS__)           \
     )
 
 // checked by the compiler
-# define LOG_REDEMPTION_FORMAT_CHECK(...)                      \
+#  define LOG_REDEMPTION_FORMAT_CHECK(...)                     \
     void(sizeof(printf(                                        \
         LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__) \
     )))
 
-# define REDEMPTION_LOG_VALUE(x) (x)
+#  define REDEMPTION_LOG_VALUE(x) (x)
 
-#else
+# endif
+#endif
+
+#ifndef LOG_REDEMPTION_FORMAT_CHECK
 
 # ifndef REDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING
 #   if defined __GNUC__ || defined __clang__

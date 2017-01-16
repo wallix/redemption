@@ -982,6 +982,17 @@ public:
                 true
         };
         FlvParams flv_params = flv_params_from_ini(this->client_info.width, this->client_info.height, ini);
+
+        GraphicToFile::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
+            | (ini.get<cfg::debug::primary_orders>() ?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
+            | (ini.get<cfg::debug::secondary_orders>() ?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
+            | (ini.get<cfg::debug::bitmap_update>() ?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
+            
+        WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
+        std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
+        std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
+        TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
+
         WrmParams wrm_params = {};
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
@@ -1035,9 +1046,17 @@ public:
         if (authentifier) {
             cctx.set_master_key(ini.get<cfg::crypto::key0>());
             cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
+
+            if (recursive_create_directory(record_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+                LOG(LOG_ERR, "Failed to create directory: \"%s\"", record_path);
+            }
+
+            if (recursive_create_directory(hash_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+                LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
+            }
         }
 
-        this->capture = new Capture(  capture_wrm, wrm_params
+        this->capture = new Capture(  capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
                                     , capture_png, png_params
                                     , capture_pattern_checker
                                     , capture_ocr, ocr_params
@@ -2539,7 +2558,6 @@ public:
 
                     uint32_t length = sec.payload.in_uint32_le();
                     uint32_t flags  = sec.payload.in_uint32_le();
-
                     size_t chunk_size = sec.payload.in_remain();
 
                     if (this->up_and_running) {

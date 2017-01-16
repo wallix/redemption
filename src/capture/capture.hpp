@@ -3367,7 +3367,6 @@ public:
         const timeval & now,
         auth_api * authentifier,
         const Drawable & drawable,
-        const Inifile & ini,
         OcrParams ocr_params,
         NotifyTitleChanged & notify_title_changed)
     : ocr_title_extractor_builder(
@@ -4316,7 +4315,7 @@ public:
         CryptoContext & cctx, Random & rnd,
         const char * record_path, const char * hash_path, const char * basename,
         int groupid, auth_api * authentifier,
-        RDPDrawable & drawable, const Inifile & ini,
+        RDPDrawable & drawable,
         std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval,
         std::chrono::seconds break_interval,
         WrmCompressionAlgorithm wrm_compression_algorithm,
@@ -4618,6 +4617,11 @@ private:
 public:
     Capture(
         bool capture_wrm,
+        GraphicToFile::Verbose wrm_verbose,
+        WrmCompressionAlgorithm wrm_compression_algorithm,
+        std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval,
+        std::chrono::seconds wrm_break_interval,
+        TraceType wrm_trace_type,
         const WrmParams wrm_params,
         bool capture_png,
         const PngParams png_params,
@@ -4711,30 +4715,12 @@ public:
             }
 
             if (this->capture_wrm) {
-                if (authentifier) {
-                    if (recursive_create_directory(record_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
-                        LOG(LOG_ERR, "Failed to create directory: \"%s\"", record_path);
-                    }
-
-                    if (recursive_create_directory(hash_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
-                        LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
-                    }
-                }
-                
-                GraphicToFile::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
-                    | (ini.get<cfg::debug::primary_orders>() ?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
-                    | (ini.get<cfg::debug::secondary_orders>() ?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
-                    | (ini.get<cfg::debug::bitmap_update>() ?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
-                    
-                WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
-
                 this->wrm_capture_obj.reset(new WrmCaptureImpl(
-                    now, wrm_params, capture_bpp, ini.get<cfg::globals::trace_type>(),
+                    now, wrm_params, capture_bpp, wrm_trace_type,
                     cctx, rnd, record_path, hash_path, basename,
                     groupid, authentifier, *this->gd_drawable,
-                    ini,
-                    ini.get<cfg::video::frame_interval>(), 
-                    ini.get<cfg::video::break_interval>(), 
+                    wrm_frame_interval,
+                    wrm_break_interval,
                     wrm_compression_algorithm, wrm_verbose
                 ));
             }
@@ -4781,7 +4767,7 @@ public:
             if (this->capture_ocr) {
                 if (this->patterns_checker || this->meta_capture_obj || this->sequenced_video_capture_obj) {
                     this->title_capture_obj.reset(new TitleCaptureImpl(
-                        now, authentifier, this->gd_drawable->impl(), ini, 
+                        now, authentifier, this->gd_drawable->impl(), 
                         ocr_params,
                         this->notifier_title_changed
                     ));

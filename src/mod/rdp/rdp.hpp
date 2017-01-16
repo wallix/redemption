@@ -1758,7 +1758,7 @@ public:
             mod_channel->log(unsigned(mod_channel - &this->mod_channel_list[0]));
         }
 
-             if (!strcmp(front_channel_name, channel_names::cliprdr)) {
+        if (!strcmp(front_channel_name, channel_names::cliprdr)) {
             this->send_to_mod_cliprdr_channel(mod_channel, chunk, length, flags);
         }
         else if (!strcmp(front_channel_name, channel_names::rail)) {
@@ -1799,7 +1799,7 @@ private:
         if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
             !this->file_system_drive_manager.HasManagedDrive()) {
 
-            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 if ((this->verbose & RDPVerbose::rdpdr) || (this->verbose & RDPVerbose::rdpdr_dump)) {
 
                     LOG(LOG_INFO,
@@ -1807,11 +1807,15 @@ private:
                             "send Chunked Virtual Channel Data transparently.");
                 }
 
-                if ((this->verbose & RDPVerbose::rdpdr_dump) && (flags & CHANNELS::CHANNEL_FLAG_LAST)) {
+                if (this->verbose & RDPVerbose::rdpdr_dump) {
                     const bool send              = false;
                     const bool from_or_to_client = false;
-                    ::msgdump_c(send, from_or_to_client, chunk.get_offset(), flags,
-                    chunk.get_data(), length);
+                    uint32_t total_length = length;
+                    if (total_length > CHANNELS::CHANNEL_CHUNK_LENGTH) {
+                        total_length = CHANNELS::CHANNEL_CHUNK_LENGTH;
+                    }
+                    ::msgdump_d(send, from_or_to_client, length, flags,
+                    chunk.get_data(), total_length);
 
                     rdpdr::streamLog(chunk, this->rdpdrLogStatus);
                 }
@@ -3215,6 +3219,7 @@ public:
             MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
             const char * reason = MCS::get_reason(mcs.reason);
             LOG(LOG_ERR, "mod::rdp::DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
+            this->front.recv_disconnect_provider_ultimatum();
 
             if (this->acl) {
                 this->end_session_reason.clear();
@@ -6910,7 +6915,7 @@ private:
                     const bool send              = false;
                     const bool from_or_to_client = false;
 
-                    ::msgdump_c(send, from_or_to_client, length, flags,
+                    ::msgdump_d(send, from_or_to_client, length, flags,
                         stream.get_data()+8, chunk_size);
 
                     rdpdr::streamLog(stream, this->rdpdrLogStatus);
