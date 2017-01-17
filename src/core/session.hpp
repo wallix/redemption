@@ -388,7 +388,7 @@ public:
                                 this->authentifier->receive();
                             }
                         }
-                        std::cout << "Session 1" <<  std::endl;
+//                        std::cout << "Session 1" <<  std::endl;
                         if (enable_osd) {
                             const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
                             if (enddate && mm.is_up_and_running()) {
