@@ -372,11 +372,8 @@ public:
                                                     , 0
                                                     , to_verbose_flags(ini.get<cfg::debug::auth>())
                                                     );
-                                    this->authentifier = new Authentifier( ini
-                                             , *this->front
-                                             , *this->auth_trans
-                                             , now        // authentifier start time
-                                             );
+                                    // now is authentifier start time
+                                    this->authentifier = new Authentifier(ini, *this->auth_trans, now);
                                     this->auth_event = new wait_obj();
                                     signal = BACK_EVENT_NEXT;
                                 }
@@ -421,7 +418,7 @@ public:
                         }
 
                         if (this->authentifier) {
-                            run_session = this->authentifier->check(mm, now, signal, front_signal);
+                            run_session = this->authentifier->check(mm, now, signal, front_signal, this->front->has_user_activity);
                         }
                         else if (signal == BACK_EVENT_STOP) {
                             mm.mod->get_event().reset();

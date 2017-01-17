@@ -27,7 +27,6 @@
 
 #include "utils/log.hpp"
 #include "configs/config.hpp"
-#include "core/activity_checker.hpp"
 #include "acl_serializer.hpp"
 #include "module_manager.hpp"
 #include "front/front.hpp"
@@ -256,8 +255,6 @@ class Authentifier : public auth_api {
         time_t inactivity_timeout;
         time_t last_activity_time;
 
-        ActivityChecker & checker;
-
     public:
         REDEMPTION_VERBOSE_FLAGS(private, verbose)
         {
@@ -265,10 +262,9 @@ class Authentifier : public auth_api {
             state = 0x10,
         };
 
-        Inactivity(ActivityChecker & checker, std::chrono::seconds timeout, time_t start, Verbose verbose)
+        Inactivity(std::chrono::seconds timeout, time_t start, Verbose verbose)
         : inactivity_timeout(std::max<time_t>(timeout.count(), 30))
         , last_activity_time(start)
-        , checker(checker)
         , verbose(verbose)
         {
             if (this->verbose & Verbose::state) {
@@ -282,9 +278,8 @@ class Authentifier : public auth_api {
             }
         }
 
-        bool check(time_t now) = delete;
-        bool check_user_activity(time_t now) {
-            if (!this->checker.check_and_reset_activity()) {
+        bool check_user_activity(time_t now, bool & has_user_activity) {
+            if (!has_user_activity) {
                 if (now > this->last_activity_time + this->inactivity_timeout) {
                     LOG(LOG_INFO, "Session User inactivity : closing");
                     // mm.invoke_close_box("Connection closed on inactivity", signal, now);
@@ -292,6 +287,7 @@ class Authentifier : public auth_api {
                 }
             }
             else {
+                has_user_activity = false;
                 this->last_activity_time = now;
             }
             return false;
@@ -308,12 +304,12 @@ public:
         state = 0x10,
     };
 
-    Authentifier(Inifile & ini, ActivityChecker & activity_checker, Transport & auth_trans, time_t acl_start_time)
+    Authentifier(Inifile & ini, Transport & auth_trans, time_t acl_start_time)
         : ini(ini)
         , acl_serial(ini, auth_trans, to_verbose_flags(ini.get<cfg::debug::auth>()))
         , remote_answer(false)
         , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), to_verbose_flags(ini.get<cfg::debug::auth>()))
-        , inactivity(activity_checker, ini.get<cfg::globals::session_timeout>(),
+        , inactivity(ini.get<cfg::globals::session_timeout>(),
                      acl_start_time, to_verbose_flags(ini.get<cfg::debug::auth>()))
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
     {
@@ -329,7 +325,7 @@ public:
     }
 
 public:
-    bool check(MMApi & mm, time_t now, BackEvent_t & signal, BackEvent_t & front_signal) {
+    bool check(MMApi & mm, time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity) {
         //LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u",
         //    (unsigned)now, static_cast<unsigned>(signal));
         if (signal == BACK_EVENT_STOP) {
@@ -370,7 +366,7 @@ public:
         }
 
         // Inactivity management
-        if (this->inactivity.check_user_activity(now)) {
+        if (this->inactivity.check_user_activity(now, has_user_activity)) {
             mm.invoke_close_box(TR("close_inactivity", language(this->ini)), signal, now);
             return true;
         }
