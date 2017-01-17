@@ -3145,8 +3145,8 @@ void Front_Qt::process_client_clipboard_out_data(const uint64_t total_length, Ou
 
     if (data_len > first_part_data_size ) {
 
-        const int cmpt_PDU_part(data_len  / PDU_MAX_SIZE);
-        const int remains_PDU  (data_len  % PDU_MAX_SIZE);
+        const int cmpt_PDU_part(data_len  / CHANNELS::CHANNEL_CHUNK_LENGTH);
+        const int remains_PDU  (data_len  % CHANNELS::CHANNEL_CHUNK_LENGTH);
         int data_sent(0);
 
         // First Part
@@ -3167,10 +3167,10 @@ void Front_Qt::process_client_clipboard_out_data(const uint64_t total_length, Ou
         for (int i = 0; i < cmpt_PDU_part - 1; i++) {
 
         // Next Part
-            StaticOutStream<PDU_MAX_SIZE> out_stream_next_part;
-            out_stream_next_part.out_copy_bytes(data + data_sent, PDU_MAX_SIZE);
+            StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_next_part;
+            out_stream_next_part.out_copy_bytes(data + data_sent, CHANNELS::CHANNEL_CHUNK_LENGTH);
 
-            data_sent += PDU_MAX_SIZE;
+            data_sent += CHANNELS::CHANNEL_CHUNK_LENGTH;
             InStream chunk_next(out_stream_next_part.get_data(), out_stream_next_part.get_offset());
 
 
