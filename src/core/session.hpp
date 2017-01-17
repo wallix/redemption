@@ -405,7 +405,7 @@ public:
                                 this->client->acl.receive();
                             }
                         }
-                        std::cout << "Session 1" <<  std::endl;
+//                        std::cout << "Session 1" <<  std::endl;
                         if (enable_osd) {
                             const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
                             if (enddate && mm.is_up_and_running()) {
@@ -433,7 +433,7 @@ public:
                                 }
                             }
                         }
-                        std::cout << "Session 2" <<  std::endl;
+//                        std::cout << "Session 2" <<  std::endl;
 
                         if (this->client) {
                             run_session = this->client->acl.check(mm, now, signal, front_signal);
@@ -442,13 +442,13 @@ public:
                             mm.mod->get_event().reset();
                             run_session = false;
                         }
-                        std::cout << "Session 3" <<  std::endl;
+//                        std::cout << "Session 3" <<  std::endl;
                         if (mm.last_module) {
                             delete this->client;
                             this->client = nullptr;
                         }
                     }
-                    std::cout << "Session 4" <<  std::endl;
+//                    std::cout << "Session 4" <<  std::endl;
                 } catch (Error & e) {
                     LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
                     time_t now = time(nullptr);
