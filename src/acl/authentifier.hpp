@@ -282,7 +282,8 @@ class Authentifier : public auth_api {
             }
         }
 
-        bool check(time_t now) {
+        bool check(time_t now) = delete;
+        bool check_user_activity(time_t now) {
             if (!this->checker.check_and_reset_activity()) {
                 if (now > this->last_activity_time + this->inactivity_timeout) {
                     LOG(LOG_INFO, "Session User inactivity : closing");
@@ -369,7 +370,7 @@ public:
         }
 
         // Inactivity management
-        if (this->inactivity.check(now)) {
+        if (this->inactivity.check_user_activity(now)) {
             mm.invoke_close_box(TR("close_inactivity", language(this->ini)), signal, now);
             return true;
         }
@@ -387,8 +388,9 @@ public:
                 this->ask_acl();
             }
         }
-        else if (this->remote_answer || (signal == BACK_EVENT_RETRY_CURRENT) ||
-                 (front_signal == BACK_EVENT_NEXT)) {
+        else if (this->remote_answer 
+        || (signal == BACK_EVENT_RETRY_CURRENT) 
+        || (front_signal == BACK_EVENT_NEXT)) {
             this->remote_answer = false;
             if (signal == BACK_EVENT_REFRESH) {
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
@@ -398,9 +400,11 @@ public:
                 mm.mod->get_event().signal = BACK_EVENT_NONE;
                 mm.mod->get_event().set();
             }
-            else if ((signal == BACK_EVENT_NEXT) || (signal == BACK_EVENT_RETRY_CURRENT) ||
-                     (front_signal == BACK_EVENT_NEXT)) {
-                if ((signal == BACK_EVENT_NEXT) || (front_signal == BACK_EVENT_NEXT)) {
+            else if ((signal == BACK_EVENT_NEXT) 
+                    || (signal == BACK_EVENT_RETRY_CURRENT) 
+                    || (front_signal == BACK_EVENT_NEXT)) {
+                if ((signal == BACK_EVENT_NEXT) 
+                   || (front_signal == BACK_EVENT_NEXT)) {
                     LOG(LOG_INFO, "===========> MODULE_NEXT");
                 }
                 else {
@@ -409,7 +413,8 @@ public:
                     LOG(LOG_INFO, "===========> MODULE_RETRY_CURRENT");
                 }
 
-                int next_state = (((signal == BACK_EVENT_NEXT) || (front_signal == BACK_EVENT_NEXT)) ? mm.next_module() : MODULE_RDP);
+                int next_state = (((signal == BACK_EVENT_NEXT) 
+                                  || (front_signal == BACK_EVENT_NEXT)) ? mm.next_module() : MODULE_RDP);
 
                 front_signal = BACK_EVENT_NONE;
 

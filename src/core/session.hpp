@@ -88,7 +88,7 @@ class Session {
     // TODO: auth_trans and auth_event can probably move into acl
     SocketTransport * auth_trans;
     wait_obj        * auth_event;
-    Authentifier    * acl;
+    Authentifier    * authentifier;
 
           time_t   perf_last_info_collect_time;
     const pid_t    perf_pid;
@@ -254,7 +254,7 @@ public:
                             pause_record.check(now, *this->front);
                         }
 
-                        // new value incomming from acl
+                        // new value incomming from authentifier
                         if (this->ini.check_from_acl()) {
                             this->front->update_config(ini.get<cfg::video::rt_display>());
                             mm.check_module();
@@ -300,8 +300,8 @@ public:
                                     signal = BACK_EVENT_RETRY_CURRENT;
                                     mm.mod->get_event().reset();
                                 }
-                                else if (this->acl) {
-                                    this->acl->report("SESSION_PROBE_LAUNCH_FAILED", "");
+                                else if (this->authentifier) {
+                                    this->authentifier->report("SESSION_PROBE_LAUNCH_FAILED", "");
                                 }
                                 else {
                                     throw;
@@ -334,8 +334,8 @@ public:
                                 this->ini.set_acl<cfg::context::target_host>(host);
                                 char message[768] = {};
                                 sprintf(message, "%s@%s", change_user, host);
-                                if (this->acl) {
-                                    this->acl->report("SERVER_REDIRECTION", message);
+                                if (this->authentifier) {
+                                    this->authentifier->report("SERVER_REDIRECTION", message);
                                 }
 
                                 signal = BACK_EVENT_RETRY_CURRENT;
@@ -349,10 +349,10 @@ public:
                             this->front->periodic_snapshot();
                         }
 
-                        // Incoming data from ACL, or opening acl
-                        if (!this->acl) {
+                        // Incoming data from ACL, or opening authentifier
+                        if (!this->authentifier) {
                             if (!mm.last_module) {
-                                // acl never opened or closed by me (close box)
+                                // authentifier never opened or closed by me (close box)
                                 try {
                                     int client_sck = local_connect(
                                         this->ini.get<cfg::globals::authfile>().c_str(),
@@ -372,10 +372,10 @@ public:
                                                     , 0
                                                     , to_verbose_flags(ini.get<cfg::debug::auth>())
                                                     );
-                                    this->acl = new Authentifier( ini
+                                    this->authentifier = new Authentifier( ini
                                              , *this->front
                                              , *this->auth_trans
-                                             , now        // acl start time
+                                             , now        // authentifier start time
                                              );
                                     this->auth_event = new wait_obj();
                                     signal = BACK_EVENT_NEXT;
@@ -387,8 +387,8 @@ public:
                         }
                         else {
                             if (this->auth_event->is_set(this->auth_trans->sck, rfds)) {
-                                // acl received updated values
-                                this->acl->receive();
+                                // authentifier received updated values
+                                this->authentifier->receive();
                             }
                         }
                         std::cout << "Session 1" <<  std::endl;
@@ -420,8 +420,8 @@ public:
                             }
                         }
 
-                        if (this->acl) {
-                            run_session = this->acl->check(mm, now, signal, front_signal);
+                        if (this->authentifier) {
+                            run_session = this->authentifier->check(mm, now, signal, front_signal);
                         }
                         else if (signal == BACK_EVENT_STOP) {
                             mm.mod->get_event().reset();
@@ -432,8 +432,8 @@ public:
                             this->auth_event = nullptr;
                             delete this->auth_trans;
                             this->auth_trans = nullptr;
-                            delete this->acl;
-                            this->acl = nullptr;
+                            delete this->authentifier;
+                            this->authentifier = nullptr;
                         }
                     }
                 } catch (Error & e) {
@@ -473,7 +473,7 @@ public:
         delete this->front;
         delete this->auth_event;
         delete this->auth_trans;
-        delete this->acl;
+        delete this->authentifier;
         // Suppress Session file from disk (original name with PID or renamed with session_id)
         if (!this->ini.get<cfg::context::session_id>().empty()) {
             char new_session_file[256];
