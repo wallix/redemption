@@ -235,57 +235,8 @@ public:
     }
 };
 
-class Inactivity {
-    // Inactivity management
-    // let t be the timeout of the blocking select in session loop,
-    // the effective inactivity timeout detection will be between
-    // inactivity_timeout and inactivity_timeout + t.
-    // hence we should have t << inactivity_timeout.
-    time_t inactivity_timeout;
-    time_t last_activity_time;
 
-    ActivityChecker & checker;
-
-public:
-    REDEMPTION_VERBOSE_FLAGS(private, verbose)
-    {
-        none,
-        state = 0x10,
-    };
-
-    Inactivity(ActivityChecker & checker, std::chrono::seconds timeout, time_t start, Verbose verbose)
-    : inactivity_timeout(std::max<time_t>(timeout.count(), 30))
-    , last_activity_time(start)
-    , checker(checker)
-    , verbose(verbose)
-    {
-        if (this->verbose & Verbose::state) {
-            LOG(LOG_INFO, "INACTIVITY CONSTRUCTOR");
-        }
-    }
-
-    ~Inactivity() {
-        if (this->verbose & Verbose::state) {
-            LOG(LOG_INFO, "INACTIVITY DESTRUCTOR");
-        }
-    }
-
-    bool check(time_t now) {
-        if (!this->checker.check_and_reset_activity()) {
-            if (now > this->last_activity_time + this->inactivity_timeout) {
-                LOG(LOG_INFO, "Session User inactivity : closing");
-                // mm.invoke_close_box("Connection closed on inactivity", signal, now);
-                return true;
-            }
-        }
-        else {
-            this->last_activity_time = now;
-        }
-        return false;
-    }
-};
-
-class SessionManager : public auth_api {
+class Authentifier : public auth_api {
     Inifile & ini;
 
     AclSerializer acl_serial;
@@ -295,7 +246,56 @@ class SessionManager : public auth_api {
                               // set to false
 
     KeepAlive keepalive;
-    Inactivity inactivity;
+    
+    class Inactivity {
+        // Inactivity management
+        // let t be the timeout of the blocking select in session loop,
+        // the effective inactivity timeout detection will be between
+        // inactivity_timeout and inactivity_timeout + t.
+        // hence we should have t << inactivity_timeout.
+        time_t inactivity_timeout;
+        time_t last_activity_time;
+
+        ActivityChecker & checker;
+
+    public:
+        REDEMPTION_VERBOSE_FLAGS(private, verbose)
+        {
+            none,
+            state = 0x10,
+        };
+
+        Inactivity(ActivityChecker & checker, std::chrono::seconds timeout, time_t start, Verbose verbose)
+        : inactivity_timeout(std::max<time_t>(timeout.count(), 30))
+        , last_activity_time(start)
+        , checker(checker)
+        , verbose(verbose)
+        {
+            if (this->verbose & Verbose::state) {
+                LOG(LOG_INFO, "INACTIVITY CONSTRUCTOR");
+            }
+        }
+
+        ~Inactivity() {
+            if (this->verbose & Verbose::state) {
+                LOG(LOG_INFO, "INACTIVITY DESTRUCTOR");
+            }
+        }
+
+        bool check(time_t now) {
+            if (!this->checker.check_and_reset_activity()) {
+                if (now > this->last_activity_time + this->inactivity_timeout) {
+                    LOG(LOG_INFO, "Session User inactivity : closing");
+                    // mm.invoke_close_box("Connection closed on inactivity", signal, now);
+                    return true;
+                }
+            }
+            else {
+                this->last_activity_time = now;
+            }
+            return false;
+        }
+    } inactivity;
 
     mutable std::string session_type;
 
@@ -307,7 +307,7 @@ public:
         state = 0x10,
     };
 
-    SessionManager(Inifile & ini, ActivityChecker & activity_checker, Transport & auth_trans, time_t acl_start_time)
+    Authentifier(Inifile & ini, ActivityChecker & activity_checker, Transport & auth_trans, time_t acl_start_time)
         : ini(ini)
         , acl_serial(ini, auth_trans, to_verbose_flags(ini.get<cfg::debug::auth>()))
         , remote_answer(false)
@@ -317,13 +317,13 @@ public:
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
     {
         if (this->verbose & Verbose::state) {
-            LOG(LOG_INFO, "auth::SessionManager");
+            LOG(LOG_INFO, "auth::Authentifier");
         }
     }
 
-    ~SessionManager() override {
+    ~Authentifier() override {
         if (this->verbose & Verbose::state) {
-            LOG(LOG_INFO, "auth::~SessionManager");
+            LOG(LOG_INFO, "auth::~Authentifier");
         }
     }
 
