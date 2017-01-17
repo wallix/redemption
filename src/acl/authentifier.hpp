@@ -27,7 +27,6 @@
 
 #include "utils/log.hpp"
 #include "configs/config.hpp"
-#include "core/activity_checker.hpp"
 #include "acl_serializer.hpp"
 #include "module_manager.hpp"
 #include "front/front.hpp"
@@ -235,57 +234,8 @@ public:
     }
 };
 
-class Inactivity {
-    // Inactivity management
-    // let t be the timeout of the blocking select in session loop,
-    // the effective inactivity timeout detection will be between
-    // inactivity_timeout and inactivity_timeout + t.
-    // hence we should have t << inactivity_timeout.
-    time_t inactivity_timeout;
-    time_t last_activity_time;
 
-    ActivityChecker & checker;
-
-public:
-    REDEMPTION_VERBOSE_FLAGS(private, verbose)
-    {
-        none,
-        state = 0x10,
-    };
-
-    Inactivity(ActivityChecker & checker, std::chrono::seconds timeout, time_t start, Verbose verbose)
-    : inactivity_timeout(std::max<time_t>(timeout.count(), 30))
-    , last_activity_time(start)
-    , checker(checker)
-    , verbose(verbose)
-    {
-        if (this->verbose & Verbose::state) {
-            LOG(LOG_INFO, "INACTIVITY CONSTRUCTOR");
-        }
-    }
-
-    ~Inactivity() {
-        if (this->verbose & Verbose::state) {
-            LOG(LOG_INFO, "INACTIVITY DESTRUCTOR");
-        }
-    }
-
-    bool check(time_t now) {
-        if (!this->checker.check_and_reset_activity()) {
-            if (now > this->last_activity_time + this->inactivity_timeout) {
-                LOG(LOG_INFO, "Session User inactivity : closing");
-                // mm.invoke_close_box("Connection closed on inactivity", signal, now);
-                return true;
-            }
-        }
-        else {
-            this->last_activity_time = now;
-        }
-        return false;
-    }
-};
-
-class SessionManager : public auth_api {
+class Authentifier : public auth_api {
     Inifile & ini;
 
     AclSerializer acl_serial;
@@ -295,7 +245,54 @@ class SessionManager : public auth_api {
                               // set to false
 
     KeepAlive keepalive;
-    Inactivity inactivity;
+    
+    class Inactivity {
+        // Inactivity management
+        // let t be the timeout of the blocking select in session loop,
+        // the effective inactivity timeout detection will be between
+        // inactivity_timeout and inactivity_timeout + t.
+        // hence we should have t << inactivity_timeout.
+        time_t inactivity_timeout;
+        time_t last_activity_time;
+
+    public:
+        REDEMPTION_VERBOSE_FLAGS(private, verbose)
+        {
+            none,
+            state = 0x10,
+        };
+
+        Inactivity(std::chrono::seconds timeout, time_t start, Verbose verbose)
+        : inactivity_timeout(std::max<time_t>(timeout.count(), 30))
+        , last_activity_time(start)
+        , verbose(verbose)
+        {
+            if (this->verbose & Verbose::state) {
+                LOG(LOG_INFO, "INACTIVITY CONSTRUCTOR");
+            }
+        }
+
+        ~Inactivity() {
+            if (this->verbose & Verbose::state) {
+                LOG(LOG_INFO, "INACTIVITY DESTRUCTOR");
+            }
+        }
+
+        bool check_user_activity(time_t now, bool & has_user_activity) {
+            if (!has_user_activity) {
+                if (now > this->last_activity_time + this->inactivity_timeout) {
+                    LOG(LOG_INFO, "Session User inactivity : closing");
+                    // mm.invoke_close_box("Connection closed on inactivity", signal, now);
+                    return true;
+                }
+            }
+            else {
+                has_user_activity = false;
+                this->last_activity_time = now;
+            }
+            return false;
+        }
+    } inactivity;
 
     mutable std::string session_type;
 
@@ -307,28 +304,28 @@ public:
         state = 0x10,
     };
 
-    SessionManager(Inifile & ini, ActivityChecker & activity_checker, Transport & auth_trans, time_t acl_start_time)
+    Authentifier(Inifile & ini, Transport & auth_trans, time_t acl_start_time)
         : ini(ini)
         , acl_serial(ini, auth_trans, to_verbose_flags(ini.get<cfg::debug::auth>()))
         , remote_answer(false)
         , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), to_verbose_flags(ini.get<cfg::debug::auth>()))
-        , inactivity(activity_checker, ini.get<cfg::globals::session_timeout>(),
+        , inactivity(ini.get<cfg::globals::session_timeout>(),
                      acl_start_time, to_verbose_flags(ini.get<cfg::debug::auth>()))
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
     {
         if (this->verbose & Verbose::state) {
-            LOG(LOG_INFO, "auth::SessionManager");
+            LOG(LOG_INFO, "auth::Authentifier");
         }
     }
 
-    ~SessionManager() override {
+    ~Authentifier() override {
         if (this->verbose & Verbose::state) {
-            LOG(LOG_INFO, "auth::~SessionManager");
+            LOG(LOG_INFO, "auth::~Authentifier");
         }
     }
 
 public:
-    bool check(MMApi & mm, time_t now, BackEvent_t & signal, BackEvent_t & front_signal) {
+    bool check(MMApi & mm, time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity) {
         //LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u",
         //    (unsigned)now, static_cast<unsigned>(signal));
         if (signal == BACK_EVENT_STOP) {
@@ -369,7 +366,7 @@ public:
         }
 
         // Inactivity management
-        if (this->inactivity.check(now)) {
+        if (this->inactivity.check_user_activity(now, has_user_activity)) {
             mm.invoke_close_box(TR("close_inactivity", language(this->ini)), signal, now);
             return true;
         }
@@ -387,8 +384,9 @@ public:
                 this->ask_acl();
             }
         }
-        else if (this->remote_answer || (signal == BACK_EVENT_RETRY_CURRENT) ||
-                 (front_signal == BACK_EVENT_NEXT)) {
+        else if (this->remote_answer 
+        || (signal == BACK_EVENT_RETRY_CURRENT) 
+        || (front_signal == BACK_EVENT_NEXT)) {
             this->remote_answer = false;
             if (signal == BACK_EVENT_REFRESH) {
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
@@ -398,9 +396,11 @@ public:
                 mm.mod->get_event().signal = BACK_EVENT_NONE;
                 mm.mod->get_event().set();
             }
-            else if ((signal == BACK_EVENT_NEXT) || (signal == BACK_EVENT_RETRY_CURRENT) ||
-                     (front_signal == BACK_EVENT_NEXT)) {
-                if ((signal == BACK_EVENT_NEXT) || (front_signal == BACK_EVENT_NEXT)) {
+            else if ((signal == BACK_EVENT_NEXT) 
+                    || (signal == BACK_EVENT_RETRY_CURRENT) 
+                    || (front_signal == BACK_EVENT_NEXT)) {
+                if ((signal == BACK_EVENT_NEXT) 
+                   || (front_signal == BACK_EVENT_NEXT)) {
                     LOG(LOG_INFO, "===========> MODULE_NEXT");
                 }
                 else {
@@ -409,7 +409,8 @@ public:
                     LOG(LOG_INFO, "===========> MODULE_RETRY_CURRENT");
                 }
 
-                int next_state = (((signal == BACK_EVENT_NEXT) || (front_signal == BACK_EVENT_NEXT)) ? mm.next_module() : MODULE_RDP);
+                int next_state = (((signal == BACK_EVENT_NEXT) 
+                                  || (front_signal == BACK_EVENT_NEXT)) ? mm.next_module() : MODULE_RDP);
 
                 front_signal = BACK_EVENT_NONE;
 

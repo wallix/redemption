@@ -162,7 +162,11 @@ char const * log_value(redemption_log_s<n> && x) { return x.data; }
 #   endif
 # endif
 
-# define LOG_REDEMPTION_FORMAT_CHECK(...) void()
+namespace { namespace compiler_aux_ {
+  template<class... Ts> void unused_variables(Ts const & ...) {}
+} }
+
+# define LOG_REDEMPTION_FORMAT_CHECK(...) compiler_aux_::unused_variables(__VA_ARGS__)
 # define REDEMPTION_LOG_VALUE(x) log_value(x)
 # define LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(...) __VA_ARGS__
 

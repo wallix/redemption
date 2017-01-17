@@ -978,7 +978,6 @@ test-run test_mstsc_client_rdp50bulk
 test-canonical core/FSCC/FileInformation.hpp ;
 test-canonical core/RDP/channels/rdpdr.hpp ;
 test-canonical core/SMB2/MessageSyntax.hpp ;
-test-canonical core/activity_checker.hpp ;
 test-canonical core/authid.hpp ;
 test-canonical core/callback.hpp ;
 test-canonical core/channel_list.hpp ;
