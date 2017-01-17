@@ -281,8 +281,8 @@ public:
     : WidgetParent(drawable, parent, notifier, group_id)
     , module_holder(*this, std::move(managed_mod))
     , drawable_ref(drawable)
-    , hscroll(drawable, *this, this, true, 0, theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font)
-    , vscroll(drawable, *this, this, false, 0, theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font)
+    , hscroll(drawable, *this, this, true, 0, 0x606060, 0xF0F0F0, 0xCDCDCD, font, true)
+    , vscroll(drawable, *this, this, false, 0, 0x606060, 0xF0F0F0, 0xCDCDCD, font, true)
     , monitors(cs_monitor)
     {
         this->impl = &composite_array;

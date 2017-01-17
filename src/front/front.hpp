@@ -94,7 +94,6 @@
 #include "core/RDP/SaveSessionInfoPDU.hpp"
 
 #include "core/front_api.hpp"
-#include "core/activity_checker.hpp"
 #include "utils/genrandom.hpp"
 
 #include "acl/auth_api.hpp"
@@ -119,15 +118,16 @@
 #include "capture/ocr_params.hpp"
 
 
-class Front : public FrontAPI, public ActivityChecker {
+class Front : public FrontAPI
+{
     using FrontAPI::draw;
-
-    bool has_activity = true;
 
     // for printf with %p
     using voidp = void const *;
 
 public:
+    bool has_user_activity = true;
+
     enum CaptureState {
           CAPTURE_STATE_UNKNOWN
         , CAPTURE_STATE_STARTED
@@ -2433,7 +2433,7 @@ public:
                             this->mouse_y = me.yPos;
                             if (this->up_and_running) {
                                 cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
-                                this->has_activity = true;
+                                this->has_user_activity = true;
                             }
 
                             if ((me.pointerFlags & (SlowPath::PTRFLAGS_BUTTON1 |
@@ -2463,7 +2463,7 @@ public:
                             this->keymap.synchronize(se.eventFlags & 0xFFFF);
                             if (this->up_and_running) {
                                 cb.rdp_input_synchronize(0, 0, se.eventFlags & 0xFFFF, 0);
-                                this->has_activity = true;
+                                this->has_user_activity = true;
                             }
                         }
                         break;
@@ -3821,7 +3821,7 @@ private:
                             this->keymap.synchronize(se.toggleFlags & 0xFFFF);
                             if (this->up_and_running) {
                                 cb.rdp_input_synchronize(ie.eventTime, 0, se.toggleFlags & 0xFFFF, (se.toggleFlags & 0xFFFF0000) >> 16);
-                                this->has_activity = true;
+                                this->has_user_activity = true;
                             }
                         }
                         break;
@@ -3838,7 +3838,7 @@ private:
                             this->mouse_y = me.yPos;
                             if (this->up_and_running) {
                                 cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
-                                this->has_activity = true;
+                                this->has_user_activity = true;
                             }
 
                             if ((me.pointerFlags & (SlowPath::PTRFLAGS_BUTTON1 |
@@ -4611,12 +4611,6 @@ public:
         return this->client_order_caps.orderSupportExFlags;
     }
 
-    bool check_and_reset_activity() override {
-        const bool res = this->has_activity;
-        this->has_activity = false;
-        return res;
-    }
-
 private:
     template<class KeyboardEvent_Recv>
     void input_event_scancode(KeyboardEvent_Recv & ke, Callback & cb, long event_time) {
@@ -4653,7 +4647,7 @@ private:
                 if (send_to_mod) {
                     cb.rdp_input_scancode(ke.keyCode, 0, KeyboardFlags::get(ke), event_time, &this->keymap);
                 }
-                this->has_activity = true;
+                this->has_user_activity = true;
             }
         }
 

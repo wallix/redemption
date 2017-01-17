@@ -68,7 +68,6 @@ class ClientExecute : public windowing_api
     bool server_execute_result_sent = false;
 
     Rect task_bar_rect;
-    Rect work_area_rect;
 
     uint16_t captured_mouse_x = 0;
     uint16_t captured_mouse_y = 0;
@@ -132,6 +131,14 @@ class ClientExecute : public windowing_api
 
     uint32_t auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
+    const static unsigned int max_work_area   = 32;
+                 unsigned int work_area_count = 0;
+
+    Rect work_areas[max_work_area];
+
+    uint16_t total_width_of_work_areas = 0;
+    uint16_t total_height_of_work_areas = 0;
+
     bool verbose;
 
 public:
@@ -165,97 +172,119 @@ public:
     }   // adjust_rect
 
 private:
-        void update_rects() {
-            this->title_bar_rect = this->window_rect;
-            this->title_bar_rect.cy = TITLE_BAR_HEIGHT;
-            this->title_bar_rect.x++;
-            this->title_bar_rect.y++;
-            this->title_bar_rect.cx -= 2;
-            this->title_bar_rect.cy--;
+    const Rect get_current_work_area_rect() {
+        REDASSERT(this->work_area_count);
 
-            this->title_bar_icon_rect    = this->title_bar_rect;
-            this->title_bar_icon_rect.cx = 3 + 16 + 2;
+        if (!this->window_rect.isempty()) {
+            size_t current_surface_size = 0;
+            Rect current_work_area = this->work_areas[0];
+            for (unsigned int i = 0; i < this->work_area_count; ++i) {
+                Rect intersect_rect = this->work_areas[i].intersect(this->window_rect);
+                if (!intersect_rect.isempty()) {
+                    size_t surface_size = intersect_rect.cx * intersect_rect.cy;
+                    if (current_surface_size < surface_size) {
+                        current_surface_size = surface_size;
+                        current_work_area = this->work_areas[i];
+                    }
+                }
+            }
 
-            this->minimize_box_rect     = this->title_bar_rect;
-            this->minimize_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH * 3;
-            this->minimize_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
+            return current_work_area;
+        }
 
-            this->maximize_box_rect     = this->title_bar_rect;
-            this->maximize_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH * 2;
-            this->maximize_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
+        return this->work_areas[0];
+    }
 
-            this->close_box_rect     = this->title_bar_rect;
-            this->close_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH;
-            this->close_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
+    void update_rects() {
+        this->title_bar_rect = this->window_rect;
+        this->title_bar_rect.cy = TITLE_BAR_HEIGHT;
+        this->title_bar_rect.x++;
+        this->title_bar_rect.y++;
+        this->title_bar_rect.cx -= 2;
+        this->title_bar_rect.cy--;
 
-            this->title_bar_rect.cx -= TITLE_BAR_BUTTON_WIDTH * 3;
+        this->title_bar_icon_rect    = this->title_bar_rect;
+        this->title_bar_icon_rect.cx = 3 + 16 + 2;
 
-            this->title_bar_rect.x  += 3 + 16 + 2;
-            this->title_bar_rect.cx -= 3 + 16 + 2;
+        this->minimize_box_rect     = this->title_bar_rect;
+        this->minimize_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH * 3;
+        this->minimize_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
 
-            this->north.x  = this->window_rect.x + TITLE_BAR_HEIGHT;
-            this->north.y  = this->window_rect.y;
-            this->north.cx = this->window_rect.cx - TITLE_BAR_HEIGHT * 2;
-            this->north.cy = 4;
+        this->maximize_box_rect     = this->title_bar_rect;
+        this->maximize_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH * 2;
+        this->maximize_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
 
-            this->north_west_north.x  = this->window_rect.x;
-            this->north_west_north.y  = this->window_rect.y;
-            this->north_west_north.cx = TITLE_BAR_HEIGHT;
-            this->north_west_north.cy = 4;
+        this->close_box_rect     = this->title_bar_rect;
+        this->close_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH;
+        this->close_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
 
-            this->north_west_west.x  = this->window_rect.x;
-            this->north_west_west.y  = this->window_rect.y;
-            this->north_west_west.cx = 4;
-            this->north_west_west.cy = TITLE_BAR_HEIGHT;
+        this->title_bar_rect.cx -= TITLE_BAR_BUTTON_WIDTH * 3;
 
-            this->west.x  = this->window_rect.x;
-            this->west.y  = this->window_rect.y + TITLE_BAR_HEIGHT;
-            this->west.cx = 4;
-            this->west.cy = this->window_rect.cy - TITLE_BAR_HEIGHT * 2;
+        this->title_bar_rect.x  += 3 + 16 + 2;
+        this->title_bar_rect.cx -= 3 + 16 + 2;
 
-            this->south_west_west.x  = this->window_rect.x;
-            this->south_west_west.y  = this->window_rect.y + this->window_rect.cy - TITLE_BAR_HEIGHT;
-            this->south_west_west.cx = 4;
-            this->south_west_west.cy = TITLE_BAR_HEIGHT;
+        this->north.x  = this->window_rect.x + TITLE_BAR_HEIGHT;
+        this->north.y  = this->window_rect.y;
+        this->north.cx = this->window_rect.cx - TITLE_BAR_HEIGHT * 2;
+        this->north.cy = 4;
 
-            this->south_west_south.x  = this->window_rect.x;
-            this->south_west_south.y  = this->window_rect.y + this->window_rect.cy - 4;
-            this->south_west_south.cx = TITLE_BAR_HEIGHT;
-            this->south_west_south.cy = 4;
+        this->north_west_north.x  = this->window_rect.x;
+        this->north_west_north.y  = this->window_rect.y;
+        this->north_west_north.cx = TITLE_BAR_HEIGHT;
+        this->north_west_north.cy = 4;
 
-            this->south.x  = this->window_rect.x + TITLE_BAR_HEIGHT;
-            this->south.y  = this->window_rect.y + this->window_rect.cy -4;
-            this->south.cx = this->window_rect.cx - TITLE_BAR_HEIGHT * 2;
-            this->south.cy = 4;
+        this->north_west_west.x  = this->window_rect.x;
+        this->north_west_west.y  = this->window_rect.y;
+        this->north_west_west.cx = 4;
+        this->north_west_west.cy = TITLE_BAR_HEIGHT;
 
-            this->south_east_south.x  = this->window_rect.x + this->window_rect.cx - TITLE_BAR_HEIGHT;
-            this->south_east_south.y  = this->window_rect.y + this->window_rect.cy - 4;
-            this->south_east_south.cx = TITLE_BAR_HEIGHT;
-            this->south_east_south.cy = 4;
+        this->west.x  = this->window_rect.x;
+        this->west.y  = this->window_rect.y + TITLE_BAR_HEIGHT;
+        this->west.cx = 4;
+        this->west.cy = this->window_rect.cy - TITLE_BAR_HEIGHT * 2;
 
-            this->south_east_east.x  = this->window_rect.x + this->window_rect.cx - 4;
-            this->south_east_east.y  = this->window_rect.y + this->window_rect.cy - TITLE_BAR_HEIGHT;
-            this->south_east_east.cx = 4;
-            this->south_east_east.cy = TITLE_BAR_HEIGHT;
+        this->south_west_west.x  = this->window_rect.x;
+        this->south_west_west.y  = this->window_rect.y + this->window_rect.cy - TITLE_BAR_HEIGHT;
+        this->south_west_west.cx = 4;
+        this->south_west_west.cy = TITLE_BAR_HEIGHT;
 
-            this->east.x  = this->window_rect.x + this->window_rect.cx - 4;
-            this->east.y  = this->window_rect.y + TITLE_BAR_HEIGHT;
-            this->east.cx = 4;
-            this->east.cy = this->window_rect.cy - TITLE_BAR_HEIGHT * 2;
+        this->south_west_south.x  = this->window_rect.x;
+        this->south_west_south.y  = this->window_rect.y + this->window_rect.cy - 4;
+        this->south_west_south.cx = TITLE_BAR_HEIGHT;
+        this->south_west_south.cy = 4;
 
-            this->north_east_east.x  = this->window_rect.x + this->window_rect.cx - 4;
-            this->north_east_east.y  = this->window_rect.y;
-            this->north_east_east.cx = 4;
-            this->north_east_east.cy = TITLE_BAR_HEIGHT;
+        this->south.x  = this->window_rect.x + TITLE_BAR_HEIGHT;
+        this->south.y  = this->window_rect.y + this->window_rect.cy -4;
+        this->south.cx = this->window_rect.cx - TITLE_BAR_HEIGHT * 2;
+        this->south.cy = 4;
 
-            this->north_east_north.x  = this->window_rect.x + this->window_rect.cx - TITLE_BAR_HEIGHT;
-            this->north_east_north.y  = this->window_rect.y;
-            this->north_east_north.cx = TITLE_BAR_HEIGHT;
-            this->north_east_north.cy = 4;
-        }   // update_rects
+        this->south_east_south.x  = this->window_rect.x + this->window_rect.cx - TITLE_BAR_HEIGHT;
+        this->south_east_south.y  = this->window_rect.y + this->window_rect.cy - 4;
+        this->south_east_south.cx = TITLE_BAR_HEIGHT;
+        this->south_east_south.cy = 4;
+
+        this->south_east_east.x  = this->window_rect.x + this->window_rect.cx - 4;
+        this->south_east_east.y  = this->window_rect.y + this->window_rect.cy - TITLE_BAR_HEIGHT;
+        this->south_east_east.cx = 4;
+        this->south_east_east.cy = TITLE_BAR_HEIGHT;
+
+        this->east.x  = this->window_rect.x + this->window_rect.cx - 4;
+        this->east.y  = this->window_rect.y + TITLE_BAR_HEIGHT;
+        this->east.cx = 4;
+        this->east.cy = this->window_rect.cy - TITLE_BAR_HEIGHT * 2;
+
+        this->north_east_east.x  = this->window_rect.x + this->window_rect.cx - 4;
+        this->north_east_east.y  = this->window_rect.y;
+        this->north_east_east.cx = 4;
+        this->north_east_east.cy = TITLE_BAR_HEIGHT;
+
+        this->north_east_north.x  = this->window_rect.x + this->window_rect.cx - TITLE_BAR_HEIGHT;
+        this->north_east_north.y  = this->window_rect.y;
+        this->north_east_north.cx = TITLE_BAR_HEIGHT;
+        this->north_east_north.cy = 4;
+    }   // update_rects
 
 public:
-
     void draw_maximize_box(bool mouse_over, const Rect r) {
         unsigned int bg_color = (mouse_over ? 0xCBCACA : 0xFFFFFF);
 
@@ -550,15 +579,17 @@ public:
 
                         ServerMinMaxInfoPDU smmipdu;
 
+                        Rect work_area_rect = this->get_current_work_area_rect();
+
                         smmipdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
-                        smmipdu.MaxWidth(this->work_area_rect.cx - 1);
-                        smmipdu.MaxHeight(this->work_area_rect.cy - 1);
-                        smmipdu.MaxPosX(0);
-                        smmipdu.MaxPosY(0);
+                        smmipdu.MaxWidth(work_area_rect.cx - 1);
+                        smmipdu.MaxHeight(work_area_rect.cy - 1);
+                        smmipdu.MaxPosX(work_area_rect.x);
+                        smmipdu.MaxPosY(work_area_rect.y);
                         smmipdu.MinTrackWidth(INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH);
                         smmipdu.MinTrackHeight(INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT);
-                        smmipdu.MaxTrackWidth(this->work_area_rect.cx - 1);
-                        smmipdu.MaxTrackHeight(this->work_area_rect.cy - 1);
+                        smmipdu.MaxTrackWidth(this->total_width_of_work_areas /*work_area_rect.cx*/ - 1);
+                        smmipdu.MaxTrackHeight(this->total_height_of_work_areas /*work_area_rect.cy*/ - 1);
 
                         smmipdu.emit(out_s);
 
@@ -825,7 +856,7 @@ public:
                     order.VisibleOffsetX(this->window_rect.x);
                     order.VisibleOffsetY(this->window_rect.y);
                     order.NumVisibilityRects(1);
-                    order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+                    order.VisibilityRects(0, RDP::RAIL::Rectangle(/*0*/this->window_rect.x, /*0*/this->window_rect.y, this->window_rect.cx, this->window_rect.cy));
 
                     if (this->verbose) {
                         StaticOutStream<1024> out_s;
@@ -1122,7 +1153,7 @@ public:
                         order.WindowWidth(this->window_rect.cx);
                         order.WindowHeight(this->window_rect.cy);
                         order.NumVisibilityRects(1);
-                        order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+                        order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, this->window_rect.cx, this->window_rect.cy));
 
                         order.ClientOffsetX(this->window_rect.x + 6);
                         order.ClientOffsetY(this->window_rect.y + 25);
@@ -1206,8 +1237,10 @@ public:
         }   // else if (SlowPath::PTRFLAGS_BUTTON1 == pointerFlags)
         else if (PTRFLAGS_EX_DOUBLE_CLICK == pointerFlags) {
             if (this->south.contains_pt(xPos, yPos) && !this->maximized) {
+                Rect work_area_rect = this->get_current_work_area_rect();
+
                 this->window_rect.y  = 0;
-                this->window_rect.cy = this->work_area_rect.cy - 1;
+                this->window_rect.cy = work_area_rect.cy - 1;
 
                 this->update_rects();
 
@@ -1230,7 +1263,7 @@ public:
                     order.WindowWidth(this->window_rect.cx);
                     order.WindowHeight(this->window_rect.cy);
                     order.NumVisibilityRects(1);
-                    order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+                    order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, this->window_rect.cx, this->window_rect.cy));
 
                     order.ClientOffsetX(this->window_rect.x + 6);
                     order.ClientOffsetY(this->window_rect.y + 25);
@@ -1290,7 +1323,7 @@ public:
                 order.WindowWidth(this->window_rect.cx);
                 order.WindowHeight(this->window_rect.cy);
                 order.NumVisibilityRects(1);
-                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, this->window_rect.cx, this->window_rect.cy));
 
                 order.ClientOffsetX(this->window_rect.x + 6);
                 order.ClientOffsetY(this->window_rect.y + 25);
@@ -1320,10 +1353,12 @@ public:
 
             this->window_rect_normal = this->window_rect;
 
-            this->window_rect.x  = -1;
-            this->window_rect.y  = -1;
-            this->window_rect.cx = this->work_area_rect.cx + 1 * 2;
-            this->window_rect.cy = this->work_area_rect.cy + 1 * 2;
+            Rect work_area_rect = this->get_current_work_area_rect();
+
+            this->window_rect.x  = work_area_rect.x - 1;
+            this->window_rect.y  = work_area_rect.y - 1;
+            this->window_rect.cx = work_area_rect.cx + 1 * 2;
+            this->window_rect.cy = work_area_rect.cy + 1 * 2;
 
             this->update_rects();
 
@@ -1343,19 +1378,19 @@ public:
                     );
                 order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
 
-                order.ClientAreaWidth(this->work_area_rect.cx);
-                order.ClientAreaHeight(this->work_area_rect.cy - 25);
-                order.WindowWidth(this->work_area_rect.cx + 2);
-                order.WindowHeight(this->work_area_rect.cy + 2);
+                order.ClientAreaWidth(work_area_rect.cx);
+                order.ClientAreaHeight(work_area_rect.cy - 25);
+                order.WindowWidth(work_area_rect.cx + 2);
+                order.WindowHeight(work_area_rect.cy + 2);
                 order.NumVisibilityRects(1);
-                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->work_area_rect.cx, this->work_area_rect.cy + 1));
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(work_area_rect.x, work_area_rect.y, work_area_rect.cx, work_area_rect.cy + 1));
 
-                order.ClientOffsetX(0);
-                order.ClientOffsetY(25);
-                order.WindowOffsetX(-1);
-                order.WindowOffsetY(-1);
-                order.VisibleOffsetX(0);
-                order.VisibleOffsetY(0);
+                order.ClientOffsetX(work_area_rect.x/* + 0*/);
+                order.ClientOffsetY(work_area_rect.y + 25);
+                order.WindowOffsetX(work_area_rect.x + -1);
+                order.WindowOffsetY(work_area_rect.y + -1);
+                order.VisibleOffsetX(work_area_rect.x/* + 0*/);
+                order.VisibleOffsetY(work_area_rect.y/* + 0*/);
 
                 order.ShowState(3);
                 order.Style(0x17CF0000);
@@ -1514,6 +1549,8 @@ public:
         }
 
         auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
+
+        this->work_area_count = 0;
 
         this->channel_ = nullptr;
     }   // reset
@@ -1877,7 +1914,7 @@ protected:
                     order.VisibleOffsetX(this->window_rect.x);
                     order.VisibleOffsetY(this->window_rect.y);
                     order.NumVisibilityRects(1);
-                    order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+                    order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, this->window_rect.cx, this->window_rect.cy));
 
                     if (this->verbose) {
                         StaticOutStream<1024> out_s;
@@ -1930,16 +1967,45 @@ protected:
         if (cspupdu.SystemParam() == SPI_SETWORKAREA) {
             RDP::RAIL::Rectangle const & body_r = cspupdu.body_r();
 
+            this->work_areas[this->work_area_count].x  = body_r.Left();
+            this->work_areas[this->work_area_count].y  = body_r.Top();
+            this->work_areas[this->work_area_count].cx = body_r.Right() - body_r.Left();
+            this->work_areas[this->work_area_count].cy = body_r.Bottom() - body_r.Top();
+
+            if (this->verbose) {
+                LOG(LOG_INFO, "WorkAreaRect: (%u, %u, %u, %u)",
+                    this->work_areas[this->work_area_count].x, this->work_areas[this->work_area_count].y,
+                    this->work_areas[this->work_area_count].cx, this->work_areas[this->work_area_count].cy);
+            }
+
+            if (this->total_width_of_work_areas < body_r.Right()) {
+                this->total_width_of_work_areas = body_r.Right();
+            }
+            if (this->total_height_of_work_areas < body_r.Bottom()) {
+                this->total_height_of_work_areas = body_r.Bottom();
+            }
+
+            this->work_area_count++;
+
+/*
             this->work_area_rect.x  = body_r.Left();
             this->work_area_rect.y  = body_r.Top();
             this->work_area_rect.cx = body_r.Right() - body_r.Left();
             this->work_area_rect.cy = body_r.Bottom() - body_r.Top();
+
+LOG(LOG_INFO, "SPI_SETWORKAREA (%d %d %u %u)",
+        this->work_area_rect.x,
+        this->work_area_rect.y,
+        this->work_area_rect.cx,
+        this->work_area_rect.cy
+    );
 
             if (this->verbose) {
                 LOG(LOG_INFO, "WorkAreaRect: (%u, %u, %u, %u)",
                     this->work_area_rect.x, this->work_area_rect.y,
                     this->work_area_rect.cx, this->work_area_rect.cy);
             }
+*/
 
             {
                 RDP::RAIL::ActivelyMonitoredDesktop order;
@@ -2060,7 +2126,7 @@ protected:
                 order.VisibleOffsetX(this->window_rect.x);
                 order.VisibleOffsetY(this->window_rect.y);
                 order.NumVisibilityRects(1);
-                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, this->window_rect.cx, this->window_rect.cy));
 
                 if (this->verbose) {
                     StaticOutStream<1024> out_s;
@@ -2343,7 +2409,7 @@ protected:
                 order.WindowWidth(this->window_rect.cx);
                 order.WindowHeight(this->window_rect.cy);
                 order.NumVisibilityRects(1);
-                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, this->window_rect.cx, this->window_rect.cy));
 
                 order.ClientOffsetX(this->window_rect.x + 6);
                 order.ClientOffsetY(this->window_rect.y + 25);
@@ -2664,7 +2730,7 @@ public:
             order.VisibleOffsetX(window_rect.x);
             order.VisibleOffsetY(window_rect.y);
             order.NumVisibilityRects(1);
-            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, window_rect.cx, window_rect.cy));
+            order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, window_rect.cx, window_rect.cy));
 
             /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
                 StaticOutStream<1024> out_s;

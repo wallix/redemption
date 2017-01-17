@@ -133,10 +133,10 @@ public:
 
         if (label_rect.isempty()) {
             label_rect = rect;
-            label_rect.x = label_rect.x + (border_width - 1);
-            label_rect.y = label_rect.y + (border_width - 1);
-            label_rect.cx -= (border_width * 2 - 1);
-            label_rect.cy -= (border_width * 2 - 1);
+            label_rect.x  += (border_width + 1);
+            label_rect.y  += (border_width + 1);
+            label_rect.cx -= (border_width * 2 + 1);
+            label_rect.cy -= (border_width * 2 + 1);
         }
 
         // Label color
