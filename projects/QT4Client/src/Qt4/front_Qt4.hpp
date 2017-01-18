@@ -241,8 +241,8 @@ public:
     virtual void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) = 0;
     virtual void empty_buffer() = 0;
     virtual bool can_be_start_capture(auth_api *) override { return true; }
-    virtual bool can_be_pause_capture() override { return true; }
-    virtual bool can_be_resume_capture() override { return true; }
+//     virtual bool can_be_pause_capture() override { return true; }
+//     virtual bool can_be_resume_capture() override { return true; }
     virtual bool must_be_stop_capture() override { return true; }
     virtual void emptyLocalBuffer() = 0;
     virtual void replay(std::string const & movie_path) = 0;
@@ -267,8 +267,8 @@ class Front_Qt : public Front_Qt_API
             std::chrono::microseconds res(1);
             return res;
         }
-        void do_pause_capture(const timeval&) override {}
-        void do_resume_capture(const timeval&) override {}
+//         void do_pause_capture(const timeval&) override {}
+//         void do_resume_capture(const timeval&) override {}
     };
     Snapshoter snapshoter;
 
@@ -466,9 +466,9 @@ public:
 
     void removeDriveDevice(const FileSystemData::DeviceData *, const size_t);
 
-    virtual gdi::Depth const & order_depth() const override {
-        return gdi::Depth::from_bpp(this->mod_bpp);
-    }
+//     virtual gdi::Depth const & order_depth() const override {
+//         return gdi::Depth::from_bpp(this->mod_bpp);
+//     }
 
     virtual void recv_disconnect_provider_ultimatum() override;
 

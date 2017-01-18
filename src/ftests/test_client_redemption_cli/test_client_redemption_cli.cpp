@@ -69,7 +69,6 @@ int main(int argc, char** argv){
     //=========================================================
 
 
-
     std::string script_file_path;
     uint8_t input_connection_data_complete(0);
     for (int i = 0; i < argc; i++) {
@@ -80,41 +79,86 @@ int main(int argc, char** argv){
         //================================
         //     Cmd lines User config
         //================================
-        if (i+1 < argc) {
-            if (       word == "--user") {
+        if (       word == "--user") {
+            if (i+1 < argc) {
+                argv[i] = "";
                 userName = std::string(argv[i+1]);
                 input_connection_data_complete |= TestClientCLI::NAME;
-
-            } else if (word == "--pwd") {
+                argv[i+1] = "";
+            }
+        } else if (word == "--pwd" || word == "--password") {
+            if (i+1 < argc) {
+                argv[i] = "";
                 userPwd = std::string(argv[i+1]);
                 input_connection_data_complete |= TestClientCLI::PWD;
-            } else if (word == "--ip") {
+                argv[i+1] = "";
+            }
+        } else if (word == "--ip") {
+            if (i+1 < argc) {
+                argv[i] = "";
                 ip = std::string(argv[i+1]);
                 input_connection_data_complete |= TestClientCLI::IP;
-            } else if (word == "--port") {
+                argv[i+1] = "";
+            }
+        } else if (word == "--port") {
+            if (i+1 < argc) {
                 port = std::stoi(std::string(argv[i+1]));
                 input_connection_data_complete |= TestClientCLI::PORT;
-            } else if (word == "--local_ip") {
+                argv[i] = "";
+                argv[i+1] = "";
+            }
+        } else if (word == "--local_ip") {
+            if (i+1 < argc) {
                 localIP = std::string(argv[i+1]);
-            } else if (word == "--keylayout") {
+                argv[i] = "";
+                argv[i+1] = "";
+            }
+        } else if (word == "--keylayout") {
+            if (i+1 < argc) {
                 info.keylayout = std::stoi(std::string(argv[i+1]));
-            } else if (word == "--bpp") {
+                argv[i] = "";
+                argv[i+1] = "";
+            }
+        } else if (word == "--bpp") {
+            if (i+1 < argc) {
                 info.bpp = std::stoi(std::string(argv[i+1]));
-            } else if (word == "--width") {
+                argv[i] = "";
+                argv[i+1] = "";
+            }
+        } else if (word == "--width") {
+            if (i+1 < argc) {
                 info.width = std::stoi(std::string(argv[i+1]));
-            } else if (word == "--height") {
+                argv[i] = "";
+                argv[i+1] = "";
+            }
+        } else if (word == "--height") {
+            if (i+1 < argc) {
                 info.height = std::stoi(std::string(argv[i+1]));
-            } else if (word == "--wallpaper") {
-                if (       std::string(argv[i+1]) ==  "off") {
+                argv[i] = "";
+                argv[i+1] = "";
+            }
+        } else if (word == "--wallpaper") {
+            if (       std::string(argv[i+1]) ==  "off") {
+                if (i+1 < argc) {
                     info.rdp5_performanceflags -=  PERF_DISABLE_WALLPAPER;
+                    argv[i] = "";
+                    argv[i+1] = "";
                 }
-            } else if (word == "--fullwindowdrag") {
-                if (       std::string(argv[i+1]) ==  "off") {
+            }
+        } else if (word == "--fullwindowdrag") {
+            if (       std::string(argv[i+1]) ==  "off") {
+                if (i+1 < argc) {
                     info.rdp5_performanceflags -=  PERF_DISABLE_FULLWINDOWDRAG;
+                    argv[i] = "";
+                    argv[i+1] = "";
                 }
-            } else if (word == "--menuanimations") {
-                if (       std::string(argv[i+1]) ==  "off") {
+            }
+        } else if (word == "--menuanimations") {
+            if (       std::string(argv[i+1]) ==  "off") {
+                if (i+1 < argc) {
                     info.rdp5_performanceflags -=  PERF_DISABLE_MENUANIMATIONS;
+                    argv[i] = "";
+                    argv[i+1] = "";
                 }
             }
         }
@@ -257,15 +301,6 @@ int main(int argc, char** argv){
     };//========================================================================================
 
 
-    std::cout << "\n " <<  std::endl;
-    std::cout << "\n ********************************\n";
-    std::cout << "\n ====== RDPHEADLESS CLIENT ======\n";
-    std::cout << "\n ********************************" <<  std::endl;
-
-    if (argc == 1) {
-        std::cout << " Version 4.2.3" << "\n";
-        print_help(mod_rdp_params_config, nb_mod_rdp_params_config);
-    }
 
     struct timeval time_out_response = { TestClientCLI::DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE / 1000, TestClientCLI::DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE % 1000 };
     bool script_on(false);
@@ -283,8 +318,11 @@ int main(int argc, char** argv){
             // TODO show all script cmd
         } else if (word ==  "--script") {
             if (i+1 < argc) {
+                quick_connection_test = false;
                 script_file_path = std::string(argv[i+1]);
                 script_on = true;
+                argv[i+1] = "";
+                argv[i] = "";
             }
         } else if (word == "--show_user_params") {
             verbose = verbose | TestClientCLI::SHOW_USER_AND_TARGET_PARAMS;
@@ -332,11 +370,53 @@ int main(int argc, char** argv){
              if (i+1 < argc) {
                 long time = std::stol(std::string(argv[i+1]));
                 time_out_response = { time/1000, time % 1000 };
+                argv[i+1] = "";
+                argv[i] = "";
             }
         }
     } //==============================================================
 
+    uint32_t encryptionMethods(GCC::UserData::CSSecurity::_40BIT_ENCRYPTION_FLAG |           GCC::UserData::CSSecurity::_128BIT_ENCRYPTION_FLAG);
+    //===========================================
+    //       Cmd line mod_rdp_param config
+    //===========================================
+    for (int i = 0; i < argc - 1; i++) {
+        std::string word(argv[i]);
+        for (size_t j = 0; j < nb_mod_rdp_params_config; j++) {
+            if (       word == mod_rdp_params_config[j].cmd) {
+                if (       std::string(argv[i+1]) ==  "on") {
+                    *(mod_rdp_params_config[j].param) = true;
+                    argv[i+1] = "";
+                    argv[i] = "";
+                } else if (std::string(argv[i+1]) ==  "off") {
+                    *(mod_rdp_params_config[j].param) = false;
+                    argv[i+1] = "";
+                    argv[i] = "";
+                }
+            }
+        }
 
+        if (word ==  "--encrpt_methds") {
+            encryptionMethods = std::stoi(argv[i+1]);
+        }
+    }
+
+    for (int i = 1; i < argc; i++) {
+        if (argv[i] !=  "") {
+            std::cout << "Unknow key word or missing argument: \'" << argv[i] << "\'" <<  std::endl;
+            exit(11);
+        }
+    }
+
+    std::cout << "\n " <<  std::endl;
+    std::cout << "\n ********************************\n";
+    std::cout << "\n ====== RDPHEADLESS CLIENT ======\n";
+    std::cout << "\n ********************************" <<  std::endl;
+
+    if (argc == 1) {
+        std::cout << " Version 4.2.3" << "\n";
+        print_help(mod_rdp_params_config, nb_mod_rdp_params_config);
+    }
 
     if (verbose != 0) {
 
@@ -382,26 +462,7 @@ int main(int argc, char** argv){
     }
 
 
-    uint32_t encryptionMethods(GCC::UserData::CSSecurity::_40BIT_ENCRYPTION_FLAG |           GCC::UserData::CSSecurity::_128BIT_ENCRYPTION_FLAG);
-    //===========================================
-    //       Cmd line mod_rdp_param config
-    //===========================================
-    for (int i = 0; i < argc - 1; i++) {
-        std::string word(argv[i]);
-        for (size_t j = 0; j < nb_mod_rdp_params_config; j++) {
-            if (       word == mod_rdp_params_config[j].cmd) {
-                if (       std::string(argv[i+1]) ==  "on") {
-                    *(mod_rdp_params_config[j].param) = true;
-                } else if (std::string(argv[i+1]) ==  "off"){
-                    *(mod_rdp_params_config[j].param) = false;
-                }
-            }
-        }
 
-        if (word ==  "--encrpt_methds") {
-            encryptionMethods = std::stoi(argv[i+1]);
-        }
-    }
 
     if (verbose & TestClientCLI::SHOW_MOD_RDP_PARAMS) {
         std::cout << " ================================" << "\n";
