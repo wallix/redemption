@@ -86,9 +86,9 @@ class Session {
     TimeSystem timeobj;
 
     // TODO: auth_trans and auth_event can probably move into acl
-    SocketTransport * auth_trans;
-    wait_obj        * auth_event;
-    Authentifier    * authentifier;
+    SocketTransport * auth_trans   = nullptr;
+    wait_obj        * auth_event   = nullptr;
+    Authentifier    * authentifier = nullptr;
 
           time_t   perf_last_info_collect_time;
     const pid_t    perf_pid;
@@ -165,7 +165,7 @@ public:
                         this->front->capture->get_capture_event().wait_on_timeout(timeout);
                     }
                 }
-                if (this->auth_event && this->auth_trans) {
+                if (this->auth_event && this->auth_trans && (INVALID_SOCKET != this->auth_trans->sck)) {
                     this->auth_event->wait_on_fd(this->auth_trans->sck, rfds, max, timeout);
                 }
 
@@ -383,7 +383,7 @@ public:
                             }
                         }
                         else {
-                            if (this->auth_event->is_set(this->auth_trans->sck, rfds)) {
+                            if (this->auth_event && this->auth_trans && (INVALID_SOCKET != this->auth_trans->sck) && this->auth_event->is_set(this->auth_trans->sck, rfds)) {
                                 // authentifier received updated values
                                 this->authentifier->receive();
                             }
@@ -469,8 +469,8 @@ public:
         }
         delete this->front;
         delete this->auth_event;
-        delete this->auth_trans;
         delete this->authentifier;
+        delete this->auth_trans;
         // Suppress Session file from disk (original name with PID or renamed with session_id)
         if (!this->ini.get<cfg::context::session_id>().empty()) {
             char new_session_file[256];
