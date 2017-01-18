@@ -1354,6 +1354,8 @@ public:
                          !(*mod_rdp_params.target_application))) {
                         client_info.width  = adjusted_client_execute_rect.cx / 4 * 4;
                         client_info.height = adjusted_client_execute_rect.cy;
+
+                        ::memset(&client_info.cs_monitor, 0, sizeof(client_info.cs_monitor));
                     }
 
                     ModWithSocket<mod_rdp>* new_mod =
