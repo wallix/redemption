@@ -29,4 +29,8 @@ TOOLS_PATH ?= $(REDEMPTION_PUBLIC_PATH)/tools ;
 SYSTEM_TEST_PATH ?= $(REDEMPTION_TEST_PATH)/system/$(SYSTEM_TYPE) ;
 SYSTEM_SRC_PATH ?= $(REDEMPTION_SRC_PATH)/system/$(SYSTEM_TYPE) ;
 
-REDEMPTION_ETC_DH_GLOG ?= $(REDEMPTION_SYS_PATH)/etc/rdpproxy/dh*pem ;
+REDEMPTION_ETC_DH_GLOG ?=
+    $(REDEMPTION_SYS_PATH)/etc/rdpproxy/dh*pem 
+    $(REDEMPTION_SYS_PATH)/etc/rdpproxy/rdpproxy.crt
+    $(REDEMPTION_SYS_PATH)/etc/rdpproxy/rdpproxy.key ;
+

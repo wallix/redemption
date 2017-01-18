@@ -194,7 +194,7 @@ public:
             throw Error(ERR_RECORDER_FAILED_TO_ALLOC_STREAM);
         }
 
-        this->video_st->r_frame_rate.den = frame_rate;    // avg_frame_rate
+        this->video_st->r_frame_rate.den = frame_rate; 
         this->video_st->r_frame_rate.num = 1;
 
         this->video_st->time_base.den = frame_rate;
