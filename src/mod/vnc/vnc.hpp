@@ -575,7 +575,7 @@ private:
         stream.out_uint16_be(r.cx);
         stream.out_uint16_be(r.cy);
         this->t.send(stream.get_data(), stream.get_offset());
-    } // rdp_input_invalidate
+    } // update_screen
 
 public:
     void rdp_input_invalidate(Rect r) override {
@@ -588,8 +588,10 @@ public:
             return;
         }
 
-        if (!r.isempty()) {
-            this->update_screen(r, 0);
+        Rect r_ = r.intersect(Rect(0, 0, this->width, this->height));
+
+        if (!r_.isempty()) {
+            this->update_screen(r_, 0);
         }
     } // rdp_input_invalidate
 
@@ -2815,6 +2817,9 @@ public:
             this->acl->log4(false, "SESSION_DISCONNECTION", extra);
         }
     }
+
+    Dimension get_dim() const override
+    { return Dimension(this->width, this->height); }
 
     bool is_content_laid_out() override {
 LOG(LOG_INFO, "mod_vnc::is_content_laid_out");

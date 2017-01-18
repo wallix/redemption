@@ -681,7 +681,9 @@ public:
 
     // Widget2
 
-    void refresh(Rect/* clip*/) override {}
+    void refresh(Rect/* clip*/) override {
+        this->update_rects();
+    }
 
 private:
     void begin_update() override
