@@ -79,6 +79,7 @@
 #include "keymaps/Qt4_ScanCode_KeyMap.hpp"
 #include "capture/capture.hpp"
 
+
 #include <QtGui/QImage>
 #include <QtGui/QRgb>
 #include <QtGui/QBitmap>
@@ -632,9 +633,9 @@ public:
 //
 //     virtual void draw(const RDP::RAIL::NonMonitoredDesktop & order) override;
 
-    virtual void draw(const RDPColCache   & cmd) override;
-
-    virtual void draw(const RDPBrushCache & cmd) override;
+//     virtual void draw(const RDPColCache   & cmd) override;
+//
+//     virtual void draw(const RDPBrushCache & cmd) override;
 
 
 

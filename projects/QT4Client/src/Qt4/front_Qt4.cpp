@@ -524,17 +524,20 @@ bool Front_Qt::connect() {
                 ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned, std::ratio<1, 100>>(6));
             LCGRandom gen(0);
             CryptoContext cctx;
-            bool enable_rt(true);
             auth_api * authentifier(nullptr);
             struct timeval time;
             gettimeofday(&time, nullptr);
-            PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false, true};
+            PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true};
             FlvParams flv_params = flv_params_from_ini(this->_info.width, this->_info.height, ini);
-            OcrParams ocr_params;
-            ocr_params.ocr_version = 1;
+            OcrParams ocr_params = {OcrVersion::v1, ocr::locale::LocaleId::latin, false, 0, std::chrono::milliseconds{60}};
             const char * record_path = "/replay";
 
             this->_capture = new Capture( true
+                                        , GraphicToFile::Verbose::none
+                                        , WrmCompressionAlgorithm::no_compression
+                                        , std::chrono::duration<unsigned int, std::ratio<1l, 100l> >{60}
+                                        , std::chrono::seconds{1}
+                                        , TraceType::localfile
                                         , wrmParams
                                         , false
                                         , png_params
@@ -552,8 +555,11 @@ bool Front_Qt::connect() {
                                         , this->_info.bpp
                                         , record_path
                                         , record_path
+                                        , 1
+                                        , ""
+                                        , ""
                                         , flv_params
-                                        , enable_rt
+                                        , false
                                         , authentifier
                                         , ini
                                         , cctx
@@ -1156,7 +1162,7 @@ void Front_Qt::draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ct
 void Front_Qt::draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
     if (this->verbose & RDPVerbose::graphics) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
-        bitmap_data.log(LOG_INFO, "FakeFront");
+        //bitmap_data.log(LOG_INFO, "FakeFront");
         LOG(LOG_INFO, "========================================\n");
     }
     //std::cout << "RDPBitmapData" << std::endl;
@@ -1689,7 +1695,6 @@ void Front_Qt::draw(const RDP::FrameMarker & order) {
     }
 
     LOG(LOG_INFO, "DEFAULT: FrameMarker");
-    //this->gd.draw(order);
 }
 
 // void Front_Qt::draw(const RDP::RAIL::NewOrExistingWindow & order) {
@@ -1781,13 +1786,13 @@ void Front_Qt::draw(const RDP::FrameMarker & order) {
 //     //this->gd.draw(order);
 // }
 
-void Front_Qt::draw(const RDPColCache   & cmd) {
-    LOG(LOG_WARNING, "DEFAULT: RDPColCache cacheIndex = %d", cmd.cacheIndex);
-}
-
-void Front_Qt::draw(const RDPBrushCache & brush) {
-    LOG(LOG_WARNING, "DEFAULT: RDPBrushCache cacheIndex = %d", brush.cacheIndex);
-}
+// void Front_Qt::draw(const RDPColCache   & cmd) {
+//     LOG(LOG_WARNING, "DEFAULT: RDPColCache cacheIndex = %d", cmd.cacheIndex);
+// }
+//
+// void Front_Qt::draw(const RDPBrushCache & brush) {
+//     LOG(LOG_WARNING, "DEFAULT: RDPBrushCache cacheIndex = %d", brush.cacheIndex);
+// }
 
 
 
@@ -2632,7 +2637,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             case rdpdr::IRP_MJ_READ:
                                 LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Read Request");
                                 {
-                                rdpdr::DeviceReadResponse deviceReadResponse(0, nullptr);
+                                rdpdr::DeviceReadResponse deviceReadResponse(0);
                                 deviceReadResponse.emit(out_stream);
 
                                 int total_length(out_stream.get_offset());
@@ -3350,9 +3355,9 @@ int main(int argc, char** argv){
 
     QApplication app(argc, argv);
 
-    RDPVerbose verbose = to_verbose_flags(0);
+    RDPVerbose verbose = RDPVerbose::cliprdr;               //to_verbose_flags(0);
 
-    Front_Qt front_qt(argv, argc, RDPVerbose::cliprdr);
+    Front_Qt front_qt(argv, argc, verbose);
 
 
     app.exec();

@@ -72,6 +72,7 @@
 #include "core/RDP/bitmapupdate.hpp"
 #include "keyboard/keymap2.hpp"
 #include "core/client_info.hpp"
+#include "utils/word_identification.hpp"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
