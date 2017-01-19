@@ -579,6 +579,7 @@ private:
 
 public:
     void rdp_input_invalidate(Rect r) override {
+LOG(LOG_INFO, "r(%d %d %u %u)", r.x, r.y, r.cx, r.cy);
         if (this->state == WAIT_PASSWORD) {
             this->screen.rdp_input_invalidate(r);
             return;
