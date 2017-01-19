@@ -25,16 +25,15 @@
 
 
 
-// bjam debug rdpheadless && bin/gcc-4.9.2/debug/link-static/rdpheadless --user admin --pwd $mdp --ip 10.10.47.90 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
 
 // bjam debug rdpheadless && bin/gcc-4.9.2/debug/rdpheadless --user QA\\proxyuser --pwd $mdp --ip 10.10.46.88 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
 
-// bjam debug rdpheadless && bin/gcc-4.9.2/debug/rdpheadless --user admin --pwd $mdp --ip 10.10.47.90 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
+// bjam debug rdpheadless && bin/gcc-4.9.2/debug/rdpheadless --user admin --pwd $mdp --ip 10.10.47.54 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
 
 
 
 void run_mod(mod_api *, TestClientCLI &, SocketTransport *, EventList &, bool, struct timeval &);
-void print_help(ModRDPParamsConfig *, size_t);
+void print_help();
 void disconnect(mod_api *, SocketTransport *);
 
 ///////////////////////////////
@@ -43,7 +42,7 @@ int main(int argc, char** argv){
 
 
     //================================
-    //      Default User config
+    //         Default config
     //================================
     ClientInfo info;
     info.keylayout = 0x040C;
@@ -66,111 +65,57 @@ int main(int argc, char** argv){
     int nbTry(3);
     int retryDelay(1000);
     bool quick_connection_test = true;
+    std::string script_file_path;
+    uint32_t encryptionMethods(GCC::UserData::CSSecurity::_40BIT_ENCRYPTION_FLAG |           GCC::UserData::CSSecurity::_128BIT_ENCRYPTION_FLAG);
+    struct timeval time_out_response = { TestClientCLI::DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE / 1000, TestClientCLI::DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE % 1000 };
+    bool script_on(false);
     //=========================================================
 
 
-    std::string script_file_path;
+
+    std::cout << "\n " <<  std::endl;
+    std::cout << "\n ====== RDPHEADLESS CLIENT ======\n";
+
+    if (argc == 1) {
+        std::cout << " Version 4.2.3" << "\n";
+        print_help();
+    }
+
+
     uint8_t input_connection_data_complete(0);
-    for (int i = 0; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
 
         // TODO string_view
         std::string word(argv[i]);
 
         //================================
-        //     Cmd lines User config
+        //    MOD RDP INITIALS PARAM
         //================================
         if (       word == "--user") {
             if (i+1 < argc) {
-                argv[i] = "";
                 userName = std::string(argv[i+1]);
                 input_connection_data_complete |= TestClientCLI::NAME;
-                argv[i+1] = "";
+                i++;
             }
         } else if (word == "--pwd" || word == "--password") {
             if (i+1 < argc) {
-                argv[i] = "";
                 userPwd = std::string(argv[i+1]);
                 input_connection_data_complete |= TestClientCLI::PWD;
-                argv[i+1] = "";
+                i++;
             }
         } else if (word == "--ip") {
             if (i+1 < argc) {
-                argv[i] = "";
                 ip = std::string(argv[i+1]);
                 input_connection_data_complete |= TestClientCLI::IP;
-                argv[i+1] = "";
-            }
-        } else if (word == "--port") {
-            if (i+1 < argc) {
-                port = std::stoi(std::string(argv[i+1]));
-                input_connection_data_complete |= TestClientCLI::PORT;
-                argv[i] = "";
-                argv[i+1] = "";
+                i++;
             }
         } else if (word == "--local_ip") {
             if (i+1 < argc) {
                 localIP = std::string(argv[i+1]);
-                argv[i] = "";
-                argv[i+1] = "";
-            }
-        } else if (word == "--keylayout") {
-            if (i+1 < argc) {
-                info.keylayout = std::stoi(std::string(argv[i+1]));
-                argv[i] = "";
-                argv[i+1] = "";
-            }
-        } else if (word == "--bpp") {
-            if (i+1 < argc) {
-                info.bpp = std::stoi(std::string(argv[i+1]));
-                argv[i] = "";
-                argv[i+1] = "";
-            }
-        } else if (word == "--width") {
-            if (i+1 < argc) {
-                info.width = std::stoi(std::string(argv[i+1]));
-                argv[i] = "";
-                argv[i+1] = "";
-            }
-        } else if (word == "--height") {
-            if (i+1 < argc) {
-                info.height = std::stoi(std::string(argv[i+1]));
-                argv[i] = "";
-                argv[i+1] = "";
-            }
-        } else if (word == "--wallpaper") {
-            if (       std::string(argv[i+1]) ==  "off") {
-                if (i+1 < argc) {
-                    info.rdp5_performanceflags -=  PERF_DISABLE_WALLPAPER;
-                    argv[i] = "";
-                    argv[i+1] = "";
-                }
-            }
-        } else if (word == "--fullwindowdrag") {
-            if (       std::string(argv[i+1]) ==  "off") {
-                if (i+1 < argc) {
-                    info.rdp5_performanceflags -=  PERF_DISABLE_FULLWINDOWDRAG;
-                    argv[i] = "";
-                    argv[i+1] = "";
-                }
-            }
-        } else if (word == "--menuanimations") {
-            if (       std::string(argv[i+1]) ==  "off") {
-                if (i+1 < argc) {
-                    info.rdp5_performanceflags -=  PERF_DISABLE_MENUANIMATIONS;
-                    argv[i] = "";
-                    argv[i+1] = "";
-                }
+                i++;
             }
         }
-
-        if (word == "--persist") {
-            quick_connection_test = false;
-        } else if (word == "--mon_count") {
-            info.cs_monitor.monitorCount = std::stoi(std::string(argv[i+1]));
-        }
-    }//================================================================
-
-
+    }
 
     //===========================================
     //       Default mod_rdp_param config
@@ -191,232 +136,606 @@ int main(int argc, char** argv){
                                , to_verbose_flags(0)
                                );
 
+    mod_rdp_params.enable_tls = true;
+    mod_rdp_params.enable_nla = true;
     mod_rdp_params.device_id = "device_id";
-
-    const size_t nb_mod_rdp_params_config(33);
-    std::string dscr(" Active/unactive ");
-
-    // TODO What that ? See program_options
-    ModRDPParamsConfig mod_rdp_params_config[] = {
-
-      ModRDPParamsConfig(&(mod_rdp_params.enable_tls), false
-        , "--tls", "                   "+dscr+"tls"
-        , "enable_tls")
-    , ModRDPParamsConfig(&(mod_rdp_params.enable_nla), false
-        , "--nla", "                   "+dscr+"nla"
-        , "enable_nla")
-    , ModRDPParamsConfig(&(mod_rdp_params.enable_fastpath), false
-        , "--fastpath", "              "+dscr+"fastpath"
-        , "enable_fastpath")
-    , ModRDPParamsConfig(&(mod_rdp_params.enable_mem3blt) , true
-        , "--mem3blt", "               "+dscr+"mem3blt"
-        , "enable_mem3blt")
-    , ModRDPParamsConfig(&(mod_rdp_params.enable_new_pointer), true
-        , "--new_pointer", "           "+dscr+"new pointer"
-        , "enable_new_pointer")
-    , ModRDPParamsConfig(&(mod_rdp_params.server_redirection_support), true
-        , "--serv_red", "              "+dscr+"server redirection support"
-        , "server_redirection_support")
-    , ModRDPParamsConfig(&(mod_rdp_params.enable_krb)
-        , "--krb", "                   "+dscr+"krb"
-        , "enable_krb")
-    , ModRDPParamsConfig(&(mod_rdp_params.enable_glyph_cache)
-        , "--glph_cache", "            "+dscr+"glyph cache"
-        , "enable_glyph_cache")
-    , ModRDPParamsConfig(&(mod_rdp_params.enable_session_probe)
-        , "--sess_prb", "              "+dscr+"session probe"
-        , "enable_session_probe")
-    , ModRDPParamsConfig(&(mod_rdp_params.enable_session_probe_launch_mask)
-        , "--sess_prb_lnch_mask", "    "+dscr+"session probe launch mask"
-        , "enable_session_probe_launch_mask")
-    , ModRDPParamsConfig(&(mod_rdp_params.disable_clipboard_log_syslog)
-        , "--disable_cb_log_sys", "    "+dscr+"clipboard log syslog lock"
-        , "disable_clipboard_log_syslog")
-    , ModRDPParamsConfig(&(mod_rdp_params.disable_clipboard_log_wrm)
-        , "--disable_cb_log_wrm", "    "+dscr+"clipboard log wrm lock"
-        , "disable_clipboard_log_wrm")
-    , ModRDPParamsConfig(&(mod_rdp_params.disable_file_system_log_syslog)
-        , "--disable_file_syslog", "   "+dscr+"file system log syslog lock"
-        , "disable_file_system_log_syslog")
-    , ModRDPParamsConfig(&(mod_rdp_params.disable_file_system_log_wrm)
-        , "--disable_file_wrm", "      "+dscr+"file system log wrm lock"
-        , "disable_file_system_log_wrm")
-    , ModRDPParamsConfig(&(mod_rdp_params.session_probe_use_clipboard_based_launcher)
-        , "--sess_prb_cb_based_lnch", ""+dscr+"session probe use clipboard based launcher"
-        , "session_probe_use_clipboard_based_launcher")
-    , ModRDPParamsConfig(&(mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon)
-        , "--sess_prb_slttoal", "      "+dscr+"session probe start launch timeout timer only after logon"
-        , "session_probe_start_launch_timeout_timer_only_after_logon")
-    , ModRDPParamsConfig(&(mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user)
-        , "--sess_prob_oktdu", "       "+dscr+"session probe on keepalive timeout disconnect user"
-        , "session_probe_on_keepalive_timeout_disconnect_user")
-    , ModRDPParamsConfig(&(mod_rdp_params.session_probe_end_disconnected_session)
-        , "--sess_prb_eds", "          "+dscr+"session probe end disconnected session"
-        , "session_probe_end_disconnected_session")
-    , ModRDPParamsConfig(&(mod_rdp_params.session_probe_customize_executable_name)
-        , "--sess_prb_custom_exe", "   "+dscr+"session probe customize executable name"
-        , "session_probe_cen")
-    , ModRDPParamsConfig(&(mod_rdp_params.enable_transparent_mode)
-        , "--transp_mode", "           "+dscr+"enable transparent mode"
-        , "enable_transparent_mode")
-    , ModRDPParamsConfig(&(mod_rdp_params.ignore_auth_channel)
-        , "--ignore_auth_channel", "   "+dscr+"ignore auth channel"
-        , "ignore_auth_channel")
-    , ModRDPParamsConfig(&(mod_rdp_params.use_client_provided_alternate_shell)
-        , "--use_client_as", "         "+dscr+"use client provided alternate shell"
-        , "use_client_provided_alternate_shell")
-    , ModRDPParamsConfig(&(mod_rdp_params.disconnect_on_logon_user_change)
-        , "--disconn_oluc", "          "+dscr+"disconnect on logon user change"
-        , "disconnect_on_logon_user_change")
-    , ModRDPParamsConfig(&(mod_rdp_params.server_cert_store)
-        , "--cert_store", "            "+dscr+"enable server certifications store"
-        , "server_cert_store")
-    , ModRDPParamsConfig(&(mod_rdp_params.hide_client_name)
-        , "--hide_name", "             "+dscr+"hide client name"
-        , "hide_client_name")
-    , ModRDPParamsConfig(&(mod_rdp_params.enable_persistent_disk_bitmap_cache)
-        , "--persist_bmp_cache", "     "+dscr+"enable persistent disk bitmap cache"
-        , "enable_persistent_disk_bitmap_cache")
-    , ModRDPParamsConfig(&(mod_rdp_params.enable_cache_waiting_list)
-        , "--cache_wait_list", "       "+dscr+"enable_cache_waiting_list"
-        , "enable_cache_waiting_list")
-    , ModRDPParamsConfig(&(mod_rdp_params.persist_bitmap_cache_on_disk)
-        , "--persist_bmp_disk ", "     "+dscr+"persist bitmap cache on disk"
-        , "persist_bitmap_cache_on_disk")
-    , ModRDPParamsConfig(&(mod_rdp_params.server_redirection_support)
-        , "--serv_redir_supp", "       "+dscr+"server redirection support"
-        , "server_redirection_support")
-    , ModRDPParamsConfig(&(mod_rdp_params.bogus_sc_net_size)
-        , "--bogus_size", "            "+dscr+"bogus sc net size"
-        , "bogus_sc_net_size")
-    , ModRDPParamsConfig(&(mod_rdp_params.bogus_refresh_rect)
-        , "--bogus_rectc", "           "+dscr+"bogus refresh rect"
-        , "bogus_refresh_rect")
-    , ModRDPParamsConfig(&(mod_rdp_params.allow_using_multiple_monitors)
-        , "--multi_mon", "             "+dscr+"allow using multiple monitors"
-        , "allow_using_multiple_monitors")
-    , ModRDPParamsConfig(&(mod_rdp_params.adjust_performance_flags_for_recording)
-        , "--adj_perf_rec", "          "+dscr+"adjust performance flags for recording"
-        , "adjust_performance_flags_for_recording")
-    };//========================================================================================
+    std::string allow_channels = "*";
+    mod_rdp_params.allow_channels                  = &allow_channels;
+    //mod_rdp_params.allow_using_multiple_monitors   = true;
+    mod_rdp_params.bogus_refresh_rect              = true;
+    mod_rdp_params.verbose = RDPVerbose::cliprdr;
 
 
 
-    struct timeval time_out_response = { TestClientCLI::DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE / 1000, TestClientCLI::DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE % 1000 };
-    bool script_on(false);
-    for (int i = 0; i <  argc; i++) {
+    const char * options[] = {
 
-        std::string word(argv[i]);
-        //================================
-        //            TOOLS
-        //================================
-        if (word == "-v" || word == "--version") {
-            std::cout << "\n Version 5.1.0" << "\n";
-        } else if (word == "--help" || word == "-h") {
-            print_help(mod_rdp_params_config, nb_mod_rdp_params_config);
-        } else if (word == "--script_help") {
-            // TODO show all script cmd
-        } else if (word ==  "--script") {
-            if (i+1 < argc) {
-                quick_connection_test = false;
-                script_file_path = std::string(argv[i+1]);
-                script_on = true;
-                argv[i+1] = "";
-                argv[i] = "";
-            }
-        } else if (word == "--show_user_params") {
-            verbose = verbose | TestClientCLI::SHOW_USER_AND_TARGET_PARAMS;
-        } else if (word == "--show_rdp_params") {
-            verbose = verbose | TestClientCLI::SHOW_MOD_RDP_PARAMS;
-        } else if (word == "--show_draw") {
-            verbose = verbose | TestClientCLI::SHOW_DRAW_ORDERS_INFO;
-        } else if (word == "--show_clpbrd") {
-            verbose = verbose | TestClientCLI::SHOW_CLPBRD_PDU_EXCHANGE;
-        } else if (word == "--show_cursor") {
-            verbose = verbose | TestClientCLI::SHOW_CURSOR_STATE_CHANGE;
-        } else if (word == "--show_core") {
-            verbose = verbose | TestClientCLI::SHOW_CORE_SERVER_INFO;
-        } else if (word == "--show_security") {
-            verbose = verbose | TestClientCLI::SHOW_SECURITY_SERVER_INFO;
-        } else if (word == "--show_keyboard") {
-            verbose = verbose | TestClientCLI::SHOW_KEYBOARD_EVENT;
-        } else if (word == "--show_files_sys") {
-            verbose = verbose | TestClientCLI::SHOW_FILE_SYSTEM_EXCHANGE;
-        } else if (word == "--show_caps") {
-            verbose = verbose | TestClientCLI::SHOW_CAPS;
-        } else if (word == "--show_all") {
-            verbose = verbose | TestClientCLI::SHOW_CURSOR_STATE_CHANGE
-                      | TestClientCLI::SHOW_USER_AND_TARGET_PARAMS
-                      | TestClientCLI::SHOW_MOD_RDP_PARAMS
-                      | TestClientCLI::SHOW_DRAW_ORDERS_INFO
-                      | TestClientCLI::SHOW_CLPBRD_PDU_EXCHANGE
-                      | TestClientCLI::SHOW_CORE_SERVER_INFO
-                      | TestClientCLI::SHOW_SECURITY_SERVER_INFO
-                      | TestClientCLI::SHOW_KEYBOARD_EVENT
-                      | TestClientCLI::SHOW_FILE_SYSTEM_EXCHANGE
-                      | TestClientCLI::SHOW_CAPS
-                      ;
-        } else if (word == "--show_in_pdu") {
-            verbose = verbose | TestClientCLI::SHOW_IN_PDU;
-        } else if (word == "--show_out_pdu") {
-            verbose = verbose | TestClientCLI::SHOW_OUT_PDU;
-        } else if (word == "--show_pdu") {
-            verbose = verbose | TestClientCLI::SHOW_OUT_PDU
-                              | TestClientCLI::SHOW_IN_PDU;
-        } else if (word == "--show_channels") {
-            verbose = verbose | TestClientCLI::SHOW_FILE_SYSTEM_EXCHANGE
-                              | TestClientCLI::SHOW_CLPBRD_PDU_EXCHANGE;
-        } else if (word == "--timeout") {
-             if (i+1 < argc) {
-                long time = std::stol(std::string(argv[i+1]));
-                time_out_response = { time/1000, time % 1000 };
-                argv[i+1] = "";
-                argv[i] = "";
-            }
-        }
-    } //==============================================================
+        "--user", "--pwd",  "--password", "--local_ip", "--ip", // 1-5
+        "--port",                                                   // 6
+        "--keylayout",                                              // 7
+        "--bpp",
+        "--width",
+        "--height",
+        "--wallpaper",
+        "--fullwindowdrag",
+        "--menuanimations",
+        "--persist",
+        "--mon_count",
+        "--v",
+        "--version",
+        "--h",
+        "--help",
+        "--script_help",
+        "--encrpt_methds",
+        "--show_user_params",
+        "--show_rdp_params",
+        "--show_draw",
+        "--show_clpbrd",
+        "--show_cursor",
+        "--show_core",
+        "--show_security",
+        "--show_keyboard",
+        "--show_files_sys",
+        "--show_caps",
+        "--show_all",
+        "--show_in_pdu",
+        "--show_out_pdu",
+        "--show_pdu",
+        "--show_channels",
+        "--timeout",
+        "--script",
+        "--tls",
+        "--nla",
+        "--fastpath",
+        "--mem3blt",
+        "--new_pointer",
+        "--serv_red",
+        "--krb",
+        "--glph_cache",
+        "--sess_prb",
+        "--sess_prb_lnch_mask",
+        "--disable_cb_log_sys",
+        "--disable_cb_log_wrm",
+        "--disable_file_syslog",
+        "--disable_file_wrm",
+        "--sess_prb_cb_based_lnch",
+        "--sess_prb_slttoal",
+        "--sess_prob_oktdu",
+        "--sess_prb_eds",
+        "--sess_prb_custom_exe",
+        "--transp_mode",
+        "--ignore_auth_channel",
+        "--use_client_as",
+        "--disconn_oluc",
+        "--cert_store",
+        "--hide_name",
+        "--persist_bmp_cache",
+        "--cache_wait_list",
+        "--persist_bmp_disk",
+        "--serv_redir_supp",
+        "--bogus_size",
+        "--bogus_rectc",
+        "--multi_mon",
+        "--adj_perf_rec"
+    };
 
-    uint32_t encryptionMethods(GCC::UserData::CSSecurity::_40BIT_ENCRYPTION_FLAG |           GCC::UserData::CSSecurity::_128BIT_ENCRYPTION_FLAG);
-    //===========================================
-    //       Cmd line mod_rdp_param config
-    //===========================================
-    for (int i = 0; i < argc - 1; i++) {
-        std::string word(argv[i]);
-        for (size_t j = 0; j < nb_mod_rdp_params_config; j++) {
-            if (       word == mod_rdp_params_config[j].cmd) {
-                if (       std::string(argv[i+1]) ==  "on") {
-                    *(mod_rdp_params_config[j].param) = true;
-                    argv[i+1] = "";
-                    argv[i] = "";
-                } else if (std::string(argv[i+1]) ==  "off") {
-                    *(mod_rdp_params_config[j].param) = false;
-                    argv[i+1] = "";
-                    argv[i] = "";
-                }
-            }
-        }
 
-        if (word ==  "--encrpt_methds") {
-            encryptionMethods = std::stoi(argv[i+1]);
-        }
-    }
 
     for (int i = 1; i < argc; i++) {
-        if (argv[i] !=  "") {
-            std::cout << "Unknow key word or missing argument: \'" << argv[i] << "\'" <<  std::endl;
-            exit(11);
+
+        int cmd(in(argv[i], options));
+
+        switch (cmd) {
+            case 0:
+            default:
+                std::cout << "Unknow key word: \'" << argv[i] << "\'" <<  std::endl;
+                exit(11);
+
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5: if (i+1 < argc) {
+                        i++;
+                    }
+                break;
+
+            case 6:                                         // --port
+                if (i+1 < argc) {
+                    port = std::stoi(std::string(argv[i+1]));
+                    i++;
+                }
+                break;
+            case 7:                                         // --keylayout
+                if (i+1 < argc) {
+                    info.keylayout = std::stoi(std::string(argv[i+1]));
+                    i++;
+                }
+                break;
+            case 8:                                         // --bpp
+                if (i+1 < argc) {
+                    info.bpp = std::stoi(std::string(argv[i+1]));
+                    i++;
+                }
+                break;
+            case 9:                                         // --width
+                if (i+1 < argc) {
+                    info.width = std::stoi(std::string(argv[i+1]));
+                    i++;
+                }
+                break;
+            case 10:                                        // --height
+                if (i+1 < argc) {
+                    info.height = std::stoi(std::string(argv[i+1]));
+                    i++;
+                }
+                break;
+            case 11:                                        // --wallpaper
+                info.rdp5_performanceflags -=  PERF_DISABLE_WALLPAPER;
+                break;
+            case 12:                                        // --fullwindowdrag
+                info.rdp5_performanceflags -=  PERF_DISABLE_FULLWINDOWDRAG;
+                break;
+            case 13:                                        // --menuanimations
+                info.rdp5_performanceflags -=  PERF_DISABLE_MENUANIMATIONS;
+                break;
+            case 14:                                        // --persist
+                quick_connection_test = false;
+                break;
+            case 15:                                        // --mon_count
+                if (i+1 < argc) {
+                    info.cs_monitor.monitorCount = std::stoi(std::string(argv[i+1]));
+                    i++;
+                }
+                break;
+            case 16:                                        // --v
+            case 17:                                        // --version
+                std::cout << " Version 4.2.3" << "\n";
+                break;
+            case 18:                                        // --h
+            case 19:                                        // --help
+                print_help();
+                break;
+            case 20:                                        // --script_help
+                // TODO show all script cmd
+                std::cout << "script help not yet implemented." << "\n";
+                break;
+            case 21:                                        // --encrpt_methds
+                if (i+1 < argc) {
+                    encryptionMethods = std::stoi(argv[i+1]);
+                    i++;
+                }
+                break;
+            case 22:                                        // --show_user_params
+                    verbose |= TestClientCLI::SHOW_USER_AND_TARGET_PARAMS;
+                break;
+            case 23:                                        // --show_rdp_params
+                    verbose |= TestClientCLI::SHOW_MOD_RDP_PARAMS;
+                break;
+            case 24:                                        // --show_draw
+                    verbose |= TestClientCLI::SHOW_DRAW_ORDERS_INFO;
+                break;
+            case 25:                                        // --show_clpbrd
+                    verbose |= TestClientCLI::SHOW_CLPBRD_PDU_EXCHANGE;
+                break;
+            case 26:                                        // --show_cursor
+                    verbose |= TestClientCLI::SHOW_CURSOR_STATE_CHANGE;
+                break;
+            case 27:                                        // --show_core
+                    verbose |= TestClientCLI::SHOW_CORE_SERVER_INFO;
+                break;
+            case 28:                                        // --show_security
+                    verbose |= TestClientCLI::SHOW_SECURITY_SERVER_INFO;
+                break;
+            case 29:                                        // --show_keyboard
+                    verbose |= TestClientCLI::SHOW_KEYBOARD_EVENT;
+                break;
+            case 30:                                        // --show_files_sys
+                    verbose |= TestClientCLI::SHOW_FILE_SYSTEM_EXCHANGE;
+                break;
+            case 31:                                        // --show_caps
+                    verbose |= TestClientCLI::SHOW_CAPS;
+                break;
+            case 32:                                        // --show_all
+                    verbose |=    TestClientCLI::SHOW_CURSOR_STATE_CHANGE
+                                | TestClientCLI::SHOW_USER_AND_TARGET_PARAMS
+                                | TestClientCLI::SHOW_MOD_RDP_PARAMS
+                                | TestClientCLI::SHOW_DRAW_ORDERS_INFO
+                                | TestClientCLI::SHOW_CLPBRD_PDU_EXCHANGE
+                                | TestClientCLI::SHOW_CORE_SERVER_INFO
+                                | TestClientCLI::SHOW_SECURITY_SERVER_INFO
+                                | TestClientCLI::SHOW_KEYBOARD_EVENT
+                                | TestClientCLI::SHOW_FILE_SYSTEM_EXCHANGE
+                                | TestClientCLI::SHOW_CAPS
+                                ;
+                break;
+            case 33:                                        // --show_in_pdu
+                    verbose |=    TestClientCLI::SHOW_IN_PDU;
+                break;
+            case 34:                                        // --show_out_pdu
+                    verbose |= TestClientCLI::SHOW_OUT_PDU;
+                break;
+            case 35:                                        // --show_pdu
+                    verbose |=  TestClientCLI::SHOW_OUT_PDU
+                              | TestClientCLI::SHOW_IN_PDU;
+                break;
+            case 36:                                        // --show_channels
+                    verbose |=  TestClientCLI::SHOW_FILE_SYSTEM_EXCHANGE
+                              | TestClientCLI::SHOW_CLPBRD_PDU_EXCHANGE;
+                break;
+            case 37:                                        // --timeout
+                if (i+1 < argc) {
+                    long time = std::stol(std::string(argv[i+1]));
+                    time_out_response = { time/1000, time % 1000 };
+                    i++;
+                }
+                break;
+            case 38:                                        // --script
+                if (i+1 < argc) {
+                    quick_connection_test = false;
+                    script_file_path = std::string(argv[i+1]);
+                    script_on = true;
+                    i++;
+                }
+                break;
+            case 39:                                        // --tls
+                if (i+1 < argc) {
+                    if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.enable_tls = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.enable_tls = false;
+                        i++;
+                    }
+                }
+                break;
+            case 40:                                        // --nla
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.enable_nla = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.enable_nla = false;
+                        i++;
+                    }
+                }
+                break;
+            case 41:                                        // --fastpath
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.enable_fastpath = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.enable_fastpath = false;
+                        i++;
+                    }
+                }
+                break;
+            case 42:                                        // --mem3blt
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.enable_mem3blt = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.enable_mem3blt = false;
+                        i++;
+                    }
+                }
+                break;
+            case 43:                                        // --new_pointer
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.enable_new_pointer = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.enable_new_pointer = false;
+                        i++;
+                    }
+                }
+                break;
+            case 44:                                        // --serv_red
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.server_redirection_support = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.server_redirection_support = false;
+                        i++;
+                    }
+                }
+                break;
+            case 45:                                        // --krb
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.enable_krb = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.enable_krb = false;
+                        i++;
+                    }
+                }
+                break;
+            case 46:                                        // --glph_cache
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.enable_glyph_cache = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.enable_glyph_cache = false;
+                        i++;
+                    }
+                }
+                break;
+            case 47:                                        // --sess_prb
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.enable_session_probe = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.enable_session_probe = false;
+                        i++;
+                    }
+                }
+                break;
+            case 48:                                        // --sess_prb_lnch_mask
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.enable_session_probe_launch_mask = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.enable_session_probe_launch_mask = false;
+                        i++;
+                    }
+                }
+                break;
+            case 49:                                        // --disable_cb_log_sys
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.disable_clipboard_log_syslog = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.disable_clipboard_log_syslog = false;
+                        i++;
+                    }
+                }
+                break;
+            case 50:                                        // --disable_cb_log_wrm
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.disable_clipboard_log_wrm = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.disable_clipboard_log_wrm = false;
+                        i++;
+                    }
+                }
+                break;
+            case 51:                                        // --disable_file_syslog
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.disable_file_system_log_syslog = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.disable_file_system_log_syslog = false;
+                        i++;
+                    }
+                }
+                break;
+            case 52:                                        // --disable_file_wrm
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.disable_file_system_log_wrm = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.disable_file_system_log_wrm = false;
+                        i++;
+                    }
+                }
+                break;
+            case 53:                                        // --sess_prb_cb_based_lnch
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.session_probe_use_clipboard_based_launcher = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.session_probe_use_clipboard_based_launcher = false;
+                        i++;
+                    }
+                }
+                break;
+            case 54:                                        // --sess_prb_slttoal
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon = false;
+                        i++;
+                    }
+                }
+                break;
+            case 55:                                        // --sess_prob_oktdu
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user = false;
+                        i++;
+                    }
+                }
+                break;
+            case 56:                                        // --sess_prb_eds
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.session_probe_end_disconnected_session = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.session_probe_end_disconnected_session = false;
+                        i++;
+                    }
+                }
+                break;
+            case 57:                                        // --sess_prb_custom_exe
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.session_probe_customize_executable_name = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.session_probe_customize_executable_name = false;
+                        i++;
+                    }
+                }
+                break;
+            case 58:                                        // --transp_mode
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.enable_transparent_mode = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.enable_transparent_mode = false;
+                        i++;
+                    }
+                }
+                break;
+            case 59:                                        // --ignore_auth_channel
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.ignore_auth_channel = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.ignore_auth_channel = false;
+                        i++;
+                    }
+                }
+                break;
+            case 60:                                        // --use_client_as
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.use_client_provided_alternate_shell = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.use_client_provided_alternate_shell = false;
+                        i++;
+                    }
+                }
+                break;
+            case 61:                                        // --disconn_oluc
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.disconnect_on_logon_user_change = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.disconnect_on_logon_user_change = false;
+                        i++;
+                    }
+                }
+                break;
+            case 62:                                        // --cert_store
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.server_cert_store = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.server_cert_store = false;
+                        i++;
+                    }
+                }
+                break;
+            case 63:                                        // --hide_name
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.hide_client_name = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.hide_client_name = false;
+                        i++;
+                    }
+                }
+                break;
+            case 64:                                        // --persist_bmp_cache
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.enable_persistent_disk_bitmap_cache = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.enable_persistent_disk_bitmap_cache = false;
+                        i++;
+                    }
+                }
+                break;
+            case 65:                                        // --cache_wait_list
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.enable_cache_waiting_list = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.enable_cache_waiting_list = false;
+                        i++;
+                    }
+                }
+                break;
+            case 66:                                        // --serv_redir_supp
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.persist_bitmap_cache_on_disk = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.persist_bitmap_cache_on_disk = false;
+                        i++;
+                    }
+                }
+                break;
+            case 67:                                        // --bogus_size
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.bogus_sc_net_size = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.bogus_sc_net_size = false;
+                        i++;
+                    }
+                }
+                break;
+            case 68:                                        // --bogus_rectc
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.bogus_refresh_rect = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.bogus_refresh_rect = false;
+                        i++;
+                    }
+                }
+                break;
+            case 69:                                        // --multi_mon
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.allow_using_multiple_monitors = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.allow_using_multiple_monitors = false;
+                        i++;
+                    }
+                }
+                break;
+            case 70:                                        // --adj_perf_rec
+                if (i+1 < argc) {
+                     if (       std::string(argv[i+1]) ==  "on") {
+                        mod_rdp_params.adjust_performance_flags_for_recording = true;
+                        i++;
+                    } else if (std::string(argv[i+1]) ==  "off") {
+                        mod_rdp_params.adjust_performance_flags_for_recording = false;
+                        i++;
+                    }
+                }
+                break;
         }
-    }
 
-    std::cout << "\n " <<  std::endl;
-    std::cout << "\n ********************************\n";
-    std::cout << "\n ====== RDPHEADLESS CLIENT ======\n";
-    std::cout << "\n ********************************" <<  std::endl;
-
-    if (argc == 1) {
-        std::cout << " Version 4.2.3" << "\n";
-        print_help(mod_rdp_params_config, nb_mod_rdp_params_config);
     }
+    std::cout <<  "\n" <<  std::endl;
+
+
+
 
     if (verbose != 0) {
 
@@ -464,20 +783,16 @@ int main(int argc, char** argv){
 
 
 
-    if (verbose & TestClientCLI::SHOW_MOD_RDP_PARAMS) {
-        std::cout << " ================================" << "\n";
-        std::cout << " ======= ModRDP Parameters ======" << "\n";
-        std::cout << " ================================" << "\n";
-        for (size_t i = 0; i < nb_mod_rdp_params_config; i++ ) {
-            std::cout << " " << mod_rdp_params_config[i].name << "=" << *(mod_rdp_params_config[i].param) << "\n";
-        }
-    }
-    std::cout << "\n" << "\n";
-    std::string allow_channels = "*";
-    mod_rdp_params.allow_channels                  = &allow_channels;
-    //mod_rdp_params.allow_using_multiple_monitors   = true;
-    mod_rdp_params.bogus_refresh_rect              = true;
-    mod_rdp_params.verbose = RDPVerbose::cliprdr;
+//     if (verbose & TestClientCLI::SHOW_MOD_RDP_PARAMS) {
+//         std::cout << " ================================" << "\n";
+//         std::cout << " ======= ModRDP Parameters ======" << "\n";
+//         std::cout << " ================================" << "\n";
+//         for (size_t i = 0; i < nb_mod_rdp_params_config; i++ ) {
+//             std::cout << " " << mod_rdp_params_config[i].name << "=" << *(mod_rdp_params_config[i].param) << "\n";
+//         }
+//     }
+//     std::cout << "\n" << "\n";
+
     //======================================================================
 
 
@@ -486,7 +801,7 @@ int main(int argc, char** argv){
 
 
 
-    if (input_connection_data_complete & TestClientCLI::INPUT_COMPLETE) {
+    if (input_connection_data_complete & TestClientCLI::IP) {
         int sck(0);
         SocketTransport * socket(nullptr);
         std::string error_message;
@@ -554,7 +869,7 @@ int main(int argc, char** argv){
                 if (mod !=  nullptr) {
                     while (!mod->is_up_and_running()) {
                         try {
-                            std::cout <<  " Early negociations... " <<"\n";
+                            //std::cout <<  " Early negociations... " <<"\n";
                             mod->draw_event(time(nullptr), front);
                          } catch (const Error & e) {
                             std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
@@ -766,7 +1081,7 @@ int main(int argc, char** argv){
 
 
 
-void print_help(ModRDPParamsConfig * mod_rdp_params_config, size_t nb_mod_rdp_params_config) {
+void print_help() {
     std::cout << "\n";
 
     std::cout << " COMMAND LINE HELPER:" << "\n\n";
@@ -810,9 +1125,39 @@ void print_help(ModRDPParamsConfig * mod_rdp_params_config, size_t nb_mod_rdp_pa
     std::cout << "  --encrpt_methds           Set encryption methods as any addition of 1, 2, 8 and 16" <<  "\n";
     std::cout << "\n";
     std::cout << "  ======== CONFIG ========" << "\n";
-    for (size_t i = 0; i < nb_mod_rdp_params_config; i++) {
-        std::cout << "  " << mod_rdp_params_config[i].cmd << " [on/off] " << mod_rdp_params_config[i].descrpt << "\n";
-    }
+    std::cout << "--tls [on/off]                     Active/unactive tls" <<  "\n";
+    std::cout << "--nla [on/off]                     Active/unactive nla" <<  "\n";
+    std::cout << "--fastpath [on/off]                Active/unactive fastpath" <<  "\n";
+    std::cout << "--mem3blt [on/off]                 Active/unactive mem3blt" <<  "\n";
+    std::cout << "--new_pointer [on/off]             Active/unactive new pointer" <<  "\n";
+    std::cout << "--serv_red [on/off]                Active/unactive server redirection support" <<  "\n";
+    std::cout << "--krb [on/off]                     Active/unactive krb" <<  "\n";
+    std::cout << "--glph_cache [on/off]              Active/unactive glyph cache" <<  "\n";
+    std::cout << "--sess_prb [on/off]                Active/unactive session probe" <<  "\n";
+    std::cout << "--sess_prb_lnch_mask [on/off]      Active/unactive session probe launch mask" <<  "\n";
+    std::cout << "--disable_cb_log_sys [on/off]      Active/unactive clipboard log syslog lock" <<  "\n";
+    std::cout << "--disable_cb_log_wrm [on/off]      Active/unactive clipboard log wrm lock" <<  "\n";
+    std::cout << "--disable_file_syslog [on/off]     Active/unactive file system log syslog lock" <<  "\n";
+    std::cout << "--disable_file_wrm [on/off]        Active/unactive file system log wrm lock" <<  "\n";
+    std::cout << "--sess_prb_cb_based_lnch [on/off]  Active/unactive session probe use clipboard based launcher" <<  "\n";
+    std::cout << "--sess_prb_slttoal [on/off]        Active/unactive session probe start launch timeout timer only after logon" <<  "\n";
+    std::cout << "--sess_prob_oktdu [on/off]         Active/unactive session probe on keepalive timeout disconnect user" <<  "\n";
+    std::cout << "--sess_prb_eds [on/off]            Active/unactive session probe end disconnected session" <<  "\n";
+    std::cout << "--sess_prb_custom_exe [on/off]     Active/unactive session probe customize executable name" <<  "\n";
+    std::cout << "--transp_mode [on/off]             Active/unactive enable transparent mode" <<  "\n";
+    std::cout << "--ignore_auth_channel [on/off]     Active/unactive ignore auth channel" <<  "\n";
+    std::cout << "--use_client_as [on/off]           Active/unactive use client provided alternate shell" <<  "\n";
+    std::cout << "--disconn_oluc [on/off]            Active/unactive disconnect on logon user change" <<  "\n";
+    std::cout << "--cert_store [on/off]              Active/unactive enable server certifications store" <<  "\n";
+    std::cout << "--hide_name [on/off]               Active/unactive hide client name" <<  "\n";
+    std::cout << "--persist_bmp_cache [on/off]       Active/unactive enable persistent disk bitmap cache" <<  "\n";
+    std::cout << "--cache_wait_list [on/off]         Active/unactive enable_cache_waiting_list" <<  "\n";
+    std::cout << "--persist_bmp_disk  [on/off]       Active/unactive persist bitmap cache on disk" <<  "\n";
+    std::cout << "--serv_redir_supp [on/off]         Active/unactive server redirection support" <<  "\n";
+    std::cout << "--bogus_size [on/off]              Active/unactive bogus sc net size" <<  "\n";
+    std::cout << "--bogus_rectc [on/off]             Active/unactive bogus refresh rect" <<  "\n";
+    std::cout << "--multi_mon [on/off]               Active/unactive allow using multiple monitors" <<  "\n";
+    std::cout << "--adj_perf_rec [on/off]            Active/unactive adjust performance flags for recording" <<  "\n";
 
     std::cout << std::endl;
 }

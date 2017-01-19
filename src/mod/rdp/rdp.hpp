@@ -595,7 +595,7 @@ protected:
                 ServerNotification server_access_allowed_message,
                 ServerNotification server_cert_create_message,
                 ServerNotification server_cert_success_message,
-                ServerNotification server_cert_failure_message,
+                ServerNotification server_cert_failure_message, 
                 ServerNotification server_cert_error_message,
                 RDPVerbose verbose
             )
