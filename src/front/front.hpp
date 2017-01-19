@@ -682,6 +682,8 @@ private:
 
     bool client_support_monitor_layout_pdu = false;
 
+    bool session_resized = false;
+
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
     void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
@@ -834,6 +836,15 @@ public:
         delete this->capture;
     }
 
+    wait_obj& get_event() override {
+        if (this->session_resized) {
+            this->event.set(0);
+            this->event.object_and_time = true;
+        }
+
+        return this->event;
+    }
+
     uint64_t get_total_received() const
     {
         return this->trans.get_total_received();
@@ -865,48 +876,52 @@ public:
             }
         }
 
-        if ((this->client_info.width != width
-        || this->client_info.height != height)
-        && !this->client_info.remote_program) {
-            /* older client can't resize */
-            if (client_info.build <= 419) {
-                LOG(LOG_WARNING, "Resizing is not available on older RDP clients");
-                // resizing needed but not available
-                res = ResizeResult::fail;
+        if (this->client_info.width != width
+         || this->client_info.height != height) {
+            if (!this->client_info.remote_program) {
+                /* older client can't resize */
+                if (client_info.build <= 419) {
+                    LOG(LOG_WARNING, "Resizing is not available on older RDP clients");
+                    // resizing needed but not available
+                    res = ResizeResult::fail;
+                }
+                else {
+                    LOG(LOG_INFO, "Resizing client to : %d x %d x %d", width, height, this->client_info.bpp);
+
+                    this->client_info.width = width;
+                    this->client_info.height = height;
+
+                    if (this->capture)
+                    {
+                        CaptureState original_capture_state = this->capture_state;
+
+                        this->must_be_stop_capture();
+                        this->can_be_start_capture(this->authentifier);
+
+                        this->capture_state = original_capture_state;
+                    }
+
+                    // TODO Why are we not calling this->flush() instead ? Looks dubious.
+                    // send buffered orders
+                    this->orders.graphics_update_pdu().sync();
+
+                    // clear all pending orders, caches data, and so on and
+                    // start a send_deactive, send_deman_active process with
+                    // the new resolution setting
+                    /* shut down the rdp client */
+                    this->up_and_running = 0;
+                    this->send_deactive();
+                    /* this should do the actual resizing */
+                    this->send_demand_active();
+                    this->send_monitor_layout();
+
+                    LOG(LOG_INFO, "Front::server_resize::ACTIVATED (resize)");
+                    state = ACTIVATE_AND_PROCESS_DATA;
+                    res = ResizeResult::done;
+                }
             }
             else {
-                LOG(LOG_INFO, "Resizing client to : %d x %d x %d", width, height, this->client_info.bpp);
-
-                this->client_info.width = width;
-                this->client_info.height = height;
-
-                if (this->capture)
-                {
-                    CaptureState original_capture_state = this->capture_state;
-
-                    this->must_be_stop_capture();
-                    this->can_be_start_capture(this->authentifier);
-
-                    this->capture_state = original_capture_state;
-                }
-
-                // TODO Why are we not calling this->flush() instead ? Looks dubious.
-                // send buffered orders
-                this->orders.graphics_update_pdu().sync();
-
-                // clear all pending orders, caches data, and so on and
-                // start a send_deactive, send_deman_active process with
-                // the new resolution setting
-                /* shut down the rdp client */
-                this->up_and_running = 0;
-                this->send_deactive();
-                /* this should do the actual resizing */
-                this->send_demand_active();
-                this->send_monitor_layout();
-
-                LOG(LOG_INFO, "Front::server_resize::ACTIVATED (resize)");
-                state = ACTIVATE_AND_PROCESS_DATA;
-                res = ResizeResult::done;
+                this->session_resized = true;
             }
         }
 
@@ -987,7 +1002,7 @@ public:
             | (ini.get<cfg::debug::primary_orders>() ?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
             | (ini.get<cfg::debug::secondary_orders>() ?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
             | (ini.get<cfg::debug::bitmap_update>() ?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
-            
+
         WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
         std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
@@ -1350,6 +1365,12 @@ public:
             this->event.reset();
             this->event.object_and_time = false;
             break;
+        }
+
+        if (this->session_resized) {
+            cb.refresh(Rect(0, 0, this->client_info.width, this->client_info.height));
+
+            this->session_resized = false;
         }
 
         if (this->event.waked_up_by_time) return;

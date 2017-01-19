@@ -427,10 +427,10 @@ public:
                         if (mm.last_module) {
                             delete this->auth_event;
                             this->auth_event = nullptr;
-                            delete this->auth_trans;
-                            this->auth_trans = nullptr;
                             delete this->authentifier;
                             this->authentifier = nullptr;
+                            delete this->auth_trans;
+                            this->auth_trans = nullptr;
                         }
                     }
                 } catch (Error & e) {

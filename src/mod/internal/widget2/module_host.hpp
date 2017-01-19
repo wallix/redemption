@@ -614,6 +614,11 @@ public:
 
     void rdp_input_invalidate(Rect clip) override
     {
+LOG(LOG_INFO, "");
+LOG(LOG_INFO, "");
+LOG(LOG_INFO, "WidgetModuleHost::rdp_input_invalidate");
+clip.log(LOG_INFO, "Clip");
+this->get_rect().log(LOG_INFO, "This");
         Rect rect_intersect = clip.intersect(this->get_rect());
 
         if (!rect_intersect.isempty()) {
@@ -640,7 +645,7 @@ public:
                 }
             }
 
-            ::fill_region(this->drawable, region, 0x000000);
+            ::fill_region(this->drawable, region, 0xFF0000);
 
 
             Rect mod_update_rect = clip.intersect(this->vision_rect);
@@ -681,7 +686,9 @@ public:
 
     // Widget2
 
-    void refresh(Rect/* clip*/) override {}
+    void refresh(Rect/* clip*/) override {
+        this->update_rects();
+    }
 
 private:
     void begin_update() override
