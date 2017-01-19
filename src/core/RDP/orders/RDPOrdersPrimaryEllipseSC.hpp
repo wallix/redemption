@@ -182,9 +182,7 @@ public:
         if (header.fields & 0x0020) { stream.out_uint8(this->fillMode); }
 
         if (header.fields & 0x0040) {
-            stream.out_uint8(this->color);
-            stream.out_uint8(this->color >> 8);
-            stream.out_uint8(this->color >> 16);
+            emit_rdp_color(stream, this->color);
         }
 
         // LOG(LOG_INFO, "RDPEllipseSC::emit: header fields=0x%02X", header.fields);
@@ -211,10 +209,7 @@ public:
             this->fillMode  = stream.in_uint8();
         }
         if (header.fields & 0x0040) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->color = RDPColor(r + (g << 8) + (b << 16));
+            receive_rdp_color(stream, this->color);
         }
     }
 

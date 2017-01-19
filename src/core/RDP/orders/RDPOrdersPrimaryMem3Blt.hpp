@@ -296,14 +296,10 @@ class RDPMem3Blt {
         header.emit_src(stream, 0x0040, this->srcx, this->srcy, oldcmd.srcx, oldcmd.srcy);
 
         if (header.fields & 0x0100) {
-            stream.out_uint8(this->back_color);
-            stream.out_uint8(this->back_color >> 8);
-            stream.out_uint8(this->back_color >> 16);
+            emit_rdp_color(stream, this->back_color);
         }
         if (header.fields & 0x0200) {
-            stream.out_uint8(this->fore_color);
-            stream.out_uint8(this->fore_color >> 8);
-            stream.out_uint8(this->fore_color >> 16);
+            emit_rdp_color(stream, this->fore_color);
         }
 
         header.emit_brush(stream, 0x0400, this->brush, oldcmd.brush);
@@ -329,17 +325,11 @@ class RDPMem3Blt {
         header.receive_src(stream, 0x0040, this->srcx, this->srcy);
 
         if (header.fields & 0x0100) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->back_color = RDPColor(r + (g << 8) + (b << 16));
+            receive_rdp_color(stream, this->back_color);
         }
 
         if (header.fields & 0x0200) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->fore_color = RDPColor(r + (g << 8) + (b << 16));
+            receive_rdp_color(stream, this->fore_color);
         }
 
         header.receive_brush(stream, 0x0400, this->brush);

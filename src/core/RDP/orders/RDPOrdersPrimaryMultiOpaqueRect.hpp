@@ -194,14 +194,14 @@ public:
             is_1_byte(this->nWidth - oldcmd.nWidth) && is_1_byte(this->nHeight - oldcmd.nHeight)) * RDP::DELTA;
 
         header.fields =
-                (this->nLeftRect           != oldcmd.nLeftRect          ) * 0x0001
-              | (this->nTopRect            != oldcmd.nTopRect           ) * 0x0002
-              | (this->nWidth              != oldcmd.nWidth             ) * 0x0004
-              | (this->nHeight             != oldcmd.nHeight            ) * 0x0008
-              | ((this->_Color & 0x0000FF) != (oldcmd._Color & 0x0000FF)) * 0x0010
-              | ((this->_Color & 0x00FF00) != (oldcmd._Color & 0x00FF00)) * 0x0020
-              | ((this->_Color & 0xFF0000) != (oldcmd._Color & 0xFF0000)) * 0x0040
-              | (this->nDeltaEntries       != oldcmd.nDeltaEntries      ) * 0x0080
+                (this->nLeftRect               != oldcmd.nLeftRect              ) * 0x0001
+              | (this->nTopRect                != oldcmd.nTopRect               ) * 0x0002
+              | (this->nWidth                  != oldcmd.nWidth                 ) * 0x0004
+              | (this->nHeight                 != oldcmd.nHeight                ) * 0x0008
+              | (this->_Color.as_bgr().red()   != oldcmd._Color.as_bgr().red()  ) * 0x0010
+              | (this->_Color.as_bgr().green() != oldcmd._Color.as_bgr().green()) * 0x0020
+              | (this->_Color.as_bgr().blue()  != oldcmd._Color.as_bgr().blue() ) * 0x0040
+              | (this->nDeltaEntries           != oldcmd.nDeltaEntries          ) * 0x0080
               | (
                  (this->nDeltaEntries != oldcmd.nDeltaEntries) ||
                  memcmp(this->deltaEncodedRectangles, oldcmd.deltaEncodedRectangles,
@@ -216,9 +216,9 @@ public:
         header.emit_coord(stream, 0x0004, this->nWidth,    oldcmd.nWidth);
         header.emit_coord(stream, 0x0008, this->nHeight,   oldcmd.nHeight);
 
-        if (header.fields & 0x0010) { stream.out_uint8(this->_Color); }
-        if (header.fields & 0x0020) { stream.out_uint8(this->_Color >> 8); }
-        if (header.fields & 0x0040) { stream.out_uint8(this->_Color >> 16); }
+        if (header.fields & 0x0010) { stream.out_uint8(this->_Color.as_bgr().red()); }
+        if (header.fields & 0x0020) { stream.out_uint8(this->_Color.as_bgr().green()); }
+        if (header.fields & 0x0040) { stream.out_uint8(this->_Color.as_bgr().blue()); }
 
         if (header.fields & 0x0080) { stream.out_uint8(this->nDeltaEntries); }
 
@@ -280,9 +280,9 @@ public:
         header.receive_coord(stream, 0x0004, this->nWidth);
         header.receive_coord(stream, 0x0008, this->nHeight);
 
-        uint8_t r = this->_Color;
-        uint8_t g = this->_Color >> 8;
-        uint8_t b = this->_Color >> 16;
+        uint8_t r = this->_Color.as_bgr().red();
+        uint8_t g = this->_Color.as_bgr().green();
+        uint8_t b = this->_Color.as_bgr().blue();
 
         if (header.fields & 0x0010) {
             r = stream.in_uint8();
@@ -349,9 +349,9 @@ public:
             "MultiOpaqueRect(nLeftRect=%d nTopRect=%d nWidth=%d nHeight=%d RedOrPaletteIndex=0x%02X Green=0x%02X Blue=0x%02X "
                 "nDeltaEntries=%d CodedDeltaList=(",
             this->nLeftRect, this->nTopRect, this->nWidth, this->nHeight,
-            this->_Color & 0x0000FF,
-            ((this->_Color & 0x00FF00) >> 8),
-            ((this->_Color & 0xFF0000) >> 16),
+            this->_Color.as_bgr().red(),
+            this->_Color.as_bgr().green(),
+            this->_Color.as_bgr().blue(),
             this->nDeltaEntries);
         for (uint8_t i = 0; i < this->nDeltaEntries; i++) {
             if (i) {

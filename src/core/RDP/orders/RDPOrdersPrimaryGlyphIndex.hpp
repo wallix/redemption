@@ -427,14 +427,10 @@ public:
         if (header.fields & 0x008) { stream.out_uint8(this->f_op_redundant); }
 
         if (header.fields & 0x010) {
-            stream.out_uint8(this->back_color);
-            stream.out_uint8(this->back_color >> 8);
-            stream.out_uint8(this->back_color >> 16);
+            emit_rdp_color(stream, this->back_color);
         }
         if (header.fields & 0x020) {
-            stream.out_uint8(this->fore_color);
-            stream.out_uint8(this->fore_color >> 8);
-            stream.out_uint8(this->fore_color >> 16);
+            emit_rdp_color(stream, this->fore_color);
         }
 
         if (header.fields & 0x0040) { stream.out_uint16_le(this->bk.x); }
@@ -465,17 +461,11 @@ public:
         if (header.fields & 0x008) { this->f_op_redundant = stream.in_uint8(); }
 
         if (header.fields & 0x010) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->back_color = RDPColor(r + (g << 8) + (b << 16));
+            receive_rdp_color(stream, this->back_color);
         }
 
         if (header.fields & 0x020) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->fore_color = RDPColor(r + (g << 8) + (b << 16));
+            receive_rdp_color(stream, this->fore_color);
         }
 
         int16_t bk_left   = this->bk.x;

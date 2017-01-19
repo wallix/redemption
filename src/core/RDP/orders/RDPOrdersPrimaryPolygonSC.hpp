@@ -271,9 +271,7 @@ public:
         if (header.fields & 0x0008) { stream.out_uint8(this->fillMode); }
 
         if (header.fields & 0x0010) {
-            stream.out_uint8(this->BrushColor);
-            stream.out_uint8(this->BrushColor >> 8);
-            stream.out_uint8(this->BrushColor >> 16);
+            emit_rdp_color(stream, this->BrushColor);
         }
 
         if (header.fields & 0x0020) { stream.out_uint8(this->NumDeltaEntries); }
@@ -327,10 +325,7 @@ public:
         }
 
         if (header.fields & 0x0010) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->BrushColor = RDPColor(r + (g << 8) + (b << 16));
+            receive_rdp_color(stream, this->BrushColor);
         }
 
         if (header.fields & 0x0020) {

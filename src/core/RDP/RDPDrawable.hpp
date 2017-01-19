@@ -141,6 +141,9 @@ private:
 
         return this->u32_to_color(color);
     }
+    Color u32rgb_to_color(gdi::ColorCtx color_ctx, RDPColor color) const {
+        return this->u32rgb_to_color(color_ctx, color.as_bgr().to_u32());
+    }
 
     std::pair<Color, Color> u32rgb_to_color(gdi::ColorCtx color_ctx, BGRColor color1, BGRColor color2) const {
         using gdi::Depth;
@@ -164,6 +167,9 @@ private:
         }
 
         return std::pair<Color, Color>{this->u32_to_color(color1), this->u32_to_color(color2)};
+    }
+    std::pair<Color, Color> u32rgb_to_color(gdi::ColorCtx color_ctx, RDPColor color1, RDPColor color2) const {
+        return this->u32rgb_to_color(color_ctx, color1.as_bgr().to_u32(), color2.as_bgr().to_u32());
     }
 
 public:

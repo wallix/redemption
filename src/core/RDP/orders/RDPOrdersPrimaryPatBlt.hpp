@@ -1110,14 +1110,10 @@ class RDPPatBlt {
             stream.out_uint8(this->rop);
         }
         if (header.fields & 0x20) {
-            stream.out_uint8(this->back_color);
-            stream.out_uint8(this->back_color >> 8);
-            stream.out_uint8(this->back_color >> 16);
+            emit_rdp_color(stream, this->back_color);
         }
         if (header.fields & 0x40) {
-            stream.out_uint8(this->fore_color);
-            stream.out_uint8(this->fore_color >> 8);
-            stream.out_uint8(this->fore_color >> 16);
+            emit_rdp_color(stream, this->fore_color);
         }
 
         header.emit_brush(stream, 0x80, this->brush, oldcmd.brush);
@@ -1133,16 +1129,10 @@ class RDPPatBlt {
             this->rop = stream.in_uint8();
         }
         if (header.fields & 0x20) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->back_color = RDPColor(r + (g << 8) + (b << 16));
+            receive_rdp_color(stream, this->back_color);
         }
         if (header.fields & 0x40) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->fore_color = RDPColor(r + (g << 8) + (b << 16));
+            receive_rdp_color(stream, this->fore_color);
         }
 
         header.receive_brush(stream, 0x080, this->brush);
@@ -1187,8 +1177,8 @@ class RDPPatBlt {
                     "brush.style=%d brush.hatch=%d)\n",
                 this->rect.x, this->rect.y, this->rect.cx, this->rect.cy,
                 unsigned(this->rop),
-                this->back_color,
-                this->fore_color,
+                this->back_color.to_u32(),
+                this->fore_color.to_u32(),
                 this->brush.org_x,
                 this->brush.org_y,
                 this->brush.style,

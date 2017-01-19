@@ -127,9 +127,7 @@ class RDPLineTo {
         header.emit_coord(stream, 0x10, this->endy,   oldcmd.endy);
 
         if (header.fields & 0x20) {
-            stream.out_uint8(this->back_color);
-            stream.out_uint8(this->back_color >> 8);
-            stream.out_uint8(this->back_color >> 16);
+            emit_rdp_color(stream, this->back_color);
         }
         if (header.fields & 0x40) { stream.out_uint8(this->rop2); }
         header.emit_pen(stream, 0x80, this->pen, oldcmd.pen);
@@ -149,10 +147,7 @@ class RDPLineTo {
         header.receive_coord(stream, 0x010, this->endy);
 
         if (header.fields & 0x020) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->back_color = RDPColor(r + (g << 8) + (b << 16));
+            receive_rdp_color(stream, this->back_color);
         }
 
         if (header.fields & 0x040) {

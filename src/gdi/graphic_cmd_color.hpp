@@ -44,28 +44,28 @@ struct GraphicCmdColor
 private:
     struct color1_val
     {
-        uint32_t color1;
+        RDPColor color1;
     };
 
     struct color1_ref
     {
-        uint32_t & color1;
-        template<class Enc> void encode(Enc const & enc) { color1 = enc(color1); }
+        RDPColor & color1;
+        template<class Enc> void encode(Enc const & enc) { color1 = RDPColor(enc(color1.as_bgr().to_u32())); }
         void assign(color1_val other) { color1 = other.color1; }
         color1_val to_colors() const { return {color1}; }
     };
 
     struct color2_val
     {
-        uint32_t color1;
-        uint32_t color2;
+        RDPColor color1;
+        RDPColor color2;
     };
 
     struct color2_ref
     {
-        uint32_t & color1;
-        uint32_t & color2;
-        template<class Enc> void encode(Enc const & enc) { color1 = enc(color1); color2 = enc(color2); }
+        RDPColor & color1;
+        RDPColor & color2;
+        template<class Enc> void encode(Enc const & enc) { color1 = RDPColor(enc(color1.as_bgr().to_u32())); color2 = RDPColor(enc(color2.as_bgr().to_u32())); }
         void assign(color2_val other) { color1 = other.color1; color2 = other.color2; }
         color2_val to_colors() const { return {color1, color2}; }
     };

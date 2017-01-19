@@ -279,9 +279,7 @@ public:
         if (header.fields & 0x0008) { stream.out_uint16_le(this->BrushCacheEntry); }
 
         if (header.fields & 0x0010) {
-            stream.out_uint8(this->PenColor);
-            stream.out_uint8(this->PenColor >> 8);
-            stream.out_uint8(this->PenColor >> 16);
+            emit_rdp_color(stream, this->PenColor);
         }
 
         if (header.fields & 0x0020) { stream.out_uint8(this->NumDeltaEntries); }
@@ -336,10 +334,7 @@ public:
         }
 
         if (header.fields & 0x0010) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->PenColor = RDPColor(r + (g << 8) + (b << 16));
+            receive_rdp_color(stream, this->PenColor);
         }
 
         if (header.fields & 0x0020) {

@@ -86,7 +86,7 @@ class RDPOpaqueRect {
         // from Microsoft. Looks like an error in RDP specs.
         header.control |= dr.fully_relative() * DELTA;
 
-        uint32_t diff_color = this->color ^ oldcmd.color;
+        uint32_t diff_color = this->color.as_bgr().to_u32() ^ oldcmd.color.as_bgr().to_u32();
 
 //        LOG(LOG_INFO, "emit opaque rect old_color = %.6x new_color = %.6x\n", oldcmd.color, this->color);
 
@@ -103,13 +103,13 @@ class RDPOpaqueRect {
         header.emit_rect(stream, 0x01, this->rect, oldcmd.rect);
 
         if (header.fields & 0x10){
-            stream.out_uint8(this->color);
+            stream.out_uint8(this->color.as_bgr().red());
         }
         if (header.fields & 0x20){
-            stream.out_uint8(this->color >> 8);
+            stream.out_uint8(this->color.as_bgr().green());
         }
         if (header.fields & 0x40){
-            stream.out_uint8(this->color >> 16);
+            stream.out_uint8(this->color.as_bgr().blue());
         }
     }
 
@@ -119,9 +119,9 @@ class RDPOpaqueRect {
 
         header.receive_rect(stream, 0x01, this->rect);
 
-        uint8_t r = this->color;
-        uint8_t g = this->color >> 8;
-        uint8_t b = this->color >> 16;
+        uint8_t r = this->color.as_bgr().red();
+        uint8_t g = this->color.as_bgr().green();
+        uint8_t b = this->color.as_bgr().blue();
 
         if (header.fields & 0x10) {
             r = stream.in_uint8();

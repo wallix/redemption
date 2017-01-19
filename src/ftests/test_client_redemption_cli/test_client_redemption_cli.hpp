@@ -712,7 +712,7 @@ public:
 
     virtual void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
-            std::cout << "server >> RDPOpaqueRect color=" << int(cmd.color);
+            std::cout << "server >> RDPOpaqueRect color=" << cmd.color.as_bgr().to_u32();
             std::cout << " bpp: " << color_ctx.depth().to_bpp();
             std::cout << " clip x=" << int(clip.x) <<  std::endl;
         }

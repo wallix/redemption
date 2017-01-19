@@ -221,14 +221,10 @@ public:
         if (header.fields & 0x0020) { stream.out_uint8(this->fill_mode); }
 
         if (header.fields & 0x0040) {
-            stream.out_uint8(this->back_color);
-            stream.out_uint8(this->back_color >> 8);
-            stream.out_uint8(this->back_color >> 16);
+            emit_rdp_color(stream, this->back_color);
         }
         if (header.fields & 0x0080) {
-            stream.out_uint8(this->fore_color);
-            stream.out_uint8(this->fore_color >> 8);
-            stream.out_uint8(this->fore_color >> 16);
+            emit_rdp_color(stream, this->fore_color);
         }
         header.emit_brush(stream, 0x0100, this->brush, oldcmd.brush);
     }
@@ -254,16 +250,10 @@ public:
             this->fill_mode  = stream.in_uint8();
         }
         if (header.fields & 0x0040) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->back_color = RDPColor(r + (g << 8) + (b << 16));
+            receive_rdp_color(stream, this->back_color);
         }
         if (header.fields & 0x0080) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->fore_color = RDPColor(r + (g << 8) + (b << 16));
+            receive_rdp_color(stream, this->fore_color);
         }
 
         header.receive_brush(stream, 0x0100, this->brush);

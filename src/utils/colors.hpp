@@ -163,6 +163,44 @@ enum NamedBGRColor {
 };
 
 
+struct BGRColor_
+{
+    constexpr BGRColor_(NamedBGRColor color) noexcept
+    : color_(color)
+    {}
+
+    constexpr explicit BGRColor_(uint32_t color = 0) noexcept
+    : color_(color/* & 0xFFFFFF*/)
+    {}
+
+    constexpr explicit BGRColor_(uint8_t blue, uint8_t green, uint8_t red) noexcept
+    : color_((blue << 16) | (green << 8) | red)
+    {}
+
+    struct uninit {};
+    BGRColor_(uninit) noexcept
+    {}
+
+    constexpr uint32_t to_u32() const noexcept { return this->color_; }
+
+    constexpr uint8_t red() const noexcept { return this->color_; }
+    constexpr uint8_t green() const noexcept { return this->color_ >> 8; }
+    constexpr uint8_t blue() const noexcept { return this->color_ >> 16; }
+
+private:
+    uint32_t color_;
+};
+
+constexpr bool operator == (BGRColor_ const & lhs, BGRColor_ const & rhs) { return lhs.to_u32() == rhs.to_u32(); }
+constexpr bool operator != (BGRColor_ const & lhs, BGRColor_ const & rhs) { return !(lhs == rhs); }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & out, BGRColor_ const & c)
+{ return out << c.to_u32(); }
+
+constexpr uint32_t log_value(BGRColor_ const & c) noexcept { return c.to_u32(); }
+
+
 struct RDPColor
 {
     constexpr RDPColor() noexcept
@@ -179,12 +217,7 @@ struct RDPColor
 
     constexpr uint32_t to_u32() const noexcept { return this->color_; }
 
-    constexpr operator uint32_t const & () const noexcept { return this->color_; }
-    operator uint32_t & () noexcept { return this->color_; }
-
-//     constexpr uint8_t red() const noexcept { return this->color_; }
-//     constexpr uint8_t green() const noexcept { return this->color_ >> 8; }
-//     constexpr uint8_t blue() const noexcept { return this->color_ >> 16; }
+    constexpr BGRColor_ as_bgr() const noexcept { return BGRColor_(this->color_); }
 
 //     constexpr static RDPColor from(uint32_t c) noexcept
 //     { return RDPColor(nullptr, c); }
@@ -196,6 +229,15 @@ private:
 
     uint32_t color_;
 };
+
+constexpr bool operator == (RDPColor const & lhs, RDPColor const & rhs) { return lhs.to_u32() == rhs.to_u32(); }
+constexpr bool operator != (RDPColor const & lhs, RDPColor const & rhs) { return !(lhs == rhs); }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & out, RDPColor const & c)
+{ return out << c.to_u32(); }
+
+constexpr uint32_t log_value(RDPColor const & c) noexcept { return c.to_u32(); }
 
 
 inline unsigned color_from_cstr(const char * str) {
@@ -373,6 +415,10 @@ inline RGBColor color_decode_opaquerect(const BGRColor c, const uint8_t in_bpp, 
             assert(!"unknown bpp");
     }
     return 0;
+}
+
+inline RGBColor color_decode_opaquerect(RDPColor c, const uint8_t in_bpp, const BGRPalette & palette){
+    return color_decode_opaquerect(c.as_bgr().to_u32(), in_bpp, palette);
 }
 
 template<class Converter>
