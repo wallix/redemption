@@ -203,8 +203,8 @@ public:
     int16_t  yStart;
     uint8_t  bRop2;
     uint8_t  fillMode;
-    uint32_t backColor;
-    uint32_t foreColor;
+    RDPColor backColor;
+    RDPColor foreColor;
     RDPBrush brush;
     uint8_t  NumDeltaEntries;
 
@@ -230,7 +230,7 @@ public:
     }
 
     RDPPolygonCB(int16_t xStart, int16_t yStart, uint8_t bRop2, uint8_t fillMode,
-                 uint32_t backColor, uint32_t foreColor, const RDPBrush & brush,
+                 RDPColor backColor, RDPColor foreColor, const RDPBrush & brush,
                  uint8_t NumDeltaEntries, InStream & deltaPoints)
         : xStart(xStart)
         , yStart(yStart)
@@ -446,7 +446,7 @@ public:
                        "brush.style=%d brush.hatch=%d "
                        "NumDeltaEntries=%d DeltaEntries=(",
                        this->xStart, this->yStart, unsigned(this->bRop2), this->fillMode,
-                       this->backColor, this->foreColor,
+                       this->backColor.to_u32(), this->foreColor.to_u32(),
                        this->brush.org_x, this->brush.org_y,
                        this->brush.style, this->brush.hatch,
                        this->NumDeltaEntries);

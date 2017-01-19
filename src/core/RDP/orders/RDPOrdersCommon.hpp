@@ -27,6 +27,7 @@
 
 #include "utils/stream.hpp"
 #include "utils/rect.hpp"
+#include "utils/colors.hpp"
 
 // MS-RDPEGDI 3.3.5.1.1.1       Construction of a Primary Drawing Order
 // ====================================================================
@@ -144,8 +145,8 @@
 struct RDPPen {
     uint8_t style;
     uint8_t width;
-    uint32_t color;
-    RDPPen(uint8_t style, uint8_t width, uint32_t color)
+    RDPColor color;
+    RDPPen(uint8_t style, uint8_t width, RDPColor color)
         : style(style), width(width), color(color) {}
 
     RDPPen() : style(0), width(0), color(0) {

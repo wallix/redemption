@@ -36,6 +36,7 @@
 typedef uint32_t BGRColor;
 typedef uint32_t RGBColor;
 
+
 inline BGRColor RGBtoBGR(const BGRColor & c) noexcept {
     return ((c << 16) & 0xFF0000)|(c & 0x00FF00)|((c>>16) & 0x0000FF);
 }
@@ -115,7 +116,7 @@ private:
 // typedef BGRColor BGRPalette[256];
 
 // Those are in BGR
-enum {
+enum NamedBGRColor {
     BLACK                     = 0x000000,
     GREY                      = 0xc0c0c0,
     MEDIUM_GREY               = 0xa0a0a0,
@@ -159,6 +160,41 @@ enum {
     LIGHT_ORANGE              = 0x64BFFF,
     PALE_ORANGE               = 0x9AD5FF,
     BROWN                     = 0x006AC5
+};
+
+
+struct RDPColor
+{
+    constexpr RDPColor() noexcept
+    : color_(0)
+    {}
+
+    constexpr RDPColor(NamedBGRColor color) noexcept
+    : color_(color)
+    {}
+
+    constexpr RDPColor(BGRColor color) noexcept
+    : color_(color)
+    {}
+
+    constexpr uint32_t to_u32() const noexcept { return this->color_; }
+
+    constexpr operator uint32_t const & () const noexcept { return this->color_; }
+    operator uint32_t & () noexcept { return this->color_; }
+
+//     constexpr uint8_t red() const noexcept { return this->color_; }
+//     constexpr uint8_t green() const noexcept { return this->color_ >> 8; }
+//     constexpr uint8_t blue() const noexcept { return this->color_ >> 16; }
+
+//     constexpr static RDPColor from(uint32_t c) noexcept
+//     { return RDPColor(nullptr, c); }
+
+private:
+//     constexpr RDPColor(std::nullptr_t, uint32_t c) noexcept
+//     : color_(c)
+//     {}
+
+    uint32_t color_;
 };
 
 

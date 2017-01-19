@@ -47,7 +47,7 @@ class RDPLineTo {
     int16_t starty;
     int16_t endx;
     int16_t endy;
-    uint32_t back_color;
+    RDPColor back_color;
     uint8_t rop2;
     RDPPen pen;
 
@@ -58,7 +58,7 @@ class RDPLineTo {
 
     RDPLineTo(uint8_t back_mode,
               int16_t startx, int16_t starty, int16_t endx, int16_t endy,
-              uint32_t back_color,
+              RDPColor back_color,
               uint8_t rop2,
               const RDPPen & pen) :
         back_mode(back_mode),
@@ -177,10 +177,10 @@ class RDPLineTo {
             unsigned(this->back_mode),
             this->startx, this->starty, this->endx, this->endy,
             this->rop2,
-            this->back_color,
+            this->back_color.to_u32(),
             this->pen.style,
             this->pen.width,
-            this->pen.color
+            this->pen.color.to_u32()
             );
         if (lg >= sz){
             return sz;

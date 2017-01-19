@@ -29,14 +29,14 @@
 class RDPOpaqueRect {
     public:
     Rect rect;
-    uint32_t color;
+    RDPColor color;
 
     static uint8_t id(void)
     {
         return RDP::RECT;
     }
 
-    RDPOpaqueRect(const Rect r, int c) :
+    RDPOpaqueRect(const Rect r, RDPColor c) :
         rect(r), color(c)
         {}
 
@@ -142,7 +142,7 @@ class RDPOpaqueRect {
             buffer+lg,
             sz-lg,
             "opaquerect(rect(%d,%d,%d,%d) color=0x%.6x)",
-            this->rect.x, this->rect.y, this->rect.cx, this->rect.cy, this->color);
+            this->rect.x, this->rect.y, this->rect.cx, this->rect.cy, this->color.to_u32());
         if (lg >= sz){
             return sz;
         }

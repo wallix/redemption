@@ -114,7 +114,7 @@ public:
     Ellipse el;
     uint8_t  bRop2;
     uint8_t  fillMode;
-    uint32_t color;
+    RDPColor color;
 
     RDPEllipseSC()
     : bRop2(0x0)
@@ -225,7 +225,7 @@ public:
             "ellipseSC(leftRect=%d topRect=%d rightRect=%d bottomRect=%d bRop2=0x%02X "
             "fillMode=%d Color=%.6x)",
                        this->el.left(), this->el.top(), this->el.right(), this->el.bottom(),
-                       unsigned(this->bRop2), this->fillMode, this->color);
+                       unsigned(this->bRop2), this->fillMode, this->color.to_u32());
         if (lg >= sz) {
             return sz;
         }

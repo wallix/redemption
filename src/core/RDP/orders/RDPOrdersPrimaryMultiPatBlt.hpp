@@ -142,8 +142,8 @@ class RDPMultiPatBlt {
 public:
     Rect       rect {}; //nLeftRect, nTopRect, nWidth, nHeight
     uint8_t    bRop {};
-    uint32_t   BackColor {};
-    uint32_t   ForeColor {};
+    RDPColor   BackColor {};
+    RDPColor   ForeColor {};
     RDPBrush   brush {}; // BrushOrgX , BrushOrgY , BrushStyle , BrushHatch , BrushExtra
     uint8_t    nDeltaEntries {};
 
@@ -157,7 +157,7 @@ public:
 
     RDPMultiPatBlt(RDPMultiPatBlt const &) = default;
 
-    RDPMultiPatBlt( const Rect _rect, uint8_t bRop, uint32_t BackColor, uint32_t ForeColor, const RDPBrush & _brush
+    RDPMultiPatBlt( const Rect _rect, uint8_t bRop, RDPColor BackColor, RDPColor ForeColor, const RDPBrush & _brush
                   , uint8_t nDeltaEntries, InStream & deltaEncodedRectangles)
     : rect(_rect)
     , bRop(bRop)
@@ -393,7 +393,7 @@ public:
                         "nDeltaEntries=%d "
                         "CodedDeltaList=("
                       , this->rect.x, this->rect.y, this->rect.cx, this->rect.cy, unsigned(this->bRop)
-                      , this->BackColor, this->ForeColor
+                      , this->BackColor.to_u32(), this->ForeColor.to_u32()
                       , this->brush.org_x, this->brush.org_y
                       , unsigned(this->brush.style), unsigned(this->brush.hatch)
                       , unsigned(this->brush.extra[0]), unsigned(this->brush.extra[1])

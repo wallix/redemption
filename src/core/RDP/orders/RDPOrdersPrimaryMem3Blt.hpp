@@ -170,8 +170,8 @@ class RDPMem3Blt {
     uint8_t     rop;
     uint16_t    srcx;
     uint16_t    srcy;
-    uint32_t    back_color;
-    uint32_t    fore_color;
+    RDPColor    back_color;
+    RDPColor    fore_color;
     RDPBrush    brush;
     uint16_t    cache_idx;
 
@@ -184,8 +184,8 @@ class RDPMem3Blt {
               , uint8_t rop
               , uint16_t srcx
               , uint16_t srcy
-              , uint32_t back_color
-              , uint32_t fore_color
+              , RDPColor back_color
+              , RDPColor fore_color
               , const RDPBrush & brush
               , uint16_t cache_idx)
     : cache_id(cache_id)
@@ -363,8 +363,8 @@ class RDPMem3Blt {
             this->rect.x, this->rect.y, this->rect.cx, this->rect.cy,
             unsigned(this->rop),
             this->srcx, this->srcy,
-            this->back_color,
-            this->fore_color,
+            this->back_color.to_u32(),
+            this->fore_color.to_u32(),
             this->brush.org_x, this->brush.org_y, this->brush.style, this->brush.hatch,
             unsigned(this->brush.extra[0]), unsigned(this->brush.extra[1]),
             unsigned(this->brush.extra[2]), unsigned(this->brush.extra[3]),

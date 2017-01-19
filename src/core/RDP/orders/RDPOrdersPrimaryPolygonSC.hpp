@@ -175,7 +175,7 @@ public:
     int16_t  yStart;
     uint8_t  bRop2;
     uint8_t  fillMode;
-    uint32_t BrushColor;
+    RDPColor BrushColor;
     uint8_t  NumDeltaEntries;
 
     struct DeltaPoint {
@@ -198,7 +198,7 @@ public:
     }
 
     RDPPolygonSC(int16_t xStart, int16_t yStart, uint8_t bRop2, uint8_t fillMode,
-                 uint32_t BrushColor, uint8_t NumDeltaEntries, InStream & deltaPoints) {
+                 RDPColor BrushColor, uint8_t NumDeltaEntries, InStream & deltaPoints) {
         this->xStart          = xStart;
         this->yStart          = yStart;
         this->bRop2           = bRop2;
@@ -383,7 +383,7 @@ public:
             "polygonsc(xStart=%d yStart=%d bRop2=0x%02X fillMode=%d BrushColor=%.6x "
                 "NumDeltaEntries=%d DeltaEntries=(",
             this->xStart, this->yStart, unsigned(this->bRop2),
-            this->fillMode, this->BrushColor, this->NumDeltaEntries);
+            this->fillMode, this->BrushColor.to_u32(), this->NumDeltaEntries);
         for (uint8_t i = 0; i < this->NumDeltaEntries; i++) {
             if (i) {
                 lg += snprintf(buffer + lg, sz - lg, " ");

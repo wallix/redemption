@@ -140,8 +140,8 @@ public:
     Ellipse el;
     uint8_t  brop2;
     uint8_t  fill_mode;
-    uint32_t back_color;
-    uint32_t fore_color;
+    RDPColor back_color;
+    RDPColor fore_color;
     RDPBrush brush;
 
     static uint8_t id(void)
@@ -150,7 +150,7 @@ public:
     }
 
     RDPEllipseCB(const Rect rect, uint8_t rop, uint8_t fill,
-                 uint32_t back_color, uint32_t fore_color,
+                 RDPColor back_color, RDPColor fore_color,
                  const RDPBrush & brush) :
         el(rect),
         brop2(rop),
@@ -278,7 +278,7 @@ public:
                        "brush.org_x=%d brush.org_y=%d "
                        "brush.style=%d brush.hatch=%d)",
                        this->el.left(), this->el.top(), this->el.right(), this->el.bottom(),
-                       unsigned(this->brop2), this->fill_mode, this->back_color, this->fore_color,
+                       unsigned(this->brop2), this->fill_mode, this->back_color.to_u32(), this->fore_color.to_u32(),
                        this->brush.org_x, this->brush.org_y,
                        this->brush.style, this->brush.hatch);
         if (lg >= sz) {

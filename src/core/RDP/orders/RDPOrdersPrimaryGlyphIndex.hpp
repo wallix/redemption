@@ -282,8 +282,8 @@ public:
     int16_t  ui_charinc;
     int16_t  f_op_redundant;
 
-    uint32_t back_color;
-    uint32_t fore_color;
+    RDPColor back_color;
+    RDPColor fore_color;
 
     Rect     bk;
     Rect     op;
@@ -301,7 +301,7 @@ public:
     }
 
     RDPGlyphIndex( uint8_t cache_id, uint8_t fl_accel, uint8_t ui_charinc
-                 , uint8_t f_op_redundant, uint32_t back_color, uint32_t fore_color
+                 , uint8_t f_op_redundant, RDPColor back_color, RDPColor fore_color
                  , const Rect bk, const Rect op, const RDPBrush & brush
                  , int16_t glyph_x, int16_t glyph_y
                  , uint8_t data_len, const uint8_t * data)
@@ -534,8 +534,8 @@ public:
                       , this->fl_accel
                       , this->ui_charinc
                       , this->f_op_redundant
-                      , this->back_color
-                      , this->fore_color
+                      , this->back_color.to_u32()
+                      , this->fore_color.to_u32()
                       , this->bk.x, this->bk.y, this->bk.cx, this->bk.cy
                       , this->op.x, this->op.y, this->op.cx, this->op.cy
                       , this->brush.org_x, this->brush.org_y, this->brush.style, this->brush.hatch

@@ -114,7 +114,7 @@ public:
     int16_t  nTopRect;
     int16_t  nWidth;
     int16_t  nHeight;
-    uint32_t _Color;
+    RDPColor _Color;
     uint8_t  nDeltaEntries;
 
     struct RDP::DeltaEncodedRectangle deltaEncodedRectangles[45];

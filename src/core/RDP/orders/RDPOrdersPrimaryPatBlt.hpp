@@ -1018,8 +1018,8 @@ class RDPPatBlt {
     public:
     Rect rect;
     uint8_t rop;
-    uint32_t back_color;
-    uint32_t fore_color;
+    RDPColor back_color;
+    RDPColor fore_color;
     RDPBrush brush;
 
     static uint8_t id(void)
@@ -1028,7 +1028,7 @@ class RDPPatBlt {
     }
 
     RDPPatBlt(const Rect rect, uint8_t rop,
-              uint32_t back_color, uint32_t fore_color,
+              RDPColor back_color, RDPColor fore_color,
               const RDPBrush & brush) :
         rect(rect),
         rop(rop),
@@ -1162,8 +1162,8 @@ class RDPPatBlt {
                     "brush.style=%d brush.hatch=%d brush.extra=[%.2x %.2x %.2x %.2x %.2x %.2x %.2x])\n",
                 this->rect.x, this->rect.y, this->rect.cx, this->rect.cy,
                 unsigned(this->rop),
-                this->back_color,
-                this->fore_color,
+                this->back_color.to_u32(),
+                this->fore_color.to_u32(),
                 this->brush.org_x,
                 this->brush.org_y,
                 this->brush.style,
