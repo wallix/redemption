@@ -304,9 +304,9 @@ public:
         state = 0x10,
     };
 
-    Authentifier(AclSerializer * acl_serial, Inifile & ini, Transport & auth_trans, time_t acl_start_time)
+    Authentifier(AclSerializer * acl_serial, Inifile & ini, time_t acl_start_time)
         : ini(ini)
-        , acl_serial(acl_serial) // AclSerializer(ini, auth_trans, to_verbose_flags(ini.get<cfg::debug::auth>()))
+        , acl_serial(acl_serial)
         , remote_answer(false)
         , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), to_verbose_flags(ini.get<cfg::debug::auth>()))
         , inactivity(ini.get<cfg::globals::session_timeout>(),
@@ -341,29 +341,29 @@ public:
             return true;
         }
 
-        const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
+        const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
         if (enddate != 0 && (static_cast<uint32_t>(now) > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
-            const char * message = TR("session_out_time", language(this->ini));
+            const char * message = TR("session_out_time", language(ini));
             mm.invoke_close_box(message, signal, now);
 
             return true;
         }
 
         // Close by rejeted message received
-        if (!this->ini.get<cfg::context::rejected>().empty()) {
-            this->ini.set<cfg::context::auth_error_message>(this->ini.get<cfg::context::rejected>());
-//            const char * error_message = this->ini.get<cfg::context::rejected>();
+        if (!ini.get<cfg::context::rejected>().empty()) {
+            ini.set<cfg::context::auth_error_message>(ini.get<cfg::context::rejected>());
+//            const char * error_message = ini.get<cfg::context::rejected>();
 //            this->set_auth_error_message(error_message);
-            LOG(LOG_INFO, "Close by Rejected message received : %s", this->ini.get<cfg::context::rejected>());
-            this->ini.set_acl<cfg::context::rejected>("");
+            LOG(LOG_INFO, "Close by Rejected message received : %s", ini.get<cfg::context::rejected>());
+            ini.set_acl<cfg::context::rejected>("");
             mm.invoke_close_box(nullptr, signal, now);
             return true;
         }
 
         // Keep Alive
-        if (this->keepalive.check(now, this->ini)) {
-            mm.invoke_close_box(TR("miss_keepalive", language(this->ini)), signal, now);
+        if (this->keepalive.check(now, ini)) {
+            mm.invoke_close_box(TR("miss_keepalive", language(ini)), signal, now);
             return true;
         }
 
@@ -374,7 +374,7 @@ public:
         }
 
         // Manage module (refresh or next)
-        if (this->ini.changed_field_size()) {
+        if (ini.changed_field_size()) {
             if (mm.connected) {
                 // send message to acl with changed values when connected to
                 // a module (rdp, vnc, xup ...) and something changed.
@@ -394,7 +394,7 @@ public:
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
                 signal = BACK_EVENT_NONE;
                 // TODO signal management (refresh/next) should go to ModuleManager, it's basically the same behavior. It could be implemented by closing module then opening another one of the same kind
-                mm.mod->refresh_context(this->ini);
+                mm.mod->refresh_context(ini);
                 mm.mod->get_event().signal = BACK_EVENT_NONE;
                 mm.mod->get_event().set();
             }
@@ -436,7 +436,7 @@ public:
                 }
                 catch (Error & e) {
                     if (e.id == ERR_SOCKET_CONNECT_FAILED) {
-                        this->ini.set_acl<cfg::context::module>(STRMODULE_TRANSITORY);
+                        ini.set_acl<cfg::context::module>(STRMODULE_TRANSITORY);
 
                         signal = BACK_EVENT_NEXT;
 
@@ -450,24 +450,24 @@ public:
                     else if (e.id == ERR_RDP_SERVER_REDIR) {
                         // SET new target in ini
                         const char * host = char_ptr_cast(
-                            this->ini.get<cfg::mod_rdp::redir_info>().host);
+                            ini.get<cfg::mod_rdp::redir_info>().host);
                         const char * password = char_ptr_cast(
-                            this->ini.get<cfg::mod_rdp::redir_info>().password);
+                            ini.get<cfg::mod_rdp::redir_info>().password);
                         const char * username = char_ptr_cast(
-                            this->ini.get<cfg::mod_rdp::redir_info>().username);
+                            ini.get<cfg::mod_rdp::redir_info>().username);
                         const char * change_user = "";
-                        if (this->ini.get<cfg::mod_rdp::redir_info>().dont_store_username &&
+                        if (ini.get<cfg::mod_rdp::redir_info>().dont_store_username &&
                             (username[0] != 0)) {
                             LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
-                            this->ini.set_acl<cfg::globals::target_user>(username);
+                            ini.set_acl<cfg::globals::target_user>(username);
                             change_user = username;
                         }
                         if (password[0] != 0) {
                             LOG(LOG_INFO, "SrvRedir: Change target password");
-                            this->ini.set_acl<cfg::context::target_password>(password);
+                            ini.set_acl<cfg::context::target_password>(password);
                         }
                         LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
-                        this->ini.set_acl<cfg::context::target_host>(host);
+                        ini.set_acl<cfg::context::target_host>(host);
                         char message[768] = {};
                         sprintf(message, "%s@%s", change_user, host);
                         this->report("SERVER_REDIRECTION", message);
@@ -485,29 +485,29 @@ public:
             }
             else
             {
-                if (!this->ini.get<cfg::context::disconnect_reason>().empty()) {
-                    this->ini.set<cfg::context::manager_disconnect_reason>(
-                        this->ini.get<cfg::context::disconnect_reason>());
-                    this->ini.get_ref<cfg::context::disconnect_reason>().clear();
+                if (!ini.get<cfg::context::disconnect_reason>().empty()) {
+                    ini.set<cfg::context::manager_disconnect_reason>(
+                        ini.get<cfg::context::disconnect_reason>());
+                    ini.get_ref<cfg::context::disconnect_reason>().clear();
 
-                    this->ini.set_acl<cfg::context::disconnect_reason_ack>(true);
+                    ini.set_acl<cfg::context::disconnect_reason_ack>(true);
                 }
             }
         }
 
-        // LOG(LOG_INFO, "connect=%s ini.check=%s", this->connected?"Y":"N", this->ini.check()?"Y":"N");
+        // LOG(LOG_INFO, "connect=%s ini.check=%s", this->connected?"Y":"N", ini.check()?"Y":"N");
 
         // AuthCHANNEL CHECK
         // if an answer has been received, send it to
         // rdp serveur via mod (should be rdp module)
         // TODO Check if this->mod is RDP MODULE
-        if (mm.connected && this->ini.get<cfg::mod_rdp::auth_channel>()[0]) {
+        if (mm.connected && ini.get<cfg::mod_rdp::auth_channel>()[0]) {
             // Get sesman answer to AUTHCHANNEL_TARGET
-            if (!this->ini.get<cfg::context::auth_channel_answer>().empty()) {
+            if (!ini.get<cfg::context::auth_channel_answer>().empty()) {
                 // If set, transmit to auth_channel channel
-                mm.mod->send_auth_channel_data(this->ini.get<cfg::context::auth_channel_answer>().c_str());
+                mm.mod->send_auth_channel_data(ini.get<cfg::context::auth_channel_answer>().c_str());
                 // Erase the context variable
-                this->ini.get_ref<cfg::context::auth_channel_answer>().clear();
+                ini.get_ref<cfg::context::auth_channel_answer>().clear();
             }
         }
         return true;
@@ -517,6 +517,9 @@ public:
         if (this->verbose & Verbose::state) {
             LOG(LOG_INFO, "+++++++++++> ACL receive <++++++++++++++++");
         }
+        // TODO: replace code below by new function call below in acl_serial
+        // or maybe even inline at caller level
+//        this->acl_serial->acl_receive(this->session_type, this->remote_answer);
         try {
             this->acl_serial->incoming();
 
@@ -572,6 +575,7 @@ public:
         this->ini.set_acl<cfg::context::module>(STRMODULE_CLOSE);
     }
 
+    // TODO: provide explicit init ? or even move that to ACLSerializer ?
     void log4(bool duplicate_with_pid, const char * type,
             const char * extra = nullptr) const override {
         const bool session_log =

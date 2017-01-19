@@ -375,7 +375,7 @@ public:
                                                     );
                                     // now is authentifier start time
                                     this->acl_serial = new AclSerializer(ini, *this->auth_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
-                                    this->authentifier = new Authentifier(this->acl_serial, ini, *this->auth_trans, now);
+                                    this->authentifier = new Authentifier(this->acl_serial, ini, now);
                                     this->auth_event = new wait_obj();
                                     signal = BACK_EVENT_NEXT;
                                 }

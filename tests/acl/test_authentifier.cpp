@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
     AclSerializer acl_serial(ini, acl_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
-    Authentifier sesman(&acl_serial, ini, acl_trans, 10010);
+    Authentifier sesman(&acl_serial, ini, 10010);
     signal = BACK_EVENT_NEXT;
 
     bool has_activity = true;
@@ -223,7 +223,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
     AclSerializer acl_serial(ini, acl_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
-    Authentifier sesman(&acl_serial, ini, acl_trans, 10010);
+    Authentifier sesman(&acl_serial, ini, 10010);
     signal = BACK_EVENT_NEXT;
 
     bool has_activity = true;
@@ -388,7 +388,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
     CountTransport keepalivetrans;
     AclSerializer acl_serial(ini, acl_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
-    Authentifier sesman(&acl_serial, ini, acl_trans, 10010);
+    Authentifier sesman(&acl_serial, ini, 10010);
     signal = BACK_EVENT_NEXT;
 
 
