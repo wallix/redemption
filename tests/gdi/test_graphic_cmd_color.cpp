@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TestGdCmdConverter)
     decode_color16 dec;
     BGRColor raw_color = 0x8ba93c;
     BGRColor color16 = enc(raw_color);
-    RDPOpaqueRect opaque_rect({}, color16);
+    RDPOpaqueRect opaque_rect({}, RDPColor(color16));
 
     BOOST_CHECK_EQUAL(gdi::GraphicCmdColor::is_encodable_cmd_color(opaque_rect).value, true);
     BOOST_CHECK_EQUAL(gdi::GraphicCmdColor::is_encodable_cmd_color(RDPMemBlt{0, {}, 0, 0, 0, 0}).value, false);

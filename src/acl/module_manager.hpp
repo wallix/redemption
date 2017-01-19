@@ -483,7 +483,7 @@ private:
 
             auto const color_ctx = gdi::ColorCtx::from_bpp(this->mm.front.client_info.bpp, this->mm.front.get_palette());
 
-            drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip, color_ctx);
+            drawable.draw(RDPOpaqueRect(this->clip, RDPColor(this->background_color)), this->clip, color_ctx);
 
             StaticOutStream<256> deltaPoints;
             deltaPoints.out_sint16_le(this->clip.cx - 1);

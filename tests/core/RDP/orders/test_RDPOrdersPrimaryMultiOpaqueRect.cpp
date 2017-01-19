@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
 
         RDPOrderCommon state_common(0, Rect(0, 0, 0, 0));
         RDPMultiOpaqueRect state_multiopaquerect;
-        state_multiopaquerect._Color=0x00D699;
+        state_multiopaquerect._Color = RDPColor(0x00D699);
         RDPOrderCommon newcommon(MULTIOPAQUERECT, Rect(0, 0, 1024, 768));
 
         StaticOutStream<1024> deltaRectangles;

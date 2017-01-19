@@ -194,7 +194,7 @@ public:
                 this->drawable.draw(
                         RDPOpaqueRect(
                             rect_intersect.intersect(this->scroll_bar_rect),
-                            this->bg_color
+                            RDPColor(this->bg_color)
                         ),
                         this->get_rect(),
                         gdi::ColorCtx::depth24()
@@ -209,7 +209,7 @@ public:
                                                 this->scroll_bar_rect.cx,
                                                 1)
                                     ),
-                                this->fg_color
+                                RDPColor(this->fg_color)
                             ),
                             this->get_rect(),
                             gdi::ColorCtx::depth24()
@@ -223,7 +223,7 @@ public:
                                                 this->scroll_bar_rect.cx,
                                                 1)
                                     ),
-                                this->fg_color
+                                RDPColor(this->fg_color)
                             ),
                             this->get_rect(),
                             gdi::ColorCtx::depth24()
@@ -234,7 +234,7 @@ public:
                     this->drawable.draw(
                             RDPOpaqueRect(
                                 rect_intersect.intersect(this->cursor_button_rect),
-                                this->fg_color
+                                RDPColor(this->fg_color)
                             ),
                             this->get_rect(),
                             gdi::ColorCtx::depth24()
@@ -261,7 +261,7 @@ public:
                 this->drawable.draw(
                         RDPOpaqueRect(
                             rect_intersect.intersect(this->scroll_bar_rect),
-                            this->bg_color
+                            RDPColor(this->bg_color)
                         ),
                         this->get_rect(),
                         gdi::ColorCtx::depth24()
@@ -276,7 +276,7 @@ public:
                                                 1,
                                                 this->scroll_bar_rect.cy)
                                     ),
-                                this->fg_color
+                                RDPColor(this->fg_color)
                             ),
                             this->get_rect(),
                             gdi::ColorCtx::depth24()
@@ -290,7 +290,7 @@ public:
                                                 1,
                                                 this->scroll_bar_rect.cy)
                                     ),
-                                this->fg_color
+                                RDPColor(this->fg_color)
                             ),
                             this->get_rect(),
                             gdi::ColorCtx::depth24()
@@ -301,7 +301,7 @@ public:
                     this->drawable.draw(
                             RDPOpaqueRect(
                                 rect_intersect.intersect(this->cursor_button_rect),
-                                this->fg_color
+                                RDPColor(this->fg_color)
                             ),
                             this->get_rect(),
                             gdi::ColorCtx::depth24()

@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
             | (ini.get<cfg::debug::primary_orders>() ?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
             | (ini.get<cfg::debug::secondary_orders>() ?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
             | (ini.get<cfg::debug::bitmap_update>() ?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
-            
+
         WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
         std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
@@ -312,7 +312,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         | (ini.get<cfg::debug::primary_orders>() ?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
         | (ini.get<cfg::debug::secondary_orders>() ?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
         | (ini.get<cfg::debug::bitmap_update>() ?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
-        
+
     WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
     std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
     std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
@@ -384,7 +384,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
     bool ignore_frame_in_timeval = true;
 
-    capture.draw(RDPOpaqueRect(scr, color_encode(BLUE, 16)), scr, color_cxt);
+    capture.draw(RDPOpaqueRect(scr, RDPColor(color_encode(BLUE, 16))), scr, color_cxt);
     now.tv_sec++;
     capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 

@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TestPolygonSC)
 
     InStream deltaPoints_in(deltaPoints.get_data(), deltaPoints.get_offset());
 
-    RDPPolygonSC polygonSC(158, 230, 0x0D, 0, 0x000000, 7, deltaPoints_in);
+    RDPPolygonSC polygonSC(158, 230, 0x0D, 0, RDPColor{0x000000}, 7, deltaPoints_in);
 
 
     polygonSC.emit(out_stream, newcommon, state_common, state_polygonSC);
@@ -173,6 +173,6 @@ BOOST_AUTO_TEST_CASE(TestPolygonSC)
 
     check<RDPPolygonSC>(common_cmd, cmd,
                         RDPOrderCommon(POLYGONSC, Rect(0, 0, 0, 0)),
-                        RDPPolygonSC(158, 230, 0x0D, 0, 0x000000, 7, deltaPoints_in),
+                        RDPPolygonSC(158, 230, 0x0D, 0, RDPColor{0x000000}, 7, deltaPoints_in),
                         "PolygonSC 1");
 }

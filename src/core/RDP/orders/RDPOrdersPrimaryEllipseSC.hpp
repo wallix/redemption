@@ -214,7 +214,7 @@ public:
             uint8_t r = stream.in_uint8();
             uint8_t g = stream.in_uint8();
             uint8_t b = stream.in_uint8();
-            this->color = r + (g << 8) + (b << 16);
+            this->color = RDPColor(r + (g << 8) + (b << 16));
         }
     }
 

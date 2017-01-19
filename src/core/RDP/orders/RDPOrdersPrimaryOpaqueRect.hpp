@@ -132,7 +132,7 @@ class RDPOpaqueRect {
         if (header.fields & 0x40) {
             b = stream.in_uint8();
         }
-        this->color = r|(g << 8)|(b<<16);
+        this->color = RDPColor(r|(g << 8)|(b<<16));
     }
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const

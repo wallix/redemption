@@ -116,7 +116,7 @@ public:
 
         if (this->draw_green_carpet) {
             drawable.begin_update();
-            drawable.draw(RDPOpaqueRect(this->screen.get_rect(), 0x00FF00), this->screen.get_rect(), color_ctx);
+            drawable.draw(RDPOpaqueRect(this->screen.get_rect(), RDPColor{0x00FF00}), this->screen.get_rect(), color_ctx);
             drawable.end_update();
 
             this->draw_green_carpet = false;
@@ -145,10 +145,10 @@ public:
 
         drawable.begin_update();
         // Drawing the RECT
-        drawable.draw(RDPOpaqueRect(this->dancing_rect, 0x0000FF), this->screen.get_rect(), color_ctx);
+        drawable.draw(RDPOpaqueRect(this->dancing_rect, RDPColor(0x0000FF)), this->screen.get_rect(), color_ctx);
 
         // And erase
-        this->wipe(oldrect, this->dancing_rect, 0x00FF00, this->screen.get_rect(), drawable);
+        this->wipe(oldrect, this->dancing_rect, RDPColor{0x00FF00}, this->screen.get_rect(), drawable);
         drawable.end_update();
 
         // Final with setting next idle time
@@ -158,7 +158,7 @@ public:
     bool is_up_and_running() override { return true; }
 
 private:
-    void wipe(Rect const oldrect, Rect newrect, int color, const Rect clip, gdi::GraphicApi & drawable) {
+    void wipe(Rect const oldrect, Rect newrect, RDPColor color, const Rect clip, gdi::GraphicApi & drawable) {
         oldrect.difference(newrect, [&](const Rect & a) {
             drawable.draw(RDPOpaqueRect(a, color), clip, gdi::ColorCtx::depth24());
         });

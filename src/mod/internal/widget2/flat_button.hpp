@@ -147,7 +147,7 @@ public:
             bg_color = has_focus ? focuscolor : bgcolor;
         }
         // background
-        drawable.draw(RDPOpaqueRect(clip.intersect(rect), bg_color), rect, gdi::ColorCtx::depth24());
+        drawable.draw(RDPOpaqueRect(clip.intersect(rect), RDPColor(bg_color)), rect, gdi::ColorCtx::depth24());
 
         if (state & 1)  {
             Rect temp_rect = label_rect.offset(1, 1);
@@ -167,19 +167,19 @@ public:
             //top
             drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                   rect.x, rect.y, rect.cx - border_width, border_width
-                  )), fg_color), rect, gdi::ColorCtx::depth24());
+                  )), RDPColor(fg_color)), rect, gdi::ColorCtx::depth24());
             //left
             drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                   rect.x, rect.y + border_width, border_width, rect.cy - border_width
-                  )), fg_color), rect, gdi::ColorCtx::depth24());
+                  )), RDPColor(fg_color)), rect, gdi::ColorCtx::depth24());
             //right
             drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                   rect.x + rect.cx - border_width, rect.y, border_width, rect.cy
-                  )), fg_color), rect, gdi::ColorCtx::depth24());
+                  )), RDPColor(fg_color)), rect, gdi::ColorCtx::depth24());
             //bottom
             drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                   rect.x, rect.y + rect.cy - border_width, rect.cx, border_width
-                  )), fg_color), rect, gdi::ColorCtx::depth24());
+                  )), RDPColor(fg_color)), rect, gdi::ColorCtx::depth24());
         }
     }
 

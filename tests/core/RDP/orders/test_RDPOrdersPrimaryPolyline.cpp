@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
 
         InStream deltaPoints_in(deltaPoints.get_data(), deltaPoints.get_offset());
 
-        RDPPolyline polyline(158, 230, 0x0D, 0, 0x000000, 7, deltaPoints_in);
+        RDPPolyline polyline(158, 230, 0x0D, 0, RDPColor{0x000000}, 7, deltaPoints_in);
 
 
         polyline.emit(out_stream, newcommon, state_common, state_polyline);
@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
 
         check<RDPPolyline>(common_cmd, cmd,
             RDPOrderCommon(POLYLINE, Rect(0, 0, 0, 0)),
-            RDPPolyline(158, 230, 0x0D, 0, 0x000000, 7, deltaPoints_in),
+            RDPPolyline(158, 230, 0x0D, 0, RDPColor{0x000000}, 7, deltaPoints_in),
             "Polyline 2");
     }
 }

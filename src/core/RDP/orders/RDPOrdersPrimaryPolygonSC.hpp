@@ -330,7 +330,7 @@ public:
             uint8_t r = stream.in_uint8();
             uint8_t g = stream.in_uint8();
             uint8_t b = stream.in_uint8();
-            this->BrushColor = r + (g << 8) + (b << 16);
+            this->BrushColor = RDPColor(r + (g << 8) + (b << 16));
         }
 
         if (header.fields & 0x0020) {

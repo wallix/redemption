@@ -332,14 +332,14 @@ class RDPMem3Blt {
             uint8_t r = stream.in_uint8();
             uint8_t g = stream.in_uint8();
             uint8_t b = stream.in_uint8();
-            this->back_color = r + (g << 8) + (b << 16);
+            this->back_color = RDPColor(r + (g << 8) + (b << 16));
         }
 
         if (header.fields & 0x0200) {
             uint8_t r = stream.in_uint8();
             uint8_t g = stream.in_uint8();
             uint8_t b = stream.in_uint8();
-            this->fore_color = r + (g << 8) + (b << 16);
+            this->fore_color = RDPColor(r + (g << 8) + (b << 16));
         }
 
         header.receive_brush(stream, 0x0400, this->brush);

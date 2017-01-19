@@ -143,20 +143,20 @@ struct StateChunk {
     RDPPolyline             polyline;
     RDPEllipseSC            ellipseSC;
 
-    StateChunk()    
+    StateChunk()
         : common(RDP::PATBLT, Rect(0, 0, 1, 1))
         , destblt(Rect(), 0)
         , multidstblt()
         , multiopaquerect()
         , multipatblt()
         , multiscrblt()
-        , patblt(Rect(), 0, 0, 0, RDPBrush())
+        , patblt(Rect(), 0, RDPColor{}, RDPColor{}, RDPBrush())
         , scrblt(Rect(), 0, 0, 0)
-        , opaquerect(Rect(), 0)
+        , opaquerect(Rect(), RDPColor{})
         , memblt(0, Rect(), 0, 0, 0, 0)
-        , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
-        , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
-        , glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
+        , mem3blt(0, Rect(), 0, 0, 0, RDPColor{}, RDPColor{}, RDPBrush(), 0)
+        , lineto(0, 0, 0, 0, 0, RDPColor{}, 0, RDPPen(0, 0, RDPColor{}))
+        , glyphindex( 0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
                     , reinterpret_cast<const uint8_t *>(""))
         , polyline()
         , ellipseSC()
@@ -237,7 +237,7 @@ public:
     // Internal state of orders
     , polygonSC()
     , polygonCB()
-    , ellipseCB(Rect(), 0, 0, 0, 0, RDPBrush())
+    , ellipseCB(Rect(), 0, 0, RDPColor{}, RDPColor{}, RDPBrush())
     // state variables for a batch of orders
     , order_count(0)
     , bitmap_count(0)

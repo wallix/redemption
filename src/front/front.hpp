@@ -4445,8 +4445,8 @@ private:
             const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
             const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
 
-            cmd2.back_color= color_encode(back_color24, this->client_info.bpp);
-            cmd2.fore_color= color_encode(fore_color24, this->client_info.bpp);
+            cmd2.back_color = RDPColor(color_encode(back_color24, this->client_info.bpp));
+            cmd2.fore_color = RDPColor(color_encode(fore_color24, this->client_info.bpp));
         }
 
         // this may change the brush add send it to to remote cache

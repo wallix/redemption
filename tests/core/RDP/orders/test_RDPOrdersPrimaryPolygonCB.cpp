@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(TestPolygonCB)
 
         InStream deltaPoints_in(deltaPoints.get_data(), deltaPoints.get_offset());
 
-        RDPPolygonCB polygonCB(158, 230, 0x0D, 0, 0x0D080F, 0xD41002,
+        RDPPolygonCB polygonCB(158, 230, 0x0D, 0, RDPColor{0x0D080F}, RDPColor{0xD41002},
                                RDPBrush(3, 4, 3, 0xDD, reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7")),
                                7, deltaPoints_in);
 
@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE(TestPolygonCB)
 
         check<RDPPolygonCB>(common_cmd, cmd,
                             RDPOrderCommon(POLYGONCB, Rect(0, 0, 0, 0)),
-                            RDPPolygonCB(158, 230, 0x0D, 0, 0x0D080F, 0xD41002,
+                            RDPPolygonCB(158, 230, 0x0D, 0, RDPColor{0x0D080F}, RDPColor{0xD41002},
                                          RDPBrush(3, 4, 3, 0xDD, reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7")),
                                          7, deltaPoints_in),
                             "PolygonSC 1");

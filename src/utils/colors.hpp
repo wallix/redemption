@@ -173,7 +173,7 @@ struct RDPColor
     : color_(color)
     {}
 
-    constexpr RDPColor(BGRColor color) noexcept
+    explicit constexpr RDPColor(BGRColor color) noexcept
     : color_(color)
     {}
 

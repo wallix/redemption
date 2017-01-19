@@ -43,13 +43,13 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
 
         const uint8_t empty[1] = {0};
         RDPOrderCommon state_common(0, Rect(0, 0, 0, 0));
-        RDPGlyphIndex statecmd(0, 0, 0, 0, 0, 0, Rect(), Rect(), RDPBrush(), 0, 0, 0, empty);
+        RDPGlyphIndex statecmd(0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(), Rect(), RDPBrush(), 0, 0, 0, empty);
         RDPOrderCommon newcommon(GLYPHINDEX, Rect(5, 0, 800, 600));
         const uint8_t brush_extra[] = {1,2,3,4,5,6,7};
         const uint8_t greeting[] = { 'H','e','l','l','o',',',' ','W','o','r','l','d' };
         RDPGlyphIndex newcmd(1, 0x20, 1, 4,
-                             0x112233,
-                             0x445566,
+                             RDPColor{0x112233},
+                             RDPColor{0x445566},
                              Rect(1,2,40,60),
                              Rect(3,4,50,70),
                              RDPBrush(3, 4, 0x03, 0xDD, brush_extra),
@@ -105,8 +105,8 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
         check<RDPGlyphIndex>(common_cmd, cmd,
             RDPOrderCommon(GLYPHINDEX, Rect(5, 0, 800, 600)),
             RDPGlyphIndex(1, 0x20, 1, 4,
-                          0x112233,
-                          0x445566,
+                          RDPColor{0x112233},
+                          RDPColor{0x445566},
                           Rect(1,2,40,60),
                           Rect(3,4,50,70),
                           RDPBrush(3, 4, 0x03, 0xDD, brush_extra),
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex2)
         // TODO " actual data is much more complex  than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives"
 
         RDPOrderCommon state_common(RDP::PATBLT, Rect(0, 0, 1024, 768));
-        RDPGlyphIndex  statecmd(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, reinterpret_cast<const uint8_t *>(""));
+        RDPGlyphIndex  statecmd(0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, reinterpret_cast<const uint8_t *>(""));
         RDPOrderCommon newcommon(GLYPHINDEX, Rect(0, 0, 1024, 768));
         const uint8_t nullbrush_extra[] = {0,0,0,0,0,0,0};
         const uint8_t data[] = { 0x00, 0x00, 0x01, 0x08, 0x02, 0x07, 0x03, 0x07
@@ -138,8 +138,8 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex2)
 
 
         RDPGlyphIndex  newcmd( 7, 3, 0, 1
-                             , 0x00ffff
-                             , 0x00092d
+                             , RDPColor{0x00ffff}
+                             , RDPColor{0x00092d}
                              , Rect(308, 155, 174, 14)
                              , Rect(0, 0, 1, 1)
                              , RDPBrush(0, 0, 0, 0, nullbrush_extra)
@@ -195,8 +195,8 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex2)
         check<RDPGlyphIndex>( common_cmd, cmd
                             , RDPOrderCommon(GLYPHINDEX, Rect(0, 0, 1024, 768))
                             , RDPGlyphIndex( 7, 3, 0, 1
-                                           , 0x00ffff
-                                           , 0x00092d
+                                           , RDPColor{0x00ffff}
+                                           , RDPColor{0x00092d}
                                            , Rect(308, 155, 174, 14)
                                            , Rect(0, 0, 1, 1)
                                            , RDPBrush(0, 0, 0x0, 0x0, nullbrush_extra)

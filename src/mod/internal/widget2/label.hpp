@@ -103,7 +103,7 @@ public:
     static void draw(Rect const clip, Rect const rect, gdi::GraphicApi& drawable,
                      char const* text, uint32_t fgcolor, uint32_t bgcolor,
                      Font const & font, int xtext, int ytext) {
-        drawable.draw(RDPOpaqueRect(rect, bgcolor), clip, gdi::ColorCtx::depth24());
+        drawable.draw(RDPOpaqueRect(rect, RDPColor(bgcolor)), clip, gdi::ColorCtx::depth24());
         gdi::server_draw_text(drawable,
                               font,
                               xtext + rect.x,

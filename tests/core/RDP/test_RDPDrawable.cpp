@@ -127,8 +127,8 @@ BOOST_AUTO_TEST_CASE(TestDrawGlyphIndex)
                                   3,                            // flAccel
                                   0,                            // ulCharInc
                                   1,                            // fOpRedundant
-                                  0x000000,                     // BackColor
-                                  0xc8d0d4,                     // ForeColor
+                                  RDPColor(0x000000),           // BackColor
+                                  RDPColor(0xc8d0d4),           // ForeColor
                                   rect_bk,                      // Bk
                                   rect_op,                      // Op
                                   RDPBrush(),                   // Brush
@@ -151,8 +151,8 @@ BOOST_AUTO_TEST_CASE(TestDrawGlyphIndex)
                                     3,                              // flAccel
                                     0,                              // ulCharInc
                                     1,                              // fOpRedundant
-                                    0x000000,                       // BackColor
-                                    0xc8d0d4,                       // ForeColor
+                                    RDPColor(0x000000),             // BackColor
+                                    RDPColor(0xc8d0d4),             // ForeColor
                                     rect_bk,                        // Bk
                                     rect_op,                        // Op
                                     RDPBrush(),                     // Brush
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
 
     InStream dp(array, deltaPoints.get_offset());
 
-    gd.draw(RDPPolyline(158, 230, 0x06, 0, 0xFFFFFF, 7, dp), screen_rect, color_cxt);
+    gd.draw(RDPPolyline(158, 230, 0x06, 0, RDPColor(0xFFFFFF), 7, dp), screen_rect, color_cxt);
 
     char message[1024];
     if (!check_sig(gd, message,

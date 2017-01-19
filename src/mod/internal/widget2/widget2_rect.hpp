@@ -49,7 +49,7 @@ public:
             this->drawable.draw(
                 RDPOpaqueRect(
                     rect_intersect,
-                    this->color
+                    RDPColor(this->color)
                 ),
                 rect_intersect,
                 gdi::ColorCtx::depth24()

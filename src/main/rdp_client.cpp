@@ -72,7 +72,7 @@ public:
         }
 
         RDPOpaqueRect new_cmd24 = cmd;
-        new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
+        new_cmd24.color = RDPColor(color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette));
         this->gd.draw(new_cmd24, clip, color_ctx);
     }
 
@@ -144,8 +144,8 @@ public:
         }
 
         RDPPatBlt new_cmd24 = cmd;
-        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
-        new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+        new_cmd24.back_color = RDPColor(color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette));
+        new_cmd24.fore_color = RDPColor(color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette));
         this->gd.draw(new_cmd24, clip, color_ctx);
     }
 
@@ -177,8 +177,8 @@ public:
         }
 
         RDPLineTo new_cmd24 = cmd;
-        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
-        new_cmd24.pen.color  = color_decode_opaquerect(cmd.pen.color,  this->mod_bpp, this->mod_palette);
+        new_cmd24.back_color = RDPColor(color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette));
+        new_cmd24.pen.color  = RDPColor(color_decode_opaquerect(cmd.pen.color,  this->mod_bpp, this->mod_palette));
         this->gd.draw(new_cmd24, clip, color_ctx);
     }
 
@@ -190,8 +190,8 @@ public:
         }
 
         RDPGlyphIndex new_cmd24 = cmd;
-        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
-        new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+        new_cmd24.back_color = RDPColor(color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette));
+        new_cmd24.fore_color = RDPColor(color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette));
         this->gd.draw(new_cmd24, clip, color_ctx, gly_cache);
     }
 
@@ -203,7 +203,7 @@ public:
         }
 
         RDPPolygonSC new_cmd24 = cmd;
-        new_cmd24.BrushColor  = color_decode_opaquerect(cmd.BrushColor,  this->mod_bpp, this->mod_palette);
+        new_cmd24.BrushColor  = RDPColor(color_decode_opaquerect(cmd.BrushColor,  this->mod_bpp, this->mod_palette));
         this->gd.draw(new_cmd24, clip, color_ctx);
     }
 
@@ -215,8 +215,8 @@ public:
         }
 
         RDPPolygonCB new_cmd24 = cmd;
-        new_cmd24.foreColor  = color_decode_opaquerect(cmd.foreColor,  this->mod_bpp, this->mod_palette);
-        new_cmd24.backColor  = color_decode_opaquerect(cmd.backColor,  this->mod_bpp, this->mod_palette);
+        new_cmd24.foreColor  = RDPColor(color_decode_opaquerect(cmd.foreColor,  this->mod_bpp, this->mod_palette));
+        new_cmd24.backColor  = RDPColor(color_decode_opaquerect(cmd.backColor,  this->mod_bpp, this->mod_palette));
         this->gd.draw(new_cmd24, clip, color_ctx);
     }
 
@@ -228,7 +228,7 @@ public:
         }
 
         RDPPolyline new_cmd24 = cmd;
-        new_cmd24.PenColor  = color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette);
+        new_cmd24.PenColor  = RDPColor(color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette));
         this->gd.draw(new_cmd24, clip, color_ctx);
     }
 
@@ -240,7 +240,7 @@ public:
         }
 
         RDPEllipseSC new_cmd24 = cmd;
-        new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
+        new_cmd24.color = RDPColor(color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette));
         this->gd.draw(new_cmd24, clip, color_ctx);
     }
 
@@ -252,8 +252,8 @@ public:
         }
 
         RDPEllipseCB new_cmd24 = cmd;
-        new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
-        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+        new_cmd24.fore_color = RDPColor(color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette));
+        new_cmd24.back_color = RDPColor(color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette));
         this->gd.draw(new_cmd24, clip, color_ctx);
     }
 

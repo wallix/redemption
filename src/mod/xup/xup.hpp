@@ -320,7 +320,7 @@ enum {
                         int y2 = stream.in_sint16_le();
                         const RDPLineTo lineto(1, x1, y1, x2, y2, WHITE,
                                                this->rop,
-                                               RDPPen(this->pen.style, this->pen.width, this->fgcolor));
+                                               RDPPen(this->pen.style, this->pen.width, RDPColor(this->fgcolor)));
                         drawable.draw(lineto, Rect(0,0,1,1), gdi::ColorCtx::from_bpp(this->bpp, this->palette332));
                     }
                     break;

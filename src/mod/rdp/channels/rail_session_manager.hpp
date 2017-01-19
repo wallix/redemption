@@ -538,7 +538,7 @@ private:
         this->drawable->begin_update();
 
         {
-            RDPOpaqueRect order(this->protected_rect, 0x000000);
+            RDPOpaqueRect order(this->protected_rect, RDPColor{0x000000});
 
             this->drawable->draw(order, this->protected_rect, gdi::ColorCtx::depth24());
         }
@@ -546,7 +546,7 @@ private:
         {
             Rect rect = this->protected_rect.shrink(1);
 
-            RDPOpaqueRect order(rect, this->theme.global.bgcolor);
+            RDPOpaqueRect order(rect, RDPColor(this->theme.global.bgcolor));
             order.log(LOG_INFO, rect);
 
             this->drawable->draw(order, rect, gdi::ColorCtx::depth24());
@@ -573,7 +573,7 @@ private:
         this->drawable->begin_update();
 
         {
-            RDPOpaqueRect order(this->protected_rect, 0x000000);
+            RDPOpaqueRect order(this->protected_rect, RDPColor{0x000000});
 
             this->drawable->draw(order, this->protected_rect, gdi::ColorCtx::depth24());
         }
@@ -581,7 +581,7 @@ private:
         {
             Rect rect = this->protected_rect.shrink(1);
 
-            RDPOpaqueRect order(rect, this->theme.global.bgcolor);
+            RDPOpaqueRect order(rect, RDPColor(this->theme.global.bgcolor));
             order.log(LOG_INFO, rect);
 
             this->drawable->draw(order, rect, gdi::ColorCtx::depth24());

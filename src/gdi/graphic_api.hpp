@@ -372,8 +372,8 @@ static inline void server_draw_text(
             0x03,               // fl_accel
             0x0,                // ui_charinc
             1,                  // f_op_redundant,
-            fgcolor,            // BackColor (text color)
-            bgcolor,            // ForeColor (color of the opaque rectangle)
+            RDPColor(fgcolor),  // BackColor (text color)
+            RDPColor(bgcolor),  // ForeColor (color of the opaque rectangle)
             bk,                 // bk
             bk,                 // op
             // brush

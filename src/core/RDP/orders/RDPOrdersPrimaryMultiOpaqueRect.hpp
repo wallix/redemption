@@ -296,7 +296,7 @@ public:
             b = stream.in_uint8();
         }
 
-        this->_Color = (r | (g << 8) | (b << 16));
+        this->_Color = RDPColor(r | (g << 8) | (b << 16));
 
         if (header.fields & 0x0080) {
             this->nDeltaEntries = stream.in_uint8();
