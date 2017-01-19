@@ -88,6 +88,7 @@ class Session {
     // TODO: auth_trans and auth_event can probably move into acl
     SocketTransport * auth_trans   = nullptr;
     wait_obj        * auth_event   = nullptr;
+    AclSerializer   * acl_serial   = nullptr;
     Authentifier    * authentifier = nullptr;
 
           time_t   perf_last_info_collect_time;
@@ -373,7 +374,8 @@ public:
                                                     , to_verbose_flags(ini.get<cfg::debug::auth>())
                                                     );
                                     // now is authentifier start time
-                                    this->authentifier = new Authentifier(ini, *this->auth_trans, now);
+                                    this->acl_serial = new AclSerializer(ini, *this->auth_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
+                                    this->authentifier = new Authentifier(this->acl_serial, ini, *this->auth_trans, now);
                                     this->auth_event = new wait_obj();
                                     signal = BACK_EVENT_NEXT;
                                 }
@@ -418,7 +420,7 @@ public:
                         }
 
                         if (this->authentifier) {
-                            run_session = this->authentifier->check(mm, now, signal, front_signal, this->front->has_user_activity);
+                            run_session = this->authentifier->check(mm, now, signal, front_signal, this->front->has_user_activity, this->ini);
                         }
                         else if (signal == BACK_EVENT_STOP) {
                             mm.mod->get_event().reset();
@@ -429,6 +431,8 @@ public:
                             this->auth_event = nullptr;
                             delete this->authentifier;
                             this->authentifier = nullptr;
+                            delete this->acl_serial;
+                            this->acl_serial = nullptr;
                             delete this->auth_trans;
                             this->auth_trans = nullptr;
                         }
@@ -468,9 +472,15 @@ public:
             ::fclose(this->perf_file);
         }
         delete this->front;
+        this->front = nullptr;
         delete this->auth_event;
+        this->auth_event = nullptr;
         delete this->authentifier;
+        this->authentifier = nullptr;
+        delete this->acl_serial;
+        this->acl_serial = nullptr;
         delete this->auth_trans;
+        this->auth_trans = nullptr;
         // Suppress Session file from disk (original name with PID or renamed with session_id)
         if (!this->ini.get<cfg::context::session_id>().empty()) {
             char new_session_file[256];

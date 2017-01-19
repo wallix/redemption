@@ -238,7 +238,7 @@ public:
 class Authentifier : public auth_api {
     Inifile & ini;
 
-    AclSerializer acl_serial;
+    AclSerializer * acl_serial;
 
     bool remote_answer;       // false initialy, set to true once response is
                               // received from acl and asked_remote_answer is
@@ -304,9 +304,9 @@ public:
         state = 0x10,
     };
 
-    Authentifier(Inifile & ini, Transport & auth_trans, time_t acl_start_time)
+    Authentifier(AclSerializer * acl_serial, Inifile & ini, Transport & auth_trans, time_t acl_start_time)
         : ini(ini)
-        , acl_serial(ini, auth_trans, to_verbose_flags(ini.get<cfg::debug::auth>()))
+        , acl_serial(acl_serial) // AclSerializer(ini, auth_trans, to_verbose_flags(ini.get<cfg::debug::auth>()))
         , remote_answer(false)
         , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), to_verbose_flags(ini.get<cfg::debug::auth>()))
         , inactivity(ini.get<cfg::globals::session_timeout>(),
@@ -325,7 +325,7 @@ public:
     }
 
 public:
-    bool check(MMApi & mm, time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity) {
+    bool check(MMApi & mm, time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity, Inifile & ini) {
         //LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u",
         //    (unsigned)now, static_cast<unsigned>(signal));
         if (signal == BACK_EVENT_STOP) {
@@ -353,6 +353,8 @@ public:
         // Close by rejeted message received
         if (!this->ini.get<cfg::context::rejected>().empty()) {
             this->ini.set<cfg::context::auth_error_message>(this->ini.get<cfg::context::rejected>());
+//            const char * error_message = this->ini.get<cfg::context::rejected>();
+//            this->set_auth_error_message(error_message);
             LOG(LOG_INFO, "Close by Rejected message received : %s", this->ini.get<cfg::context::rejected>());
             this->ini.set_acl<cfg::context::rejected>("");
             mm.invoke_close_box(nullptr, signal, now);
@@ -516,7 +518,7 @@ public:
             LOG(LOG_INFO, "+++++++++++> ACL receive <++++++++++++++++");
         }
         try {
-            this->acl_serial.incoming();
+            this->acl_serial->incoming();
 
             if (!this->ini.get<cfg::context::module>().compare("RDP") ||
                 !this->ini.get<cfg::context::module>().compare("VNC")) {
@@ -544,7 +546,7 @@ public:
         if (this->verbose & Verbose::state) {
             LOG(LOG_INFO, "Ask acl\n");
         }
-        this->acl_serial.send_acl_data();
+        this->acl_serial->send_acl_data();
     }
 
     void set_auth_channel_target(const char * target) override {
