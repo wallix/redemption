@@ -36,8 +36,6 @@
 
 namespace rdpdr {
 
-
-
 // [MS-RDPEFS] - 2.2.1.1 Shared Header (RDPDR_HEADER)
 // ==================================================
 
