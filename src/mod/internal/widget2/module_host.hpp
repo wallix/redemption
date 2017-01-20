@@ -202,16 +202,6 @@ private:
 
             return mod_api::get_dim();
         }
-
-        bool is_content_laid_out() override
-        {
-            if (this->managed_mod)
-            {
-                return this->managed_mod->is_content_laid_out();
-            }
-
-            return mod_api::is_content_laid_out();
-        }
     } module_holder;
 
     CompositeArray composite_array;
@@ -387,11 +377,9 @@ private:
         }
 
         this->mod_visible_rect.cx = std::min<uint16_t>(
-            this->vision_rect.cx - (this->vscroll_added ? this->vscroll_width : 0),
-            module_dim.w);
+            this->vision_rect.cx, module_dim.w);
         this->mod_visible_rect.cy = std::min<uint16_t>(
-            this->vision_rect.cy - (this->hscroll_added ? this->hscroll_height : 0),
-            module_dim.h);
+            this->vision_rect.cy, module_dim.h);
 
         if (this->hscroll_added) {
             const unsigned int new_max_value = module_dim.w - this->vision_rect.cx;
@@ -614,11 +602,6 @@ public:
 
     void rdp_input_invalidate(Rect clip) override
     {
-LOG(LOG_INFO, "");
-LOG(LOG_INFO, "");
-LOG(LOG_INFO, "WidgetModuleHost::rdp_input_invalidate");
-clip.log(LOG_INFO, "Clip");
-this->get_rect().log(LOG_INFO, "This");
         Rect rect_intersect = clip.intersect(this->get_rect());
 
         if (!rect_intersect.isempty()) {
@@ -645,7 +628,7 @@ this->get_rect().log(LOG_INFO, "This");
                 }
             }
 
-            ::fill_region(this->drawable, region, 0xFF0000);
+            ::fill_region(this->drawable, region, 0x000000);
 
 
             Rect mod_update_rect = clip.intersect(this->vision_rect);

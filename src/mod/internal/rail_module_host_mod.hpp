@@ -161,11 +161,4 @@ public:
     {
         this->rail_module_host.move_size_widget(left, top, width, height);
     }
-
-    bool is_content_laid_out() override
-    {
-        mod_api& mod = this->rail_module_host.get_managed_mod();
-
-        return mod.is_content_laid_out();
-    }
 };
