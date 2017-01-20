@@ -596,11 +596,6 @@ private:
         {
             return this->mm.internal_mod->get_dim();
         }
-
-        bool is_content_laid_out() override
-        {
-            return this->mm.internal_mod->is_content_laid_out();
-        }
     };
 
 public:

@@ -7015,9 +7015,4 @@ public:
 
     Dimension get_dim() const override
     { return Dimension(this->front_width, this->front_height); }
-
-    bool is_content_laid_out() override {
-LOG(LOG_INFO, "mod_rdp::is_content_laid_out");
-        return false;
-    }
 };
