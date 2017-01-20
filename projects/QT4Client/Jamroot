@@ -45,7 +45,7 @@ project redemption_qt4_client
 
 constant EXE_DEPENDENCIES :
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
-    <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
+    <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)$(MAIN_PATH)\"'
     <define>MAIN_PATH='\"$(MAIN_PATH)\"'
 ;
 
