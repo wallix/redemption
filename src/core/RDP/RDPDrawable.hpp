@@ -143,6 +143,16 @@ private:
     }
     Color u32rgb_to_color(gdi::ColorCtx color_ctx, RDPColor color) const {
         return this->u32rgb_to_color(color_ctx, color.as_bgr().to_u32());
+//         using gdi::Depth;
+//
+//         switch (color_ctx.depth()){
+//             // TODO color_ctx.palette()
+//             case Depth::depth8():  return this->drawable.u32_to_color(decode_color8()(color, this->mod_palette_rgb).to_u32());
+//             case Depth::depth15(): return this->drawable.u32_to_color(decode_color15()(color).to_u32());
+//             case Depth::depth16(): return this->drawable.u32_to_color(decode_color16()(color).to_u32());
+//             case Depth::depth24(): return this->drawable.u32_to_color(decode_color24()(color).to_u32());
+//             case Depth::unspecified(): default: REDASSERT(false); return Color{0, 0, 0};
+//         }
     }
 
     std::pair<Color, Color> u32rgb_to_color(gdi::ColorCtx color_ctx, BGRColor color1, BGRColor color2) const {
@@ -170,6 +180,38 @@ private:
     }
     std::pair<Color, Color> u32rgb_to_color(gdi::ColorCtx color_ctx, RDPColor color1, RDPColor color2) const {
         return this->u32rgb_to_color(color_ctx, color1.as_bgr().to_u32(), color2.as_bgr().to_u32());
+//         using gdi::Depth;
+//         using P = std::pair<Color, Color>;
+//
+//         switch (color_ctx.depth()){
+//             case Depth::depth8():
+//                 // TODO color_ctx.palette()
+//                 return P{
+//                     this->drawable.u32_to_color(decode_color8()(color1, this->mod_palette_rgb).to_u32()),
+//                     this->drawable.u32_to_color(decode_color8()(color2, this->mod_palette_rgb).to_u32())
+//                 };
+//             case Depth::depth15():
+//                 return P{
+//                     this->drawable.u32_to_color(decode_color15()(color1).to_u32()),
+//                     this->drawable.u32_to_color(decode_color15()(color2).to_u32())
+//                 };
+//                 break;
+//             case Depth::depth16():
+//                 return P{
+//                     this->drawable.u32_to_color(decode_color16()(color1).to_u32()),
+//                     this->drawable.u32_to_color(decode_color16()(color2).to_u32())
+//                 };
+//                 break;
+//             case Depth::depth24():
+//                 return P{
+//                     this->drawable.u32_to_color(decode_color24()(color1).to_u32()),
+//                     this->drawable.u32_to_color(decode_color24()(color2).to_u32())
+//                 };
+//                 break;
+//             case Depth::unspecified(): default:
+//                 REDASSERT(false);
+//                 return P{Color{0, 0, 0}, Color{0, 0, 0}};
+//         }
     }
 
 public:

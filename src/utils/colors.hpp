@@ -215,15 +215,19 @@ struct RDPColor
     : color_(color)
     {}
 
+    constexpr RDPColor(BGRColor_ color) noexcept
+    : color_(color.to_u32())
+    {}
+
     constexpr BGRColor_ as_bgr() const noexcept { return BGRColor_(this->color_); }
 
-//     constexpr static RDPColor from(uint32_t c) noexcept
-//     { return RDPColor(nullptr, c); }
+    constexpr static RDPColor from(uint32_t c) noexcept
+    { return RDPColor(nullptr, c); }
 
 private:
-//     constexpr RDPColor(std::nullptr_t, uint32_t c) noexcept
-//     : color_(c)
-//     {}
+    constexpr RDPColor(std::nullptr_t, uint32_t c) noexcept
+    : color_(c)
+    {}
 
     uint32_t color_;
 };
@@ -295,17 +299,35 @@ struct decode_color8 {
     RGBColor operator()(BGRColor c, BGRPalette const & palette) const noexcept {
         return palette[static_cast<uint8_t>(c)];
     }
+
+    constexpr decode_color8() noexcept {}
+
+    constexpr BGRColor_ operator()(RDPColor c, BGRPalette const & palette) const noexcept {
+        // assert(c.as_bgr().to_u32() <= 255);
+        return BGRColor_(palette[static_cast<uint8_t>(c.as_bgr().to_u32())]);
+    }
 };
 
 struct decode_color15 {
     static constexpr const uint8_t bpp = 15;
 
     RGBColor operator()(BGRColor c) const noexcept {
-        // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 b1 b2 b3 b4 b5
+        // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
         const BGRColor r = ((c >> 7) & 0xf8) | ((c >> 12) & 0x7); // r1 r2 r3 r4 r5 r1 r2 r3
         const BGRColor g = ((c >> 2) & 0xf8) | ((c >>  7) & 0x7); // g1 g2 g3 g4 g5 g1 g2 g3
         const BGRColor b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
         return (r << 16) | (g << 8) | b;
+    }
+
+    constexpr decode_color15() noexcept {}
+
+    constexpr BGRColor_ operator()(RDPColor c) const noexcept {
+        // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
+        return BGRColor_(
+            ((c.as_bgr().to_u32() >> 7) & 0xf8) | ((c.as_bgr().to_u32() >> 12) & 0x7), // b1 b2 b3 b4 b5 b1 b2 b3
+            ((c.as_bgr().to_u32() >> 2) & 0xf8) | ((c.as_bgr().to_u32() >>  7) & 0x7), // g1 g2 g3 g4 g5 g1 g2 g3
+            ((c.as_bgr().to_u32() << 3) & 0xf8) | ((c.as_bgr().to_u32() >>  2) & 0x7)  // r1 r2 r3 r4 r5 r1 r2 r3
+        );
     }
 };
 
@@ -313,11 +335,22 @@ struct decode_color16 {
     static constexpr const uint8_t bpp = 16;
 
     RGBColor operator()(BGRColor c) const noexcept {
-        // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 g6 b1 b2 b3 b4 b5
+        // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
         const BGRColor r = ((c >> 8) & 0xf8) | ((c >> 13) & 0x7); // r1 r2 r3 r4 r5 r6 r7 r8
         const BGRColor g = ((c >> 3) & 0xfc) | ((c >>  9) & 0x3); // g1 g2 g3 g4 g5 g6 g1 g2
         const BGRColor b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
         return (r << 16) | (g << 8) | b;
+    }
+
+    constexpr decode_color16() noexcept {}
+
+    constexpr BGRColor_ operator()(RDPColor c) const noexcept {
+        // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
+        return BGRColor_(
+            ((c.as_bgr().to_u32() >> 8) & 0xf8) | ((c.as_bgr().to_u32() >> 13) & 0x7), // b1 b2 b3 b4 b5 b1 b2 b3
+            ((c.as_bgr().to_u32() >> 3) & 0xfc) | ((c.as_bgr().to_u32() >>  9) & 0x3), // g1 g2 g3 g4 g5 g6 g1 g2
+            ((c.as_bgr().to_u32() << 3) & 0xf8) | ((c.as_bgr().to_u32() >>  2) & 0x7)  // r1 r2 r3 r4 r5 r6 r7 r8
+        );
     }
 };
 
@@ -326,6 +359,12 @@ struct decode_color24 {
 
     RGBColor operator()(BGRColor c) const noexcept {
         return c & 0xFFFFFF;
+    }
+
+    constexpr decode_color24() noexcept {}
+
+    constexpr BGRColor_ operator()(RDPColor c) const noexcept {
+        return c.as_bgr();
     }
 };
 
@@ -450,6 +489,17 @@ struct encode_color8 {
         //  | ((((c >> 8) & 0xFF) >> 2) & 0x38)
         //  | (((c >> 16  & 0xFF) >> 5) & 0x03);
     }
+
+    constexpr encode_color8() noexcept {}
+
+    constexpr RDPColor operator()(BGRColor_ c) const noexcept {
+        // bbbgggrr
+        return RDPColor::from(
+            ((c.to_u32() >> 16) & 0xE0)
+          | ((c.to_u32() >> 11) & 0x1C)
+          | ((c.to_u32() >> 6 ) & 0x03)
+        );
+    }
 };
 
 struct encode_color15 {
@@ -464,6 +514,21 @@ struct encode_color15 {
           | ((((c >>  8) & 0xFF) << 2) & 0x03E0)
             // r1 r2 r3 r4 r5 r6 r7 r8 --> 0 0 0 0 0 0 0 0 0 0 0 r1 r2 r3 r4 r5
           |  (((c >> 16) & 0xFF) >> 3);
+    }
+
+    constexpr encode_color15() noexcept {}
+
+    // bgr555
+    RDPColor operator()(BGRColor_ c) const noexcept {
+        // 0 b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
+        return RDPColor::from(
+            // b1 b2 b3 b4 b5 b6 b7 b8 --> b1 b2 b3 b4 b5 0 0 0 0 0 0 0 0 0 0 0
+            ((c.to_u32() >> 9) & 0xF800)
+            // g1 g2 g3 g4 g5 g6 g7 g8 --> 0 0 0 0 0 g1 g2 g3 g4 g5 g6 0 0 0 0 0
+          | ((c.to_u32() >> 6) & 0x03E0)
+            // r1 r2 r3 r4 r5 r6 r7 r8 --> 0 0 0 0 0 0 0 0 0 0 0 r1 r2 r3 r4 r5
+          | ((c.to_u32() >> 3) & 0x1F)
+        );
     }
 };
 
@@ -480,6 +545,21 @@ struct encode_color16 {
             // r1 r2 r3 r4 r5 r6 r7 r8 --> 0 0 0 0 0 0 0 0 0 0 0 r1 r2 r3 r4 r5
           |  (((c >> 16) & 0xFF) >> 3);
     }
+
+    constexpr encode_color16() noexcept {}
+
+    // bgr565
+    RDPColor operator()(BGRColor_ c) const noexcept {
+        // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
+        return RDPColor::from(
+            // b1 b2 b3 b4 b5 b6 b7 b8 --> b1 b2 b3 b4 b5 0 0 0 0 0 0 0 0 0 0 0
+            ((c.to_u32() >> 8) & 0x7C00)
+            // g1 g2 g3 g4 g5 g6 g7 g8 --> 0 0 0 0 0 g1 g2 g3 g4 g5 g6 0 0 0 0 0
+          | ((c.to_u32() >> 5) & 0x07E0)
+            // r1 r2 r3 r4 r5 r6 r7 r8 --> 0 0 0 0 0 0 0 0 0 0 0 r1 r2 r3 r4 r5
+          | ((c.to_u32() >> 3) & 0x1F)
+        );
+    }
 };
 
 struct encode_color24 {
@@ -487,6 +567,12 @@ struct encode_color24 {
 
     RGBColor operator()(BGRColor c) const noexcept {
         return c;
+    }
+
+    constexpr encode_color24() noexcept {}
+
+    RDPColor operator()(BGRColor_ c) const noexcept {
+        return RDPColor(c);
     }
 };
 
