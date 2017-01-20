@@ -172,10 +172,10 @@ class RDPLineTo {
             unsigned(this->back_mode),
             this->startx, this->starty, this->endx, this->endy,
             this->rop2,
-            this->back_color.to_u32(),
+            this->back_color.as_bgr().to_u32(),
             this->pen.style,
             this->pen.width,
-            this->pen.color.to_u32()
+            this->pen.color.as_bgr().to_u32()
             );
         if (lg >= sz){
             return sz;

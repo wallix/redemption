@@ -142,7 +142,7 @@ class RDPOpaqueRect {
             buffer+lg,
             sz-lg,
             "opaquerect(rect(%d,%d,%d,%d) color=0x%.6x)",
-            this->rect.x, this->rect.y, this->rect.cx, this->rect.cy, this->color.to_u32());
+            this->rect.x, this->rect.y, this->rect.cx, this->rect.cy, this->color.as_bgr().to_u32());
         if (lg >= sz){
             return sz;
         }

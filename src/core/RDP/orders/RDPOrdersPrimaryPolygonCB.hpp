@@ -436,7 +436,7 @@ public:
                        "brush.style=%d brush.hatch=%d "
                        "NumDeltaEntries=%d DeltaEntries=(",
                        this->xStart, this->yStart, unsigned(this->bRop2), this->fillMode,
-                       this->backColor.to_u32(), this->foreColor.to_u32(),
+                       this->backColor.as_bgr().to_u32(), this->foreColor.as_bgr().to_u32(),
                        this->brush.org_x, this->brush.org_y,
                        this->brush.style, this->brush.hatch,
                        this->NumDeltaEntries);

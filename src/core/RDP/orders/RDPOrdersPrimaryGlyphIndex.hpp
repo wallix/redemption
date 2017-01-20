@@ -524,8 +524,8 @@ public:
                       , this->fl_accel
                       , this->ui_charinc
                       , this->f_op_redundant
-                      , this->back_color.to_u32()
-                      , this->fore_color.to_u32()
+                      , this->back_color.as_bgr().to_u32()
+                      , this->fore_color.as_bgr().to_u32()
                       , this->bk.x, this->bk.y, this->bk.cx, this->bk.cy
                       , this->op.x, this->op.y, this->op.cx, this->op.cy
                       , this->brush.org_x, this->brush.org_y, this->brush.style, this->brush.hatch

@@ -268,7 +268,7 @@ public:
                        "brush.org_x=%d brush.org_y=%d "
                        "brush.style=%d brush.hatch=%d)",
                        this->el.left(), this->el.top(), this->el.right(), this->el.bottom(),
-                       unsigned(this->brop2), this->fill_mode, this->back_color.to_u32(), this->fore_color.to_u32(),
+                       unsigned(this->brop2), this->fill_mode, this->back_color.as_bgr().to_u32(), this->fore_color.as_bgr().to_u32(),
                        this->brush.org_x, this->brush.org_y,
                        this->brush.style, this->brush.hatch);
         if (lg >= sz) {

@@ -215,8 +215,6 @@ struct RDPColor
     : color_(color)
     {}
 
-    constexpr uint32_t to_u32() const noexcept { return this->color_; }
-
     constexpr BGRColor_ as_bgr() const noexcept { return BGRColor_(this->color_); }
 
 //     constexpr static RDPColor from(uint32_t c) noexcept
@@ -230,14 +228,16 @@ private:
     uint32_t color_;
 };
 
-constexpr bool operator == (RDPColor const & lhs, RDPColor const & rhs) { return lhs.to_u32() == rhs.to_u32(); }
-constexpr bool operator != (RDPColor const & lhs, RDPColor const & rhs) { return !(lhs == rhs); }
+constexpr bool operator == (RDPColor const & lhs, RDPColor const & rhs)
+{ return lhs.as_bgr().to_u32() == rhs.as_bgr().to_u32(); }
+constexpr bool operator != (RDPColor const & lhs, RDPColor const & rhs)
+{ return !(lhs == rhs); }
 
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & out, RDPColor const & c)
-{ return out << c.to_u32(); }
+{ return out << c.as_bgr().to_u32(); }
 
-constexpr uint32_t log_value(RDPColor const & c) noexcept { return c.to_u32(); }
+constexpr uint32_t log_value(RDPColor const & c) noexcept { return c.as_bgr().to_u32(); }
 
 
 inline unsigned color_from_cstr(const char * str) {

@@ -378,7 +378,7 @@ public:
             "polygonsc(xStart=%d yStart=%d bRop2=0x%02X fillMode=%d BrushColor=%.6x "
                 "NumDeltaEntries=%d DeltaEntries=(",
             this->xStart, this->yStart, unsigned(this->bRop2),
-            this->fillMode, this->BrushColor.to_u32(), this->NumDeltaEntries);
+            this->fillMode, this->BrushColor.as_bgr().to_u32(), this->NumDeltaEntries);
         for (uint8_t i = 0; i < this->NumDeltaEntries; i++) {
             if (i) {
                 lg += snprintf(buffer + lg, sz - lg, " ");

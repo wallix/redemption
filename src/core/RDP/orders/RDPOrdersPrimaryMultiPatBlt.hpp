@@ -383,7 +383,7 @@ public:
                         "nDeltaEntries=%d "
                         "CodedDeltaList=("
                       , this->rect.x, this->rect.y, this->rect.cx, this->rect.cy, unsigned(this->bRop)
-                      , this->BackColor.to_u32(), this->ForeColor.to_u32()
+                      , this->BackColor.as_bgr().to_u32(), this->ForeColor.as_bgr().to_u32()
                       , this->brush.org_x, this->brush.org_y
                       , unsigned(this->brush.style), unsigned(this->brush.hatch)
                       , unsigned(this->brush.extra[0]), unsigned(this->brush.extra[1])
