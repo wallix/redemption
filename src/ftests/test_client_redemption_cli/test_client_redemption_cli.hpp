@@ -79,42 +79,6 @@
 #pragma GCC diagnostic pop
 
 
-struct ModRDPParamsConfig
-{
-    bool * param;
-    const bool default_value;
-    const std::string cmd;
-    const std::string descrpt;
-    const std::string name;
-
-    ModRDPParamsConfig( bool * param
-                      , bool default_value
-                      , std::string cmd
-                      , std::string descrpt
-                      , std::string name
-                      )
-    : param(param)
-    , default_value(default_value)
-    , cmd(cmd)
-    , descrpt(descrpt)
-    , name(name)
-    {
-        *param = default_value;
-    }
-
-    ModRDPParamsConfig( bool * param
-                      , std::string cmd
-                      , std::string descrpt
-                      , std::string name
-                      )
-    : param(param)
-    , default_value(false)
-    , cmd(cmd)
-    , descrpt(descrpt)
-    , name(name)
-    {}
-};
-
 
 
 

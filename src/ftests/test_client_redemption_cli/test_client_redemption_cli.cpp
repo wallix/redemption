@@ -783,17 +783,16 @@ int main(int argc, char** argv){
 
 
 
-//     if (verbose & TestClientCLI::SHOW_MOD_RDP_PARAMS) {
-//         std::cout << " ================================" << "\n";
-//         std::cout << " ======= ModRDP Parameters ======" << "\n";
-//         std::cout << " ================================" << "\n";
+    if (verbose & TestClientCLI::SHOW_MOD_RDP_PARAMS) {
+        std::cout << " ================================" << "\n";
+        std::cout << " ======= ModRDP Parameters ======" << "\n";
+        std::cout << " ================================" << "\n";
+           std::cout << " Not yet" << "\n";
 //         for (size_t i = 0; i < nb_mod_rdp_params_config; i++ ) {
 //             std::cout << " " << mod_rdp_params_config[i].name << "=" << *(mod_rdp_params_config[i].param) << "\n";
 //         }
-//     }
-//     std::cout << "\n" << "\n";
-
-    //======================================================================
+        std::cout << "\n" << "\n";
+    } //======================================================================
 
 
 
