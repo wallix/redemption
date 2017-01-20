@@ -787,11 +787,40 @@ int main(int argc, char** argv){
         std::cout << " ================================" << "\n";
         std::cout << " ======= ModRDP Parameters ======" << "\n";
         std::cout << " ================================" << "\n";
-           std::cout << " Not yet" << "\n";
-//         for (size_t i = 0; i < nb_mod_rdp_params_config; i++ ) {
-//             std::cout << " " << mod_rdp_params_config[i].name << "=" << *(mod_rdp_params_config[i].param) << "\n";
-//         }
-        std::cout << "\n" << "\n";
+
+        std::cout << " enable_tls = " << mod_rdp_params.enable_tls << "\n";
+        std::cout << " enable_nla = " << mod_rdp_params.enable_nla << "\n";
+        std::cout << " enable_fastpath = " << mod_rdp_params.enable_fastpath << "\n";
+        std::cout << " enable_mem3blt = " << mod_rdp_params.enable_mem3blt << "\n";
+        std::cout << " enable_new_pointer = " << mod_rdp_params.enable_new_pointer << "\n";
+        std::cout << " server_redirection_support = " << mod_rdp_params.server_redirection_support << "\n";
+        std::cout << " enable_krb = " << mod_rdp_params.enable_krb << "\n";
+        std::cout << " enable_glyph_cache = " << mod_rdp_params.enable_glyph_cache << "\n";
+        std::cout << " enable_session_probe = " << mod_rdp_params.enable_session_probe << "\n";
+        std::cout << " enable_session_probe_launch_mask = t" << mod_rdp_params.enable_session_probe_launch_mask << "\n";
+        std::cout << " disable_clipboard_log_syslog = " << mod_rdp_params.disable_clipboard_log_syslog << "\n";
+        std::cout << " disable_clipboard_log_wrm = " << mod_rdp_params.disable_clipboard_log_wrm << "\n";
+        std::cout << " disable_file_system_log_syslog = " << mod_rdp_params.disable_file_system_log_syslog << "\n";
+        std::cout << " disable_file_system_log_wrm = " << mod_rdp_params.disable_file_system_log_wrm << "\n";
+        std::cout << " session_probe_use_clipboard_based_launcher = " << mod_rdp_params.session_probe_use_clipboard_based_launcher << "\n";
+        std::cout << " session_probe_start_launch_timeout_timer_only_after_logon = " << mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon << "\n";
+        std::cout << " session_probe_on_keepalive_timeout_disconnect_user = " << mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user << "\n";
+        std::cout << " session_probe_end_disconnected_session = " << mod_rdp_params.session_probe_end_disconnected_session << "\n";
+        std::cout << " session_probe_customize_executable_name = " << mod_rdp_params.session_probe_customize_executable_name << "\n";
+        std::cout << " enable_transparent_mode = " << mod_rdp_params.enable_transparent_mode << "\n";
+        std::cout << " ignore_auth_channel = " << mod_rdp_params.ignore_auth_channel << "\n";
+        std::cout << " use_client_provided_alternate_shell = " << mod_rdp_params.use_client_provided_alternate_shell << "\n";
+        std::cout << " disconnect_on_logon_user_change = " << mod_rdp_params.disconnect_on_logon_user_change << "\n";
+        std::cout << " server_cert_store = " << mod_rdp_params.server_cert_store << "\n";
+        std::cout << " hide_client_name = " << mod_rdp_params.hide_client_name << "\n";
+        std::cout << " enable_persistent_disk_bitmap_cache = t" << mod_rdp_params.enable_persistent_disk_bitmap_cache << "\n";
+        std::cout << " enable_cache_waiting_list = " << mod_rdp_params.enable_cache_waiting_list << "\n";
+        std::cout << " persist_bitmap_cache_on_disk = " << mod_rdp_params.persist_bitmap_cache_on_disk << "\n";
+        std::cout << " bogus_sc_net_size = " << mod_rdp_params.bogus_sc_net_size << "\n";
+        std::cout << " bogus_refresh_rect = " << mod_rdp_params.bogus_refresh_rect << "\n";
+        std::cout << " allow_using_multiple_monitors = " << mod_rdp_params.allow_using_multiple_monitors << "\n";
+        std::cout << " adjust_performance_flags_for_recording = " << mod_rdp_params.adjust_performance_flags_for_recording << "\n";
+        std::cout << "\n" << std::endl;
     } //======================================================================
 
 
