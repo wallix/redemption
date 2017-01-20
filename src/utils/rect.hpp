@@ -184,7 +184,6 @@ struct Rect {
         );
     }
 
-
     // Ensemblist difference
     template<class Fn>
     void difference(Rect a, Fn fn) const
@@ -266,7 +265,24 @@ struct Rect {
         return static_cast<t_region>(res);
     }
 
+private:
+    size_t str(const char* label, char* buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "%s: Rect(%d %d %u %u)",
+            label,
+            this->x, this->y, this->cx, this->cy);
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    void log(int level, const char* label) const {
+        char buffer[2048];
+        this->str(label, buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
 };
+
 struct Dimension {
     uint16_t w;
     uint16_t h;
@@ -280,7 +296,25 @@ struct Dimension {
         : w(w)
         , h(h)
     {}
+
+private:
+    size_t str(const char* label, char* buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "%s: Dimension(%u %u)",
+            label,
+            static_cast<unsigned>(this->w), static_cast<unsigned>(this->h));
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    void log(int level, const char* label) const {
+        char buffer[2048];
+        this->str(label, buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
 };
+
 struct Point {
     int x;
     int y;

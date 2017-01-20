@@ -595,7 +595,7 @@ protected:
                 ServerNotification server_access_allowed_message,
                 ServerNotification server_cert_create_message,
                 ServerNotification server_cert_success_message,
-                ServerNotification server_cert_failure_message,
+                ServerNotification server_cert_failure_message, 
                 ServerNotification server_cert_error_message,
                 RDPVerbose verbose
             )
@@ -7015,9 +7015,4 @@ public:
 
     Dimension get_dim() const override
     { return Dimension(this->front_width, this->front_height); }
-
-    bool is_content_laid_out() override {
-LOG(LOG_INFO, "mod_rdp::is_content_laid_out");
-        return false;
-    }
 };

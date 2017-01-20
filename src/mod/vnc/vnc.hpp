@@ -2820,10 +2820,5 @@ public:
 
     Dimension get_dim() const override
     { return Dimension(this->width, this->height); }
-
-    bool is_content_laid_out() override {
-LOG(LOG_INFO, "mod_vnc::is_content_laid_out");
-        return false;
-    }
 };
 
