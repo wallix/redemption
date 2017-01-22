@@ -36,6 +36,7 @@
 #include <array>
 
 #include "utils/invalid_socket.hpp"
+#include "utils/verbose_flags.hpp"
 
 #include "acl/authentifier.hpp"
 #include "core/server.hpp"
@@ -374,8 +375,9 @@ public:
                                                     , to_verbose_flags(ini.get<cfg::debug::auth>())
                                                     );
                                     // now is authentifier start time
-                                    this->acl_serial = new AclSerializer(ini, *this->auth_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
-                                    this->authentifier = new Authentifier(this->acl_serial, ini, now);
+                                    this->acl_serial = new AclSerializer(ini, now, *this->auth_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
+                                    this->authentifier = new Authentifier(Authentifier::Verbose(to_verbose_flags(this->ini.get<cfg::debug::auth>())));
+                                    this->authentifier->set_acl_serial(this->acl_serial);
                                     this->auth_event = new wait_obj();
                                     signal = BACK_EVENT_NEXT;
                                 }
@@ -385,7 +387,10 @@ public:
                             }
                         }
                         else {
-                            if (this->auth_event && this->auth_trans && (INVALID_SOCKET != this->auth_trans->sck) && this->auth_event->is_set(this->auth_trans->sck, rfds)) {
+                            if (this->auth_event 
+                            && this->auth_trans 
+                            && (INVALID_SOCKET != this->auth_trans->sck) 
+                            && this->auth_event->is_set(this->auth_trans->sck, rfds)) {
                                 // authentifier received updated values
                                 this->authentifier->receive();
                             }
@@ -420,7 +425,7 @@ public:
                         }
 
                         if (this->authentifier) {
-                            run_session = this->authentifier->check(mm, now, signal, front_signal, this->front->has_user_activity, this->ini);
+                            run_session = this->authentifier->check(mm, now, signal, front_signal, this->front->has_user_activity);
                         }
                         else if (signal == BACK_EVENT_STOP) {
                             mm.mod->get_event().reset();

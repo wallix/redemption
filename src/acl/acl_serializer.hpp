@@ -37,16 +37,172 @@
 #include "utils/get_printable_password.hpp"
 #include "utils/verbose_flags.hpp"
 
+
+class KeepAlive {
+    // Keep alive Variables
+    int  grace_delay;
+    long timeout;
+    long renew_time;
+    bool wait_answer;     // true when we are waiting for a positive response
+                          // false when positive response has been received and
+                          // timers have been set to new timers.
+    bool connected;
+
+public:
+    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    {
+        none,
+        state = 0x10,
+    };
+
+    KeepAlive(std::chrono::seconds grace_delay_, Verbose verbose)
+        : grace_delay(grace_delay_.count())
+        , timeout(0)
+        , renew_time(0)
+        , wait_answer(false)
+        , connected(false)
+        , verbose(verbose)
+    {
+        if (this->verbose & Verbose::state) {
+            LOG(LOG_INFO, "KEEP ALIVE CONSTRUCTOR");
+        }
+    }
+
+    ~KeepAlive() {
+        if (this->verbose & Verbose::state) {
+            LOG(LOG_INFO, "KEEP ALIVE DESTRUCTOR");
+        }
+    }
+
+    bool is_started() {
+        return this->connected;
+    }
+
+    void start(time_t now) {
+        this->connected = true;
+        if (this->verbose & Verbose::state) {
+            LOG(LOG_INFO, "auth::start_keep_alive");
+        }
+        this->timeout    = now + 2 * this->grace_delay;
+        this->renew_time = now + this->grace_delay;
+    }
+
+    void stop() {
+        this->connected = false;
+    }
+
+    bool check(time_t now, Inifile & ini) {
+        if (this->connected) {
+            // LOG(LOG_INFO, "now=%u timeout=%u  renew_time=%u wait_answer=%s grace_delay=%u", now, this->timeout, this->renew_time, this->wait_answer?"Y":"N", this->grace_delay);
+            // Keep alive timeout
+            if (now > this->timeout) {
+                LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
+                // mm.invoke_close_box("Missed keepalive from ACL", signal, now);
+                return true;
+            }
+
+            // LOG(LOG_INFO, "keepalive state ask=%s bool=%s\n",
+            //     ini.is_asked<cfg::context::keepalive>()?"Y":"N",
+            //     ini.get<cfg::context::keepalive>()?"Y":"N");
+
+            // Keepalive received positive response
+            if (this->wait_answer
+                && !ini.is_asked<cfg::context::keepalive>()
+                && ini.get<cfg::context::keepalive>()) {
+                if (this->verbose & Verbose::state) {
+                    LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
+                }
+                this->timeout    = now + 2*this->grace_delay;
+                this->renew_time = now + this->grace_delay;
+                this->wait_answer = false;
+            }
+
+            // Keep alive asking for an answer from ACL
+            if (!this->wait_answer
+                && (now > this->renew_time)) {
+
+                this->wait_answer = true;
+
+                ini.ask<cfg::context::keepalive>();
+            }
+        }
+        return false;
+    }
+};
+
+class Inactivity {
+    // Inactivity management
+    // let t be the timeout of the blocking select in session loop,
+    // the effective inactivity timeout detection will be between
+    // inactivity_timeout and inactivity_timeout + t.
+    // hence we should have t << inactivity_timeout.
+    time_t inactivity_timeout;
+    time_t last_activity_time;
+
+public:
+    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    {
+        none,
+        state = 0x10,
+    };
+
+    Inactivity(std::chrono::seconds timeout, time_t start, Verbose verbose)
+    : inactivity_timeout(std::max<time_t>(timeout.count(), 30))
+    , last_activity_time(start)
+    , verbose(verbose)
+    {
+        if (this->verbose & Verbose::state) {
+            LOG(LOG_INFO, "INACTIVITY CONSTRUCTOR");
+        }
+    }
+
+    ~Inactivity() {
+        if (this->verbose & Verbose::state) {
+            LOG(LOG_INFO, "INACTIVITY DESTRUCTOR");
+        }
+    }
+
+    bool check_user_activity(time_t now, bool & has_user_activity) {
+        if (!has_user_activity) {
+            if (now > this->last_activity_time + this->inactivity_timeout) {
+                LOG(LOG_INFO, "Session User inactivity : closing");
+                // mm.invoke_close_box("Connection closed on inactivity", signal, now);
+                return true;
+            }
+        }
+        else {
+            has_user_activity = false;
+            this->last_activity_time = now;
+        }
+        return false;
+    }
+};
+
 class AclSerializer{
     enum {
         HEADER_SIZE = 4
     };
 
+public:
     Inifile & ini;
+    
+private:
     Transport & auth_trans;
+    
+
+    
     char session_id[256];
 
 public:
+
+    bool remote_answer;       // false initialy, set to true once response is
+                              // received from acl and asked_remote_answer is
+                              // set to false
+
+    KeepAlive keepalive;
+    
+    Inactivity inactivity;
+
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
@@ -56,10 +212,14 @@ public:
     };
 
 public:
-    AclSerializer(Inifile & ini, Transport & auth_trans, Verbose verbose)
+    AclSerializer(Inifile & ini, time_t acl_start_time, Transport & auth_trans, Verbose verbose)
         : ini(ini)
         , auth_trans(auth_trans)
         , session_id{}
+        , remote_answer(false)
+        , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), to_verbose_flags(ini.get<cfg::debug::auth>()))
+        , inactivity(ini.get<cfg::globals::session_timeout>(), acl_start_time, to_verbose_flags(ini.get<cfg::debug::auth>()))
+        
         , verbose(verbose)
     {
         std::snprintf(this->session_id, sizeof(this->session_id), "%d", getpid());
@@ -79,6 +239,20 @@ public:
                       "%s/redemption/session_%s.pid", PID_PATH, this->session_id);
         unlink(session_file);
     }
+
+    void report(const char * reason, const char * message) {
+        this->ini.ask<cfg::context::keepalive>();
+        char report[1024];
+        snprintf(report, sizeof(report), "%s:%s:%s", reason,
+            this->ini.get<cfg::globals::target_device>().c_str(), message);
+        this->ini.set_acl<cfg::context::reporting>(report);
+        this->send_acl_data();
+    }
+
+    void set_auth_error_message(const char * error_message) {
+        this->ini.set<cfg::context::auth_error_message>(error_message);
+    }
+
 
 private:
     class Reader
@@ -415,4 +589,7 @@ public:
             this->ini.clear_send_index();
         }
     }
+    
+    
+    
 };

@@ -103,35 +103,36 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
     ;
 
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-    AclSerializer acl_serial(ini, acl_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
-    Authentifier sesman(&acl_serial, ini, 10010);
+    AclSerializer acl_serial(ini, 10010, acl_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
+    Authentifier sesman(Authentifier::Verbose(to_verbose_flags(0)));
+    sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;
 
     bool has_activity = true;
     // Ask next_module, send inital data to ACL
-    sesman.check(mm, 10011, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10011, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
     // Receive answer, OK to connect
     sesman.receive();
     // instanciate new mod, start keepalive (proxy ASK keepalive and should receive result in less than keepalive_grace_delay)
     has_activity = true;
-    sesman.check(mm, 10012, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10012, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
     has_activity = true;
-    sesman.check(mm, 10042, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10042, signal, front_signal,has_activity);
     // Send keepalive=ASK
     BOOST_CHECK_EQUAL(has_activity, false);
     has_activity = true;
-    sesman.check(mm, 10043, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10043, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
     has_activity = true;
-    sesman.check(mm, 10072, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10072, signal, front_signal,has_activity);
     // still connected
     BOOST_CHECK_EQUAL(mm.last_module, false);
     // If no keepalive is received after 30 seconds => disconnection
     BOOST_CHECK_EQUAL(has_activity, false);
     has_activity = true;
-    sesman.check(mm, 10073, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10073, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, true);
     BOOST_CHECK_EQUAL(mm.last_module, true);
 }
@@ -222,58 +223,59 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
     ;
 
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-    AclSerializer acl_serial(ini, acl_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
-    Authentifier sesman(&acl_serial, ini, 10010);
+    AclSerializer acl_serial(ini, 10010, acl_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
+    Authentifier sesman(Authentifier::Verbose(to_verbose_flags(0)));
+    sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;
 
     bool has_activity = true;
     CountTransport keepalivetrans;
     // Ask next_module, send inital data to ACL
-    sesman.check(mm, 10011, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10011, signal, front_signal,has_activity);
     // Receive answer, OK to connect
     sesman.receive();
     BOOST_CHECK_EQUAL(false, has_activity);
     has_activity = true;
     // instanciate new mod, start keepalive (proxy ASK keepalive and should receive result in less than keepalive_grace_delay)
-    sesman.check(mm, 10012, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10012, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(false, has_activity);
     has_activity = true;
-    sesman.check(mm, 10042, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10042, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(false, has_activity);
     has_activity = true;
     // Send keepalive=ASK
-    sesman.check(mm, 10043, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10043, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(false, has_activity);
     has_activity = true;
 
     sesman.receive();
     //  keepalive=True
-    sesman.check(mm, 10045, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10045, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(false, has_activity);
     has_activity = true;
 
     // koopalive=True => unknown var...
     sesman.receive();
-    sesman.check(mm, 10072, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10072, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(false, has_activity);
     has_activity = true;
-    sesman.check(mm, 10075, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10075, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(false, has_activity);
     has_activity = true;
     BOOST_CHECK_EQUAL(mm.last_module, false);  // still connected
 
     // Renew Keepalive time:
     // Send keepalive=ASK
-    sesman.check(mm, 10076, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10076, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(false, has_activity);
     has_activity = true;
-    sesman.check(mm, 10105, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10105, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(false, has_activity);
     has_activity = true;
     BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
 
     // Keep alive not received, disconnection
-    sesman.check(mm, 10106, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10106, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(true, has_activity);
     has_activity = true;
     BOOST_CHECK_EQUAL(mm.last_module, true);  // close box
@@ -387,84 +389,85 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
     CountTransport keepalivetrans;
-    AclSerializer acl_serial(ini, acl_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
-    Authentifier sesman(&acl_serial, ini, 10010);
+    AclSerializer acl_serial(ini, 10010, acl_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
+    Authentifier sesman(Authentifier::Verbose(to_verbose_flags(0)));
+    sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;
 
 
     bool has_activity = false;
     // Ask next_module, send inital data to ACL
-    sesman.check(mm, 10011, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10011, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
     // Receive answer, OK to connect
     sesman.receive();
 
     // instanciate new mod, start keepalive (proxy ASK keepalive and should receive result in less than keepalive_grace_delay)
-    sesman.check(mm, 10012, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10012, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
-    sesman.check(mm, 10042, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10042, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
     // Send keepalive=ASK
-    sesman.check(mm, 10043, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10043, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
 
     sesman.receive();
     //  keepalive=True
-    sesman.check(mm, 10045, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10045, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
 
     // keepalive=True
     sesman.receive();
-    sesman.check(mm, 10072, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10072, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
-    sesman.check(mm, 10075, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10075, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(mm.last_module, false);  // still connected
     BOOST_CHECK_EQUAL(has_activity, false);
 
     // Renew Keepalive time:
     // Send keepalive=ASK
-    sesman.check(mm, 10076, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10076, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
     sesman.receive();
-    sesman.check(mm, 10079, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10079, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
     BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
 
 
     // Send keepalive=ASK
-    sesman.check(mm, 10106, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10106, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
-    sesman.check(mm, 10135, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10135, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
     BOOST_CHECK_EQUAL(has_activity, false);
 
     sesman.receive();
-    sesman.check(mm, 10136, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10136, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
-    sesman.check(mm, 10165, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10165, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
 
     BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
 
 
-    sesman.check(mm, 10166, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10166, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
     sesman.receive();
-    sesman.check(mm, 10195, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10195, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
     BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
 
     sesman.receive();
-    sesman.check(mm, 10196, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10196, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
-    sesman.check(mm, 10225, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10225, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
     BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
 
     sesman.receive();
-    sesman.check(mm, 10227, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10227, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
-    sesman.check(mm, 10255, signal, front_signal, has_activity, ini);
+    sesman.check(mm, 10255, signal, front_signal,has_activity);
     BOOST_CHECK_EQUAL(has_activity, false);
     BOOST_CHECK_EQUAL(mm.last_module, true); // disconnected on inactivity
 }
