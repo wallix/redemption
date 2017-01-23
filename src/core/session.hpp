@@ -352,7 +352,7 @@ public:
                         }
 
                         // Incoming data from ACL, or opening authentifier
-                        if (!this->authentifier) {
+                        if (!this->authentifier || !this->acl_serial)) {
                             if (!mm.last_module) {
                                 // authentifier never opened or closed by me (close box)
                                 try {
@@ -376,6 +376,7 @@ public:
                                                     );
                                     // now is authentifier start time
                                     this->acl_serial = new AclSerializer(ini, now, *this->auth_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
+                                    // TODO: move creation of authentifier up
                                     this->authentifier = new Authentifier(Authentifier::Verbose(to_verbose_flags(this->ini.get<cfg::debug::auth>())));
                                     this->authentifier->set_acl_serial(this->acl_serial);
                                     this->auth_event = new wait_obj();
@@ -387,12 +388,13 @@ public:
                             }
                         }
                         else {
-                            if (this->auth_event 
+                            if (this->acl_serial
+                            && this->auth_event 
                             && this->auth_trans 
                             && (INVALID_SOCKET != this->auth_trans->sck) 
                             && this->auth_event->is_set(this->auth_trans->sck, rfds)) {
                                 // authentifier received updated values
-                                this->authentifier->receive();
+                                this->acl_serial->receive();
                             }
                         }
 //                        std::cout << "Session 1" <<  std::endl;
@@ -424,8 +426,8 @@ public:
                             }
                         }
 
-                        if (this->authentifier) {
-                            run_session = this->authentifier->check(mm, now, signal, front_signal, this->front->has_user_activity);
+                        if (this->authentifier && this->acl_serial) {
+                            run_session = this->acl_serial->check(this->authentifier, mm, now, signal, front_signal, this->front->has_user_activity);
                         }
                         else if (signal == BACK_EVENT_STOP) {
                             mm.mod->get_event().reset();

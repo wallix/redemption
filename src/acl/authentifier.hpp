@@ -68,9 +68,6 @@ public:
     }
 
 public:
-    bool check(MMApi & mm, time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity) {
-        return this->acl_serial->check(this, mm, now, signal, front_signal, has_user_activity);
-    }
 
     void receive() {
         this->acl_serial->receive();
