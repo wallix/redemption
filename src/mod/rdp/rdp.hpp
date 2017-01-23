@@ -80,6 +80,7 @@
 #include "core/channel_names.hpp"
 
 #include "core/FSCC/FileInformation.hpp"
+#include "mod/internal/client_execute.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/rail_channel.hpp"
 #include "mod/rdp/channels/rail_session_manager.hpp"
@@ -1234,7 +1235,8 @@ public:
                 std::make_unique<RemoteProgramsSessionManager>(front, *this,
                     this->lang, this->front_width, this->front_height,
                     this->font, this->theme, this->acl,
-                    session_probe_window_title, this->verbose);
+                    session_probe_window_title,
+                    mod_rdp_params.client_execute, this->verbose);
         }
     }   // mod_rdp
 

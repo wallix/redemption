@@ -195,6 +195,12 @@ private:
         return this->work_areas[0];
     }
 
+public:
+    const Rect get_window_rect() {
+        return this->window_rect;
+    }
+
+private:
     void update_rects() {
         this->title_bar_rect = this->window_rect;
         this->title_bar_rect.cy = TITLE_BAR_HEIGHT;
