@@ -300,6 +300,11 @@ public:
         return this->module_holder;
     }
 
+    const mod_api& get_managed_mod() const
+    {
+        return this->module_holder;
+    }
+
 private:
     gdi::GraphicApi& get_drawable()
     {
