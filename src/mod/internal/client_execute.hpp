@@ -1300,6 +1300,25 @@ public:
 
             this->window_rect = this->window_rect_normal;
 
+            Rect work_area_rect = this->get_current_work_area_rect();
+
+            Dimension module_dimension;
+            if (this->mod_) {
+                module_dimension = this->mod_->get_dim();
+            }
+
+            Dimension prefered_window_dimension(
+                    module_dimension.w + 2,
+                    module_dimension.h + 2 + TITLE_BAR_HEIGHT
+                );
+            if (((this->window_rect.cx != prefered_window_dimension.w) ||
+                 (this->window_rect.cy != prefered_window_dimension.h)) &&
+                (work_area_rect.cx > prefered_window_dimension.w) &&
+                (work_area_rect.cy > prefered_window_dimension.h)) {
+                this->window_rect.cx = prefered_window_dimension.w;
+                this->window_rect.cy = prefered_window_dimension.h;
+            }
+
             this->update_rects();
 
             {

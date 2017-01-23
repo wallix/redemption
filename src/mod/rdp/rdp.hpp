@@ -595,7 +595,7 @@ protected:
                 ServerNotification server_access_allowed_message,
                 ServerNotification server_cert_create_message,
                 ServerNotification server_cert_success_message,
-                ServerNotification server_cert_failure_message, 
+                ServerNotification server_cert_failure_message,
                 ServerNotification server_cert_error_message,
                 RDPVerbose verbose
             )
@@ -1703,7 +1703,9 @@ private:
             this->acl->disconnect_target();
             this->acl->set_auth_error_message(TR("session_logoff_in_progress", this->lang));
 
-            session_probe_virtual_channel_p->get_event()->signal = BACK_EVENT_NEXT;
+            if (session_probe_virtual_channel_p) {
+                session_probe_virtual_channel_p->get_event()->signal = BACK_EVENT_NEXT;
+            }
         }
     }
 
