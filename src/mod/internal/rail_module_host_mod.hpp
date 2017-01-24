@@ -98,10 +98,6 @@ public:
                             long param4, Keymap2 * keymap) override {
         LocallyIntegrableMod::rdp_input_scancode(param1, param2, param3,
             param4, keymap);
-
-        mod_api& mod = this->rail_module_host.get_managed_mod();
-
-        mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 
     void rdp_input_up_and_running() override {

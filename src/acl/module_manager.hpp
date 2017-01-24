@@ -770,7 +770,7 @@ private:
     }
 
 public:
-    void new_mod(int target_module, time_t now, auth_api * acl) override {
+    void new_mod(int target_module, time_t now, auth_api * authentifier) override {
         LOG(LOG_INFO, "----------> ACL new_mod <--------");
         LOG(LOG_INFO, "target_module=%s(%d)", get_module_name(target_module), target_module);
         this->connected = false;
@@ -1107,9 +1107,7 @@ public:
                 in_addr s4_sin_addr;
                 int status = resolve_ipv4_address(ip, s4_sin_addr);
                 if (status){
-                    if (acl) {
-                        acl->log4(false, "CONNECTION_FAILED");
-                    }
+                    authentifier->log4(false, "CONNECTION_FAILED");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     // TODO: actually this is DNS Failure or invalid address
@@ -1121,9 +1119,7 @@ public:
                 int client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 4, 1000);
 
                 if (client_sck == -1){
-                    if (acl) {
-                        acl->log4(false, "CONNECTION_FAILED");
-                    }
+                    authentifier->log4(false, "CONNECTION_FAILED");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
@@ -1145,6 +1141,7 @@ public:
                     this->ini.get<cfg::context::opt_width>(),
                     this->ini.get<cfg::context::opt_height>(),
                     this->ini.get<cfg::context::opt_bpp>()
+                    // TODO: shouldn't alls mods have access to sesman authentifier ?
                 ));
 
                 this->ini.get_ref<cfg::context::auth_error_message>().clear();
@@ -1176,9 +1173,7 @@ public:
                 in_addr s4_sin_addr;
                 int status = resolve_ipv4_address(ip, s4_sin_addr);
                 if (status){
-                    if (acl) {
-                        acl->log4(false, "CONNECTION_FAILED");
-                    }
+                    authentifier->log4(false, "CONNECTION_FAILED");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     // TODO: actually this is DNS Failure or invalid address
@@ -1190,9 +1185,7 @@ public:
                 int client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
 
                 if (client_sck == -1) {
-                    if (acl) {
-                        acl->log4(false, "CONNECTION_FAILED");
-                    }
+                    authentifier->log4(false, "CONNECTION_FAILED");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
@@ -1269,7 +1262,6 @@ public:
                 mod_rdp_params.disable_clipboard_log_wrm           = bool(this->ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm);
                 mod_rdp_params.disable_file_system_log_syslog      = bool(this->ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::syslog);
                 mod_rdp_params.disable_file_system_log_wrm         = bool(this->ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm);
-                mod_rdp_params.acl                                 = acl;
                 mod_rdp_params.outbound_connection_monitoring_rules=
                     this->ini.get<cfg::context::outbound_connection_monitoring_rules>().c_str();
                 mod_rdp_params.process_monitoring_rules            =
@@ -1333,7 +1325,8 @@ public:
 
                 mod_rdp_params.remote_program                      = (client_info.remote_program &&
                                                                       (mod_rdp_params.target_application &&
-                                                                       (*mod_rdp_params.target_application)));
+                                                                       (*mod_rdp_params.target_application)) &&
+                                                                      this->ini.get<cfg::mod_rdp::use_native_remoteapp_capability>());
 
                 try {
                     const char * const name = "RDP Target";
@@ -1347,7 +1340,8 @@ public:
 
                     if (this->front.client_info.remote_program &&
                         (!mod_rdp_params.target_application ||
-                         !(*mod_rdp_params.target_application))) {
+                         !(*mod_rdp_params.target_application) ||
+                         !this->ini.get<cfg::mod_rdp::use_native_remoteapp_capability>())) {
                         client_info.width  = adjusted_client_execute_rect.cx / 4 * 4;
                         client_info.height = adjusted_client_execute_rect.cy;
 
@@ -1367,7 +1361,8 @@ public:
                                 ini.get_ref<cfg::mod_rdp::redir_info>(),
                                 this->gen,
                                 this->timeobj,
-                                mod_rdp_params
+                                mod_rdp_params,
+                                authentifier
                             );
 
                     windowing_api* winapi = new_mod->get_windowing_api();
@@ -1376,7 +1371,8 @@ public:
 
                     if (this->front.client_info.remote_program &&
                         (!mod_rdp_params.target_application ||
-                         !(*mod_rdp_params.target_application))) {
+                         !(*mod_rdp_params.target_application) ||
+                         !this->ini.get<cfg::mod_rdp::use_native_remoteapp_capability>())) {
                         LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
 
                         this->set_mod(
@@ -1400,9 +1396,7 @@ public:
                     }
                 }
                 catch (...) {
-                    if (acl) {
-                        acl->log4(false, "SESSION_CREATION_FAILED");
-                    }
+                    authentifier->log4(false, "SESSION_CREATION_FAILED");
 
                     throw;
                 }
@@ -1430,9 +1424,7 @@ public:
                 in_addr s4_sin_addr;
                 int status = resolve_ipv4_address(ip, s4_sin_addr);
                 if (status){
-                    if (acl) {
-                        acl->log4(false, "CONNECTION_FAILED");
-                    }
+                    authentifier->log4(false, "CONNECTION_FAILED");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     // TODO: actually this is DNS Failure or invalid address
@@ -1444,9 +1436,7 @@ public:
                 int client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
 
                 if (client_sck == -1) {
-                    if (acl) {
-                        acl->log4(false, "CONNECTION_FAILED");
-                    }
+                    authentifier->log4(false, "CONNECTION_FAILED");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
@@ -1486,7 +1476,7 @@ public:
                                         ? mod_vnc::ClipboardEncodingType::UTF8
                                         : mod_vnc::ClipboardEncodingType::Latin1,
                                     this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
-                                    acl,
+                                    authentifier,
                                     this->ini.get<cfg::debug::mod_vnc>()
                                 )
                         );
@@ -1518,9 +1508,7 @@ public:
                     }
                 }
                 catch (...) {
-                    if (acl) {
-                        acl->log4(false, "SESSION_CREATION_FAILED");
-                    }
+                    authentifier->log4(false, "SESSION_CREATION_FAILED");
 
                     throw;
                 }

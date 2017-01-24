@@ -81,7 +81,7 @@ struct ModRDPParams {
 
     int key_flags;
 
-    auth_api * acl = nullptr;
+//    auth_api * acl = nullptr;
 
     const char * outbound_connection_monitoring_rules = "";
     const char * process_monitoring_rules           = "";
@@ -229,8 +229,6 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    transparent_recorder_transport);
 
         RDP_PARAMS_LOG("%d",     RDP_PARAMS_LOG_GET,    key_flags);
-
-        RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    acl);
 
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             outbound_connection_monitoring_rules);
 

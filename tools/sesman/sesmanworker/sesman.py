@@ -1758,7 +1758,8 @@ class Sesman():
     def fetch_connectionpolicy(self, conn_opts):
         cp_spec = {
             'rdp': {
-                u'use_client_provided_alternate_shell': 'use_client_provided_alternate_shell'
+                u'use_client_provided_alternate_shell': 'use_client_provided_alternate_shell',
+                u'use_native_remoteapp_capability': 'use_native_remoteapp_capability'
                 },
             'session_probe': {
                 u'session_probe' : 'enable_session_probe',

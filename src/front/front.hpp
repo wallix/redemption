@@ -724,6 +724,7 @@ public:
           , Random & gen
           , Inifile & ini
           , CryptoContext & cctx
+          , auth_api * authentifier
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
           , time_t now
@@ -756,7 +757,7 @@ public:
     , server_capabilities_filename(server_capabilities_filename)
     , persistent_key_list_transport(persistent_key_list_transport)
     , mppc_enc(nullptr)
-    , authentifier(nullptr)
+    , authentifier(authentifier)
     , auth_info_sent(false)
     , timeout(now, this->ini.get<cfg::globals::handshake_timeout>().count())
     {
@@ -896,7 +897,7 @@ public:
                         CaptureState original_capture_state = this->capture_state;
 
                         this->must_be_stop_capture();
-                        this->can_be_start_capture(this->authentifier);
+                        this->can_be_start_capture();
 
                         this->capture_state = original_capture_state;
                     }
@@ -943,7 +944,7 @@ public:
     }
 
     // ===========================================================================
-    bool can_be_start_capture(auth_api * authentifier) override
+    bool can_be_start_capture() override
     {
         LOG(LOG_INFO, "Starting Capture");
         // Recording is enabled.
@@ -1010,26 +1011,23 @@ public:
 
         WrmParams wrm_params = {};
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-        const char * record_path = authentifier ? ini.get<cfg::video::record_path>().c_str() : record_tmp_path;
+        const char * record_path = ini.get<cfg::video::record_path>().c_str();
         const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
 
         bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
         bool capture_png = bool(capture_flags & CaptureFlags::png)
-                        && (!authentifier || png_params.png_limit > 0);
-        bool capture_pattern_checker = authentifier
-            && (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+                        && (png_params.png_limit > 0);
+        bool capture_pattern_checker = (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
                 || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
 
         bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
         bool capture_flv = bool(capture_flags & CaptureFlags::flv);
         bool capture_flv_full = full_video;
         bool capture_meta = capture_ocr;
-        bool capture_kbd = authentifier
-          ? !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
+        bool capture_kbd = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
           || ini.get<cfg::session_log::enable_session_log>()
           || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
           || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
-          : false
         ;
 
         OcrParams ocr_params = {
@@ -1058,17 +1056,15 @@ public:
         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
         const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
 
-        if (authentifier) {
-            cctx.set_master_key(ini.get<cfg::crypto::key0>());
-            cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
+        cctx.set_master_key(ini.get<cfg::crypto::key0>());
+        cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
 
-            if (recursive_create_directory(record_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
-                LOG(LOG_ERR, "Failed to create directory: \"%s\"", record_path);
-            }
+        if (recursive_create_directory(record_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+            LOG(LOG_ERR, "Failed to create directory: \"%s\"", record_path);
+        }
 
-            if (recursive_create_directory(hash_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
-                LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
-            }
+        if (recursive_create_directory(hash_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+            LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
         }
 
         this->capture = new Capture(  capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
@@ -1089,7 +1085,7 @@ public:
                                     , hash_path
                                     , movie_path
                                     , flv_params
-                                    , false, authentifier
+                                    , false, this->authentifier
                                     , ini, this->cctx, this->gen
                                     , nullptr
                                     );
@@ -1105,7 +1101,7 @@ public:
 
         this->update_keyboard_input_mask_state();
 
-        this->authentifier = authentifier;
+//        this->authentifier.capture_started = true;
 
         return true;
     }
@@ -1114,7 +1110,7 @@ public:
     {
         if (this->capture) {
             LOG(LOG_INFO, "---<>   Front::stop_capture  <>---");
-            this->authentifier = nullptr;
+//            this->authentifier->capture_started = false;
             delete this->capture;
             this->capture = nullptr;
 

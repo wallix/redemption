@@ -90,29 +90,31 @@ class Session {
     SocketTransport * auth_trans   = nullptr;
     wait_obj        * auth_event   = nullptr;
     AclSerializer   * acl_serial   = nullptr;
-    Authentifier    * authentifier = nullptr;
 
           time_t   perf_last_info_collect_time;
     const pid_t    perf_pid;
           FILE   * perf_file;
 
     static const time_t select_timeout_tv_sec = 3;
+    
+    Authentifier authentifier;
 
 public:
     Session(int sck, Inifile & ini, CryptoContext & cctx, Random & rnd)
             : ini(ini)
             , perf_last_info_collect_time(0)
             , perf_pid(getpid())
-            , perf_file(nullptr) {
+            , perf_file(nullptr) 
+            , authentifier(Authentifier::Verbose(to_verbose_flags(ini.get<cfg::debug::auth>())))
+    {
         try {
+        
             TRANSLATIONCONF.set_ini(&ini);
 
             SocketTransport front_trans(
                 "RDP Client", sck, "", 0,
                 to_verbose_flags(this->ini.get<cfg::debug::front>())
             );
-            // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
-            //  here instead of inside Authentifier
 
             this->internal_state = SESSION_STATE_ENTRY;
 
@@ -121,7 +123,7 @@ public:
             time_t now = time(nullptr);
 
             this->front = new Front( front_trans, rnd
-                                   , this->ini, cctx, this->ini.get<cfg::client::fast_path>(), mem3blt_support
+                                   , this->ini, cctx, &authentifier, this->ini.get<cfg::client::fast_path>(), mem3blt_support
                                    , now);
 
             ModuleManager mm(*this->front, this->ini, rnd, this->timeobj);
@@ -151,6 +153,13 @@ public:
             const bool enable_osd = this->ini.get<cfg::globals::enable_osd>();
 
             std::vector<EventHandler> event_handlers;
+
+            // TODO: we should define some select object to wrap rfds, wfds and timeouts
+            // and hide events inside modules managing sockets (or timers)
+            // this should help in the future to generalise architecture
+            // to multiple simultaneous fronts and mods. It should also simplify
+            // module manager. Complexity of module transition should be hidden behind module
+            // managers
 
             while (run_session) {
                 unsigned max = 0;
@@ -256,7 +265,7 @@ public:
                             pause_record.check(now, *this->front);
                         }
 
-                        // new value incomming from authentifier
+                        // new value incoming from authentifier
                         if (this->ini.check_from_acl()) {
                             this->front->update_config(ini.get<cfg::video::rt_display>());
                             mm.check_module();
@@ -302,14 +311,20 @@ public:
                                     signal = BACK_EVENT_RETRY_CURRENT;
                                     mm.mod->get_event().reset();
                                 }
-                                else if (this->authentifier) {
-                                    this->authentifier->report("SESSION_PROBE_LAUNCH_FAILED", "");
+                                else if (this->acl_serial) {
+                                    this->authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
                                 }
                                 else {
                                     throw;
                                 }
                             }
                             else if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
+                                signal = BACK_EVENT_RETRY_CURRENT;
+                                mm.mod->get_event().reset();
+                            }
+                            else if (e.id == ERR_RAIL_NOT_ENABLED) {
+                                this->ini.get_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
+
                                 signal = BACK_EVENT_RETRY_CURRENT;
                                 mm.mod->get_event().reset();
                             }
@@ -336,9 +351,7 @@ public:
                                 this->ini.set_acl<cfg::context::target_host>(host);
                                 char message[768] = {};
                                 sprintf(message, "%s@%s", change_user, host);
-                                if (this->authentifier) {
-                                    this->authentifier->report("SERVER_REDIRECTION", message);
-                                }
+                                this->authentifier.report("SERVER_REDIRECTION", message);
 
                                 signal = BACK_EVENT_RETRY_CURRENT;
                                 mm.mod->get_event().reset();
@@ -352,7 +365,7 @@ public:
                         }
 
                         // Incoming data from ACL, or opening authentifier
-                        if (!this->authentifier || !this->acl_serial) {
+                        if (!this->acl_serial) {
                             if (!mm.last_module) {
                                 // authentifier never opened or closed by me (close box)
                                 try {
@@ -376,9 +389,7 @@ public:
                                                     );
                                     // now is authentifier start time
                                     this->acl_serial = new AclSerializer(ini, now, *this->auth_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
-                                    // TODO: move creation of authentifier up
-                                    this->authentifier = new Authentifier(Authentifier::Verbose(to_verbose_flags(this->ini.get<cfg::debug::auth>())));
-                                    this->authentifier->set_acl_serial(this->acl_serial);
+                                    this->authentifier.set_acl_serial(this->acl_serial);
                                     this->auth_event = new wait_obj();
                                     signal = BACK_EVENT_NEXT;
                                 }
@@ -426,8 +437,8 @@ public:
                             }
                         }
 
-                        if (this->authentifier && this->acl_serial) {
-                            run_session = this->acl_serial->check(this->authentifier, mm, now, signal, front_signal, this->front->has_user_activity);
+                        if (this->acl_serial) {
+                            run_session = this->acl_serial->check(&this->authentifier, mm, now, signal, front_signal, this->front->has_user_activity);
                         }
                         else if (signal == BACK_EVENT_STOP) {
                             mm.mod->get_event().reset();
@@ -436,9 +447,9 @@ public:
                         if (mm.last_module) {
                             delete this->auth_event;
                             this->auth_event = nullptr;
-                            delete this->authentifier;
-                            this->authentifier = nullptr;
                             delete this->acl_serial;
+                            this->authentifier.connected_to_acl = false;
+                            this->authentifier.acl_serial = nullptr;
                             this->acl_serial = nullptr;
                             delete this->auth_trans;
                             this->auth_trans = nullptr;
@@ -482,9 +493,9 @@ public:
         this->front = nullptr;
         delete this->auth_event;
         this->auth_event = nullptr;
-        delete this->authentifier;
-        this->authentifier = nullptr;
         delete this->acl_serial;
+        this->authentifier.connected_to_acl = false;
+        this->authentifier.acl_serial = nullptr;
         this->acl_serial = nullptr;
         delete this->auth_trans;
         this->auth_trans = nullptr;
