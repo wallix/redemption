@@ -36,6 +36,7 @@
 #include <string>
 #include <vector>
 #include <boost/algorithm/string.hpp>
+#include <sys/stat.h>
 
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
@@ -99,6 +100,7 @@
 #define REPLAY_PATH "/replay"
 #define KEY_SETTING_PATH "/config/keySetting.config"
 #define LOGINS_PATH "/config/logins.config"
+#define _SHARE_PATH "/share/"
 
 
 class Form_Qt;
@@ -177,6 +179,7 @@ public:
     const std::string    CB_TEMP_DIR;
     const std::string    USER_CONF_DIR;
     const std::string    REPLAY_DIR;
+    const std::string    SHARE_DIR;
     QPixmap            * _cache;
     QPixmap            * _cache_replay;
     bool                 _span;
@@ -205,6 +208,7 @@ public:
     , CB_TEMP_DIR(MAIN_DIR + std::string(CB_FILE_TEMP_PATH))
     , USER_CONF_DIR(MAIN_DIR + std::string(USER_CONF_PATH))
     , REPLAY_DIR(MAIN_DIR + std::string(REPLAY_PATH))
+    , SHARE_DIR(MAIN_DIR + std::string(_SHARE_PATH))
     , _cache(nullptr)
     , _cache_replay(nullptr)
     , _span(false)
@@ -326,11 +330,9 @@ public:
     CHANNELS::ChannelDefArray   _cl;
 
     // Clipboard Channel Management members
-    uint32_t                    _requestedFormatId = 0;
-    std::string                 _requestedFormatName;
-    bool                        _waiting_for_data;
-
-
+    uint32_t             _requestedFormatId = 0;
+    std::string          _requestedFormatName;
+    bool                 _waiting_for_data;
 
     struct ClipbrdFormatsList{
         enum : uint16_t {
@@ -392,6 +394,13 @@ public:
 
     } _cb_buffers;
 
+
+
+    // RDPDR Channel
+    std::string          current_path;
+
+
+
     struct FileSystemData {
 
         struct DeviceData {
@@ -406,12 +415,23 @@ public:
         uint16_t versionMinor = 0;
 
         bool drives_created = false;
-
         bool fileSystemCapacity[5] = { false };
-
         const size_t drivesCount = 1;
-
         DeviceData drives[2];
+
+        uint32_t next_file_id = 0;
+
+        uint32_t get_file_id() {
+            this->next_file_id++;
+            return this->next_file_id;
+        }
+
+        std::vector<bool> isFilesDirectories;
+        std::vector<std::string> paths;
+
+        int current_file_index = 0;
+
+
 
     } fileSystemData;
 

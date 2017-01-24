@@ -732,7 +732,7 @@ public:
         LOG(LOG_INFO, "          * DeviceName       = \"%s\" (8 bytes)", DeviceName);
         LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->device_data.sz));
         std::string DeviceData(reinterpret_cast<const char *>(this->device_data.p), this->device_data.sz);
-        LOG(LOG_INFO, "          * DeviceData       = \"%s\" (%d byte(s))", DeviceData, int(this->device_data.sz));
+        LOG(LOG_INFO, "          * DeviceData       = \"%s\" (%d byte(s))", DeviceData, int(2*this->device_data.sz));
     }
 };  // DeviceAnnounceHeader
 
@@ -1210,7 +1210,7 @@ public:
         LOG(LOG_INFO, "          * CreateDisposition = 0x%08x (4 bytes): %s", this->CreateDisposition_, smb2::get_CreateDisposition_name(this->CreateDisposition_));
         LOG(LOG_INFO, "          * CreateOptions     = 0x%08x (4 bytes): %s", this->CreateOptions_, smb2::get_CreateOptions_name(this->CreateOptions_));
         LOG(LOG_INFO, "          * PathLength        = %d (4 bytes)", int(this->path.size()));
-        LOG(LOG_INFO, "          * Path              = \"%s\" (%d byte(s))", this->path, int(this->path.size()));
+        LOG(LOG_INFO, "          * Path              = \"%s\" (%d byte(s))", this->path, int(2*this->path.size()));
     }
 
 };  // DeviceCreateRequest
@@ -1858,6 +1858,10 @@ public:
     uint32_t CompletionId() const { return this->CompletionId_; }
 
     uint32_t IoStatus() const { return this->IoStatus_; }
+
+    void set_IoStatus(uint32_t IoStatus) {
+        this->IoStatus_ = IoStatus;
+    }
 
     static size_t size() {
         return 12;  // DeviceId(4) + CompletionId(4) + IoStatus(4)
@@ -4175,7 +4179,7 @@ public:
         LOG(LOG_INFO, "          * InitialQuery       = 0x%02x (1 byte)", this->InitialQuery_);
         LOG(LOG_INFO, "          * PathLength         = %d (4 bytes)", int(this->path.size()));
         LOG(LOG_INFO, "          * Padding - (23 byte) NOT USED");
-        LOG(LOG_INFO, "          * path               = \"%s\" (%d byte(s))", this->path.c_str(), int(this->path.size()));
+        LOG(LOG_INFO, "          * path               = \"%s\" (%d byte(s))", this->path.c_str(), int(2*this->path.size()));
     }
 };  // ServerDriveQueryDirectoryRequest
 
@@ -4312,6 +4316,11 @@ struct ClientDriveQueryDirectoryResponse {
 //  list of these structures, refer to [MS-FSCC] section 2.4. The "File
 //  information class" table defines all the possible values for the
 //  FsInformationClass field.
+
+enum : uint32_t {
+    FILE_STANDARD_INFORMATION_SIZE = 22,
+    FILE_BASIC_INFORMATION_SIZE    = 36
+};
 
 struct ClientDriveQueryInformationResponse {
 

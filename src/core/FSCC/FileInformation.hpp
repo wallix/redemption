@@ -2340,6 +2340,7 @@ class FileStandardInformation {
     uint8_t  Directory      = 0;
 
 public:
+
     FileStandardInformation() = default;
 
     FileStandardInformation(int64_t AllocationSize, int64_t EndOfFile,

@@ -2373,7 +2373,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         break;
 
                     case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
-
                         {
                         uint16_t capa  = chunk.in_uint16_le();
                         chunk.in_skip_bytes(2);
@@ -2430,7 +2429,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 0x1,        // protocolMajorVersion
                                 0x0002,        // protocolMinorVersion -
                                             //     RDP Client 6.0 and 6.1
-                                0xFF00,     // ioCode1
+                                0xFFFF,     // ioCode1
                                 0x0,        // ioCode2
                                 0x7,        // extendedPDU -
                                             //     RDPDR_DEVICE_REMOVE_PDUS(1) |
@@ -2501,7 +2500,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         {
                         int deviceID = chunk.in_uint32_le();
                         int resultCod = chunk.in_uint32_le();
-                        this->fileSystemData.drives[deviceID - 3].status = resultCod;
+                        this->fileSystemData.drives[deviceID - 1].status = resultCod;
                         if (resultCod == 0) {
                             this->fileSystemData.drives_created = true;
                         } else {
@@ -2525,18 +2524,52 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                         , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
                         sharedHeader.emit(out_stream);
 
-                        rdpdr::DeviceIOResponse deviceIOResponse( deviceIORequest.DeviceId()
+                        uint32_t id = deviceIORequest.DeviceId();
+
+                        rdpdr::DeviceIOResponse deviceIOResponse( id
                                                                 , deviceIORequest.CompletionId()
                                                                 , 0);
-                        deviceIOResponse.emit(out_stream);
+
 
                         switch (deviceIORequest.MajorFunction()) {
 
                             case rdpdr::IRP_MJ_CREATE:
                                 LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Create Request");
                                 {
-                                rdpdr::DeviceCreateResponse deviceCreateResponse( deviceIORequest.FileId()
+                                rdpdr::DeviceCreateRequest request;
+                                request.receive(chunk);
+
+                                if (id == 0) {
+                                    id = this->fileSystemData.get_file_id();
+
+                                    this->fileSystemData.paths.push_back(this->SHARE_DIR + request.Path());
+
+                                    if (request.CreateOptions() == smb2::FILE_DIRECTORY_FILE) {
+
+                                        DIR * dir;
+                                        if ((dir = opendir (this->fileSystemData.paths[id-1].c_str())) != NULL) {
+                                            this->fileSystemData.isFilesDirectories.push_back(true);
+                                        } else {
+                                            deviceIOResponse.set_IoStatus(0xc000000f);
+                                            LOG(LOG_WARNING, "  Can't open such directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str())
+                                        }
+
+                                    } else {
+
+                                        std::ifstream file(this->fileSystemData.paths[id-1].c_str());
+                                        if (file.good()) {
+                                            this->fileSystemData.isFilesDirectories.push_back(false);
+                                        } else {
+                                            deviceIOResponse.set_IoStatus(0xc000000f);
+                                            LOG(LOG_WARNING, "  Can't open such directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str())
+                                        }
+
+                                    }
+                                }
+
+                                rdpdr::DeviceCreateResponse deviceCreateResponse( id
                                                                                 , rdpdr::FILE_SUPERSEDED);
+                                deviceIOResponse.emit(out_stream);
                                 deviceCreateResponse.emit(out_stream);
 
                                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
@@ -2561,38 +2594,64 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     case rdpdr::FileBasicInformation:
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Basic Query Information Request");
                                         {
-                                        rdpdr::ClientDriveQueryInformationResponse cdqir(36);
+
+                                        if (this->fileSystemData.isFilesDirectories[id-1]) {
+                                            DIR * dir;
+                                            if ((dir = opendir (this->fileSystemData.paths[id-1].c_str())) != NULL) {
+
+                                            } else {
+                                                deviceIOResponse.set_IoStatus(0xc000000f);
+                                                LOG(LOG_WARNING, "  Can't open such directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str());
+                                            }
+                                        } else {
+                                            std::ifstream file(this->fileSystemData.paths[id-1].c_str());
+                                            if (file.good()) {
+                                                
+                                            } else {
+                                                deviceIOResponse.set_IoStatus(0xc000000f);
+                                                LOG(LOG_WARNING, "  Can't open such directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str());
+                                            }
+                                        }
+
+                                        deviceIOResponse.emit(out_stream);
+
+                                        rdpdr::ClientDriveQueryInformationResponse cdqir(rdpdr::FILE_BASIC_INFORMATION_SIZE);
                                         cdqir.emit(out_stream);
 
                                         uint64_t time(0x1cbf8fef0787980);
                                         fscc::FileBasicInformation fileBasicInformation(time, time, time, 0,
                                                     fscc::FILE_ATTRIBUTE_DIRECTORY | fscc::FILE_ATTRIBUTE_READONLY
-                                          );
+                                        );
+
                                         fileBasicInformation.emit(out_stream);
-                                        //DIR * dir;
-                                        //int fd = ::dirfd(dir);
 
                                         int total_length(out_stream.get_offset());
                                         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
                                         this->_callback->send_to_mod_channel( channel_names::rdpdr
-                                                                            , chunk_to_send
-                                                                            , total_length
-                                                                            , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                              CHANNELS::CHANNEL_FLAG_FIRST
-                                                                            );
+                                                                        , chunk_to_send
+                                                                        , total_length
+                                                                        , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                                            CHANNELS::CHANNEL_FLAG_FIRST
+                                                                        );
                                         LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Basic Query Information Response");
+
                                         }
                                         break;
 
                                     case rdpdr::FileStandardInformation:
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Standard Information Request");
                                         {
-                                        rdpdr::ClientDriveQueryInformationResponse cdqir(22);
+                                        rdpdr::ClientDriveQueryInformationResponse cdqir(rdpdr::FILE_STANDARD_INFORMATION_SIZE);
                                         cdqir.emit(out_stream);
 
-                                        fscc::FileStandardInformation fsi(0, 0, 0, 0, 1);
-                                        fsi.emit(out_stream);
+                                        if (this->fileSystemData.isFilesDirectories[deviceIORequest.DeviceId()-1]) {
+                                            fscc::FileStandardInformation fsi(0, 0, 0, 0, 1);
+                                            fsi.emit(out_stream);
+                                        } else {
+//                                             fscc::FileStandardInformation fsi(0, 0, 0, 0, 0);
+//                                             fsi.emit(out_stream);
+                                        }
 
                                         int total_length(out_stream.get_offset());
                                         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
@@ -2616,6 +2675,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             case rdpdr::IRP_MJ_CLOSE:
                                 LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Close Request");
                                 {
+                                deviceIOResponse.emit(out_stream);
 
                                 out_stream.out_uint32_le(deviceIORequest.FileId());
                                 out_stream.out_uint8(rdpdr::FILE_SUPERSEDED);
@@ -2638,6 +2698,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Read Request");
                                 {
                                 rdpdr::DeviceReadResponse deviceReadResponse(0);
+                                deviceIOResponse.emit(out_stream);
                                 deviceReadResponse.emit(out_stream);
 
                                 int total_length(out_stream.get_offset());
@@ -2660,57 +2721,62 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                     case rdpdr::IRP_MN_QUERY_DIRECTORY:
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Directory Request");
-                                        /*{
+                                        {
+                                        rdpdr::ServerDriveQueryDirectoryRequest sdqdr;
+                                        sdqdr.receive(chunk);
 
-                                        StaticOutStream<256> out_stream;
-                                        rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
-                                                                        , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
-                                        sharedHeader.emit(out_stream);
+                                        deviceIOResponse.emit(out_stream);
 
-                                        std::string dir_name("RDP C:");
+                                        size_t Length = 0;
+
+                                        rdpdr::ClientDriveQueryDirectoryResponse cdqdr(Length);
+
+//
+//                                      std::string dir_name("RDP C:");
 
          //STATUS_NO_MORE_FILES 0x80000006
 
-                                        out_stream.out_uint32_le(94+6);
-
-                                        out_stream.out_uint32_le(94+6);
-
-                                        out_stream.out_uint64_le(0);
-                                        out_stream.out_uint64_le(0);
-                                        out_stream.out_uint64_le(0);
-                                        out_stream.out_uint64_le(0);
-
-                                        out_stream.out_uint64_le(0);
-                                        out_stream.out_uint64_le(0);
-
-                                        out_stream.out_uint32_le(fscc::FILE_ATTRIBUTE_DIRECTORY);
-                                        out_stream.out_uint32_le(6);
-                                        out_stream.out_uint32_le(0);
-
-                                        out_stream.out_uint8(6);
-                                        out_stream.out_uint8(0);
-
-                                        out_stream.out_copy_bytes(dir_name.data(), 24);
-                                        out_stream.out_copy_bytes(dir_name.data(), 6);
-
-                                        int total_length(out_stream.get_offset());
-                                        InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-
-                                        this->_callback->send_to_mod_channel( channel_names::rdpdr
-                                                                            , chunk_to_send
-                                                                            , total_length
-                                                                            , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                              CHANNELS::CHANNEL_FLAG_FIRST
-                                                                            );
+//                                         out_stream.out_uint32_le(94+6);
+//
+//                                         out_stream.out_uint32_le(94+6);
+//
+//                                         out_stream.out_uint64_le(0);
+//                                         out_stream.out_uint64_le(0);
+//                                         out_stream.out_uint64_le(0);
+//                                         out_stream.out_uint64_le(0);
+//
+//                                         out_stream.out_uint64_le(0);
+//                                         out_stream.out_uint64_le(0);
+//
+//                                         out_stream.out_uint32_le(fscc::FILE_ATTRIBUTE_DIRECTORY);
+//                                         out_stream.out_uint32_le(6);
+//                                         out_stream.out_uint32_le(0);
+//
+//                                         out_stream.out_uint8(6);
+//                                         out_stream.out_uint8(0);
+//
+//                                         out_stream.out_copy_bytes(dir_name.data(), 24);
+//                                         out_stream.out_copy_bytes(dir_name.data(), 6);
+//
+//                                         int total_length(out_stream.get_offset());
+//                                         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+//
+//                                         this->_callback->send_to_mod_channel( channel_names::rdpdr
+//                                                                             , chunk_to_send
+//                                                                             , total_length
+//                                                                             , CHANNELS::CHANNEL_FLAG_LAST  |
+//                                                                               CHANNELS::CHANNEL_FLAG_FIRST
+//                                                                             );
 
 
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query directory Response");
-                                        }*/
+                                        }
                                         break;
 
                                     case rdpdr::IRP_MN_NOTIFY_CHANGE_DIRECTORY:
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Notify Change Directory Request");
                                         {
+                                        deviceIOResponse.emit(out_stream);
 
                                         /*StaticOutStream<128> out_stream;
                                         rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
