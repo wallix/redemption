@@ -36,6 +36,8 @@
 
 class Authentifier : public auth_api {
 
+public:
+    bool connected_to_acl;
     AclSerializer * acl_serial;
 
 public:
@@ -48,7 +50,8 @@ public:
     Authentifier(const Authentifier&) = delete;
     
     Authentifier(Verbose verbose)
-        : acl_serial(nullptr)
+        : connected_to_acl(false)
+        , acl_serial(nullptr)
         , verbose(verbose)
     {
         if (this->verbose & Verbose::state) {
@@ -58,6 +61,7 @@ public:
     
     void set_acl_serial(AclSerializer * acl_serial)
     {
+        this->connected_to_acl = true;
         this->acl_serial = acl_serial;
     }
 
@@ -70,27 +74,39 @@ public:
 public:
 
     void receive() {
-        this->acl_serial->receive();
+        if (this->connected_to_acl){
+            this->acl_serial->receive();
+        }
     }
 
     void set_auth_channel_target(const char * target) override {
-        this->acl_serial->ini.set_acl<cfg::context::auth_channel_target>(target);
+        if (this->connected_to_acl){
+            this->acl_serial->ini.set_acl<cfg::context::auth_channel_target>(target);
+        }
     }
 
     void set_auth_error_message(const char * error_message) override {
-        this->acl_serial->set_auth_error_message(error_message);
+        if (this->connected_to_acl){
+            this->acl_serial->set_auth_error_message(error_message);
+        }
     }
 
     void report(const char * reason, const char * message) override {
-        this->acl_serial->report(reason, message);
+        if (this->connected_to_acl){
+            this->acl_serial->report(reason, message);
+        }
     }
 
     void disconnect_target() override {
-        this->acl_serial->ini.set_acl<cfg::context::module>(STRMODULE_CLOSE);
+        if (this->connected_to_acl){
+            this->acl_serial->ini.set_acl<cfg::context::module>(STRMODULE_CLOSE);
+        }
     }
 
     void log4(bool duplicate_with_pid, const char * type, const char * extra = nullptr) override {
-        this->acl_serial->log4(duplicate_with_pid, type, extra); 
+        if (this->connected_to_acl){
+            this->acl_serial->log4(duplicate_with_pid, type, extra);
+        }
     }
 };
 
