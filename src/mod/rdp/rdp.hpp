@@ -121,6 +121,8 @@ private:
 
     std::unique_ptr<RemoteProgramsSessionManager> remote_programs_session_manager;
 
+    bool remote_apps_not_enabled = false;
+
 protected:
     FileSystemDriveManager file_system_drive_manager;
 
@@ -3223,8 +3225,9 @@ public:
                 this->end_session_reason.clear();
                 this->end_session_message.clear();
 
-                if (!this->session_probe_virtual_channel_p 
-                ||  !this->session_probe_virtual_channel_p->is_disconnection_reconnection_required()) {
+                if ((!this->session_probe_virtual_channel_p 
+                    || !this->session_probe_virtual_channel_p->is_disconnection_reconnection_required()) 
+                 && !this->remote_apps_not_enabled) {
                     this->authentifier->disconnect_target();
                 }
                 this->authentifier->report("CLOSE_SESSION_SUCCESSFUL", "OK.");
@@ -3752,8 +3755,12 @@ public:
                     throw Error(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION);
                 }
 
-                if (this->authentifier &&
-                    (e.id != ERR_MCS_APPID_IS_MCS_DPUM))
+                if (this->remote_apps_not_enabled) {
+                    throw Error(ERR_RAIL_NOT_ENABLED);
+                }
+
+                if (this->authentifier
+                && (e.id != ERR_MCS_APPID_IS_MCS_DPUM))
                 {
                     char const* reason =
                         ((UP_AND_RUNNING == this->connection_finalization_state) ?
@@ -4084,9 +4091,9 @@ public:
 
                     if (!this->enable_transparent_mode && !this->deactivation_reactivation_in_progress) {
                         this->orders.create_cache_bitmap(
-                            120,   nbbytes(this->orders.bpp) * 16 * 16, false,
-                            120,   nbbytes(this->orders.bpp) * 32 * 32, false,
-                            2553,  nbbytes(this->orders.bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
+                            this->BmpCacheRev2_Cache_NumEntries()[0], nbbytes(this->orders.bpp) * 16 * 16, false,
+                            this->BmpCacheRev2_Cache_NumEntries()[1], nbbytes(this->orders.bpp) * 32 * 32, false,
+                            this->BmpCacheRev2_Cache_NumEntries()[2], nbbytes(this->orders.bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
                             this->enable_cache_waiting_list,
                             this->cache_verbose);
                     }
@@ -5289,6 +5296,8 @@ public:
             break;
         case ERRINFO_REMOTEAPPSNOTENABLED:
             LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "REMOTEAPPSNOTENABLED");
+
+            this->remote_apps_not_enabled = true;
             break;
         case ERRINFO_CACHECAPNOTSET:
             LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CACHECAPNOTSET");
