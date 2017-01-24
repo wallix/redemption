@@ -194,7 +194,7 @@ private:
     }
 
 public:
-    bool can_be_start_capture(auth_api*) override { return false; }
+    bool can_be_start_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
 
     void set_palette(const BGRPalette &) override {

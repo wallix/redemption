@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(Testmatch_finder)
     BOOST_REQUIRE_EQUAL(regexes.begin()[1].name, " c");
 
     struct Auth : auth_api {
-        void log4(bool duplicate_with_pid, const char* type, const char* extra) const override {
+        void log4(bool duplicate_with_pid, const char* type, const char* extra) override {
             BOOST_CHECK_EQUAL(duplicate_with_pid, false);
             BOOST_CHECK_EQUAL(type, "NOTIFY_PATTERN_DETECTED");
             BOOST_CHECK_EQUAL(extra, "pattern='$kbd:c| cacao'");

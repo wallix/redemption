@@ -318,7 +318,7 @@ public:
         return this->_running;
     }
 
-    virtual bool can_be_start_capture(auth_api *) override { return true; }
+    virtual bool can_be_start_capture() override { return true; }
     virtual bool must_be_stop_capture() override { return true; }
     virtual void begin_update() override {}
     virtual void end_update() override {}

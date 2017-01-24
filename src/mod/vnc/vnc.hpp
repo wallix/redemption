@@ -188,7 +188,7 @@ private:
 
     uint32_t clipboard_general_capability_flags = 0;
 
-    auth_api * acl;
+    auth_api * authentifier;
 
     time_t beginning;
 
@@ -212,7 +212,7 @@ public:
            , bool is_socket_transport
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
-           , auth_api * acl
+           , auth_api * authentifier
            , uint32_t verbose
            )
     //==============================================================================================================
@@ -241,7 +241,7 @@ public:
     , is_socket_transport(is_socket_transport)
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
-    , acl(acl)
+    , authentifier(authentifier)
     {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
@@ -669,9 +669,7 @@ public:
                 memset(cursor.mask, 0xff, 32 * (32 / 8));
                 this->front.set_pointer(cursor);
 
-                if (this->acl) {
-                    this->acl->log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
-                }
+                this->authentifier->log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
 
                 LOG(LOG_INFO, "VNC connection complete, connected ok\n");
                 this->front.begin_update();
@@ -680,7 +678,7 @@ public:
                 this->front.end_update();
 
                 this->state = UP_AND_RUNNING;
-                this->front.can_be_start_capture(this->acl);
+                this->front.can_be_start_capture();
                 this->update_screen(Rect(0, 0, this->width, this->height));
 
                 this->lib_open_clip_channel();
@@ -2806,16 +2804,14 @@ private:
 
 public:
     void disconnect(time_t now) override {
-        if (this->acl) {
-            double seconds = ::difftime(now, this->beginning);
+        double seconds = ::difftime(now, this->beginning);
 
-            char extra[1024];
-            snprintf(extra, sizeof(extra), "duration='%02d:%02d:%02d'",
-                (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
-                (int(seconds) % 60));
+        char extra[1024];
+        snprintf(extra, sizeof(extra), "duration='%02d:%02d:%02d'",
+            (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
+            (int(seconds) % 60));
 
-            this->acl->log4(false, "SESSION_DISCONNECTION", extra);
-        }
+        this->authentifier->log4(false, "SESSION_DISCONNECTION", extra);
     }
 
     Dimension get_dim() const override

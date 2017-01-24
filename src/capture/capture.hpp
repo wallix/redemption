@@ -131,7 +131,7 @@
 class SaveStateChunk {
 public:
     SaveStateChunk() {}
-    
+
     void recv(InStream & stream, StateChunk & sc, uint8_t info_version) {
         this->send_recv(stream, sc, info_version);
     }
@@ -2476,7 +2476,7 @@ public:
             ::unlink(this->trans.seqgen()->get(num));
         }
      }
-    
+
     std::chrono::microseconds do_snapshot(
         timeval const & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
@@ -2545,10 +2545,11 @@ public:
     }
 
      virtual void clear_old() {
-        uint32_t num_start = this->trans.get_seqno() >= this->png_limit 
-                           ? this->trans.get_seqno() - this->png_limit 
-                           : 0;
-        this->clear_png_interval(num_start, num_start + 1); 
+        if (this->trans.get_seqno() < this->png_limit) {
+            return;
+        }
+        uint32_t num_start = this->trans.get_seqno() - this->png_limit;
+        this->clear_png_interval(num_start, num_start + 1);
     }
 };
 
@@ -2861,7 +2862,7 @@ public:
     PreparingWhenFrameMarkerEnd preparing_vc{vc};
 
     OutFilenameSequenceTransport ic_trans;
-    
+
     unsigned ic_zoom_factor;
     unsigned ic_scaled_width;
     unsigned ic_scaled_height;
@@ -4232,7 +4233,7 @@ public:
         void enable_kbd_input_mask(bool enable) override {
             this->impl->enable_kbd_input_mask(enable);
         }
-        
+
         bool kbd_input(const timeval & now, uint32_t uchar) override {
             return this->GraphicToFile::kbd_input(now, uchar);
         }
@@ -4581,9 +4582,9 @@ private:
         , snapshoters(snapshoters)
         {}
     };
-    
+
     std::unique_ptr<Graphic> graphic_api;
-    
+
     std::unique_ptr<WrmCaptureImpl> wrm_capture_obj;
     std::unique_ptr<PngCapture> png_capture_obj;
     std::unique_ptr<PngCaptureRT> png_capture_real_time_obj;
@@ -4610,7 +4611,7 @@ private:
     std::vector<std::reference_wrapper<gdi::KbdInputApi>> kbds;
     std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
     std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> objs;
-    
+
     bool capture_drawable = false;
 
 
@@ -4662,9 +4663,9 @@ public:
     , drawable{nullptr}
     , mouse_info{now, width / 2, height / 2}
     , capture_event{}
-    , capture_drawable(this->capture_wrm 
+    , capture_drawable(this->capture_wrm
                     || this->capture_flv
-                    || this->capture_ocr 
+                    || this->capture_ocr
                     || this->capture_png
                     || this->capture_flv_full)
     {
@@ -4767,7 +4768,7 @@ public:
             if (this->capture_ocr) {
                 if (this->patterns_checker || this->meta_capture_obj || this->sequenced_video_capture_obj) {
                     this->title_capture_obj.reset(new TitleCaptureImpl(
-                        now, authentifier, this->gd_drawable->impl(), 
+                        now, authentifier, this->gd_drawable->impl(),
                         ocr_params,
                         this->notifier_title_changed
                     ));
@@ -4812,7 +4813,7 @@ public:
                 this->caps.push_back(*this->syslog_kbd_capture_obj.get());
             }
         }
-        
+
         if (this->session_log_kbd_capture_obj.get())
         {
             if (authentifier && ini.get<cfg::session_log::enable_session_log>() &&
