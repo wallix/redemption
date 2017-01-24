@@ -1325,6 +1325,7 @@ public:
                                                                       ((this->ini.get<cfg::video::capture_flags>() &
                                                                         (CaptureFlags::wrm | CaptureFlags::ocr)) !=
                                                                        CaptureFlags::none));
+                mod_rdp_params.client_execute                      = &this->client_execute;
                 mod_rdp_params.client_execute_flags                = this->client_execute.Flags();
                 mod_rdp_params.client_execute_exe_or_file          = this->client_execute.ExeOrFile();
                 mod_rdp_params.client_execute_working_dir          = this->client_execute.WorkingDir();

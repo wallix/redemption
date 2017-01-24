@@ -80,6 +80,7 @@
 #include "core/channel_names.hpp"
 
 #include "core/FSCC/FileInformation.hpp"
+#include "mod/internal/client_execute.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/rail_channel.hpp"
 #include "mod/rdp/channels/rail_session_manager.hpp"
@@ -595,7 +596,7 @@ protected:
                 ServerNotification server_access_allowed_message,
                 ServerNotification server_cert_create_message,
                 ServerNotification server_cert_success_message,
-                ServerNotification server_cert_failure_message, 
+                ServerNotification server_cert_failure_message,
                 ServerNotification server_cert_error_message,
                 RDPVerbose verbose
             )
@@ -1234,7 +1235,8 @@ public:
                 std::make_unique<RemoteProgramsSessionManager>(front, *this,
                     this->lang, this->front_width, this->front_height,
                     this->font, this->theme, this->acl,
-                    session_probe_window_title, this->verbose);
+                    session_probe_window_title,
+                    mod_rdp_params.client_execute, this->verbose);
         }
     }   // mod_rdp
 
@@ -1703,7 +1705,9 @@ private:
             this->acl->disconnect_target();
             this->acl->set_auth_error_message(TR("session_logoff_in_progress", this->lang));
 
-            session_probe_virtual_channel_p->get_event()->signal = BACK_EVENT_NEXT;
+            if (session_probe_virtual_channel_p) {
+                session_probe_virtual_channel_p->get_event()->signal = BACK_EVENT_NEXT;
+            }
         }
     }
 
@@ -4086,9 +4090,9 @@ public:
 
                     if (!this->enable_transparent_mode && !this->deactivation_reactivation_in_progress) {
                         this->orders.create_cache_bitmap(
-                            120,   nbbytes(this->orders.bpp) * 16 * 16, false,
-                            120,   nbbytes(this->orders.bpp) * 32 * 32, false,
-                            2553,  nbbytes(this->orders.bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
+                            this->BmpCacheRev2_Cache_NumEntries()[0], nbbytes(this->orders.bpp) * 16 * 16, false,
+                            this->BmpCacheRev2_Cache_NumEntries()[1], nbbytes(this->orders.bpp) * 32 * 32, false,
+                            this->BmpCacheRev2_Cache_NumEntries()[2], nbbytes(this->orders.bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
                             this->enable_cache_waiting_list,
                             this->cache_verbose);
                     }

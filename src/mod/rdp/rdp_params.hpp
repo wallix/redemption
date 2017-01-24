@@ -24,6 +24,7 @@
 #include "utils/log.hpp"
 #include "utils/translation.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
+#include "mod/internal/client_execute.hpp"
 #include "mod/rdp/rdp_log.hpp"
 
 #include <string>
@@ -136,6 +137,8 @@ struct ModRDPParams {
     bool allow_using_multiple_monitors = false;
 
     bool adjust_performance_flags_for_recording = false;
+
+    ClientExecute * client_execute = nullptr;
 
     uint16_t     client_execute_flags;
     const char * client_execute_exe_or_file = "";
@@ -290,6 +293,8 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,             allow_using_multiple_monitors);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             adjust_performance_flags_for_recording);
+
+        RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    client_execute);
 
         RDP_PARAMS_LOG("0x%04X", RDP_PARAMS_LOG_GET,    client_execute_flags);
 

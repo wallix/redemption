@@ -62,6 +62,11 @@ public:
         return this->module_host.get_managed_mod();
     }
 
+    const mod_api& get_managed_mod() const
+    {
+        return this->module_host.get_managed_mod();
+    }
+
     void move_size_widget(int16_t left, int16_t top, uint16_t width,
                           uint16_t height) {
         this->set_xy(left, top);
