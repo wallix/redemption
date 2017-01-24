@@ -2234,7 +2234,7 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
     struct : auth_api {
         mutable std::string s;
 
-        void log4(bool duplicate_with_pid, const char* type, const char* extra) const override {
+        void log4(bool duplicate_with_pid, const char* type, const char* extra) override {
             (void)duplicate_with_pid;
             (void)type;
             BOOST_REQUIRE(extra);
@@ -2304,7 +2304,7 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 
         void set_auth_channel_target(const char*) override {}
         void set_auth_error_message(const char*) override {}
-        void log4(bool, const char*, const char*) const override {}
+        void log4(bool, const char*, const char*) override {}
     } auth;
 
     PatternKbd kbd_capture(&auth, "$kbd:abcd", nullptr);
@@ -2339,7 +2339,7 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternKill)
 
         void set_auth_channel_target(const char*) override {}
         void set_auth_error_message(const char*) override {}
-        void log4(bool, const char*, const char*) const override {}
+        void log4(bool, const char*, const char*) override {}
     } auth;
 
     PatternKbd kbd_capture(&auth, "$kbd:ab/cd", nullptr);
