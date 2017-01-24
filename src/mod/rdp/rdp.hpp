@@ -4090,9 +4090,9 @@ public:
 
                     if (!this->enable_transparent_mode && !this->deactivation_reactivation_in_progress) {
                         this->orders.create_cache_bitmap(
-                            120,   nbbytes(this->orders.bpp) * 16 * 16, false,
-                            120,   nbbytes(this->orders.bpp) * 32 * 32, false,
-                            2553,  nbbytes(this->orders.bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
+                            this->BmpCacheRev2_Cache_NumEntries()[0], nbbytes(this->orders.bpp) * 16 * 16, false,
+                            this->BmpCacheRev2_Cache_NumEntries()[1], nbbytes(this->orders.bpp) * 32 * 32, false,
+                            this->BmpCacheRev2_Cache_NumEntries()[2], nbbytes(this->orders.bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
                             this->enable_cache_waiting_list,
                             this->cache_verbose);
                     }
