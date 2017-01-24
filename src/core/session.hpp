@@ -352,7 +352,7 @@ public:
                         }
 
                         // Incoming data from ACL, or opening authentifier
-                        if (!this->authentifier || !this->acl_serial)) {
+                        if (!this->authentifier || !this->acl_serial) {
                             if (!mm.last_module) {
                                 // authentifier never opened or closed by me (close box)
                                 try {
@@ -389,9 +389,9 @@ public:
                         }
                         else {
                             if (this->acl_serial
-                            && this->auth_event 
-                            && this->auth_trans 
-                            && (INVALID_SOCKET != this->auth_trans->sck) 
+                            && this->auth_event
+                            && this->auth_trans
+                            && (INVALID_SOCKET != this->auth_trans->sck)
                             && this->auth_event->is_set(this->auth_trans->sck, rfds)) {
                                 // authentifier received updated values
                                 this->acl_serial->receive();
