@@ -242,6 +242,8 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(H, type_<bool>(), "use_client_provided_alternate_shell", set(false), r);
         W.sep();
+        W.member(A, type_<bool>(), "use_native_remoteapp_capability", set(false), r);
+        W.sep();
         W.member(H, type_<bool>(), "enable_session_probe", sesman::name{"session_probe"}, set(false), r);
         W.member(H, type_<bool>(), "session_probe_use_smart_launcher", desc{
             "Minimum supported server : Windows Server 2008.\n"

@@ -313,6 +313,12 @@ public:
                                 signal = BACK_EVENT_RETRY_CURRENT;
                                 mm.mod->get_event().reset();
                             }
+                            else if (e.id == ERR_RAIL_NOT_ENABLED) {
+                                this->ini.get_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
+
+                                signal = BACK_EVENT_RETRY_CURRENT;
+                                mm.mod->get_event().reset();
+                            }
                             else if (e.id == ERR_RDP_SERVER_REDIR) {
                                 // SET new target in ini
                                 const char * host = char_ptr_cast(
