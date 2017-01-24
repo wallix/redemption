@@ -1245,7 +1245,7 @@ public:
 
         delete this->transparent_recorder;
 
-        if (!this->end_session_reason.empty() 
+        if (!this->end_session_reason.empty()
         &&  !this->end_session_message.empty()) {
             this->authentifier->report(
                 this->end_session_reason.c_str(),
@@ -1701,8 +1701,12 @@ private:
             this->authentifier->disconnect_target();
             this->authentifier->set_auth_error_message(TR("session_logoff_in_progress", this->lang));
 
-            if (session_probe_virtual_channel_p) {
-                session_probe_virtual_channel_p->get_event()->signal = BACK_EVENT_NEXT;
+            if (this->session_probe_virtual_channel_p) {
+                wait_obj* event = this->session_probe_virtual_channel_p->get_event();
+
+                if (event) {
+                    event->signal = BACK_EVENT_NEXT;
+                }
             }
         }
     }
@@ -3225,8 +3229,8 @@ public:
                 this->end_session_reason.clear();
                 this->end_session_message.clear();
 
-                if ((!this->session_probe_virtual_channel_p 
-                    || !this->session_probe_virtual_channel_p->is_disconnection_reconnection_required()) 
+                if ((!this->session_probe_virtual_channel_p
+                    || !this->session_probe_virtual_channel_p->is_disconnection_reconnection_required())
                  && !this->remote_apps_not_enabled) {
                     this->authentifier->disconnect_target();
                 }
