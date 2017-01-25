@@ -386,7 +386,7 @@ public:
     }
 };
 
-class ochecksum_buf_null_buf //: public transbuf::null_buf
+class ochecksum_buf_null_buf
 {
     struct HMac
     {

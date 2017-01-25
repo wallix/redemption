@@ -169,10 +169,87 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 }
 
 
-template<size_t N>
-long write(transbuf::ochecksum_buf_null_buf & buf, char const (&s)[N]) {
-    return buf.write(s, N-1);
-}
+class ochecksum_buf_null_buf
+{
+    struct HMac
+    {
+        HMAC_CTX hmac;
+        bool initialized = false;
+
+        HMac() = default;
+
+        ~HMac() {
+            if (this->initialized) {
+                HMAC_CTX_cleanup(&this->hmac);
+            }
+        }
+
+        void init(const uint8_t * const crypto_key, size_t key_len) {
+            HMAC_CTX_init(&this->hmac);
+            if (!HMAC_Init_ex(&this->hmac, crypto_key, key_len, EVP_sha256(), nullptr)) {
+                throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
+            }
+            this->initialized = true;
+        }
+
+        void update(const void * const data, size_t data_size) {
+            assert(this->initialized);
+            if (!HMAC_Update(&this->hmac, reinterpret_cast<uint8_t const *>(data), data_size)) {
+                throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
+            }
+        }
+
+        void final(uint8_t (&out_data)[SHA256_DIGEST_LENGTH]) {
+            assert(this->initialized);
+            unsigned int len = 0;
+            if (!HMAC_Final(&this->hmac, out_data, &len)) {
+                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+            }
+            this->initialized = false;
+        }
+    };
+
+    static constexpr size_t nosize = ~size_t{};
+    static constexpr size_t quick_size = 4096;
+    size_t file_size = nosize;
+
+    HMac hmac;
+    HMac quick_hmac;
+    unsigned char const (&hmac_key)[SHA256_DIGEST_LENGTH];
+
+public:
+    explicit ochecksum_buf_null_buf(unsigned char const (&hmac_key)[SHA256_DIGEST_LENGTH])
+    : hmac_key(hmac_key)
+    {}
+
+    int open()
+    {
+        this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
+        this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
+        this->file_size = 0;
+        return 0;
+    }
+
+    ssize_t write(const void * data, size_t len)
+    {
+        this->hmac.update(data, len);
+        if (this->file_size < quick_size) {
+            auto const remaining = std::min(quick_size - this->file_size, len);
+            this->quick_hmac.update(data, remaining);
+            this->file_size += remaining;
+        }
+        return len;
+    }
+
+    int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
+    {
+        this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
+        this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
+        this->file_size = nosize;
+        return 0;
+    }
+};
+
 
 BOOST_AUTO_TEST_CASE(TestOSumBuf)
 {
@@ -186,8 +263,8 @@ BOOST_AUTO_TEST_CASE(TestOSumBuf)
     cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
     transbuf::ochecksum_buf_null_buf buf(cctx.get_hmac_key());
     buf.open();
-    BOOST_CHECK_EQUAL(write(buf, "ab"), 2);
-    BOOST_CHECK_EQUAL(write(buf, "cde"), 3);
+    BOOST_CHECK_EQUAL(buf.write("ab", 2), 2);
+    BOOST_CHECK_EQUAL(buf.write("cde", 3), 3);
 
     detail::hash_type hash;
     buf.close(hash);
