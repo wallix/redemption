@@ -261,7 +261,7 @@ namespace detail
     };
 }
 
-template<class Buf, class PathTraits = detail::NoCurrentPath>
+template<class Buf, class PathTraits>
 struct RequestCleaningAndNextTransport
 : Transport
 {
@@ -1116,9 +1116,8 @@ namespace detail
 
 struct OutFilenameSequenceTransport
 : RequestCleaningAndNextTransport<
-    detail::out_sequence_filename_buf_impl<
-        detail::empty_ctor<io::posix::fdbuf>
->>
+    detail::out_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>>,
+    detail::NoCurrentPath>
 {
     OutFilenameSequenceTransport(
         FilenameGenerator::Format format,
@@ -1141,9 +1140,8 @@ struct OutFilenameSequenceTransport
 
 struct OutFilenameSequenceSeekableTransport
 : RequestCleaningAndNextTransport<
-    detail::out_sequence_filename_buf_impl<
-        detail::empty_ctor<io::posix::fdbuf>
->>
+    detail::out_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>>,
+    detail::NoCurrentPath>
 {
     OutFilenameSequenceSeekableTransport(
         FilenameGenerator::Format format,
@@ -1796,9 +1794,7 @@ namespace transbuf {
 
 struct OutMetaSequenceTransport
 : RequestCleaningAndNextTransport<
-    detail::out_meta_sequence_filename_buf_impl<
-        detail::empty_ctor<io::posix::fdbuf>,
-        detail::empty_ctor<transbuf::ofile_buf_out>
+    detail::out_meta_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>, detail::empty_ctor<transbuf::ofile_buf_out>
     >,
     detail::GetCurrentPath
 >
