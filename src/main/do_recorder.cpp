@@ -48,7 +48,6 @@
 
 #include "transport/in_meta_sequence_transport.hpp"
 #include "transport/out_file_transport.hpp"
-#include "transport/out_meta_sequence_transport.hpp"
 #include "transport/transport.hpp"
 
 #include "acl/auth_api.hpp"
