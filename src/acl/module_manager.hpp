@@ -1324,8 +1324,11 @@ public:
                 mod_rdp_params.client_execute_arguments            = this->client_execute.Arguments();
 
                 mod_rdp_params.remote_program                      = (client_info.remote_program &&
-                                                                      (mod_rdp_params.target_application &&
-                                                                       (*mod_rdp_params.target_application)) &&
+                                                                      ((mod_rdp_params.target_application &&
+                                                                        (*mod_rdp_params.target_application)) ||
+                                                                       (this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>() &&
+                                                                        mod_rdp_params.client_execute_exe_or_file &&
+                                                                        (*mod_rdp_params.client_execute_exe_or_file))) &&
                                                                       this->ini.get<cfg::mod_rdp::use_native_remoteapp_capability>());
 
                 try {

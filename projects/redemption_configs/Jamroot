@@ -92,6 +92,7 @@ constant TEST_DEPENDENCIES :
     <implicit-dependency>generate_enum
     <include>redemption_src
     <cxxflags>-frtti
+    <define>CFG_PATH='\"$(REDEMPTION_ROOT_PATH)/etc/rdpproxy/\"'
 ;
 
 ## Tests
