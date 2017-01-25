@@ -245,80 +245,6 @@ namespace transbuf
     };
 }
 
-
-template<class Buf>
-struct RequestCleaningAndNextTransport
-: Transport
-{
-    RequestCleaningAndNextTransport() = default;
-
-    template<class Params>
-    explicit RequestCleaningAndNextTransport(const Params & buf_params)
-    : buf(buf_params)
-    {}
-
-    bool next() override {
-        if (this->status == false) {
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
-        const ssize_t res = this->buffer().next();
-        if (res) {
-            this->status = false;
-            if (res < 0){
-                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
-            }
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-        }
-        ++this->seqno;
-        return true;
-    }
-
-    bool disconnect() override {
-        return !this->buf.close();
-    }
-
-    void request_full_cleaning() override {
-        this->buffer().request_full_cleaning();
-    }
-
-    ~RequestCleaningAndNextTransport() {
-        this->buf.close();
-    }
-
-private:
-    void do_send(const uint8_t * data, size_t len) override {
-        const ssize_t res = this->buf.write(data, len);
-        if (res < 0) {
-            this->status = false;
-            if (errno == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|%s", buf.current_path());
-                this->authentifier->report("FILESYSTEM_FULL", message);
-                errno = ENOSPC;
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
-            }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
-        this->last_quantum_sent += res;
-    }
-
-protected:
-    Buf & buffer() noexcept
-    { return this->buf; }
-
-    const Buf & buffer() const noexcept
-    { return this->buf; }
-
-    typedef RequestCleaningAndNextTransport TransportType;
-
-private:
-    Buf buf;
-};
-
-
 namespace transbuf {
     class ofile_buf_out
     {
@@ -2081,16 +2007,17 @@ private:
 
 
 struct CryptoOutMetaSequenceTransport
-: RequestCleaningAndNextTransport<
-    detail::out_hash_meta_sequence_filename_buf_impl<
-        detail::empty_ctor<io::posix::fdbuf>,
-        detail::ocrypto_filter,
-        transbuf::ocrypto_filename_buf,
-        transbuf::ocrypto_filename_buf,
-        transbuf::ocrypto_filename_params
-    >
->
-{
+: public Transport {
+
+    using Buf =
+        detail::out_hash_meta_sequence_filename_buf_impl<
+            detail::empty_ctor<io::posix::fdbuf>,
+            detail::ocrypto_filter,
+            transbuf::ocrypto_filename_buf,
+            transbuf::ocrypto_filename_buf,
+            transbuf::ocrypto_filename_params
+        >;
+
     CryptoOutMetaSequenceTransport(
         CryptoContext & crypto_ctx,
         Random & rnd,
@@ -2103,13 +2030,12 @@ struct CryptoOutMetaSequenceTransport
         const int groupid,
         auth_api * authentifier = nullptr,
         FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    : CryptoOutMetaSequenceTransport::TransportType(
+    : buf(
         detail::out_hash_meta_sequence_filename_buf_param<transbuf::ocrypto_filename_params>(
             crypto_ctx,
             now.tv_sec, format, hash_path, path, basename, ".wrm", groupid,
             {crypto_ctx, rnd}
-        )
-    ) {
+        )) {
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
@@ -2125,6 +2051,64 @@ struct CryptoOutMetaSequenceTransport
     {
         return &(this->buffer().seqgen());
     }
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+    void request_full_cleaning() override {
+        this->buffer().request_full_cleaning();
+    }
+
+    ~CryptoOutMetaSequenceTransport() {
+        this->buf.close();
+    }
+
+private:
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", buf.current_path());
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+    Buf & buffer() noexcept
+    { return this->buf; }
+
+    const Buf & buffer() const noexcept
+    { return this->buf; }
+
+    typedef CryptoOutMetaSequenceTransport TransportType;
+
+    Buf buf;
+
 };
 
 
