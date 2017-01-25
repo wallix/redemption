@@ -863,6 +863,8 @@ public:
 
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
+        
+        Params(auth_api & authentifier) : BaseVirtualChannel::Params(authentifier) {}
     };
 
     FileSystemVirtualChannel(
@@ -1616,16 +1618,14 @@ public:
                                     "/desktop.ini",
                                     sizeof("/desktop.ini")-1
                                 )) {
-                                    if (this->authentifier) {
-                                        std::string info("file_name='");
-                                        info += target_info.file_path;
-                                        info += "'";
+                                    std::string info("file_name='");
+                                    info += target_info.file_path;
+                                    info += "'";
 
-                                        this->authentifier->log4(
-                                            !this->param_dont_log_data_into_syslog,
-                                            "DRIVE_REDIRECTION_READ",
-                                            info.c_str());
-                                    }
+                                    this->authentifier.log4(
+                                        !this->param_dont_log_data_into_syslog,
+                                        "DRIVE_REDIRECTION_READ",
+                                        info.c_str());
 
                                     if (!this->param_dont_log_data_into_wrm) {
                                         std::string message("ReadRedirectedFileSystem=");
@@ -1661,16 +1661,14 @@ public:
                         if (target_iter != this->device_io_target_info_inventory.end()) {
                             device_io_target_info_type & target_info = *target_iter;
                             if (!target_info.for_writing) {
-                                if (this->authentifier) {
-                                    std::string info("file_name='");
-                                    info += target_info.file_path;
-                                    info += "'";
+                                std::string info("file_name='");
+                                info += target_info.file_path;
+                                info += "'";
 
-                                    this->authentifier->log4(
-                                        !this->param_dont_log_data_into_syslog,
-                                        "DRIVE_REDIRECTION_WRITE",
-                                        info.c_str());
-                                }
+                                this->authentifier.log4(
+                                    !this->param_dont_log_data_into_syslog,
+                                    "DRIVE_REDIRECTION_WRITE",
+                                    info.c_str());
 
                                 if (!this->param_dont_log_data_into_wrm) {
                                     std::string message("WriteRedirectedFileSystem=");
@@ -1717,16 +1715,14 @@ public:
                             auto target_iter = this->find_target_response(device_io_response, FileId);
                             if (target_iter != this->device_io_target_info_inventory.end()) {
                                 device_io_target_info_type & target_info = *target_iter;
-                                if (this->authentifier) {
-                                    std::string info("file_name='");
-                                    info += target_info.file_path;
-                                    info += "'";
+                                std::string info("file_name='");
+                                info += target_info.file_path;
+                                info += "'";
 
-                                    this->authentifier->log4(
-                                        !this->param_dont_log_data_into_syslog,
-                                        "DRIVE_REDIRECTION_DELETE",
-                                        info.c_str());
-                                }
+                                this->authentifier.log4(
+                                    !this->param_dont_log_data_into_syslog,
+                                    "DRIVE_REDIRECTION_DELETE",
+                                    info.c_str());
                             }
                         }
                         break;
@@ -1736,18 +1732,16 @@ public:
                             auto target_iter = this->find_target_response(device_io_response, FileId);
                             if (target_iter != this->device_io_target_info_inventory.end()) {
                                 device_io_target_info_type & target_info = *target_iter;
-                                if (this->authentifier) {
-                                    std::string info("old_file_name='");
-                                    info += target_info.file_path;
-                                    info += "' new_file_name='";
-                                    info += file_path;
-                                    info += "'";
+                                std::string info("old_file_name='");
+                                info += target_info.file_path;
+                                info += "' new_file_name='";
+                                info += file_path;
+                                info += "'";
 
-                                    this->authentifier->log4(
-                                        !this->param_dont_log_data_into_syslog,
-                                        "DRIVE_REDIRECTION_RENAME",
-                                        info.c_str());
-                                }
+                                this->authentifier.log4(
+                                    !this->param_dont_log_data_into_syslog,
+                                    "DRIVE_REDIRECTION_RENAME",
+                                    info.c_str());
                             }
                         }
                         break;

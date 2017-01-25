@@ -53,6 +53,8 @@ public:
         const char* client_execute_arguments;
 
         RemoteProgramsSessionManager * rail_session_manager;
+        
+        Params(auth_api & authentifier) : BaseVirtualChannel::Params(authentifier) {}
     };
 
     RemoteProgramsVirtualChannel(

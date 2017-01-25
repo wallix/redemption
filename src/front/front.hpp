@@ -664,7 +664,7 @@ private:
 
     rdp_mppc_enc * mppc_enc;
 
-    auth_api * authentifier;
+    auth_api & authentifier;
     bool       auth_info_sent;
 
     uint16_t rail_channel_id = 0;
@@ -724,7 +724,7 @@ public:
           , Random & gen
           , Inifile & ini
           , CryptoContext & cctx
-          , auth_api * authentifier
+          , auth_api & authentifier
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
           , time_t now
@@ -1085,7 +1085,7 @@ public:
                                     , hash_path
                                     , movie_path
                                     , flv_params
-                                    , false, this->authentifier
+                                    , false, &this->authentifier
                                     , ini, this->cctx, this->gen
                                     , nullptr
                                     );

@@ -124,6 +124,8 @@ public:
         bool bogus_refresh_rect_ex;
 
         bool show_maximized;
+        
+        Params(auth_api & authentifier) : BaseVirtualChannel::Params(authentifier) {}
     };
 
     SessionProbeVirtualChannel(
@@ -182,8 +184,6 @@ public:
         }
 
         this->session_probe_event.object_and_time = true;
-
-        REDASSERT(this->authentifier);
     }
 
     void start_launch_timeout_timer()
@@ -316,7 +316,7 @@ public:
                     }
 
                     if (this->param_session_probe_on_keepalive_timeout_disconnect_user) {
-                        this->authentifier->report("SESSION_PROBE_KEEPALIVE_MISSED", "");
+                        this->authentifier.report("SESSION_PROBE_KEEPALIVE_MISSED", "");
                     }
                     else {
                         this->front.session_probe_started(false);
@@ -922,7 +922,7 @@ public:
             this->session_probe_keep_alive_received = true;
         }
         else if (!this->server_message.compare("SESSION_ENDING_IN_PROGRESS")) {
-            this->authentifier->log4(
+            this->authentifier.log4(
                 (this->verbose & RDPVerbose::sesprobe),
                 "SESSION_ENDING_IN_PROGRESS");
 
@@ -958,7 +958,7 @@ public:
 
                 if (!order.compare("PASSWORD_TEXT_BOX_GET_FOCUS")) {
                     std::string info("status='" + parameters[0] + "'");
-                    this->authentifier->log4(
+                    this->authentifier.log4(
                         (this->verbose & RDPVerbose::sesprobe),
                         order.c_str(), info.c_str());
 
@@ -972,7 +972,7 @@ public:
                 }
                 else if (!order.compare("UAC_PROMPT_BECOME_VISIBLE")) {
                     std::string info("status='" + parameters[0] + "'");
-                    this->authentifier->log4
+                    this->authentifier.log4
                         ((this->verbose & RDPVerbose::sesprobe),
                         order.c_str(), info.c_str());
 
@@ -989,7 +989,7 @@ public:
                         std::string info(
                             "identifier='" + parameters[0] +
                             "' display_name='" + parameters[1] + "'");
-                        this->authentifier->log4(
+                        this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
 
@@ -1004,7 +1004,7 @@ public:
                          !order.compare("COMPLETED_PROCESS")) {
                     if (parameters.size() == 1) {
                         std::string info("command_line='" + parameters[0] + "'");
-                        this->authentifier->log4(
+                        this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
                     }
@@ -1020,7 +1020,7 @@ public:
                         std::string info(
                             "rule='" + parameters[0] +
                             "' application_name='" + parameters[1]);
-                        this->authentifier->log4(
+                        this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
 
@@ -1067,7 +1067,7 @@ public:
                                 "' app_cmd_line='" + parameters[2] +
                                 "' dst_addr='" + parameters[3] +
                                 "' dst_port='" + parameters[4] + "'");
-                            this->authentifier->log4(
+                            this->authentifier.log4(
                                 (this->verbose & RDPVerbose::sesprobe),
                                 order.c_str(), info.c_str());
 
@@ -1075,7 +1075,7 @@ public:
                                 if (::strtoul(parameters[5].c_str(), nullptr, 10)) {
                                     LOG(LOG_ERR,
                                         "Session Probe failed to block outbound connection!");
-                                    this->authentifier->report(
+                                    this->authentifier.report(
                                         "SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED", "");
                                 }
                                 else {
@@ -1118,7 +1118,7 @@ public:
                                 "rule='" + description +
                                 "' app_name='" + parameters[1] +
                                 "' app_cmd_line='" + parameters[2] + "'");
-                            this->authentifier->log4(
+                            this->authentifier.log4(
                                 (this->verbose & RDPVerbose::sesprobe),
                                 order.c_str(), info.c_str());
 
@@ -1126,7 +1126,7 @@ public:
                                 if (::strtoul(parameters[3].c_str(), nullptr, 10)) {
                                     LOG(LOG_ERR,
                                         "Session Probe failed to block process!");
-                                    this->authentifier->report(
+                                    this->authentifier.report(
                                         "SESSION_PROBE_PROCESS_BLOCKING_FAILED", "");
                                 }
                                 else {
@@ -1155,7 +1155,7 @@ public:
                     if (parameters.size() == 3) {
                         std::string info(
                             "source='Probe' window='" + parameters[0] + "'");
-                        this->authentifier->log4(
+                        this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             "TITLE_BAR", info.c_str());
                     }
@@ -1168,7 +1168,7 @@ public:
                         std::string info(
                             "windows='" + parameters[0] +
                             "' button='" + parameters[1] + "'");
-                        this->authentifier->log4(
+                        this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
                     }
@@ -1181,7 +1181,7 @@ public:
                         std::string info(
                             "windows='" + parameters[0] +
                             "' edit='" + parameters[1] + "'");
-                        this->authentifier->log4(
+                        this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
                     }

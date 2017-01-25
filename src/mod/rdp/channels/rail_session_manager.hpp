@@ -79,7 +79,7 @@ private:
     Rect disconnect_now_button_rect;
     bool disconnect_now_button_clicked = false;
 
-    auth_api* authentifier = nullptr;
+    auth_api& authentifier;
 
     bool has_previous_window = false;
 
@@ -115,7 +115,7 @@ public:
 
     RemoteProgramsSessionManager(FrontAPI& front, mod_api& mod, Translation::language_t lang,
                                  uint16_t front_width, uint16_t front_height,
-                                 Font const & font, Theme const & theme, auth_api * authentifier,
+                                 Font const & font, Theme const & theme, auth_api & authentifier,
                                  char const * session_probe_window_title,
                                  ClientExecute * client_execute, RDPVerbose verbose)
     : front(front)
@@ -194,7 +194,7 @@ public:
             if (!(device_flags & SlowPath::PTRFLAGS_DOWN) &&
                 (this->disconnect_now_button_rect.contains_pt(x, y))) {
                 LOG(LOG_INFO, "RemoteApp session initiated disconnect by user");
-                this->authentifier->disconnect_target();
+                this->authentifier.disconnect_target();
                 throw Error(ERR_DISCONNECT_BY_USER);
             }
         }
@@ -208,7 +208,7 @@ public:
         (void)param2;
         if ((28 == param1) && !(device_flags & SlowPath::KBDFLAGS_RELEASE)) {
             LOG(LOG_INFO, "RemoteApp session initiated disconnect by user");
-            this->authentifier->disconnect_target();
+            this->authentifier.disconnect_target();
             throw Error(ERR_DISCONNECT_BY_USER);
         }
     }
