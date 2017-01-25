@@ -862,7 +862,7 @@ public:
                     order.VisibleOffsetX(this->window_rect.x);
                     order.VisibleOffsetY(this->window_rect.y);
                     order.NumVisibilityRects(1);
-                    order.VisibilityRects(0, RDP::RAIL::Rectangle(/*0*/this->window_rect.x, /*0*/this->window_rect.y, this->window_rect.cx, this->window_rect.cy));
+                    order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
                     if (this->verbose) {
                         StaticOutStream<1024> out_s;
@@ -1159,7 +1159,7 @@ public:
                         order.WindowWidth(this->window_rect.cx);
                         order.WindowHeight(this->window_rect.cy);
                         order.NumVisibilityRects(1);
-                        order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, this->window_rect.cx, this->window_rect.cy));
+                        order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
                         order.ClientOffsetX(this->window_rect.x + 6);
                         order.ClientOffsetY(this->window_rect.y + 25);
@@ -1269,7 +1269,7 @@ public:
                     order.WindowWidth(this->window_rect.cx);
                     order.WindowHeight(this->window_rect.cy);
                     order.NumVisibilityRects(1);
-                    order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, this->window_rect.cx, this->window_rect.cy));
+                    order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
                     order.ClientOffsetX(this->window_rect.x + 6);
                     order.ClientOffsetY(this->window_rect.y + 25);
@@ -1348,7 +1348,7 @@ public:
                 order.WindowWidth(this->window_rect.cx);
                 order.WindowHeight(this->window_rect.cy);
                 order.NumVisibilityRects(1);
-                order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, this->window_rect.cx, this->window_rect.cy));
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
                 order.ClientOffsetX(this->window_rect.x + 6);
                 order.ClientOffsetY(this->window_rect.y + 25);
@@ -1408,7 +1408,7 @@ public:
                 order.WindowWidth(work_area_rect.cx + 2);
                 order.WindowHeight(work_area_rect.cy + 2);
                 order.NumVisibilityRects(1);
-                order.VisibilityRects(0, RDP::RAIL::Rectangle(work_area_rect.x, work_area_rect.y, work_area_rect.cx, work_area_rect.cy + 1));
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, work_area_rect.cx, work_area_rect.cy + 1));
 
                 order.ClientOffsetX(work_area_rect.x/* + 0*/);
                 order.ClientOffsetY(work_area_rect.y + 25);
@@ -1939,7 +1939,7 @@ protected:
                     order.VisibleOffsetX(this->window_rect.x);
                     order.VisibleOffsetY(this->window_rect.y);
                     order.NumVisibilityRects(1);
-                    order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, this->window_rect.cx, this->window_rect.cy));
+                    order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
                     if (this->verbose) {
                         StaticOutStream<1024> out_s;
@@ -2011,26 +2011,6 @@ protected:
             }
 
             this->work_area_count++;
-
-/*
-            this->work_area_rect.x  = body_r.Left();
-            this->work_area_rect.y  = body_r.Top();
-            this->work_area_rect.cx = body_r.Right() - body_r.Left();
-            this->work_area_rect.cy = body_r.Bottom() - body_r.Top();
-
-LOG(LOG_INFO, "SPI_SETWORKAREA (%d %d %u %u)",
-        this->work_area_rect.x,
-        this->work_area_rect.y,
-        this->work_area_rect.cx,
-        this->work_area_rect.cy
-    );
-
-            if (this->verbose) {
-                LOG(LOG_INFO, "WorkAreaRect: (%u, %u, %u, %u)",
-                    this->work_area_rect.x, this->work_area_rect.y,
-                    this->work_area_rect.cx, this->work_area_rect.cy);
-            }
-*/
 
             {
                 RDP::RAIL::ActivelyMonitoredDesktop order;
@@ -2151,7 +2131,7 @@ LOG(LOG_INFO, "SPI_SETWORKAREA (%d %d %u %u)",
                 order.VisibleOffsetX(this->window_rect.x);
                 order.VisibleOffsetY(this->window_rect.y);
                 order.NumVisibilityRects(1);
-                order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, this->window_rect.cx, this->window_rect.cy));
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
                 if (this->verbose) {
                     StaticOutStream<1024> out_s;
@@ -2434,7 +2414,7 @@ LOG(LOG_INFO, "SPI_SETWORKAREA (%d %d %u %u)",
                 order.WindowWidth(this->window_rect.cx);
                 order.WindowHeight(this->window_rect.cy);
                 order.NumVisibilityRects(1);
-                order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, this->window_rect.cx, this->window_rect.cy));
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
                 order.ClientOffsetX(this->window_rect.x + 6);
                 order.ClientOffsetY(this->window_rect.y + 25);
@@ -2755,9 +2735,9 @@ public:
             order.VisibleOffsetX(window_rect.x);
             order.VisibleOffsetY(window_rect.y);
             order.NumVisibilityRects(1);
-            order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, window_rect.cx, window_rect.cy));
+            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, window_rect.cx, window_rect.cy));
 
-            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+            if (this->verbose) {
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
@@ -2780,7 +2760,7 @@ public:
                 );
             order.header.WindowId(this->auxiliary_window_id);
 
-            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+            if (this->verbose) {
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);

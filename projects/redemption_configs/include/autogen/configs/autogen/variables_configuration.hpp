@@ -2083,6 +2083,17 @@ namespace cfg {
             type value{};
         };
         // type: uint32_t
+        struct bitmap_update {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "debug"; }
+            static constexpr char const * name() { return "bitmap_update"; }
+            using type = uint32_t;
+            using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
+            type value{};
+        };
+        // type: uint32_t
         struct bitmap {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
@@ -2160,11 +2171,11 @@ namespace cfg {
             type value{};
         };
         // type: uint32_t
-        struct mod_int {
+        struct mod_internal {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "debug"; }
-            static constexpr char const * name() { return "mod_int"; }
+            static constexpr char const * name() { return "mod_internal"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
             using mapped_type = sesman_and_spec_type;
@@ -2237,17 +2248,6 @@ namespace cfg {
             type value{};
         };
         // type: uint32_t
-        struct bitmap_update {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
-            static constexpr char const * section() { return "debug"; }
-            static constexpr char const * name() { return "bitmap_update"; }
-            using type = uint32_t;
-            using sesman_and_spec_type = uint32_t;
-            using mapped_type = sesman_and_spec_type;
-            type value{};
-        };
-        // type: uint32_t
         struct performance {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
@@ -2264,17 +2264,6 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "pass_dialog_box"; }
-            using type = uint32_t;
-            using sesman_and_spec_type = uint32_t;
-            using mapped_type = sesman_and_spec_type;
-            type value{};
-        };
-        // type: uint32_t
-        struct mod_internal {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
-            static constexpr char const * section() { return "debug"; }
-            static constexpr char const * name() { return "mod_internal"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
             using mapped_type = sesman_and_spec_type;
@@ -3297,6 +3286,7 @@ struct debug
 , cfg::debug::rdp
 , cfg::debug::primary_orders
 , cfg::debug::secondary_orders
+, cfg::debug::bitmap_update
 , cfg::debug::bitmap
 , cfg::debug::capture
 , cfg::debug::auth
@@ -3304,17 +3294,15 @@ struct debug
 , cfg::debug::front
 , cfg::debug::mod_rdp
 , cfg::debug::mod_vnc
-, cfg::debug::mod_int
+, cfg::debug::mod_internal
 , cfg::debug::mod_xup
 , cfg::debug::widget
 , cfg::debug::input
 , cfg::debug::password
 , cfg::debug::compression
 , cfg::debug::cache
-, cfg::debug::bitmap_update
 , cfg::debug::performance
 , cfg::debug::pass_dialog_box
-, cfg::debug::mod_internal
 , cfg::debug::ocr
 , cfg::debug::ffmpeg
 , cfg::debug::config

@@ -673,6 +673,9 @@
 "#secondary_orders = 0\n\n"
 
 "#_advanced\n"
+"#bitmap_update = 0\n\n"
+
+"#_advanced\n"
 "#bitmap = 0\n\n"
 
 "#_advanced\n"
@@ -694,7 +697,7 @@
 "#mod_vnc = 0\n\n"
 
 "#_advanced\n"
-"#mod_int = 0\n\n"
+"#mod_internal = 0\n\n"
 
 "#_advanced\n"
 "#mod_xup = 0\n\n"
@@ -715,16 +718,10 @@
 "#cache = 0\n\n"
 
 "#_advanced\n"
-"#bitmap_update = 0\n\n"
-
-"#_advanced\n"
 "#performance = 0\n\n"
 
 "#_advanced\n"
 "#pass_dialog_box = 0\n\n"
-
-"#_advanced\n"
-"#mod_internal = 0\n\n"
 
 "#_advanced\n"
 "#ocr = 0\n\n"

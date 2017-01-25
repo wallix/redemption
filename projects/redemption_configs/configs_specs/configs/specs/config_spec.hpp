@@ -417,26 +417,29 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<types::u32>(), "mcs");
         W.member(A, type_<types::u32>(), "sec");
         W.member(A, type_<types::u32>(), "rdp");
+
         W.member(A, type_<types::u32>(), "primary_orders");
         W.member(A, type_<types::u32>(), "secondary_orders");
+        W.member(A, type_<types::u32>(), "bitmap_update");
+
         W.member(A, type_<types::u32>(), "bitmap");
         W.member(A, type_<types::u32>(), "capture");
         W.member(A, type_<types::u32>(), "auth");
         W.member(A, type_<types::u32>(), "session");
         W.member(A, type_<types::u32>(), "front");
+
         W.member(A, type_<types::u32>(), "mod_rdp");
         W.member(A, type_<types::u32>(), "mod_vnc");
-        W.member(A, type_<types::u32>(), "mod_int");
+        W.member(A, type_<types::u32>(), "mod_internal");
         W.member(A, type_<types::u32>(), "mod_xup");
+
         W.member(A, type_<types::u32>(), "widget");
         W.member(A, type_<types::u32>(), "input");
         W.member(A, type_<types::u32>(), "password");
         W.member(A, type_<types::u32>(), "compression");
         W.member(A, type_<types::u32>(), "cache");
-        W.member(A, type_<types::u32>(), "bitmap_update");
         W.member(A, type_<types::u32>(), "performance");
         W.member(A, type_<types::u32>(), "pass_dialog_box");
-        W.member(A, type_<types::u32>(), "mod_internal");
         W.member(A, type_<types::u32>(), "ocr");
         W.member(A, type_<types::u32>(), "ffmpeg");
         W.sep();
