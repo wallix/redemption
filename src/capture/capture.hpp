@@ -293,64 +293,9 @@ namespace transbuf {
 
 using std::size_t;
 
-class ochecksum_buf_ofile_buf_out
-: public transbuf::ofile_buf_out
-{
-    static constexpr size_t nosize = ~size_t{};
-    static constexpr size_t quick_size = 4096;
-
-    SslHMAC_Sha256_Delayed hmac;
-    SslHMAC_Sha256_Delayed quick_hmac;
-    unsigned char const (&hmac_key)[MD_HASH_LENGTH];
-    size_t file_size = nosize;
-
-public:
-    explicit ochecksum_buf_ofile_buf_out(unsigned char const (&hmac_key)[MD_HASH_LENGTH])
-    : hmac_key(hmac_key)
-    {}
-
-    ochecksum_buf_ofile_buf_out(ochecksum_buf_ofile_buf_out const &) = delete;
-    ochecksum_buf_ofile_buf_out & operator=(ochecksum_buf_ofile_buf_out const &) = delete;
-
-    template<class... Ts>
-    int open(Ts && ... args)
-    {
-        this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
-        this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
-        int ret = this->transbuf::ofile_buf_out::open(args...);
-        this->file_size = 0;
-        return ret;
-    }
-
-    ssize_t write(const void * data, size_t len)
-    {
-        REDASSERT(this->file_size != nosize);
-        this->hmac.update(static_cast<const uint8_t *>(data), len);
-        if (this->file_size < quick_size) {
-            auto const remaining = std::min(quick_size - this->file_size, len);
-            this->quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
-            this->file_size += remaining;
-        }
-        return this->transbuf::ofile_buf_out::write(data, len);
-    }
-
-    int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
-    {
-        REDASSERT(this->file_size != nosize);
-        this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
-        this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
-        this->file_size = nosize;
-        return this->transbuf::ofile_buf_out::close();
-    }
-
-    int close() {
-        return this->transbuf::ofile_buf_out::close();
-    }
-};
 
 class ochecksum_buf_null_buf
 {
-
     static constexpr size_t nosize = ~size_t{};
     static constexpr size_t quick_size = 4096;
 
@@ -402,7 +347,6 @@ public:
         return 0;
     }
 };
-
 
 }
 
@@ -1644,12 +1588,100 @@ namespace detail
         {}
     };
 
-    struct cctx_ochecksum_file
-    : transbuf::ochecksum_buf_ofile_buf_out
+
+    class cctx_ochecksum_file
     {
+        int fd;
+
+        static constexpr size_t nosize = ~size_t{};
+        static constexpr size_t quick_size = 4096;
+
+        SslHMAC_Sha256_Delayed hmac;
+        SslHMAC_Sha256_Delayed quick_hmac;
+        unsigned char const (&hmac_key)[MD_HASH_LENGTH];
+        size_t file_size = nosize;
+
+    public:
         explicit cctx_ochecksum_file(CryptoContext & cctx)
-        : transbuf::ochecksum_buf_ofile_buf_out(cctx.get_hmac_key())
+        : fd(-1)
+        , hmac_key(cctx.get_hmac_key())
         {}
+
+        ~cctx_ochecksum_file()
+        {
+            this->close();
+        }
+
+        cctx_ochecksum_file(cctx_ochecksum_file const &) = delete;
+        cctx_ochecksum_file & operator=(cctx_ochecksum_file const &) = delete;
+
+        int open(const char * filename, mode_t mode)
+        {
+            this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
+            this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
+            this->file_size = 0;
+            this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+            return this->fd;
+        }
+
+        ssize_t write(const void * data, size_t len)
+        {
+            REDASSERT(this->file_size != nosize);
+
+            // TODO: hmac returns error as exceptions while write errors are returned as -1
+            // this is inconsistent and probably need a fix.
+            // also, if we choose to raise exception every error should have it's own one
+            this->hmac.update(static_cast<const uint8_t *>(data), len);
+            if (this->file_size < quick_size) {
+                auto const remaining = std::min(quick_size - this->file_size, len);
+                this->quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
+                this->file_size += remaining;
+            }
+
+            size_t remaining_len = len;
+            size_t total_sent = 0;
+            while (remaining_len) {
+                ssize_t ret = ::write(this->fd,
+                    static_cast<const char*>(data) + total_sent, remaining_len);
+                if (ret <= 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    return -1;
+                }
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            return total_sent;
+        }
+
+        int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
+        {
+            REDASSERT(this->file_size != nosize);
+            this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
+            this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
+            this->file_size = nosize;
+            return this->close();
+        }
+
+        int close()
+        {
+            if (this->is_open()) {
+                const int ret = ::close(this->fd);
+                this->fd = -1;
+                return ret;
+            }
+            return 0;
+        }
+
+        bool is_open() const noexcept
+        { return -1 != this->fd; }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return ::lseek64(this->fd, offset, whence); }
+
+        int flush() const
+        { return 0; }
     };
 }
 
