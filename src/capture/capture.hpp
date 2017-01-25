@@ -229,22 +229,6 @@ private:
 
 typedef FilenameGenerator::Format FilenameFormat;
 
-namespace transbuf
-{
-    struct null_buf
-    {
-        int open() noexcept { return 0; }
-
-        int close() noexcept { return 0; }
-
-        ssize_t write(const void *, size_t len) noexcept { return len; }
-
-        ssize_t read(void *, size_t len) noexcept { return len; }
-
-        int flush() const noexcept { return 0; }
-    };
-}
-
 namespace transbuf {
     class ofile_buf_out
     {
@@ -402,8 +386,7 @@ public:
     }
 };
 
-class ochecksum_buf_null_buf
-: public transbuf::null_buf
+class ochecksum_buf_null_buf //: public transbuf::null_buf
 {
     struct HMac
     {
@@ -464,7 +447,7 @@ public:
     {
         this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
         this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
-        int ret = this->transbuf::null_buf::open(args...);
+        int ret = 0;
         this->file_size = 0;
         return ret;
     }
@@ -478,7 +461,7 @@ public:
             this->quick_hmac.update(data, remaining);
             this->file_size += remaining;
         }
-        return this->transbuf::null_buf::write(data, len);
+        return len;
     }
 
     int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
@@ -487,11 +470,11 @@ public:
         this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
         this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
         this->file_size = nosize;
-        return this->transbuf::null_buf::close();
+        return 0;
     }
 
     int close() {
-        return this->transbuf::null_buf::close();
+        return 0;
     }
 };
 
