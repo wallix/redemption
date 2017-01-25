@@ -388,49 +388,12 @@ public:
 
 class ochecksum_buf_null_buf
 {
-    struct HMac
-    {
-        HMAC_CTX hmac;
-        bool initialized = false;
-
-        HMac() = default;
-
-        ~HMac() {
-            if (this->initialized) {
-                HMAC_CTX_cleanup(&this->hmac);
-            }
-        }
-
-        void init(const uint8_t * const crypto_key, size_t key_len) {
-            HMAC_CTX_init(&this->hmac);
-            if (!HMAC_Init_ex(&this->hmac, crypto_key, key_len, EVP_sha256(), nullptr)) {
-                throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
-            }
-            this->initialized = true;
-        }
-
-        void update(const void * const data, size_t data_size) {
-            assert(this->initialized);
-            if (!HMAC_Update(&this->hmac, reinterpret_cast<uint8_t const *>(data), data_size)) {
-                throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
-            }
-        }
-
-        void final(uint8_t (&out_data)[SHA256_DIGEST_LENGTH]) {
-            assert(this->initialized);
-            unsigned int len = 0;
-            if (!HMAC_Final(&this->hmac, out_data, &len)) {
-                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
-            }
-            this->initialized = false;
-        }
-    };
 
     static constexpr size_t nosize = ~size_t{};
     static constexpr size_t quick_size = 4096;
 
-    HMac hmac;
-    HMac quick_hmac;
+    SslHMAC_Sha256_Delayed hmac;
+    SslHMAC_Sha256_Delayed quick_hmac;
     unsigned char const (&hmac_key)[MD_HASH_LENGTH];
     size_t file_size = nosize;
 
@@ -455,10 +418,10 @@ public:
     ssize_t write(const void * data, size_t len)
     {
         REDASSERT(this->file_size != nosize);
-        this->hmac.update(data, len);
+        this->hmac.update(static_cast<const uint8_t *>(data), len);
         if (this->file_size < quick_size) {
             auto const remaining = std::min(quick_size - this->file_size, len);
-            this->quick_hmac.update(data, remaining);
+            this->quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
             this->file_size += remaining;
         }
         return len;
