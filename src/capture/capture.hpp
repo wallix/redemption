@@ -1114,10 +1114,83 @@ namespace detail
 }
 
 
-struct OutFilenameSequenceTransport
-: RequestCleaningAndNextTransport<
-    detail::out_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>>,
-    detail::NoCurrentPath>
+struct RequestCleaningAndNextTransport_OutSeqF
+: Transport
+{
+    using Buf = detail::out_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>>;
+    using PathTraits = detail::NoCurrentPath;
+    
+    RequestCleaningAndNextTransport_OutSeqF() = default;
+
+    template<class Params>
+    explicit RequestCleaningAndNextTransport_OutSeqF(const Params & buf_params)
+    : buf(buf_params)
+    {}
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+    void request_full_cleaning() override {
+        this->buffer().request_full_cleaning();
+    }
+
+    ~RequestCleaningAndNextTransport_OutSeqF() {
+        this->buf.close();
+    }
+
+private:
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                const char * filename = PathTraits::current_path(this->buf);
+                snprintf(message, sizeof(message), "100|%s", filename ? filename : "unknow");
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+protected:
+    Buf & buffer() noexcept
+    { return this->buf; }
+
+    const Buf & buffer() const noexcept
+    { return this->buf; }
+
+    typedef RequestCleaningAndNextTransport_OutSeqF TransportType;
+
+private:
+    Buf buf;
+};
+
+
+struct OutFilenameSequenceTransport : RequestCleaningAndNextTransport_OutSeqF
 {
     OutFilenameSequenceTransport(
         FilenameGenerator::Format format,
