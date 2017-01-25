@@ -246,22 +246,7 @@ namespace transbuf
 }
 
 
-namespace detail
-{
-    struct NoCurrentPath {
-        template<class Buf>
-        static const char * current_path(Buf &)
-        { return nullptr; }
-    };
-
-    struct GetCurrentPath {
-        template<class Buf>
-        static const char * current_path(Buf & buf)
-        { return buf.current_path(); }
-    };
-}
-
-template<class Buf, class PathTraits>
+template<class Buf>
 struct RequestCleaningAndNextTransport
 : Transport
 {
@@ -308,8 +293,7 @@ private:
             this->status = false;
             if (errno == ENOSPC) {
                 char message[1024];
-                const char * filename = PathTraits::current_path(this->buf);
-                snprintf(message, sizeof(message), "100|%s", filename ? filename : "unknow");
+                snprintf(message, sizeof(message), "100|%s", buf.current_path());
                 this->authentifier->report("FILESYSTEM_FULL", message);
                 errno = ENOSPC;
                 throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
@@ -1116,7 +1100,6 @@ namespace detail
 struct OutFilenameSequenceTransport : public Transport
 {
     using Buf = detail::out_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>>;
-    using PathTraits = detail::NoCurrentPath;
 
     OutFilenameSequenceTransport(
         FilenameGenerator::Format format,
@@ -1172,8 +1155,7 @@ private:
             this->status = false;
             if (errno == ENOSPC) {
                 char message[1024];
-                const char * filename = PathTraits::current_path(this->buf);
-                snprintf(message, sizeof(message), "100|%s", filename ? filename : "unknow");
+                snprintf(message, sizeof(message), "100|unknown");
                 this->authentifier->report("FILESYSTEM_FULL", message);
                 errno = ENOSPC;
                 throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
@@ -1197,7 +1179,6 @@ private:
 struct OutFilenameSequenceSeekableTransport : public Transport
 {
     using Buf = detail::out_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>>;
-    using PathTraits = detail::NoCurrentPath;
 
     OutFilenameSequenceSeekableTransport(
         FilenameGenerator::Format format,
@@ -1258,8 +1239,7 @@ private:
             this->status = false;
             if (errno == ENOSPC) {
                 char message[1024];
-                const char * filename = PathTraits::current_path(this->buf);
-                snprintf(message, sizeof(message), "100|%s", filename ? filename : "unknow");
+                snprintf(message, sizeof(message), "100|unknown");
                 this->authentifier->report("FILESYSTEM_FULL", message);
                 errno = ENOSPC;
                 throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
@@ -1908,8 +1888,7 @@ namespace transbuf {
 struct OutMetaSequenceTransport
 : RequestCleaningAndNextTransport<
     detail::out_meta_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>, detail::empty_ctor<transbuf::ofile_buf_out>
-    >,
-    detail::GetCurrentPath
+    >
 >
 {
     OutMetaSequenceTransport(
@@ -1952,8 +1931,7 @@ struct OutMetaSequenceTransportWithSum
         detail::cctx_ochecksum_file,
         detail::cctx_ofile_buf,
         CryptoContext&
-    >,
-    detail::GetCurrentPath
+    >
 >
 {
     OutMetaSequenceTransportWithSum(
@@ -2000,8 +1978,7 @@ struct CryptoOutMetaSequenceTransport
         transbuf::ocrypto_filename_buf,
         transbuf::ocrypto_filename_buf,
         transbuf::ocrypto_filename_params
-    >,
-    detail::GetCurrentPath
+    >
 >
 {
     CryptoOutMetaSequenceTransport(
