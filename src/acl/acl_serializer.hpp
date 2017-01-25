@@ -206,7 +206,7 @@ public:
             // Keep alive timeout
             if (now > this->timeout) {
                 LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
-                // mm.invoke_close_box("Missed keepalive from ACL", signal, now);
+                // mm.invoke_close_box("Missed keepalive from ACL", signal, now, authentifier);
                 return true;
             }
 
@@ -275,7 +275,7 @@ public:
         if (!has_user_activity) {
             if (now > this->last_activity_time + this->inactivity_timeout) {
                 LOG(LOG_INFO, "Session User inactivity : closing");
-                // mm.invoke_close_box("Connection closed on inactivity", signal, now);
+                // mm.invoke_close_box("Connection closed on inactivity", signal, now, authentifier);
                 return true;
             }
         }
@@ -448,7 +448,7 @@ public:
                    );
     }
 
-    bool check(auth_api * authentifier, MMApi & mm, time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity) {
+    bool check(auth_api & authentifier, MMApi & mm, time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity) {
         //LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u",
         //    (unsigned)now, static_cast<unsigned>(signal));
         if (signal == BACK_EVENT_STOP) {
@@ -468,7 +468,7 @@ public:
         if (enddate != 0 && (static_cast<uint32_t>(now) > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             const char * message = TR("session_out_time", language(this->ini));
-            mm.invoke_close_box(message, signal, now);
+            mm.invoke_close_box(message, signal, now, authentifier);
 
             return true;
         }
@@ -481,19 +481,19 @@ public:
             LOG(LOG_INFO, "Close by Rejected message received : %s",
                 this->ini.get<cfg::context::rejected>());
             this->ini.set_acl<cfg::context::rejected>("");
-            mm.invoke_close_box(nullptr, signal, now);
+            mm.invoke_close_box(nullptr, signal, now, authentifier);
             return true;
         }
 
         // Keep Alive
         if (this->keepalive.check(now, this->ini)) {
-            mm.invoke_close_box(TR("miss_keepalive", language(this->ini)), signal, now);
+            mm.invoke_close_box(TR("miss_keepalive", language(this->ini)), signal, now, authentifier);
             return true;
         }
 
         // Inactivity management
         if (this->inactivity.check_user_activity(now, has_user_activity)) {
-            mm.invoke_close_box(TR("close_inactivity", language(this->ini)), signal, now);
+            mm.invoke_close_box(TR("close_inactivity", language(this->ini)), signal, now, authentifier);
             return true;
         }
 
@@ -548,7 +548,7 @@ public:
 
                 signal = BACK_EVENT_NONE;
                 if (next_state == MODULE_INTERNAL_CLOSE) {
-                    mm.invoke_close_box(nullptr, signal, now);
+                    mm.invoke_close_box(nullptr, signal, now, authentifier);
                     return true;
                 }
                 if (next_state == MODULE_INTERNAL_CLOSE_BACK) {

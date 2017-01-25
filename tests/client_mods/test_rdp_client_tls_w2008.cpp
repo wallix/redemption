@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     LCGTime timeobj;
     FakeAuthentifier authentifier;
     mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen, timeobj, mod_rdp_params, &authentifier);
+        gen, timeobj, mod_rdp_params, authentifier);
     mod_api * mod = &mod_;
 
     if (verbose > 2) {
@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
     LCGTime timeobj;
     FakeAuthentifier authentifier;
     mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen, timeobj, mod_rdp_params, &authentifier);
+        gen, timeobj, mod_rdp_params, authentifier);
     mod_api * mod = &mod_;
 
     if (verbose > 2) {

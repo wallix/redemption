@@ -82,7 +82,7 @@ public:
             , Random & gen
             , Inifile & ini
             , CryptoContext & cctx
-            , auth_api * authentifier
+            , auth_api & authentifier
             , bool fp_support // If true, fast-path must be supported
             , bool mem3blt_support
             , time_t now
@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
         FakeAuthentifier authentifier;
-        MyFront front( front_trans, gen1, ini , cctx, &authentifier, fastpath_support, mem3blt_support
+        MyFront front( front_trans, gen1, ini , cctx, authentifier, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>().count());
         null_mod no_mod(front);
 
@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         BOOST_CHECK(true);
 
         front.clear_channels();
-        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, &authentifier);
+        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier);
         mod_api * mod = &mod_;
         BOOST_CHECK(true);
 
@@ -383,7 +383,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
 
         FakeAuthentifier authentifier;
         MyFront front( front_trans, gen1, ini
-                     , cctx, &authentifier, fastpath_support, mem3blt_support
+                     , cctx, authentifier, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>().count() - 1);
         null_mod no_mod(front);
 
@@ -448,7 +448,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         BOOST_CHECK(true);
 
         front.clear_channels();
-        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, &authentifier);
+        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier);
         mod_api * mod = &mod_;
          BOOST_CHECK(true);
 
@@ -621,7 +621,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         FakeAuthentifier authentifier;
 
         MyFront front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
-                     , cctx, &authentifier, fastpath_support, mem3blt_support
+                     , cctx, authentifier, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>());
         null_mod no_mod(front);
 
@@ -685,7 +685,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         BOOST_CHECK(true);
 
         front.clear_channels();
-        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params);
+        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params, authentifier);
         mod_api * mod = &mod_;
          BOOST_CHECK(true);
 

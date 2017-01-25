@@ -81,8 +81,6 @@ struct ModRDPParams {
 
     int key_flags;
 
-//    auth_api * acl = nullptr;
-
     const char * outbound_connection_monitoring_rules = "";
     const char * process_monitoring_rules           = "";
 
