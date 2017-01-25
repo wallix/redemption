@@ -1113,19 +1113,27 @@ namespace detail
     };
 }
 
-
-struct RequestCleaningAndNextTransport_OutSeqF
-: Transport
+struct OutFilenameSequenceTransport : public Transport
 {
     using Buf = detail::out_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>>;
     using PathTraits = detail::NoCurrentPath;
-    
-    RequestCleaningAndNextTransport_OutSeqF() = default;
 
-    template<class Params>
-    explicit RequestCleaningAndNextTransport_OutSeqF(const Params & buf_params)
-    : buf(buf_params)
-    {}
+    OutFilenameSequenceTransport(
+        FilenameGenerator::Format format,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        auth_api * authentifier = nullptr)
+    : buf(detail::out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
+    {
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+    }
+
+    const FilenameGenerator * seqgen() const noexcept
+    { return &(this->buffer().seqgen()); }
 
     bool next() override {
         if (this->status == false) {
@@ -1152,7 +1160,94 @@ struct RequestCleaningAndNextTransport_OutSeqF
         this->buffer().request_full_cleaning();
     }
 
-    ~RequestCleaningAndNextTransport_OutSeqF() {
+    ~OutFilenameSequenceTransport() {
+        this->buf.close();
+    }
+
+private:
+
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                const char * filename = PathTraits::current_path(this->buf);
+                snprintf(message, sizeof(message), "100|%s", filename ? filename : "unknow");
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+    Buf & buffer() noexcept
+    { return this->buf; }
+
+    const Buf & buffer() const noexcept
+    { return this->buf; }
+
+    Buf buf;
+};
+
+struct OutFilenameSequenceSeekableTransport : public Transport
+{
+    using Buf = detail::out_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>>;
+    using PathTraits = detail::NoCurrentPath;
+
+    OutFilenameSequenceSeekableTransport(
+        FilenameGenerator::Format format,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        auth_api * authentifier = nullptr)
+    : buf(detail::out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
+    {
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+    }
+
+    const FilenameGenerator * seqgen() const noexcept
+    { return &(this->buffer().seqgen()); }
+
+    void seek(int64_t offset, int whence) override {
+        if (static_cast<off64_t>(-1) == this->buffer().seek(offset, whence)){
+            throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
+        }
+    }
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+    void request_full_cleaning() override {
+        this->buffer().request_full_cleaning();
+    }
+
+    ~OutFilenameSequenceSeekableTransport() {
         this->buf.close();
     }
 
@@ -1176,69 +1271,14 @@ private:
         this->last_quantum_sent += res;
     }
 
-protected:
     Buf & buffer() noexcept
     { return this->buf; }
 
     const Buf & buffer() const noexcept
     { return this->buf; }
 
-    typedef RequestCleaningAndNextTransport_OutSeqF TransportType;
-
 private:
     Buf buf;
-};
-
-
-struct OutFilenameSequenceTransport : RequestCleaningAndNextTransport_OutSeqF
-{
-    OutFilenameSequenceTransport(
-        FilenameGenerator::Format format,
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension,
-        const int groupid,
-        auth_api * authentifier = nullptr)
-    : OutFilenameSequenceTransport::TransportType(
-        detail::out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
-    {
-        if (authentifier) {
-            this->set_authentifier(authentifier);
-        }
-    }
-
-    const FilenameGenerator * seqgen() const noexcept
-    { return &(this->buffer().seqgen()); }
-};
-
-struct OutFilenameSequenceSeekableTransport
-: RequestCleaningAndNextTransport<
-    detail::out_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>>,
-    detail::NoCurrentPath>
-{
-    OutFilenameSequenceSeekableTransport(
-        FilenameGenerator::Format format,
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension,
-        const int groupid,
-        auth_api * authentifier = nullptr)
-    : OutFilenameSequenceSeekableTransport::TransportType(
-        detail::out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
-    {
-        if (authentifier) {
-            this->set_authentifier(authentifier);
-        }
-    }
-
-    const FilenameGenerator * seqgen() const noexcept
-    { return &(this->buffer().seqgen()); }
-
-    void seek(int64_t offset, int whence) override {
-        if (static_cast<off64_t>(-1) == this->buffer().seek(offset, whence)){
-            throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
-        }
-    }
 
 };
 
