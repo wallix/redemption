@@ -928,6 +928,18 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 static_cast<cfg::mod_rdp::use_client_provided_alternate_shell&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "use_client_provided_remoteapp")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::use_client_provided_remoteapp&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_rdp::use_client_provided_remoteapp&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "use_native_remoteapp_capability")) {
             ::configs::parse_and_log(
                 context, key,

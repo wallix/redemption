@@ -240,7 +240,8 @@ void config_spec_definition(Writer && W)
         W.member(H, type_<std::string>(), "alternate_shell", r);
         W.member(H, type_<std::string>(), "shell_working_directory", r);
         W.sep();
-        W.member(H, type_<bool>(), "use_client_provided_alternate_shell", set(false), r);
+        W.member(A, type_<bool>(), "use_client_provided_alternate_shell", set(false), r);
+        W.member(A, type_<bool>(), "use_client_provided_remoteapp", set(false), r);
         W.sep();
         W.member(A, type_<bool>(), "use_native_remoteapp_capability", set(false), r);
         W.sep();

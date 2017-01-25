@@ -304,8 +304,11 @@
 "#_hidden\n"
 "#shell_working_directory = \n\n"
 
-"#_hidden\n"
+"#_advanced\n"
 "#use_client_provided_alternate_shell = 0\n\n"
+
+"#_advanced\n"
+"#use_client_provided_remoteapp = 0\n\n"
 
 "#_advanced\n"
 "#use_native_remoteapp_capability = 0\n\n"

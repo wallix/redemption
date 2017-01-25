@@ -304,8 +304,11 @@
 "#_hidden\n"
 "shell_working_directory = string(default='')\n\n"
 
-"#_hidden\n"
+"#_advanced\n"
 "use_client_provided_alternate_shell = boolean(default=False)\n\n"
+
+"#_advanced\n"
+"use_client_provided_remoteapp = boolean(default=False)\n\n"
 
 "#_advanced\n"
 "use_native_remoteapp_capability = boolean(default=False)\n\n"
