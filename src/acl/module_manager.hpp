@@ -1342,9 +1342,7 @@ public:
                             ));
 
                     if (this->front.client_info.remote_program &&
-                        (!mod_rdp_params.target_application ||
-                         !(*mod_rdp_params.target_application) ||
-                         !this->ini.get<cfg::mod_rdp::use_native_remoteapp_capability>())) {
+                        !mod_rdp_params.remote_program) {
                         client_info.width  = adjusted_client_execute_rect.cx / 4 * 4;
                         client_info.height = adjusted_client_execute_rect.cy;
 
@@ -1373,9 +1371,7 @@ public:
                     std::unique_ptr<mod_api> managed_mod(new_mod);
 
                     if (this->front.client_info.remote_program &&
-                        (!mod_rdp_params.target_application ||
-                         !(*mod_rdp_params.target_application) ||
-                         !this->ini.get<cfg::mod_rdp::use_native_remoteapp_capability>())) {
+                        !mod_rdp_params.remote_program) {
                         LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
 
                         this->set_mod(
