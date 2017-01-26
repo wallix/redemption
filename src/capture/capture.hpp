@@ -229,112 +229,6 @@ private:
 
 typedef FilenameGenerator::Format FilenameFormat;
 
-namespace transbuf
-{
-    struct null_buf
-    {
-        int open() noexcept { return 0; }
-
-        int close() noexcept { return 0; }
-
-        ssize_t write(const void *, size_t len) noexcept { return len; }
-
-        ssize_t read(void *, size_t len) noexcept { return len; }
-
-        int flush() const noexcept { return 0; }
-    };
-}
-
-
-namespace detail
-{
-    struct NoCurrentPath {
-        template<class Buf>
-        static const char * current_path(Buf &)
-        { return nullptr; }
-    };
-
-    struct GetCurrentPath {
-        template<class Buf>
-        static const char * current_path(Buf & buf)
-        { return buf.current_path(); }
-    };
-}
-
-template<class Buf, class PathTraits>
-struct RequestCleaningAndNextTransport
-: Transport
-{
-    RequestCleaningAndNextTransport() = default;
-
-    template<class Params>
-    explicit RequestCleaningAndNextTransport(const Params & buf_params)
-    : buf(buf_params)
-    {}
-
-    bool next() override {
-        if (this->status == false) {
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
-        const ssize_t res = this->buffer().next();
-        if (res) {
-            this->status = false;
-            if (res < 0){
-                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
-            }
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-        }
-        ++this->seqno;
-        return true;
-    }
-
-    bool disconnect() override {
-        return !this->buf.close();
-    }
-
-    void request_full_cleaning() override {
-        this->buffer().request_full_cleaning();
-    }
-
-    ~RequestCleaningAndNextTransport() {
-        this->buf.close();
-    }
-
-private:
-    void do_send(const uint8_t * data, size_t len) override {
-        const ssize_t res = this->buf.write(data, len);
-        if (res < 0) {
-            this->status = false;
-            if (errno == ENOSPC) {
-                char message[1024];
-                const char * filename = PathTraits::current_path(this->buf);
-                snprintf(message, sizeof(message), "100|%s", filename ? filename : "unknow");
-                this->authentifier->report("FILESYSTEM_FULL", message);
-                errno = ENOSPC;
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
-            }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
-        this->last_quantum_sent += res;
-    }
-
-protected:
-    Buf & buffer() noexcept
-    { return this->buf; }
-
-    const Buf & buffer() const noexcept
-    { return this->buf; }
-
-    typedef RequestCleaningAndNextTransport TransportType;
-
-private:
-    Buf buf;
-};
-
-
 namespace transbuf {
     class ofile_buf_out
     {
@@ -399,145 +293,14 @@ namespace transbuf {
 
 using std::size_t;
 
-class ochecksum_buf_ofile_buf_out
-: public transbuf::ofile_buf_out
-{
-    struct HMac
-    {
-        HMAC_CTX hmac;
-        bool initialized = false;
-
-        HMac() = default;
-
-        ~HMac() {
-            if (this->initialized) {
-                HMAC_CTX_cleanup(&this->hmac);
-            }
-        }
-
-        void init(const uint8_t * const crypto_key, size_t key_len) {
-            HMAC_CTX_init(&this->hmac);
-            if (!HMAC_Init_ex(&this->hmac, crypto_key, key_len, EVP_sha256(), nullptr)) {
-                throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
-            }
-            this->initialized = true;
-        }
-
-        void update(const void * const data, size_t data_size) {
-            assert(this->initialized);
-            if (!HMAC_Update(&this->hmac, reinterpret_cast<uint8_t const *>(data), data_size)) {
-                throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
-            }
-        }
-
-        void final(uint8_t (&out_data)[SHA256_DIGEST_LENGTH]) {
-            assert(this->initialized);
-            unsigned int len = 0;
-            if (!HMAC_Final(&this->hmac, out_data, &len)) {
-                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
-            }
-            this->initialized = false;
-        }
-    };
-
-    static constexpr size_t nosize = ~size_t{};
-    static constexpr size_t quick_size = 4096;
-
-    HMac hmac;
-    HMac quick_hmac;
-    unsigned char const (&hmac_key)[MD_HASH_LENGTH];
-    size_t file_size = nosize;
-
-public:
-    explicit ochecksum_buf_ofile_buf_out(unsigned char const (&hmac_key)[MD_HASH_LENGTH])
-    : hmac_key(hmac_key)
-    {}
-
-    ochecksum_buf_ofile_buf_out(ochecksum_buf_ofile_buf_out const &) = delete;
-    ochecksum_buf_ofile_buf_out & operator=(ochecksum_buf_ofile_buf_out const &) = delete;
-
-    template<class... Ts>
-    int open(Ts && ... args)
-    {
-        this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
-        this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
-        int ret = this->transbuf::ofile_buf_out::open(args...);
-        this->file_size = 0;
-        return ret;
-    }
-
-    ssize_t write(const void * data, size_t len)
-    {
-        REDASSERT(this->file_size != nosize);
-        this->hmac.update(data, len);
-        if (this->file_size < quick_size) {
-            auto const remaining = std::min(quick_size - this->file_size, len);
-            this->quick_hmac.update(data, remaining);
-            this->file_size += remaining;
-        }
-        return this->transbuf::ofile_buf_out::write(data, len);
-    }
-
-    int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
-    {
-        REDASSERT(this->file_size != nosize);
-        this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
-        this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
-        this->file_size = nosize;
-        return this->transbuf::ofile_buf_out::close();
-    }
-
-    int close() {
-        return this->transbuf::ofile_buf_out::close();
-    }
-};
 
 class ochecksum_buf_null_buf
-: public transbuf::null_buf
 {
-    struct HMac
-    {
-        HMAC_CTX hmac;
-        bool initialized = false;
-
-        HMac() = default;
-
-        ~HMac() {
-            if (this->initialized) {
-                HMAC_CTX_cleanup(&this->hmac);
-            }
-        }
-
-        void init(const uint8_t * const crypto_key, size_t key_len) {
-            HMAC_CTX_init(&this->hmac);
-            if (!HMAC_Init_ex(&this->hmac, crypto_key, key_len, EVP_sha256(), nullptr)) {
-                throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
-            }
-            this->initialized = true;
-        }
-
-        void update(const void * const data, size_t data_size) {
-            assert(this->initialized);
-            if (!HMAC_Update(&this->hmac, reinterpret_cast<uint8_t const *>(data), data_size)) {
-                throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
-            }
-        }
-
-        void final(uint8_t (&out_data)[SHA256_DIGEST_LENGTH]) {
-            assert(this->initialized);
-            unsigned int len = 0;
-            if (!HMAC_Final(&this->hmac, out_data, &len)) {
-                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
-            }
-            this->initialized = false;
-        }
-    };
-
     static constexpr size_t nosize = ~size_t{};
     static constexpr size_t quick_size = 4096;
 
-    HMac hmac;
-    HMac quick_hmac;
+    SslHMAC_Sha256_Delayed hmac;
+    SslHMAC_Sha256_Delayed quick_hmac;
     unsigned char const (&hmac_key)[MD_HASH_LENGTH];
     size_t file_size = nosize;
 
@@ -554,7 +317,7 @@ public:
     {
         this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
         this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
-        int ret = this->transbuf::null_buf::open(args...);
+        int ret = 0;
         this->file_size = 0;
         return ret;
     }
@@ -562,13 +325,13 @@ public:
     ssize_t write(const void * data, size_t len)
     {
         REDASSERT(this->file_size != nosize);
-        this->hmac.update(data, len);
+        this->hmac.update(static_cast<const uint8_t *>(data), len);
         if (this->file_size < quick_size) {
             auto const remaining = std::min(quick_size - this->file_size, len);
-            this->quick_hmac.update(data, remaining);
+            this->quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
             this->file_size += remaining;
         }
-        return this->transbuf::null_buf::write(data, len);
+        return len;
     }
 
     int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
@@ -577,14 +340,13 @@ public:
         this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
         this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
         this->file_size = nosize;
-        return this->transbuf::null_buf::close();
+        return 0;
     }
 
     int close() {
-        return this->transbuf::null_buf::close();
+        return 0;
     }
 };
-
 
 }
 
@@ -929,51 +691,6 @@ namespace detail
         }
     };
 
-    template<class HashBuf>
-    int write_meta_hash(
-        char const * hash_filename, char const * meta_filename,
-        HashBuf & crypto_hash, hash_type const * hash
-    ) {
-        char path[1024] = {};
-        char basename[1024] = {};
-        char extension[256] = {};
-        char filename[2048] = {};
-
-        canonical_path(
-            meta_filename,
-            path, sizeof(path),
-            basename, sizeof(basename),
-            extension, sizeof(extension)
-        );
-
-        snprintf(filename, sizeof(filename), "%s%s", basename, extension);
-
-        if (crypto_hash.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
-            char header[] = "v2\n\n\n";
-            crypto_hash.write(header, sizeof(header)-1);
-
-            struct stat stat;
-            int err = ::stat(meta_filename, &stat);
-            if (!err) {
-                err = write_meta_file_impl<false>(crypto_hash, filename, stat, 0, 0, hash);
-            }
-            if (!err) {
-                err = crypto_hash.close(/*hash*/);
-            }
-            if (err) {
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                return 1;
-            }
-        }
-        else {
-            int e = errno;
-            LOG(LOG_ERR, "Open to transport failed: code=%d", e);
-            errno = e;
-            return 1;
-        }
-
-        return 0;
-    }
 
     template<class MetaParams = no_param>
     struct out_meta_sequence_filename_buf_param
@@ -1042,11 +759,48 @@ namespace detail
             const int res2 = (this->meta_buf().is_open() ? this->meta_buf_.close() : 0);
             int err = res1 ? res1 : res2;
             if (!err) {
-                transbuf::ofile_buf_out ofile;
-                return write_meta_hash(
-                    this->hash_filename(), this->meta_filename(),
-                    ofile, nullptr
+                char const * hash_filename = this->hash_filename();
+                char const * meta_filename = this->meta_filename();
+                transbuf::ofile_buf_out crypto_hash;
+
+                char path[1024] = {};
+                char basename[1024] = {};
+                char extension[256] = {};
+                char filename[2048] = {};
+
+                canonical_path(
+                    meta_filename,
+                    path, sizeof(path),
+                    basename, sizeof(basename),
+                    extension, sizeof(extension)
                 );
+
+                snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+                if (crypto_hash.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+                    char header[] = "v2\n\n\n";
+                    crypto_hash.write(header, sizeof(header)-1);
+
+                    struct stat stat;
+                    int err = ::stat(meta_filename, &stat);
+                    if (!err) {
+                        err = write_meta_file_impl<false>(crypto_hash, filename, stat, 0, 0, nullptr);
+                    }
+                    if (!err) {
+                        err = crypto_hash.close(/*hash*/);
+                    }
+                    if (err) {
+                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                        return 1;
+                    }
+                }
+                else {
+                    int e = errno;
+                    LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+                    errno = e;
+                    return 1;
+                }
+                return 0;
             }
             return err;
         }
@@ -1113,12 +867,10 @@ namespace detail
     };
 }
 
-
-struct OutFilenameSequenceTransport
-: RequestCleaningAndNextTransport<
-    detail::out_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>>,
-    detail::NoCurrentPath>
+struct OutFilenameSequenceTransport : public Transport
 {
+    using Buf = detail::out_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>>;
+
     OutFilenameSequenceTransport(
         FilenameGenerator::Format format,
         const char * const prefix,
@@ -1126,8 +878,7 @@ struct OutFilenameSequenceTransport
         const char * const extension,
         const int groupid,
         auth_api * authentifier = nullptr)
-    : OutFilenameSequenceTransport::TransportType(
-        detail::out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
+    : buf(detail::out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
     {
         if (authentifier) {
             this->set_authentifier(authentifier);
@@ -1136,13 +887,69 @@ struct OutFilenameSequenceTransport
 
     const FilenameGenerator * seqgen() const noexcept
     { return &(this->buffer().seqgen()); }
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+    void request_full_cleaning() override {
+        this->buffer().request_full_cleaning();
+    }
+
+    ~OutFilenameSequenceTransport() {
+        this->buf.close();
+    }
+
+private:
+
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|unknown");
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+    Buf & buffer() noexcept
+    { return this->buf; }
+
+    const Buf & buffer() const noexcept
+    { return this->buf; }
+
+    Buf buf;
 };
 
-struct OutFilenameSequenceSeekableTransport
-: RequestCleaningAndNextTransport<
-    detail::out_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>>,
-    detail::NoCurrentPath>
+struct OutFilenameSequenceSeekableTransport : public Transport
 {
+    using Buf = detail::out_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>>;
+
     OutFilenameSequenceSeekableTransport(
         FilenameGenerator::Format format,
         const char * const prefix,
@@ -1150,8 +957,7 @@ struct OutFilenameSequenceSeekableTransport
         const char * const extension,
         const int groupid,
         auth_api * authentifier = nullptr)
-    : OutFilenameSequenceSeekableTransport::TransportType(
-        detail::out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
+    : buf(detail::out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
     {
         if (authentifier) {
             this->set_authentifier(authentifier);
@@ -1166,6 +972,63 @@ struct OutFilenameSequenceSeekableTransport
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }
     }
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+    void request_full_cleaning() override {
+        this->buffer().request_full_cleaning();
+    }
+
+    ~OutFilenameSequenceSeekableTransport() {
+        this->buf.close();
+    }
+
+private:
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|unknown");
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+    Buf & buffer() noexcept
+    { return this->buf; }
+
+    const Buf & buffer() const noexcept
+    { return this->buf; }
+
+private:
+    Buf buf;
 
 };
 
@@ -1660,7 +1523,48 @@ namespace detail
                 return 1;
             }
 
-            return write_meta_hash(this->hash_filename(), this->meta_filename(), hash_buf, &hash);
+            char const * hash_filename = this->hash_filename();
+            char const * meta_filename = this->meta_filename();
+
+            char path[1024] = {};
+            char basename[1024] = {};
+            char extension[256] = {};
+            char filename[2048] = {};
+
+            canonical_path(
+                meta_filename,
+                path, sizeof(path),
+                basename, sizeof(basename),
+                extension, sizeof(extension)
+            );
+
+            snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+            if (hash_buf.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+                char header[] = "v2\n\n\n";
+                hash_buf.write(header, sizeof(header)-1);
+
+                struct stat stat;
+                int err = ::stat(meta_filename, &stat);
+                if (!err) {
+                    err = write_meta_file_impl<false>(hash_buf, filename, stat, 0, 0, &hash);
+                }
+                if (!err) {
+                    err = hash_buf.close(/*hash*/);
+                }
+                if (err) {
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                    return 1;
+                }
+            }
+            else {
+                int e = errno;
+                LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+                errno = e;
+                return 1;
+            }
+
+            return 0;
         }
 
         int next()
@@ -1717,12 +1621,100 @@ namespace detail
         {}
     };
 
-    struct cctx_ochecksum_file
-    : transbuf::ochecksum_buf_ofile_buf_out
+
+    class cctx_ochecksum_file
     {
+        int fd;
+
+        static constexpr size_t nosize = ~size_t{};
+        static constexpr size_t quick_size = 4096;
+
+        SslHMAC_Sha256_Delayed hmac;
+        SslHMAC_Sha256_Delayed quick_hmac;
+        unsigned char const (&hmac_key)[MD_HASH_LENGTH];
+        size_t file_size = nosize;
+
+    public:
         explicit cctx_ochecksum_file(CryptoContext & cctx)
-        : transbuf::ochecksum_buf_ofile_buf_out(cctx.get_hmac_key())
+        : fd(-1)
+        , hmac_key(cctx.get_hmac_key())
         {}
+
+        ~cctx_ochecksum_file()
+        {
+            this->close();
+        }
+
+        cctx_ochecksum_file(cctx_ochecksum_file const &) = delete;
+        cctx_ochecksum_file & operator=(cctx_ochecksum_file const &) = delete;
+
+        int open(const char * filename, mode_t mode)
+        {
+            this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
+            this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
+            this->file_size = 0;
+            this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+            return this->fd;
+        }
+
+        ssize_t write(const void * data, size_t len)
+        {
+            REDASSERT(this->file_size != nosize);
+
+            // TODO: hmac returns error as exceptions while write errors are returned as -1
+            // this is inconsistent and probably need a fix.
+            // also, if we choose to raise exception every error should have it's own one
+            this->hmac.update(static_cast<const uint8_t *>(data), len);
+            if (this->file_size < quick_size) {
+                auto const remaining = std::min(quick_size - this->file_size, len);
+                this->quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
+                this->file_size += remaining;
+            }
+
+            size_t remaining_len = len;
+            size_t total_sent = 0;
+            while (remaining_len) {
+                ssize_t ret = ::write(this->fd,
+                    static_cast<const char*>(data) + total_sent, remaining_len);
+                if (ret <= 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    return -1;
+                }
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            return total_sent;
+        }
+
+        int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
+        {
+            REDASSERT(this->file_size != nosize);
+            this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
+            this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
+            this->file_size = nosize;
+            return this->close();
+        }
+
+        int close()
+        {
+            if (this->is_open()) {
+                const int ret = ::close(this->fd);
+                this->fd = -1;
+                return ret;
+            }
+            return 0;
+        }
+
+        bool is_open() const noexcept
+        { return -1 != this->fd; }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return ::lseek64(this->fd, offset, whence); }
+
+        int flush() const
+        { return 0; }
     };
 }
 
@@ -1791,13 +1783,7 @@ namespace transbuf {
     };
 }
 
-
-struct OutMetaSequenceTransport
-: RequestCleaningAndNextTransport<
-    detail::out_meta_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>, detail::empty_ctor<transbuf::ofile_buf_out>
-    >,
-    detail::GetCurrentPath
->
+struct OutMetaSequenceTransport : public Transport
 {
     OutMetaSequenceTransport(
         const char * path,
@@ -1809,7 +1795,7 @@ struct OutMetaSequenceTransport
         const int groupid,
         auth_api * authentifier = nullptr,
         FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    : OutMetaSequenceTransport::TransportType(detail::out_meta_sequence_filename_buf_param<>(
+    : buf(detail::out_meta_sequence_filename_buf_param<>(
         now.tv_sec, format, hash_path, path, basename, ".wrm", groupid
     ))
     {
@@ -1828,21 +1814,76 @@ struct OutMetaSequenceTransport
     {
         return &(this->buffer().seqgen());
     }
+    using Buf = detail::out_meta_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>, detail::empty_ctor<transbuf::ofile_buf_out>>;
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+    void request_full_cleaning() override {
+        this->buffer().request_full_cleaning();
+    }
+
+    ~OutMetaSequenceTransport() {
+        this->buf.close();
+    }
+
+private:
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", buf.current_path());
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+    Buf & buffer() noexcept
+    { return this->buf; }
+
+    const Buf & buffer() const noexcept
+    { return this->buf; }
+
+    Buf buf;
+
 };
 
 
-struct OutMetaSequenceTransportWithSum
-: RequestCleaningAndNextTransport<
-    detail::out_hash_meta_sequence_filename_buf_impl<
-        detail::empty_ctor<io::posix::fdbuf>,
-        detail::ochecksum_filter,
-        detail::cctx_ochecksum_file,
-        detail::cctx_ofile_buf,
-        CryptoContext&
-    >,
-    detail::GetCurrentPath
->
-{
+struct OutMetaSequenceTransportWithSum : public Transport {
+
+    using Buf = detail::out_hash_meta_sequence_filename_buf_impl<
+            detail::empty_ctor<io::posix::fdbuf>,
+            detail::ochecksum_filter,
+            detail::cctx_ochecksum_file,
+            detail::cctx_ofile_buf,
+            CryptoContext&>;
+        
     OutMetaSequenceTransportWithSum(
         CryptoContext & crypto_ctx,
         const char * path,
@@ -1854,7 +1895,7 @@ struct OutMetaSequenceTransportWithSum
         const int groupid,
         auth_api * authentifier = nullptr,
         FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    : OutMetaSequenceTransportWithSum::TransportType(
+    : buf(
         detail::out_hash_meta_sequence_filename_buf_param<CryptoContext&>(
             crypto_ctx,
             now.tv_sec, format, hash_path, path, basename, ".wrm", groupid,
@@ -1876,21 +1917,80 @@ struct OutMetaSequenceTransportWithSum
     {
         return &(this->buffer().seqgen());
     }
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+    void request_full_cleaning() override {
+        this->buffer().request_full_cleaning();
+    }
+
+    ~OutMetaSequenceTransportWithSum() {
+        this->buf.close();
+    }
+
+private:
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", buf.current_path());
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+protected:
+    Buf & buffer() noexcept
+    { return this->buf; }
+
+    const Buf & buffer() const noexcept
+    { return this->buf; }
+
+private:
+    Buf buf;
+
 };
 
 
 struct CryptoOutMetaSequenceTransport
-: RequestCleaningAndNextTransport<
-    detail::out_hash_meta_sequence_filename_buf_impl<
-        detail::empty_ctor<io::posix::fdbuf>,
-        detail::ocrypto_filter,
-        transbuf::ocrypto_filename_buf,
-        transbuf::ocrypto_filename_buf,
-        transbuf::ocrypto_filename_params
-    >,
-    detail::GetCurrentPath
->
-{
+: public Transport {
+
+    using Buf =
+        detail::out_hash_meta_sequence_filename_buf_impl<
+            detail::empty_ctor<io::posix::fdbuf>,
+            detail::ocrypto_filter,
+            transbuf::ocrypto_filename_buf,
+            transbuf::ocrypto_filename_buf,
+            transbuf::ocrypto_filename_params
+        >;
+
     CryptoOutMetaSequenceTransport(
         CryptoContext & crypto_ctx,
         Random & rnd,
@@ -1903,13 +2003,12 @@ struct CryptoOutMetaSequenceTransport
         const int groupid,
         auth_api * authentifier = nullptr,
         FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    : CryptoOutMetaSequenceTransport::TransportType(
+    : buf(
         detail::out_hash_meta_sequence_filename_buf_param<transbuf::ocrypto_filename_params>(
             crypto_ctx,
             now.tv_sec, format, hash_path, path, basename, ".wrm", groupid,
             {crypto_ctx, rnd}
-        )
-    ) {
+        )) {
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
@@ -1925,6 +2024,64 @@ struct CryptoOutMetaSequenceTransport
     {
         return &(this->buffer().seqgen());
     }
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+    void request_full_cleaning() override {
+        this->buffer().request_full_cleaning();
+    }
+
+    ~CryptoOutMetaSequenceTransport() {
+        this->buf.close();
+    }
+
+private:
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", buf.current_path());
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+    Buf & buffer() noexcept
+    { return this->buf; }
+
+    const Buf & buffer() const noexcept
+    { return this->buf; }
+
+    typedef CryptoOutMetaSequenceTransport TransportType;
+
+    Buf buf;
+
 };
 
 
