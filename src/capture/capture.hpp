@@ -567,12 +567,11 @@ namespace detail
         {}
     };
 
-    template<class Buf>
     class out_sequence_filename_buf_impl
     {
         char current_filename_[1024];
         FilenameGenerator filegen_;
-        Buf buf_;
+        detail::empty_ctor<io::posix::fdbuf> buf_;
         unsigned num_file_;
         int groupid_;
 
@@ -621,21 +620,13 @@ namespace detail
             }
         }
 
-        int flush()
-        {
-            if (this->buf_.is_open()) {
-                return this->buf_.flush();
-            }
-            return 0;
-        }
-
         off64_t seek(int64_t offset, int whence)
         { return this->buf_.seek(offset, whence); }
 
         const FilenameGenerator & seqgen() const noexcept
         { return this->filegen_; }
 
-        Buf & buf() noexcept
+        detail::empty_ctor<io::posix::fdbuf> & buf() noexcept
         { return this->buf_; }
 
         const char * current_path() const
@@ -719,9 +710,9 @@ namespace detail
 
     template<class Buf, class BufMeta>
     class out_meta_sequence_filename_buf_impl
-    : public out_sequence_filename_buf_impl<Buf>
+    : public out_sequence_filename_buf_impl
     {
-        typedef out_sequence_filename_buf_impl<Buf> sequence_base_type;
+        typedef out_sequence_filename_buf_impl sequence_base_type;
 
         BufMeta meta_buf_;
         MetaFilename mf_;
@@ -734,7 +725,7 @@ namespace detail
         explicit out_meta_sequence_filename_buf_impl(
             out_meta_sequence_filename_buf_param<MetaParams> const & params
         )
-        : sequence_base_type(params.sq_params)
+        : out_sequence_filename_buf_impl(params.sq_params)
         , meta_buf_(params.meta_buf_params)
         , mf_(params.sq_params.prefix, params.sq_params.filename, params.sq_params.format)
         , hf_(params.hash_prefix, params.sq_params.filename, params.sq_params.format)
@@ -848,13 +839,13 @@ namespace detail
     public:
         void request_full_cleaning()
         {
-            this->sequence_base_type::request_full_cleaning();
+            this->out_sequence_filename_buf_impl::request_full_cleaning();
             ::unlink(this->mf_.filename);
         }
 
         int flush()
         {
-            const int res1 = this->sequence_base_type::flush();
+            const int res1 = this->out_sequence_filename_buf_impl::flush();
             const int res2 = this->meta_buf_.flush();
             return res1 == 0 ? res2 : res1;
         }
@@ -869,7 +860,7 @@ namespace detail
 
 struct OutFilenameSequenceTransport : public Transport
 {
-    using Buf = detail::out_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>>;
+    using Buf = detail::out_sequence_filename_buf_impl;
 
     OutFilenameSequenceTransport(
         FilenameGenerator::Format format,
@@ -948,7 +939,7 @@ private:
 
 struct OutFilenameSequenceSeekableTransport : public Transport
 {
-    using Buf = detail::out_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>>;
+    using Buf = detail::out_sequence_filename_buf_impl;
 
     OutFilenameSequenceSeekableTransport(
         FilenameGenerator::Format format,
