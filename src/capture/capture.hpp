@@ -691,51 +691,6 @@ namespace detail
         }
     };
 
-    template<class HashBuf>
-    int write_meta_hash(
-        char const * hash_filename, char const * meta_filename,
-        HashBuf & crypto_hash, hash_type const * hash
-    ) {
-        char path[1024] = {};
-        char basename[1024] = {};
-        char extension[256] = {};
-        char filename[2048] = {};
-
-        canonical_path(
-            meta_filename,
-            path, sizeof(path),
-            basename, sizeof(basename),
-            extension, sizeof(extension)
-        );
-
-        snprintf(filename, sizeof(filename), "%s%s", basename, extension);
-
-        if (crypto_hash.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
-            char header[] = "v2\n\n\n";
-            crypto_hash.write(header, sizeof(header)-1);
-
-            struct stat stat;
-            int err = ::stat(meta_filename, &stat);
-            if (!err) {
-                err = write_meta_file_impl<false>(crypto_hash, filename, stat, 0, 0, hash);
-            }
-            if (!err) {
-                err = crypto_hash.close(/*hash*/);
-            }
-            if (err) {
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                return 1;
-            }
-        }
-        else {
-            int e = errno;
-            LOG(LOG_ERR, "Open to transport failed: code=%d", e);
-            errno = e;
-            return 1;
-        }
-
-        return 0;
-    }
 
     template<class MetaParams = no_param>
     struct out_meta_sequence_filename_buf_param
@@ -804,11 +759,48 @@ namespace detail
             const int res2 = (this->meta_buf().is_open() ? this->meta_buf_.close() : 0);
             int err = res1 ? res1 : res2;
             if (!err) {
-                transbuf::ofile_buf_out ofile;
-                return write_meta_hash(
-                    this->hash_filename(), this->meta_filename(),
-                    ofile, nullptr
+                char const * hash_filename = this->hash_filename();
+                char const * meta_filename = this->meta_filename();
+                transbuf::ofile_buf_out crypto_hash;
+
+                char path[1024] = {};
+                char basename[1024] = {};
+                char extension[256] = {};
+                char filename[2048] = {};
+
+                canonical_path(
+                    meta_filename,
+                    path, sizeof(path),
+                    basename, sizeof(basename),
+                    extension, sizeof(extension)
                 );
+
+                snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+                if (crypto_hash.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+                    char header[] = "v2\n\n\n";
+                    crypto_hash.write(header, sizeof(header)-1);
+
+                    struct stat stat;
+                    int err = ::stat(meta_filename, &stat);
+                    if (!err) {
+                        err = write_meta_file_impl<false>(crypto_hash, filename, stat, 0, 0, nullptr);
+                    }
+                    if (!err) {
+                        err = crypto_hash.close(/*hash*/);
+                    }
+                    if (err) {
+                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                        return 1;
+                    }
+                }
+                else {
+                    int e = errno;
+                    LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+                    errno = e;
+                    return 1;
+                }
+                return 0;
             }
             return err;
         }
@@ -1531,7 +1523,48 @@ namespace detail
                 return 1;
             }
 
-            return write_meta_hash(this->hash_filename(), this->meta_filename(), hash_buf, &hash);
+            char const * hash_filename = this->hash_filename();
+            char const * meta_filename = this->meta_filename();
+
+            char path[1024] = {};
+            char basename[1024] = {};
+            char extension[256] = {};
+            char filename[2048] = {};
+
+            canonical_path(
+                meta_filename,
+                path, sizeof(path),
+                basename, sizeof(basename),
+                extension, sizeof(extension)
+            );
+
+            snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+            if (hash_buf.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+                char header[] = "v2\n\n\n";
+                hash_buf.write(header, sizeof(header)-1);
+
+                struct stat stat;
+                int err = ::stat(meta_filename, &stat);
+                if (!err) {
+                    err = write_meta_file_impl<false>(hash_buf, filename, stat, 0, 0, &hash);
+                }
+                if (!err) {
+                    err = hash_buf.close(/*hash*/);
+                }
+                if (err) {
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                    return 1;
+                }
+            }
+            else {
+                int e = errno;
+                LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+                errno = e;
+                return 1;
+            }
+
+            return 0;
         }
 
         int next()
