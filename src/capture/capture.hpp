@@ -2239,11 +2239,7 @@ private:
 };
 
 
-struct CryptoOutMetaSequenceTransport
-: public Transport {
-
-    using Buf =
-        detail::out_hash_meta_sequence_filename_buf_impl_ocrypto;
+struct CryptoOutMetaSequenceTransport : public Transport {
 
     CryptoOutMetaSequenceTransport(
         CryptoContext & crypto_ctx,
@@ -2326,15 +2322,15 @@ private:
         this->last_quantum_sent += res;
     }
 
-    Buf & buffer() noexcept
+    detail::out_hash_meta_sequence_filename_buf_impl_ocrypto & buffer() noexcept
     { return this->buf; }
 
-    const Buf & buffer() const noexcept
+    const detail::out_hash_meta_sequence_filename_buf_impl_ocrypto & buffer() const noexcept
     { return this->buf; }
 
     typedef CryptoOutMetaSequenceTransport TransportType;
 
-    Buf buf;
+    detail::out_hash_meta_sequence_filename_buf_impl_ocrypto buf;
 
 };
 
