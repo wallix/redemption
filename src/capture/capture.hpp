@@ -1871,10 +1871,14 @@ private:
 
 namespace detail {
 
-
     class out_meta_sequence_filename_buf_impl_cctx
-    : public out_sequence_filename_buf_impl
     {
+        char current_filename_[1024];
+        FilenameGenerator filegen_;
+        detail::empty_ctor<io::posix::fdbuf> buf_;
+        unsigned num_file_;
+        int groupid_;
+
         cctx_ochecksum_file meta_buf_;
         MetaFilename mf_;
         MetaFilename hf_;
@@ -1886,13 +1890,18 @@ namespace detail {
         explicit out_meta_sequence_filename_buf_impl_cctx(
             out_meta_sequence_filename_buf_param<MetaParams> const & params
         )
-        : out_sequence_filename_buf_impl(params.sq_params)
+        : filegen_(params.sq_params.format, params.sq_params.prefix, 
+                   params.sq_params.filename, params.sq_params.extension)
+        , buf_()
+        , num_file_(0)
+        , groupid_(params.sq_params.groupid)
         , meta_buf_(params.meta_buf_params)
         , mf_(params.sq_params.prefix, params.sq_params.filename, params.sq_params.format)
         , hf_(params.hash_prefix, params.sq_params.filename, params.sq_params.format)
         , start_sec_(params.sec)
         , stop_sec_(params.sec)
         {
+            this->current_filename_[0] = 0;
             if (this->meta_buf_.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
                 LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
                 throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
@@ -1903,6 +1912,17 @@ namespace detail {
                    , "u+r, g+r"
                    , strerror(errno), errno);
             }
+        }
+
+        ssize_t write(const void * data, size_t len)
+        {
+            if (!this->buf_.is_open()) {
+                const int res = this->open_filename(this->filegen_.get(this->num_file_));
+                if (res < 0) {
+                    return res;
+                }
+            }
+            return this->buf_.write(data, len);
         }
 
         int close()
@@ -1997,10 +2017,58 @@ namespace detail {
             return this->mf_.filename;
         }
 
+        ssize_t open_filename(const char * filename)
+        {
+            snprintf(this->current_filename_, sizeof(this->current_filename_),
+                        "%sred-XXXXXX.tmp", filename);
+            const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+            if (fd < 0) {
+                return fd;
+            }
+            if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                   , this->current_filename_
+                   , this->groupid_ ? "u+r, g+r" : "u+r"
+                   , strerror(errno), errno);
+            }
+            this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+            return this->buf_.open(fd);
+        }
+
+        const char * rename_filename()
+        {
+            const char * filename = this->get_filename_generate();
+            const int res = ::rename(this->current_filename_, filename);
+            if (res < 0) {
+                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                   , this->current_filename_, filename, errno, strerror(errno));
+                return nullptr;
+            }
+
+            this->current_filename_[0] = 0;
+            ++this->num_file_;
+            this->filegen_.set_last_filename(-1u, "");
+
+            return filename;
+        }
+
+        const char * get_filename_generate()
+        {
+            this->filegen_.set_last_filename(-1u, "");
+            const char * filename = this->filegen_.get(this->num_file_);
+            this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+            return filename;
+        }
+
     public:
         void request_full_cleaning()
         {
-            this->out_sequence_filename_buf_impl::request_full_cleaning();
+            unsigned i = this->num_file_ + 1;
+            while (i > 0 && !::unlink(this->filegen_.get(--i))) {
+            }
+            if (this->buf_.is_open()) {
+                this->buf_.close();
+            }
             ::unlink(this->mf_.filename);
         }
 
@@ -2009,129 +2077,145 @@ namespace detail {
 
         void update_sec(time_t sec)
         { this->stop_sec_ = sec; }
+        
+        
+        off64_t seek(int64_t offset, int whence)
+        { return this->buf_.seek(offset, whence); }
+
+        const FilenameGenerator & seqgen() const noexcept
+        { return this->filegen_; }
+
+        detail::empty_ctor<io::posix::fdbuf> & buf() noexcept
+        { return this->buf_; }
+
+        const char * current_path() const
+        {
+            if (!this->current_filename_[0] && !this->num_file_) {
+                return nullptr;
+            }
+            return this->filegen_.get(this->num_file_ - 1);
+        }
+        
     };
 
-class out_hash_meta_sequence_filename_buf_impl_cctx
-: public out_meta_sequence_filename_buf_impl_cctx
-{
-    using BufFilter = detail::ochecksum_filter;
-//    using BufMeta = detail::cctx_ochecksum_file;
-    using BufHash = detail::cctx_ofile_buf;
-    using Params = CryptoContext&;
-            
-    CryptoContext & cctx;
-    Params hash_ctx;
-    BufFilter wrm_filter;
-
-public:
-    explicit out_hash_meta_sequence_filename_buf_impl_cctx(
-        out_hash_meta_sequence_filename_buf_param<Params> const & params
-    )
-    : out_meta_sequence_filename_buf_impl_cctx(params.meta_sq_params)
-    , cctx(params.cctx)
-    , hash_ctx(params.filter_params)
-    , wrm_filter(params.filter_params)
-    {}
-
-    ssize_t write(const void * data, size_t len)
+    class out_hash_meta_sequence_filename_buf_impl_cctx : public out_meta_sequence_filename_buf_impl_cctx
     {
-        if (!this->buf().is_open()) {
-            const char * filename = this->get_filename_generate();
-            const int res = this->open_filename(filename);
-            if (res < 0) {
-                return res;
+        using BufFilter = detail::ochecksum_filter;
+        using BufHash = detail::cctx_ofile_buf;
+        using Params = CryptoContext&;
+                
+        CryptoContext & cctx;
+        Params hash_ctx;
+        BufFilter wrm_filter;
+
+    public:
+        explicit out_hash_meta_sequence_filename_buf_impl_cctx(
+            out_hash_meta_sequence_filename_buf_param<Params> const & params
+        )
+        : out_meta_sequence_filename_buf_impl_cctx(params.meta_sq_params)
+        , cctx(params.cctx)
+        , hash_ctx(params.filter_params)
+        , wrm_filter(params.filter_params)
+        {}
+
+        ssize_t write(const void * data, size_t len)
+        {
+            if (!this->buf().is_open()) {
+                const char * filename = this->get_filename_generate();
+                const int res = this->open_filename(filename);
+                if (res < 0) {
+                    return res;
+                }
+                if (int err = this->wrm_filter.open(this->buf(), filename)) {
+                    return err;
+                }
             }
-            if (int err = this->wrm_filter.open(this->buf(), filename)) {
-                return err;
-            }
+            return this->wrm_filter.write(this->buf(), data, len);
         }
-        return this->wrm_filter.write(this->buf(), data, len);
-    }
 
-    int close()
-    {
-        if (this->buf().is_open()) {
-            if (this->next()) {
+        int close()
+        {
+            if (this->buf().is_open()) {
+                if (this->next()) {
+                    return 1;
+                }
+            }
+
+            BufHash hash_buf(this->hash_ctx);
+
+            if (!this->meta_buf().is_open()) {
                 return 1;
             }
-        }
 
-        BufHash hash_buf(this->hash_ctx);
-
-        if (!this->meta_buf().is_open()) {
-            return 1;
-        }
-
-        hash_type hash;
-
-        if (this->meta_buf().close(hash)) {
-            return 1;
-        }
-
-        char const * hash_filename = this->hash_filename();
-        char const * meta_filename = this->meta_filename();
-
-        char path[1024] = {};
-        char basename[1024] = {};
-        char extension[256] = {};
-        char filename[2048] = {};
-
-        canonical_path(
-            meta_filename,
-            path, sizeof(path),
-            basename, sizeof(basename),
-            extension, sizeof(extension)
-        );
-
-        snprintf(filename, sizeof(filename), "%s%s", basename, extension);
-
-        if (hash_buf.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
-            char header[] = "v2\n\n\n";
-            hash_buf.write(header, sizeof(header)-1);
-
-            struct stat stat;
-            int err = ::stat(meta_filename, &stat);
-            if (!err) {
-                err = write_meta_file_impl<false>(hash_buf, filename, stat, 0, 0, &hash);
-            }
-            if (!err) {
-                err = hash_buf.close(/*hash*/);
-            }
-            if (err) {
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                return 1;
-            }
-        }
-        else {
-            int e = errno;
-            LOG(LOG_ERR, "Open to transport failed: code=%d", e);
-            errno = e;
-            return 1;
-        }
-
-        return 0;
-    }
-
-    int next()
-    {
-        if (this->buf().is_open()) {
             hash_type hash;
-            {
-                const int res1 = this->wrm_filter.close(this->buf(), hash, this->cctx.get_hmac_key());
-                const int res2 = this->buf().close();
-                if (res1) {
-                    return res1;
-                }
-                if (res2) {
-                    return res2;
-                }
+
+            if (this->meta_buf().close(hash)) {
+                return 1;
             }
 
-            return this->next_meta_file(&hash);
+            char const * hash_filename = this->hash_filename();
+            char const * meta_filename = this->meta_filename();
+
+            char path[1024] = {};
+            char basename[1024] = {};
+            char extension[256] = {};
+            char filename[2048] = {};
+
+            canonical_path(
+                meta_filename,
+                path, sizeof(path),
+                basename, sizeof(basename),
+                extension, sizeof(extension)
+            );
+
+            snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+            if (hash_buf.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+                char header[] = "v2\n\n\n";
+                hash_buf.write(header, sizeof(header)-1);
+
+                struct stat stat;
+                int err = ::stat(meta_filename, &stat);
+                if (!err) {
+                    err = write_meta_file_impl<false>(hash_buf, filename, stat, 0, 0, &hash);
+                }
+                if (!err) {
+                    err = hash_buf.close(/*hash*/);
+                }
+                if (err) {
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                    return 1;
+                }
+            }
+            else {
+                int e = errno;
+                LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+                errno = e;
+                return 1;
+            }
+
+            return 0;
         }
-        return 1;
-    }
-};
+
+        int next()
+        {
+            if (this->buf().is_open()) {
+                hash_type hash;
+                {
+                    const int res1 = this->wrm_filter.close(this->buf(), hash, this->cctx.get_hmac_key());
+                    const int res2 = this->buf().close();
+                    if (res1) {
+                        return res1;
+                    }
+                    if (res2) {
+                        return res2;
+                    }
+                }
+                return this->next_meta_file(&hash);
+            }
+            return 1;
+        }
+    };
 
 }
 
