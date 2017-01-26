@@ -671,6 +671,12 @@ protected:
     std::string client_execute_working_dir;
     std::string client_execute_arguments;
 
+
+    uint16_t    real_client_execute_flags;
+    std::string real_client_execute_exe_or_file;
+    std::string real_client_execute_working_dir;
+    std::string real_client_execute_arguments;
+
     time_t beginning;
     bool   session_disconnection_logged = false;
 
@@ -857,10 +863,10 @@ public:
                           mod_rdp_params.verbose
                          )
         , cs_monitor(info.cs_monitor)
-        , client_execute_flags(mod_rdp_params.client_execute_flags)
         , client_execute_exe_or_file(mod_rdp_params.client_execute_exe_or_file)
         , client_execute_working_dir(mod_rdp_params.client_execute_working_dir)
         , client_execute_arguments(mod_rdp_params.client_execute_arguments)
+        , client_execute_flags(mod_rdp_params.client_execute_flags)
         , asynchronous_task_event_handler(*this)
         , session_probe_launcher_event_handler(*this)
         , session_probe_virtual_channel_event_handler(*this)
@@ -1118,6 +1124,11 @@ public:
 
                 replace_tag(this->session_probe_arguments,
                     "${TITLE_VAR} ", param.c_str());
+
+                this->real_client_execute_flags       = this->client_execute_flags;
+                this->real_client_execute_exe_or_file = std::move(this->client_execute_exe_or_file);
+                this->real_client_execute_arguments   = std::move(this->client_execute_arguments);
+                this->real_client_execute_working_dir = std::move(this->client_execute_working_dir);
 
                 this->client_execute_exe_or_file = this->session_probe_exe_or_file;
                 this->client_execute_arguments   = this->session_probe_arguments;
@@ -1477,6 +1488,16 @@ protected:
             this->client_execute_working_dir.c_str();
         remote_programs_virtual_channel_params.client_execute_arguments        =
             this->client_execute_arguments.c_str();
+
+        remote_programs_virtual_channel_params.client_execute_flags_2          =
+            this->real_client_execute_flags;
+        remote_programs_virtual_channel_params.client_execute_exe_or_file_2    =
+            this->real_client_execute_exe_or_file.c_str();
+        remote_programs_virtual_channel_params.client_execute_working_dir_2    =
+            this->real_client_execute_working_dir.c_str();
+        remote_programs_virtual_channel_params.client_execute_arguments_2      =
+            this->real_client_execute_arguments.c_str();
+
         remote_programs_virtual_channel_params.rail_session_manager            =
             this->remote_programs_session_manager.get();
 
@@ -3218,8 +3239,8 @@ public:
             this->end_session_reason.clear();
             this->end_session_message.clear();
 
-            if ((!this->session_probe_virtual_channel_p 
-                || !this->session_probe_virtual_channel_p->is_disconnection_reconnection_required()) 
+            if ((!this->session_probe_virtual_channel_p
+                || !this->session_probe_virtual_channel_p->is_disconnection_reconnection_required())
              && !this->remote_apps_not_enabled) {
                 this->authentifier.disconnect_target();
             }
