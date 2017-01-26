@@ -671,8 +671,10 @@ protected:
     std::string client_execute_working_dir;
     std::string client_execute_arguments;
 
+    bool use_client_provided_remoteapp;
 
-    uint16_t    real_client_execute_flags;
+
+    uint16_t    real_client_execute_flags = 0;
     std::string real_client_execute_exe_or_file;
     std::string real_client_execute_working_dir;
     std::string real_client_execute_arguments;
@@ -867,6 +869,7 @@ public:
         , client_execute_working_dir(mod_rdp_params.client_execute_working_dir)
         , client_execute_arguments(mod_rdp_params.client_execute_arguments)
         , client_execute_flags(mod_rdp_params.client_execute_flags)
+        , use_client_provided_remoteapp(mod_rdp_params.use_client_provided_remoteapp)
         , asynchronous_task_event_handler(*this)
         , session_probe_launcher_event_handler(*this)
         , session_probe_virtual_channel_event_handler(*this)
@@ -1125,10 +1128,16 @@ public:
                 replace_tag(this->session_probe_arguments,
                     "${TITLE_VAR} ", param.c_str());
 
-                this->real_client_execute_flags       = this->client_execute_flags;
-                this->real_client_execute_exe_or_file = std::move(this->client_execute_exe_or_file);
-                this->real_client_execute_arguments   = std::move(this->client_execute_arguments);
-                this->real_client_execute_working_dir = std::move(this->client_execute_working_dir);
+                if (this->real_alternate_shell.empty() &&
+                    this->use_client_provided_remoteapp &&
+                    !this->client_execute_exe_or_file.empty()) {
+                    this->real_alternate_shell = "[None]";
+
+                    this->real_client_execute_flags       = this->client_execute_flags;
+                    this->real_client_execute_exe_or_file = std::move(this->client_execute_exe_or_file);
+                    this->real_client_execute_arguments   = std::move(this->client_execute_arguments);
+                    this->real_client_execute_working_dir = std::move(this->client_execute_working_dir);
+                }
 
                 this->client_execute_exe_or_file = this->session_probe_exe_or_file;
                 this->client_execute_arguments   = this->session_probe_arguments;

@@ -124,7 +124,7 @@ public:
         bool bogus_refresh_rect_ex;
 
         bool show_maximized;
-        
+
         Params(auth_api & authentifier) : BaseVirtualChannel::Params(authentifier) {}
     };
 
@@ -671,7 +671,9 @@ public:
                 out_s.get_data(), out_s.get_offset());
         }
         else if (!this->server_message.compare(
-                    "Request=Get startup application")) {
+                     "Request=Get startup application") &&
+                 this->param_real_alternate_shell.compare(
+                     "[None]")) {
             StaticOutStream<8192> out_s;
 
             const size_t message_length_offset = out_s.get_offset();
