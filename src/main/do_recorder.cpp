@@ -462,10 +462,44 @@ static inline int check_encrypted_or_checksumed(
 
         local_auto_remove auto_remove{full_hash_path_tmp.c_str()};
 
-        if (detail::write_meta_hash(
-            full_hash_path_tmp.c_str(), full_mwrm_filename.c_str(),
-            hash_file_cp, nullptr
-        )) {
+        char const * hash_filename = full_hash_path_tmp.c_str();
+        char const * meta_filename = full_mwrm_filename.c_str();
+
+        char path[1024] = {};
+        char basename[1024] = {};
+        char extension[256] = {};
+        char filename[2048] = {};
+
+        canonical_path(
+            meta_filename,
+            path, sizeof(path),
+            basename, sizeof(basename),
+            extension, sizeof(extension)
+        );
+
+        snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+        if (hash_file_cp.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+            char header[] = "v2\n\n\n";
+            hash_file_cp.write(header, sizeof(header)-1);
+
+            struct stat stat;
+            int err = ::stat(meta_filename, &stat);
+            if (!err) {
+                err = detail::write_meta_file_impl<false>(hash_file_cp, filename, stat, 0, 0, nullptr);
+            }
+            if (!err) {
+                err = hash_file_cp.close(/*hash*/);
+            }
+            if (err) {
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                return 1;
+            }
+        }
+        else {
+            int e = errno;
+            LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+            errno = e;
             return 1;
         }
 
