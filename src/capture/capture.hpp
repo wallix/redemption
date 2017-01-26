@@ -567,12 +567,11 @@ namespace detail
         {}
     };
 
-    template<class Buf>
     class out_sequence_filename_buf_impl
     {
         char current_filename_[1024];
         FilenameGenerator filegen_;
-        Buf buf_;
+        detail::empty_ctor<io::posix::fdbuf> buf_;
         unsigned num_file_;
         int groupid_;
 
@@ -621,21 +620,13 @@ namespace detail
             }
         }
 
-        int flush()
-        {
-            if (this->buf_.is_open()) {
-                return this->buf_.flush();
-            }
-            return 0;
-        }
-
         off64_t seek(int64_t offset, int whence)
         { return this->buf_.seek(offset, whence); }
 
         const FilenameGenerator & seqgen() const noexcept
         { return this->filegen_; }
 
-        Buf & buf() noexcept
+        detail::empty_ctor<io::posix::fdbuf> & buf() noexcept
         { return this->buf_; }
 
         const char * current_path() const
@@ -717,11 +708,11 @@ namespace detail
     };
 
 
-    template<class Buf, class BufMeta>
+    template<class BufMeta>
     class out_meta_sequence_filename_buf_impl
-    : public out_sequence_filename_buf_impl<Buf>
+    : public out_sequence_filename_buf_impl
     {
-        typedef out_sequence_filename_buf_impl<Buf> sequence_base_type;
+        typedef out_sequence_filename_buf_impl sequence_base_type;
 
         BufMeta meta_buf_;
         MetaFilename mf_;
@@ -734,7 +725,7 @@ namespace detail
         explicit out_meta_sequence_filename_buf_impl(
             out_meta_sequence_filename_buf_param<MetaParams> const & params
         )
-        : sequence_base_type(params.sq_params)
+        : out_sequence_filename_buf_impl(params.sq_params)
         , meta_buf_(params.meta_buf_params)
         , mf_(params.sq_params.prefix, params.sq_params.filename, params.sq_params.format)
         , hf_(params.hash_prefix, params.sq_params.filename, params.sq_params.format)
@@ -848,13 +839,13 @@ namespace detail
     public:
         void request_full_cleaning()
         {
-            this->sequence_base_type::request_full_cleaning();
+            this->out_sequence_filename_buf_impl::request_full_cleaning();
             ::unlink(this->mf_.filename);
         }
 
         int flush()
         {
-            const int res1 = this->sequence_base_type::flush();
+            const int res1 = this->out_sequence_filename_buf_impl::flush();
             const int res2 = this->meta_buf_.flush();
             return res1 == 0 ? res2 : res1;
         }
@@ -869,7 +860,7 @@ namespace detail
 
 struct OutFilenameSequenceTransport : public Transport
 {
-    using Buf = detail::out_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>>;
+    using Buf = detail::out_sequence_filename_buf_impl;
 
     OutFilenameSequenceTransport(
         FilenameGenerator::Format format,
@@ -948,7 +939,7 @@ private:
 
 struct OutFilenameSequenceSeekableTransport : public Transport
 {
-    using Buf = detail::out_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>>;
+    using Buf = detail::out_sequence_filename_buf_impl;
 
     OutFilenameSequenceSeekableTransport(
         FilenameGenerator::Format format,
@@ -1468,15 +1459,19 @@ namespace detail
         {}
     };
 
-    template<class Buf, class BufFilter, class BufMeta, class BufHash, class Params>
+
+
+
+
+    template<class BufFilter, class BufMeta, class BufHash, class Params>
     class out_hash_meta_sequence_filename_buf_impl
-    : public out_meta_sequence_filename_buf_impl<Buf, BufMeta>
+    : public out_meta_sequence_filename_buf_impl<BufMeta>
     {
         CryptoContext & cctx;
         Params hash_ctx;
         BufFilter wrm_filter;
 
-        using sequence_base_type = out_meta_sequence_filename_buf_impl<Buf, BufMeta>;
+        using sequence_base_type = out_meta_sequence_filename_buf_impl<BufMeta>;
 
     public:
         explicit out_hash_meta_sequence_filename_buf_impl(
@@ -1814,7 +1809,7 @@ struct OutMetaSequenceTransport : public Transport
     {
         return &(this->buffer().seqgen());
     }
-    using Buf = detail::out_meta_sequence_filename_buf_impl<detail::empty_ctor<io::posix::fdbuf>, detail::empty_ctor<transbuf::ofile_buf_out>>;
+    using Buf = detail::out_meta_sequence_filename_buf_impl<detail::empty_ctor<transbuf::ofile_buf_out>>;
 
     bool next() override {
         if (this->status == false) {
@@ -1874,16 +1869,274 @@ private:
 
 };
 
+namespace detail {
+
+
+    class out_meta_sequence_filename_buf_impl_cctx
+    : public out_sequence_filename_buf_impl
+    {
+        cctx_ochecksum_file meta_buf_;
+        MetaFilename mf_;
+        MetaFilename hf_;
+        time_t start_sec_;
+        time_t stop_sec_;
+
+    public:
+        template<class MetaParams>
+        explicit out_meta_sequence_filename_buf_impl_cctx(
+            out_meta_sequence_filename_buf_param<MetaParams> const & params
+        )
+        : out_sequence_filename_buf_impl(params.sq_params)
+        , meta_buf_(params.meta_buf_params)
+        , mf_(params.sq_params.prefix, params.sq_params.filename, params.sq_params.format)
+        , hf_(params.hash_prefix, params.sq_params.filename, params.sq_params.format)
+        , start_sec_(params.sec)
+        , stop_sec_(params.sec)
+        {
+            if (this->meta_buf_.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+                LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
+                throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+            }
+            if (chmod(this->mf_.filename, S_IRUSR | S_IRGRP) == -1) {
+                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                   , this->mf_.filename
+                   , "u+r, g+r"
+                   , strerror(errno), errno);
+            }
+        }
+
+        int close()
+        {
+            const int res1 = this->next();
+            const int res2 = (this->meta_buf().is_open() ? this->meta_buf_.close() : 0);
+            int err = res1 ? res1 : res2;
+            if (!err) {
+                char const * hash_filename = this->hash_filename();
+                char const * meta_filename = this->meta_filename();
+                transbuf::ofile_buf_out crypto_hash;
+
+                char path[1024] = {};
+                char basename[1024] = {};
+                char extension[256] = {};
+                char filename[2048] = {};
+
+                canonical_path(
+                    meta_filename,
+                    path, sizeof(path),
+                    basename, sizeof(basename),
+                    extension, sizeof(extension)
+                );
+
+                snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+                if (crypto_hash.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+                    char header[] = "v2\n\n\n";
+                    crypto_hash.write(header, sizeof(header)-1);
+
+                    struct stat stat;
+                    int err = ::stat(meta_filename, &stat);
+                    if (!err) {
+                        err = write_meta_file_impl<false>(crypto_hash, filename, stat, 0, 0, nullptr);
+                    }
+                    if (!err) {
+                        err = crypto_hash.close(/*hash*/);
+                    }
+                    if (err) {
+                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                        return 1;
+                    }
+                }
+                else {
+                    int e = errno;
+                    LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+                    errno = e;
+                    return 1;
+                }
+                return 0;
+            }
+            return err;
+        }
+
+        /// \return 0 if success
+        int next()
+        {
+            if (this->buf().is_open()) {
+                this->buf().close();
+                return this->next_meta_file();
+            }
+            return 1;
+        }
+
+    protected:
+        int next_meta_file(hash_type const * hash = nullptr)
+        {
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+            const char * filename = this->rename_filename();
+            if (!filename) {
+                return 1;
+            }
+
+            if (int err = write_meta_file(
+                this->meta_buf_, filename, this->start_sec_, this->stop_sec_+1, hash
+            )) {
+                return err;
+            }
+
+            this->start_sec_ = this->stop_sec_;
+
+            return 0;
+        }
+
+        char const * hash_filename() const noexcept
+        {
+            return this->hf_.filename;
+        }
+
+        char const * meta_filename() const noexcept
+        {
+            return this->mf_.filename;
+        }
+
+    public:
+        void request_full_cleaning()
+        {
+            this->out_sequence_filename_buf_impl::request_full_cleaning();
+            ::unlink(this->mf_.filename);
+        }
+
+        cctx_ochecksum_file & meta_buf() noexcept
+        { return this->meta_buf_; }
+
+        void update_sec(time_t sec)
+        { this->stop_sec_ = sec; }
+    };
+
+class out_hash_meta_sequence_filename_buf_impl_cctx
+: public out_meta_sequence_filename_buf_impl_cctx
+{
+    using BufFilter = detail::ochecksum_filter;
+//    using BufMeta = detail::cctx_ochecksum_file;
+    using BufHash = detail::cctx_ofile_buf;
+    using Params = CryptoContext&;
+            
+    CryptoContext & cctx;
+    Params hash_ctx;
+    BufFilter wrm_filter;
+
+public:
+    explicit out_hash_meta_sequence_filename_buf_impl_cctx(
+        out_hash_meta_sequence_filename_buf_param<Params> const & params
+    )
+    : out_meta_sequence_filename_buf_impl_cctx(params.meta_sq_params)
+    , cctx(params.cctx)
+    , hash_ctx(params.filter_params)
+    , wrm_filter(params.filter_params)
+    {}
+
+    ssize_t write(const void * data, size_t len)
+    {
+        if (!this->buf().is_open()) {
+            const char * filename = this->get_filename_generate();
+            const int res = this->open_filename(filename);
+            if (res < 0) {
+                return res;
+            }
+            if (int err = this->wrm_filter.open(this->buf(), filename)) {
+                return err;
+            }
+        }
+        return this->wrm_filter.write(this->buf(), data, len);
+    }
+
+    int close()
+    {
+        if (this->buf().is_open()) {
+            if (this->next()) {
+                return 1;
+            }
+        }
+
+        BufHash hash_buf(this->hash_ctx);
+
+        if (!this->meta_buf().is_open()) {
+            return 1;
+        }
+
+        hash_type hash;
+
+        if (this->meta_buf().close(hash)) {
+            return 1;
+        }
+
+        char const * hash_filename = this->hash_filename();
+        char const * meta_filename = this->meta_filename();
+
+        char path[1024] = {};
+        char basename[1024] = {};
+        char extension[256] = {};
+        char filename[2048] = {};
+
+        canonical_path(
+            meta_filename,
+            path, sizeof(path),
+            basename, sizeof(basename),
+            extension, sizeof(extension)
+        );
+
+        snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+        if (hash_buf.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+            char header[] = "v2\n\n\n";
+            hash_buf.write(header, sizeof(header)-1);
+
+            struct stat stat;
+            int err = ::stat(meta_filename, &stat);
+            if (!err) {
+                err = write_meta_file_impl<false>(hash_buf, filename, stat, 0, 0, &hash);
+            }
+            if (!err) {
+                err = hash_buf.close(/*hash*/);
+            }
+            if (err) {
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                return 1;
+            }
+        }
+        else {
+            int e = errno;
+            LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+            errno = e;
+            return 1;
+        }
+
+        return 0;
+    }
+
+    int next()
+    {
+        if (this->buf().is_open()) {
+            hash_type hash;
+            {
+                const int res1 = this->wrm_filter.close(this->buf(), hash, this->cctx.get_hmac_key());
+                const int res2 = this->buf().close();
+                if (res1) {
+                    return res1;
+                }
+                if (res2) {
+                    return res2;
+                }
+            }
+
+            return this->next_meta_file(&hash);
+        }
+        return 1;
+    }
+};
+
+}
 
 struct OutMetaSequenceTransportWithSum : public Transport {
 
-    using Buf = detail::out_hash_meta_sequence_filename_buf_impl<
-            detail::empty_ctor<io::posix::fdbuf>,
-            detail::ochecksum_filter,
-            detail::cctx_ochecksum_file,
-            detail::cctx_ofile_buf,
-            CryptoContext&>;
-        
     OutMetaSequenceTransportWithSum(
         CryptoContext & crypto_ctx,
         const char * path,
@@ -1967,14 +2220,14 @@ private:
     }
 
 protected:
-    Buf & buffer() noexcept
+    detail::out_hash_meta_sequence_filename_buf_impl_cctx & buffer() noexcept
     { return this->buf; }
 
-    const Buf & buffer() const noexcept
+    const detail::out_hash_meta_sequence_filename_buf_impl_cctx & buffer() const noexcept
     { return this->buf; }
 
 private:
-    Buf buf;
+    detail::out_hash_meta_sequence_filename_buf_impl_cctx buf;
 
 };
 
@@ -1984,7 +2237,6 @@ struct CryptoOutMetaSequenceTransport
 
     using Buf =
         detail::out_hash_meta_sequence_filename_buf_impl<
-            detail::empty_ctor<io::posix::fdbuf>,
             detail::ocrypto_filter,
             transbuf::ocrypto_filename_buf,
             transbuf::ocrypto_filename_buf,
