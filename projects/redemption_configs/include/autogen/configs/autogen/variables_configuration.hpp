@@ -1315,7 +1315,7 @@ namespace cfg {
             using type = char[512];
             using sesman_and_spec_type = ::configs::spec_types::fixed_string;
             using mapped_type = sesman_and_spec_type;
-            type value = "CMD";
+            type value = "||CMD";
         };
         // type: char[512]
         struct session_probe_arguments {

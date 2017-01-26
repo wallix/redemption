@@ -380,7 +380,7 @@
 "#session_probe_idle_session_limit = 0\n\n"
 
 "#_hidden\n"
-"#session_probe_exe_or_file = CMD\n\n"
+"#session_probe_exe_or_file = ||CMD\n\n"
 
 "#_hidden\n"
 "#session_probe_arguments = /K\n\n"

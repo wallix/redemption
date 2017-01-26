@@ -282,7 +282,7 @@ void config_spec_definition(Writer && W)
             "0 to disable timeout."
         }, set(0), r);
 
-        W.member(H, type_<types::fixed_string<511>>(), "session_probe_exe_or_file", set("CMD"));
+        W.member(H, type_<types::fixed_string<511>>(), "session_probe_exe_or_file", set("||CMD"));
         W.member(H, type_<types::fixed_string<511>>(), "session_probe_arguments", set("/K"));
         W.sep();
 
