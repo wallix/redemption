@@ -2423,6 +2423,36 @@ static int bisearch(unsigned long ucs, const struct interval* table, int max)
     return 0;
 }
 
+
+/* The following functions define the column width of an ISO 10646
+ * character as follows:
+ *
+ *    - The null character (U+0000) has a column width of 0.
+ *
+ *    - Other C0/C1 control characters and DEL will lead to a return
+ *      value of -1.
+ *
+ *    - Non-spacing and enclosing combining characters (general
+ *      category code Mn or Me in the Unicode database) have a
+ *      column width of 0.
+ *
+ *    - Other format characters (general category code Cf in the Unicode
+ *      database) and ZERO WIDTH SPACE (U+200B) have a column width of 0.
+ *
+ *    - Hangul Jamo medial vowels and final consonants (U+1160-U+11FF)
+ *      have a column width of 0.
+ *
+ *    - Spacing characters in the East Asian Wide (W) or East Asian
+ *      FullWidth (F) category as defined in Unicode Technical
+ *      Report #11 have a column width of 2.
+ *
+ *    - All remaining characters (including all printable
+ *      ISO 8859-1 and WGL4 characters, Unicode control characters,
+ *      etc.) have a column width of 1.
+ *
+ * This implementation assumes that quint16 characters are encoded
+ * in ISO 10646.
+ */
 int konsole_wcwidth(uint16_t oucs)
 {
     /* NOTE: It is not possible to compare quint16 with the new last four lines of characters,
@@ -2489,8 +2519,7 @@ int konsole_wcwidth(uint16_t oucs)
         return -1;
 
     /* binary search in table of non-spacing characters */
-    if (bisearch(ucs, combining,
-                 sizeof(combining) / sizeof(struct interval) - 1))
+    if (bisearch(ucs, combining, sizeof(combining) / sizeof(struct interval) - 1))
         return 0;
 
     /* if we arrive here, ucs is not a combining or C0/C1 control character */
@@ -2983,6 +3012,7 @@ protected:
 
 public: // TODO protected
     void receiveChar(int cc);
+    void receiveCharNG(uin32_t ucs);
 
 private:
     unsigned short applyCharset(unsigned short c);
@@ -3393,6 +3423,238 @@ void Vt102Emulation::receiveChar(int cc)
     resetTokenizer();
     return;
   }
+}
+
+void Vt102Emulation::receiveCharNG(uint32_t ucs)
+{
+    struct ParserState
+    {
+        enum State {
+            None,
+            ESC,
+
+            CSI, // ESC [
+            OSI, // ESC ]
+        };
+
+        enum Param {
+            P1,
+            P2,
+            P3,
+            P4,
+        };
+        int state;
+    } parser;
+
+    auto mk_parser = []{};
+    auto match = []{};
+    auto ch = []{};
+    auto other = []{};
+    auto on_digit = []{};
+    auto Pn = []{};
+    auto noop = []{};
+    auto nochange = []{};
+    auto root_parser = []{};
+    struct P p {};
+
+#define CH(c) ch(c) = [](P & p)
+#define DIGITS() digits() = [](P & p)
+#define IN(s) in(s) = [](P & p)
+#define RNG(a, b) rng(a,b) = [](P & p)
+
+    auto osi_parser = mk_parser( // ESC ]
+      noop
+    , p(in("012"))
+    , ch(';', mk_parser(
+        noop
+      , ch('\a', root_parser, set_title_or_icon)
+      , pstr()
+    ), nochange)
+    , ch('\a', root_parser, noop)
+    , other(mk_parser(
+        noop
+      , ch('\a', root_parser, noop)
+      , other(nochange, noop)
+    ), noop)
+    );
+
+    auto osi_parser_ng =
+        *(
+          p(in("012")) >> ch(';') >> +(ch('\a')[set_title_or_icon] | p<std::string>())
+        | ch('\a') >> root_parser
+        | ch >> *ch >> root_parser
+        )
+    ;
+
+    auto line_size_parser = mk_parser(
+      noop
+    , ch('3', root_parser, double_height_line_top /* DECDHL */)
+    , ch('4', root_parser, double_height_line_bottom /* DECDHL */)
+    , ch('5', root_parser, single_width_line/* DECSWL */)
+    , ch('6', root_parser, double_width_line/* DECDWL */)
+    , ch('8', root_parser, screen_alignement_diaplay /* DECALN */)
+    , other(root_parser, noop)
+    );
+
+    auto charset_set_parser = mk_parser(
+      noop
+    , ch('A', root_parser, set_charset /* United Kingdom (UK) */)
+    , ch('B', root_parser, set_charset /* United States (USASCII) */)
+    , ch('0', root_parser, set_charset /* Special graphics characters and line drawing set */)
+    , ch('1', root_parser, set_charset /* Alternate character ROM */)
+    , ch('2', root_parser, set_charset /* Alternate character ROM special graphics characters */)
+    );
+
+    auto csi_parser = mk_parser(
+      noop
+    , ch('K', root_parser, set_charset /* United Kingdom (UK) */)
+    , ch('J', root_parser, set_charset /* United States (USASCII) */)
+    , ch('J', root_parser, set_charset /* Special graphics characters and line drawing set */)
+    , ch('1', root_parser, set_charset /* Alternate character ROM */)
+    , ch('2', root_parser, set_charset /* Alternate character ROM special graphics characters */)
+    );
+
+    mk_parser(
+        ch(ESC, mk_parser(
+            noop
+          , ch(']', osi_parser, noop)
+          , ch('#', line_size_parser, noop)
+          , ch('(', charset_set_parser, select_g0_parser)
+          , ch(')', charset_set_parser, select_g1_parser)
+          , ch('[', csi_parser, noop)
+          , ch('Z', root_parser, identity_terminal /* DECID */)
+          , ch('=', root_parser, keypad_application_mode /* DECKPAM */)
+          , ch('>', root_parser, keypad_numeric_mode /* DECKPMM */)
+          , ch('<', root_parser, ansi_mode /* */)
+          , ch('7', root_parser, save_cursor /* DECCS */)
+          , ch('8', root_parser, restore_cursor /* DECRS */)
+          , ch('H', root_parser, horizontal_tabulation_set /* HTS */)
+          , ch('D', root_parser, index /* IND */)
+          , ch('E', root_parser, next_line /* NEL */)
+          , ch('M', root_parser, reverse_index /* RI */)
+          , ch('c', root_parser, reset_to_initial_state /* RIS */)
+          , ch('A', root_parser, cursor_up /* CU */)
+          , ch('B', root_parser, cursor_down /*  */)
+          , ch('C', root_parser, cursor_right /* C */)
+          , ch('D', root_parser, cursor_left /* C */)
+          , ch('F', root_parser, enter_graphics_node /*  */)
+          , ch('G', root_parser, exit_graphics_mode /* */)
+          , ch('H', root_parser, cursor_to_home /* */)
+          , ch('I', root_parser, reverse_line_feed /* */)
+          , ch('J', root_parser, erase_to_end_of_screen /* */)
+          , ch('K', root_parser, erase_to_end_of_line /* */)
+          , ch('Y', p(p(root_parser, direct_cursor_address), noop), noop)
+          , other(root_parser, add_char)
+        ))
+    );
+
+    switch (parser.state) {
+        case ParserState::None:
+        switch (ucs) {
+            case ESC: parser.state = ParserState::ESC; break;
+
+            case DEL:
+            case '\a': break;
+
+            case '\b': _currentScreen->cursorLeft(); break;
+            case '\t': _currentScreen->tab(); break;
+            case '\n': _currentScreen->newLine(); break;
+            case '\v':
+            case '\f': _currentScreen->cursorDown(); break;
+            case '\r': _currentScreen->setCursorX(0); break;
+            //case SO : selectG0(); break;
+            //case SI : selectG1(); break;
+        }
+        break;
+
+        case ParserState::ESC:
+        switch (ucs) {
+            case '[': parser.state = ParserState::CSI; break;
+            case ']': parser.state = ParserState::OSI; break;
+
+            case DEL:
+            case '\a': break;
+
+            case '\b': _currentScreen->cursorLeft(); break;
+            case '\t': _currentScreen->tab(); break;
+            case '\n': _currentScreen->newLine(); break;
+            case '\v':
+            case '\f': _currentScreen->cursorDown(); break;
+            case '\r': _currentScreen->setCursorX(0); break;
+            //case SO : selectG0(); break;
+            //case SI : selectG1(); break;
+        }
+        break;
+
+        // ESC ']' [0|1|2] ';' Str '\a'
+        case ParserState::OSI:
+        switch (ucs) {
+            case '0':
+            case '1':
+            case '2': /* TODO */ break;
+            case '\x9c': // String Terminator
+            case '\a': /* TODO end sequence */ break;
+            case ';': parser.state |= ParserState::P1; break;
+        }
+        case ParserState::OSI | ParserState::P1:
+        switch (ucs) {
+            case '0':
+            case '1':
+            case '2': /* TODO */ break;
+            case '\x9c': // String Terminator
+            case '\a': /* TODO end sequence */ break;
+            case ';': parser.state |= ParserState::P1; break;
+        }
+        break;
+    }
+
+    // no mode
+    switch (ucs) {
+
+        case ESC: parser.state |= ParserState::ESC; break;
+    }
+
+    // ESC state
+    switch (ucs) {
+        case '@': _currentScreen->insertChars      (p    ); break; //Ansix364 : TODO ESC [ Pn @
+
+        case 'A': _currentScreen->cursorUp             (         1); break; //VT52 CUU
+        case 'B': _currentScreen->cursorDown           (         1); break; //VT52 CUD
+        case 'C': _currentScreen->cursorRight          (         1); break; //VT52 CUR
+        case 'D': _currentScreen->cursorLeft           (         1); break; //VT52 CUL
+
+        case 'E': _currentScreen->cursorDown           (         p); break; //VT100 CNL
+        case 'F': _currentScreen->cursorUp           (         p); break; //VT100 CPL
+        case 'G': _currentScreen->setCursorX           (         p); break; //VT100 CHA TODO LINUX ?
+        case 'H': _currentScreen->setCursorYX(         p, q); break; //VT100 CUP
+    case TY_CSI_PN('I'      ) : _currentScreen->tab                  (p         ); break;
+        case 'J': _currentScreen->tab(         ); break; //VT100 EL TODO erase in display
+        case 'K': _currentScreen->cursorDown           (         ); break; //VT100 IL TODO erase in lines
+        case 'L': _currentScreen->insertLines           (p         ); break; //VT100 DL
+        case 'M': _currentScreen->deleteLines           (p         ); break; //VT100 DCH
+        case 'P': _currentScreen->deleteChars           (p         ); break; //VT100 DCH
+    case TY_CSI_PN('S'      ) : _currentScreen->scrollUp             (p         ); break;
+    case TY_CSI_PN('T'      ) : _currentScreen->scrollDown           (p         ); break;
+        case 'X': _currentScreen->eraseChars           (p         ); break; //VT100 ECH
+    case TY_CSI_PN('Z'      ) : _currentScreen->backtab              (p         ); break;
+        case 'a': _currentScreen->cursorRight           (         ); break; //VT100 HPR
+        case 'c': reportTerminalType(); break; //VT100 DA TODO Reports terminal identity
+        case 'd': _currentScreen->setCursorY           (p         ); break; //VT100 VPA
+        case 'e': _currentScreen->cursorDown           (p         ); break; //VT100 VPR
+        case 'f': _currentScreen->setCursorYX           (p, q        ); break; //VT100 HVP
+        case 'g': break; //VT100 TBC TODO clear_tab_stop
+        case 'h': setMode      (MODE_AppCuKeys); break; //VT100 SM
+        case 'l': resetMode      (MODE_AppCuKeys); break; //VT100 RM
+        case 'm':  break; //VT100 SGR TODO select_graphic_rendition
+        case 'n': _currentScreen->cursorDown           (p         ); break; //VT100 DSR TODO report_device_status
+        case 'r': _currentScreen->cursorDown           (p         ); break; //VT100 DECSTBM TODO set_margins
+        case '\'': _currentScreen->setCursorX           (p         ); break; //VT100 HPA
+
+        case 'D': _currentScreen->index             (    ); break; //VT100
+        case 'E': _currentScreen->nextLine          (    ); break; //VT100
+        case 'H': _currentScreen->changeTabStop     (true); break; //VT100
+        case 'M': _currentScreen->reverseIndex      (    ); break; //VT100
+    }
 }
 
 // Interpreting Codes ---------------------------------------------------------
