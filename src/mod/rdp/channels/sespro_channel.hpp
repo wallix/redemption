@@ -92,6 +92,9 @@ private:
 
     uint16_t other_version = 0x0100;
 
+    bool start_application_query_processed = false;
+    bool start_application_started         = false;
+
 public:
     struct Params : public BaseVirtualChannel::Params {
         std::chrono::milliseconds session_probe_launch_timeout;
@@ -671,55 +674,63 @@ public:
                 out_s.get_data(), out_s.get_offset());
         }
         else if (!this->server_message.compare(
-                     "Request=Get startup application") &&
-                 this->param_real_alternate_shell.compare(
-                     "[None]")) {
-            StaticOutStream<8192> out_s;
+                     "Request=Get startup application")) {
+            if (this->param_real_alternate_shell.compare(
+                     "[None]") ||
+                this->start_application_started) {
+                StaticOutStream<8192> out_s;
 
-            const size_t message_length_offset = out_s.get_offset();
-            out_s.out_skip_bytes(sizeof(uint16_t));
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_skip_bytes(sizeof(uint16_t));
 
-            {
-                const char cstr[] = "StartupApplication=";
-                out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-            }
-
-            if (this->param_real_alternate_shell.empty()) {
-                const char cstr[] = "[Windows Explorer]";
-                out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-            }
-            else {
-                if (!this->param_real_working_dir.empty()) {
-                    out_s.out_copy_bytes(
-                        this->param_real_working_dir.data(),
-                        this->param_real_working_dir.size());
+                {
+                    const char cstr[] = "StartupApplication=";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                 }
-                out_s.out_uint8('\x01');
 
-                out_s.out_copy_bytes(
-                    this->param_real_alternate_shell.data(),
-                    this->param_real_alternate_shell.size());
+                if (this->param_real_alternate_shell.empty()) {
+                    const char cstr[] = "[Windows Explorer]";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+                else if (!this->param_real_alternate_shell.compare("[None]")) {
+                    const char cstr[] = "[None]";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+                else {
+                    if (!this->param_real_working_dir.empty()) {
+                        out_s.out_copy_bytes(
+                            this->param_real_working_dir.data(),
+                            this->param_real_working_dir.size());
+                    }
+                    out_s.out_uint8('\x01');
 
-                if (0x0102 <= this->other_version) {
-                    if (!this->param_show_maximized) {
-                        out_s.out_uint8('\x01');
+                    out_s.out_copy_bytes(
+                        this->param_real_alternate_shell.data(),
+                        this->param_real_alternate_shell.size());
 
-                        const char cstr[] = "Minimized";
-                        out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                    if (0x0102 <= this->other_version) {
+                        if (!this->param_show_maximized) {
+                            out_s.out_uint8('\x01');
+
+                            const char cstr[] = "Minimized";
+                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                        }
                     }
                 }
+
+                out_s.out_clear_bytes(1);   // Null-terminator.
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset -
+                        sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_message_to_server(out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    out_s.get_data(), out_s.get_offset());
             }
 
-            out_s.out_clear_bytes(1);   // Null-terminator.
-
-            out_s.set_out_uint16_le(
-                out_s.get_offset() - message_length_offset -
-                    sizeof(uint16_t),
-                message_length_offset);
-
-            this->send_message_to_server(out_s.get_offset(),
-                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-                out_s.get_data(), out_s.get_offset());
+            this->start_application_query_processed = true;
         }
         else if (!this->server_message.compare(
                      "Request=Disconnection-Reconnection")) {
@@ -1220,6 +1231,12 @@ public:
             return;
         }
 
+        this->start_application_started = true;
+
+        if (!this->start_application_query_processed) {
+            return;
+        }
+
         StaticOutStream<8192> out_s;
 
         const size_t message_length_offset = out_s.get_offset();
@@ -1247,4 +1264,3 @@ public:
             out_s.get_data(), out_s.get_offset());
     }
 };  // class SessionProbeVirtualChannel
-
