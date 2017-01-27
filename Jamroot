@@ -430,6 +430,9 @@ exe tls_test_server
 # ===================
 # bjam coverage test_utf.coverage
 
+test-canonical redemptionio/redemptionio.hpp ;
+
+
 ## Acl tests
 ## @{
 test-canonical acl/acl_serializer.hpp : <library>png ;

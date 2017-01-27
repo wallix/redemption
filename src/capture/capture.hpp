@@ -142,6 +142,8 @@
 #include "capture/RDPChunkedDevice.hpp"
 
 #include "openssl_crypto.hpp"
+#include "redemptionio/redemptionio.hpp"
+
 
 struct FilenameGenerator
 {
@@ -752,7 +754,6 @@ namespace detail
             if (!err) {
                 char const * hash_filename = this->hash_filename();
                 char const * meta_filename = this->meta_filename();
-                transbuf::ofile_buf_out crypto_hash;
 
                 char path[1024] = {};
                 char basename[1024] = {};
@@ -768,14 +769,67 @@ namespace detail
 
                 snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
-                if (crypto_hash.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+                RedOutFd crypto_hash(hash_filename, S_IRUSR|S_IRGRP);
+
+                if (crypto_hash.fd >= 0) {
                     char header[] = "v2\n\n\n";
                     crypto_hash.write(header, sizeof(header)-1);
 
                     struct stat stat;
                     int err = ::stat(meta_filename, &stat);
                     if (!err) {
+
+
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW                    
+                        template<bool write_time, class Writer>
+                        int write_meta_file_impl(
+                            Writer & writer, const char * filename,
+                            struct stat const & stat,
+                            time_t start_sec, time_t stop_sec,
+                            hash_type const * hash = nullptr
+                        ) {
+                            if (int err = write_filename(crypto_hash, filename)) {
+                                return err;
+                            }
+
+                            using ull = unsigned long long;
+                            using ll = long long;
+                            char mes[
+                                (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+                                (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+                                hash_string_len + 1 +
+                                2
+                            ];
+                            ssize_t len = std::sprintf(
+                                mes,
+                                " %lld %llu %lld %lld %llu %lld %lld %lld",
+                                ll(stat.st_size),
+                                ull(stat.st_mode),
+                                ll(stat.st_uid),
+                                ll(stat.st_gid),
+                                ull(stat.st_dev),
+                                ll(stat.st_ino),
+                                ll(stat.st_mtim.tv_sec),
+                                ll(stat.st_ctim.tv_sec)
+                            );
+
+                            char * p = mes + len;
+                            if (hash) {
+                                p = swrite_hash(p, *hash);
+                            }
+                            *p++ = '\n';
+
+                            ssize_t res = writer.write(mes, p-mes);
+
+                            if (res < p-mes) {
+                                return res < 0 ? res : 1;
+                            }
+
+                            return 0;
+                        }
+                    
                         err = write_meta_file_impl<false>(crypto_hash, filename, stat, 0, 0, nullptr);
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW                    
                     }
                     if (!err) {
                         err = crypto_hash.close(/*hash*/);
