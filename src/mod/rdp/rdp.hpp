@@ -865,10 +865,10 @@ public:
                           mod_rdp_params.verbose
                          )
         , cs_monitor(info.cs_monitor)
+        , client_execute_flags(mod_rdp_params.client_execute_flags)
         , client_execute_exe_or_file(mod_rdp_params.client_execute_exe_or_file)
         , client_execute_working_dir(mod_rdp_params.client_execute_working_dir)
         , client_execute_arguments(mod_rdp_params.client_execute_arguments)
-        , client_execute_flags(mod_rdp_params.client_execute_flags)
         , use_client_provided_remoteapp(mod_rdp_params.use_client_provided_remoteapp)
         , asynchronous_task_event_handler(*this)
         , session_probe_launcher_event_handler(*this)
@@ -7018,8 +7018,11 @@ private:
                     this->session_probe_virtual_channel_p);
             }
 
-            if (this->remote_programs_virtual_channel) {
-                this->remote_programs_virtual_channel->set_session_probe_virtual_channel(
+            if (this->remote_program) {
+                RemoteProgramsVirtualChannel& rpvc =
+                    this->get_remote_programs_virtual_channel();
+
+                rpvc.set_session_probe_virtual_channel(
                     this->session_probe_virtual_channel_p);
             }
         }
