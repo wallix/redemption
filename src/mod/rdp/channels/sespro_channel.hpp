@@ -22,7 +22,7 @@
 #pragma once
 
 #include "core/front_api.hpp"
-#include "mod/rdp/channels/base_channel.hpp"
+#include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "utils/outbound_connection_monitor_rules.hpp"
 #include "utils/process_monitor_rules.hpp"
 #include "utils/stream.hpp"
@@ -1213,6 +1213,38 @@ public:
 
     void set_session_probe_launcher(SessionProbeLauncher* launcher) {
         this->session_probe_stop_launch_sequence_notifier = launcher;
+    }
+
+    void start_end_session_check() {
+        if (this->param_real_alternate_shell.compare("[None]")) {
+            return;
+        }
+
+        StaticOutStream<8192> out_s;
+
+        const size_t message_length_offset = out_s.get_offset();
+        out_s.out_skip_bytes(sizeof(uint16_t));
+
+        {
+            const char cstr[] = "StartupApplication=";
+            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+        }
+
+        {
+            const char cstr[] = "[None]";
+            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+        }
+
+        out_s.out_clear_bytes(1);   // Null-terminator.
+
+        out_s.set_out_uint16_le(
+            out_s.get_offset() - message_length_offset -
+                sizeof(uint16_t),
+            message_length_offset);
+
+        this->send_message_to_server(out_s.get_offset(),
+            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+            out_s.get_data(), out_s.get_offset());
     }
 };  // class SessionProbeVirtualChannel
 

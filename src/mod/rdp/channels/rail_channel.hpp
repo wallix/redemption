@@ -23,6 +23,8 @@
 
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/rail_session_manager.hpp"
+#include "mod/rdp/channels/sespro_channel.hpp"
+#include "utils/log.hpp"
 
 class FrontAPI;
 
@@ -44,9 +46,11 @@ private:
     std::string param_client_execute_working_dir_2;
     std::string param_client_execute_arguments_2;
 
-    RemoteProgramsSessionManager * param_rail_session_manager;
+    RemoteProgramsSessionManager * param_rail_session_manager = nullptr;
 
     bool client_execute_pdu_sent = false;
+
+    SessionProbeVirtualChannel * session_probe_channel = nullptr;
 
 public:
     struct Params : public BaseVirtualChannel::Params {
@@ -852,7 +856,15 @@ public:
             serpdu.log(LOG_INFO);
         }
 
-        return true;
+        if (!this->param_client_execute_exe_or_file_2.compare(serpdu.ExeOrFile())) {
+            if (this->session_probe_channel) {
+                this->session_probe_channel->start_end_session_check();
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     bool process_server_get_application_id_response_pdu(uint32_t total_length,
@@ -1231,4 +1243,8 @@ public:
                 chunk_data_length);
         }   // switch (this->server_order_type)
     }   // process_server_message
+
+    void set_session_probe_virtual_channel(SessionProbeVirtualChannel * session_probe_channel) {
+        this->session_probe_channel = session_probe_channel;
+    }
 };

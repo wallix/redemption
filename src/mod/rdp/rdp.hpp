@@ -7017,6 +7017,11 @@ private:
                 this->session_probe_launcher->set_session_probe_virtual_channel(
                     this->session_probe_virtual_channel_p);
             }
+
+            if (this->remote_programs_virtual_channel) {
+                this->remote_programs_virtual_channel->set_session_probe_virtual_channel(
+                    this->session_probe_virtual_channel_p);
+            }
         }
     }
 
