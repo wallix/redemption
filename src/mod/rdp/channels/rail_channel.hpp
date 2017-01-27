@@ -856,6 +856,16 @@ public:
             serpdu.log(LOG_INFO);
         }
 
+        if (!this->session_probe_channel ||
+            this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
+            std::string info("ExeOrFile='");
+            info += serpdu.ExeOrFile();
+            info += "'";
+            this->authentifier.log4(
+                false,
+                "CLIENT_EXECUTE_REMOTEAPP", info.c_str());
+        }
+
         if (!this->param_client_execute_exe_or_file_2.compare(serpdu.ExeOrFile())) {
             if (this->session_probe_channel) {
                 this->session_probe_channel->start_end_session_check();
