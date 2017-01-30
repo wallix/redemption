@@ -430,6 +430,9 @@ exe tls_test_server
 # ===================
 # bjam coverage test_utf.coverage
 
+test-canonical redemptionio/redemptionio.hpp ;
+
+
 ## Acl tests
 ## @{
 test-canonical acl/acl_serializer.hpp : <library>png ;
@@ -570,7 +573,7 @@ test-canonical utils/netutils.hpp ;
 test-canonical utils/outbound_connection_monitor_rules.hpp ;
 test-canonical utils/parse.hpp ;
 test-canonical utils/parse_ip_conntrack.hpp ;
-test-canonical utils/parser.hpp ;
+#test-canonical utils/parser.hpp ;
 test-canonical utils/pattutils.hpp ;
 test-canonical utils/png.hpp : <library>png ;
 test-canonical utils/rdtsc.hpp ;
