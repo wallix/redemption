@@ -20,10 +20,12 @@
 */
 
 #pragma once
-
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 struct RedIO {
-    ~RedIO() = delete;
+    virtual ~RedIO() {}
 };
 
 struct RedIn : public RedIO {
@@ -57,7 +59,7 @@ public:
         return this->fd != -1;
     }
 
-    virtual ~RedOut() { if (this->is_open()) { ::close(this->fd); } };
+    virtual ~RedOutFd() { if (this->is_open()) { ::close(this->fd); } };
     virtual int write(const uint8_t * buffer, size_t len)
     {
         return ::write(this->fd, buffer, len);

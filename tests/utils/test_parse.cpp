@@ -28,12 +28,17 @@
 
 #include "utils/parse.hpp"
 
-BOOST_AUTO_TEST_CASE(TestParse)
+BOOST_AUTO_TEST_CASE(TestParse_0)
 {
     uint8_t buffer[] = { 0x10, 0xFF, 0xFF, 0x11, 0x12, 0x13, 0x14 };
     Parse data(buffer);
     BOOST_CHECK_EQUAL(0x10, data.in_uint8());
     BOOST_CHECK_EQUAL(0xFF, data.in_uint8());
     BOOST_CHECK_EQUAL(-1, data.in_sint8());
+}
+
+BOOST_AUTO_TEST_CASE(TestParse_1)
+{
+    BOOST_CHECK_EQUAL(Parse(reinterpret_cast<const uint8_t *>("2281701377")).ulong_from_cstr(), 0x88000001);
 }
 

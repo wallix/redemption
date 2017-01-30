@@ -31,5 +31,5 @@
 
 BOOST_AUTO_TEST_CASE(TestRedIO)
 {
-    RedIO redio;
+//    RedIO redio;
 }

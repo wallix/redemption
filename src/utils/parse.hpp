@@ -199,6 +199,10 @@ public:
         return false;
     }
 
+    bool bool_from_cstrz() noexcept
+    {
+        return this->bool_from_cstr() && this->p[0] == 0;
+    }
 
     // MS-RDPEGDI : 2.2.2.2.1.2.1.2 Two-Byte Unsigned Encoding
     // =======================================================

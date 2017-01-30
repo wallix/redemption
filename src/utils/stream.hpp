@@ -373,6 +373,9 @@ public:
 };
 
 
+// TODO: OutStream should be based on some output object (like it is done between InStream and Parse)
+// where output object doesn't care about checking boundaries (OutStream job)
+
 class OutStream
 {
     uint8_t * begin = nullptr;
@@ -785,14 +788,6 @@ public:
     // Output zero terminated string, non including trailing 0
     void out_string(const char * v) {
         this->out_copy_bytes(v, strlen(v));
-    }
-
-    void set_out_copy_bytes(const uint8_t * v, size_t n, size_t offset) {
-        memcpy(this->get_data()+offset, v, n);
-    }
-
-    void set_out_copy_bytes(const char * v, size_t n, size_t offset) {
-        this->set_out_copy_bytes(reinterpret_cast<uint8_t const*>(v), n, offset);
     }
 
     void out_clear_bytes(size_t n) {

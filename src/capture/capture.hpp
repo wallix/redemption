@@ -769,7 +769,6 @@ namespace detail
                 snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
                 if (crypto_hash.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
-//                    OutputStream 
                     char header[] = "v2\n\n\n";
                     crypto_hash.write(header, sizeof(header)-1);
 
@@ -6523,7 +6522,8 @@ public:
     WrmCaptureImpl(
         const timeval & now,
         const WrmParams wrm_params,
-        uint8_t capture_bpp, TraceType trace_type,
+        uint8_t capture_bpp, 
+        TraceType trace_type,
         CryptoContext & cctx, Random & rnd,
         const char * record_path, const char * hash_path, const char * basename,
         int groupid, auth_api * authentifier,
