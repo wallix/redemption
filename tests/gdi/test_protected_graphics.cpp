@@ -31,7 +31,7 @@
 
 #include <memory>
 
-#include "transport/out_meta_sequence_transport.hpp"
+#include "capture/capture.hpp"
 #include "utils/png.hpp"
 #include "utils/drawable.hpp"
 #include "utils/difftimeval.hpp"

@@ -34,7 +34,7 @@ class BaseVirtualChannel
     VirtualChannelDataSender* to_server_sender;
 
 protected:
-    auth_api*      authentifier;
+    auth_api & authentifier;
     implicit_bool_flags<RDPVerbose> verbose;
 
 private:
@@ -45,9 +45,11 @@ private:
 public:
     struct Params
     {
-        auth_api*       authentifier;
+        auth_api    &   authentifier;
         data_size_type  exchanged_data_limit;
         RDPVerbose verbose;
+        
+        Params(auth_api & authentifier) : authentifier(authentifier) {}
     };
 
 protected:
@@ -121,12 +123,11 @@ protected:
     {
         this->exchanged_data += data_length;
 
-        if (this->exchanged_data_limit &&
-            this->authentifier &&
-            !this->exchanged_data_limit_reached_reported &&
-            (this->exchanged_data > this->exchanged_data_limit))
+        if (this->exchanged_data_limit 
+        && !this->exchanged_data_limit_reached_reported 
+        && (this->exchanged_data > this->exchanged_data_limit))
         {
-            this->authentifier->report(
+            this->authentifier.report(
                 this->get_reporting_reason_exchanged_data_limit_reached(),
                 "");
 

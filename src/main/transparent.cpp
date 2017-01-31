@@ -216,7 +216,7 @@ int main(int argc, char * argv[]) {
         virtual void disconnect_target() {}
     } authentifier;
     
-    Front front(front_trans, gen, ini, cctx, &authentifier,
+    Front front(front_trans, gen, ini, cctx, authentifier,
         fastpath_support, mem3blt_support, now, input_filename.c_str(), persistent_key_list_oft);
     null_mod no_mod(front);
 
@@ -304,7 +304,7 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.deny_channels                       = &(ini.get<cfg::mod_rdp::deny_channels>());
 
             mod_rdp mod(mod_trans, front, client_info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-                        gen, timeobj, mod_rdp_params, &authentifier);
+                        gen, timeobj, mod_rdp_params, authentifier);
 
             run_mod(mod, front, front_event, &mod_trans, &front_trans);
 

@@ -81,8 +81,6 @@ struct ModRDPParams {
 
     int key_flags;
 
-//    auth_api * acl = nullptr;
-
     const char * outbound_connection_monitoring_rules = "";
     const char * process_monitoring_rules           = "";
 
@@ -144,6 +142,7 @@ struct ModRDPParams {
     const char * client_execute_exe_or_file = "";
     const char * client_execute_working_dir = "";
     const char * client_execute_arguments = "";
+    bool         use_client_provided_remoteapp = false;
 
     bool remote_program = false;
 
@@ -299,6 +298,8 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     s_or_none,             client_execute_exe_or_file);
         RDP_PARAMS_LOG("%s",     s_or_none,             client_execute_working_dir);
         RDP_PARAMS_LOG("%s",     s_or_none,             client_execute_arguments);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             use_client_provided_remoteapp);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             remote_program);
 

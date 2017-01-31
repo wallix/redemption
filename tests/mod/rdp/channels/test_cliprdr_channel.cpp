@@ -37,6 +37,16 @@
 
 #include "../../../front/fake_front.hpp"
 
+class FakeAuthentifier : public auth_api {
+public:
+    virtual void set_auth_channel_target(const char *) {}
+    virtual void set_auth_error_message(const char *) {}
+    virtual void report(const char *, const char *) {}
+    virtual void log4(bool, const char *, const char * = nullptr) {}
+    virtual void disconnect_target() {}
+};
+
+
 class TestToClientSender : public VirtualChannelDataSender {
     Transport& transport;
 
@@ -108,9 +118,9 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
 
     int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
+    FakeAuthentifier authentifier;
+    ClipboardVirtualChannel::Params clipboard_virtual_channel_params(authentifier);
 
-    clipboard_virtual_channel_params.authentifier              = nullptr;
     clipboard_virtual_channel_params.exchanged_data_limit      = 0;
     clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
 
@@ -204,9 +214,9 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
 
     int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
+    FakeAuthentifier authentifier;
+    ClipboardVirtualChannel::Params clipboard_virtual_channel_params(authentifier);
 
-    clipboard_virtual_channel_params.authentifier              = nullptr;
     clipboard_virtual_channel_params.exchanged_data_limit      = 0;
     clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
 
@@ -300,9 +310,9 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
 
     int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
+    FakeAuthentifier authentifier;
+    ClipboardVirtualChannel::Params clipboard_virtual_channel_params(authentifier);
 
-    clipboard_virtual_channel_params.authentifier              = nullptr;
     clipboard_virtual_channel_params.exchanged_data_limit      = 0;
     clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
 
@@ -395,10 +405,10 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
                    );
 
     int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
+    FakeAuthentifier authentifier;
 
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
+    ClipboardVirtualChannel::Params clipboard_virtual_channel_params(authentifier);
 
-    clipboard_virtual_channel_params.authentifier              = nullptr;
     clipboard_virtual_channel_params.exchanged_data_limit      = 0;
     clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
 
@@ -497,9 +507,9 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
 
     int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
+    FakeAuthentifier authentifier;
+    ClipboardVirtualChannel::Params clipboard_virtual_channel_params(authentifier);
 
-    clipboard_virtual_channel_params.authentifier              = nullptr;
     clipboard_virtual_channel_params.exchanged_data_limit      = 0;
     clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
 

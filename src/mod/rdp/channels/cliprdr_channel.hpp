@@ -76,6 +76,8 @@ public:
 
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
+        
+        Params(auth_api & authentifier) : BaseVirtualChannel::Params(authentifier) {}
     };
 
     ClipboardVirtualChannel(
@@ -413,18 +415,16 @@ private:
                     fd.log(LOG_INFO);
                 }
 
-                if (this->authentifier) {
-                    std::string info("file_name='");
-                    info += fd.fileName();
-                    info += "' size='";
-                    info += std::to_string(fd.file_size());
-                    info += "'";
+                std::string info("file_name='");
+                info += fd.fileName();
+                info += "' size='";
+                info += std::to_string(fd.file_size());
+                info += "'";
 
-                    this->authentifier->log4(
-                        !this->param_dont_log_data_into_syslog,
-                        "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
-                        info.c_str());
-                }
+                this->authentifier.log4(
+                    !this->param_dont_log_data_into_syslog,
+                    "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
+                    info.c_str());
 
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message("SendFileToServerClipboard=");
@@ -456,18 +456,16 @@ private:
                     fd.log(LOG_INFO);
                 }
 
-                if (this->authentifier) {
-                    std::string info("file_name='");
-                    info += fd.fileName();
-                    info += "' size='";
-                    info += std::to_string(fd.file_size());
-                    info += "'";
+                std::string info("file_name='");
+                info += fd.fileName();
+                info += "' size='";
+                info += std::to_string(fd.file_size());
+                info += "'";
 
-                    this->authentifier->log4(
-                        !this->param_dont_log_data_into_syslog,
-                        "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
-                        info.c_str());
-                }
+                this->authentifier.log4(
+                    !this->param_dont_log_data_into_syslog,
+                    "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
+                    info.c_str());
 
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message("SendFileToServerClipboard=");
@@ -1048,18 +1046,16 @@ public:
                     fd.log(LOG_INFO);
                 }
 
-                if (this->authentifier) {
-                    std::string info("file_name='");
-                    info += fd.fileName();
-                    info += "' size='";
-                    info += std::to_string(fd.file_size());
-                    info += "'";
+                std::string info("file_name='");
+                info += fd.fileName();
+                info += "' size='";
+                info += std::to_string(fd.file_size());
+                info += "'";
 
-                    this->authentifier->log4(
-                        !this->param_dont_log_data_into_syslog,
-                        "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
-                        info.c_str());
-                }
+                this->authentifier.log4(
+                    !this->param_dont_log_data_into_syslog,
+                    "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
+                    info.c_str());
 
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message("SendFileToClientClipboard=");
@@ -1082,18 +1078,16 @@ public:
                     fd.log(LOG_INFO);
                 }
 
-                if (this->authentifier) {
-                    std::string info("file_name='");
-                    info += fd.fileName();
-                    info += "' size='";
-                    info += std::to_string(fd.file_size());
-                    info += "'";
+                std::string info("file_name='");
+                info += fd.fileName();
+                info += "' size='";
+                info += std::to_string(fd.file_size());
+                info += "'";
 
-                    this->authentifier->log4(
-                        !this->param_dont_log_data_into_syslog,
-                        "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
-                        info.c_str());
-                }
+                this->authentifier.log4(
+                    !this->param_dont_log_data_into_syslog,
+                    "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
+                    info.c_str());
 
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message("SendFileToClientClipboard=");

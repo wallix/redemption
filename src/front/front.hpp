@@ -664,7 +664,7 @@ private:
 
     rdp_mppc_enc * mppc_enc;
 
-    auth_api * authentifier;
+    auth_api & authentifier;
     bool       auth_info_sent;
 
     uint16_t rail_channel_id = 0;
@@ -719,12 +719,17 @@ public:
 
     BGRPalette const & get_palette() const { return this->mod_palette_rgb; }
 
+    // TODO: these are temporaries, to remove after refactoring capture code
+    char path[1024];
+    char basename[1024];
+    char extension[128];
+
 public:
     Front(  Transport & trans
           , Random & gen
           , Inifile & ini
           , CryptoContext & cctx
-          , auth_api * authentifier
+          , auth_api & authentifier
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
           , time_t now
@@ -1067,6 +1072,21 @@ public:
             LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
         }
 
+//        char path[1024];
+//        char basename[1024];
+//        char extension[128];
+
+        strcpy(this->path, WRM_PATH "/");     // default value, actual one should come from movie_path
+        strcpy(this->basename, movie_path);
+        strcpy(this->extension, "");          // extension is currently ignored
+
+        if (!canonical_path(movie_path, this->path, sizeof(this->path), this->basename, sizeof(this->basename), this->extension, sizeof(this->extension))
+        ) {
+            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
+            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
+        }
+
+
         this->capture = new Capture(  capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
                                     , capture_png, png_params
                                     , capture_pattern_checker
@@ -1075,7 +1095,9 @@ public:
                                     , capture_flv_full
                                     , capture_meta
                                     , capture_kbd
-
+                                    , this->path
+                                    , this->basename
+                                    , this->extension
                                     , now
                                     , this->client_info.width, this->client_info.height
                                     , this->mod_bpp, this->capture_bpp
@@ -1085,7 +1107,7 @@ public:
                                     , hash_path
                                     , movie_path
                                     , flv_params
-                                    , false, this->authentifier
+                                    , false, &this->authentifier
                                     , ini, this->cctx, this->gen
                                     , nullptr
                                     );

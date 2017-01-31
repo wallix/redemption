@@ -76,7 +76,6 @@
 #include "core/client_info.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/authorization_channels.hpp"
-#include "utils/parser.hpp"
 #include "core/channel_names.hpp"
 
 #include "core/FSCC/FileInformation.hpp"
@@ -300,7 +299,7 @@ protected:
     int  auth_channel_chanid;
     //int  auth_channel_state;    // 0 means unused, 1 means session running
 
-    auth_api * authentifier;
+    auth_api & authentifier;
 
     RdpNego nego;
 
@@ -578,7 +577,7 @@ protected:
 
     class RDPServerNotifier : public ServerNotifier {
     private:
-        auth_api * authentifier;
+        auth_api & authentifier;
 
         const ServerNotification server_access_allowed_message;
         const ServerNotification server_cert_create_message;
@@ -594,7 +593,7 @@ protected:
 
     public:
         RDPServerNotifier(
-                auth_api * authentifier,
+                auth_api & authentifier,
                 ServerNotification server_access_allowed_message,
                 ServerNotification server_cert_create_message,
                 ServerNotification server_cert_success_message,
@@ -613,7 +612,7 @@ protected:
 
         void server_access_allowed() override {
             if (is_syslog_notification_enabled(this->server_access_allowed_message)) {
-                this->authentifier->log4((this->verbose & RDPVerbose::basic_trace),
+                this->authentifier.log4((this->verbose & RDPVerbose::basic_trace),
                         "CERTIFICATE_CHECK_SUCCESS",
                         "description='Connexion to server allowed'"
                     );
@@ -622,7 +621,7 @@ protected:
 
         void server_cert_create() override {
             if (is_syslog_notification_enabled(this->server_cert_create_message)) {
-                this->authentifier->log4((this->verbose & RDPVerbose::basic_trace),
+                this->authentifier.log4((this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_NEW",
                         "description='New X.509 certificate created'"
                     );
@@ -631,7 +630,7 @@ protected:
 
         void server_cert_success() override {
             if (is_syslog_notification_enabled(this->server_cert_success_message)) {
-                this->authentifier->log4((this->verbose & RDPVerbose::basic_trace),
+                this->authentifier.log4((this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_MATCH_SUCCESS",
                         "description='X.509 server certificate match'"
                     );
@@ -639,10 +638,8 @@ protected:
         }
 
         void server_cert_failure() override {
-            if (is_syslog_notification_enabled(
-                    this->server_cert_failure_message) &&
-                this->authentifier) {
-                this->authentifier->log4((this->verbose & RDPVerbose::basic_trace),
+            if (is_syslog_notification_enabled(this->server_cert_failure_message)) {
+                this->authentifier.log4((this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_MATCH_FAILURE",
                         "description='X.509 server certificate match failure'"
                     );
@@ -656,7 +653,7 @@ protected:
                         "description='X.509 server certificate internal error: \"%s\"'",
                         (str_error ? str_error : "")
                     );
-                this->authentifier->log4((this->verbose & RDPVerbose::basic_trace),
+                this->authentifier.log4((this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_ERROR",
                         extra
                     );
@@ -672,6 +669,14 @@ protected:
     std::string client_execute_exe_or_file;
     std::string client_execute_working_dir;
     std::string client_execute_arguments;
+
+    bool use_client_provided_remoteapp;
+
+
+    uint16_t    real_client_execute_flags = 0;
+    std::string real_client_execute_exe_or_file;
+    std::string real_client_execute_working_dir;
+    std::string real_client_execute_arguments;
 
     time_t beginning;
     bool   session_disconnection_logged = false;
@@ -731,7 +736,7 @@ public:
            , Random & gen
            , TimeObj & timeobj
            , const ModRDPParams & mod_rdp_params
-           , auth_api * authentifier
+           , auth_api & authentifier
            )
         : front_width(info.width - (info.width % 4))
         , front_height(info.height)
@@ -863,6 +868,7 @@ public:
         , client_execute_exe_or_file(mod_rdp_params.client_execute_exe_or_file)
         , client_execute_working_dir(mod_rdp_params.client_execute_working_dir)
         , client_execute_arguments(mod_rdp_params.client_execute_arguments)
+        , use_client_provided_remoteapp(mod_rdp_params.use_client_provided_remoteapp)
         , asynchronous_task_event_handler(*this)
         , session_probe_launcher_event_handler(*this)
         , session_probe_virtual_channel_event_handler(*this)
@@ -1121,6 +1127,17 @@ public:
                 replace_tag(this->session_probe_arguments,
                     "${TITLE_VAR} ", param.c_str());
 
+                if (this->real_alternate_shell.empty() &&
+                    this->use_client_provided_remoteapp &&
+                    !this->client_execute_exe_or_file.empty()) {
+                    this->real_alternate_shell = "[None]";
+
+                    this->real_client_execute_flags       = this->client_execute_flags;
+                    this->real_client_execute_exe_or_file = std::move(this->client_execute_exe_or_file);
+                    this->real_client_execute_arguments   = std::move(this->client_execute_arguments);
+                    this->real_client_execute_working_dir = std::move(this->client_execute_working_dir);
+                }
+
                 this->client_execute_exe_or_file = this->session_probe_exe_or_file;
                 this->client_execute_arguments   = this->session_probe_arguments;
                 this->client_execute_working_dir = "%TMP%";
@@ -1247,7 +1264,7 @@ public:
 
         if (!this->end_session_reason.empty()
         &&  !this->end_session_message.empty()) {
-            this->authentifier->report(
+            this->authentifier.report(
                 this->end_session_reason.c_str(),
                 this->end_session_message.c_str());
         }
@@ -1336,10 +1353,8 @@ protected:
     const ClipboardVirtualChannel::Params
         get_clipboard_virtual_channel_params() const
     {
-        ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
+        ClipboardVirtualChannel::Params clipboard_virtual_channel_params(this->authentifier);
 
-        clipboard_virtual_channel_params.authentifier                    =
-            this->authentifier;
         clipboard_virtual_channel_params.exchanged_data_limit            =
             this->max_clipboard_data;
         clipboard_virtual_channel_params.verbose                         =
@@ -1363,10 +1378,8 @@ protected:
     const FileSystemVirtualChannel::Params
         get_file_system_virtual_channel_params() const
     {
-        FileSystemVirtualChannel::Params file_system_virtual_channel_params;
+        FileSystemVirtualChannel::Params file_system_virtual_channel_params(this->authentifier);
 
-        file_system_virtual_channel_params.authentifier                    =
-            this->authentifier;
         file_system_virtual_channel_params.exchanged_data_limit            =
             this->max_rdpdr_data;
         file_system_virtual_channel_params.verbose                         =
@@ -1405,10 +1418,8 @@ protected:
         get_session_probe_virtual_channel_params() const
     {
         SessionProbeVirtualChannel::Params
-            session_probe_virtual_channel_params;
+            session_probe_virtual_channel_params(this->authentifier);
 
-        session_probe_virtual_channel_params.authentifier                           =
-            this->authentifier;
         session_probe_virtual_channel_params.exchanged_data_limit                   =
             static_cast<data_size_type>(-1);
         session_probe_virtual_channel_params.verbose                                =
@@ -1470,10 +1481,8 @@ protected:
     const RemoteProgramsVirtualChannel::Params
         get_remote_programs_virtual_channel_params() const
     {
-        RemoteProgramsVirtualChannel::Params remote_programs_virtual_channel_params;
+        RemoteProgramsVirtualChannel::Params remote_programs_virtual_channel_params(this->authentifier);
 
-        remote_programs_virtual_channel_params.authentifier                    =
-            this->authentifier;
         remote_programs_virtual_channel_params.exchanged_data_limit            =
             this->max_clipboard_data;
         remote_programs_virtual_channel_params.verbose                         =
@@ -1487,6 +1496,16 @@ protected:
             this->client_execute_working_dir.c_str();
         remote_programs_virtual_channel_params.client_execute_arguments        =
             this->client_execute_arguments.c_str();
+
+        remote_programs_virtual_channel_params.client_execute_flags_2          =
+            this->real_client_execute_flags;
+        remote_programs_virtual_channel_params.client_execute_exe_or_file_2    =
+            this->real_client_execute_exe_or_file.c_str();
+        remote_programs_virtual_channel_params.client_execute_working_dir_2    =
+            this->real_client_execute_working_dir.c_str();
+        remote_programs_virtual_channel_params.client_execute_arguments_2      =
+            this->real_client_execute_arguments.c_str();
+
         remote_programs_virtual_channel_params.rail_session_manager            =
             this->remote_programs_session_manager.get();
 
@@ -1698,11 +1717,15 @@ private:
             this->end_session_reason.clear();
             this->end_session_message.clear();
 
-            this->authentifier->disconnect_target();
-            this->authentifier->set_auth_error_message(TR("session_logoff_in_progress", this->lang));
+            this->authentifier.disconnect_target();
+            this->authentifier.set_auth_error_message(TR("session_logoff_in_progress", this->lang));
 
-            if (session_probe_virtual_channel_p) {
-                session_probe_virtual_channel_p->get_event()->signal = BACK_EVENT_NEXT;
+            if (this->session_probe_virtual_channel_p) {
+                wait_obj* event = this->session_probe_virtual_channel_p->get_event();
+
+                if (event) {
+                    event->signal = BACK_EVENT_NEXT;
+                }
             }
         }
     }
@@ -3221,28 +3244,26 @@ public:
             LOG(LOG_ERR, "mod::rdp::DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
             this->front.recv_disconnect_provider_ultimatum();
 
-            if (this->authentifier) {
-                this->end_session_reason.clear();
-                this->end_session_message.clear();
+            this->end_session_reason.clear();
+            this->end_session_message.clear();
 
-                if ((!this->session_probe_virtual_channel_p
-                    || !this->session_probe_virtual_channel_p->is_disconnection_reconnection_required())
-                 && !this->remote_apps_not_enabled) {
-                    this->authentifier->disconnect_target();
-                }
-                this->authentifier->report("CLOSE_SESSION_SUCCESSFUL", "OK.");
+            if ((!this->session_probe_virtual_channel_p
+                || !this->session_probe_virtual_channel_p->is_disconnection_reconnection_required())
+                && !this->remote_apps_not_enabled) {
+                this->authentifier->disconnect_target();
+            }
+            this->authentifier->report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
-                if (!this->session_disconnection_logged) {
-                    double seconds = ::difftime(now, this->beginning);
+            if (!this->session_disconnection_logged) {
+                double seconds = ::difftime(now, this->beginning);
 
-                    char extra[1024];
-                    snprintf(extra, sizeof(extra), "duration='%02d:%02d:%02d'",
-                        (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
-                        (int(seconds) % 60));
+                char extra[1024];
+                snprintf(extra, sizeof(extra), "duration='%02d:%02d:%02d'",
+                    (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
+                    (int(seconds) % 60));
 
-                    this->authentifier->log4(false, "SESSION_DISCONNECTION", extra);
-                    this->session_disconnection_logged = true;
-                }
+                this->authentifier.log4(false, "SESSION_DISCONNECTION", extra);
+                this->session_disconnection_logged = true;
             }
             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
         }
@@ -3402,8 +3423,8 @@ public:
                             }
                             this->connection_finalization_state = UP_AND_RUNNING;
 
-                            if (this->authentifier && !this->deactivation_reactivation_in_progress) {
-                                this->authentifier->log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
+                            if (!this->deactivation_reactivation_in_progress) {
+                                this->authentifier.log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -3759,14 +3780,13 @@ public:
                     throw Error(ERR_RAIL_NOT_ENABLED);
                 }
 
-                if (this->authentifier
-                && (e.id != ERR_MCS_APPID_IS_MCS_DPUM))
+                if (e.id != ERR_MCS_APPID_IS_MCS_DPUM)
                 {
                     char const* reason =
                         ((UP_AND_RUNNING == this->connection_finalization_state) ?
                          "SESSION_EXCEPTION" : "SESSION_EXCEPTION_NO_RECORD");
 
-                    this->authentifier->report(reason, e.errmsg());
+                    this->authentifier.report(reason, e.errmsg());
 
                     this->end_session_reason.clear();
                     this->end_session_message.clear();
@@ -3833,10 +3853,7 @@ public:
                     *this->error_message = "Logon timer expired!";
                 }
 
-                if (this->authentifier)
-                {
-                    this->authentifier->report("CONNECTION_FAILED", "Logon timer expired.");
-                }
+                this->authentifier.report("CONNECTION_FAILED", "Logon timer expired.");
 
                 if (this->enable_session_probe) {
                     const bool disable_input_event     = false;
@@ -3874,8 +3891,8 @@ public:
             this->end_session_reason.clear();
             this->end_session_message.clear();
 
-            this->authentifier->disconnect_target();
-            this->authentifier->set_auth_error_message(TR("session_logoff_in_progress", this->lang));
+            this->authentifier.disconnect_target();
+            this->authentifier.set_auth_error_message(TR("session_logoff_in_progress", this->lang));
 
             this->event.signal = BACK_EVENT_NEXT;
         }
@@ -5113,9 +5130,7 @@ public:
             break;
         case ERRINFO_DISCONNECTED_BY_OTHERCONNECTION:
             LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DISCONNECTED_BY_OTHERCONNECTION");
-            if (this->authentifier) {
-                this->authentifier->set_auth_error_message(TR("disconnected_by_otherconnection", this->lang));
-            }
+            this->authentifier.set_auth_error_message(TR("disconnected_by_otherconnection", this->lang));
             break;
         case ERRINFO_OUT_OF_MEMORY:
             LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "OUT_OF_MEMORY");
@@ -5472,10 +5487,7 @@ public:
             this->session_probe_virtual_channel_p->start_launch_timeout_timer();
         }
 
-        if (this->authentifier)
-        {
-            this->authentifier->report("OPEN_SESSION_SUCCESSFUL", "OK.");
-        }
+        this->authentifier.report("OPEN_SESSION_SUCCESSFUL", "OK.");
         this->end_session_reason = "CLOSE_SESSION_SUCCESSFUL";
         this->end_session_message = "OK.";
 
@@ -5569,7 +5581,7 @@ public:
                     std::string errmsg = "(RemoteApp) ";
 
                     errmsg += RDP::LogonErrorsInfo_Recv::ErrorNotificationDataToShortMessage(lei.ErrorNotificationData);
-                    this->authentifier->set_auth_error_message(errmsg.c_str());
+                    this->authentifier.set_auth_error_message(errmsg.c_str());
                     throw Error(ERR_RAIL_LOGON_FAILED_OR_WARNING);
                 }
             }
@@ -6783,18 +6795,16 @@ private:
             // this->draw_event(time(nullptr));
             this->send_disconnect_ultimatum();
         }
-        if (this->authentifier) {
-            if (!this->session_disconnection_logged) {
-                double seconds = ::difftime(now, this->beginning);
+        if (!this->session_disconnection_logged) {
+            double seconds = ::difftime(now, this->beginning);
 
-                char extra[1024];
-                snprintf(extra, sizeof(extra), "duration='%02d:%02d:%02d'",
-                    (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
-                    (int(seconds) % 60));
+            char extra[1024];
+            snprintf(extra, sizeof(extra), "duration='%02d:%02d:%02d'",
+                (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
+                (int(seconds) % 60));
 
-                this->authentifier->log4(false, "SESSION_DISCONNECTION", extra);
-                this->session_disconnection_logged = true;
-            }
+            this->authentifier.log4(false, "SESSION_DISCONNECTION", extra);
+            this->session_disconnection_logged = true;
         }
     }
 
@@ -6857,9 +6867,7 @@ private:
         this->auth_channel_flags  = flags;
         this->auth_channel_chanid = auth_channel.chanid;
 
-        if (this->authentifier) {
-            this->authentifier->set_auth_channel_target(auth_channel_message.c_str());
-        }
+        this->authentifier.set_auth_channel_target(auth_channel_message.c_str());
     }
 
     void process_session_probe_event(
@@ -7006,6 +7014,14 @@ private:
                     &cvc);
 
                 this->session_probe_launcher->set_session_probe_virtual_channel(
+                    this->session_probe_virtual_channel_p);
+            }
+
+            if (this->remote_program) {
+                RemoteProgramsVirtualChannel& rpvc =
+                    this->get_remote_programs_virtual_channel();
+
+                rpvc.set_session_probe_virtual_channel(
                     this->session_probe_virtual_channel_p);
             }
         }

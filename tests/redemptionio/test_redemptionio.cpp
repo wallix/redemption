@@ -14,22 +14,22 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2014
+   Copyright (C) Wallix 2017
    Author(s): Christophe Grosjean
-
-   Unit test for char parse class
 
 */
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestParse
+#define BOOST_TEST_MODULE TestRedemptionIO
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/parser.hpp"
+#define LOGPRINT
+#include "utils/log.hpp"
 
-BOOST_AUTO_TEST_CASE(TestParse)
+#include "redemptionio/redemptionio.hpp"
+
+BOOST_AUTO_TEST_CASE(TestRedIO)
 {
-    BOOST_CHECK_EQUAL(ulong_from_cstr("2281701377"), 0x88000001);
+//    RedIO redio;
 }
-

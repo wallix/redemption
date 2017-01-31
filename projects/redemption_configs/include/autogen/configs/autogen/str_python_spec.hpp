@@ -304,8 +304,11 @@
 "#_hidden\n"
 "shell_working_directory = string(default='')\n\n"
 
-"#_hidden\n"
+"#_advanced\n"
 "use_client_provided_alternate_shell = boolean(default=False)\n\n"
+
+"#_advanced\n"
+"use_client_provided_remoteapp = boolean(default=False)\n\n"
 
 "#_advanced\n"
 "use_native_remoteapp_capability = boolean(default=False)\n\n"
@@ -377,7 +380,7 @@
 "session_probe_idle_session_limit = integer(min=0, default=0)\n\n"
 
 "#_hidden\n"
-"session_probe_exe_or_file = string(max=511, default='CMD')\n\n"
+"session_probe_exe_or_file = string(max=511, default='||CMD')\n\n"
 
 "#_hidden\n"
 "session_probe_arguments = string(max=511, default='/K')\n\n"
@@ -673,6 +676,9 @@
 "secondary_orders = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"bitmap_update = integer(min=0, default=0)\n\n"
+
+"#_advanced\n"
 "bitmap = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
@@ -694,7 +700,7 @@
 "mod_vnc = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
-"mod_int = integer(min=0, default=0)\n\n"
+"mod_internal = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
 "mod_xup = integer(min=0, default=0)\n\n"
@@ -715,16 +721,10 @@
 "cache = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
-"bitmap_update = integer(min=0, default=0)\n\n"
-
-"#_advanced\n"
 "performance = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
 "pass_dialog_box = integer(min=0, default=0)\n\n"
-
-"#_advanced\n"
-"mod_internal = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
 "ocr = integer(min=0, default=0)\n\n"
