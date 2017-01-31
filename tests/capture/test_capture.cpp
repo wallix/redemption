@@ -180,10 +180,9 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
                         , record_tmp_path
                         , record_path
                         , groupid
-                        , hash_path
                         , flv_params
                         , no_timestamp, nullptr
-                        , ini, cctx, rnd, nullptr);
+                        , ini, nullptr);
 
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
@@ -429,10 +428,9 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , record_tmp_path
                    , record_path
                    , groupid
-                   , hash_path
                    , flv_params
                    , no_timestamp, nullptr
-                   , ini, cctx, rnd, nullptr);
+                   , ini, nullptr);
     auto const color_cxt = gdi::ColorCtx::depth16();
     Pointer pointer1(Pointer::POINTER_EDIT);
     capture.set_pointer(pointer1);
@@ -2639,12 +2637,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
         RDPDrawable gd_drawable(scr.cx, scr.cy);
 
         WrmCaptureImpl wrmcapture(
-                    now, wrm_params, 24, wrm_trace_type,
-                    cctx, rnd, record_path, hash_path, basename,
-                    groupid, nullptr /* authentifier */, gd_drawable,
-                    wrm_frame_interval,
-                    wrm_break_interval,
-                    wrm_compression_algorithm, wrm_verbose
+                    now, wrm_params, nullptr /* authentifier */, gd_drawable, wrm_verbose
                 );
                 
         auto const color_cxt = gdi::ColorCtx::depth24();
@@ -2802,12 +2795,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
 //        RDPDrawable gd_drawable(scr.cx, scr.cy);
 
 //        WrmCaptureImpl wrmcapture(
-//                    now, wrm_params, 24, wrm_trace_type,
-//                    cctx, rnd, record_path, hash_path, basename,
-//                    groupid, nullptr /* authentifier */, gd_drawable,
-//                    wrm_frame_interval,
-//                    wrm_break_interval,
-//                    wrm_compression_algorithm, wrm_verbose
+//                    now, wrm_params, nullptr /* authentifier */, gd_drawable, wrm_verbose
 //                );
 //                
 //        auto const color_cxt = gdi::ColorCtx::depth24();

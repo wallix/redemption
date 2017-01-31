@@ -6522,34 +6522,27 @@ public:
     WrmCaptureImpl(
         const timeval & now,
         const WrmParams wrm_params,
-        uint8_t capture_bpp, 
-        TraceType trace_type,
-        CryptoContext & cctx, Random & rnd,
-        const char * record_path, const char * hash_path, const char * basename,
-        int groupid, auth_api * authentifier,
+        auth_api * authentifier,
         RDPDrawable & drawable,
-        std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval,
-        std::chrono::seconds break_interval,
-        WrmCompressionAlgorithm wrm_compression_algorithm,
         GraphicToFile::Verbose wrm_verbose = GraphicToFile::Verbose::none
     )
     : bmp_cache(
-        BmpCache::Recorder, capture_bpp, 3, false,
+        BmpCache::Recorder, wrm_params.capture_bpp, 3, false,
         BmpCache::CacheOption(600, 768, false),
         BmpCache::CacheOption(300, 3072, false),
         BmpCache::CacheOption(262, 12288, false))
     , ptr_cache(/*pointerCacheSize=*/0x19)
     , dump_png24_api{drawable}
     , trans_variant(
-        trace_type, cctx, rnd, record_path, hash_path, basename, now,
-        drawable.width(), drawable.height(), groupid, authentifier)
+        wrm_params.trace_type, wrm_params.cctx, wrm_params.rnd, wrm_params.record_path, wrm_params.hash_path, wrm_params.basename, now,
+        drawable.width(), drawable.height(), wrm_params.groupid, authentifier)
     , graphic_to_file(
-        now, *this->trans_variant.trans, drawable.width(), drawable.height(), capture_bpp,
+        now, *this->trans_variant.trans, drawable.width(), drawable.height(), wrm_params.capture_bpp,
         this->bmp_cache, this->gly_cache, this->ptr_cache, this->dump_png24_api,
-        wrm_compression_algorithm, GraphicToFile::SendInput::YES,
+        wrm_params.wrm_compression_algorithm, GraphicToFile::SendInput::YES,
         wrm_verbose
     )
-    , nc(this->graphic_to_file, now, frame_interval, break_interval)
+    , nc(this->graphic_to_file, now, wrm_params.frame_interval, wrm_params.break_interval)
     , kbd_input_mask_enabled{false}
     {}
 
@@ -6849,13 +6842,10 @@ public:
         const char * record_tmp_path,
         const char * record_path,
         const int groupid,
-        const char * hash_path,
         const FlvParams flv_params,
         bool no_timestamp,
         auth_api * authentifier,
         const Inifile & ini,
-        CryptoContext & cctx,
-        Random & rnd,
         UpdateProgressData * update_progress_data)
     : is_replay_mod(!authentifier)
     , capture_wrm(capture_wrm)
@@ -6909,32 +6899,31 @@ public:
 
             if (this->capture_wrm) {
                 this->wrm_capture_obj.reset(new WrmCaptureImpl(
-                    now, wrm_params, capture_bpp, wrm_params.trace_type,
-                    cctx, rnd, record_path, hash_path, basename,
-                    groupid, authentifier, *this->gd_drawable,
-                    wrm_params.frame_interval,
-                    wrm_params.break_interval,
-                    wrm_params.wrm_compression_algorithm, wrm_verbose
+                    now, wrm_params, authentifier, *this->gd_drawable, wrm_verbose
                 ));
             }
 
             if (this->capture_ocr) {
+                auto meta_enable_session_log = ini.get<cfg::session_log::enable_session_log>();
                 this->meta_capture_obj.reset(new MetaCaptureImpl(
                     now, record_tmp_path, basename,
-                    authentifier && ini.get<cfg::session_log::enable_session_log>()
+                    authentifier && meta_enable_session_log
                 ));
             }
 
             if (this->capture_flv) {
+                auto flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
+                auto flv_break_interval = ini.get<cfg::video::flv_break_interval>();
+                
                 std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
-                if (ini.get<cfg::globals::capture_chunk>() && this->meta_capture_obj) {
+                if ( flv_capture_chunk && this->meta_capture_obj) {
                     this->notifier_next_video.session_meta = &this->meta_capture_obj->get_session_meta();
                     notifier = this->notifier_next_video;
                 }
                 this->sequenced_video_capture_obj.reset(new SequencedVideoCaptureImpl(
                     now, record_path, basename, groupid, no_timestamp, png_params.zoom, this->gd_drawable->impl(),
                     flv_params,
-                    ini.get<cfg::video::flv_break_interval>(), notifier
+                    flv_break_interval, notifier
                 ));
             }
 
@@ -6945,11 +6934,14 @@ public:
             }
 
             if (this->capture_pattern_checker) {
+            auto pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
+            auto pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
+            auto debug_capture = ini.get<cfg::debug::capture>();
                 this->patterns_checker.reset(new PatternsChecker(
                     *authentifier,
-                    ini.get<cfg::context::pattern_kill>().c_str(),
-                    ini.get<cfg::context::pattern_notify>().c_str(),
-                    ini.get<cfg::debug::capture>())
+                    pattern_kill,
+                    pattern_notify,
+                    debug_capture)
                 );
                 if (!this->patterns_checker->contains_pattern()) {
                     LOG(LOG_WARNING, "Disable pattern_checker");

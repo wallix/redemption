@@ -1003,13 +1003,10 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , record_tmp_path
                                 , record_path
                                 , groupid
-                                , hash_path
                                 , flv_params
                                 , no_timestamp
                                 , nullptr
                                 , ini
-                                , cctx
-                                , rnd
                                 , &update_progress_data);
 
                         player.add_consumer(&capture, &capture, &capture, &capture, &capture);

@@ -1077,7 +1077,7 @@ public:
         strcpy(this->basename, movie_path);
         strcpy(extension, "");          // extension is currently ignored
 
-        if (!canonical_path(movie_path, this->path, sizeof(this->path), this->basename, sizeof(this->basename), this->extension, sizeof(this->extension))
+        if (!canonical_path(movie_path, path, sizeof(path), this->basename, sizeof(this->basename), extension, sizeof(extension))
         ) {
             LOG(LOG_ERR, "Buffer Overflowed: Path too long");
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
@@ -1113,10 +1113,9 @@ public:
                                     , record_tmp_path
                                     , record_path
                                     , groupid
-                                    , hash_path
                                     , flv_params
                                     , false, &this->authentifier
-                                    , ini, this->cctx, this->gen
+                                    , ini
                                     , nullptr
                                     );
         if (this->nomouse) {
