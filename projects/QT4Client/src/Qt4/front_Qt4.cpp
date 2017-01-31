@@ -382,6 +382,8 @@ Screen_Qt * Front_Qt::getMainScreen() {
 Front_Qt::~Front_Qt() {
     this->empty_buffer();
     delete(this->_capture);
+
+    this->fileSystemData.paths.clear();
 }
 
 
@@ -2092,7 +2094,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                                    );
                                     fdr.emit(out_stream_first_part);
 
-                                    this->process_client_clipboard_out_data( total_length
+                                    this->process_client_clipboard_out_data( channel_names::cliprdr
+                                                                           , total_length
                                                                            , out_stream_first_part
                                                                            , first_part_data_size
                                                                            , this->_clipboard_qt->_chunk.get()
@@ -2114,7 +2117,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                     fdr.emit(out_stream_first_part);
 
-                                    this->process_client_clipboard_out_data( total_length
+                                    this->process_client_clipboard_out_data( channel_names::cliprdr
+                                                                           , total_length
                                                                            , out_stream_first_part
                                                                            , first_part_data_size
                                                                            , this->_clipboard_qt->_chunk.get()
@@ -2253,12 +2257,13 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Response PDU RANGE");
                                 }
 
-                                this->process_client_clipboard_out_data( total_length
-                                                                      , out_stream_first_part
-                                                                      , first_part_data_size
-                                                                      , reinterpret_cast<uint8_t *>(
-                                                                        this->_clipboard_qt->_items_list[lindex]->chunk)
-                                                                      , total_length
+                                this->process_client_clipboard_out_data( channel_names::cliprdr
+                                                                       , total_length
+                                                                       , out_stream_first_part
+                                                                       , first_part_data_size
+                                                                       , reinterpret_cast<uint8_t *>(
+                                                                         this->_clipboard_qt->_items_list[lindex]->chunk)
+                                                                       , total_length
                                                                       );
                             }
                             break;
@@ -2524,9 +2529,9 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                         , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
                         sharedHeader.emit(out_stream);
 
-                        uint32_t id = deviceIORequest.DeviceId();
+                        uint32_t id = deviceIORequest.FileId();
 
-                        rdpdr::DeviceIOResponse deviceIOResponse( id
+                        rdpdr::DeviceIOResponse deviceIOResponse( deviceIORequest.DeviceId()
                                                                 , deviceIORequest.CompletionId()
                                                                 , 0);
 
@@ -2544,27 +2549,12 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                     this->fileSystemData.paths.push_back(this->SHARE_DIR + request.Path());
 
-                                    if (request.CreateOptions() == smb2::FILE_DIRECTORY_FILE) {
-
-                                        DIR * dir;
-                                        if ((dir = opendir (this->fileSystemData.paths[id-1].c_str())) != NULL) {
-                                            this->fileSystemData.isFilesDirectories.push_back(true);
-                                        } else {
-                                            deviceIOResponse.set_IoStatus(0xc000000f);
-                                            LOG(LOG_WARNING, "  Can't open such directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str())
-                                        }
-
-                                    } else {
-
-                                        std::ifstream file(this->fileSystemData.paths[id-1].c_str());
-                                        if (file.good()) {
-                                            this->fileSystemData.isFilesDirectories.push_back(false);
-                                        } else {
-                                            deviceIOResponse.set_IoStatus(0xc000000f);
-                                            LOG(LOG_WARNING, "  Can't open such directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str())
-                                        }
-
+                                    std::ifstream file(this->fileSystemData.paths[id-1].c_str());
+                                    if (!file.good()) {
+                                        deviceIOResponse.set_IoStatus(0xc000000f);
+                                        LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str());
                                     }
+
                                 }
 
                                 rdpdr::DeviceCreateResponse deviceCreateResponse( id
@@ -2595,22 +2585,12 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Basic Query Information Request");
                                         {
 
-                                        if (this->fileSystemData.isFilesDirectories[id-1]) {
-                                            DIR * dir;
-                                            if ((dir = opendir (this->fileSystemData.paths[id-1].c_str())) != NULL) {
+                                        std::ifstream file(this->fileSystemData.paths[id-1].c_str());
+                                        if (file.good()) {
 
-                                            } else {
-                                                deviceIOResponse.set_IoStatus(0xc000000f);
-                                                LOG(LOG_WARNING, "  Can't open such directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str());
-                                            }
                                         } else {
-                                            std::ifstream file(this->fileSystemData.paths[id-1].c_str());
-                                            if (file.good()) {
-                                                
-                                            } else {
-                                                deviceIOResponse.set_IoStatus(0xc000000f);
-                                                LOG(LOG_WARNING, "  Can't open such directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str());
-                                            }
+                                            deviceIOResponse.set_IoStatus(0xc000000f);
+                                            LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str());
                                         }
 
                                         deviceIOResponse.emit(out_stream);
@@ -2618,10 +2598,20 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         rdpdr::ClientDriveQueryInformationResponse cdqir(rdpdr::FILE_BASIC_INFORMATION_SIZE);
                                         cdqir.emit(out_stream);
 
-                                        uint64_t time(0x1cbf8fef0787980);
-                                        fscc::FileBasicInformation fileBasicInformation(time, time, time, 0,
-                                                    fscc::FILE_ATTRIBUTE_DIRECTORY | fscc::FILE_ATTRIBUTE_READONLY
-                                        );
+                                        struct stat buff;
+                                        stat(this->fileSystemData.paths[id-1].c_str(), &buff);
+
+                                        //UnixSecondsToWindowsTick(buff.st_atime);
+                                        uint64_t LastAccessTime = 0x1d1f187b3db725f;
+                                        //UnixSecondsToWindowsTick(buff.st_mtime);
+                                        uint64_t LastWriteTime  = 0x1d1f187b3db725f;
+                                        //UnixSecondsToWindowsTick(buff.st_ctime);
+                                        uint64_t ChangeTime     = 0x1d1f187b3db725f;
+                                        uint32_t FileAttributes = fscc::FILE_ATTRIBUTE_NORMAL;
+                                        if (S_ISDIR(buff.st_mode)) {
+                                            FileAttributes |= fscc::FILE_ATTRIBUTE_DIRECTORY;
+                                        }
+                                        fscc::FileBasicInformation fileBasicInformation(LastWriteTime, LastAccessTime, LastWriteTime, ChangeTime, FileAttributes);
 
                                         fileBasicInformation.emit(out_stream);
 
@@ -2642,16 +2632,31 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     case rdpdr::FileStandardInformation:
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Standard Information Request");
                                         {
+                                        deviceIOResponse.emit(out_stream);
+
                                         rdpdr::ClientDriveQueryInformationResponse cdqir(rdpdr::FILE_STANDARD_INFORMATION_SIZE);
                                         cdqir.emit(out_stream);
 
-                                        if (this->fileSystemData.isFilesDirectories[deviceIORequest.DeviceId()-1]) {
-                                            fscc::FileStandardInformation fsi(0, 0, 0, 0, 1);
-                                            fsi.emit(out_stream);
-                                        } else {
-//                                             fscc::FileStandardInformation fsi(0, 0, 0, 0, 0);
-//                                             fsi.emit(out_stream);
+                                        struct stat buff;
+                                        stat(this->fileSystemData.paths[id-1].c_str(), &buff);
+
+                                        int64_t  AllocationSize = buff.st_blksize;
+                                        //buff.st_size;
+                                        int64_t  EndOfFile      = buff.st_blksize;
+                                        uint32_t NumberOfLinks  = buff.st_nlink;
+                                        uint8_t  DeletePending  = 0;
+                                        uint8_t  Directory      = 0;
+
+                                        if (S_ISDIR(buff.st_mode)) {
+                                            Directory = 1;
                                         }
+
+                                        fscc::FileStandardInformation fsi( AllocationSize
+                                                                         , EndOfFile
+                                                                         , NumberOfLinks
+                                                                         , DeletePending
+                                                                         , Directory);
+                                        fsi.emit(out_stream);
 
                                         int total_length(out_stream.get_offset());
                                         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
@@ -2680,12 +2685,11 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 out_stream.out_uint32_le(deviceIORequest.FileId());
                                 out_stream.out_uint8(rdpdr::FILE_SUPERSEDED);
 
-                                int total_length(out_stream.get_offset());
                                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
                                 this->_callback->send_to_mod_channel( channel_names::rdpdr
                                                                     , chunk_to_send
-                                                                    , total_length
+                                                                    , out_stream.get_offset()
                                                                     , CHANNELS::CHANNEL_FLAG_LAST  |
                                                                       CHANNELS::CHANNEL_FLAG_FIRST
                                                                     );
@@ -2697,16 +2701,16 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             case rdpdr::IRP_MJ_READ:
                                 LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Read Request");
                                 {
-                                rdpdr::DeviceReadResponse deviceReadResponse(0);
                                 deviceIOResponse.emit(out_stream);
+
+                                rdpdr::DeviceReadResponse deviceReadResponse(0);
                                 deviceReadResponse.emit(out_stream);
 
-                                int total_length(out_stream.get_offset());
                                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
                                 this->_callback->send_to_mod_channel( channel_names::rdpdr
                                                                     , chunk_to_send
-                                                                    , total_length
+                                                                    , out_stream.get_offset()
                                                                     , CHANNELS::CHANNEL_FLAG_LAST  |
                                                                       CHANNELS::CHANNEL_FLAG_FIRST
                                                                     );
@@ -2722,93 +2726,193 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     case rdpdr::IRP_MN_QUERY_DIRECTORY:
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Directory Request");
                                         {
+                                        std::string slash("/");
+
                                         rdpdr::ServerDriveQueryDirectoryRequest sdqdr;
                                         sdqdr.receive(chunk);
 
+                                        if (this->fileSystemData.current_dir_id != id) {
+                                            this->fileSystemData.current_dir_id = id;
+                                            this->fileSystemData.current_file_index = 0;
+                                        }
+
+                                        std::string str_dir_path;
+                                        if (id <= this->fileSystemData.paths.size()) {
+                                            str_dir_path = this->fileSystemData.paths[id-1];
+                                        } else {
+                                            LOG(LOG_WARNING, " Device I/O Query Directory Request Unknow ID (%d).", id);
+                                            return;
+                                        }
+
+                                        if (str_dir_path.length() > 0) {
+                                            std::string test = str_dir_path.substr(str_dir_path.length() -1, str_dir_path.length());
+                                            if (test == slash) {
+                                                str_dir_path = str_dir_path.substr(0, str_dir_path.length()-1);
+                                            }
+                                        }
+
+                                        DIR *dir;
+                                        struct dirent *ent;
+                                        std::string str_file_name;
+                                        std::string ignored1("..");
+                                        std::string ignored2(".");
+
+                                        if ((dir = opendir (str_dir_path.c_str())) != nullptr) {
+                                            int i = 0;
+                                            try {
+                                                while ((ent = readdir (dir)) != nullptr) {
+
+                                                    std::string current_name = std::string (ent->d_name);
+                                                    if (!(current_name == ignored1) && !(current_name == ignored2)) {
+
+                                                        if (i == this->fileSystemData.current_file_index) {
+                                                            this->fileSystemData.current_file_index++;
+                                                            str_file_name = current_name;
+                                                            break;
+                                                        }
+                                                        i++;
+                                                    }
+                                                }
+                                            } catch (Error & e) {
+                                                LOG(LOG_INFO, "readdir error: (%d) %s", e.id, e.errmsg());
+                                            }
+                                            closedir (dir);
+                                        } else {
+                                            deviceIOResponse.set_IoStatus(0xc000000f);
+                                            LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_dir).", str_dir_path.c_str());
+                                        }
+
+                                        struct stat buff_child;
+                                        if (str_file_name.length() == 0) {
+                                            deviceIOResponse.set_IoStatus(0x80000006);
+                                        } else {
+                                            std::string str_file_path_slash(str_dir_path + "/" + str_file_name);
+                                            if (stat(str_file_path_slash.c_str(), &buff_child)) {
+                                                deviceIOResponse.set_IoStatus(0xc000000f);
+                                                LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());
+                                            }
+                                        }
+
                                         deviceIOResponse.emit(out_stream);
 
-                                        size_t Length = 0;
+                                        //UnixSecondsToWindowsTick(buff_child.st_atime);
+                                        uint64_t LastAccessTime  = 0x1d1f187b3db725f;
+                                        //UnixSecondsToWindowsTick(buff_child.st_mtime);
+                                        uint64_t LastWriteTime   = 0x1d1f187b3db725f;
+                                        //UnixSecondsToWindowsTick(buff_child.st_ctime);
+                                        uint64_t ChangeTime      = 0x1d1f187b3db725f;
+                                        uint64_t CreationTime    = LastWriteTime + 1;
+                                        int64_t  EndOfFile       = buff_child.st_blksize;
+                                        int64_t  AllocationSize  = buff_child.st_blksize;
+                                        uint32_t FileAttributes  = fscc::FILE_ATTRIBUTE_NORMAL;
+                                        if (S_ISDIR(buff_child.st_mode)) {
+                                            FileAttributes |= fscc::FILE_ATTRIBUTE_DIRECTORY;
+                                        }
 
-                                        rdpdr::ClientDriveQueryDirectoryResponse cdqdr(Length);
+                                        switch (sdqdr.FsInformationClass()) {
 
-//
-//                                      std::string dir_name("RDP C:");
+                                            case rdpdr::FileDirectoryInformation:
+                                                break;
+                                            case rdpdr::FileFullDirectoryInformation:
+                                                break;
+                                            case rdpdr::FileBothDirectoryInformation:
+                                                {
+                                                rdpdr::ClientDriveQueryDirectoryResponse cdqdr(93 + (str_file_name.length()*2));
+                                                cdqdr.emit(out_stream);
 
-         //STATUS_NO_MORE_FILES 0x80000006
+                                                fscc::FileBothDirectoryInformation fbdi(CreationTime, LastAccessTime, LastWriteTime, ChangeTime, EndOfFile, AllocationSize, FileAttributes, str_file_name.c_str());
 
-//                                         out_stream.out_uint32_le(94+6);
-//
-//                                         out_stream.out_uint32_le(94+6);
-//
-//                                         out_stream.out_uint64_le(0);
-//                                         out_stream.out_uint64_le(0);
-//                                         out_stream.out_uint64_le(0);
-//                                         out_stream.out_uint64_le(0);
-//
-//                                         out_stream.out_uint64_le(0);
-//                                         out_stream.out_uint64_le(0);
-//
-//                                         out_stream.out_uint32_le(fscc::FILE_ATTRIBUTE_DIRECTORY);
-//                                         out_stream.out_uint32_le(6);
-//                                         out_stream.out_uint32_le(0);
-//
-//                                         out_stream.out_uint8(6);
-//                                         out_stream.out_uint8(0);
-//
-//                                         out_stream.out_copy_bytes(dir_name.data(), 24);
-//                                         out_stream.out_copy_bytes(dir_name.data(), 6);
-//
-//                                         int total_length(out_stream.get_offset());
-//                                         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-//
-//                                         this->_callback->send_to_mod_channel( channel_names::rdpdr
-//                                                                             , chunk_to_send
-//                                                                             , total_length
-//                                                                             , CHANNELS::CHANNEL_FLAG_LAST  |
-//                                                                               CHANNELS::CHANNEL_FLAG_FIRST
-//                                                                             );
+                                                fbdi.emit(out_stream);
+                                                }
+                                                break;
+                                            case rdpdr::FileNamesInformation:
+                                                break;
+                                        }
 
+                                        InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                                        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query directory Response");
+                                        this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                                            , chunk_to_send
+                                                                            , out_stream.get_offset()
+                                                                            , CHANNELS::CHANNEL_FLAG_LAST |
+                                                                              CHANNELS::CHANNEL_FLAG_FIRST
+                                                                            );
+
+                                        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Directory Response");
                                         }
                                         break;
 
                                     case rdpdr::IRP_MN_NOTIFY_CHANGE_DIRECTORY:
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Notify Change Directory Request");
                                         {
-                                        deviceIOResponse.emit(out_stream);
-
-                                        /*StaticOutStream<128> out_stream;
-                                        rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
-                                                                        , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
-                                        sharedHeader.emit(out_stream);
-
-                                        out_stream.out_uint32_le(DeviceID);
-                                        out_stream.out_uint32_le(CompletionId);
-                                        out_stream.out_uint32_le(0);
-                                        out_stream.out_uint32_le(0); // Buffer Length
-                                        out_stream.out_uint16_le(9); // StructureSize
-                                        out_stream.out_uint16_le(28); // OutputBufferOffset
-                                        out_stream.out_uint32_le(0); // OutputBufferLength
-
-                                        int total_length(out_stream.get_offset());
-                                        InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-
-                                        this->_callback->send_to_mod_channel( channel_names::rdpdr
-                                                                            , chunk_to_send
-                                                                            , total_length
-                                                                            , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                              CHANNELS::CHANNEL_FLAG_FIRST
-                                                                            );
-                                        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Notify Change Directory Response");
-                                        this->show_out_stream(0, out_stream, total_length);*/
-                                        break;
+                                        //deviceIOResponse.emit(out_stream);
                                         }
                                         break;
 
                                     default: break;
                                 }
 
+                                break;
+
+                            case rdpdr::IRP_MJ_QUERY_VOLUME_INFORMATION:
+                                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Volume Information Request");
+                                {
+                                    rdpdr::ServerDriveQueryVolumeInformationRequest sdqvir;
+                                    sdqvir.receive(chunk);
+
+                                    std::string str_path;
+                                    if (id <= this->fileSystemData.paths.size()) {
+                                        str_path = this->fileSystemData.paths[id-1];
+                                    } else {
+                                        LOG(LOG_WARNING, " Device I/O Query Volume Information Request Unknow ID (%d).", id);
+                                        return;
+                                    }
+
+                                    struct stat buff;
+                                    if (stat(str_path.c_str(), &buff)) {
+                                        deviceIOResponse.set_IoStatus(0xc000000f);
+                                        LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_path.c_str());
+                                    }
+
+                                    //UnixSecondsToWindowsTick(buff.st_mtime);
+                                    uint64_t LastWriteTime   = 0x1d1f187b3db725f;
+                                    uint64_t CreationTime    = LastWriteTime + 1;
+                                    //int64_t  AllocationSize  = buff.st_size;
+
+                                    deviceIOResponse.emit(out_stream);
+
+                                    switch (sdqvir.FsInformationClass()) {
+                                        case rdpdr::FileFsVolumeInformation:
+                                        {
+                                            rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(4 + 17);
+                                            cdqvir.emit(out_stream);
+
+                                            fscc::FileFsVolumeInformation ffvi(CreationTime, CreationTime, 0, "");
+                                            ffvi.emit(out_stream);
+                                        }
+                                            break;
+                                        case rdpdr::FileFsSizeInformation:
+                                            break;
+                                        case rdpdr::FileFsAttributeInformation:
+                                            break;
+                                        case rdpdr::FileFsFullSizeInformation:
+                                            break;
+                                        case rdpdr::FileFsDeviceInformation:
+                                            break;
+                                    }
+
+                                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                                    this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                                        , chunk_to_send
+                                                                        , out_stream.get_offset()
+                                                                        , CHANNELS::CHANNEL_FLAG_LAST |
+                                                                          CHANNELS::CHANNEL_FLAG_FIRST
+                                                                        );
+
+                                    LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Volume Information Response");
+
+                                }
                                 break;
 
                             default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT: Device I/O Request unknow MajorFunction = %x",       deviceIORequest.MajorFunction());
@@ -3005,8 +3109,6 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk, CB_B
                     unlockClipboardDataPDU.emit(out_stream_unlock);
                     InStream chunk_unlock(out_stream_unlock.get_data(), out_stream_unlock.get_offset());
 
-
-
                     this->_callback->send_to_mod_channel( channel_names::cliprdr
                                                         , chunk_unlock
                                                         , out_stream_unlock.get_offset()
@@ -3028,8 +3130,6 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk, CB_B
                     const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
 
                     InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatDataRequestPDU);
-
-
 
                     this->_callback->send_to_mod_channel( channel_names::cliprdr
                                                         , chunkRequest
@@ -3166,7 +3266,7 @@ void Front_Qt::send_FormatListPDU(uint32_t const * formatIDs, std::string const 
 }
 
 
-void Front_Qt::process_client_clipboard_out_data(const uint64_t total_length, OutStream & out_stream_first_part, const size_t first_part_data_size,  uint8_t const * data, const size_t data_len){
+void Front_Qt::process_client_clipboard_out_data(const char * const front_channel_name, const uint64_t total_length, OutStream & out_stream_first_part, const size_t first_part_data_size,  uint8_t const * data, const size_t data_len){
 
     // 3.1.5.2.2.1 Reassembly of Chunked Virtual Channel Dat
 
@@ -3228,7 +3328,7 @@ void Front_Qt::process_client_clipboard_out_data(const uint64_t total_length, Ou
 
 
 
-            this->_callback->send_to_mod_channel( channel_names::cliprdr
+            this->_callback->send_to_mod_channel( front_channel_name
                                                 , chunk_first
                                                 , total_length
                                                 , CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
@@ -3246,7 +3346,7 @@ void Front_Qt::process_client_clipboard_out_data(const uint64_t total_length, Ou
 
 
 
-            this->_callback->send_to_mod_channel( channel_names::cliprdr
+            this->_callback->send_to_mod_channel( front_channel_name
                                                 , chunk_next
                                                 , total_length
                                                 , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
@@ -3262,7 +3362,7 @@ void Front_Qt::process_client_clipboard_out_data(const uint64_t total_length, Ou
 
 
 
-            this->_callback->send_to_mod_channel( channel_names::cliprdr
+            this->_callback->send_to_mod_channel( front_channel_name
                                                 , chunk_last
                                                 , total_length
                                                 , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
@@ -3273,7 +3373,7 @@ void Front_Qt::process_client_clipboard_out_data(const uint64_t total_length, Ou
         out_stream_first_part.out_copy_bytes(data, data_len);
         InStream chunk(out_stream_first_part.get_data(), out_stream_first_part.get_offset());
 
-        this->_callback->send_to_mod_channel( channel_names::cliprdr
+        this->_callback->send_to_mod_channel( front_channel_name
                                             , chunk
                                             , total_length
                                             , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |

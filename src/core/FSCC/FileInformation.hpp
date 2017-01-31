@@ -1121,6 +1121,7 @@ public:
 //  +-----------------------------+--------------------------------------------+
 
 class FileBothDirectoryInformation {
+
     uint32_t NextEntryOffset = 0;
     uint32_t FileIndex       = 0;
     uint64_t CreationTime    = 0;

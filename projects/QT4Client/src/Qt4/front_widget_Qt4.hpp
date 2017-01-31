@@ -59,6 +59,16 @@
 #include <QtCore/QDebug>
 
 
+struct DummyAuthentifier : public auth_api
+{
+public:
+    virtual void set_auth_channel_target(const char *) {}
+    virtual void set_auth_error_message(const char *) {}
+    virtual void report(const char * reason, const char *) {}
+    virtual void log4(bool duplicate_with_pid, const char *, const char * = nullptr) {}
+    virtual void disconnect_target() {}
+};
+
 
 class Mod_Qt : public QObject
 {
@@ -184,9 +194,9 @@ public:
         mod_rdp_params.allow_channels                  = &allow_channels;
         //mod_rdp_params.allow_using_multiple_monitors   = true;
         //mod_rdp_params.bogus_refresh_rect              = true;
-        mod_rdp_params.verbose = to_verbose_flags(0);                
+        mod_rdp_params.verbose = to_verbose_flags(0);
 
-         // To always get the same client random, in tests
+        DummyAuthentifier * authentifier = new DummyAuthentifier;
 
         try {
             this->_callback = new mod_rdp( *(this->_sck)
@@ -196,6 +206,7 @@ public:
                                          , this->gen
                                          , this->_timeSystem
                                          , mod_rdp_params
+                                         , authentifier
                                          );
 
             this->_front->_to_server_sender._callback = this->_callback;

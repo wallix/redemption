@@ -95,12 +95,15 @@
 #endif
 
 
+#define _WINDOWS_TICK 10000000
+#define _SEC_TO_UNIX_EPOCH 11644473600LL
+
 #define USER_CONF_PATH "/config/userConfig.config"
 #define CB_FILE_TEMP_PATH "/clipboard_temp"
 #define REPLAY_PATH "/replay"
 #define KEY_SETTING_PATH "/config/keySetting.config"
 #define LOGINS_PATH "/config/logins.config"
-#define _SHARE_PATH "/share/"
+#define _SHARE_PATH "/share"
 
 
 class Form_Qt;
@@ -245,7 +248,7 @@ public:
     virtual void writeClientInfo() = 0;
     virtual void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) = 0;
     virtual void empty_buffer() = 0;
-    virtual bool can_be_start_capture(auth_api *) override { return true; }
+    virtual bool can_be_start_capture() override { return true; }
 //     virtual bool can_be_pause_capture() override { return true; }
 //     virtual bool can_be_resume_capture() override { return true; }
     virtual bool must_be_stop_capture() override { return true; }
@@ -396,10 +399,6 @@ public:
 
 
 
-    // RDPDR Channel
-    std::string          current_path;
-
-
 
     struct FileSystemData {
 
@@ -426,10 +425,12 @@ public:
             return this->next_file_id;
         }
 
-        std::vector<bool> isFilesDirectories;
         std::vector<std::string> paths;
 
+        uint32_t current_dir_id = 0;
         int current_file_index = 0;
+
+        std::string current_path;
 
 
 
@@ -467,7 +468,7 @@ public:
 
     void empty_buffer() override;
 
-    void process_client_clipboard_out_data(const uint64_t total_length, OutStream & out_streamfirst, size_t firstPartSize, uint8_t const * data, const size_t data_len);
+    void process_client_clipboard_out_data(const char * const front_channel_name, const uint64_t total_length, OutStream & out_streamfirst, size_t firstPartSize, uint8_t const * data, const size_t data_len);
 
     virtual void set_pointer(Pointer const & cursor) override;
 
@@ -494,6 +495,17 @@ public:
     virtual void recv_disconnect_provider_ultimatum() override;
 
 //     virtual void set_depths(gdi::Depth const & depths) override {}
+
+    unsigned WindowsTickToUnixSeconds(long long windowsTicks)
+    {
+        return (unsigned)((windowsTicks / _WINDOWS_TICK) - _SEC_TO_UNIX_EPOCH);
+    }
+
+    unsigned UnixSecondsToWindowsTick(long long unixSeconds)
+    {
+        return (unsigned) ((unixSeconds + _SEC_TO_UNIX_EPOCH) * _WINDOWS_TICK) ;
+    }
+
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
