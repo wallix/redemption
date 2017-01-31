@@ -916,14 +916,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
                         TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
-                        WrmParams wrm_params = {};
-//                        WrmParams wrm_params(
-//                            groupid,
-//                            wrm_frame_interval,
-//                            wrm_break_interval
-//                            wrm_compression_algorithm,
-//                            wrm_verbose
-//                        );
                         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
                         const char * record_path = record_tmp_path;
 
@@ -978,6 +970,21 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         }
 
                         LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
+
+                        WrmParams wrm_params(
+                            wrm_color_depth,
+                            wrm_trace_type,
+                            cctx,
+                            rnd,
+                            record_path,
+                            hash_path,
+                            basename,
+                            groupid,
+                            wrm_frame_interval,
+                            wrm_break_interval,
+                            wrm_compression_algorithm,
+                            int(wrm_verbose)
+                        );
 
                         Capture capture( capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
                                 , capture_png, png_params

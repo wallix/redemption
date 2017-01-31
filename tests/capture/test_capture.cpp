@@ -97,7 +97,6 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
         TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
-        WrmParams wrm_params = {};
         PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false};
 
         FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
@@ -153,6 +152,20 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
 
+        WrmParams wrm_params(
+            24,
+            wrm_trace_type,
+            cctx,
+            rnd,
+            record_path,
+            hash_path,
+            basename,
+            groupid,
+            wrm_frame_interval,
+            wrm_break_interval,
+            wrm_compression_algorithm,
+            int(wrm_verbose)
+        );
 
         Capture capture( capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
                         , capture_png, png_params
@@ -335,7 +348,6 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
     std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
     TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
-    WrmParams wrm_params = {};
 
     PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false };
     FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
@@ -389,6 +401,22 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         LOG(LOG_ERR, "Buffer Overflowed: Path too long");
         throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
     }
+
+    WrmParams wrm_params(
+        24,
+        wrm_trace_type,
+        cctx,
+        rnd,
+        record_path,
+        hash_path,
+        basename,
+        groupid,
+        wrm_frame_interval,
+        wrm_break_interval,
+        wrm_compression_algorithm,
+        int(wrm_verbose)
+    );
+
 
     // TODO remove this after unifying capture interface
     Capture capture( capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
@@ -2589,8 +2617,6 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
         TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
-        WrmParams wrm_params = {};
-
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = record_tmp_path;
 
@@ -2605,6 +2631,21 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
         strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
         strcpy(basename, "capture");
         strcpy(extension, "");          // extension is currently ignored
+
+        WrmParams wrm_params(
+            24,
+            wrm_trace_type,
+            cctx,
+            rnd,
+            record_path,
+            hash_path,
+            basename,
+            groupid,
+            wrm_frame_interval,
+            wrm_break_interval,
+            wrm_compression_algorithm,
+            int(wrm_verbose)
+        );
 
         RDPDrawable gd_drawable(scr.cx, scr.cy);
 

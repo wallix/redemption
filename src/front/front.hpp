@@ -1014,7 +1014,6 @@ public:
         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
         TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
-        WrmParams wrm_params = {};
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = ini.get<cfg::video::record_path>().c_str();
         const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
@@ -1086,6 +1085,20 @@ public:
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
 
+        WrmParams wrm_params(
+            this->capture_bpp,
+            wrm_trace_type,
+            this->cctx,
+            this->gen,
+            record_path,
+            hash_path,
+            basename,
+            groupid,
+            wrm_frame_interval,
+            wrm_break_interval,
+            wrm_compression_algorithm,
+            wrm_verbose
+        );
 
         this->capture = new Capture(  capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
                                     , capture_png, png_params
