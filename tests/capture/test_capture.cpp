@@ -167,7 +167,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
             int(wrm_verbose)
         );
 
-        Capture capture( capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
+        Capture capture( capture_wrm, wrm_verbose, wrm_params
                         , capture_png, png_params
                         , capture_pattern_checker
                         , capture_ocr, ocr_params
@@ -175,15 +175,12 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
                         , capture_flv_full
                         , capture_meta
                         , capture_kbd
-                        , path
                         , basename
-                        , extension
                         , now, scr.cx, scr.cy, 24, 24
                         , record_tmp_path
                         , record_path
                         , groupid
                         , hash_path
-                        , movie_path
                         , flv_params
                         , no_timestamp, nullptr
                         , ini, cctx, rnd, nullptr);
@@ -419,7 +416,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
 
     // TODO remove this after unifying capture interface
-    Capture capture( capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
+    Capture capture( capture_wrm, wrm_verbose, wrm_params
                    , capture_png, png_params
                    , capture_pattern_checker
                    , capture_ocr, ocr_params
@@ -427,15 +424,12 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , capture_flv_full
                    , capture_meta
                    , capture_kbd
-                   , path
                    , basename
-                   , extension
                    , now, scr.cx, scr.cy, 16, 16
                    , record_tmp_path
                    , record_path
                    , groupid
                    , hash_path
-                   , movie_path
                    , flv_params
                    , no_timestamp, nullptr
                    , ini, cctx, rnd, nullptr);
@@ -2594,9 +2588,6 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
         ini.set<cfg::video::png_limit>(10); // one snapshot by second
         ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
 
-        ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
-        CaptureFlags capture_flags = CaptureFlags::wrm | CaptureFlags::png;
-
         ini.set<cfg::globals::trace_type>(TraceType::localfile);
 
         ini.set<cfg::video::record_tmp_path>("./");
@@ -2619,8 +2610,6 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
 
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = record_tmp_path;
-
-        bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
 
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
@@ -2745,4 +2734,167 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
         ::unlink(filename);
     }
 }
+
+//BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
+//{
+//    Inifile ini;
+//    ini.set<cfg::video::rt_display>(1);
+//    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
+//    {
+//        // Timestamps are applied only when flushing
+//        timeval now;
+//        now.tv_usec = 0;
+//        now.tv_sec = 1000;
+
+//        Rect scr(0, 0, 800, 600);
+
+//        ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
+//        ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
+
+//        ini.set<cfg::video::record_tmp_path>("./");
+//        ini.set<cfg::video::record_path>("./");
+//        ini.set<cfg::video::hash_path>("/tmp");
+//        ini.set<cfg::globals::movie_path>("capture");
+
+//        LCGRandom rnd(0);
+//        CryptoContext cctx;
+
+//        GraphicToFile::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
+// |(ini.get<cfg::debug::primary_orders>()?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
+// |(ini.get<cfg::debug::secondary_orders>()?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
+// |(ini.get<cfg::debug::bitmap_update>()?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
+//            
+//        WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
+//        std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
+//        std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
+
+//        ini.set<cfg::globals::trace_type>(TraceType::localfile_hashed);
+//        TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
+
+//        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
+//        const char * record_path = record_tmp_path;
+
+//        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+//        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
+
+//        char path[1024];
+//        char basename[1024];
+//        char extension[128];
+//        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
+//        strcpy(basename, "capture");
+//        strcpy(extension, "");          // extension is currently ignored
+
+//        WrmParams wrm_params(
+//            24,
+//            wrm_trace_type,
+//            cctx,
+//            rnd,
+//            record_path,
+//            hash_path,
+//            basename,
+//            groupid,
+//            wrm_frame_interval,
+//            wrm_break_interval,
+//            wrm_compression_algorithm,
+//            int(wrm_verbose)
+//        );
+
+//        RDPDrawable gd_drawable(scr.cx, scr.cy);
+
+//        WrmCaptureImpl wrmcapture(
+//                    now, wrm_params, 24, wrm_trace_type,
+//                    cctx, rnd, record_path, hash_path, basename,
+//                    groupid, nullptr /* authentifier */, gd_drawable,
+//                    wrm_frame_interval,
+//                    wrm_break_interval,
+//                    wrm_compression_algorithm, wrm_verbose
+//                );
+//                
+//        auto const color_cxt = gdi::ColorCtx::depth24();
+//        bool ignore_frame_in_timeval = false;
+
+//        gd_drawable.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
+//        wrmcapture.graphic_to_file.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
+//        now.tv_sec++;
+//        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+//        gd_drawable.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
+//        wrmcapture.graphic_to_file.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
+//        now.tv_sec++;
+//        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+//        gd_drawable.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
+//        wrmcapture.graphic_to_file.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
+//        now.tv_sec++;
+//        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+//        // ------------------------------ BREAKPOINT ------------------------------
+
+//        gd_drawable.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
+//        wrmcapture.graphic_to_file.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
+//        now.tv_sec++;
+//        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+//        gd_drawable.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
+//        wrmcapture.graphic_to_file.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
+//        now.tv_sec++;
+//        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+//        gd_drawable.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
+//        wrmcapture.graphic_to_file.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
+//        now.tv_sec++;
+//        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+//        // ------------------------------ BREAKPOINT ------------------------------
+
+//        gd_drawable.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
+//        wrmcapture.graphic_to_file.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
+//        now.tv_sec++;
+//        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+//        // The destruction of capture object will finalize the metafile content
+//    }
+
+//    {
+//        FilenameGenerator wrm_seq(
+////            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
+//            FilenameGenerator::PATH_FILE_COUNT_EXTENSION
+//          , "./" , "capture", ".wrm"
+//        );
+
+//        struct {
+//            size_t len = 0;
+//            ssize_t write(char const *, size_t len) {
+//                this->len += len;
+//                return len;
+//            }
+//        } meta_len_writer;
+//        detail::write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, false);
+
+//        const char * filename;
+
+//        filename = wrm_seq.get(0);
+//        BOOST_CHECK_EQUAL(1646, ::filesize(filename));
+//        detail::write_meta_file(meta_len_writer, filename, 1000, 1004);
+//        ::unlink(filename);
+//        filename = wrm_seq.get(1);
+//        BOOST_CHECK_EQUAL(3508, ::filesize(filename));
+//        detail::write_meta_file(meta_len_writer, filename, 1003, 1007);
+//        ::unlink(filename);
+//        filename = wrm_seq.get(2);
+//        BOOST_CHECK_EQUAL(3463, ::filesize(filename));
+//        detail::write_meta_file(meta_len_writer, filename, 1006, 1008);
+//       ::unlink(filename);
+//        filename = wrm_seq.get(3);
+//        BOOST_CHECK_EQUAL(false, file_exist(filename));
+
+//        FilenameGenerator mwrm_seq(
+////            FilenameGenerator::PATH_FILE_PID_EXTENSION
+//            FilenameGenerator::PATH_FILE_EXTENSION
+//          , "./", "capture", ".mwrm"
+//        );
+//        filename = mwrm_seq.get(0);
+//        BOOST_CHECK_EQUAL(meta_len_writer.len, ::filesize(filename));
+//        ::unlink(filename);
+//    }
+//}
 

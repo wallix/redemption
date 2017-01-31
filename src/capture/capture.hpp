@@ -6830,10 +6830,6 @@ public:
     Capture(
         bool capture_wrm,
         GraphicToFile::Verbose wrm_verbose,
-        WrmCompressionAlgorithm wrm_compression_algorithm,
-        std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval,
-        std::chrono::seconds wrm_break_interval,
-        TraceType wrm_trace_type,
         const WrmParams wrm_params,
         bool capture_png,
         const PngParams png_params,
@@ -6844,9 +6840,7 @@ public:
         bool capture_flv_full,
         bool capture_meta,
         bool capture_kbd,
-        const char * path,
         const char * basename,
-        const char * extension,
         const timeval & now,
         int width,
         int height,
@@ -6856,7 +6850,6 @@ public:
         const char * record_path,
         const int groupid,
         const char * hash_path,
-        const char * movie_path,
         const FlvParams flv_params,
         bool no_timestamp,
         auth_api * authentifier,
@@ -6916,12 +6909,12 @@ public:
 
             if (this->capture_wrm) {
                 this->wrm_capture_obj.reset(new WrmCaptureImpl(
-                    now, wrm_params, capture_bpp, wrm_trace_type,
+                    now, wrm_params, capture_bpp, wrm_params.trace_type,
                     cctx, rnd, record_path, hash_path, basename,
                     groupid, authentifier, *this->gd_drawable,
-                    wrm_frame_interval,
-                    wrm_break_interval,
-                    wrm_compression_algorithm, wrm_verbose
+                    wrm_params.frame_interval,
+                    wrm_params.break_interval,
+                    wrm_params.wrm_compression_algorithm, wrm_verbose
                 ));
             }
 

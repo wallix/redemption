@@ -21,6 +21,7 @@
 
 #pragma once
 #include "capture/cryptofile.hpp"
+#include "configs/autogen/enums.hpp"
 
 struct WrmParams
 {

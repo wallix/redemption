@@ -986,7 +986,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             int(wrm_verbose)
                         );
 
-                        Capture capture( capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
+                        Capture capture( capture_wrm, wrm_verbose, wrm_params
                                 , capture_png, png_params
                                 , capture_pattern_checker
                                 , capture_ocr, ocr_params
@@ -994,9 +994,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , capture_flv_full
                                 , capture_meta
                                 , capture_kbd
-                                , path
                                 , basename
-                                , extension
                                 , ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                                 , player.screen_rect.cx
                                 , player.screen_rect.cy
@@ -1006,7 +1004,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , record_path
                                 , groupid
                                 , hash_path
-                                , movie_path
                                 , flv_params
                                 , no_timestamp
                                 , nullptr
