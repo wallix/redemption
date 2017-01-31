@@ -6844,6 +6844,9 @@ public:
         bool capture_flv_full,
         bool capture_meta,
         bool capture_kbd,
+        const char * path,
+        const char * basename,
+        const char * extension,
         const timeval & now,
         int width,
         int height,
@@ -6887,21 +6890,6 @@ public:
                 LOG(LOG_INFO, "Failed to create directory: \"%s\"", record_tmp_path);
             }
         }
-
-        char path[1024];
-        char basename[1024];
-        char extension[128];
-        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
-        strcpy(basename, movie_path);
-        strcpy(extension, "");          // extension is currently ignored
-
-        if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
-        ) {
-            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
-            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
-        }
-
-        LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
 
         if (this->capture_drawable) {
             this->gd_drawable = new RDPDrawable(width, height);

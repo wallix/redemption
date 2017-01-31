@@ -140,6 +140,20 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
         const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
 
+        char path[1024];
+        char basename[1024];
+        char extension[128];
+        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
+        strcpy(basename, movie_path);
+        strcpy(extension, "");          // extension is currently ignored
+
+        if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
+        ) {
+            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
+            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
+        }
+
+
         Capture capture( capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
                         , capture_png, png_params
                         , capture_pattern_checker
@@ -148,6 +162,9 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
                         , capture_flv_full
                         , capture_meta
                         , capture_kbd
+                        , path
+                        , basename
+                        , extension
                         , now, scr.cx, scr.cy, 24, 24
                         , record_tmp_path
                         , record_path
@@ -360,6 +377,19 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
     const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
 
+    char path[1024];
+    char basename[1024];
+    char extension[128];
+    strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
+    strcpy(basename, movie_path);
+    strcpy(extension, "");          // extension is currently ignored
+
+    if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
+    ) {
+        LOG(LOG_ERR, "Buffer Overflowed: Path too long");
+        throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
+    }
+
     // TODO remove this after unifying capture interface
     Capture capture( capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
                    , capture_png, png_params
@@ -369,7 +399,9 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , capture_flv_full
                    , capture_meta
                    , capture_kbd
-
+                   , path
+                   , basename
+                   , extension
                    , now, scr.cx, scr.cy, 16, 16
                    , record_tmp_path
                    , record_path

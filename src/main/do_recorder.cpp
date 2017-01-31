@@ -917,6 +917,13 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
                         WrmParams wrm_params = {};
+//                        WrmParams wrm_params(
+//                            groupid,
+//                            wrm_frame_interval,
+//                            wrm_break_interval
+//                            wrm_compression_algorithm,
+//                            wrm_verbose
+//                        );
                         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
                         const char * record_path = record_tmp_path;
 
@@ -957,6 +964,21 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
                         const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
 
+                        char path[1024];
+                        char basename[1024];
+                        char extension[128];
+                        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
+                        strcpy(basename, movie_path);
+                        strcpy(extension, "");          // extension is currently ignored
+
+                        if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
+                        ) {
+                            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
+                            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
+                        }
+
+                        LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
+
                         Capture capture( capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
                                 , capture_png, png_params
                                 , capture_pattern_checker
@@ -965,6 +987,9 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , capture_flv_full
                                 , capture_meta
                                 , capture_kbd
+                                , path
+                                , basename
+                                , extension
                                 , ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                                 , player.screen_rect.cx
                                 , player.screen_rect.cy
