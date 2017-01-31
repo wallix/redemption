@@ -6663,15 +6663,7 @@ private:
     } null_notifier_next_video;
     //@}
 
-// TODO
 public:
-    const bool capture_wrm;
-    const bool capture_png;
-    const bool capture_pattern_checker;
-    const bool capture_ocr;
-    const bool capture_flv;
-    const bool capture_flv_full; // capturewab only
-    const bool capture_meta; // capturewab only
 
     RDPDrawable * gd_drawable;
 
@@ -6848,40 +6840,29 @@ public:
         const Inifile & ini,
         UpdateProgressData * update_progress_data)
     : is_replay_mod(!authentifier)
-    , capture_wrm(capture_wrm)
-    , capture_png(capture_png)
-    , capture_pattern_checker(capture_pattern_checker)
-    , capture_ocr(capture_ocr)
-    , capture_flv(capture_flv)
-    , capture_flv_full(capture_flv_full)
-    , capture_meta(capture_meta)
     , gd_drawable(nullptr)
     , update_progress_data(update_progress_data)
     , drawable{nullptr}
     , mouse_info{now, width / 2, height / 2}
     , capture_event{}
-    , capture_drawable(this->capture_wrm
-                    || this->capture_flv
-                    || this->capture_ocr
-                    || this->capture_png
-                    || this->capture_flv_full)
+    , capture_drawable(capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full)
     {
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
 
-        if (this->capture_png || (authentifier && (this->capture_flv || this->capture_ocr))) {
+        if (capture_png || (authentifier && (capture_flv || capture_ocr))) {
             if (recursive_create_directory(record_tmp_path, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {
                 LOG(LOG_INFO, "Failed to create directory: \"%s\"", record_tmp_path);
             }
         }
 
-        if (this->capture_drawable) {
+        if (capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full) {
             this->gd_drawable = new RDPDrawable(width, height);
             this->gds.push_back(*this->gd_drawable);
 
             this->graphic_api.reset(new Graphic(this->mouse_info, this->gds, this->snapshoters));
             this->drawable = &this->gd_drawable->impl();
 
-            if (this->capture_png) {
+            if (capture_png) {
                 if (png_params.real_time_image_capture) {
                     this->png_capture_real_time_obj.reset(new PngCaptureRT(
                         now, authentifier, this->gd_drawable->impl(),
@@ -6897,13 +6878,13 @@ public:
                 }
             }
 
-            if (this->capture_wrm) {
+            if (capture_wrm) {
                 this->wrm_capture_obj.reset(new WrmCaptureImpl(
                     now, wrm_params, authentifier, *this->gd_drawable, wrm_verbose
                 ));
             }
 
-            if (this->capture_ocr) {
+            if (capture_meta) {
                 auto meta_enable_session_log = ini.get<cfg::session_log::enable_session_log>();
                 this->meta_capture_obj.reset(new MetaCaptureImpl(
                     now, record_tmp_path, basename,
@@ -6911,7 +6892,7 @@ public:
                 ));
             }
 
-            if (this->capture_flv) {
+            if (capture_flv) {
                 auto flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
                 auto flv_break_interval = ini.get<cfg::video::flv_break_interval>();
                 
@@ -6927,13 +6908,13 @@ public:
                 ));
             }
 
-            if (this->capture_flv_full) {
+            if (capture_flv_full) {
                 this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
                     now, record_path, basename, groupid, no_timestamp, this->gd_drawable->impl(),
                     flv_params));
             }
 
-            if (this->capture_pattern_checker) {
+            if (capture_pattern_checker) {
             auto pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
             auto pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
             auto debug_capture = ini.get<cfg::debug::capture>();
@@ -6949,7 +6930,7 @@ public:
                 }
             }
 
-            if (this->capture_ocr) {
+            if (capture_ocr) {
                 if (this->patterns_checker || this->meta_capture_obj || this->sequenced_video_capture_obj) {
                     this->title_capture_obj.reset(new TitleCaptureImpl(
                         now, authentifier, this->gd_drawable->impl(),
@@ -6964,35 +6945,43 @@ public:
         }
 
         if (capture_kbd) {
+            auto pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
+            auto pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
+            auto debug_capture = ini.get<cfg::debug::capture>();
             this->syslog_kbd_capture_obj.reset(new SyslogKbd(now));
             this->session_log_kbd_capture_obj.reset(new SessionLogKbd(*authentifier));
-            this->pattern_kbd_capture_obj.reset(new PatternKbd(authentifier, ini.get<cfg::context::pattern_kill>().c_str(), ini.get<cfg::context::pattern_notify>().c_str(), ini.get<cfg::debug::capture>()));
+            this->pattern_kbd_capture_obj.reset(new PatternKbd(authentifier, pattern_kill, pattern_notify, debug_capture));
         }
 
-        if (this->capture_wrm) {
+        if (capture_wrm) {
             this->gds.push_back(this->wrm_capture_obj->graphic_to_file);
             this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->wrm_capture_obj));
             this->objs.push_back(this->wrm_capture_obj->nc);
             this->probes.push_back(this->wrm_capture_obj->graphic_to_file);
 
-            if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm)) {
+            auto disable_keyboard_log = ini.get<cfg::video::disable_keyboard_log>();
+            if (!bool(disable_keyboard_log & KeyboardLogFlags::wrm)) {
                 this->wrm_capture_obj->graphic_to_file.impl = this->wrm_capture_obj.get();
             }
         }
 
-        if (this->capture_drawable && this->png_capture_real_time_obj) {
-            this->png_capture_real_time_obj->enable_rt_display = ini.get<cfg::video::rt_display>();
+        if ((capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full)
+        && this->png_capture_real_time_obj) {
+            auto rt_display = ini.get<cfg::video::rt_display>();
+            this->png_capture_real_time_obj->enable_rt_display = rt_display;
             this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_real_time_obj));
             this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_real_time_obj));
         }
 
-        if (this->capture_drawable && this->png_capture_obj) {
+        if ((capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full)
+        && this->png_capture_obj) {
             this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_obj));
             this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_obj));
         }
 
         if (this->syslog_kbd_capture_obj.get()) {
-            if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)) {
+            bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
+            if (!syslog_keyboard_log) {
                 this->kbds.push_back(*this->syslog_kbd_capture_obj.get());
                 this->caps.push_back(*this->syslog_kbd_capture_obj.get());
             }
@@ -7000,9 +6989,10 @@ public:
 
         if (this->session_log_kbd_capture_obj.get())
         {
-            if (authentifier && ini.get<cfg::session_log::enable_session_log>() &&
-                (ini.get<cfg::session_log::keyboard_input_masking_level>()
-                 != ::KeyboardInputMaskingLevel::fully_masked)
+            bool session_log_enabled = authentifier && ini.get<cfg::session_log::enable_session_log>();
+            bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
+                 != ::KeyboardInputMaskingLevel::fully_masked; 
+            if ( session_log_enabled && keyboard_fully_masked
             ) {
                 this->kbds.push_back(*this->session_log_kbd_capture_obj.get());
                 this->probes.push_back(*this->session_log_kbd_capture_obj.get());
@@ -7015,19 +7005,22 @@ public:
             }
         }
 
-        if (this->capture_drawable && this->sequenced_video_capture_obj) {
+        if ((capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full)
+        && this->sequenced_video_capture_obj) {
             this->caps.push_back(this->sequenced_video_capture_obj->vc);
             this->snapshoters.push_back(this->sequenced_video_capture_obj->preparing_vc);
             this->sequenced_video_capture_obj->first_image.first_image_cap_elem = {this->caps, this->sequenced_video_capture_obj->first_image};
             this->sequenced_video_capture_obj->first_image.first_image_gcap_elem = {this->snapshoters, this->sequenced_video_capture_obj->first_image};
         }
-        if (this->capture_drawable && this->full_video_capture_obj) {
+        if ((capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full)
+        && this->full_video_capture_obj) {
             this->caps.push_back(this->full_video_capture_obj->vc);
             this->snapshoters.push_back(this->full_video_capture_obj->preparing_vc);
         }
         if (this->meta_capture_obj) {
+            bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
             this->caps.push_back(this->meta_capture_obj->meta);
-            if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta)) {
+            if (!meta_keyboard_log) {
                 this->kbds.push_back(this->meta_capture_obj->meta);
                 this->probes.push_back(this->meta_capture_obj->meta);
             }
@@ -7078,7 +7071,7 @@ public:
             this->png_capture_obj.reset();
             if (this->png_capture_real_time_obj) { this->png_capture_real_time_obj.reset(); }
 
-            if (this->capture_wrm) {
+            if (this->wrm_capture_obj) {
                 timeval now = tvtime();
                 this->wrm_capture_obj->send_timestamp_chunk(now, false);
                 this->wrm_capture_obj.reset();
