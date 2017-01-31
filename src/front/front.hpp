@@ -1097,7 +1097,7 @@ public:
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
-            wrm_verbose
+            int(wrm_verbose)
         );
 
         this->capture = new Capture(  capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
