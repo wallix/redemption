@@ -6837,7 +6837,6 @@ public:
         const FlvParams flv_params,
         bool no_timestamp,
         auth_api * authentifier,
-        const Inifile & ini,
         UpdateProgressData * update_progress_data,
         const char * pattern_kill,
         const char * pattern_notify,

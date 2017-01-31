@@ -1020,7 +1020,6 @@ bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & Keyb
                                 , flv_params
                                 , no_timestamp
                                 , nullptr
-                                , ini
                                 , &update_progress_data
                                 , pattern_kill
                                 , pattern_notify

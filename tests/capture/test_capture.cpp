@@ -196,7 +196,6 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
                         , groupid
                         , flv_params
                         , no_timestamp, nullptr
-                        , ini
                         , nullptr
                         , pattern_kill
                         , pattern_notify
@@ -472,7 +471,6 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , groupid
                    , flv_params
                    , no_timestamp, nullptr
-                   , ini
                    , nullptr
                    , pattern_kill
                    , pattern_notify

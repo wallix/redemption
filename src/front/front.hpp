@@ -1129,7 +1129,6 @@ public:
                                     , groupid
                                     , flv_params
                                     , false, &this->authentifier
-                                    , ini
                                     , nullptr
                                     , pattern_kill
                                     , pattern_notify
@@ -1142,9 +1141,7 @@ public:
                                     , disable_keyboard_log
                                     , session_log_enabled
                                     , keyboard_fully_masked
-                                    , meta_keyboard_log);
-
-
+                                    , meta_keyboard_log
                                     );
         if (this->nomouse) {
             this->capture->set_pointer_display();
