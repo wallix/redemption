@@ -1098,6 +1098,20 @@ public:
             int(wrm_verbose)
         );
 
+        const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
+        const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
+        int debug_capture = ini.get<cfg::debug::capture>();
+        bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
+        bool meta_enable_session_log = ini.get<cfg::session_log::enable_session_log>();
+        const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
+        bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
+        bool rt_display = ini.get<cfg::video::rt_display>();
+        bool disable_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm);
+        bool session_log_enabled = ini.get<cfg::session_log::enable_session_log>();
+        bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
+             != ::KeyboardInputMaskingLevel::fully_masked;
+        bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
+
         this->capture = new Capture(  capture_wrm, wrm_verbose, wrm_params
                                     , capture_png, png_params
                                     , capture_pattern_checker
@@ -1117,6 +1131,20 @@ public:
                                     , false, &this->authentifier
                                     , ini
                                     , nullptr
+                                    , pattern_kill
+                                    , pattern_notify
+                                    , debug_capture
+                                    , flv_capture_chunk
+                                    , meta_enable_session_log
+                                    , flv_break_interval
+                                    , syslog_keyboard_log
+                                    , rt_display
+                                    , disable_keyboard_log
+                                    , session_log_enabled
+                                    , keyboard_fully_masked
+                                    , meta_keyboard_log);
+
+
                                     );
         if (this->nomouse) {
             this->capture->set_pointer_display();

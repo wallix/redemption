@@ -6838,7 +6838,19 @@ public:
         bool no_timestamp,
         auth_api * authentifier,
         const Inifile & ini,
-        UpdateProgressData * update_progress_data)
+        UpdateProgressData * update_progress_data,
+        const char * pattern_kill,
+        const char * pattern_notify,
+        int debug_capture,
+        bool flv_capture_chunk,
+        bool meta_enable_session_log,
+        const std::chrono::duration<long int> flv_break_interval,
+        bool syslog_keyboard_log,
+        bool rt_display,
+        bool disable_keyboard_log,
+        bool session_log_enabled,
+        bool keyboard_fully_masked,
+        bool meta_keyboard_log)
     : is_replay_mod(!authentifier)
     , gd_drawable(nullptr)
     , update_progress_data(update_progress_data)
@@ -6885,19 +6897,16 @@ public:
             }
 
             if (capture_meta) {
-                auto meta_enable_session_log = ini.get<cfg::session_log::enable_session_log>();
                 this->meta_capture_obj.reset(new MetaCaptureImpl(
                     now, record_tmp_path, basename,
-                    authentifier && meta_enable_session_log
+                    meta_enable_session_log
                 ));
             }
 
             if (capture_flv) {
-                auto flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
-                auto flv_break_interval = ini.get<cfg::video::flv_break_interval>();
                 
                 std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
-                if ( flv_capture_chunk && this->meta_capture_obj) {
+                if (flv_capture_chunk && this->meta_capture_obj) {
                     this->notifier_next_video.session_meta = &this->meta_capture_obj->get_session_meta();
                     notifier = this->notifier_next_video;
                 }
@@ -6915,9 +6924,6 @@ public:
             }
 
             if (capture_pattern_checker) {
-            auto pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
-            auto pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
-            auto debug_capture = ini.get<cfg::debug::capture>();
                 this->patterns_checker.reset(new PatternsChecker(
                     *authentifier,
                     pattern_kill,
@@ -6945,9 +6951,6 @@ public:
         }
 
         if (capture_kbd) {
-            auto pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
-            auto pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
-            auto debug_capture = ini.get<cfg::debug::capture>();
             this->syslog_kbd_capture_obj.reset(new SyslogKbd(now));
             this->session_log_kbd_capture_obj.reset(new SessionLogKbd(*authentifier));
             this->pattern_kbd_capture_obj.reset(new PatternKbd(authentifier, pattern_kill, pattern_notify, debug_capture));
@@ -6959,15 +6962,13 @@ public:
             this->objs.push_back(this->wrm_capture_obj->nc);
             this->probes.push_back(this->wrm_capture_obj->graphic_to_file);
 
-            auto disable_keyboard_log = ini.get<cfg::video::disable_keyboard_log>();
-            if (!bool(disable_keyboard_log & KeyboardLogFlags::wrm)) {
+            if (!disable_keyboard_log) {
                 this->wrm_capture_obj->graphic_to_file.impl = this->wrm_capture_obj.get();
             }
         }
 
         if ((capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full)
         && this->png_capture_real_time_obj) {
-            auto rt_display = ini.get<cfg::video::rt_display>();
             this->png_capture_real_time_obj->enable_rt_display = rt_display;
             this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_real_time_obj));
             this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_real_time_obj));
@@ -6980,7 +6981,7 @@ public:
         }
 
         if (this->syslog_kbd_capture_obj.get()) {
-            bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
+           
             if (!syslog_keyboard_log) {
                 this->kbds.push_back(*this->syslog_kbd_capture_obj.get());
                 this->caps.push_back(*this->syslog_kbd_capture_obj.get());
@@ -6989,9 +6990,6 @@ public:
 
         if (this->session_log_kbd_capture_obj.get())
         {
-            bool session_log_enabled = authentifier && ini.get<cfg::session_log::enable_session_log>();
-            bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
-                 != ::KeyboardInputMaskingLevel::fully_masked; 
             if ( session_log_enabled && keyboard_fully_masked
             ) {
                 this->kbds.push_back(*this->session_log_kbd_capture_obj.get());
@@ -7018,7 +7016,6 @@ public:
             this->snapshoters.push_back(this->full_video_capture_obj->preparing_vc);
         }
         if (this->meta_capture_obj) {
-            bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
             this->caps.push_back(this->meta_capture_obj->meta);
             if (!meta_keyboard_log) {
                 this->kbds.push_back(this->meta_capture_obj->meta);

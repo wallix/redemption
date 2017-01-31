@@ -986,6 +986,20 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             int(wrm_verbose)
                         );
 
+const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
+const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
+int debug_capture = ini.get<cfg::debug::capture>();
+bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
+bool meta_enable_session_log = false;
+const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
+bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
+bool rt_display = ini.get<cfg::video::rt_display>();
+bool disable_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm);
+bool session_log_enabled = false;
+bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
+     != ::KeyboardInputMaskingLevel::fully_masked;
+bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
+
                         Capture capture( capture_wrm, wrm_verbose, wrm_params
                                 , capture_png, png_params
                                 , capture_pattern_checker
@@ -1007,7 +1021,20 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , no_timestamp
                                 , nullptr
                                 , ini
-                                , &update_progress_data);
+                                , &update_progress_data
+                                , pattern_kill
+                                , pattern_notify
+                                , debug_capture
+                                , flv_capture_chunk
+                                , meta_enable_session_log
+                                , flv_break_interval
+                                , syslog_keyboard_log
+                                , rt_display
+                                , disable_keyboard_log
+                                , session_log_enabled
+                                , keyboard_fully_masked
+                                , meta_keyboard_log
+                                );
 
                         player.add_consumer(&capture, &capture, &capture, &capture, &capture);
 
