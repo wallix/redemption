@@ -546,7 +546,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
 BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
 {
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid, nullptr);
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);
@@ -582,7 +582,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
         CleanupTransport()
         : OutFilenameSequenceTransport(
             FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION,
-            "./", "xxxtest", ".png", groupid)
+            "./", "xxxtest", ".png", groupid, nullptr)
         {}
 
         ~CleanupTransport() {
@@ -713,7 +713,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 BOOST_AUTO_TEST_CASE(TestSmallImage)
 {
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid, nullptr);
     Rect scr(0, 0, 20, 10);
     RDPDrawable drawable(20, 10);
     auto const color_cxt = gdi::ColorCtx::depth24();
@@ -731,7 +731,7 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
     const int width = 800;
     const int height = 600;
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid, nullptr);
     Rect scr(0, 0, width, height);
     RDPDrawable drawable(scr.cx, scr.cy);
 
@@ -772,7 +772,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
 {
     BOOST_CHECK(1);
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, nullptr);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
@@ -901,7 +901,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
 {
     BOOST_CHECK(1);
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, nullptr);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
