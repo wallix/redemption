@@ -6361,22 +6361,16 @@ public:
             switch (trace_type) {
                 case TraceType::cryptofile:
                     this->trans = new (&this->variant.out_crypto)
-                    CryptoOutMetaSequenceTransport(
-                        cctx, rnd, path, hash_path, basename, now,
-                        width, height, groupid, authentifier);
+                    CryptoOutMetaSequenceTransport(cctx, rnd, path, hash_path, basename, now, width, height, groupid, authentifier);
                     break;
                 case TraceType::localfile_hashed:
                     this->trans = new (&this->variant.out_with_sum)
-                    OutMetaSequenceTransportWithSum(
-                        cctx, path, hash_path, basename, now,
-                        width, height, groupid, authentifier);
+                    OutMetaSequenceTransportWithSum(cctx, path, hash_path, basename, now, width, height, groupid, authentifier);
                     break;
                 default:
                 case TraceType::localfile:
                     this->trans = new (&this->variant.out)
-                    OutMetaSequenceTransport(
-                        path, hash_path, basename, now,
-                        width, height, groupid, authentifier);
+                    OutMetaSequenceTransport(path, hash_path, basename, now, width, height, groupid, authentifier);
                     break;
             }
         }
@@ -6519,13 +6513,7 @@ public:
     bool kbd_input_mask_enabled;
 
 public:
-    WrmCaptureImpl(
-        const timeval & now,
-        const WrmParams wrm_params,
-        auth_api * authentifier,
-        RDPDrawable & drawable,
-        GraphicToFile::Verbose wrm_verbose = GraphicToFile::Verbose::none
-    )
+    WrmCaptureImpl(const timeval & now, const WrmParams wrm_params, auth_api * authentifier, RDPDrawable & drawable)
     : bmp_cache(
         BmpCache::Recorder, wrm_params.capture_bpp, 3, false,
         BmpCache::CacheOption(600, 768, false),
@@ -6540,7 +6528,7 @@ public:
         now, *this->trans_variant.trans, drawable.width(), drawable.height(), wrm_params.capture_bpp,
         this->bmp_cache, this->gly_cache, this->ptr_cache, this->dump_png24_api,
         wrm_params.wrm_compression_algorithm, GraphicToFile::SendInput::YES,
-        wrm_verbose
+        GraphicToFile::Verbose(wrm_params.wrm_verbose)
     )
     , nc(this->graphic_to_file, now, wrm_params.frame_interval, wrm_params.break_interval)
     , kbd_input_mask_enabled{false}
@@ -6814,7 +6802,6 @@ private:
 public:
     Capture(
         bool capture_wrm,
-        GraphicToFile::Verbose wrm_verbose,
         const WrmParams wrm_params,
         bool capture_png,
         const PngParams png_params,
@@ -6890,9 +6877,7 @@ public:
             }
 
             if (capture_wrm) {
-                this->wrm_capture_obj.reset(new WrmCaptureImpl(
-                    now, wrm_params, authentifier, *this->gd_drawable, wrm_verbose
-                ));
+                this->wrm_capture_obj.reset(new WrmCaptureImpl(now, wrm_params, authentifier, *this->gd_drawable));
             }
 
             if (capture_meta) {

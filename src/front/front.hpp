@@ -1112,7 +1112,7 @@ public:
              != ::KeyboardInputMaskingLevel::fully_masked;
         bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
 
-        this->capture = new Capture(  capture_wrm, wrm_verbose, wrm_params
+        this->capture = new Capture(  capture_wrm, wrm_params
                                     , capture_png, png_params
                                     , capture_pattern_checker
                                     , capture_ocr, ocr_params
