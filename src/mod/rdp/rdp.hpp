@@ -3249,10 +3249,10 @@ public:
 
             if ((!this->session_probe_virtual_channel_p
                 || !this->session_probe_virtual_channel_p->is_disconnection_reconnection_required())
-                && !this->remote_apps_not_enabled) {
-                this->authentifier->disconnect_target();
+             && !this->remote_apps_not_enabled) {
+                this->authentifier.disconnect_target();
             }
-            this->authentifier->report("CLOSE_SESSION_SUCCESSFUL", "OK.");
+            this->authentifier.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
             if (!this->session_disconnection_logged) {
                 double seconds = ::difftime(now, this->beginning);

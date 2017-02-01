@@ -1945,10 +1945,10 @@ public:
 //  | 0x00000003       |                                   |
 //  +------------------+-----------------------------------+
 
-enum {
-      FILE_SUPERSEDED  = 0x00000000
-    , FILE_OPENED      = 0x00000001
-    , FILE_OVERWRITTEN = 0x00000003
+enum : uint8_t {
+      FILE_SUPERSEDED  = 0x00
+    , FILE_OPENED      = 0x01
+    , FILE_OVERWRITTEN = 0x03
 };
 
 //  The values of the CreateDisposition field in the Device Create Request

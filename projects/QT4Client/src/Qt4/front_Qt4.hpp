@@ -37,6 +37,9 @@
 #include <vector>
 #include <boost/algorithm/string.hpp>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <linux/hdreg.h>
+
 
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
@@ -111,6 +114,16 @@ class Screen_Qt;
 class Mod_Qt;
 class ClipBoard_Qt;
 
+struct DummyAuthentifier : public auth_api
+{
+public:
+    virtual void set_auth_channel_target(const char *) {}
+    virtual void set_auth_error_message(const char *) {}
+    virtual void report(const char * , const char *) {}
+    virtual void log4(bool , const char *, const char * = nullptr) {
+    }
+    virtual void disconnect_target() {}
+};
 
 class Front_Qt_API : public FrontAPI
 {
@@ -432,8 +445,6 @@ public:
 
         std::string current_path;
 
-
-
     } fileSystemData;
 
 
@@ -498,12 +509,13 @@ public:
 
     unsigned WindowsTickToUnixSeconds(long long windowsTicks)
     {
-        return (unsigned)((windowsTicks / _WINDOWS_TICK) - _SEC_TO_UNIX_EPOCH);
+        return unsigned((windowsTicks / _WINDOWS_TICK) - _SEC_TO_UNIX_EPOCH);
     }
 
-    unsigned UnixSecondsToWindowsTick(long long unixSeconds)
+    long long UnixSecondsToWindowsTick(unsigned unixSeconds)
     {
-        return (unsigned) ((unixSeconds + _SEC_TO_UNIX_EPOCH) * _WINDOWS_TICK) ;
+        //(long long)
+        return ((unixSeconds + _SEC_TO_UNIX_EPOCH) * _WINDOWS_TICK);
     }
 
 
@@ -611,31 +623,33 @@ public:
     //       DRAW FUNCTIONS
     //-----------------------------
 
-    virtual void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
+    using Front_Qt_API::draw;
 
-    virtual void draw(const RDPScrBlt & cmd, Rect clip) override;
+    void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override;
+    void draw(const RDPScrBlt & cmd, Rect clip) override;
 
-    virtual void draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
+    void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override;
 
-    virtual void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
+    void draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override;
+    void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
+
+    void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override;
 
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override;
 
-    virtual void draw(const RDPDestBlt & cmd, Rect clip) override;
+    void draw(const RDPDestBlt & cmd, Rect clip) override;
 
-    virtual void draw(const RDPMultiDstBlt & cmd, Rect clip) override;
+    void draw(const RDPMultiDstBlt & cmd, Rect clip) override;
 
-    virtual void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
+    void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
+    void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override;
+    void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override;
 
-    virtual void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override;
+    void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override;
 
     void draw(const RDPPolygonSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
@@ -643,31 +657,31 @@ public:
 
     void draw(const RDPPolyline & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDPEllipseSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
+    void draw(const RDPEllipseSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDPEllipseCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
+    void draw(const RDPEllipseCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDP::FrameMarker & order) override;
+    void draw(const RDP::FrameMarker & order) override;
 
-//     virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) override;
+//     void draw(const RDP::RAIL::NewOrExistingWindow & order) override;
 //
-//     virtual void draw(const RDP::RAIL::WindowIcon & order) override;
+//     void draw(const RDP::RAIL::WindowIcon & order) override;
 //
-//     virtual void draw(const RDP::RAIL::CachedIcon & order) override;
+//     void draw(const RDP::RAIL::CachedIcon & order) override;
 //
-//     virtual void draw(const RDP::RAIL::DeletedWindow & order) override;
+//     void draw(const RDP::RAIL::DeletedWindow & order) override;
 //
-//     virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override;
+//     void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override;
 //
-//     virtual void draw(const RDP::RAIL::DeletedNotificationIcons & order) override;
+//     void draw(const RDP::RAIL::DeletedNotificationIcons & order) override;
 //
-//     virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override;
+//     void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override;
 //
-//     virtual void draw(const RDP::RAIL::NonMonitoredDesktop & order) override;
+//     void draw(const RDP::RAIL::NonMonitoredDesktop & order) override;
 
-//     virtual void draw(const RDPColCache   & cmd) override;
+//     void draw(const RDPColCache   & cmd) override;
 //
-//     virtual void draw(const RDPBrushCache & cmd) override;
+//     void draw(const RDPBrushCache & cmd) override;
 
 
 

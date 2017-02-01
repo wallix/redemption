@@ -51,9 +51,9 @@ Front_Qt::Front_Qt(char* argv[], int argc, RDPVerbose verbose)
     , _connected(false)
     , _monitorCountNegociated(false)
     , _clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [](){
-        ClipboardVirtualChannel::Params params;
+        DummyAuthentifier authentifier;
+        ClipboardVirtualChannel::Params params(authentifier);
 
-        params.authentifier = nullptr;
         params.exchanged_data_limit = ~decltype(params.exchanged_data_limit){};
         params.verbose = to_verbose_flags(0xfffffff);
 
@@ -526,12 +526,17 @@ bool Front_Qt::connect() {
                 ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned, std::ratio<1, 100>>(6));
             LCGRandom gen(0);
             CryptoContext cctx;
-            auth_api * authentifier(nullptr);
+            DummyAuthentifier * authentifier = nullptr;
             struct timeval time;
             gettimeofday(&time, nullptr);
             PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true};
             FlvParams flv_params = flv_params_from_ini(this->_info.width, this->_info.height, ini);
-            OcrParams ocr_params = {OcrVersion::v1, ocr::locale::LocaleId::latin, false, 0, std::chrono::milliseconds{60}};
+            OcrParams ocr_params = { ini.get<cfg::ocr::version>(),
+                                     static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
+                                     ini.get<cfg::ocr::on_title_bar_only>(),
+                                     ini.get<cfg::ocr::max_unrecog_char_rate>(),
+                                     ini.get<cfg::ocr::interval>()
+                                   };
             const char * record_path = "/replay";
 
             this->_capture = new Capture( true
@@ -550,16 +555,19 @@ bool Front_Qt::connect() {
                                         , false
                                         , false
                                         , false
+                                        , record_path
+                                        , ini.get<cfg::globals::movie_path>().c_str()
+                                        , ""
                                         , time
                                         , this->_info.width
                                         , this->_info.height
                                         , this->_info.bpp
                                         , this->_info.bpp
-                                        , record_path
-                                        , record_path
-                                        , 1
-                                        , ""
-                                        , ""
+                                        , ini.get<cfg::video::record_tmp_path>().c_str()
+                                        , ini.get<cfg::video::record_tmp_path>().c_str()
+                                        , ini.get<cfg::video::capture_groupid>()
+                                        , ini.get<cfg::video::hash_path>().c_str()
+                                        , ini.get<cfg::globals::movie_path>().c_str()
                                         , flv_params
                                         , false
                                         , authentifier
@@ -2346,7 +2354,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                             );
 
                         LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Announce Reply");
-                        //this->show_out_stream(0, stream, total_length);
                         }
 
                         {
@@ -2373,7 +2380,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                             );
 
                         LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Name Request");
-                        //this->show_out_stream(0, stream, total_length);
                         }
                         break;
 
@@ -2535,7 +2541,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                 , deviceIORequest.CompletionId()
                                                                 , 0);
 
-
                         switch (deviceIORequest.MajorFunction()) {
 
                             case rdpdr::IRP_MJ_CREATE:
@@ -2554,11 +2559,18 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         deviceIOResponse.set_IoStatus(0xc000000f);
                                         LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str());
                                     }
+                                }
 
+                                struct stat buff;
+                                stat(this->fileSystemData.paths[id-1].c_str(), &buff);
+                                uint8_t Information(rdpdr::FILE_OPENED);
+                                if (S_ISDIR(buff.st_mode)) {
+                                    Information = rdpdr::FILE_SUPERSEDED;
                                 }
 
                                 rdpdr::DeviceCreateResponse deviceCreateResponse( id
-                                                                                , rdpdr::FILE_SUPERSEDED);
+                                                                                , Information);
+
                                 deviceIOResponse.emit(out_stream);
                                 deviceCreateResponse.emit(out_stream);
 
@@ -2593,6 +2605,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                             LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str());
                                         }
 
+
                                         deviceIOResponse.emit(out_stream);
 
                                         rdpdr::ClientDriveQueryInformationResponse cdqir(rdpdr::FILE_BASIC_INFORMATION_SIZE);
@@ -2601,15 +2614,12 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         struct stat buff;
                                         stat(this->fileSystemData.paths[id-1].c_str(), &buff);
 
-                                        //UnixSecondsToWindowsTick(buff.st_atime);
-                                        uint64_t LastAccessTime = 0x1d1f187b3db725f;
-                                        //UnixSecondsToWindowsTick(buff.st_mtime);
-                                        uint64_t LastWriteTime  = 0x1d1f187b3db725f;
-                                        //UnixSecondsToWindowsTick(buff.st_ctime);
-                                        uint64_t ChangeTime     = 0x1d1f187b3db725f;
-                                        uint32_t FileAttributes = fscc::FILE_ATTRIBUTE_NORMAL;
+                                        uint64_t LastAccessTime = UnixSecondsToWindowsTick(buff.st_atime);
+                                        uint64_t LastWriteTime  = UnixSecondsToWindowsTick(buff.st_mtime);
+                                        uint64_t ChangeTime     = UnixSecondsToWindowsTick(buff.st_ctime);
+                                        uint32_t FileAttributes = fscc::FILE_ATTRIBUTE_ARCHIVE;
                                         if (S_ISDIR(buff.st_mode)) {
-                                            FileAttributes |= fscc::FILE_ATTRIBUTE_DIRECTORY;
+                                            FileAttributes = fscc::FILE_ATTRIBUTE_DIRECTORY;
                                         }
                                         fscc::FileBasicInformation fileBasicInformation(LastWriteTime, LastAccessTime, LastWriteTime, ChangeTime, FileAttributes);
 
@@ -2795,18 +2805,16 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                         deviceIOResponse.emit(out_stream);
 
-                                        //UnixSecondsToWindowsTick(buff_child.st_atime);
-                                        uint64_t LastAccessTime  = 0x1d1f187b3db725f;
-                                        //UnixSecondsToWindowsTick(buff_child.st_mtime);
-                                        uint64_t LastWriteTime   = 0x1d1f187b3db725f;
-                                        //UnixSecondsToWindowsTick(buff_child.st_ctime);
-                                        uint64_t ChangeTime      = 0x1d1f187b3db725f;
+                                        //0x1d1f187b3db725f
+                                        uint64_t LastAccessTime  = UnixSecondsToWindowsTick(buff_child.st_atime);
+                                        uint64_t LastWriteTime   = UnixSecondsToWindowsTick(buff_child.st_mtime);
+                                        uint64_t ChangeTime      = UnixSecondsToWindowsTick(buff_child.st_ctime);
                                         uint64_t CreationTime    = LastWriteTime + 1;
                                         int64_t  EndOfFile       = buff_child.st_blksize;
                                         int64_t  AllocationSize  = buff_child.st_blksize;
-                                        uint32_t FileAttributes  = fscc::FILE_ATTRIBUTE_NORMAL;
+                                        uint32_t FileAttributes  = fscc::FILE_ATTRIBUTE_ARCHIVE;
                                         if (S_ISDIR(buff_child.st_mode)) {
-                                            FileAttributes |= fscc::FILE_ATTRIBUTE_DIRECTORY;
+                                            FileAttributes = fscc::FILE_ATTRIBUTE_DIRECTORY;
                                         }
 
                                         switch (sdqdr.FsInformationClass()) {
@@ -2874,10 +2882,30 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_path.c_str());
                                     }
 
-                                    //UnixSecondsToWindowsTick(buff.st_mtime);
-                                    uint64_t LastWriteTime   = 0x1d1f187b3db725f;
+                                    uint64_t LastWriteTime   = UnixSecondsToWindowsTick(buff.st_mtime);
                                     uint64_t CreationTime    = LastWriteTime + 1;
                                     //int64_t  AllocationSize  = buff.st_size;
+                                    uint32_t VolumeSerialNumber = 0xb035dca6;
+                                    const char * VolumeLabel = "sda8";
+
+                                    static struct hd_driveid hd;
+                                    int device = open(str_path.c_str(), O_RDONLY);
+
+                                    if (device < 0) {
+                                        deviceIOResponse.set_IoStatus(0xc000000f);
+                                        LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_path.c_str());
+                                    }
+
+                                    int resioctl = ioctl(device, HDIO_GET_IDENTITY, &hd);
+
+                                    //std:: cout << "hd.serial_no = " << hd.serial_no << " for Device = " << device << " resioctl = " << resioctl << std::endl;
+
+
+//                                     for (int i = 0; i < 20; i++) {
+//                                         VolumeSerialNumber = hd.serial_no;
+//                                     }
+
+                                    //uint32_t VolumeSerialNumber = hd.serial_no;
 
                                     deviceIOResponse.emit(out_stream);
 
@@ -2887,7 +2915,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                             rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(4 + 17);
                                             cdqvir.emit(out_stream);
 
-                                            fscc::FileFsVolumeInformation ffvi(CreationTime, CreationTime, 0, "");
+                                            fscc::FileFsVolumeInformation ffvi(CreationTime, VolumeSerialNumber, 0, VolumeLabel);
                                             ffvi.emit(out_stream);
                                         }
                                             break;
@@ -2910,9 +2938,45 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                           CHANNELS::CHANNEL_FLAG_FIRST
                                                                         );
 
-                                    LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Volume Information Response");
+                                    LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Volume Information Response");
 
                                 }
+                                break;
+
+                            case rdpdr::IRP_MJ_DEVICE_CONTROL:
+                                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O QClient Drive Control Request");
+                                {
+                                    DeviceControlRequest dcr;
+                                    dcr.receive(chunk);
+
+                                    deviceIOResponse.emit(out_stream);
+
+                                    switch (dcr.IoControlCode()) {
+                                        case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID :
+                                            {
+                                                uint8_t ObjectId[16] =  { 0 };
+                                                uint8_t BirthVolumeId[16] =  { 0 };
+                                                uint8_t BirthObjectId[16] =  { 0 };
+                                                uint8_t DomainId[16] =  { 0 };
+
+                                                fscc::FileObjectBuffer_Type1 rgdb(ObjectId, BirthVolumeId, BirthObjectId, DomainId);
+                                                rgdb.emit(out_stream);
+                                            }
+                                            break;
+                                        default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Data: Code = 0x%08x", dcr.IoControlCode());
+                                            break;
+                                    }
+
+//                                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+//
+//                                     this->_callback->send_to_mod_channel( channel_names::rdpdr
+//                                                                         , chunk_to_send
+//                                                                         , out_stream.get_offset()
+//                                                                         , CHANNELS::CHANNEL_FLAG_LAST |
+//                                                                           CHANNELS::CHANNEL_FLAG_FIRST
+//                                                                         );
+                                }
+                                LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O QClient Drive Control Response");
                                 break;
 
                             default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT: Device I/O Request unknow MajorFunction = %x",       deviceIORequest.MajorFunction());

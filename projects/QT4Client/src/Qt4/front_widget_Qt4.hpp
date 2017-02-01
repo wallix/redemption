@@ -59,15 +59,7 @@
 #include <QtCore/QDebug>
 
 
-struct DummyAuthentifier : public auth_api
-{
-public:
-    virtual void set_auth_channel_target(const char *) {}
-    virtual void set_auth_error_message(const char *) {}
-    virtual void report(const char * reason, const char *) {}
-    virtual void log4(bool duplicate_with_pid, const char *, const char * = nullptr) {}
-    virtual void disconnect_target() {}
-};
+
 
 
 class Mod_Qt : public QObject
@@ -75,7 +67,7 @@ class Mod_Qt : public QObject
 
 Q_OBJECT
 
-public:
+
     Front_Qt                  * _front;
     QSocketNotifier           * _sckRead;
     mod_rdp                   * _callback;
@@ -84,7 +76,10 @@ public:
     TimeSystem                  _timeSystem;
 
     LCGRandom gen;
+    DummyAuthentifier authentifier;
+    std::string error_message;
 
+public:
     struct ModRDPParamsData
     {
         bool enable_tls                      = false;
@@ -139,13 +134,13 @@ public:
 
         if (this->_client_sck > 0) {
             try {
-                std::string error_message;
+
                 this->_sck = new SocketTransport( name
                                                 , this->_client_sck
                                                 , targetIP
                                                 , this->_front->_port
                                                 , to_verbose_flags(0)
-                                                , &error_message
+                                                , &this->error_message
                                                 );
                 std::cout << "Connected to [" << targetIP <<  "]." << std::endl;
                 return true;
@@ -196,8 +191,6 @@ public:
         //mod_rdp_params.bogus_refresh_rect              = true;
         mod_rdp_params.verbose = to_verbose_flags(0);
 
-        DummyAuthentifier * authentifier = new DummyAuthentifier;
-
         try {
             this->_callback = new mod_rdp( *(this->_sck)
                                          , *(this->_front)
@@ -206,7 +199,7 @@ public:
                                          , this->gen
                                          , this->_timeSystem
                                          , mod_rdp_params
-                                         , authentifier
+                                         , this->authentifier
                                          );
 
             this->_front->_to_server_sender._callback = this->_callback;
