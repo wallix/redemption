@@ -472,7 +472,7 @@ private:
             order.NumVisibilityRects(1);
             order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->protected_rect.cx, this->protected_rect.cy));
 
-            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+            if (this->verbose & RDPVerbose::rail) {
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
@@ -493,7 +493,7 @@ private:
             order.NumWindowIds(1);
             order.window_ids(0, this->dialog_box_window_id);
 
-            /*if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) */{
+            if (this->verbose & RDPVerbose::rail) {
                 StaticOutStream<256> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
@@ -520,7 +520,7 @@ private:
                 );
             order.header.WindowId(this->dialog_box_window_id);
 
-            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+            if (this->verbose & RDPVerbose::rail) {
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
@@ -695,7 +695,7 @@ public:
             order.NumVisibilityRects(1);
             order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, window_rect.cx, window_rect.cy));
 
-            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+            if (this->verbose & RDPVerbose::rail) {
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
@@ -718,7 +718,7 @@ public:
                 );
             order.header.WindowId(this->auxiliary_window_id);
 
-            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+            if (this->verbose & RDPVerbose::rail) {
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);

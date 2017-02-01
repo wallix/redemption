@@ -96,7 +96,7 @@ class Session {
           FILE   * perf_file;
 
     static const time_t select_timeout_tv_sec = 3;
-    
+
     Authentifier authentifier;
 
 public:
@@ -104,11 +104,11 @@ public:
             : ini(ini)
             , perf_last_info_collect_time(0)
             , perf_pid(getpid())
-            , perf_file(nullptr) 
+            , perf_file(nullptr)
             , authentifier(Authentifier::Verbose(to_verbose_flags(ini.get<cfg::debug::auth>())))
     {
         try {
-        
+
             TRANSLATIONCONF.set_ini(&ini);
 
             SocketTransport front_trans(
