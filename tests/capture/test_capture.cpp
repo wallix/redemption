@@ -2792,10 +2792,23 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 
         LCGRandom rnd(0);
         CryptoContext cctx;
+        cctx.set_master_key(cstr_array_view(
+            "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+            "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+            "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+            "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+        ));
+        cctx.set_hmac_key(cstr_array_view(
+             "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+             "\x49\x21\x57\x87\x47\x74\x08\x8a"
+             "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+             "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+        ));
+
 
         WrmParams wrm_params(
             24,
-            TraceType::localfile,
+            TraceType::localfile_hashed,
             cctx,
             rnd,
             "./",
@@ -2805,7 +2818,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
             std::chrono::seconds{1},
             std::chrono::seconds{3},
             WrmCompressionAlgorithm::no_compression,
-            0
+            0xFFFF
         );
 
         RDPDrawable gd_drawable(scr.cx, scr.cy);
@@ -2859,26 +2872,14 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
     {
         FilenameGenerator wrm_seq(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, "./" , "capture", ".wrm");
 
-        struct {
-            size_t len = 0;
-            ssize_t write(char const *, size_t len) {
-                this->len += len;
-                return len;
-            }
-        } meta_len_writer;
-        detail::write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, false);
-
         const char * filename = wrm_seq.get(0);
         BOOST_CHECK_EQUAL(1646, ::filesize(filename));
-        detail::write_meta_file(meta_len_writer, filename, 1000, 1004);
         ::unlink(filename);
         filename = wrm_seq.get(1);
         BOOST_CHECK_EQUAL(3508, ::filesize(filename));
-        detail::write_meta_file(meta_len_writer, filename, 1003, 1007);
         ::unlink(filename);
         filename = wrm_seq.get(2);
         BOOST_CHECK_EQUAL(3463, ::filesize(filename));
-        detail::write_meta_file(meta_len_writer, filename, 1006, 1008);
        ::unlink(filename);
         filename = wrm_seq.get(3);
         BOOST_CHECK_EQUAL(false, file_exist(filename));
@@ -2889,7 +2890,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
           , "./", "capture", ".mwrm"
         );
         filename = mwrm_seq.get(0);
-        BOOST_CHECK_EQUAL(meta_len_writer.len, ::filesize(filename));
+        BOOST_CHECK_EQUAL(673, ::filesize(filename));
         ::unlink(filename);
     }
 }
