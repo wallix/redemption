@@ -719,10 +719,8 @@ public:
 
     BGRPalette const & get_palette() const { return this->mod_palette_rgb; }
 
-    // TODO: these are temporaries, to remove after refactoring capture code
-    char path[1024];
+    // TODO: this is temporary, to remove after refactoring capture code
     char basename[1024];
-    char extension[128];
 
 public:
     Front(  Transport & trans
@@ -1014,7 +1012,6 @@ public:
         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
         TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
-        WrmParams wrm_params = {};
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = ini.get<cfg::video::record_path>().c_str();
         const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
@@ -1072,22 +1069,50 @@ public:
             LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
         }
 
-//        char path[1024];
+        char path[1024];
 //        char basename[1024];
-//        char extension[128];
+        char extension[128];
 
-        strcpy(this->path, WRM_PATH "/");     // default value, actual one should come from movie_path
+        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
         strcpy(this->basename, movie_path);
-        strcpy(this->extension, "");          // extension is currently ignored
+        strcpy(extension, "");          // extension is currently ignored
 
-        if (!canonical_path(movie_path, this->path, sizeof(this->path), this->basename, sizeof(this->basename), this->extension, sizeof(this->extension))
+        if (!canonical_path(movie_path, path, sizeof(path), this->basename, sizeof(this->basename), extension, sizeof(extension))
         ) {
             LOG(LOG_ERR, "Buffer Overflowed: Path too long");
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
 
+        WrmParams wrm_params(
+            this->capture_bpp,
+            wrm_trace_type,
+            this->cctx,
+            this->gen,
+            record_path,
+            hash_path,
+            basename,
+            groupid,
+            wrm_frame_interval,
+            wrm_break_interval,
+            wrm_compression_algorithm,
+            int(wrm_verbose)
+        );
 
-        this->capture = new Capture(  capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
+        const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
+        const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
+        int debug_capture = ini.get<cfg::debug::capture>();
+        bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
+        bool meta_enable_session_log = ini.get<cfg::session_log::enable_session_log>();
+        const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
+        bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
+        bool rt_display = ini.get<cfg::video::rt_display>();
+        bool disable_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm);
+        bool session_log_enabled = ini.get<cfg::session_log::enable_session_log>();
+        bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
+             != ::KeyboardInputMaskingLevel::fully_masked;
+        bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
+
+        this->capture = new Capture(  capture_wrm, wrm_params
                                     , capture_png, png_params
                                     , capture_pattern_checker
                                     , capture_ocr, ocr_params
@@ -1095,21 +1120,28 @@ public:
                                     , capture_flv_full
                                     , capture_meta
                                     , capture_kbd
-                                    , this->path
                                     , this->basename
-                                    , this->extension
                                     , now
                                     , this->client_info.width, this->client_info.height
                                     , this->mod_bpp, this->capture_bpp
                                     , record_tmp_path
                                     , record_path
                                     , groupid
-                                    , hash_path
-                                    , movie_path
                                     , flv_params
                                     , false, &this->authentifier
-                                    , ini, this->cctx, this->gen
                                     , nullptr
+                                    , pattern_kill
+                                    , pattern_notify
+                                    , debug_capture
+                                    , flv_capture_chunk
+                                    , meta_enable_session_log
+                                    , flv_break_interval
+                                    , syslog_keyboard_log
+                                    , rt_display
+                                    , disable_keyboard_log
+                                    , session_log_enabled
+                                    , keyboard_fully_masked
+                                    , meta_keyboard_log
                                     );
         if (this->nomouse) {
             this->capture->set_pointer_display();

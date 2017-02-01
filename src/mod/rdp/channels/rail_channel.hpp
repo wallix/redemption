@@ -52,6 +52,8 @@ private:
 
     SessionProbeVirtualChannel * session_probe_channel = nullptr;
 
+    SessionProbeLauncher* session_probe_stop_launch_sequence_notifier = nullptr;
+
 public:
     struct Params : public BaseVirtualChannel::Params {
            uint16_t client_execute_flags;
@@ -457,10 +459,12 @@ private:
                     ::msgdump_c(send, from_or_to_client, length, flags,
                         out_s.get_data(), length);
                 }
-                LOG(LOG_INFO,
-                    "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                        "Send to server - Client Execute PDU");
-                cepdu.log(LOG_INFO);
+                if (this->verbose & RDPVerbose::rail) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
+                            "Send to server - Client Execute PDU");
+                    cepdu.log(LOG_INFO);
+                }
 
                 this->send_message_to_server(length, flags, out_s.get_data(),
                     length);
@@ -856,14 +860,26 @@ public:
             serpdu.log(LOG_INFO);
         }
 
-        if (!this->session_probe_channel ||
-            this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
-            std::string info("ExeOrFile='");
-            info += serpdu.ExeOrFile();
-            info += "'";
-            this->authentifier.log4(
-                false,
-                "CLIENT_EXECUTE_REMOTEAPP", info.c_str());
+        if (serpdu.ExecResult() != RAIL_EXEC_S_OK) {
+            uint16_t ExecResult_ = serpdu.ExecResult();
+            LOG(LOG_WARNING,
+                "RemoteProgramsVirtualChannel::process_server_execute_result_pdu: "
+                    "Flags=0x%X ExecResult=%s(%d) RawResult=%u",
+                serpdu.Flags(),
+                get_RAIL_ExecResult_name(ExecResult_), ExecResult_,
+                serpdu.RawResult());
+        }
+
+        if (serpdu.ExecResult() == RAIL_EXEC_S_OK) {
+            if (!this->session_probe_channel ||
+                this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
+                std::string info("ExeOrFile='");
+                info += serpdu.ExeOrFile();
+                info += "'";
+                this->authentifier.log4(
+                    false,
+                    "CLIENT_EXECUTE_REMOTEAPP", info.c_str());
+            }
         }
 
         if (!this->param_client_execute_exe_or_file_2.compare(serpdu.ExeOrFile())) {
@@ -872,6 +888,24 @@ public:
             }
 
             return true;
+        }
+
+        if (!this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
+            if (this->session_probe_channel) {
+                if (this->session_probe_stop_launch_sequence_notifier) {
+                    this->session_probe_stop_launch_sequence_notifier->stop(false);
+                    this->session_probe_stop_launch_sequence_notifier = nullptr;
+                }
+
+                if (serpdu.ExecResult() != RAIL_EXEC_S_OK) {
+                    throw Error(ERR_SESSION_PROBE_LAUNCH);
+                }
+            }
+            else {
+                if (serpdu.ExecResult() != RAIL_EXEC_S_OK) {
+                    throw Error(ERR_RAIL_CLIENT_EXECUTE);
+                }
+            }
         }
 
         return false;
@@ -1256,5 +1290,9 @@ public:
 
     void set_session_probe_virtual_channel(SessionProbeVirtualChannel * session_probe_channel) {
         this->session_probe_channel = session_probe_channel;
+    }
+
+    void set_session_probe_launcher(SessionProbeLauncher* launcher) {
+        this->session_probe_stop_launch_sequence_notifier = launcher;
     }
 };

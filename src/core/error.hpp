@@ -296,6 +296,7 @@ enum error_type {
     ERR_RAIL_PDU_TRUNCATED = 22200,
     ERR_RAIL_LOGON_FAILED_OR_WARNING,
     ERR_RAIL_NOT_ENABLED,
+    ERR_RAIL_CLIENT_EXECUTE,
 
     ERR_RDPDR_PDU_TRUNCATED = 22300,
     ERR_RDPDR_READ_REQUEST,
@@ -378,6 +379,9 @@ public:
 
         case ERR_LIC:
             return "An error occurred during the licensing protocol";
+
+        case ERR_RAIL_CLIENT_EXECUTE:
+            return "The RemoteApp program did not start on the remote computer.";
 
         default:
             {

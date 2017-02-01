@@ -916,14 +916,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
                         TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
-                        WrmParams wrm_params = {};
-//                        WrmParams wrm_params(
-//                            groupid,
-//                            wrm_frame_interval,
-//                            wrm_break_interval
-//                            wrm_compression_algorithm,
-//                            wrm_verbose
-//                        );
                         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
                         const char * record_path = record_tmp_path;
 
@@ -979,7 +971,36 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
 
-                        Capture capture( capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
+                        WrmParams wrm_params(
+                            wrm_color_depth,
+                            wrm_trace_type,
+                            cctx,
+                            rnd,
+                            record_path,
+                            hash_path,
+                            basename,
+                            groupid,
+                            wrm_frame_interval,
+                            wrm_break_interval,
+                            wrm_compression_algorithm,
+                            int(wrm_verbose)
+                        );
+
+const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
+const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
+int debug_capture = ini.get<cfg::debug::capture>();
+bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
+bool meta_enable_session_log = false;
+const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
+bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
+bool rt_display = ini.get<cfg::video::rt_display>();
+bool disable_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm);
+bool session_log_enabled = false;
+bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
+     != ::KeyboardInputMaskingLevel::fully_masked;
+bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
+
+                        Capture capture( capture_wrm, wrm_params
                                 , capture_png, png_params
                                 , capture_pattern_checker
                                 , capture_ocr, ocr_params
@@ -987,9 +1008,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , capture_flv_full
                                 , capture_meta
                                 , capture_kbd
-                                , path
                                 , basename
-                                , extension
                                 , ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                                 , player.screen_rect.cx
                                 , player.screen_rect.cy
@@ -998,15 +1017,23 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , record_tmp_path
                                 , record_path
                                 , groupid
-                                , hash_path
-                                , movie_path
                                 , flv_params
                                 , no_timestamp
                                 , nullptr
-                                , ini
-                                , cctx
-                                , rnd
-                                , &update_progress_data);
+                                , &update_progress_data
+                                , pattern_kill
+                                , pattern_notify
+                                , debug_capture
+                                , flv_capture_chunk
+                                , meta_enable_session_log
+                                , flv_break_interval
+                                , syslog_keyboard_log
+                                , rt_display
+                                , disable_keyboard_log
+                                , session_log_enabled
+                                , keyboard_fully_masked
+                                , meta_keyboard_log
+                                );
 
                         player.add_consumer(&capture, &capture, &capture, &capture, &capture);
 
