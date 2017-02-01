@@ -14,19 +14,21 @@
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
 *   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2015
+*   Copyright (C) Wallix 2010-2016
 *   Author(s): Jonathan Poelen
 */
 
 #pragma once
 
-#include <type_traits>
 
-template<class T>
-using underlying_type = typename std::underlying_type<T>::type;
+#define FALCON_CXX_STD_11 201103
+#define FALCON_CXX_STD_14 201402
 
-template<class E>
-constexpr
-underlying_type<E>
-underlying_cast(E e)
-{ return static_cast<underlying_type<E>>(e); }
+// C++14 constexpr functions are inline in C++11
+#if __cplusplus >= FALCON_CXX_STD_14
+# define FALCON_CXX14_CONSTEXPR constexpr
+# define FALCON_CONSTEXPR_AFTER_CXX11 constexpr
+#else
+# define FALCON_CXX14_CONSTEXPR inline
+# define FALCON_CONSTEXPR_AFTER_CXX11
+#endif

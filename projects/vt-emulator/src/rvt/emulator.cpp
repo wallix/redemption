@@ -25,1440 +25,41 @@
 #include <type_traits>
 #include <memory>
 
-namespace utils
-{
-    template<std::size_t N, class T>
-    constexpr std::integral_constant<std::size_t, N>
-    size(T (&)[N])
-    { return {}; }
-
-    template<class T>
-    using underlying_type = typename std::underlying_type<T>::type;
-
-    template<class E>
-    constexpr underlying_type<E>
-    underlying(E e)
-    {
-        static_assert(std::is_enum<E>::value, "must be a enum");
-        return static_cast<underlying_type<E>>(e);
-    }
-}
-
-
-// namespace vt100_old
-// {
-//     namespace charsets
-//     {
-//         //"""
-//         //    pyte.charsets
-//         //    ~~~~~~~~~~~~~
-//         //
-//         //    This module defines ``G0`` and ``G1`` charset mappings the same way
-//         //    they are defined for linux terminal, see
-//         //    ``linux/drivers/tty/consolemap.c`` @ http://git.kernel.org
-//         //
-//         //    .. note:: ``VT100_MAP`` and ``IBMPC_MAP`` were taken unchanged
-//         //            from linux kernel source and therefore are licensed
-//         //            under **GPL**.
-//         //
-//         //    :copyright: (c) 2011-2012 by Selectel.
-//         //    :copyright: (c) 2012-2016 by pyte authors and contributors,
-//         //                    see AUTHORS for details.
-//         //    :license: LGPL, see LICENSE for more details.
-//         //"""
-//
-//         constexpr std::size_t charset_map_size = 256;
-//         using charset_map_type = uint16_t[charset_map_size];
-//
-//         // TODO char const * ? 0x1234 -> "\u1234"
-//
-//         // Latin1
-//         constexpr uint16_t LAT1_map[]{
-//             0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
-//             0x0008, 0x0009, 0x000a, 0x000b, 0x000c, 0x000d, 0x000e, 0x000f,
-//             0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017,
-//             0x0018, 0x0019, 0x001a, 0x001b, 0x001c, 0x001d, 0x001e, 0x001f,
-//             0x0020, 0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
-//             0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
-//             0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
-//             0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
-//             0x0040, 0x0041, 0x0042, 0x0043, 0x0044, 0x0045, 0x0046, 0x0047,
-//             0x0048, 0x0049, 0x004a, 0x004b, 0x004c, 0x004d, 0x004e, 0x004f,
-//             0x0050, 0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057,
-//             0x0058, 0x0059, 0x005a, 0x005b, 0x005c, 0x005d, 0x005e, 0x005f,
-//             0x0060, 0x0061, 0x0062, 0x0063, 0x0064, 0x0065, 0x0066, 0x0067,
-//             0x0068, 0x0069, 0x006a, 0x006b, 0x006c, 0x006d, 0x006e, 0x006f,
-//             0x0070, 0x0071, 0x0072, 0x0073, 0x0074, 0x0075, 0x0076, 0x0077,
-//             0x0078, 0x0079, 0x007a, 0x007b, 0x007c, 0x007d, 0x007e, 0x007f,
-//             0x0080, 0x0081, 0x0082, 0x0083, 0x0084, 0x0085, 0x0086, 0x0087,
-//             0x0088, 0x0089, 0x008a, 0x008b, 0x008c, 0x008d, 0x008e, 0x008f,
-//             0x0090, 0x0091, 0x0092, 0x0093, 0x0094, 0x0095, 0x0096, 0x0097,
-//             0x0098, 0x0099, 0x009a, 0x009b, 0x009c, 0x009d, 0x009e, 0x009f,
-//             0x00a0, 0x00a1, 0x00a2, 0x00a3, 0x00a4, 0x00a5, 0x00a6, 0x00a7,
-//             0x00a8, 0x00a9, 0x00aa, 0x00ab, 0x00ac, 0x00ad, 0x00ae, 0x00af,
-//             0x00b0, 0x00b1, 0x00b2, 0x00b3, 0x00b4, 0x00b5, 0x00b6, 0x00b7,
-//             0x00b8, 0x00b9, 0x00ba, 0x00bb, 0x00bc, 0x00bd, 0x00be, 0x00bf,
-//             0x00c0, 0x00c1, 0x00c2, 0x00c3, 0x00c4, 0x00c5, 0x00c6, 0x00c7,
-//             0x00c8, 0x00c9, 0x00ca, 0x00cb, 0x00cc, 0x00cd, 0x00ce, 0x00cf,
-//             0x00d0, 0x00d1, 0x00d2, 0x00d3, 0x00d4, 0x00d5, 0x00d6, 0x00d7,
-//             0x00d8, 0x00d9, 0x00da, 0x00db, 0x00dc, 0x00dd, 0x00de, 0x00df,
-//             0x00e0, 0x00e1, 0x00e2, 0x00e3, 0x00e4, 0x00e5, 0x00e6, 0x00e7,
-//             0x00e8, 0x00e9, 0x00ea, 0x00eb, 0x00ec, 0x00ed, 0x00ee, 0x00ef,
-//             0x00f0, 0x00f1, 0x00f2, 0x00f3, 0x00f4, 0x00f5, 0x00f6, 0x00f7,
-//             0x00f8, 0x00f9, 0x00fa, 0x00fb, 0x00fc, 0x00fd, 0x00fe, 0x00ff,
-//         };
-//         static_assert(utils::size(LAT1_map) == charset_map_size, "");
-//
-//         // VT100 graphic character set
-//         constexpr uint16_t VT100_map[]{
-//             0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
-//             0x0008, 0x0009, 0x000a, 0x000b, 0x000c, 0x000d, 0x000e, 0x000f,
-//             0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017,
-//             0x0018, 0x0019, 0x001a, 0x001b, 0x001c, 0x001d, 0x001e, 0x001f,
-//             0x0020, 0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
-//             0x0028, 0x0029, 0x002a, 0x2192, 0x2190, 0x2191, 0x2193, 0x002f,
-//             0x2588, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
-//             0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
-//             0x0040, 0x0041, 0x0042, 0x0043, 0x0044, 0x0045, 0x0046, 0x0047,
-//             0x0048, 0x0049, 0x004a, 0x004b, 0x004c, 0x004d, 0x004e, 0x004f,
-//             0x0050, 0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057,
-//             0x0058, 0x0059, 0x005a, 0x005b, 0x005c, 0x005d, 0x005e, 0x00a0,
-//             0x25c6, 0x2592, 0x2409, 0x240c, 0x240d, 0x240a, 0x00b0, 0x00b1,
-//             0x2591, 0x240b, 0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0x23ba,
-//             0x23bb, 0x2500, 0x23bc, 0x23bd, 0x251c, 0x2524, 0x2534, 0x252c,
-//             0x2502, 0x2264, 0x2265, 0x03c0, 0x2260, 0x00a3, 0x00b7, 0x007f,
-//             0x0080, 0x0081, 0x0082, 0x0083, 0x0084, 0x0085, 0x0086, 0x0087,
-//             0x0088, 0x0089, 0x008a, 0x008b, 0x008c, 0x008d, 0x008e, 0x008f,
-//             0x0090, 0x0091, 0x0092, 0x0093, 0x0094, 0x0095, 0x0096, 0x0097,
-//             0x0098, 0x0099, 0x009a, 0x009b, 0x009c, 0x009d, 0x009e, 0x009f,
-//             0x00a0, 0x00a1, 0x00a2, 0x00a3, 0x00a4, 0x00a5, 0x00a6, 0x00a7,
-//             0x00a8, 0x00a9, 0x00aa, 0x00ab, 0x00ac, 0x00ad, 0x00ae, 0x00af,
-//             0x00b0, 0x00b1, 0x00b2, 0x00b3, 0x00b4, 0x00b5, 0x00b6, 0x00b7,
-//             0x00b8, 0x00b9, 0x00ba, 0x00bb, 0x00bc, 0x00bd, 0x00be, 0x00bf,
-//             0x00c0, 0x00c1, 0x00c2, 0x00c3, 0x00c4, 0x00c5, 0x00c6, 0x00c7,
-//             0x00c8, 0x00c9, 0x00ca, 0x00cb, 0x00cc, 0x00cd, 0x00ce, 0x00cf,
-//             0x00d0, 0x00d1, 0x00d2, 0x00d3, 0x00d4, 0x00d5, 0x00d6, 0x00d7,
-//             0x00d8, 0x00d9, 0x00da, 0x00db, 0x00dc, 0x00dd, 0x00de, 0x00df,
-//             0x00e0, 0x00e1, 0x00e2, 0x00e3, 0x00e4, 0x00e5, 0x00e6, 0x00e7,
-//             0x00e8, 0x00e9, 0x00ea, 0x00eb, 0x00ec, 0x00ed, 0x00ee, 0x00ef,
-//             0x00f0, 0x00f1, 0x00f2, 0x00f3, 0x00f4, 0x00f5, 0x00f6, 0x00f7,
-//             0x00f8, 0x00f9, 0x00fa, 0x00fb, 0x00fc, 0x00fd, 0x00fe, 0x00ff,
-//         };
-//         static_assert(utils::size(VT100_map) == charset_map_size, "");
-//
-//         // IBM Codepage 437
-//         constexpr uint16_t IBMPC_map[]{
-//             0x0000, 0x263a, 0x263b, 0x2665, 0x2666, 0x2663, 0x2660, 0x2022,
-//             0x25d8, 0x25cb, 0x25d9, 0x2642, 0x2640, 0x266a, 0x266b, 0x263c,
-//             0x25b6, 0x25c0, 0x2195, 0x203c, 0x00b6, 0x00a7, 0x25ac, 0x21a8,
-//             0x2191, 0x2193, 0x2192, 0x2190, 0x221f, 0x2194, 0x25b2, 0x25bc,
-//             0x0020, 0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
-//             0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
-//             0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
-//             0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
-//             0x0040, 0x0041, 0x0042, 0x0043, 0x0044, 0x0045, 0x0046, 0x0047,
-//             0x0048, 0x0049, 0x004a, 0x004b, 0x004c, 0x004d, 0x004e, 0x004f,
-//             0x0050, 0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057,
-//             0x0058, 0x0059, 0x005a, 0x005b, 0x005c, 0x005d, 0x005e, 0x005f,
-//             0x0060, 0x0061, 0x0062, 0x0063, 0x0064, 0x0065, 0x0066, 0x0067,
-//             0x0068, 0x0069, 0x006a, 0x006b, 0x006c, 0x006d, 0x006e, 0x006f,
-//             0x0070, 0x0071, 0x0072, 0x0073, 0x0074, 0x0075, 0x0076, 0x0077,
-//             0x0078, 0x0079, 0x007a, 0x007b, 0x007c, 0x007d, 0x007e, 0x2302,
-//             0x00c7, 0x00fc, 0x00e9, 0x00e2, 0x00e4, 0x00e0, 0x00e5, 0x00e7,
-//             0x00ea, 0x00eb, 0x00e8, 0x00ef, 0x00ee, 0x00ec, 0x00c4, 0x00c5,
-//             0x00c9, 0x00e6, 0x00c6, 0x00f4, 0x00f6, 0x00f2, 0x00fb, 0x00f9,
-//             0x00ff, 0x00d6, 0x00dc, 0x00a2, 0x00a3, 0x00a5, 0x20a7, 0x0192,
-//             0x00e1, 0x00ed, 0x00f3, 0x00fa, 0x00f1, 0x00d1, 0x00aa, 0x00ba,
-//             0x00bf, 0x2310, 0x00ac, 0x00bd, 0x00bc, 0x00a1, 0x00ab, 0x00bb,
-//             0x2591, 0x2592, 0x2593, 0x2502, 0x2524, 0x2561, 0x2562, 0x2556,
-//             0x2555, 0x2563, 0x2551, 0x2557, 0x255d, 0x255c, 0x255b, 0x2510,
-//             0x2514, 0x2534, 0x252c, 0x251c, 0x2500, 0x253c, 0x255e, 0x255f,
-//             0x255a, 0x2554, 0x2569, 0x2566, 0x2560, 0x2550, 0x256c, 0x2567,
-//             0x2568, 0x2564, 0x2565, 0x2559, 0x2558, 0x2552, 0x2553, 0x256b,
-//             0x256a, 0x2518, 0x250c, 0x2588, 0x2584, 0x258c, 0x2590, 0x2580,
-//             0x03b1, 0x00df, 0x0393, 0x03c0, 0x03a3, 0x03c3, 0x00b5, 0x03c4,
-//             0x03a6, 0x0398, 0x03a9, 0x03b4, 0x221e, 0x03c6, 0x03b5, 0x2229,
-//             0x2261, 0x00b1, 0x2265, 0x2264, 0x2320, 0x2321, 0x00f7, 0x2248,
-//             0x00b0, 0x2219, 0x00b7, 0x221a, 0x207f, 0x00b2, 0x25a0, 0x00a0,
-//         };
-//         static_assert(utils::size(IBMPC_map) == charset_map_size, "");
-//
-//
-//         // VAX42 character set.
-//         constexpr uint16_t VAX42_map[]{
-//             0x0000, 0x263a, 0x263b, 0x2665, 0x2666, 0x2663, 0x2660, 0x2022,
-//             0x25d8, 0x25cb, 0x25d9, 0x2642, 0x2640, 0x266a, 0x266b, 0x263c,
-//             0x25b6, 0x25c0, 0x2195, 0x203c, 0x00b6, 0x00a7, 0x25ac, 0x21a8,
-//             0x2191, 0x2193, 0x2192, 0x2190, 0x221f, 0x2194, 0x25b2, 0x25bc,
-//             0x0020, 0x043b, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
-//             0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
-//             0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
-//             0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x0435,
-//             0x0040, 0x0041, 0x0042, 0x0043, 0x0044, 0x0045, 0x0046, 0x0047,
-//             0x0048, 0x0049, 0x004a, 0x004b, 0x004c, 0x004d, 0x004e, 0x004f,
-//             0x0050, 0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057,
-//             0x0058, 0x0059, 0x005a, 0x005b, 0x005c, 0x005d, 0x005e, 0x005f,
-//             0x0060, 0x0441, 0x0062, 0x0063, 0x0064, 0x0065, 0x0066, 0x0067,
-//             0x0435, 0x0069, 0x006a, 0x006b, 0x006c, 0x006d, 0x006e, 0x043a,
-//             0x0070, 0x0071, 0x0442, 0x0073, 0x043b, 0x0435, 0x0076, 0x0077,
-//             0x0078, 0x0079, 0x007a, 0x007b, 0x007c, 0x007d, 0x007e, 0x2302,
-//             0x00c7, 0x00fc, 0x00e9, 0x00e2, 0x00e4, 0x00e0, 0x00e5, 0x00e7,
-//             0x00ea, 0x00eb, 0x00e8, 0x00ef, 0x00ee, 0x00ec, 0x00c4, 0x00c5,
-//             0x00c9, 0x00e6, 0x00c6, 0x00f4, 0x00f6, 0x00f2, 0x00fb, 0x00f9,
-//             0x00ff, 0x00d6, 0x00dc, 0x00a2, 0x00a3, 0x00a5, 0x20a7, 0x0192,
-//             0x00e1, 0x00ed, 0x00f3, 0x00fa, 0x00f1, 0x00d1, 0x00aa, 0x00ba,
-//             0x00bf, 0x2310, 0x00ac, 0x00bd, 0x00bc, 0x00a1, 0x00ab, 0x00bb,
-//             0x2591, 0x2592, 0x2593, 0x2502, 0x2524, 0x2561, 0x2562, 0x2556,
-//             0x2555, 0x2563, 0x2551, 0x2557, 0x255d, 0x255c, 0x255b, 0x2510,
-//             0x2514, 0x2534, 0x252c, 0x251c, 0x2500, 0x253c, 0x255e, 0x255f,
-//             0x255a, 0x2554, 0x2569, 0x2566, 0x2560, 0x2550, 0x256c, 0x2567,
-//             0x2568, 0x2564, 0x2565, 0x2559, 0x2558, 0x2552, 0x2553, 0x256b,
-//             0x256a, 0x2518, 0x250c, 0x2588, 0x2584, 0x258c, 0x2590, 0x2580,
-//             0x03b1, 0x00df, 0x0393, 0x03c0, 0x03a3, 0x03c3, 0x00b5, 0x03c4,
-//             0x03a6, 0x0398, 0x03a9, 0x03b4, 0x221e, 0x03c6, 0x03b5, 0x2229,
-//             0x2261, 0x00b1, 0x2265, 0x2264, 0x2320, 0x2321, 0x00f7, 0x2248,
-//             0x00b0, 0x2219, 0x00b7, 0x221a, 0x207f, 0x00b2, 0x25a0, 0x00a0
-//         };
-//         static_assert(utils::size(VAX42_map) == charset_map_size, "");
-//
-//
-// //         constexpr charset_map_type maps[] {
-// //             /*'B':*/ LAT1_map,
-// //             /*'0':*/ VT100_map,
-// //             /*'U':*/ IBMPC_map,
-// //             /*'V':*/ VAX42_map,
-// //         };
-//     }
-//
-//
-//     //"""
-//     //    pyte.control
-//     //    ~~~~~~~~~~~~
-//     //
-//     //    This module defines simple control sequences, recognized by
-//     //    :class:`~pyte.streams.Stream`, the set of codes here is for
-//     //    ``TERM=linux`` which is a superset of VT102.
-//     //
-//     //    :copyright: (c) 2011-2012 by Selectel.
-//     //    :copyright: (c) 2012-2016 by pyte authors and contributors,
-//     //                    see AUTHORS for details.
-//     //    :license: LGPL, see LICENSE for more details.
-//     //"""
-//
-//     enum class controls : uint8_t
-//     {
-//         // *Space*: Not suprisingly -- ``" "``.
-//         SP = ' ',
-//
-//         // *Null*: Does nothing.
-//         NUL = 0x00,
-//
-//         // *Bell*: Beeps.
-//         BEL = 0x07,
-//
-//         // *Backspace*: Backspace one column, but not past the begining of the
-//         // line.
-//         BS = 0x08,
-//
-//         // *Horizontal tab*: Move cursor to the next tab stop, or to the end
-//         // of the line if there is no earlier tab stop.
-//         HT = 0x09,
-//
-//         // *Linefeed*: Give a line feed, and, if :data:`pyte.modes.LNM` (new
-//         // line mode) is set also a carriage return.
-//         LF = '\n',
-//         // *Vertical tab*: Same as :data:`LF`.
-//         VT = 0x0b,
-//         // *Form feed*: Same as :data:`LF`.
-//         FF = 0x0c,
-//
-//         // *Carriage return*: Move cursor to left margin on current line.
-//         CR = '\r',
-//
-//         // *Shift out*: Activate G1 character set.
-//         SO = 0x0e,
-//
-//         // *Shift in*: Activate G0 character set.
-//         SI = 0x0f,
-//
-//         // *Cancel*: Interrupt escape sequence. If received during an escape or
-//         // control sequence, cancels the sequence and displays substitution
-//         // character.
-//         CAN = 0x18,
-//         // *Substitute*: Same as :data:`CAN`.
-//         SUB = 0x1a,
-//
-//         // *Escape*: Starts an escape sequence.
-//         ESC = 0x1b,
-//
-//         // *Delete*: Is ignored.
-//         DEL = 0x7f,
-//
-//         // *Control sequence introducer*: An equivalent for ``ESC [``.
-//         CSI = 0x9b,
-//
-//         // *String terminator*.
-//         ST = 0x9c,
-//
-//         // *Operating system command*.
-//         OSC = 0x9d,
-//     };
-//
-//
-//     //"""
-//     //    pyte.escape
-//     //    ~~~~~~~~~~~
-//     //
-//     //    This module defines both CSI and non-CSI escape sequences, recognized
-//     //    by :class:`~pyte.streams.Stream` and subclasses.
-//     //
-//     //    :copyright: (c) 2011-2012 by Selectel.
-//     //    :copyright: (c) 2012-2016 by pyte authors and contributors,
-//     //                    see AUTHORS for details.
-//     //    :license: LGPL, see LICENSE for more details.
-//     //"""
-//
-//     enum class escapes : uint8_t
-//     {
-//         // *Reset*.
-//         RIS = 'c',
-//
-//         // *Index*: Move cursor down one line in same column. If the cursor is
-//         // at the bottom margin, the screen performs a scroll-up.
-//         IND = 'D',
-//
-//         // *Next line*: Same as :data:`pyte.control.LF`.
-//         NEL = 'E',
-//
-//         // Tabulation set: Set a horizontal tab stop at cursor position.
-//         HTS = 'H',
-//
-//         // *Reverse index*: Move cursor up one line in same column. If the
-//         // cursor is at the top margin, the screen performs a scroll-down.
-//         RI = 'M',
-//
-//         // Save cursor: Save cursor position, character attribute (graphic
-//         // rendition), character set, and origin mode selection (see
-//         // :data:`DECRC`).
-//         DECSC = '7',
-//
-//         // *Restore cursor*: Restore previously saved cursor position, character
-//         // attribute (graphic rendition), character set, and origin mode
-//         // selection. If none were saved, move cursor to home position.
-//         DECRC = '8',
-//
-//         // "Sharp" escape sequences.
-//         // -------------------------
-//
-//         // *Alignment display*: Fill screen with uppercase E's for testing
-//         // screen focus and alignment.
-//         DECALN = '8',
-//
-//
-//         // ECMA-48 CSI sequences.
-//         // ---------------------
-//
-//         // *Insert character*: Insert the indicated # of blank characters.
-//         ICH = '@',
-//
-//         // *Cursor up*: Move cursor up the indicated # of lines in same column.
-//         // Cursor stops at top margin.
-//         CUU = 'A',
-//
-//         // *Cursor down*: Move cursor down the indicated # of lines in same
-//         // column. Cursor stops at bottom margin.
-//         CUD = 'B',
-//
-//         // *Cursor forward*: Move cursor right the indicated # of columns.
-//         // Cursor stops at right margin.
-//         CUF = 'C',
-//
-//         // *Cursor back*: Move cursor left the indicated # of columns. Cursor
-//         // stops at left margin.
-//         CUB = 'D',
-//
-//         // *Cursor next line*: Move cursor down the indicated # of lines to
-//         // column 1.
-//         CNL = 'E',
-//
-//         // *Cursor previous line*: Move cursor up the indicated # of lines to
-//         // column 1.
-//         CPL = 'F',
-//
-//         // *Cursor horizontal align*: Move cursor to the indicated column in
-//         // current line.
-//         CHA = 'G',
-//
-//         // *Cursor position*: Move cursor to the indicated line, column (origin
-//         // at ``1, 1``).
-//         CUP = 'H',
-//
-//         // *Erase data* (default: from cursor to end of line).
-//         ED = 'J',
-//
-//         // *Erase in line* (default: from cursor to end of line).
-//         EL = 'K',
-//
-//         // *Insert line*: Insert the indicated # of blank lines, starting from
-//         // the current line. Lines displayed below cursor move down. Lines moved
-//         // past the bottom margin are lost.
-//         IL = 'L',
-//
-//         // *Delete line*: Delete the indicated # of lines, starting from the
-//         // current line. As lines are deleted, lines displayed below cursor
-//         // move up. Lines added to bottom of screen have spaces with same
-//         // character attributes as last line move up.
-//         DL = 'M',
-//
-//         // *Delete character*: Delete the indicated # of characters on the
-//         // current line. When character is deleted, all characters to the right
-//         // of cursor move left.
-//         DCH = 'P',
-//
-//         // *Erase character*: Erase the indicated # of characters on the
-//         // current line.
-//         ECH = 'X',
-//
-//         // *Horizontal position relative*: Same as :data:`CUF`.
-//         HPR = 'a',
-//
-//         // *Device Attributes*.
-//         DA = 'c',
-//
-//         // *Vertical position adjust*: Move cursor to the indicated line,
-//         // current column.
-//         VPA = 'd',
-//
-//         // *Vertical position relative*: Same as :data:`CUD`.
-//         VPR = 'e',
-//
-//         // *Horizontal / Vertical position*: Same as :data:`CUP`.
-//         HVP = 'f',
-//
-//         // *Tabulation clear*: Clears a horizontal tab stop at cursor position.
-//         TBC = 'g',
-//
-//         // *Set mode*.
-//         SM = 'h',
-//
-//         // *Reset mode*.
-//         RM = 'l',
-//
-//         // *Select graphics rendition*: The terminal can display the following
-//         // character attributes that change the character display without
-//         // changing the character (see :mod:`pyte.graphics`).
-//         SGR = 'm',
-//
-//         // *Device status report*.
-//         DSR = 'n',
-//
-//         // *Select top and bottom margins*: Selects margins, defining the
-//         // scrolling region; parameters are top and bottom line. If called
-//         // without any arguments, whole screen is used.
-//         DECSTBM = 'r',
-//
-//         // *Horizontal position adjust*: Same as :data:`CHA`.
-//         HPA = '\'',
-//     };
-//
-//     namespace graphics
-//     {
-//         enum class text : uint8_t
-//         {
-//             add_bold = 1,
-//             add_italics = 3,
-//             add_underscore = 4,
-//             add_reverse = 7,
-//             add_strikethrough = 9,
-//             sub_bold = 22,
-//             sub_italics = 23,
-//             sub_underscore = 24,
-//             sub_reverse = 27,
-//             sub_strikethrough = 29,
-//         };
-//
-//         enum class fg_ansi : uint8_t
-//         {
-//             black = 30,
-//             red = 31,
-//             green = 32,
-//             brown = 33,
-//             blue = 34,
-//             magenta = 35,
-//             cyan = 36,
-//             white = 37,
-//             default_ = 39, // white
-//         };
-//
-//         enum class fg_aixterm : uint8_t
-//         {
-//             black = 90,
-//             red = 91,
-//             green = 92,
-//             brown = 93,
-//             blue = 94,
-//             magenta = 95,
-//             cyan = 96,
-//             white = 97,
-//         };
-//
-//         enum class bg_ansi : uint8_t
-//         {
-//             black = 40,
-//             red = 41,
-//             green = 42,
-//             brown = 43,
-//             blue = 44,
-//             magenta = 45,
-//             cyan = 46,
-//             white = 47,
-//             default_ = 49, // white
-//         };
-//
-//         enum class bg_aixterm : uint8_t
-//         {
-//             black = 100,
-//             red = 101,
-//             green = 102,
-//             brown = 103,
-//             blue = 104,
-//             magenta = 105,
-//             cyan = 106,
-//             white = 107,
-//         };
-//
-//         // SGR code for foreground in 256 or True color mode.
-//         constexpr uint8_t fg_256 = 38;
-//         // SGR code for background in 256 or True color mode.
-//         constexpr uint8_t bg_256 = 48;
-//
-//         // A table of 256 foreground or background colors.
-//         // The following code is part of the Pygments project (BSD licensed).
-//         //constexpr uint8_t fg_bg_256[][3] {
-//         //    {0x00, 0x00, 0x00},  // 0
-//         //    {0xcd, 0x00, 0x00},  // 1
-//         //    {0x00, 0xcd, 0x00},  // 2
-//         //    {0xcd, 0xcd, 0x00},  // 3
-//         //    {0x00, 0x00, 0xee},  // 4
-//         //    {0xcd, 0x00, 0xcd},  // 5
-//         //    {0x00, 0xcd, 0xcd},  // 6
-//         //    {0xe5, 0xe5, 0xe5},  // 7
-//         //    {0x7f, 0x7f, 0x7f},  // 8
-//         //    {0xff, 0x00, 0x00},  // 9
-//         //    {0x00, 0xff, 0x00},  // 10
-//         //    {0xff, 0xff, 0x00},  // 11
-//         //    {0x5c, 0x5c, 0xff},  // 12
-//         //    {0xff, 0x00, 0xff},  // 13
-//         //    {0x00, 0xff, 0xff},  // 14
-//         //    {0xff, 0xff, 0xff},  // 15
-//         //};
-//         //
-//         //// colors 16..232: the 6x6x6 color cube
-//         //uint8_t valuerange[] = {0x00, 0x5f, 0x87, 0xaf, 0xd7, 0xff};
-//         //
-//         //# colors 16..232: the 6x6x6 color cube
-//         //valuerange = (0x00, 0x5f, 0x87, 0xaf, 0xd7, 0xff)
-//         //
-//         //for i in range(217):
-//         //    r = valuerange[(i // 36) % 6]
-//         //    g = valuerange[(i // 6) % 6]
-//         //    b = valuerange[i % 6]
-//         //    FG_BG_256.append((r, g, b))
-//         //
-//         //# colors 233..253: grayscale
-//         //for i in range(1, 22):
-//         //    v = 8 + i * 10
-//         //    FG_BG_256.append((v, v, v))
-//         //
-//         //FG_BG_256 = ["{0:02x}{1:02x}{2:02x}".format(r, g, b) for r, g, b in FG_BG_256]
-//     }
-//
-//
-//     //"""
-//     //    pyte.modes
-//     //    ~~~~~~~~~~
-//     //
-//     //    This module defines terminal mode switches, used by
-//     //    :class:`~pyte.screens.Screen`. There're two types of terminal modes:
-//     //
-//     //    * `non-private` which should be set with ``ESC [ N h``, where ``N``
-//     //    is an integer, representing mode being set; and
-//     //    * `private` which should be set with ``ESC [ ? N h``.
-//     //
-//     //    The latter are shifted 5 times to the right, to be easily
-//     //    distinguishable from the former ones; for example `Origin Mode`
-//     //    -- :data:`DECOM` is ``192`` not ``6``.
-//     //
-//     //    >>> DECOM
-//     //    192
-//     //
-//     //    :copyright: (c) 2011-2012 by Selectel.
-//     //    :copyright: (c) 2012-2016 by pyte authors and contributors,
-//     //                    see AUTHORS for details.
-//     //    :license: LGPL, see LICENSE for more details.
-//     //"""
-//
-//     enum class mode_t : uint16_t
-//     {
-//         // *Line Feed/New Line Mode*: When enabled, causes a received
-//         // :data:`~pyte.control.LF`, :data:`pyte.control.FF`, or
-//         // :data:`~pyte.control.VT` to move the cursor to the first column of
-//         // the next line.
-//         LNM = 20,
-//
-//         // *Insert/Replace Mode*: When enabled, new display characters move
-//         // old display characters to the right. Characters moved past the
-//         // right margin are lost. Otherwise, new display characters replace
-//         // old display characters at the cursor position.
-//         IRM = 4,
-//
-//
-//         // Private modes.
-//         // ..............
-//
-//         // *Text Cursor Enable Mode*: determines if the text cursor is
-//         // visible.
-//         DECTCEM = 25 << 5,
-//
-//         // *Screen Mode*: toggles screen-wide reverse-video mode.
-//         DECSCNM = 5 << 5,
-//
-//         // *Origin Mode*: allows cursor addressing relative to a user-defined
-//         // origin. This mode resets when the terminal is powered up or reset.
-//         // It does not affect the erase in display (ED) function.
-//         DECOM = 6 << 5,
-//
-//         // *Auto Wrap Mode*: selects where received graphic characters appear
-//         // when the cursor is at the right margin.
-//         DECAWM = 7 << 5,
-//
-//         // *Column Mode*: selects the number of columns per line (80 or 132)
-//         // on the screen.
-//         DECCOLM = 3 << 5,
-//
-//         origin = DECOM,
-//     };
-//
-//     struct Margins
-//     {
-//         int top;
-//         int bottom;
-//     };
-//
-//     struct SavePoint
-//     {
-// //     "cursor",
-// //     "g0_charset",
-// //     "g1_charset",
-// //     "charset",
-// //     "use_utf8",
-// //     "origin",
-// //     "wrap"
-//     };
-//
-//     struct Char
-//     {
-//         uint8_t data; // TODO u32 ?
-//         uint32_t fg;
-//         uint32_t bg;
-//         // TODO bitset
-//         bool bold;
-//         bool itealics;
-//         bool underscore;
-//         bool strikethrough;
-//         bool reverse;
-//     };
-//
-//     struct Cursor
-//     {
-//         int x;
-//         int y;
-//         Char attrs;
-//         bool hidden;
-//     };
-//
-//     bool operator == (Cursor const & c1, Cursor const & c2)
-//     { return c1.x == c2.x && c1.y == c2.y; }
-//
-//     struct noncopyable
-//     {
-//         noncopyable() = default;
-//         noncopyable(noncopyable &&) = delete;
-//         noncopyable(noncopyable const &) = delete;
-//         noncopyable & operator = (noncopyable &&) = delete;
-//         noncopyable & operator = (noncopyable const &) = delete;
-//     };
-//
-//     struct Screen
-//     {
-//         struct ScreenBuffer : noncopyable
-//         {
-//             ScreenBuffer(int lines, int columns)
-//             : lines_(lines)
-//             , columns_(columns)
-//             , top_line_(0)
-//             , data_(new Char[lines * columns]{})
-//             {}
-//
-//             ~ScreenBuffer()
-//             { delete[] data_; }
-//
-//             int lines_;
-//             int columns_;
-//             int top_line_;
-//             Char * data_; // TODO vector ?
-//         } buffer_;
-//         Margins margins_;
-//         SavePoint save_point_;
-//         Cursor cursor_;
-//
-//         // bitset mode
-//         struct Modes
-//         {
-//             Modes() = default;
-//
-//             bool operator[](mode_t m) const
-//             { return bool(m_ & utils::underlying(m)); }
-//
-//             int m_ = 0;
-//         } modes_;
-//
-//         Screen(int lines, int columns)
-//         : buffer_(lines, columns)
-//         , margins_{0, lines - 1}
-//         , cursor_{}
-//         , modes_{}
-//         {}
-//
-//         int top_margin() const { return margins_.top; }
-//         int bottom_margin() const { return margins_.bottom; }
-//
-//         /*
-//         CUU – Cursor Up – Host to VT100 and VT100 to Host
-//
-//         ESC [ Pn A        default value: 1
-//
-//         Moves the active position upward without altering the column
-//         position. The number of lines moved is determined by the parameter. A
-//         parameter value of zero or one moves the active position one line
-//         upward. A parameter value of n moves the active position n lines
-//         upward. If an attempt is made to move the cursor above the top margin,
-//         the cursor stops at the top margin. Editor Function
-//         */
-//         void cursor_up(int n)
-//         {
-//             const int stop = cursor_.y < margins_.top ? 0 : margins_.top;
-//             cursor_.x = std::min(buffer_.columns_ - 1, cursor_.x); // nowrap!
-//             cursor_.y = std::max(stop, cursor_.y - n);
-//         }
-//
-//         /*
-//         CUD – Cursor Down – Host to VT100 and VT100 to Host
-//
-//         ESC [ Pn B        default value: 1
-//
-//         The CUD sequence moves the active position downward without altering
-//         the column position. The number of lines moved is determined by the
-//         parameter. If the parameter value is zero or one, the active position
-//         is moved one line downward. If the parameter value is n, the active
-//         position is moved n lines downward. In an attempt is made to move the
-//         cursor below the bottom margin, the cursor stops at the bottom
-//         margin. Editor Function
-//         */
-//         void cursor_down(int n)
-//         {
-//             const int stop = cursor_.y > margins_.bottom ? buffer_.lines_ - 1 : margins_.bottom;
-//             cursor_.x = std::min(buffer_.columns_ - 1, cursor_.x); // nowrap!
-//             cursor_.y = std::min(stop, cursor_.y + n);
-//         }
-//
-//         /*
-//         CUB – Cursor Backward – Host to VT100 and VT100 to Host
-//
-//         ESC [ Pn D        default value: 1
-//
-//         The CUB sequence moves the active position to the left. The distance
-//         moved is determined by the parameter. If the parameter value is zero
-//         or one, the active position is moved one position to the left. If the
-//         parameter value is n, the active position is moved n positions to the
-//         left. If an attempt is made to move the cursor to the left of the left
-//         margin, the cursor stops at the left margin. Editor Function
-//         */
-//         void cursor_left(int n)
-//         {
-//             cursor_.x = std::min(buffer_.columns_ - 1, cursor_.x); // nowrap!
-//             cursor_.x = std::max(0, cursor_.x - n);
-//         }
-//
-//         /*
-//         CUF – Cursor Forward – Host to VT100 and VT100 to Host
-//
-//         ESC [ Pn C        default value: 1
-//
-//         The CUF sequence moves the active position to the right. The distance
-//         moved is determined by the parameter. A parameter value of zero or one
-//         moves the active position one position to the right. A parameter value
-//         of n moves the active position n positions to the right. If an attempt
-//         is made to move the cursor to the right of the right margin, the
-//         cursor stops at the right margin. Editor Function
-//         */
-//         void cursor_right(int n)
-//         {
-//             cursor_.x = std::min(buffer_.columns_ - 1, cursor_.x + n);
-//         }
-//
-//         /*
-//         DECSTBM – Set Top and Bottom Margins (DEC Private)
-//
-//         ESC [ Pn; Pn r
-//
-//         This sequence sets the top and bottom margins to define the scrolling
-//         region. The first parameter is the line number of the first line in
-//         the scrolling region; the second parameter is the line number of the
-//         bottom line in the scrolling region. Default is the entire screen (no
-//         margins). The minimum size of the scrolling region allowed is two
-//         lines, i.e., the top margin must be less than the bottom margin. The
-//         cursor is placed in the home position (see Origin Mode DECOM).
-//
-//         */
-//         void set_margins(int top, int bot)
-//         {
-//             if (top == 0) top = 1;      // Default
-//             if (bot == 0) bot = buffer_.lines_;  // Default
-//             top = top - 1;              // Adjust to internal lineno
-//             bot = bot - 1;              // Adjust to internal lineno
-//             if (!(0 <= top && top < bot && bot < buffer_.lines_)) {
-//                 //Debug()<<" setRegion("<<top<<","<<bot<<") : bad range.";
-//                 return;                   // Default error action: ignore
-//             }
-//             margins_.top = top;
-//             margins_.bottom = bot;
-//             cursor_.x = 0;
-//             cursor_.y = modes_[mode_t::origin] ? top : 0;
-//         }
-//
-//
-//         /*
-//         IND – Index
-//
-//         ESC D
-//
-//         This sequence causes the active position to move downward one line
-//         without changing the column position. If the active position is at the
-//         bottom margin, a scroll up is performed. Format Effector
-//         */
-//         void index()
-//         {
-//             if (_cuY == _bottomMargin) {
-//                 scroll_up(1);
-//             }
-//             else if (_cuY < _lines - 1) {
-//                 _cuY += 1;
-//             }
-//         }
-//
-//         /*
-//         RI – Reverse Index
-//
-//         ESC M
-//
-//         Move the active position to the same horizontal position on the
-//         preceding line. If the active position is at the top margin, a scroll
-//         down is performed. Format Effector
-//         */
-//         void reverse_index()
-//         {
-//             if (_cuY == _topMargin) {
-//                 scrollDown(_topMargin, 1);
-//             }
-//             else if (_cuY > 0) {
-//                 _cuY -= 1;
-//             }
-//         }
-//
-//         /*
-//         NEL – Next Line
-//
-//         ESC E
-//
-//         This sequence causes the active position to move to the first position
-//         on the next line downward. If the active position is at the bottom
-//         margin, a scroll up is performed. Format Effector
-//         */
-//         void next_line()
-//         {
-//             toStartOfLine();
-//             index();
-//         }
-//
-//         void scroll_up(int from, int n)
-//         {
-//             if (n <= 0 || from + n > _bottomMargin) return;
-//
-//             _scrolledLines -= n;
-//             _lastScrolledRegion = Rect(0, _topMargin, _columns - 1, (_bottomMargin - _topMargin));
-//
-//             //FIXME: make sure `topMargin', `bottomMargin', `from', `n' is in bounds.
-//             moveImage(loc(0, from), loc(0, from + n), loc(_columns - 1, _bottomMargin));
-//             clearImage(loc(0, _bottomMargin - n + 1), loc(_columns - 1, _bottomMargin), ' ');
-//         }
-//
-//     };
-// }
-
 #include <vector>
 #include <string>
+#include <algorithm>
 
 #include <cassert>
 #include <cstring> // memset
 
 #include "utils/rect.hpp"
 #include "utils/sugar/make_unique.hpp"
+#include "utils/sugar/array_view.hpp"
+#include "utils/sugar/underlying_cast.hpp"
+#include "utils/sugar/enum_flags_operators.hpp"
 #include "cxx/diagnostic.hpp"
 
-#define CXX_UNUSED(x) (void)x // [[maybe_unused]]
+#include "rvt/character.hpp"
 
-#define REDEMPTION_DIAGNOSTIC_IGNORE_CONVERSION REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wconversion")
+//#define CXX_UNUSED(x) (void)x // [[maybe_unused]]
 
-namespace vt100
+// #define REDEMPTION_DIAGNOSTIC_IGNORE_CONVERSION REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wconversion")
+
+namespace rvt
 {
-
-// std::clamp (c++17)
-template<class T>
-constexpr inline const T &
-clamp(const T & min, const T & val, const T & max)
-{ return std::max(min, std::min(max, val)); }
-
-struct Color
-{
-    constexpr Color() noexcept = default;
-
-    constexpr Color(uint8_t r, uint8_t g, uint8_t b) noexcept
-    : r(r)
-    , g(g)
-    , b(b)
-    {}
-
-    constexpr uint8_t red() const noexcept { return r; }
-    constexpr uint8_t green() const noexcept { return g; }
-    constexpr uint8_t blue() const noexcept { return b; }
-
-private:
-    // TODO uin32_t ?
-    uint8_t r = 0;
-    uint8_t g = 0;
-    uint8_t b = 0;
-};
-
-constexpr bool operator == (Color const & c1, Color const & c2) noexcept
-{
-    return c1.red() == c2.red()
-        && c1.green() == c2.green()
-        && c1.blue() == c2.blue();
-}
-
-constexpr bool operator != (Color const & c1, Color const & c2) noexcept
-{ return !operator==(c1, c2); }
-
-/**
- * An entry in a terminal display's color palette.
- *
- * A color palette is an array of 16 ColorEntry instances which map
- * system color indexes (from 0 to 15) into actual colors.
- *
- * Each entry can be set as bold, in which case any text
- * drawn using the color should be drawn in bold.
- */
-class ColorEntry
-{
-public:
-    /** Specifies the weight to use when drawing text with this color. */
-    enum FontWeight {
-        /** Always draw text in this color with a bold weight. */
-        Bold,
-        /** Always draw text in this color with a normal weight. */
-        Normal,
-        /**
-         * Use the current font weight set by the terminal application.
-         * This is the default behavior.
-         */
-        UseCurrentFormat
-    };
-
-    /**
-     * Constructs a new color palette entry.
-     *
-     * @param c The color value for this entry.
-     * @param weight Specifies the font weight to use when drawing text with this color.
-     */
-    explicit ColorEntry(Color c,  FontWeight weight = UseCurrentFormat)
-        : color(c), fontWeight(weight) {}
-
-    /**
-     * Constructs a new color palette entry using black color and font weight set to
-     * use current format.
-     */
-    ColorEntry() : color(Color(0x00, 0x00, 0x00)), fontWeight(UseCurrentFormat) {}
-
-    /**
-     * Sets the color and boldness of this color to those of @p rhs.
-     */
-    void operator=(const ColorEntry& rhs) {
-        color = rhs.color;
-        fontWeight = rhs.fontWeight;
-    }
-
-    /** The color value of this entry for display. */
-    Color color;
-
-    /**
-     * Specifies the font weight to use when drawing text with this color.
-     * This is not applicable when the color is used to draw a character's background.
-     */
-    FontWeight fontWeight;
-
-    /**
-     * Compares two color entries and returns true if they represent the same
-     * color and font weight.
-     */
-    friend bool operator == (const ColorEntry& a, const ColorEntry& b);
-    /**
-     * Compares two color entries and returns true if they represent different
-     * color and font weight.
-     */
-    friend bool operator != (const ColorEntry& a, const ColorEntry& b);
-};
-
-inline bool operator == (const ColorEntry& a, const ColorEntry& b)
-{
-    return  a.color == b.color &&
-            a.fontWeight == b.fontWeight;
-}
-
-inline bool operator != (const ColorEntry& a, const ColorEntry& b)
-{
-    return !operator==(a, b);
-}
-
-// Attributed Character Representations ///////////////////////////////
-
-// Colors
-
-constexpr int BASE_COLORS = 2+8;
-constexpr int INTENSITIES = 2;
-constexpr int TABLE_COLORS = INTENSITIES * BASE_COLORS;
-
-constexpr int DEFAULT_FORE_COLOR = 0;
-constexpr int DEFAULT_BACK_COLOR = 1;
-
-/* CharacterColor is a union of the various color spaces.
-
-   Assignment is as follows:
-
-   Type  - Space        - Values
-
-   0     - Undefined   - u:  0,      v:0        w:0
-   1     - Default     - u:  0..1    v:intense  w:0
-   2     - System      - u:  0..7    v:intense  w:0
-   3     - Index(256)  - u: 16..255  v:0        w:0
-   4     - RGB         - u:  0..255  v:0..255   w:0..255
-
-   Default color space has two separate colors, namely
-   default foreground and default background color.
-*/
-
-enum class ColorSpace : uint8_t
-{
-    Undefined   = 0,
-    Default     = 1,
-    System      = 2,
-    Index256    = 3,
-    RGB         = 4,
-};
-
-/**
- * Describes the color of a single character in the terminal.
- */
-class CharacterColor
-{
-    friend class Character;
-
-public:
-    /** Constructs a new CharacterColor whose color and color space are undefined. */
-    CharacterColor()
-    : _colorSpace(ColorSpace::Undefined)
-    {}
-
-    /**
-     * Constructs a new CharacterColor using the specified @p colorSpace and with
-     * color value @p co
-     *
-     * The meaning of @p co depends on the @p colorSpace used.
-     *
-     * TODO : Document how @p co relates to @p colorSpace
-     *
-     * TODO : Add documentation about available color spaces.
-     */
-    CharacterColor(ColorSpace colorSpace, int co)
-    : _colorSpace(colorSpace)
+    enum class LineProperty : uint8_t
     {
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_IGNORE_CONVERSION
-        switch (colorSpace) {
-        case ColorSpace::Default:
-            _u = co & 1;
-            break;
-        case ColorSpace::System:
-            _u = co & 7;
-            _v = (co >> 3) & 1;
-            break;
-        case ColorSpace::Index256:
-            _u = co & 255;
-            break;
-        case ColorSpace::RGB:
-            _u = co >> 16;
-            _v = co >> 8;
-            _w = co;
-            break;
-        case ColorSpace::Undefined:
-            break;
-        }
-        REDEMPTION_DIAGNOSTIC_POP
-    }
-
-    /**
-     * Returns true if this character color entry is valid.
-     */
-    bool isValid() const {
-        return _colorSpace != ColorSpace::Undefined;
-    }
-
-    /**
-     * Set this color as an intensive system color.
-     *
-     * This is only applicable if the color is using the ColorSpace::Default or ColorSpace::System
-     * color spaces.
-     */
-    void setIntensive();
-
-    /**
-     * Returns the color within the specified color @p palette
-     *
-     * The @p palette is only used if this color is one of the 16 system colors, otherwise
-     * it is ignored.
-     */
-    Color color(const ColorEntry* palette) const;
-
-    /**
-     * Compares two colors and returns true if they represent the same color value and
-     * use the same color space.
-     */
-    friend bool operator == (const CharacterColor& a, const CharacterColor& b);
-    /**
-     * Compares two colors and returns true if they represent different color values
-     * or use different color spaces.
-     */
-    friend bool operator != (const CharacterColor& a, const CharacterColor& b);
-
-private:
-    ColorSpace _colorSpace;
-
-    // bytes storing the character color
-    uint8_t _u = 0;
-    uint8_t _v = 0;
-    uint8_t _w = 0;
-};
-
-inline bool operator == (const CharacterColor& a, const CharacterColor& b)
-{
-    return     a._colorSpace == b._colorSpace &&
-               a._u == b._u &&
-               a._v == b._v &&
-               a._w == b._w;
-}
-inline bool operator != (const CharacterColor& a, const CharacterColor& b)
-{
-    return !operator==(a, b);
-}
-
-inline const Color color256(uint8_t u, const ColorEntry* base)
-{
-    REDEMPTION_DIAGNOSTIC_PUSH
-    REDEMPTION_DIAGNOSTIC_IGNORE_CONVERSION
-    //   0.. 16: system colors
-    if (u < 8) {
-        return base[u + 2].color;
-    }
-    u -= 8;
-    if (u < 8) {
-        return base[u + 2 + BASE_COLORS].color;
-    }
-    u -= 8;
-
-    //  16..231: 6x6x6 rgb color cube
-    if (u < 216) {
-        return Color(((u / 36) % 6) ? (40 * ((u / 36) % 6) + 55) : 0,
-                     ((u / 6) % 6) ? (40 * ((u / 6) % 6) + 55) : 0,
-                     ((u / 1) % 6) ? (40 * ((u / 1) % 6) + 55) : 0);
-    }
-    u -= 216;
-
-    // 232..255: gray, leaving out black and white
-    uint8_t gray = u * 10 + 8;
-    REDEMPTION_DIAGNOSTIC_POP
-
-    return Color(gray, gray, gray);
-}
-
-inline Color CharacterColor::color(const ColorEntry* base) const
-{
-    switch (_colorSpace) {
-    case ColorSpace::Default:
-        return base[_u + 0 + (_v ? BASE_COLORS : 0)].color;
-    case ColorSpace::System:
-        return base[_u + 2 + (_v ? BASE_COLORS : 0)].color;
-    case ColorSpace::Index256:
-        return color256(_u, base);
-    case ColorSpace::RGB:
-        return Color(_u, _v, _w);
-    case ColorSpace::Undefined:
-        return Color();
-    }
-
-    assert(false); // invalid color space
-
-    return Color();
-}
-
-inline void CharacterColor::setIntensive()
-{
-    if (_colorSpace == ColorSpace::System || _colorSpace == ColorSpace::Default) {
-        _v = 1;
-    }
-}
-
-namespace detail_
-{
-    template<bool>
-    struct enable_if_impl
-    {
-        template<class T> using type = T;
+        Default      = 0,
+        Wrapped      = (1 << 0),
+        DoubleWidth  = (1 << 1),
+        DoubleHeight = (1 << 2),
     };
-
-    template<>
-    struct enable_if_impl<false>;
 }
-
-template<bool v, class R = void>
-using enable_if = typename detail_::enable_if_impl<v>::template type<R>;
-
-template<class V, class R = void>
-using enable_if_c = enable_if<V::value, R>;
-
-template<class T>
-struct is_enum_flags : std::false_type
-{};
-
-template<class T>
-using enable_if_enum_flags = enable_if_c<is_enum_flags<T>, T>;
-
-template<class T>
-using underlying_type = typename std::underlying_type<T>::type;
-
-template<class T>
-constexpr
-underlying_type<T>
-underlying_cast(T x) noexcept
-{ return static_cast<underlying_type<T>>(x); }
-
-template<class T>
-constexpr
-enable_if_enum_flags<T>
-operator ~ (T x) noexcept
-{ return T(~underlying_cast(x)); }
-
-template<class T>
-constexpr
-enable_if_enum_flags<T>
-operator & (T x, T y) noexcept
-{ return T(underlying_cast(x) & underlying_cast(y)); }
-
-template<class T>
-constexpr
-enable_if_enum_flags<T>
-operator | (T x, T y) noexcept
-{ return T(underlying_cast(x) | underlying_cast(y)); }
-
-template<class T>
-// constexpr c++14
-enable_if_enum_flags<T> &
-operator &= (T & x, T y) noexcept
-{ return x = T(underlying_cast(x) & underlying_cast(y)); }
-
-template<class T>
-// constexpr c++14
-enable_if_enum_flags<T> &
-operator |= (T & x, T y) noexcept
-{ return x = T(underlying_cast(x) | underlying_cast(y)); }
+template<> struct is_enum_flags<rvt::LineProperty> : std::true_type {};
 
 
-enum class LineProperty : uint8_t
+namespace rvt
 {
-    Default      = 0,
-    Wrapped      = (1 << 0),
-    DoubleWidth  = (1 << 1),
-    DoubleHeight = (1 << 2),
-};
-
-template<> struct is_enum_flags<LineProperty> : std::true_type {};
-
-enum class Rendition : uint8_t
-{
-    Default       = 0,
-    Bold          = (1 << 0),
-    Blink         = (1 << 1),
-    Underline     = (1 << 2),
-    Reverse       = (1 << 3), // Screen only
-    //Intensive     = (1 << 3), // Widget only
-    Italic        = (1 << 4),
-    Cursor        = (1 << 5),
-    ExtendedChar  = (1 << 6),
-};
-
-template<> struct is_enum_flags<Rendition> : std::true_type {};
-
-
-/**
- * Unicode character in the range of U+2500 ~ U+257F are known as line
- * characters, or box-drawing characters. Currently, konsole draws those
- * characters itself, instead of using the glyph provided by the font.
- * Unfortunately, the triple and quadruple dash lines (┄┅┆┇┈┉┊┋) are too
- * detailed too be drawn cleanly at normal font scales without anti
- * -aliasing, so those are drawn as regular characters.
- */
-inline bool isSupportedLineChar(uint16_t codePoint)
-{
-    return (codePoint & 0xFF80) == 0x2500 // Unicode block: Mathematical Symbols - Box Drawing
-           && !(0x2504 <= codePoint && codePoint <= 0x250B); // Triple and quadruple dash range
-}
-
-/**
- * A single character in the terminal which consists of a unicode character
- * value, foreground and background colors and a set of rendition attributes
- * which specify how it should be drawn.
- */
-class Character
-{
-public:
-    /**
-     * Constructs a new character.
-     *
-     * @param _c The unicode character value of this character.
-     * @param _f The foreground color used to draw the character.
-     * @param _b The color used to draw the character's background.
-     * @param _r A set of rendition flags which specify how this character
-     *           is to be drawn.
-     * @param _real Indicate whether this character really exists, or exists
-     *              simply as place holder.
-     */
-    explicit inline Character(uint16_t _c = ' ',
-                              CharacterColor  _f = CharacterColor(ColorSpace::Default, DEFAULT_FORE_COLOR),
-                              CharacterColor  _b = CharacterColor(ColorSpace::Default, DEFAULT_BACK_COLOR),
-                              Rendition  _r = Rendition::Default,
-                              bool _real = true)
-        : character(_c)
-        , rendition(_r)
-        , foregroundColor(_f)
-        , backgroundColor(_b)
-        , isRealCharacter(_real) { }
-
-    /** The unicode character value for this character.
-     *
-     * if Rendition::ExtendedChar is set, character is a hash code which can be used to
-     * look up the unicode character sequence in the ExtendedCharTable used to
-     * create the sequence.
-     */
-    uint16_t character;
-
-    /** A combination of RENDITION flags which specify options for drawing the character. */
-    Rendition rendition;
-
-    /** The foreground color used to draw this character. */
-    CharacterColor  foregroundColor;
-
-    /** The color used to draw this character's background. */
-    CharacterColor  backgroundColor;
-
-    /** Indicate whether this character really exists, or exists simply as place holder.
-     *
-     *  TODO: this boolean filed can be further improved to become a enum filed, which
-     *  indicates different roles:
-     *
-     *    RealCharacter: a character which really exists
-     *    PlaceHolderCharacter: a character which exists as place holder
-     *    TabStopCharacter: a special place holder for HT("\t")
-     */
-    bool isRealCharacter;
-
-    /**
-     * Returns true if this character should always be drawn in bold when
-     * it is drawn with the specified @p palette, independent of whether
-     * or not the character has the Rendition::Bold rendition flag.
-     */
-    ColorEntry::FontWeight fontWeight(const ColorEntry* base) const;
-
-    /**
-     * returns true if the format (color, rendition flag) of the compared characters is equal
-     */
-    bool equalsFormat(const Character& other) const;
-
-    /**
-     * Compares two characters and returns true if they have the same unicode character value,
-     * rendition and colors.
-     */
-    friend bool operator == (const Character& a, const Character& b);
-
-    /**
-     * Compares two characters and returns true if they have different unicode character values,
-     * renditions or colors.
-     */
-    friend bool operator != (const Character& a, const Character& b);
-
-    inline bool isLineChar() const {
-        if (bool(rendition & Rendition::ExtendedChar)) {
-            return false;
-        } else {
-            return isSupportedLineChar(character);
-        }
-    }
-};
-
-inline bool operator == (const Character& a, const Character& b)
-{
-    return a.character == b.character && a.equalsFormat(b);
-}
-
-inline bool operator != (const Character& a, const Character& b)
-{
-    return !operator==(a, b);
-}
-
-inline bool Character::equalsFormat(const Character& other) const
-{
-    return backgroundColor == other.backgroundColor &&
-           foregroundColor == other.foregroundColor &&
-           rendition == other.rendition;
-}
-
-inline ColorEntry::FontWeight Character::fontWeight(const ColorEntry* base) const
-{
-    if (foregroundColor._colorSpace == ColorSpace::Default)
-        return base[foregroundColor._u + 0 + (foregroundColor._v ? BASE_COLORS : 0)].fontWeight;
-    else if (foregroundColor._colorSpace == ColorSpace::System)
-        return base[foregroundColor._u + 2 + (foregroundColor._v ? BASE_COLORS : 0)].fontWeight;
-    else
-        return ColorEntry::UseCurrentFormat;
-}
 
 struct Mode {
     enum enum_t /*: uint8_t*/ {
@@ -1771,7 +372,7 @@ public:
      * is inserted at the current cursor position, otherwise it will replace the
      * character already at the current cursor position.
      */
-    void displayCharacter(unsigned short c);
+    void displayCharacter(uc_t c);
 
     /**
      * Resizes the image to a new fixed size of @p new_lines by @p new_columns.
@@ -1885,6 +486,7 @@ private:
 
 public:    // TODO
     std::vector<ImageLine> const & getScreenLines() const { return _screenLines;  }
+    ExtendedCharTable const & extendedCharTable() const { return _extendedCharTable;  }
 
 private:
     int _scrolledLines;
@@ -1913,12 +515,6 @@ private:
 
     std::vector<bool> _tabStops; // TODO QBitArray
 
-    // selection -------------------
-    int _selBegin; // The first location selected.
-    int _selTopLeft;    // TopLeft Location.
-    int _selBottomRight;    // Bottom Right Location.
-    bool _blockSelectionMode;  // Column selection mode
-
     // effective colors and rendition ------------
     CharacterColor _effectiveForeground; // These are derived from
     CharacterColor _effectiveBackground; // the cu_* variables above
@@ -1940,6 +536,8 @@ private:
 
     // last position where we added a character
     int _lastPos;
+
+    ExtendedCharTable _extendedCharTable;
 };
 
 
@@ -1974,10 +572,6 @@ Screen::Screen(int lines, int columns):
     _currentRendition(Rendition::Default),
     _topMargin(0),
     _bottomMargin(0),
-    _selBegin(0),
-    _selTopLeft(0),
-    _selBottomRight(0),
-    _blockSelectionMode(false),
     _effectiveForeground(CharacterColor()),
     _effectiveBackground(CharacterColor()),
     _effectiveRendition(Rendition::Default),
@@ -2211,7 +805,7 @@ void Screen::resizeImage(int new_lines, int new_columns)
     for (int i = 0; i < std::min(_lines, new_lines + 1) ; i++)
         newScreenLines[i] = _screenLines[i];
     for (int i = _lines; (i > 0) && (i < new_lines + 1); i++)
-        newScreenLines[i].resize(new_columns);
+        newScreenLines[i].resize(new_columns); // TODO + max konsole_wcwidth - 1
 
     _lineProperties.resize(new_lines + 1, LineProperty::Default);
 
@@ -2334,7 +928,7 @@ void Screen::backspace()
 
     if (BS_CLEARS) {
         _screenLines[_cuY][_cuX].character = ' ';
-        _screenLines[_cuY][_cuX].rendition = _screenLines[_cuY][_cuX].rendition & ~Rendition::ExtendedChar;
+        //_screenLines[_cuY][_cuX].rendition = _screenLines[_cuY][_cuX].rendition & ~Rendition::ExtendedChar;
     }
 }
 
@@ -2403,13 +997,13 @@ struct interval {
 };
 
 /* auxiliary function for binary search in interval table */
-static int bisearch(unsigned long ucs, const struct interval* table, int max)
+static bool bisearch(uc_t ucs, const interval * table, int max)
 {
     int min = 0;
     int mid;
 
     if (ucs < table[0].first || ucs > table[max].last)
-        return 0;
+        return false;
     while (max >= min) {
         mid = (min + max) / 2;
         if (ucs > table[mid].last)
@@ -2417,10 +1011,10 @@ static int bisearch(unsigned long ucs, const struct interval* table, int max)
         else if (ucs < table[mid].first)
             max = mid - 1;
         else
-            return 1;
+            return true;
     }
 
-    return 0;
+    return false;
 }
 
 
@@ -2453,12 +1047,8 @@ static int bisearch(unsigned long ucs, const struct interval* table, int max)
  * This implementation assumes that quint16 characters are encoded
  * in ISO 10646.
  */
-int konsole_wcwidth(uint16_t oucs)
+inline int konsole_wcwidth(uc_t ucs)
 {
-    /* NOTE: It is not possible to compare quint16 with the new last four lines of characters,
-     * therefore this cast is now necessary.
-     */
-    unsigned long ucs = static_cast<unsigned long>(oucs);
     /* sorted list of non-overlapping intervals of non-spacing characters */
     /* generated by "uniset +cat=Me +cat=Mn +cat=Cf -00AD +1160-11FF +200B c" */
     static const struct interval combining[] = {
@@ -2540,16 +1130,8 @@ int konsole_wcwidth(uint16_t oucs)
              (ucs >= 0x30000 && ucs <= 0x3fffd)));
 }
 
-inline int string_width(std::string const & text)
-{
-    int w = 0;
-    for (std::size_t i = 0; i < text.length(); ++i)
-        w += konsole_wcwidth(text[i]/*TODO .unicode()*/);
-    return w;
-}
 
-
-void Screen::displayCharacter(unsigned short c)
+void Screen::displayCharacter(uc_t c)
 {
     // Note that VT100 does wrapping BEFORE putting the character.
     // This has impact on the assumption of valid cursor positions.
@@ -2561,7 +1143,7 @@ void Screen::displayCharacter(unsigned short c)
         return;
     else if (w == 0) {
         // TODO if (QChar(c).category() != QChar::Mark_NonSpacing)
-        if (c != ' ' && c != '\t') // TODO NonSpacing
+        if (c == ' ' || c == '\t') // TODO NonSpacing
             return;
         int charToCombineWithX = -1;
         int charToCombineWithY = -1;
@@ -2587,32 +1169,14 @@ void Screen::displayCharacter(unsigned short c)
             return;
         }
 
-        // TODO
-        //Character& currentChar = _screenLines[charToCombineWithY][charToCombineWithX];
-        //if (!bool(currentChar.rendition & Rendition::ExtendedChar)) {
-        //    const ushort chars[2] = { currentChar.character, c };
-        //    currentChar.rendition |= Rendition::ExtendedChar;
-        //    currentChar.character = ExtendedCharTable::instance.createExtendedChar(chars, 2);
-        //} else {
-        //    ushort extendedCharLength;
-        //    const ushort* oldChars = ExtendedCharTable::instance.lookupExtendedChar(currentChar.character, extendedCharLength);
-        //    assert(oldChars);
-        //    if (oldChars) {
-        //        assert(extendedCharLength > 1);
-        //        assert(extendedCharLength < 65535);
-        //        ushort* chars = new ushort[extendedCharLength + 1];
-        //        memcpy(chars, oldChars, sizeof(ushort) * extendedCharLength);
-        //        chars[extendedCharLength] = c;
-        //        currentChar.character = ExtendedCharTable::instance.createExtendedChar(chars, extendedCharLength + 1);
-        //        delete[] chars;
-        //    }
-        //}
+        Character & currentChar = _screenLines[charToCombineWithY][charToCombineWithX];
+        _extendedCharTable.growChar(currentChar, c);
         return;
     }
 
     if (_cuX + w > _columns) {
         if (getMode(Mode::Wrap)) {
-            _lineProperties[_cuY] = _lineProperties[_cuY] | LineProperty::Wrapped;
+            _lineProperties[_cuY] |= LineProperty::Wrapped;
             nextLine();
         } else {
             _cuX = _columns - w;
@@ -2643,9 +1207,6 @@ void Screen::displayCharacter(unsigned short c)
     const int newCursorX = _cuX + w--;
     while (w) {
         i++;
-
-        if (int(_screenLines[_cuY].size()) < _cuX + i + 1)
-            _screenLines[_cuY].resize(_cuX + i + 1);
 
         Character& ch = _screenLines[_cuY][_cuX + i];
         ch.character = 0;
@@ -2819,39 +1380,6 @@ void Screen::moveImage(int dest, int sourceBegin, int sourceEnd)
         if ((_lastPos < 0) || (_lastPos >= (lines * _columns)))
             _lastPos = -1;
     }
-
-    // Adjust selection to follow scroll.
-    if (_selBegin != -1) {
-        const bool beginIsTL = (_selBegin == _selTopLeft);
-        const int diff = dest - sourceBegin; // Scroll by this amount
-        const int scr_TL = 0;//loc(0, _history->getLines());
-        const int srca = sourceBegin + scr_TL; // Translate index from screen to global
-        const int srce = sourceEnd + scr_TL; // Translate index from screen to global
-        const int desta = srca + diff;
-        const int deste = srce + diff;
-
-        if ((_selTopLeft >= srca) && (_selTopLeft <= srce))
-            _selTopLeft += diff;
-        else if ((_selTopLeft >= desta) && (_selTopLeft <= deste))
-            _selBottomRight = -1; // Clear selection (see below)
-
-        if ((_selBottomRight >= srca) && (_selBottomRight <= srce))
-            _selBottomRight += diff;
-        else if ((_selBottomRight >= desta) && (_selBottomRight <= deste))
-            _selBottomRight = -1; // Clear selection (see below)
-
-        if (_selBottomRight < 0) {
-            //clearSelection();
-        } else {
-            if (_selTopLeft < 0)
-                _selTopLeft = 0;
-        }
-
-        if (beginIsTL)
-            _selBegin = _selTopLeft;
-        else
-            _selBegin = _selBottomRight;
-    }
 }
 
 void Screen::clearToEndOfScreen()
@@ -3011,12 +1539,10 @@ protected:
     void resetMode(int mode);
 
 public: // TODO protected
-    void receiveChar(int cc);
-    void receiveCharNG(uin32_t ucs);
+    void receiveChar(uc_t cc);
 
 private:
-    unsigned short applyCharset(unsigned short c);
-    unsigned short applyCharset(int c) { return applyCharset(static_cast<unsigned short>(c)); }
+    uc_t applyCharset(uc_t  c);
     void setCharset(int n, int cs);
     void useCharset(int n);
     void setAndUseCharset(int n, int cs);
@@ -3040,7 +1566,7 @@ private:
 
     void resetTokenizer();
 #define MAX_TOKEN_LENGTH 256 // Max length of tokens (e.g. window title)
-    void addToCurrentToken(int cc);
+    void addToCurrentToken(uc_t cc);
     int tokenBuffer[MAX_TOKEN_LENGTH]; //FIXME: overflow?
     int tokenBufferPos;
 #define MAXARGS 15
@@ -3245,7 +1771,7 @@ void Vt102Emulation::addArgument()
     argv[argc] = 0;
 }
 
-void Vt102Emulation::addToCurrentToken(int cc)
+void Vt102Emulation::addToCurrentToken(uc_t cc)
 {
     tokenBuffer[tokenBufferPos] = cc;
     tokenBufferPos = std::min(tokenBufferPos + 1, MAX_TOKEN_LENGTH - 1);
@@ -3322,7 +1848,7 @@ const int ESC = 27;
 const int DEL = 127;
 
 // process an incoming unicode character
-void Vt102Emulation::receiveChar(int cc)
+void Vt102Emulation::receiveChar(uc_t cc)
 {
   if (cc == DEL)
     return; //VT100: ignore.
@@ -3344,7 +1870,7 @@ void Vt102Emulation::receiveChar(int cc)
   // advance the state
   addToCurrentToken(cc);
 
-  int* s = tokenBuffer;
+  int * s = tokenBuffer;
   const int  p = tokenBufferPos;
 
   if (getMode(MODE_Ansi))
@@ -3423,238 +1949,6 @@ void Vt102Emulation::receiveChar(int cc)
     resetTokenizer();
     return;
   }
-}
-
-void Vt102Emulation::receiveCharNG(uint32_t ucs)
-{
-    struct ParserState
-    {
-        enum State {
-            None,
-            ESC,
-
-            CSI, // ESC [
-            OSI, // ESC ]
-        };
-
-        enum Param {
-            P1,
-            P2,
-            P3,
-            P4,
-        };
-        int state;
-    } parser;
-
-    auto mk_parser = []{};
-    auto match = []{};
-    auto ch = []{};
-    auto other = []{};
-    auto on_digit = []{};
-    auto Pn = []{};
-    auto noop = []{};
-    auto nochange = []{};
-    auto root_parser = []{};
-    struct P p {};
-
-#define CH(c) ch(c) = [](P & p)
-#define DIGITS() digits() = [](P & p)
-#define IN(s) in(s) = [](P & p)
-#define RNG(a, b) rng(a,b) = [](P & p)
-
-    auto osi_parser = mk_parser( // ESC ]
-      noop
-    , p(in("012"))
-    , ch(';', mk_parser(
-        noop
-      , ch('\a', root_parser, set_title_or_icon)
-      , pstr()
-    ), nochange)
-    , ch('\a', root_parser, noop)
-    , other(mk_parser(
-        noop
-      , ch('\a', root_parser, noop)
-      , other(nochange, noop)
-    ), noop)
-    );
-
-    auto osi_parser_ng =
-        *(
-          p(in("012")) >> ch(';') >> +(ch('\a')[set_title_or_icon] | p<std::string>())
-        | ch('\a') >> root_parser
-        | ch >> *ch >> root_parser
-        )
-    ;
-
-    auto line_size_parser = mk_parser(
-      noop
-    , ch('3', root_parser, double_height_line_top /* DECDHL */)
-    , ch('4', root_parser, double_height_line_bottom /* DECDHL */)
-    , ch('5', root_parser, single_width_line/* DECSWL */)
-    , ch('6', root_parser, double_width_line/* DECDWL */)
-    , ch('8', root_parser, screen_alignement_diaplay /* DECALN */)
-    , other(root_parser, noop)
-    );
-
-    auto charset_set_parser = mk_parser(
-      noop
-    , ch('A', root_parser, set_charset /* United Kingdom (UK) */)
-    , ch('B', root_parser, set_charset /* United States (USASCII) */)
-    , ch('0', root_parser, set_charset /* Special graphics characters and line drawing set */)
-    , ch('1', root_parser, set_charset /* Alternate character ROM */)
-    , ch('2', root_parser, set_charset /* Alternate character ROM special graphics characters */)
-    );
-
-    auto csi_parser = mk_parser(
-      noop
-    , ch('K', root_parser, set_charset /* United Kingdom (UK) */)
-    , ch('J', root_parser, set_charset /* United States (USASCII) */)
-    , ch('J', root_parser, set_charset /* Special graphics characters and line drawing set */)
-    , ch('1', root_parser, set_charset /* Alternate character ROM */)
-    , ch('2', root_parser, set_charset /* Alternate character ROM special graphics characters */)
-    );
-
-    mk_parser(
-        ch(ESC, mk_parser(
-            noop
-          , ch(']', osi_parser, noop)
-          , ch('#', line_size_parser, noop)
-          , ch('(', charset_set_parser, select_g0_parser)
-          , ch(')', charset_set_parser, select_g1_parser)
-          , ch('[', csi_parser, noop)
-          , ch('Z', root_parser, identity_terminal /* DECID */)
-          , ch('=', root_parser, keypad_application_mode /* DECKPAM */)
-          , ch('>', root_parser, keypad_numeric_mode /* DECKPMM */)
-          , ch('<', root_parser, ansi_mode /* */)
-          , ch('7', root_parser, save_cursor /* DECCS */)
-          , ch('8', root_parser, restore_cursor /* DECRS */)
-          , ch('H', root_parser, horizontal_tabulation_set /* HTS */)
-          , ch('D', root_parser, index /* IND */)
-          , ch('E', root_parser, next_line /* NEL */)
-          , ch('M', root_parser, reverse_index /* RI */)
-          , ch('c', root_parser, reset_to_initial_state /* RIS */)
-          , ch('A', root_parser, cursor_up /* CU */)
-          , ch('B', root_parser, cursor_down /*  */)
-          , ch('C', root_parser, cursor_right /* C */)
-          , ch('D', root_parser, cursor_left /* C */)
-          , ch('F', root_parser, enter_graphics_node /*  */)
-          , ch('G', root_parser, exit_graphics_mode /* */)
-          , ch('H', root_parser, cursor_to_home /* */)
-          , ch('I', root_parser, reverse_line_feed /* */)
-          , ch('J', root_parser, erase_to_end_of_screen /* */)
-          , ch('K', root_parser, erase_to_end_of_line /* */)
-          , ch('Y', p(p(root_parser, direct_cursor_address), noop), noop)
-          , other(root_parser, add_char)
-        ))
-    );
-
-    switch (parser.state) {
-        case ParserState::None:
-        switch (ucs) {
-            case ESC: parser.state = ParserState::ESC; break;
-
-            case DEL:
-            case '\a': break;
-
-            case '\b': _currentScreen->cursorLeft(); break;
-            case '\t': _currentScreen->tab(); break;
-            case '\n': _currentScreen->newLine(); break;
-            case '\v':
-            case '\f': _currentScreen->cursorDown(); break;
-            case '\r': _currentScreen->setCursorX(0); break;
-            //case SO : selectG0(); break;
-            //case SI : selectG1(); break;
-        }
-        break;
-
-        case ParserState::ESC:
-        switch (ucs) {
-            case '[': parser.state = ParserState::CSI; break;
-            case ']': parser.state = ParserState::OSI; break;
-
-            case DEL:
-            case '\a': break;
-
-            case '\b': _currentScreen->cursorLeft(); break;
-            case '\t': _currentScreen->tab(); break;
-            case '\n': _currentScreen->newLine(); break;
-            case '\v':
-            case '\f': _currentScreen->cursorDown(); break;
-            case '\r': _currentScreen->setCursorX(0); break;
-            //case SO : selectG0(); break;
-            //case SI : selectG1(); break;
-        }
-        break;
-
-        // ESC ']' [0|1|2] ';' Str '\a'
-        case ParserState::OSI:
-        switch (ucs) {
-            case '0':
-            case '1':
-            case '2': /* TODO */ break;
-            case '\x9c': // String Terminator
-            case '\a': /* TODO end sequence */ break;
-            case ';': parser.state |= ParserState::P1; break;
-        }
-        case ParserState::OSI | ParserState::P1:
-        switch (ucs) {
-            case '0':
-            case '1':
-            case '2': /* TODO */ break;
-            case '\x9c': // String Terminator
-            case '\a': /* TODO end sequence */ break;
-            case ';': parser.state |= ParserState::P1; break;
-        }
-        break;
-    }
-
-    // no mode
-    switch (ucs) {
-
-        case ESC: parser.state |= ParserState::ESC; break;
-    }
-
-    // ESC state
-    switch (ucs) {
-        case '@': _currentScreen->insertChars      (p    ); break; //Ansix364 : TODO ESC [ Pn @
-
-        case 'A': _currentScreen->cursorUp             (         1); break; //VT52 CUU
-        case 'B': _currentScreen->cursorDown           (         1); break; //VT52 CUD
-        case 'C': _currentScreen->cursorRight          (         1); break; //VT52 CUR
-        case 'D': _currentScreen->cursorLeft           (         1); break; //VT52 CUL
-
-        case 'E': _currentScreen->cursorDown           (         p); break; //VT100 CNL
-        case 'F': _currentScreen->cursorUp           (         p); break; //VT100 CPL
-        case 'G': _currentScreen->setCursorX           (         p); break; //VT100 CHA TODO LINUX ?
-        case 'H': _currentScreen->setCursorYX(         p, q); break; //VT100 CUP
-    case TY_CSI_PN('I'      ) : _currentScreen->tab                  (p         ); break;
-        case 'J': _currentScreen->tab(         ); break; //VT100 EL TODO erase in display
-        case 'K': _currentScreen->cursorDown           (         ); break; //VT100 IL TODO erase in lines
-        case 'L': _currentScreen->insertLines           (p         ); break; //VT100 DL
-        case 'M': _currentScreen->deleteLines           (p         ); break; //VT100 DCH
-        case 'P': _currentScreen->deleteChars           (p         ); break; //VT100 DCH
-    case TY_CSI_PN('S'      ) : _currentScreen->scrollUp             (p         ); break;
-    case TY_CSI_PN('T'      ) : _currentScreen->scrollDown           (p         ); break;
-        case 'X': _currentScreen->eraseChars           (p         ); break; //VT100 ECH
-    case TY_CSI_PN('Z'      ) : _currentScreen->backtab              (p         ); break;
-        case 'a': _currentScreen->cursorRight           (         ); break; //VT100 HPR
-        case 'c': reportTerminalType(); break; //VT100 DA TODO Reports terminal identity
-        case 'd': _currentScreen->setCursorY           (p         ); break; //VT100 VPA
-        case 'e': _currentScreen->cursorDown           (p         ); break; //VT100 VPR
-        case 'f': _currentScreen->setCursorYX           (p, q        ); break; //VT100 HVP
-        case 'g': break; //VT100 TBC TODO clear_tab_stop
-        case 'h': setMode      (MODE_AppCuKeys); break; //VT100 SM
-        case 'l': resetMode      (MODE_AppCuKeys); break; //VT100 RM
-        case 'm':  break; //VT100 SGR TODO select_graphic_rendition
-        case 'n': _currentScreen->cursorDown           (p         ); break; //VT100 DSR TODO report_device_status
-        case 'r': _currentScreen->cursorDown           (p         ); break; //VT100 DECSTBM TODO set_margins
-        case '\'': _currentScreen->setCursorX           (p         ); break; //VT100 HPA
-
-        case 'D': _currentScreen->index             (    ); break; //VT100
-        case 'E': _currentScreen->nextLine          (    ); break; //VT100
-        case 'H': _currentScreen->changeTabStop     (true); break; //VT100
-        case 'M': _currentScreen->reverseIndex      (    ); break; //VT100
-    }
 }
 
 // Interpreting Codes ---------------------------------------------------------
@@ -4089,17 +2383,17 @@ void Vt102Emulation::clearScreenAndSetColumns(int /*columnCount*/)
    particular glyphs allocated in (0x00-0x1f) in their code page.
 */
 
-#define CHARSET _charset[_currentScreen==_screen[1]]
+//#define CHARSET _charset[_currentScreen==_screen[1]]
 
 // Apply current character map.
 
-unsigned short Vt102Emulation::applyCharset(unsigned short c)
+uc_t Vt102Emulation::applyCharset(uc_t  c)
 {
     return c;
     // TODO
     //if (CHARSET.graphic && 0x5f <= c && c <= 0x7e) return vt100_graphics[c - 0x5f];
     //if (CHARSET.pound && c == '#') return 0xa3;  //This mode is obsolete
-    return c;
+    //return c;
 }
 
 /*
@@ -4403,9 +2697,24 @@ struct Checker
 
 #include <iomanip>
 
+using uchar = unsigned char;
+
+template<std::size_t n>
+int touc(char const (&s)[n])
+{
+    int r = 0;
+    for (std::size_t i = 1; i < n; ++i) {
+        r <<= 8;
+        r |= uchar(s[i-1]);
+    }
+    return r;
+}
+
+template<int> struct i_{};
+
 int main()
 {
-    vt100::Screen screen(40, 40);
+    rvt::Screen screen(40, 40);
     screen.cursorDown(1);
     BOOST_EQUAL_CHECK(screen.cursor_x(), 0);
     BOOST_EQUAL_CHECK(screen.cursor_y(), 1);
@@ -4443,7 +2752,7 @@ int main()
     BOOST_EQUAL_CHECK(screen.cursor_x(), 0);
     BOOST_EQUAL_CHECK(screen.cursor_y(), 0);
 
-    vt100::Vt102Emulation emulator(&screen);
+    rvt::Vt102Emulation emulator(&screen);
     for (int i = 0; i < 20; ++i) {
         emulator.receiveChar('a');
         emulator.receiveChar('b');
@@ -4453,17 +2762,114 @@ int main()
     emulator.receiveChar('[');
     emulator.receiveChar('0');
     emulator.receiveChar('B');
+    emulator.receiveChar('\033');
+    emulator.receiveChar('[');
+    emulator.receiveChar('3');
+    emulator.receiveChar('1');
+    emulator.receiveChar('m');
     for (int i = 0; i < 20; ++i) {
         emulator.receiveChar('a');
         emulator.receiveChar('b');
         emulator.receiveChar('c');
     }
-
+    emulator.receiveChar('\033');
+    emulator.receiveChar('[');
+    emulator.receiveChar('4');
+    emulator.receiveChar('4');
+    emulator.receiveChar('m');
+    emulator.receiveChar(touc("é"));
+    emulator.receiveChar('e');
+    emulator.receiveChar(0xcc82);
     int i = 0;
     for (auto const & line : screen.getScreenLines()) {
         std::cout << std::setw(4) << ++i << " ";
-        for (vt100::Character const & ch : line) {
+        for (rvt::Character const & ch : line) {
             std::cout << char(ch.character ? ch.character : '?');
+        }
+        std::cout << '\n';
+    }
+
+    const rvt::Color color_table[] = {
+        rvt::Color(0x00, 0x00, 0x00), // Dfore
+        rvt::Color(0xFF, 0xFF, 0xFF), // Dback
+        rvt::Color(0x00, 0x00, 0x00), // Black
+        rvt::Color(0xB2, 0x18, 0x18), // Red
+        rvt::Color(0x18, 0xB2, 0x18), // Green
+        rvt::Color(0xB2, 0x68, 0x18), // Yellow
+        rvt::Color(0x18, 0x18, 0xB2), // Blue
+        rvt::Color(0xB2, 0x18, 0xB2), // Magenta
+        rvt::Color(0x18, 0xB2, 0xB2), // Cyan
+        rvt::Color(0xB2, 0xB2, 0xB2), // White
+        // intensive versions
+        rvt::Color(0x00, 0x00, 0x00),
+        rvt::Color(0xFF, 0xFF, 0xFF),
+        rvt::Color(0x68, 0x68, 0x68),
+        rvt::Color(0xFF, 0x54, 0x54),
+        rvt::Color(0x54, 0xFF, 0x54),
+        rvt::Color(0xFF, 0xFF, 0x54),
+        rvt::Color(0x54, 0x54, 0xFF),
+        rvt::Color(0xFF, 0x54, 0xFF),
+        rvt::Color(0x54, 0xFF, 0xFF),
+        rvt::Color(0xFF, 0xFF, 0xFF),
+    };
+    static_assert(sizeof(color_table) / sizeof(color_table[0]) == rvt::TABLE_COLORS, "");
+
+    auto print_color = [&color_table](char const * cmd, rvt::CharacterColor const & ch_color) {
+        auto color = ch_color.color(color_table);
+        std::cout << cmd << (color.red()+0) << ";" << (color.green()+0) << ";" << (color.blue()+0);
+    };
+    auto print_mode = [](char const * cmd, rvt::Character const & ch, rvt::Rendition r) {
+        if (bool(ch.rendition & r)) {
+            std::cout << cmd;
+        }
+    };
+    auto print_uc = [](rvt::uc_t uc) {
+        if (uc & 0xff00) {
+            std::cout << uchar(uc >> 8);
+        }
+        std::cout << uchar(uc);
+    };
+
+    // Format
+    //@{
+    rvt::Rendition previous_rendition = rvt::Rendition::Default;
+    rvt::CharacterColor previous_fg(rvt::ColorSpace::Default, 0);
+    rvt::CharacterColor previous_bg(rvt::ColorSpace::Default, 1);
+    //@}
+    std::cout << "\033[0";
+    print_color(";38;2;", previous_fg);
+    print_color(";48;2;", previous_bg);
+    std::cout << "m";
+    for (auto const & line : screen.getScreenLines()) {
+        for (rvt::Character const & ch : line) {
+            if (!ch.isRealCharacter) {
+                continue;
+            }
+            if (ch.backgroundColor != previous_bg
+             || ch.foregroundColor != previous_fg
+             || ch.rendition != previous_rendition
+            ) {
+                std::cout << "\033[0";
+                print_mode(";1", ch, rvt::Rendition::Bold);
+                print_mode(";3", ch, rvt::Rendition::Italic);
+                print_mode(";4", ch, rvt::Rendition::Underline);
+                print_mode(";5", ch, rvt::Rendition::Blink);
+                print_mode(";7", ch, rvt::Rendition::Reverse);
+                print_color(";38;2;", ch.foregroundColor);
+                print_color(";48;2;", ch.backgroundColor);
+                std::cout << "m";
+                previous_bg = ch.backgroundColor;
+                previous_fg = ch.foregroundColor;
+                previous_rendition = ch.rendition;
+            }
+            if (ch.is_extended()) {
+                for (rvt::uc_t uc : screen.extendedCharTable()[ch.character]) {
+                    print_uc(uc);
+                }
+            }
+            else {
+                print_uc(ch.character);
+            }
         }
         std::cout << '\n';
     }

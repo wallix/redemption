@@ -1,0 +1,30 @@
+include ../../jam/cxxflags.jam ;
+
+project configs
+: requirements
+    <include>../../src
+    <include>../../src/system/linux
+    <include>src
+
+    <cxxflags>-std=c++14
+
+    $(CXXFLAGS)
+
+   : default-build release
+;
+
+lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
+
+constant TEST_DEPENDENCIES :
+    <cxxflags>-frtti
+    <library>libboost_unit_test
+;
+
+import testing ;
+
+## Tests
+## @{
+unit-test test_character_color : test/test_character_color.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_character : test/test_character.cpp : $(TEST_DEPENDENCIES) ;
+# unit-test enumator : src/rvt/emulator.cpp : $(TEST_DEPENDENCIES) ;
+## }

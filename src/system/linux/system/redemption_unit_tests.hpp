@@ -19,6 +19,7 @@ namespace boost { namespace unit_test { namespace ut_detail {
 # define BOOST_CHECK_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
 # define BOOST_CHECK_EQUAL(a, b) (a) == (b)
 # define BOOST_CHECK_NE(a, b) (a) != (b)
+# define BOOST_CHECK_EQUAL_RANGES(a, b) (a) != (b)
 #else
 # define CHECK_EXCEPTION_ERROR_ID(stmt, ErrId)  \
     BOOST_CHECK_EXCEPTION(                      \
@@ -32,6 +33,14 @@ namespace boost { namespace unit_test { namespace ut_detail {
             return false;                       \
         }                                       \
     )
+# define BOOST_CHECK_EQUAL_RANGES(a_, b_)                                  \
+    do {                                                                   \
+        auto const & a = a_;                                               \
+        auto const & b = b_;                                               \
+        using std::begin;                                                  \
+        using std::end;                                                    \
+        BOOST_CHECK_EQUAL_COLLECTIONS(begin(a), end(a), begin(b), end(b)); \
+    } while (0)
 #endif
 
 #include <cstdio>
