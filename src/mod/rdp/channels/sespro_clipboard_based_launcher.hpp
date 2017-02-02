@@ -59,7 +59,7 @@ class SessionProbeClipboardBasedLauncher : public SessionProbeLauncher {
 
     mod_api& mod;
 
-    const std::string& alternate_shell;
+    const std::string alternate_shell;
 
     bool drive_ready = false;
     bool drive_redirection_initialized = false;
@@ -84,7 +84,7 @@ class SessionProbeClipboardBasedLauncher : public SessionProbeLauncher {
 
 public:
     SessionProbeClipboardBasedLauncher(mod_api& mod,
-        const std::string& alternate_shell, RDPVerbose verbose)
+        const char* alternate_shell, RDPVerbose verbose)
     : mod(mod)
     , alternate_shell(alternate_shell)
     , verbose(verbose) {}

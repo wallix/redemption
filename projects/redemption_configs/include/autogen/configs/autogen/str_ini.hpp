@@ -302,6 +302,9 @@
 "#alternate_shell = \n\n"
 
 "#_hidden\n"
+"#shell_arguments = \n\n"
+
+"#_hidden\n"
 "#shell_working_directory = \n\n"
 
 "#_advanced\n"

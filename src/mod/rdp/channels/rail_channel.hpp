@@ -459,7 +459,7 @@ private:
                     ::msgdump_c(send, from_or_to_client, length, flags,
                         out_s.get_data(), length);
                 }
-                if (this->verbose & RDPVerbose::rail) {
+/*                if (this->verbose & RDPVerbose::rail)*/ {
                     LOG(LOG_INFO,
                         "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
                             "Send to server - Client Execute PDU");
@@ -893,7 +893,7 @@ public:
         if (!this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
             if (this->session_probe_channel) {
                 if (this->session_probe_stop_launch_sequence_notifier) {
-                    this->session_probe_stop_launch_sequence_notifier->stop(false);
+                    this->session_probe_stop_launch_sequence_notifier->stop(serpdu.ExecResult() == RAIL_EXEC_S_OK);
                     this->session_probe_stop_launch_sequence_notifier = nullptr;
                 }
 
