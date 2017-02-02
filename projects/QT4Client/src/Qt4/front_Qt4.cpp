@@ -2212,6 +2212,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                             , total_length
                                                                             , flag_next
                                                                             );
+
                                         data_sent += RDPECLIP::FileDescriptor::size();
                                         if (this->verbose & RDPVerbose::cliprdr) {
                                             LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%d", data_sent, total_length);
@@ -2250,7 +2251,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 fileSize.emit(out_stream);
 
                                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-                                this->_callback->send_to_mod_channel(channel_names::cliprdr
+                                this->_callback->send_to_mod_channel( channel_names::cliprdr
                                                                     , chunk_to_send
                                                                     , out_stream.get_offset()
                                                                     , CHANNELS::CHANNEL_FLAG_LAST |
@@ -2288,7 +2289,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                        , reinterpret_cast<uint8_t *>(
                                                                          this->_clipboard_qt->_items_list[lindex]->chunk)
                                                                        , total_length
-                                                                      );
+                                                                       );
                             }
                             break;
                         }
@@ -2572,7 +2573,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                     std::ifstream file(this->fileSystemData.paths[id-1].c_str());
                                     if (!file.good()) {
-                                        deviceIOResponse.set_IoStatus(0xc000000f);
+                                        deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
                                         LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str());
                                     }
                                 }
@@ -2617,7 +2618,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         if (file.good()) {
 
                                         } else {
-                                            deviceIOResponse.set_IoStatus(0xc000000f);
+                                            deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
                                             LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str());
                                         }
 
@@ -2804,17 +2805,17 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                             }
                                             closedir (dir);
                                         } else {
-                                            deviceIOResponse.set_IoStatus(0xc000000f);
+                                            deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
                                             LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_dir).", str_dir_path.c_str());
                                         }
 
                                         struct stat buff_child;
                                         if (str_file_name.length() == 0) {
-                                            deviceIOResponse.set_IoStatus(0x80000006);
+                                            deviceIOResponse.set_IoStatus(erref::STATUS_NO_MORE_FILES);
                                         } else {
                                             std::string str_file_path_slash(str_dir_path + "/" + str_file_name);
                                             if (stat(str_file_path_slash.c_str(), &buff_child)) {
-                                                deviceIOResponse.set_IoStatus(0xc000000f);
+                                                deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
                                                 LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());
                                             }
                                         }
@@ -2894,7 +2895,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                     struct stat buff;
                                     if (stat(str_path.c_str(), &buff)) {
-                                        deviceIOResponse.set_IoStatus(0xc000000f);
+                                        deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
                                         LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_path.c_str());
                                     }
 
@@ -2908,7 +2909,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     int device = open(str_path.c_str(), O_RDONLY);
 
                                     if (device < 0) {
-                                        deviceIOResponse.set_IoStatus(0xc000000f);
+                                        deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
                                         LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_path.c_str());
                                     }
 

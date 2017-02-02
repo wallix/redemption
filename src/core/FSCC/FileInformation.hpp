@@ -15,7 +15,7 @@
 
     Product name: redemption, a FLOSS RDP proxy
     Copyright (C) Wallix 2015
-    Author(s): Christophe Grosjean, Raphael Zhou
+    Author(s): Christophe Grosjean, Raphael Zhou, Clément Moroldo
 */
 
 

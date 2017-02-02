@@ -82,6 +82,7 @@
 #include "core/client_info.hpp"
 #include "keymaps/Qt4_ScanCode_KeyMap.hpp"
 #include "capture/capture.hpp"
+#include "core/ERREF/ntstatus.hpp"
 
 
 #include <QtGui/QImage>

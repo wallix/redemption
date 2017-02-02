@@ -15,7 +15,7 @@
 *
 *   Product name: redemption, a FLOSS RDP proxy
 *   Copyright (C) Wallix 2010-2014
-*   Author(s): Jonathan Poelen
+*   Author(s): Jonathan Poelen, Clément Moroldo
 */
 
 
