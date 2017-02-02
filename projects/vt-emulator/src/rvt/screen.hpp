@@ -20,30 +20,18 @@
 *   Based on Konsole, an X terminal
 */
 
-#include <array>
-#include <cstdint>
-#include <type_traits>
-#include <memory>
-
-#include <vector>
-#include <string>
-#include <algorithm>
-
-#include <cassert>
-#include <cstring> // memset
-
-#include "utils/rect.hpp"
-#include "utils/sugar/make_unique.hpp"
-#include "utils/sugar/array_view.hpp"
-#include "utils/sugar/underlying_cast.hpp"
-#include "utils/sugar/enum_flags_operators.hpp"
-#include "cxx/diagnostic.hpp"
+#pragma once
 
 #include "rvt/character.hpp"
 
-//#define CXX_UNUSED(x) (void)x // [[maybe_unused]]
+#include "utils/rect.hpp"
+#include "utils/sugar/enum_flags_operators.hpp"
 
-// #define REDEMPTION_DIAGNOSTIC_IGNORE_CONVERSION REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wconversion")
+#include <vector>
+#include <algorithm>
+
+#include <cstdint>
+#include <cassert>
 
 namespace rvt
 {
@@ -61,16 +49,15 @@ template<> struct is_enum_flags<rvt::LineProperty> : std::true_type {};
 namespace rvt
 {
 
-struct Mode {
-    enum enum_t /*: uint8_t*/ {
-        Origin,
-        Wrap,
-        Insert,
-        Screen,
-        Cursor,
-        NewLine,
-        COUNT_
-    };
+enum class Mode : uint8_t
+{
+    Origin,
+    Wrap,
+    Insert,
+    Screen,
+    Cursor,
+    NewLine,
+    COUNT_
 };
 
 /**
@@ -246,18 +233,18 @@ public:
     void changeTabStop(bool set);
 
     /** Resets (clears) the specified screen @p mode. */
-    void resetMode(int mode);
+    void resetMode(Mode mode);
     /** Sets (enables) the specified screen @p mode. */
-    void setMode(int mode);
+    void setMode(Mode mode);
     /**
      * Saves the state of the specified screen @p mode.  It can be restored
      * using restoreMode()
      */
-    void saveMode(int mode);
+    void saveMode(Mode mode);
     /** Restores the state of a screen @p mode saved by calling saveMode() */
-    void restoreMode(int mode);
+    void restoreMode(Mode mode);
     /** Returns whether the specified screen @p mode is enabled or not .*/
-    bool getMode(int mode) const;
+    bool getMode(Mode mode) const;
 
     /**
      * Saves the current position and appearance (text color and style) of the cursor.
@@ -445,11 +432,11 @@ public:
 
     static const Character DefaultChar;
 
-    int cursor_x() const { return _cuX; }
-    int cursor_y() const { return _cuY; }
+    int cursorX() const { return _cuX; }
+    int cursorY() const { return _cuY; }
 
 private:
-    inline int loc(int x, int y) { return x * _columns + y; }
+    inline int loc(int x, int y) { return y * _columns + x; }
 
     //fills a section of the screen image with the character 'c'
     //the parameters are specified as offsets from the start of the screen image.
@@ -508,8 +495,12 @@ private:
     int _bottomMargin;
 
     // states ----------------
-    int _currentModes[Mode::COUNT_];
-    int _savedModes[Mode::COUNT_];
+    using ModeFlags = unsigned;
+    constexpr static ModeFlags mode2flag(Mode m) noexcept
+    { return 1u << ModeFlags(m); }
+
+    ModeFlags _currentModes;
+    ModeFlags _savedModes;
 
     // ----------------------------
 
@@ -731,41 +722,45 @@ void Screen::insertLines(int n)
     scrollDown(_cuY, n);
 }
 
-void Screen::setMode(int m)
+void Screen::setMode(Mode m)
 {
-    _currentModes[m] = true;
+    _currentModes |= mode2flag(m);
     switch (m) {
-    case Mode::Origin :
+    case Mode::Origin:
         _cuX = 0;
         _cuY = _topMargin;
         break; //FIXME: home
+    default:
+        break;
     }
 }
 
-void Screen::resetMode(int m)
+void Screen::resetMode(Mode m)
 {
-    _currentModes[m] = false;
+    _currentModes &= ~mode2flag(m);
     switch (m) {
-    case Mode::Origin :
+    case Mode::Origin:
         _cuX = 0;
         _cuY = 0;
         break; //FIXME: home
+    default:
+        break;
     }
 }
 
-void Screen::saveMode(int m)
+void Screen::saveMode(Mode m)
 {
-    _savedModes[m] = _currentModes[m];
+    _savedModes = (_savedModes & ~mode2flag(m)) | (_currentModes & mode2flag(m));
 }
 
-void Screen::restoreMode(int m)
+void Screen::restoreMode(Mode m)
 {
-    _currentModes[m] = _savedModes[m];
+    _currentModes = (_currentModes & ~mode2flag(m)) | (_savedModes & mode2flag(m));
 }
 
-bool Screen::getMode(int m) const
+bool Screen::getMode(Mode m) const
 {
-    return _currentModes[m];
+    return bool(_currentModes & mode2flag(m));
 }
 
 void Screen::saveCursor()
@@ -928,7 +923,7 @@ void Screen::backspace()
 
     if (BS_CLEARS) {
         _screenLines[_cuY][_cuX].character = ' ';
-        //_screenLines[_cuY][_cuX].rendition = _screenLines[_cuY][_cuX].rendition & ~Rendition::ExtendedChar;
+        _screenLines[_cuY][_cuX].rendition &= ~Rendition::ExtendedChar;
     }
 }
 

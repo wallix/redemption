@@ -47,8 +47,7 @@ constant CXXFLAGS-COMMON :
     <cxxflags>-Wno-overlength-strings
     <cxxflags>-Wunused-macros
 
-#     <cxxflags>-Wswitch-enum
-#     <cxxflags>-Wswitch-default
+    <cxxflags>-Wno-switch-enum&&-Wswitch
 #     <cxxflags>-Wsign-conversion
 #     <cxxflags>-Wconversion
 #     <cxxflags>-Werror

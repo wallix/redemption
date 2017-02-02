@@ -21,6 +21,7 @@
 #pragma once
 
 #include "rvt/color.hpp"
+
 #include "cxx/diagnostic.hpp"
 
 #include <cassert>

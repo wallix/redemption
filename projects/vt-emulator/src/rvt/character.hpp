@@ -20,17 +20,20 @@
 *   Based on Konsole, an X terminal
 */
 
+#pragma once
+
+#include "rvt/character_color.hpp"
+
+#include "cxx/attributes.hpp"
+#include "utils/sugar/array_view.hpp"
+#include "utils/sugar/enum_flags_operators.hpp"
+
 #include <array>
 #include <vector>
 #include <memory>
 
 #include <cstdint>
-#include <cstring>
-
-#include "cxx/attributes.hpp"
-#include "utils/sugar/array_view.hpp"
-#include "utils/sugar/enum_flags_operators.hpp"
-#include "rvt/character_color.hpp"
+#include <cstring> // memcpy
 
 
 namespace rvt
@@ -161,7 +164,9 @@ class ExtendedCharTable
 public:
     ExtendedCharTable() = default;
 
-    REDEMPTION_CXX_NODISCARD bool growChar(Character & character, uc_t uc);
+    REDEMPTION_CXX_NODISCARD
+    bool growChar(Character & character, uc_t uc);
+
     void clear();
 
     inline array_view<uc_t const> operator[](std::size_t i) const noexcept
