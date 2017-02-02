@@ -4998,37 +4998,37 @@ public:
     struct FirstImage : gdi::CaptureApi
     {
         
-        template<class T>
-        struct ApiRegisterElement
+        struct ApiRegisterElementCaptureApi
         {
-            using list_type = std::vector<std::reference_wrapper<T>>;
+            ApiRegisterElementCaptureApi() = default;
 
-            ApiRegisterElement() = default;
-
-            ApiRegisterElement(list_type & l, T & x)
+            ApiRegisterElementCaptureApi(std::vector<std::reference_wrapper<gdi::CaptureApi>> & l, gdi::CaptureApi & x)
             : l(&l)
             , i(l.size())
             {
                 l.push_back(x);
             }
 
-            ApiRegisterElement & operator = (ApiRegisterElement const &) = default;
-            ApiRegisterElement & operator = (T & x) { (*this->l)[this->i] = x; return *this; }
+            ApiRegisterElementCaptureApi & operator = (ApiRegisterElementCaptureApi const &) = default;
+            ApiRegisterElementCaptureApi & operator = (gdi::CaptureApi & x) 
+            { 
+                (*this->l)[this->i] = x; return *this; 
+            }
 
-            bool operator == (T const & x) const { return &this->get() == &x; }
+            bool operator == (gdi::CaptureApi const & x) const { return &this->get() == &x; }
         //    bool operator != (T const & x) const { return !(this == x); }
 
-            T & get() { return (*this->l)[this->i]; }
-            T const & get() const { return (*this->l)[this->i]; }
+            gdi::CaptureApi & get() { return (*this->l)[this->i]; }
+            gdi::CaptureApi const & get() const { return (*this->l)[this->i]; }
 
         private:
-            list_type * l = nullptr;
+            std::vector<std::reference_wrapper<gdi::CaptureApi>> * l = nullptr;
             std::size_t i = ~std::size_t{};
         };
 
         SequencedVideoCaptureImpl & first_image_impl;
-        ApiRegisterElement<gdi::CaptureApi> first_image_cap_elem;
-        ApiRegisterElement<gdi::CaptureApi> first_image_gcap_elem;
+        ApiRegisterElementCaptureApi first_image_cap_elem;
+        ApiRegisterElementCaptureApi first_image_gcap_elem;
 
         const timeval first_image_start_capture;
 
