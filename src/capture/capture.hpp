@@ -4309,33 +4309,6 @@ public:
 using std::begin;
 using std::end;
 
-template<class T>
-struct ApiRegisterElement
-{
-    using list_type = std::vector<std::reference_wrapper<T>>;
-
-    ApiRegisterElement() = default;
-
-    ApiRegisterElement(list_type & l, T & x)
-    : l(&l)
-    , i(l.size())
-    {
-        l.push_back(x);
-    }
-
-    ApiRegisterElement & operator = (ApiRegisterElement const &) = default;
-    ApiRegisterElement & operator = (T & x) { (*this->l)[this->i] = x; return *this; }
-
-    bool operator == (T const & x) const { return &this->get() == &x; }
-//    bool operator != (T const & x) const { return !(this == x); }
-
-    T & get() { return (*this->l)[this->i]; }
-    T const & get() const { return (*this->l)[this->i]; }
-
-private:
-    list_type * l = nullptr;
-    std::size_t i = ~std::size_t{};
-};
 
 
 class FileToChunk
@@ -5020,9 +4993,39 @@ class SequencedVideoCaptureImpl
 
 
 
+public:
     // first next_video is ignored
     struct FirstImage : gdi::CaptureApi
     {
+        
+        template<class T>
+        struct ApiRegisterElement
+        {
+            using list_type = std::vector<std::reference_wrapper<T>>;
+
+            ApiRegisterElement() = default;
+
+            ApiRegisterElement(list_type & l, T & x)
+            : l(&l)
+            , i(l.size())
+            {
+                l.push_back(x);
+            }
+
+            ApiRegisterElement & operator = (ApiRegisterElement const &) = default;
+            ApiRegisterElement & operator = (T & x) { (*this->l)[this->i] = x; return *this; }
+
+            bool operator == (T const & x) const { return &this->get() == &x; }
+        //    bool operator != (T const & x) const { return !(this == x); }
+
+            T & get() { return (*this->l)[this->i]; }
+            T const & get() const { return (*this->l)[this->i]; }
+
+        private:
+            list_type * l = nullptr;
+            std::size_t i = ~std::size_t{};
+        };
+
         SequencedVideoCaptureImpl & first_image_impl;
         ApiRegisterElement<gdi::CaptureApi> first_image_cap_elem;
         ApiRegisterElement<gdi::CaptureApi> first_image_gcap_elem;
@@ -5063,7 +5066,7 @@ class SequencedVideoCaptureImpl
             return std::min(ret, first_image_impl.video_sequencer.snapshot(now, x, y, ignore_frame_in_timeval));
         }
 
-    };
+    } first_image;
 
 public:
     VideoTransport vc_trans;
@@ -5136,7 +5139,6 @@ public:
     }
 
     VideoSequencer video_sequencer;
-    FirstImage first_image;
 
     NotifyNextVideo & next_video_notifier;
 
@@ -5164,7 +5166,9 @@ public:
         FlvParams flv_params,
         std::chrono::microseconds video_interval,
         NotifyNextVideo & next_video_notifier)
-    : vc_trans(record_path, basename, ("." + flv_params.codec).c_str(), groupid)
+    : first_image(now, *this)
+
+    , vc_trans(record_path, basename, ("." + flv_params.codec).c_str(), groupid)
     , vc(now, this->vc_trans, drawable, no_timestamp, std::move(flv_params))
     , ic_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_path, basename, ".png", groupid, nullptr)
     , ic_zoom_factor(std::min(image_zoom, 100u))
@@ -5173,7 +5177,6 @@ public:
     , ic_drawable(drawable)
     , video_sequencer(
         now, video_interval > std::chrono::microseconds(0) ? video_interval : std::chrono::microseconds::max(), *this)
-    , first_image(now, *this)
     , next_video_notifier(next_video_notifier)
     {
         const unsigned zoom_width = (this->ic_drawable.width() * this->ic_zoom_factor) / 100;
@@ -7053,9 +7056,13 @@ public:
             if (this->sequenced_video_capture_obj) {
                 this->caps.push_back(this->sequenced_video_capture_obj->vc);
                 this->snapshoters.push_back(this->sequenced_video_capture_obj->preparing_vc);
+
                 this->sequenced_video_capture_obj->first_image.first_image_cap_elem = {
-                    this->caps, this->sequenced_video_capture_obj->first_image
+                    this->caps, 
+                    this->sequenced_video_capture_obj->first_image 
                 };
+//              this->sequenced_video_capture_obj->first_image.first_image_cap_elem_1 = this->caps;
+//              this->sequenced_video_capture_obj->first_image.first_image_cap_elem_2 = this->sequenced_video_capture_obj->first_image;
                 this->sequenced_video_capture_obj->first_image.first_image_gcap_elem = {
                     this->snapshoters, this->sequenced_video_capture_obj->first_image
                 };
