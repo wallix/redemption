@@ -60,12 +60,14 @@
 
 
 
+
+
 class Mod_Qt : public QObject
 {
 
 Q_OBJECT
 
-public:
+
     Front_Qt                  * _front;
     QSocketNotifier           * _sckRead;
     mod_rdp                   * _callback;
@@ -74,7 +76,10 @@ public:
     TimeSystem                  _timeSystem;
 
     LCGRandom gen;
+    DummyAuthentifier authentifier;
+    std::string error_message;
 
+public:
     struct ModRDPParamsData
     {
         bool enable_tls                      = false;
@@ -129,13 +134,13 @@ public:
 
         if (this->_client_sck > 0) {
             try {
-                std::string error_message;
+
                 this->_sck = new SocketTransport( name
                                                 , this->_client_sck
                                                 , targetIP
                                                 , this->_front->_port
                                                 , to_verbose_flags(0)
-                                                , &error_message
+                                                , &this->error_message
                                                 );
                 std::cout << "Connected to [" << targetIP <<  "]." << std::endl;
                 return true;
@@ -184,9 +189,7 @@ public:
         mod_rdp_params.allow_channels                  = &allow_channels;
         //mod_rdp_params.allow_using_multiple_monitors   = true;
         //mod_rdp_params.bogus_refresh_rect              = true;
-        mod_rdp_params.verbose = to_verbose_flags(0);                      //MODRDP_LOGLEVEL_CLIPRDR | 16;
-
-         // To always get the same client random, in tests
+        mod_rdp_params.verbose = to_verbose_flags(0);
 
         try {
             this->_callback = new mod_rdp( *(this->_sck)
@@ -196,6 +199,7 @@ public:
                                          , this->gen
                                          , this->_timeSystem
                                          , mod_rdp_params
+                                         , this->authentifier
                                          );
 
             this->_front->_to_server_sender._callback = this->_callback;

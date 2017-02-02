@@ -210,6 +210,16 @@ enum {
 };
 
 
+static inline
+const char * get_FSCTLStructures(uint32_t FSCTLStructures) {
+
+    switch (FSCTLStructures) {
+        case FSCTL_CREATE_OR_GET_OBJECT_ID: return "FSCTL_CREATE_OR_GET_OBJECT_ID";
+        case FSCTL_DELETE_OBJECT_ID: return "FSCTL_DELETE_OBJECT_ID";
+    }
+
+    return "unknow";
+}
 
 // [MS-FSCC]: File System Control Codes
 
@@ -1121,6 +1131,7 @@ public:
 //  +-----------------------------+--------------------------------------------+
 
 class FileBothDirectoryInformation {
+
     uint32_t NextEntryOffset = 0;
     uint32_t FileIndex       = 0;
     uint64_t CreationTime    = 0;
@@ -2340,6 +2351,7 @@ class FileStandardInformation {
     uint8_t  Directory      = 0;
 
 public:
+
     FileStandardInformation() = default;
 
     FileStandardInformation(int64_t AllocationSize, int64_t EndOfFile,
@@ -3597,6 +3609,9 @@ struct FileNotifyInformation {
         LOG(LOG_INFO, "          * FileName        = \"%s\"", this->FileName);
     }
 };
+
+
+
 
 
 }   // namespace fscc

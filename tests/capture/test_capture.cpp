@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
  |(ini.get<cfg::debug::primary_orders>()?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
  |(ini.get<cfg::debug::secondary_orders>()?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
  |(ini.get<cfg::debug::bitmap_update>()?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
-            
+
         WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
         std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
@@ -366,7 +366,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         | (ini.get<cfg::debug::primary_orders>() ?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
         | (ini.get<cfg::debug::secondary_orders>() ?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
         | (ini.get<cfg::debug::bitmap_update>() ?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
-        
+
     WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
     std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
     std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
@@ -454,7 +454,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
          != ::KeyboardInputMaskingLevel::fully_masked;
     bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
-        
+
     // TODO remove this after unifying capture interface
     Capture capture( capture_wrm, wrm_params
                    , capture_png, png_params
@@ -2654,7 +2654,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
  |(ini.get<cfg::debug::primary_orders>()?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
  |(ini.get<cfg::debug::secondary_orders>()?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
  |(ini.get<cfg::debug::bitmap_update>()?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
-            
+
         WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
         std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
@@ -2691,7 +2691,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
         RDPDrawable gd_drawable(scr.cx, scr.cy);
 
         WrmCaptureImpl wrmcapture(now, wrm_params, nullptr /* authentifier */, gd_drawable);
-                
+
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
 
@@ -2824,7 +2824,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         RDPDrawable gd_drawable(scr.cx, scr.cy);
 
         WrmCaptureImpl wrmcapture(now, wrm_params, nullptr /* authentifier */, gd_drawable);
-                
+
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
 
