@@ -1693,7 +1693,7 @@ public:
         LOG(LOG_INFO, "     Device Control Request:");
         LOG(LOG_INFO, "          * OutputBufferLength = %d (4 bytes)", int(this->OutputBufferLength));
         LOG(LOG_INFO, "          * InputBufferLength  = %d (4 bytes)", int(this->input_buffer.sz));
-        LOG(LOG_INFO, "          * IoControlCode      = 0x%08x (4 bytes)", this->IoControlCode_);
+        LOG(LOG_INFO, "          * IoControlCode      = 0x%08x (4 bytes): %s", this->IoControlCode_, fscc::get_FSCTLStructures(this->IoControlCode_));
         LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
     }
 };  // DeviceControlRequest
@@ -5192,6 +5192,8 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                                 rgdb.log();
                                             }
                                             break;
+                                         case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID :
+                                            break;
                                         default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Data: Code = 0x%08x", dcr.IoControlCode());
                                             break;
                                     }
@@ -5435,8 +5437,13 @@ void streamLog( InStream & stream , RdpDrStatus & status)
 
                                 if (cdcr.OutputBufferLength > 0) {
                                     switch (status_dior.IOControlCode) {
-                                        //case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID:
-                                        //    break;
+                                        case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID:
+                                        {
+                                            fscc::FileObjectBuffer_Type1 rgdb;
+                                            rgdb.receive(s);
+                                            rgdb.log();
+                                        }
+                                            break;
                                         //case fscc::FSCTL_FILESYSTEM_GET_STATISTICS:
                                         //    break;
                                         default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Code: 0x%08x", status_dior.IOControlCode);
