@@ -23,10 +23,10 @@
 #include <type_traits>
 
 template<class T>
-using underlying_type = typename std::underlying_type<T>::type;
+using underlying_type_t = typename std::underlying_type<T>::type;
 
 template<class E>
 constexpr
-underlying_type<E>
+underlying_type_t<E>
 underlying_cast(E e)
-{ return static_cast<underlying_type<E>>(e); }
+{ return static_cast<underlying_type_t<E>>(e); }

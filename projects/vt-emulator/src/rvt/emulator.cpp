@@ -49,24 +49,6 @@
 namespace rvt
 {
 
-#define MODES_SCREEN static_cast<int>(Mode::COUNT_)
-
-#define MODE_AppScreen       (MODES_SCREEN+0)   // Mode #1
-#define MODE_AppCuKeys       (MODES_SCREEN+1)   // Application cursor keys (DECCKM)
-#define MODE_AppKeyPad       (MODES_SCREEN+2)   //
-#define MODE_Mouse1000       (MODES_SCREEN+3)   // Send mouse X,Y position on press and release
-#define MODE_Mouse1001       (MODES_SCREEN+4)   // Use Hilight mouse tracking
-#define MODE_Mouse1002       (MODES_SCREEN+5)   // Use cell motion mouse tracking
-#define MODE_Mouse1003       (MODES_SCREEN+6)   // Use all motion mouse tracking
-#define MODE_Mouse1005       (MODES_SCREEN+7)   // Xterm-style extended coordinates
-#define MODE_Mouse1006       (MODES_SCREEN+8)   // 2nd Xterm-style extended coordinates
-#define MODE_Mouse1015       (MODES_SCREEN+9)   // Urxvt-style extended coordinates
-#define MODE_Ansi            (MODES_SCREEN+10)   // Use US Ascii for character sets G0-G3 (DECANM)
-#define MODE_132Columns      (MODES_SCREEN+11)  // 80 <-> 132 column mode switch (DECCOLM)
-#define MODE_Allow132Columns (MODES_SCREEN+12)  // Allow DECCOLM mode
-#define MODE_BracketedPaste  (MODES_SCREEN+13)  // Xterm-style bracketed paste mode
-#define MODE_total           (MODES_SCREEN+14)
-
 extern unsigned short vt100_graphics[32];
 
 struct CharCodes {
@@ -92,6 +74,25 @@ struct CharCodes {
  */
 class Vt102Emulation
 {
+    enum Mode : uint16_t
+    {
+        AppScreen       , // Mode #1
+        AppCuKeys       , // Application cursor keys (DECCKM)
+        AppKeyPad       , //
+        Mouse1000       , // Send mouse X,Y position on press and release
+        Mouse1001       , // Use Hilight mouse tracking
+        Mouse1002       , // Use cell motion mouse tracking
+        Mouse1003       , // Use all motion mouse tracking
+        Mouse1005       , // Xterm-style extended coordinates
+        Mouse1006       , // 2nd Xterm-style extended coordinates
+        Mouse1015       , // Urxvt-style extended coordinates
+        Ansi            , // Use US Ascii for character sets G0-G3 (DECANM)
+        Columns132      , // 80 <-> 132 column mode switch (DECCOLM)
+        AllowColumns132 , // Allow DECCOLM mode
+        BracketedPaste  , // Xterm-style bracketed paste mode
+        COUNT_          ,
+    };
+
 public:
     /** Constructs a new emulation */
     Vt102Emulation(Screen * screen);
@@ -104,8 +105,13 @@ public:
 
 protected:
     // reimplemented from Emulation
-    void setMode(int mode);
-    void resetMode(int mode);
+    void setMode(Mode mode);
+    void resetMode(Mode mode);
+
+    using ScreenMode = Screen::Mode;
+
+    void setMode(ScreenMode mode);
+    void resetMode(ScreenMode mode);
 
 public: // TODO protected
     void receiveChar(uc_t cc);
@@ -124,13 +130,19 @@ private:
     void setDefaultMargins();
 
     // returns true if 'mode' is set or false otherwise
-    bool getMode(int mode);
+    bool getMode(Mode mode);
     // saves the current boolean value of 'mode'
-    void saveMode(int mode);
+    void saveMode(Mode mode);
     // restores the boolean value of 'mode'
-    void restoreMode(int mode);
+    void restoreMode(Mode mode);
+    // returns true if 'mode' is set or false otherwise
+    bool getMode(ScreenMode mode);
+    // saves the current boolean value of 'mode'
+    void saveMode(ScreenMode mode);
+    // restores the boolean value of 'mode'
+    void restoreMode(ScreenMode mode);
     // resets all modes
-    // (except MODE_Allow132Columns)
+    // (except Mode::AllowColumns132)
     void resetModes();
 
     void resetTokenizer();
@@ -167,19 +179,10 @@ private:
 
     CharCodes _charset[2];
 
-    class TerminalState
-    {
-    public:
-        // Initializes all modes to false
-        TerminalState() {
-            memset(&mode, false, MODE_total * sizeof(bool));
-        }
+    using ModeFlags = Flags<Mode>;
 
-        bool mode[MODE_total];
-    };
-
-    TerminalState _currentModes;
-    TerminalState _savedModes;
+    ModeFlags _currentModes;
+    ModeFlags _savedModes;
 
     bool _reportFocusEvents;
 
@@ -442,7 +445,7 @@ void Vt102Emulation::receiveChar(uc_t cc)
   int * s = tokenBuffer;
   const int  p = tokenBufferPos;
 
-  if (getMode(MODE_Ansi))
+  if (getMode(Mode::Ansi))
   {
     if (lec(1,0,ESC)) { return; }
     if (lec(1,0,ESC+128)) { s[0] = ESC; receiveChar('['); return; }
@@ -593,9 +596,9 @@ void Vt102Emulation::processToken(int token, int p, int q)
     case TY_ESC('7'      ) :      saveCursor           (          ); break;
     case TY_ESC('8'      ) :      restoreCursor        (          ); break;
 
-    case TY_ESC('='      ) :          setMode      (MODE_AppKeyPad); break;
-    case TY_ESC('>'      ) :        resetMode      (MODE_AppKeyPad); break;
-    case TY_ESC('<'      ) :          setMode      (MODE_Ansi     ); break; //VT100
+    case TY_ESC('='      ) :          setMode      (Mode::AppKeyPad); break;
+    case TY_ESC('>'      ) :        resetMode      (Mode::AppKeyPad); break;
+    case TY_ESC('<'      ) :          setMode      (Mode::Ansi     ); break; //VT100
 
     case TY_ESC_CS('(', '0') :      setCharset           (0,    '0'); break; //VT100
     case TY_ESC_CS('(', 'A') :      setCharset           (0,    'A'); break; //VT100
@@ -651,11 +654,11 @@ void Vt102Emulation::processToken(int token, int p, int q)
     case TY_CSI_PS('J',      3) : /* TODO clearHistory();*/                            break;
     case TY_CSI_PS('g',   0) : _currentScreen->changeTabStop        (false     ); break; //VT100
     case TY_CSI_PS('g',   3) : _currentScreen->clearTabStops        (          ); break; //VT100
-    case TY_CSI_PS('h',   4) : _currentScreen->    setMode      (Mode::Insert   ); break;
-    case TY_CSI_PS('h',  20) :          setMode      (Mode::NewLine  ); break;
+    case TY_CSI_PS('h',   4) : _currentScreen->    setMode      (ScreenMode::Insert   ); break;
+    case TY_CSI_PS('h',  20) :          setMode      (ScreenMode::NewLine  ); break;
     case TY_CSI_PS('i',   0) : /* IGNORE: attached printer          */ break; //VT100
-    case TY_CSI_PS('l',   4) : _currentScreen->  resetMode      (Mode::Insert   ); break;
-    case TY_CSI_PS('l',  20) :        resetMode      (Mode::NewLine  ); break;
+    case TY_CSI_PS('l',   4) : _currentScreen->  resetMode      (ScreenMode::Insert   ); break;
+    case TY_CSI_PS('l',  20) :        resetMode      (ScreenMode::NewLine  ); break;
     case TY_CSI_PS('s',   0) :      saveCursor           (          ); break;
     case TY_CSI_PS('u',   0) :      restoreCursor        (          ); break;
 
@@ -751,31 +754,31 @@ void Vt102Emulation::processToken(int token, int p, int q)
     case TY_CSI_PN('r'      ) :      setMargins           (p,      q); break; //VT100
     case TY_CSI_PN('y'      ) : /* IGNORED: Confidence test          */ break; //VT100
 
-    case TY_CSI_PR('h',   1) :          setMode      (MODE_AppCuKeys); break; //VT100
-    case TY_CSI_PR('l',   1) :        resetMode      (MODE_AppCuKeys); break; //VT100
-    case TY_CSI_PR('s',   1) :         saveMode      (MODE_AppCuKeys); break; //FIXME
-    case TY_CSI_PR('r',   1) :      restoreMode      (MODE_AppCuKeys); break; //FIXME
+    case TY_CSI_PR('h',   1) :          setMode      (Mode::AppCuKeys); break; //VT100
+    case TY_CSI_PR('l',   1) :        resetMode      (Mode::AppCuKeys); break; //VT100
+    case TY_CSI_PR('s',   1) :         saveMode      (Mode::AppCuKeys); break; //FIXME
+    case TY_CSI_PR('r',   1) :      restoreMode      (Mode::AppCuKeys); break; //FIXME
 
-    case TY_CSI_PR('l',   2) :        resetMode      (MODE_Ansi     ); break; //VT100
+    case TY_CSI_PR('l',   2) :        resetMode      (Mode::Ansi     ); break; //VT100
 
-    case TY_CSI_PR('h',   3) :          setMode      (MODE_132Columns); break; //VT100
-    case TY_CSI_PR('l',   3) :        resetMode      (MODE_132Columns); break; //VT100
+    case TY_CSI_PR('h',   3) :          setMode      (Mode::Columns132); break; //VT100
+    case TY_CSI_PR('l',   3) :        resetMode      (Mode::Columns132); break; //VT100
 
     case TY_CSI_PR('h',   4) : /* IGNORED: soft scrolling           */ break; //VT100
     case TY_CSI_PR('l',   4) : /* IGNORED: soft scrolling           */ break; //VT100
 
-    case TY_CSI_PR('h',   5) : _currentScreen->    setMode      (Mode::Screen   ); break; //VT100
-    case TY_CSI_PR('l',   5) : _currentScreen->  resetMode      (Mode::Screen   ); break; //VT100
+    case TY_CSI_PR('h',   5) : _currentScreen->    setMode      (ScreenMode::Screen   ); break; //VT100
+    case TY_CSI_PR('l',   5) : _currentScreen->  resetMode      (ScreenMode::Screen   ); break; //VT100
 
-    case TY_CSI_PR('h',   6) : _currentScreen->    setMode      (Mode::Origin   ); break; //VT100
-    case TY_CSI_PR('l',   6) : _currentScreen->  resetMode      (Mode::Origin   ); break; //VT100
-    case TY_CSI_PR('s',   6) : _currentScreen->   saveMode      (Mode::Origin   ); break; //FIXME
-    case TY_CSI_PR('r',   6) : _currentScreen->restoreMode      (Mode::Origin   ); break; //FIXME
+    case TY_CSI_PR('h',   6) : _currentScreen->    setMode      (ScreenMode::Origin   ); break; //VT100
+    case TY_CSI_PR('l',   6) : _currentScreen->  resetMode      (ScreenMode::Origin   ); break; //VT100
+    case TY_CSI_PR('s',   6) : _currentScreen->   saveMode      (ScreenMode::Origin   ); break; //FIXME
+    case TY_CSI_PR('r',   6) : _currentScreen->restoreMode      (ScreenMode::Origin   ); break; //FIXME
 
-    case TY_CSI_PR('h',   7) : _currentScreen->    setMode      (Mode::Wrap     ); break; //VT100
-    case TY_CSI_PR('l',   7) : _currentScreen->  resetMode      (Mode::Wrap     ); break; //VT100
-    case TY_CSI_PR('s',   7) : _currentScreen->   saveMode      (Mode::Wrap     ); break; //FIXME
-    case TY_CSI_PR('r',   7) : _currentScreen->restoreMode      (Mode::Wrap     ); break; //FIXME
+    case TY_CSI_PR('h',   7) : _currentScreen->    setMode      (ScreenMode::Wrap     ); break; //VT100
+    case TY_CSI_PR('l',   7) : _currentScreen->  resetMode      (ScreenMode::Wrap     ); break; //VT100
+    case TY_CSI_PR('s',   7) : _currentScreen->   saveMode      (ScreenMode::Wrap     ); break; //FIXME
+    case TY_CSI_PR('r',   7) : _currentScreen->restoreMode      (ScreenMode::Wrap     ); break; //FIXME
 
     case TY_CSI_PR('h',   8) : /* IGNORED: autorepeat on            */ break; //VT100
     case TY_CSI_PR('l',   8) : /* IGNORED: autorepeat off           */ break; //VT100
@@ -792,23 +795,23 @@ void Vt102Emulation::processToken(int token, int p, int q)
     case TY_CSI_PR('s',  12) : /* IGNORED: Cursor blink             */ break; //att610
     case TY_CSI_PR('r',  12) : /* IGNORED: Cursor blink             */ break; //att610
 
-    case TY_CSI_PR('h',  25) :          setMode      (Mode::Cursor   ); break; //VT100
-    case TY_CSI_PR('l',  25) :        resetMode      (Mode::Cursor   ); break; //VT100
-    case TY_CSI_PR('s',  25) :         saveMode      (Mode::Cursor   ); break; //VT100
-    case TY_CSI_PR('r',  25) :      restoreMode      (Mode::Cursor   ); break; //VT100
+    case TY_CSI_PR('h',  25) :          setMode      (ScreenMode::Cursor   ); break; //VT100
+    case TY_CSI_PR('l',  25) :        resetMode      (ScreenMode::Cursor   ); break; //VT100
+    case TY_CSI_PR('s',  25) :         saveMode      (ScreenMode::Cursor   ); break; //VT100
+    case TY_CSI_PR('r',  25) :      restoreMode      (ScreenMode::Cursor   ); break; //VT100
 
-    case TY_CSI_PR('h',  40) :         setMode(MODE_Allow132Columns ); break; // XTERM
-    case TY_CSI_PR('l',  40) :       resetMode(MODE_Allow132Columns ); break; // XTERM
+    case TY_CSI_PR('h',  40) :         setMode(Mode::AllowColumns132 ); break; // XTERM
+    case TY_CSI_PR('l',  40) :       resetMode(Mode::AllowColumns132 ); break; // XTERM
 
     case TY_CSI_PR('h',  41) : /* IGNORED: obsolete more(1) fix     */ break; //XTERM
     case TY_CSI_PR('l',  41) : /* IGNORED: obsolete more(1) fix     */ break; //XTERM
     case TY_CSI_PR('s',  41) : /* IGNORED: obsolete more(1) fix     */ break; //XTERM
     case TY_CSI_PR('r',  41) : /* IGNORED: obsolete more(1) fix     */ break; //XTERM
 
-    case TY_CSI_PR('h',  47) :          setMode      (MODE_AppScreen); break; //VT100
-    case TY_CSI_PR('l',  47) :        resetMode      (MODE_AppScreen); break; //VT100
-    case TY_CSI_PR('s',  47) :         saveMode      (MODE_AppScreen); break; //XTERM
-    case TY_CSI_PR('r',  47) :      restoreMode      (MODE_AppScreen); break; //XTERM
+    case TY_CSI_PR('h',  47) :          setMode      (Mode::AppScreen); break; //VT100
+    case TY_CSI_PR('l',  47) :        resetMode      (Mode::AppScreen); break; //VT100
+    case TY_CSI_PR('s',  47) :         saveMode      (Mode::AppScreen); break; //XTERM
+    case TY_CSI_PR('r',  47) :      restoreMode      (Mode::AppScreen); break; //XTERM
 
     case TY_CSI_PR('h',  67) : /* IGNORED: DECBKM                   */ break; //XTERM
     case TY_CSI_PR('l',  67) : /* IGNORED: DECBKM                   */ break; //XTERM
@@ -829,50 +832,50 @@ void Vt102Emulation::processToken(int token, int p, int q)
     //1003 (a slight variation on dragging the mouse)
     //
 
-    case TY_CSI_PR('h', 1000) :          setMode      (MODE_Mouse1000); break; //XTERM
-    case TY_CSI_PR('l', 1000) :        resetMode      (MODE_Mouse1000); break; //XTERM
-    case TY_CSI_PR('s', 1000) :         saveMode      (MODE_Mouse1000); break; //XTERM
-    case TY_CSI_PR('r', 1000) :      restoreMode      (MODE_Mouse1000); break; //XTERM
+    case TY_CSI_PR('h', 1000) :          setMode      (Mode::Mouse1000); break; //XTERM
+    case TY_CSI_PR('l', 1000) :        resetMode      (Mode::Mouse1000); break; //XTERM
+    case TY_CSI_PR('s', 1000) :         saveMode      (Mode::Mouse1000); break; //XTERM
+    case TY_CSI_PR('r', 1000) :      restoreMode      (Mode::Mouse1000); break; //XTERM
 
     case TY_CSI_PR('h', 1001) : /* IGNORED: hilite mouse tracking    */ break; //XTERM
-    case TY_CSI_PR('l', 1001) :        resetMode      (MODE_Mouse1001); break; //XTERM
+    case TY_CSI_PR('l', 1001) :        resetMode      (Mode::Mouse1001); break; //XTERM
     case TY_CSI_PR('s', 1001) : /* IGNORED: hilite mouse tracking    */ break; //XTERM
     case TY_CSI_PR('r', 1001) : /* IGNORED: hilite mouse tracking    */ break; //XTERM
 
-    case TY_CSI_PR('h', 1002) :          setMode      (MODE_Mouse1002); break; //XTERM
-    case TY_CSI_PR('l', 1002) :        resetMode      (MODE_Mouse1002); break; //XTERM
-    case TY_CSI_PR('s', 1002) :         saveMode      (MODE_Mouse1002); break; //XTERM
-    case TY_CSI_PR('r', 1002) :      restoreMode      (MODE_Mouse1002); break; //XTERM
+    case TY_CSI_PR('h', 1002) :          setMode      (Mode::Mouse1002); break; //XTERM
+    case TY_CSI_PR('l', 1002) :        resetMode      (Mode::Mouse1002); break; //XTERM
+    case TY_CSI_PR('s', 1002) :         saveMode      (Mode::Mouse1002); break; //XTERM
+    case TY_CSI_PR('r', 1002) :      restoreMode      (Mode::Mouse1002); break; //XTERM
 
-    case TY_CSI_PR('h', 1003) :          setMode      (MODE_Mouse1003); break; //XTERM
-    case TY_CSI_PR('l', 1003) :        resetMode      (MODE_Mouse1003); break; //XTERM
-    case TY_CSI_PR('s', 1003) :         saveMode      (MODE_Mouse1003); break; //XTERM
-    case TY_CSI_PR('r', 1003) :      restoreMode      (MODE_Mouse1003); break; //XTERM
+    case TY_CSI_PR('h', 1003) :          setMode      (Mode::Mouse1003); break; //XTERM
+    case TY_CSI_PR('l', 1003) :        resetMode      (Mode::Mouse1003); break; //XTERM
+    case TY_CSI_PR('s', 1003) :         saveMode      (Mode::Mouse1003); break; //XTERM
+    case TY_CSI_PR('r', 1003) :      restoreMode      (Mode::Mouse1003); break; //XTERM
 
     case TY_CSI_PR('h',  1004) : _reportFocusEvents = true; break;
     case TY_CSI_PR('l',  1004) : _reportFocusEvents = false; break;
 
-    case TY_CSI_PR('h', 1005) :          setMode      (MODE_Mouse1005); break; //XTERM
-    case TY_CSI_PR('l', 1005) :        resetMode      (MODE_Mouse1005); break; //XTERM
-    case TY_CSI_PR('s', 1005) :         saveMode      (MODE_Mouse1005); break; //XTERM
-    case TY_CSI_PR('r', 1005) :      restoreMode      (MODE_Mouse1005); break; //XTERM
+    case TY_CSI_PR('h', 1005) :          setMode      (Mode::Mouse1005); break; //XTERM
+    case TY_CSI_PR('l', 1005) :        resetMode      (Mode::Mouse1005); break; //XTERM
+    case TY_CSI_PR('s', 1005) :         saveMode      (Mode::Mouse1005); break; //XTERM
+    case TY_CSI_PR('r', 1005) :      restoreMode      (Mode::Mouse1005); break; //XTERM
 
-    case TY_CSI_PR('h', 1006) :          setMode      (MODE_Mouse1006); break; //XTERM
-    case TY_CSI_PR('l', 1006) :        resetMode      (MODE_Mouse1006); break; //XTERM
-    case TY_CSI_PR('s', 1006) :         saveMode      (MODE_Mouse1006); break; //XTERM
-    case TY_CSI_PR('r', 1006) :      restoreMode      (MODE_Mouse1006); break; //XTERM
+    case TY_CSI_PR('h', 1006) :          setMode      (Mode::Mouse1006); break; //XTERM
+    case TY_CSI_PR('l', 1006) :        resetMode      (Mode::Mouse1006); break; //XTERM
+    case TY_CSI_PR('s', 1006) :         saveMode      (Mode::Mouse1006); break; //XTERM
+    case TY_CSI_PR('r', 1006) :      restoreMode      (Mode::Mouse1006); break; //XTERM
 
-    case TY_CSI_PR('h', 1015) :          setMode      (MODE_Mouse1015); break; //URXVT
-    case TY_CSI_PR('l', 1015) :        resetMode      (MODE_Mouse1015); break; //URXVT
-    case TY_CSI_PR('s', 1015) :         saveMode      (MODE_Mouse1015); break; //URXVT
-    case TY_CSI_PR('r', 1015) :      restoreMode      (MODE_Mouse1015); break; //URXVT
+    case TY_CSI_PR('h', 1015) :          setMode      (Mode::Mouse1015); break; //URXVT
+    case TY_CSI_PR('l', 1015) :        resetMode      (Mode::Mouse1015); break; //URXVT
+    case TY_CSI_PR('s', 1015) :         saveMode      (Mode::Mouse1015); break; //URXVT
+    case TY_CSI_PR('r', 1015) :      restoreMode      (Mode::Mouse1015); break; //URXVT
 
     case TY_CSI_PR('h', 1034) : /* IGNORED: 8bitinput activation     */ break; //XTERM
 
-    case TY_CSI_PR('h', 1047) :          setMode      (MODE_AppScreen); break; //XTERM
-    case TY_CSI_PR('l', 1047) : /*TODO _screen[1]*/_currentScreen->clearEntireScreen(); resetMode(MODE_AppScreen); break; //XTERM
-    case TY_CSI_PR('s', 1047) :         saveMode      (MODE_AppScreen); break; //XTERM
-    case TY_CSI_PR('r', 1047) :      restoreMode      (MODE_AppScreen); break; //XTERM
+    case TY_CSI_PR('h', 1047) :          setMode      (Mode::AppScreen); break; //XTERM
+    case TY_CSI_PR('l', 1047) : /*TODO _screen[1]*/_currentScreen->clearEntireScreen(); resetMode(Mode::AppScreen); break; //XTERM
+    case TY_CSI_PR('s', 1047) :         saveMode      (Mode::AppScreen); break; //XTERM
+    case TY_CSI_PR('r', 1047) :      restoreMode      (Mode::AppScreen); break; //XTERM
 
     //FIXME: Unitoken: save translations
     case TY_CSI_PR('h', 1048) :      saveCursor           (          ); break; //XTERM
@@ -882,13 +885,13 @@ void Vt102Emulation::processToken(int token, int p, int q)
 
     //FIXME: every once new sequences like this pop up in xterm.
     //       Here's a guess of what they could mean.
-    case TY_CSI_PR('h', 1049) : saveCursor(); /*TODO _screen[1]*/_currentScreen->clearEntireScreen(); setMode(MODE_AppScreen); break; //XTERM
-    case TY_CSI_PR('l', 1049) : resetMode(MODE_AppScreen); restoreCursor(); break; //XTERM
+    case TY_CSI_PR('h', 1049) : saveCursor(); /*TODO _screen[1]*/_currentScreen->clearEntireScreen(); setMode(Mode::AppScreen); break; //XTERM
+    case TY_CSI_PR('l', 1049) : resetMode(Mode::AppScreen); restoreCursor(); break; //XTERM
 
-    case TY_CSI_PR('h', 2004) :          setMode      (MODE_BracketedPaste); break; //XTERM
-    case TY_CSI_PR('l', 2004) :        resetMode      (MODE_BracketedPaste); break; //XTERM
-    case TY_CSI_PR('s', 2004) :         saveMode      (MODE_BracketedPaste); break; //XTERM
-    case TY_CSI_PR('r', 2004) :      restoreMode      (MODE_BracketedPaste); break; //XTERM
+    case TY_CSI_PR('h', 2004) :          setMode      (Mode::BracketedPaste); break; //XTERM
+    case TY_CSI_PR('l', 2004) :        resetMode      (Mode::BracketedPaste); break; //XTERM
+    case TY_CSI_PR('s', 2004) :         saveMode      (Mode::BracketedPaste); break; //XTERM
+    case TY_CSI_PR('r', 2004) :      restoreMode      (Mode::BracketedPaste); break; //XTERM
 
     //FIXME: weird DEC reset sequence
     case TY_CSI_PE('p'      ) : /* IGNORED: reset         (        ) */ break;
@@ -908,9 +911,9 @@ void Vt102Emulation::processToken(int token, int p, int q)
     case TY_VT52('K'      ) : _currentScreen->clearToEndOfLine     (          ); break; //VT52
     case TY_VT52('Y'      ) : _currentScreen->setCursorYX          (p-31,q-31 ); break; //VT52
     case TY_VT52('Z'      ) :      reportTerminalType   (           ); break; //VT52
-    case TY_VT52('<'      ) :          setMode      (MODE_Ansi     ); break; //VT52
-    case TY_VT52('='      ) :          setMode      (MODE_AppKeyPad); break; //VT52
-    case TY_VT52('>'      ) :        resetMode      (MODE_AppKeyPad); break; //VT52
+    case TY_VT52('<'      ) :          setMode      (Mode::Ansi     ); break; //VT52
+    case TY_VT52('='      ) :          setMode      (Mode::AppKeyPad); break; //VT52
+    case TY_VT52('>'      ) :        resetMode      (Mode::AppKeyPad); break; //VT52
 
     case TY_CSI_PG('c'      ) :  reportSecondaryAttributes(          ); break; //VT100
 
@@ -1055,110 +1058,125 @@ void Vt102Emulation::restoreCursor()
 
 void Vt102Emulation::resetModes()
 {
-    // MODE_Allow132Columns is not reset here
+    // Mode::AllowColumns132 is not reset here
     // to match Xterm's behavior (see Xterm's VTReset() function)
 
-    resetMode(MODE_132Columns); saveMode(MODE_132Columns);
-    resetMode(MODE_Mouse1000);  saveMode(MODE_Mouse1000);
-    resetMode(MODE_Mouse1001);  saveMode(MODE_Mouse1001);
-    resetMode(MODE_Mouse1002);  saveMode(MODE_Mouse1002);
-    resetMode(MODE_Mouse1003);  saveMode(MODE_Mouse1003);
-    resetMode(MODE_Mouse1005);  saveMode(MODE_Mouse1005);
-    resetMode(MODE_Mouse1006);  saveMode(MODE_Mouse1006);
-    resetMode(MODE_Mouse1015);  saveMode(MODE_Mouse1015);
-    resetMode(MODE_BracketedPaste);  saveMode(MODE_BracketedPaste);
+    resetMode(Mode::Columns132); saveMode(Mode::Columns132);
+    resetMode(Mode::Mouse1000);  saveMode(Mode::Mouse1000);
+    resetMode(Mode::Mouse1001);  saveMode(Mode::Mouse1001);
+    resetMode(Mode::Mouse1002);  saveMode(Mode::Mouse1002);
+    resetMode(Mode::Mouse1003);  saveMode(Mode::Mouse1003);
+    resetMode(Mode::Mouse1005);  saveMode(Mode::Mouse1005);
+    resetMode(Mode::Mouse1006);  saveMode(Mode::Mouse1006);
+    resetMode(Mode::Mouse1015);  saveMode(Mode::Mouse1015);
+    resetMode(Mode::BracketedPaste);  saveMode(Mode::BracketedPaste);
 
-    resetMode(MODE_AppScreen);  saveMode(MODE_AppScreen);
-    resetMode(MODE_AppCuKeys);  saveMode(MODE_AppCuKeys);
-    resetMode(MODE_AppKeyPad);  saveMode(MODE_AppKeyPad);
-    resetMode(Mode::NewLine);
-    setMode(MODE_Ansi);
+    resetMode(Mode::AppScreen);  saveMode(Mode::AppScreen);
+    resetMode(Mode::AppCuKeys);  saveMode(Mode::AppCuKeys);
+    resetMode(Mode::AppKeyPad);  saveMode(Mode::AppKeyPad);
+    resetMode(ScreenMode::NewLine);
+    setMode(Mode::Ansi);
 }
 
-void Vt102Emulation::setMode(int m)
+void Vt102Emulation::setMode(Mode m)
 {
-    _currentModes.mode[m] = true;
+    _currentModes.set(m);
     switch (m) {
-    case MODE_132Columns:
-        if (getMode(MODE_Allow132Columns))
+    case Mode::Columns132:
+        if (getMode(Mode::AllowColumns132))
             clearScreenAndSetColumns(132);
         else
-            _currentModes.mode[m] = false;
+            _currentModes.reset(m);
         break;
-    case MODE_Mouse1000:
-    case MODE_Mouse1001:
-    case MODE_Mouse1002:
-    case MODE_Mouse1003:
+    case Mode::Mouse1000:
+    case Mode::Mouse1001:
+    case Mode::Mouse1002:
+    case Mode::Mouse1003:
         // TODO emit programUsesMouseChanged(false);
         break;
 
-    case MODE_BracketedPaste:
+    case Mode::BracketedPaste:
         // TODO emit programBracketedPasteModeChanged(true);
         break;
 
-    case MODE_AppScreen :
+    case Mode::AppScreen :
         // TODO _screen[1]->clearSelection();
         // TODO setScreen(1);
         break;
     }
-    // FIXME: Currently this has a redundant condition as MODES_SCREEN is 6
-    // and MODE_NewLine is 5
-    if (m < MODES_SCREEN || static_cast<Mode::enum_t>(m) == Mode::NewLine) {
-        // TODO _screen[0]->setMode(m);
-        // TODO _screen[1]->setMode(m);
-        _currentScreen->setMode(m);
-    }
 }
 
-void Vt102Emulation::resetMode(int m)
+void Vt102Emulation::setMode(ScreenMode m)
 {
-    _currentModes.mode[m] = false;
+    // TODO _screen[0]->setMode(m);
+    // TODO _screen[1]->setMode(m);
+    _currentScreen->setMode(m);
+}
+
+void Vt102Emulation::resetMode(Mode m)
+{
+    _currentModes.reset(m);
     switch (m) {
-    case MODE_132Columns:
-        if (getMode(MODE_Allow132Columns))
+    case Mode::Columns132:
+        if (getMode(Mode::AllowColumns132))
             clearScreenAndSetColumns(80);
         break;
-    case MODE_Mouse1000 :
-    case MODE_Mouse1001 :
-    case MODE_Mouse1002 :
-    case MODE_Mouse1003 :
+    case Mode::Mouse1000 :
+    case Mode::Mouse1001 :
+    case Mode::Mouse1002 :
+    case Mode::Mouse1003 :
         // TODO emit programUsesMouseChanged(true);
         break;
 
-    case MODE_BracketedPaste:
+    case Mode::BracketedPaste:
         // TODO emit programBracketedPasteModeChanged(false);
         break;
 
-    case MODE_AppScreen :
+    case Mode::AppScreen :
         // TODO _screen[0]->clearSelection();
         // TODO setScreen(0);
         break;
     }
-    // FIXME: Currently this has a redundant condition as MODES_SCREEN is 6
-    // and MODE_NewLine is 5
-    if (m < MODES_SCREEN || static_cast<Mode::enum_t>(m) == Mode::NewLine) {
-        // TODO _screen[0]->resetMode(m);
-        // TODO _screen[1]->resetMode(m);
-        _currentScreen->resetMode(m);
-    }
 }
 
-void Vt102Emulation::saveMode(int m)
+void Vt102Emulation::resetMode(ScreenMode m)
 {
-    _savedModes.mode[m] = _currentModes.mode[m];
+    // TODO _screen[0]->resetMode(m);
+    // TODO _screen[1]->resetMode(m);
+    _currentScreen->resetMode(m);
 }
 
-void Vt102Emulation::restoreMode(int m)
+void Vt102Emulation::saveMode(Mode m)
 {
-    if (_savedModes.mode[m])
-        setMode(m);
-    else
-        resetMode(m);
+    _savedModes.copy_of(m, _currentModes);
 }
 
-bool Vt102Emulation::getMode(int m)
+void Vt102Emulation::restoreMode(Mode m)
 {
-    return _currentModes.mode[m];
+    _currentModes.copy_of(m, _savedModes);
+}
+
+bool Vt102Emulation::getMode(Mode m)
+{
+    return _currentModes.has(m);
+}
+
+void Vt102Emulation::saveMode(ScreenMode m)
+{
+    // TODO saveMode(static_cast<Screen>(m))
+    _currentScreen->saveMode(m);
+}
+
+void Vt102Emulation::restoreMode(ScreenMode m)
+{
+    // TODO restoreMode(static_cast<Screen>(m))
+    _currentScreen->resetMode(m);
+}
+
+bool Vt102Emulation::getMode(ScreenMode m)
+{
+    // TODO getMode(static_cast<Screen>(m))
+    return _currentScreen->getMode(m);
 }
 
 char Vt102Emulation::eraseChar() const
@@ -1258,11 +1276,6 @@ struct Checker
     }
 };
 
-#ifndef IN_IDE_PARSER
-# define BOOST_EQUAL_CHECK(a, b) Checker{__FILE__, __LINE__, #a " == " #b}.check_equal(a, b)
-#else
-# define BOOST_EQUAL_CHECK
-#endif
 
 #include <iomanip>
 
@@ -1284,42 +1297,6 @@ template<int> struct i_{};
 int main()
 {
     rvt::Screen screen(40, 40);
-    screen.cursorDown(1);
-    BOOST_EQUAL_CHECK(screen.cursor_x(), 0);
-    BOOST_EQUAL_CHECK(screen.cursor_y(), 1);
-    screen.cursorDown(1);
-    BOOST_EQUAL_CHECK(screen.cursor_x(), 0);
-    BOOST_EQUAL_CHECK(screen.cursor_y(), 2);
-    screen.cursorDown(2);
-    BOOST_EQUAL_CHECK(screen.cursor_x(), 0);
-    BOOST_EQUAL_CHECK(screen.cursor_y(), 4);
-    screen.cursorDown(40);
-    BOOST_EQUAL_CHECK(screen.cursor_x(), 0);
-    BOOST_EQUAL_CHECK(screen.cursor_y(), 39);
-    screen.cursorUp(10);
-    BOOST_EQUAL_CHECK(screen.cursor_x(), 0);
-    BOOST_EQUAL_CHECK(screen.cursor_y(), 29);
-    screen.cursorUp(40);
-    BOOST_EQUAL_CHECK(screen.cursor_x(), 0);
-    BOOST_EQUAL_CHECK(screen.cursor_y(), 0);
-    screen.cursorRight(2);
-    BOOST_EQUAL_CHECK(screen.cursor_x(), 2);
-    BOOST_EQUAL_CHECK(screen.cursor_y(), 0);
-    screen.cursorRight(200);
-    BOOST_EQUAL_CHECK(screen.cursor_x(), 39);
-    BOOST_EQUAL_CHECK(screen.cursor_y(), 0);
-    screen.cursorLeft(3);
-    BOOST_EQUAL_CHECK(screen.cursor_x(), 36);
-    BOOST_EQUAL_CHECK(screen.cursor_y(), 0);
-    screen.cursorLeft(40);
-    BOOST_EQUAL_CHECK(screen.cursor_x(), 0);
-    BOOST_EQUAL_CHECK(screen.cursor_y(), 0);
-    screen.cursorRight(1);
-    BOOST_EQUAL_CHECK(screen.cursor_x(), 1);
-    BOOST_EQUAL_CHECK(screen.cursor_y(), 0);
-    screen.cursorLeft(2);
-    BOOST_EQUAL_CHECK(screen.cursor_x(), 0);
-    BOOST_EQUAL_CHECK(screen.cursor_y(), 0);
 
     rvt::Vt102Emulation emulator(&screen);
     for (int i = 0; i < 20; ++i) {

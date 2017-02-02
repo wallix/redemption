@@ -39,12 +39,14 @@ BOOST_AUTO_TEST_CASE(TestScreenCtor)
     BOOST_CHECK_EQUAL(screen.getLines(), 40);
     BOOST_CHECK_EQUAL(screen.lastScrolledRegion(), Rect(0, 0, 39, 39));
     BOOST_CHECK_EQUAL(screen.scrolledLines(), -39);
-    BOOST_CHECK_EQUAL(screen.getMode(rvt::Mode::Cursor), true);
-    BOOST_CHECK_EQUAL(screen.getMode(rvt::Mode::Wrap), true);
-    BOOST_CHECK_EQUAL(screen.getMode(rvt::Mode::Origin), false);
-    BOOST_CHECK_EQUAL(screen.getMode(rvt::Mode::Insert), false);
-    BOOST_CHECK_EQUAL(screen.getMode(rvt::Mode::Screen), false);
-    BOOST_CHECK_EQUAL(screen.getMode(rvt::Mode::NewLine), false);
+
+    using Mode = rvt::Screen::Mode;
+    BOOST_CHECK_EQUAL(screen.getMode(Mode::Cursor), true);
+    BOOST_CHECK_EQUAL(screen.getMode(Mode::Wrap), true);
+    BOOST_CHECK_EQUAL(screen.getMode(Mode::Origin), false);
+    BOOST_CHECK_EQUAL(screen.getMode(Mode::Insert), false);
+    BOOST_CHECK_EQUAL(screen.getMode(Mode::Screen), false);
+    BOOST_CHECK_EQUAL(screen.getMode(Mode::NewLine), false);
 }
 
 BOOST_AUTO_TEST_CASE(TestScreenCursor)
@@ -131,6 +133,8 @@ BOOST_AUTO_TEST_CASE(TestScreenInsert)
 
     BOOST_CHECK_EQUAL(to_string(screen), "[        ]\n[        ]\n[        ]\n[        ]\n");
 
+    using Mode = rvt::Screen::Mode;
+
     screen.displayCharacter('a');
     BOOST_CHECK_EQUAL(to_string(screen), "[a       ]\n[        ]\n[        ]\n[        ]\n");
     screen.displayCharacter('b');
@@ -147,7 +151,7 @@ BOOST_AUTO_TEST_CASE(TestScreenInsert)
     screen.setCursorX(0);
     screen.displayCharacter('f');
     BOOST_CHECK_EQUAL(to_string(screen), "[abc     ]\n[f  e    ]\n[        ]\n[        ]\n");
-    screen.setMode(rvt::Mode::Insert);
+    screen.setMode(Mode::Insert);
     screen.displayCharacter('g');
     BOOST_CHECK_EQUAL(to_string(screen), "[abc     ]\n[fg  e   ]\n[        ]\n[        ]\n");
     screen.displayCharacter('h');
@@ -166,13 +170,13 @@ BOOST_AUTO_TEST_CASE(TestScreenInsert)
     BOOST_CHECK_EQUAL(to_string(screen), "[abc     ]\n[fghijklm]\n[n       ]\n[        ]\n");
     screen.displayCharacter('o');
     BOOST_CHECK_EQUAL(to_string(screen), "[abc     ]\n[fghijklm]\n[no      ]\n[        ]\n");
-    screen.resetMode(rvt::Mode::Wrap);
+    screen.resetMode(Mode::Wrap);
     screen.cursorRight(5);
     screen.displayCharacter('p');
     BOOST_CHECK_EQUAL(to_string(screen), "[abc     ]\n[fghijklm]\n[no     p]\n[        ]\n");
     screen.displayCharacter('q');
     BOOST_CHECK_EQUAL(to_string(screen), "[abc     ]\n[fghijklm]\n[no     q]\n[        ]\n");
-    screen.setMode(rvt::Mode::Wrap);
+    screen.setMode(Mode::Wrap);
     screen.displayCharacter('r');
     BOOST_CHECK_EQUAL(to_string(screen), "[abc     ]\n[fghijklm]\n[no     q]\n[r       ]\n");
     screen.newLine();
@@ -181,7 +185,7 @@ BOOST_AUTO_TEST_CASE(TestScreenInsert)
     BOOST_CHECK_EQUAL(to_string(screen), "[no     q]\n[r       ]\n[        ]\n[        ]\n");
     screen.displayCharacter('s');
     BOOST_CHECK_EQUAL(to_string(screen), "[no     q]\n[r       ]\n[        ]\n[ s      ]\n");
-    screen.resetMode(rvt::Mode::NewLine);
+    screen.resetMode(Mode::NewLine);
     screen.newLine();
     screen.displayCharacter('t');
     BOOST_CHECK_EQUAL(to_string(screen), "[r       ]\n[        ]\n[ s      ]\n[  t     ]\n");

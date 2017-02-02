@@ -49,16 +49,23 @@ template<> struct is_enum_flags<rvt::LineProperty> : std::true_type {};
 namespace rvt
 {
 
-enum class Mode : uint8_t
+template<class Bit, class Underlying = underlying_type_t<Bit>>
+struct Flags
 {
-    Origin,
-    Wrap,
-    Insert,
-    Screen,
-    Cursor,
-    NewLine,
-    COUNT_
+    Flags() : value_{} {}
+    Flags(Underlying value) : value_(value) {}
+
+    void set(Bit pos) { this->value_ |= to_flag(pos); }
+    void reset(Bit pos) { this->value_ &= ~to_flag(pos); }
+    void copy_of(Bit pos, Flags f) { this->value_ = (this->value_ & ~to_flag(pos)) | (f.value_ & to_flag(pos)); }
+    bool has(Bit pos) const { return bool(this->value_ & to_flag(pos)); }
+
+private:
+    constexpr static Underlying to_flag(Bit pos) { return 1u << Underlying(pos); }
+
+    Underlying value_;
 };
+
 
 /**
     \brief An image of characters with associated attributes.
@@ -86,6 +93,17 @@ enum class Mode : uint8_t
 class Screen
 {
 public:
+    enum class Mode : uint8_t
+    {
+        Origin,
+        Wrap,
+        Insert,
+        Screen,
+        Cursor,
+        NewLine,
+        COUNT_
+    };
+
     /** Construct a new screen image of size @p lines by @p columns. */
     Screen(int lines, int columns);
     ~Screen();
@@ -495,9 +513,7 @@ private:
     int _bottomMargin;
 
     // states ----------------
-    using ModeFlags = unsigned;
-    constexpr static ModeFlags mode2flag(Mode m) noexcept
-    { return 1u << ModeFlags(m); }
+    using ModeFlags = Flags<Mode>;
 
     ModeFlags _currentModes;
     ModeFlags _savedModes;
@@ -724,7 +740,7 @@ void Screen::insertLines(int n)
 
 void Screen::setMode(Mode m)
 {
-    _currentModes |= mode2flag(m);
+    _currentModes.set(m);
     switch (m) {
     case Mode::Origin:
         _cuX = 0;
@@ -737,7 +753,7 @@ void Screen::setMode(Mode m)
 
 void Screen::resetMode(Mode m)
 {
-    _currentModes &= ~mode2flag(m);
+    _currentModes.reset(m);
     switch (m) {
     case Mode::Origin:
         _cuX = 0;
@@ -750,17 +766,17 @@ void Screen::resetMode(Mode m)
 
 void Screen::saveMode(Mode m)
 {
-    _savedModes = (_savedModes & ~mode2flag(m)) | (_currentModes & mode2flag(m));
+    _savedModes.copy_of(m, _currentModes);
 }
 
 void Screen::restoreMode(Mode m)
 {
-    _currentModes = (_currentModes & ~mode2flag(m)) | (_savedModes & mode2flag(m));
+    _currentModes.copy_of(m, _savedModes);
 }
 
 bool Screen::getMode(Mode m) const
 {
-    return bool(_currentModes & mode2flag(m));
+    return _currentModes.has(m);
 }
 
 void Screen::saveCursor()
