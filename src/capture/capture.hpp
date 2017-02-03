@@ -5036,10 +5036,14 @@ public:
             if (duration >= interval) {
                 auto video_interval = first_image_impl.video_sequencer.get_interval();
                 if (this->first_image_impl.ic_drawable.logical_frame_ended || duration > std::chrono::seconds(2) || duration >= video_interval) {
-                    assert(this->first_image_cap_elem == *this);
-                    assert(this->first_image_gcap_elem == *this);
-                    this->first_image_cap_elem = this->first_image_impl.video_sequencer;
-                    this->first_image_gcap_elem = this->first_image_impl.video_sequencer;
+//                    assert(this->first_image_cap_elem == *this);
+//                    assert(this->first_image_gcap_elem == *this);
+                    
+                    
+                    (*this->first_image_cap_elem.l)[this->first_image_cap_elem.i] = this->first_image_impl.video_sequencer; 
+
+                    (*this->first_image_gcap_elem.l)[this->first_image_gcap_elem.i] = this->first_image_impl.video_sequencer; 
+                    
                     tm ptm;
                     localtime_r(&now.tv_sec, &ptm);
                     this->first_image_impl.ic_drawable.trace_timestamp(ptm);
