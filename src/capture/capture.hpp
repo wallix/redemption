@@ -2018,7 +2018,7 @@ class out_hash_meta_sequence_filename_buf_impl_cctx
 //    using BufMeta = detail::cctx_ochecksum_file;
     using BufHash = detail::cctx_ofile_buf;
     using Params = CryptoContext&;
-            
+
     CryptoContext & cctx;
     Params hash_ctx;
     BufFilter wrm_filter;
@@ -4882,7 +4882,7 @@ public:
     }
 
     std::chrono::microseconds do_snapshot(
-        const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval) 
+        const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
     override {
         return this->vc.do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
     }
@@ -4937,7 +4937,7 @@ public:
         timeval const & now,
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
-    ) 
+    )
     {
         if (!this->ic_has_first_img) {
             return this->first_image.do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
@@ -4949,7 +4949,7 @@ public:
         timeval const & now,
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
-    ) 
+    )
     {
         if (!this->ic_has_first_img) {
             return this->first_image.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
@@ -5021,13 +5021,13 @@ public:
             if (duration >= interval) {
                 auto video_interval = first_image_impl.video_sequencer.get_interval();
                 if (this->first_image_impl.ic_drawable.logical_frame_ended || duration > std::chrono::seconds(2) || duration >= video_interval) {
-                    assert(&(*this->caps)[this->caps_i] == this);
+                    assert(&(*this->caps)[this->caps_i].get() == this);
 //                    assert(&(*this->gcaps)[this->gcaps_i] == this);
-                    
-                    (*this->caps)[this->caps_i] = this->first_image_impl.video_sequencer; 
 
-//                    (*this->gcaps)[this->gcaps_i] = this->first_image_impl.video_sequencer; 
-                    
+                    (*this->caps)[this->caps_i] = this->first_image_impl.video_sequencer;
+
+//                    (*this->gcaps)[this->gcaps_i] = this->first_image_impl.video_sequencer;
+
                     tm ptm;
                     localtime_r(&now.tv_sec, &ptm);
                     this->first_image_impl.ic_drawable.trace_timestamp(ptm);
@@ -5154,7 +5154,7 @@ public:
             this->ic_drawable.clear_timestamp();
             this->ic_has_first_img = true;
             this->ic_trans.next();
-            
+
             (*this->first_image.caps)[this->first_image.caps_i]
                 =  this->video_sequencer;
 //            (*this->first_image.gcaps)[this->first_image.gcaps_i]
@@ -6338,10 +6338,10 @@ public:
 
 
 
-class WrmCaptureImpl : 
+class WrmCaptureImpl :
     public gdi::KbdInputApi,
-    public gdi::CaptureApi, 
-    public gdi::GraphicApi, 
+    public gdi::CaptureApi,
+    public gdi::GraphicApi,
     public gdi::CaptureProbeApi
 {
 public:
@@ -6997,7 +6997,7 @@ public:
             }
 
             if (capture_flv) {
-                
+
                 std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
                 if (flv_capture_chunk && this->meta_capture_obj) {
                     this->notifier_next_video.session_meta = &this->meta_capture_obj->get_session_meta();
@@ -7065,14 +7065,14 @@ public:
             if (this->sequenced_video_capture_obj) {
                 this->caps.push_back(this->sequenced_video_capture_obj->vc);
 
-                this->caps.push_back(this->sequenced_video_capture_obj->first_image); 
+                this->caps.push_back(this->sequenced_video_capture_obj->first_image);
 
                 this->sequenced_video_capture_obj->first_image.caps = &this->caps;
                 this->sequenced_video_capture_obj->first_image.caps_i = this->caps.size()-1;
 //                this->sequenced_video_capture_obj->first_image.gcaps = &this->caps;
 //                this->sequenced_video_capture_obj->first_image.gcaps_i = this->caps.size()-1;
             }
-            
+
             if (this->full_video_capture_obj) {
                 this->caps.push_back(this->full_video_capture_obj->vc);
             }
@@ -7383,7 +7383,7 @@ static int do_recompress(
             if (program_requested_to_shutdown) {
                 trans.request_full_cleaning();
             }
-        }                
+        }
         else {
             OutMetaSequenceTransport trans(
                     outfile_path.c_str(),
