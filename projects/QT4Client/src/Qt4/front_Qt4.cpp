@@ -500,7 +500,6 @@ bool Front_Qt::connect() {
         this->_screen[0]->show();
 
         if (this->_record && !this->_replay) {
-            WrmParams wrmParams;
             Inifile ini;
                 ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
                 ini.set<cfg::video::png_limit>(0);
@@ -524,6 +523,7 @@ bool Front_Qt::connect() {
                 ini.set<cfg::globals::trace_type>(TraceType::localfile);
                 ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
                 ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned, std::ratio<1, 100>>(6));
+
             LCGRandom gen(0);
             CryptoContext cctx;
             DummyAuthentifier * authentifier = nullptr;
@@ -537,14 +537,25 @@ bool Front_Qt::connect() {
                                      ini.get<cfg::ocr::max_unrecog_char_rate>(),
                                      ini.get<cfg::ocr::interval>()
                                    };
+
             const char * record_path = "/replay";
 
+            WrmParams wrmParams(
+                  this->_info.bpp
+                , TraceType::localfile
+                , cctx
+                , gen
+                , record_path
+                , ini.get<cfg::video::hash_path>().c_str()
+                , ""
+                , ini.get<cfg::video::capture_groupid>()
+                , std::chrono::duration<unsigned int, std::ratio<1l, 100l> >{60}
+                , std::chrono::seconds{1}
+                , WrmCompressionAlgorithm::no_compression
+                , 0
+              );
+
             this->_capture = new Capture( true
-                                        , GraphicToFile::Verbose::none
-                                        , WrmCompressionAlgorithm::no_compression
-                                        , std::chrono::duration<unsigned int, std::ratio<1l, 100l> >{60}
-                                        , std::chrono::seconds{1}
-                                        , TraceType::localfile
                                         , wrmParams
                                         , false
                                         , png_params
@@ -555,8 +566,6 @@ bool Front_Qt::connect() {
                                         , false
                                         , false
                                         , false
-                                        , record_path
-                                        , ini.get<cfg::globals::movie_path>().c_str()
                                         , ""
                                         , time
                                         , this->_info.width
@@ -565,16 +574,23 @@ bool Front_Qt::connect() {
                                         , this->_info.bpp
                                         , ini.get<cfg::video::record_tmp_path>().c_str()
                                         , ini.get<cfg::video::record_tmp_path>().c_str()
-                                        , ini.get<cfg::video::capture_groupid>()
-                                        , ini.get<cfg::video::hash_path>().c_str()
-                                        , ini.get<cfg::globals::movie_path>().c_str()
+                                        , 1
                                         , flv_params
                                         , false
                                         , authentifier
-                                        , ini
-                                        , cctx
-                                        , gen
                                         , nullptr
+                                        , ""
+                                        , ""
+                                        , 0xfffffff
+                                        , false
+                                        , false
+                                        , std::chrono::duration<long int>{60}
+                                        , false
+                                        , false
+                                        , false
+                                        , false
+                                        , false
+                                        , false
                                         );
 
             this->_graph_capture = this->_capture->get_graphic_api();
@@ -2196,6 +2212,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                             , total_length
                                                                             , flag_next
                                                                             );
+
                                         data_sent += RDPECLIP::FileDescriptor::size();
                                         if (this->verbose & RDPVerbose::cliprdr) {
                                             LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%d", data_sent, total_length);
@@ -2234,7 +2251,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 fileSize.emit(out_stream);
 
                                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-                                this->_callback->send_to_mod_channel(channel_names::cliprdr
+                                this->_callback->send_to_mod_channel( channel_names::cliprdr
                                                                     , chunk_to_send
                                                                     , out_stream.get_offset()
                                                                     , CHANNELS::CHANNEL_FLAG_LAST |
@@ -2272,7 +2289,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                        , reinterpret_cast<uint8_t *>(
                                                                          this->_clipboard_qt->_items_list[lindex]->chunk)
                                                                        , total_length
-                                                                      );
+                                                                       );
                             }
                             break;
                         }
@@ -2556,7 +2573,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                     std::ifstream file(this->fileSystemData.paths[id-1].c_str());
                                     if (!file.good()) {
-                                        deviceIOResponse.set_IoStatus(0xc000000f);
+                                        deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
                                         LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str());
                                     }
                                 }
@@ -2601,7 +2618,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         if (file.good()) {
 
                                         } else {
-                                            deviceIOResponse.set_IoStatus(0xc000000f);
+                                            deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
                                             LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str());
                                         }
 
@@ -2788,17 +2805,17 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                             }
                                             closedir (dir);
                                         } else {
-                                            deviceIOResponse.set_IoStatus(0xc000000f);
+                                            deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
                                             LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_dir).", str_dir_path.c_str());
                                         }
 
                                         struct stat buff_child;
                                         if (str_file_name.length() == 0) {
-                                            deviceIOResponse.set_IoStatus(0x80000006);
+                                            deviceIOResponse.set_IoStatus(erref::STATUS_NO_MORE_FILES);
                                         } else {
                                             std::string str_file_path_slash(str_dir_path + "/" + str_file_name);
                                             if (stat(str_file_path_slash.c_str(), &buff_child)) {
-                                                deviceIOResponse.set_IoStatus(0xc000000f);
+                                                deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
                                                 LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());
                                             }
                                         }
@@ -2878,7 +2895,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                     struct stat buff;
                                     if (stat(str_path.c_str(), &buff)) {
-                                        deviceIOResponse.set_IoStatus(0xc000000f);
+                                        deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
                                         LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_path.c_str());
                                     }
 
@@ -2892,7 +2909,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     int device = open(str_path.c_str(), O_RDONLY);
 
                                     if (device < 0) {
-                                        deviceIOResponse.set_IoStatus(0xc000000f);
+                                        deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
                                         LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_path.c_str());
                                     }
 
@@ -2946,7 +2963,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             case rdpdr::IRP_MJ_DEVICE_CONTROL:
                                 LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O QClient Drive Control Request");
                                 {
-                                    DeviceControlRequest dcr;
+                                    rdpdr::DeviceControlRequest dcr;
                                     dcr.receive(chunk);
 
                                     deviceIOResponse.emit(out_stream);
@@ -2957,9 +2974,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                 uint8_t ObjectId[16] =  { 0 };
                                                 uint8_t BirthVolumeId[16] =  { 0 };
                                                 uint8_t BirthObjectId[16] =  { 0 };
-                                                uint8_t DomainId[16] =  { 0 };
 
-                                                fscc::FileObjectBuffer_Type1 rgdb(ObjectId, BirthVolumeId, BirthObjectId, DomainId);
+                                                fscc::FileObjectBuffer_Type1 rgdb(ObjectId, BirthVolumeId, BirthObjectId);
                                                 rgdb.emit(out_stream);
                                             }
                                             break;

@@ -15,7 +15,7 @@
 
     Product name: redemption, a FLOSS RDP proxy
     Copyright (C) Wallix 2015
-    Author(s): Christophe Grosjean, Raphael Zhou
+    Author(s): Christophe Grosjean, Raphael Zhou, Clément Moroldo
 */
 
 
@@ -412,13 +412,12 @@ struct FileObjectBuffer_Type1 {                             // FSCTL_CREATE_OR_G
 
     FileObjectBuffer_Type1() = default;
 
-    FileObjectBuffer_Type1(uint8_t * ObjectId, uint8_t * BirthVolumeId, uint8_t * BirthObjectId, uint8_t * DomainId)
+    FileObjectBuffer_Type1(uint8_t * ObjectId, uint8_t * BirthVolumeId, uint8_t * BirthObjectId)
     {
         for (size_t i = 0; i < GUID_SIZE; i++) {
             this->ObjectId[i] = ObjectId[i];
             this->BirthVolumeId[i] = BirthVolumeId[i];
             this->BirthObjectId[i] = BirthObjectId[i];
-            this->DomainId[i] = DomainId[i];
         }
     }
 
@@ -444,8 +443,7 @@ struct FileObjectBuffer_Type1 {                             // FSCTL_CREATE_OR_G
         hexdump_c(this->BirthVolumeId,  GUID_SIZE);
         LOG(LOG_INFO, "          * BirthObjectId  (16 bytes):");
         hexdump_c(this->BirthObjectId,  GUID_SIZE);
-        LOG(LOG_INFO, "          * DomainId       (16 bytes):");
-        hexdump_c(this->DomainId,  GUID_SIZE);
+        LOG(LOG_INFO, "          * DomainId - (16 bytes) NOT USED");
     }
 };
 
