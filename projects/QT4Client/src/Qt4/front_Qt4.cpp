@@ -370,7 +370,7 @@ void Front_Qt::set_pointer(Pointer const & cursor) {
             this->_graph_capture->set_pointer(cursor);
             struct timeval time;
             gettimeofday(&time, nullptr);
-            this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
+            this->_capture->periodic_snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
         }
     }
 }
@@ -1156,7 +1156,7 @@ void Front_Qt::draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) {
         this->_graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->_info.bpp), &this->mod_palette));
         struct timeval time;
         gettimeofday(&time, nullptr);
-        this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
+        this->_capture->periodic_snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
     }
 }
 
@@ -1180,7 +1180,7 @@ void Front_Qt::draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ct
         this->_graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->_info.bpp), &this->mod_palette));
         struct timeval time;
         gettimeofday(&time, nullptr);
-        this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
+        this->_capture->periodic_snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
     }
 }
 
@@ -1234,7 +1234,7 @@ void Front_Qt::draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
         this->_graph_capture->draw(bitmap_data, bmp);
         struct timeval time;
         gettimeofday(&time, nullptr);
-        this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
+        this->_capture->periodic_snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
     }
 }
 
@@ -1260,7 +1260,7 @@ void Front_Qt::draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) {
         this->_graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->_info.bpp), &this->mod_palette));
         struct timeval time;
         gettimeofday(&time, nullptr);
-        this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
+        this->_capture->periodic_snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
     }
 }
 
@@ -1307,7 +1307,7 @@ void Front_Qt::draw(const RDPScrBlt & cmd, Rect clip) {
         this->_graph_capture->draw(cmd, clip);
         struct timeval time;
         gettimeofday(&time, nullptr);
-        this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
+        this->_capture->periodic_snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
     }
 }
 
@@ -1371,7 +1371,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) {
         this->_graph_capture->draw(cmd, clip, bitmap);
         struct timeval time;
         gettimeofday(&time, nullptr);
-        this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
+        this->_capture->periodic_snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
     }
 }
 
@@ -1446,7 +1446,7 @@ void Front_Qt::draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, 
         this->_graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->_info.bpp), &this->mod_palette), bitmap);
         struct timeval time;
         gettimeofday(&time, nullptr);
-        this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
+        this->_capture->periodic_snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
     }
 }
 
@@ -1482,7 +1482,7 @@ void Front_Qt::draw(const RDPDestBlt & cmd, Rect clip) {
         this->_graph_capture->draw(cmd, clip);
         struct timeval time;
         gettimeofday(&time, nullptr);
-        this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
+        this->_capture->periodic_snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
     }
 }
 
@@ -1631,7 +1631,7 @@ void Front_Qt::draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ct
         this->_graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->_info.bpp), &this->mod_palette), gly_cache);
         struct timeval time;
         gettimeofday(&time, nullptr);
-        this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
+        this->_capture->periodic_snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
     }
 }
 
@@ -1717,7 +1717,7 @@ void Front_Qt::draw(const RDP::FrameMarker & order) {
         this->_graph_capture->draw(order);
         struct timeval time;
         gettimeofday(&time, nullptr);
-        this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
+        this->_capture->periodic_snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
     }
 
     LOG(LOG_INFO, "DEFAULT: FrameMarker");
@@ -3486,7 +3486,7 @@ void Front_Qt::end_update() {
         this->_graph_capture->end_update();
         struct timeval time;
         gettimeofday(&time, nullptr);
-        this->_capture->snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
+        this->_capture->periodic_snapshot(time, this->_mouse_data.x, this->_mouse_data.y, false);
     }
 }
 
