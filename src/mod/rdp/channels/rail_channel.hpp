@@ -459,7 +459,7 @@ private:
                     ::msgdump_c(send, from_or_to_client, length, flags,
                         out_s.get_data(), length);
                 }
-/*                if (this->verbose & RDPVerbose::rail)*/ {
+                if (this->verbose & RDPVerbose::rail) {
                     LOG(LOG_INFO,
                         "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
                             "Send to server - Client Execute PDU");
