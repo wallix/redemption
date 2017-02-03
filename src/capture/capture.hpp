@@ -4997,15 +4997,11 @@ public:
     // first next_video is ignored
     struct FirstImage : gdi::CaptureApi
     {
+        std::vector<std::reference_wrapper<gdi::CaptureApi>> * caps = nullptr;
+        std::vector<std::reference_wrapper<gdi::CaptureApi>> * gcaps = nullptr;
         
         struct ApiRegisterElementCaptureApi
         {
-//            ApiRegisterElementCaptureApi & operator = (gdi::CaptureApi & x) 
-//            { 
-//                (*this->l)[this->i] = x; return *this; 
-//            }
-
-            std::vector<std::reference_wrapper<gdi::CaptureApi>> * l = nullptr;
             std::size_t i = ~std::size_t{};
         };
 
@@ -5030,12 +5026,12 @@ public:
             if (duration >= interval) {
                 auto video_interval = first_image_impl.video_sequencer.get_interval();
                 if (this->first_image_impl.ic_drawable.logical_frame_ended || duration > std::chrono::seconds(2) || duration >= video_interval) {
-                    assert(&(*this->first_image_cap_elem.l)[this->first_image_cap_elem.i] == this);
-                    assert(&(*this->first_image_gcap_elem.l)[this->first_image_gcap_elem.i] == this);
+                    assert(&(*this->caps)[this->first_image_cap_elem.i] == this);
+                    assert(&(*this->gcaps)[this->first_image_gcap_elem.i] == this);
                     
-                    (*this->first_image_cap_elem.l)[this->first_image_cap_elem.i] = this->first_image_impl.video_sequencer; 
+                    (*this->caps)[this->first_image_cap_elem.i] = this->first_image_impl.video_sequencer; 
 
-                    (*this->first_image_gcap_elem.l)[this->first_image_gcap_elem.i] = this->first_image_impl.video_sequencer; 
+                    (*this->gcaps)[this->first_image_gcap_elem.i] = this->first_image_impl.video_sequencer; 
                     
                     tm ptm;
                     localtime_r(&now.tv_sec, &ptm);
@@ -5164,9 +5160,9 @@ public:
             this->ic_has_first_img = true;
             this->ic_trans.next();
             
-            (*this->first_image.first_image_cap_elem.l)[this->first_image.first_image_cap_elem.i]
+            (*this->first_image.caps)[this->first_image.first_image_cap_elem.i]
                 =  this->video_sequencer;
-            (*this->first_image.first_image_gcap_elem.l)[this->first_image.first_image_gcap_elem.i]
+            (*this->first_image.gcaps)[this->first_image.first_image_gcap_elem.i]
                 =  this->video_sequencer;
         }
         this->vc.next_video();
@@ -7076,9 +7072,9 @@ public:
 
                 this->caps.push_back(this->sequenced_video_capture_obj->first_image); 
 
-                this->sequenced_video_capture_obj->first_image.first_image_cap_elem.l = &this->caps;
+                this->sequenced_video_capture_obj->first_image.caps = &this->caps;
                 this->sequenced_video_capture_obj->first_image.first_image_cap_elem.i = this->caps.size()-1;
-                this->sequenced_video_capture_obj->first_image.first_image_gcap_elem.l = &this->caps;
+                this->sequenced_video_capture_obj->first_image.gcaps = &this->caps;
                 this->sequenced_video_capture_obj->first_image.first_image_gcap_elem.i = this->caps.size()-1;
             }
             
