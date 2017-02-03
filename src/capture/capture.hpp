@@ -5000,16 +5000,10 @@ public:
         
         struct ApiRegisterElementCaptureApi
         {
-            ApiRegisterElementCaptureApi & operator = (gdi::CaptureApi & x) 
-            { 
-                (*this->l)[this->i] = x; return *this; 
-            }
-
-//            bool operator == (gdi::CaptureApi const & x) const { return &this->get() == &x; }
-        //    bool operator != (T const & x) const { return !(this == x); }
-
-            gdi::CaptureApi & get() { return (*this->l)[this->i]; }
-            gdi::CaptureApi const & get() const { return (*this->l)[this->i]; }
+//            ApiRegisterElementCaptureApi & operator = (gdi::CaptureApi & x) 
+//            { 
+//                (*this->l)[this->i] = x; return *this; 
+//            }
 
             std::vector<std::reference_wrapper<gdi::CaptureApi>> * l = nullptr;
             std::size_t i = ~std::size_t{};
@@ -5169,8 +5163,11 @@ public:
             this->ic_drawable.clear_timestamp();
             this->ic_has_first_img = true;
             this->ic_trans.next();
-            this->first_image.first_image_cap_elem = this->video_sequencer;
-            this->first_image.first_image_gcap_elem = this->video_sequencer;
+            
+            (*this->first_image.first_image_cap_elem.l)[this->first_image.first_image_cap_elem.i]
+                =  this->video_sequencer;
+            (*this->first_image.first_image_gcap_elem.l)[this->first_image.first_image_gcap_elem.i]
+                =  this->video_sequencer;
         }
         this->vc.next_video();
         tm ptm;
