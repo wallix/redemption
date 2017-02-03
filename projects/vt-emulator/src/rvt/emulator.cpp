@@ -40,6 +40,7 @@
 #include "cxx/diagnostic.hpp"
 
 #include "rvt/character.hpp"
+#include "rvt/charsets.hpp"
 #include "rvt/screen.hpp"
 
 //#define CXX_UNUSED(x) (void)x // [[maybe_unused]]
@@ -52,13 +53,9 @@ namespace rvt
 extern unsigned short vt100_graphics[32];
 
 struct CharCodes {
-    // coding info
-    char charset[4]; //
-    int  cu_cs;      // actual charset.
-    bool graphic;    // Some VT100 tricks
-    bool pound;      // Some VT100 tricks
-    bool sa_graphic; // saved graphic
-    bool sa_pound;   // saved pound
+    std::array<CharsetId, 4> charset; // coding info
+    CharsetId charset_id = CharsetId::Undefined; // actual charset.
+    CharsetId sa_charset_id = CharsetId::Undefined; // saved charset.
 };
 
 
@@ -117,13 +114,13 @@ public: // TODO protected
     void receiveChar(uc_t cc);
 
 private:
-    uc_t applyCharset(uc_t  c);
-    void setCharset(int n, int cs);
+    uc_t applyCharset(uc_t  c) const;
+    void setCharset(int n, CharsetId cs);
     void useCharset(int n);
-    void setAndUseCharset(int n, int cs);
+    void setAndUseCharset(int n, CharsetId cs);
     void saveCursor();
     void restoreCursor();
-    void resetCharset(int scrno);
+    void resetCharset();
 
     void setMargins(int top, int bottom);
     //set margins for all screens back to their defaults
@@ -177,7 +174,7 @@ private:
     // number of columns
     void clearScreenAndSetColumns(int columnCount);
 
-    CharCodes _charset[2];
+    CharCodes _charset;
 
     using ModeFlags = Flags<Mode>;
 
@@ -221,11 +218,8 @@ void Vt102Emulation::reset()
 
     resetTokenizer();
     resetModes();
-    resetCharset(0);
-//     _screen[0]->reset();
-    resetCharset(1);
-//     _screen[1]->reset();
-_currentScreen->reset();
+    resetCharset();
+    _currentScreen->reset();
 
 //     if (currentCodec)
 //         setCodec(currentCodec);
@@ -525,6 +519,14 @@ void Vt102Emulation::receiveChar(uc_t cc)
 
 // Interpreting Codes ---------------------------------------------------------
 
+constexpr inline CharsetId char_to_charset_id(char c)
+{
+    return('0' == c) ? CharsetId::VT100Graphics
+        : ('A' == c) ? CharsetId::IBMPC
+        : ('B' == c) ? CharsetId::Latin1
+        : CharsetId::Undefined;
+}
+
 /*
    Now that the incoming character stream is properly tokenized,
    meaning is assigned to them. These are either operations of
@@ -600,21 +602,21 @@ void Vt102Emulation::processToken(int token, int p, int q)
     case TY_ESC('>'      ) :        resetMode      (Mode::AppKeyPad); break;
     case TY_ESC('<'      ) :          setMode      (Mode::Ansi     ); break; //VT100
 
-    case TY_ESC_CS('(', '0') :      setCharset           (0,    '0'); break; //VT100
-    case TY_ESC_CS('(', 'A') :      setCharset           (0,    'A'); break; //VT100
-    case TY_ESC_CS('(', 'B') :      setCharset           (0,    'B'); break; //VT100
+    case TY_ESC_CS('(', '0') :      setCharset           (0, char_to_charset_id('0')); break; //VT100
+    case TY_ESC_CS('(', 'A') :      setCharset           (0, char_to_charset_id('A')); break; //VT100
+    case TY_ESC_CS('(', 'B') :      setCharset           (0, char_to_charset_id('B')); break; //VT100
 
-    case TY_ESC_CS(')', '0') :      setCharset           (1,    '0'); break; //VT100
-    case TY_ESC_CS(')', 'A') :      setCharset           (1,    'A'); break; //VT100
-    case TY_ESC_CS(')', 'B') :      setCharset           (1,    'B'); break; //VT100
+    case TY_ESC_CS(')', '0') :      setCharset           (1, char_to_charset_id('0')); break; //VT100
+    case TY_ESC_CS(')', 'A') :      setCharset           (1, char_to_charset_id('A')); break; //VT100
+    case TY_ESC_CS(')', 'B') :      setCharset           (1, char_to_charset_id('B')); break; //VT100
 
-    case TY_ESC_CS('*', '0') :      setCharset           (2,    '0'); break; //VT100
-    case TY_ESC_CS('*', 'A') :      setCharset           (2,    'A'); break; //VT100
-    case TY_ESC_CS('*', 'B') :      setCharset           (2,    'B'); break; //VT100
+    case TY_ESC_CS('*', '0') :      setCharset           (2, char_to_charset_id('0')); break; //VT100
+    case TY_ESC_CS('*', 'A') :      setCharset           (2, char_to_charset_id('A')); break; //VT100
+    case TY_ESC_CS('*', 'B') :      setCharset           (2, char_to_charset_id('B')); break; //VT100
 
-    case TY_ESC_CS('+', '0') :      setCharset           (3,    '0'); break; //VT100
-    case TY_ESC_CS('+', 'A') :      setCharset           (3,    'A'); break; //VT100
-    case TY_ESC_CS('+', 'B') :      setCharset           (3,    'B'); break; //VT100
+    case TY_ESC_CS('+', '0') :      setCharset           (3, char_to_charset_id('0')); break; //VT100
+    case TY_ESC_CS('+', 'A') :      setCharset           (3, char_to_charset_id('A')); break; //VT100
+    case TY_ESC_CS('+', 'B') :      setCharset           (3, char_to_charset_id('B')); break; //VT100
 
     case TY_ESC_CS('%', 'G') :      /* TODO setCodec             (Utf8Codec   );*/ break; //LINUX
     case TY_ESC_CS('%', '@') :      /* TODO setCodec             (LocaleCodec );*/ break; //LINUX
@@ -873,7 +875,7 @@ void Vt102Emulation::processToken(int token, int p, int q)
     case TY_CSI_PR('h', 1034) : /* IGNORED: 8bitinput activation     */ break; //XTERM
 
     case TY_CSI_PR('h', 1047) :          setMode      (Mode::AppScreen); break; //XTERM
-    case TY_CSI_PR('l', 1047) : /*TODO _screen[1]*/_currentScreen->clearEntireScreen(); resetMode(Mode::AppScreen); break; //XTERM
+    case TY_CSI_PR('l', 1047) : _currentScreen->clearEntireScreen(); resetMode(Mode::AppScreen); break; //XTERM
     case TY_CSI_PR('s', 1047) :         saveMode      (Mode::AppScreen); break; //XTERM
     case TY_CSI_PR('r', 1047) :      restoreMode      (Mode::AppScreen); break; //XTERM
 
@@ -885,7 +887,7 @@ void Vt102Emulation::processToken(int token, int p, int q)
 
     //FIXME: every once new sequences like this pop up in xterm.
     //       Here's a guess of what they could mean.
-    case TY_CSI_PR('h', 1049) : saveCursor(); /*TODO _screen[1]*/_currentScreen->clearEntireScreen(); setMode(Mode::AppScreen); break; //XTERM
+    case TY_CSI_PR('h', 1049) : saveCursor(); _currentScreen->clearEntireScreen(); setMode(Mode::AppScreen); break; //XTERM
     case TY_CSI_PR('l', 1049) : resetMode(Mode::AppScreen); restoreCursor(); break; //XTERM
 
     case TY_CSI_PR('h', 2004) :          setMode      (Mode::BracketedPaste); break; //XTERM
@@ -902,8 +904,9 @@ void Vt102Emulation::processToken(int token, int p, int q)
     case TY_VT52('C'      ) : _currentScreen->cursorRight          (         1); break; //VT52
     case TY_VT52('D'      ) : _currentScreen->cursorLeft           (         1); break; //VT52
 
-    case TY_VT52('F'      ) :      setAndUseCharset     (0,    '0'); break; //VT52
-    case TY_VT52('G'      ) :      setAndUseCharset     (0,    'B'); break; //VT52
+    // FIXME The special graphics characters in the VT100 are different from those in the VT52.
+    case TY_VT52('F'      ) :      setAndUseCharset     (0, char_to_charset_id('0')); break; //VT52
+    case TY_VT52('G'      ) :      setAndUseCharset     (0, char_to_charset_id('B')); break; //VT52
 
     case TY_VT52('H'      ) : _currentScreen->setCursorYX          (1,1       ); break; //VT52
     case TY_VT52('I'      ) : _currentScreen->reverseIndex         (          ); break; //VT52
@@ -955,17 +958,15 @@ void Vt102Emulation::clearScreenAndSetColumns(int /*columnCount*/)
    particular glyphs allocated in (0x00-0x1f) in their code page.
 */
 
-//#define CHARSET _charset[_currentScreen==_screen[1]]
-
 // Apply current character map.
 
-uc_t Vt102Emulation::applyCharset(uc_t  c)
+uc_t Vt102Emulation::applyCharset(uc_t c) const
 {
+    auto const charset_index = underlying_cast(_charset.charset_id);
+    if (charset_index < underlying_cast(CharsetId::MAX_) && c < charset_map_size) {
+        return charset_maps[charset_index][c];
+    }
     return c;
-    // TODO
-    //if (CHARSET.graphic && 0x5f <= c && c <= 0x7e) return vt100_graphics[c - 0x5f];
-    //if (CHARSET.pound && c == '#') return 0xa3;  //This mode is obsolete
-    //return c;
 }
 
 /*
@@ -976,46 +977,38 @@ uc_t Vt102Emulation::applyCharset(uc_t  c)
    the following two are different.
 */
 
-void Vt102Emulation::resetCharset(int scrno)
+void Vt102Emulation::resetCharset()
 {
-    _charset[scrno].cu_cs = 0;
-    strncpy(_charset[scrno].charset, "BBBB", 4);
-    _charset[scrno].sa_graphic = false;
-    _charset[scrno].sa_pound = false;
-    _charset[scrno].graphic = false;
-    _charset[scrno].pound = false;
+    _charset.charset.fill(CharsetId::Latin1);
+    _charset.charset_id = CharsetId::Latin1;
+    _charset.sa_charset_id = CharsetId::Latin1;
 }
 
-void Vt102Emulation::setCharset(int n, int cs) // on both screens.
+void Vt102Emulation::setCharset(int n, CharsetId cs) // on both screens.
 {
-    _charset[0].charset[n & 3] = static_cast<char>(cs); useCharset(_charset[0].cu_cs);
-    _charset[1].charset[n & 3] = static_cast<char>(cs); useCharset(_charset[1].cu_cs);
+    _charset.charset[n & 3] = cs;
+    this->useCharset(n);
 }
 
-void Vt102Emulation::setAndUseCharset(int n, int /*cs*/)
+// TODO as setCharset
+void Vt102Emulation::setAndUseCharset(int n, CharsetId cs)
 {
-    // TODO CHARSET.charset[n & 3] = cs;
-    useCharset(n & 3);
+    _charset.charset[n & 3] = cs;
+    useCharset(n);
 }
 
-void Vt102Emulation::useCharset(int /*n*/)
+void Vt102Emulation::useCharset(int n)
 {
-    // TODO CHARSET.cu_cs   = n & 3;
-    // TODO CHARSET.graphic = (CHARSET.charset[n & 3] == '0');
-    // TODO CHARSET.pound   = (CHARSET.charset[n & 3] == 'A'); //This mode is obsolete
+    _charset.charset_id = _charset.charset[n & 3];
 }
 
 void Vt102Emulation::setDefaultMargins()
 {
-    // TODO _screen[0]->setDefaultMargins();
-    // TODO _screen[1]->setDefaultMargins();
     _currentScreen->setDefaultMargins();
 }
 
 void Vt102Emulation::setMargins(int t, int b)
 {
-    // TODO _screen[0]->setMargins(t, b);
-    // TODO _screen[1]->setMargins(t, b);
     _currentScreen->setMargins(t, b);
 }
 

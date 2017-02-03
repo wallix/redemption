@@ -229,7 +229,7 @@ inline REDEMPTION_CXX_NODISCARD bool ExtendedCharTable::growChar(Character & cha
     return true;
 }
 
-void ExtendedCharTable::clear()
+inline void ExtendedCharTable::clear()
 {
     this->extendedCharTable.clear();
 }
