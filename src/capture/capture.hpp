@@ -3758,7 +3758,7 @@ private:
             this->interpret_order();
             if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
                 for (gdi::CaptureApi * cap : this->capture_consumers){
-                    cap->snapshot(
+                    cap->periodic_snapshot(
                         this->record_now, this->mouse_x, this->mouse_y
                       , this->ignore_frame_in_timeval
                     );
@@ -3800,7 +3800,7 @@ private:
 
                 if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
                     for (gdi::CaptureApi * cap : this->capture_consumers){
-                        cap->snapshot(
+                        cap->periodic_snapshot(
                             this->record_now, this->mouse_x, this->mouse_y
                         , this->ignore_frame_in_timeval
                         );
@@ -4919,11 +4919,20 @@ struct NotifyNextVideo : private noncopyable
     virtual ~NotifyNextVideo() = default;
 };
 
-class SequencedVideoCaptureImpl
+class SequencedVideoCaptureImpl : public gdi::CaptureApi
 {
 
 //public:
 //    std::chrono::microseconds gdi::CaptureApi::do_snapshot(const timeval&, int, int, bool) override { return std::chrono::microseconds{0}; }
+    virtual std::chrono::microseconds do_snapshot(
+        timeval const & now,
+        int cursor_x, int cursor_y,
+        bool ignore_frame_in_timeval
+    ) 
+    {
+        return std::chrono::microseconds{1000};
+    }
+
 
 private:
 
@@ -5024,7 +5033,7 @@ public:
                 ret = interval - duration;
             }
 
-            return std::min(ret, this->first_image_impl.video_sequencer.snapshot(now, x, y, ignore_frame_in_timeval));
+            return std::min(ret, this->first_image_impl.video_sequencer.periodic_snapshot(now, x, y, ignore_frame_in_timeval));
         }
 
     } first_image;
@@ -6665,7 +6674,7 @@ public:
     std::chrono::microseconds do_snapshot(
         const timeval & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
-        return this->nc.snapshot(now, x, y, ignore_frame_in_timeval);
+        return this->nc.periodic_snapshot(now, x, y, ignore_frame_in_timeval);
     }
 
 };
@@ -6853,7 +6862,7 @@ private:
 
             if (cmd.action == RDP::FrameMarker::FrameEnd) {
                 for (gdi::CaptureApi & cap : this->snapshoters) {
-                    cap.snapshot(
+                    cap.periodic_snapshot(
                         this->mouse.last_now,
                         this->mouse.last_x,
                         this->mouse.last_y,
@@ -7057,19 +7066,23 @@ public:
 
             if (this->png_capture_real_time_obj) {
                 this->png_capture_real_time_obj->enable_rt_display = rt_display;
+                // SAME
                 this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_real_time_obj));
                 this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_real_time_obj));
             }
 
             if (this->png_capture_obj) {
+                // SAME
                 this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_obj));
                 this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_obj));
             }
 
             if (this->sequenced_video_capture_obj) {
+                // DIFFERENT
                 this->caps.push_back(this->sequenced_video_capture_obj->vc);
                 this->snapshoters.push_back(this->sequenced_video_capture_obj->preparing_vc);
 
+                // SAME
                 this->caps.push_back(this->sequenced_video_capture_obj->first_image); 
                 this->snapshoters.push_back(this->sequenced_video_capture_obj->first_image);
 
@@ -7080,6 +7093,7 @@ public:
             }
             
             if (this->full_video_capture_obj) {
+                // DIFFERENT
                 this->caps.push_back(this->full_video_capture_obj->vc);
                 this->snapshoters.push_back(this->full_video_capture_obj->preparing_vc);
             }
@@ -7231,7 +7245,7 @@ protected:
         std::chrono::microseconds time = std::chrono::microseconds::max();
         if (!this->caps.empty()) {
             for (gdi::CaptureApi & cap : this->caps) {
-                time = std::min(time, cap.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
+                time = std::min(time, cap.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
             }
             this->capture_event.update(time.count());
         }

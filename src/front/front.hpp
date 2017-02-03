@@ -1189,7 +1189,7 @@ public:
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
-            this->capture->snapshot(
+            this->capture->periodic_snapshot(
                 now, this->mouse_x, this->mouse_y
               , false  // ignore frame in time interval
             );
