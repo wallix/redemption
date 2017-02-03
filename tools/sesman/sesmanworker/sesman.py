@@ -1367,10 +1367,9 @@ class Sesman():
                     app_params = self.engine.get_app_params(selected_target, physical_target)
                     if not app_params:
                         continue
+                    kv[u'alternate_shell'] = app_params.program
                     if app_params.params is not None:
-                        kv[u'alternate_shell'] = (u"%s %s" % (app_params.program, app_params.params))
-                    else:
-                        kv[u'alternate_shell'] = app_params.program
+                        kv[u'shell_arguments'] = app_params.params
                     kv[u'shell_working_directory'] = app_params.workingdir
 
                     kv[u'target_application'] = "%s@%s" % \
@@ -1759,7 +1758,8 @@ class Sesman():
         cp_spec = {
             'rdp': {
                 u'use_client_provided_alternate_shell': 'use_client_provided_alternate_shell',
-                u'use_native_remoteapp_capability': 'use_native_remoteapp_capability'
+                u'use_native_remoteapp_capability': 'use_native_remoteapp_capability',
+                u'use_client_provided_remoteapp': 'use_client_provided_remoteapp'
                 },
             'session_probe': {
                 u'session_probe' : 'enable_session_probe',

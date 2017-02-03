@@ -893,7 +893,7 @@ public:
         if (!this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
             if (this->session_probe_channel) {
                 if (this->session_probe_stop_launch_sequence_notifier) {
-                    this->session_probe_stop_launch_sequence_notifier->stop(false);
+                    this->session_probe_stop_launch_sequence_notifier->stop(serpdu.ExecResult() == RAIL_EXEC_S_OK);
                     this->session_probe_stop_launch_sequence_notifier = nullptr;
                 }
 

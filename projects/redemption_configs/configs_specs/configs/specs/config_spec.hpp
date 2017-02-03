@@ -238,6 +238,7 @@ void config_spec_definition(Writer && W)
         W.member(V, type_<types::fixed_string<7>>(), "auth_channel", set("*"), desc{"Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel."});
         W.sep();
         W.member(H, type_<std::string>(), "alternate_shell", r);
+        W.member(H, type_<std::string>(), "shell_arguments", r);
         W.member(H, type_<std::string>(), "shell_working_directory", r);
         W.sep();
         W.member(A, type_<bool>(), "use_client_provided_alternate_shell", set(false), r);

@@ -302,6 +302,9 @@
 "alternate_shell = string(default='')\n\n"
 
 "#_hidden\n"
+"shell_arguments = string(default='')\n\n"
+
+"#_hidden\n"
 "shell_working_directory = string(default='')\n\n"
 
 "#_advanced\n"

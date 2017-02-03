@@ -904,6 +904,18 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 static_cast<cfg::mod_rdp::alternate_shell&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "shell_arguments")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::shell_arguments&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_rdp::shell_arguments&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "shell_working_directory")) {
             ::configs::parse_and_log(
                 context, key,
