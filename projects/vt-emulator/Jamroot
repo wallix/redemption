@@ -1,5 +1,8 @@
 include ../../jam/cxxflags.jam ;
 
+constant SRC : src/rvt ;
+constant SRC_TEST : test ;
+
 project configs
 : requirements
     <include>../../src
@@ -22,10 +25,15 @@ constant TEST_DEPENDENCIES :
 
 import testing ;
 
+obj screen : $(SRC)/screen.cpp ;
+
 ## Tests
 ## @{
-unit-test test_character_color : test/test_character_color.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_character : test/test_character.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_screen : test/test_screen.cpp : $(TEST_DEPENDENCIES) ;
-unit-test enumator : src/rvt/emulator.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_character_color : $(SRC_TEST)/test_character_color.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_character : $(SRC_TEST)/test_character.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_charsets : $(SRC_TEST)/test_charsets.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_screen : $(SRC_TEST)/test_screen.cpp screen : $(TEST_DEPENDENCIES) ;
+
+unit-test enumator : $(SRC)/emulator.cpp screen : $(TEST_DEPENDENCIES) ;
 ## }
