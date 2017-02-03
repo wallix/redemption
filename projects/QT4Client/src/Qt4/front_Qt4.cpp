@@ -2561,7 +2561,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         switch (deviceIORequest.MajorFunction()) {
 
                             case rdpdr::IRP_MJ_CREATE:
-                                LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Create Request");
+                                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Create Request");
                                 {
                                 rdpdr::DeviceCreateRequest request;
                                 request.receive(chunk);
@@ -2667,6 +2667,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         struct stat buff;
                                         stat(this->fileSystemData.paths[id-1].c_str(), &buff);
 
+
                                         int64_t  AllocationSize = buff.st_blksize;
                                         //buff.st_size;
                                         int64_t  EndOfFile      = buff.st_blksize;
@@ -2705,7 +2706,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 break;
 
                             case rdpdr::IRP_MJ_CLOSE:
-                                LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Close Request");
+                                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Close Request");
                                 {
                                 deviceIOResponse.emit(out_stream);
 
@@ -2822,7 +2823,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                         deviceIOResponse.emit(out_stream);
 
-                                        //0x1d1f187b3db725f
+                                        //if (deviceIOResponse.IoStatus() == erref::STATUS_SUCCESS) {
                                         uint64_t LastAccessTime  = UnixSecondsToWindowsTick(buff_child.st_atime);
                                         uint64_t LastWriteTime   = UnixSecondsToWindowsTick(buff_child.st_mtime);
                                         uint64_t ChangeTime      = UnixSecondsToWindowsTick(buff_child.st_ctime);
@@ -2853,6 +2854,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                             case rdpdr::FileNamesInformation:
                                                 break;
                                         }
+                                        //}
 
                                         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
@@ -2863,7 +2865,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                               CHANNELS::CHANNEL_FLAG_FIRST
                                                                             );
 
-                                        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Directory Response");
+                                        LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Directory Response");
                                         }
                                         break;
 
@@ -2876,7 +2878,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                     default: break;
                                 }
-
                                 break;
 
                             case rdpdr::IRP_MJ_QUERY_VOLUME_INFORMATION:
@@ -2926,24 +2927,26 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                     deviceIOResponse.emit(out_stream);
 
-                                    switch (sdqvir.FsInformationClass()) {
-                                        case rdpdr::FileFsVolumeInformation:
-                                        {
-                                            rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(4 + 17);
-                                            cdqvir.emit(out_stream);
+                                    if (deviceIOResponse.IoStatus() == erref::STATUS_SUCCESS) {
+                                        switch (sdqvir.FsInformationClass()) {
+                                            case rdpdr::FileFsVolumeInformation:
+                                            {
+                                                rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(4 + 17);
+                                                cdqvir.emit(out_stream);
 
-                                            fscc::FileFsVolumeInformation ffvi(CreationTime, VolumeSerialNumber, 0, VolumeLabel);
-                                            ffvi.emit(out_stream);
+                                                fscc::FileFsVolumeInformation ffvi(CreationTime, VolumeSerialNumber, 0, VolumeLabel);
+                                                ffvi.emit(out_stream);
+                                            }
+                                                break;
+                                            case rdpdr::FileFsSizeInformation:
+                                                break;
+                                            case rdpdr::FileFsAttributeInformation:
+                                                break;
+                                            case rdpdr::FileFsFullSizeInformation:
+                                                break;
+                                            case rdpdr::FileFsDeviceInformation:
+                                                break;
                                         }
-                                            break;
-                                        case rdpdr::FileFsSizeInformation:
-                                            break;
-                                        case rdpdr::FileFsAttributeInformation:
-                                            break;
-                                        case rdpdr::FileFsFullSizeInformation:
-                                            break;
-                                        case rdpdr::FileFsDeviceInformation:
-                                            break;
                                     }
 
                                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
