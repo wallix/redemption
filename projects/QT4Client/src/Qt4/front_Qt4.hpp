@@ -40,7 +40,6 @@
 #include <sys/ioctl.h>
 #include <linux/hdreg.h>
 
-
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
@@ -82,7 +81,6 @@
 #include "core/client_info.hpp"
 #include "keymaps/Qt4_ScanCode_KeyMap.hpp"
 #include "capture/capture.hpp"
-#include "core/ERREF/ntstatus.hpp"
 
 
 #include <QtGui/QImage>

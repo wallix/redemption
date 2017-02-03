@@ -31,6 +31,7 @@
 #include "utils/utf.hpp"
 #include "core/SMB2/MessageSyntax.hpp"
 #include "core/FSCC/FileInformation.hpp"
+#include "core/ERREF/ntstatus.hpp"
 
 #include <vector>
 
@@ -1887,7 +1888,7 @@ public:
         LOG(LOG_INFO, "     Device I\\O Response:");
         LOG(LOG_INFO, "          * DeviceId     = 0x%08x (4 bytes)", this->DeviceId_);
         LOG(LOG_INFO, "          * CompletionId = 0x%08x (4 bytes)", this->CompletionId_);
-        LOG(LOG_INFO, "          * IoStatus     = 0x%08x (4 bytes)", this->IoStatus_);
+        LOG(LOG_INFO, "          * IoStatus     = 0x%08x (4 bytes): %s", this->IoStatus_, erref::get_NTStatus(this->IoStatus_));
     }
 };
 
@@ -2178,8 +2179,8 @@ struct DeviceReadResponse {
 
     void log() {
         LOG(LOG_INFO, "     Device Read Response:");
-        LOG(LOG_INFO, "          * Length   = %d (4 bytes)", int(this->ReadData.size()));
-        LOG(LOG_INFO, "          * ReadData - (%d byte(s))", int(this->ReadData.size()));
+        LOG(LOG_INFO, "          * Length   = %zu (4 bytes)", this->ReadData.size());
+        LOG(LOG_INFO, "          * ReadData - (%zu byte(s))", this->ReadData.size());
     }
 };
 
@@ -2725,8 +2726,8 @@ public:
         LOG(LOG_INFO, "     Client Name Request:");
         LOG(LOG_INFO, "          * UnicodeFlag     = 0x%08x (4 bytes)", this->UnicodeFlag);
         LOG(LOG_INFO, "          * CodePage        = 0x%08x (4 bytes)", this->CodePage);
-        LOG(LOG_INFO, "          * ComputerNameLen = %d (4 bytes)", int(this->computer_name.size()));
-        LOG(LOG_INFO, "          * ComputerName    = \"%s\" (%d byte(s))", this->computer_name, int(this->computer_name.size()));
+        LOG(LOG_INFO, "          * ComputerNameLen = %zu (4 bytes)", this->computer_name.size());
+        LOG(LOG_INFO, "          * ComputerName    = \"%s\" (%zu byte(s))", this->computer_name, this->computer_name.size());
     }
 
 };  // ClientNameRequest
@@ -3305,7 +3306,7 @@ public:
     void log() {
         LOG(LOG_INFO, "     Server Drive Query Information Request:");
         LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes): %s", this->FsInformationClass_, this->get_FsInformationClass_name(this->FsInformationClass_));
-        LOG(LOG_INFO, "          * Length             = %d (4 bytes)", int(this->query_buffer.sz));
+        LOG(LOG_INFO, "          * Length             = %zu (4 bytes)", this->query_buffer.sz);
         LOG(LOG_INFO, "          * Padding - (24 bytes) NOT USED");
     }
 
@@ -3555,7 +3556,7 @@ public:
     void log() {
         LOG(LOG_INFO, "     Server Drive Query Volume Information Request:");
         LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes): %s", this->FsInformationClass_, get_FsInformationClass_name(this->FsInformationClass_));
-        LOG(LOG_INFO, "          * Length             = %d (4 bytes)", int(this->query_volume_buffer.sz));
+        LOG(LOG_INFO, "          * Length             = %zu (4 bytes)", this->query_volume_buffer.sz);
         LOG(LOG_INFO, "          * Padding - (4 bytes) NOT USED");
     }
 };  // ServerDriveQueryVolumeInformationRequest
@@ -3814,7 +3815,7 @@ public:
     void log() {
         LOG(LOG_INFO, "     Server Drive Set Information Request:");
         LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes): %s", this->FsInformationClass_, get_FsInformationClass_name(this->FsInformationClass_));
-        LOG(LOG_INFO, "          * Length = %d (4 bytes)", int(this->Length_));
+        LOG(LOG_INFO, "          * Length = %u (4 bytes)", this->Length_);
         LOG(LOG_INFO, "          * Padding - (24 bytes) NOT USED");
     }
 };
@@ -4177,9 +4178,9 @@ public:
         LOG(LOG_INFO, "     Server Drive Query Directory Request:");
         LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes): %s", this->FsInformationClass_, this->get_FsInformationClass_name(this->FsInformationClass_));
         LOG(LOG_INFO, "          * InitialQuery       = 0x%02x (1 byte)", this->InitialQuery_);
-        LOG(LOG_INFO, "          * PathLength         = %d (4 bytes)", int(this->path.size()));
+        LOG(LOG_INFO, "          * PathLength         = %zu (4 bytes)", this->path.size());
         LOG(LOG_INFO, "          * Padding - (23 byte) NOT USED");
-        LOG(LOG_INFO, "          * path               = \"%s\" (%d byte(s))", this->path.c_str(), int(2*this->path.size()));
+        LOG(LOG_INFO, "          * path               = \"%s\" (%zu byte(s))", this->path.c_str(), 2*this->path.size());
     }
 };  // ServerDriveQueryDirectoryRequest
 

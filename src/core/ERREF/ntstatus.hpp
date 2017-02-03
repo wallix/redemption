@@ -58,9 +58,23 @@ namespace erref {
 //
 
 enum : uint32_t {
-    STATUS_SUCCESS = 0x00000000,
-    STATUS_NO_SUCH_FILE = 0xC000000F,
+    STATUS_SUCCESS       = 0x00000000,
+    STATUS_NO_SUCH_FILE  = 0xC000000F,
     STATUS_NO_MORE_FILES = 0x80000006
+//  ...
+
 };
+
+ static const char * get_NTStatus(uint32_t ntstatus) {
+        switch (ntstatus) {
+            case STATUS_SUCCESS:       return "STATUS_SUCCESS";
+            case STATUS_NO_SUCH_FILE:  return "STATUS_NO_SUCH_FILE";
+            case STATUS_NO_MORE_FILES: return "STATUS_NO_MORE_FILES";
+//          ...
+
+        }
+
+        return "<unknown>";
+    }
 
 }
