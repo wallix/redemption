@@ -5005,7 +5005,7 @@ public:
                 (*this->l)[this->i] = x; return *this; 
             }
 
-            bool operator == (gdi::CaptureApi const & x) const { return &this->get() == &x; }
+//            bool operator == (gdi::CaptureApi const & x) const { return &this->get() == &x; }
         //    bool operator != (T const & x) const { return !(this == x); }
 
             gdi::CaptureApi & get() { return (*this->l)[this->i]; }
@@ -5036,9 +5036,8 @@ public:
             if (duration >= interval) {
                 auto video_interval = first_image_impl.video_sequencer.get_interval();
                 if (this->first_image_impl.ic_drawable.logical_frame_ended || duration > std::chrono::seconds(2) || duration >= video_interval) {
-//                    assert(this->first_image_cap_elem == *this);
-//                    assert(this->first_image_gcap_elem == *this);
-                    
+                    assert(&(*this->first_image_cap_elem.l)[this->first_image_cap_elem.i] == this);
+                    assert(&(*this->first_image_gcap_elem.l)[this->first_image_gcap_elem.i] == this);
                     
                     (*this->first_image_cap_elem.l)[this->first_image_cap_elem.i] = this->first_image_impl.video_sequencer; 
 
