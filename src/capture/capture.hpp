@@ -2018,7 +2018,7 @@ class out_hash_meta_sequence_filename_buf_impl_cctx
 //    using BufMeta = detail::cctx_ochecksum_file;
     using BufHash = detail::cctx_ofile_buf;
     using Params = CryptoContext&;
-            
+
     CryptoContext & cctx;
     Params hash_ctx;
     BufFilter wrm_filter;
@@ -3758,7 +3758,7 @@ private:
             this->interpret_order();
             if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
                 for (gdi::CaptureApi * cap : this->capture_consumers){
-                    cap->snapshot(
+                    cap->periodic_snapshot(
                         this->record_now, this->mouse_x, this->mouse_y
                       , this->ignore_frame_in_timeval
                     );
@@ -3800,7 +3800,7 @@ private:
 
                 if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
                     for (gdi::CaptureApi * cap : this->capture_consumers){
-                        cap->snapshot(
+                        cap->periodic_snapshot(
                             this->record_now, this->mouse_x, this->mouse_y
                         , this->ignore_frame_in_timeval
                         );
@@ -4812,7 +4812,13 @@ public:
         this->recorder->encoding_video_frame();
     }
 
-private:
+    virtual std::chrono::microseconds frame_marker_event(
+        const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
+    ) override {
+        this->preparing_video_frame();
+        return std::chrono::microseconds{};
+    }
+
     std::chrono::microseconds do_snapshot(
         const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool ignore_frame_in_timeval
     ) override {
@@ -4865,27 +4871,28 @@ private:
     }
 };
 
-class FullVideoCaptureImpl
+class FullVideoCaptureImpl : public gdi::CaptureApi
 {
     OutFilenameSequenceSeekableTransport trans;
 public:
+
+    std::chrono::microseconds frame_marker_event(const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
+    override {
+        return this->vc.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+    }
+
+    std::chrono::microseconds do_snapshot(
+        const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
+    override {
+        return this->vc.do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+    }
+
+    std::chrono::microseconds periodic_snapshot(const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
+    override {
+        return this->vc.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+    }
+
     VideoCapture vc;
-    struct PreparingWhenFrameMarkerEnd final : gdi::CaptureApi
-    {
-        PreparingWhenFrameMarkerEnd(VideoCapture & vc)
-        : vc(vc)
-        {}
-
-    private:
-        VideoCapture & vc;
-
-        std::chrono::microseconds do_snapshot(
-            const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
-        ) override {
-            vc.preparing_video_frame();
-            return std::chrono::microseconds{};
-        }
-    } preparing_vc{vc};
 
     FullVideoCaptureImpl(
         const timeval & now,
@@ -4903,6 +4910,8 @@ public:
         ::unlink((std::string(record_path) + basename + "." + flv_params.codec).c_str());
     }
 
+    virtual ~FullVideoCaptureImpl() {}
+
     void encoding_video_frame() {
         this->vc.encoding_video_frame();
     }
@@ -4919,11 +4928,35 @@ struct NotifyNextVideo : private noncopyable
     virtual ~NotifyNextVideo() = default;
 };
 
-class SequencedVideoCaptureImpl
+class SequencedVideoCaptureImpl : public gdi::CaptureApi
 {
+    bool ic_has_first_img = false;
 
-//public:
-//    std::chrono::microseconds gdi::CaptureApi::do_snapshot(const timeval&, int, int, bool) override { return std::chrono::microseconds{0}; }
+public:
+    virtual std::chrono::microseconds do_snapshot(
+        timeval const & now,
+        int cursor_x, int cursor_y,
+        bool ignore_frame_in_timeval
+    )
+    {
+        if (!this->ic_has_first_img) {
+            return this->first_image.do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        }
+        return this->vc.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+    }
+
+    virtual std::chrono::microseconds frame_marker_event(
+        timeval const & now,
+        int cursor_x, int cursor_y,
+        bool ignore_frame_in_timeval
+    )
+    {
+        if (!this->ic_has_first_img) {
+            return this->first_image.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        }
+        return this->vc.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+    }
+
 
 private:
 
@@ -4964,27 +4997,12 @@ public:
     // first next_video is ignored
     struct FirstImage : gdi::CaptureApi
     {
-        
-        struct ApiRegisterElementCaptureApi
-        {
-            ApiRegisterElementCaptureApi & operator = (gdi::CaptureApi & x) 
-            { 
-                (*this->l)[this->i] = x; return *this; 
-            }
-
-            bool operator == (gdi::CaptureApi const & x) const { return &this->get() == &x; }
-        //    bool operator != (T const & x) const { return !(this == x); }
-
-            gdi::CaptureApi & get() { return (*this->l)[this->i]; }
-            gdi::CaptureApi const & get() const { return (*this->l)[this->i]; }
-
-            std::vector<std::reference_wrapper<gdi::CaptureApi>> * l = nullptr;
-            std::size_t i = ~std::size_t{};
-        };
+        std::vector<std::reference_wrapper<gdi::CaptureApi>> * caps = nullptr;
+//        std::vector<std::reference_wrapper<gdi::CaptureApi>> * gcaps = nullptr;
+        std::size_t caps_i = ~std::size_t{};
+//        std::size_t gcaps_i = ~std::size_t{};
 
         SequencedVideoCaptureImpl & first_image_impl;
-        ApiRegisterElementCaptureApi first_image_cap_elem;
-        ApiRegisterElementCaptureApi first_image_gcap_elem;
 
         const timeval first_image_start_capture;
 
@@ -5003,10 +5021,13 @@ public:
             if (duration >= interval) {
                 auto video_interval = first_image_impl.video_sequencer.get_interval();
                 if (this->first_image_impl.ic_drawable.logical_frame_ended || duration > std::chrono::seconds(2) || duration >= video_interval) {
-                    assert(this->first_image_cap_elem == *this);
-                    assert(this->first_image_gcap_elem == *this);
-                    this->first_image_cap_elem = this->first_image_impl.video_sequencer;
-                    this->first_image_gcap_elem = this->first_image_impl.video_sequencer;
+                    assert(&(*this->caps)[this->caps_i].get() == this);
+//                    assert(&(*this->gcaps)[this->gcaps_i] == this);
+
+                    (*this->caps)[this->caps_i] = this->first_image_impl.video_sequencer;
+
+//                    (*this->gcaps)[this->gcaps_i] = this->first_image_impl.video_sequencer;
+
                     tm ptm;
                     localtime_r(&now.tv_sec, &ptm);
                     this->first_image_impl.ic_drawable.trace_timestamp(ptm);
@@ -5024,7 +5045,7 @@ public:
                 ret = interval - duration;
             }
 
-            return std::min(ret, this->first_image_impl.video_sequencer.snapshot(now, x, y, ignore_frame_in_timeval));
+            return std::min(ret, this->first_image_impl.video_sequencer.periodic_snapshot(now, x, y, ignore_frame_in_timeval));
         }
 
     } first_image;
@@ -5032,23 +5053,6 @@ public:
 public:
     VideoTransport vc_trans;
     VideoCapture vc;
-    struct PreparingWhenFrameMarkerEnd final : gdi::CaptureApi
-    {
-        PreparingWhenFrameMarkerEnd(VideoCapture & vc)
-        : vc(vc)
-        {}
-
-    private:
-        VideoCapture & vc;
-
-        std::chrono::microseconds do_snapshot(
-            const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
-        ) override {
-            vc.preparing_video_frame();
-            return std::chrono::microseconds{};
-        }
-    } preparing_vc{vc};
-
     OutFilenameSequenceTransport ic_trans;
 
     unsigned ic_zoom_factor;
@@ -5101,8 +5105,6 @@ public:
             this->ic_scaled_width * 3, false);
     }
 
-    bool ic_has_first_img = false;
-
     class VideoSequencer : public gdi::CaptureApi
     {
         timeval start_break;
@@ -5152,8 +5154,11 @@ public:
             this->ic_drawable.clear_timestamp();
             this->ic_has_first_img = true;
             this->ic_trans.next();
-            this->first_image.first_image_cap_elem = this->video_sequencer;
-            this->first_image.first_image_gcap_elem = this->video_sequencer;
+
+            (*this->first_image.caps)[this->first_image.caps_i]
+                =  this->video_sequencer;
+//            (*this->first_image.gcaps)[this->first_image.gcaps_i]
+//                =  this->video_sequencer;
         }
         this->vc.next_video();
         tm ptm;
@@ -5161,7 +5166,6 @@ public:
         this->ic_drawable.trace_timestamp(ptm);
         this->ic_flush();
         this->ic_drawable.clear_timestamp();
-        this->ic_has_first_img = true;
         this->ic_trans.next();
         this->next_video_notifier.notify_next_video(now, reason);
     }
@@ -6334,10 +6338,10 @@ public:
 
 
 
-class WrmCaptureImpl : 
+class WrmCaptureImpl :
     public gdi::KbdInputApi,
-    public gdi::CaptureApi, 
-    public gdi::GraphicApi, 
+    public gdi::CaptureApi,
+    public gdi::GraphicApi,
     public gdi::CaptureProbeApi
 {
 public:
@@ -6665,7 +6669,7 @@ public:
     std::chrono::microseconds do_snapshot(
         const timeval & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
-        return this->nc.snapshot(now, x, y, ignore_frame_in_timeval);
+        return this->nc.periodic_snapshot(now, x, y, ignore_frame_in_timeval);
     }
 
 };
@@ -6852,13 +6856,8 @@ private:
             }
 
             if (cmd.action == RDP::FrameMarker::FrameEnd) {
-                for (gdi::CaptureApi & cap : this->snapshoters) {
-                    cap.snapshot(
-                        this->mouse.last_now,
-                        this->mouse.last_x,
-                        this->mouse.last_y,
-                        false
-                    );
+                for (gdi::CaptureApi & cap : this->caps) {
+                    cap.frame_marker_event(this->mouse.last_now, this->mouse.last_x, this->mouse.last_y, false);
                 }
             }
         }
@@ -6866,14 +6865,14 @@ private:
     public:
         MouseTrace const & mouse;
         const std::vector<std::reference_wrapper<gdi::GraphicApi>> & gds;
-        const std::vector<std::reference_wrapper<gdi::CaptureApi>> & snapshoters;
+        const std::vector<std::reference_wrapper<gdi::CaptureApi>> & caps;
 
         Graphic(MouseTrace const & mouse,
                 const std::vector<std::reference_wrapper<gdi::GraphicApi>> & gds,
-                const std::vector<std::reference_wrapper<gdi::CaptureApi>> & snapshoters)
+                const std::vector<std::reference_wrapper<gdi::CaptureApi>> & caps)
         : mouse(mouse)
         , gds(gds)
-        , snapshoters(snapshoters)
+        , caps(caps)
         {}
     };
 
@@ -6901,7 +6900,6 @@ private:
 
     std::vector<std::reference_wrapper<gdi::GraphicApi>> gds;
     // Objects willing to be warned of FrameMarker Events
-    std::vector<std::reference_wrapper<gdi::CaptureApi>> snapshoters;
     std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
     std::vector<std::reference_wrapper<gdi::KbdInputApi>> kbds;
     std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
@@ -6968,7 +6966,7 @@ public:
             this->gd_drawable = new RDPDrawable(width, height);
             this->gds.push_back(*this->gd_drawable);
 
-            this->graphic_api.reset(new Graphic(this->mouse_info, this->gds, this->snapshoters));
+            this->graphic_api.reset(new Graphic(this->mouse_info, this->gds, this->caps));
             this->drawable = &this->gd_drawable->impl();
 
             if (capture_png) {
@@ -6999,7 +6997,7 @@ public:
             }
 
             if (capture_flv) {
-                
+
                 std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
                 if (flv_capture_chunk && this->meta_capture_obj) {
                     this->notifier_next_video.session_meta = &this->meta_capture_obj->get_session_meta();
@@ -7058,30 +7056,25 @@ public:
             if (this->png_capture_real_time_obj) {
                 this->png_capture_real_time_obj->enable_rt_display = rt_display;
                 this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_real_time_obj));
-                this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_real_time_obj));
             }
 
             if (this->png_capture_obj) {
                 this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_obj));
-                this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_obj));
             }
 
             if (this->sequenced_video_capture_obj) {
                 this->caps.push_back(this->sequenced_video_capture_obj->vc);
-                this->snapshoters.push_back(this->sequenced_video_capture_obj->preparing_vc);
 
-                this->caps.push_back(this->sequenced_video_capture_obj->first_image); 
-                this->snapshoters.push_back(this->sequenced_video_capture_obj->first_image);
+                this->caps.push_back(this->sequenced_video_capture_obj->first_image);
 
-                this->sequenced_video_capture_obj->first_image.first_image_cap_elem.l = &this->caps;
-                this->sequenced_video_capture_obj->first_image.first_image_cap_elem.i = this->caps.size()-1;
-                this->sequenced_video_capture_obj->first_image.first_image_gcap_elem.l = &this->caps;
-                this->sequenced_video_capture_obj->first_image.first_image_gcap_elem.i = this->caps.size()-1;
+                this->sequenced_video_capture_obj->first_image.caps = &this->caps;
+                this->sequenced_video_capture_obj->first_image.caps_i = this->caps.size()-1;
+//                this->sequenced_video_capture_obj->first_image.gcaps = &this->caps;
+//                this->sequenced_video_capture_obj->first_image.gcaps_i = this->caps.size()-1;
             }
-            
+
             if (this->full_video_capture_obj) {
                 this->caps.push_back(this->full_video_capture_obj->vc);
-                this->snapshoters.push_back(this->full_video_capture_obj->preparing_vc);
             }
         }
 
@@ -7231,7 +7224,7 @@ protected:
         std::chrono::microseconds time = std::chrono::microseconds::max();
         if (!this->caps.empty()) {
             for (gdi::CaptureApi & cap : this->caps) {
-                time = std::min(time, cap.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
+                time = std::min(time, cap.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
             }
             this->capture_event.update(time.count());
         }
@@ -7390,7 +7383,7 @@ static int do_recompress(
             if (program_requested_to_shutdown) {
                 trans.request_full_cleaning();
             }
-        }                
+        }
         else {
             OutMetaSequenceTransport trans(
                     outfile_path.c_str(),

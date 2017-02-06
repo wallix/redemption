@@ -868,9 +868,7 @@ public:
         {
             gdi::GraphicApi & gd_orders = this->orders.initialize_drawable(this->client_info.bpp);
 
-            if (!this->capture) {
-                this->set_gd(gd_orders);
-            }
+            this->set_gd(this->capture ? this->capture : &gd_orders);
         }
 
         if (bpp == 8) {
@@ -1189,7 +1187,7 @@ public:
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
-            this->capture->snapshot(
+            this->capture->periodic_snapshot(
                 now, this->mouse_x, this->mouse_y
               , false  // ignore frame in time interval
             );

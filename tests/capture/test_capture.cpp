@@ -216,35 +216,35 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         capture.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
     }
 
@@ -493,7 +493,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
     capture.draw(RDPOpaqueRect(scr, color_encode(BLUE, 16)), scr, color_cxt);
     now.tv_sec++;
-    capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+    capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     const char * filename = "./capture-000000.png";
 
@@ -536,9 +536,9 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 
     drawable.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
     graphic_to_file.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.periodic_snapshot(now, 10, 10, ignore_frame_in_timeval);
     now.tv_sec += 6;
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
+    consumer.periodic_snapshot(now, 10, 10, ignore_frame_in_timeval);
     trans.disconnect();
 
     const char * filename;
@@ -625,8 +625,8 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCapture)
             now.tv_usec = (usec % 1000000LL);
             //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
             drawable.set_mouse_cursor_pos(r.x + 10, r.y + 10);
-            flvgen.snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-            flvseq.snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+            flvgen.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+            flvseq.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
             if ((r.x + r.cx >= width ) || (r.x < 0)) { vx = -vx; }
             if ((r.y + r.cy >= height) || (r.y < 0)) { vy = -vy; }
         }
@@ -696,8 +696,8 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureMP4)
             now.tv_usec = (usec % 1000000LL);
             //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
             drawable.set_mouse_cursor_pos(r.x + 10, r.y + 10);
-            flvgen.snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-            flvseq.snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+            flvgen.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+            flvseq.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
             if ((r.x + r.cx >= width ) || (r.x < 0)) { vx = -vx; }
             if ((r.y + r.cy >= height) || (r.y < 0)) { vy = -vy; }
         }
@@ -768,8 +768,8 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureOneChunk)
             now.tv_usec = (usec % 1000000LL);
             //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
             drawable.set_mouse_cursor_pos(r.x + 10, r.y + 10);
-            flvgen.snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-            flvseq.snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+            flvgen.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+            flvseq.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
             if ((r.x + r.cx >= width ) || (r.x < 0)) { vx = -vx; }
             if ((r.y + r.cy >= height) || (r.y < 0)) { vy = -vy; }
         }
@@ -826,8 +826,8 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
             now.tv_usec = (usec % 1000000LL);
             //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
             drawable.set_mouse_cursor_pos(r.x + 10, r.y + 10);
-            flvgen.snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-            flvseq.snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+            flvgen.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+            flvseq.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
             r1.y += vy;
             r1.x += vx;
             drawable.opaquerect(r1.intersect(screen), color3);
@@ -918,16 +918,16 @@ BOOST_AUTO_TEST_CASE(TestSessionMeta)
         send_kbd(); now.tv_sec += 1;
         send_kbd(); now.tv_sec += 1;
         send_kbd(); now.tv_sec += 1;
-        meta.snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, 0);
         send_kbd(); now.tv_sec += 1;
         meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
-        meta.snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, 0);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
         send_kbd(); now.tv_sec += 1;
         send_kbd(); now.tv_sec += 1;
-        meta.snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, 0);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
-        meta.snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, 0);
     }
 }
 
@@ -957,13 +957,13 @@ BOOST_AUTO_TEST_CASE(TestSessionMeta2)
         };
 
         meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
-        meta.snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, 0);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
         send_kbd(); now.tv_sec += 1;
         send_kbd(); now.tv_sec += 1;
-        meta.snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, 0);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
-        meta.snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, 0);
         meta.send_line(now.tv_sec, cstr_array_view("(break)"));
     }
 }
@@ -2698,41 +2698,41 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
         gd_drawable.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
         wrmcapture.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
         wrmcapture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
         wrmcapture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         gd_drawable.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
         wrmcapture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
         wrmcapture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
         wrmcapture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         gd_drawable.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
         wrmcapture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
     }
 
@@ -2831,41 +2831,41 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         gd_drawable.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
         wrmcapture.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
         wrmcapture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
         wrmcapture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         gd_drawable.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
         wrmcapture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
         wrmcapture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
         wrmcapture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         gd_drawable.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
         wrmcapture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
     }
 
