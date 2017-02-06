@@ -58,12 +58,12 @@ namespace po = program_options;
 */
 
 
-void run_mod(mod_api & mod, VncFront & front, wait_obj & front_event, SocketTransport * st_mod, SocketTransport * st_front);
+void run_mod(mod_api & mod, VncFront & front, SocketTransport * st_mod);
 
 int main(int argc, char** argv)
 {
     RedirectionInfo redir_info;
-    int verbose = 0;
+    int verbose = 16;
     std::string target_device = "10.10.46.70";
     int target_port = 5900;
     int nbretry = 3;
@@ -141,7 +141,6 @@ int main(int argc, char** argv)
     const bool is_socket_transport = true;
     const VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop {};
     Font font;
-    wait_obj front_event;
 
     /* Random */
     TimeSystem timeobj;
@@ -172,17 +171,16 @@ int main(int argc, char** argv)
       , verbose);
     mod.get_event().set();
 
-    run_mod(mod, front, front_event, &sock_trans, nullptr);
+    run_mod(mod, front, &sock_trans);
 
     return 0;
 }
 
 
-
-void run_mod(mod_api &mod, VncFront &front, wait_obj &front_event, SocketTransport *st_mod, SocketTransport *st_front) {
+void run_mod(mod_api &mod, VncFront &front, SocketTransport *st_mod) {
     struct      timeval time_mark = { 0, 50000 };
     bool        run_session       = true;
-
+    
     while (run_session) {
         try {
             unsigned max = 0;
@@ -193,17 +191,14 @@ void run_mod(mod_api &mod, VncFront &front, wait_obj &front_event, SocketTranspo
             io_fd_zero(wfds);
             struct timeval timeout = time_mark;
 
-            front_event.wait_on_fd(st_front?st_front->sck:INVALID_SOCKET, rfds, max, timeout);
             mod.get_event().wait_on_fd(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
 
-            if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
-                timeout.tv_sec  = 2;
-                timeout.tv_usec = 0;
-            }
+//            if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
+//                timeout = time_mark;
+//            }
 
             int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
 
-            LOG(LOG_INFO, "VNC CLIENT :: select num = %d\n", num);
 
             if (num < 0) {
                 if (errno == EINTR) {
@@ -214,7 +209,13 @@ void run_mod(mod_api &mod, VncFront &front, wait_obj &front_event, SocketTranspo
                 break;
             }
 
+            if (num > 0){ // incoming data from network socket
+                LOG(LOG_INFO, "VNC CLIENT :: select num = %d\n", num);
+            }
+
             if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
+                mod.get_event().reset();
+                mod.rdp_input_up_and_running(); // really we only need this once
                 LOG(LOG_INFO, "VNC CLIENT :: draw_event");
                 mod.draw_event(time(nullptr), front);
             }

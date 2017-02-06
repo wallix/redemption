@@ -60,103 +60,103 @@ public:
 
 
 
-BOOST_AUTO_TEST_CASE(TestVncConnection)
-{
-  BOOST_CHECK(1);
+//BOOST_AUTO_TEST_CASE(TestVncConnection)
+//{
+//  BOOST_CHECK(1);
 
-  ClientInfo info;
-  info.keylayout = 0x04C;
-  info.console_session = 0;
-  info.brush_cache_code = 0;
-  info.bpp = 24;
-  info.width = 800;
-  info.height = 600;
-  info.build = 420;
-  int verbose = 511;
-  int port = 5900;
-  FakeAuthentifier authentifier;
-  VncFront front(false, false, info, verbose);
+//  ClientInfo info;
+//  info.keylayout = 0x04C;
+//  info.console_session = 0;
+//  info.brush_cache_code = 0;
+//  info.bpp = 24;
+//  info.width = 800;
+//  info.height = 600;
+//  info.build = 420;
+//  int verbose = 511;
+//  int port = 5900;
+//  FakeAuthentifier authentifier;
+//  VncFront front(false, false, info, verbose);
 
-//   BStream stream(65536);
-  const char * name = "VNC Target";
-  const char * targetIP("10.10.46.70");
-  int nbretry = 3;
-  int retry_delai_ms = 1000;
+////   BStream stream(65536);
+//  const char * name = "VNC Target";
+//  const char * targetIP("10.10.46.70");
+//  int nbretry = 3;
+//  int retry_delai_ms = 1000;
 
-  int sck = ip_connect(targetIP, port, nbretry, retry_delai_ms);
- 
-  SocketTransport t(name, sck, targetIP, 5900, to_verbose_flags(verbose));
-  t.connect();
+//  int sck = ip_connect(targetIP, port, nbretry, retry_delai_ms);
+// 
+//  SocketTransport t(name, sck, targetIP, 5900, to_verbose_flags(verbose));
+//  t.connect();
 
-  const bool is_socket_transport = true;
+//  const bool is_socket_transport = true;
 
-  if (verbose > 2){
-      LOG(LOG_INFO, "========= CREATION OF MOD VNC =========================");
-  }
+//  if (verbose > 2){
+//      LOG(LOG_INFO, "========= CREATION OF MOD VNC =========================");
+//  }
 
-  Font font;
+//  Font font;
 
-  const VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop {};
+//  const VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop {};
 
-  mod_vnc mod(
-        t
-      , targetIP
-      , "SecureLinux$42"
-      , front
-      , info.width
-      , info.height
-      , font
-      , Translator(Translation::EN)
-      , Theme()
-      , info.keylayout
-      , 0             /* key_flags */
-      , true          /* clipboard */
-      , true          /* clipboard */
-      , "0,1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
-      , false         /* allow authentification retries */
-      , is_socket_transport
-      , mod_vnc::ClipboardEncodingType::UTF8
-      , bogus_clipboard_infinite_loop
-      , authentifier // nullptr       // acl
-      , verbose);
-  mod.get_event().set();
+//  mod_vnc mod(
+//        t
+//      , targetIP
+//      , "SecureLinux$42"
+//      , front
+//      , info.width
+//      , info.height
+//      , font
+//      , Translator(Translation::EN)
+//      , Theme()
+//      , info.keylayout
+//      , 0             /* key_flags */
+//      , true          /* clipboard */
+//      , true          /* clipboard */
+//      , "0,1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
+//      , false         /* allow authentification retries */
+//      , is_socket_transport
+//      , mod_vnc::ClipboardEncodingType::UTF8
+//      , bogus_clipboard_infinite_loop
+//      , authentifier // nullptr       // acl
+//      , verbose);
+//  mod.get_event().set();
 
-  if (verbose > 2){
-    LOG(LOG_INFO, "========= CREATION OF MOD VNC DONE ====================\n\n");
-  }
- // BOOST_CHECK(t.status);
-
-
-  mod.draw_event(time(nullptr), front);
-  BOOST_CHECK(1);
-  mod.rdp_input_up_and_running();
-  mod.draw_event(time(nullptr), front);
-  BOOST_CHECK(1);
-  BOOST_CHECK_EQUAL(front.info.width, 800);
-  BOOST_CHECK_EQUAL(front.info.height, 600);
-/*
-    while (!mod.rdp_input_up_and_running())
-            mod.draw_event(time(nullptr), front);
-*/
-
-    uint32_t    count = 0;
-    for (;;) {
-        LOG(LOG_INFO, "===================> count = %u", count);
-      //  if (count++ >= 8) break;
-        mod.draw_event(time(nullptr), front);
-    }
+//  if (verbose > 2){
+//    LOG(LOG_INFO, "========= CREATION OF MOD VNC DONE ====================\n\n");
+//  }
+// // BOOST_CHECK(t.status);
 
 
+//  mod.draw_event(time(nullptr), front);
+//  BOOST_CHECK(1);
+//  mod.rdp_input_up_and_running();
+//  mod.draw_event(time(nullptr), front);
+//  BOOST_CHECK(1);
+//  BOOST_CHECK_EQUAL(front.info.width, 800);
+//  BOOST_CHECK_EQUAL(front.info.height, 600);
+///*
+//    while (!mod.rdp_input_up_and_running())
+//            mod.draw_event(time(nullptr), front);
+//*/
 
-/*
- mod.draw_event(time(nullptr), front);
- // BOOST_CHECK(t.status);
+//    uint32_t    count = 0;
+//    for (;;) {
+//        LOG(LOG_INFO, "===================> count = %u", count);
+//      //  if (count++ >= 8) break;
+//        mod.draw_event(time(nullptr), front);
+//    }
 
- mod.draw_event(time(nullptr), front);
- // BOOST_CHECK(t.status);
 
- mod.draw_event(time(nullptr), front);
- // BOOST_CHECK(t.status);
- 
-*/
-}
+
+///*
+// mod.draw_event(time(nullptr), front);
+// // BOOST_CHECK(t.status);
+
+// mod.draw_event(time(nullptr), front);
+// // BOOST_CHECK(t.status);
+
+// mod.draw_event(time(nullptr), front);
+// // BOOST_CHECK(t.status);
+// 
+//*/
+//}
