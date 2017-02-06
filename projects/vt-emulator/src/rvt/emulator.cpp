@@ -1140,7 +1140,9 @@ int touc(char const (&s)[n])
     return r;
 }
 
-template<int> struct i_{};
+// template<int> struct i_{};
+
+#include "utils/utf.hpp"
 
 int main()
 {
@@ -1170,17 +1172,62 @@ int main()
     emulator.receiveChar('4');
     emulator.receiveChar('4');
     emulator.receiveChar('m');
-    emulator.receiveChar(touc("é"));
+    emulator.receiveChar(UTF8toUnicodeIterator("é").code());
     emulator.receiveChar('e');
-    emulator.receiveChar(0xcc82);
+    emulator.receiveChar(0x311);
+    emulator.receiveChar(0xac00); // 가
+
 
     rvt::Screen const & screen = emulator.getScreen();
+
+    auto print_uc = [](rvt::uc_t uc) {
+        if (uc <= 0x7f) {
+            std::cout << uchar(uc);
+        }
+        else
+        if (uc <= 0x7ff) {
+            std::cout
+              << uchar(0xc0 | ((uc >> 6)  & 0x1f))
+              << uchar(0x80 |  (uc        & 0x3f))
+            ;
+        }
+        else
+        if (uc <= 0xffff) {
+            std::cout
+              << uchar(0xe0 | ((uc >> 12) & 0x0f))
+              << uchar(0x80 | ((uc >> 6)  & 0x3f))
+              << uchar(0x80 |  (uc        & 0x3f))
+            ;
+        }
+        else
+        if (uc <= 0x1ffff) {
+            std::cout
+              << uchar(0xf0 | ((uc >> 18) & 0x07))
+              << uchar(0x80 | ((uc >> 12) & 0x3f))
+              << uchar(0x80 | ((uc >> 6)  & 0x3f))
+              << uchar(        (uc        & 0x3f))
+            ;
+        }
+    };
+
+    auto print_ch = [&screen, print_uc](rvt::Character const & ch) {
+        if (ch.isRealCharacter) {
+            if (ch.is_extended()) {
+                for (rvt::uc_t uc : screen.extendedCharTable()[ch.character]) {
+                    print_uc(uc);
+                }
+            }
+            else {
+                print_uc(ch.character);
+            }
+        }
+    };
 
     int i = 0;
     for (auto const & line : screen.getScreenLines()) {
         std::cout << std::setw(4) << ++i << " ";
         for (rvt::Character const & ch : line) {
-            std::cout << char(ch.character ? ch.character : '?');
+            print_ch(ch);
         }
         std::cout << '\n';
     }
@@ -1219,12 +1266,6 @@ int main()
             std::cout << cmd;
         }
     };
-    auto print_uc = [](rvt::uc_t uc) {
-        if (uc & 0xff00) {
-            std::cout << uchar(uc >> 8);
-        }
-        std::cout << uchar(uc);
-    };
 
     // Format
     //@{
@@ -1258,14 +1299,7 @@ int main()
                 previous_fg = ch.foregroundColor;
                 previous_rendition = ch.rendition;
             }
-            if (ch.is_extended()) {
-                for (rvt::uc_t uc : screen.extendedCharTable()[ch.character]) {
-                    print_uc(uc);
-                }
-            }
-            else {
-                print_uc(ch.character);
-            }
+            print_ch(ch);
         }
         std::cout << '\n';
     }
