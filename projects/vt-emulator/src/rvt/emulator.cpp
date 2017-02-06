@@ -50,9 +50,8 @@
 namespace rvt
 {
 
-extern unsigned short vt100_graphics[32];
-
-struct CharCodes {
+struct CharCodes
+{
     std::array<CharsetId, 4> charset; // coding info
     CharsetId charset_id = CharsetId::Undefined; // actual charset.
     CharsetId sa_charset_id = CharsetId::Undefined; // saved charset.
@@ -76,13 +75,14 @@ class Vt102Emulation
 
 public:
     /** Constructs a new emulation */
-    Vt102Emulation(Screen * screen);
+    Vt102Emulation(int lines, int columns);
     ~Vt102Emulation();
 
     // reimplemented from Emulation
     void clearEntireScreen();
     void reset();
-    char eraseChar() const;
+
+    Screen const & getScreen() const { return *_currentScreen; }
 
 protected:
     // reimplemented from Emulation
@@ -105,6 +105,9 @@ private:
     void saveCursor();
     void restoreCursor();
     void resetCharset();
+
+    void setScreen(int n);
+    void setScreenSize(int lines, int columns);
 
     void setMargins(int top, int bottom);
     //set margins for all screens back to their defaults
@@ -145,32 +148,25 @@ private:
 
     void reportDecodingError();
 
-    void processToken(int code, int p, int q);
+    void processToken(int code, int32_t p, int q);
 
     // clears the screen and resizes it to the specified
     // number of columns
     void clearScreenAndSetColumns(int columnCount);
 
-    CharCodes _charset;
+    CharCodes _charsets[2];
 
     using ModeFlags = Flags<Mode>;
 
     ModeFlags _currentModes;
     ModeFlags _savedModes;
 
-    Screen* _currentScreen;
+    Screen _screens[2];
+    Screen * _currentScreen = &_screens[0];
 };
 
-unsigned short vt100_graphics[32] = {
-    // 0/8     1/9    2/10    3/11    4/12    5/13    6/14    7/15
-    0x0020, 0x25C6, 0x2592, 0x2409, 0x240c, 0x240d, 0x240a, 0x00b0,
-    0x00b1, 0x2424, 0x240b, 0x2518, 0x2510, 0x250c, 0x2514, 0x253c,
-    0xF800, 0xF801, 0x2500, 0xF803, 0xF804, 0x251c, 0x2524, 0x2534,
-    0x252c, 0x2502, 0x2264, 0x2265, 0x03C0, 0x2260, 0x00A3, 0x00b7
-};
-
-Vt102Emulation::Vt102Emulation(Screen * screen)
-: _currentScreen(screen)
+Vt102Emulation::Vt102Emulation(int lines, int columns)
+: _screens{{lines, columns}, {lines, columns}}
 {
     initTokenizer();
     reset();
@@ -347,8 +343,6 @@ void Vt102Emulation::initTokenizer()
         charClass[*s] |= SCS;
     for (auto s = as_bytes("()+*#[]%"); *s; ++s)
         charClass[*s] |= GRP;
-
-    resetTokenizer();
 }
 
 /* Ok, here comes the nasty part of the decoder.
@@ -418,7 +412,7 @@ void Vt102Emulation::receiveChar(uc_t cc)
     if (lec(1,0,ESC)) { return; }
     if (lec(1,0,ESC+128)) { s[0] = ESC; receiveChar('['); return; }
     if (les(2,1,GRP)) { return; }
-    if (Xte         ) { /* TODO processWindowAttributeRequest();*/ resetTokenizer(); return; }
+    if (Xte         ) { /* processWindowAttributeRequest();*/ resetTokenizer(); return; }
     if (Xpe         ) { return; }
     if (lec(3,2,'?')) { return; }
     if (lec(3,2,'>')) { return; }
@@ -427,7 +421,7 @@ void Vt102Emulation::receiveChar(uc_t cc)
     if (lec(2,0,ESC)) { processToken( TY_ESC(s[1]), 0, 0);              resetTokenizer(); return; }
     if (les(3,1,SCS)) { processToken( TY_ESC_CS(s[1],s[2]), 0, 0);      resetTokenizer(); return; }
     if (lec(3,1,'#')) { processToken( TY_ESC_DE(s[2]), 0, 0);           resetTokenizer(); return; }
-    if (eps(    CPN)) { processToken( TY_CSI_PN(cc), argv[0],argv[1]);  resetTokenizer(); return; }
+    if (eps(    CPN)) { processToken( TY_CSI_PN(cc), argv[0], argv[1]);  resetTokenizer(); return; }
 
     // resize = \e[8;<row>;<col>t
     if (eps(CPS))
@@ -498,6 +492,8 @@ constexpr inline CharsetId char_to_charset_id(char c)
     return('0' == c) ? CharsetId::VT100Graphics
         : ('A' == c) ? CharsetId::IBMPC
         : ('B' == c) ? CharsetId::Latin1
+        : ('U' == c) ? CharsetId::IBMPC
+        : ('K' == c) ? CharsetId::UserDefined
         : CharsetId::Undefined;
 }
 
@@ -517,11 +513,11 @@ constexpr inline CharsetId char_to_charset_id(char c)
    about this mapping.
 */
 
-void Vt102Emulation::processToken(int token, int p, int q)
+void Vt102Emulation::processToken(int token, int32_t p, int q)
 {
   switch (token)
   {
-    case TY_CHR(         ) : _currentScreen->displayCharacter     (static_cast<unsigned short>(p) /* TODO */ ); break; //UTF16
+    case TY_CHR(         ) : _currentScreen->displayCharacter     (static_cast<uc_t>(p)); break; //UTF16
 
     //             127 DEL    : ignored on input
 
@@ -575,39 +571,47 @@ void Vt102Emulation::processToken(int token, int p, int q)
     case TY_ESC_CS('(', '0') :      setCharset           (0, char_to_charset_id('0')); break; //VT100
     case TY_ESC_CS('(', 'A') :      setCharset           (0, char_to_charset_id('A')); break; //VT100
     case TY_ESC_CS('(', 'B') :      setCharset           (0, char_to_charset_id('B')); break; //VT100
+    case TY_ESC_CS('(', 'U') :      setCharset           (0, char_to_charset_id('U')); break; //Linux
+    case TY_ESC_CS('(', 'K') :      setCharset           (0, char_to_charset_id('K')); break; //Linux
 
     case TY_ESC_CS(')', '0') :      setCharset           (1, char_to_charset_id('0')); break; //VT100
     case TY_ESC_CS(')', 'A') :      setCharset           (1, char_to_charset_id('A')); break; //VT100
     case TY_ESC_CS(')', 'B') :      setCharset           (1, char_to_charset_id('B')); break; //VT100
+    case TY_ESC_CS(')', 'U') :      setCharset           (1, char_to_charset_id('U')); break; //Linux
+    case TY_ESC_CS(')', 'K') :      setCharset           (1, char_to_charset_id('K')); break; //Linux
 
     case TY_ESC_CS('*', '0') :      setCharset           (2, char_to_charset_id('0')); break; //VT100
     case TY_ESC_CS('*', 'A') :      setCharset           (2, char_to_charset_id('A')); break; //VT100
     case TY_ESC_CS('*', 'B') :      setCharset           (2, char_to_charset_id('B')); break; //VT100
+    case TY_ESC_CS('*', 'U') :      setCharset           (2, char_to_charset_id('U')); break; //Linux
+    case TY_ESC_CS('*', 'K') :      setCharset           (2, char_to_charset_id('K')); break; //Linux
 
     case TY_ESC_CS('+', '0') :      setCharset           (3, char_to_charset_id('0')); break; //VT100
     case TY_ESC_CS('+', 'A') :      setCharset           (3, char_to_charset_id('A')); break; //VT100
     case TY_ESC_CS('+', 'B') :      setCharset           (3, char_to_charset_id('B')); break; //VT100
+    case TY_ESC_CS('+', 'U') :      setCharset           (3, char_to_charset_id('U')); break; //Linux
+    case TY_ESC_CS('+', 'K') :      setCharset           (3, char_to_charset_id('K')); break; //Linux
 
     case TY_ESC_CS('%', 'G') :      /* TODO setCodec             (Utf8Codec   );*/ break; //LINUX
     case TY_ESC_CS('%', '@') :      /* TODO setCodec             (LocaleCodec );*/ break; //LINUX
 
-    case TY_ESC_DE('3'      ) : /* Double height line, top half    */
-                                _currentScreen->setLineProperty( LineProperty::DoubleWidth , true );
-                                _currentScreen->setLineProperty( LineProperty::DoubleHeight , true );
-                                    break;
-    case TY_ESC_DE('4'      ) : /* Double height line, bottom half */
-                                _currentScreen->setLineProperty( LineProperty::DoubleWidth , true );
-                                _currentScreen->setLineProperty( LineProperty::DoubleHeight , true );
-                                    break;
-    case TY_ESC_DE('5'      ) : /* Single width, single height line*/
-                                _currentScreen->setLineProperty( LineProperty::DoubleWidth , false);
-                                _currentScreen->setLineProperty( LineProperty::DoubleHeight , false);
-                                break;
-    case TY_ESC_DE('6'      ) : /* Double width, single height line*/
-                                _currentScreen->setLineProperty( LineProperty::DoubleWidth , true);
-                                _currentScreen->setLineProperty( LineProperty::DoubleHeight , false);
-                                break;
-    case TY_ESC_DE('8'      ) : _currentScreen->helpAlign            (          ); break;
+    case TY_ESC_DE('3'     ) : /* Double height line, top half    */
+                               _currentScreen->setLineProperty( LineProperty::DoubleWidth , true );
+                               _currentScreen->setLineProperty( LineProperty::DoubleHeight , true );
+                                   break;
+    case TY_ESC_DE('4'     ) : /* Double height line, bottom half */
+                               _currentScreen->setLineProperty( LineProperty::DoubleWidth , true );
+                               _currentScreen->setLineProperty( LineProperty::DoubleHeight , true );
+                                   break;
+    case TY_ESC_DE('5'     ) : /* Single width, single height line*/
+                               _currentScreen->setLineProperty( LineProperty::DoubleWidth , false);
+                               _currentScreen->setLineProperty( LineProperty::DoubleHeight , false);
+                               break;
+    case TY_ESC_DE('6'     ) : /* Double width, single height line*/
+                               _currentScreen->setLineProperty( LineProperty::DoubleWidth , true);
+                               _currentScreen->setLineProperty( LineProperty::DoubleHeight , false);
+                               break;
+    case TY_ESC_DE('8'     ) : _currentScreen->helpAlign            (          ); break;
 
 // resize = \e[8;<row>;<col>t
     case TY_CSI_PS('t',   8) : // TODO setImageSize( p /*lines */, q /* columns */ );
@@ -623,7 +627,7 @@ void Vt102Emulation::processToken(int token, int p, int q)
     case TY_CSI_PS('J',   0) : _currentScreen->clearToEndOfScreen   (          ); break;
     case TY_CSI_PS('J',   1) : _currentScreen->clearToBeginOfScreen (          ); break;
     case TY_CSI_PS('J',   2) : _currentScreen->clearEntireScreen    (          ); break;
-    case TY_CSI_PS('J',      3) : /* TODO clearHistory();*/                            break;
+    case TY_CSI_PS('J',   3) : /* clearHistory();*/                               break;
     case TY_CSI_PS('g',   0) : _currentScreen->changeTabStop        (false     ); break; //VT100
     case TY_CSI_PS('g',   3) : _currentScreen->clearTabStops        (          ); break; //VT100
     case TY_CSI_PS('h',   4) : _currentScreen->    setMode      (ScreenMode::Insert   ); break;
@@ -858,9 +862,11 @@ void Vt102Emulation::clearScreenAndSetColumns(int /*columnCount*/)
 
 // Apply current character map.
 
+#define CHARSET _charsets[_currentScreen == &_screens[1]]
+
 uc_t Vt102Emulation::applyCharset(uc_t c) const
 {
-    auto const charset_index = underlying_cast(_charset.charset_id);
+    auto const charset_index = underlying_cast(CHARSET.charset_id);
     if (charset_index < underlying_cast(CharsetId::MAX_) && c < charset_map_size) {
         return charset_maps[charset_index][c];
     }
@@ -877,32 +883,51 @@ uc_t Vt102Emulation::applyCharset(uc_t c) const
 
 void Vt102Emulation::resetCharset()
 {
-    _charset.charset.fill(CharsetId::Latin1);
-    _charset.charset_id = CharsetId::Latin1;
-    _charset.sa_charset_id = CharsetId::Latin1;
+    _charsets[0].charset.fill(CharsetId::Latin1);
+    _charsets[0].charset_id = CharsetId::Latin1;
+    _charsets[0].sa_charset_id = CharsetId::Latin1;
+
+    _charsets[1].charset.fill(CharsetId::Latin1);
+    _charsets[1].charset_id = CharsetId::Latin1;
+    _charsets[1].sa_charset_id = CharsetId::Latin1;
 }
 
 void Vt102Emulation::setCharset(int n, CharsetId cs) // on both screens.
 {
-    _charset.charset[n & 3] = cs;
+    _charsets[0].charset[n & 3] = cs;
+    _charsets[1].charset[n & 3] = cs;
     this->useCharset(n);
 }
 
-// TODO as setCharset
 void Vt102Emulation::setAndUseCharset(int n, CharsetId cs)
 {
-    _charset.charset[n & 3] = cs;
+    CHARSET.charset[n & 3] = cs;
     useCharset(n);
 }
 
 void Vt102Emulation::useCharset(int n)
 {
-    _charset.charset_id = _charset.charset[n & 3];
+    CHARSET.charset_id = CHARSET.charset[n & 3];
 }
 
 void Vt102Emulation::setDefaultMargins()
 {
     _currentScreen->setDefaultMargins();
+}
+
+void Vt102Emulation::setScreen(int n)
+{
+    _currentScreen = &_screens[n & 1];
+}
+
+void Vt102Emulation::setScreenSize(int lines, int columns)
+{
+    if (lines < 1 || columns < 1) {
+        return;
+    }
+
+    _screens[0].resizeImage(lines, columns);
+    _screens[1].resizeImage(lines, columns);
 }
 
 void Vt102Emulation::setMargins(int t, int b)
@@ -912,8 +937,7 @@ void Vt102Emulation::setMargins(int t, int b)
 
 void Vt102Emulation::saveCursor()
 {
-    // TODO CHARSET.sa_graphic = CHARSET.graphic;
-    // TODO CHARSET.sa_pound   = CHARSET.pound; //This mode is obsolete
+    CHARSET.sa_charset_id = CHARSET.charset_id;
     // we are not clear about these
     //sa_charset = charsets[cScreen->_charset];
     //sa_charset_num = cScreen->_charset;
@@ -922,10 +946,11 @@ void Vt102Emulation::saveCursor()
 
 void Vt102Emulation::restoreCursor()
 {
-    // TODO CHARSET.graphic = CHARSET.sa_graphic;
-    // TODO CHARSET.pound   = CHARSET.sa_pound; //This mode is obsolete
+    CHARSET.charset_id = CHARSET.sa_charset_id;
     _currentScreen->restoreCursor();
 }
+
+// #undef CHARSET
 
 /* ------------------------------------------------------------------------- */
 /*                                                                           */
@@ -970,17 +995,15 @@ void Vt102Emulation::setMode(Mode m)
         break;
 
     case Mode::AppScreen :
-        // TODO _screen[1]->clearSelection();
-        // TODO setScreen(1);
+        setScreen(1);
         break;
     }
 }
 
 void Vt102Emulation::setMode(ScreenMode m)
 {
-    // TODO _screen[0]->setMode(m);
-    // TODO _screen[1]->setMode(m);
-    _currentScreen->setMode(m);
+    _screens[0].setMode(m);
+    _screens[1].setMode(m);
 }
 
 void Vt102Emulation::resetMode(Mode m)
@@ -993,17 +1016,15 @@ void Vt102Emulation::resetMode(Mode m)
         break;
 
     case Mode::AppScreen :
-        // TODO _screen[0]->clearSelection();
-        // TODO setScreen(0);
+        setScreen(0);
         break;
     }
 }
 
 void Vt102Emulation::resetMode(ScreenMode m)
 {
-    // TODO _screen[0]->resetMode(m);
-    // TODO _screen[1]->resetMode(m);
-    _currentScreen->resetMode(m);
+    _screens[0].resetMode(m);
+    _screens[1].resetMode(m);
 }
 
 void Vt102Emulation::saveMode(Mode m)
@@ -1039,36 +1060,6 @@ bool Vt102Emulation::getMode(ScreenMode m)
     return _currentScreen->getMode(m);
 }
 
-char Vt102Emulation::eraseChar() const
-{
-    // TODO
-//     KeyboardTranslator::Entry entry = _keyTranslator->findEntry(
-//                                           Qt::Key_Backspace,
-//                                           0,
-//                                           0);
-//     if (entry.text().count() > 0)
-//         return entry.text()[0];
-//     else
-//         return '\b';
-    return '\0';
-}
-
-#if 0
-// print contents of the scan buffer
-static void hexdump(int* s, int len)
-{
-    int i;
-    for (i = 0; i < len; i++) {
-        if (s[i] == '\\')
-            printf("\\\\");
-        else if ((s[i]) > 32 && s[i] < 127)
-            printf("%c", s[i]);
-        else
-            printf("\\%04x(hex)", s[i]);
-    }
-}
-#endif
-
 // return contents of the scan buffer
 static std::string hexdump2(int* s, int len)
 {
@@ -1078,12 +1069,12 @@ static std::string hexdump2(int* s, int len)
 
     for (i = 0; i < len; i++) {
         if (s[i] == '\\')
-            snprintf(dump, sizeof(dump), "%s", "\\\\");
+            std::snprintf(dump, sizeof(dump), "%s", "\\\\");
         else if ((s[i]) > 32 && s[i] < 127)
-            snprintf(dump, sizeof(dump), "%c", s[i]);
+            std::snprintf(dump, sizeof(dump), "%c", s[i]);
         else
-            snprintf(dump, sizeof(dump), "\\%04x(hex)", s[i]);
-        returnDump.append(std::string(dump));
+            std::snprintf(dump, sizeof(dump), "\\%04x(hex)", s[i]);
+        returnDump.append(dump);
     }
     return returnDump;
 }
@@ -1093,14 +1084,10 @@ void Vt102Emulation::reportDecodingError()
     if (tokenBufferPos == 0 || (tokenBufferPos == 1 && (tokenBuffer[0] & 0xff) >= 32))
         return;
 
-    // TODO
-//    printf("Undecodable sequence: ");
-//    hexdump(tokenBuffer, tokenBufferPos);
-//    printf("\n");
-
     std::string outputError("Undecodable sequence: ");
     outputError.append(hexdump2(tokenBuffer, tokenBufferPos));
-    //qDebug() << outputError;
+    LOG(LOG_INFO, "%s", outputError.c_str());
+    // std::cerr << outputError << std::endl;
 }
 
 }
@@ -1157,9 +1144,8 @@ template<int> struct i_{};
 
 int main()
 {
-    rvt::Screen screen(40, 40);
+    rvt::Vt102Emulation emulator(40, 40);
 
-    rvt::Vt102Emulation emulator(&screen);
     for (int i = 0; i < 20; ++i) {
         emulator.receiveChar('a');
         emulator.receiveChar('b');
@@ -1187,6 +1173,9 @@ int main()
     emulator.receiveChar(touc("é"));
     emulator.receiveChar('e');
     emulator.receiveChar(0xcc82);
+
+    rvt::Screen const & screen = emulator.getScreen();
+
     int i = 0;
     for (auto const & line : screen.getScreenLines()) {
         std::cout << std::setw(4) << ++i << " ";
