@@ -57,7 +57,7 @@ alias install :
     install-etc-ppocr
     install-share
 ;
-alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient rdpheadless rdpinichecker ;
+alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient vcnclient rdpheadless rdpinichecker ;
 alias libs    : libredrec ;
 
 alias ocr_tools : display_learning extract_text ppocr_extract_text ;
@@ -269,6 +269,40 @@ exe rdpclient
     :
         $(EXE_DEPENDENCIES)
     ;
+
+exe vncclient
+    : $(REDEMPTION_SRC_PATH)/main/vnc_client.cpp
+        program_options
+        bitmap
+        openssl
+        d3des
+        crypto
+        png
+        z
+        dl
+
+        ## @{
+        ocr
+        ppocr_static
+        #ppocr
+
+        ffmpeg
+        ## @}
+
+
+        ocr
+        ppocr
+
+
+
+        snappy
+        krb5
+        gssglue
+    :
+        $(EXE_DEPENDENCIES)
+    ;
+
+
 
 exe rdpheadless
     : $(REDEMPTION_SRC_PATH)/ftests/test_client_redemption_cli/test_client_redemption_cli.cpp
@@ -816,7 +850,7 @@ test-canonical mod/null/null.hpp ;
 test-canonical mod/rdp/rdp_log.hpp ;
 test-canonical mod/rdp/rdp_orders.hpp ;
 test-canonical mod/rdp/rdp_params.hpp ;
-test-canonical mod/vnc/vnc.hpp : <library>png ;
+test-canonical mod/vnc/vnc.hpp : <library>png <library>d3des ;
 test-canonical mod/xup/xup.hpp ;
 test-canonical mod/rdp/rdp.hpp : <library>bitmap <library>krb5 <library>gssglue <library>png <library>d3des <library>z <library>dl <library>crypto ;
 ## @}
@@ -914,6 +948,23 @@ test-run test_vnc_client_simple
       <library>krb5
       <library>gssglue
       <library>png
+      <library>crypto
+      <library>d3des
+      <library>dl
+      <covflag>nocover
+    ;
+## @}
+
+
+
+test-run cli_vnc_connection
+    : client_mods/cli_vnc_connection.cpp
+    :
+    : <library>bitmap
+      <library>krb5
+      <library>gssglue
+      <library>png
+      <library>openssl
       <library>crypto
       <library>d3des
       <library>dl
