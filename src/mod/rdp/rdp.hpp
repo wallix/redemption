@@ -3917,6 +3917,8 @@ public:
                 if ((e.id == ERR_LIC) ||
                     (e.id == ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT) ||
                     (e.id == ERR_RAIL_CLIENT_EXECUTE) ||
+                    (e.id == ERR_RAIL_STARTING_PROGRAM) ||
+                    (e.id == ERR_RAIL_UNAUTHORIZED_PROGRAM) ||
                     (e.id == ERR_SESSION_PROBE_LAUNCH)) {
                     throw;
                 }

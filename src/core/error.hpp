@@ -297,6 +297,8 @@ enum error_type {
     ERR_RAIL_LOGON_FAILED_OR_WARNING,
     ERR_RAIL_NOT_ENABLED,
     ERR_RAIL_CLIENT_EXECUTE,
+    ERR_RAIL_STARTING_PROGRAM,
+    ERR_RAIL_UNAUTHORIZED_PROGRAM,
 
     ERR_RDPDR_PDU_TRUNCATED = 22300,
     ERR_RDPDR_READ_REQUEST,
@@ -381,7 +383,13 @@ public:
             return "An error occurred during the licensing protocol";
 
         case ERR_RAIL_CLIENT_EXECUTE:
-            return "The RemoteApp program did not start on the remote computer.";
+            return "The RemoteApp program did not start on the remote computer";
+
+        case ERR_RAIL_STARTING_PROGRAM:
+            return "Cannot start the RemoteApp program";
+
+        case ERR_RAIL_UNAUTHORIZED_PROGRAM:
+            return "The RemoteApp program is not in the list of authorized programs";
 
         default:
             {

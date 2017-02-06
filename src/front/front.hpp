@@ -868,9 +868,7 @@ public:
         {
             gdi::GraphicApi & gd_orders = this->orders.initialize_drawable(this->client_info.bpp);
 
-            if (!this->capture) {
-                this->set_gd(gd_orders);
-            }
+            this->set_gd(this->capture ? this->capture : &gd_orders);
         }
 
         if (bpp == 8) {

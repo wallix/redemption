@@ -54,6 +54,10 @@ private:
 
     SessionProbeLauncher* session_probe_stop_launch_sequence_notifier = nullptr;
 
+    bool exe_or_file_2_sent = false;
+
+    bool log_exe_or_file_2 = false;
+
 public:
     struct Params : public BaseVirtualChannel::Params {
            uint16_t client_execute_flags;
@@ -470,41 +474,6 @@ private:
                     length);
             }
 
-            if (!this->param_client_execute_exe_or_file_2.empty()) {
-                StaticOutStream<16384> out_s;
-                RAILPDUHeader header;
-                header.emit_begin(out_s, TS_RAIL_ORDER_EXEC);
-
-                ClientExecutePDU cepdu;
-
-                cepdu.Flags(this->param_client_execute_flags_2);
-                cepdu.ExeOrFile(this->param_client_execute_exe_or_file_2.c_str());
-                cepdu.WorkingDir(this->param_client_execute_working_dir_2.c_str());
-                cepdu.Arguments(this->param_client_execute_arguments_2.c_str());
-
-                cepdu.emit(out_s);
-
-                header.emit_end();
-
-                const size_t   length = out_s.get_offset();
-                const uint32_t flags  =   CHANNELS::CHANNEL_FLAG_FIRST
-                                        | CHANNELS::CHANNEL_FLAG_LAST;
-
-                {
-                    const bool send              = true;
-                    const bool from_or_to_client = true;
-                    ::msgdump_c(send, from_or_to_client, length, flags,
-                        out_s.get_data(), length);
-                }
-                LOG(LOG_INFO,
-                    "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                        "Send to server - Client Execute PDU (2)");
-                cepdu.log(LOG_INFO);
-
-                this->send_message_to_server(length, flags, out_s.get_data(),
-                    length);
-            }
-
             this->client_execute_pdu_sent = true;
         }
 
@@ -869,8 +838,7 @@ public:
                 get_RAIL_ExecResult_name(ExecResult_), ExecResult_,
                 serpdu.RawResult());
         }
-
-        if (serpdu.ExecResult() == RAIL_EXEC_S_OK) {
+        else {
             if (!this->session_probe_channel ||
                 this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
                 std::string info("ExeOrFile='");
@@ -880,14 +848,6 @@ public:
                     false,
                     "CLIENT_EXECUTE_REMOTEAPP", info.c_str());
             }
-        }
-
-        if (!this->param_client_execute_exe_or_file_2.compare(serpdu.ExeOrFile())) {
-            if (this->session_probe_channel) {
-                this->session_probe_channel->start_end_session_check();
-            }
-
-            return true;
         }
 
         if (!this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
@@ -906,6 +866,60 @@ public:
                     throw Error(ERR_RAIL_CLIENT_EXECUTE);
                 }
             }
+
+            if (!this->exe_or_file_2_sent &&
+                !this->param_client_execute_exe_or_file_2.empty()) {
+                this->exe_or_file_2_sent = true;
+
+                StaticOutStream<16384> out_s;
+                RAILPDUHeader header;
+                header.emit_begin(out_s, TS_RAIL_ORDER_EXEC);
+
+                ClientExecutePDU cepdu;
+
+                cepdu.Flags(this->param_client_execute_flags_2);
+                cepdu.ExeOrFile(this->param_client_execute_exe_or_file_2.c_str());
+                cepdu.WorkingDir(this->param_client_execute_working_dir_2.c_str());
+                cepdu.Arguments(this->param_client_execute_arguments_2.c_str());
+
+                cepdu.emit(out_s);
+
+                header.emit_end();
+
+                const size_t   length = out_s.get_offset();
+                const uint32_t flags  =   CHANNELS::CHANNEL_FLAG_FIRST
+                                        | CHANNELS::CHANNEL_FLAG_LAST;
+
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags,
+                        out_s.get_data(), length);
+                }
+                LOG(LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_server_execute_result_pdu: "
+                        "Send to server - Client Execute PDU (2)");
+                cepdu.log(LOG_INFO);
+
+                this->send_message_to_server(length, flags, out_s.get_data(),
+                    length);
+            }
+        }
+        else if (!this->param_client_execute_exe_or_file_2.compare(serpdu.ExeOrFile())) {
+            if (this->session_probe_channel) {
+                this->session_probe_channel->start_end_session_check();
+            }
+
+            if (serpdu.ExecResult() != RAIL_EXEC_S_OK) {
+                if (serpdu.ExecResult() == RAIL_EXEC_E_NOT_IN_ALLOWLIST) {
+                    throw Error(ERR_RAIL_UNAUTHORIZED_PROGRAM);
+                }
+                else {
+                    throw Error(ERR_RAIL_STARTING_PROGRAM);
+                }
+            }
+
+            return true;
         }
 
         return false;
