@@ -4743,7 +4743,7 @@ class VideoCapture : public gdi::CaptureApi
 
     FlvParams flv_params;
 
-    const Drawable & drawable;
+    RDPDrawable & drawable;
     std::unique_ptr<video_recorder> recorder;
 
     timeval start_video_capture;
@@ -4754,7 +4754,7 @@ public:
     VideoCapture(
         const timeval & now,
         Transport & trans,
-        const Drawable & drawable,
+        RDPDrawable & drawable,
         bool no_timestamp,
         FlvParams flv_params)
     : trans(trans)
@@ -4797,17 +4797,16 @@ public:
     }
 
     void preparing_video_frame() {
-        auto & drawable = const_cast<Drawable&>(this->drawable);
-        drawable.trace_mouse();
+        this->drawable.trace_mouse();
         if (!this->no_timestamp) {
             time_t rawtime = this->start_video_capture.tv_sec;
             tm tm_result;
             localtime_r(&rawtime, &tm_result);
-            drawable.trace_timestamp(tm_result);
+            this->drawable.trace_timestamp(tm_result);
         }
         this->recorder->preparing_video_frame(true);
-        if (!this->no_timestamp) { drawable.clear_timestamp(); }
-        drawable.clear_mouse();
+        if (!this->no_timestamp) { this->drawable.clear_timestamp(); }
+        this->drawable.clear_mouse();
     }
 
     void encoding_video_frame() {
@@ -4828,19 +4827,18 @@ public:
         uint64_t const inter_frame_interval = this->inter_frame_interval.count();
         if (tick >= inter_frame_interval) {
             auto encoding_video_frame = [this](time_t rawtime){
-                auto & drawable = const_cast<Drawable&>(this->drawable);
-                drawable.trace_mouse();
+                this->drawable.trace_mouse();
                 if (!this->no_timestamp) {
                     tm tm_result;
                     localtime_r(&rawtime, &tm_result);
-                    drawable.trace_timestamp(tm_result);
+                    this->drawable.trace_timestamp(tm_result);
                     this->recorder->encoding_video_frame();
-                    drawable.clear_timestamp();
+                    this->drawable.clear_timestamp();
                 }
                 else {
                     this->recorder->encoding_video_frame();
                 }
-                drawable.clear_mouse();
+                this->drawable.clear_mouse();
             };
 
             if (ignore_frame_in_timeval) {
@@ -4902,7 +4900,7 @@ public:
         const char * const basename,
         const int groupid,
         bool no_timestamp,
-        const Drawable & drawable,
+        RDPDrawable & drawable,
         FlvParams flv_params)
     : trans(
         FilenameGenerator::PATH_FILE_EXTENSION,
@@ -5022,7 +5020,7 @@ public:
             auto const interval = std::chrono::microseconds(std::chrono::seconds(3))/2;
             if (duration >= interval) {
                 auto video_interval = first_image_impl.video_sequencer.get_interval();
-                if (this->first_image_impl.ic_drawable.logical_frame_ended || duration > std::chrono::seconds(2) || duration >= video_interval) {
+                if (this->first_image_impl.ic_drawable.logical_frame_ended() || duration > std::chrono::seconds(2) || duration >= video_interval) {
                     assert(&(*this->caps)[this->caps_i].get() == this);
 //                    assert(&(*this->gcaps)[this->gcaps_i] == this);
 
@@ -5061,7 +5059,7 @@ public:
     unsigned ic_scaled_width;
     unsigned ic_scaled_height;
 
-    /* const */ Drawable & ic_drawable;
+    /* const */ RDPDrawable & ic_drawable;
 
     private:
         std::unique_ptr<uint8_t[]> ic_scaled_buffer;
@@ -5180,7 +5178,7 @@ public:
         const int groupid,
         bool no_timestamp,
         unsigned image_zoom,
-        /* const */Drawable & drawable,
+        /* const */RDPDrawable & drawable,
         FlvParams flv_params,
         std::chrono::microseconds video_interval,
         NotifyNextVideo & next_video_notifier)
@@ -5597,11 +5595,11 @@ public:
     TitleCaptureImpl(
         const timeval & now,
         auth_api * authentifier,
-        const Drawable & drawable,
+        RDPDrawable & drawable,
         OcrParams ocr_params,
         NotifyTitleChanged & notify_title_changed)
     : ocr_title_extractor_builder(
-        drawable, authentifier != nullptr,
+        drawable.impl(), authentifier != nullptr,
         ocr_params.ocr_version,
         ocr_params.ocr_locale,
         ocr_params.ocr_on_title_bar_only,
@@ -6896,7 +6894,6 @@ private:
 
     UpdateProgressData * update_progress_data;
 
-    Drawable * drawable = nullptr;
     MouseTrace mouse_info;
     wait_obj capture_event;
 
@@ -6948,7 +6945,6 @@ public:
     : is_replay_mod(!authentifier)
     , gd_drawable(nullptr)
     , update_progress_data(update_progress_data)
-    , drawable{nullptr}
     , mouse_info{now, width / 2, height / 2}
     , capture_event{}
     , capture_drawable(capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full)
@@ -6997,7 +6993,7 @@ public:
                     notifier = this->notifier_next_video;
                 }
                 this->sequenced_video_capture_obj.reset(new SequencedVideoCaptureImpl(
-                    now, record_path, basename, groupid, no_timestamp, png_params.zoom, this->gd_drawable->impl(),
+                    now, record_path, basename, groupid, no_timestamp, png_params.zoom, *this->gd_drawable,
                     flv_params,
                     flv_break_interval, notifier
                 ));
@@ -7005,7 +7001,7 @@ public:
 
             if (capture_flv_full) {
                 this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
-                    now, record_path, basename, groupid, no_timestamp, this->gd_drawable->impl(),
+                    now, record_path, basename, groupid, no_timestamp, *this->gd_drawable,
                     flv_params));
             }
 
@@ -7025,7 +7021,7 @@ public:
             if (capture_ocr) {
                 if (this->patterns_checker || this->meta_capture_obj || this->sequenced_video_capture_obj) {
                     this->title_capture_obj.reset(new TitleCaptureImpl(
-                        now, authentifier, this->gd_drawable->impl(),
+                        now, authentifier, *this->gd_drawable,
                         ocr_params,
                         this->notifier_title_changed
                     ));
