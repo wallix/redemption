@@ -6970,7 +6970,6 @@ public:
             this->gds.push_back(*this->gd_drawable);
 
             this->graphic_api.reset(new Graphic(this->mouse_info, this->gds, this->caps));
-            this->drawable = &this->gd_drawable->impl();
 
             if (capture_png) {
                 if (png_params.real_time_image_capture) {
@@ -7216,8 +7215,8 @@ protected:
     ) override {
         this->capture_event.reset();
 
-        if (this->drawable) {
-            this->drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
+        if (this->gd_drawable) {
+            this->gd_drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
         }
         this->mouse_info = {now, cursor_x, cursor_y};
 
