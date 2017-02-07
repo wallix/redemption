@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "rvt/character.hpp" // TODO uc_t
+#include "rvt/character.hpp" // TODO ucs4_char
 
 #include <array>
 
@@ -46,7 +46,7 @@ namespace utils
 namespace rvt  {
 
 constexpr std::size_t charset_map_size = 256;
-using charset_map_type = std::array<uc_t, charset_map_size>;
+using charset_map_type = std::array<ucs4_char, charset_map_size>;
 
 template<class... T>
 constexpr
@@ -54,7 +54,7 @@ charset_map_type
 make_charset(T ... ucs)
 {
     static_assert(sizeof...(ucs) == charset_map_size, "");
-    return {{uc_t(ucs)...}};
+    return {{ucs4_char(ucs)...}};
 }
 
 constexpr auto charset_maps = utils::make_array(

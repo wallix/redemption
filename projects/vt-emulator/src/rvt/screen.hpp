@@ -375,7 +375,7 @@ public:
      * is inserted at the current cursor position, otherwise it will replace the
      * character already at the current cursor position.
      */
-    void displayCharacter(uc_t c);
+    void displayCharacter(ucs4_char c);
 
     /**
      * Resizes the image to a new fixed size of @p new_lines by @p new_columns.

@@ -95,10 +95,10 @@ protected:
     void resetMode(ScreenMode mode);
 
 public: // TODO protected
-    void receiveChar(uc_t cc);
+    void receiveChar(ucs4_char cc);
 
 private:
-    uc_t applyCharset(uc_t  c) const;
+    ucs4_char applyCharset(ucs4_char  c) const;
     void setCharset(int n, CharsetId cs);
     void useCharset(int n);
     void setAndUseCharset(int n, CharsetId cs);
@@ -131,7 +131,7 @@ private:
 
     void resetTokenizer();
 #define MAX_TOKEN_LENGTH 256 // Max length of tokens (e.g. window title)
-    void addToCurrentToken(uc_t cc);
+    void addToCurrentToken(ucs4_char cc);
     int tokenBuffer[MAX_TOKEN_LENGTH]; //FIXME: overflow?
     int tokenBufferPos;
 #define MAXARGS 15
@@ -307,7 +307,7 @@ void Vt102Emulation::addArgument()
     argv[argc] = 0;
 }
 
-void Vt102Emulation::addToCurrentToken(uc_t cc)
+void Vt102Emulation::addToCurrentToken(ucs4_char cc)
 {
     tokenBuffer[tokenBufferPos] = cc;
     tokenBufferPos = std::min(tokenBufferPos + 1, MAX_TOKEN_LENGTH - 1);
@@ -382,7 +382,7 @@ const int ESC = 27;
 const int DEL = 127;
 
 // process an incoming unicode character
-void Vt102Emulation::receiveChar(uc_t cc)
+void Vt102Emulation::receiveChar(ucs4_char cc)
 {
   if (cc == DEL)
     return; //VT100: ignore.
@@ -517,7 +517,7 @@ void Vt102Emulation::processToken(int token, int32_t p, int q)
 {
   switch (token)
   {
-    case TY_CHR(         ) : _currentScreen->displayCharacter     (static_cast<uc_t>(p)); break; //UTF16
+    case TY_CHR(         ) : _currentScreen->displayCharacter     (static_cast<ucs4_char>(p)); break; //UTF16
 
     //             127 DEL    : ignored on input
 
@@ -864,7 +864,7 @@ void Vt102Emulation::clearScreenAndSetColumns(int /*columnCount*/)
 
 #define CHARSET _charsets[_currentScreen == &_screens[1]]
 
-uc_t Vt102Emulation::applyCharset(uc_t c) const
+ucs4_char Vt102Emulation::applyCharset(ucs4_char c) const
 {
     auto const charset_index = underlying_cast(CHARSET.charset_id);
     if (charset_index < underlying_cast(CharsetId::MAX_) && c < charset_map_size) {
@@ -1181,16 +1181,16 @@ int main()
 
     rvt::Screen const & screen = emulator.getScreen();
 
-    auto print_uc = [](rvt::uc_t uc) {
+    auto print_uc = [](rvt::ucs4_char uc) {
         char utf8_ch[4];
-        std::size_t const n = uc_to_utf8(uc, utf8_ch);
+        std::size_t const n = ucs4_to_utf8(uc, utf8_ch);
         std::cout.write(utf8_ch, static_cast<std::streamsize>(n));
     };
 
     auto print_ch = [&screen, print_uc](rvt::Character const & ch) {
         if (ch.isRealCharacter) {
             if (ch.is_extended()) {
-                for (rvt::uc_t uc : screen.extendedCharTable()[ch.character]) {
+                for (rvt::ucs4_char uc : screen.extendedCharTable()[ch.character]) {
                     print_uc(uc);
                 }
             }

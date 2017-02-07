@@ -59,19 +59,19 @@ template<> struct is_enum_flags<rvt::Rendition> : std::true_type {};
 namespace rvt
 {
 
-using uc_t = uint32_t;
+using ucs4_char = uint32_t;
 
 
 struct ExtendedCharacter
 {
-    array_view<uc_t const> as_array() const noexcept
+    array_view<ucs4_char const> as_array() const noexcept
     { return {this->chars.get(), this->len}; }
 
-    void append(uc_t uc);
+    void append(ucs4_char uc);
 
     uint16_t len;
     uint16_t capacity;
-    std::unique_ptr<uc_t[]> chars;
+    std::unique_ptr<ucs4_char[]> chars;
 };
 
 
@@ -94,7 +94,7 @@ public:
      * @param _real Indicate whether this character really exists, or exists
      *              simply as place holder.
      */
-    explicit inline Character(uc_t _c = ' ',
+    explicit inline Character(ucs4_char _c = ' ',
                               CharacterColor  _f = CharacterColor(ColorSpace::Default, DEFAULT_FORE_COLOR),
                               CharacterColor  _b = CharacterColor(ColorSpace::Default, DEFAULT_BACK_COLOR),
                               Rendition  _r = Rendition::Default,
@@ -113,7 +113,7 @@ public:
      *
      * if Rendition::ExtendedChar is set, character is unicode sequence point.
      */
-    uc_t character;
+    ucs4_char character;
 
     /** A combination of RENDITION flags which specify options for drawing the character. */
     Rendition rendition;
@@ -165,11 +165,11 @@ public:
     ExtendedCharTable() = default;
 
     REDEMPTION_CXX_NODISCARD
-    bool growChar(Character & character, uc_t uc);
+    bool growChar(Character & character, ucs4_char uc);
 
     void clear();
 
-    inline array_view<uc_t const> operator[](std::size_t i) const noexcept
+    inline array_view<ucs4_char const> operator[](std::size_t i) const noexcept
     { return this->extendedCharTable[i].as_array(); }
 
 private:
@@ -194,11 +194,11 @@ inline bool Character::equalsFormat(const Character& other) const
 }
 
 
-inline void ExtendedCharacter::append(uc_t uc)
+inline void ExtendedCharacter::append(ucs4_char uc)
 {
     if (this->len == this->capacity) {
         if (this->len != (1u << (8 * sizeof(this->len) - 1))) {
-            std::unique_ptr<uc_t[]> u(new uc_t[this->capacity * 2u]);
+            std::unique_ptr<ucs4_char[]> u(new ucs4_char[this->capacity * 2u]);
             memcpy(u.get(), this->chars.get(), this->len);
             this->chars = std::move(u);
             this->capacity *= 2u;
@@ -213,7 +213,7 @@ inline void ExtendedCharacter::append(uc_t uc)
 }
 
 
-inline REDEMPTION_CXX_NODISCARD bool ExtendedCharTable::growChar(Character & character, uc_t uc)
+inline REDEMPTION_CXX_NODISCARD bool ExtendedCharTable::growChar(Character & character, ucs4_char uc)
 {
     if (character.is_extended()) {
         this->extendedCharTable[character.character].append(uc);
@@ -221,7 +221,7 @@ inline REDEMPTION_CXX_NODISCARD bool ExtendedCharTable::growChar(Character & cha
     else {
         uint16_t capacity = 4;
         this->extendedCharTable.emplace_back(ExtendedCharacter{
-            2, capacity, std::unique_ptr<uc_t[]>{new uc_t[capacity]{character.character, uc}}
+            2, capacity, std::unique_ptr<ucs4_char[]>{new ucs4_char[capacity]{character.character, uc}}
         });
         character.character = this->extendedCharTable.size() - 1;
         character.rendition |= Rendition::ExtendedChar;

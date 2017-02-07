@@ -463,7 +463,7 @@ UTF8toUTF16_exit:
 #include <cassert>
 
 /// \return 1, 2, 3, 4 or 0 if an invalide unicode point
-inline std::size_t uc_to_utf8(uint32_t uc, bytes_t s)
+inline std::size_t ucs4_to_utf8(uint32_t uc, bytes_t s)
 {
     if (REDEMPTION_LIKELY(uc <= 0x7f)) {
         s[0] = uint8_t(uc);

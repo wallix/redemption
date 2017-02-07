@@ -37,14 +37,14 @@ BOOST_AUTO_TEST_CASE(TestCharacter)
         bool r = ext_ch_table.growChar(ch, 0x0311);
         BOOST_CHECK_EQUAL(r, true);
         BOOST_CHECK_EQUAL(ch.is_extended(), true);
-        rvt::uc_t ucs[] {'e', 0x0311};
+        rvt::ucs4_char ucs[] {'e', 0x0311};
         BOOST_CHECK_EQUAL_RANGES(ucs, ext_ch_table[ch.character]);
     }
     {
         bool r = ext_ch_table.growChar(ch, 0x0312);
         BOOST_CHECK_EQUAL(r, true);
         BOOST_CHECK_EQUAL(ch.is_extended(), true);
-        rvt::uc_t ucs[] {'e', 0x0311, 0x0312};
+        rvt::ucs4_char ucs[] {'e', 0x0311, 0x0312};
         BOOST_CHECK_EQUAL_RANGES(ucs, ext_ch_table[ch.character]);
     }
 }
