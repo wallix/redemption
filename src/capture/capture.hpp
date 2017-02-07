@@ -135,6 +135,12 @@
 #include "capture/png_params.hpp"
 #include "capture/flv_params.hpp"
 #include "capture/ocr_params.hpp"
+#include "capture/meta_params.hpp"
+#include "capture/sequenced_video_params.hpp"
+#include "capture/full_video_params.hpp"
+#include "capture/pattern_checker_params.hpp"
+#include "capture/kbdlog_params.hpp"
+
 #include "capture/wrm_label.hpp"
 #include "capture/cryptofile.hpp"
 #include "capture/video_recorder.hpp"
@@ -6910,17 +6916,14 @@ private:
 
 public:
     Capture(
-        bool capture_wrm,
-        const WrmParams wrm_params,
-        bool capture_png,
-        const PngParams png_params,
-        bool capture_pattern_checker,
-        bool capture_ocr,
-        OcrParams ocr_params,
-        bool capture_flv,
-        bool capture_flv_full,
-        bool capture_meta,
-        bool capture_kbd,
+        bool capture_wrm, const WrmParams wrm_params,
+        bool capture_png, const PngParams png_params,
+        bool capture_pattern_checker, const PatternCheckerParams pattern_checker_params,
+        bool capture_ocr, const OcrParams ocr_params,
+        bool capture_flv, const SequencedVideoParams sequenced_video_params,
+        bool capture_flv_full, const FullVideoParams full_video_params,
+        bool capture_meta, const MetaParams meta_params,
+        bool capture_kbd, const KbdLogParams kbd_log_params,
         const char * basename,
         const timeval & now,
         int width,
@@ -7064,13 +7067,10 @@ public:
 
             if (this->sequenced_video_capture_obj) {
                 this->caps.push_back(this->sequenced_video_capture_obj->vc);
-
                 this->caps.push_back(this->sequenced_video_capture_obj->first_image);
 
                 this->sequenced_video_capture_obj->first_image.caps = &this->caps;
                 this->sequenced_video_capture_obj->first_image.caps_i = this->caps.size()-1;
-//                this->sequenced_video_capture_obj->first_image.gcaps = &this->caps;
-//                this->sequenced_video_capture_obj->first_image.gcaps_i = this->caps.size()-1;
             }
 
             if (this->full_video_capture_obj) {

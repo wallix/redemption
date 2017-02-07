@@ -1081,6 +1081,12 @@ public:
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
 
+        MetaParams meta_params;
+        KbdLogParams kbdlog_params;
+        PatternCheckerParams patter_checker_params;
+        SequencedVideoParams sequenced_video_params;
+        FullVideoParams full_video_params;
+
         WrmParams wrm_params(
             this->capture_bpp,
             wrm_trace_type,
@@ -1110,14 +1116,15 @@ public:
              != ::KeyboardInputMaskingLevel::fully_masked;
         bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
 
-        this->capture = new Capture(  capture_wrm, wrm_params
+        this->capture = new Capture(  
+                                      capture_wrm, wrm_params
                                     , capture_png, png_params
-                                    , capture_pattern_checker
+                                    , capture_pattern_checker, patter_checker_params
                                     , capture_ocr, ocr_params
-                                    , capture_flv
-                                    , capture_flv_full
-                                    , capture_meta
-                                    , capture_kbd
+                                    , capture_flv, sequenced_video_params
+                                    , capture_flv_full, full_video_params
+                                    , capture_meta, meta_params
+                                    , capture_kbd, kbdlog_params
                                     , this->basename
                                     , now
                                     , this->client_info.width, this->client_info.height
