@@ -1159,7 +1159,7 @@ public:
         this->capture_state = CAPTURE_STATE_STARTED;
         if (this->capture->get_graphic_api()) {
             this->set_gd(this->capture->get_graphic_api());
-            this->capture->add_graphic(this->orders.graphics_update_pdu());
+            this->capture->add_graphic(this->orders.get_graphics_api());
         }
 
         this->update_keyboard_input_mask_state();
