@@ -487,7 +487,7 @@ inline std::size_t ucs4_to_utf8(uint32_t uc, bytes_t s)
         s[0] = uint8_t(0xf0 | ((uc >> 18) & 0x07));
         s[1] = uint8_t(0x80 | ((uc >> 12) & 0x3f));
         s[2] = uint8_t(0x80 | ((uc >> 6)  & 0x3f));
-        s[3] = uint8_t(        (uc        & 0x3f));
+        s[3] = uint8_t(0x80 | ( uc        & 0x3f));
         return 4;
     }
 

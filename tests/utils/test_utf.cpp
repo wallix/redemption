@@ -835,4 +835,10 @@ BOOST_AUTO_TEST_CASE(Test_uc_to_utf8) {
     BOOST_CHECK_EQUAL(0xea, utf8_ch[0]);
     BOOST_CHECK_EQUAL(0xb0, utf8_ch[1]);
     BOOST_CHECK_EQUAL(0x80, utf8_ch[2]);
+
+    BOOST_CHECK_EQUAL(4, ucs4_to_utf8(0x10348, utf8_ch));
+    BOOST_CHECK_EQUAL(0xf0, utf8_ch[0]);
+    BOOST_CHECK_EQUAL(0x90, utf8_ch[1]);
+    BOOST_CHECK_EQUAL(0x8d, utf8_ch[2]);
+    BOOST_CHECK_EQUAL(0x88, utf8_ch[3]);
 }
