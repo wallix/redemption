@@ -4618,11 +4618,9 @@ public:
 
     std::unique_ptr<uint8_t[]> scaled_buffer;
 
-    PngCapture(
-        const timeval & now, auth_api * authentifier, RDPDrawable & drawable,
-        const char * record_tmp_path, const char * basename, int groupid,
-        const PngParams & png_params)
-    : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_tmp_path, basename, ".png", groupid, authentifier)
+
+    PngCapture(const timeval & now, RDPDrawable & drawable, const PngParams & png_params)
+    : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, png_params.record_tmp_path, png_params.basename, ".png", png_params.groupid, png_params.authentifier)
     , drawable(drawable)
     , start_capture(now)
     , frame_interval(png_params.png_interval)
@@ -4709,10 +4707,8 @@ public:
     bool enable_rt_display = false;
 
     PngCaptureRT(
-        const timeval & now, auth_api * authentifier, RDPDrawable & drawable,
-        const char * record_tmp_path, const char * basename, int groupid,
-        const PngParams & png_params)
-    : PngCapture(now, authentifier, drawable, record_tmp_path, basename, groupid, png_params)
+        const timeval & now, RDPDrawable & drawable, const PngParams & png_params)
+    : PngCapture(now, drawable, png_params)
     , num_start(this->trans.get_seqno())
     , png_limit(png_params.png_limit)
     {
@@ -6974,16 +6970,11 @@ public:
             if (capture_png) {
                 if (png_params.real_time_image_capture) {
                     this->png_capture_real_time_obj.reset(new PngCaptureRT(
-                        now, authentifier, this->gd_drawable,
-                        record_tmp_path, basename, groupid,
-                        png_params
-                    ));
+                        now, *this->gd_drawable, png_params));
                 }
                 else {
                     this->png_capture_obj.reset(new PngCapture(
-                        now, authentifier, this->gd_drawable,
-                        record_tmp_path, basename, groupid,
-                        png_params));
+                        now, *this->gd_drawable, png_params));
                 }
             }
 

@@ -97,7 +97,6 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
         TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
-        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false};
 
         FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
@@ -151,6 +150,9 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
             LOG(LOG_ERR, "Buffer Overflowed: Path too long");
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
+
+        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false, 
+                                nullptr, record_tmp_path, basename, groupid};
 
         MetaParams meta_params;
         KbdLogParams kbdlog_params;
@@ -379,7 +381,6 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
     TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
-    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false };
     FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
     const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
     const char * record_path = record_tmp_path;
@@ -431,6 +432,9 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         LOG(LOG_ERR, "Buffer Overflowed: Path too long");
         throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
     }
+
+    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false, 
+                        nullptr, record_tmp_path, basename, groupid};
 
     MetaParams meta_params;
     KbdLogParams kbdlog_params;

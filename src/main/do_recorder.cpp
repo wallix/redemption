@@ -971,6 +971,13 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
 
+                        // PngParams
+                        png_params.authentifier = nullptr;
+                        png_params.record_tmp_path = record_tmp_path;
+                        png_params.basename = basename;
+                        png_params.groupid = groupid;
+
+
                         MetaParams meta_params;
                         KbdLogParams kbdlog_params;
                         PatternCheckerParams patter_checker_params;
@@ -1151,7 +1158,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false };
+    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , nullptr, nullptr, nullptr, 0};
     FlvParams flv_params = {};
 
     // flv output options
