@@ -23,6 +23,7 @@
 #include "rvt/color.hpp"
 
 #include "cxx/diagnostic.hpp"
+#include "utils/sugar/array.hpp"
 
 #include <cassert>
 #include <array>
@@ -66,16 +67,45 @@ enum class ColorSpace : uint8_t
     RGB         = 4,
 };
 
+constexpr std::array<Color, TABLE_COLORS>
+color_table = utils::make_array(
+    Color(0x00, 0x00, 0x00), // Dfore
+    Color(0xFF, 0xFF, 0xFF), // Dback
+    Color(0x00, 0x00, 0x00), // Black
+    Color(0xB2, 0x18, 0x18), // Red
+    Color(0x18, 0xB2, 0x18), // Green
+    Color(0xB2, 0x68, 0x18), // Yellow
+    Color(0x18, 0x18, 0xB2), // Blue
+    Color(0xB2, 0x18, 0xB2), // Magenta
+    Color(0x18, 0xB2, 0xB2), // Cyan
+    Color(0xB2, 0xB2, 0xB2), // White
+    // intensive versions
+    Color(0x00, 0x00, 0x00),
+    Color(0xFF, 0xFF, 0xFF),
+    Color(0x68, 0x68, 0x68),
+    Color(0xFF, 0x54, 0x54),
+    Color(0x54, 0xFF, 0x54),
+    Color(0xFF, 0xFF, 0x54),
+    Color(0x54, 0x54, 0xFF),
+    Color(0xFF, 0x54, 0xFF),
+    Color(0x54, 0xFF, 0xFF),
+    Color(0xFF, 0xFF, 0xFF)
+);
+
 
 // TODO utils/fixed_array_view.hpp
 template<class T, std::size_t N>
 struct fixed_array_view
 {
-    fixed_array_view(std::array<T, N> const & a)
+    fixed_array_view(std::array<typename std::remove_const<T>::type, N> const & a) noexcept
     : p(a.data())
     {}
 
-    fixed_array_view(T const (&a)[N])
+    fixed_array_view(std::array<T, N> const & a) noexcept
+    : p(a.data())
+    {}
+
+    fixed_array_view(T const (&a)[N]) noexcept
     : p(a)
     {}
 

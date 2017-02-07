@@ -21,27 +21,7 @@
 #pragma once
 
 #include "rvt/character.hpp" // TODO ucs4_char
-
-#include <array>
-
-namespace utils
-{
-    template<std::size_t N, class T>
-    constexpr std::integral_constant<std::size_t, N>
-    size(T const (&)[N])
-    { return {}; }
-
-    template<std::size_t N, class T>
-    constexpr std::integral_constant<std::size_t, N>
-    size(std::array<T, N> const &)
-    { return {}; }
-
-    template<class T, class... Ts>
-    constexpr
-    std::array<T, sizeof...(Ts) + 1>
-    make_array(T && value, Ts && ... values)
-    { return std::array<T, sizeof...(Ts) + 1>{{std::forward<T>(value), std::forward<Ts>(values)...}}; }
-}
+#include "utils/sugar/array.hpp"
 
 namespace rvt  {
 

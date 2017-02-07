@@ -1144,6 +1144,184 @@ int touc(char const (&s)[n])
 
 #include "utils/utf.hpp"
 
+struct Utf8ByteSize
+{
+    enum enum_t : unsigned char
+    {
+        LenError,
+        Len1,
+        Len2,
+        Len3,
+        Len4,
+    };
+};
+
+constexpr Utf8ByteSize::enum_t utf8_byte_size_table[] {
+    // 0xxx [xxxx]
+    1, 1, 1, 1,
+    1, 1, 1, 1,
+    // 10xx [xxxx]  invalid value
+    0, 0, 0, 0,
+    // 110x [xxxx]
+    2, 2,
+    // 1110 [xxxx]
+    3,
+    // 1111 [0xxx]
+    4,
+    // 1111 [1xxx]  invalid value
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+};
+
+constexpr Utf8ByteSize utf8_byte_size(uint8_t c) noexcept
+{
+    return utf8_byte_size_table[
+        (c >> 3) | (
+            ((c & 0x80) >> 4) &
+            ((c & 0x40) >> 3) &
+            ((c & 0x20) >> 2) &
+            ((c & 0x10) >> 1)
+        )
+    ];
+}
+
+constexpr bool is_valid_utf8_sequence(uint8_t a) noexcept
+{
+    return (a & 0xc0) == 0x80;
+}
+
+constexpr bool is_valid_utf8_sequence(uint8_t a, uint8_t b) noexcept
+{
+    return ((a & b & 0x80) | ((a | b) & 0x40)) == 0xc0;
+}
+
+constexpr bool is_valid_utf8_sequence(uint8_t a, uint8_t b, uint8_t c) noexcept
+{
+    return ((a & b & c & 0x80) | ((a | b | c) & 0x40)) == 0xc0;
+}
+
+constexpr rvt::ucs4_char replacement_character = 0xfffd; // � REPLACEMENT CHARACTER
+
+struct Utf8Decoder
+{
+    uint8_t data_[4];
+    unsigned data_len_ = 0;
+    unsigned missing_byte_ = 0;
+
+    using utf8_array = array_view_const_u8;
+    using utf8_iterator = utf8_array::iterator;
+
+    using checked_size = std::true_type;
+    using no_checked_size = std::false_type;
+
+    template<class CheckedSize, class F>
+    bool advance_and_decode(CheckedSize checked_size, utf8_iterator & it, utf8_iterator const & last, F & f)
+    {
+        switch (utf8_byte_size(*it)) {
+            case Utf8ByteSize::LenError:
+                f(replacement_character);
+                ++it;
+                break;
+
+            case Utf8ByteSize::Len1:
+                f(data_[0]);
+                ++it;
+                break;
+
+            case Utf8ByteSize::Len2:
+                if (last - it < 2) {
+                    return false;
+                }
+
+                if (is_valid_utf8_sequence(data_[1])) {
+                    f(utf8_2_bytes_to_ucs(data_[0], data_[1]));
+                    it += 2;
+                }
+                else {
+                    f(replacement_character);
+                    ++it;
+                }
+                break;
+
+            case Utf8ByteSize::Len3:
+                if (last - it < 3) {
+                    return false;
+                }
+
+                if (is_valid_utf8_sequence(data_[1], data_[2])) {
+                    f(utf8_3_bytes_to_ucs(data_[0], data_[1], data_[2]));
+                    it += 3;
+                }
+                else {
+                    f(replacement_character);
+                    ++it;
+                }
+                break;
+
+            case Utf8ByteSize::Len4:
+                if (last - it < 4) {
+                    return false;
+                }
+
+                if (is_valid_utf8_sequence(data_[1], data_[2], data_[3])) {
+                    f(utf8_4_bytes_to_ucs(data_[0], data_[1], data_[2], data_[3]));
+                    it += 4;
+                }
+                else {
+                    f(replacement_character);
+                    ++it;
+                }
+                break;
+        }
+
+        return true;
+    }
+
+
+    template<class F>
+    rvt::ucs4_char decode(utf8_array utf8_string, F && f)
+    {
+        if (utf8_string.empty()) {
+            return ;
+        }
+
+        if (data_len_) {
+            auto it = utf8_string.begin();
+            // utf8 Len2, 3, or 4
+            data_[data_len_++] = *it;
+            auto data_it = data_;
+            auto data_end = data_it + data_len_;
+            do {
+                if (!advance_and_decode(checked_size{}, data_it, data_end, f)) {
+                    if (data_len_ < utils::size(data_)) {
+                        data_[data_len_++] = *it;
+                    }
+                }
+                else {
+                    std::copy(data_it, data_end, data_);
+                    data_it = data_;
+                    data_end = data_ + (data_end - data_it);
+                }
+            } while (data_it != data_end);
+        }
+
+        auto it = utf8_string.begin();
+        auto last = it + utf8_string.size() / 4u * 4u;
+
+        while (it < last) {
+            advance_and_decode(no_checked_size{}, it, last, f);
+        }
+
+        last = utf8_string.end();
+        while (it < last && advance_and_decode(checked_size{}, it, last, f)) {
+        }
+
+        data_len_ = std::copy(it, last, data_) - data_;
+    }
+};
+
 
 int main()
 {
@@ -1176,7 +1354,7 @@ int main()
     emulator.receiveChar(UTF8toUnicodeIterator("é").code());
     emulator.receiveChar('e');
     emulator.receiveChar(0x311);
-    emulator.receiveChar(0xac00); // 가
+    emulator.receiveChar(0xac00);
 
 
     rvt::Screen const & screen = emulator.getScreen();
@@ -1209,33 +1387,8 @@ int main()
         std::cout << '\n';
     }
 
-    const rvt::Color color_table[] = {
-        rvt::Color(0x00, 0x00, 0x00), // Dfore
-        rvt::Color(0xFF, 0xFF, 0xFF), // Dback
-        rvt::Color(0x00, 0x00, 0x00), // Black
-        rvt::Color(0xB2, 0x18, 0x18), // Red
-        rvt::Color(0x18, 0xB2, 0x18), // Green
-        rvt::Color(0xB2, 0x68, 0x18), // Yellow
-        rvt::Color(0x18, 0x18, 0xB2), // Blue
-        rvt::Color(0xB2, 0x18, 0xB2), // Magenta
-        rvt::Color(0x18, 0xB2, 0xB2), // Cyan
-        rvt::Color(0xB2, 0xB2, 0xB2), // White
-        // intensive versions
-        rvt::Color(0x00, 0x00, 0x00),
-        rvt::Color(0xFF, 0xFF, 0xFF),
-        rvt::Color(0x68, 0x68, 0x68),
-        rvt::Color(0xFF, 0x54, 0x54),
-        rvt::Color(0x54, 0xFF, 0x54),
-        rvt::Color(0xFF, 0xFF, 0x54),
-        rvt::Color(0x54, 0x54, 0xFF),
-        rvt::Color(0xFF, 0x54, 0xFF),
-        rvt::Color(0x54, 0xFF, 0xFF),
-        rvt::Color(0xFF, 0xFF, 0xFF),
-    };
-    static_assert(sizeof(color_table) / sizeof(color_table[0]) == rvt::TABLE_COLORS, "");
-
-    auto print_color = [&color_table](char const * cmd, rvt::CharacterColor const & ch_color) {
-        auto color = ch_color.color(color_table);
+    auto print_color = [](char const * cmd, rvt::CharacterColor const & ch_color) {
+        auto color = ch_color.color(rvt::color_table);
         std::cout << cmd << (color.red()+0) << ";" << (color.green()+0) << ";" << (color.blue()+0);
     };
     auto print_mode = [](char const * cmd, rvt::Character const & ch, rvt::Rendition r) {

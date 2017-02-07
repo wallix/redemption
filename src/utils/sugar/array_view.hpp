@@ -82,6 +82,9 @@ struct array_view
     /*c++14 constexpr*/ type & operator[](std::size_t i) { assert(i < this->size()); return this->p[i]; }
     /*c++14 constexpr*/ type const & operator[](std::size_t i) const { assert(i < this->size()); return this->p[i]; }
 
+    void remove_prefix(std::size_t n) noexcept { assert(n <= this->size()); p += n; }
+    void remove_suffix(std::size_t n) noexcept { assert(n <= this->size()); sz -= n; }
+
 private:
     type * p        = nullptr;
     std::size_t sz  = 0;

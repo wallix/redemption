@@ -495,6 +495,15 @@ inline std::size_t ucs4_to_utf8(uint32_t uc, bytes_t s)
     return 0;
 }
 
+constexpr uint32_t utf8_2_bytes_to_ucs(uint8_t a, uint8_t b) noexcept
+{ return ((a & 0x1F) << 6 ) |  (b & 0x3F); }
+
+constexpr uint32_t utf8_3_bytes_to_ucs(uint8_t a, uint8_t b, uint8_t c) noexcept
+{ return ((a & 0x0F) << 12) | ((b & 0x3F) << 6) |  (c & 0x3F); }
+
+constexpr uint32_t utf8_4_bytes_to_ucs(uint8_t a, uint8_t b, uint8_t c, uint8_t d) noexcept
+{ return ((a & 0x07) << 18) | ((b & 0x3F) << 12) | ((c & 0x3F) << 6) | (d & 0x3F); }
+
 class UTF8toUnicodeIterator
 {
     const uint8_t * source;
@@ -520,16 +529,16 @@ public:
             break;
             /* handle U+0080..U+07FF inline : 2 bytes sequences */
             case 0xC: case 0xD:
-                this->ucode = ((this->ucode & 0x1F) << 6)|(source[0] & 0x3F);
+                this->ucode = utf8_2_bytes_to_ucs(this->ucode, source[0]);
                 source += 1;
             break;
              /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
             case 0xE:
-                this->ucode = ((this->ucode & 0x0F) << 12)|((source[0] & 0x3F) << 6)|(source[1] & 0x3F);
+                this->ucode = utf8_3_bytes_to_ucs(this->ucode, source[0], source[1]);
                 source += 2;
             break;
             case 0xF:
-                this->ucode = ((this->ucode & 0x07) << 18)|((source[0] & 0x3F) << 12)|((source[1] & 0x3F) << 6)|(source[2] & 0x3F);
+                this->ucode = utf8_4_bytes_to_ucs(this->ucode, source[0], source[1], source[2]);
                 source += 3;
             break;
             // these should never happen on valid UTF8
