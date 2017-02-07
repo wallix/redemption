@@ -855,6 +855,11 @@ public:
         this->drawable.logical_frame_ended = (this->frame_start_count == 0);
     }
 
+    bool logical_frame_ended()
+    {
+        return this->drawable.logical_frame_ended;
+    }
+
     void draw(const RDP::RAIL::NewOrExistingWindow            &) override {}
     void draw(const RDP::RAIL::WindowIcon                     &) override {}
     void draw(const RDP::RAIL::CachedIcon                     &) override {}

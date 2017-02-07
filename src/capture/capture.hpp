@@ -4608,7 +4608,7 @@ class PngCapture : public gdi::CaptureApi
 {
 public:
     OutFilenameSequenceTransport trans;
-    Drawable & drawable;
+    RDPDrawable & drawable;
     timeval start_capture;
     std::chrono::microseconds frame_interval;
 
@@ -4619,7 +4619,7 @@ public:
     std::unique_ptr<uint8_t[]> scaled_buffer;
 
     PngCapture(
-        const timeval & now, auth_api * authentifier, Drawable & drawable,
+        const timeval & now, auth_api * authentifier, RDPDrawable & drawable,
         const char * record_tmp_path, const char * basename, int groupid,
         const PngParams & png_params)
     : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_tmp_path, basename, ".png", groupid, authentifier)
@@ -4675,7 +4675,7 @@ public:
         uint64_t const interval = this->frame_interval.count();
         if (duration >= interval) {
              // Snapshot at end of Frame or force snapshot if diff_time_val >= 1.5 x frame_interval.
-            if (this->drawable.logical_frame_ended || (duration >= interval * 3 / 2)) {
+            if (this->drawable.logical_frame_ended() || (duration >= interval * 3 / 2)) {
                 this->drawable.trace_mouse();
                 tm ptm;
                 localtime_r(&now.tv_sec, &ptm);
@@ -4709,7 +4709,7 @@ public:
     bool enable_rt_display = false;
 
     PngCaptureRT(
-        const timeval & now, auth_api * authentifier, Drawable & drawable,
+        const timeval & now, auth_api * authentifier, RDPDrawable & drawable,
         const char * record_tmp_path, const char * basename, int groupid,
         const PngParams & png_params)
     : PngCapture(now, authentifier, drawable, record_tmp_path, basename, groupid, png_params)
@@ -6974,14 +6974,14 @@ public:
             if (capture_png) {
                 if (png_params.real_time_image_capture) {
                     this->png_capture_real_time_obj.reset(new PngCaptureRT(
-                        now, authentifier, this->gd_drawable->impl(),
+                        now, authentifier, this->gd_drawable,
                         record_tmp_path, basename, groupid,
                         png_params
                     ));
                 }
                 else {
                     this->png_capture_obj.reset(new PngCapture(
-                        now, authentifier, this->gd_drawable->impl(),
+                        now, authentifier, this->gd_drawable,
                         record_tmp_path, basename, groupid,
                         png_params));
                 }
