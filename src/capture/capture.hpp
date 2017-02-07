@@ -4942,7 +4942,7 @@ public:
         if (!this->ic_has_first_img) {
             return this->first_image.do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
         }
-        return this->vc.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        return this->video_sequencer.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
     }
 
     virtual std::chrono::microseconds frame_marker_event(
@@ -4954,7 +4954,7 @@ public:
         if (!this->ic_has_first_img) {
             return this->first_image.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
         }
-        return this->vc.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        return this->video_sequencer.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
     }
 
 
@@ -4995,13 +4995,8 @@ private:
 
 public:
     // first next_video is ignored
-    struct FirstImage : gdi::CaptureApi
+    struct FirstImage
     {
-        std::vector<std::reference_wrapper<gdi::CaptureApi>> * caps = nullptr;
-//        std::vector<std::reference_wrapper<gdi::CaptureApi>> * gcaps = nullptr;
-        std::size_t caps_i = ~std::size_t{};
-//        std::size_t gcaps_i = ~std::size_t{};
-
         SequencedVideoCaptureImpl & first_image_impl;
 
         const timeval first_image_start_capture;
@@ -5011,9 +5006,29 @@ public:
         , first_image_start_capture(now)
         {}
 
+        std::chrono::microseconds periodic_snapshot(
+            timeval const & now,
+            int cursor_x, int cursor_y,
+            bool ignore_frame_in_timeval
+        ) {
+            // assert(now >= previous);
+            auto next_duration = this->do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+            assert(next_duration.count() >= 0);
+            return next_duration;
+        }
+
+        std::chrono::microseconds frame_marker_event(
+            timeval const & now,
+            int cursor_x, int cursor_y,
+            bool ignore_frame_in_timeval
+        ) 
+        {
+            return this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        }
+
         std::chrono::microseconds do_snapshot(
             const timeval& now, int x, int y, bool ignore_frame_in_timeval
-        ) override {
+        ) {
             std::chrono::microseconds ret;
 
             auto const duration = std::chrono::microseconds(difftimeval(now, this->first_image_start_capture));
@@ -5021,13 +5036,6 @@ public:
             if (duration >= interval) {
                 auto video_interval = first_image_impl.video_sequencer.get_interval();
                 if (this->first_image_impl.ic_drawable.logical_frame_ended() || duration > std::chrono::seconds(2) || duration >= video_interval) {
-                    assert(&(*this->caps)[this->caps_i].get() == this);
-//                    assert(&(*this->gcaps)[this->gcaps_i] == this);
-
-                    (*this->caps)[this->caps_i] = this->first_image_impl.video_sequencer;
-
-//                    (*this->gcaps)[this->gcaps_i] = this->first_image_impl.video_sequencer;
-
                     tm ptm;
                     localtime_r(&now.tv_sec, &ptm);
                     this->first_image_impl.ic_drawable.trace_timestamp(ptm);
@@ -5128,7 +5136,6 @@ public:
             this->start_break = now;
         }
 
-    private:
         std::chrono::microseconds do_snapshot(
             const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
         ) override {
@@ -5140,6 +5147,27 @@ public:
             }
             return this->break_interval;
         }
+
+        std::chrono::microseconds periodic_snapshot(
+            timeval const & now,
+            int cursor_x, int cursor_y,
+            bool ignore_frame_in_timeval
+        ) {
+            // assert(now >= previous);
+            auto next_duration = this->do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+            assert(next_duration.count() >= 0);
+            return next_duration;
+        }
+
+        std::chrono::microseconds frame_marker_event(
+            timeval const & now,
+            int cursor_x, int cursor_y,
+            bool ignore_frame_in_timeval
+        ) 
+        {
+            return this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        }
+
     } video_sequencer;
 
     NotifyNextVideo & next_video_notifier;
@@ -5154,11 +5182,6 @@ public:
             this->ic_drawable.clear_timestamp();
             this->ic_has_first_img = true;
             this->ic_trans.next();
-
-            (*this->first_image.caps)[this->first_image.caps_i]
-                =  this->video_sequencer;
-//            (*this->first_image.gcaps)[this->first_image.gcaps_i]
-//                =  this->video_sequencer;
         }
         this->vc.next_video();
         tm ptm;
@@ -7063,11 +7086,8 @@ public:
 
             if (this->sequenced_video_capture_obj) {
                 this->caps.push_back(this->sequenced_video_capture_obj->vc);
-                this->caps.push_back(this->sequenced_video_capture_obj->first_image);
-
-                this->sequenced_video_capture_obj->first_image.caps = &this->caps;
-                this->sequenced_video_capture_obj->first_image.caps_i = this->caps.size()-1;
-            }
+                this->caps.push_back(*this->sequenced_video_capture_obj);
+           }
 
             if (this->full_video_capture_obj) {
                 this->caps.push_back(this->full_video_capture_obj->vc);
