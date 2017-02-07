@@ -21,14 +21,28 @@
 #pragma once
 
 
-#define FALCON_CXX_STD_11 201103
-#define FALCON_CXX_STD_14 201402
+#define REDEMPTION_CXX_STD_11 201103
+#define REDEMPTION_CXX_STD_14 201402
 
 // C++14 constexpr functions are inline in C++11
-#if __cplusplus >= FALCON_CXX_STD_14
-# define FALCON_CXX14_CONSTEXPR constexpr
-# define FALCON_CONSTEXPR_AFTER_CXX11 constexpr
+#if __cplusplus >= REDEMPTION_CXX_STD_14
+# define REDEMPTION_CXX14_CONSTEXPR constexpr
+# define REDEMPTION_CONSTEXPR_AFTER_CXX11 constexpr
 #else
-# define FALCON_CXX14_CONSTEXPR inline
-# define FALCON_CONSTEXPR_AFTER_CXX11
+# define REDEMPTION_CXX14_CONSTEXPR inline
+# define REDEMPTION_CONSTEXPR_AFTER_CXX11
+#endif
+
+#if defined(__clang__) || defined(__GNUC__)
+# define REDEMPTION_LIKELY(x) __builtin_expect(!!(x), 1)
+# define REDEMPTION_UNLIKELY(x) __builtin_expect(!!(x), 0)
+# define REDEMPTION_ALWAYS_INLINE __attribute__((always_inline))
+#else
+# define REDEMPTION_LIKELY(x) (x)
+# define REDEMPTION_UNLIKELY(x) (x)
+# ifdef _MSC_VER
+#  define REDEMPTION_ALWAYS_INLINE __forceinline
+# else
+#  define REDEMPTION_ALWAYS_INLINE
+# endif
 #endif

@@ -1144,6 +1144,7 @@ int touc(char const (&s)[n])
 
 #include "utils/utf.hpp"
 
+
 int main()
 {
     rvt::Vt102Emulation emulator(40, 40);
@@ -1181,33 +1182,9 @@ int main()
     rvt::Screen const & screen = emulator.getScreen();
 
     auto print_uc = [](rvt::uc_t uc) {
-        if (uc <= 0x7f) {
-            std::cout << uchar(uc);
-        }
-        else
-        if (uc <= 0x7ff) {
-            std::cout
-              << uchar(0xc0 | ((uc >> 6)  & 0x1f))
-              << uchar(0x80 |  (uc        & 0x3f))
-            ;
-        }
-        else
-        if (uc <= 0xffff) {
-            std::cout
-              << uchar(0xe0 | ((uc >> 12) & 0x0f))
-              << uchar(0x80 | ((uc >> 6)  & 0x3f))
-              << uchar(0x80 |  (uc        & 0x3f))
-            ;
-        }
-        else
-        if (uc <= 0x1ffff) {
-            std::cout
-              << uchar(0xf0 | ((uc >> 18) & 0x07))
-              << uchar(0x80 | ((uc >> 12) & 0x3f))
-              << uchar(0x80 | ((uc >> 6)  & 0x3f))
-              << uchar(        (uc        & 0x3f))
-            ;
-        }
+        char utf8_ch[4];
+        std::size_t const n = uc_to_utf8(uc, utf8_ch);
+        std::cout.write(utf8_ch, static_cast<std::streamsize>(n));
     };
 
     auto print_ch = [&screen, print_uc](rvt::Character const & ch) {

@@ -27,11 +27,6 @@
 #define BOOST_TEST_MODULE TestLul
 #include "system/redemption_unit_tests.hpp"
 
-//#define LOGNULL
-#define LOGPRINT
-
-#include <stdio.h>
-
 #include "utils/sugar/cast.hpp"
 #include "utils/utf.hpp"
 
@@ -394,15 +389,7 @@ BOOST_AUTO_TEST_CASE(TestUTF8_UTF16)
 
     // Check result
     BOOST_CHECK_EQUAL(target_length, nbbytes_utf16);
-    for (size_t q = 0 ; q < target_length ; q++){
-        if (expected_target[q] != target[q]){
-            printf("at %u: expected %u, got %u\n",
-                   static_cast<unsigned>(q),
-                   static_cast<unsigned>(expected_target[q]),
-                   static_cast<unsigned>(target[q]));
-            BOOST_CHECK(false);
-        }
-    }
+    BOOST_CHECK_EQUAL_RANGES(target, expected_target);
 
     uint8_t source_round_trip[15];
 
@@ -427,15 +414,7 @@ BOOST_AUTO_TEST_CASE(TestUTF8_UTF16_witch_control_character)
 
     // Check result
     BOOST_CHECK_EQUAL(target_length, nbbytes_utf16);
-    for (size_t q = 0 ; q < target_length ; q++){
-        if (expected_target[q] != target[q]){
-            printf("at %u: expected %u, got %u\n",
-                   static_cast<unsigned>(q),
-                   static_cast<unsigned>(expected_target[q]),
-                   static_cast<unsigned>(target[q]));
-            BOOST_CHECK(false);
-        }
-    }
+    BOOST_CHECK_EQUAL_RANGES(target, expected_target);
 
     uint8_t source_round_trip[16];
 
@@ -464,29 +443,13 @@ BOOST_AUTO_TEST_CASE(TestUTF8_UTF16_witch_CrLf)
 
     // Check result
     BOOST_CHECK_EQUAL(target_lengthCr, nbbytes_utf16);
-    for (size_t q = 0 ; q < target_lengthCr ; q++){
-        if (expected_targetCr[q] != targetCr[q]){
-            printf("at %u: expected %u, got %u\n",
-                   static_cast<unsigned>(q),
-                   static_cast<unsigned>(expected_targetCr[q]),
-                   static_cast<unsigned>(targetCr[q]));
-            BOOST_CHECK(false);
-        }
-    }
+    BOOST_CHECK_EQUAL_RANGES(targetCr, expected_targetCr);
 
     nbbytes_utf16 = UTF8toUTF16_CrLf(source, targetCrLf, target_lengthCrLf);
 
     // Check result
     BOOST_CHECK_EQUAL(target_lengthCrLf, nbbytes_utf16);
-    for (size_t q = 0 ; q < target_lengthCrLf ; q++){
-        if (expected_targetCrLf[q] != targetCrLf[q]){
-            printf("at %u: expected %u, got %u\n",
-                   static_cast<unsigned>(q),
-                   static_cast<unsigned>(expected_targetCrLf[q]),
-                   static_cast<unsigned>(targetCrLf[q]));
-            BOOST_CHECK(false);
-        }
-    }
+    BOOST_CHECK_EQUAL_RANGES(targetCrLf, expected_targetCrLf);
 }
 
 BOOST_AUTO_TEST_CASE(TestUTF32toUTF8) {
@@ -854,4 +817,22 @@ BOOST_AUTO_TEST_CASE(TestUTF16StrLen) {
     BOOST_CHECK_EQUAL(UTF16StrLen(byte_ptr_cast("\x31\x00\x30\x00\x30\x00\x00\x00")), 3);
 
     BOOST_CHECK_EQUAL(UTF16StrLen(byte_ptr_cast("\x31\x00\x30\x00\x30\x00\x00\x00\x31\x00\x30\x00\x30\x00")), 3);
+}
+
+BOOST_AUTO_TEST_CASE(Test_uc_to_utf8) {
+    uint8_t utf8_ch[4]{};
+
+    for (uint8_t c = 0; c <= 126; ++c) {
+        BOOST_CHECK_EQUAL(1, uc_to_utf8(c, utf8_ch));
+        BOOST_CHECK_EQUAL(c, utf8_ch[0]);
+    }
+
+    BOOST_CHECK_EQUAL(2, uc_to_utf8(0xa2, utf8_ch));
+    BOOST_CHECK_EQUAL(0xc2, utf8_ch[0]);
+    BOOST_CHECK_EQUAL(0xa2, utf8_ch[1]);
+
+    BOOST_CHECK_EQUAL(3, uc_to_utf8(0xac00, utf8_ch));
+    BOOST_CHECK_EQUAL(0xea, utf8_ch[0]);
+    BOOST_CHECK_EQUAL(0xb0, utf8_ch[1]);
+    BOOST_CHECK_EQUAL(0x80, utf8_ch[2]);
 }

@@ -63,13 +63,13 @@ operator | (T x, T y) noexcept
 { return T(underlying_cast(x) | underlying_cast(y)); }
 
 template<class T>
-FALCON_CXX14_CONSTEXPR
+REDEMPTION_CXX14_CONSTEXPR
 enable_if_enum_flags<T> &
 operator &= (T & x, T y) noexcept
 { return x = T(underlying_cast(x) & underlying_cast(y)); }
 
 template<class T>
-FALCON_CXX14_CONSTEXPR
+REDEMPTION_CXX14_CONSTEXPR
 enable_if_enum_flags<T> &
 operator |= (T & x, T y) noexcept
 { return x = T(underlying_cast(x) | underlying_cast(y)); }

@@ -30,8 +30,6 @@
 #include <cstring>
 // #include <wctype.h>
 
-#include "utils/log.hpp"
-
 enum {
       maximum_length_of_utf8_character_in_bytes = 4
 };
@@ -459,48 +457,43 @@ UTF8toUTF16_exit:
     return i_t;
 }
 
-// UTF8toUnicode never writes the trailing zero
-//static inline size_t UTF8toUnicode(const uint8_t * source, uint32_t * target, size_t t_len)
-//{
-//    size_t i_t = 0;
-//    uint32_t ucode = 0;
-//    size_t i = 0;
-//    for (; (ucode = source[i]) != 0 ; i++){
-//        switch (ucode >> 4){
-//            case 0:
-//                // should never happen, catched by test above
-//                goto UTF8toUnicode_exit;
-//            break;
-//            case 1: case 2: case 3:
-//            case 4: case 5: case 6: case 7:
-//            break;
-//            /* handle U+0080..U+07FF inline : 2 bytes sequences */
-//            case 0xC: case 0xD:
-//                ucode = ((ucode & 0x1F) << 6)|(source[i+1] & 0x3F);
-//                i+=1;
-//            break;
-//             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
-//            case 0xE:
-//                ucode = ((ucode & 0x0F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
-//                i+=2;
-//            break;
-//            case 0xF:
-//                ucode = ((ucode & 0x07) << 18)|((source[i+1] & 0x3F) << 12)|((source[i+2] & 0x3F) << 6)|(source[i+3] & 0x3F);
-//                i+=3;
-//            break;
-//            case 8: case 9: case 0x0A: case 0x0B:
-//                // these should never happen on valid UTF8
-//                goto UTF8toUnicode_exit;
-//            break;
-//        }
-//        if (i_t + 1 > t_len) { goto UTF8toUnicode_exit; }
-//        target[i_t] = ucode;
-//        i_t += 1;
-//    }
-//    // write final 0
-//UTF8toUnicode_exit:
-//    return i_t;
-//}
+
+#include "utils/sugar/bytes_t.hpp"
+#include "cxx/keyword.hpp"
+#include <cassert>
+
+/// \return 1, 2, 3, 4 or 0 if an invalide unicode point
+inline std::size_t uc_to_utf8(uint32_t uc, bytes_t s)
+{
+    if (REDEMPTION_LIKELY(uc <= 0x7f)) {
+        s[0] = uint8_t(uc);
+        return 1;
+    }
+
+    if (REDEMPTION_LIKELY(uc <= 0x7ff)) {
+        s[0] = uint8_t(0xc0 | ((uc >> 6)  & 0x1f));
+        s[1] = uint8_t(0x80 |  (uc        & 0x3f));
+        return 2;
+    }
+
+    if (uc <= 0xffff) {
+        s[0] = uint8_t(0xe0 | ((uc >> 12) & 0x0f));
+        s[1] = uint8_t(0x80 | ((uc >> 6)  & 0x3f));
+        s[2] = uint8_t(0x80 |  (uc        & 0x3f));
+        return 3;
+    }
+
+    if (uc <= 0x1ffff) {
+        s[0] = uint8_t(0xf0 | ((uc >> 18) & 0x07));
+        s[1] = uint8_t(0x80 | ((uc >> 12) & 0x3f));
+        s[2] = uint8_t(0x80 | ((uc >> 6)  & 0x3f));
+        s[3] = uint8_t(        (uc        & 0x3f));
+        return 4;
+    }
+
+    assert(uc && "invalide unicode point");
+    return 0;
+}
 
 class UTF8toUnicodeIterator
 {
