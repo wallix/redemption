@@ -855,6 +855,31 @@ public:
         this->drawable.logical_frame_ended = (this->frame_start_count == 0);
     }
 
+    bool logical_frame_ended()
+    {
+        return this->drawable.logical_frame_ended;
+    }
+
+    void trace_mouse(void)
+    {
+        return this->drawable.trace_mouse();
+    }
+
+    void clear_mouse(void)
+    {
+        return this->drawable.clear_mouse();
+    }
+
+    void clear_timestamp(void)
+    {
+        return this->drawable.clear_timestamp();
+    }
+
+    void trace_timestamp(const tm & ptm)
+    {
+        return this->drawable.trace_timestamp(ptm);
+    }
+
     void draw(const RDP::RAIL::NewOrExistingWindow            &) override {}
     void draw(const RDP::RAIL::WindowIcon                     &) override {}
     void draw(const RDP::RAIL::CachedIcon                     &) override {}

@@ -135,6 +135,12 @@
 #include "capture/png_params.hpp"
 #include "capture/flv_params.hpp"
 #include "capture/ocr_params.hpp"
+#include "capture/meta_params.hpp"
+#include "capture/sequenced_video_params.hpp"
+#include "capture/full_video_params.hpp"
+#include "capture/pattern_checker_params.hpp"
+#include "capture/kbdlog_params.hpp"
+
 #include "capture/wrm_label.hpp"
 #include "capture/cryptofile.hpp"
 #include "capture/video_recorder.hpp"
@@ -4602,7 +4608,7 @@ class PngCapture : public gdi::CaptureApi
 {
 public:
     OutFilenameSequenceTransport trans;
-    Drawable & drawable;
+    RDPDrawable & drawable;
     timeval start_capture;
     std::chrono::microseconds frame_interval;
 
@@ -4612,11 +4618,9 @@ public:
 
     std::unique_ptr<uint8_t[]> scaled_buffer;
 
-    PngCapture(
-        const timeval & now, auth_api * authentifier, Drawable & drawable,
-        const char * record_tmp_path, const char * basename, int groupid,
-        const PngParams & png_params)
-    : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_tmp_path, basename, ".png", groupid, authentifier)
+
+    PngCapture(const timeval & now, RDPDrawable & drawable, const PngParams & png_params)
+    : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, png_params.record_tmp_path, png_params.basename, ".png", png_params.groupid, png_params.authentifier)
     , drawable(drawable)
     , start_capture(now)
     , frame_interval(png_params.png_interval)
@@ -4669,7 +4673,7 @@ public:
         uint64_t const interval = this->frame_interval.count();
         if (duration >= interval) {
              // Snapshot at end of Frame or force snapshot if diff_time_val >= 1.5 x frame_interval.
-            if (this->drawable.logical_frame_ended || (duration >= interval * 3 / 2)) {
+            if (this->drawable.logical_frame_ended() || (duration >= interval * 3 / 2)) {
                 this->drawable.trace_mouse();
                 tm ptm;
                 localtime_r(&now.tv_sec, &ptm);
@@ -4703,10 +4707,8 @@ public:
     bool enable_rt_display = false;
 
     PngCaptureRT(
-        const timeval & now, auth_api * authentifier, Drawable & drawable,
-        const char * record_tmp_path, const char * basename, int groupid,
-        const PngParams & png_params)
-    : PngCapture(now, authentifier, drawable, record_tmp_path, basename, groupid, png_params)
+        const timeval & now, RDPDrawable & drawable, const PngParams & png_params)
+    : PngCapture(now, drawable, png_params)
     , num_start(this->trans.get_seqno())
     , png_limit(png_params.png_limit)
     {
@@ -6910,17 +6912,14 @@ private:
 
 public:
     Capture(
-        bool capture_wrm,
-        const WrmParams wrm_params,
-        bool capture_png,
-        const PngParams png_params,
-        bool capture_pattern_checker,
-        bool capture_ocr,
-        OcrParams ocr_params,
-        bool capture_flv,
-        bool capture_flv_full,
-        bool capture_meta,
-        bool capture_kbd,
+        bool capture_wrm, const WrmParams wrm_params,
+        bool capture_png, const PngParams png_params,
+        bool capture_pattern_checker, const PatternCheckerParams pattern_checker_params,
+        bool capture_ocr, const OcrParams ocr_params,
+        bool capture_flv, const SequencedVideoParams sequenced_video_params,
+        bool capture_flv_full, const FullVideoParams full_video_params,
+        bool capture_meta, const MetaParams meta_params,
+        bool capture_kbd, const KbdLogParams kbd_log_params,
         const char * basename,
         const timeval & now,
         int width,
@@ -6967,21 +6966,15 @@ public:
             this->gds.push_back(*this->gd_drawable);
 
             this->graphic_api.reset(new Graphic(this->mouse_info, this->gds, this->caps));
-            this->drawable = &this->gd_drawable->impl();
 
             if (capture_png) {
                 if (png_params.real_time_image_capture) {
                     this->png_capture_real_time_obj.reset(new PngCaptureRT(
-                        now, authentifier, this->gd_drawable->impl(),
-                        record_tmp_path, basename, groupid,
-                        png_params
-                    ));
+                        now, *this->gd_drawable, png_params));
                 }
                 else {
                     this->png_capture_obj.reset(new PngCapture(
-                        now, authentifier, this->gd_drawable->impl(),
-                        record_tmp_path, basename, groupid,
-                        png_params));
+                        now, *this->gd_drawable, png_params));
                 }
             }
 
@@ -7064,13 +7057,10 @@ public:
 
             if (this->sequenced_video_capture_obj) {
                 this->caps.push_back(this->sequenced_video_capture_obj->vc);
-
                 this->caps.push_back(this->sequenced_video_capture_obj->first_image);
 
                 this->sequenced_video_capture_obj->first_image.caps = &this->caps;
                 this->sequenced_video_capture_obj->first_image.caps_i = this->caps.size()-1;
-//                this->sequenced_video_capture_obj->first_image.gcaps = &this->caps;
-//                this->sequenced_video_capture_obj->first_image.gcaps_i = this->caps.size()-1;
             }
 
             if (this->full_video_capture_obj) {
@@ -7216,8 +7206,8 @@ protected:
     ) override {
         this->capture_event.reset();
 
-        if (this->drawable) {
-            this->drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
+        if (this->gd_drawable) {
+            this->gd_drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
         }
         this->mouse_info = {now, cursor_x, cursor_y};
 

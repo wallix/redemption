@@ -97,7 +97,6 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
         TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
-        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false};
 
         FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
@@ -152,6 +151,15 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
 
+        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false, 
+                                nullptr, record_tmp_path, basename, groupid};
+
+        MetaParams meta_params;
+        KbdLogParams kbdlog_params;
+        PatternCheckerParams patter_checker_params;
+        SequencedVideoParams sequenced_video_params;
+        FullVideoParams full_video_params;
+
         WrmParams wrm_params(
             24,
             wrm_trace_type,
@@ -181,14 +189,15 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
              != ::KeyboardInputMaskingLevel::fully_masked;
         bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
 
-        Capture capture( capture_wrm, wrm_params
+        Capture capture( 
+                          capture_wrm, wrm_params
                         , capture_png, png_params
-                        , capture_pattern_checker
+                        , capture_pattern_checker, patter_checker_params
                         , capture_ocr, ocr_params
-                        , capture_flv
-                        , capture_flv_full
-                        , capture_meta
-                        , capture_kbd
+                        , capture_flv, sequenced_video_params
+                        , capture_flv_full, full_video_params
+                        , capture_meta, meta_params
+                        , capture_kbd, kbdlog_params
                         , basename
                         , now, scr.cx, scr.cy, 24, 24
                         , record_tmp_path
@@ -372,7 +381,6 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
     TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
-    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false };
     FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
     const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
     const char * record_path = record_tmp_path;
@@ -425,6 +433,15 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
     }
 
+    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false, 
+                        nullptr, record_tmp_path, basename, groupid};
+
+    MetaParams meta_params;
+    KbdLogParams kbdlog_params;
+    PatternCheckerParams patter_checker_params;
+    SequencedVideoParams sequenced_video_params;
+    FullVideoParams full_video_params;
+
     WrmParams wrm_params(
         24,
         wrm_trace_type,
@@ -456,14 +473,15 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
 
     // TODO remove this after unifying capture interface
-    Capture capture( capture_wrm, wrm_params
+    Capture capture( 
+                     capture_wrm, wrm_params
                    , capture_png, png_params
-                   , capture_pattern_checker
+                   , capture_pattern_checker, patter_checker_params
                    , capture_ocr, ocr_params
-                   , capture_flv
-                   , capture_flv_full
-                   , capture_meta
-                   , capture_kbd
+                   , capture_flv, sequenced_video_params
+                   , capture_flv_full, full_video_params
+                   , capture_meta, meta_params
+                   , capture_kbd, kbdlog_params
                    , basename
                    , now, scr.cx, scr.cy, 16, 16
                    , record_tmp_path

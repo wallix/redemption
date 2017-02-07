@@ -58,7 +58,9 @@ public:
     virtual void disconnect_target() {}
 };
 
-
+BOOST_AUTO_TEST_CASE(TestVncConnection0)
+{
+}
 
 //BOOST_AUTO_TEST_CASE(TestVncConnection)
 //{
