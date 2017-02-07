@@ -6342,7 +6342,8 @@ class WrmCaptureImpl :
     public gdi::KbdInputApi,
     public gdi::CaptureApi,
     public gdi::GraphicApi,
-    public gdi::CaptureProbeApi
+    public gdi::CaptureProbeApi,
+    public gdi::ExternalCaptureApi
 {
 public:
     BmpCache     bmp_cache;
@@ -6465,6 +6466,15 @@ private:
     } graphic_to_file;
 
 public:
+
+    // EXTERNAL CAPTURE API
+    void external_breakpoint() override {
+        this->nc.external_breakpoint();
+    }
+
+    void external_time(timeval const & now) override {
+        this->nc.external_time(now);
+    }
 
     // CAPTURE PROBE API
     void session_update(timeval const & now, array_view_const_char message) override {
@@ -7034,7 +7044,7 @@ public:
             if (capture_wrm) {
                 this->gds.push_back(static_cast<gdi::GraphicApi&>(*this->wrm_capture_obj));   // gdi::GraphicApi
                 this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->wrm_capture_obj));
-                this->objs.push_back(this->wrm_capture_obj->nc);     // gdi::ExternalCaptureApi
+                this->objs.push_back(*this->wrm_capture_obj);     // gdi::ExternalCaptureApi
                 this->probes.push_back(static_cast<gdi::CaptureProbeApi&>(*this->wrm_capture_obj)); // gdi::CaptureProbeApi
 
                 if (!disable_keyboard_log) {

@@ -62,8 +62,6 @@ struct CaptureApi : private noncopyable
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
     ) = 0;
-    
-
 };
 
 
