@@ -269,89 +269,11 @@ protected:
 };
 
 
-struct videocapture_OutFilenameSequenceTransport : public Transport
-{
-    using Buf = videocapture_out_sequence_filename_buf_impl;
 
-    videocapture_OutFilenameSequenceTransport(
-        videocapture_FilenameGenerator::Format format,
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension,
-        const int groupid,
-        auth_api * authentifier)
-    : buf(videocapture_out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
-    {
-        if (authentifier) {
-            this->set_authentifier(authentifier);
-        }
-    }
-
-    const videocapture_FilenameGenerator * seqgen() const noexcept
-    { return &(this->buffer().seqgen()); }
-
-    bool next() override {
-        if (this->status == false) {
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
-        const ssize_t res = this->buffer().next();
-        if (res) {
-            this->status = false;
-            if (res < 0){
-                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
-            }
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-        }
-        ++this->seqno;
-        return true;
-    }
-
-    bool disconnect() override {
-        return !this->buf.close();
-    }
-
-    void request_full_cleaning() override {
-        this->buffer().request_full_cleaning();
-    }
-
-    ~videocapture_OutFilenameSequenceTransport() {
-        this->buf.close();
-    }
-
-private:
-
-    void do_send(const uint8_t * data, size_t len) override {
-        const ssize_t res = this->buf.write(data, len);
-        if (res < 0) {
-            this->status = false;
-            if (errno == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|unknown");
-                this->authentifier->report("FILESYSTEM_FULL", message);
-                errno = ENOSPC;
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
-            }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
-        this->last_quantum_sent += res;
-    }
-
-    Buf & buffer() noexcept
-    { return this->buf; }
-
-    const Buf & buffer() const noexcept
-    { return this->buf; }
-
-    Buf buf;
-};
 
 
 struct videocapture_OutFilenameSequenceSeekableTransport : public Transport
 {
-    using Buf = videocapture_out_sequence_filename_buf_impl;
 
     videocapture_OutFilenameSequenceSeekableTransport(
         videocapture_FilenameGenerator::Format format,
@@ -424,14 +346,14 @@ private:
         this->last_quantum_sent += res;
     }
 
-    Buf & buffer() noexcept
+    videocapture_out_sequence_filename_buf_impl & buffer() noexcept
     { return this->buf; }
 
-    const Buf & buffer() const noexcept
+    const videocapture_out_sequence_filename_buf_impl & buffer() const noexcept
     { return this->buf; }
 
 private:
-    Buf buf;
+    videocapture_out_sequence_filename_buf_impl buf;
 
 };
 
@@ -871,7 +793,82 @@ public:
 public:
     VideoTransport vc_trans;
     VideoCapture vc;
-    videocapture_OutFilenameSequenceTransport ic_trans;
+    struct videocapture_OutFilenameSequenceTransport : public Transport
+    {
+        videocapture_OutFilenameSequenceTransport(
+            videocapture_FilenameGenerator::Format format,
+            const char * const prefix,
+            const char * const filename,
+            const char * const extension,
+            const int groupid,
+            auth_api * authentifier)
+        : buf(videocapture_out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
+        {
+            if (authentifier) {
+                this->set_authentifier(authentifier);
+            }
+        }
+
+        const videocapture_FilenameGenerator * seqgen() const noexcept
+        { return &(this->buffer().seqgen()); }
+
+        bool next() override {
+            if (this->status == false) {
+                throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+            }
+            const ssize_t res = this->buffer().next();
+            if (res) {
+                this->status = false;
+                if (res < 0){
+                    LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                    throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+                }
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+            ++this->seqno;
+            return true;
+        }
+
+        bool disconnect() override {
+            return !this->buf.close();
+        }
+
+        void request_full_cleaning() override {
+            this->buffer().request_full_cleaning();
+        }
+
+        ~videocapture_OutFilenameSequenceTransport() {
+            this->buf.close();
+        }
+
+    private:
+
+        void do_send(const uint8_t * data, size_t len) override {
+            const ssize_t res = this->buf.write(data, len);
+            if (res < 0) {
+                this->status = false;
+                if (errno == ENOSPC) {
+                    char message[1024];
+                    snprintf(message, sizeof(message), "100|unknown");
+                    this->authentifier->report("FILESYSTEM_FULL", message);
+                    errno = ENOSPC;
+                    throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+                }
+                else {
+                    throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+                }
+            }
+            this->last_quantum_sent += res;
+        }
+
+        videocapture_out_sequence_filename_buf_impl & buffer() noexcept
+        { return this->buf; }
+
+        const videocapture_out_sequence_filename_buf_impl & buffer() const noexcept
+        { return this->buf; }
+
+        videocapture_out_sequence_filename_buf_impl buf;
+    } ic_trans;
 
     unsigned ic_zoom_factor;
     unsigned ic_scaled_width;
