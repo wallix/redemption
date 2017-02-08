@@ -172,13 +172,16 @@ public:
     inline array_view<ucs4_char const> operator[](std::size_t i) const noexcept
     { return this->extendedCharTable[i].as_array(); }
 
+    inline std::size_t size() const noexcept
+    { return this->extendedCharTable.size(); }
+
 private:
     std::vector<ExtendedCharacter> extendedCharTable;
 };
 
 inline bool operator == (const Character& a, const Character& b)
 {
-    return a.character == b.character && a.equalsFormat(b);
+    return a.character == b.character && a.isRealCharacter == b.isRealCharacter && a.equalsFormat(b);
 }
 
 inline bool operator != (const Character& a, const Character& b)

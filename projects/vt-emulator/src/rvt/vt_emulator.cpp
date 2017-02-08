@@ -28,7 +28,7 @@
 #include "rvt/character.hpp"
 #include "rvt/charsets.hpp"
 #include "rvt/screen.hpp"
-#include "rvt/emulator.hpp"
+#include "rvt/vt_emulator.hpp"
 
 //#define CXX_UNUSED(x) (void)x // [[maybe_unused]]
 
@@ -37,22 +37,22 @@
 namespace rvt
 {
 
-Vt102Emulation::Vt102Emulation(int lines, int columns)
+VtEmulator::VtEmulator(int lines, int columns)
 : _screens{{lines, columns}, {lines, columns}}
 {
     initTokenizer();
     reset();
 }
 
-Vt102Emulation::~Vt102Emulation() = default;
+VtEmulator::~VtEmulator() = default;
 
-void Vt102Emulation::clearEntireScreen()
+void VtEmulator::clearEntireScreen()
 {
     _currentScreen->clearEntireScreen();
     // bufferedUpdate();
 }
 
-void Vt102Emulation::reset()
+void VtEmulator::reset()
 {
     // Save the current codec so we can set it later.
     // Ideally we would want to use the profile setting
@@ -151,7 +151,7 @@ const int MAX_ARGUMENT = 4096;
    Note that they are kept internal in the tokenizer.
 */
 
-void Vt102Emulation::resetTokenizer()
+void VtEmulator::resetTokenizer()
 {
     tokenBufferPos = 0;
     argc = 0;
@@ -159,19 +159,19 @@ void Vt102Emulation::resetTokenizer()
     argv[1] = 0;
 }
 
-void Vt102Emulation::addDigit(int digit)
+void VtEmulator::addDigit(int digit)
 {
     if (argv[argc] < MAX_ARGUMENT)
         argv[argc] = 10 * argv[argc] + digit;
 }
 
-void Vt102Emulation::addArgument()
+void VtEmulator::addArgument()
 {
     argc = std::min(argc + 1, MAXARGS - 1);
     argv[argc] = 0;
 }
 
-void Vt102Emulation::addToCurrentToken(ucs4_char cc)
+void VtEmulator::addToCurrentToken(ucs4_char cc)
 {
     tokenBuffer[tokenBufferPos] = cc;
     tokenBufferPos = std::min(tokenBufferPos + 1, MAX_TOKEN_LENGTH - 1);
@@ -186,7 +186,7 @@ const int SCS = 16;  // Select Character Set
 const int GRP = 32;  // TODO: Document me
 const int CPS = 64;  // Character which indicates end of window resize
 
-void Vt102Emulation::initTokenizer()
+void VtEmulator::initTokenizer()
 {
     auto as_bytes = [](char const * s) { return reinterpret_cast<uint8_t const *>(s); };
 
@@ -246,7 +246,7 @@ const int ESC = 27;
 const int DEL = 127;
 
 // process an incoming unicode character
-void Vt102Emulation::receiveChar(ucs4_char cc)
+void VtEmulator::receiveChar(ucs4_char cc)
 {
   if (cc == DEL)
     return; //VT100: ignore.
@@ -377,7 +377,7 @@ constexpr inline CharsetId char_to_charset_id(char c)
    about this mapping.
 */
 
-void Vt102Emulation::processToken(int token, int32_t p, int q)
+void VtEmulator::processToken(int token, int32_t p, int q)
 {
   switch (token)
   {
@@ -692,7 +692,7 @@ void Vt102Emulation::processToken(int token, int32_t p, int q)
   };
 }
 
-void Vt102Emulation::clearScreenAndSetColumns(int /*columnCount*/)
+void VtEmulator::clearScreenAndSetColumns(int /*columnCount*/)
 {
     // TODO setImageSize(_currentScreen->getLines(),columnCount);
     clearEntireScreen();
@@ -728,7 +728,7 @@ void Vt102Emulation::clearScreenAndSetColumns(int /*columnCount*/)
 
 #define CHARSET _charsets[_currentScreen == &_screens[1]]
 
-ucs4_char Vt102Emulation::applyCharset(ucs4_char c) const
+ucs4_char VtEmulator::applyCharset(ucs4_char c) const
 {
     auto const charset_index = underlying_cast(CHARSET.charset_id);
     if (charset_index < underlying_cast(CharsetId::MAX_) && c < charset_map_size) {
@@ -745,7 +745,7 @@ ucs4_char Vt102Emulation::applyCharset(ucs4_char c) const
    the following two are different.
 */
 
-void Vt102Emulation::resetCharset()
+void VtEmulator::resetCharset()
 {
     _charsets[0].charset.fill(CharsetId::Latin1);
     _charsets[0].charset_id = CharsetId::Latin1;
@@ -756,35 +756,35 @@ void Vt102Emulation::resetCharset()
     _charsets[1].sa_charset_id = CharsetId::Latin1;
 }
 
-void Vt102Emulation::setCharset(int n, CharsetId cs) // on both screens.
+void VtEmulator::setCharset(int n, CharsetId cs) // on both screens.
 {
     _charsets[0].charset[n & 3] = cs;
     _charsets[1].charset[n & 3] = cs;
     this->useCharset(n);
 }
 
-void Vt102Emulation::setAndUseCharset(int n, CharsetId cs)
+void VtEmulator::setAndUseCharset(int n, CharsetId cs)
 {
     CHARSET.charset[n & 3] = cs;
     useCharset(n);
 }
 
-void Vt102Emulation::useCharset(int n)
+void VtEmulator::useCharset(int n)
 {
     CHARSET.charset_id = CHARSET.charset[n & 3];
 }
 
-void Vt102Emulation::setDefaultMargins()
+void VtEmulator::setDefaultMargins()
 {
     _currentScreen->setDefaultMargins();
 }
 
-void Vt102Emulation::setScreen(int n)
+void VtEmulator::setScreen(int n)
 {
     _currentScreen = &_screens[n & 1];
 }
 
-void Vt102Emulation::setScreenSize(int lines, int columns)
+void VtEmulator::setScreenSize(int lines, int columns)
 {
     if (lines < 1 || columns < 1) {
         return;
@@ -794,12 +794,12 @@ void Vt102Emulation::setScreenSize(int lines, int columns)
     _screens[1].resizeImage(lines, columns);
 }
 
-void Vt102Emulation::setMargins(int t, int b)
+void VtEmulator::setMargins(int t, int b)
 {
     _currentScreen->setMargins(t, b);
 }
 
-void Vt102Emulation::saveCursor()
+void VtEmulator::saveCursor()
 {
     CHARSET.sa_charset_id = CHARSET.charset_id;
     // we are not clear about these
@@ -808,7 +808,7 @@ void Vt102Emulation::saveCursor()
     _currentScreen->saveCursor();
 }
 
-void Vt102Emulation::restoreCursor()
+void VtEmulator::restoreCursor()
 {
     CHARSET.charset_id = CHARSET.sa_charset_id;
     _currentScreen->restoreCursor();
@@ -834,7 +834,7 @@ void Vt102Emulation::restoreCursor()
 
 // "Mode" related part of the state. These are all booleans.
 
-void Vt102Emulation::resetModes()
+void VtEmulator::resetModes()
 {
     // Mode::AllowColumns132 is not reset here
     // to match Xterm's behavior (see Xterm's VTReset() function)
@@ -845,7 +845,7 @@ void Vt102Emulation::resetModes()
     setMode(Mode::Ansi);
 }
 
-void Vt102Emulation::setMode(Mode m)
+void VtEmulator::setMode(Mode m)
 {
     _currentModes.set(m);
     switch (m) {
@@ -862,13 +862,13 @@ void Vt102Emulation::setMode(Mode m)
     }
 }
 
-void Vt102Emulation::setMode(ScreenMode m)
+void VtEmulator::setMode(ScreenMode m)
 {
     _screens[0].setMode(m);
     _screens[1].setMode(m);
 }
 
-void Vt102Emulation::resetMode(Mode m)
+void VtEmulator::resetMode(Mode m)
 {
     _currentModes.reset(m);
     switch (m) {
@@ -883,40 +883,40 @@ void Vt102Emulation::resetMode(Mode m)
     }
 }
 
-void Vt102Emulation::resetMode(ScreenMode m)
+void VtEmulator::resetMode(ScreenMode m)
 {
     _screens[0].resetMode(m);
     _screens[1].resetMode(m);
 }
 
-void Vt102Emulation::saveMode(Mode m)
+void VtEmulator::saveMode(Mode m)
 {
     _savedModes.copy_of(m, _currentModes);
 }
 
-void Vt102Emulation::restoreMode(Mode m)
+void VtEmulator::restoreMode(Mode m)
 {
     _currentModes.copy_of(m, _savedModes);
 }
 
-bool Vt102Emulation::getMode(Mode m)
+bool VtEmulator::getMode(Mode m)
 {
     return _currentModes.has(m);
 }
 
-void Vt102Emulation::saveMode(ScreenMode m)
+void VtEmulator::saveMode(ScreenMode m)
 {
     // TODO saveMode(static_cast<Screen>(m))
     _currentScreen->saveMode(m);
 }
 
-void Vt102Emulation::restoreMode(ScreenMode m)
+void VtEmulator::restoreMode(ScreenMode m)
 {
     // TODO restoreMode(static_cast<Screen>(m))
     _currentScreen->resetMode(m);
 }
 
-bool Vt102Emulation::getMode(ScreenMode m)
+bool VtEmulator::getMode(ScreenMode m)
 {
     // TODO getMode(static_cast<Screen>(m))
     return _currentScreen->getMode(m);
@@ -941,7 +941,7 @@ static std::string hexdump2(int* s, int len)
     return returnDump;
 }
 
-void Vt102Emulation::reportDecodingError()
+void VtEmulator::reportDecodingError()
 {
     if (tokenBufferPos == 0 || (tokenBufferPos == 1 && (tokenBuffer[0] & 0xff) >= 32))
         return;

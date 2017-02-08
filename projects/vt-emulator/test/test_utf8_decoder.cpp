@@ -26,7 +26,7 @@
 
 #include "rvt/utf8_decoder.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCharsets)
+BOOST_AUTO_TEST_CASE(TestUtf8Decoder)
 {
     struct Accu {
         std::vector<rvt::ucs4_char> v;

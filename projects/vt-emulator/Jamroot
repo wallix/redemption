@@ -26,7 +26,9 @@ constant TEST_DEPENDENCIES :
 import testing ;
 
 obj screen : $(SRC)/screen.cpp ;
-obj emulator : $(SRC)/emulator.cpp ;
+obj emulator : $(SRC)/vt_emulator.cpp ;
+
+alias libemu : emulator screen ;
 
 ## Tests
 ## @{
@@ -38,6 +40,8 @@ unit-test test_screen : $(SRC_TEST)/test_screen.cpp screen : $(TEST_DEPENDENCIES
 
 unit-test test_utf8_decoder : $(SRC_TEST)/test_utf8_decoder.cpp : $(TEST_DEPENDENCIES) ;
 
+unit-test test_vt_emulator : $(SRC_TEST)/test_vt_emulator.cpp libemu : $(TEST_DEPENDENCIES) ;
 
-unit-test enumator : $(SRC)/main.cpp screen emulator : $(TEST_DEPENDENCIES) ;
+
+unit-test enumator : $(SRC)/main.cpp libemu : $(TEST_DEPENDENCIES) ;
 ## }
