@@ -2025,7 +2025,7 @@ public:
 
 
         this->FileId_     = stream.in_uint32_le();
-        if (stream.in_check_rem(5)) {
+        if (stream.in_check_rem(1)) {
             this->Information = stream.in_uint8();
         }
     }

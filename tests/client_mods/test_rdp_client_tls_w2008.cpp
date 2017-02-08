@@ -24,11 +24,13 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestRdpClientTLSW2008
+
+
 #include "system/redemption_unit_tests.hpp"
 
 
 // Comment the code block below to generate testing data.
-// #define LOGNULL
+//#define LOGNULL
 // Uncomment the code block below to generate testing data.
 #define LOGPRINT
 

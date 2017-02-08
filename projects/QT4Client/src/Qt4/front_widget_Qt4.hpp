@@ -121,7 +121,7 @@ public:
         if (this->_sck != nullptr) {
             delete (this->_sck);
             this->_sck = nullptr;
-            std::cout << "Disconnected from [" << this->_front->_targetIP << "]." << std::endl;
+            LOG(LOG_INFO, "Disconnected from [%s].", this->_front->_targetIP.c_str());
         }
     }
 
@@ -142,18 +142,18 @@ public:
                                                 , to_verbose_flags(0)
                                                 , &this->error_message
                                                 );
-                std::cout << "Connected to [" << targetIP <<  "]." << std::endl;
+                LOG(LOG_INFO, "Connected to [%s].", targetIP);
                 return true;
 
             } catch (const std::exception &) {
                 std::string windowErrorMsg(errorMsg+" Socket error.");
-                std::cout << windowErrorMsg << std::endl;
+                LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
                 this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
                 return false;
             }
         } else {
             std::string windowErrorMsg(errorMsg+" ip_connect error.");
-            std::cout << windowErrorMsg << std::endl;
+            LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
             this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
             return false;
         }
@@ -185,6 +185,7 @@ public:
         mod_rdp_params.enable_new_pointer              = true;
         mod_rdp_params.server_redirection_support      = true;
         mod_rdp_params.enable_new_pointer              = true;
+        mod_rdp_params.enable_glyph_cache              = true;
         std::string allow_channels = "*";
         mod_rdp_params.allow_channels                  = &allow_channels;
         //mod_rdp_params.allow_using_multiple_monitors   = true;
@@ -209,7 +210,7 @@ public:
 
         } catch (const Error &) {
             const std::string errorMsg("Error: RDP Initialization failed.");
-            std::cout << errorMsg << std::endl;
+            LOG(LOG_WARNING, "%s", errorMsg.c_str());
             std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
             this->_front->dropScreen();
             this->_front->disconnect(labelErrorMsg);
@@ -223,7 +224,7 @@ public:
 
                 } catch (const Error &) {
                     const std::string errorMsg("Error: Failed during RDP early negociations.");
-                    std::cout << errorMsg << std::endl;
+                    LOG(LOG_WARNING, "%s", errorMsg.c_str());
                     std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
                     this->_front->dropScreen();
                     this->_front->disconnect(labelErrorMsg);
@@ -1390,7 +1391,6 @@ public Q_SLOTS:
         }
 
         if (this->_front->_replay_mod->get_break_privplay_qt()) {
-            std::cout <<  "movie over" <<  std::endl;
             this->_timer_replay.stop();
             this->slotRepaint();
             this->_buttonCtrlAltDel.setText("Replay");
@@ -1554,7 +1554,7 @@ public:
         for (size_t i = 0; i < items_list.size(); i++) {
 
             std::string path(this->_front->CB_TEMP_DIR + std::string("/") + items_list[i].name);
-            std::cout <<  path <<  std::endl;
+            //std::cout <<  path <<  std::endl;
             QString qpath(path.c_str());
 
             qDebug() << "QUrl" << QUrl::fromLocalFile(qpath);
@@ -1712,7 +1712,7 @@ public Q_SLOTS:
                             this->_items_list.push_back(file);
 
                         } else {
-                            std::cout << "path \"" << path << "\" not found." <<  std::endl;
+                            LOG(LOG_WARNING, "Path \"%s\" not found.", path.c_str());
                         }
                     }
 
