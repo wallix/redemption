@@ -311,7 +311,7 @@ void Front_Qt::writeClientInfo() {
         ofichier << "keylayout "             << this->_info.keylayout               << "\n";
         ofichier << "console_session "       << this->_info.console_session         << "\n";
         ofichier << "brush_cache_code "      << this->_info.brush_cache_code        << "\n";
-        ofichier << "bpp "                   << this->_info.bpp                     << "\n";
+        ofichier << "bpp "                   << this->mod_bpp                     << "\n";
         ofichier << "width "                 << this->_width                        << "\n";
         ofichier << "height "                << this->_height                       << "\n";
         ofichier << "rdp5_performanceflags " << this->_info.rdp5_performanceflags   << "\n";
@@ -334,12 +334,30 @@ void Front_Qt::set_pointer(Pointer const & cursor) {
         cursor.mask[0x49] == 0xFF &&
         cursor.mask[0x4A] == 0xFF &&
         cursor.mask[0x4B] == 0xFF) {
+
+//         for (int i = 0; i < cursor.height; i++) {
+//             for (int j = 0; j < cursor.width; j++) {
+//                 if (cursor.data[(i*cursor.width)+j] == 0x00) {
+//                     std::cout << ".";
+//                 } else if (cursor.data[(i*cursor.width)+j] == 0xFF) {
+//                     std::cout << "x";
+//                 } else {
+//                     std::cout << int(cursor.data[(i*cursor.width)+j]);
+//                 }
+//
+//             }
+//             std::cout <<  std::endl;
+//         }
         image_mask = image_data.convertToFormat(QImage::Format_ARGB32_Premultiplied);
         image_data.invertPixels();
+        //LOG(LOG_INFO, "Cursor type 1");
 
     } else {
         image_mask.invertPixels();
+        //LOG(LOG_INFO, "Cursor type 2");
     }
+
+
 
     image_data = image_data.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
     image_mask = image_mask.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
@@ -353,7 +371,7 @@ void Front_Qt::set_pointer(Pointer const & cursor) {
         data[i  ] = data_data[i+2];
         data[i+1] = data_data[i+1];
         data[i+2] = data_data[i  ];
-        data[i+3] = mask_data[i  ];
+        data[i+3] = mask_data[i+0];
     }
 
     image_data = QImage(static_cast<uchar *>(data), cursor.width, cursor.height, QImage::Format_ARGB32_Premultiplied);
@@ -1945,12 +1963,14 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                 break;
 
                 case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
+                    if (this->verbose & RDPVerbose::cliprdr) {
                     if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
                         LOG(LOG_INFO, "SERVER >> CB Channel: Format List Response PDU FAILED");
                     } else {
                         if (this->verbose & RDPVerbose::cliprdr) {
                             LOG(LOG_INFO, "SERVER >> CB Channel: Format List Response PDU");
                         }
+                    }
                     }
 
                 break;
@@ -2278,9 +2298,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 }
                                 fileRange.emit(out_stream_first_part);
 
-                                if (this->verbose & RDPVerbose::cliprdr) {
-                                    LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Response PDU RANGE");
-                                }
+
 
                                 this->process_client_clipboard_out_data( channel_names::cliprdr
                                                                        , total_length
@@ -2290,6 +2308,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                          this->_clipboard_qt->_items_list[lindex]->chunk)
                                                                        , total_length
                                                                        );
+
+                                if (this->verbose & RDPVerbose::cliprdr) {
+                                    LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Response PDU RANGE");
+                                }
                             }
                             break;
                         }
@@ -2580,7 +2602,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                 struct stat buff;
                                 stat(this->fileSystemData.paths[id-1].c_str(), &buff);
-                                uint8_t Information(rdpdr::FILE_OPENED);
+                                uint8_t Information(rdpdr::FILE_SUPERSEDED);
                                 if (S_ISDIR(buff.st_mode)) {
                                     Information = rdpdr::FILE_SUPERSEDED;
                                 }
@@ -2901,10 +2923,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     }
 
                                     uint64_t LastWriteTime   = UnixSecondsToWindowsTick(buff.st_mtime);
-                                    uint64_t CreationTime    = LastWriteTime + 1;
+                                    uint64_t CreationTime    = 0;
                                     //int64_t  AllocationSize  = buff.st_size;
                                     uint32_t VolumeSerialNumber = 0xb035dca6;
-                                    const char * VolumeLabel = "sda8";
+                                    const char * VolumeLabel = "";
 
                                     static struct hd_driveid hd;
                                     int device = open(str_path.c_str(), O_RDONLY);
@@ -3016,8 +3038,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
             default: LOG(LOG_WARNING, "SERVER >> RDPDR: DEFAULT RDPDR unknow component = %x", component);
                 break;
         }
-
-
     }
 }
 
@@ -3397,7 +3417,10 @@ void Front_Qt::process_client_clipboard_out_data(const char * const front_channe
     // last chunk of virtual channel data, the reassembled data is processed by the virtual channel endpoint.
 
 
+
     if (data_len > first_part_data_size ) {
+
+        //int real_total = data_len - first_part_data_size;
 
         const int cmpt_PDU_part(data_len  / CHANNELS::CHANNEL_CHUNK_LENGTH);
         const int remains_PDU  (data_len  % CHANNELS::CHANNEL_CHUNK_LENGTH);
@@ -3408,8 +3431,6 @@ void Front_Qt::process_client_clipboard_out_data(const char * const front_channe
 
             data_sent += first_part_data_size;
             InStream chunk_first(out_stream_first_part.get_data(), out_stream_first_part.get_offset());
-
-
 
             this->_callback->send_to_mod_channel( front_channel_name
                                                 , chunk_first
@@ -3427,8 +3448,6 @@ void Front_Qt::process_client_clipboard_out_data(const char * const front_channe
             data_sent += CHANNELS::CHANNEL_CHUNK_LENGTH;
             InStream chunk_next(out_stream_next_part.get_data(), out_stream_next_part.get_offset());
 
-
-
             this->_callback->send_to_mod_channel( front_channel_name
                                                 , chunk_next
                                                 , total_length
@@ -3442,8 +3461,6 @@ void Front_Qt::process_client_clipboard_out_data(const char * const front_channe
 
             data_sent += remains_PDU;
             InStream chunk_last(out_stream_last_part.get_data(), out_stream_last_part.get_offset());
-
-
 
             this->_callback->send_to_mod_channel( front_channel_name
                                                 , chunk_last
@@ -3515,7 +3532,7 @@ void Front_Qt::call_Draw() {
         } catch (const Error &) {
             this->dropScreen();
             const std::string errorMsg("Error: connexion to [" + this->_targetIP +  "] is closed.");
-            std::cout << errorMsg <<  std::endl;
+            LOG(LOG_INFO, "%s", errorMsg.c_str());
             std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
 
             this->disconnect(labelErrorMsg);
@@ -3604,7 +3621,7 @@ int main(int argc, char** argv){
 
     QApplication app(argc, argv);
 
-    RDPVerbose verbose = RDPVerbose::cliprdr;               //to_verbose_flags(0);
+    RDPVerbose verbose =  RDPVerbose::cliprdr;              // to_verbose_flags(0);
 
     Front_Qt front_qt(argv, argc, verbose);
 
