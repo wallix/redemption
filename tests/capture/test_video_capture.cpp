@@ -377,27 +377,52 @@ void simple_movie(timeval now, RDPDrawable & drawable, gdi::CaptureApi & capture
 
 BOOST_AUTO_TEST_CASE(TestFullVideoCaptureFlv)
 {
-    timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
-    const int groupid = 0;
-    bool no_timestamp = false;
-    RDPDrawable drawable(800, 600);
-    FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", 0};
-    FullVideoCaptureImpl video_capture(now, 
-        "./", "opaquerect_fullvideocapture_timestamp", 0, false,
-        drawable, flv_params);
-    simple_movie(now, drawable, video_capture, false, false);
+    {
+        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
+        RDPDrawable drawable(800, 600);
+        FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", 0};
+        FullVideoCaptureImpl video_capture(now, 
+            "./", "opaquerect_fullvideocapture_timestamp1", 
+            0 /* groupid */, false /* no_timestamp */, drawable, flv_params);
+        simple_movie(now, drawable, video_capture, false, true);
+    }
+    const char * filename = "./opaquerect_fullvideocapture_timestamp1.flv";
+    BOOST_CHECK_EQUAL(164693, filesize(filename));
+    ::unlink(filename);
+
+}
+
+BOOST_AUTO_TEST_CASE(TestFullVideoCaptureFlv2)
+{
+    {
+        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
+        RDPDrawable drawable(800, 600);
+        FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", 0};
+        FullVideoCaptureImpl video_capture(now, 
+            "./", "opaquerect_fullvideocapture_timestamp_mouse0", 
+            0 /* groupid */, false /* no_timestamp */, drawable, flv_params);
+        simple_movie(now, drawable, video_capture, false, false);
+    }
+    const char * filename = "./opaquerect_fullvideocapture_timestamp_mouse0.flv";
+    BOOST_CHECK_EQUAL(158699, filesize(filename));
+    ::unlink(filename);
+
 }
 
 BOOST_AUTO_TEST_CASE(TestFullVideoCaptureX264)
 {
-    timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
-    const int groupid = 0;
-    bool no_timestamp = false;
-    RDPDrawable drawable(800, 600);
-    FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "mp4", 0};
-    FullVideoCaptureImpl video_capture(now, 
-        "./", "opaquerect_fullvideocapture_timestamp", 0, false,
-        drawable, flv_params);
-    simple_movie(now, drawable, video_capture, false, true);
+    {
+        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
+        RDPDrawable drawable(800, 600);
+        FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "mp4", 0};
+        FullVideoCaptureImpl video_capture(now, 
+            "./", "opaquerect_fullvideocapture_timestamp2",
+            0 /* groupid */, false /* no_timestamp */, drawable, flv_params);
+        simple_movie(now, drawable, video_capture, false, true);
+    }
+    const char * filename = "./opaquerect_fullvideocapture_timestamp2.mp4";
+    BOOST_CHECK_EQUAL(54190, filesize(filename));
+    ::unlink(filename);
+
 }
 
