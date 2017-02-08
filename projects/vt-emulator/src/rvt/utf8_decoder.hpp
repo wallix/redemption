@@ -78,7 +78,7 @@ constexpr bool is_valid_utf8_sequence(uint8_t a, uint8_t b, uint8_t c) noexcept
     return ((a & b & c & 0x80) | ((a | b | c) & 0x40)) == 0x80;
 }
 
-constexpr ucs4_char replacement_character = 0xfffd; // � REPLACEMENT CHARACTER
+//constexpr ucs4_char replacement_character = 0xfffd; // � REPLACEMENT CHARACTER
 
 struct Utf8Decoder
 {
@@ -154,10 +154,6 @@ private:
     {
         switch (utf8_byte_size(*it)) {
             case Utf8ByteSize::LenError:
-                f(replacement_character);
-                ++it;
-                break;
-
             case Utf8ByteSize::Len1:
                 f(*it);
                 ++it;
@@ -173,7 +169,7 @@ private:
                     it += 2;
                 }
                 else {
-                    f(replacement_character);
+                    f(*it);
                     ++it;
                 }
                 break;
@@ -188,7 +184,7 @@ private:
                     it += 3;
                 }
                 else {
-                    f(replacement_character);
+                    f(*it);
                     ++it;
                 }
                 break;
@@ -203,7 +199,7 @@ private:
                     it += 4;
                 }
                 else {
-                    f(replacement_character);
+                    f(*it);
                     ++it;
                 }
                 break;

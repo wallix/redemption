@@ -61,20 +61,29 @@ BOOST_AUTO_TEST_CASE(TestCharsets)
         utils::make_array<rvt::ucs4_char>(0xac00u)
     );
 
+    BOOST_CHECK_EQUAL_RANGES(
+        decoder.decode(cstr_array_view("\xb7p\xc3\xc7"), Accu()).v,
+        utils::make_array<rvt::ucs4_char>(0xb7, 'p', 0xc3, 0xc7)
+    );
+    BOOST_CHECK_EQUAL_RANGES(
+        decoder.end_decode(Accu()).v,
+        utils::make_array<rvt::ucs4_char>()
+    );
+
     // utf8 format error
 
     BOOST_CHECK_EQUAL_RANGES(
         decoder.decode(cstr_array_view("\xea\xb0""a\xea""a\x80"), Accu()).v,
-        utils::make_array<rvt::ucs4_char>(rvt::replacement_character, rvt::replacement_character, 'a', rvt::replacement_character)
+        utils::make_array<rvt::ucs4_char>(0xea, 0xb0, 'a', 0xea)
     );
     BOOST_CHECK_EQUAL_RANGES(
         decoder.end_decode(Accu()).v,
-        utils::make_array<rvt::ucs4_char>('a', rvt::replacement_character)
+        utils::make_array<rvt::ucs4_char>('a', 0x80)
     );
 
     BOOST_CHECK_EQUAL_RANGES(
         decoder.decode(cstr_array_view("\xfa\xb0\x80""ab"), Accu()).v,
-        utils::make_array<rvt::ucs4_char>(rvt::replacement_character, rvt::replacement_character, rvt::replacement_character, 'a')
+        utils::make_array<rvt::ucs4_char>(0xfa, 0xb0, 0x80, 'a')
     );
     BOOST_CHECK_EQUAL_RANGES(
         decoder.end_decode(Accu()).v,
