@@ -35,13 +35,31 @@ namespace utils
     size(std::array<T, N> const &)
     { return {}; }
 
+    template<std::size_t N, class T>
+    constexpr T const &
+    back(T const (&a)[N])
+    { return a[N-1]; }
+
+    template<std::size_t N, class T>
+    constexpr T &
+    back(T (& a)[N])
+    { return a[N-1]; }
+
+    template<class T, class... Ts>
+    constexpr
+    std::array<T, sizeof...(Ts)>
+    make_array(Ts && ... values)
+    {
+        using array_type = std::array<T, sizeof...(Ts)>;
+        return array_type{{T(std::forward<Ts>(values))...}};
+    }
+
     template<class T, class... Ts>
     constexpr
     std::array<typename std::decay<T>::type, sizeof...(Ts) + 1>
     make_array(T && value, Ts && ... values)
     {
-        return std::array<typename std::decay<T>::type, sizeof...(Ts) + 1>{
-            {std::forward<T>(value), std::forward<Ts>(values)...}
-        };
+        using array_type = std::array<typename std::decay<T>::type, sizeof...(Ts) + 1>;
+        return array_type{{std::forward<T>(value), std::forward<Ts>(values)...}};
     }
 }

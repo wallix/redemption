@@ -35,5 +35,8 @@ unit-test test_charsets : $(SRC_TEST)/test_charsets.cpp : $(TEST_DEPENDENCIES) ;
 
 unit-test test_screen : $(SRC_TEST)/test_screen.cpp screen : $(TEST_DEPENDENCIES) ;
 
+unit-test test_utf8_decoder : $(SRC_TEST)/test_utf8_decoder.cpp : $(TEST_DEPENDENCIES) ;
+
+
 unit-test enumator : $(SRC)/emulator.cpp screen : $(TEST_DEPENDENCIES) ;
 ## }
