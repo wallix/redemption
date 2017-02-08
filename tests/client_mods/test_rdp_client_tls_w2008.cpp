@@ -201,7 +201,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
                                , 7
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
-                               , to_verbose_flags(511)
+                               , to_verbose_flags(2023)
                                );
     mod_rdp_params.device_id                       = "device_id";
     //mod_rdp_params.enable_tls                      = true;

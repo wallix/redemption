@@ -3322,9 +3322,9 @@ private:
                         LOG(LOG_INFO, "Receiving from client CAPSTYPE_GLYPHCACHE");
                     }
                     this->client_glyphcache_caps.recv(stream, capset_length);
-                    if (this->verbose) {
+                    //if (this->verbose) {
                         this->client_glyphcache_caps.log("Receiving from client");
-                    }
+                    //}
                     for (uint8_t i = 0; i < NUMBER_OF_GLYPH_CACHES; ++i) {
                         this->client_info.number_of_entries_in_glyph_cache[i] =
                             this->client_glyphcache_caps.GlyphCache[i].CacheEntries;
@@ -4406,8 +4406,172 @@ protected:
         this->priv_draw_and_update_cache_brush(cmd, clip, color_ctx);
     }
 
+    using Color = Drawable::Color;
+
+    Color u32_to_color(uint32_t color) const {
+        return {uint8_t(color >> 16), uint8_t(color >> 8), uint8_t(color)};
+    }
+
+    Color u32rgb_to_color(gdi::ColorCtx color_ctx, BGRColor color) const {
+        using gdi::Depth;
+
+        switch (color_ctx.depth()){
+            // TODO color_ctx.palette()
+            case Depth::depth8():  color = decode_color8_opaquerect()(color, this->mod_palette_rgb); break;
+            case Depth::depth15(): color = decode_color15_opaquerect()(color); break;
+            case Depth::depth16(): color = decode_color16_opaquerect()(color); break;
+            case Depth::depth24(): break;
+            case Depth::unspecified(): default: REDASSERT(false);
+        }
+
+        return this->u32_to_color(color);
+    }
+
     void draw_impl(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) {
-        this->priv_draw_and_update_cache_brush(cmd, clip, color_ctx, gly_cache);
+
+        if (this->client_glyphcache_caps.GlyphSupportLevel == GlyphCacheCaps::GLYPH_SUPPORT_NONE) {
+// GlyphCacheCaps::GLYPH_SUPPORT_NONE
+            bool has_delta_bytes = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
+            const Color color_fore = this->u32rgb_to_color(color_ctx, cmd.fore_color);
+            const Color color_back = this->u32rgb_to_color(color_ctx, cmd.back_color);
+//             const int16_t offset_y = /*cmd.bk.cy - (*/cmd.glyph_y - cmd.bk.y/* + 1)*/;
+//             const int16_t offset_x = cmd.glyph_x - cmd.bk.x;
+
+            uint16_t draw_pos_ref = 0;
+
+            InStream variable_bytes(cmd.data, cmd.data_len);
+
+//             uint8_t const * fragment_begin_position = variable_bytes.get_current();
+
+            while (variable_bytes.in_remain()) {
+                uint8_t data = variable_bytes.in_uint8();
+                if (data <= 0xFD) {
+                    FontChar const & fc = gly_cache.glyphs[cmd.cache_id][data].font_item;
+                    if (!fc) {
+                        REDASSERT(fc);
+                    }
+
+                    if (has_delta_bytes) {
+                        data = variable_bytes.in_uint8();
+                        if (data == 0x80) {
+                            draw_pos_ref += variable_bytes.in_uint16_le();
+                        }
+                        else {
+                            draw_pos_ref += data;
+                        }
+                    }
+
+                    if (fc)
+                    {
+                        const int16_t x = cmd.bk.x + draw_pos_ref;
+                        const int16_t y = cmd.bk.y;
+
+                        const Rect rect = clip.intersect(Rect(x, y, fc.width, fc.height));
+                        if (Rect(0,0,0,0) != rect){
+
+                            const uint8_t * fc_data = fc.data.get();
+                            uint8_t data[256*3];
+
+                            for (int i = 0; i < 256*3; i += 3) {
+                                data[i  ] = color_fore.red();
+                                data[i+1] = color_fore.green();
+                                data[i+2] = color_fore.blue();
+                            }
+
+                            int height_bitmap = fc.height;
+
+                            if (fc.width == 8) {
+                                height_bitmap *=  2;
+                            }
+
+                            for (int yy = 0 ; yy < height_bitmap; yy++) {
+                                uint8_t   fc_bit_mask        = 128;
+                                for (int xx = 0 ; xx < fc.width; xx++) {
+                                    if (!fc_bit_mask) {
+                                        fc_data++;
+                                        fc_bit_mask = 128;
+                                    }
+
+                                    const uint16_t xpix = xx * 3;
+                                    const uint16_t ypix = yy * fc.width * 3;
+
+                                    if (fc_bit_mask & *fc_data) {
+                                        data[xpix + ypix    ] = color_back.blue();
+                                        data[xpix + ypix + 1] = color_back.green();
+                                        data[xpix + ypix + 2] = color_back.red();
+                                    }
+                                    fc_bit_mask >>= 1;
+                                }
+                                fc_data++;
+                            }
+
+                            RDPBitmapData rDPBitmapData;
+                            rDPBitmapData.dest_left = x;
+                            rDPBitmapData.dest_top = y;
+                            rDPBitmapData.dest_right = fc.width + x - 1;
+                            rDPBitmapData.dest_bottom = fc.height + y - 1;
+//                             rDPBitmapData.width = fc.width;
+//                             rDPBitmapData.height = fc.height;
+//                             rDPBitmapData.bits_per_pixel = 32;
+//                             rDPBitmapData.flags;
+//                             rDPBitmapData.bitmap_length = fc.width * fc.height * 3;
+//
+//                             // Compressed Data Header (TS_CD_HEADER)
+//                             rDPBitmapData.cb_comp_main_body_size;
+//                             rDPBitmapData.cb_scan_width;
+//                             urDPBitmapData.cb_uncompressed_size;
+
+                            //RDPMemBlt cmd(cmd.cache_id, rect, 0xCC, rect.x, rect.y, 0);
+                            const Rect tile(0, 0, fc.width, fc.height);
+                            Bitmap bmp(data, fc.width, 16, 24, tile);
+                            draw_impl(rDPBitmapData, bmp);
+                        }
+                    }
+                }
+                else if (data == 0xFE) {
+                     LOG(LOG_WARNING, "data == 0xFE");
+//                     const uint8_t fragment_index = variable_bytes.in_uint8();
+//
+//                     uint16_t delta = 0;
+//                     if (has_delta_bytes)
+//                     {
+//                         delta = variable_bytes.in_uint8();
+//                         if (delta == 0x80)
+//                         {
+//                             delta = variable_bytes.in_uint16_le();
+//                         }
+//                     }
+//                     REDASSERT(!delta);  // Fragment's position delta is not yet supported.
+//
+//                     fragment_begin_position = variable_bytes.get_current();
+
+//                     this->draw_VariableBytes(&this->fragment_cache[fragment_index][1],
+//                         this->fragment_cache[fragment_index][0], has_delta_bytes,
+//                         draw_pos_ref, offset_y, color, bmp_pos_x, bmp_pos_y, clip,
+//                         cache_id, gly_cache);
+                }
+                else if (data == 0xFF)  {
+                    LOG(LOG_WARNING, "data == 0xFF");
+//                     const uint8_t fragment_index = variable_bytes.in_uint8();
+//                     const uint8_t fragment_size  = variable_bytes.in_uint8();
+//
+//                     REDASSERT(!variable_bytes.in_remain());
+//
+//                     REDASSERT(fragment_begin_position + fragment_size + 3 == variable_bytes.get_current());
+//
+// //                     this->fragment_cache[fragment_index][0] = fragment_size;
+// //                     ::memcpy(&this->fragment_cache[fragment_index][1],
+// //                             fragment_begin_position,
+// //                             fragment_size
+// //                             );
+//
+//                     fragment_begin_position = variable_bytes.get_current();
+                }
+            }
+
+        } else {
+            this->priv_draw_and_update_cache_brush(cmd, clip, color_ctx, gly_cache);
+        }
     }
 
     void draw_impl(RDPBitmapData const & bitmap_data, Bitmap const & bmp) {

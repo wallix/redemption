@@ -247,14 +247,14 @@ protected:
     int      share_id;
     uint16_t userid;
 
-    char hostname[HOST_NAME_MAX + 1];
-    char username[128];
-    char password[2048];
-    char domain[256];
-    char program[512];
-    char directory[512];
+    char hostname[HOST_NAME_MAX + 1]  = {};
+    char username[128]  = {};
+    char password[2048]  = {};
+    char domain[256]  = {};
+    char program[512] = {};
+    char directory[512]  = {};
 
-    char client_name[128];
+    char client_name[128]  = {};
 
     int encryptionLevel;
     int encryptionMethod;

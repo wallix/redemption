@@ -3420,7 +3420,7 @@ void Front_Qt::process_client_clipboard_out_data(const char * const front_channe
 
     if (data_len > first_part_data_size ) {
 
-        int real_total = data_len - first_part_data_size;
+        //int real_total = data_len - first_part_data_size;
 
         const int cmpt_PDU_part(data_len  / CHANNELS::CHANNEL_CHUNK_LENGTH);
         const int remains_PDU  (data_len  % CHANNELS::CHANNEL_CHUNK_LENGTH);
@@ -3431,8 +3431,6 @@ void Front_Qt::process_client_clipboard_out_data(const char * const front_channe
 
             data_sent += first_part_data_size;
             InStream chunk_first(out_stream_first_part.get_data(), out_stream_first_part.get_offset());
-
-
 
             this->_callback->send_to_mod_channel( front_channel_name
                                                 , chunk_first
@@ -3450,8 +3448,6 @@ void Front_Qt::process_client_clipboard_out_data(const char * const front_channe
             data_sent += CHANNELS::CHANNEL_CHUNK_LENGTH;
             InStream chunk_next(out_stream_next_part.get_data(), out_stream_next_part.get_offset());
 
-
-
             this->_callback->send_to_mod_channel( front_channel_name
                                                 , chunk_next
                                                 , total_length
@@ -3465,8 +3461,6 @@ void Front_Qt::process_client_clipboard_out_data(const char * const front_channe
 
             data_sent += remains_PDU;
             InStream chunk_last(out_stream_last_part.get_data(), out_stream_last_part.get_offset());
-
-
 
             this->_callback->send_to_mod_channel( front_channel_name
                                                 , chunk_last
@@ -3538,7 +3532,7 @@ void Front_Qt::call_Draw() {
         } catch (const Error &) {
             this->dropScreen();
             const std::string errorMsg("Error: connexion to [" + this->_targetIP +  "] is closed.");
-            std::cout << errorMsg <<  std::endl;
+            LOG(LOG_INFO, "%s", errorMsg.c_str());
             std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
 
             this->disconnect(labelErrorMsg);
