@@ -868,7 +868,7 @@ public:
         {
             gdi::GraphicApi & gd_orders = this->orders.initialize_drawable(this->client_info.bpp);
 
-            this->set_gd(this->capture ? this->capture : &gd_orders);
+            this->set_gd((this->capture && this->capture->get_graphic_api()) ? this->capture : &gd_orders);
         }
 
         if (bpp == 8) {
@@ -1120,7 +1120,7 @@ public:
              != ::KeyboardInputMaskingLevel::fully_masked;
         bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
 
-        this->capture = new Capture(  
+        this->capture = new Capture(
                                       capture_wrm, wrm_params
                                     , capture_png, png_params
                                     , capture_pattern_checker, patter_checker_params
