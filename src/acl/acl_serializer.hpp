@@ -41,7 +41,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <time.h>
+#include <ctime>
 
 #define LOG_SESSION(normal_log, session_log, session_type, type, session_id,    \
         ip_client, ip_target, user, device, service, account, priority, format, \
@@ -403,24 +403,17 @@ public:
             std::ofstream log_file(filename, std::ios::app);
 
             if(!log_file.is_open()) {
-                LOG(LOG_INFO, "auth::bad SIEM log file creation");
+                LOG(LOG_INFO, "auth::Bad SIEM log file creation");
             }
             else {
-                time_t seconds = time(nullptr);
-                struct tm * timeinfo = localtime(&seconds);
-                log_file << (1900+timeinfo->tm_year) << "-";
-                log_file << (timeinfo->tm_mon+1) << "-" << timeinfo->tm_mday << " " << timeinfo->tm_hour << ":" <<timeinfo->tm_min << ":" <<timeinfo->tm_sec << " ";
+                std::time_t t = std::time(NULL);
+                char mbstr[100];
+                if (std::strftime(mbstr, sizeof(mbstr), "%F %T", std::localtime(&t))) {
+                    log_file << mbstr;
+                }
+
                 log_file << " [" << (this->session_type.empty() ? "Neutral" : this->session_type.c_str()) << " Session] " << " " ;
                 log_file << "type=" << type << " " ;
-                log_file << "session_id=" << this->ini.get<cfg::context::session_id>() << " " ;
-                log_file << "client_ip=" << this->ini.get<cfg::globals::host>() << " " ;
-                log_file << "target_ip=" << (isdigit(this->ini.get<cfg::context::target_host>()[0]) ?
-                                             this->ini.get<cfg::context::target_host>() :
-                                             this->ini.get<cfg::context::ip_target>()) << " " ;
-                log_file << "user=" << this->ini.get<cfg::globals::auth_user>() << " " ;
-                log_file << "device=" << this->ini.get<cfg::globals::target_device>() << " " ;
-                log_file << "service=" << this->ini.get<cfg::context::target_service>() << " " ;
-                log_file << "account=" << this->ini.get<cfg::globals::target_user>() << " " ;
                 log_file << (extra ? extra : "") << std::endl;
                 log_file.close();
             }

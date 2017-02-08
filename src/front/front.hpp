@@ -991,13 +991,6 @@ public:
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16) ? 16 : 24);
         // TODO remove this after unifying capture interface
         bool full_video = false;
-        PngParams png_params = {
-                0, 0,
-                ini.get<cfg::video::png_interval>(),
-                100u,
-                ini.get<cfg::video::png_limit>(),
-                true
-        };
         FlvParams flv_params = flv_params_from_ini(this->client_info.width, this->client_info.height, ini);
 
         GraphicToFile::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
@@ -1015,8 +1008,6 @@ public:
         const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
 
         bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        bool capture_png = bool(capture_flags & CaptureFlags::png)
-                        && (png_params.png_limit > 0);
         bool capture_pattern_checker = (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
                 || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
 
@@ -1038,19 +1029,6 @@ public:
                 ini.get<cfg::ocr::max_unrecog_char_rate>(),
                 ini.get<cfg::ocr::interval>()
         };
-
-        if (ini.get<cfg::debug::capture>()) {
-            LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
-                capture_wrm ?"wrm ":"",
-                capture_png ?"png ":"",
-                capture_kbd ? 1 : 0,
-                capture_flv ?"flv ":"",
-                capture_flv_full ?"flv_full ":"",
-                capture_pattern_checker ?"pattern ":"",
-                capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
-                capture_meta?"meta ":""
-            );
-        }
 
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
@@ -1081,6 +1059,38 @@ public:
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
 
+        PngParams png_params = {
+                0, 0,
+                ini.get<cfg::video::png_interval>(),
+                100u,
+                ini.get<cfg::video::png_limit>(),
+                true,
+                &this->authentifier,
+                record_tmp_path,
+                this->basename,
+                groupid
+        };
+        bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
+
+        if (ini.get<cfg::debug::capture>()) {
+            LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
+                capture_wrm ?"wrm ":"",
+                capture_png ?"png ":"",
+                capture_kbd ? 1 : 0,
+                capture_flv ?"flv ":"",
+                capture_flv_full ?"flv_full ":"",
+                capture_pattern_checker ?"pattern ":"",
+                capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
+                capture_meta?"meta ":""
+            );
+        }
+
+        MetaParams meta_params;
+        KbdLogParams kbdlog_params;
+        PatternCheckerParams patter_checker_params;
+        SequencedVideoParams sequenced_video_params;
+        FullVideoParams full_video_params;
+
         WrmParams wrm_params(
             this->capture_bpp,
             wrm_trace_type,
@@ -1110,14 +1120,15 @@ public:
              != ::KeyboardInputMaskingLevel::fully_masked;
         bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
 
-        this->capture = new Capture(  capture_wrm, wrm_params
+        this->capture = new Capture(  
+                                      capture_wrm, wrm_params
                                     , capture_png, png_params
-                                    , capture_pattern_checker
+                                    , capture_pattern_checker, patter_checker_params
                                     , capture_ocr, ocr_params
-                                    , capture_flv
-                                    , capture_flv_full
-                                    , capture_meta
-                                    , capture_kbd
+                                    , capture_flv, sequenced_video_params
+                                    , capture_flv_full, full_video_params
+                                    , capture_meta, meta_params
+                                    , capture_kbd, kbdlog_params
                                     , this->basename
                                     , now
                                     , this->client_info.width, this->client_info.height
@@ -1148,7 +1159,7 @@ public:
         this->capture_state = CAPTURE_STATE_STARTED;
         if (this->capture->get_graphic_api()) {
             this->set_gd(this->capture->get_graphic_api());
-            this->capture->add_graphic(this->orders.graphics_update_pdu());
+            this->capture->add_graphic(this->orders.get_graphics_api());
         }
 
         this->update_keyboard_input_mask_state();

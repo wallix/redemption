@@ -97,7 +97,6 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
         TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
-        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false};
 
         FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
@@ -152,6 +151,15 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
 
+        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false, 
+                                nullptr, record_tmp_path, basename, groupid};
+
+        MetaParams meta_params;
+        KbdLogParams kbdlog_params;
+        PatternCheckerParams patter_checker_params;
+        SequencedVideoParams sequenced_video_params;
+        FullVideoParams full_video_params;
+
         WrmParams wrm_params(
             24,
             wrm_trace_type,
@@ -181,14 +189,15 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
              != ::KeyboardInputMaskingLevel::fully_masked;
         bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
 
-        Capture capture( capture_wrm, wrm_params
+        Capture capture( 
+                          capture_wrm, wrm_params
                         , capture_png, png_params
-                        , capture_pattern_checker
+                        , capture_pattern_checker, patter_checker_params
                         , capture_ocr, ocr_params
-                        , capture_flv
-                        , capture_flv_full
-                        , capture_meta
-                        , capture_kbd
+                        , capture_flv, sequenced_video_params
+                        , capture_flv_full, full_video_params
+                        , capture_meta, meta_params
+                        , capture_kbd, kbdlog_params
                         , basename
                         , now, scr.cx, scr.cy, 24, 24
                         , record_tmp_path
@@ -372,7 +381,6 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
     TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
-    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false };
     FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
     const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
     const char * record_path = record_tmp_path;
@@ -425,6 +433,15 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
     }
 
+    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false, 
+                        nullptr, record_tmp_path, basename, groupid};
+
+    MetaParams meta_params;
+    KbdLogParams kbdlog_params;
+    PatternCheckerParams patter_checker_params;
+    SequencedVideoParams sequenced_video_params;
+    FullVideoParams full_video_params;
+
     WrmParams wrm_params(
         24,
         wrm_trace_type,
@@ -456,14 +473,15 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
 
     // TODO remove this after unifying capture interface
-    Capture capture( capture_wrm, wrm_params
+    Capture capture( 
+                     capture_wrm, wrm_params
                    , capture_png, png_params
-                   , capture_pattern_checker
+                   , capture_pattern_checker, patter_checker_params
                    , capture_ocr, ocr_params
-                   , capture_flv
-                   , capture_flv_full
-                   , capture_meta
-                   , capture_kbd
+                   , capture_flv, sequenced_video_params
+                   , capture_flv_full, full_video_params
+                   , capture_meta, meta_params
+                   , capture_kbd, kbdlog_params
                    , basename
                    , now, scr.cx, scr.cy, 16, 16
                    , record_tmp_path
@@ -599,27 +617,27 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCapture)
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
         const int width  = 800;
         const int height = 600;
-        Drawable drawable(width, height);
+        RDPDrawable drawable(width, height);
 
         FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "flv", 0};
         VideoCapture flvgen(now, trans, drawable, false, flv_params);
         VideoSequencer flvseq(now, std::chrono::microseconds{2 * 1000000l}, flvgen);
 
-        auto const color1 = drawable.u32bgr_to_color(BLUE);
-        auto const color2 = drawable.u32bgr_to_color(WABGREEN);
-
         Rect screen(0, 0, width, height);
-        drawable.opaquerect(screen, color1);
+
+        auto const color_cxt = gdi::ColorCtx::depth24();
+        drawable.draw(RDPOpaqueRect(screen, BLUE), screen, color_cxt);
+
         uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
         Rect r(10, 10, 50, 50);
         int vx = 5;
         int vy = 4;
         bool ignore_frame_in_timeval = false;
         for (size_t x = 0; x < 250; x++) {
-            drawable.opaquerect(r.intersect(screen), color1);
+            drawable.draw(RDPOpaqueRect(r, BLUE), screen, color_cxt);
             r.y += vy;
             r.x += vx;
-            drawable.opaquerect(r.intersect(screen), color2);
+            drawable.draw(RDPOpaqueRect(r, WABGREEN), screen, color_cxt);
             usec += 40000LL;
             now.tv_sec  = usec / 1000000LL;
             now.tv_usec = (usec % 1000000LL);
@@ -670,27 +688,27 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureMP4)
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
         const int width  = 800;
         const int height = 600;
-        Drawable drawable(width, height);
+        RDPDrawable drawable(width, height);
 
         FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "mp4", 0};
         VideoCapture flvgen(now, trans, drawable, false, flv_params);
         VideoSequencer flvseq(now, std::chrono::microseconds{2 * 1000000l}, flvgen);
 
-        auto const color1 = drawable.u32bgr_to_color(BLUE);
-        auto const color2 = drawable.u32bgr_to_color(WABGREEN);
-
         Rect screen(0, 0, width, height);
-        drawable.opaquerect(screen, color1);
+        
+        auto const color_cxt = gdi::ColorCtx::depth24();
+        drawable.draw(RDPOpaqueRect(screen, BLUE), screen, color_cxt);
+
         uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
         Rect r(10, 10, 50, 50);
         int vx = 5;
         int vy = 4;
         bool ignore_frame_in_timeval = false;
         for (size_t x = 0; x < 100; x++) {
-            drawable.opaquerect(r.intersect(screen), color1);
+            drawable.draw(RDPOpaqueRect(r, BLUE), screen, color_cxt);
             r.y += vy;
             r.x += vx;
-            drawable.opaquerect(r.intersect(screen), color2);
+            drawable.draw(RDPOpaqueRect(r, WABGREEN), screen, color_cxt);
             usec += 40000LL;
             now.tv_sec  = usec / 1000000LL;
             now.tv_usec = (usec % 1000000LL);
@@ -742,17 +760,17 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureOneChunk)
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
         const int width  = 800;
         const int height = 600;
-        Drawable drawable(width, height);
+        RDPDrawable drawable(width, height);
 
 //        FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "flv", 0};
         VideoCapture flvgen(now, trans, drawable, false, {Level::high, width, height, 25, 15, 100000, "flv", 0});
         VideoSequencer flvseq(now, std::chrono::microseconds{1000 * 1000000l}, flvgen);
 
-        auto const color1 = drawable.u32bgr_to_color(BLUE);
-        auto const color2 = drawable.u32bgr_to_color(WABGREEN);
-
         Rect screen(0, 0, width, height);
-        drawable.opaquerect(screen, color1);
+
+        auto const color_cxt = gdi::ColorCtx::depth24();
+        drawable.draw(RDPOpaqueRect(screen, BLUE), screen, color_cxt);
+
         uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
         Rect r(10, 10, 50, 50);
         int vx = 5;
@@ -760,9 +778,9 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureOneChunk)
         bool ignore_frame_in_timeval = false;
         for (size_t x = 0; x < 1000 ; x++) {
             r.y += vy;
-            drawable.opaquerect(r.intersect(screen), color1);
+            drawable.draw(RDPOpaqueRect(r, BLUE), screen, color_cxt);
             r.x += vx;
-            drawable.opaquerect(r.intersect(screen), color2);
+            drawable.draw(RDPOpaqueRect(r, WABGREEN), screen, color_cxt);
             usec += 40000LL;
             now.tv_sec  = usec / 1000000LL;
             now.tv_usec = (usec % 1000000LL);
@@ -797,18 +815,17 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
         const int width  = 800;
         const int height = 600;
-        Drawable drawable(width, height);
+        RDPDrawable drawable(width, height);
 
         FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "flv", 0};
         VideoCapture flvgen(now, trans, drawable, false, flv_params);
         VideoSequencer flvseq(now, std::chrono::microseconds{1000 * 1000000l}, flvgen);
 
-        auto const color1 = drawable.u32bgr_to_color(BLUE);
-        auto const color2 = drawable.u32bgr_to_color(WABGREEN);
-        auto const color3 = drawable.u32bgr_to_color(RED);
-
         Rect screen(0, 0, width, height);
-        drawable.opaquerect(screen, color1);
+        
+        auto const color_cxt = gdi::ColorCtx::depth24();
+        drawable.draw(RDPOpaqueRect(screen, BLUE), screen, color_cxt);
+
         uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
         Rect r(10, 10, 50, 25);
         Rect r1(10, 10 + 25, 50, 25);
@@ -816,11 +833,11 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
         int vy = 4;
         bool ignore_frame_in_timeval = false;
         for (size_t x = 0; x < 1000 ; x++) {
-            drawable.opaquerect(r.intersect(screen), color1);
-            drawable.opaquerect(r1.intersect(screen), color1);
+            drawable.draw(RDPOpaqueRect(r, BLUE), screen, color_cxt);
+            drawable.draw(RDPOpaqueRect(r1, BLUE), screen, color_cxt);
             r.y += vy;
             r.x += vx;
-            drawable.opaquerect(r.intersect(screen), color2);
+            drawable.draw(RDPOpaqueRect(r, WABGREEN), screen, color_cxt);
             usec += 40000LL;
             now.tv_sec  = usec / 1000000LL;
             now.tv_usec = (usec % 1000000LL);
@@ -830,8 +847,7 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
             flvseq.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
             r1.y += vy;
             r1.x += vx;
-            drawable.opaquerect(r1.intersect(screen), color3);
-
+            drawable.draw(RDPOpaqueRect(r1, RED), screen, color_cxt);
             flvgen.preparing_video_frame();
 
             if ((r.x + r.cx >= width ) || (r.x < 0)) { vx = -vx; }
