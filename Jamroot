@@ -517,6 +517,7 @@ test-canonical capture/ocr/locale/latin_to_cyrillic.hpp : <library>ocr ;
 ## @{
 test-canonical capture/RDPChunkedDevice.hpp ;
 test-canonical capture/capture.hpp : <library>bitmap <library>png <library>crypto <library>dl <library>z <library>snappy <library>ppocr_test <library>ocr <library>ffmpeg ;
+test-canonical capture/video_capture.hpp : <library>bitmap <library>png <library>crypto <library>dl <library>z <library>snappy <library>ppocr_test <library>ocr <library>ffmpeg ;
 test-canonical capture/transparentchunk.hpp ;
 test-canonical capture/transparentplayer.hpp ;
 test-canonical capture/transparentrecorder.hpp ;
