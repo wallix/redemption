@@ -20,29 +20,15 @@
 *   Based on Konsole, an X terminal
 */
 
-#include <array>
-#include <cstdint>
-#include <type_traits>
-#include <memory>
-
-#include <vector>
 #include <string>
 #include <algorithm>
 
-#include <cassert>
-#include <cstring> // memset
-
-#include "utils/rect.hpp"
-#include "utils/sugar/make_unique.hpp"
-#include "utils/sugar/array_view.hpp"
 #include "utils/sugar/underlying_cast.hpp"
-#include "utils/sugar/enum_flags_operators.hpp"
-#include "cxx/diagnostic.hpp"
 
 #include "rvt/character.hpp"
 #include "rvt/charsets.hpp"
 #include "rvt/screen.hpp"
-#include "rvt/utf8_decoder.hpp"
+#include "rvt/emulator.hpp"
 
 //#define CXX_UNUSED(x) (void)x // [[maybe_unused]]
 
@@ -50,121 +36,6 @@
 
 namespace rvt
 {
-
-struct CharCodes
-{
-    std::array<CharsetId, 4> charset; // coding info
-    CharsetId charset_id = CharsetId::Undefined; // actual charset.
-    CharsetId sa_charset_id = CharsetId::Undefined; // saved charset.
-};
-
-
-/**
- * Provides an xterm compatible terminal emulation based on the DEC VT102 terminal.
- * A full description of this terminal can be found at http://vt100.net/docs/vt102-ug/
- */
-class Vt102Emulation
-{
-    enum Mode : uint16_t
-    {
-        AppScreen       , // Mode #1
-        Ansi            , // Use US Ascii for character sets G0-G3 (DECANM)
-        Columns132      , // 80 <-> 132 column mode switch (DECCOLM)
-        AllowColumns132 , // Allow DECCOLM mode
-        COUNT_          ,
-    };
-
-public:
-    /** Constructs a new emulation */
-    Vt102Emulation(int lines, int columns);
-    ~Vt102Emulation();
-
-    // reimplemented from Emulation
-    void clearEntireScreen();
-    void reset();
-
-    Screen const & getScreen() const { return *_currentScreen; }
-
-protected:
-    // reimplemented from Emulation
-    void setMode(Mode mode);
-    void resetMode(Mode mode);
-
-    using ScreenMode = Screen::Mode;
-
-    void setMode(ScreenMode mode);
-    void resetMode(ScreenMode mode);
-
-public: // TODO protected
-    void receiveChar(ucs4_char cc);
-
-private:
-    ucs4_char applyCharset(ucs4_char  c) const;
-    void setCharset(int n, CharsetId cs);
-    void useCharset(int n);
-    void setAndUseCharset(int n, CharsetId cs);
-    void saveCursor();
-    void restoreCursor();
-    void resetCharset();
-
-    void setScreen(int n);
-    void setScreenSize(int lines, int columns);
-
-    void setMargins(int top, int bottom);
-    //set margins for all screens back to their defaults
-    void setDefaultMargins();
-
-    // returns true if 'mode' is set or false otherwise
-    bool getMode(Mode mode);
-    // saves the current boolean value of 'mode'
-    void saveMode(Mode mode);
-    // restores the boolean value of 'mode'
-    void restoreMode(Mode mode);
-    // returns true if 'mode' is set or false otherwise
-    bool getMode(ScreenMode mode);
-    // saves the current boolean value of 'mode'
-    void saveMode(ScreenMode mode);
-    // restores the boolean value of 'mode'
-    void restoreMode(ScreenMode mode);
-    // resets all modes
-    // (except Mode::AllowColumns132)
-    void resetModes();
-
-    void resetTokenizer();
-#define MAX_TOKEN_LENGTH 256 // Max length of tokens (e.g. window title)
-    void addToCurrentToken(ucs4_char cc);
-    int tokenBuffer[MAX_TOKEN_LENGTH]; //FIXME: overflow?
-    int tokenBufferPos;
-#define MAXARGS 15
-    void addDigit(int dig);
-    void addArgument();
-    int argv[MAXARGS];
-    int argc;
-    void initTokenizer();
-
-    // Set of flags for each of the ASCII characters which indicates
-    // what category they fall into (printable character, control, digit etc.)
-    // for the purposes of decoding terminal output
-    int charClass[256];
-
-    void reportDecodingError();
-
-    void processToken(int code, int32_t p, int q);
-
-    // clears the screen and resizes it to the specified
-    // number of columns
-    void clearScreenAndSetColumns(int columnCount);
-
-    CharCodes _charsets[2];
-
-    using ModeFlags = Flags<Mode>;
-
-    ModeFlags _currentModes;
-    ModeFlags _savedModes;
-
-    Screen _screens[2];
-    Screen * _currentScreen = &_screens[0];
-};
 
 Vt102Emulation::Vt102Emulation(int lines, int columns)
 : _screens{{lines, columns}, {lines, columns}}
@@ -185,19 +56,11 @@ void Vt102Emulation::reset()
 {
     // Save the current codec so we can set it later.
     // Ideally we would want to use the profile setting
-//     const QTextCodec* currentCodec = codec();
 
     resetTokenizer();
     resetModes();
     resetCharset();
     _currentScreen->reset();
-
-//     if (currentCodec)
-//         setCodec(currentCodec);
-//     else
-//         setCodec(LocaleCodec);
-//
-//     bufferedUpdate();
 }
 
 /* ------------------------------------------------------------------------- */
@@ -951,8 +814,6 @@ void Vt102Emulation::restoreCursor()
     _currentScreen->restoreCursor();
 }
 
-// #undef CHARSET
-
 /* ------------------------------------------------------------------------- */
 /*                                                                           */
 /*                                Mode Operations                            */
@@ -1091,166 +952,4 @@ void Vt102Emulation::reportDecodingError()
     // std::cerr << outputError << std::endl;
 }
 
-}
-
-
-#include <iostream>
-
-template<class T>
-auto print_value(std::ostream & os, T const & value)
--> decltype(void(os << value))
-{ os << value; }
-
-// void print_value(std::ostream & os, vt100::Cursor const & cursor)
-// { os << "{" << cursor.x << " " << cursor.y << "}"; }
-
-
-struct Checker
-{
-    char const * file;
-    int line;
-    const char * expr;
-
-    template<class T, class U>
-    void check_equal(T const & a, U const & b)
-    {
-        if (!(a == b)) {
-            std::cerr << file << ":" << line << ": " << expr << " -- [";
-            print_value(std::cerr, a);
-            std::cerr << " == ";
-            print_value(std::cerr, b);
-            std::cerr << "] failed\n";
-            std::abort();
-        }
-    }
-};
-
-
-#include <iomanip>
-
-using uchar = unsigned char;
-
-template<std::size_t n>
-int touc(char const (&s)[n])
-{
-    int r = 0;
-    for (std::size_t i = 1; i < n; ++i) {
-        r <<= 8;
-        r |= uchar(s[i-1]);
-    }
-    return r;
-}
-
-// template<int> struct i_{};
-
-int main()
-{
-    rvt::Vt102Emulation emulator(40, 40);
-
-    for (int i = 0; i < 20; ++i) {
-        emulator.receiveChar('a');
-        emulator.receiveChar('b');
-        emulator.receiveChar('c');
-    }
-    emulator.receiveChar('\033');
-    emulator.receiveChar('[');
-    emulator.receiveChar('0');
-    emulator.receiveChar('B');
-    emulator.receiveChar('\033');
-    emulator.receiveChar('[');
-    emulator.receiveChar('3');
-    emulator.receiveChar('1');
-    emulator.receiveChar('m');
-    for (int i = 0; i < 20; ++i) {
-        emulator.receiveChar('a');
-        emulator.receiveChar('b');
-        emulator.receiveChar('c');
-    }
-    emulator.receiveChar('\033');
-    emulator.receiveChar('[');
-    emulator.receiveChar('4');
-    emulator.receiveChar('4');
-    emulator.receiveChar('m');
-    emulator.receiveChar(UTF8toUnicodeIterator("é").code());
-    emulator.receiveChar('e');
-    emulator.receiveChar(0x311);
-    emulator.receiveChar(0xac00);
-
-
-    rvt::Screen const & screen = emulator.getScreen();
-
-    auto print_uc = [](rvt::ucs4_char uc) {
-        char utf8_ch[4];
-        std::size_t const n = ucs4_to_utf8(uc, utf8_ch);
-        std::cout.write(utf8_ch, static_cast<std::streamsize>(n));
-    };
-
-    auto print_ch = [&screen, print_uc](rvt::Character const & ch) {
-        if (ch.isRealCharacter) {
-            if (ch.is_extended()) {
-                for (rvt::ucs4_char uc : screen.extendedCharTable()[ch.character]) {
-                    print_uc(uc);
-                }
-            }
-            else {
-                print_uc(ch.character);
-            }
-        }
-    };
-
-    int i = 0;
-    for (auto const & line : screen.getScreenLines()) {
-        std::cout << std::setw(4) << ++i << " ";
-        for (rvt::Character const & ch : line) {
-            print_ch(ch);
-        }
-        std::cout << '\n';
-    }
-
-    auto print_color = [](char const * cmd, rvt::CharacterColor const & ch_color) {
-        auto color = ch_color.color(rvt::color_table);
-        std::cout << cmd << (color.red()+0) << ";" << (color.green()+0) << ";" << (color.blue()+0);
-    };
-    auto print_mode = [](char const * cmd, rvt::Character const & ch, rvt::Rendition r) {
-        if (bool(ch.rendition & r)) {
-            std::cout << cmd;
-        }
-    };
-
-    // Format
-    //@{
-    rvt::Rendition previous_rendition = rvt::Rendition::Default;
-    rvt::CharacterColor previous_fg(rvt::ColorSpace::Default, 0);
-    rvt::CharacterColor previous_bg(rvt::ColorSpace::Default, 1);
-    //@}
-    std::cout << "\033[0";
-    print_color(";38;2;", previous_fg);
-    print_color(";48;2;", previous_bg);
-    std::cout << "m";
-    for (auto const & line : screen.getScreenLines()) {
-        for (rvt::Character const & ch : line) {
-            if (!ch.isRealCharacter) {
-                continue;
-            }
-            if (ch.backgroundColor != previous_bg
-             || ch.foregroundColor != previous_fg
-             || ch.rendition != previous_rendition
-            ) {
-                std::cout << "\033[0";
-                print_mode(";1", ch, rvt::Rendition::Bold);
-                print_mode(";3", ch, rvt::Rendition::Italic);
-                print_mode(";4", ch, rvt::Rendition::Underline);
-                print_mode(";5", ch, rvt::Rendition::Blink);
-                print_mode(";7", ch, rvt::Rendition::Reverse);
-                print_color(";38;2;", ch.foregroundColor);
-                print_color(";48;2;", ch.backgroundColor);
-                std::cout << "m";
-                previous_bg = ch.backgroundColor;
-                previous_fg = ch.foregroundColor;
-                previous_rendition = ch.rendition;
-            }
-            print_ch(ch);
-        }
-        std::cout << '\n';
-    }
 }
