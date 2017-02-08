@@ -26,8 +26,8 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 
 #include "utils/log.hpp"
 
@@ -41,13 +41,13 @@
 #include "transport/test_transport.hpp"
 #include "transport/out_file_transport.hpp"
 #include "transport/in_file_transport.hpp"
-#include "transport/out_meta_sequence_transport.hpp"
 
-#include "capture/capture.hpp"
 #include "check_sig.hpp"
 #include "get_file_contents.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/bitmap_shrink.hpp"
+
+#include "capture/video_capture.hpp"
 
 class VideoSequencer : public gdi::CaptureApi
 {
@@ -89,8 +89,8 @@ private:
 BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCapture)
 {
     const int groupid = 0;
-    OutFilenameSequenceSeekableTransport trans(
-        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+    videocapture_OutFilenameSequenceSeekableTransport trans(
+        videocapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
         "./", "opaquerect_videocapture", ".flv", groupid);
 
     {
@@ -160,8 +160,8 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCapture)
 BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureMP4)
 {
     const int groupid = 0;
-    OutFilenameSequenceSeekableTransport trans(
-        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+    videocapture_OutFilenameSequenceSeekableTransport trans(
+        videocapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
         "./", "opaquerect_videocapture", ".mp4", groupid);
 
     {
@@ -232,8 +232,8 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureMP4)
 BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureOneChunk)
 {
     const int groupid = 0;
-    OutFilenameSequenceSeekableTransport trans(
-        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+    videocapture_OutFilenameSequenceSeekableTransport trans(
+        videocapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
         "./", "opaquerect_videocapture_one_chunk", ".flv", groupid);
 
     {
@@ -287,8 +287,8 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureOneChunk)
 BOOST_AUTO_TEST_CASE(TestFrameMarker)
 {
     const int groupid = 0;
-    OutFilenameSequenceSeekableTransport trans(
-        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+    videocapture_OutFilenameSequenceSeekableTransport trans(
+        videocapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
         "./", "framemarked_opaquerect_videocapture", ".flv", groupid);
 
     {
@@ -345,6 +345,7 @@ BOOST_AUTO_TEST_CASE(TestFrameMarker)
     ::unlink(filename);
 }
 
+void simple_movie(timeval now, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse);
 
 void simple_movie(timeval now, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse)
 {
@@ -424,5 +425,119 @@ BOOST_AUTO_TEST_CASE(TestFullVideoCaptureX264)
     BOOST_CHECK_EQUAL(54190, filesize(filename));
     ::unlink(filename);
 
+}
+
+BOOST_AUTO_TEST_CASE(SequencedVideoCaptureFLV)
+{
+    struct notified_on_video_change : public NotifyNextVideo
+    {
+        void notify_next_video(const timeval& now, reason reason) 
+        {
+            LOG(LOG_INFO, "next video: now=%u:%u reason=%u", 
+                static_cast<unsigned>(now.tv_sec),
+                static_cast<unsigned>(now.tv_usec),
+                static_cast<unsigned>(reason));
+        }
+    } next_video_notifier;
+
+    {
+        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
+        RDPDrawable drawable(800, 600);
+        FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", 0};
+        SequencedVideoCaptureImpl video_capture(now, 
+            "./", "opaquerect_seqvideocapture",
+            0 /* groupid */, false /* no_timestamp */, 100 /* zoom */, drawable, flv_params,
+            std::chrono::microseconds{1000000}, next_video_notifier);
+        simple_movie(now, drawable, video_capture, false, true);
+    }
+    
+    struct CheckFiles {
+        const char * filename;
+        size_t size;
+    } fileinfo[] = {
+        {"./opaquerect_seqvideocapture-000000.png", 3099},
+        {"./opaquerect_seqvideocapture-000000.flv", 29439},
+        {"./opaquerect_seqvideocapture-000001.png", 3099},
+        {"./opaquerect_seqvideocapture-000001.flv", 30726},
+        {"./opaquerect_seqvideocapture-000002.png", 3104},
+        {"./opaquerect_seqvideocapture-000002.flv", 29119},
+        {"./opaquerect_seqvideocapture-000003.png", 3101},
+        {"./opaquerect_seqvideocapture-000003.flv", 29108},
+        {"./opaquerect_seqvideocapture-000004.png", 3107},
+        {"./opaquerect_seqvideocapture-000004.flv", 29088},
+        {"./opaquerect_seqvideocapture-000005.png", 3101},
+        {"./opaquerect_seqvideocapture-000005.flv", 30560},
+        {"./opaquerect_seqvideocapture-000006.png", 3099},
+        {"./opaquerect_seqvideocapture-000006.flv", 29076},
+        {"./opaquerect_seqvideocapture-000007.png", 3101},
+        {"./opaquerect_seqvideocapture-000007.flv", 30125},
+        {"./opaquerect_seqvideocapture-000008.png", 3098},
+        {"./opaquerect_seqvideocapture-000008.flv", 28966},
+        {"./opaquerect_seqvideocapture-000009.png", 3098},
+        {"./opaquerect_seqvideocapture-000009.flv", 29309},
+        {"./opaquerect_seqvideocapture-000010.png", 3098},
+        {"./opaquerect_seqvideocapture-000010.flv", 13539}
+    };
+    for (auto x: fileinfo) {
+        BOOST_CHECK_EQUAL(x.size, filesize(x.filename));
+        ::unlink(x.filename);
+    }
+}
+
+
+BOOST_AUTO_TEST_CASE(SequencedVideoCaptureX264)
+{
+    struct notified_on_video_change : public NotifyNextVideo
+    {
+        void notify_next_video(const timeval& now, reason reason) 
+        {
+            LOG(LOG_INFO, "next video: now=%u:%u reason=%u", 
+                static_cast<unsigned>(now.tv_sec),
+                static_cast<unsigned>(now.tv_usec),
+                static_cast<unsigned>(reason));
+        }
+    } next_video_notifier;
+
+    {
+        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
+        RDPDrawable drawable(800, 600);
+        FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "mp4", 0};
+        SequencedVideoCaptureImpl video_capture(now, 
+            "./", "opaquerect_seqvideocapture_timestamp2",
+            0 /* groupid */, false /* no_timestamp */, 100 /* zoom */, drawable, flv_params,
+            std::chrono::microseconds{1000000}, next_video_notifier);
+        simple_movie(now, drawable, video_capture, false, true);
+    }
+    struct CheckFiles {
+        const char * filename;
+        size_t size;
+    } fileinfo[] = {
+        {"./opaquerect_seqvideocapture_timestamp2-000000.png", 3099},
+        {"./opaquerect_seqvideocapture_timestamp2-000000.mp4", 7323},
+        {"./opaquerect_seqvideocapture_timestamp2-000001.png", 3099},
+        {"./opaquerect_seqvideocapture_timestamp2-000001.mp4", 6889},
+        {"./opaquerect_seqvideocapture_timestamp2-000002.png", 3104},
+        {"./opaquerect_seqvideocapture_timestamp2-000002.mp4", 6629},
+        {"./opaquerect_seqvideocapture_timestamp2-000003.png", 3101},
+        {"./opaquerect_seqvideocapture_timestamp2-000003.mp4", 6385},
+        {"./opaquerect_seqvideocapture_timestamp2-000004.png", 3107},
+        {"./opaquerect_seqvideocapture_timestamp2-000004.mp4", 6013},
+        {"./opaquerect_seqvideocapture_timestamp2-000005.png", 3101},
+        {"./opaquerect_seqvideocapture_timestamp2-000005.mp4", 6036},
+        {"./opaquerect_seqvideocapture_timestamp2-000006.png", 3099},
+        {"./opaquerect_seqvideocapture_timestamp2-000006.mp4", 6133},
+        {"./opaquerect_seqvideocapture_timestamp2-000007.png", 3101},
+        {"./opaquerect_seqvideocapture_timestamp2-000007.mp4", 6410},
+        {"./opaquerect_seqvideocapture_timestamp2-000008.png", 3098},
+        {"./opaquerect_seqvideocapture_timestamp2-000008.mp4", 6631},
+        {"./opaquerect_seqvideocapture_timestamp2-000009.png", 3098},
+        {"./opaquerect_seqvideocapture_timestamp2-000009.mp4", 6876},
+        {"./opaquerect_seqvideocapture_timestamp2-000010.png", 3098},
+        {"./opaquerect_seqvideocapture_timestamp2-000010.mp4", 262}
+    };
+    for (auto x: fileinfo) {
+        BOOST_CHECK_EQUAL(x.size, filesize(x.filename));
+        ::unlink(x.filename);
+    }
 }
 

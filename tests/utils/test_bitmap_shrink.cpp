@@ -122,7 +122,6 @@ BOOST_AUTO_TEST_CASE(TestSimpleShrink)
 //#include "utils/rect.hpp"
 //#include "utils/stream.hpp"
 //#include "transport/out_file_transport.hpp"
-//#include "transport/out_meta_sequence_transport.hpp"
 //#include "transport/test_transport.hpp"
 //#include "utils/difftimeval.hpp"
 //#include "gdi/capture_api.hpp"

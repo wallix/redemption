@@ -41,7 +41,6 @@
 #include "transport/test_transport.hpp"
 #include "transport/out_file_transport.hpp"
 #include "transport/in_file_transport.hpp"
-#include "transport/out_meta_sequence_transport.hpp"
 
 #include "capture/capture.hpp"
 #include "check_sig.hpp"
@@ -569,301 +568,6 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     ::unlink(filename);
 }
 
-class VideoSequencer : public gdi::CaptureApi
-{
-    timeval start_break;
-    std::chrono::microseconds break_interval;
-
-protected:
-    VideoCapture & action;
-
-public:
-    VideoSequencer(const timeval & now, std::chrono::microseconds break_interval, VideoCapture & action)
-    : start_break(now)
-    , break_interval(break_interval)
-    , action(action)
-    {}
-
-    std::chrono::microseconds get_interval() const {
-        return this->break_interval;
-    }
-
-    void reset_now(const timeval& now) {
-        this->start_break = now;
-    }
-
-private:
-    std::chrono::microseconds do_snapshot(
-        const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
-    ) override {
-        assert(this->break_interval.count());
-        auto const interval = difftimeval(now, this->start_break);
-        if (interval >= uint64_t(this->break_interval.count())) {
-            this->action.next_video();
-            this->start_break = now;
-        }
-        return this->break_interval;
-    }
-};
-
-BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCapture)
-{
-    const int groupid = 0;
-    OutFilenameSequenceSeekableTransport trans(
-        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-        "./", "opaquerect_videocapture", ".flv", groupid);
-
-    {
-        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
-        const int width  = 800;
-        const int height = 600;
-        RDPDrawable drawable(width, height);
-
-        FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "flv", 0};
-        VideoCapture flvgen(now, trans, drawable, false, flv_params);
-        VideoSequencer flvseq(now, std::chrono::microseconds{2 * 1000000l}, flvgen);
-
-        Rect screen(0, 0, width, height);
-
-        auto const color_cxt = gdi::ColorCtx::depth24();
-        drawable.draw(RDPOpaqueRect(screen, BLUE), screen, color_cxt);
-
-        uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
-        Rect r(10, 10, 50, 50);
-        int vx = 5;
-        int vy = 4;
-        bool ignore_frame_in_timeval = false;
-        for (size_t x = 0; x < 250; x++) {
-            drawable.draw(RDPOpaqueRect(r, BLUE), screen, color_cxt);
-            r.y += vy;
-            r.x += vx;
-            drawable.draw(RDPOpaqueRect(r, WABGREEN), screen, color_cxt);
-            usec += 40000LL;
-            now.tv_sec  = usec / 1000000LL;
-            now.tv_usec = (usec % 1000000LL);
-            //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
-            drawable.set_mouse_cursor_pos(r.x + 10, r.y + 10);
-            flvgen.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-            flvseq.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-            if ((r.x + r.cx >= width ) || (r.x < 0)) { vx = -vx; }
-            if ((r.y + r.cy >= height) || (r.y < 0)) { vy = -vy; }
-        }
-    }
-
-    trans.disconnect();
-    auto & file_gen = *trans.seqgen();
-
-    // actual generated files depends on ffmpeg version
-    // values below depends on current embedded ffmpeg version
-    const char * filename;
-    filename = (file_gen.get(0));
-    BOOST_CHECK_EQUAL(40677, filesize(filename));
-    ::unlink(filename);
-    filename = (file_gen.get(1));
-    BOOST_CHECK_EQUAL(40011, filesize(filename));
-    ::unlink(filename);
-    filename = (file_gen.get(2));
-    BOOST_CHECK_EQUAL(41172, filesize(filename));
-    ::unlink(filename);
-    filename = (file_gen.get(3));
-    BOOST_CHECK_EQUAL(40610, filesize(filename));
-    ::unlink(filename);
-    filename = (file_gen.get(4));
-    BOOST_CHECK_EQUAL(40173, filesize(filename));
-    ::unlink(filename);
-    filename = (file_gen.get(5));
-    BOOST_CHECK_EQUAL(13539, filesize(filename));
-    ::unlink(filename);
-}
-
-
-BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureMP4)
-{
-    const int groupid = 0;
-    OutFilenameSequenceSeekableTransport trans(
-        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-        "./", "opaquerect_videocapture", ".mp4", groupid);
-
-    {
-        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
-        const int width  = 800;
-        const int height = 600;
-        RDPDrawable drawable(width, height);
-
-        FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "mp4", 0};
-        VideoCapture flvgen(now, trans, drawable, false, flv_params);
-        VideoSequencer flvseq(now, std::chrono::microseconds{2 * 1000000l}, flvgen);
-
-        Rect screen(0, 0, width, height);
-        
-        auto const color_cxt = gdi::ColorCtx::depth24();
-        drawable.draw(RDPOpaqueRect(screen, BLUE), screen, color_cxt);
-
-        uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
-        Rect r(10, 10, 50, 50);
-        int vx = 5;
-        int vy = 4;
-        bool ignore_frame_in_timeval = false;
-        for (size_t x = 0; x < 100; x++) {
-            drawable.draw(RDPOpaqueRect(r, BLUE), screen, color_cxt);
-            r.y += vy;
-            r.x += vx;
-            drawable.draw(RDPOpaqueRect(r, WABGREEN), screen, color_cxt);
-            usec += 40000LL;
-            now.tv_sec  = usec / 1000000LL;
-            now.tv_usec = (usec % 1000000LL);
-            //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
-            drawable.set_mouse_cursor_pos(r.x + 10, r.y + 10);
-            flvgen.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-            flvseq.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-            if ((r.x + r.cx >= width ) || (r.x < 0)) { vx = -vx; }
-            if ((r.y + r.cy >= height) || (r.y < 0)) { vy = -vy; }
-        }
-    }
-
-    trans.disconnect();
-    auto & file_gen = *trans.seqgen();
-
-    // actual generated files depends on ffmpeg version
-    // values below depends on current embedded ffmpeg version
-    // that's why there are two possible values allowed
-    const char * filename = (file_gen.get(0));
-    int fsize = filesize(filename);
-    switch (fsize) {
-        case 12999: break;
-        case 12985: break;
-        default: BOOST_CHECK_EQUAL(-2, fsize);
-    }
-    ::unlink(filename);
-    filename = (file_gen.get(1));
-    fsize = filesize(filename);
-    switch (fsize) {
-        case 11726: break;
-        case 11712: break;
-        default: BOOST_CHECK_EQUAL(-2, fsize);
-    }
-    ::unlink(filename);
-    filename = (file_gen.get(2));
-    BOOST_CHECK_EQUAL(262, filesize(filename));
-    ::unlink(filename);
-}
-
-
-BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureOneChunk)
-{
-    const int groupid = 0;
-    OutFilenameSequenceSeekableTransport trans(
-        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-        "./", "opaquerect_videocapture_one_chunk", ".flv", groupid);
-
-    {
-        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
-        const int width  = 800;
-        const int height = 600;
-        RDPDrawable drawable(width, height);
-
-//        FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "flv", 0};
-        VideoCapture flvgen(now, trans, drawable, false, {Level::high, width, height, 25, 15, 100000, "flv", 0});
-        VideoSequencer flvseq(now, std::chrono::microseconds{1000 * 1000000l}, flvgen);
-
-        Rect screen(0, 0, width, height);
-
-        auto const color_cxt = gdi::ColorCtx::depth24();
-        drawable.draw(RDPOpaqueRect(screen, BLUE), screen, color_cxt);
-
-        uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
-        Rect r(10, 10, 50, 50);
-        int vx = 5;
-        int vy = 4;
-        bool ignore_frame_in_timeval = false;
-        for (size_t x = 0; x < 1000 ; x++) {
-            r.y += vy;
-            drawable.draw(RDPOpaqueRect(r, BLUE), screen, color_cxt);
-            r.x += vx;
-            drawable.draw(RDPOpaqueRect(r, WABGREEN), screen, color_cxt);
-            usec += 40000LL;
-            now.tv_sec  = usec / 1000000LL;
-            now.tv_usec = (usec % 1000000LL);
-            //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
-            drawable.set_mouse_cursor_pos(r.x + 10, r.y + 10);
-            flvgen.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-            flvseq.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-            if ((r.x + r.cx >= width ) || (r.x < 0)) { vx = -vx; }
-            if ((r.y + r.cy >= height) || (r.y < 0)) { vy = -vy; }
-        }
-    }
-
-    trans.disconnect();
-    auto & file_gen = *trans.seqgen();
-
-    // actual generated files depends on ffmpeg version
-    // values below depends on current embedded ffmpeg version
-    const char * filename = (file_gen.get(0));
-    BOOST_CHECK_EQUAL(1629235, filesize(filename));
-    ::unlink(filename);
-}
-
-
-BOOST_AUTO_TEST_CASE(TestFrameMarker)
-{
-    const int groupid = 0;
-    OutFilenameSequenceSeekableTransport trans(
-        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-        "./", "framemarked_opaquerect_videocapture", ".flv", groupid);
-
-    {
-        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
-        const int width  = 800;
-        const int height = 600;
-        RDPDrawable drawable(width, height);
-
-        FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "flv", 0};
-        VideoCapture flvgen(now, trans, drawable, false, flv_params);
-        VideoSequencer flvseq(now, std::chrono::microseconds{1000 * 1000000l}, flvgen);
-
-        Rect screen(0, 0, width, height);
-        
-        auto const color_cxt = gdi::ColorCtx::depth24();
-        drawable.draw(RDPOpaqueRect(screen, BLUE), screen, color_cxt);
-
-        uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
-        Rect r(10, 10, 50, 25);
-        Rect r1(10, 10 + 25, 50, 25);
-        int vx = 5;
-        int vy = 4;
-        bool ignore_frame_in_timeval = false;
-        for (size_t x = 0; x < 1000 ; x++) {
-            drawable.draw(RDPOpaqueRect(r, BLUE), screen, color_cxt);
-            drawable.draw(RDPOpaqueRect(r1, BLUE), screen, color_cxt);
-            r.y += vy;
-            r.x += vx;
-            drawable.draw(RDPOpaqueRect(r, WABGREEN), screen, color_cxt);
-            usec += 40000LL;
-            now.tv_sec  = usec / 1000000LL;
-            now.tv_usec = (usec % 1000000LL);
-            //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
-            drawable.set_mouse_cursor_pos(r.x + 10, r.y + 10);
-            flvgen.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-            flvseq.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-            r1.y += vy;
-            r1.x += vx;
-            drawable.draw(RDPOpaqueRect(r1, RED), screen, color_cxt);
-            flvgen.preparing_video_frame();
-
-            if ((r.x + r.cx >= width ) || (r.x < 0)) { vx = -vx; }
-            if ((r.y + r.cy >= height) || (r.y < 0)) { vy = -vy; }
-        }
-    }
-
-    trans.disconnect();
-    auto & file_gen = *trans.seqgen();
-
-    // actual generated files depends on ffmpeg version
-    // values below depends on current embedded ffmpeg version
-    const char * filename = (file_gen.get(0));
-    BOOST_CHECK_EQUAL(734469, filesize(filename));
-    ::unlink(filename);
-}
 
 BOOST_AUTO_TEST_CASE(TestPattern)
 {
@@ -2911,3 +2615,281 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
     }
 }
 
+BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
+{
+    unsigned sec_start = 1352304810;
+    {
+        timeval now;
+        now.tv_sec = sec_start;
+        now.tv_usec = 0;
+        const int groupid = 0;
+        OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid);
+        wrm_trans.send("AAAAX", 5);
+        wrm_trans.send("BBBBX", 5);
+        wrm_trans.next();
+        wrm_trans.send("CCCCX", 5);
+    } // brackets necessary to force closing sequence
+
+    struct {
+        size_t len = 0;
+        ssize_t write(char const *, size_t len) {
+            this->len += len;
+            return len;
+        }
+    } meta_len_writer;
+
+    const char * meta_path = "./xxx.mwrm";
+    const char * meta_hash_path = "./hash-xxx.mwrm";
+    meta_len_writer.len = 5; // header
+    struct stat stat;
+    BOOST_CHECK(!::stat(meta_path, &stat));
+    BOOST_CHECK(!detail::write_meta_file_impl<false>(meta_len_writer, meta_path + 2, stat, 0, 0, nullptr));
+    BOOST_CHECK_EQUAL(meta_len_writer.len, filesize(meta_hash_path));
+    BOOST_CHECK_EQUAL(0, ::unlink(meta_hash_path));
+
+
+    meta_len_writer.len = 0;
+
+    detail::write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, false);
+
+    const char * file1 = "./xxx-000000.wrm";
+    BOOST_CHECK(!detail::write_meta_file(meta_len_writer, file1, sec_start, sec_start+1));
+    BOOST_CHECK_EQUAL(10, filesize(file1));
+    BOOST_CHECK_EQUAL(0, ::unlink(file1));
+
+    const char * file2 = "./xxx-000001.wrm";
+    BOOST_CHECK(!detail::write_meta_file(meta_len_writer, file2, sec_start, sec_start+1));
+    BOOST_CHECK_EQUAL(5, filesize(file2));
+    BOOST_CHECK_EQUAL(0, ::unlink(file2));
+
+    BOOST_CHECK_EQUAL(meta_len_writer.len, filesize(meta_path));
+    BOOST_CHECK_EQUAL(0, ::unlink(meta_path));
+}
+
+
+BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
+{
+    unsigned sec_start = 1352304810;
+    {
+        CryptoContext cctx;
+        cctx.set_master_key(cstr_array_view(
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+        ));
+        cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
+        timeval now;
+        now.tv_sec = sec_start;
+        now.tv_usec = 0;
+        const int groupid = 0;
+        OutMetaSequenceTransportWithSum wrm_trans(cctx, "./", "./", "xxx", now, 800, 600, groupid);
+        wrm_trans.send("AAAAX", 5);
+        wrm_trans.send("BBBBX", 5);
+        wrm_trans.next();
+        wrm_trans.send("CCCCX", 5);
+    } // brackets necessary to force closing sequence
+
+    struct {
+        size_t len = 0;
+        ssize_t write(char const *, size_t len) {
+            this->len += len;
+            return len;
+        }
+    } meta_len_writer;
+    detail::write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, true);
+
+    const unsigned hash_size = (1 + MD_HASH_LENGTH*2) * 2;
+
+//    char file1[1024];
+//    snprintf(file1, 1024, "./xxx-%06u-%06u.wrm", getpid(), 0);
+    const char * file1 = "./xxx-000000.wrm";
+    detail::write_meta_file(meta_len_writer, file1, sec_start, sec_start+1);
+    meta_len_writer.len += hash_size;
+    BOOST_CHECK_EQUAL(10, filesize(file1));
+    BOOST_CHECK_EQUAL(0, ::unlink(file1));
+
+//    char file2[1024];
+//    snprintf(file2, 1024, "./xxx-%06u-%06u.wrm", getpid(), 1);
+    const char * file2 = "./xxx-000001.wrm";
+    detail::write_meta_file(meta_len_writer, file2, sec_start, sec_start+1);
+    meta_len_writer.len += hash_size;
+    BOOST_CHECK_EQUAL(5, filesize(file2));
+    BOOST_CHECK_EQUAL(0, ::unlink(file2));
+
+//    char meta_path[1024];
+//    snprintf(meta_path, 1024, "./xxx-%06u.mwrm", getpid());
+    const char * meta_path = "./xxx.mwrm";
+    BOOST_CHECK_EQUAL(meta_len_writer.len, filesize(meta_path));
+    BOOST_CHECK_EQUAL(0, ::unlink(meta_path));
+}
+
+BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
+{
+    unlink("./xxx-000000.wrm");
+    unlink("./xxx-000001.wrm");
+    unlink("./xxx.mwrm");
+
+    timeval now;
+    now.tv_sec = 1352304810;
+    now.tv_usec = 0;
+    const int groupid = 0;
+    OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid, nullptr,
+                                       FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
+    wrm_trans.send("AAAAX", 5);
+    wrm_trans.send("BBBBX", 5);
+    wrm_trans.next();
+    wrm_trans.send("CCCCX", 5);
+
+    const FilenameGenerator * sqgen = wrm_trans.seqgen();
+
+    BOOST_CHECK(-1 != filesize(sqgen->get(0)));
+    BOOST_CHECK(-1 != filesize(sqgen->get(1)));
+    BOOST_CHECK(-1 != filesize("./xxx.mwrm"));
+
+    wrm_trans.request_full_cleaning();
+
+    BOOST_CHECK_EQUAL(-1, filesize(sqgen->get(0)));
+    BOOST_CHECK_EQUAL(-1, filesize(sqgen->get(1)));
+    BOOST_CHECK_EQUAL(-1, filesize("./xxx.mwrm"));
+}
+
+
+class ochecksum_buf_null_buf
+{
+    static constexpr size_t nosize = ~size_t{};
+    static constexpr size_t quick_size = 4096;
+    size_t file_size = nosize;
+
+    SslHMAC_Sha256_Delayed hmac;
+    SslHMAC_Sha256_Delayed quick_hmac;
+    unsigned char const (&hmac_key)[SHA256_DIGEST_LENGTH];
+
+public:
+    explicit ochecksum_buf_null_buf(unsigned char const (&hmac_key)[SHA256_DIGEST_LENGTH])
+    : hmac_key(hmac_key)
+    {}
+
+    int open()
+    {
+        this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
+        this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
+        this->file_size = 0;
+        return 0;
+    }
+
+    ssize_t write(const void * data, size_t len)
+    {
+        this->hmac.update(static_cast<const uint8_t *>(data), len);
+        if (this->file_size < quick_size) {
+            auto const remaining = std::min(quick_size - this->file_size, len);
+            this->quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
+            this->file_size += remaining;
+        }
+        return len;
+    }
+
+    int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
+    {
+        this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
+        this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
+        this->file_size = nosize;
+        return 0;
+    }
+};
+
+
+BOOST_AUTO_TEST_CASE(TestOSumBuf)
+{
+    CryptoContext cctx;
+    cctx.set_master_key(cstr_array_view(
+        "\x00\x01\x02\x03\x04\x05\x06\x07"
+        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        "\x10\x11\x12\x13\x14\x15\x16\x17"
+        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+    ));
+    cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
+    transbuf::ochecksum_buf_null_buf buf(cctx.get_hmac_key());
+    buf.open();
+    BOOST_CHECK_EQUAL(buf.write("ab", 2), 2);
+    BOOST_CHECK_EQUAL(buf.write("cde", 3), 3);
+
+    detail::hash_type hash;
+    buf.close(hash);
+
+    char hash_str[detail::hash_string_len + 1];
+    *detail::swrite_hash(hash_str, hash) = 0;
+    BOOST_CHECK_EQUAL(
+        hash_str,
+        " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
+        " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
+    );
+}
+
+#include <string>
+
+BOOST_AUTO_TEST_CASE(TestWriteFilename)
+{
+    using detail::write_filename;
+
+    struct {
+        std::string s;
+
+        int write(char const * data, std::size_t len) {
+            s.append(data, len);
+            return len;
+        }
+    } writer;
+
+#define TEST_WRITE_FILENAME(origin_filename, wrote_filename) \
+    write_filename(writer, origin_filename);                 \
+    BOOST_CHECK_EQUAL(writer.s, wrote_filename);             \
+    writer.s.clear()
+
+    TEST_WRITE_FILENAME("abcde.txt", "abcde.txt");
+
+    TEST_WRITE_FILENAME(R"(\abcde.txt)", R"(\\abcde.txt)");
+    TEST_WRITE_FILENAME(R"(abc\de.txt)", R"(abc\\de.txt)");
+    TEST_WRITE_FILENAME(R"(abcde.txt\)", R"(abcde.txt\\)");
+    TEST_WRITE_FILENAME(R"(abc\\de.txt)", R"(abc\\\\de.txt)");
+    TEST_WRITE_FILENAME(R"(\\\\)", R"(\\\\\\\\)");
+
+    TEST_WRITE_FILENAME(R"( abcde.txt)", R"(\ abcde.txt)");
+    TEST_WRITE_FILENAME(R"(abc de.txt)", R"(abc\ de.txt)");
+    TEST_WRITE_FILENAME(R"(abcde.txt )", R"(abcde.txt\ )");
+    TEST_WRITE_FILENAME(R"(abc  de.txt)", R"(abc\ \ de.txt)");
+    TEST_WRITE_FILENAME(R"(    )", R"(\ \ \ \ )");
+}
+
+BOOST_AUTO_TEST_CASE(TestWriteHash)
+{
+    detail::hash_type hash;
+    std::iota(std::begin(hash), std::end(hash), 0);
+
+    char hash_str[detail::hash_string_len + 1];
+    *detail::swrite_hash(hash_str, hash) = 0;
+    BOOST_CHECK_EQUAL(
+        hash_str,
+        " 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"
+        " 202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"
+    );
+}
+
+#include "utils/fileutils.hpp"
+
+BOOST_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
+{
+    OutFilenameSequenceTransport fnt(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test_outfilenametransport", ".txt", getgid(), nullptr);
+    fnt.send("We write, ", 10);
+    fnt.send("and again, ", 11);
+    fnt.send("and so on.", 10);
+
+    fnt.next();
+    fnt.send(" ", 1);
+    fnt.send("A new file.", 11);
+
+    BOOST_CHECK_EQUAL(filesize(fnt.seqgen()->get(0)), 31);
+    BOOST_CHECK_EQUAL(filesize(fnt.seqgen()->get(1)), 12);
+
+    fnt.disconnect();
+    unlink(fnt.seqgen()->get(0));
+    unlink(fnt.seqgen()->get(1));
+}
