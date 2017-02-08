@@ -687,8 +687,8 @@ protected:
         : mod_(mod)
         {}
 
-        void operator()(time_t now, gdi::GraphicApi& drawable) override {
-            this->mod_.process_asynchronous_task_event(now, drawable);
+        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+            this->mod_.process_asynchronous_task_event(now, event, drawable);
         }
     } asynchronous_task_event_handler;
 
@@ -700,8 +700,8 @@ protected:
         : mod_(mod)
         {}
 
-        void operator()(time_t now, gdi::GraphicApi& drawable) override {
-            this->mod_.process_session_probe_launcher_event(now, drawable);
+        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+            this->mod_.process_session_probe_launcher_event(now, event, drawable);
         }
     } session_probe_launcher_event_handler;
 
@@ -713,8 +713,8 @@ protected:
         : mod_(mod)
         {}
 
-        void operator()(time_t now, gdi::GraphicApi& drawable) override {
-            this->mod_.process_session_probe_virtual_channel_event(now, drawable);
+        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+            this->mod_.process_session_probe_virtual_channel_event(now, event, drawable);
         }
     } session_probe_virtual_channel_event_handler;
 
@@ -1783,7 +1783,7 @@ public:
     }
 
 private:
-    void process_asynchronous_task_event(time_t, gdi::GraphicApi&) {
+    void process_asynchronous_task_event(time_t, wait_obj* /* event*/, gdi::GraphicApi&) {
         if (!this->asynchronous_tasks.front()->run(this->asynchronous_task_event)) {
             this->asynchronous_tasks.pop_front();
         }
@@ -1796,14 +1796,14 @@ private:
         }
     }
 
-    void process_session_probe_launcher_event(time_t, gdi::GraphicApi&) {
+    void process_session_probe_launcher_event(time_t, wait_obj* /*event*/, gdi::GraphicApi&) {
         if (this->session_probe_launcher) {
             this->session_probe_launcher->on_event();
         }
     }
 
-    void process_session_probe_virtual_channel_event(time_t, gdi::GraphicApi&) {
-        //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event()");
+    void process_session_probe_virtual_channel_event(time_t, wait_obj* event, gdi::GraphicApi&) {
+        //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event() ...");
         try{
             if (this->session_probe_virtual_channel_p) {
                 this->session_probe_virtual_channel_p->process_event();
@@ -1819,14 +1819,11 @@ private:
             this->authentifier.disconnect_target();
             this->authentifier.set_auth_error_message(TR("session_logoff_in_progress", this->lang));
 
-            if (this->session_probe_virtual_channel_p) {
-                wait_obj* event = this->session_probe_virtual_channel_p->get_event();
-
-                if (event) {
-                    event->signal = BACK_EVENT_NEXT;
-                }
+            if (event) {
+                event->signal = BACK_EVENT_NEXT;
             }
         }
+        //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event() done.");
     }
 
 public:

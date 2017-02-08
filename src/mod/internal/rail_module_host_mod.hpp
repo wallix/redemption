@@ -48,8 +48,8 @@ class RailModuleHostMod : public LocallyIntegrableMod, public NotifyApi {
         : mod_(mod)
         {}
 
-        void operator()(time_t now, gdi::GraphicApi& drawable) override {
-            this->mod_.process_managed_mod_event(now, drawable);
+        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+            this->mod_.process_managed_mod_event(now, event, drawable);
         }
     } managed_mod_event_handler;
 
@@ -85,7 +85,7 @@ public:
 
     void notify(Widget2*, notify_event_t) override {}
 
-    void process_managed_mod_event(time_t now, gdi::GraphicApi& gapi) {
+    void process_managed_mod_event(time_t now, wait_obj* /*event*/, gdi::GraphicApi& gapi) {
         mod_api& mod = this->rail_module_host.get_managed_mod();
 
         mod.draw_event(now, gapi);

@@ -45,7 +45,7 @@ public:
     public:
         virtual ~CB() = default;
 
-        virtual void operator()(time_t now, gdi::GraphicApi& drawable) = 0;
+        virtual void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) = 0;
     };
 
 private:
@@ -66,7 +66,7 @@ public:
 
     void operator()(time_t now, gdi::GraphicApi& drawable) {
         if (this->cb_) {
-            (*this->cb_)(now, drawable);
+            (*this->cb_)(now, this->event_, drawable);
         }
     }
 
