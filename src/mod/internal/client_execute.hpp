@@ -171,8 +171,7 @@ public:
         return result_rect;
     }   // adjust_rect
 
-private:
-    const Rect get_current_work_area_rect() {
+    Rect get_current_work_area_rect() const {
         REDASSERT(this->work_area_count);
 
         if (!this->window_rect.isempty()) {
@@ -195,8 +194,7 @@ private:
         return this->work_areas[0];
     }
 
-public:
-    const Rect get_window_rect() {
+    Rect get_window_rect() const {
         return this->window_rect;
     }
 

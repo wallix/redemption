@@ -387,7 +387,21 @@ private:
                 this->color = color_encode(color, this->mm.front.client_info.bpp);
                 this->background_color = color_encode(background_color, this->mm.front.client_info.bpp);
             }
-            this->clip = Rect(this->mm.front.client_info.width < w ? 0 : (this->mm.front.client_info.width - w) / 2, 0, w, h);
+
+            if (this->mm.front.client_info.remote_program &&
+                (this->mm.winapi == static_cast<windowing_api*>(&this->mm.client_execute))) {
+
+                Rect current_work_area_rect = this->mm.client_execute.get_current_work_area_rect();
+
+                this->clip = Rect(
+                    current_work_area_rect.x +
+                        (current_work_area_rect.cx < w ? 0 : (current_work_area_rect.cx - w) / 2),
+                    0, w, h);
+            }
+            else {
+                this->clip = Rect(this->mm.front.client_info.width < w ? 0 : (this->mm.front.client_info.width - w) / 2, 0, w, h);
+            }
+
             this->set_protected_rect(this->clip);
 
             if (this->mm.winapi) {
