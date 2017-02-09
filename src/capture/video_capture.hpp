@@ -48,26 +48,23 @@ public:
     : fd(fd)
     {}
 
-    videocapture_fdbuf(videocapture_fdbuf && other) noexcept
-    : fd(other.fd)
-    {
-        other.fd = -1;
-    }
-
     ~videocapture_fdbuf()
     {
-        this->close();
+        if (-1 != this->fd) {
+            ::close(this->fd);
+            this->fd = -1;
+        }
     }
 
-    int close()
-    {
-        if (-1 != this->fd) {
-            const int ret = ::close(this->fd);
-            this->fd = -1;
-            return ret;
-        }
-        return 0;
-    }
+//    int close()
+//    {
+//        if (-1 != this->fd) {
+//            const int ret = ::close(this->fd);
+//            this->fd = -1;
+//            return ret;
+//        }
+//        return 0;
+//    }
 
     explicit operator bool () const noexcept
     {
@@ -238,7 +235,8 @@ public:
     int next()
     {
         if (this->buf_.fd != -1) {
-            this->buf_.close();
+            ::close(this->buf_.fd);
+            this->buf_.fd = -1;
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             return this->rename_filename() ? 0 : 1;
         }
@@ -250,8 +248,9 @@ public:
         unsigned i = this->num_file_ + 1;
         while (i > 0 && !::unlink(this->filegen_.get(--i))) {
         }
-        if (this->buf_.fd != -1) {
-            this->buf_.close();
+        if (-1 != this->buf_.fd) {
+            ::close(this->buf_.fd);
+            this->buf_.fd = -1;
         }
     }
 
@@ -288,7 +287,11 @@ protected:
                , strerror(errno), errno);
         }
         this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-        this->buf_.close();
+
+        if (-1 != this->buf_.fd) {
+            ::close(this->buf_.fd);
+            this->buf_.fd = -1;
+        }
         this->buf_.fd = fd;
         return fd;
     }
