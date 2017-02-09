@@ -803,7 +803,28 @@ public:
             if (this->status == false) {
                 throw Error(ERR_TRANSPORT_NO_MORE_DATA);
             }
-            const ssize_t res = this->buf.next();
+            ssize_t tmpres = 1;
+            if (this->buf.buf_fd != -1) {
+                ::close(this->buf.buf_fd);
+                this->buf.buf_fd = -1;
+                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+                this->buf.filegen_.set_last_filename(-1u, "");
+                const char * filename = this->buf.filegen_.get(this->buf.num_file_);
+                this->buf.filegen_.set_last_filename(this->buf.num_file_, this->buf.current_filename_);
+
+                const int res = ::rename(this->buf.current_filename_, filename);
+                if (res < 0) {
+                    LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                       , this->buf.current_filename_, filename, errno, strerror(errno));
+                }
+                else {
+                    this->buf.current_filename_[0] = 0;
+                    ++this->buf.num_file_;
+                    this->buf.filegen_.set_last_filename(-1u, "");
+                    tmpres = 0;
+                }
+            }
+            const ssize_t res = tmpres;
             if (res) {
                 this->status = false;
                 if (res < 0){
@@ -850,12 +871,12 @@ public:
 
         class videocapture_out_sequence_filename_buf_impl
         {
-            char current_filename_[1024];
             public:
+            char current_filename_[1024];
             videocapture_FilenameGenerator filegen_;
-            private:
             int buf_fd;
             unsigned num_file_;
+            private:
             int groupid_;
 
         public:
@@ -869,7 +890,29 @@ public:
             }
 
             int close()
-            { return this->next(); }
+            {
+                int tmpxres = 1; // error
+                if (this->buf_fd != -1) {
+                    ::close(this->buf_fd);
+                    this->buf_fd = -1;
+                    // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+                    this->filegen_.set_last_filename(-1u, "");
+                    const char * filename = this->filegen_.get(this->num_file_);
+                    this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+                    const int res = ::rename(this->current_filename_, filename);
+                    if (res < 0) {
+                        LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                           , this->current_filename_, filename, errno, strerror(errno));
+                    }
+                    else {
+                        this->current_filename_[0] = 0;
+                        ++this->num_file_;
+                        this->filegen_.set_last_filename(-1u, "");
+                        tmpxres = 0;
+                    }
+                }
+                return tmpxres;
+            }
 
             ssize_t write(const void * data, size_t len)
             {
@@ -894,18 +937,6 @@ public:
                     total_sent += ret;
                 }
                 return total_sent;
-            }
-
-            /// \return 0 if success
-            int next()
-            {
-                if (this->buf_fd != -1) {
-                    ::close(this->buf_fd);
-                    this->buf_fd = -1;
-                    // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                    return this->rename_filename() ? 0 : 1;
-                }
-                return 1;
             }
 
             void request_full_cleaning()
@@ -948,31 +979,6 @@ public:
                 }
                 this->buf_fd = fd;
                 return fd;
-            }
-
-            const char * rename_filename()
-            {
-                const char * filename = this->get_filename_generate();
-                const int res = ::rename(this->current_filename_, filename);
-                if (res < 0) {
-                    LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                       , this->current_filename_, filename, errno, strerror(errno));
-                    return nullptr;
-                }
-
-                this->current_filename_[0] = 0;
-                ++this->num_file_;
-                this->filegen_.set_last_filename(-1u, "");
-
-                return filename;
-            }
-
-            const char * get_filename_generate()
-            {
-                this->filegen_.set_last_filename(-1u, "");
-                const char * filename = this->filegen_.get(this->num_file_);
-                this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-                return filename;
             }
         } buf;
     } ic_trans;
