@@ -441,11 +441,8 @@ private:
             }
         }
 
-//        const videocapture_FilenameGenerator & seqgen() const noexcept
-//        { return this->filegen_; }
-
-        int & buf() noexcept
-        { return this->buf_fd; }
+//        int & buf() noexcept
+//        { return this->buf_fd; }
 
         const char * current_path() const
         {
