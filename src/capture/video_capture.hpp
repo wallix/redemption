@@ -57,11 +57,11 @@ public:
         other.fd = -1;
     }
 
-    videocapture_fdbuf& operator=(videocapture_fdbuf && other) noexcept
-    {
-        this->fd = exchange(other.fd, -1);
-        return *this;
-    }
+//    videocapture_fdbuf& operator=(videocapture_fdbuf && other) noexcept
+//    {
+//        this->fd = exchange(other.fd, -1);
+//        return *this;
+//    }
 
     ~videocapture_fdbuf()
     {
