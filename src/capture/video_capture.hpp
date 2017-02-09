@@ -295,24 +295,11 @@ struct videocapture_out_sequence_filename_buf_param
 };
 
 
-struct videocapture_no_param {};
-
-template<class Buf>
-struct videocapture_empty_ctor
-: Buf
-{
-    explicit videocapture_empty_ctor(videocapture_no_param = videocapture_no_param()) noexcept
-    {}
-};
-
-
-
-
 class videocapture_out_sequence_filename_buf_impl
 {
     char current_filename_[1024];
     videocapture_FilenameGenerator filegen_;
-    videocapture_empty_ctor<videocapture_fdbuf> buf_;
+    videocapture_fdbuf buf_;
     unsigned num_file_;
     int groupid_;
 
@@ -367,7 +354,7 @@ public:
     const videocapture_FilenameGenerator & seqgen() const noexcept
     { return this->filegen_; }
 
-    videocapture_empty_ctor<videocapture_fdbuf> & buf() noexcept
+    videocapture_fdbuf & buf() noexcept
     { return this->buf_; }
 
     const char * current_path() const
