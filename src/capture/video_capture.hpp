@@ -39,65 +39,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-
-struct videocapture_FilenameGenerator_PATH_FILE_EXTENSION
-{
-private:
-    char         path[1024];
-    char         filename[1012];
-    char         extension[12];
-    unsigned     pid;
-    mutable char filename_gen[1024];
-
-    const char * last_filename;
-    unsigned     last_num;
-
-public:
-    videocapture_FilenameGenerator_PATH_FILE_EXTENSION(
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension)
-    : pid(getpid())
-    , last_filename(nullptr)
-    , last_num(-1u)
-    {
-        if (strlen(prefix) > sizeof(this->path) - 1
-         || strlen(filename) > sizeof(this->filename) - 1
-         || strlen(extension) > sizeof(this->extension) - 1) {
-            throw Error(ERR_TRANSPORT);
-        }
-
-        strcpy(this->path, prefix);
-        strcpy(this->filename, filename);
-        strcpy(this->extension, extension);
-
-        this->filename_gen[0] = 0;
-    }
-
-    const char * get(unsigned count) const
-    {
-        if (count == this->last_num && this->last_filename) {
-            return this->last_filename;
-        }
-
-        using std::snprintf;
-        snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s%s", this->path
-                , this->filename, this->extension);
-        return this->filename_gen;
-    }
-
-    void set_last_filename(unsigned num, const char * name)
-    {
-        this->last_num = num;
-        this->last_filename = name;
-    }
-
-private:
-    videocapture_FilenameGenerator_PATH_FILE_EXTENSION(videocapture_FilenameGenerator_PATH_FILE_EXTENSION const &) = delete;
-    videocapture_FilenameGenerator_PATH_FILE_EXTENSION& operator=(videocapture_FilenameGenerator_PATH_FILE_EXTENSION const &) = delete;
-};
-
-
 struct videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION
 {
 private:
@@ -368,7 +309,59 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
     struct videocapture_OutFilenameSequenceSeekableTransport : public Transport
     {
         char buf_current_filename_[1024];
-        videocapture_FilenameGenerator_PATH_FILE_EXTENSION buf_filegen_;
+        struct videocapture_FilenameGenerator_PATH_FILE_EXTENSION
+        {
+        private:
+            char         path[1024];
+            char         filename[1012];
+            char         extension[12];
+            unsigned     pid;
+            mutable char filename_gen[1024];
+
+            const char * last_filename;
+            unsigned     last_num;
+
+        public:
+            videocapture_FilenameGenerator_PATH_FILE_EXTENSION(
+                const char * const prefix,
+                const char * const filename,
+                const char * const extension)
+            : pid(getpid())
+            , last_filename(nullptr)
+            , last_num(-1u)
+            {
+                if (strlen(prefix) > sizeof(this->path) - 1
+                 || strlen(filename) > sizeof(this->filename) - 1
+                 || strlen(extension) > sizeof(this->extension) - 1) {
+                    throw Error(ERR_TRANSPORT);
+                }
+
+                strcpy(this->path, prefix);
+                strcpy(this->filename, filename);
+                strcpy(this->extension, extension);
+
+                this->filename_gen[0] = 0;
+            }
+
+            const char * get(unsigned count) const
+            {
+                if (count == this->last_num && this->last_filename) {
+                    return this->last_filename;
+                }
+
+                using std::snprintf;
+                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s%s", this->path
+                        , this->filename, this->extension);
+                return this->filename_gen;
+            }
+
+            void set_last_filename(unsigned num, const char * name)
+            {
+                this->last_num = num;
+                this->last_filename = name;
+            }
+        } buf_filegen_;
+
         int buf_buf_fd;
         unsigned buf_num_file_;
         int buf_groupid_;
@@ -390,9 +383,6 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
                     this->set_authentifier(authentifier);
                 }
         }
-
-//        const videocapture_FilenameGenerator_PATH_FILE_EXTENSION * seqgen() const noexcept
-//        { return &this->buf_filegen_; }
 
         void seek(int64_t offset, int whence) override {
             if (static_cast<off64_t>(-1) == lseek64(this->buf_buf_fd, offset, whence)){
