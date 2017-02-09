@@ -4528,28 +4528,30 @@ protected:
                         const int16_t y = cmd.bk.y;
 
                         const Rect rect = clip.intersect(Rect(x, y, fc.width, fc.height));
-                        if (Rect(0,0,0,0) != rect) {
+                        LOG(LOG_WARNING, "Clip Rect x=%u y=%u cx=%u, cy=%u", clip.x, clip.y, clip.cx, clip.cy);
+                        LOG(LOG_WARNING, "rect Rect x=%u y=%u cx=%u, cy=%u", rect.x, rect.y, rect.cx, rect.cy);
+                        if (rect.cx != 0 && rect.cy != 0) {
 
                             GlyphTo24Bitmap glyphBitmap(fc, color_fore, color_back);
 
                             RDPBitmapData rDPBitmapData;
-                            rDPBitmapData.dest_left = x;
-                            rDPBitmapData.dest_top = y;
-                            rDPBitmapData.dest_right = fc.width + x - 1;
-                            rDPBitmapData.dest_bottom = fc.height + y - 1;
-                            rDPBitmapData.width = fc.width;
-                            rDPBitmapData.height = fc.height;
+                            rDPBitmapData.dest_left = rect.x;
+                            rDPBitmapData.dest_top = rect.y;
+                            rDPBitmapData.dest_right = rect.cx + rect.x - 1;
+                            rDPBitmapData.dest_bottom = rect.cy + rect.y - 1;
+                            rDPBitmapData.width = rect.cx;
+                            rDPBitmapData.height = rect.cy;
                             rDPBitmapData.bits_per_pixel = 24;
-//                             rDPBitmapData.flags;
-                            rDPBitmapData.bitmap_length = fc.width * fc.height * 3;
-//
-//                             // Compressed Data Header (TS_CD_HEADER)
-//                             rDPBitmapData.cb_comp_main_body_size;
-//                             rDPBitmapData.cb_scan_width;
-//                             urDPBitmapData.cb_uncompressed_size;
+                            rDPBitmapData.flags = 0x0401;
+                            rDPBitmapData.bitmap_length = rect.cx * rect.cy * 3;
+
+                             // Compressed Data Header (TS_CD_HEADER)
+                            rDPBitmapData.cb_comp_main_body_size;
+                            rDPBitmapData.cb_scan_width;
+                            rDPBitmapData.cb_uncompressed_size;
 
                             //RDPMemBlt cmd(cmd.cache_id, rect, 0xCC, rect.x, rect.y, 0);
-                            const Rect tile(0, 0, fc.width, fc.height);
+                            const Rect tile(rect.x - x, rect.y - y, rect.cx, rect.cy);
                             Bitmap bmp(glyphBitmap.raw_data, fc.width, 16, 24, tile);
                             draw_impl(rDPBitmapData, bmp);
                         }
