@@ -4652,7 +4652,6 @@ public:
 };
 
 
-
 namespace {
     template<std::size_t N>
     inline bool cstr_equal(char const (&s1)[N], array_view_const_char s2) {

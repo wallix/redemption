@@ -4417,6 +4417,7 @@ protected:
         this->priv_draw_and_update_cache_brush(cmd, clip, color_ctx);
     }
 
+public:
     using Color = Drawable::Color;
 
     Color u32_to_color(uint32_t color) const {
@@ -4438,21 +4439,61 @@ protected:
         return this->u32_to_color(color);
     }
 
+    typedef struct GlyphTo24Bitmap {
+
+        uint8_t raw_data[256*3];
+
+        GlyphTo24Bitmap( FontChar const & fc
+                     , const Color color_fore
+                     , const Color color_back) {
+
+            for (int i = 0; i < 256*3; i += 3) {
+                this->raw_data[i  ] = color_fore.red();
+                this->raw_data[i+1] = color_fore.green();
+                this->raw_data[i+2] = color_fore.blue();
+            }
+
+            int height_bitmap = fc.height;
+            if (fc.width == 8) {
+                height_bitmap *=  2;
+            }
+
+            const uint8_t * fc_data = fc.data.get();
+
+            for (int y = 0 ; y < height_bitmap; y++) {
+                uint8_t   fc_bit_mask        = 128;
+                for (int x = 0 ; x < fc.width; x++) {
+                    if (!fc_bit_mask) {
+                        fc_data++;
+                        fc_bit_mask = 128;
+                    }
+
+                    const uint16_t xpix = x * 3;
+                    const uint16_t ypix = y * fc.width * 3;
+
+                    if (fc_bit_mask & *fc_data) {
+                        this->raw_data[xpix + ypix    ] = color_back.blue();
+                        this->raw_data[xpix + ypix + 1] = color_back.green();
+                        this->raw_data[xpix + ypix + 2] = color_back.red();
+                    }
+                    fc_bit_mask >>= 1;
+                }
+                fc_data++;
+            }
+        }
+    } GlyphTo24Bitmap;
+
+
+protected:
     void draw_impl(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) {
 
         if (this->client_glyphcache_caps.GlyphSupportLevel == GlyphCacheCaps::GLYPH_SUPPORT_NONE) {
-// GlyphCacheCaps::GLYPH_SUPPORT_NONE
             bool has_delta_bytes = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
             const Color color_fore = this->u32rgb_to_color(color_ctx, cmd.fore_color);
             const Color color_back = this->u32rgb_to_color(color_ctx, cmd.back_color);
-//             const int16_t offset_y = /*cmd.bk.cy - (*/cmd.glyph_y - cmd.bk.y/* + 1)*/;
-//             const int16_t offset_x = cmd.glyph_x - cmd.bk.x;
 
             uint16_t draw_pos_ref = 0;
-
             InStream variable_bytes(cmd.data, cmd.data_len);
-
-//             uint8_t const * fragment_begin_position = variable_bytes.get_current();
 
             while (variable_bytes.in_remain()) {
                 uint8_t data = variable_bytes.in_uint8();
@@ -4472,111 +4513,43 @@ protected:
                         }
                     }
 
-                    if (fc)
-                    {
+                    if (fc) {
                         const int16_t x = cmd.bk.x + draw_pos_ref;
                         const int16_t y = cmd.bk.y;
 
                         const Rect rect = clip.intersect(Rect(x, y, fc.width, fc.height));
-                        if (Rect(0,0,0,0) != rect){
+                        if (rect.cx != 0 && rect.cy != 0) {
 
-                            const uint8_t * fc_data = fc.data.get();
-                            uint8_t data[256*3];
-
-                            for (int i = 0; i < 256*3; i += 3) {
-                                data[i  ] = color_fore.red();
-                                data[i+1] = color_fore.green();
-                                data[i+2] = color_fore.blue();
-                            }
-
-                            int height_bitmap = fc.height;
-
-                            if (fc.width == 8) {
-                                height_bitmap *=  2;
-                            }
-
-                            for (int yy = 0 ; yy < height_bitmap; yy++) {
-                                uint8_t   fc_bit_mask        = 128;
-                                for (int xx = 0 ; xx < fc.width; xx++) {
-                                    if (!fc_bit_mask) {
-                                        fc_data++;
-                                        fc_bit_mask = 128;
-                                    }
-
-                                    const uint16_t xpix = xx * 3;
-                                    const uint16_t ypix = yy * fc.width * 3;
-
-                                    if (fc_bit_mask & *fc_data) {
-                                        data[xpix + ypix    ] = color_back.blue();
-                                        data[xpix + ypix + 1] = color_back.green();
-                                        data[xpix + ypix + 2] = color_back.red();
-                                    }
-                                    fc_bit_mask >>= 1;
-                                }
-                                fc_data++;
-                            }
+                            GlyphTo24Bitmap glyphBitmap(fc, color_fore, color_back);
 
                             RDPBitmapData rDPBitmapData;
-                            rDPBitmapData.dest_left = x;
-                            rDPBitmapData.dest_top = y;
-                            rDPBitmapData.dest_right = fc.width + x - 1;
-                            rDPBitmapData.dest_bottom = fc.height + y - 1;
-//                             rDPBitmapData.width = fc.width;
-//                             rDPBitmapData.height = fc.height;
-//                             rDPBitmapData.bits_per_pixel = 32;
-//                             rDPBitmapData.flags;
-//                             rDPBitmapData.bitmap_length = fc.width * fc.height * 3;
-//
-//                             // Compressed Data Header (TS_CD_HEADER)
+                            rDPBitmapData.dest_left = rect.x;
+                            rDPBitmapData.dest_top = rect.y;
+                            rDPBitmapData.dest_right = rect.cx + rect.x - 1;
+                            rDPBitmapData.dest_bottom = rect.cy + rect.y - 1;
+                            rDPBitmapData.width = rect.cx;
+                            rDPBitmapData.height = rect.cy;
+                            rDPBitmapData.bits_per_pixel = 24;
+                            rDPBitmapData.flags = 0x0401;
+                            rDPBitmapData.bitmap_length = rect.cx * rect.cy * 3;
+
+                             // Compressed Data Header (TS_CD_HEADER)
 //                             rDPBitmapData.cb_comp_main_body_size;
 //                             rDPBitmapData.cb_scan_width;
-//                             urDPBitmapData.cb_uncompressed_size;
+//                             rDPBitmapData.cb_uncompressed_size;
 
                             //RDPMemBlt cmd(cmd.cache_id, rect, 0xCC, rect.x, rect.y, 0);
-                            const Rect tile(0, 0, fc.width, fc.height);
-                            Bitmap bmp(data, fc.width, 16, 24, tile);
+                            const Rect tile(rect.x - x, rect.y - y, rect.cx, rect.cy);
+                            Bitmap bmp(glyphBitmap.raw_data, fc.width, 16, 24, tile);
                             draw_impl(rDPBitmapData, bmp);
                         }
                     }
                 }
                 else if (data == 0xFE) {
-                     LOG(LOG_WARNING, "data == 0xFE");
-//                     const uint8_t fragment_index = variable_bytes.in_uint8();
-//
-//                     uint16_t delta = 0;
-//                     if (has_delta_bytes)
-//                     {
-//                         delta = variable_bytes.in_uint8();
-//                         if (delta == 0x80)
-//                         {
-//                             delta = variable_bytes.in_uint16_le();
-//                         }
-//                     }
-//                     REDASSERT(!delta);  // Fragment's position delta is not yet supported.
-//
-//                     fragment_begin_position = variable_bytes.get_current();
-
-//                     this->draw_VariableBytes(&this->fragment_cache[fragment_index][1],
-//                         this->fragment_cache[fragment_index][0], has_delta_bytes,
-//                         draw_pos_ref, offset_y, color, bmp_pos_x, bmp_pos_y, clip,
-//                         cache_id, gly_cache);
+                     LOG(LOG_WARNING, "Glyph fragment not implemented yet");
                 }
                 else if (data == 0xFF)  {
-                    LOG(LOG_WARNING, "data == 0xFF");
-//                     const uint8_t fragment_index = variable_bytes.in_uint8();
-//                     const uint8_t fragment_size  = variable_bytes.in_uint8();
-//
-//                     REDASSERT(!variable_bytes.in_remain());
-//
-//                     REDASSERT(fragment_begin_position + fragment_size + 3 == variable_bytes.get_current());
-//
-// //                     this->fragment_cache[fragment_index][0] = fragment_size;
-// //                     ::memcpy(&this->fragment_cache[fragment_index][1],
-// //                             fragment_begin_position,
-// //                             fragment_size
-// //                             );
-//
-//                     fragment_begin_position = variable_bytes.get_current();
+                    LOG(LOG_WARNING, "Glyph fragment not implemented yet");
                 }
             }
 

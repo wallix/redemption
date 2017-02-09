@@ -1166,14 +1166,14 @@ public:
         this->setAction(action);
     }
 
-    void setKey_press(TestClientCLI * front
+    void setKey_press( TestClientCLI * front
                      , uint32_t scanCode
                      , uint32_t flag) {
         EventConfig * action = new KeyPressed(front, scanCode, flag);
         this->setAction(action);
     }
 
-    void setKey_release(TestClientCLI * front
+    void setKey_release( TestClientCLI * front
                        , uint32_t scanCode
                        , uint32_t flag) {
         EventConfig * action = new KeyReleased(front, scanCode, flag);
@@ -1189,9 +1189,9 @@ public:
         this->setAction(action);
     }
 
-    void setKey(TestClientCLI * front
-                , uint32_t scanCode
-                , uint32_t flag) {
+    void setKey( TestClientCLI * front
+               , uint32_t scanCode
+               , uint32_t flag) {
         this->setKey_press(front, scanCode, flag);
         this->setKey_release(front, scanCode, flag);
     }

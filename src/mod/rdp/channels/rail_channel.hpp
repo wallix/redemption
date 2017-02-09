@@ -236,7 +236,11 @@ private:
             cepdu.log(LOG_INFO);
         }
 
-        return true;
+        if (::strcasecmp(cepdu.ExeOrFile(), DUMMY_REMOTEAPP)) {
+            return true;
+        }
+
+        return false;
     }
 
     bool process_client_get_application_id_pdu(uint32_t total_length,

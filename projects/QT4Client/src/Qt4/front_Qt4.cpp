@@ -26,7 +26,6 @@
 #include <string>
 #include <unistd.h>
 
-
 #include "front_widget_Qt4.hpp"
 #pragma GCC diagnostic pop
 
@@ -547,7 +546,7 @@ bool Front_Qt::connect() {
             DummyAuthentifier * authentifier = nullptr;
             struct timeval time;
             gettimeofday(&time, nullptr);
-            PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true};
+            PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true, authentifier, ini.get<cfg::video::record_tmp_path>().c_str(), "", 1};
             FlvParams flv_params = flv_params_from_ini(this->_info.width, this->_info.height, ini);
             OcrParams ocr_params = { ini.get<cfg::ocr::version>(),
                                      static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
@@ -573,17 +572,20 @@ bool Front_Qt::connect() {
                 , 0
               );
 
-            this->_capture = new Capture( true
-                                        , wrmParams
-                                        , false
-                                        , png_params
-                                        , false
-                                        , false
-                                        , ocr_params
-                                        , false
-                                        , false
-                                        , false
-                                        , false
+            PatternCheckerParams patternCheckerParams;
+            SequencedVideoParams sequenced_video_params;
+            FullVideoParams full_video_params;
+            MetaParams meta_params;
+            KbdLogParams kbd_log_params;
+
+            this->_capture = new Capture( true, wrmParams
+                                        , false, png_params
+                                        , false, patternCheckerParams
+                                        , false, ocr_params
+                                        , false, sequenced_video_params
+                                        , false, full_video_params
+                                        , false, meta_params
+                                        , false, kbd_log_params
                                         , ""
                                         , time
                                         , this->_info.width
@@ -2922,13 +2924,13 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_path.c_str());
                                     }
 
-                                    uint64_t LastWriteTime   = UnixSecondsToWindowsTick(buff.st_mtime);
-                                    uint64_t CreationTime    = 0;
+                                    //uint64_t LastWriteTime   = UnixSecondsToWindowsTick(buff.st_mtime);
+                                    uint64_t CreationTime    = UnixSecondsToWindowsTick(buff.st_mtime);;
                                     //int64_t  AllocationSize  = buff.st_size;
                                     uint32_t VolumeSerialNumber = 0xb035dca6;
                                     const char * VolumeLabel = "";
 
-                                    static struct hd_driveid hd;
+                                    //static struct hd_driveid hd;
                                     int device = open(str_path.c_str(), O_RDONLY);
 
                                     if (device < 0) {
@@ -2936,7 +2938,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_path.c_str());
                                     }
 
-                                    int resioctl = ioctl(device, HDIO_GET_IDENTITY, &hd);
+                                    //int resioctl = ioctl(device, HDIO_GET_IDENTITY, &hd);
 
                                     //std:: cout << "hd.serial_no = " << hd.serial_no << " for Device = " << device << " resioctl = " << resioctl << std::endl;
 

@@ -33,6 +33,33 @@
 #include "utils/log.hpp"
 #include "core/font.hpp"
 
+BOOST_AUTO_TEST_CASE(TestCreateFontChar)
+{
+    std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(8);
+    int16_t offset = 0;
+    int16_t baseline = 1;
+    uint16_t width = 8;
+    uint16_t height = 8;
+    int16_t incby = 8;
+
+//     FontChar fc1(data, offset, baseline, width, height, incby);
+//     BOOST_CHECK_EQUAL(fc1.datasize(), 8);
+//     BOOST_CHECK_EQUAL(fc1.offset, offset);
+//     BOOST_CHECK_EQUAL(fc1.baseline, baseline);
+//     BOOST_CHECK_EQUAL(fc1.width, width);
+//     BOOST_CHECK_EQUAL(fc1.height, height);
+//     BOOST_CHECK_EQUAL(fc1.incby, incby);
+
+    FontChar fc2(offset, baseline, width, height, incby);
+    BOOST_CHECK_EQUAL(fc2.datasize(), 8);
+    BOOST_CHECK_EQUAL(fc2.offset, offset);
+    BOOST_CHECK_EQUAL(fc2.baseline, baseline);
+    BOOST_CHECK_EQUAL(fc2.width, width);
+    BOOST_CHECK_EQUAL(fc2.height, height);
+    BOOST_CHECK_EQUAL(fc2.incby, incby);
+
+}
+
 BOOST_AUTO_TEST_CASE(TestCreateFont)
 {
     {

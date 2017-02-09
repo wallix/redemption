@@ -94,10 +94,25 @@ public:
 public:
     // RdpInput
 
-    void rdp_input_scancode(long param1, long param2, long param3,
-                            long param4, Keymap2 * keymap) override {
-        LocallyIntegrableMod::rdp_input_scancode(param1, param2, param3,
-            param4, keymap);
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
+        Rect client_execute_auxiliary_window_rect = this->client_execute.get_auxiliary_window_rect();
+
+        if (!client_execute_auxiliary_window_rect.isempty() &&
+            client_execute_auxiliary_window_rect.contains_pt(x, y)) {
+            mod_api& mod = this->rail_module_host.get_managed_mod();
+
+            mod.rdp_input_mouse(device_flags, x, y, keymap);
+        }
+        else {
+            LocallyIntegrableMod::rdp_input_mouse(device_flags, x, y, keymap);
+        }
+    }
+
+    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {
+        (void)time;
+        (void)device_flags;
+        (void)param1;
+        (void)param2;
     }
 
     void rdp_input_up_and_running() override {

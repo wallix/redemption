@@ -38,6 +38,8 @@
 #include "utils/stream.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
 
+#define DUMMY_REMOTEAPP "||WABDummyRemoteApp"
+
 #define INTERNAL_MODULE_WINDOW_ID    40000
 #define INTERNAL_MODULE_WINDOW_TITLE "Wallix AdminBastion"
 
@@ -131,6 +133,8 @@ class ClientExecute : public windowing_api
 
     uint32_t auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
+    Rect auxiliary_window_rect;
+
     const static unsigned int max_work_area   = 32;
                  unsigned int work_area_count = 0;
 
@@ -171,8 +175,7 @@ public:
         return result_rect;
     }   // adjust_rect
 
-private:
-    const Rect get_current_work_area_rect() {
+    Rect get_current_work_area_rect() const {
         REDASSERT(this->work_area_count);
 
         if (!this->window_rect.isempty()) {
@@ -195,9 +198,16 @@ private:
         return this->work_areas[0];
     }
 
-public:
-    const Rect get_window_rect() {
+    Rect get_window_rect() const {
         return this->window_rect;
+    }
+
+    Rect get_auxiliary_window_rect() const {
+        if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == this->auxiliary_window_id) {
+            return Rect();
+        }
+
+        return this->auxiliary_window_rect;
     }
 
 private:
@@ -1677,10 +1687,12 @@ protected:
             cepdu.log(LOG_INFO);
         }
 
-        this->client_execute_flags       = cepdu.Flags();
-        this->client_execute_exe_or_file = cepdu.ExeOrFile();
-        this->client_execute_working_dir = cepdu.WorkingDir();
-        this->client_execute_arguments   = cepdu.Arguments();
+        if (::strcasecmp(cepdu.ExeOrFile(), DUMMY_REMOTEAPP)) {
+            this->client_execute_flags       = cepdu.Flags();
+            this->client_execute_exe_or_file = cepdu.ExeOrFile();
+            this->client_execute_working_dir = cepdu.WorkingDir();
+            this->client_execute_arguments   = cepdu.Arguments();
+        }
     }   // process_client_execute_pdu
 
     void process_client_get_application_id_pdu(uint32_t total_length,
@@ -2746,6 +2758,8 @@ public:
 
             this->front_->draw(order);
         }
+
+        this->auxiliary_window_rect = window_rect;
     }
 
     void destroy_auxiliary_window() override {
