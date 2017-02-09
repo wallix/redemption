@@ -39,25 +39,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-//struct videocapture_fdbuf
-//{
-//    int fd;
-
-//public:
-//    explicit videocapture_fdbuf(int fd = -1) noexcept
-//    : fd(fd)
-//    {}
-
-//    ~videocapture_fdbuf()
-//    {
-//        if (-1 != this->fd) {
-//            ::close(this->fd);
-//            this->fd = -1;
-//        }
-//    }
-//};
-
-
 struct videocapture_FilenameGenerator
 {
     enum Format {
@@ -381,14 +362,152 @@ private:
         this->last_quantum_sent += res;
     }
 
-    videocapture_out_sequence_filename_buf_impl & buffer() noexcept
+
+    class videocapture_out_sequence_filename_buf_impl0
+    {
+        char current_filename_[1024];
+        videocapture_FilenameGenerator filegen_;
+        int buf_fd;
+        unsigned num_file_;
+        int groupid_;
+
+    public:
+        explicit videocapture_out_sequence_filename_buf_impl0(videocapture_out_sequence_filename_buf_param const & params)
+        : filegen_(params.format, params.prefix, params.filename, params.extension)
+        , buf_fd(-1)
+        , num_file_(0)
+        , groupid_(params.groupid)
+        {
+            this->current_filename_[0] = 0;
+        }
+
+        int close()
+        { return this->next(); }
+
+        ssize_t write(const void * data, size_t len)
+        {
+            if (this->buf_fd == -1) {
+                const int res = this->open_filename(this->filegen_.get(this->num_file_));
+                if (res < 0) {
+                    return res;
+                }
+            }
+            
+            size_t remaining_len = len;
+            size_t total_sent = 0;
+            while (remaining_len) {
+                ssize_t ret = ::write(this->buf_fd, static_cast<const char*>(data) + total_sent, remaining_len);
+                if (ret <= 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    return -1;
+                }
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            return total_sent;
+        }
+
+        /// \return 0 if success
+        int next()
+        {
+            if (this->buf_fd != -1) {
+                ::close(this->buf_fd);
+                this->buf_fd = -1;
+                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+                return this->rename_filename() ? 0 : 1;
+            }
+            return 1;
+        }
+
+        void request_full_cleaning()
+        {
+            unsigned i = this->num_file_ + 1;
+            while (i > 0 && !::unlink(this->filegen_.get(--i))) {
+            }
+            if (-1 != this->buf_fd) {
+                ::close(this->buf_fd);
+                this->buf_fd = -1;
+            }
+        }
+
+        off64_t seek(int64_t offset, int whence)
+        { return lseek64(this->buf_fd, offset, whence); }
+
+        const videocapture_FilenameGenerator & seqgen() const noexcept
+        { return this->filegen_; }
+
+        int & buf() noexcept
+        { return this->buf_fd; }
+
+        const char * current_path() const
+        {
+            if (!this->current_filename_[0] && !this->num_file_) {
+                return nullptr;
+            }
+            return this->filegen_.get(this->num_file_ - 1);
+        }
+
+    protected:
+        ssize_t open_filename(const char * filename)
+        {
+            snprintf(this->current_filename_, sizeof(this->current_filename_),
+                        "%sred-XXXXXX.tmp", filename);
+            const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+            if (fd < 0) {
+                return fd;
+            }
+            if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                   , this->current_filename_
+                   , this->groupid_ ? "u+r, g+r" : "u+r"
+                   , strerror(errno), errno);
+            }
+            this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+
+            if (-1 != this->buf_fd) {
+                ::close(this->buf_fd);
+                this->buf_fd = -1;
+            }
+            this->buf_fd = fd;
+            return fd;
+        }
+
+        const char * rename_filename()
+        {
+            const char * filename = this->get_filename_generate();
+            const int res = ::rename(this->current_filename_, filename);
+            if (res < 0) {
+                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                   , this->current_filename_, filename, errno, strerror(errno));
+                return nullptr;
+            }
+
+            this->current_filename_[0] = 0;
+            ++this->num_file_;
+            this->filegen_.set_last_filename(-1u, "");
+
+            return filename;
+        }
+
+        const char * get_filename_generate()
+        {
+            this->filegen_.set_last_filename(-1u, "");
+            const char * filename = this->filegen_.get(this->num_file_);
+            this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+            return filename;
+        }
+    };
+
+    videocapture_out_sequence_filename_buf_impl0 & buffer() noexcept
     { return this->buf; }
 
-    const videocapture_out_sequence_filename_buf_impl & buffer() const noexcept
+    const videocapture_out_sequence_filename_buf_impl0 & buffer() const noexcept
     { return this->buf; }
 
 private:
-    videocapture_out_sequence_filename_buf_impl buf;
+    videocapture_out_sequence_filename_buf_impl0 buf;
 
 };
 
