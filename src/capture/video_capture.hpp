@@ -961,9 +961,6 @@ public:
                     this->buf_fd = -1;
                 }
             }
-
-            off64_t seek(int64_t offset, int whence)
-            { return lseek64(this->buf_fd, offset, whence); }
         } buf;
     } ic_trans;
 
