@@ -306,10 +306,10 @@ struct videocapture_OutFilenameSequenceSeekableTransport : public Transport
     }
 
     const videocapture_FilenameGenerator * seqgen() const noexcept
-    { return &(this->buf.seqgen()); }
+    { return &this->buf.filegen_; }
 
     void seek(int64_t offset, int whence) override {
-        if (static_cast<off64_t>(-1) == this->buf.seek(offset, whence)){
+        if (static_cast<off64_t>(-1) == lseek64(this->buf.buf_fd, offset, whence)){
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }
     }
@@ -365,13 +365,13 @@ private:
 
     class videocapture_out_sequence_filename_buf_impl0
     {
+    public:
         char current_filename_[1024];
         videocapture_FilenameGenerator filegen_;
         int buf_fd;
         unsigned num_file_;
         int groupid_;
 
-    public:
         explicit videocapture_out_sequence_filename_buf_impl0(videocapture_out_sequence_filename_buf_param const & params)
         : filegen_(params.format, params.prefix, params.filename, params.extension)
         , buf_fd(-1)
@@ -441,11 +441,8 @@ private:
             }
         }
 
-        off64_t seek(int64_t offset, int whence)
-        { return lseek64(this->buf_fd, offset, whence); }
-
-        const videocapture_FilenameGenerator & seqgen() const noexcept
-        { return this->filegen_; }
+//        const videocapture_FilenameGenerator & seqgen() const noexcept
+//        { return this->filegen_; }
 
         int & buf() noexcept
         { return this->buf_fd; }
