@@ -68,30 +68,9 @@ public:
         this->close();
     }
 
-    int open(const char *pathname, int flags)
-    {
-        this->close();
-        this->fd = ::open(pathname, flags);
-        return fd;
-    }
-
-    int open(const char *pathname, int flags, mode_t mode)
-    {
-        this->close();
-        this->fd = ::open(pathname, flags, mode);
-        return fd;
-    }
-
-    int open(int fd)
-    {
-        this->close();
-        this->fd = fd;
-        return fd;
-    }
-
     int close()
     {
-        if (this->is_open()) {
+        if (-1 != this->fd) {
             const int ret = ::close(this->fd);
             this->fd = -1;
             return ret;
@@ -99,22 +78,12 @@ public:
         return 0;
     }
 
-    bool is_open() const noexcept
+    explicit operator bool () const noexcept
     {
         return -1 != this->fd;
     }
 
-    explicit operator bool () const noexcept
-    {
-        return this->is_open();
-    }
-
     ssize_t write(const void * data, size_t len) const
-    {
-        return this->write_all(data, len);
-    }
-
-    ssize_t write_all(const void * data, size_t len) const
     {
         size_t remaining_len = len;
         size_t total_sent = 0;
@@ -131,10 +100,6 @@ public:
         }
         return total_sent;
     }
-
-//    off64_t seek(off64_t offset, int whence) const
-//    { return lseek64(this->fd, offset, whence); }
-
 };
 
 
@@ -269,7 +234,7 @@ public:
 
     ssize_t write(const void * data, size_t len)
     {
-        if (!this->buf_.is_open()) {
+        if (this->buf_.fd == -1) {
             const int res = this->open_filename(this->filegen_.get(this->num_file_));
             if (res < 0) {
                 return res;
@@ -281,7 +246,7 @@ public:
     /// \return 0 if success
     int next()
     {
-        if (this->buf_.is_open()) {
+        if (this->buf_.fd != -1) {
             this->buf_.close();
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             return this->rename_filename() ? 0 : 1;
@@ -294,7 +259,7 @@ public:
         unsigned i = this->num_file_ + 1;
         while (i > 0 && !::unlink(this->filegen_.get(--i))) {
         }
-        if (this->buf_.is_open()) {
+        if (this->buf_.fd != -1) {
             this->buf_.close();
         }
     }
@@ -332,7 +297,9 @@ protected:
                , strerror(errno), errno);
         }
         this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-        return this->buf_.open(fd);
+        this->buf_.close();
+        this->buf_.fd = fd;
+        return fd;
     }
 
     const char * rename_filename()
