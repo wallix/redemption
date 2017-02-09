@@ -32,6 +32,161 @@
 #include "capture/video_recorder.hpp"
 #include "capture/flv_params.hpp"
 
+#include <cerrno>
+#include <cstddef>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+class videocapture_fdbuf
+{
+    int fd;
+
+public:
+    explicit videocapture_fdbuf(int fd = -1) noexcept
+    : fd(fd)
+    {}
+
+    videocapture_fdbuf(videocapture_fdbuf const &) = delete ;
+    videocapture_fdbuf&operator=(videocapture_fdbuf const &) = delete ;
+
+    videocapture_fdbuf(videocapture_fdbuf && other) noexcept
+    : fd(other.fd)
+    {
+        other.fd = -1;
+    }
+
+    videocapture_fdbuf& operator=(videocapture_fdbuf && other) noexcept
+    {
+        this->fd = exchange(other.fd, -1);
+        return *this;
+    }
+
+    ~videocapture_fdbuf()
+    {
+        this->close();
+    }
+
+    //int get_fd() const
+    //{
+    //   return this->fd;
+    //}
+
+    int open(const char *pathname, int flags)
+    {
+        this->close();
+        this->fd = ::open(pathname, flags);
+        return fd;
+    }
+
+    int open(const char *pathname, int flags, mode_t mode)
+    {
+        this->close();
+        this->fd = ::open(pathname, flags, mode);
+        return fd;
+    }
+
+    int open(int fd)
+    {
+        this->close();
+        this->fd = fd;
+        return fd;
+    }
+
+    int close()
+    {
+        if (this->is_open()) {
+            const int ret = ::close(this->fd);
+            this->fd = -1;
+            return ret;
+        }
+        return 0;
+    }
+
+    bool is_open() const noexcept
+    {
+        return -1 != this->fd;
+    }
+
+    explicit operator bool () const noexcept
+    {
+        return this->is_open();
+    }
+
+    ssize_t read(void * data, size_t len) const
+    {
+        return this->read_all(data, len);
+    }
+
+    ssize_t read_all(void * data, size_t len) const
+    {
+        size_t remaining_len = len;
+        while (remaining_len) {
+            ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+            if (ret < 0){
+                if (errno == EINTR){
+                    continue;
+                }
+                // Error should still be there next time we try to read
+                if (remaining_len != len){
+                    return len - remaining_len;
+                }
+                return ret;
+            }
+            // We must exit loop or we will enter infinite loop
+            if (ret == 0){
+                break;
+            }
+            remaining_len -= ret;
+        }
+        return len - remaining_len;
+    }
+
+
+    ssize_t write(const void * data, size_t len) const
+    {
+        return this->write_all(data, len);
+    }
+
+    ssize_t write_all(const void * data, size_t len) const
+    {
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            ssize_t ret = ::write(this->fd, static_cast<const char*>(data) + total_sent, remaining_len);
+            if (ret <= 0){
+                if (errno == EINTR){
+                    continue;
+                }
+                return -1;
+            }
+            remaining_len -= ret;
+            total_sent += ret;
+        }
+        return total_sent;
+    }
+
+    off64_t seek(off64_t offset, int whence) const
+    { return lseek64(this->fd, offset, whence); }
+
+    void swap(videocapture_fdbuf & other) noexcept
+    {
+        int const fd = this->fd;
+        this->fd = other.fd;
+        other.fd = fd;
+    }
+
+    int release() noexcept {
+        int old_fd = this->fd;
+
+        this->fd = -1;
+
+        return old_fd;
+    }
+};
+
+
 struct videocapture_FilenameGenerator
 {
     enum Format {
@@ -157,7 +312,7 @@ class videocapture_out_sequence_filename_buf_impl
 {
     char current_filename_[1024];
     videocapture_FilenameGenerator filegen_;
-    videocapture_empty_ctor<io::posix::fdbuf> buf_;
+    videocapture_empty_ctor<videocapture_fdbuf> buf_;
     unsigned num_file_;
     int groupid_;
 
@@ -212,7 +367,7 @@ public:
     const videocapture_FilenameGenerator & seqgen() const noexcept
     { return this->filegen_; }
 
-    videocapture_empty_ctor<io::posix::fdbuf> & buf() noexcept
+    videocapture_empty_ctor<videocapture_fdbuf> & buf() noexcept
     { return this->buf_; }
 
     const char * current_path() const
