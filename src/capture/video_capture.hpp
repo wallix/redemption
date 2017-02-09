@@ -782,6 +782,12 @@ public:
     VideoCapture vc;
     struct videocapture_OutFilenameSequenceTransport : public Transport
     {
+        char buf_current_filename_[1024];
+        videocapture_FilenameGenerator buf_filegen_;
+        int buf_buf_fd;
+        unsigned buf_num_file_;
+        int buf_groupid_;
+
         videocapture_OutFilenameSequenceTransport(
             videocapture_FilenameGenerator::Format format,
             const char * const prefix,
@@ -789,38 +795,42 @@ public:
             const char * const extension,
             const int groupid,
             auth_api * authentifier)
-        : buf(videocapture_out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
+        : buf_filegen_(format, prefix, filename, extension)
+            , buf_buf_fd(-1)
+            , buf_num_file_(0)
+            , buf_groupid_(groupid)
         {
-            if (authentifier) {
-                this->set_authentifier(authentifier);
-            }
+                this->buf_current_filename_[0] = 0;
+                if (authentifier) {
+                    this->set_authentifier(authentifier);
+                }
         }
 
         const videocapture_FilenameGenerator * seqgen() const noexcept
-        { return &(this->buf.filegen_); }
+        { return &(this->buf_filegen_); }
 
         bool next() override {
             if (this->status == false) {
                 throw Error(ERR_TRANSPORT_NO_MORE_DATA);
             }
             ssize_t tmpres = 1;
-            if (this->buf.buf_fd != -1) {
-                ::close(this->buf.buf_fd);
-                this->buf.buf_fd = -1;
+            if (this->buf_buf_fd != -1) {
+                ::close(this->buf_buf_fd);
+                this->buf_buf_fd = -1;
                 // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                this->buf.filegen_.set_last_filename(-1u, "");
-                const char * filename = this->buf.filegen_.get(this->buf.num_file_);
-                this->buf.filegen_.set_last_filename(this->buf.num_file_, this->buf.current_filename_);
+                this->buf_filegen_.set_last_filename(-1u, "");
+                const char * filename = this->buf_filegen_.get(this->buf_num_file_);
+                this->buf_filegen_.set_last_filename(this->buf_num_file_, this->buf_current_filename_);
 
-                const int res = ::rename(this->buf.current_filename_, filename);
+                const int res = ::rename(this->buf_current_filename_, filename);
                 if (res < 0) {
                     LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                       , this->buf.current_filename_, filename, errno, strerror(errno));
+                       , this->buf_current_filename_, filename, errno, strerror(errno));
                 }
                 else {
-                    this->buf.current_filename_[0] = 0;
-                    ++this->buf.num_file_;
-                    this->buf.filegen_.set_last_filename(-1u, "");
+                    this->buf_current_filename_[0] = 0;
+                    ++this->buf_num_file_;
+                    this->buf_filegen_.set_last_filename(-1u, "");
                     tmpres = 0;
                 }
             }
@@ -837,54 +847,67 @@ public:
             return true;
         }
 
-        bool disconnect() override {
-            return !this->buf.close();
-        }
-
         void request_full_cleaning() override {
-            unsigned i = this->buf.num_file_ + 1;
-            while (i > 0 && !::unlink(this->buf.filegen_.get(--i))) {
+            unsigned i = this->buf_num_file_ + 1;
+            while (i > 0 && !::unlink(this->buf_filegen_.get(--i))) {
             }
-            if (-1 != this->buf.buf_fd) {
-                ::close(this->buf.buf_fd);
-                this->buf.buf_fd = -1;
+            if (-1 != this->buf_buf_fd) {
+                ::close(this->buf_buf_fd);
+                this->buf_buf_fd = -1;
             }
         }
 
         ~videocapture_OutFilenameSequenceTransport() {
-            this->buf.close();
+            if (this->buf_buf_fd != -1) {
+                ::close(this->buf_buf_fd);
+                this->buf_buf_fd = -1;
+                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->buf_current_filename, this->buf_rename_to);
+                this->buf_filegen_.set_last_filename(-1u, "");
+                const char * filename = this->buf_filegen_.get(this->buf_num_file_);
+                this->buf_filegen_.set_last_filename(this->buf_num_file_, this->buf_current_filename_);
+                const int res = ::rename(this->buf_current_filename_, filename);
+                if (res < 0) {
+                    LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                       , this->buf_current_filename_, filename, errno, strerror(errno));
+                }
+                else {
+                    this->buf_current_filename_[0] = 0;
+                    ++this->buf_num_file_;
+                    this->buf_filegen_.set_last_filename(-1u, "");
+                }
+            }
         }
 
     private:
 
         void do_send(const uint8_t * data, size_t len) override {
         {
-            if (this->buf.buf_fd == -1) {
-                const char * filename = this->buf.filegen_.get(this->buf.num_file_);
-                snprintf(this->buf.current_filename_, sizeof(this->buf.current_filename_),
+            if (this->buf_buf_fd == -1) {
+                const char * filename = this->buf_filegen_.get(this->buf_num_file_);
+                snprintf(this->buf_current_filename_, sizeof(this->buf_current_filename_),
                             "%sred-XXXXXX.tmp", filename);
-                this->buf.buf_fd = ::mkostemps(this->buf.current_filename_, 4, O_WRONLY | O_CREAT);
-                if (this->buf.buf_fd >= 0) {
+                this->buf_buf_fd = ::mkostemps(this->buf_current_filename_, 4, O_WRONLY | O_CREAT);
+                if (this->buf_buf_fd >= 0) {
                     }
-                    if (chmod(this->buf.current_filename_, this->buf.groupid_
+                    if (chmod(this->buf_current_filename_, this->buf_groupid_
                         ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                         LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                           , this->buf.current_filename_
-                           , this->buf.groupid_ ? "u+r, g+r" : "u+r"
+                           , this->buf_current_filename_
+                           , this->buf_groupid_ ? "u+r, g+r" : "u+r"
                            , strerror(errno), errno);
                            // TODO: this should be an error
                     }
-                    this->buf.filegen_.set_last_filename(this->buf.num_file_, this->buf.current_filename_);
+                    this->buf_filegen_.set_last_filename(this->buf_num_file_, this->buf_current_filename_);
                 }
             }
 
             int tmpres = -1;
-            if (this->buf.buf_fd >= 0){
+            if (this->buf_buf_fd >= 0){
                 tmpres = 0;
                 size_t remaining_len = len;
                 size_t total_sent = 0;
                 while (remaining_len) {
-                    ssize_t ret = ::write(this->buf.buf_fd, data + total_sent, remaining_len);
+                    ssize_t ret = ::write(this->buf_buf_fd, data + total_sent, remaining_len);
                     if (ret <= 0){
                         if (errno == EINTR){
                             continue;
@@ -917,89 +940,6 @@ public:
             this->last_quantum_sent += res;
         }
 
-
-
-        class videocapture_out_sequence_filename_buf_impl
-        {
-        public:
-            char current_filename_[1024];
-            videocapture_FilenameGenerator filegen_;
-            int buf_fd;
-            unsigned num_file_;
-            int groupid_;
-
-        public:
-            explicit videocapture_out_sequence_filename_buf_impl(videocapture_out_sequence_filename_buf_param const & params)
-            : filegen_(params.format, params.prefix, params.filename, params.extension)
-            , buf_fd(-1)
-            , num_file_(0)
-            , groupid_(params.groupid)
-            {
-                this->current_filename_[0] = 0;
-            }
-
-            int close()
-            {
-                int tmpxres = 1; // error
-                if (this->buf_fd != -1) {
-                    ::close(this->buf_fd);
-                    this->buf_fd = -1;
-                    // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                    this->filegen_.set_last_filename(-1u, "");
-                    const char * filename = this->filegen_.get(this->num_file_);
-                    this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-                    const int res = ::rename(this->current_filename_, filename);
-                    if (res < 0) {
-                        LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                           , this->current_filename_, filename, errno, strerror(errno));
-                    }
-                    else {
-                        this->current_filename_[0] = 0;
-                        ++this->num_file_;
-                        this->filegen_.set_last_filename(-1u, "");
-                        tmpxres = 0;
-                    }
-                }
-                return tmpxres;
-            }
-
-//            ssize_t write(const void * data, size_t len)
-//            {
-//                if (this->buf_fd == -1) {
-//                    const char * filename = this->filegen_.get(this->num_file_);
-//                    snprintf(this->current_filename_, sizeof(this->current_filename_),
-//                                "%sred-XXXXXX.tmp", filename);
-//                    this->buf_fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
-//                    if (this->buf_fd < 0) {
-//                        return -1;
-//                    }
-//                    if (chmod(this->current_filename_, this->groupid_
-//                        ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-//                        LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-//                           , this->current_filename_
-//                           , this->groupid_ ? "u+r, g+r" : "u+r"
-//                           , strerror(errno), errno);
-//                           // TODO: this should be an error
-//                    }
-//                    this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-//                }
-//                
-//                size_t remaining_len = len;
-//                size_t total_sent = 0;
-//                while (remaining_len) {
-//                    ssize_t ret = ::write(this->buf_fd, static_cast<const char*>(data) + total_sent, remaining_len);
-//                    if (ret <= 0){
-//                        if (errno == EINTR){
-//                            continue;
-//                        }
-//                        return -1;
-//                    }
-//                    remaining_len -= ret;
-//                    total_sent += ret;
-//                }
-//                return total_sent;
-//            }
-        } buf;
     } ic_trans;
 
     unsigned ic_zoom_factor;
