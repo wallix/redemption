@@ -332,7 +332,7 @@ struct videocapture_OutFilenameSequenceSeekableTransport : public Transport
     }
 
     bool disconnect() override {
-        return !this->buf.close();
+        return !this->buf.next();
     }
 
     void request_full_cleaning() override {
@@ -340,7 +340,7 @@ struct videocapture_OutFilenameSequenceSeekableTransport : public Transport
     }
 
     ~videocapture_OutFilenameSequenceSeekableTransport() {
-        this->buf.close();
+        this->buf.next();
     }
 
 private:
@@ -381,8 +381,8 @@ private:
             this->current_filename_[0] = 0;
         }
 
-        int close()
-        { return this->next(); }
+//        int close()
+//        { return this->next(); }
 
         ssize_t write(const void * data, size_t len)
         {
@@ -499,15 +499,6 @@ private:
             return filename;
         }
     } buf;
-
-//    videocapture_out_sequence_filename_buf_impl0 & buffer() noexcept
-//    { return this->buf; }
-
-//    const videocapture_out_sequence_filename_buf_impl0 & buffer() const noexcept
-//    { return this->buf; }
-
-//private:
-//    videocapture_out_sequence_filename_buf_impl0 buf;
 
 };
 
