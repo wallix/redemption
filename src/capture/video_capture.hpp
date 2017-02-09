@@ -318,7 +318,29 @@ struct videocapture_OutFilenameSequenceSeekableTransport : public Transport
         if (this->status == false) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
-        const ssize_t res = this->buf.next();
+        ssize_t tmpres = 1;
+        if (this->buf.buf_fd != -1) {
+            ::close(this->buf.buf_fd);
+            this->buf.buf_fd = -1;
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+            
+            this->buf.filegen_.set_last_filename(-1u, "");
+            const char * filename = this->buf.filegen_.get(this->buf.num_file_);
+            this->buf.filegen_.set_last_filename(this->buf.num_file_, this->buf.current_filename_);
+            
+            const int res = ::rename(this->buf.current_filename_, filename);
+            if (res < 0) {
+                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                   , this->buf.current_filename_, filename, errno, strerror(errno));
+                tmpres = 1;
+            }
+
+            this->buf.current_filename_[0] = 0;
+            ++this->buf.num_file_;
+            this->buf.filegen_.set_last_filename(-1u, "");
+            tmpres = 0;
+        }
+        const ssize_t res = tmpres;
         if (res) {
             this->status = false;
             if (res < 0){
@@ -332,7 +354,29 @@ struct videocapture_OutFilenameSequenceSeekableTransport : public Transport
     }
 
     bool disconnect() override {
-        return !this->buf.next();
+        ssize_t tmpres = 1;
+        if (this->buf.buf_fd != -1) {
+            ::close(this->buf.buf_fd);
+            this->buf.buf_fd = -1;
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+            
+            this->buf.filegen_.set_last_filename(-1u, "");
+            const char * filename = this->buf.filegen_.get(this->buf.num_file_);
+            this->buf.filegen_.set_last_filename(this->buf.num_file_, this->buf.current_filename_);
+            
+            const int res = ::rename(this->buf.current_filename_, filename);
+            if (res < 0) {
+                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                   , this->buf.current_filename_, filename, errno, strerror(errno));
+                tmpres = 1;
+            }
+            this->buf.current_filename_[0] = 0;
+            ++this->buf.num_file_;
+            this->buf.filegen_.set_last_filename(-1u, "");
+            
+            tmpres = 0;
+        }
+        return !tmpres;
     }
 
     void request_full_cleaning() override {
