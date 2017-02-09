@@ -45,20 +45,20 @@ BOOST_AUTO_TEST_CASE(TestUtf8Decoder)
 
     BOOST_CHECK_EQUAL_RANGES(
         decoder.decode(cstr_array_view("abc"), Accu()).v,
-        utils::make_array<rvt::ucs4_char>()
+        utils::make_array<rvt::ucs4_char>('a', 'b', 'c')
     );
     BOOST_CHECK_EQUAL_RANGES(
         decoder.end_decode(Accu()).v,
-        utils::make_array<rvt::ucs4_char>('a', 'b', 'c')
+        utils::make_array<rvt::ucs4_char>()
     );
 
     BOOST_CHECK_EQUAL_RANGES(
         decoder.decode(cstr_array_view("\xea\xb0\x80"), Accu()).v,
-        utils::make_array<rvt::ucs4_char>()
+        utils::make_array<rvt::ucs4_char>(0xac00u)
     );
     BOOST_CHECK_EQUAL_RANGES(
         decoder.end_decode(Accu()).v,
-        utils::make_array<rvt::ucs4_char>(0xac00u)
+        utils::make_array<rvt::ucs4_char>()
     );
 
     BOOST_CHECK_EQUAL_RANGES(
@@ -70,23 +70,45 @@ BOOST_AUTO_TEST_CASE(TestUtf8Decoder)
         utils::make_array<rvt::ucs4_char>()
     );
 
-    // utf8 format error
-
     BOOST_CHECK_EQUAL_RANGES(
-        decoder.decode(cstr_array_view("\xea\xb0""a\xea""a\x80"), Accu()).v,
-        utils::make_array<rvt::ucs4_char>(0xea, 0xb0, 'a', 0xea)
+        decoder.decode(cstr_array_view("\xea\xb0"), Accu()).v,
+        utils::make_array<rvt::ucs4_char>()
+    );
+    BOOST_CHECK_EQUAL_RANGES(
+        decoder.decode(cstr_array_view("\x80"), Accu()).v,
+        utils::make_array<rvt::ucs4_char>(0xac00u)
     );
     BOOST_CHECK_EQUAL_RANGES(
         decoder.end_decode(Accu()).v,
-        utils::make_array<rvt::ucs4_char>('a', 0x80)
+        utils::make_array<rvt::ucs4_char>()
+    );
+
+    // utf8 format error
+
+    BOOST_CHECK_EQUAL_RANGES(
+        decoder.decode(cstr_array_view("\xea\xb0"), Accu()).v,
+        utils::make_array<rvt::ucs4_char>()
+    );
+    BOOST_CHECK_EQUAL_RANGES(
+        decoder.end_decode(Accu()).v,
+        utils::make_array<rvt::ucs4_char>(0xea, 0xb0)
+    );
+
+    BOOST_CHECK_EQUAL_RANGES(
+        decoder.decode(cstr_array_view("\xea\xb0""a\xea""a\x80"), Accu()).v,
+        utils::make_array<rvt::ucs4_char>(0xea, 0xb0, 'a', 0xea, 'a', 0x80)
+    );
+    BOOST_CHECK_EQUAL_RANGES(
+        decoder.end_decode(Accu()).v,
+        utils::make_array<rvt::ucs4_char>()
     );
 
     BOOST_CHECK_EQUAL_RANGES(
         decoder.decode(cstr_array_view("\xfa\xb0\x80""ab"), Accu()).v,
-        utils::make_array<rvt::ucs4_char>(0xfa, 0xb0, 0x80, 'a')
+        utils::make_array<rvt::ucs4_char>(0xfa, 0xb0, 0x80, 'a', 'b')
     );
     BOOST_CHECK_EQUAL_RANGES(
         decoder.end_decode(Accu()).v,
-        utils::make_array<rvt::ucs4_char>('b')
+        utils::make_array<rvt::ucs4_char>()
     );
 }

@@ -99,11 +99,12 @@ struct Utf8Decoder
 
             while (data_it != data_end && it != end) {
                 if (!advance_and_decode(checked_size{}, data_it, data_end, f)) {
-                    if (data_len_ < utils::size(data_)) {
-                        data_[data_len_++] = *it;
+                    if (data_end < std::end(data_)) {
+                        *data_end = *it;
+                        ++data_end;
                     }
                     else {
-                        std::copy(data_it, data_end, data_);
+                        this->copy_to_data(data_it, data_end);
                         data_it = data_;
                         data_end = data_ + (data_end - data_);
                         utils::back(data_) = *it;
@@ -111,7 +112,19 @@ struct Utf8Decoder
                     ++it;
                 }
             }
+
+            while (data_it != data_end && advance_and_decode(checked_size{}, data_it, data_end, f)) {
+            }
+
+            data_len_ = data_end - data_it;
+            if (data_len_ && data_it != data_) {
+                this->copy_to_data(data_it, data_end);
+            }
+
             utf8_string = utf8_array{it, end};
+            if (utf8_string.empty()) {
+                return f;
+            }
         }
 
         auto it = utf8_string.begin();
@@ -121,11 +134,11 @@ struct Utf8Decoder
             advance_and_decode(no_checked_size{}, it, last, f);
         }
 
-        //last = utf8_string.end();
-        //while (it < last && advance_and_decode(checked_size{}, it, last, f)) {
-        //}
+        last = utf8_string.end();
+        while (it < last && advance_and_decode(checked_size{}, it, last, f)) {
+        }
 
-        data_len_ = std::copy(it, utf8_string.end(), data_) - data_;
+        data_len_ = this->copy_to_data(it, last);
 
         return f;
     }
@@ -206,6 +219,26 @@ private:
         }
 
         return true;
+    }
+
+    // return std::copy(first, last, this->data_) - this->data_
+    template<class It>
+    std::size_t copy_to_data(It first, It const & last)
+    {
+        #ifdef NDEBUG
+        auto const n = static_cast<int8_t>(last - first);
+        #else
+        auto const n = last - first;
+        #endif
+        switch (n) {
+            case 4: data_[3] = first[3]; REDEMPTION_CXX_FALLTHROUGH;
+            case 3: data_[2] = first[2]; REDEMPTION_CXX_FALLTHROUGH;
+            case 2: data_[1] = first[1]; REDEMPTION_CXX_FALLTHROUGH;
+            case 1: data_[0] = first[0]; REDEMPTION_CXX_FALLTHROUGH;
+            case 0: break;
+            default: assert(n && "bad value, isn't 0, 1, 2, 3 or 4");
+        }
+        return static_cast<std::size_t>(n);
     }
 
     using checked_size = std::true_type;
