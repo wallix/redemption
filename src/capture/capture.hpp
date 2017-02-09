@@ -4869,7 +4869,7 @@ public:
 
         return std::chrono::microseconds(inter_frame_interval - tick);
     }
-    
+
     std::chrono::microseconds periodic_snapshot(
         timeval const & now,
         int cursor_x, int cursor_y,
@@ -5036,7 +5036,7 @@ public:
 
             return std::chrono::microseconds(inter_frame_interval - tick);
         }
-        
+
         std::chrono::microseconds periodic_snapshot(
             timeval const & now,
             int cursor_x, int cursor_y,
@@ -5191,7 +5191,7 @@ public:
             timeval const & now,
             int cursor_x, int cursor_y,
             bool ignore_frame_in_timeval
-        ) 
+        )
         {
             return this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
         }
@@ -5333,7 +5333,7 @@ public:
             timeval const & now,
             int cursor_x, int cursor_y,
             bool ignore_frame_in_timeval
-        ) 
+        )
         {
             return this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
         }

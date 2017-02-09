@@ -4287,6 +4287,7 @@ public:
 
                 GlyphCacheCaps glyphcache_caps;
                 if (this->enable_glyph_cache) {
+                    LOG(LOG_WARNING, "confirm_active_pdu GlyphCacheCaps");
                     this->front.retrieve_client_capability_set(glyphcache_caps);
 
                     glyphcache_caps.FragCache         = 0;  // Not yet supported
