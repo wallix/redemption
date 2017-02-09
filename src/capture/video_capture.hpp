@@ -68,11 +68,6 @@ public:
         this->close();
     }
 
-    //int get_fd() const
-    //{
-    //   return this->fd;
-    //}
-
     int open(const char *pathname, int flags)
     {
         this->close();
@@ -114,36 +109,6 @@ public:
         return this->is_open();
     }
 
-    ssize_t read(void * data, size_t len) const
-    {
-        return this->read_all(data, len);
-    }
-
-    ssize_t read_all(void * data, size_t len) const
-    {
-        size_t remaining_len = len;
-        while (remaining_len) {
-            ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
-            if (ret < 0){
-                if (errno == EINTR){
-                    continue;
-                }
-                // Error should still be there next time we try to read
-                if (remaining_len != len){
-                    return len - remaining_len;
-                }
-                return ret;
-            }
-            // We must exit loop or we will enter infinite loop
-            if (ret == 0){
-                break;
-            }
-            remaining_len -= ret;
-        }
-        return len - remaining_len;
-    }
-
-
     ssize_t write(const void * data, size_t len) const
     {
         return this->write_all(data, len);
@@ -169,13 +134,6 @@ public:
 
     off64_t seek(off64_t offset, int whence) const
     { return lseek64(this->fd, offset, whence); }
-
-    void swap(videocapture_fdbuf & other) noexcept
-    {
-        int const fd = this->fd;
-        this->fd = other.fd;
-        other.fd = fd;
-    }
 
     int release() noexcept {
         int old_fd = this->fd;
