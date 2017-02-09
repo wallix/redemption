@@ -56,38 +56,23 @@ public:
         }
     }
 
-//    int close()
+//    ssize_t write(const void * data, size_t len) const
 //    {
-//        if (-1 != this->fd) {
-//            const int ret = ::close(this->fd);
-//            this->fd = -1;
-//            return ret;
+//        size_t remaining_len = len;
+//        size_t total_sent = 0;
+//        while (remaining_len) {
+//            ssize_t ret = ::write(this->fd, static_cast<const char*>(data) + total_sent, remaining_len);
+//            if (ret <= 0){
+//                if (errno == EINTR){
+//                    continue;
+//                }
+//                return -1;
+//            }
+//            remaining_len -= ret;
+//            total_sent += ret;
 //        }
-//        return 0;
+//        return total_sent;
 //    }
-
-    explicit operator bool () const noexcept
-    {
-        return -1 != this->fd;
-    }
-
-    ssize_t write(const void * data, size_t len) const
-    {
-        size_t remaining_len = len;
-        size_t total_sent = 0;
-        while (remaining_len) {
-            ssize_t ret = ::write(this->fd, static_cast<const char*>(data) + total_sent, remaining_len);
-            if (ret <= 0){
-                if (errno == EINTR){
-                    continue;
-                }
-                return -1;
-            }
-            remaining_len -= ret;
-            total_sent += ret;
-        }
-        return total_sent;
-    }
 };
 
 
@@ -228,7 +213,21 @@ public:
                 return res;
             }
         }
-        return this->buf_.write(data, len);
+        
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            ssize_t ret = ::write(this->buf_.fd, static_cast<const char*>(data) + total_sent, remaining_len);
+            if (ret <= 0){
+                if (errno == EINTR){
+                    continue;
+                }
+                return -1;
+            }
+            remaining_len -= ret;
+            total_sent += ret;
+        }
+        return total_sent;
     }
 
     /// \return 0 if success
