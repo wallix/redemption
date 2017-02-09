@@ -131,6 +131,8 @@ class ClientExecute : public windowing_api
 
     uint32_t auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
+    Rect auxiliary_window_rect;
+
     const static unsigned int max_work_area   = 32;
                  unsigned int work_area_count = 0;
 
@@ -196,6 +198,14 @@ public:
 
     Rect get_window_rect() const {
         return this->window_rect;
+    }
+
+    Rect get_auxiliary_window_rect() const {
+        if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == this->auxiliary_window_id) {
+            return Rect();
+        }
+
+        return this->auxiliary_window_rect;
     }
 
 private:
@@ -2744,6 +2754,8 @@ public:
 
             this->front_->draw(order);
         }
+
+        this->auxiliary_window_rect = window_rect;
     }
 
     void destroy_auxiliary_window() override {
