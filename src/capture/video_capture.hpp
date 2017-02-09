@@ -39,41 +39,23 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-struct videocapture_fdbuf
-{
-    int fd;
+//struct videocapture_fdbuf
+//{
+//    int fd;
 
-public:
-    explicit videocapture_fdbuf(int fd = -1) noexcept
-    : fd(fd)
-    {}
+//public:
+//    explicit videocapture_fdbuf(int fd = -1) noexcept
+//    : fd(fd)
+//    {}
 
-    ~videocapture_fdbuf()
-    {
-        if (-1 != this->fd) {
-            ::close(this->fd);
-            this->fd = -1;
-        }
-    }
-
-//    ssize_t write(const void * data, size_t len) const
+//    ~videocapture_fdbuf()
 //    {
-//        size_t remaining_len = len;
-//        size_t total_sent = 0;
-//        while (remaining_len) {
-//            ssize_t ret = ::write(this->fd, static_cast<const char*>(data) + total_sent, remaining_len);
-//            if (ret <= 0){
-//                if (errno == EINTR){
-//                    continue;
-//                }
-//                return -1;
-//            }
-//            remaining_len -= ret;
-//            total_sent += ret;
+//        if (-1 != this->fd) {
+//            ::close(this->fd);
+//            this->fd = -1;
 //        }
-//        return total_sent;
 //    }
-};
+//};
 
 
 struct videocapture_FilenameGenerator
@@ -188,14 +170,14 @@ class videocapture_out_sequence_filename_buf_impl
 {
     char current_filename_[1024];
     videocapture_FilenameGenerator filegen_;
-    videocapture_fdbuf buf_;
+    int buf_fd;
     unsigned num_file_;
     int groupid_;
 
 public:
     explicit videocapture_out_sequence_filename_buf_impl(videocapture_out_sequence_filename_buf_param const & params)
     : filegen_(params.format, params.prefix, params.filename, params.extension)
-    , buf_()
+    , buf_fd(-1)
     , num_file_(0)
     , groupid_(params.groupid)
     {
@@ -207,7 +189,7 @@ public:
 
     ssize_t write(const void * data, size_t len)
     {
-        if (this->buf_.fd == -1) {
+        if (this->buf_fd == -1) {
             const int res = this->open_filename(this->filegen_.get(this->num_file_));
             if (res < 0) {
                 return res;
@@ -217,7 +199,7 @@ public:
         size_t remaining_len = len;
         size_t total_sent = 0;
         while (remaining_len) {
-            ssize_t ret = ::write(this->buf_.fd, static_cast<const char*>(data) + total_sent, remaining_len);
+            ssize_t ret = ::write(this->buf_fd, static_cast<const char*>(data) + total_sent, remaining_len);
             if (ret <= 0){
                 if (errno == EINTR){
                     continue;
@@ -233,9 +215,9 @@ public:
     /// \return 0 if success
     int next()
     {
-        if (this->buf_.fd != -1) {
-            ::close(this->buf_.fd);
-            this->buf_.fd = -1;
+        if (this->buf_fd != -1) {
+            ::close(this->buf_fd);
+            this->buf_fd = -1;
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             return this->rename_filename() ? 0 : 1;
         }
@@ -247,20 +229,20 @@ public:
         unsigned i = this->num_file_ + 1;
         while (i > 0 && !::unlink(this->filegen_.get(--i))) {
         }
-        if (-1 != this->buf_.fd) {
-            ::close(this->buf_.fd);
-            this->buf_.fd = -1;
+        if (-1 != this->buf_fd) {
+            ::close(this->buf_fd);
+            this->buf_fd = -1;
         }
     }
 
     off64_t seek(int64_t offset, int whence)
-    { return lseek64(this->buf_.fd, offset, whence); }
+    { return lseek64(this->buf_fd, offset, whence); }
 
     const videocapture_FilenameGenerator & seqgen() const noexcept
     { return this->filegen_; }
 
-    videocapture_fdbuf & buf() noexcept
-    { return this->buf_; }
+    int & buf() noexcept
+    { return this->buf_fd; }
 
     const char * current_path() const
     {
@@ -287,11 +269,11 @@ protected:
         }
         this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
 
-        if (-1 != this->buf_.fd) {
-            ::close(this->buf_.fd);
-            this->buf_.fd = -1;
+        if (-1 != this->buf_fd) {
+            ::close(this->buf_fd);
+            this->buf_fd = -1;
         }
-        this->buf_.fd = fd;
+        this->buf_fd = fd;
         return fd;
     }
 
