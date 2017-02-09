@@ -25,6 +25,7 @@
 #include "rvt/screen.hpp"
 #include "rvt/vt_emulator.hpp"
 #include "rvt/utf8_decoder.hpp"
+#include "rvt/ansi_rendering.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -62,81 +63,5 @@ int main()
     emulator.receiveChar(0x311);
     emulator.receiveChar(0xac00);
 
-
-    rvt::Screen const & screen = emulator.getCurrentScreen();
-
-    auto print_uc = [](rvt::ucs4_char uc) {
-        char utf8_ch[4];
-        std::size_t const n = ucs4_to_utf8(uc, utf8_ch);
-        std::cout.write(utf8_ch, static_cast<std::streamsize>(n));
-    };
-
-    auto print_ch = [&screen, print_uc](rvt::Character const & ch) {
-        if (ch.isRealCharacter) {
-            if (ch.is_extended()) {
-                for (rvt::ucs4_char uc : screen.extendedCharTable()[ch.character]) {
-                    print_uc(uc);
-                }
-            }
-            else {
-                print_uc(ch.character);
-            }
-        }
-    };
-
-    int i = 0;
-    for (auto const & line : screen.getScreenLines()) {
-        std::cout << std::setw(4) << ++i << " ";
-        for (rvt::Character const & ch : line) {
-            print_ch(ch);
-        }
-        std::cout << '\n';
-    }
-
-    auto print_color = [](char const * cmd, rvt::CharacterColor const & ch_color) {
-        auto color = ch_color.color(rvt::color_table);
-        std::cout << cmd << (color.red()+0) << ";" << (color.green()+0) << ";" << (color.blue()+0);
-    };
-    auto print_mode = [](char const * cmd, rvt::Character const & ch, rvt::Rendition r) {
-        if (bool(ch.rendition & r)) {
-            std::cout << cmd;
-        }
-    };
-
-    // Format
-    //@{
-    rvt::Rendition previous_rendition = rvt::Rendition::Default;
-    rvt::CharacterColor previous_fg(rvt::ColorSpace::Default, 0);
-    rvt::CharacterColor previous_bg(rvt::ColorSpace::Default, 1);
-    //@}
-    std::cout << "\033[0";
-    print_color(";38;2;", previous_fg);
-    print_color(";48;2;", previous_bg);
-    std::cout << "m";
-    for (auto const & line : screen.getScreenLines()) {
-        for (rvt::Character const & ch : line) {
-            if (!ch.isRealCharacter) {
-                continue;
-            }
-            if (ch.backgroundColor != previous_bg
-             || ch.foregroundColor != previous_fg
-             || ch.rendition != previous_rendition
-            ) {
-                std::cout << "\033[0";
-                print_mode(";1", ch, rvt::Rendition::Bold);
-                print_mode(";3", ch, rvt::Rendition::Italic);
-                print_mode(";4", ch, rvt::Rendition::Underline);
-                print_mode(";5", ch, rvt::Rendition::Blink);
-                print_mode(";7", ch, rvt::Rendition::Reverse);
-                print_color(";38;2;", ch.foregroundColor);
-                print_color(";48;2;", ch.backgroundColor);
-                std::cout << "m";
-                previous_bg = ch.backgroundColor;
-                previous_fg = ch.foregroundColor;
-                previous_rendition = ch.rendition;
-            }
-            print_ch(ch);
-        }
-        std::cout << '\n';
-    }
+    rvt::ansi_rendering(emulator.getCurrentScreen(), rvt::color_table, std::cout);
 }

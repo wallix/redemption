@@ -119,6 +119,8 @@ private:
     T const * p;
 };
 
+using ColorTableView = fixed_array_view<const Color, TABLE_COLORS>;
+
 /**
  * Describes the color of a single character in the terminal.
  */
@@ -188,7 +190,7 @@ public:
      * The @p palette is only used if this color is one of the 16 system colors, otherwise
      * it is ignored.
      */
-    Color color(fixed_array_view<const Color, TABLE_COLORS> palette) const;
+    Color color(ColorTableView palette) const;
 
     /**
      * Compares two colors and returns true if they represent the same color value and

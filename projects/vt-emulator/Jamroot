@@ -29,6 +29,7 @@ import testing ;
 
 obj screen : $(RVT_SRC)/screen.cpp ;
 obj emulator : $(RVT_SRC)/vt_emulator.cpp ;
+obj ansi_rendering : $(RVT_SRC)/ansi_rendering.cpp ;
 
 alias libemu : emulator screen ;
 
@@ -45,6 +46,6 @@ unit-test test_utf8_decoder : $(RVT_SRC_TEST)/test_utf8_decoder.cpp : $(TEST_DEP
 unit-test test_vt_emulator : $(RVT_SRC_TEST)/test_vt_emulator.cpp libemu : $(TEST_DEPENDENCIES) ;
 
 
-unit-test enumator : $(SRC)/main.cpp libemu : $(TEST_DEPENDENCIES) ;
-exe terminal_browser : $(SRC)/terminal_browser.cpp libemu : $(TEST_DEPENDENCIES) ;
+unit-test enumator : $(SRC)/main.cpp ansi_rendering libemu : $(TEST_DEPENDENCIES) ;
+exe terminal_browser : $(SRC)/terminal_browser.cpp ansi_rendering libemu : $(TEST_DEPENDENCIES) ;
 ## }
