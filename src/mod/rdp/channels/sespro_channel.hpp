@@ -1165,7 +1165,7 @@ public:
                     }
                 }
                 else if (!order.compare("FOREGROUND_WINDOW_CHANGED")) {
-                    if (parameters.size() == 3) {
+                    if ((parameters.size() == 2) || (parameters.size() == 3)) {
                         std::string info(
                             "source='Probe' window='" + parameters[0] + "'");
                         this->authentifier.log4(
