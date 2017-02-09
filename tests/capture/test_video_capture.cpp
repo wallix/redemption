@@ -49,46 +49,9 @@
 
 #include "capture/video_capture.hpp"
 
-class VideoSequencer : public gdi::CaptureApi
-{
-    timeval start_break;
-    std::chrono::microseconds break_interval;
+void simple_movie(timeval now, unsigned duration, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse);
 
-protected:
-    VideoCapture & action;
-
-public:
-    VideoSequencer(const timeval & now, std::chrono::microseconds break_interval, VideoCapture & action)
-    : start_break(now)
-    , break_interval(break_interval)
-    , action(action)
-    {}
-
-    std::chrono::microseconds get_interval() const {
-        return this->break_interval;
-    }
-
-    void reset_now(const timeval& now) {
-        this->start_break = now;
-    }
-
-private:
-    std::chrono::microseconds do_snapshot(
-        const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
-    ) override {
-        assert(this->break_interval.count());
-        auto const interval = difftimeval(now, this->start_break);
-        if (interval >= uint64_t(this->break_interval.count())) {
-            this->action.next_video();
-            this->start_break = now;
-        }
-        return this->break_interval;
-    }
-};
-
-void simple_movie(timeval now, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse);
-
-void simple_movie(timeval now, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse)
+void simple_movie(timeval now, unsigned duration, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse)
 {
     Rect screen(0, 0, drawable.width(), drawable.height());
     auto const color_cxt = gdi::ColorCtx::depth24();
@@ -98,7 +61,7 @@ void simple_movie(timeval now, RDPDrawable & drawable, gdi::CaptureApi & capture
     Rect r(10, 10, 50, 50);
     int vx = 5;
     int vy = 4;
-    for (size_t x = 0; x < 250; x++) {
+    for (size_t x = 0; x < duration; x++) {
         drawable.draw(RDPOpaqueRect(r, BLUE), screen, color_cxt);
         r.y += vy;
         r.x += vx;
@@ -117,37 +80,7 @@ void simple_movie(timeval now, RDPDrawable & drawable, gdi::CaptureApi & capture
     }
 }
 
-void simple_movie2(timeval now, RDPDrawable & drawable, gdi::CaptureApi & capture, VideoCapture & vc, bool ignore_frame_in_timeval, bool mouse);
-
-void simple_movie2(timeval now, RDPDrawable & drawable, gdi::CaptureApi & capture, VideoCapture & vc, bool ignore_frame_in_timeval, bool mouse)
-{
-    Rect screen(0, 0, drawable.width(), drawable.height());
-    auto const color_cxt = gdi::ColorCtx::depth24();
-    drawable.draw(RDPOpaqueRect(screen, BLUE), screen, color_cxt);
-
-    uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
-    Rect r(10, 10, 50, 50);
-    int vx = 5;
-    int vy = 4;
-    for (size_t x = 0; x < 250; x++) {
-        drawable.draw(RDPOpaqueRect(r, BLUE), screen, color_cxt);
-        r.y += vy;
-        r.x += vx;
-        drawable.draw(RDPOpaqueRect(r, WABGREEN), screen, color_cxt);
-        usec += 40000LL;
-        now.tv_sec  = usec / 1000000LL;
-        now.tv_usec = (usec % 1000000LL);
-        //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
-        drawable.set_mouse_cursor_pos(r.x + 10, r.y + 10);
-        vc.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-//        capture.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-        if ((r.x + r.cx >= drawable.width() ) || (r.x < 0)) { vx = -vx; }
-        if ((r.y + r.cy >= drawable.height()) || (r.y < 0)) { vy = -vy; }
-    }
-
-}
-
-BOOST_AUTO_TEST_CASE(TestFullVideoCaptureXX)
+BOOST_AUTO_TEST_CASE(TestSequencedVideoCapture)
 {
     {
         struct notified_on_video_change : public NotifyNextVideo
@@ -168,7 +101,7 @@ BOOST_AUTO_TEST_CASE(TestFullVideoCaptureXX)
             "./", "opaquerect_videocapture", 
             0 /* groupid */, false /* no_timestamp */, 100 /* zoom */, drawable, flv_params,
             std::chrono::microseconds{2 * 1000000l}, next_video_notifier);
-        simple_movie(now, drawable, video_capture, false, true);
+        simple_movie(now, 250, drawable, video_capture, false, true);
     }
 
     struct CheckFiles {
@@ -190,198 +123,100 @@ BOOST_AUTO_TEST_CASE(TestFullVideoCaptureXX)
     };
     for (auto x: fileinfo) {
         size_t fsize = filesize(x.filename);
-        BOOST_CHECK_EQUAL(x.size, filesize(x.filename));
+        BOOST_CHECK_EQUAL(x.size, fsize);
         ::unlink(x.filename);
     }
 }
 
-
-BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureMP4)
+BOOST_AUTO_TEST_CASE(TestSequencedVideoCaptureMP4)
 {
-    const int groupid = 0;
-    videocapture_OutFilenameSequenceSeekableTransport trans(
-        videocapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-        "./", "opaquerect_videocapture", ".mp4", groupid);
-
     {
+        struct notified_on_video_change : public NotifyNextVideo
+        {
+            void notify_next_video(const timeval& now, reason reason) 
+            {
+                LOG(LOG_INFO, "next video: now=%u:%u reason=%u", 
+                    static_cast<unsigned>(now.tv_sec),
+                    static_cast<unsigned>(now.tv_usec),
+                    static_cast<unsigned>(reason));
+            }
+        } next_video_notifier;
+
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
-        const int width  = 800;
-        const int height = 600;
-        RDPDrawable drawable(width, height);
+        RDPDrawable drawable(800, 600);
+        FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "mp4", 0};
+        SequencedVideoCaptureImpl video_capture(now, 
+            "./", "opaquerect_videocapture", 
+            0 /* groupid */, false /* no_timestamp */, 100 /* zoom */, drawable, flv_params,
+            std::chrono::microseconds{2 * 1000000l}, next_video_notifier);
+        simple_movie(now, 250, drawable, video_capture, false, true);
+    }
 
-        FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "mp4", 0};
-        VideoCapture flvgen(now, trans, drawable, false, flv_params);
-        VideoSequencer flvseq(now, std::chrono::microseconds{2 * 1000000l}, flvgen);
-
-        Rect screen(0, 0, width, height);
-        
-        auto const color_cxt = gdi::ColorCtx::depth24();
-        drawable.draw(RDPOpaqueRect(screen, BLUE), screen, color_cxt);
-
-        uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
-        Rect r(10, 10, 50, 50);
-        int vx = 5;
-        int vy = 4;
-        bool ignore_frame_in_timeval = false;
-        for (size_t x = 0; x < 100; x++) {
-            drawable.draw(RDPOpaqueRect(r, BLUE), screen, color_cxt);
-            r.y += vy;
-            r.x += vx;
-            drawable.draw(RDPOpaqueRect(r, WABGREEN), screen, color_cxt);
-            usec += 40000LL;
-            now.tv_sec  = usec / 1000000LL;
-            now.tv_usec = (usec % 1000000LL);
-            //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
-            drawable.set_mouse_cursor_pos(r.x + 10, r.y + 10);
-            flvgen.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-            flvseq.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-            if ((r.x + r.cx >= width ) || (r.x < 0)) { vx = -vx; }
-            if ((r.y + r.cy >= height) || (r.y < 0)) { vy = -vy; }
+    struct CheckFiles {
+        const char * filename;
+        size_t size;
+        size_t alternativesize;
+    } fileinfo[] = {
+        {"./opaquerect_videocapture-000000.png", 3099, 3099},
+        {"./opaquerect_videocapture-000000.mp4", 12999, 12985},
+        {"./opaquerect_videocapture-000001.png", 3104, 3104},
+        {"./opaquerect_videocapture-000001.mp4", 11726, 11712},
+        {"./opaquerect_videocapture-000002.png", 3107, 3107},
+        {"./opaquerect_videocapture-000002.mp4", 10798, 0},
+        {"./opaquerect_videocapture-000003.png", 3099, 3099},
+        {"./opaquerect_videocapture-000003.mp4", 11329, 0},
+        {"./opaquerect_videocapture-000004.png", 3098, 3098},
+        {"./opaquerect_videocapture-000004.mp4", 12331, 9},
+        {"./opaquerect_videocapture-000005.png", 3098, 3098},
+        {"./opaquerect_videocapture-000005.mp4", 262, 0},
+    };
+    for (auto x: fileinfo) {
+        size_t fsize = filesize(x.filename);
+        if (fsize != x.size && fsize != x.alternativesize){
+            BOOST_CHECK_EQUAL(x.size, fsize);
         }
+        ::unlink(x.filename);
     }
-
-    trans.disconnect();
-    auto & file_gen = *trans.seqgen();
-
-    // actual generated files depends on ffmpeg version
-    // values below depends on current embedded ffmpeg version
-    // that's why there are two possible values allowed
-    const char * filename = (file_gen.get(0));
-    int fsize = filesize(filename);
-    switch (fsize) {
-        case 12999: break;
-        case 12985: break;
-        default: BOOST_CHECK_EQUAL(-2, fsize);
-    }
-    ::unlink(filename);
-    filename = (file_gen.get(1));
-    fsize = filesize(filename);
-    switch (fsize) {
-        case 11726: break;
-        case 11712: break;
-        default: BOOST_CHECK_EQUAL(-2, fsize);
-    }
-    ::unlink(filename);
-    filename = (file_gen.get(2));
-    BOOST_CHECK_EQUAL(262, filesize(filename));
-    ::unlink(filename);
 }
 
-
-BOOST_AUTO_TEST_CASE(TestOpaqueRectVideoCaptureOneChunk)
+BOOST_AUTO_TEST_CASE(TestVideoCaptureOneChunkFLV)
 {
-    const int groupid = 0;
-    videocapture_OutFilenameSequenceSeekableTransport trans(
-        videocapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-        "./", "opaquerect_videocapture_one_chunk", ".flv", groupid);
+    struct notified_on_video_change : public NotifyNextVideo
+    {
+        void notify_next_video(const timeval& now, reason reason) 
+        {
+            LOG(LOG_INFO, "next video: now=%u:%u reason=%u", 
+                static_cast<unsigned>(now.tv_sec),
+                static_cast<unsigned>(now.tv_usec),
+                static_cast<unsigned>(reason));
+        }
+    } next_video_notifier;
 
     {
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
-        const int width  = 800;
-        const int height = 600;
-        RDPDrawable drawable(width, height);
-
-//        FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "flv", 0};
-        VideoCapture flvgen(now, trans, drawable, false, {Level::high, width, height, 25, 15, 100000, "flv", 0});
-        VideoSequencer flvseq(now, std::chrono::microseconds{1000 * 1000000l}, flvgen);
-
-        Rect screen(0, 0, width, height);
-
-        auto const color_cxt = gdi::ColorCtx::depth24();
-        drawable.draw(RDPOpaqueRect(screen, BLUE), screen, color_cxt);
-
-        uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
-        Rect r(10, 10, 50, 50);
-        int vx = 5;
-        int vy = 4;
-        bool ignore_frame_in_timeval = false;
-        for (size_t x = 0; x < 1000 ; x++) {
-            r.y += vy;
-            drawable.draw(RDPOpaqueRect(r, BLUE), screen, color_cxt);
-            r.x += vx;
-            drawable.draw(RDPOpaqueRect(r, WABGREEN), screen, color_cxt);
-            usec += 40000LL;
-            now.tv_sec  = usec / 1000000LL;
-            now.tv_usec = (usec % 1000000LL);
-            //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
-            drawable.set_mouse_cursor_pos(r.x + 10, r.y + 10);
-            flvgen.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-            flvseq.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-            if ((r.x + r.cx >= width ) || (r.x < 0)) { vx = -vx; }
-            if ((r.y + r.cy >= height) || (r.y < 0)) { vy = -vy; }
-        }
+        RDPDrawable drawable(800, 600);
+        FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", 0};
+        SequencedVideoCaptureImpl video_capture(now, 
+            "./", "opaquerect_videocapture_one_chunk_xxx", 
+            0 /* groupid */, false /* no_timestamp */, 100 /* zoom */, drawable, flv_params,
+            std::chrono::microseconds{1000 * 1000000l}, next_video_notifier);
+        simple_movie(now, 1000, drawable, video_capture, false, true);
     }
 
-    trans.disconnect();
-    auto & file_gen = *trans.seqgen();
-
-    // actual generated files depends on ffmpeg version
-    // values below depends on current embedded ffmpeg version
-    const char * filename = (file_gen.get(0));
-    BOOST_CHECK_EQUAL(1629235, filesize(filename));
-    ::unlink(filename);
-}
-
-
-BOOST_AUTO_TEST_CASE(TestFrameMarker)
-{
-    const int groupid = 0;
-    videocapture_OutFilenameSequenceSeekableTransport trans(
-        videocapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-        "./", "framemarked_opaquerect_videocapture", ".flv", groupid);
-
-    {
-        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
-        const int width  = 800;
-        const int height = 600;
-        RDPDrawable drawable(width, height);
-
-        FlvParams flv_params{Level::high, width, height, 25, 15, 100000, "flv", 0};
-        VideoCapture flvgen(now, trans, drawable, false, flv_params);
-        VideoSequencer flvseq(now, std::chrono::microseconds{1000 * 1000000l}, flvgen);
-
-        Rect screen(0, 0, width, height);
-        
-        auto const color_cxt = gdi::ColorCtx::depth24();
-        drawable.draw(RDPOpaqueRect(screen, BLUE), screen, color_cxt);
-
-        uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
-        Rect r(10, 10, 50, 25);
-        Rect r1(10, 10 + 25, 50, 25);
-        int vx = 5;
-        int vy = 4;
-        bool ignore_frame_in_timeval = false;
-        for (size_t x = 0; x < 1000 ; x++) {
-            drawable.draw(RDPOpaqueRect(r, BLUE), screen, color_cxt);
-            drawable.draw(RDPOpaqueRect(r1, BLUE), screen, color_cxt);
-            r.y += vy;
-            r.x += vx;
-            drawable.draw(RDPOpaqueRect(r, WABGREEN), screen, color_cxt);
-            usec += 40000LL;
-            now.tv_sec  = usec / 1000000LL;
-            now.tv_usec = (usec % 1000000LL);
-            //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
-            drawable.set_mouse_cursor_pos(r.x + 10, r.y + 10);
-            flvgen.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-            flvseq.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
-            r1.y += vy;
-            r1.x += vx;
-            drawable.draw(RDPOpaqueRect(r1, RED), screen, color_cxt);
-            flvgen.preparing_video_frame();
-
-            if ((r.x + r.cx >= width ) || (r.x < 0)) { vx = -vx; }
-            if ((r.y + r.cy >= height) || (r.y < 0)) { vy = -vy; }
-        }
+    struct CheckFiles {
+        const char * filename;
+        size_t size;
+    } fileinfo[] = {
+        {"./opaquerect_videocapture_one_chunk_xxx-000000.png", 3099},
+        {"./opaquerect_videocapture_one_chunk_xxx-000000.flv", 645722},
+        {"./opaquerect_videocapture_one_chunk_xxx-000001.png", static_cast<long unsigned>(-1)},
+        {"./opaquerect_videocapture_one_chunk_xxx-000001.flv", static_cast<long unsigned>(-1)},
+    };
+    for (auto x: fileinfo) {
+        size_t fsize = filesize(x.filename);
+        BOOST_CHECK_EQUAL(x.size, fsize);
+        ::unlink(x.filename);
     }
-
-    trans.disconnect();
-    auto & file_gen = *trans.seqgen();
-
-    // actual generated files depends on ffmpeg version
-    // values below depends on current embedded ffmpeg version
-    const char * filename = (file_gen.get(0));
-    BOOST_CHECK_EQUAL(734469, filesize(filename));
-    ::unlink(filename);
 }
 
 BOOST_AUTO_TEST_CASE(TestFullVideoCaptureFlv)
@@ -393,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TestFullVideoCaptureFlv)
         FullVideoCaptureImpl video_capture(now, 
             "./", "opaquerect_fullvideocapture_timestamp1", 
             0 /* groupid */, false /* no_timestamp */, drawable, flv_params);
-        simple_movie(now, drawable, video_capture, false, true);
+        simple_movie(now, 250, drawable, video_capture, false, true);
     }
     const char * filename = "./opaquerect_fullvideocapture_timestamp1.flv";
     BOOST_CHECK_EQUAL(164693, filesize(filename));
@@ -410,7 +245,7 @@ BOOST_AUTO_TEST_CASE(TestFullVideoCaptureFlv2)
         FullVideoCaptureImpl video_capture(now, 
             "./", "opaquerect_fullvideocapture_timestamp_mouse0", 
             0 /* groupid */, false /* no_timestamp */, drawable, flv_params);
-        simple_movie(now, drawable, video_capture, false, false);
+        simple_movie(now, 250, drawable, video_capture, false, false);
     }
     const char * filename = "./opaquerect_fullvideocapture_timestamp_mouse0.flv";
     BOOST_CHECK_EQUAL(158699, filesize(filename));
@@ -427,7 +262,7 @@ BOOST_AUTO_TEST_CASE(TestFullVideoCaptureX264)
         FullVideoCaptureImpl video_capture(now, 
             "./", "opaquerect_fullvideocapture_timestamp2",
             0 /* groupid */, false /* no_timestamp */, drawable, flv_params);
-        simple_movie(now, drawable, video_capture, false, true);
+        simple_movie(now, 250, drawable, video_capture, false, true);
     }
     const char * filename = "./opaquerect_fullvideocapture_timestamp2.mp4";
     size_t fsize = filesize(filename);
@@ -460,7 +295,7 @@ BOOST_AUTO_TEST_CASE(SequencedVideoCaptureFLV)
             "./", "opaquerect_seqvideocapture",
             0 /* groupid */, false /* no_timestamp */, 100 /* zoom */, drawable, flv_params,
             std::chrono::microseconds{1000000}, next_video_notifier);
-        simple_movie(now, drawable, video_capture, false, true);
+        simple_movie(now, 250, drawable, video_capture, false, true);
     }
     
     struct CheckFiles {
@@ -519,7 +354,7 @@ BOOST_AUTO_TEST_CASE(SequencedVideoCaptureX264)
             "./", "opaquerect_seqvideocapture_timestamp2",
             0 /* groupid */, false /* no_timestamp */, 100 /* zoom */, drawable, flv_params,
             std::chrono::microseconds{1000000}, next_video_notifier);
-        simple_movie(now, drawable, video_capture, false, true);
+        simple_movie(now, 250, drawable, video_capture, false, true);
     }
     struct CheckFiles {
         const char * filename;
