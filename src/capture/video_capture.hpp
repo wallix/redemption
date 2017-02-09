@@ -39,7 +39,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-class videocapture_fdbuf
+struct videocapture_fdbuf
 {
     int fd;
 
@@ -132,16 +132,9 @@ public:
         return total_sent;
     }
 
-    off64_t seek(off64_t offset, int whence) const
-    { return lseek64(this->fd, offset, whence); }
+//    off64_t seek(off64_t offset, int whence) const
+//    { return lseek64(this->fd, offset, whence); }
 
-    int release() noexcept {
-        int old_fd = this->fd;
-
-        this->fd = -1;
-
-        return old_fd;
-    }
 };
 
 
@@ -307,7 +300,7 @@ public:
     }
 
     off64_t seek(int64_t offset, int whence)
-    { return this->buf_.seek(offset, whence); }
+    { return lseek64(this->buf_.fd, offset, whence); }
 
     const videocapture_FilenameGenerator & seqgen() const noexcept
     { return this->filegen_; }
