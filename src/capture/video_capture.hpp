@@ -48,20 +48,11 @@ public:
     : fd(fd)
     {}
 
-    videocapture_fdbuf(videocapture_fdbuf const &) = delete ;
-    videocapture_fdbuf&operator=(videocapture_fdbuf const &) = delete ;
-
     videocapture_fdbuf(videocapture_fdbuf && other) noexcept
     : fd(other.fd)
     {
         other.fd = -1;
     }
-
-//    videocapture_fdbuf& operator=(videocapture_fdbuf && other) noexcept
-//    {
-//        this->fd = exchange(other.fd, -1);
-//        return *this;
-//    }
 
     ~videocapture_fdbuf()
     {
