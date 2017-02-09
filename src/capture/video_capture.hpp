@@ -858,7 +858,49 @@ public:
     private:
 
         void do_send(const uint8_t * data, size_t len) override {
-            const ssize_t res = this->buf.write(data, len);
+        {
+            if (this->buf.buf_fd == -1) {
+                const char * filename = this->buf.filegen_.get(this->buf.num_file_);
+                snprintf(this->buf.current_filename_, sizeof(this->buf.current_filename_),
+                            "%sred-XXXXXX.tmp", filename);
+                this->buf.buf_fd = ::mkostemps(this->buf.current_filename_, 4, O_WRONLY | O_CREAT);
+                if (this->buf.buf_fd >= 0) {
+                    }
+                    if (chmod(this->buf.current_filename_, this->buf.groupid_
+                        ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                        LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                           , this->buf.current_filename_
+                           , this->buf.groupid_ ? "u+r, g+r" : "u+r"
+                           , strerror(errno), errno);
+                           // TODO: this should be an error
+                    }
+                    this->buf.filegen_.set_last_filename(this->buf.num_file_, this->buf.current_filename_);
+                }
+            }
+
+            int tmpres = -1;
+            if (this->buf.buf_fd >= 0){
+                tmpres = 0;
+                size_t remaining_len = len;
+                size_t total_sent = 0;
+                while (remaining_len) {
+                    ssize_t ret = ::write(this->buf.buf_fd, data + total_sent, remaining_len);
+                    if (ret <= 0){
+                        if (errno == EINTR){
+                            continue;
+                        }
+                        tmpres = -1;
+                        break;
+                    }
+                    remaining_len -= ret;
+                    total_sent += ret;
+                }
+                if (tmpres == 0){
+                    tmpres = total_sent;
+                }
+            }
+
+            const ssize_t res = tmpres;
             if (res < 0) {
                 this->status = false;
                 if (errno == ENOSPC) {
@@ -875,14 +917,15 @@ public:
             this->last_quantum_sent += res;
         }
 
+
+
         class videocapture_out_sequence_filename_buf_impl
         {
-            public:
+        public:
             char current_filename_[1024];
             videocapture_FilenameGenerator filegen_;
             int buf_fd;
             unsigned num_file_;
-            private:
             int groupid_;
 
         public:
@@ -920,52 +963,41 @@ public:
                 return tmpxres;
             }
 
-            ssize_t write(const void * data, size_t len)
-            {
-                if (this->buf_fd == -1) {
-                    const char * filename = this->filegen_.get(this->num_file_);
-                    snprintf(this->current_filename_, sizeof(this->current_filename_),
-                                "%sred-XXXXXX.tmp", filename);
-                    this->buf_fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
-                    if (this->buf_fd < 0) {
-                        return -1;
-                    }
-                    if (chmod(this->current_filename_, this->groupid_
-                        ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-                        LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                           , this->current_filename_
-                           , this->groupid_ ? "u+r, g+r" : "u+r"
-                           , strerror(errno), errno);
-                           // TODO: this should be an error
-                    }
-                    this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-                }
-                
-                size_t remaining_len = len;
-                size_t total_sent = 0;
-                while (remaining_len) {
-                    ssize_t ret = ::write(this->buf_fd, static_cast<const char*>(data) + total_sent, remaining_len);
-                    if (ret <= 0){
-                        if (errno == EINTR){
-                            continue;
-                        }
-                        return -1;
-                    }
-                    remaining_len -= ret;
-                    total_sent += ret;
-                }
-                return total_sent;
-            }
-
-//            void request_full_cleaning()
+//            ssize_t write(const void * data, size_t len)
 //            {
-//                unsigned i = this->num_file_ + 1;
-//                while (i > 0 && !::unlink(this->buf.filegen_.get(--i))) {
+//                if (this->buf_fd == -1) {
+//                    const char * filename = this->filegen_.get(this->num_file_);
+//                    snprintf(this->current_filename_, sizeof(this->current_filename_),
+//                                "%sred-XXXXXX.tmp", filename);
+//                    this->buf_fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+//                    if (this->buf_fd < 0) {
+//                        return -1;
+//                    }
+//                    if (chmod(this->current_filename_, this->groupid_
+//                        ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+//                        LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+//                           , this->current_filename_
+//                           , this->groupid_ ? "u+r, g+r" : "u+r"
+//                           , strerror(errno), errno);
+//                           // TODO: this should be an error
+//                    }
+//                    this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
 //                }
-//                if (-1 != this->buf.buf_fd) {
-//                    ::close(this->buf.buf_fd);
-//                    this->buf.buf_fd = -1;
+//                
+//                size_t remaining_len = len;
+//                size_t total_sent = 0;
+//                while (remaining_len) {
+//                    ssize_t ret = ::write(this->buf_fd, static_cast<const char*>(data) + total_sent, remaining_len);
+//                    if (ret <= 0){
+//                        if (errno == EINTR){
+//                            continue;
+//                        }
+//                        return -1;
+//                    }
+//                    remaining_len -= ret;
+//                    total_sent += ret;
 //                }
+//                return total_sent;
 //            }
         } buf;
     } ic_trans;
