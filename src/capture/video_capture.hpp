@@ -309,14 +309,11 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
     struct videocapture_OutFilenameSequenceSeekableTransport : public Transport
     {
         char buf_current_filename_[1024];
+
         struct videocapture_FilenameGenerator_PATH_FILE_EXTENSION
         {
         private:
-            char         path[1024];
-            char         filename[1012];
-            char         extension[12];
             mutable char filename_gen[1024];
-
             const char * last_filename;
             unsigned     last_num;
 
@@ -328,17 +325,11 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
             : last_filename(nullptr)
             , last_num(-1u)
             {
-                if (strlen(prefix) > sizeof(this->path) - 1
-                 || strlen(filename) > sizeof(this->filename) - 1
-                 || strlen(extension) > sizeof(this->extension) - 1) {
-                    throw Error(ERR_TRANSPORT);
-                }
-
-                strcpy(this->path, prefix);
-                strcpy(this->filename, filename);
-                strcpy(this->extension, extension);
-
+                using std::snprintf;
                 this->filename_gen[0] = 0;
+                // TODO: s'assurer que filename_gen ne sature pas ou lever une exception
+                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s%s", prefix, filename, extension);
+
             }
 
             const char * get(unsigned count) const
@@ -346,10 +337,6 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
                 if (count == this->last_num && this->last_filename) {
                     return this->last_filename;
                 }
-
-                using std::snprintf;
-                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s%s", this->path
-                        , this->filename, this->extension);
                 return this->filename_gen;
             }
 
@@ -386,46 +373,6 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
             if (static_cast<off64_t>(-1) == lseek64(this->buf_buf_fd, offset, whence)){
                 throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
             }
-        }
-
-        bool next() override {
-            if (this->status == false) {
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-            }
-            ssize_t tmpres = 1;
-            if (this->buf_buf_fd != -1) {
-                ::close(this->buf_buf_fd);
-                this->buf_buf_fd = -1;
-                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                
-                this->buf_filegen_.set_last_filename(-1u, "");
-                const char * filename = this->buf_filegen_.get(this->buf_num_file_);
-                this->buf_filegen_.set_last_filename(this->buf_num_file_, this->buf_current_filename_);
-                
-                const int res = ::rename(this->buf_current_filename_, filename);
-                if (res < 0) {
-                    LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                       , this->buf_current_filename_, filename, errno, strerror(errno));
-                    tmpres = 1;
-                }
-                else {
-                    this->buf_current_filename_[0] = 0;
-                    ++this->buf_num_file_;
-                    this->buf_filegen_.set_last_filename(-1u, "");
-                    tmpres = 0;
-                }
-            }
-            const ssize_t res = tmpres;
-            if (res) {
-                this->status = false;
-                if (res < 0){
-                    LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
-                    throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
-                }
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-            ++this->seqno;
-            return true;
         }
 
         void request_full_cleaning() override {
