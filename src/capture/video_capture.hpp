@@ -332,12 +332,14 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
 
             }
 
-            const char * get(unsigned count) const
+            const char * get_gen_filename() const
             {
-                if (count == this->last_num && this->last_filename) {
-                    return this->last_filename;
-                }
                 return this->filename_gen;
+            }
+
+            const char * get_last_filename() const
+            {
+                return this->last_filename;
             }
 
             void set_last_filename(unsigned num, const char * name)
@@ -375,35 +377,17 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
             }
         }
 
-        void request_full_cleaning() override {
-            unsigned i = this->buf_num_file_ + 1;
-            while (i > 0 && !::unlink(this->buf_filegen_.get(--i))) {
-            }
-            if (-1 != this->buf_buf_fd) {
-                ::close(this->buf_buf_fd);
-                this->buf_buf_fd = -1;
-            }
-        }
-
         ~videocapture_OutFilenameSequenceSeekableTransport() {
             if (this->buf_buf_fd != -1) {
                 ::close(this->buf_buf_fd);
                 this->buf_buf_fd = -1;
                 // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
                 
-                this->buf_filegen_.set_last_filename(-1u, "");
-                const char * filename = this->buf_filegen_.get(this->buf_num_file_);
-                this->buf_filegen_.set_last_filename(this->buf_num_file_, this->buf_current_filename_);
-                
+                const char * filename = this->buf_filegen_.get_gen_filename();
                 const int res = ::rename(this->buf_current_filename_, filename);
                 if (res < 0) {
                     LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
                        , this->buf_current_filename_, filename, errno, strerror(errno));
-                }
-                else {
-                    this->buf_current_filename_[0] = 0;
-                    ++this->buf_num_file_;
-                    this->buf_filegen_.set_last_filename(-1u, "");
                 }
             }
         }
@@ -412,7 +396,7 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
         void do_send(const uint8_t * data, size_t len) override {
             ssize_t tmpres = 0;
             if (this->buf_buf_fd == -1) {
-                const char * filename = this->buf_filegen_.get(this->buf_num_file_);
+                const char * filename = this->buf_filegen_.get_gen_filename();
                 snprintf(this->buf_current_filename_, sizeof(this->buf_current_filename_),
                             "%sred-XXXXXX.tmp", filename);
                 this->buf_buf_fd = ::mkostemps(this->buf_current_filename_, 4, O_WRONLY | O_CREAT);
@@ -427,7 +411,6 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
                        , this->buf_groupid_ ? "u+r, g+r" : "u+r"
                        , strerror(errno), errno);
                     }
-                    this->buf_filegen_.set_last_filename(this->buf_num_file_, this->buf_current_filename_);
                 }
             }
             if (tmpres != -1){
