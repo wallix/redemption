@@ -334,11 +334,12 @@ struct videocapture_OutFilenameSequenceSeekableTransport : public Transport
                    , this->buf.current_filename_, filename, errno, strerror(errno));
                 tmpres = 1;
             }
-
-            this->buf.current_filename_[0] = 0;
-            ++this->buf.num_file_;
-            this->buf.filegen_.set_last_filename(-1u, "");
-            tmpres = 0;
+            else {
+                this->buf.current_filename_[0] = 0;
+                ++this->buf.num_file_;
+                this->buf.filegen_.set_last_filename(-1u, "");
+                tmpres = 0;
+            }
         }
         const ssize_t res = tmpres;
         if (res) {
@@ -370,11 +371,13 @@ struct videocapture_OutFilenameSequenceSeekableTransport : public Transport
                    , this->buf.current_filename_, filename, errno, strerror(errno));
                 tmpres = 1;
             }
-            this->buf.current_filename_[0] = 0;
-            ++this->buf.num_file_;
-            this->buf.filegen_.set_last_filename(-1u, "");
-            
-            tmpres = 0;
+            else {
+                this->buf.current_filename_[0] = 0;
+                ++this->buf.num_file_;
+                this->buf.filegen_.set_last_filename(-1u, "");
+                
+                tmpres = 0;
+            }
         }
         return !tmpres;
     }
@@ -390,7 +393,26 @@ struct videocapture_OutFilenameSequenceSeekableTransport : public Transport
     }
 
     ~videocapture_OutFilenameSequenceSeekableTransport() {
-        this->buf.next();
+        if (this->buf.buf_fd != -1) {
+            ::close(this->buf.buf_fd);
+            this->buf.buf_fd = -1;
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+            
+            this->buf.filegen_.set_last_filename(-1u, "");
+            const char * filename = this->buf.filegen_.get(this->buf.num_file_);
+            this->buf.filegen_.set_last_filename(this->buf.num_file_, this->buf.current_filename_);
+            
+            const int res = ::rename(this->buf.current_filename_, filename);
+            if (res < 0) {
+                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                   , this->buf.current_filename_, filename, errno, strerror(errno));
+            }
+            else {
+                this->buf.current_filename_[0] = 0;
+                ++this->buf.num_file_;
+                this->buf.filegen_.set_last_filename(-1u, "");
+            }
+        }
     }
 
 private:
@@ -464,35 +486,7 @@ private:
                 total_sent += ret;
             }
             return total_sent;
-        }
-
-        /// \return 0 if success
-        int next()
-        {
-            if (this->buf_fd != -1) {
-                ::close(this->buf_fd);
-                this->buf_fd = -1;
-                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                
-                this->filegen_.set_last_filename(-1u, "");
-                const char * filename = this->filegen_.get(this->num_file_);
-                this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-                
-                const int res = ::rename(this->current_filename_, filename);
-                if (res < 0) {
-                    LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                       , this->current_filename_, filename, errno, strerror(errno));
-                    return 1;
-                }
-
-                this->current_filename_[0] = 0;
-                ++this->num_file_;
-                this->filegen_.set_last_filename(-1u, "");
-                
-                return 0;
-            }
-            return 1;
-        }
+       }
     } buf;
 
 };
