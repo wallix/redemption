@@ -26,7 +26,6 @@
 #include <string>
 #include <unistd.h>
 
-
 #include "front_widget_Qt4.hpp"
 #pragma GCC diagnostic pop
 
@@ -2926,7 +2925,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     }
 
                                     //uint64_t LastWriteTime   = UnixSecondsToWindowsTick(buff.st_mtime);
-                                    uint64_t CreationTime    = 0;
+                                    uint64_t CreationTime    = UnixSecondsToWindowsTick(buff.st_mtime);;
                                     //int64_t  AllocationSize  = buff.st_size;
                                     uint32_t VolumeSerialNumber = 0xb035dca6;
                                     const char * VolumeLabel = "";
