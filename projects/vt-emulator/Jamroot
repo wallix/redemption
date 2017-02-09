@@ -1,7 +1,9 @@
 include ../../jam/cxxflags.jam ;
 
-constant SRC : src/rvt ;
+constant SRC : src ;
 constant SRC_TEST : test ;
+constant RVT_SRC : $(SRC)/rvt ;
+constant RVT_SRC_TEST : $(SRC_TEST)/rvt ;
 
 project configs
 : requirements
@@ -25,23 +27,24 @@ constant TEST_DEPENDENCIES :
 
 import testing ;
 
-obj screen : $(SRC)/screen.cpp ;
-obj emulator : $(SRC)/vt_emulator.cpp ;
+obj screen : $(RVT_SRC)/screen.cpp ;
+obj emulator : $(RVT_SRC)/vt_emulator.cpp ;
 
 alias libemu : emulator screen ;
 
 ## Tests
 ## @{
-unit-test test_character_color : $(SRC_TEST)/test_character_color.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_character : $(SRC_TEST)/test_character.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_charsets : $(SRC_TEST)/test_charsets.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_character_color : $(RVT_SRC_TEST)/test_character_color.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_character : $(RVT_SRC_TEST)/test_character.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_charsets : $(RVT_SRC_TEST)/test_charsets.cpp : $(TEST_DEPENDENCIES) ;
 
-unit-test test_screen : $(SRC_TEST)/test_screen.cpp screen : $(TEST_DEPENDENCIES) ;
+unit-test test_screen : $(RVT_SRC_TEST)/test_screen.cpp screen : $(TEST_DEPENDENCIES) ;
 
-unit-test test_utf8_decoder : $(SRC_TEST)/test_utf8_decoder.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_utf8_decoder : $(RVT_SRC_TEST)/test_utf8_decoder.cpp : $(TEST_DEPENDENCIES) ;
 
-unit-test test_vt_emulator : $(SRC_TEST)/test_vt_emulator.cpp libemu : $(TEST_DEPENDENCIES) ;
+unit-test test_vt_emulator : $(RVT_SRC_TEST)/test_vt_emulator.cpp libemu : $(TEST_DEPENDENCIES) ;
 
 
 unit-test enumator : $(SRC)/main.cpp libemu : $(TEST_DEPENDENCIES) ;
+exe terminal_browser : $(SRC)/terminal_browser.cpp libemu : $(TEST_DEPENDENCIES) ;
 ## }
