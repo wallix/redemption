@@ -842,7 +842,13 @@ public:
         }
 
         void request_full_cleaning() override {
-            this->buf.request_full_cleaning();
+            unsigned i = this->buf.num_file_ + 1;
+            while (i > 0 && !::unlink(this->buf.filegen_.get(--i))) {
+            }
+            if (-1 != this->buf.buf_fd) {
+                ::close(this->buf.buf_fd);
+                this->buf.buf_fd = -1;
+            }
         }
 
         ~videocapture_OutFilenameSequenceTransport() {
@@ -951,16 +957,16 @@ public:
                 return total_sent;
             }
 
-            void request_full_cleaning()
-            {
-                unsigned i = this->num_file_ + 1;
-                while (i > 0 && !::unlink(this->filegen_.get(--i))) {
-                }
-                if (-1 != this->buf_fd) {
-                    ::close(this->buf_fd);
-                    this->buf_fd = -1;
-                }
-            }
+//            void request_full_cleaning()
+//            {
+//                unsigned i = this->num_file_ + 1;
+//                while (i > 0 && !::unlink(this->buf.filegen_.get(--i))) {
+//                }
+//                if (-1 != this->buf.buf_fd) {
+//                    ::close(this->buf.buf_fd);
+//                    this->buf.buf_fd = -1;
+//                }
+//            }
         } buf;
     } ic_trans;
 
