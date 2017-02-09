@@ -21,6 +21,9 @@
 
 #pragma once
 
+#define LOGPRINT
+#include "utils/log.hpp"
+
 #include "transport/socket_transport.hpp"
 #include "mod/rdp/rdp.hpp"
 
@@ -1611,6 +1614,7 @@ public Q_SLOTS:
     void mem_clipboard() {
         if (this->_front->_callback != nullptr && this->_local_clipboard_stream) {
             const QMimeData * mimeData = this->_clipboard->mimeData();
+            mimeData->hasImage();
 
             if (mimeData->hasImage()){
             //==================
@@ -1643,115 +1647,118 @@ public Q_SLOTS:
 
             } else if (mimeData->hasText()){                //  File or Text copy
 
-                this->emptyBuffer();
-                std::string str(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData());
+                QString qstr = this->_clipboard->text(QClipboard::Clipboard);
+                if (qstr.size() > 0) {
+                    this->emptyBuffer();
+                    std::string str(qstr.toUtf8().constData());
 
-                if (str.at(0) == '/') {
-            //==================
-            //    FILE COPY
-            //==================
-                    this->_bufferTypeID       = Front_Qt::ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
-                    this->_bufferTypeLongName = this->_front->_clipbrdFormatsList.FILEGROUPDESCRIPTORW;
+                    if (str.at(0) == '/') {
+                //==================
+                //    FILE COPY
+                //==================
+                        this->_bufferTypeID       = Front_Qt::ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
+                        this->_bufferTypeLongName = this->_front->_clipbrdFormatsList.FILEGROUPDESCRIPTORW;
 
-                    // retrieve each path
-                    const std::string delimiter = "\n";
-                    this->_cItems = 0;
-                    uint32_t pos = 0;
-                    while (pos <= str.size()) {
-                        pos = str.find(delimiter);
-                        std::string path = str.substr(0, pos);
-                        str = str.substr(pos+1, str.size());
+                        // retrieve each path
+                        const std::string delimiter = "\n";
+                        this->_cItems = 0;
+                        uint32_t pos = 0;
+                        while (pos <= str.size()) {
+                            pos = str.find(delimiter);
+                            std::string path = str.substr(0, pos);
+                            str = str.substr(pos+1, str.size());
 
-                        // double slash
-                        uint32_t posSlash(0);
-                        std::string slash = "/";
-                        bool stillSlash = true;
-                        while (stillSlash) {
-                            posSlash = path.find(slash, posSlash);
-                            if (posSlash < path.size()) {
-                                path = path.substr(0, posSlash) + "//" + path.substr(posSlash+1, path.size());
-                                posSlash += 2;
-                            } else {
-                                path = path.substr(0, path.size());
-                                stillSlash = false;
-                            }
-                        }
-
-                        // get file data
-                        uint64_t size(::filesize(path.c_str()));
-                        std::ifstream iFile(path.c_str(), std::ios::in | std::ios::binary);
-                        if (iFile.is_open()) {
-
-                            CB_out_File * file = new CB_out_File();
-                            file->size  = size;
-                            file->chunk = new char[file->size];
-                            iFile.read(file->chunk, file->size);
-                            iFile.close();
-
-                            int posName(path.size()-1);
-                            bool lookForName = true;
-                            while (posName >= 0 && lookForName) {
-                                if (path.at(posName) == '/') {
-                                    lookForName = false;
+                            // double slash
+                            uint32_t posSlash(0);
+                            std::string slash = "/";
+                            bool stillSlash = true;
+                            while (stillSlash) {
+                                posSlash = path.find(slash, posSlash);
+                                if (posSlash < path.size()) {
+                                    path = path.substr(0, posSlash) + "//" + path.substr(posSlash+1, path.size());
+                                    posSlash += 2;
+                                } else {
+                                    path = path.substr(0, path.size());
+                                    stillSlash = false;
                                 }
-                                posName--;
                             }
-                            file->nameUTF8 = path.substr(posName+2, path.size());
-                            //std::string name = file->nameUTF8;
-                            int UTF8nameSize(file->nameUTF8.size() *2);
-                            if (UTF8nameSize > 520) {
-                                UTF8nameSize = 520;
-                            }
-                            uint8_t UTF16nameData[520];
-                            int UTF16nameSize = ::UTF8toUTF16_CrLf(
-                                reinterpret_cast<const uint8_t *>(file->nameUTF8.c_str())
-                              , UTF16nameData
-                              , UTF8nameSize);
-                            file->name = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
-                            this->_cItems++;
-                            this->_items_list.push_back(file);
 
-                        } else {
-                            LOG(LOG_WARNING, "Path \"%s\" not found.", path.c_str());
+                            // get file data
+                            uint64_t size(::filesize(path.c_str()));
+                            std::ifstream iFile(path.c_str(), std::ios::in | std::ios::binary);
+                            if (iFile.is_open()) {
+
+                                CB_out_File * file = new CB_out_File();
+                                file->size  = size;
+                                file->chunk = new char[file->size];
+                                iFile.read(file->chunk, file->size);
+                                iFile.close();
+
+                                int posName(path.size()-1);
+                                bool lookForName = true;
+                                while (posName >= 0 && lookForName) {
+                                    if (path.at(posName) == '/') {
+                                        lookForName = false;
+                                    }
+                                    posName--;
+                                }
+                                file->nameUTF8 = path.substr(posName+2, path.size());
+                                //std::string name = file->nameUTF8;
+                                int UTF8nameSize(file->nameUTF8.size() *2);
+                                if (UTF8nameSize > 520) {
+                                    UTF8nameSize = 520;
+                                }
+                                uint8_t UTF16nameData[520];
+                                int UTF16nameSize = ::UTF8toUTF16_CrLf(
+                                    reinterpret_cast<const uint8_t *>(file->nameUTF8.c_str())
+                                , UTF16nameData
+                                , UTF8nameSize);
+                                file->name = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
+                                this->_cItems++;
+                                this->_items_list.push_back(file);
+
+                            } else {
+                                LOG(LOG_WARNING, "Path \"%s\" not found.", path.c_str());
+                            }
                         }
+
+                        this->send_FormatListPDU();
+                //==========================================================================
+
+
+
+                    } else {
+                //==================
+                //    TEXT COPY
+                //==================
+                        this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
+                        this->_bufferTypeLongName = std::string("\0\0", 2);
+
+    //                     int cmptCR(0);
+    //                     std::string tmp(str);
+    //                     int pos(tmp.find("\n"));
+
+    //                     while (pos != -1) {
+    //                         cmptCR++;
+    //                         tmp = tmp.substr(pos+2, tmp.length());
+    //                         pos = tmp.find("\n"); // for linux install
+    //                     }
+
+                        size_t size( ( str.length() * 4) + 2 );
+
+                        this->_chunk = std::make_unique<uint8_t[]>(size);
+
+                        // UTF8toUTF16_CrLf for linux install
+                        this->_cliboard_data_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size);
+
+                        RDPECLIP::FormatDataResponsePDU_Text::Ender ender;
+                        ender.emit(this->_chunk.get(), this->_cliboard_data_length);
+
+                        this->_cliboard_data_length += RDPECLIP::FormatDataResponsePDU_Text::Ender::SIZE;
+
+                        this->send_FormatListPDU();
+                //==========================================================================
                     }
-
-                    this->send_FormatListPDU();
-            //==========================================================================
-
-
-
-                } else {
-            //==================
-            //    TEXT COPY
-            //==================
-                    this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
-                    this->_bufferTypeLongName = std::string("\0\0", 2);
-
-                    int cmptCR(0);
-                    std::string tmp(str);
-                    int pos(tmp.find("\n"));
-
-                    while (pos != -1) {
-                        cmptCR++;
-                        tmp = tmp.substr(pos+2, tmp.length());
-                        pos = tmp.find("\n"); // for linux install
-                    }
-
-                    size_t size( ( (str.length() + cmptCR*2) * 4) + 2 );
-
-                    this->_chunk = std::make_unique<uint8_t[]>(size);
-
-                    // UTF8toUTF16_CrLf for linux install
-                    this->_cliboard_data_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size);
-
-                    RDPECLIP::FormatDataResponsePDU_Text::Ender ender;
-                    ender.emit(this->_chunk.get(), this->_cliboard_data_length);
-
-                    this->_cliboard_data_length += RDPECLIP::FormatDataResponsePDU_Text::Ender::SIZE;
-
-                    this->send_FormatListPDU();
-            //==========================================================================
 
                 }
             }
