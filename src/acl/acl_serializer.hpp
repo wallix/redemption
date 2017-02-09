@@ -294,16 +294,13 @@ class AclSerializer{
 
 public:
     Inifile & ini;
-    
+
 private:
     Transport & auth_trans;
-    
 
-    
     char session_id[256];
 
 public:
-
     std::string session_type;
 
     bool remote_answer;       // false initialy, set to true once response is
@@ -311,7 +308,7 @@ public:
                               // set to false
 
     KeepAlive keepalive;
-    
+
     Inactivity inactivity;
 
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
@@ -330,7 +327,7 @@ public:
         , remote_answer(false)
         , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), to_verbose_flags(ini.get<cfg::debug::auth>()))
         , inactivity(ini.get<cfg::globals::session_timeout>(), acl_start_time, to_verbose_flags(ini.get<cfg::debug::auth>()))
-        
+
         , verbose(verbose)
     {
         std::snprintf(this->session_id, sizeof(this->session_id), "%d", getpid());
@@ -368,7 +365,7 @@ public:
         try {
             this->incoming();
 
-            if (!this->ini.get<cfg::context::module>().compare("RDP") 
+            if (!this->ini.get<cfg::context::module>().compare("RDP")
             ||  !this->ini.get<cfg::context::module>().compare("VNC")) {
                 this->session_type = this->ini.get<cfg::context::module>();
             }
@@ -389,7 +386,7 @@ public:
         }
     }
 
-    void log4(bool duplicate_with_pid, const char * type, const char * extra) 
+    void log4(bool duplicate_with_pid, const char * type, const char * extra)
     {
         const bool session_log =
             this->ini.get<cfg::session_log::enable_session_log>();
@@ -503,8 +500,8 @@ public:
                 this->send_acl_data();
             }
         }
-        else if (this->remote_answer 
-        || (signal == BACK_EVENT_RETRY_CURRENT) 
+        else if (this->remote_answer
+        || (signal == BACK_EVENT_RETRY_CURRENT)
         || (front_signal == BACK_EVENT_NEXT)) {
             this->remote_answer = false;
             if (signal == BACK_EVENT_REFRESH) {
@@ -515,10 +512,10 @@ public:
                 mm.mod->get_event().signal = BACK_EVENT_NONE;
                 mm.mod->get_event().set();
             }
-            else if ((signal == BACK_EVENT_NEXT) 
-                    || (signal == BACK_EVENT_RETRY_CURRENT) 
+            else if ((signal == BACK_EVENT_NEXT)
+                    || (signal == BACK_EVENT_RETRY_CURRENT)
                     || (front_signal == BACK_EVENT_NEXT)) {
-                if ((signal == BACK_EVENT_NEXT) 
+                if ((signal == BACK_EVENT_NEXT)
                    || (front_signal == BACK_EVENT_NEXT)) {
                     LOG(LOG_INFO, "===========> MODULE_NEXT");
                 }
@@ -528,7 +525,7 @@ public:
                     LOG(LOG_INFO, "===========> MODULE_RETRY_CURRENT");
                 }
 
-                int next_state = (((signal == BACK_EVENT_NEXT) 
+                int next_state = (((signal == BACK_EVENT_NEXT)
                                   || (front_signal == BACK_EVENT_NEXT)) ? mm.next_module() : MODULE_RDP);
 
                 front_signal = BACK_EVENT_NONE;
@@ -570,7 +567,7 @@ public:
                         const char * password = char_ptr_cast(this->ini.get<cfg::mod_rdp::redir_info>().password);
                         const char * username = char_ptr_cast(this->ini.get<cfg::mod_rdp::redir_info>().username);
                         const char * change_user = "";
-                        if (this->ini.get<cfg::mod_rdp::redir_info>().dont_store_username 
+                        if (this->ini.get<cfg::mod_rdp::redir_info>().dont_store_username
                         && (username[0] != 0)) {
                             LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
                             this->ini.set_acl<cfg::globals::target_user>(username);
@@ -962,7 +959,4 @@ public:
             this->ini.clear_send_index();
         }
     }
-    
-    
-    
 };
