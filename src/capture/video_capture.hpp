@@ -306,10 +306,10 @@ struct videocapture_OutFilenameSequenceSeekableTransport : public Transport
     }
 
     const videocapture_FilenameGenerator * seqgen() const noexcept
-    { return &(this->buffer().seqgen()); }
+    { return &(this->buf.seqgen()); }
 
     void seek(int64_t offset, int whence) override {
-        if (static_cast<off64_t>(-1) == this->buffer().seek(offset, whence)){
+        if (static_cast<off64_t>(-1) == this->buf.seek(offset, whence)){
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }
     }
@@ -318,7 +318,7 @@ struct videocapture_OutFilenameSequenceSeekableTransport : public Transport
         if (this->status == false) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
-        const ssize_t res = this->buffer().next();
+        const ssize_t res = this->buf.next();
         if (res) {
             this->status = false;
             if (res < 0){
@@ -336,7 +336,7 @@ struct videocapture_OutFilenameSequenceSeekableTransport : public Transport
     }
 
     void request_full_cleaning() override {
-        this->buffer().request_full_cleaning();
+        this->buf.request_full_cleaning();
     }
 
     ~videocapture_OutFilenameSequenceSeekableTransport() {
@@ -498,16 +498,16 @@ private:
             this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
             return filename;
         }
-    };
+    } buf;
 
-    videocapture_out_sequence_filename_buf_impl0 & buffer() noexcept
-    { return this->buf; }
+//    videocapture_out_sequence_filename_buf_impl0 & buffer() noexcept
+//    { return this->buf; }
 
-    const videocapture_out_sequence_filename_buf_impl0 & buffer() const noexcept
-    { return this->buf; }
+//    const videocapture_out_sequence_filename_buf_impl0 & buffer() const noexcept
+//    { return this->buf; }
 
-private:
-    videocapture_out_sequence_filename_buf_impl0 buf;
+//private:
+//    videocapture_out_sequence_filename_buf_impl0 buf;
 
 };
 
