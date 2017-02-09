@@ -314,16 +314,9 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
         {
         private:
             mutable char filename_gen[1024];
-            const char * last_filename;
-            unsigned     last_num;
 
         public:
-            videocapture_FilenameGenerator_PATH_FILE_EXTENSION(
-                const char * const prefix,
-                const char * const filename,
-                const char * const extension)
-            : last_filename(nullptr)
-            , last_num(-1u)
+            videocapture_FilenameGenerator_PATH_FILE_EXTENSION(const char * const prefix, const char * const filename, const char * const extension)
             {
                 using std::snprintf;
                 this->filename_gen[0] = 0;
@@ -337,16 +330,6 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
                 return this->filename_gen;
             }
 
-            const char * get_last_filename() const
-            {
-                return this->last_filename;
-            }
-
-            void set_last_filename(unsigned num, const char * name)
-            {
-                this->last_num = num;
-                this->last_filename = name;
-            }
         } buf_filegen_;
 
         int buf_buf_fd;
