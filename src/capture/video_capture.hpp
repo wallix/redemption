@@ -797,7 +797,7 @@ public:
         }
 
         const videocapture_FilenameGenerator * seqgen() const noexcept
-        { return &(this->buf.seqgen()); }
+        { return &(this->buf.filegen_); }
 
         bool next() override {
             if (this->status == false) {
@@ -851,7 +851,9 @@ public:
         class videocapture_out_sequence_filename_buf_impl
         {
             char current_filename_[1024];
+            public:
             videocapture_FilenameGenerator filegen_;
+            private:
             int buf_fd;
             unsigned num_file_;
             int groupid_;
@@ -920,19 +922,8 @@ public:
             off64_t seek(int64_t offset, int whence)
             { return lseek64(this->buf_fd, offset, whence); }
 
-            const videocapture_FilenameGenerator & seqgen() const noexcept
-            { return this->filegen_; }
-
-            int & buf() noexcept
-            { return this->buf_fd; }
-
-//            const char * current_path() const
-//            {
-//                if (!this->current_filename_[0] && !this->num_file_) {
-//                    return nullptr;
-//                }
-//                return this->filegen_.get(this->num_file_ - 1);
-//            }
+//            const videocapture_FilenameGenerator & seqgen() const noexcept
+//            { return this->filegen_; }
 
         protected:
             ssize_t open_filename(const char * filename)
@@ -984,14 +975,6 @@ public:
                 return filename;
             }
         } buf;
-
-//        videocapture_out_sequence_filename_buf_impl & buffer() noexcept
-//        { return this->buf; }
-
-//        const videocapture_out_sequence_filename_buf_impl & buffer() const noexcept
-//        { return this->buf; }
-
-//        videocapture_out_sequence_filename_buf_impl buf;
     } ic_trans;
 
     unsigned ic_zoom_factor;
