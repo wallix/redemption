@@ -4460,13 +4460,6 @@ public:
 
             const uint8_t * fc_data = fc.data.get();
 
-//             LOG(LOG_INFO, "Glyph24Bitmap color_back %u %u %u", color_back.red(), color_back.green(), color_back.blue());
-//
-//             LOG(LOG_INFO, "Glyph24Bitmap color_fore %u %u %u", color_fore.red(), color_fore.green(), color_fore.blue());
-//
-//             LOG(LOG_INFO, "Glyph24Bitmap fc_data");
-//             hexdump_c(fc_data, 16*2);
-
             for (int y = 0 ; y < height_bitmap; y++) {
                 uint8_t   fc_bit_mask        = 128;
                 for (int x = 0 ; x < fc.width; x++) {
@@ -4487,9 +4480,6 @@ public:
                 }
                 fc_data++;
             }
-
-//             LOG(LOG_INFO, "Glyph24Bitmap raw_data");
-//             hexdump_c(raw_data, 256*3);
         }
     } GlyphTo24Bitmap;
 
@@ -4528,28 +4518,28 @@ protected:
                         const int16_t y = cmd.bk.y;
 
                         const Rect rect = clip.intersect(Rect(x, y, fc.width, fc.height));
-                        if (Rect(0,0,0,0) != rect) {
+                        if (rect.cx != 0 && rect.cy != 0) {
 
                             GlyphTo24Bitmap glyphBitmap(fc, color_fore, color_back);
 
                             RDPBitmapData rDPBitmapData;
-                            rDPBitmapData.dest_left = x;
-                            rDPBitmapData.dest_top = y;
-                            rDPBitmapData.dest_right = fc.width + x - 1;
-                            rDPBitmapData.dest_bottom = fc.height + y - 1;
-                            rDPBitmapData.width = fc.width;
-                            rDPBitmapData.height = fc.height;
+                            rDPBitmapData.dest_left = rect.x;
+                            rDPBitmapData.dest_top = rect.y;
+                            rDPBitmapData.dest_right = rect.cx + rect.x - 1;
+                            rDPBitmapData.dest_bottom = rect.cy + rect.y - 1;
+                            rDPBitmapData.width = rect.cx;
+                            rDPBitmapData.height = rect.cy;
                             rDPBitmapData.bits_per_pixel = 24;
-//                             rDPBitmapData.flags;
-                            rDPBitmapData.bitmap_length = fc.width * fc.height * 3;
-//
-//                             // Compressed Data Header (TS_CD_HEADER)
+                            rDPBitmapData.flags = 0x0401;
+                            rDPBitmapData.bitmap_length = rect.cx * rect.cy * 3;
+
+                             // Compressed Data Header (TS_CD_HEADER)
 //                             rDPBitmapData.cb_comp_main_body_size;
 //                             rDPBitmapData.cb_scan_width;
-//                             urDPBitmapData.cb_uncompressed_size;
+//                             rDPBitmapData.cb_uncompressed_size;
 
                             //RDPMemBlt cmd(cmd.cache_id, rect, 0xCC, rect.x, rect.y, 0);
-                            const Rect tile(0, 0, fc.width, fc.height);
+                            const Rect tile(rect.x - x, rect.y - y, rect.cx, rect.cy);
                             Bitmap bmp(glyphBitmap.raw_data, fc.width, 16, 24, tile);
                             draw_impl(rDPBitmapData, bmp);
                         }
