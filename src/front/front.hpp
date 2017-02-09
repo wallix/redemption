@@ -4460,13 +4460,6 @@ public:
 
             const uint8_t * fc_data = fc.data.get();
 
-//             LOG(LOG_INFO, "Glyph24Bitmap color_back %u %u %u", color_back.red(), color_back.green(), color_back.blue());
-//
-//             LOG(LOG_INFO, "Glyph24Bitmap color_fore %u %u %u", color_fore.red(), color_fore.green(), color_fore.blue());
-//
-//             LOG(LOG_INFO, "Glyph24Bitmap fc_data");
-//             hexdump_c(fc_data, 16*2);
-
             for (int y = 0 ; y < height_bitmap; y++) {
                 uint8_t   fc_bit_mask        = 128;
                 for (int x = 0 ; x < fc.width; x++) {
@@ -4487,9 +4480,6 @@ public:
                 }
                 fc_data++;
             }
-
-//             LOG(LOG_INFO, "Glyph24Bitmap raw_data");
-//             hexdump_c(raw_data, 256*3);
         }
     } GlyphTo24Bitmap;
 
@@ -4528,8 +4518,6 @@ protected:
                         const int16_t y = cmd.bk.y;
 
                         const Rect rect = clip.intersect(Rect(x, y, fc.width, fc.height));
-                        LOG(LOG_WARNING, "Clip Rect x=%u y=%u cx=%u, cy=%u", clip.x, clip.y, clip.cx, clip.cy);
-                        LOG(LOG_WARNING, "rect Rect x=%u y=%u cx=%u, cy=%u", rect.x, rect.y, rect.cx, rect.cy);
                         if (rect.cx != 0 && rect.cy != 0) {
 
                             GlyphTo24Bitmap glyphBitmap(fc, color_fore, color_back);
@@ -4546,9 +4534,9 @@ protected:
                             rDPBitmapData.bitmap_length = rect.cx * rect.cy * 3;
 
                              // Compressed Data Header (TS_CD_HEADER)
-                            rDPBitmapData.cb_comp_main_body_size;
-                            rDPBitmapData.cb_scan_width;
-                            rDPBitmapData.cb_uncompressed_size;
+//                             rDPBitmapData.cb_comp_main_body_size;
+//                             rDPBitmapData.cb_scan_width;
+//                             rDPBitmapData.cb_uncompressed_size;
 
                             //RDPMemBlt cmd(cmd.cache_id, rect, 0xCC, rect.x, rect.y, 0);
                             const Rect tile(rect.x - x, rect.y - y, rect.cx, rect.cy);
