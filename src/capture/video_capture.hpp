@@ -917,10 +917,22 @@ public:
             ssize_t write(const void * data, size_t len)
             {
                 if (this->buf_fd == -1) {
-                    const int res = this->open_filename(this->filegen_.get(this->num_file_));
-                    if (res < 0) {
-                        return res;
+                    const char * filename = this->filegen_.get(this->num_file_);
+                    snprintf(this->current_filename_, sizeof(this->current_filename_),
+                                "%sred-XXXXXX.tmp", filename);
+                    this->buf_fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+                    if (this->buf_fd < 0) {
+                        return -1;
                     }
+                    if (chmod(this->current_filename_, this->groupid_
+                        ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                        LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                           , this->current_filename_
+                           , this->groupid_ ? "u+r, g+r" : "u+r"
+                           , strerror(errno), errno);
+                           // TODO: this should be an error
+                    }
+                    this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
                 }
                 
                 size_t remaining_len = len;
@@ -952,34 +964,6 @@ public:
 
             off64_t seek(int64_t offset, int whence)
             { return lseek64(this->buf_fd, offset, whence); }
-
-//            const videocapture_FilenameGenerator & seqgen() const noexcept
-//            { return this->filegen_; }
-
-        protected:
-            ssize_t open_filename(const char * filename)
-            {
-                snprintf(this->current_filename_, sizeof(this->current_filename_),
-                            "%sred-XXXXXX.tmp", filename);
-                const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
-                if (fd < 0) {
-                    return fd;
-                }
-                if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-                    LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                       , this->current_filename_
-                       , this->groupid_ ? "u+r, g+r" : "u+r"
-                       , strerror(errno), errno);
-                }
-                this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-
-                if (-1 != this->buf_fd) {
-                    ::close(this->buf_fd);
-                    this->buf_fd = -1;
-                }
-                this->buf_fd = fd;
-                return fd;
-            }
         } buf;
     } ic_trans;
 
