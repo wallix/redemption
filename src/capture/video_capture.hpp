@@ -381,9 +381,6 @@ private:
             this->current_filename_[0] = 0;
         }
 
-//        int close()
-//        { return this->next(); }
-
         ssize_t write(const void * data, size_t len)
         {
             if (this->buf_fd == -1) {
@@ -416,7 +413,19 @@ private:
                 ::close(this->buf_fd);
                 this->buf_fd = -1;
                 // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                return this->rename_filename() ? 0 : 1;
+                const char * filename = this->get_filename_generate();
+                const int res = ::rename(this->current_filename_, filename);
+                if (res < 0) {
+                    LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                       , this->current_filename_, filename, errno, strerror(errno));
+                    return 1;
+                }
+
+                this->current_filename_[0] = 0;
+                ++this->num_file_;
+                this->filegen_.set_last_filename(-1u, "");
+                
+                return 0;
             }
             return 1;
         }
