@@ -49,7 +49,7 @@ struct videocapture_OutFilenameSequenceSeekableTransport_COUNT : public Transpor
         char         extension[12];
         mutable char filename_gen[1024];
 
-        const char * last_filename;
+        char * last_filename;
         unsigned     last_num;
 
         videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION(
@@ -72,7 +72,7 @@ struct videocapture_OutFilenameSequenceSeekableTransport_COUNT : public Transpor
             this->filename_gen[0] = 0;
         }
 
-        const char * get(unsigned count) const
+        char * get(unsigned count) const
         {
             if (count == this->last_num && this->last_filename) {
                 return this->last_filename;
@@ -106,7 +106,7 @@ public:
             }
     }
 
-    const videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION * seqgen() const noexcept
+    videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION * seqgen() noexcept
     { return &this->buf_filegen_; }
 
     void seek(int64_t offset, int whence) override {
@@ -126,9 +126,9 @@ public:
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             
             this->buf_filegen_.last_num = -1u;
-            this->buf_filegen_.last_filename = "";
+            this->buf_filegen_.last_filename = nullptr;
             
-            const char * filename = this->buf_filegen_.get(this->buf_num_file_);
+            char * filename = this->buf_filegen_.get(this->buf_num_file_);
             
             this->buf_filegen_.last_num = this->buf_num_file_;
             this->buf_filegen_.last_filename = this->buf_current_filename_;
@@ -143,7 +143,7 @@ public:
                 this->buf_current_filename_[0] = 0;
                 ++this->buf_num_file_;
                 this->buf_filegen_.last_num = -1u;
-                this->buf_filegen_.last_filename = "";
+                this->buf_filegen_.last_filename = nullptr;
                 tmpres = 0;
             }
         }
@@ -177,8 +177,8 @@ public:
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             
             this->buf_filegen_.last_num = -1u;
-            this->buf_filegen_.last_filename = "";
-            const char * filename = this->buf_filegen_.get(this->buf_num_file_);
+            this->buf_filegen_.last_filename = nullptr;
+            char * filename = this->buf_filegen_.get(this->buf_num_file_);
             this->buf_filegen_.last_num = this->buf_num_file_;
             this->buf_filegen_.last_filename = this->buf_current_filename_;
             
@@ -194,7 +194,20 @@ private:
     void do_send(const uint8_t * data, size_t len) override {
         ssize_t tmpres = 0;
         if (this->buf_buf_fd == -1) {
-            const char * filename = this->buf_filegen_.get(this->buf_num_file_);
+            unsigned count = this->buf_num_file_;
+            char * filename = this->buf_filegen_.last_filename;
+            if (count != this->buf_filegen_.last_num 
+            || this->buf_filegen_.last_filename == nullptr) {
+                using std::snprintf;
+                snprintf( this->buf_filegen_.filename_gen
+                        , sizeof(this->buf_filegen_.filename_gen)
+                        , "%s%s-%06u%s"
+                        , this->buf_filegen_.path
+                        , this->buf_filegen_.filename
+                        , count, this->buf_filegen_.extension);
+                filename = this->buf_filegen_.filename_gen;
+            }
+
             snprintf(this->buf_current_filename_, sizeof(this->buf_current_filename_),
                         "%sred-XXXXXX.tmp", filename);
             this->buf_buf_fd = ::mkostemps(this->buf_current_filename_, 4, O_WRONLY | O_CREAT);
