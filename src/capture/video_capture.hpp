@@ -43,15 +43,15 @@ struct SequenceTransport : public Transport
 {
     char tmp_filename[1024];
 
-    char         buf_filegen_path[1024];
-    char         buf_filegen_filename[1012];
-    char         buf_filegen_extension[12];
+    char         filegen_path[1024];
+    char         filegen_base[1012];
+    char         filegen_ext[12];
     char         final_filename[1024];
     char *       buf_filegen_last_filename;
     unsigned     buf_filegen_last_num;
 
-    int buf_buf_fd;
-    unsigned buf_num_file_;
+    int fd;
+    unsigned filegen_num;
     int buf_groupid_;
 
 public:
@@ -63,19 +63,19 @@ public:
         auth_api * authentifier)
     : buf_filegen_last_filename(nullptr)
     , buf_filegen_last_num(-1u)
-    , buf_buf_fd(-1)
-    , buf_num_file_(0)
+    , fd(-1)
+    , filegen_num(0)
     , buf_groupid_(groupid)
     {
-        if (strlen(prefix) > sizeof(this->buf_filegen_path) - 1
-         || strlen(filename) > sizeof(this->buf_filegen_filename) - 1
-         || strlen(extension) > sizeof(this->buf_filegen_extension) - 1) {
+        if (strlen(prefix) > sizeof(this->filegen_path) - 1
+         || strlen(filename) > sizeof(this->filegen_base) - 1
+         || strlen(extension) > sizeof(this->filegen_ext) - 1) {
             throw Error(ERR_TRANSPORT);
         }
 
-        strcpy(this->buf_filegen_path, prefix);
-        strcpy(this->buf_filegen_filename, filename);
-        strcpy(this->buf_filegen_extension, extension);
+        strcpy(this->filegen_path, prefix);
+        strcpy(this->filegen_base, filename);
+        strcpy(this->filegen_ext, extension);
 
         this->final_filename[0] = 0;
 
@@ -86,7 +86,7 @@ public:
     }
 
     void seek(int64_t offset, int whence) override {
-        if (static_cast<off64_t>(-1) == lseek64(this->buf_buf_fd, offset, whence)){
+        if (static_cast<off64_t>(-1) == lseek64(this->fd, offset, whence)){
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }
     }
@@ -95,20 +95,20 @@ public:
         if (this->status == false) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
-        ::close(this->buf_buf_fd);
-        this->buf_buf_fd = -1;
+        ::close(this->fd);
+        this->fd = -1;
         // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
         
         using std::snprintf;
         snprintf( this->final_filename
                 , sizeof(this->final_filename)
                 , "%s%s-%06u%s"
-                , this->buf_filegen_path
-                , this->buf_filegen_filename
-                , this->buf_num_file_
-                , this->buf_filegen_extension);
+                , this->filegen_path
+                , this->filegen_base
+                , this->filegen_num
+                , this->filegen_ext);
 
-        this->buf_filegen_last_num = this->buf_num_file_;
+        this->buf_filegen_last_num = this->filegen_num;
         this->buf_filegen_last_filename = this->tmp_filename;
 
         if (::rename(this->tmp_filename, this->final_filename) < 0)
@@ -121,7 +121,7 @@ public:
         }
         this->tmp_filename[0] = 0;
 
-        ++this->buf_num_file_;
+        ++this->filegen_num;
 
         this->buf_filegen_last_num = -1u;
         this->buf_filegen_last_filename = nullptr;
@@ -131,20 +131,20 @@ public:
     }
 
     ~SequenceTransport() {
-        if (this->buf_buf_fd != -1) {
-            ::close(this->buf_buf_fd);
+        if (this->fd != -1) {
+            ::close(this->fd);
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             
             using std::snprintf;
             snprintf( this->final_filename
                     , sizeof(this->final_filename)
                     , "%s%s-%06u%s"
-                    , this->buf_filegen_path
-                    , this->buf_filegen_filename
-                    , this->buf_num_file_
-                    , this->buf_filegen_extension);
+                    , this->filegen_path
+                    , this->filegen_base
+                    , this->filegen_num
+                    , this->filegen_ext);
 
-            this->buf_filegen_last_num = this->buf_num_file_;
+            this->buf_filegen_last_num = this->filegen_num;
             this->buf_filegen_last_filename = this->tmp_filename;
             
             const int res = ::rename(this->tmp_filename, this->final_filename);
@@ -157,26 +157,26 @@ public:
 
 private:
     void do_send(const uint8_t * data, size_t len) override {
-        if (this->buf_buf_fd == -1) {
+        if (this->fd == -1) {
             // TODO: if we don't have any file open we are likely in special case
             // where we have no temporary filename open
             char * filename = this->buf_filegen_last_filename;
-            if (this->buf_num_file_ != this->buf_filegen_last_num || this->buf_filegen_last_filename == nullptr) 
+            if (this->filegen_num != this->buf_filegen_last_num || this->buf_filegen_last_filename == nullptr) 
             {
                 using std::snprintf;
                 snprintf( this->final_filename
                         , sizeof(this->final_filename)
                         , "%s%s-%06u%s"
-                        , this->buf_filegen_path
-                        , this->buf_filegen_filename
-                        , this->buf_num_file_, this->buf_filegen_extension);
+                        , this->filegen_path
+                        , this->filegen_base
+                        , this->filegen_num, this->filegen_ext);
                 filename = this->final_filename;
             }
 
             snprintf(this->tmp_filename, sizeof(this->tmp_filename),
                         "%sred-XXXXXX.tmp", filename);
-            this->buf_buf_fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
-            if (this->buf_buf_fd == -1) {
+            this->fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
+            if (this->fd == -1) {
                 this->status = false;
                 auto id = ERR_TRANSPORT_WRITE_FAILED;
                 if (errno == ENOSPC) {
@@ -195,14 +195,14 @@ private:
                , this->buf_groupid_ ? "u+r, g+r" : "u+r"
                , strerror(errno), errno);
             }
-            this->buf_filegen_last_num = this->buf_num_file_;
+            this->buf_filegen_last_num = this->filegen_num;
             this->buf_filegen_last_filename = this->tmp_filename;
         }
 
         size_t remaining_len = len;
         size_t total_sent = 0;
         while (remaining_len) {
-            ssize_t ret = ::write(this->buf_buf_fd, data + total_sent, remaining_len);
+            ssize_t ret = ::write(this->fd, data + total_sent, remaining_len);
             if (ret <= 0){
                 if (errno == EINTR){
                     continue;
@@ -230,15 +230,15 @@ struct VideoTransport : public Transport
 {
     char tmp_filename[1024];
 
-    char         buf_filegen_path[1024];
-    char         buf_filegen_filename[1012];
-    char         buf_filegen_extension[12];
+    char         filegen_path[1024];
+    char         filegen_base[1012];
+    char         filegen_ext[12];
     char         final_filename[1024];
     char *       buf_filegen_last_filename;
     unsigned     buf_filegen_last_num;
 
-    int buf_buf_fd;
-    unsigned buf_num_file_;
+    int fd;
+    unsigned filegen_num;
     int buf_groupid_;
 
 public:
@@ -251,19 +251,19 @@ public:
     )
     : buf_filegen_last_filename(nullptr)
     , buf_filegen_last_num(-1u)
-    , buf_buf_fd(-1)
-    , buf_num_file_(0)
+    , fd(-1)
+    , filegen_num(0)
     , buf_groupid_(groupid)
     {
-        if (strlen(prefix) > sizeof(this->buf_filegen_path) - 1
-         || strlen(filename) > sizeof(this->buf_filegen_filename) - 1
-         || strlen(extension) > sizeof(this->buf_filegen_extension) - 1) {
+        if (strlen(prefix) > sizeof(this->filegen_path) - 1
+         || strlen(filename) > sizeof(this->filegen_base) - 1
+         || strlen(extension) > sizeof(this->filegen_ext) - 1) {
             throw Error(ERR_TRANSPORT);
         }
 
-        strcpy(this->buf_filegen_path, prefix);
-        strcpy(this->buf_filegen_filename, filename);
-        strcpy(this->buf_filegen_extension, extension);
+        strcpy(this->filegen_path, prefix);
+        strcpy(this->filegen_base, filename);
+        strcpy(this->filegen_ext, extension);
 
         this->final_filename[0] = 0;
 
@@ -274,15 +274,15 @@ public:
         snprintf( this->final_filename
                 , sizeof(this->final_filename)
                 , "%s%s-%06u%s"
-                , this->buf_filegen_path
-                , this->buf_filegen_filename
+                , this->filegen_path
+                , this->filegen_base
                 , this->get_seqno()
-                , this->buf_filegen_extension);
+                , this->filegen_ext);
         ::unlink(this->final_filename);
     }
 
     void seek(int64_t offset, int whence) override {
-        if (static_cast<off64_t>(-1) == lseek64(this->buf_buf_fd, offset, whence)){
+        if (static_cast<off64_t>(-1) == lseek64(this->fd, offset, whence)){
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }
     }
@@ -292,20 +292,20 @@ public:
         if (this->status == false) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
-        ::close(this->buf_buf_fd);
-        this->buf_buf_fd = -1;
+        ::close(this->fd);
+        this->fd = -1;
         // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
         
         using std::snprintf;
         snprintf( this->final_filename
                 , sizeof(this->final_filename)
                 , "%s%s-%06u%s"
-                , this->buf_filegen_path
-                , this->buf_filegen_filename
-                , this->buf_num_file_
-                , this->buf_filegen_extension);
+                , this->filegen_path
+                , this->filegen_base
+                , this->filegen_num
+                , this->filegen_ext);
 
-        this->buf_filegen_last_num = this->buf_num_file_;
+        this->buf_filegen_last_num = this->filegen_num;
         this->buf_filegen_last_filename = this->tmp_filename;
 
         if (::rename(this->tmp_filename, this->final_filename) < 0)
@@ -317,7 +317,7 @@ public:
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
         this->tmp_filename[0] = 0;
-        ++this->buf_num_file_;
+        ++this->filegen_num;
         this->buf_filegen_last_num = -1u;
         this->buf_filegen_last_filename = nullptr;
         ++this->seqno;
@@ -327,29 +327,29 @@ public:
         snprintf( this->final_filename
                 , sizeof(this->final_filename)
                 , "%s%s-%06u%s"
-                , this->buf_filegen_path
-                , this->buf_filegen_filename
+                , this->filegen_path
+                , this->filegen_base
                 , this->get_seqno()
-                , this->buf_filegen_extension);
+                , this->filegen_ext);
         ::unlink(this->final_filename);
         return true;
     }
 
     ~VideoTransport() {
-        if (this->buf_buf_fd != -1) {
-            ::close(this->buf_buf_fd);
+        if (this->fd != -1) {
+            ::close(this->fd);
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             
             using std::snprintf;
             snprintf( this->final_filename
                     , sizeof(this->final_filename)
                     , "%s%s-%06u%s"
-                    , this->buf_filegen_path
-                    , this->buf_filegen_filename
-                    , this->buf_num_file_
-                    , this->buf_filegen_extension);
+                    , this->filegen_path
+                    , this->filegen_base
+                    , this->filegen_num
+                    , this->filegen_ext);
 
-            this->buf_filegen_last_num = this->buf_num_file_;
+            this->buf_filegen_last_num = this->filegen_num;
             this->buf_filegen_last_filename = this->tmp_filename;
             
             const int res = ::rename(this->tmp_filename, this->final_filename);
@@ -362,19 +362,19 @@ public:
 
 private:
     void do_send(const uint8_t * data, size_t len) override {
-        if (this->buf_buf_fd == -1) {
+        if (this->fd == -1) {
             using std::snprintf;
             snprintf( this->final_filename
                     , sizeof(this->final_filename)
                     , "%s%s-%06u%s"
-                    , this->buf_filegen_path
-                    , this->buf_filegen_filename
-                    , this->buf_num_file_, this->buf_filegen_extension);
+                    , this->filegen_path
+                    , this->filegen_base
+                    , this->filegen_num, this->filegen_ext);
             snprintf(this->tmp_filename, sizeof(this->tmp_filename),
                         "%sred-XXXXXX.tmp", this->final_filename);
 
-            this->buf_buf_fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
-            if (this->buf_buf_fd == -1) {
+            this->fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
+            if (this->fd == -1) {
                 this->status = false;
                 auto id = ERR_TRANSPORT_WRITE_FAILED;
                 if (errno == ENOSPC) {
@@ -395,14 +395,14 @@ private:
                    , strerror(errno), errno);
                 // TODO: shouldn't we stop on error throwing exception ?
             }
-            this->buf_filegen_last_num = this->buf_num_file_;
+            this->buf_filegen_last_num = this->filegen_num;
             this->buf_filegen_last_filename = this->tmp_filename;
         }
 
         size_t remaining_len = len;
         size_t total_sent = 0;
         while (remaining_len) {
-            ssize_t ret = ::write(this->buf_buf_fd, data + total_sent, remaining_len);
+            ssize_t ret = ::write(this->fd, data + total_sent, remaining_len);
             if (ret <= 0){
                 if (errno == EINTR){
                     continue;
@@ -442,7 +442,7 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
         char final_filename[1024];
 
         int fd;
-        unsigned buf_num_file_;
+        unsigned filegen_num;
         int buf_groupid_;
 
     public:
@@ -452,7 +452,7 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
             const char * const extension,
             const int groupid)
         : fd(-1)
-        , buf_num_file_(0)
+        , filegen_num(0)
         , buf_groupid_(groupid)
         {
                 using std::snprintf;
