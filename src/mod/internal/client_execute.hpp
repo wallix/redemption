@@ -38,6 +38,8 @@
 #include "utils/stream.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
 
+#define DUMMY_REMOTEAPP "||WABDummyRemoteApp"
+
 #define INTERNAL_MODULE_WINDOW_ID    40000
 #define INTERNAL_MODULE_WINDOW_TITLE "Wallix AdminBastion"
 
@@ -1685,10 +1687,12 @@ protected:
             cepdu.log(LOG_INFO);
         }
 
-        this->client_execute_flags       = cepdu.Flags();
-        this->client_execute_exe_or_file = cepdu.ExeOrFile();
-        this->client_execute_working_dir = cepdu.WorkingDir();
-        this->client_execute_arguments   = cepdu.Arguments();
+        if (::strcasecmp(cepdu.ExeOrFile(), DUMMY_REMOTEAPP)) {
+            this->client_execute_flags       = cepdu.Flags();
+            this->client_execute_exe_or_file = cepdu.ExeOrFile();
+            this->client_execute_working_dir = cepdu.WorkingDir();
+            this->client_execute_arguments   = cepdu.Arguments();
+        }
     }   // process_client_execute_pdu
 
     void process_client_get_application_id_pdu(uint32_t total_length,
