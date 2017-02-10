@@ -94,9 +94,6 @@ public:
             }
     }
 
-    videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION * seqgen() noexcept
-    { return &this->buf_filegen_; }
-
     void seek(int64_t offset, int whence) override {
         if (static_cast<off64_t>(-1) == lseek64(this->buf_buf_fd, offset, whence)){
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
@@ -626,19 +623,18 @@ private:
 
     private:
         void remove_current_path() {
-            unsigned count = this->get_seqno();
-            const char * path = this->seqgen()->last_filename;
-            if (count != this->seqgen()->last_num 
-            || this->seqgen()->last_filename == nullptr) {
+            const char * path = this->buf_filegen_.last_filename;
+            if (this->get_seqno() != this->buf_filegen_.last_num 
+            || this->buf_filegen_.last_filename == nullptr) {
                 using std::snprintf;
-                snprintf( this->seqgen()->filename_gen
-                        , sizeof(this->seqgen()->filename_gen)
+                snprintf( this->buf_filegen_.filename_gen
+                        , sizeof(this->buf_filegen_.filename_gen)
                         , "%s%s-%06u%s"
-                        , this->seqgen()->path
-                        , this->seqgen()->filename
-                        , count
-                        , this->seqgen()->extension);
-                path = this->seqgen()->filename_gen;
+                        , this->buf_filegen_.path
+                        , this->buf_filegen_.filename
+                        , this->get_seqno()
+                        , this->buf_filegen_.extension);
+                path = this->buf_filegen_.filename_gen;
             }
             ::unlink(path);
         }
