@@ -48,7 +48,6 @@ struct videocapture_OutFilenameSequenceSeekableTransport_COUNT : public Transpor
         char         path[1024];
         char         filename[1012];
         char         extension[12];
-        unsigned     pid;
         mutable char filename_gen[1024];
 
     public:
@@ -60,8 +59,7 @@ struct videocapture_OutFilenameSequenceSeekableTransport_COUNT : public Transpor
             const char * const prefix,
             const char * const filename,
             const char * const extension)
-        : pid(getpid())
-        , last_filename(nullptr)
+        : last_filename(nullptr)
         , last_num(-1u)
         {
             if (strlen(prefix) > sizeof(this->path) - 1
