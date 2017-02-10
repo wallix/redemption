@@ -51,6 +51,7 @@ struct videocapture_OutFilenameSequenceSeekableTransport_COUNT : public Transpor
         unsigned     pid;
         mutable char filename_gen[1024];
 
+    public:
         const char * last_filename;
         unsigned     last_num;
 
@@ -86,12 +87,6 @@ struct videocapture_OutFilenameSequenceSeekableTransport_COUNT : public Transpor
             snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
                     , this->filename, count, this->extension);
             return this->filename_gen;
-        }
-
-        void set_last_filename(unsigned num, const char * name)
-        {
-            this->last_num = num;
-            this->last_filename = name;
         }
     } buf_filegen_;
     int buf_buf_fd;
@@ -135,10 +130,14 @@ public:
             this->buf_buf_fd = -1;
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             
-            this->buf_filegen_.set_last_filename(-1u, "");
-            const char * filename = this->buf_filegen_.get(this->buf_num_file_);
-            this->buf_filegen_.set_last_filename(this->buf_num_file_, this->buf_current_filename_);
+            this->buf_filegen_.last_num = -1u;
+            this->buf_filegen_.last_filename = "";
             
+            const char * filename = this->buf_filegen_.get(this->buf_num_file_);
+            
+            this->buf_filegen_.last_num = this->buf_num_file_;
+            this->buf_filegen_.last_filename = this->buf_current_filename_;
+
             const int res = ::rename(this->buf_current_filename_, filename);
             if (res < 0) {
                 LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
@@ -148,7 +147,8 @@ public:
             else {
                 this->buf_current_filename_[0] = 0;
                 ++this->buf_num_file_;
-                this->buf_filegen_.set_last_filename(-1u, "");
+                this->buf_filegen_.last_num = -1u;
+                this->buf_filegen_.last_filename = "";
                 tmpres = 0;
             }
         }
@@ -181,19 +181,16 @@ public:
             this->buf_buf_fd = -1;
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             
-            this->buf_filegen_.set_last_filename(-1u, "");
+            this->buf_filegen_.last_num = -1u;
+            this->buf_filegen_.last_filename = "";
             const char * filename = this->buf_filegen_.get(this->buf_num_file_);
-            this->buf_filegen_.set_last_filename(this->buf_num_file_, this->buf_current_filename_);
+            this->buf_filegen_.last_num = this->buf_num_file_;
+            this->buf_filegen_.last_filename = this->buf_current_filename_;
             
             const int res = ::rename(this->buf_current_filename_, filename);
             if (res < 0) {
                 LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
                    , this->buf_current_filename_, filename, errno, strerror(errno));
-            }
-            else {
-                this->buf_current_filename_[0] = 0;
-                ++this->buf_num_file_;
-                this->buf_filegen_.set_last_filename(-1u, "");
             }
         }
     }
@@ -217,7 +214,8 @@ private:
                    , this->buf_groupid_ ? "u+r, g+r" : "u+r"
                    , strerror(errno), errno);
                 }
-                this->buf_filegen_.set_last_filename(this->buf_num_file_, this->buf_current_filename_);
+                this->buf_filegen_.last_num = this->buf_num_file_;
+                this->buf_filegen_.last_filename = this->buf_current_filename_;
             }
         }
         if (tmpres != -1){
