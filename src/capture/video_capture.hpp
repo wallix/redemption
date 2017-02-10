@@ -182,9 +182,16 @@ public:
             this->buf_buf_fd = -1;
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             
-            this->buf_filegen_.last_num = -1u;
-            this->buf_filegen_.last_filename = nullptr;
-            char * filename = this->buf_filegen_.get(this->buf_num_file_);
+            using std::snprintf;
+            snprintf( this->buf_filegen_.filename_gen
+                    , sizeof(this->buf_filegen_.filename_gen)
+                    , "%s%s-%06u%s"
+                    , this->buf_filegen_.path
+                    , this->buf_filegen_.filename
+                    , this->buf_num_file_
+                    , this->buf_filegen_.extension);
+            char * filename = this->buf_filegen_.filename_gen;
+
             this->buf_filegen_.last_num = this->buf_num_file_;
             this->buf_filegen_.last_filename = this->buf_current_filename_;
             
