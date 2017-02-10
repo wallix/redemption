@@ -271,7 +271,14 @@ public:
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
-        this->remove_current_path();
+        snprintf( this->buf_filegen_filename_gen
+                , sizeof(this->buf_filegen_filename_gen)
+                , "%s%s-%06u%s"
+                , this->buf_filegen_path
+                , this->buf_filegen_filename
+                , this->get_seqno()
+                , this->buf_filegen_extension);
+        ::unlink(this->buf_filegen_filename_gen);
     }
 
     void seek(int64_t offset, int whence) override {
@@ -310,14 +317,20 @@ public:
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
         this->buf_current_filename_[0] = 0;
-
         ++this->buf_num_file_;
-
         this->buf_filegen_last_num = -1u;
         this->buf_filegen_last_filename = nullptr;
-
         ++this->seqno;
-        this->remove_current_path();
+
+        using std::snprintf;
+        snprintf( this->buf_filegen_filename_gen
+                , sizeof(this->buf_filegen_filename_gen)
+                , "%s%s-%06u%s"
+                , this->buf_filegen_path
+                , this->buf_filegen_filename
+                , this->get_seqno()
+                , this->buf_filegen_extension);
+        ::unlink(this->buf_filegen_filename_gen);
     }
 
     ~VideoTransport() {
@@ -415,22 +428,7 @@ private:
     }
 
 private:
-    void remove_current_path() {
-        const char * path = this->buf_filegen_last_filename;
-        if (this->get_seqno() != this->buf_filegen_last_num 
-        || this->buf_filegen_last_filename == nullptr) {
-            using std::snprintf;
-            snprintf( this->buf_filegen_filename_gen
-                    , sizeof(this->buf_filegen_filename_gen)
-                    , "%s%s-%06u%s"
-                    , this->buf_filegen_path
-                    , this->buf_filegen_filename
-                    , this->get_seqno()
-                    , this->buf_filegen_extension);
-            path = this->buf_filegen_filename_gen;
-        }
-        ::unlink(path);
-    }
+
 };
 
 
