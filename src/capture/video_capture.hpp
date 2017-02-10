@@ -71,19 +71,6 @@ struct videocapture_OutFilenameSequenceSeekableTransport_COUNT : public Transpor
 
             this->filename_gen[0] = 0;
         }
-
-//        char * get(unsigned count) const
-//        {
-//            char * path = this->last_filename;
-//            if (count != this->last_num 
-//            || this->last_filename == nullptr) {
-//                using std::snprintf;
-//                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
-//                        , this->filename, count, this->extension);
-//                path = this->filename_gen;
-//            }
-//            return path;
-//        }
     } buf_filegen_;
     int buf_buf_fd;
     unsigned buf_num_file_;
