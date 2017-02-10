@@ -60,7 +60,7 @@ public:
         const char * const filename,
         const char * const extension,
         const int groupid,
-        auth_api * authentifier = nullptr)
+        auth_api * authentifier)
     : buf_filegen_last_filename(nullptr)
     , buf_filegen_last_num(-1u)
     , buf_buf_fd(-1)
@@ -435,7 +435,7 @@ struct NotifyNextVideo : private noncopyable
 
 class FullVideoCaptureImpl : public gdi::CaptureApi
 {
-    struct videocapture_OutFilenameSequenceSeekableTransport : public Transport
+    struct TmpFileTransport : public Transport
     {
         char buf_current_filename_[1024];
         char buf_filegen_filename_gen[1024];
@@ -445,7 +445,7 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
         int buf_groupid_;
 
     public:
-        videocapture_OutFilenameSequenceSeekableTransport(
+        TmpFileTransport(
             const char * const prefix,
             const char * const filename,
             const char * const extension,
@@ -474,7 +474,7 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
             }
         }
 
-        ~videocapture_OutFilenameSequenceSeekableTransport() {
+        ~TmpFileTransport() {
             if (this->buf_buf_fd != -1) {
                 ::close(this->buf_buf_fd);
                 this->buf_buf_fd = -1;
