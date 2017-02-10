@@ -322,6 +322,7 @@ public:
         this->buf_filegen_last_filename = nullptr;
         ++this->seqno;
 
+        // TODO: why do we do an unlink of the next file ?
         using std::snprintf;
         snprintf( this->buf_filegen_filename_gen
                 , sizeof(this->buf_filegen_filename_gen)
@@ -352,7 +353,7 @@ public:
             
             const int res = ::rename(this->buf_current_filename_, this->buf_filegen_filename_gen);
             if (res < 0) {
-                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%u : %s\n"
                    , this->buf_current_filename_, this->buf_filegen_filename_gen, errno, strerror(errno));
             }
         }
@@ -361,23 +362,16 @@ public:
 private:
     void do_send(const uint8_t * data, size_t len) override {
         if (this->buf_buf_fd == -1) {
-            // TODO: if we don't have any file open we are likely in special case
-            // where we have no temporary filename open
-            char * filename = this->buf_filegen_last_filename;
-            if (this->buf_num_file_ != this->buf_filegen_last_num || this->buf_filegen_last_filename == nullptr) 
-            {
-                using std::snprintf;
-                snprintf( this->buf_filegen_filename_gen
-                        , sizeof(this->buf_filegen_filename_gen)
-                        , "%s%s-%06u%s"
-                        , this->buf_filegen_path
-                        , this->buf_filegen_filename
-                        , this->buf_num_file_, this->buf_filegen_extension);
-                filename = this->buf_filegen_filename_gen;
-            }
-
+            using std::snprintf;
+            snprintf( this->buf_filegen_filename_gen
+                    , sizeof(this->buf_filegen_filename_gen)
+                    , "%s%s-%06u%s"
+                    , this->buf_filegen_path
+                    , this->buf_filegen_filename
+                    , this->buf_num_file_, this->buf_filegen_extension);
             snprintf(this->buf_current_filename_, sizeof(this->buf_current_filename_),
-                        "%sred-XXXXXX.tmp", filename);
+                        "%sred-XXXXXX.tmp", this->buf_filegen_filename_gen);
+
             this->buf_buf_fd = ::mkostemps(this->buf_current_filename_, 4, O_WRONLY | O_CREAT);
             if (this->buf_buf_fd == -1) {
                 this->status = false;
@@ -391,12 +385,14 @@ private:
                 }
                 throw Error(id, errno);
             }
+            
             if (chmod(this->buf_current_filename_, this->buf_groupid_ ?
                 (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-               , this->buf_current_filename_
-               , this->buf_groupid_ ? "u+r, g+r" : "u+r"
-               , strerror(errno), errno);
+                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                   , this->buf_current_filename_
+                   , this->buf_groupid_ ? "u+r, g+r" : "u+r"
+                   , strerror(errno), errno);
+                // TODO: shouldn't we stop on error throwing exception ?
             }
             this->buf_filegen_last_num = this->buf_num_file_;
             this->buf_filegen_last_filename = this->buf_current_filename_;
@@ -426,9 +422,6 @@ private:
         }
         this->last_quantum_sent += total_sent;
     }
-
-private:
-
 };
 
 
