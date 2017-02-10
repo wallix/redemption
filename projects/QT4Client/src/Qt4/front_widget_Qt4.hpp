@@ -1310,12 +1310,10 @@ public:
         }
     }
 
-    void set_mem_cursor(QCursor & qcursor, const uchar * data) {
-
+    void set_mem_cursor(const uchar * data) {
         for (int i = 0; i < Pointer::DATA_SIZE*4; i++) {
             this->cursor_data[i] = data[i];
         }
-
         this->update_current_cursor();
     }
 

@@ -336,27 +336,9 @@ void Front_Qt::set_pointer(Pointer const & cursor) {
 
         image_mask = image_data.convertToFormat(QImage::Format_ARGB32_Premultiplied);
         image_data.invertPixels();
-//         LOG(LOG_INFO, "Cursor type 1");
 
     } else {
         image_mask.invertPixels();
-
-//         std::cout <<  std::endl;
-//         for (int i = 0; i < cursor.height; i++) {
-//             for (int j = 0; j < cursor.width; j++) {
-//                 if (cursor.data[(i*cursor.width)+j] == 0x00) {
-//                     std::cout << ".";
-//                 } else if (cursor.data[(i*cursor.width)+j] == 0xFF) {
-//                     std::cout << "x";
-//                 } else {
-//                     std::cout << int(cursor.data[(i*cursor.width)+j]);
-//                 }
-//
-//             }
-//             std::cout <<  std::endl;
-//         }
-
-//         LOG(LOG_INFO, "Cursor type 2");
     }
 
     image_data = image_data.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
@@ -374,18 +356,11 @@ void Front_Qt::set_pointer(Pointer const & cursor) {
         data[i+3] = mask_data[i+0];
     }
 
-    image_data = QImage(static_cast<uchar *>(data), cursor.width, cursor.height, QImage::Format_ARGB32_Premultiplied);
-
     if (this->_replay) {
-        this->_mouse_data.cursor_image = image_data;
+        this->_mouse_data.cursor_image = QImage(static_cast<uchar *>(data), cursor.width, cursor.height, QImage::Format_ARGB32_Premultiplied);
 
     } else {
-        QPixmap map = QPixmap::fromImage(image_data);
-        QCursor qcursor(map, cursor.x, cursor.y);
-
-        this->_screen[this->_current_screen_index]->set_mem_cursor(qcursor, static_cast<uchar *>(data));
-
-        //this->_screen[0]->paintCache().drawImage(QRect(0, 0, 16, 16), image_data);
+        this->_screen[this->_current_screen_index]->set_mem_cursor(static_cast<uchar *>(data));
 
         if (this->_record) {
             this->_graph_capture->set_pointer(cursor);
@@ -3631,7 +3606,7 @@ int main(int argc, char** argv){
 
     QApplication app(argc, argv);
 
-    RDPVerbose verbose =  RDPVerbose::cliprdr;              // to_verbose_flags(0);
+    RDPVerbose verbose =  RDPVerbose::rdpdr_dump;              // to_verbose_flags(0);
 
     Front_Qt front_qt(argv, argc, verbose);
 
