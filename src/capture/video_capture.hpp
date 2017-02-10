@@ -144,7 +144,6 @@ public:
     ~videocapture_OutFilenameSequenceSeekableTransport_COUNT() {
         if (this->buf_buf_fd != -1) {
             ::close(this->buf_buf_fd);
-            this->buf_buf_fd = -1;
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             
             using std::snprintf;
@@ -155,34 +154,33 @@ public:
                     , this->buf_filegen_filename
                     , this->buf_num_file_
                     , this->buf_filegen_extension);
-            char * filename = this->buf_filegen_filename_gen;
 
             this->buf_filegen_last_num = this->buf_num_file_;
             this->buf_filegen_last_filename = this->buf_current_filename_;
             
-            const int res = ::rename(this->buf_current_filename_, filename);
+            const int res = ::rename(this->buf_current_filename_, this->buf_filegen_filename_gen);
             if (res < 0) {
                 LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                   , this->buf_current_filename_, filename, errno, strerror(errno));
+                   , this->buf_current_filename_, this->buf_filegen_filename_gen, errno, strerror(errno));
             }
         }
     }
 
 private:
     void do_send(const uint8_t * data, size_t len) override {
-        ssize_t tmpres = 0;
         if (this->buf_buf_fd == -1) {
-            unsigned count = this->buf_num_file_;
+            // TODO: if we don't have any file open we are likely in special case
+            // where we have no temporary filename open
             char * filename = this->buf_filegen_last_filename;
-            if (count != this->buf_filegen_last_num 
-            || this->buf_filegen_last_filename == nullptr) {
+            if (this->buf_num_file_ != this->buf_filegen_last_num || this->buf_filegen_last_filename == nullptr) 
+            {
                 using std::snprintf;
                 snprintf( this->buf_filegen_filename_gen
                         , sizeof(this->buf_filegen_filename_gen)
                         , "%s%s-%06u%s"
                         , this->buf_filegen_path
                         , this->buf_filegen_filename
-                        , count, this->buf_filegen_extension);
+                        , this->buf_num_file_, this->buf_filegen_extension);
                 filename = this->buf_filegen_filename_gen;
             }
 
@@ -190,55 +188,51 @@ private:
                         "%sred-XXXXXX.tmp", filename);
             this->buf_buf_fd = ::mkostemps(this->buf_current_filename_, 4, O_WRONLY | O_CREAT);
             if (this->buf_buf_fd == -1) {
-                tmpres = -1;
-            }
-            else {
-                if (chmod(this->buf_current_filename_, this->buf_groupid_ ?
-                    (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                   , this->buf_current_filename_
-                   , this->buf_groupid_ ? "u+r, g+r" : "u+r"
-                   , strerror(errno), errno);
+                this->status = false;
+                auto id = ERR_TRANSPORT_WRITE_FAILED;
+                if (errno == ENOSPC) {
+                    char message[1024];
+                    snprintf(message, sizeof(message), "100|unknown");
+                    this->authentifier->report("FILESYSTEM_FULL", message);
+                    id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                    errno = ENOSPC;
                 }
-                this->buf_filegen_last_num = this->buf_num_file_;
-                this->buf_filegen_last_filename = this->buf_current_filename_;
+                throw Error(id, errno);
             }
+            if (chmod(this->buf_current_filename_, this->buf_groupid_ ?
+                (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+               , this->buf_current_filename_
+               , this->buf_groupid_ ? "u+r, g+r" : "u+r"
+               , strerror(errno), errno);
+            }
+            this->buf_filegen_last_num = this->buf_num_file_;
+            this->buf_filegen_last_filename = this->buf_current_filename_;
         }
-        if (tmpres != -1){
-            size_t remaining_len = len;
-            size_t total_sent = 0;
-            while (remaining_len) {
-                ssize_t ret = ::write(this->buf_buf_fd, data + total_sent, remaining_len);
-                if (ret <= 0){
-                    if (errno == EINTR){
-                        continue;
-                    }
-                    tmpres = -1;
-                    break;
+
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            ssize_t ret = ::write(this->buf_buf_fd, data + total_sent, remaining_len);
+            if (ret <= 0){
+                if (errno == EINTR){
+                    continue;
                 }
-                remaining_len -= ret;
-                total_sent += ret;
+                this->status = false;
+                auto id = ERR_TRANSPORT_WRITE_FAILED;
+                if (errno == ENOSPC) {
+                    char message[1024];
+                    snprintf(message, sizeof(message), "100|unknown");
+                    this->authentifier->report("FILESYSTEM_FULL", message);
+                    id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                    errno = ENOSPC;
+                }
+                throw Error(id, errno);
             }
-            if (tmpres != -1){
-                tmpres = total_sent;
-            }
+            remaining_len -= ret;
+            total_sent += ret;
         }
-    
-        const ssize_t res = tmpres;
-        if (res < 0) {
-            this->status = false;
-            if (errno == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|unknown");
-                this->authentifier->report("FILESYSTEM_FULL", message);
-                errno = ENOSPC;
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
-            }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
-        this->last_quantum_sent += res;
+        this->last_quantum_sent += total_sent;
     }
 };
 
