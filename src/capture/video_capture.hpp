@@ -47,7 +47,6 @@ struct SequenceTransport : public Transport
     char         filegen_base[1012];
     char         filegen_ext[12];
     char         final_filename[1024];
-    char *       buf_filegen_last_filename;
     unsigned     buf_filegen_last_num;
 
     int fd;
@@ -61,8 +60,7 @@ public:
         const char * const extension,
         const int groupid,
         auth_api * authentifier)
-    : buf_filegen_last_filename(nullptr)
-    , buf_filegen_last_num(-1u)
+    : buf_filegen_last_num(-1u)
     , fd(-1)
     , filegen_num(0)
     , buf_groupid_(groupid)
@@ -109,7 +107,6 @@ public:
                 , this->filegen_ext);
 
         this->buf_filegen_last_num = this->filegen_num;
-        this->buf_filegen_last_filename = this->tmp_filename;
 
         if (::rename(this->tmp_filename, this->final_filename) < 0)
         {
@@ -124,7 +121,6 @@ public:
         ++this->filegen_num;
 
         this->buf_filegen_last_num = -1u;
-        this->buf_filegen_last_filename = nullptr;
 
         ++this->seqno;
         return true;
@@ -145,7 +141,6 @@ public:
                     , this->filegen_ext);
 
             this->buf_filegen_last_num = this->filegen_num;
-            this->buf_filegen_last_filename = this->tmp_filename;
             
             const int res = ::rename(this->tmp_filename, this->final_filename);
             if (res < 0) {
@@ -158,23 +153,17 @@ public:
 private:
     void do_send(const uint8_t * data, size_t len) override {
         if (this->fd == -1) {
-            // TODO: if we don't have any file open we are likely in special case
-            // where we have no temporary filename open
-            char * filename = this->buf_filegen_last_filename;
-            if (this->filegen_num != this->buf_filegen_last_num || this->buf_filegen_last_filename == nullptr) 
-            {
-                using std::snprintf;
-                snprintf( this->final_filename
-                        , sizeof(this->final_filename)
-                        , "%s%s-%06u%s"
-                        , this->filegen_path
-                        , this->filegen_base
-                        , this->filegen_num, this->filegen_ext);
-                filename = this->final_filename;
-            }
+
+            using std::snprintf;
+            snprintf( this->final_filename
+                    , sizeof(this->final_filename)
+                    , "%s%s-%06u%s"
+                    , this->filegen_path
+                    , this->filegen_base
+                    , this->filegen_num, this->filegen_ext);
 
             snprintf(this->tmp_filename, sizeof(this->tmp_filename),
-                        "%sred-XXXXXX.tmp", filename);
+                        "%sred-XXXXXX.tmp", this->final_filename);
             this->fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
             if (this->fd == -1) {
                 this->status = false;
@@ -190,13 +179,12 @@ private:
             }
             if (chmod(this->tmp_filename, this->buf_groupid_ ?
                 (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-               , this->tmp_filename
-               , this->buf_groupid_ ? "u+r, g+r" : "u+r"
-               , strerror(errno), errno);
+                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                   , this->tmp_filename
+                   , this->buf_groupid_ ? "u+r, g+r" : "u+r"
+                   , strerror(errno), errno);
             }
             this->buf_filegen_last_num = this->filegen_num;
-            this->buf_filegen_last_filename = this->tmp_filename;
         }
 
         size_t remaining_len = len;
@@ -234,7 +222,6 @@ struct VideoTransport : public Transport
     char         filegen_base[1012];
     char         filegen_ext[12];
     char         final_filename[1024];
-    char *       buf_filegen_last_filename;
     unsigned     buf_filegen_last_num;
 
     int fd;
@@ -249,8 +236,7 @@ public:
         const int groupid,
         auth_api * authentifier = nullptr
     )
-    : buf_filegen_last_filename(nullptr)
-    , buf_filegen_last_num(-1u)
+    : buf_filegen_last_num(-1u)
     , fd(-1)
     , filegen_num(0)
     , buf_groupid_(groupid)
@@ -306,7 +292,6 @@ public:
                 , this->filegen_ext);
 
         this->buf_filegen_last_num = this->filegen_num;
-        this->buf_filegen_last_filename = this->tmp_filename;
 
         if (::rename(this->tmp_filename, this->final_filename) < 0)
         {
@@ -319,7 +304,6 @@ public:
         this->tmp_filename[0] = 0;
         ++this->filegen_num;
         this->buf_filegen_last_num = -1u;
-        this->buf_filegen_last_filename = nullptr;
         ++this->seqno;
 
         // TODO: why do we do an unlink of the next file ?
@@ -350,7 +334,6 @@ public:
                     , this->filegen_ext);
 
             this->buf_filegen_last_num = this->filegen_num;
-            this->buf_filegen_last_filename = this->tmp_filename;
             
             const int res = ::rename(this->tmp_filename, this->final_filename);
             if (res < 0) {
@@ -396,7 +379,6 @@ private:
                 // TODO: shouldn't we stop on error throwing exception ?
             }
             this->buf_filegen_last_num = this->filegen_num;
-            this->buf_filegen_last_filename = this->tmp_filename;
         }
 
         size_t remaining_len = len;
