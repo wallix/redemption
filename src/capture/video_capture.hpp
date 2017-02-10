@@ -44,17 +44,14 @@ struct videocapture_OutFilenameSequenceSeekableTransport_COUNT : public Transpor
     char buf_current_filename_[1024];
     struct videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION
     {
-    private:
         char         path[1024];
         char         filename[1012];
         char         extension[12];
         mutable char filename_gen[1024];
 
-    public:
         const char * last_filename;
         unsigned     last_num;
 
-    public:
         videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION(
             const char * const prefix,
             const char * const filename,
@@ -596,7 +593,20 @@ private:
 
     private:
         void remove_current_path() {
-            const char * const path = this->seqgen()->get(this->get_seqno());
+            unsigned count = this->get_seqno();
+            const char * path = this->seqgen()->last_filename;
+            if (count != this->seqgen()->last_num 
+            || this->seqgen()->last_filename == nullptr) {
+                using std::snprintf;
+                snprintf( this->seqgen()->filename_gen
+                        , sizeof(this->seqgen()->filename_gen)
+                        , "%s%s-%06u%s"
+                        , this->seqgen()->path
+                        , this->seqgen()->filename
+                        , count
+                        , this->seqgen()->extension);
+                path = this->seqgen()->filename_gen;
+            }
             ::unlink(path);
         }
     };
