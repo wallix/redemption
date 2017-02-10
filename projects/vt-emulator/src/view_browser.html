@@ -1,0 +1,89 @@
+<DOCTYPE html>
+<html>
+<head>
+    <title>Terminal</title>
+    <meta charset="UTF-8"/>
+
+<style>
+#tty-player {
+    font-family: monospace, monospace;
+    border: 2px solid #285577;
+    border-top: 1px solid #4c7899;
+    display: inline-block;
+    position: relative;
+
+    background-color: #333;
+    color: #eee;
+}
+
+#tty-player-title {
+    background: #285577;
+    border-bottom: 1px solid #4c7899;
+    color: #fff;
+    margin:0;
+    font-family: sans-serif;
+    font-weight: bold;
+    padding: 0.2em;
+    line-height: 1;
+    height: 1em;
+    cursor: default;
+}
+
+#tty-player-terminal {
+    margin:0;
+    cursor: text;
+    line-height: initial;
+}
+</style>
+</head>
+<body>
+
+<pre id="tty-player">
+<!-- <p id="tty-player-title">No Title</p> -->
+<!-- <p id="tty-player-terminal">contents</p> -->
+</pre>
+
+<script type="text/javascript">
+
+var json ={"lines":40,"columns":80,"data":[[[{"s":"                                                                                "}]],[[{"s":""},{"f":11692056,"s":"[2]"},{"f":1618610,"b":0,"s":"redemption-public/projects/vt-emulator"},{"f":0,"b":16777215,"s":"!"},{"r":"b","f":6842472,"s":"10014"},{"r":"","f":1618456,"s":"$"},{"f":1579186,"s":"(vt100)"},{"f":11692056,"s":"✗"},{"f":0,"s":"           "},{"f":11671576,"s":"~/projects/re"}]],[[{"s":""},{"f":0,"s":"t"},{"f":11671576,"s":"emption-public/projects/vt-emulator"}]],[[{"s":""},{"r":"u","f":6260695,"s":"."}]],[[{"s":""},{"r":"","f":0,"s":"├── "},{"r":"u","f":6260695,"s":"aa"}]],[[{"s":""},{"r":"","f":0,"s":"├── Jamroot"}]],[[{"s":"├── "},{"r":"u","f":6260695,"s":"src"}]],[[{"s":""},{"r":"","f":0,"s":"│   ├── "},{"f":11503360,"s":"main.cpp"}]],[[{"s":""},{"f":0,"s":"│   ├── "},{"r":"u","f":6260695,"s":"rvt"}]],[[{"s":""},{"r":"","f":0,"s":"│   │   ├── "},{"f":11503360,"s":"ansi_rendering.cpp"}]],[[{"s":""},{"f":0,"s":"│   │   ├── "},{"f":6281215,"s":"ansi_rendering.hpp"}]],[[{"s":""},{"f":0,"s":"│   │   ├── "},{"f":6281215,"s":"character_color.hpp"}]],[[{"s":""},{"f":0,"s":"│   │   ├── "},{"f":6281215,"s":"character.hpp"}]],[[{"s":""},{"f":0,"s":"│   │   ├── "},{"f":6281215,"s":"charsets.hpp"}]],[[{"s":""},{"f":0,"s":"│   │   ├── "},{"f":6281215,"s":"color.hpp"}]],[[{"s":""},{"f":0,"s":"│   │   ├── "},{"f":11503360,"s":"json_rendering.cpp"}]],[[{"s":""},{"f":0,"s":"│   │   ├── "},{"f":6281215,"s":"json_rendering.hpp"}]],[[{"s":""},{"f":0,"s":"│   │   ├── "},{"f":11503360,"s":"screen.cpp"}]],[[{"s":""},{"f":0,"s":"│   │   ├── "},{"f":6281215,"s":"screen.hpp"}]],[[{"s":""},{"f":0,"s":"│   │   ├── "},{"f":6281215,"s":"utf8_decoder.hpp"}]],[[{"s":""},{"f":0,"s":"│   │   ├── "},{"f":11503360,"s":"vt_emulator.cpp"}]],[[{"s":""},{"f":0,"s":"│   │   └── "},{"f":6281215,"s":"vt_emulator.hpp"}]],[[{"s":""},{"f":0,"s":"│   └── "},{"f":11503360,"s":"terminal_browser.cpp"}]],[[{"s":""},{"f":0,"s":"├── "},{"r":"u","f":6260695,"s":"test"}]],[[{"s":""},{"r":"","f":0,"s":"│   └── "},{"r":"u","f":6260695,"s":"rvt"}]],[[{"s":""},{"r":"","f":0,"s":"│       ├── "},{"f":11503360,"s":"test_character_color.cpp"}]],[[{"s":""},{"f":0,"s":"│       ├── "},{"f":11503360,"s":"test_character.cpp"}]],[[{"s":""},{"f":0,"s":"│       ├── "},{"f":11503360,"s":"test_charsets.cpp"}]],[[{"s":""},{"f":0,"s":"│       ├── "},{"f":11503360,"s":"test_screen.cpp"}]],[[{"s":""},{"f":0,"s":"│       ├── "},{"f":11503360,"s":"test_utf8_decoder.cpp"}]],[[{"s":""},{"f":0,"s":"│       └── "},{"f":11503360,"s":"test_vt_emulator.cpp"}]],[[{"s":""},{"f":0,"s":"└── typescript"}]],[[{"s":""}]],[[{"s":"5 directories, 23 files"}]],[[{"s":""},{"r":"b","f":16777215,"b":0,"s":"%"},{"r":"","f":0,"b":16777215,"s":"                                                                               "}]],[[{"s":""},{"f":11692056,"s":"[2]"},{"f":1618610,"b":0,"s":"redemption-public/projects/vt-emulator"},{"f":0,"b":16777215,"s":"!"},{"r":"b","f":6842472,"s":"10015"},{"r":"","f":1618456,"s":"$"},{"f":1579186,"s":"(vt100)"},{"f":11692056,"s":"✗"},{"f":0,"s":"           "},{"f":11671576,"s":"~/projects/re"}]],[[{"s":"demption-public/projects/vt-emulator"}]],[[{"s":""}]],[[{"s":""},{"f":0,"s":"Script done on jeu. 09 févr. 2017 18:28:53 CET"}]],[[{"s":""}]],[[{"s":""}]]]}
+
+var pre = document.getElementById("tty-player")
+
+function render(elem, screen)
+{
+    var rendering_fmt = {b: 'b', i: 'i', u: 'u'}
+
+    var elem2html = function(e) {
+        var start = ''
+        var stop = ''
+        if (e.r) {
+            Array.prototype.reduce.call(e.r, function(html, c) {
+                if (rendering_fmt[c]) {
+                    start += '<'+rendering_fmt[c]+'>'
+                    stop = '</'+rendering_fmt[c]+'>' + stop;
+                }
+            })
+        }
+        if (e.f || e.b) {
+            start += '<span style="'
+            if (e.b) start += 'background-color:#'+e.b.toString(16)+';'
+            if (e.f) start += 'color:#'+e.f.toString(16)
+            start += '">'
+            stop = '</span>' + stop;
+        }
+        return start + e.s + stop;
+    }
+
+    elem.innerHTML = "<p id='tty-player-title'>No Title</p><p id='tty-player-terminal'>" + screen.data.map(
+        (lines) => lines.map(
+            (line) => line.map(elem2html).join('')
+        ).join('')
+    ).join("\n") + "</p>";
+}
+
+render(pre, json)
+
+</script>
+
+</body>
+</html>

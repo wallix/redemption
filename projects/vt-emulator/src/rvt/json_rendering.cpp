@@ -30,7 +30,7 @@
 
 namespace rvt {
 
-// format = "{ lines: %d, columns: %d, screen: [ $line... ] }"
+// format = "{ lines: %d, columns: %d, title: %s, data: [ $line... ] }"
 // $line = "[ {" $render? $foreground? $background? "s: %s } ]"
 // $render = "r: 'b'? 'i'? 'u'? 'l'?"
 //      b -> bold
@@ -45,7 +45,8 @@ void json_rendering(Screen const & screen, ColorTableView palette, std::ostream 
 {
     char buf[4096];
     auto s = buf;
-    s += std::sprintf(s, R"({"lines":%d,"columns":%d,"screen":[)", screen.getLines(), screen.getColumns());
+    // TODO write a title
+    s += std::sprintf(s, R"({"lines":%d,"columns":%d,"title":"no title",data":[)", screen.getLines(), screen.getColumns());
 
     if (!screen.getColumns() || !screen.getLines()) {
         *s++ = ']';
