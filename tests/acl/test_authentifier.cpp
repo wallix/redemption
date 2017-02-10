@@ -25,7 +25,7 @@
 
 
 #define LOGNULL
-// #define LOGPRINT
+//#define LOGPRINT
 
 //#include "acl/module_manager.hpp"
 #include "transport/count_transport.hpp"
@@ -47,13 +47,13 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
     char outdata[] =
         // Time: 10011
-           "\x00\x00\x01\xA4"
+           "\x00\x00\x01\xA3"
            "login\nASK\n"
            "ip_client\n!\n"
            "ip_target\n!\n"
            "target_device\nASK\n"
            "target_login\nASK\n"
-           "session_log_redirection\n!False\n"
+           "session_log_redirection\n!True\n"
            "bpp\n!24\n"
            "height\n!600\n"
            "width\n!800\n"
@@ -155,13 +155,13 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     char outdata[] =
         // Time 10011
-           "\x00\x00\x01\xA4"
+           "\x00\x00\x01\xA3"
            "login\nASK\n"
            "ip_client\n!\n"
            "ip_target\n!\n"
            "target_device\nASK\n"
            "target_login\nASK\n"
-           "session_log_redirection\n!False\n"
+           "session_log_redirection\n!True\n"
            "bpp\n!24\n"
            "height\n!600\n"
            "width\n!800\n"
@@ -295,13 +295,13 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     char outdata[] =
         // Time 10011
-        "\x00\x00\x01\xA4"
+        "\x00\x00\x01\xA3"
         "login\nASK\n"
         "ip_client\n!\n"
         "ip_target\n!\n"
         "target_device\nASK\n"
         "target_login\nASK\n"
-        "session_log_redirection\n!False\n"
+        "session_log_redirection\n!True\n"
         "bpp\n!24\n"
         "height\n!600\n"
         "width\n!800\n"
