@@ -449,8 +449,7 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
             const char * const prefix,
             const char * const filename,
             const char * const extension,
-            const int groupid,
-            auth_api * authentifier = nullptr)
+            const int groupid)
         : buf_buf_fd(-1)
         , buf_num_file_(0)
         , buf_groupid_(groupid)
@@ -463,9 +462,6 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
                         , "%s%s%s", prefix, filename, extension);
 
                 this->buf_current_filename_[0] = 0;
-                if (authentifier) {
-                    this->set_authentifier(authentifier);
-                }
         }
 
         void seek(int64_t offset, int whence) override {
@@ -533,20 +529,15 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
             const ssize_t res = tmpres;
             if (res < 0) {
                 this->status = false;
+                auto eid = ERR_TRANSPORT_WRITE_FAILED;
                 if (errno == ENOSPC) {
-                    char message[1024];
-                    snprintf(message, sizeof(message), "100|unknown");
-                    this->authentifier->report("FILESYSTEM_FULL", message);
-                    errno = ENOSPC;
-                    throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+                    eid = ERR_TRANSPORT_WRITE_NO_ROOM;
                 }
-                else {
-                    throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-                }
+                throw Error(eid, errno);
             }
             this->last_quantum_sent += res;
         }
-    } trans;
+    } trans_tmp_file;
 
     RDPDrawable & drawable;
     
@@ -631,7 +622,7 @@ public:
 
     FullVideoCaptureImpl(const timeval & now, const char * const record_path, const char * const basename,
         const int groupid, bool no_timestamp, RDPDrawable & drawable, FlvParams flv_params)
-    : trans(record_path, basename, ("." + flv_params.codec).c_str(), groupid)
+    : trans_tmp_file(record_path, basename, ("." + flv_params.codec).c_str(), groupid)
     , drawable(drawable)
     , flv_params(std::move(flv_params))
     , start_video_capture(now)
@@ -647,10 +638,10 @@ public:
 
         if (this->recorder) {
             this->recorder.reset();
-            this->trans.next();
+            this->trans_tmp_file.next();
         }
 
-        io_video_recorder_with_transport io{this->trans};
+        io_video_recorder_with_transport io{this->trans_tmp_file};
         this->recorder.reset(new video_recorder(
             io.write_fn(), io.seek_fn(), io.params(),
             drawable.width(), drawable.height(),
