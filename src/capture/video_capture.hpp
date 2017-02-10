@@ -49,6 +49,13 @@ struct SequenceTransport : public Transport
         char base[1012];
         char ext[12];
         unsigned num = 0;
+
+        void set_final_filename(char * final_filename, size_t final_filename_size)
+        {
+            using std::snprintf;
+            snprintf( final_filename, final_filename_size, "%s%s-%06u%s"
+                    , this->path, this->base, this->num, this->ext);
+        }
     } filegen;
 
     int fd;
@@ -96,14 +103,7 @@ public:
         this->fd = -1;
         // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
         
-        using std::snprintf;
-        snprintf( this->final_filename
-                , sizeof(this->final_filename)
-                , "%s%s-%06u%s"
-                , this->filegen.path
-                , this->filegen.base
-                , this->filegen.num
-                , this->filegen.ext);
+        this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
 
         if (::rename(this->tmp_filename, this->final_filename) < 0)
         {
@@ -125,14 +125,7 @@ public:
             ::close(this->fd);
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             
-            using std::snprintf;
-            snprintf( this->final_filename
-                    , sizeof(this->final_filename)
-                    , "%s%s-%06u%s"
-                    , this->filegen.path
-                    , this->filegen.base
-                    , this->filegen.num
-                    , this->filegen.ext);
+            this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
 
             const int res = ::rename(this->tmp_filename, this->final_filename);
             if (res < 0) {
@@ -146,14 +139,7 @@ private:
     void do_send(const uint8_t * data, size_t len) override {
         if (this->fd == -1) {
 
-            using std::snprintf;
-            snprintf( this->final_filename
-                    , sizeof(this->final_filename)
-                    , "%s%s-%06u%s"
-                    , this->filegen.path
-                    , this->filegen.base
-                    , this->filegen.num
-                    , this->filegen.ext);
+            this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
 
             snprintf(this->tmp_filename, sizeof(this->tmp_filename),
                         "%sred-XXXXXX.tmp", this->final_filename);
