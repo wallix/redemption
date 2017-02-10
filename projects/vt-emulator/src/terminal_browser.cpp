@@ -23,7 +23,7 @@
 #include "rvt/character_color.hpp"
 #include "rvt/vt_emulator.hpp"
 #include "rvt/utf8_decoder.hpp"
-#include "rvt/ansi_rendering.hpp"
+#include "rvt/json_rendering.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -56,9 +56,9 @@ int main()
         emulator.receiveChar(ucs);
 //         std::this_thread::sleep_for(std::chrono::milliseconds{4});
 
-        std::ofstream out("/tmp/rawdisk/output_term");
+//         std::ofstream out("/tmp/rawdisk/output_term");
         //auto & out = std::cout;
-        rvt::ansi_rendering(emulator.getCurrentScreen(), rvt::color_table, out);
+//         rvt::json_rendering(emulator.getCurrentScreen(), rvt::color_table, out);
     };
 
     std::string line;
@@ -67,4 +67,6 @@ int main()
         decoder.decode(line, send_ucs);
     }
     decoder.end_decode(send_ucs);
+
+    rvt::json_rendering(emulator.getCurrentScreen(), rvt::color_table, std::cout);
 }

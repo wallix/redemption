@@ -54,25 +54,24 @@ void ansi_rendering(Screen const & screen, ColorTableView palette, std::ostream 
                 s = buf;
             }
 
-            bool const has_same_bg = ch.backgroundColor == previous_ch.get().backgroundColor;
-            bool const has_same_fg = ch.foregroundColor == previous_ch.get().foregroundColor;
-            bool const has_same_rendition = ch.rendition == previous_ch.get().rendition;
-            bool const has_same_format = has_same_bg & has_same_fg & has_same_rendition;
-            if (!has_same_format) {
+            bool const is_same_bg = ch.backgroundColor == previous_ch.get().backgroundColor;
+            bool const is_same_fg = ch.foregroundColor == previous_ch.get().foregroundColor;
+            bool const is_same_rendition = ch.rendition == previous_ch.get().rendition;
+            bool const is_same_format = is_same_bg & is_same_fg & is_same_rendition;
+            if (!is_same_format) {
                 *s++ = '\033';
                 *s++ = '[';
                 *s++ = '0';
-                if (!has_same_format) {
+                if (!is_same_format) {
                     auto const r = ch.rendition;
-                    if (bool(r & rvt::Rendition::Bold))     { *s++ = ';'; *s++ = '1'; }
                     if (bool(r & rvt::Rendition::Bold))     { *s++ = ';'; *s++ = '1'; }
                     if (bool(r & rvt::Rendition::Italic))   { *s++ = ';'; *s++ = '3'; }
                     if (bool(r & rvt::Rendition::Underline)){ *s++ = ';'; *s++ = '4'; }
                     if (bool(r & rvt::Rendition::Blink))    { *s++ = ';'; *s++ = '5'; }
                     if (bool(r & rvt::Rendition::Reverse))  { *s++ = ';'; *s++ = '6'; }
                 }
-                if (!has_same_fg) s = write_color(s, '3', ch.foregroundColor);
-                if (!has_same_bg) s = write_color(s, '4', ch.backgroundColor);
+                if (!is_same_fg) s = write_color(s, '3', ch.foregroundColor);
+                if (!is_same_bg) s = write_color(s, '4', ch.backgroundColor);
                 *s++ = 'm';
                 out.write(buf, s - buf);
             }
