@@ -1126,6 +1126,9 @@ public:
     bool           _running;
     std::string    _movie_name;
 
+    uchar cursor_data[Pointer::DATA_SIZE*4];
+    bool mouse_out;
+
     Screen_Qt (Front_Qt_API * front, int screen_index, QPixmap * cache, QPixmap * trans_cache)
         : QWidget()
         , _front(front)
@@ -1141,6 +1144,7 @@ public:
         , _connexionLasted(false)
         , _screen_index(screen_index)
         , _running(false)
+        , mouse_out(false)
     {
         this->setMouseTracking(true);
         this->installEventFilter(this);
@@ -1188,6 +1192,7 @@ public:
         , _screen_index(0)
         , _running(false)
         , _movie_name(movie_path)
+        , mouse_out(false)
     {
         std::string title = "Remote Desktop Player " + this->_movie_name;
         this->setWindowTitle(QString(title.c_str()));
@@ -1221,7 +1226,6 @@ public:
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (closeReplay()));
         this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
 
-
         uint32_t centerW = 0;
         uint32_t centerH = 0;
         if (!this->_front->_span) {
@@ -1252,6 +1256,7 @@ public:
         , _connexionLasted(false)
         , _screen_index(0)
         , _running(false)
+        , mouse_out(false)
     {
         this->setMouseTracking(true);
         this->installEventFilter(this);
@@ -1270,7 +1275,7 @@ public:
         this->_buttonCtrlAltDel.setGeometry(rectCtrlAltDel);
         this->_buttonCtrlAltDel.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (pressed()),  this, SLOT (CtrlAltDelPressed()));
-        this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));
+        this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));;
         this->_buttonCtrlAltDel.setFocusPolicy(Qt::NoFocus);
 
         QRect rectRefresh(QPoint(this->_width/3, this->_height+1),QSize(this->_width/3, Front_Qt_API::BUTTON_HEIGHT));
@@ -1303,6 +1308,23 @@ public:
         if (!this->_connexionLasted) {
             this->_front->closeFromScreen(this->_screen_index);
         }
+    }
+
+    void set_mem_cursor(QCursor & qcursor, const uchar * data) {
+
+        for (int i = 0; i < Pointer::DATA_SIZE*4; i++) {
+            this->cursor_data[i] = data[i];
+        }
+
+        this->update_current_cursor();
+    }
+
+    void update_current_cursor() {
+        QImage image(this->cursor_data, 32, 32, QImage::Format_ARGB32_Premultiplied);
+        QPixmap map = QPixmap::fromImage(image);
+        QCursor qcursor(map, 10, 10);
+
+        this->setCursor(qcursor);
     }
 
     void update_view() {
@@ -1367,8 +1389,10 @@ private:
 
     void enterEvent(QEvent *event) {
         Q_UNUSED(event);
+        //this->update_current_cursor();
         this->_front->_current_screen_index =  this->_screen_index;
     }
+
     bool eventFilter(QObject *obj, QEvent *e) {
         this->_front->eventFilter(obj, e, this->_front->_info.cs_monitor.monitorDefArray[this->_screen_index].left);
         return false;
@@ -1424,7 +1448,10 @@ public Q_SLOTS:
     }
 
     void CtrlAltDelReleased() {
+
         this->_front->CtrlAltDelReleased();
+//         this->update_current_cursor();
+//         this->_buttonCtrlAltDel.setCursor(Qt::PointingHandCursor);
     }
 
     void stopRelease() {

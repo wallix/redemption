@@ -326,7 +326,7 @@ void Front_Qt::writeClientInfo() {
 
 void Front_Qt::set_pointer(Pointer const & cursor) {
 
-    QImage image_data(cursor.data, cursor.width, cursor.height, QImage::Format_RGB888);
+    QImage image_data(cursor.data, cursor.width, cursor.height, this->bpp_to_QFormat(cursor.bpp, false));
     QImage image_mask(cursor.mask, cursor.width, cursor.height, QImage::Format_Mono);
 
     if (cursor.mask[0x48] == 0xFF &&
@@ -334,6 +334,14 @@ void Front_Qt::set_pointer(Pointer const & cursor) {
         cursor.mask[0x4A] == 0xFF &&
         cursor.mask[0x4B] == 0xFF) {
 
+        image_mask = image_data.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+        image_data.invertPixels();
+//         LOG(LOG_INFO, "Cursor type 1");
+
+    } else {
+        image_mask.invertPixels();
+
+//         std::cout <<  std::endl;
 //         for (int i = 0; i < cursor.height; i++) {
 //             for (int j = 0; j < cursor.width; j++) {
 //                 if (cursor.data[(i*cursor.width)+j] == 0x00) {
@@ -347,16 +355,9 @@ void Front_Qt::set_pointer(Pointer const & cursor) {
 //             }
 //             std::cout <<  std::endl;
 //         }
-        image_mask = image_data.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-        image_data.invertPixels();
-        //LOG(LOG_INFO, "Cursor type 1");
 
-    } else {
-        image_mask.invertPixels();
-        //LOG(LOG_INFO, "Cursor type 2");
+//         LOG(LOG_INFO, "Cursor type 2");
     }
-
-
 
     image_data = image_data.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
     image_mask = image_mask.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
@@ -381,7 +382,10 @@ void Front_Qt::set_pointer(Pointer const & cursor) {
     } else {
         QPixmap map = QPixmap::fromImage(image_data);
         QCursor qcursor(map, cursor.x, cursor.y);
-        this->_screen[this->_current_screen_index]->setCursor(qcursor);
+
+        this->_screen[this->_current_screen_index]->set_mem_cursor(qcursor, static_cast<uchar *>(data));
+
+        //this->_screen[0]->paintCache().drawImage(QRect(0, 0, 16, 16), image_data);
 
         if (this->_record) {
             this->_graph_capture->set_pointer(cursor);
@@ -786,13 +790,17 @@ bool Front_Qt::eventFilter(QObject *, QEvent *e, int screen_shift)  {
             y = 0;
         }
 
+        if (y > this->_info.height) {
+            this->_screen[this->_current_screen_index]->mouse_out = true;
+        } else if (this->_screen[this->_current_screen_index]->mouse_out) {
+            this->_screen[this->_current_screen_index]->update_current_cursor();
+            this->_screen[this->_current_screen_index]->mouse_out = false;
+        }
+
         if (this->_callback != nullptr) {
             this->_mouse_data.x = x;
             this->_mouse_data.y = y;
             this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, &(this->_keymap));
-            if (this->_record) {
-
-            }
         }
     }
     return false;

@@ -112,7 +112,7 @@
 
 "# Log redirection in a file\n"
 "#_advanced\n"
-"session_log_redirection = boolean(default=False)\n\n"
+"session_log_redirection = boolean(default=True)\n\n"
 
 "#_advanced\n"
 "log_path = string(default='')\n\n"

@@ -541,6 +541,7 @@ private:
             }
 
             assert(this->gd);
+
             return *this->gd;
         }
     } orders;
@@ -864,12 +865,6 @@ public:
         ResizeResult res = ResizeResult::no_need;
 
         this->mod_bpp = bpp;
-
-        {
-            gdi::GraphicApi & gd_orders = this->orders.initialize_drawable(this->client_info.bpp);
-
-            this->set_gd((this->capture && this->capture->get_graphic_api()) ? this->capture : &gd_orders);
-        }
 
         if (bpp == 8) {
             this->palette_sent = false;
@@ -4173,6 +4168,9 @@ private:
                 if (this->verbose & (Verbose::basic_trace4 | Verbose::basic_trace)) {
                     LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");
                 }
+
+                this->set_gd(this->orders.initialize_drawable(this->client_info.bpp));
+
                 this->up_and_running = 1;
                 this->timeout.cancel_timeout();
                 cb.rdp_input_up_and_running();
