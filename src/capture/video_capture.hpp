@@ -42,36 +42,14 @@
 struct videocapture_OutFilenameSequenceSeekableTransport_COUNT : public Transport
 {
     char buf_current_filename_[1024];
-    struct videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION
-    {
-        char         path[1024];
-        char         filename[1012];
-        char         extension[12];
-        mutable char filename_gen[1024];
 
-        char * last_filename;
-        unsigned     last_num;
+    char         buf_filegen_path[1024];
+    char         buf_filegen_filename[1012];
+    char         buf_filegen_extension[12];
+    char         buf_filegen_filename_gen[1024];
+    char *       buf_filegen_last_filename;
+    unsigned     buf_filegen_last_num;
 
-        videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION(
-            const char * const prefix,
-            const char * const filename,
-            const char * const extension)
-        : last_filename(nullptr)
-        , last_num(-1u)
-        {
-            if (strlen(prefix) > sizeof(this->path) - 1
-             || strlen(filename) > sizeof(this->filename) - 1
-             || strlen(extension) > sizeof(this->extension) - 1) {
-                throw Error(ERR_TRANSPORT);
-            }
-
-            strcpy(this->path, prefix);
-            strcpy(this->filename, filename);
-            strcpy(this->extension, extension);
-
-            this->filename_gen[0] = 0;
-        }
-    } buf_filegen_;
     int buf_buf_fd;
     unsigned buf_num_file_;
     int buf_groupid_;
@@ -83,15 +61,28 @@ public:
         const char * const extension,
         const int groupid,
         auth_api * authentifier = nullptr)
-    : buf_filegen_(prefix, filename, extension)
+    : buf_filegen_last_filename(nullptr)
+    , buf_filegen_last_num(-1u)
     , buf_buf_fd(-1)
     , buf_num_file_(0)
     , buf_groupid_(groupid)
     {
-            this->buf_current_filename_[0] = 0;
-            if (authentifier) {
-                this->set_authentifier(authentifier);
-            }
+        if (strlen(prefix) > sizeof(this->buf_filegen_path) - 1
+         || strlen(filename) > sizeof(this->buf_filegen_filename) - 1
+         || strlen(extension) > sizeof(this->buf_filegen_extension) - 1) {
+            throw Error(ERR_TRANSPORT);
+        }
+
+        strcpy(this->buf_filegen_path, prefix);
+        strcpy(this->buf_filegen_filename, filename);
+        strcpy(this->buf_filegen_extension, extension);
+
+        this->buf_filegen_filename_gen[0] = 0;
+
+        this->buf_current_filename_[0] = 0;
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
     }
 
     void seek(int64_t offset, int whence) override {
@@ -111,17 +102,17 @@ public:
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             
             using std::snprintf;
-            snprintf( this->buf_filegen_.filename_gen
-                    , sizeof(this->buf_filegen_.filename_gen)
+            snprintf( this->buf_filegen_filename_gen
+                    , sizeof(this->buf_filegen_filename_gen)
                     , "%s%s-%06u%s"
-                    , this->buf_filegen_.path
-                    , this->buf_filegen_.filename
+                    , this->buf_filegen_path
+                    , this->buf_filegen_filename
                     , this->buf_num_file_
-                    , this->buf_filegen_.extension);
+                    , this->buf_filegen_extension);
 
-            char * filename = this->buf_filegen_.filename_gen;
-            this->buf_filegen_.last_num = this->buf_num_file_;
-            this->buf_filegen_.last_filename = this->buf_current_filename_;
+            char * filename = this->buf_filegen_filename_gen;
+            this->buf_filegen_last_num = this->buf_num_file_;
+            this->buf_filegen_last_filename = this->buf_current_filename_;
 
             const int res = ::rename(this->buf_current_filename_, filename);
             if (res < 0) {
@@ -132,8 +123,8 @@ public:
             else {
                 this->buf_current_filename_[0] = 0;
                 ++this->buf_num_file_;
-                this->buf_filegen_.last_num = -1u;
-                this->buf_filegen_.last_filename = nullptr;
+                this->buf_filegen_last_num = -1u;
+                this->buf_filegen_last_filename = nullptr;
                 tmpres = 0;
             }
         }
@@ -157,17 +148,17 @@ public:
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             
             using std::snprintf;
-            snprintf( this->buf_filegen_.filename_gen
-                    , sizeof(this->buf_filegen_.filename_gen)
+            snprintf( this->buf_filegen_filename_gen
+                    , sizeof(this->buf_filegen_filename_gen)
                     , "%s%s-%06u%s"
-                    , this->buf_filegen_.path
-                    , this->buf_filegen_.filename
+                    , this->buf_filegen_path
+                    , this->buf_filegen_filename
                     , this->buf_num_file_
-                    , this->buf_filegen_.extension);
-            char * filename = this->buf_filegen_.filename_gen;
+                    , this->buf_filegen_extension);
+            char * filename = this->buf_filegen_filename_gen;
 
-            this->buf_filegen_.last_num = this->buf_num_file_;
-            this->buf_filegen_.last_filename = this->buf_current_filename_;
+            this->buf_filegen_last_num = this->buf_num_file_;
+            this->buf_filegen_last_filename = this->buf_current_filename_;
             
             const int res = ::rename(this->buf_current_filename_, filename);
             if (res < 0) {
@@ -182,17 +173,17 @@ private:
         ssize_t tmpres = 0;
         if (this->buf_buf_fd == -1) {
             unsigned count = this->buf_num_file_;
-            char * filename = this->buf_filegen_.last_filename;
-            if (count != this->buf_filegen_.last_num 
-            || this->buf_filegen_.last_filename == nullptr) {
+            char * filename = this->buf_filegen_last_filename;
+            if (count != this->buf_filegen_last_num 
+            || this->buf_filegen_last_filename == nullptr) {
                 using std::snprintf;
-                snprintf( this->buf_filegen_.filename_gen
-                        , sizeof(this->buf_filegen_.filename_gen)
+                snprintf( this->buf_filegen_filename_gen
+                        , sizeof(this->buf_filegen_filename_gen)
                         , "%s%s-%06u%s"
-                        , this->buf_filegen_.path
-                        , this->buf_filegen_.filename
-                        , count, this->buf_filegen_.extension);
-                filename = this->buf_filegen_.filename_gen;
+                        , this->buf_filegen_path
+                        , this->buf_filegen_filename
+                        , count, this->buf_filegen_extension);
+                filename = this->buf_filegen_filename_gen;
             }
 
             snprintf(this->buf_current_filename_, sizeof(this->buf_current_filename_),
@@ -209,8 +200,8 @@ private:
                    , this->buf_groupid_ ? "u+r, g+r" : "u+r"
                    , strerror(errno), errno);
                 }
-                this->buf_filegen_.last_num = this->buf_num_file_;
-                this->buf_filegen_.last_filename = this->buf_current_filename_;
+                this->buf_filegen_last_num = this->buf_num_file_;
+                this->buf_filegen_last_filename = this->buf_current_filename_;
             }
         }
         if (tmpres != -1){
@@ -265,28 +256,7 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
     struct videocapture_OutFilenameSequenceSeekableTransport : public Transport
     {
         char buf_current_filename_[1024];
-
-        struct videocapture_FilenameGenerator_PATH_FILE_EXTENSION
-        {
-        private:
-            mutable char filename_gen[1024];
-
-        public:
-            videocapture_FilenameGenerator_PATH_FILE_EXTENSION(const char * const prefix, const char * const filename, const char * const extension)
-            {
-                using std::snprintf;
-                this->filename_gen[0] = 0;
-                // TODO: s'assurer que filename_gen ne sature pas ou lever une exception
-                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s%s", prefix, filename, extension);
-
-            }
-
-            const char * get_gen_filename() const
-            {
-                return this->filename_gen;
-            }
-
-        } buf_filegen_;
+        char buf_filegen_filename_gen[1024];
 
         int buf_buf_fd;
         unsigned buf_num_file_;
@@ -299,11 +269,17 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
             const char * const extension,
             const int groupid,
             auth_api * authentifier = nullptr)
-        : buf_filegen_(prefix, filename, extension)
-        , buf_buf_fd(-1)
+        : buf_buf_fd(-1)
         , buf_num_file_(0)
         , buf_groupid_(groupid)
         {
+                using std::snprintf;
+                this->buf_filegen_filename_gen[0] = 0;
+                // TODO: s'assurer que filename_gen ne sature pas ou lever une exception
+                snprintf( this->buf_filegen_filename_gen
+                        , sizeof(this->buf_filegen_filename_gen)
+                        , "%s%s%s", prefix, filename, extension);
+
                 this->buf_current_filename_[0] = 0;
                 if (authentifier) {
                     this->set_authentifier(authentifier);
@@ -322,7 +298,7 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
                 this->buf_buf_fd = -1;
                 // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
                 
-                const char * filename = this->buf_filegen_.get_gen_filename();
+                const char * filename = this->buf_filegen_filename_gen;
                 const int res = ::rename(this->buf_current_filename_, filename);
                 if (res < 0) {
                     LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
@@ -335,7 +311,7 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
         void do_send(const uint8_t * data, size_t len) override {
             ssize_t tmpres = 0;
             if (this->buf_buf_fd == -1) {
-                const char * filename = this->buf_filegen_.get_gen_filename();
+                const char * filename = this->buf_filegen_filename_gen;
                 snprintf(this->buf_current_filename_, sizeof(this->buf_current_filename_),
                             "%sred-XXXXXX.tmp", filename);
                 this->buf_buf_fd = ::mkostemps(this->buf_current_filename_, 4, O_WRONLY | O_CREAT);
@@ -590,18 +566,18 @@ private:
 
     private:
         void remove_current_path() {
-            const char * path = this->buf_filegen_.last_filename;
-            if (this->get_seqno() != this->buf_filegen_.last_num 
-            || this->buf_filegen_.last_filename == nullptr) {
+            const char * path = this->buf_filegen_last_filename;
+            if (this->get_seqno() != this->buf_filegen_last_num 
+            || this->buf_filegen_last_filename == nullptr) {
                 using std::snprintf;
-                snprintf( this->buf_filegen_.filename_gen
-                        , sizeof(this->buf_filegen_.filename_gen)
+                snprintf( this->buf_filegen_filename_gen
+                        , sizeof(this->buf_filegen_filename_gen)
                         , "%s%s-%06u%s"
-                        , this->buf_filegen_.path
-                        , this->buf_filegen_.filename
+                        , this->buf_filegen_path
+                        , this->buf_filegen_filename
                         , this->get_seqno()
-                        , this->buf_filegen_.extension);
-                path = this->buf_filegen_.filename_gen;
+                        , this->buf_filegen_extension);
+                path = this->buf_filegen_filename_gen;
             }
             ::unlink(path);
         }
