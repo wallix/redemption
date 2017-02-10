@@ -46,7 +46,7 @@ struct SequenceTransport : public Transport
     char         buf_filegen_path[1024];
     char         buf_filegen_filename[1012];
     char         buf_filegen_extension[12];
-    char         buf_filegen_filename_gen[1024];
+    char         final_filename[1024];
     char *       buf_filegen_last_filename;
     unsigned     buf_filegen_last_num;
 
@@ -77,7 +77,7 @@ public:
         strcpy(this->buf_filegen_filename, filename);
         strcpy(this->buf_filegen_extension, extension);
 
-        this->buf_filegen_filename_gen[0] = 0;
+        this->final_filename[0] = 0;
 
         this->buf_current_filename_[0] = 0;
         if (authentifier) {
@@ -100,8 +100,8 @@ public:
         // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
         
         using std::snprintf;
-        snprintf( this->buf_filegen_filename_gen
-                , sizeof(this->buf_filegen_filename_gen)
+        snprintf( this->final_filename
+                , sizeof(this->final_filename)
                 , "%s%s-%06u%s"
                 , this->buf_filegen_path
                 , this->buf_filegen_filename
@@ -111,10 +111,10 @@ public:
         this->buf_filegen_last_num = this->buf_num_file_;
         this->buf_filegen_last_filename = this->buf_current_filename_;
 
-        if (::rename(this->buf_current_filename_, this->buf_filegen_filename_gen) < 0)
+        if (::rename(this->buf_current_filename_, this->final_filename) < 0)
         {
             LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-               , this->buf_current_filename_, this->buf_filegen_filename_gen, errno, strerror(errno));
+               , this->buf_current_filename_, this->final_filename, errno, strerror(errno));
             this->status = false;
             LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
@@ -136,8 +136,8 @@ public:
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             
             using std::snprintf;
-            snprintf( this->buf_filegen_filename_gen
-                    , sizeof(this->buf_filegen_filename_gen)
+            snprintf( this->final_filename
+                    , sizeof(this->final_filename)
                     , "%s%s-%06u%s"
                     , this->buf_filegen_path
                     , this->buf_filegen_filename
@@ -147,10 +147,10 @@ public:
             this->buf_filegen_last_num = this->buf_num_file_;
             this->buf_filegen_last_filename = this->buf_current_filename_;
             
-            const int res = ::rename(this->buf_current_filename_, this->buf_filegen_filename_gen);
+            const int res = ::rename(this->buf_current_filename_, this->final_filename);
             if (res < 0) {
                 LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                   , this->buf_current_filename_, this->buf_filegen_filename_gen, errno, strerror(errno));
+                   , this->buf_current_filename_, this->final_filename, errno, strerror(errno));
             }
         }
     }
@@ -164,13 +164,13 @@ private:
             if (this->buf_num_file_ != this->buf_filegen_last_num || this->buf_filegen_last_filename == nullptr) 
             {
                 using std::snprintf;
-                snprintf( this->buf_filegen_filename_gen
-                        , sizeof(this->buf_filegen_filename_gen)
+                snprintf( this->final_filename
+                        , sizeof(this->final_filename)
                         , "%s%s-%06u%s"
                         , this->buf_filegen_path
                         , this->buf_filegen_filename
                         , this->buf_num_file_, this->buf_filegen_extension);
-                filename = this->buf_filegen_filename_gen;
+                filename = this->final_filename;
             }
 
             snprintf(this->buf_current_filename_, sizeof(this->buf_current_filename_),
@@ -233,7 +233,7 @@ struct VideoTransport : public Transport
     char         buf_filegen_path[1024];
     char         buf_filegen_filename[1012];
     char         buf_filegen_extension[12];
-    char         buf_filegen_filename_gen[1024];
+    char         final_filename[1024];
     char *       buf_filegen_last_filename;
     unsigned     buf_filegen_last_num;
 
@@ -265,20 +265,20 @@ public:
         strcpy(this->buf_filegen_filename, filename);
         strcpy(this->buf_filegen_extension, extension);
 
-        this->buf_filegen_filename_gen[0] = 0;
+        this->final_filename[0] = 0;
 
         this->buf_current_filename_[0] = 0;
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
-        snprintf( this->buf_filegen_filename_gen
-                , sizeof(this->buf_filegen_filename_gen)
+        snprintf( this->final_filename
+                , sizeof(this->final_filename)
                 , "%s%s-%06u%s"
                 , this->buf_filegen_path
                 , this->buf_filegen_filename
                 , this->get_seqno()
                 , this->buf_filegen_extension);
-        ::unlink(this->buf_filegen_filename_gen);
+        ::unlink(this->final_filename);
     }
 
     void seek(int64_t offset, int whence) override {
@@ -297,8 +297,8 @@ public:
         // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
         
         using std::snprintf;
-        snprintf( this->buf_filegen_filename_gen
-                , sizeof(this->buf_filegen_filename_gen)
+        snprintf( this->final_filename
+                , sizeof(this->final_filename)
                 , "%s%s-%06u%s"
                 , this->buf_filegen_path
                 , this->buf_filegen_filename
@@ -308,10 +308,10 @@ public:
         this->buf_filegen_last_num = this->buf_num_file_;
         this->buf_filegen_last_filename = this->buf_current_filename_;
 
-        if (::rename(this->buf_current_filename_, this->buf_filegen_filename_gen) < 0)
+        if (::rename(this->buf_current_filename_, this->final_filename) < 0)
         {
             LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-               , this->buf_current_filename_, this->buf_filegen_filename_gen, errno, strerror(errno));
+               , this->buf_current_filename_, this->final_filename, errno, strerror(errno));
             this->status = false;
             LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
@@ -324,14 +324,14 @@ public:
 
         // TODO: why do we do an unlink of the next file ?
         using std::snprintf;
-        snprintf( this->buf_filegen_filename_gen
-                , sizeof(this->buf_filegen_filename_gen)
+        snprintf( this->final_filename
+                , sizeof(this->final_filename)
                 , "%s%s-%06u%s"
                 , this->buf_filegen_path
                 , this->buf_filegen_filename
                 , this->get_seqno()
                 , this->buf_filegen_extension);
-        ::unlink(this->buf_filegen_filename_gen);
+        ::unlink(this->final_filename);
         return true;
     }
 
@@ -341,8 +341,8 @@ public:
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             
             using std::snprintf;
-            snprintf( this->buf_filegen_filename_gen
-                    , sizeof(this->buf_filegen_filename_gen)
+            snprintf( this->final_filename
+                    , sizeof(this->final_filename)
                     , "%s%s-%06u%s"
                     , this->buf_filegen_path
                     , this->buf_filegen_filename
@@ -352,10 +352,10 @@ public:
             this->buf_filegen_last_num = this->buf_num_file_;
             this->buf_filegen_last_filename = this->buf_current_filename_;
             
-            const int res = ::rename(this->buf_current_filename_, this->buf_filegen_filename_gen);
+            const int res = ::rename(this->buf_current_filename_, this->final_filename);
             if (res < 0) {
                 LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%u : %s\n"
-                   , this->buf_current_filename_, this->buf_filegen_filename_gen, errno, strerror(errno));
+                   , this->buf_current_filename_, this->final_filename, errno, strerror(errno));
             }
         }
     }
@@ -364,14 +364,14 @@ private:
     void do_send(const uint8_t * data, size_t len) override {
         if (this->buf_buf_fd == -1) {
             using std::snprintf;
-            snprintf( this->buf_filegen_filename_gen
-                    , sizeof(this->buf_filegen_filename_gen)
+            snprintf( this->final_filename
+                    , sizeof(this->final_filename)
                     , "%s%s-%06u%s"
                     , this->buf_filegen_path
                     , this->buf_filegen_filename
                     , this->buf_num_file_, this->buf_filegen_extension);
             snprintf(this->buf_current_filename_, sizeof(this->buf_current_filename_),
-                        "%sred-XXXXXX.tmp", this->buf_filegen_filename_gen);
+                        "%sred-XXXXXX.tmp", this->final_filename);
 
             this->buf_buf_fd = ::mkostemps(this->buf_current_filename_, 4, O_WRONLY | O_CREAT);
             if (this->buf_buf_fd == -1) {
