@@ -104,7 +104,6 @@ public:
         // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
         
         this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
-
         if (::rename(this->tmp_filename, this->final_filename) < 0)
         {
             LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
@@ -126,7 +125,6 @@ public:
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             
             this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
-
             const int res = ::rename(this->tmp_filename, this->final_filename);
             if (res < 0) {
                 LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
@@ -195,14 +193,23 @@ private:
 struct VideoTransport : public Transport
 {
     char tmp_filename[1024];
+    char final_filename[1024];
 
-    char         filegen_path[1024];
-    char         filegen_base[1012];
-    char         filegen_ext[12];
-    char         final_filename[1024];
+    struct FileGen {
+        char path[1024];
+        char base[1012];
+        char ext[12];
+        unsigned num = 0;
+
+        void set_final_filename(char * final_filename, size_t final_filename_size)
+        {
+            using std::snprintf;
+            snprintf( final_filename, final_filename_size, "%s%s-%06u%s"
+                    , this->path, this->base, this->num, this->ext);
+        }
+    } filegen;
 
     int fd;
-    unsigned filegen_num;
     int groupid;
 
 public:
@@ -214,32 +221,24 @@ public:
         auth_api * authentifier = nullptr
     )
     : fd(-1)
-    , filegen_num(0)
     , groupid(groupid)
     {
-        if (strlen(prefix) > sizeof(this->filegen_path) - 1
-         || strlen(filename) > sizeof(this->filegen_base) - 1
-         || strlen(extension) > sizeof(this->filegen_ext) - 1) {
+        if (strlen(prefix) > sizeof(this->filegen.path) - 1
+         || strlen(filename) > sizeof(this->filegen.base) - 1
+         || strlen(extension) > sizeof(this->filegen.ext) - 1) {
             throw Error(ERR_TRANSPORT);
         }
 
-        strcpy(this->filegen_path, prefix);
-        strcpy(this->filegen_base, filename);
-        strcpy(this->filegen_ext, extension);
+        strcpy(this->filegen.path, prefix);
+        strcpy(this->filegen.base, filename);
+        strcpy(this->filegen.ext, extension);
 
         this->final_filename[0] = 0;
-
         this->tmp_filename[0] = 0;
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
-        snprintf( this->final_filename
-                , sizeof(this->final_filename)
-                , "%s%s-%06u%s"
-                , this->filegen_path
-                , this->filegen_base
-                , this->get_seqno()
-                , this->filegen_ext);
+        this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
         ::unlink(this->final_filename);
     }
 
@@ -258,15 +257,7 @@ public:
         this->fd = -1;
         // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
         
-        using std::snprintf;
-        snprintf( this->final_filename
-                , sizeof(this->final_filename)
-                , "%s%s-%06u%s"
-                , this->filegen_path
-                , this->filegen_base
-                , this->filegen_num
-                , this->filegen_ext);
-
+        this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
         if (::rename(this->tmp_filename, this->final_filename) < 0)
         {
             LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
@@ -276,18 +267,11 @@ public:
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
         this->tmp_filename[0] = 0;
-        ++this->filegen_num;
+        ++this->filegen.num;
         ++this->seqno;
 
         // TODO: why do we do an unlink of the next file ?
-        using std::snprintf;
-        snprintf( this->final_filename
-                , sizeof(this->final_filename)
-                , "%s%s-%06u%s"
-                , this->filegen_path
-                , this->filegen_base
-                , this->get_seqno()
-                , this->filegen_ext);
+        this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
         ::unlink(this->final_filename);
         return true;
     }
@@ -297,15 +281,7 @@ public:
             ::close(this->fd);
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             
-            using std::snprintf;
-            snprintf( this->final_filename
-                    , sizeof(this->final_filename)
-                    , "%s%s-%06u%s"
-                    , this->filegen_path
-                    , this->filegen_base
-                    , this->filegen_num
-                    , this->filegen_ext);
-
+            this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
             const int res = ::rename(this->tmp_filename, this->final_filename);
             if (res < 0) {
                 LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%u : %s\n"
@@ -317,15 +293,8 @@ public:
 private:
     void do_send(const uint8_t * data, size_t len) override {
         if (this->fd == -1) {
-            using std::snprintf;
-            snprintf( this->final_filename
-                    , sizeof(this->final_filename)
-                    , "%s%s-%06u%s"
-                    , this->filegen_path
-                    , this->filegen_base
-                    , this->filegen_num, this->filegen_ext);
-            snprintf(this->tmp_filename, sizeof(this->tmp_filename),
-                        "%sred-XXXXXX.tmp", this->final_filename);
+            this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
+            snprintf(this->tmp_filename, sizeof(this->tmp_filename), "%sred-XXXXXX.tmp", this->final_filename);
 
             this->fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
             if (this->fd == -1) {
@@ -394,7 +363,6 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
         char final_filename[1024];
 
         int fd;
-        unsigned filegen_num;
         int groupid;
 
     public:
@@ -404,7 +372,6 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
             const char * const extension,
             const int groupid)
         : fd(-1)
-        , filegen_num(0)
         , groupid(groupid)
         {
                 using std::snprintf;
