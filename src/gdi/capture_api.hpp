@@ -48,13 +48,13 @@ struct CaptureApi : private noncopyable
         return next_duration;
     }
 
-    virtual std::chrono::microseconds frame_marker_event(
+    virtual void frame_marker_event(
         timeval const & now,
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
     ) 
     {
-        return this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
     }
 
     virtual std::chrono::microseconds do_snapshot(

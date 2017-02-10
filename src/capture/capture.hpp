@@ -6552,7 +6552,6 @@ public:
                     this->sequenced_video_capture_obj->encoding_video_frame();
                 }
                 catch (Error const &) {
-                    this->sequenced_video_capture_obj->request_full_cleaning();
                     if (this->meta_capture_obj) {
                         this->meta_capture_obj->request_full_cleaning();
                     }
@@ -6564,7 +6563,6 @@ public:
                     this->full_video_capture_obj->encoding_video_frame();
                 }
                 catch (Error const &) {
-                    this->full_video_capture_obj->request_full_cleaning();
                 }
                 this->full_video_capture_obj.reset();
             }

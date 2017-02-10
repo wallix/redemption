@@ -332,6 +332,7 @@ public:
                 , this->get_seqno()
                 , this->buf_filegen_extension);
         ::unlink(this->buf_filegen_filename_gen);
+        return true;
     }
 
     ~VideoTransport() {
@@ -437,10 +438,10 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
 {
     struct TmpFileTransport : public Transport
     {
-        char buf_current_filename_[1024];
-        char buf_filegen_filename_gen[1024];
+        char tmp_filename[1024];
+        char final_filename[1024];
 
-        int buf_buf_fd;
+        int fd;
         unsigned buf_num_file_;
         int buf_groupid_;
 
@@ -450,92 +451,69 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
             const char * const filename,
             const char * const extension,
             const int groupid)
-        : buf_buf_fd(-1)
+        : fd(-1)
         , buf_num_file_(0)
         , buf_groupid_(groupid)
         {
                 using std::snprintf;
-                this->buf_filegen_filename_gen[0] = 0;
-                // TODO: s'assurer que filename_gen ne sature pas ou lever une exception
-                snprintf( this->buf_filegen_filename_gen
-                        , sizeof(this->buf_filegen_filename_gen)
+                this->final_filename[0] = 0;
+                // TODO: check that filename_gen is not too large of throw some exception
+                snprintf( this->final_filename
+                        , sizeof(this->final_filename)
                         , "%s%s%s", prefix, filename, extension);
 
-                this->buf_current_filename_[0] = 0;
+                this->tmp_filename[0] = 0;
         }
 
         void seek(int64_t offset, int whence) override {
-            if (static_cast<off64_t>(-1) == lseek64(this->buf_buf_fd, offset, whence)){
+            if (static_cast<off64_t>(-1) == lseek64(this->fd, offset, whence)){
                 throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
             }
         }
 
         ~TmpFileTransport() {
-            if (this->buf_buf_fd != -1) {
-                ::close(this->buf_buf_fd);
-                this->buf_buf_fd = -1;
+            if (this->fd != -1) {
+                ::close(this->fd);
                 // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                
-                const char * filename = this->buf_filegen_filename_gen;
-                const int res = ::rename(this->buf_current_filename_, filename);
-                if (res < 0) {
+                if (::rename(this->tmp_filename, this->final_filename) < 0) {
                     LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                       , this->buf_current_filename_, filename, errno, strerror(errno));
+                       , this->tmp_filename, this->final_filename, errno, strerror(errno));
                 }
             }
         }
 
     private:
         void do_send(const uint8_t * data, size_t len) override {
-            ssize_t tmpres = 0;
-            if (this->buf_buf_fd == -1) {
-                const char * filename = this->buf_filegen_filename_gen;
-                snprintf(this->buf_current_filename_, sizeof(this->buf_current_filename_),
-                            "%sred-XXXXXX.tmp", filename);
-                this->buf_buf_fd = ::mkostemps(this->buf_current_filename_, 4, O_WRONLY | O_CREAT);
-                if (this->buf_buf_fd == -1) {
-                    tmpres = -1;
+            if (this->fd == -1) {
+                snprintf(this->tmp_filename, sizeof(this->tmp_filename),
+                            "%sred-XXXXXX.tmp", this->final_filename);
+                this->fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
+                if (this->fd == -1) {
+                    this->status = false;
+                    auto eid = (errno == ENOSPC)?ERR_TRANSPORT_WRITE_NO_ROOM:ERR_TRANSPORT_WRITE_FAILED;
+                    throw Error(eid, errno);
                 }
-                else {
-                    if (chmod(this->buf_current_filename_, this->buf_groupid_ ?
-                        (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                if (chmod(this->tmp_filename, this->buf_groupid_ ?(S_IRUSR|S_IRGRP):S_IRUSR) == -1) {
                     LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                       , this->buf_current_filename_
+                       , this->tmp_filename
                        , this->buf_groupid_ ? "u+r, g+r" : "u+r"
                        , strerror(errno), errno);
-                    }
                 }
             }
-            if (tmpres != -1){
-                size_t remaining_len = len;
-                size_t total_sent = 0;
-                while (remaining_len) {
-                    ssize_t ret = ::write(this->buf_buf_fd, data + total_sent, remaining_len);
-                    if (ret <= 0){
-                        if (errno == EINTR){
-                            continue;
-                        }
-                        tmpres = -1;
-                        break;
-                    }
-                    remaining_len -= ret;
-                    total_sent += ret;
+            size_t remaining_len = len;
+            size_t total_sent = 0;
+            while (remaining_len) {
+                ssize_t ret = ::write(this->fd, data + total_sent, remaining_len);
+                if (ret <= 0){
+                    if (errno == EINTR){ continue; }
+                    this->status = false;
+                    auto eid = (errno == ENOSPC)?ERR_TRANSPORT_WRITE_NO_ROOM:ERR_TRANSPORT_WRITE_FAILED;
+                    throw Error(eid, errno);
                 }
-                if (tmpres != -1){
-                    tmpres = total_sent;
-                }
+                remaining_len -= ret;
+                total_sent += ret;
             }
-        
-            const ssize_t res = tmpres;
-            if (res < 0) {
-                this->status = false;
-                auto eid = ERR_TRANSPORT_WRITE_FAILED;
-                if (errno == ENOSPC) {
-                    eid = ERR_TRANSPORT_WRITE_NO_ROOM;
-                }
-                throw Error(eid, errno);
-            }
-            this->last_quantum_sent += res;
+            this->last_quantum_sent += total_sent;
         }
     } trans_tmp_file;
 
@@ -549,7 +527,7 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
 
 public:
 
-    std::chrono::microseconds frame_marker_event(const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
+    void frame_marker_event(const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
     override {
         this->drawable.trace_mouse();
         if (!this->no_timestamp) {
@@ -561,7 +539,6 @@ public:
         this->recorder->preparing_video_frame(true);
         if (!this->no_timestamp) { this->drawable.clear_timestamp(); }
         this->drawable.clear_mouse();
-        return std::chrono::microseconds{};
     }
 
     std::chrono::microseconds do_snapshot(
@@ -685,17 +662,15 @@ public:
         return this->video_sequencer.do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
     }
 
-    std::chrono::microseconds frame_marker_event(
-        timeval const & now,
-        int cursor_x, int cursor_y,
-        bool ignore_frame_in_timeval
-    ) override
+    void frame_marker_event(timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval) override
     {
         this->vc.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
         if (!this->ic_has_first_img) {
-            return this->first_image.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+            this->first_image.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
         }
-        return this->video_sequencer.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        else {
+            this->video_sequencer.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        }
     }
 
     std::chrono::microseconds periodic_snapshot(
@@ -740,13 +715,9 @@ public:
             return next_duration;
         }
 
-        std::chrono::microseconds frame_marker_event(
-            timeval const & now,
-            int cursor_x, int cursor_y,
-            bool ignore_frame_in_timeval
-        ) 
+        void frame_marker_event(timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval) 
         {
-            return this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+            this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
         }
 
         std::chrono::microseconds do_snapshot(
@@ -859,11 +830,8 @@ public:
             this->recorder->encoding_video_frame();
         }
 
-        std::chrono::microseconds frame_marker_event(
-            const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
-        ) {
+        void frame_marker_event(const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/) {
             this->preparing_video_frame();
-            return std::chrono::microseconds{};
         }
 
         std::chrono::microseconds do_snapshot(
@@ -1027,13 +995,9 @@ public:
             return next_duration;
         }
 
-        std::chrono::microseconds frame_marker_event(
-            timeval const & now,
-            int cursor_x, int cursor_y,
-            bool ignore_frame_in_timeval
-        ) 
+        void frame_marker_event(timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval) 
         {
-            return this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+            this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
         }
 
     } video_sequencer;
