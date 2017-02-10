@@ -178,32 +178,6 @@ exe rdpproxy
         $(EXE_DEPENDENCIES)
     ;
 
-exe vnc_client_cli
-    :
-        $(REDEMPTION_SRC_PATH)/main/vnc_client.cpp
-        bitmap
-        program_options
-
-        d3des
-
-        openssl
-        crypto
-        z
-        dl
-        png
-
-#        snappy
-##        lzma
-
-#        krb5
-#        gssglue
-
-        rt
-    :
-#         <link>static
-        $(EXE_DEPENDENCIES)
-    ;
-
 lib libredrec
     :
         do_recorder
@@ -327,8 +301,6 @@ exe vncclient
     :
         $(EXE_DEPENDENCIES)
     ;
-
-
 
 exe rdpheadless
     : $(REDEMPTION_SRC_PATH)/ftests/test_client_redemption_cli/test_client_redemption_cli.cpp

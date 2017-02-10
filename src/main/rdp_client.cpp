@@ -419,9 +419,6 @@ public:
         }
     }
 
-
-    // reutiliser le FakeFront
-    // creer un main calqué sur celui de transparent.cpp et reussir a lancer un mod_rdp
     const CHANNELS::ChannelDefArray & get_channel_list() const override { return cl; }
 
     void send_to_channel( const CHANNELS::ChannelDef &, const uint8_t * data, std::size_t length

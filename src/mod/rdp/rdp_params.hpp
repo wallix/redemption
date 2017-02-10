@@ -189,7 +189,6 @@ struct ModRDPParams {
 #define RDP_PARAMS_LOG(format, get, member) \
     LOG(LOG_INFO, "ModRDPParams " #member "=" format, get (this->member))
 #define RDP_PARAMS_LOG_GET
-
         RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    target_user);
         RDP_PARAMS_LOG("\"%s\"", hidden_or_null,        target_password);
         RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    target_host);
