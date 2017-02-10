@@ -42,16 +42,17 @@
 struct SequenceTransport : public Transport
 {
     char tmp_filename[1024];
+    char final_filename[1024];
 
-    char         filegen_path[1024];
-    char         filegen_base[1012];
-    char         filegen_ext[12];
-    char         final_filename[1024];
-    unsigned     buf_filegen_last_num;
+    struct FileGen {
+        char path[1024];
+        char base[1012];
+        char ext[12];
+        unsigned num = 0;
+    } filegen;
 
     int fd;
-    unsigned filegen_num;
-    int buf_groupid_;
+    int groupid;
 
 public:
     SequenceTransport(
@@ -60,24 +61,22 @@ public:
         const char * const extension,
         const int groupid,
         auth_api * authentifier)
-    : buf_filegen_last_num(-1u)
-    , fd(-1)
-    , filegen_num(0)
-    , buf_groupid_(groupid)
+    : fd(-1)
+    , groupid(groupid)
     {
-        if (strlen(prefix) > sizeof(this->filegen_path) - 1
-         || strlen(filename) > sizeof(this->filegen_base) - 1
-         || strlen(extension) > sizeof(this->filegen_ext) - 1) {
+        if (strlen(prefix) > sizeof(this->filegen.path) - 1
+         || strlen(filename) > sizeof(this->filegen.base) - 1
+         || strlen(extension) > sizeof(this->filegen.ext) - 1) {
             throw Error(ERR_TRANSPORT);
         }
 
-        strcpy(this->filegen_path, prefix);
-        strcpy(this->filegen_base, filename);
-        strcpy(this->filegen_ext, extension);
+        strcpy(this->filegen.path, prefix);
+        strcpy(this->filegen.base, filename);
+        strcpy(this->filegen.ext, extension);
 
         this->final_filename[0] = 0;
-
         this->tmp_filename[0] = 0;
+        
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
@@ -101,12 +100,10 @@ public:
         snprintf( this->final_filename
                 , sizeof(this->final_filename)
                 , "%s%s-%06u%s"
-                , this->filegen_path
-                , this->filegen_base
-                , this->filegen_num
-                , this->filegen_ext);
-
-        this->buf_filegen_last_num = this->filegen_num;
+                , this->filegen.path
+                , this->filegen.base
+                , this->filegen.num
+                , this->filegen.ext);
 
         if (::rename(this->tmp_filename, this->final_filename) < 0)
         {
@@ -118,10 +115,7 @@ public:
         }
         this->tmp_filename[0] = 0;
 
-        ++this->filegen_num;
-
-        this->buf_filegen_last_num = -1u;
-
+        ++this->filegen.num;
         ++this->seqno;
         return true;
     }
@@ -135,13 +129,11 @@ public:
             snprintf( this->final_filename
                     , sizeof(this->final_filename)
                     , "%s%s-%06u%s"
-                    , this->filegen_path
-                    , this->filegen_base
-                    , this->filegen_num
-                    , this->filegen_ext);
+                    , this->filegen.path
+                    , this->filegen.base
+                    , this->filegen.num
+                    , this->filegen.ext);
 
-            this->buf_filegen_last_num = this->filegen_num;
-            
             const int res = ::rename(this->tmp_filename, this->final_filename);
             if (res < 0) {
                 LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
@@ -158,9 +150,10 @@ private:
             snprintf( this->final_filename
                     , sizeof(this->final_filename)
                     , "%s%s-%06u%s"
-                    , this->filegen_path
-                    , this->filegen_base
-                    , this->filegen_num, this->filegen_ext);
+                    , this->filegen.path
+                    , this->filegen.base
+                    , this->filegen.num
+                    , this->filegen.ext);
 
             snprintf(this->tmp_filename, sizeof(this->tmp_filename),
                         "%sred-XXXXXX.tmp", this->final_filename);
@@ -177,14 +170,13 @@ private:
                 }
                 throw Error(id, errno);
             }
-            if (chmod(this->tmp_filename, this->buf_groupid_ ?
+            if (chmod(this->tmp_filename, this->groupid ?
                 (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                 LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
                    , this->tmp_filename
-                   , this->buf_groupid_ ? "u+r, g+r" : "u+r"
+                   , this->groupid ? "u+r, g+r" : "u+r"
                    , strerror(errno), errno);
             }
-            this->buf_filegen_last_num = this->filegen_num;
         }
 
         size_t remaining_len = len;
@@ -222,11 +214,10 @@ struct VideoTransport : public Transport
     char         filegen_base[1012];
     char         filegen_ext[12];
     char         final_filename[1024];
-    unsigned     buf_filegen_last_num;
 
     int fd;
     unsigned filegen_num;
-    int buf_groupid_;
+    int groupid;
 
 public:
     VideoTransport(
@@ -236,10 +227,9 @@ public:
         const int groupid,
         auth_api * authentifier = nullptr
     )
-    : buf_filegen_last_num(-1u)
-    , fd(-1)
+    : fd(-1)
     , filegen_num(0)
-    , buf_groupid_(groupid)
+    , groupid(groupid)
     {
         if (strlen(prefix) > sizeof(this->filegen_path) - 1
          || strlen(filename) > sizeof(this->filegen_base) - 1
@@ -291,8 +281,6 @@ public:
                 , this->filegen_num
                 , this->filegen_ext);
 
-        this->buf_filegen_last_num = this->filegen_num;
-
         if (::rename(this->tmp_filename, this->final_filename) < 0)
         {
             LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
@@ -303,7 +291,6 @@ public:
         }
         this->tmp_filename[0] = 0;
         ++this->filegen_num;
-        this->buf_filegen_last_num = -1u;
         ++this->seqno;
 
         // TODO: why do we do an unlink of the next file ?
@@ -333,8 +320,6 @@ public:
                     , this->filegen_num
                     , this->filegen_ext);
 
-            this->buf_filegen_last_num = this->filegen_num;
-            
             const int res = ::rename(this->tmp_filename, this->final_filename);
             if (res < 0) {
                 LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%u : %s\n"
@@ -370,15 +355,14 @@ private:
                 throw Error(id, errno);
             }
             
-            if (chmod(this->tmp_filename, this->buf_groupid_ ?
+            if (chmod(this->tmp_filename, this->groupid ?
                 (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                 LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
                    , this->tmp_filename
-                   , this->buf_groupid_ ? "u+r, g+r" : "u+r"
+                   , this->groupid ? "u+r, g+r" : "u+r"
                    , strerror(errno), errno);
                 // TODO: shouldn't we stop on error throwing exception ?
             }
-            this->buf_filegen_last_num = this->filegen_num;
         }
 
         size_t remaining_len = len;
@@ -425,7 +409,7 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
 
         int fd;
         unsigned filegen_num;
-        int buf_groupid_;
+        int groupid;
 
     public:
         TmpFileTransport(
@@ -435,7 +419,7 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
             const int groupid)
         : fd(-1)
         , filegen_num(0)
-        , buf_groupid_(groupid)
+        , groupid(groupid)
         {
                 using std::snprintf;
                 this->final_filename[0] = 0;
@@ -475,10 +459,10 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
                     auto eid = (errno == ENOSPC)?ERR_TRANSPORT_WRITE_NO_ROOM:ERR_TRANSPORT_WRITE_FAILED;
                     throw Error(eid, errno);
                 }
-                if (chmod(this->tmp_filename, this->buf_groupid_ ?(S_IRUSR|S_IRGRP):S_IRUSR) == -1) {
+                if (chmod(this->tmp_filename, this->groupid ?(S_IRUSR|S_IRGRP):S_IRUSR) == -1) {
                     LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
                        , this->tmp_filename
-                       , this->buf_groupid_ ? "u+r, g+r" : "u+r"
+                       , this->groupid ? "u+r, g+r" : "u+r"
                        , strerror(errno), errno);
                 }
             }
