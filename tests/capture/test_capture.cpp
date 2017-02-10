@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
 
-        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false, 
+        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false,
                                 nullptr, record_tmp_path, basename, groupid};
 
         MetaParams meta_params;
@@ -188,7 +188,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
              != ::KeyboardInputMaskingLevel::fully_masked;
         bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
 
-        Capture capture( 
+        Capture capture(
                           capture_wrm, wrm_params
                         , capture_png, png_params
                         , capture_pattern_checker, patter_checker_params
@@ -432,7 +432,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
     }
 
-    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false, 
+    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false,
                         nullptr, record_tmp_path, basename, groupid};
 
     MetaParams meta_params;
@@ -472,7 +472,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
 
     // TODO remove this after unifying capture interface
-    Capture capture( 
+    Capture capture(
                      capture_wrm, wrm_params
                    , capture_png, png_params
                    , capture_pattern_checker, patter_checker_params
@@ -677,6 +677,99 @@ BOOST_AUTO_TEST_CASE(TestSessionMeta2)
         };
 
         meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
+        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
+        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.send_line(now.tv_sec, cstr_array_view("(break)"));
+    }
+}
+
+
+BOOST_AUTO_TEST_CASE(TestSessionMeta3)
+{
+    char const out_data[] =
+        "1970-01-01 01:16:40 - [Kbd]ABCD\n"
+        "1970-01-01 01:16:41 + Blah1\n"
+        "1970-01-01 01:16:42 - BUTTON_CLICKED=Démarrer\n"
+        "1970-01-01 01:16:43 + Blah2[Kbd]ABCDABCD\n"
+        "1970-01-01 01:16:46 + Blah3\n"
+        "1970-01-01 01:16:47 + (break)\n"
+    ;
+    CheckTransport trans(out_data, sizeof(out_data) - 1);
+
+    timeval now;
+    now.tv_sec  = 1000;
+    now.tv_usec = 0;
+
+    {
+        SessionMeta meta(now, trans);
+
+        auto send_kbd = [&]{
+            meta.kbd_input(now, 'A');
+            meta.kbd_input(now, 'B');
+            meta.kbd_input(now, 'C');
+            meta.kbd_input(now, 'D');
+        };
+
+        send_kbd(); now.tv_sec += 1;
+
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
+
+        meta.session_update(now, {"BUTTON_CLICKED=Démarrer", 24}); now.tv_sec += 1;
+
+        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now.tv_sec += 1;
+        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
+        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.send_line(now.tv_sec, cstr_array_view("(break)"));
+    }
+}
+
+
+BOOST_AUTO_TEST_CASE(TestSessionMeta4)
+{
+    char const out_data[] =
+        "1970-01-01 01:16:40 - [Kbd]ABCD\n"
+        "1970-01-01 01:16:41 + Blah1[Kbd]ABCD\n"
+        "1970-01-01 01:16:42 - BUTTON_CLICKED=Démarrer\n"
+        "1970-01-01 01:16:42 - Blah1[Kbd]ABCD\n"
+        "1970-01-01 01:16:44 + Blah2[Kbd]ABCDABCD\n"
+        "1970-01-01 01:16:47 + Blah3\n"
+        "1970-01-01 01:16:48 + (break)\n"
+    ;
+    CheckTransport trans(out_data, sizeof(out_data) - 1);
+
+    timeval now;
+    now.tv_sec  = 1000;
+    now.tv_usec = 0;
+
+    {
+        SessionMeta meta(now, trans);
+
+        auto send_kbd = [&]{
+            meta.kbd_input(now, 'A');
+            meta.kbd_input(now, 'B');
+            meta.kbd_input(now, 'C');
+            meta.kbd_input(now, 'D');
+        };
+
+        send_kbd(); now.tv_sec += 1;
+
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
+
+        send_kbd();
+
+        meta.session_update(now, {"BUTTON_CLICKED=Démarrer", 24}); now.tv_sec += 1;
+
+        send_kbd(); now.tv_sec += 1;
+
         meta.periodic_snapshot(now, 0, 0, 0);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
         send_kbd(); now.tv_sec += 1;

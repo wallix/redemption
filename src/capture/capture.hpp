@@ -4880,8 +4880,14 @@ public:
         this->last_flush = rawtime;
     }
 
-    void session_update(const timeval& /*now*/, array_view_const_char message) override {
+    void session_update(const timeval& now, array_view_const_char message) override {
         this->is_probe_enabled_session = (::strcmp(message.data(), "Probe.Status=Unknown") != 0);
+
+        this->send_kbd();
+        this->send_date(now.tv_sec, '-');
+        this->trans.send(message.data(), message.size());
+        this->trans.send("\n", 1);
+        this->last_flush = now.tv_sec;
     }
 
     void possible_active_window_change() override {
@@ -6552,7 +6558,6 @@ public:
                     this->sequenced_video_capture_obj->encoding_video_frame();
                 }
                 catch (Error const &) {
-                    this->sequenced_video_capture_obj->request_full_cleaning();
                     if (this->meta_capture_obj) {
                         this->meta_capture_obj->request_full_cleaning();
                     }
@@ -6564,7 +6569,6 @@ public:
                     this->full_video_capture_obj->encoding_video_frame();
                 }
                 catch (Error const &) {
-                    this->full_video_capture_obj->request_full_cleaning();
                 }
                 this->full_video_capture_obj.reset();
             }
