@@ -41,7 +41,7 @@
 
 struct SequenceTransport : public Transport
 {
-    char buf_current_filename_[1024];
+    char tmp_filename[1024];
 
     char         buf_filegen_path[1024];
     char         buf_filegen_filename[1012];
@@ -79,7 +79,7 @@ public:
 
         this->final_filename[0] = 0;
 
-        this->buf_current_filename_[0] = 0;
+        this->tmp_filename[0] = 0;
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
@@ -109,17 +109,17 @@ public:
                 , this->buf_filegen_extension);
 
         this->buf_filegen_last_num = this->buf_num_file_;
-        this->buf_filegen_last_filename = this->buf_current_filename_;
+        this->buf_filegen_last_filename = this->tmp_filename;
 
-        if (::rename(this->buf_current_filename_, this->final_filename) < 0)
+        if (::rename(this->tmp_filename, this->final_filename) < 0)
         {
             LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-               , this->buf_current_filename_, this->final_filename, errno, strerror(errno));
+               , this->tmp_filename, this->final_filename, errno, strerror(errno));
             this->status = false;
             LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
-        this->buf_current_filename_[0] = 0;
+        this->tmp_filename[0] = 0;
 
         ++this->buf_num_file_;
 
@@ -145,12 +145,12 @@ public:
                     , this->buf_filegen_extension);
 
             this->buf_filegen_last_num = this->buf_num_file_;
-            this->buf_filegen_last_filename = this->buf_current_filename_;
+            this->buf_filegen_last_filename = this->tmp_filename;
             
-            const int res = ::rename(this->buf_current_filename_, this->final_filename);
+            const int res = ::rename(this->tmp_filename, this->final_filename);
             if (res < 0) {
                 LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                   , this->buf_current_filename_, this->final_filename, errno, strerror(errno));
+                   , this->tmp_filename, this->final_filename, errno, strerror(errno));
             }
         }
     }
@@ -173,9 +173,9 @@ private:
                 filename = this->final_filename;
             }
 
-            snprintf(this->buf_current_filename_, sizeof(this->buf_current_filename_),
+            snprintf(this->tmp_filename, sizeof(this->tmp_filename),
                         "%sred-XXXXXX.tmp", filename);
-            this->buf_buf_fd = ::mkostemps(this->buf_current_filename_, 4, O_WRONLY | O_CREAT);
+            this->buf_buf_fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
             if (this->buf_buf_fd == -1) {
                 this->status = false;
                 auto id = ERR_TRANSPORT_WRITE_FAILED;
@@ -188,15 +188,15 @@ private:
                 }
                 throw Error(id, errno);
             }
-            if (chmod(this->buf_current_filename_, this->buf_groupid_ ?
+            if (chmod(this->tmp_filename, this->buf_groupid_ ?
                 (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
             LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-               , this->buf_current_filename_
+               , this->tmp_filename
                , this->buf_groupid_ ? "u+r, g+r" : "u+r"
                , strerror(errno), errno);
             }
             this->buf_filegen_last_num = this->buf_num_file_;
-            this->buf_filegen_last_filename = this->buf_current_filename_;
+            this->buf_filegen_last_filename = this->tmp_filename;
         }
 
         size_t remaining_len = len;
@@ -228,7 +228,7 @@ private:
 
 struct VideoTransport : public Transport
 {
-    char buf_current_filename_[1024];
+    char tmp_filename[1024];
 
     char         buf_filegen_path[1024];
     char         buf_filegen_filename[1012];
@@ -267,7 +267,7 @@ public:
 
         this->final_filename[0] = 0;
 
-        this->buf_current_filename_[0] = 0;
+        this->tmp_filename[0] = 0;
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
@@ -306,17 +306,17 @@ public:
                 , this->buf_filegen_extension);
 
         this->buf_filegen_last_num = this->buf_num_file_;
-        this->buf_filegen_last_filename = this->buf_current_filename_;
+        this->buf_filegen_last_filename = this->tmp_filename;
 
-        if (::rename(this->buf_current_filename_, this->final_filename) < 0)
+        if (::rename(this->tmp_filename, this->final_filename) < 0)
         {
             LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-               , this->buf_current_filename_, this->final_filename, errno, strerror(errno));
+               , this->tmp_filename, this->final_filename, errno, strerror(errno));
             this->status = false;
             LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
-        this->buf_current_filename_[0] = 0;
+        this->tmp_filename[0] = 0;
         ++this->buf_num_file_;
         this->buf_filegen_last_num = -1u;
         this->buf_filegen_last_filename = nullptr;
@@ -350,12 +350,12 @@ public:
                     , this->buf_filegen_extension);
 
             this->buf_filegen_last_num = this->buf_num_file_;
-            this->buf_filegen_last_filename = this->buf_current_filename_;
+            this->buf_filegen_last_filename = this->tmp_filename;
             
-            const int res = ::rename(this->buf_current_filename_, this->final_filename);
+            const int res = ::rename(this->tmp_filename, this->final_filename);
             if (res < 0) {
                 LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%u : %s\n"
-                   , this->buf_current_filename_, this->final_filename, errno, strerror(errno));
+                   , this->tmp_filename, this->final_filename, errno, strerror(errno));
             }
         }
     }
@@ -370,10 +370,10 @@ private:
                     , this->buf_filegen_path
                     , this->buf_filegen_filename
                     , this->buf_num_file_, this->buf_filegen_extension);
-            snprintf(this->buf_current_filename_, sizeof(this->buf_current_filename_),
+            snprintf(this->tmp_filename, sizeof(this->tmp_filename),
                         "%sred-XXXXXX.tmp", this->final_filename);
 
-            this->buf_buf_fd = ::mkostemps(this->buf_current_filename_, 4, O_WRONLY | O_CREAT);
+            this->buf_buf_fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
             if (this->buf_buf_fd == -1) {
                 this->status = false;
                 auto id = ERR_TRANSPORT_WRITE_FAILED;
@@ -387,16 +387,16 @@ private:
                 throw Error(id, errno);
             }
             
-            if (chmod(this->buf_current_filename_, this->buf_groupid_ ?
+            if (chmod(this->tmp_filename, this->buf_groupid_ ?
                 (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                 LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                   , this->buf_current_filename_
+                   , this->tmp_filename
                    , this->buf_groupid_ ? "u+r, g+r" : "u+r"
                    , strerror(errno), errno);
                 // TODO: shouldn't we stop on error throwing exception ?
             }
             this->buf_filegen_last_num = this->buf_num_file_;
-            this->buf_filegen_last_filename = this->buf_current_filename_;
+            this->buf_filegen_last_filename = this->tmp_filename;
         }
 
         size_t remaining_len = len;
