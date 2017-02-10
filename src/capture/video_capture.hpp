@@ -72,18 +72,18 @@ struct videocapture_OutFilenameSequenceSeekableTransport_COUNT : public Transpor
             this->filename_gen[0] = 0;
         }
 
-        char * get(unsigned count) const
-        {
-            char * path = this->last_filename;
-            if (count != this->last_num 
-            || this->last_filename == nullptr) {
-                using std::snprintf;
-                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
-                        , this->filename, count, this->extension);
-                path = this->filename_gen;
-            }
-            return path;
-        }
+//        char * get(unsigned count) const
+//        {
+//            char * path = this->last_filename;
+//            if (count != this->last_num 
+//            || this->last_filename == nullptr) {
+//                using std::snprintf;
+//                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
+//                        , this->filename, count, this->extension);
+//                path = this->filename_gen;
+//            }
+//            return path;
+//        }
     } buf_filegen_;
     int buf_buf_fd;
     unsigned buf_num_file_;
@@ -167,8 +167,28 @@ public:
     }
 
     void request_full_cleaning() override {
+        // TODO: check that, suspicious code. Does it correctly remove files
+        // also it's not obvious why request_full_cleaning should be called
+        // at all for sequence objects. We want to generate files, not remove them!
         unsigned i = this->buf_num_file_ + 1;
-        while (i > 0 && !::unlink(this->buf_filegen_.get(--i))) {
+        while (i > 0) {
+            --i;
+            char * path = this->buf_filegen_.last_filename;
+            if (i != this->buf_filegen_.last_num 
+            || this->buf_filegen_.last_filename == nullptr) {
+                using std::snprintf;
+                snprintf( this->buf_filegen_.filename_gen
+                        , sizeof(this->buf_filegen_.filename_gen)
+                        , "%s%s-%06u%s"
+                        , this->buf_filegen_.path
+                        , this->buf_filegen_.filename
+                        , i
+                        , this->buf_filegen_.extension);
+                path = this->buf_filegen_.filename_gen;
+            }
+            if (::unlink(path) != 0) {
+                break;
+            }
         }
         if (-1 != this->buf_buf_fd) {
             ::close(this->buf_buf_fd);
