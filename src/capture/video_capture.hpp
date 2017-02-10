@@ -259,6 +259,156 @@ public:
 
 class SequencedVideoCaptureImpl : public gdi::CaptureApi
 {
+
+    struct SequenceTransport : public Transport
+    {
+        char tmp_filename[1024];
+        char final_filename[1024];
+
+        struct FileGen {
+            char path[1024];
+            char base[1012];
+            char ext[12];
+            unsigned num = 0;
+
+            void set_final_filename(char * final_filename, size_t final_filename_size)
+            {
+                using std::snprintf;
+                snprintf( final_filename, final_filename_size, "%s%s-%06u%s"
+                        , this->path, this->base, this->num, this->ext);
+            }
+        } filegen;
+
+        int fd;
+        int groupid;
+
+    public:
+        SequenceTransport(
+            const char * const prefix,
+            const char * const filename,
+            const char * const extension,
+            const int groupid,
+            auth_api * authentifier)
+        : fd(-1)
+        , groupid(groupid)
+        {
+            if (strlen(prefix) > sizeof(this->filegen.path) - 1
+             || strlen(filename) > sizeof(this->filegen.base) - 1
+             || strlen(extension) > sizeof(this->filegen.ext) - 1) {
+                throw Error(ERR_TRANSPORT);
+            }
+
+            strcpy(this->filegen.path, prefix);
+            strcpy(this->filegen.base, filename);
+            strcpy(this->filegen.ext, extension);
+
+            this->final_filename[0] = 0;
+            this->tmp_filename[0] = 0;
+            
+            if (authentifier) {
+                this->set_authentifier(authentifier);
+            }
+        }
+
+        void seek(int64_t offset, int whence) override {
+            if (static_cast<off64_t>(-1) == lseek64(this->fd, offset, whence)){
+                throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
+            }
+        }
+
+        bool next() override {
+            if (this->status == false) {
+                throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+            }
+            ::close(this->fd);
+            this->fd = -1;
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+            
+            this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
+            if (::rename(this->tmp_filename, this->final_filename) < 0)
+            {
+                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                   , this->tmp_filename, this->final_filename, errno, strerror(errno));
+                this->status = false;
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+            this->tmp_filename[0] = 0;
+
+            ++this->filegen.num;
+            ++this->seqno;
+            return true;
+        }
+
+        ~SequenceTransport() {
+            if (this->fd != -1) {
+                ::close(this->fd);
+                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+                
+                this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
+                const int res = ::rename(this->tmp_filename, this->final_filename);
+                if (res < 0) {
+                    LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                       , this->tmp_filename, this->final_filename, errno, strerror(errno));
+                }
+            }
+        }
+
+    private:
+        void do_send(const uint8_t * data, size_t len) override {
+            if (this->fd == -1) {
+
+                this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
+                snprintf(this->tmp_filename, sizeof(this->tmp_filename),
+                            "%sred-XXXXXX.tmp", this->final_filename);
+                this->fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
+                if (this->fd == -1) {
+                    this->status = false;
+                    auto id = ERR_TRANSPORT_WRITE_FAILED;
+                    if (errno == ENOSPC) {
+                        char message[1024];
+                        snprintf(message, sizeof(message), "100|unknown");
+                        this->authentifier->report("FILESYSTEM_FULL", message);
+                        id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                        errno = ENOSPC;
+                    }
+                    throw Error(id, errno);
+                }
+                if (chmod(this->tmp_filename, this->groupid ?
+                    (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                    LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                       , this->tmp_filename
+                       , this->groupid ? "u+r, g+r" : "u+r"
+                       , strerror(errno), errno);
+                }
+            }
+
+            size_t remaining_len = len;
+            size_t total_sent = 0;
+            while (remaining_len) {
+                ssize_t ret = ::write(this->fd, data + total_sent, remaining_len);
+                if (ret <= 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    this->status = false;
+                    auto id = ERR_TRANSPORT_WRITE_FAILED;
+                    if (errno == ENOSPC) {
+                        char message[1024];
+                        snprintf(message, sizeof(message), "100|unknown");
+                        this->authentifier->report("FILESYSTEM_FULL", message);
+                        id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                        errno = ENOSPC;
+                    }
+                    throw Error(id, errno);
+                }
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            this->last_quantum_sent += total_sent;
+        }
+    };
+
     bool ic_has_first_img = false;
 
 public:
@@ -361,158 +511,7 @@ public:
     } first_image;
 
 public:
-    struct VideoTransport : public Transport
-    {
-        char tmp_filename[1024];
-        char final_filename[1024];
-
-        struct FileGen {
-            char path[1024];
-            char base[1012];
-            char ext[12];
-            unsigned num = 0;
-
-            void set_final_filename(char * final_filename, size_t final_filename_size)
-            {
-                using std::snprintf;
-                snprintf( final_filename, final_filename_size, "%s%s-%06u%s"
-                        , this->path, this->base, this->num, this->ext);
-            }
-        } filegen;
-
-        int fd;
-        int groupid;
-
-    public:
-        VideoTransport(
-            const char * const prefix,
-            const char * const filename,
-            const char * const extension,
-            const int groupid,
-            auth_api * authentifier = nullptr
-        )
-        : fd(-1)
-        , groupid(groupid)
-        {
-            if (strlen(prefix) > sizeof(this->filegen.path) - 1
-             || strlen(filename) > sizeof(this->filegen.base) - 1
-             || strlen(extension) > sizeof(this->filegen.ext) - 1) {
-                throw Error(ERR_TRANSPORT);
-            }
-
-            strcpy(this->filegen.path, prefix);
-            strcpy(this->filegen.base, filename);
-            strcpy(this->filegen.ext, extension);
-
-            this->final_filename[0] = 0;
-            this->tmp_filename[0] = 0;
-            if (authentifier) {
-                this->set_authentifier(authentifier);
-            }
-        }
-
-        void seek(int64_t offset, int whence) override {
-            if (static_cast<off64_t>(-1) == lseek64(this->fd, offset, whence)){
-                throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
-            }
-        }
-
-
-        bool next() override {
-            if (this->status == false) {
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-            }
-            ::close(this->fd);
-            this->fd = -1;
-            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-            
-            this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
-            if (::rename(this->tmp_filename, this->final_filename) < 0)
-            {
-                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                   , this->tmp_filename, this->final_filename, errno, strerror(errno));
-                this->status = false;
-                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-            this->tmp_filename[0] = 0;
-            ++this->filegen.num;
-            ++this->seqno;
-
-            // TODO: why do we do an unlink of the next file ?
-            this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
-            ::unlink(this->final_filename);
-            return true;
-        }
-
-        ~VideoTransport() {
-            if (this->fd != -1) {
-                ::close(this->fd);
-                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                
-                this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
-                const int res = ::rename(this->tmp_filename, this->final_filename);
-                if (res < 0) {
-                    LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%u : %s\n"
-                       , this->tmp_filename, this->final_filename, errno, strerror(errno));
-                }
-            }
-        }
-
-    private:
-        void do_send(const uint8_t * data, size_t len) override {
-            if (this->fd == -1) {
-                this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
-                snprintf(this->tmp_filename, sizeof(this->tmp_filename), "%sred-XXXXXX.tmp", this->final_filename);
-                this->fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
-                if (this->fd == -1) {
-                    this->status = false;
-                    auto id = ERR_TRANSPORT_WRITE_FAILED;
-                    if (errno == ENOSPC) {
-                        char message[1024];
-                        snprintf(message, sizeof(message), "100|unknown");
-                        this->authentifier->report("FILESYSTEM_FULL", message);
-                        id = ERR_TRANSPORT_WRITE_NO_ROOM;
-                        errno = ENOSPC;
-                    }
-                    throw Error(id, errno);
-                }
-                
-                if (chmod(this->tmp_filename, this->groupid ?
-                    (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-                    LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                       , this->tmp_filename
-                       , this->groupid ? "u+r, g+r" : "u+r"
-                       , strerror(errno), errno);
-                    // TODO: shouldn't we stop on error throwing exception ?
-                }
-            }
-
-            size_t remaining_len = len;
-            size_t total_sent = 0;
-            while (remaining_len) {
-                ssize_t ret = ::write(this->fd, data + total_sent, remaining_len);
-                if (ret <= 0){
-                    if (errno == EINTR){
-                        continue;
-                    }
-                    this->status = false;
-                    auto id = ERR_TRANSPORT_WRITE_FAILED;
-                    if (errno == ENOSPC) {
-                        char message[1024];
-                        snprintf(message, sizeof(message), "100|unknown");
-                        this->authentifier->report("FILESYSTEM_FULL", message);
-                        id = ERR_TRANSPORT_WRITE_NO_ROOM;
-                        errno = ENOSPC;
-                    }
-                    throw Error(id, errno);
-                }
-                remaining_len -= ret;
-                total_sent += ret;
-            }
-            this->last_quantum_sent += total_sent;
-        }
-    } vc_trans;
+    SequenceTransport vc_trans;
 
     class VideoCapture
     {
@@ -652,155 +651,7 @@ public:
 
     } vc;
  
-    struct SequenceTransport : public Transport
-    {
-        char tmp_filename[1024];
-        char final_filename[1024];
-
-        struct FileGen {
-            char path[1024];
-            char base[1012];
-            char ext[12];
-            unsigned num = 0;
-
-            void set_final_filename(char * final_filename, size_t final_filename_size)
-            {
-                using std::snprintf;
-                snprintf( final_filename, final_filename_size, "%s%s-%06u%s"
-                        , this->path, this->base, this->num, this->ext);
-            }
-        } filegen;
-
-        int fd;
-        int groupid;
-
-    public:
-        SequenceTransport(
-            const char * const prefix,
-            const char * const filename,
-            const char * const extension,
-            const int groupid,
-            auth_api * authentifier)
-        : fd(-1)
-        , groupid(groupid)
-        {
-            if (strlen(prefix) > sizeof(this->filegen.path) - 1
-             || strlen(filename) > sizeof(this->filegen.base) - 1
-             || strlen(extension) > sizeof(this->filegen.ext) - 1) {
-                throw Error(ERR_TRANSPORT);
-            }
-
-            strcpy(this->filegen.path, prefix);
-            strcpy(this->filegen.base, filename);
-            strcpy(this->filegen.ext, extension);
-
-            this->final_filename[0] = 0;
-            this->tmp_filename[0] = 0;
-            
-            if (authentifier) {
-                this->set_authentifier(authentifier);
-            }
-        }
-
-        void seek(int64_t offset, int whence) override {
-            if (static_cast<off64_t>(-1) == lseek64(this->fd, offset, whence)){
-                throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
-            }
-        }
-
-        bool next() override {
-            if (this->status == false) {
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-            }
-            ::close(this->fd);
-            this->fd = -1;
-            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-            
-            this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
-            if (::rename(this->tmp_filename, this->final_filename) < 0)
-            {
-                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                   , this->tmp_filename, this->final_filename, errno, strerror(errno));
-                this->status = false;
-                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-            this->tmp_filename[0] = 0;
-
-            ++this->filegen.num;
-            ++this->seqno;
-            return true;
-        }
-
-        ~SequenceTransport() {
-            if (this->fd != -1) {
-                ::close(this->fd);
-                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                
-                this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
-                const int res = ::rename(this->tmp_filename, this->final_filename);
-                if (res < 0) {
-                    LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                       , this->tmp_filename, this->final_filename, errno, strerror(errno));
-                }
-            }
-        }
-
-    private:
-        void do_send(const uint8_t * data, size_t len) override {
-            if (this->fd == -1) {
-
-                this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
-
-                snprintf(this->tmp_filename, sizeof(this->tmp_filename),
-                            "%sred-XXXXXX.tmp", this->final_filename);
-                this->fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
-                if (this->fd == -1) {
-                    this->status = false;
-                    auto id = ERR_TRANSPORT_WRITE_FAILED;
-                    if (errno == ENOSPC) {
-                        char message[1024];
-                        snprintf(message, sizeof(message), "100|unknown");
-                        this->authentifier->report("FILESYSTEM_FULL", message);
-                        id = ERR_TRANSPORT_WRITE_NO_ROOM;
-                        errno = ENOSPC;
-                    }
-                    throw Error(id, errno);
-                }
-                if (chmod(this->tmp_filename, this->groupid ?
-                    (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-                    LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                       , this->tmp_filename
-                       , this->groupid ? "u+r, g+r" : "u+r"
-                       , strerror(errno), errno);
-                }
-            }
-
-            size_t remaining_len = len;
-            size_t total_sent = 0;
-            while (remaining_len) {
-                ssize_t ret = ::write(this->fd, data + total_sent, remaining_len);
-                if (ret <= 0){
-                    if (errno == EINTR){
-                        continue;
-                    }
-                    this->status = false;
-                    auto id = ERR_TRANSPORT_WRITE_FAILED;
-                    if (errno == ENOSPC) {
-                        char message[1024];
-                        snprintf(message, sizeof(message), "100|unknown");
-                        this->authentifier->report("FILESYSTEM_FULL", message);
-                        id = ERR_TRANSPORT_WRITE_NO_ROOM;
-                        errno = ENOSPC;
-                    }
-                    throw Error(id, errno);
-                }
-                remaining_len -= ret;
-                total_sent += ret;
-            }
-            this->last_quantum_sent += total_sent;
-        }
-    } ic_trans;
+    SequenceTransport ic_trans;
 
     unsigned ic_zoom_factor;
     unsigned ic_scaled_width;
@@ -942,7 +793,7 @@ public:
         NotifyNextVideo & next_video_notifier)
     : first_image(now, *this)
 
-    , vc_trans(record_path, basename, ("." + flv_params.codec).c_str(), groupid)
+    , vc_trans(record_path, basename, ("." + flv_params.codec).c_str(), groupid, nullptr)
     , vc(now, this->vc_trans, drawable, no_timestamp, std::move(flv_params))
     , ic_trans(record_path, basename, ".png", groupid, nullptr)
     , ic_zoom_factor(std::min(image_zoom, 100u))
