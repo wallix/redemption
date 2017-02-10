@@ -74,14 +74,15 @@ struct videocapture_OutFilenameSequenceSeekableTransport_COUNT : public Transpor
 
         char * get(unsigned count) const
         {
-            if (count == this->last_num && this->last_filename) {
-                return this->last_filename;
+            char * path = this->last_filename;
+            if (count != this->last_num 
+            || this->last_filename == nullptr) {
+                using std::snprintf;
+                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
+                        , this->filename, count, this->extension);
+                path = this->filename_gen;
             }
-
-            using std::snprintf;
-            snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
-                    , this->filename, count, this->extension);
-            return this->filename_gen;
+            return path;
         }
     } buf_filegen_;
     int buf_buf_fd;
@@ -125,11 +126,16 @@ public:
             this->buf_buf_fd = -1;
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
             
-            this->buf_filegen_.last_num = -1u;
-            this->buf_filegen_.last_filename = nullptr;
-            
-            char * filename = this->buf_filegen_.get(this->buf_num_file_);
-            
+            using std::snprintf;
+            snprintf( this->buf_filegen_.filename_gen
+                    , sizeof(this->buf_filegen_.filename_gen)
+                    , "%s%s-%06u%s"
+                    , this->buf_filegen_.path
+                    , this->buf_filegen_.filename
+                    , this->buf_num_file_
+                    , this->buf_filegen_.extension);
+
+            char * filename = this->buf_filegen_.filename_gen;
             this->buf_filegen_.last_num = this->buf_num_file_;
             this->buf_filegen_.last_filename = this->buf_current_filename_;
 
