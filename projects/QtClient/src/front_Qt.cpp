@@ -26,7 +26,8 @@
 #include <string>
 #include <unistd.h>
 
-#include "front_widget_Qt4.hpp"
+#include "front_widget_Qt.hpp"
+
 #pragma GCC diagnostic pop
 
 #include "core/channel_list.hpp"
