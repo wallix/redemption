@@ -314,7 +314,7 @@
 "#use_client_provided_remoteapp = 0\n\n"
 
 "#_advanced\n"
-"#use_native_remoteapp_capability = 0\n\n"
+"#use_native_remoteapp_capability = 1\n\n"
 
 "#_hidden\n"
 "#enable_session_probe = 0\n\n"
