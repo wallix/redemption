@@ -25,6 +25,8 @@
 #include <cstdint>
 #include <cassert>
 
+#include "cxx/keyword.hpp"
+
 template<class T>
 struct array_view
 {
@@ -71,19 +73,41 @@ struct array_view
 
     constexpr std::size_t size() const noexcept { return this->sz; }
 
-    /*c++14 constexpr*/ type * data() noexcept { return this->p; }
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 type * data() noexcept { return this->p; }
     constexpr type const * data() const noexcept { return this->p; }
 
-    /*c++14 constexpr*/ type * begin() { return this->p; }
-    /*c++14 constexpr*/ type * end() { return this->p + this->sz; }
-    constexpr type const * begin() const { return this->p; }
-    constexpr type const * end() const { return this->p + this->sz; }
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 type * begin() { return this->data(); }
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 type * end() { return this->data() + this->size(); }
+    constexpr type const * begin() const { return this->data(); }
+    constexpr type const * end() const { return this->data() + this->size(); }
 
-    /*c++14 constexpr*/ type & operator[](std::size_t i) { assert(i < this->size()); return this->p[i]; }
-    /*c++14 constexpr*/ type const & operator[](std::size_t i) const { assert(i < this->size()); return this->p[i]; }
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 type & operator[](std::size_t i) { assert(i < this->size()); return this->data()[i]; }
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 type const & operator[](std::size_t i) const { assert(i < this->size()); return this->data()[i]; }
 
-    void remove_prefix(std::size_t n) noexcept { assert(n <= this->size()); p += n; }
-    void remove_suffix(std::size_t n) noexcept { assert(n <= this->size()); sz -= n; }
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 array_view first(std::size_t n) const noexcept
+    {
+        assert(n <= this->size());
+        return {this->data(), n};
+    }
+
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 array_view last(std::size_t n) const noexcept
+    {
+        assert(n <= this->size());
+        return {this->data() + this->size() - n, n};
+    }
+
+
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 array_view subarray(std::size_t offset) const noexcept
+    {
+        assert(offset <= this->size());
+        return {this->data() + offset, static_cast<std::size_t>(this->size() - offset)};
+    }
+
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 array_view subarray(std::size_t offset, std::size_t count) const noexcept
+    {
+        assert(offset <= this->size() && count <= this->size() - offset);
+        return {this->data() + offset, count};
+    }
 
 private:
     type * p        = nullptr;
@@ -129,10 +153,12 @@ constexpr array_view<T const> make_const_array_view(T const (&arr)[N])
 { return {arr, N}; }
 
 
+// TODO renamed to zstring_array
 template<std::size_t N>
 constexpr array_view<char const> cstr_array_view(char const (&str)[N])
 { return {str, N-1}; }
 
+// TODO renamed to zstring_array
 // forbidden: array_view is for litterals
 template<std::size_t N>
 array_view<char> cstr_array_view(char (&str)[N]) = delete;

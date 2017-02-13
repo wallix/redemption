@@ -62,8 +62,7 @@ BOOST_AUTO_TEST_CASE(TestEmulator)
 
     auto send_ucs = [&emulator](rvt::ucs4_char ucs) { emulator.receiveChar(ucs); };
     auto send_zstring = [&emulator, &text_decoder, send_ucs](array_view_const_char av) {
-        av.remove_suffix(1);
-        text_decoder.decode(av, send_ucs);
+        text_decoder.decode(av.first(av.size()-1), send_ucs);
     };
 
     for (int i = 0; i < 10; ++i) {

@@ -60,7 +60,6 @@ class VtEmulator
 public:
     /** Constructs a new emulation */
     VtEmulator(int lines, int columns);
-    VtEmulator() : VtEmulator(40, 80) {}
     ~VtEmulator();
 
     // reimplemented from Emulation

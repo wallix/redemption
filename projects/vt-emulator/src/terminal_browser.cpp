@@ -35,7 +35,7 @@
 
 int main()
 {
-    rvt::VtEmulator emulator;
+    rvt::VtEmulator emulator(68, 117);
     rvt::Utf8Decoder decoder;
 
     auto send_ucs = [&emulator](rvt::ucs4_char ucs) {
@@ -68,5 +68,5 @@ int main()
     }
     decoder.end_decode(send_ucs);
 
-    rvt::json_rendering(emulator.getCurrentScreen(), rvt::color_table, std::cout);
+    rvt::json_rendering(emulator.getWindowTitle(), emulator.getCurrentScreen(), rvt::color_table, std::cout);
 }

@@ -39,13 +39,27 @@ namespace boost { namespace unit_test { namespace ut_detail {
             return false;                       \
         }                                       \
     )
-# define BOOST_CHECK_EQUAL_RANGES(a_, b_)                                  \
-    do {                                                                   \
-        auto const & a = a_;                                               \
-        auto const & b = b_;                                               \
-        using std::begin;                                                  \
-        using std::end;                                                    \
-        BOOST_CHECK_EQUAL_COLLECTIONS(begin(a), end(a), begin(b), end(b)); \
+# define BOOST_CHECK_EQUAL_RANGES(a_, b_)                 \
+    do {                                                  \
+        auto const & A__CHECK_RANGES = a_;                \
+        auto const & B__CHECK_RANGES = b_;                \
+        using std::begin;                                 \
+        using std::end;                                   \
+        BOOST_CHECK_EQUAL_COLLECTIONS(                    \
+            begin(A__CHECK_RANGES), end(A__CHECK_RANGES), \
+            begin(B__CHECK_RANGES), end(B__CHECK_RANGES)  \
+        );                                                \
+    } while (0)
+# define BOOST_REQUIRE_EQUAL_RANGES(a_, b_)               \
+    do {                                                  \
+        auto const & A__CHECK_RANGES = a_;                \
+        auto const & B__CHECK_RANGES = b_;                \
+        using std::begin;                                 \
+        using std::end;                                   \
+        BOOST_REQUIRE_EQUAL_COLLECTIONS(                  \
+            begin(A__CHECK_RANGES), end(A__CHECK_RANGES), \
+            begin(B__CHECK_RANGES), end(B__CHECK_RANGES)  \
+        );                                                \
     } while (0)
 #endif
 

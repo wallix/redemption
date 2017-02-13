@@ -27,6 +27,6 @@ namespace rvt {
 
 class Screen;
 
-void json_rendering(Screen const & screen, ColorTableView palette, std::ostream & out);
+void json_rendering(array_view<ucs4_char const> title, Screen const & screen, ColorTableView palette, std::ostream & out);
 
 }

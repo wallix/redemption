@@ -41,12 +41,23 @@ namespace rvt {
 // $background = "b: $color"
 // $color = %d
 //      decimal rgb
-void json_rendering(Screen const & screen, ColorTableView palette, std::ostream & out)
-{
+void json_rendering(
+    array_view<ucs4_char const> title,
+    Screen const & screen,
+    ColorTableView palette,
+    std::ostream & out
+) {
     char buf[4096];
     auto s = buf;
-    // TODO write a title
-    s += std::sprintf(s, R"({"lines":%d,"columns":%d,"title":"no title",data":[)", screen.getLines(), screen.getColumns());
+
+    s += std::sprintf(s, R"({"lines":%d,"columns":%d,"title":")", screen.getLines(), screen.getColumns());
+    for (ucs4_char uc : title) {
+        if (uc == '"') {
+            *s += '\\';
+        }
+        s += ucs4_to_utf8(uc, s);
+    }
+    s += std::sprintf(s, R"({","data":[)");
 
     if (!screen.getColumns() || !screen.getLines()) {
         *s++ = ']';
@@ -69,11 +80,7 @@ void json_rendering(Screen const & screen, ColorTableView palette, std::ostream 
         *s++ = '[';
         *s++ = '[';
         *s++ = '{';
-        *s++ = '"';
-        *s++ = 's';
-        *s++ = '"';
-        *s++ = ':';
-        *s++ = '"';
+        bool is_s_enable = false;
         for (rvt::Character const & ch : line) {
             if (!ch.isRealCharacter) {
                 continue;
@@ -89,10 +96,12 @@ void json_rendering(Screen const & screen, ColorTableView palette, std::ostream 
             bool const is_same_rendition = ch.rendition == previous_ch.get().rendition;
             bool const is_same_format = is_same_bg & is_same_fg & is_same_rendition;
             if (!is_same_format) {
-                *s++ = '"';
-                *s++ = '}';
-                *s++ = ',';
-                *s++ = '{';
+                if (is_s_enable) {
+                    *s++ = '"';
+                    *s++ = '}';
+                    *s++ = ',';
+                    *s++ = '{';
+                }
                 if (!is_same_rendition) {
                     *s++ = '"';
                     *s++ = 'r';
@@ -111,6 +120,11 @@ void json_rendering(Screen const & screen, ColorTableView palette, std::ostream 
                 if (!is_same_fg) { s += std::sprintf(s, R"("f":%d,)", color2int(ch.foregroundColor)); }
                 if (!is_same_bg) { s += std::sprintf(s, R"("b":%d,)", color2int(ch.backgroundColor)); }
 
+                is_s_enable = false;
+            }
+
+            if (!is_s_enable) {
+                is_s_enable = true;
                 *s++ = '"';
                 *s++ = 's';
                 *s++ = '"';
@@ -129,7 +143,10 @@ void json_rendering(Screen const & screen, ColorTableView palette, std::ostream 
 
             previous_ch = ch;
         }
-        *s++ = '"';
+
+        if (is_s_enable) {
+            *s++ = '"';
+        }
         *s++ = '}';
         *s++ = ']';
         *s++ = ']';
