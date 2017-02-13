@@ -863,7 +863,7 @@ public:
 
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
-        
+
         Params(auth_api & authentifier) : BaseVirtualChannel::Params(authentifier) {}
     };
 
@@ -2153,7 +2153,7 @@ public:
             device_create_request.log(LOG_INFO);
         }
 
-              bool     access_ok     = true;
+        bool access_ok = true;
 
         if (this->device_redirection_manager.is_known_device(
                 this->server_device_io_request.DeviceId())) {
