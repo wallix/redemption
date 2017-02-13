@@ -110,9 +110,11 @@ using qt5
     :
     : /usr/include/x86_64-linux-gnu/qt5
     : /usr/lib/x86_64-linux-gnu
+
     ;
 
-obj front_Qt5.o : src/Qt/front_Qt.cpp ;
+obj front_Qt5.o : src/front_Qt.cpp :
+    $(EXE_DEPENDENCIES) ;
 
 exe client_rdp_Qt5 :
     src/Qt5/Qt.hpp
