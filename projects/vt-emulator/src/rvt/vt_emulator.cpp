@@ -268,7 +268,7 @@ void VtEmulator::receiveChar(ucs4_char cc)
   // advance the state
   addToCurrentToken(cc);
 
-  int * s = tokenBuffer;
+  ucs4_char * s = tokenBuffer;
   const int  p = tokenBufferPos;
 
   if (getMode(Mode::Ansi))
@@ -276,7 +276,7 @@ void VtEmulator::receiveChar(ucs4_char cc)
     if (lec(1,0,ESC)) { return; }
     if (lec(1,0,ESC+128)) { s[0] = ESC; receiveChar('['); return; }
     if (les(2,1,GRP)) { return; }
-    if (Xte         ) { /* processWindowAttributeRequest();*/ resetTokenizer(); return; }
+    if (Xte         ) { processWindowAttributeRequest(); resetTokenizer(); return; }
     if (Xpe         ) { return; }
     if (lec(3,2,'?')) { return; }
     if (lec(3,2,'>')) { return; }
@@ -347,6 +347,31 @@ void VtEmulator::receiveChar(ucs4_char cc)
     resetTokenizer();
     return;
   }
+}
+
+void VtEmulator::processWindowAttributeRequest()
+{
+    // Describes the window or terminal session attribute to change
+    // See "Operating System Controls" section on http://rtfm.etla.org/xterm/ctlseq.html
+    int attribute = 0;
+    int i;
+    for (i = 2; i < tokenBufferPos     &&
+                tokenBuffer[i] >= '0'  &&
+                tokenBuffer[i] <= '9'; i++)
+    {
+        attribute = 10 * attribute + (tokenBuffer[i]-'0');
+    }
+
+    if (tokenBuffer[i] != ';')
+    {
+        reportDecodingError();
+        return;
+    }
+
+    if (attribute == 0 || attribute == 2) {
+        windowTitleLen = std::copy(tokenBuffer+i+1, tokenBuffer+tokenBufferPos-1, windowTitle) - windowTitle;
+        windowTitle[windowTitleLen] = 0;
+    }
 }
 
 // Interpreting Codes ---------------------------------------------------------
@@ -923,7 +948,7 @@ bool VtEmulator::getMode(ScreenMode m)
 }
 
 // return contents of the scan buffer
-static std::string hexdump2(int* s, int len)
+static std::string hexdump2(ucs4_char const * s, int len)
 {
     int i;
     char dump[128];

@@ -68,6 +68,7 @@ public:
     void reset();
 
     Screen const & getCurrentScreen() const { return *_currentScreen; }
+    array_view<ucs4_char const> getWindowTitle() const { return {windowTitle, windowTitleLen}; }
 
 protected:
     // reimplemented from Emulation
@@ -115,10 +116,14 @@ private:
     void resetModes();
 
     void resetTokenizer();
-    static constexpr int MAX_TOKEN_LENGTH = 256; // Max length of tokens (e.g. window title)
     void addToCurrentToken(ucs4_char cc);
-    int tokenBuffer[MAX_TOKEN_LENGTH]; //FIXME: overflow?
+    void processWindowAttributeRequest();
+    static constexpr int MAX_TOKEN_LENGTH = 256; // Max length of tokens (e.g. window title)
+    ucs4_char tokenBuffer[MAX_TOKEN_LENGTH];
     int tokenBufferPos;
+    ucs4_char windowTitle[MAX_TOKEN_LENGTH];
+    unsigned windowTitleLen = 0;
+
     static constexpr int MAXARGS = 15;
     void addDigit(int dig);
     void addArgument();

@@ -76,6 +76,12 @@ BOOST_AUTO_TEST_CASE(TestEmulator)
     send_zstring("\033[44mée\xea\xb0\x80");
     text_decoder.end_decode(send_ucs);
 
+    BOOST_CHECK_EQUAL_RANGES(emulator.getWindowTitle(), array_view<rvt::ucs4_char>());
+    send_zstring("\033]2;abc\a");
+    BOOST_CHECK_EQUAL_RANGES(emulator.getWindowTitle(), cstr_array_view("abc"));
+    send_zstring("\033]0;abcd\a");
+    BOOST_CHECK_EQUAL_RANGES(emulator.getWindowTitle(), cstr_array_view("abcd"));
+
     rvt::Screen const & screen = emulator.getCurrentScreen();
     auto const & lines = screen.getScreenLines();
 
