@@ -314,7 +314,7 @@
 "use_client_provided_remoteapp = boolean(default=False)\n\n"
 
 "#_advanced\n"
-"use_native_remoteapp_capability = boolean(default=False)\n\n"
+"use_native_remoteapp_capability = boolean(default=True)\n\n"
 
 "#_hidden\n"
 "enable_session_probe = boolean(default=False)\n\n"
