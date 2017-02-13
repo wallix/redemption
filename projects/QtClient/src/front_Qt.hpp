@@ -79,16 +79,10 @@
 #include "core/RDP/bitmapupdate.hpp"
 #include "keyboard/keymap2.hpp"
 #include "core/client_info.hpp"
-#include "keymaps/Qt4_ScanCode_KeyMap.hpp"
+#include "keymaps/Qt_ScanCode_KeyMap.hpp"
 #include "capture/capture.hpp"
 
-
-#include <QtGui/QImage>
-#include <QtGui/QRgb>
-#include <QtGui/QBitmap>
-#include <QtGui/QColormap>
-#include <QtGui/QPainter>
-
+#include "Qt4/Qt.hpp"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
