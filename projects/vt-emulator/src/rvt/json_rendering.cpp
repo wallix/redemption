@@ -82,13 +82,17 @@ struct Buf
     std::size_t remaining() const { return static_cast<std::size_t>(std::end(buf) - s); }
 };
 
-// format = "{ lines: %d, columns: %d, title: %s, data: [ $line... ] }"
+static int color2int(rvt::Color const & color)
+{ return (color.red() << 16) | (color.green() << 8) |  (color.blue() << 0); }
+
+// format = "{ lines: %d, columns: %d, title: %s, style: {$render $foreground $background}, data: [ $line... ] }"
 // $line = "[ {" $render? $foreground? $background? "s: %s } ]"
-// $render = "r: 'b'? 'i'? 'u'? 'l'?"
-//      b -> bold
-//      i -> italic
-//      u -> underline
-//      l -> blink
+// $render = "r: %d
+//      flags:
+//      1 -> bold
+//      2 -> italic
+//      4 -> underline
+//      8 -> blink
 // $foreground = "f: $color"
 // $background = "b: $color"
 // $color = %d
@@ -102,18 +106,13 @@ void json_rendering(
     Buf buf;
     buf.s += std::sprintf(buf.s, R"({"lines":%d,"columns":%d,"title":")", screen.getLines(), screen.getColumns());
     buf.push_ucs_array(title);
-    buf.push_s(R"(","data":[)");
+    buf.s += std::sprintf(buf.s, R"(","style":{"r":0,"f":%d,"b":%d},"data":[)", color2int(palette[0]), color2int(palette[1]));
 
     if (!screen.getColumns() || !screen.getLines()) {
         buf.push_s("]}");
         buf.flush(out);
         return ;
     }
-
-    auto color2int = [palette](rvt::CharacterColor const & ch_color) {
-        auto const color = ch_color.color(palette);
-        return (color.red() << 16) | (color.green() << 8) |  (color.blue() << 0);
-    };
 
     using CharacterRef = std::reference_wrapper<rvt::Character const>;
     rvt::Character const default_ch; // Default format
@@ -141,17 +140,21 @@ void json_rendering(
                     buf.push_s("\"},{");
                 }
                 if (!is_same_rendition) {
-                    buf.push_s(R"("r":")");
-                    auto const r = ch.rendition;
-                    if (bool(r & rvt::Rendition::Bold))     { buf.push_c('b'); }
-                    if (bool(r & rvt::Rendition::Italic))   { buf.push_c('i'); }
-                    if (bool(r & rvt::Rendition::Underline)){ buf.push_c('u'); }
-                    if (bool(r & rvt::Rendition::Blink))    { buf.push_c('l'); }
-                    buf.push_s(R"(",)");
+                    int const r = static_cast<int>(0
+                        | (bool(ch.rendition & rvt::Rendition::Bold)      ? 1 : 0)
+                        | (bool(ch.rendition & rvt::Rendition::Italic)    ? 2 : 0)
+                        | (bool(ch.rendition & rvt::Rendition::Underline) ? 4 : 0)
+                        | (bool(ch.rendition & rvt::Rendition::Blink)     ? 8 : 0)
+                    );
+                    buf.s += std::sprintf(buf.s, R"("r":%d,)", r);
                 }
 
-                if (!is_same_fg) { buf.s += std::sprintf(buf.s, R"("f":%d,)", color2int(ch.foregroundColor)); }
-                if (!is_same_bg) { buf.s += std::sprintf(buf.s, R"("b":%d,)", color2int(ch.backgroundColor)); }
+                if (!is_same_fg) {
+                    buf.s += std::sprintf(buf.s, R"("f":%d,)", color2int(ch.foregroundColor.color(palette)));
+                }
+                if (!is_same_bg) {
+                    buf.s += std::sprintf(buf.s, R"("b":%d,)", color2int(ch.backgroundColor.color(palette)));
+                }
 
                 is_s_enable = false;
             }

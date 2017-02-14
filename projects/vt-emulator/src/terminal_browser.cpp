@@ -27,11 +27,7 @@
 
 #include <iostream>
 #include <fstream>
-// #include <chrono>
-// #include <thread>
 
-// script -f >(./bin/terminal_browser)
-// while [ 1 ] ; do a2h < /tmp/rawdisk/output_term > /tmp/rawdisk/output.html ; sleep 2 ; done
 
 int main(int ac, char ** av)
 {
@@ -39,25 +35,15 @@ int main(int ac, char ** av)
     rvt::Utf8Decoder decoder;
 
     auto send_ucs = [&emulator](rvt::ucs4_char ucs) {
-//         switch (uc) {
-//             case '\n': std::cout << "\\n"; break;
-//             case '\t': std::cout << "\\t"; break;
-//             case '\v': std::cout << "\\v"; break;
-//             case '\f': std::cout << "\\f"; break;
-//             case 033 : std::cout << "\\e"; break;
-//             case '\b': std::cout << "\\b"; break;
-//             default : {
-//                 char utf8_ch[4];
-//                 std::size_t const n = ucs4_to_utf8(uc, utf8_ch);
-//                 std::cout.write(utf8_ch, static_cast<std::streamsize>(n));
-//             }
-//         }
-//         std::cout << "\n--------------------------------------------\n";
         emulator.receiveChar(ucs);
-//         std::this_thread::sleep_for(std::chrono::milliseconds{4});
     };
 
     auto filename = ac > 1 ? av[1] : "screen.json";
+    auto write_file = [&emulator, filename]() {
+        std::ofstream out(filename);
+        rvt::json_rendering(emulator.getWindowTitle(), emulator.getCurrentScreen(), rvt::color_table, out);
+    };
+
     char c;
     int n = 0;
     while (std::cin.get(c)) {
@@ -65,10 +51,9 @@ int main(int ac, char ** av)
 
         if (c == '\n' || ++n == 100) {
             n = 0;
-            //auto & out = std::cout;
-            std::ofstream out(filename);
-            rvt::json_rendering(emulator.getWindowTitle(), emulator.getCurrentScreen(), rvt::color_table, out);
+            write_file();
         }
     }
     decoder.end_decode(send_ucs);
+    write_file();
 }

@@ -20,10 +20,11 @@
     background: #285577;
     border-bottom: 1px solid #4c7899;
     color: #fff;
-    margin:0;
     font-family: sans-serif;
     font-weight: bold;
     padding: 0.2em;
+    margin:0;
+    margin-bottom:0.2em;
     line-height: 1;
     height: 1em;
     cursor: default;
@@ -33,6 +34,10 @@
     margin:0;
     cursor: text;
     line-height: initial;
+}
+#tty-player-terminal p {
+    margin:0;
+    padding:0;
 }
 </style>
 </head>
@@ -61,54 +66,61 @@ let ajax_param = {
     .done(function(screen){
         console.log(screen)
         this.innerHTML = render(screen);
-        window.setTimeout(loop, 2000);
+        window.setTimeout(loop, 3000);
     })
+    // file is truncated
     .fail(function(jqxhr, status, e){
         console.log(e)
-        window.setTimeout(loop, 2000)
+        window.setTimeout(loop, 3000)
     })
 })()
 
 
 function render(screen)
 {
-    let rendering_tag = {b: 'b', i: 'i', u: 'u'}
+    let rendering = ['font-weight:bold;', 'font-style: italic;', 'text-decoration: underline;']
 
-    let elem2html = function(e) {
-        let start = ''
-        let stop = ''
+    let elem2style = function(e) {
+        let style = ''
         if (e.f || e.b) {
-            start += '<span style="'
-            if (e.b) start += 'background-color:#'+e.b.toString(16)+';'
-            if (e.f) start += 'color:#'+e.f.toString(16)
-            start += '">'
-            stop = '</span>' + stop;
+            if (e.b) style += 'background-color:#'+e.b.toString(16)+';'
+            if (e.f) style += 'color:#'+e.f.toString(16)+';'
         }
         if (e.r) {
-            for (let r of e.r) {
-                let tag = rendering_tag[r]
-                if (tag) {
-                    start += '<'+tag+'>'
-                    stop = '</'+tag+'>' + stop;
+            for (let i in rendering) {
+                if (e.r & (1 << i)) {
+                    style += rendering[i] || ''
                 }
             }
         }
-        return start + (e.s||'') + stop;
+        return style
     }
 
-    return "<p id='tty-player-title'>" +
-        (screen.title||'No Title') +
-        "</p><p id='tty-player-terminal'>" +
-        screen.data.map(
-            (lines) => lines.map(
-                (line) => line.map(elem2html).join('')
-            ).join('')
-        ).join("\n") +
-        "</p>"
+    let terminal = '';
+    for (let lines of screen.data) {
+        let style = '';
+        let htmlline = '';
+        for (let line of lines) {
+            for (let e of line) {
+                style = elem2style(e);
+                htmlline += '<span style="' + style + '">' + (e.s||'') + '</span>';
+            }
+        }
+        terminal += '<p style=' + style + '>' + htmlline + '\n</p>';
+    }
+
+    let empty_line = '                                                               '
+    while (empty_line.length < screen.columns) {
+        empty_line += empty_line;
+    }
+
+    return '<p id="tty-player-title">' + (screen.title||'No Title') + '</p>'+
+        '<div id="tty-player-terminal" style="' + elem2style(screen.style) + '>' +
+            terminal +
+            '<p>' + empty_line.substr(0, screen.columns) + '</p>' +
+        '</div>'
     ;
 }
-
-// pre.innerHTML = render(json)
 
 </script>
 
