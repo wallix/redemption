@@ -217,6 +217,7 @@ class Sesman():
             u'target_host': u'',
             u'target_password': u'',
             u"target_service": u'',
+            u"target_str": u'',
             u"target_port": 3389,
             u'selector_group_filter': u'',
             u'selector_device_filter': u'',
@@ -1264,6 +1265,7 @@ class Sesman():
             target_login_info = self.engine.get_target_login_info(selected_target)
             proto_info = self.engine.get_target_protocols(selected_target)
             kv[u'proto_dest'] = proto_info.protocol
+            kv[u'target_str'] = target_login_info.get_target_str()
 
             _status, _error = self.engine.checkout_target(selected_target)
             if not _status:
