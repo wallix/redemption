@@ -38,7 +38,7 @@
 #include "utils/stream.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
 
-#define DUMMY_REMOTEAPP "||WABDummyRemoteApp"
+#define DUMMY_REMOTEAPP "||WABRemoteApp"
 
 #define INTERNAL_MODULE_WINDOW_ID    40000
 #define INTERNAL_MODULE_WINDOW_TITLE "Wallix AdminBastion"
