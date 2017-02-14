@@ -1498,7 +1498,7 @@ class PhysicalTarget(object):
 class LoginInfo(object):
     def __init__(self, account_login, account_name, domain_name, target_name,
                  service_name, auth_name, device_host, service_port, conn_opts):
-        self.account_login = account_logwin
+        self.account_login = account_login
         self.account_name = account_name
         self.domain_name = domain_name
         self.target_name = target_name
