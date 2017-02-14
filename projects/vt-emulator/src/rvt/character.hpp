@@ -70,11 +70,12 @@ namespace rvt
 {
 
 using ucs4_char = uint32_t;
+using ucs4_carray_view = array_view<ucs4_char const>;
 
 
 struct ExtendedCharacter
 {
-    array_view<ucs4_char const> as_array() const noexcept
+    ucs4_carray_view as_array() const noexcept
     { return {this->chars.get(), this->len}; }
 
     void append(ucs4_char uc);
@@ -179,7 +180,7 @@ public:
 
     void clear();
 
-    inline array_view<ucs4_char const> operator[](std::size_t i) const noexcept
+    inline ucs4_carray_view operator[](std::size_t i) const noexcept
     { return this->extendedCharTable[i].as_array(); }
 
     inline std::size_t size() const noexcept

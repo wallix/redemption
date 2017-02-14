@@ -43,11 +43,32 @@
 <!-- <p id="tty-player-terminal">contents</p> -->
 </pre>
 
+<script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript">
 
-let json ={"lines":68,"columns":117,"title":"No Title","data":[[[{"s":"Script started on jeu. 09 févr. 2017 18:28:51 CET"}]],[[{"s":"                                                 "},{"r":"b","f":0,"b":16777215,"s":"%"},{"r":"","f":16777215,"b":0,"s":"                                                                   "}]],[[{"f":11692056,"s":"[2]"},{"f":1618610,"b":0,"s":"redemption-public/projects/vt-emulator"},{"f":16777215,"b":0,"s":"!"},{"r":"b","f":6842472,"s":"10014"},{"r":"","f":1618456,"s":"$"},{"f":1579186,"s":"(vt100)"},{"f":11692056,"s":"✗"},{"f":16777215,"s":" t         "},{"f":11671576,"s":"~/projects/redemption-public/projects/vt-emulator"}]],[[{"r":"u","f":6260695,"s":"."}]],[[{"r":"","f":16777215,"s":"├── "},{"r":"u","f":6260695,"s":"aa"}]],[[{"r":"","f":16777215,"s":"├── Jamroot"}]],[[{"s":"├── "},{"r":"u","f":6260695,"s":"src"}]],[[{"r":"","f":16777215,"s":"│   ├── "},{"f":11503360,"s":"main.cpp"}]],[[{"f":16777215,"s":"│   ├── "},{"r":"u","f":6260695,"s":"rvt"}]],[[{"r":"","f":16777215,"s":"│   │   ├── "},{"f":11503360,"s":"ansi_rendering.cpp"}]],[[{"f":16777215,"s":"│   │   ├── "},{"f":6281215,"s":"ansi_rendering.hpp"}]],[[{"f":16777215,"s":"│   │   ├── "},{"f":6281215,"s":"character_color.hpp"}]],[[{"f":16777215,"s":"│   │   ├── "},{"f":6281215,"s":"character.hpp"}]],[[{"f":16777215,"s":"│   │   ├── "},{"f":6281215,"s":"charsets.hpp"}]],[[{"f":16777215,"s":"│   │   ├── "},{"f":6281215,"s":"color.hpp"}]],[[{"f":16777215,"s":"│   │   ├── "},{"f":11503360,"s":"json_rendering.cpp"}]],[[{"f":16777215,"s":"│   │   ├── "},{"f":6281215,"s":"json_rendering.hpp"}]],[[{"f":16777215,"s":"│   │   ├── "},{"f":11503360,"s":"screen.cpp"}]],[[{"f":16777215,"s":"│   │   ├── "},{"f":6281215,"s":"screen.hpp"}]],[[{"f":16777215,"s":"│   │   ├── "},{"f":6281215,"s":"utf8_decoder.hpp"}]],[[{"f":16777215,"s":"│   │   ├── "},{"f":11503360,"s":"vt_emulator.cpp"}]],[[{"f":16777215,"s":"│   │   └── "},{"f":6281215,"s":"vt_emulator.hpp"}]],[[{"f":16777215,"s":"│   └── "},{"f":11503360,"s":"terminal_browser.cpp"}]],[[{"f":16777215,"s":"├── "},{"r":"u","f":6260695,"s":"test"}]],[[{"r":"","f":16777215,"s":"│   └── "},{"r":"u","f":6260695,"s":"rvt"}]],[[{"r":"","f":16777215,"s":"│       ├── "},{"f":11503360,"s":"test_character_color.cpp"}]],[[{"f":16777215,"s":"│       ├── "},{"f":11503360,"s":"test_character.cpp"}]],[[{"f":16777215,"s":"│       ├── "},{"f":11503360,"s":"test_charsets.cpp"}]],[[{"f":16777215,"s":"│       ├── "},{"f":11503360,"s":"test_screen.cpp"}]],[[{"f":16777215,"s":"│       ├── "},{"f":11503360,"s":"test_utf8_decoder.cpp"}]],[[{"f":16777215,"s":"│       └── "},{"f":11503360,"s":"test_vt_emulator.cpp"}]],[[{"f":16777215,"s":"└── typescript"}]],[[{}]],[[{"s":"5 directories, 23 files"}]],[[{"f":11692056,"s":"[2]"},{"f":1618610,"b":0,"s":"redemption-public/projects/vt-emulator"},{"f":16777215,"b":0,"s":"!"},{"r":"b","f":6842472,"s":"10015"},{"r":"","f":1618456,"s":"$"},{"f":1579186,"s":"(vt100)"},{"f":11692056,"s":"✗"},{"f":16777215,"s":"           "},{"f":11671576,"s":"~/projects/redemption-public/projects/vt-emulator"}]],[[{}]],[[{"f":16777215,"s":"Script done on jeu. 09 févr. 2017 18:28:53 CET"}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]],[[{}]]]}
+// python -m SimpleHTTPServer 4104
+// script -f >(~/projects/build/redemption-public@projects@vt-emulator/configs/clang-linux-3.8.0/san/terminal_browser screen.json)
+// firefox http://localhost:4104/view_browser.html
 
-let pre = document.getElementById("tty-player")
+let ajax_param = {
+    url: 'screen.json',
+    context: document.getElementById("tty-player"),
+    dataType: 'json'
+};
+
+(function loop() {
+    $.ajax(ajax_param)
+    .done(function(screen){
+        console.log(screen)
+        this.innerHTML = render(screen);
+        window.setTimeout(loop, 2000);
+    })
+    .fail(function(jqxhr, status, e){
+        console.log(e)
+        window.setTimeout(loop, 2000)
+    })
+})()
+
 
 function render(screen)
 {
@@ -87,7 +108,7 @@ function render(screen)
     ;
 }
 
-pre.innerHTML = render(json)
+// pre.innerHTML = render(json)
 
 </script>
 

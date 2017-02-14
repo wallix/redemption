@@ -33,7 +33,7 @@
 // script -f >(./bin/terminal_browser)
 // while [ 1 ] ; do a2h < /tmp/rawdisk/output_term > /tmp/rawdisk/output.html ; sleep 2 ; done
 
-int main()
+int main(int ac, char ** av)
 {
     rvt::VtEmulator emulator(68, 117);
     rvt::Utf8Decoder decoder;
@@ -55,18 +55,20 @@ int main()
 //         std::cout << "\n--------------------------------------------\n";
         emulator.receiveChar(ucs);
 //         std::this_thread::sleep_for(std::chrono::milliseconds{4});
-
-//         std::ofstream out("/tmp/rawdisk/output_term");
-        //auto & out = std::cout;
-//         rvt::json_rendering(emulator.getCurrentScreen(), rvt::color_table, out);
     };
 
-    std::string line;
-    while (std::getline(std::cin, line)) {
-        line += "\n";
-        decoder.decode(line, send_ucs);
+    auto filename = ac > 1 ? av[1] : "screen.json";
+    char c;
+    int n = 0;
+    while (std::cin.get(c)) {
+        decoder.decode(bytes_array(&c, 1), send_ucs);
+
+        if (c == '\n' || ++n == 100) {
+            n = 0;
+            //auto & out = std::cout;
+            std::ofstream out(filename);
+            rvt::json_rendering(emulator.getWindowTitle(), emulator.getCurrentScreen(), rvt::color_table, out);
+        }
     }
     decoder.end_decode(send_ucs);
-
-    rvt::json_rendering(emulator.getWindowTitle(), emulator.getCurrentScreen(), rvt::color_table, std::cout);
 }

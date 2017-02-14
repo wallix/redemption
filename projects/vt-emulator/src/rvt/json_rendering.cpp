@@ -30,6 +30,58 @@
 
 namespace rvt {
 
+struct Buf
+{
+    char buf[4096];
+    char * s = buf;
+
+    void push_ucs(ucs4_char ucs)
+    {
+        switch (ucs) {
+            case '\\': assert(remaining() >= 2); *s++ = '\\'; *s++ = '\\'; break;
+            case '"': assert(remaining() >= 2); *s++ = '\\'; *s++ = '"'; break;
+            default : assert(remaining() >= 4); s += ucs4_to_utf8(ucs, s); break;
+        }
+    }
+
+    void push_ucs_array(ucs4_carray_view ucs_array)
+    {
+        for (ucs4_char ucs : ucs_array) {
+            push_ucs(ucs);
+        }
+    }
+
+    template<std::size_t n>
+    void push_s(char const (&a)[n])
+    {
+        assert(remaining() >= n);
+        for (std::size_t i = 0; i < n-1; ++i) {
+            *s++ = a[i];
+        }
+    }
+
+    void push_c(ucs4_char c) = delete; // unused
+    void push_c(char c)
+    {
+        assert(remaining() >= 1);
+        *s++ = c;
+    }
+
+    #ifndef NDEBUG
+    ~Buf() {
+        assert(std::uncaught_exception() || s == buf);
+    }
+    #endif
+
+    void flush(std::ostream & out)
+    {
+        out.write(buf, s - buf);
+        s = buf;
+    }
+
+    std::size_t remaining() const { return static_cast<std::size_t>(std::end(buf) - s); }
+};
+
 // format = "{ lines: %d, columns: %d, title: %s, data: [ $line... ] }"
 // $line = "[ {" $render? $foreground? $background? "s: %s } ]"
 // $render = "r: 'b'? 'i'? 'u'? 'l'?"
@@ -47,22 +99,14 @@ void json_rendering(
     ColorTableView palette,
     std::ostream & out
 ) {
-    char buf[4096];
-    auto s = buf;
-
-    s += std::sprintf(s, R"({"lines":%d,"columns":%d,"title":")", screen.getLines(), screen.getColumns());
-    for (ucs4_char uc : title) {
-        if (uc == '"') {
-            *s += '\\';
-        }
-        s += ucs4_to_utf8(uc, s);
-    }
-    s += std::sprintf(s, R"({","data":[)");
+    Buf buf;
+    buf.s += std::sprintf(buf.s, R"({"lines":%d,"columns":%d,"title":")", screen.getLines(), screen.getColumns());
+    buf.push_ucs_array(title);
+    buf.push_s(R"(","data":[)");
 
     if (!screen.getColumns() || !screen.getLines()) {
-        *s++ = ']';
-        *s++ = '}';
-        out.write(buf, s - buf);
+        buf.push_s("]}");
+        buf.flush(out);
         return ;
     }
 
@@ -74,21 +118,18 @@ void json_rendering(
     using CharacterRef = std::reference_wrapper<rvt::Character const>;
     rvt::Character const default_ch; // Default format
     CharacterRef previous_ch = std::cref(default_ch);
-    constexpr std::ptrdiff_t max_size_by_loop = 80; // approximate
+    constexpr std::size_t max_size_by_loop = 111; // approximate
 
     for (auto const & line : screen.getScreenLines()) {
-        *s++ = '[';
-        *s++ = '[';
-        *s++ = '{';
+        buf.push_s("[[{");
         bool is_s_enable = false;
         for (rvt::Character const & ch : line) {
             if (!ch.isRealCharacter) {
                 continue;
             }
 
-            if (std::end(buf) - s >= max_size_by_loop) {
-                out.write(buf, s - buf);
-                s = buf;
+            if (buf.remaining() >= max_size_by_loop) {
+                buf.flush(out);
             }
 
             bool const is_same_bg = ch.backgroundColor == previous_ch.get().backgroundColor;
@@ -97,66 +138,56 @@ void json_rendering(
             bool const is_same_format = is_same_bg & is_same_fg & is_same_rendition;
             if (!is_same_format) {
                 if (is_s_enable) {
-                    *s++ = '"';
-                    *s++ = '}';
-                    *s++ = ',';
-                    *s++ = '{';
+                    buf.push_s("\"},{");
                 }
                 if (!is_same_rendition) {
-                    *s++ = '"';
-                    *s++ = 'r';
-                    *s++ = '"';
-                    *s++ = ':';
-                    *s++ = '"';
+                    buf.push_s(R"("r":")");
                     auto const r = ch.rendition;
-                    if (bool(r & rvt::Rendition::Bold))     { *s++ = 'b'; }
-                    if (bool(r & rvt::Rendition::Italic))   { *s++ = 'i'; }
-                    if (bool(r & rvt::Rendition::Underline)){ *s++ = 'u'; }
-                    if (bool(r & rvt::Rendition::Blink))    { *s++ = 'l'; }
-                    *s++ = '"';
-                    *s++ = ',';
+                    if (bool(r & rvt::Rendition::Bold))     { buf.push_c('b'); }
+                    if (bool(r & rvt::Rendition::Italic))   { buf.push_c('i'); }
+                    if (bool(r & rvt::Rendition::Underline)){ buf.push_c('u'); }
+                    if (bool(r & rvt::Rendition::Blink))    { buf.push_c('l'); }
+                    buf.push_s(R"(",)");
                 }
 
-                if (!is_same_fg) { s += std::sprintf(s, R"("f":%d,)", color2int(ch.foregroundColor)); }
-                if (!is_same_bg) { s += std::sprintf(s, R"("b":%d,)", color2int(ch.backgroundColor)); }
+                if (!is_same_fg) { buf.s += std::sprintf(buf.s, R"("f":%d,)", color2int(ch.foregroundColor)); }
+                if (!is_same_bg) { buf.s += std::sprintf(buf.s, R"("b":%d,)", color2int(ch.backgroundColor)); }
 
                 is_s_enable = false;
             }
 
             if (!is_s_enable) {
                 is_s_enable = true;
-                *s++ = '"';
-                *s++ = 's';
-                *s++ = '"';
-                *s++ = ':';
-                *s++ = '"';
+                buf.push_s(R"("s":")");
             }
 
             if (ch.is_extended()) {
-                for (rvt::ucs4_char ucs : screen.extendedCharTable()[ch.character]) {
-                    s += ucs4_to_utf8(ucs, s);
+                auto ucs_array = screen.extendedCharTable()[ch.character];
+                auto buf_limit = max_size_by_loop/2u;
+                while (ucs_array.size() >= buf.remaining() - buf_limit) {
+                    auto const offset = buf.remaining() - buf_limit;
+                    buf.push_ucs_array(ucs_array.first(offset));
+                    ucs_array = ucs_array.subarray(offset);
+                    buf.flush(out);
                 }
+                buf.push_ucs_array(ucs_array);
             }
             else {
-                s += ucs4_to_utf8(ch.character, s);
+                buf.push_ucs(ch.character);
             }
 
             previous_ch = ch;
         }
 
         if (is_s_enable) {
-            *s++ = '"';
+            buf.push_c('"');
         }
-        *s++ = '}';
-        *s++ = ']';
-        *s++ = ']';
-        *s++ = ',';
+        buf.push_s("}]],");
     }
-    --s;
-    *s++ = ']';
-    *s++ = '}';
+    --buf.s;
+    buf.push_s("]}");
 
-    out.write(buf, s - buf);
+    buf.flush(out);
 }
 
 }
