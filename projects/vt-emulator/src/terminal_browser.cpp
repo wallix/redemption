@@ -20,40 +20,37 @@
 *   Based on Konsole, an X terminal
 */
 
-#include "rvt/character_color.hpp"
-#include "rvt/vt_emulator.hpp"
-#include "rvt/utf8_decoder.hpp"
-#include "rvt/json_rendering.hpp"
+#include "terminal_emulator.hpp"
 
 #include <iostream>
-#include <fstream>
+#include <memory>
 
+#include <cstring>
+
+
+struct TerminalEmulatorDeleter
+{
+    void operator()(TerminalEmulator * p) noexcept
+    { terminal_emulator_deinit(p); }
+};
 
 int main(int ac, char ** av)
 {
-    rvt::VtEmulator emulator(68, 117);
-    rvt::Utf8Decoder decoder;
-
-    auto send_ucs = [&emulator](rvt::ucs4_char ucs) {
-        emulator.receiveChar(ucs);
-    };
+    std::unique_ptr<TerminalEmulator, TerminalEmulatorDeleter> uptr{terminal_emulator_init(68, 117)};
 
     auto filename = ac > 1 ? av[1] : "screen.json";
-    auto write_file = [&emulator, filename]() {
-        std::ofstream out(filename);
-        rvt::json_rendering(emulator.getWindowTitle(), emulator.getCurrentScreen(), rvt::color_table, out);
-    };
-
     char c;
     int n = 0;
+    auto emu = uptr.get();
+    #define PError(x) do { if (int err = (x)) std::cerr << strerror(err) << std::endl; } while (0)
     while (std::cin.get(c)) {
-        decoder.decode(bytes_array(&c, 1), send_ucs);
+        PError(terminal_emulator_feed(emu, &c, 1));
 
         if (c == '\n' || ++n == 100) {
             n = 0;
-            write_file();
+            PError(terminal_emulator_write(emu, filename));
         }
     }
-    decoder.end_decode(send_ucs);
-    write_file();
+    PError(terminal_emulator_finish(emu));
+    PError(terminal_emulator_write(emu, filename));
 }

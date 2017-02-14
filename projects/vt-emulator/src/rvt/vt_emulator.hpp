@@ -81,6 +81,7 @@ protected:
 
 public: // TODO protected
     void receiveChar(ucs4_char cc);
+    void setScreenSize(int lines, int columns);
 
 private:
     ucs4_char applyCharset(ucs4_char  c) const;
@@ -92,7 +93,6 @@ private:
     void resetCharset();
 
     void setScreen(int n);
-    void setScreenSize(int lines, int columns);
 
     void setMargins(int top, int bottom);
     //set margins for all screens back to their defaults

@@ -34,6 +34,8 @@ obj json_rendering : $(RVT_SRC)/json_rendering.cpp ;
 
 alias libemu : emulator screen ;
 
+lib libterm : json_rendering libemu $(SRC)/terminal_emulator.cpp : <link>shared ;
+
 ## Tests
 ## @{
 unit-test test_character_color : $(RVT_SRC_TEST)/test_character_color.cpp : $(TEST_DEPENDENCIES) ;
@@ -48,5 +50,5 @@ unit-test test_vt_emulator : $(RVT_SRC_TEST)/test_vt_emulator.cpp libemu : $(TES
 
 
 unit-test enumator : $(SRC)/main.cpp ansi_rendering libemu : $(TEST_DEPENDENCIES) ;
-exe terminal_browser : $(SRC)/terminal_browser.cpp json_rendering libemu : $(TEST_DEPENDENCIES) ;
+exe terminal_browser : $(SRC)/terminal_browser.cpp libterm : $(TEST_DEPENDENCIES) ;
 ## }
