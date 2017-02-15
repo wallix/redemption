@@ -73,19 +73,6 @@ using ucs4_char = uint32_t;
 using ucs4_carray_view = array_view<ucs4_char const>;
 
 
-struct ExtendedCharacter
-{
-    ucs4_carray_view as_array() const noexcept
-    { return {this->chars.get(), this->len}; }
-
-    void append(ucs4_char uc);
-
-    uint16_t len;
-    uint16_t capacity;
-    std::unique_ptr<ucs4_char[]> chars;
-};
-
-
 /**
  * A single character in the terminal which consists of a unicode character
  * value, foreground and background colors and a set of rendition attributes
@@ -164,32 +151,6 @@ public:
     friend bool operator != (const Character& a, const Character& b);
 };
 
-/**
- * A table which stores sequences of unicode characters, referenced
- * by hash keys.  The hash key itself is the same size as a unicode
- * character ( ushort ) so that it can occupy the same space in
- * a structure.
- */
-class ExtendedCharTable
-{
-public:
-    ExtendedCharTable() = default;
-
-    REDEMPTION_CXX_NODISCARD
-    bool growChar(Character & character, ucs4_char uc);
-
-    void clear();
-
-    inline ucs4_carray_view operator[](std::size_t i) const noexcept
-    { return this->extendedCharTable[i].as_array(); }
-
-    inline std::size_t size() const noexcept
-    { return this->extendedCharTable.size(); }
-
-private:
-    std::vector<ExtendedCharacter> extendedCharTable;
-};
-
 inline bool operator == (const Character& a, const Character& b)
 {
     return a.character == b.character && a.isRealCharacter == b.isRealCharacter && a.equalsFormat(b);
@@ -206,6 +167,38 @@ inline bool Character::equalsFormat(const Character& other) const
            foregroundColor == other.foregroundColor &&
            rendition == other.rendition;
 }
+
+
+struct ExtendedCharacter
+{
+    ucs4_carray_view as_array() const noexcept
+    { return {this->chars.get(), this->len}; }
+
+    void append(ucs4_char uc);
+
+    uint16_t len;
+    uint16_t capacity;
+    std::unique_ptr<ucs4_char[]> chars;
+};
+
+
+class ExtendedCharTable
+{
+public:
+    ExtendedCharTable() = default;
+
+    void growChar(Character & character, ucs4_char uc);
+
+    void clear();
+
+    inline ucs4_carray_view operator[](std::size_t i) const noexcept
+    { return this->extendedCharTable[i].as_array(); }
+
+    inline std::size_t size() const noexcept
+    { return this->extendedCharTable.size(); }
+
+    std::vector<ExtendedCharacter> extendedCharTable;
+};
 
 
 inline void ExtendedCharacter::append(ucs4_char uc)
@@ -227,7 +220,7 @@ inline void ExtendedCharacter::append(ucs4_char uc)
 }
 
 
-inline REDEMPTION_CXX_NODISCARD bool ExtendedCharTable::growChar(Character & character, ucs4_char uc)
+inline void ExtendedCharTable::growChar(Character & character, ucs4_char uc)
 {
     if (character.is_extended()) {
         this->extendedCharTable[character.character].append(uc);
@@ -240,7 +233,6 @@ inline REDEMPTION_CXX_NODISCARD bool ExtendedCharTable::growChar(Character & cha
         character.character = this->extendedCharTable.size() - 1;
         character.rendition |= Rendition::ExtendedChar;
     }
-    return true;
 }
 
 inline void ExtendedCharTable::clear()

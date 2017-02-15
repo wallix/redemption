@@ -485,7 +485,6 @@ private:
 #else
     std::vector<ImageLine> _screenLines;    // [lines]
 # endif
-    int _screenLinesSize;                // _screenLines.size()
 
 public:
     std::vector<ImageLine> const & getScreenLines() const { return _screenLines;  }

@@ -31,18 +31,20 @@ BOOST_AUTO_TEST_CASE(TestCharacter)
     rvt::Character ch('e');
     rvt::ExtendedCharTable ext_ch_table;
 
+    BOOST_CHECK_EQUAL(ext_ch_table.size(), 0);
+
     BOOST_CHECK_EQUAL(ch.character, 'e');
     BOOST_CHECK_EQUAL(ch.is_extended(), false);
     {
-        bool r = ext_ch_table.growChar(ch, 0x0311);
-        BOOST_CHECK_EQUAL(r, true);
+        ext_ch_table.growChar(ch, 0x0311);
+        BOOST_CHECK_EQUAL(ext_ch_table.size(), 1);
         BOOST_CHECK_EQUAL(ch.is_extended(), true);
         rvt::ucs4_char ucs[] {'e', 0x0311};
         BOOST_CHECK_EQUAL_RANGES(ucs, ext_ch_table[ch.character]);
     }
     {
-        bool r = ext_ch_table.growChar(ch, 0x0312);
-        BOOST_CHECK_EQUAL(r, true);
+        ext_ch_table.growChar(ch, 0x0312);
+        BOOST_CHECK_EQUAL(ext_ch_table.size(), 1);
         BOOST_CHECK_EQUAL(ch.is_extended(), true);
         rvt::ucs4_char ucs[] {'e', 0x0311, 0x0312};
         BOOST_CHECK_EQUAL_RANGES(ucs, ext_ch_table[ch.character]);

@@ -21,6 +21,7 @@
 */
 
 #include "rvt/screen.hpp"
+#include "utils/sugar/make_unique.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -52,7 +53,6 @@ Screen::Screen(int lines, int columns):
     _lines(lines),
     _columns(columns),
     _screenLines(_lines + 1),
-    _screenLinesSize(_lines),
     _scrolledLines(0),
     _cuX(0),
     _cuY(0),
@@ -291,17 +291,10 @@ void Screen::resizeImage(int new_lines, int new_columns)
     }
 
     // create new screen _lines and copy from old to new
-
-    auto newScreenLines = std::vector<ImageLine>(new_lines + 1);
-    for (int i = 0; i < std::min(_lines, new_lines + 1) ; i++)
-        newScreenLines[i] = _screenLines[i];
+    _screenLines.resize(new_lines + 1);
     for (int i = _lines; (i > 0) && (i < new_lines + 1); i++)
-        newScreenLines[i].resize(new_columns); // TODO + max konsole_wcwidth - 1
-
+        _screenLines[i].resize(new_columns); // TODO + max konsole_wcwidth - 1
     _lineProperties.resize(new_lines + 1, LineProperty::Default);
-
-    _screenLines = std::move(newScreenLines);
-    _screenLinesSize = new_lines;
 
     _lines = new_lines;
     _columns = new_columns;
@@ -662,6 +655,23 @@ void Screen::displayCharacter(ucs4_char c)
 
         Character & currentChar = _screenLines[charToCombineWithY][charToCombineWithX];
         _extendedCharTable.growChar(currentChar, c);
+        if (int(_extendedCharTable.size()) >= _lines * _columns) {
+            std::vector<ExtendedCharacter> new_table;
+            new_table.resize(_lines * _columns);
+            auto b = new_table.begin();
+            auto p = b;
+            for (auto & line : _screenLines) {
+                for (Character & ch : line) {
+                    if (ch.is_extended()) {
+                        ch.character = p - b;
+                        *p = std::move(_extendedCharTable.extendedCharTable[ch.character]);
+                        ++p;
+                    }
+                }
+            }
+            new_table.resize(p - b);
+            _extendedCharTable.extendedCharTable = std::move(new_table);
+        }
         return;
     }
 
@@ -855,13 +865,13 @@ void Screen::moveImage(int dest, int sourceBegin, int sourceEnd)
     //(search the web for 'memmove implementation' for details)
     if (dest < sourceBegin) {
         for (int i = 0; i <= lines; i++) {
-            _screenLines[(dest / _columns) + i ] = _screenLines[(sourceBegin / _columns) + i ];
-            _lineProperties[(dest / _columns) + i] = _lineProperties[(sourceBegin / _columns) + i];
+            _screenLines[(dest / _columns) + i ] = std::move(_screenLines[(sourceBegin / _columns) + i ]);
+            _lineProperties[(dest / _columns) + i] = std::move(_lineProperties[(sourceBegin / _columns) + i]);
         }
     } else {
         for (int i = lines; i >= 0; i--) {
-            _screenLines[(dest / _columns) + i ] = _screenLines[(sourceBegin / _columns) + i ];
-            _lineProperties[(dest / _columns) + i] = _lineProperties[(sourceBegin / _columns) + i];
+            _screenLines[(dest / _columns) + i ] = std::move(_screenLines[(sourceBegin / _columns) + i ]);
+            _lineProperties[(dest / _columns) + i] = std::move(_lineProperties[(sourceBegin / _columns) + i]);
         }
     }
 
