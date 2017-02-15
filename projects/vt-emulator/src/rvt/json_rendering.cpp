@@ -25,7 +25,6 @@
 
 #include "utils/utf.hpp"
 
-#include <ostream>
 #include <functional> // std::cref
 
 namespace rvt {
@@ -73,9 +72,9 @@ struct Buf
     }
     #endif
 
-    void flush(std::ostream & out)
+    void flush(std::string & out)
     {
-        out.write(buf, s - buf);
+        out.append(buf, s - buf);
         s = buf;
     }
 
@@ -97,12 +96,14 @@ static int color2int(rvt::Color const & color)
 // $background = "b: $color"
 // $color = %d
 //      decimal rgb
-void json_rendering(
+std::string json_rendering(
     array_view<ucs4_char const> title,
     Screen const & screen,
-    ColorTableView palette,
-    std::ostream & out
+    ColorTableView palette
 ) {
+    std::string out;
+    out.reserve(screen.getLines() * screen.getColumns() * 7);
+
     Buf buf;
     buf.s += std::sprintf(buf.s, R"({"lines":%d,"columns":%d,"title":")", screen.getLines(), screen.getColumns());
     buf.push_ucs_array(title);
@@ -111,7 +112,7 @@ void json_rendering(
     if (!screen.getColumns() || !screen.getLines()) {
         buf.push_s("]}");
         buf.flush(out);
-        return ;
+        return out;
     }
 
     using CharacterRef = std::reference_wrapper<rvt::Character const>;
@@ -191,6 +192,7 @@ void json_rendering(
     buf.push_s("]}");
 
     buf.flush(out);
+    return out;
 }
 
 }

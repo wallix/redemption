@@ -21,12 +21,13 @@
 #pragma once
 
 #include "rvt/character.hpp"
-#include <iosfwd>
+
+#include <string>
 
 namespace rvt {
 
 class Screen;
 
-void json_rendering(array_view<ucs4_char const> title, Screen const & screen, ColorTableView palette, std::ostream & out);
+std::string json_rendering(array_view<ucs4_char const> title, Screen const & screen, ColorTableView palette);
 
 }

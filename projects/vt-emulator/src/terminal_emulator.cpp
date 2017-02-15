@@ -25,7 +25,7 @@
 #include "rvt/utf8_decoder.hpp"
 #include "rvt/json_rendering.hpp"
 
-#include <fstream>
+#include "utils/fdbuf.hpp"
 
 #include <cerrno>
 #include <cstdlib>
@@ -90,35 +90,29 @@ int terminal_emulator_write(TerminalEmulator * emu, char const * filename)
 {
     return_if(!emu);
 
+    std::string const out = rvt::json_rendering(
+        emu->emulator.getWindowTitle(),
+        emu->emulator.getCurrentScreen(),
+        rvt::color_table
+    );
+
     char tmpfilename[4096];
     tmpfilename[0] = 0;
     int n = std::snprintf(tmpfilename, utils::size(tmpfilename) - 1, "%s-terermu-XXXXXX.tmp", filename);
     tmpfilename[n < 0 ? 0 : n] = 0;
 
-    std::ofstream out(tmpfilename);
-    return_errno_if(!out);
+    io::posix::fdbuf f;
+    return_errno_if(f.open(tmpfilename, O_WRONLY | O_CREAT, 0444) < 0);
 
-    struct auto_remove_ {
-        char const * s;
-        bool is_moved;
-        ~auto_remove_() {
-            if (!is_moved) {
-                unlink(s);
-            }
-        }
-    } auto_remove{tmpfilename, false};
+    std::streamsize sz = f.write_all(out.c_str(), out.size());
+    return_errno_if(sz < 0);
 
-    rvt::json_rendering(
-        emu->emulator.getWindowTitle(),
-        emu->emulator.getCurrentScreen(),
-        rvt::color_table,
-        out
-    );
-    return_errno_if(!out);
+    f.close();
 
-    return_errno_if(rename(tmpfilename, filename));
-
-    auto_remove.is_moved = true;
+    if (rename(tmpfilename, filename)) {
+        unlink(tmpfilename);
+        return errno;
+    }
 
     return 0;
 }
