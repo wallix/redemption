@@ -55,7 +55,7 @@
 // script -f >(~/projects/build/redemption-public@projects@vt-emulator/configs/clang-linux-3.8.0/san/terminal_browser screen.json)
 // firefox http://localhost:4104/view_browser.html
 
-let ajax_param = {
+var ajax_param = {
     url: 'screen.json',
     context: document.getElementById("tty-player"),
     dataType: 'json'
@@ -78,16 +78,16 @@ let ajax_param = {
 
 function render(screen)
 {
-    let rendering = ['font-weight:bold;', 'font-style: italic;', 'text-decoration: underline;']
+    var rendering = ['font-weight:bold;', 'font-style: italic;', 'text-decoration: underline;']
 
-    let elem2style = function(e) {
-        let style = ''
+    var elem2style = function(e) {
+        var style = ''
         if (e.f || e.b) {
             if (e.b) style += 'background-color:#'+e.b.toString(16)+';'
             if (e.f) style += 'color:#'+e.f.toString(16)+';'
         }
         if (e.r) {
-            for (let i in rendering) {
+            for (var i in rendering) {
                 if (e.r & (1 << i)) {
                     style += rendering[i] || ''
                 }
@@ -96,12 +96,12 @@ function render(screen)
         return style
     }
 
-    let terminal = '';
-    for (let lines of screen.data) {
-        let style = '';
-        let htmlline = '';
-        for (let line of lines) {
-            for (let e of line) {
+    var terminal = '';
+    for (var lines of screen.data) {
+        var style = '';
+        var htmlline = '';
+        for (var line of lines) {
+            for (var e of line) {
                 style = elem2style(e);
                 htmlline += '<span style="' + style + '">' + (e.s||'') + '</span>';
             }
@@ -109,7 +109,7 @@ function render(screen)
         terminal += '<p style=' + style + '>' + htmlline + '\n</p>';
     }
 
-    let empty_line = '                                                               '
+    var empty_line = '                                                               '
     while (empty_line.length < screen.columns) {
         empty_line += empty_line;
     }
