@@ -383,7 +383,7 @@ protected:
 
     const uint32_t password_printing_mode;
 
-    bool deactivation_reactivation_in_progress;
+    bool deactivation_reactivation_in_progress = false;
 
     RedirectionInfo & redir_info;
 
@@ -838,7 +838,6 @@ public:
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
         //, total_data_received(0)
         , password_printing_mode(mod_rdp_params.password_printing_mode)
-        , deactivation_reactivation_in_progress(false)
         , redir_info(redir_info)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
