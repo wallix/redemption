@@ -487,7 +487,7 @@ private:
 # endif
     int _screenLinesSize;                // _screenLines.size()
 
-public:    // TODO
+public:
     std::vector<ImageLine> const & getScreenLines() const { return _screenLines;  }
     ExtendedCharTable const & extendedCharTable() const { return _extendedCharTable;  }
 
@@ -518,7 +518,7 @@ private:
 
     // ----------------------------
 
-    std::vector<bool> _tabStops; // TODO QBitArray
+    std::vector<bool> _tabStops;
 
     // effective colors and rendition ------------
     CharacterColor _effectiveForeground; // These are derived from

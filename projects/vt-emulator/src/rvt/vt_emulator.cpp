@@ -161,8 +161,7 @@ void VtEmulator::resetTokenizer()
 
 void VtEmulator::addDigit(int digit)
 {
-    if (argv[argc] < MAX_ARGUMENT)
-        argv[argc] = 10 * argv[argc] + digit;
+    argv[argc] = std::min(10 * argv[argc] + digit, MAX_ARGUMENT);
 }
 
 void VtEmulator::addArgument()
@@ -503,9 +502,7 @@ void VtEmulator::processToken(int token, int32_t p, int q)
     case TY_ESC_DE('8'     ) : _currentScreen->helpAlign            (          ); break;
 
 // resize = \e[8;<row>;<col>t
-    case TY_CSI_PS('t',   8) : // TODO setImageSize( p /*lines */, q /* columns */ );
-                               // TODO emit imageResizeRequest(QSize(q, p));
-                               break;
+    case TY_CSI_PS('t',   8) : setScreenSize( p /*lines */, q /* columns */ ); break;
 
 // change tab text color : \e[28;<color>t  color: 0-16,777,215
     case TY_CSI_PS('t',   28) : /* TODO emit changeTabTextColorRequest      ( p        );*/          break;
@@ -717,9 +714,9 @@ void VtEmulator::processToken(int token, int32_t p, int q)
   };
 }
 
-void VtEmulator::clearScreenAndSetColumns(int /*columnCount*/)
+void VtEmulator::clearScreenAndSetColumns(int columnCount)
 {
-    // TODO setImageSize(_currentScreen->getLines(),columnCount);
+    setScreenSize(_currentScreen->getLines(), columnCount);
     clearEntireScreen();
     setDefaultMargins();
     _currentScreen->setCursorYX(0,0);
