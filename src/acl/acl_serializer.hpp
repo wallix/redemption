@@ -544,7 +544,7 @@ public:
                 if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
                     this->keepalive.stop();
                 }
-                mm.disconnect(now);
+                mm.mod->disconnect(now);
                 mm.remove_mod();
                 try {
                     mm.new_mod(next_state, now, authentifier);
