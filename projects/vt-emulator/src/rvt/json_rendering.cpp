@@ -124,17 +124,22 @@ std::string json_rendering(
         buf.push_s("[[{");
         bool is_s_enable = false;
         for (rvt::Character const & ch : line) {
+            if (buf.remaining() >= max_size_by_loop) {
+                buf.flush(out);
+            }
             if (!ch.isRealCharacter) {
                 continue;
             }
 
-            if (buf.remaining() >= max_size_by_loop) {
-                buf.flush(out);
-            }
-
+            constexpr auto rendition_flags
+              = rvt::Rendition::Bold
+              | rvt::Rendition::Italic
+              | rvt::Rendition::Underline
+              | rvt::Rendition::Blink;
             bool const is_same_bg = ch.backgroundColor == previous_ch.get().backgroundColor;
             bool const is_same_fg = ch.foregroundColor == previous_ch.get().foregroundColor;
-            bool const is_same_rendition = ch.rendition == previous_ch.get().rendition;
+            bool const is_same_rendition
+              = (ch.rendition & rendition_flags) == (previous_ch.get().rendition & rendition_flags);
             bool const is_same_format = is_same_bg & is_same_fg & is_same_rendition;
             if (!is_same_format) {
                 if (is_s_enable) {

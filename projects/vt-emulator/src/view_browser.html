@@ -66,25 +66,29 @@ var ajax_param = {
     .done(function(screen){
         console.log(screen)
         this.innerHTML = render(screen);
-        window.setTimeout(loop, 3000);
+        window.setTimeout(loop, 5000);
     })
     // file is truncated
     .fail(function(jqxhr, status, e){
         console.log(e)
-        window.setTimeout(loop, 3000)
+        window.setTimeout(loop, 5000)
     })
 })()
 
+function i2strcolor(int_color)
+{
+    return ('000000' + int_color.toString(16)).slice(-6)
+}
 
 function render(screen)
 {
-    var rendering = ['font-weight:bold;', 'font-style: italic;', 'text-decoration: underline;']
+    var rendering = ['font-weight:bold;', 'font-style:italic;', 'text-decoration:underline;']
 
     var elem2style = function(e) {
         var style = ''
         if (e.f || e.b) {
-            if (e.b) style += 'background-color:#'+e.b.toString(16)+';'
-            if (e.f) style += 'color:#'+e.f.toString(16)+';'
+            if (e.b) style += 'background-color:#'+i2strcolor(e.b)+';'
+            if (e.f) style += 'color:#'+i2strcolor(e.f)+';'
         }
         if (e.r) {
             for (var i in rendering) {
@@ -96,17 +100,24 @@ function render(screen)
         return style
     }
 
+    var default_style = elem2style(screen.style);
+
     var terminal = '';
+    var previous_style = default_style
     for (var lines of screen.data) {
-        var style = '';
-        var htmlline = '';
+        var htmlline = ''
+        var style = previous_style
         for (var line of lines) {
             for (var e of line) {
-                style = elem2style(e);
-                htmlline += '<span style="' + style + '">' + (e.s||'') + '</span>';
+                if (e.s) {
+                    style = elem2style(e);
+                    htmlline += '<span style="' + style + '">' + e.s + '</span>';
+                }
+            console.log(e)
             }
+            previous_style = style
         }
-        terminal += '<p style=' + style + '>' + htmlline + '\n</p>';
+        terminal += '<p>' + htmlline + '\n</p>';
     }
 
     var empty_line = '                                                               '
@@ -115,7 +126,7 @@ function render(screen)
     }
 
     return '<p id="tty-player-title">' + (screen.title||'No Title') + '</p>'+
-        '<div id="tty-player-terminal" style="' + elem2style(screen.style) + '>' +
+        '<div id="tty-player-terminal">' +
             terminal +
             '<p>' + empty_line.substr(0, screen.columns) + '</p>' +
         '</div>'

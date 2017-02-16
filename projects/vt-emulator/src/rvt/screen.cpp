@@ -59,8 +59,8 @@ Screen::Screen(int lines, int columns):
     _currentRendition(Rendition::Default),
     _topMargin(0),
     _bottomMargin(0),
-    _effectiveForeground(CharacterColor()),
-    _effectiveBackground(CharacterColor()),
+    _effectiveForeground{},
+    _effectiveBackground{},
     _effectiveRendition(Rendition::Default),
     _lastPos(-1)
 {
