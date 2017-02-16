@@ -3461,7 +3461,7 @@ public:
                 REDASSERT(mask_size <= 128);
 
                 stream.in_copy_bytes(cursor.data, std::min<size_t>(sizeof(cursor.data), data_size));
-                stream.in_copy_bytes(cursor.mask, std::min<size_t>(sizeof(cursor.data), mask_size));
+                stream.in_copy_bytes(cursor.mask, std::min<size_t>(sizeof(cursor.mask), mask_size));
 
                 this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
@@ -5754,7 +5754,7 @@ public:
 protected:
     void send_pointer(int cache_idx, const Pointer & cursor) override {
         if ((cursor.width != 32) || (cursor.height != 32) || (cursor.bpp != 24)) {
-            send_pointer2(cache_idx, cursor);
+            this->send_pointer2(cache_idx, cursor);
             return;
         }
 
@@ -5811,9 +5811,6 @@ protected:
 
         payload.out_uint8(cursor.x);
         payload.out_uint8(cursor.y);
-
-        payload.out_uint16_le(this->mouse_y);
-        payload.out_uint16_le(this->mouse_y);
 
         payload.out_uint16_le(cursor.data_size());
         payload.out_uint16_le(cursor.mask_size());
