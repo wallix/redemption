@@ -777,6 +777,13 @@ void VtEmulator::clearScreenAndSetColumns(int columnCount)
     _currentScreen->setCursorYX(0,0);
 }
 
+void VtEmulator::setWindowTitle(ucs4_carray_view title)
+{
+    this->windowTitleLen = std::min(title.size(), utils::size(this->windowTitle)-1);
+    std::copy(title.begin(), title.begin() + this->windowTitleLen, this->windowTitle);
+    this->windowTitle[this->windowTitleLen] = 0;
+}
+
 /* ------------------------------------------------------------------------- */
 /*                                                                           */
 /*                                VT100 Charsets                             */

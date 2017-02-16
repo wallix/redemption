@@ -20,15 +20,19 @@
 
 #pragma once
 
+#include "cxx/keyword.hpp"
+
 class TerminalEmulator;
 
 extern "C" {
 
-TerminalEmulator * terminal_emulator_init(int lines, int columns);
-void terminal_emulator_deinit(TerminalEmulator *);
-int terminal_emulator_finish(TerminalEmulator *);
-int terminal_emulator_feed(TerminalEmulator *, char const * s, int n);
-int terminal_emulator_resize(TerminalEmulator *, int lines, int columns);
-int terminal_emulator_write(TerminalEmulator *, char const * filename);
+REDEMPTION_LIB_EXPORT TerminalEmulator * terminal_emulator_init(int lines, int columns);
+REDEMPTION_LIB_EXPORT void terminal_emulator_deinit(TerminalEmulator *);
+REDEMPTION_LIB_EXPORT int terminal_emulator_finish(TerminalEmulator *);
+
+REDEMPTION_LIB_EXPORT int terminal_emulator_set_title(TerminalEmulator *, char const * title);
+REDEMPTION_LIB_EXPORT int terminal_emulator_feed(TerminalEmulator *, char const * s, int n);
+REDEMPTION_LIB_EXPORT int terminal_emulator_resize(TerminalEmulator *, int lines, int columns);
+REDEMPTION_LIB_EXPORT int terminal_emulator_write(TerminalEmulator *, char const * filename);
 
 }

@@ -69,6 +69,8 @@ public:
     Screen const & getCurrentScreen() const { return *_currentScreen; }
     array_view<ucs4_char const> getWindowTitle() const { return {windowTitle, windowTitleLen}; }
 
+    void setWindowTitle(ucs4_carray_view title);
+
     void receiveChar(ucs4_char cc);
     void setScreenSize(int lines, int columns);
 

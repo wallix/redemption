@@ -60,21 +60,44 @@ void terminal_emulator_deinit(TerminalEmulator * emu)
     delete emu;
 }
 
-int terminal_emulator_feed(TerminalEmulator * emu, char const * s, int n)
-{
-    return_if(!emu);
-
-    auto send_fn = [emu](rvt::ucs4_char ucs) { emu->emulator.receiveChar(ucs); };
-    emu->decoder.decode(const_bytes_array(s, std::max(n, 0)), send_fn);
-    return 0;
-}
-
 int terminal_emulator_finish(TerminalEmulator * emu)
 {
     return_if(!emu);
 
     auto send_fn = [emu](rvt::ucs4_char ucs) { emu->emulator.receiveChar(ucs); };
     emu->decoder.end_decode(send_fn);
+    return 0;
+}
+
+
+int terminal_emulator_set_title(TerminalEmulator* emu, char const * title)
+{
+    return_if(!emu);
+
+    rvt::ucs4_char ucs_title[255];
+    rvt::ucs4_char * p = std::begin(ucs_title);
+    rvt::ucs4_char * e = std::end(ucs_title) - 4;
+
+    std::size_t sz = strlen(title);
+
+    auto send_fn = [&p](rvt::ucs4_char ucs) { *p = ucs; ++p; };
+    while (sz && p < e) {
+        std::size_t consumed = std::min(sz, std::size_t(e-p));
+        emu->decoder.decode(const_bytes_array(title, consumed), send_fn);
+        sz -= consumed;
+    }
+    emu->decoder.end_decode(send_fn);
+
+    emu->emulator.setWindowTitle({ucs_title, std::size_t(e-ucs_title)});
+    return 0;
+}
+
+int terminal_emulator_feed(TerminalEmulator * emu, char const * s, int n)
+{
+    return_if(!emu);
+
+    auto send_fn = [emu](rvt::ucs4_char ucs) { emu->emulator.receiveChar(ucs); };
+    emu->decoder.decode(const_bytes_array(s, std::max(n, 0)), send_fn);
     return 0;
 }
 
