@@ -75,31 +75,27 @@ var ajax_param = {
     })
 })()
 
+
 function i2strcolor(int_color)
 {
     return ('000000' + int_color.toString(16)).slice(-6)
 }
 
+function elem2style(e)
+{
+    var style = '';
+    if (e.f) style += 'color:#'+i2strcolor(e.f)+';';
+    if (e.b) style += 'background-color:#'+i2strcolor(e.b)+';';
+    if (e.r) {
+        if (e.r & 1) style += 'font-weight:bold;';
+        if (e.r & 2) style += 'font-style:italic;';
+        if (e.r & 4) style += 'text-decoration:underline;';
+    }
+    return style
+}
+
 function render(screen)
 {
-    var rendering = ['font-weight:bold;', 'font-style:italic;', 'text-decoration:underline;']
-
-    var elem2style = function(e) {
-        var style = ''
-        if (e.f || e.b) {
-            if (e.b) style += 'background-color:#'+i2strcolor(e.b)+';'
-            if (e.f) style += 'color:#'+i2strcolor(e.f)+';'
-        }
-        if (e.r) {
-            for (var i in rendering) {
-                if (e.r & (1 << i)) {
-                    style += rendering[i] || ''
-                }
-            }
-        }
-        return style
-    }
-
     var estyle = screen.style;
 
     var empty_line = '                                                               '
@@ -107,7 +103,7 @@ function render(screen)
         empty_line += empty_line;
     }
 
-    console.log(screen.props)
+    //console.log(screen.props)
 
     var terminal = '';
     for (var lines of screen.data) {
@@ -115,7 +111,7 @@ function render(screen)
         for (var line of lines) {
             var sz_s = 0;
             for (var e of line) {
-                console.log(e)
+                //console.log(e)
                 if (e.r != undefined) estyle.r = e.r;
                 if (e.f != undefined) estyle.f = e.f;
                 if (e.b != undefined) estyle.b = e.b;
