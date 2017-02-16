@@ -324,18 +324,12 @@ class Sesman():
         _data = ''
         try:
             # Fetch Data from Redemption
-            try:
-                while True:
-                    _is_multi_packet, = unpack(">H", self.proxy_conx.recv(2))
-                    _packet_size, = unpack(">H", self.proxy_conx.recv(2))
-                    _data += self.proxy_conx.recv(_packet_size)
-                    if not _is_multi_packet:
-                        break
-            except Exception, e:
-                if DEBUG:
-                    import traceback
-                    Logger().info(u"Socket Closed : %s" % traceback.format_exc(e))
-                raise AuthentifierSocketClosed()
+            while True:
+                _is_multi_packet, = unpack(">H", self.proxy_conx.recv(2))
+                _packet_size, = unpack(">H", self.proxy_conx.recv(2))
+                _data += self.proxy_conx.recv(_packet_size)
+                if not _is_multi_packet:
+                    break
             _data = _data.decode('utf-8')
         except AuthentifierSocketClosed, e:
             raise
