@@ -884,12 +884,6 @@ void VtEmulator::setMode(Mode m)
     }
 }
 
-void VtEmulator::setMode(ScreenMode m)
-{
-    _screens[0].setMode(m);
-    _screens[1].setMode(m);
-}
-
 void VtEmulator::resetMode(Mode m)
 {
     _currentModes.reset(m);
@@ -903,12 +897,6 @@ void VtEmulator::resetMode(Mode m)
         setScreen(0);
         break;
     }
-}
-
-void VtEmulator::resetMode(ScreenMode m)
-{
-    _screens[0].resetMode(m);
-    _screens[1].resetMode(m);
 }
 
 void VtEmulator::saveMode(Mode m)
@@ -926,21 +914,32 @@ bool VtEmulator::getMode(Mode m)
     return _currentModes.has(m);
 }
 
+void VtEmulator::setMode(ScreenMode m)
+{
+    _screens[0].setMode(m);
+    _screens[1].setMode(m);
+}
+
+void VtEmulator::resetMode(ScreenMode m)
+{
+    _screens[0].resetMode(m);
+    _screens[1].resetMode(m);
+}
+
 void VtEmulator::saveMode(ScreenMode m)
 {
-    // TODO saveMode(static_cast<Screen>(m))
-    _currentScreen->saveMode(m);
+    _screens[0].saveMode(m);
+    _screens[1].saveMode(m);
 }
 
 void VtEmulator::restoreMode(ScreenMode m)
 {
-    // TODO restoreMode(static_cast<Screen>(m))
-    _currentScreen->resetMode(m);
+    _screens[0].resetMode(m);
+    _screens[1].resetMode(m);
 }
 
 bool VtEmulator::getMode(ScreenMode m)
 {
-    // TODO getMode(static_cast<Screen>(m))
     return _currentScreen->getMode(m);
 }
 
