@@ -84,7 +84,14 @@ struct Buf
 static int color2int(rvt::Color const & color)
 { return (color.red() << 16) | (color.green() << 8) |  (color.blue() << 0); }
 
-// format = "{ lines: %d, columns: %d, title: %s, style: {$render $foreground $background}, data: [ $line... ] }"
+// format = "{
+//      lines: %d,
+//      columns: %d,
+//      title: %s,
+//      style: {$render $foreground $background},
+//      props: "[0-7]*"
+//      data: [ $line... ]
+// }"
 // $line = "[ {" $render? $foreground? $background? "s: %s } ]"
 // $render = "r: %d
 //      flags:
@@ -103,11 +110,21 @@ std::string json_rendering(
 ) {
     std::string out;
     out.reserve(screen.getLines() * screen.getColumns() * 7);
+    constexpr std::size_t max_size_by_loop = 111; // approximate
 
     Buf buf;
     buf.s += std::sprintf(buf.s, R"({"lines":%d,"columns":%d,"title":")", screen.getLines(), screen.getColumns());
     buf.push_ucs_array(title);
-    buf.s += std::sprintf(buf.s, R"(","style":{"r":0,"f":%d,"b":%d},"data":[)", color2int(palette[0]), color2int(palette[1]));
+    buf.s += std::sprintf(buf.s, R"(","style":{"r":0,"f":%d,"b":%d},"props":")", color2int(palette[0]), color2int(palette[1]));
+
+    for (rvt::LineProperty prop : screen.getScreenLinesProperties()) {
+        assert(unsigned(prop) <= 9);
+        buf.push_c(char(int(prop) + '0'));
+        if (buf.remaining() <= 2) {
+            buf.flush(out);
+        }
+    }
+    buf.push_s(R"(","data":[)");
 
     if (!screen.getColumns() || !screen.getLines()) {
         buf.push_s("]}");
@@ -118,19 +135,16 @@ std::string json_rendering(
     using CharacterRef = std::reference_wrapper<rvt::Character const>;
     rvt::Character const default_ch; // Default format
     CharacterRef previous_ch = std::cref(default_ch);
-    constexpr std::size_t max_size_by_loop = 111; // approximate
-
-    auto & lines_props = screen.getScreenLinesProperties();
-    auto line_props_it = lines_props.begin();
 
     for (auto const & line : screen.getScreenLines()) {
-        //buf.push_s("[[{");
-        buf.s += std::sprintf(buf.s, R"([[{"l":%d},{)", int(*line_props_it));
-        ++line_props_it;
+        buf.push_s("[[{");
+        if (buf.remaining() <= max_size_by_loop) {
+            buf.flush(out);
+        }
 
         bool is_s_enable = false;
         for (rvt::Character const & ch : line) {
-            if (buf.remaining() >= max_size_by_loop) {
+            if (buf.remaining() <= max_size_by_loop) {
                 buf.flush(out);
             }
 
@@ -176,9 +190,8 @@ std::string json_rendering(
             if (ch.isRealCharacter) {
                 if (ch.is_extended()) {
                     auto ucs_array = screen.extendedCharTable()[ch.character];
-                    auto buf_limit = max_size_by_loop/2u;
-                    while (ucs_array.size() >= buf.remaining() - buf_limit) {
-                        auto const offset = buf.remaining() - buf_limit;
+                    while (ucs_array.size() * 4u + max_size_by_loop >= buf.remaining()) {
+                        auto const offset = buf.remaining() / 4u;
                         buf.push_ucs_array(ucs_array.first(offset));
                         ucs_array = ucs_array.subarray(offset);
                         buf.flush(out);

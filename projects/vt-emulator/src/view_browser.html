@@ -107,23 +107,25 @@ function render(screen)
         empty_line += empty_line;
     }
 
+    console.log(screen.props)
+
     var terminal = '';
     for (var lines of screen.data) {
         var htmlline = ''
         for (var line of lines) {
             var sz_s = 0;
             for (var e of line) {
-                //console.log(e)
-                estyle.r = e.r || estyle.r
-                estyle.f = e.f || estyle.f
-                estyle.b = e.b || estyle.b
+                console.log(e)
+                if (e.r != undefined) estyle.r = e.r;
+                if (e.f != undefined) estyle.f = e.f;
+                if (e.b != undefined) estyle.b = e.b;
                 htmlline += '<span style="' + elem2style(estyle) + '">' +
                     (e.s ? e.s.replace(/&/g, '&amp;').replace(/</g, '&lt;') : '') +
                     '</span>'
                 sz_s += e.s ? e.s.length : 0
             }
             if (sz_s && sz_s < screen.columns) {
-                htmlline += '<span style="' + elem2style(estyle) + '">' +
+                htmlline += '<span style="' + elem2style({'f':estyle.f,'b':estyle.b}) + '">' +
                     empty_line.substr(0, screen.columns - sz_s) +
                     '</span>'
             }
