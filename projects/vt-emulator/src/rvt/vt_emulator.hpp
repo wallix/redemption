@@ -69,6 +69,9 @@ public:
     Screen const & getCurrentScreen() const { return *_currentScreen; }
     array_view<ucs4_char const> getWindowTitle() const { return {windowTitle, windowTitleLen}; }
 
+    void receiveChar(ucs4_char cc);
+    void setScreenSize(int lines, int columns);
+
 protected:
     // reimplemented from Emulation
     void setMode(Mode mode);
@@ -78,10 +81,6 @@ protected:
 
     void setMode(ScreenMode mode);
     void resetMode(ScreenMode mode);
-
-public: // TODO protected
-    void receiveChar(ucs4_char cc);
-    void setScreenSize(int lines, int columns);
 
 private:
     ucs4_char applyCharset(ucs4_char  c) const;

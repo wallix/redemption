@@ -120,15 +120,18 @@ std::string json_rendering(
     CharacterRef previous_ch = std::cref(default_ch);
     constexpr std::size_t max_size_by_loop = 111; // approximate
 
+    auto & lines_props = screen.getScreenLinesProperties();
+    auto line_props_it = lines_props.begin();
+
     for (auto const & line : screen.getScreenLines()) {
-        buf.push_s("[[{");
+        //buf.push_s("[[{");
+        buf.s += std::sprintf(buf.s, R"([[{"l":%d},{)", int(*line_props_it));
+        ++line_props_it;
+
         bool is_s_enable = false;
         for (rvt::Character const & ch : line) {
             if (buf.remaining() >= max_size_by_loop) {
                 buf.flush(out);
-            }
-            if (!ch.isRealCharacter) {
-                continue;
             }
 
             constexpr auto rendition_flags
@@ -170,19 +173,21 @@ std::string json_rendering(
                 buf.push_s(R"("s":")");
             }
 
-            if (ch.is_extended()) {
-                auto ucs_array = screen.extendedCharTable()[ch.character];
-                auto buf_limit = max_size_by_loop/2u;
-                while (ucs_array.size() >= buf.remaining() - buf_limit) {
-                    auto const offset = buf.remaining() - buf_limit;
-                    buf.push_ucs_array(ucs_array.first(offset));
-                    ucs_array = ucs_array.subarray(offset);
-                    buf.flush(out);
+            if (ch.isRealCharacter) {
+                if (ch.is_extended()) {
+                    auto ucs_array = screen.extendedCharTable()[ch.character];
+                    auto buf_limit = max_size_by_loop/2u;
+                    while (ucs_array.size() >= buf.remaining() - buf_limit) {
+                        auto const offset = buf.remaining() - buf_limit;
+                        buf.push_ucs_array(ucs_array.first(offset));
+                        ucs_array = ucs_array.subarray(offset);
+                        buf.flush(out);
+                    }
+                    buf.push_ucs_array(ucs_array);
                 }
-                buf.push_ucs_array(ucs_array);
-            }
-            else {
-                buf.push_ucs(ch.character);
+                else {
+                    buf.push_ucs(ch.character);
+                }
             }
 
             previous_ch = ch;

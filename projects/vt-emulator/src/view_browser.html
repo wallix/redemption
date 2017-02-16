@@ -64,13 +64,13 @@ var ajax_param = {
 (function loop() {
     $.ajax(ajax_param)
     .done(function(screen){
-        console.log(screen)
+        //console.log(screen)
         this.innerHTML = render(screen);
         window.setTimeout(loop, 5000);
     })
     // file is truncated
     .fail(function(jqxhr, status, e){
-        console.log(e)
+        //console.log(e)
         window.setTimeout(loop, 5000)
     })
 })()
@@ -100,37 +100,42 @@ function render(screen)
         return style
     }
 
-    var default_style = elem2style(screen.style);
-
-    var terminal = '';
-    var previous_style = default_style
-    for (var lines of screen.data) {
-        var htmlline = ''
-        var style = previous_style
-        for (var line of lines) {
-            for (var e of line) {
-                //console.log(e)
-                if (e.s) {
-                    style = elem2style(e);
-                    htmlline += '<span style="' + style + '">' +
-                        e.s.replace(/&/g, '&amp;').replace(/</g, '&lt;') +
-                        '</span>';
-                }
-            }
-            previous_style = style
-        }
-        terminal += '<p>' + htmlline + '\n</p>';
-    }
+    var estyle = screen.style;
 
     var empty_line = '                                                               '
     while (empty_line.length < screen.columns) {
         empty_line += empty_line;
     }
 
+    var terminal = '';
+    for (var lines of screen.data) {
+        var htmlline = ''
+        for (var line of lines) {
+            var sz_s = 0;
+            for (var e of line) {
+                //console.log(e)
+                estyle.r = e.r || estyle.r
+                estyle.f = e.f || estyle.f
+                estyle.b = e.b || estyle.b
+                htmlline += '<span style="' + elem2style(estyle) + '">' +
+                    (e.s ? e.s.replace(/&/g, '&amp;').replace(/</g, '&lt;') : '') +
+                    '</span>'
+                sz_s += e.s ? e.s.length : 0
+            }
+            if (sz_s && sz_s < screen.columns) {
+                htmlline += '<span style="' + elem2style(estyle) + '">' +
+                    empty_line.substr(0, screen.columns - sz_s) +
+                    '</span>'
+            }
+        }
+        terminal += '<p>' + htmlline + '\n</p>';
+    }
+
     return '<p id="tty-player-title">' + (screen.title||'No Title') + '</p>'+
         '<div id="tty-player-terminal">' +
             terminal +
-            '<p>' + empty_line.substr(0, screen.columns) + '</p>' +
+            // force terminal width
+            //'<p>' + empty_line.substr(0, screen.columns) + '</p>' +
         '</div>'
     ;
 }

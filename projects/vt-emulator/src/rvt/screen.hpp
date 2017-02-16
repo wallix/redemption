@@ -488,6 +488,7 @@ private:
 
 public:
     std::vector<ImageLine> const & getScreenLines() const { return _screenLines;  }
+    std::vector<LineProperty> const & getScreenLinesProperties() const { return _lineProperties;  }
     ExtendedCharTable const & extendedCharTable() const { return _extendedCharTable;  }
 
 private:

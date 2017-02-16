@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "rvt/character.hpp" // TODO ucs4_char
+#include "rvt/character.hpp"
 #include "utils/sugar/array.hpp"
 
 namespace rvt  {
