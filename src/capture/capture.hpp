@@ -2796,7 +2796,7 @@ public:
                              this->chunk_type,
                              (this->chunk_count-this->remaining_order_count), this->chunk_count,
                              this->stream.in_remain(), this->chunk_size);
-                return false;
+                throw Error(ERR_WRM);
             }
         }
         if (!this->remaining_order_count){
@@ -2826,7 +2826,7 @@ public:
                     }
                     if (this->chunk_size > 65536){
                         LOG(LOG_ERR,"chunk_size (%d) > 65536", this->chunk_size);
-                        return false;
+                        throw Error(ERR_WRM);
                     }
                     this->stream = InStream(this->stream_buf);
                     if (this->chunk_size - HEADER_SIZE > 0) {
@@ -2837,15 +2837,12 @@ public:
                 }
             }
             catch (Error & e){
-                if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
-                    throw;
+                if (e.id == ERR_TRANSPORT_NO_MORE_DATA) {
+                    return false;
                 }
 
-                if (this->verbose) {
-                    LOG(LOG_ERR,"receive error \"%s\" (%u)", e.errmsg(false), e.id);
-                }
-                // receive error, end of transport
-                return false;
+                LOG(LOG_ERR,"receive error \"%s\" (%u)", e.errmsg(false), e.id);
+                throw;
             }
         }
         if (this->remaining_order_count > 0){this->remaining_order_count--;}
@@ -2889,7 +2886,7 @@ public:
                         this->process_windowing(stream, header);
                     break;
                     default:
-                        LOG(LOG_ERR, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
+                        LOG(LOG_WARNING, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
                         /* error, unknown order */
                     break;
                 }
