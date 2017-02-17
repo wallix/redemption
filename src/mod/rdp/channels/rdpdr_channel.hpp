@@ -1531,6 +1531,17 @@ public:
                                 !this->param_dont_log_data_into_syslog,
                                 "DRIVE_REDIRECTION_USE",
                                 info.c_str());
+
+                            if (!this->param_dont_log_data_into_wrm) {
+                                std::string message("UseRedirectedDevice=");
+                                if (device_name) { message += device_name->c_str(); }
+                                message += "<";
+                                message += rdpdr::DeviceAnnounceHeader::get_DeviceType_friendly_name(
+                                    device_type);
+                                message += ">";
+
+                                this->front.session_update(message);
+                            }
                         }
                     }
 
