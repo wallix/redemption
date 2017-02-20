@@ -1414,13 +1414,19 @@ class Engine(object):
 
         account_login = self.get_account_login(target)
         account_name = target['account_name']
+        domain_name = target['domain_cn']
+        if domain_name == AM_IL_DOMAIN:
+            domain_name = ""
         service_port = target['service_port']
         service_name = target['service_cn']
+        auth_name = target['auth_cn']
         conn_opts = target['connection_policy_data']
         return LoginInfo(account_login=account_login,
                          account_name=account_name,
+                         domain_name=domain_name,
                          target_name=target_name,
                          service_name=service_name,
+                         auth_name=auth_name,
                          device_host=device_host,
                          service_port=service_port,
                          conn_opts=conn_opts)
@@ -1490,12 +1496,20 @@ class PhysicalTarget(object):
         self.device_id = device_id
 
 class LoginInfo(object):
-    def __init__(self, account_login, account_name, target_name, service_name,
-                 device_host, service_port, conn_opts):
+    def __init__(self, account_login, account_name, domain_name, target_name,
+                 service_name, auth_name, device_host, service_port, conn_opts):
         self.account_login = account_login
         self.account_name = account_name
+        self.domain_name = domain_name
         self.target_name = target_name
         self.service_name = service_name
+        self.auth_name = auth_name
         self.device_host = device_host
         self.service_port = service_port
         self.conn_opts = conn_opts
+
+    def get_target_str(self):
+        return "%s%s@%s:%s:%s" % (self.account_name,
+                                  "@%s" % self.domain_name if self.domain_name
+                                  else '',
+                                  self.target_name, self.service_name, self.auth_name)

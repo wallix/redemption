@@ -27,6 +27,7 @@ extern "C" {
             get_trace_key_prototype * trace_fn);
 }
 
+
 enum { QUICK_CHECK_LENGTH = 4096 };
 
 

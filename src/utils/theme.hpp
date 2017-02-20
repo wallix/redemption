@@ -23,8 +23,7 @@
 
 #include "utils/colors.hpp"
 #include "cfgloader.hpp"
-#include "utils/parser.hpp"
-
+#include "utils/parse.hpp"
 
 struct Theme final : public ConfigurationHolder
 {
@@ -150,7 +149,7 @@ struct Theme final : public ConfigurationHolder
                 this->global.error_color = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "logo")){
-                this->global.logo = bool_from_cstr(value);
+                this->global.logo = Parse(reinterpret_cast<const uint8_t *>(value)).bool_from_cstr();
             }
         }
         else if (0 == strcmp(context, "edit")) {

@@ -79,7 +79,7 @@ private:
     Rect disconnect_now_button_rect;
     bool disconnect_now_button_clicked = false;
 
-    auth_api* authentifier = nullptr;
+    auth_api& authentifier;
 
     bool has_previous_window = false;
 
@@ -115,7 +115,7 @@ public:
 
     RemoteProgramsSessionManager(FrontAPI& front, mod_api& mod, Translation::language_t lang,
                                  uint16_t front_width, uint16_t front_height,
-                                 Font const & font, Theme const & theme, auth_api * authentifier,
+                                 Font const & font, Theme const & theme, auth_api & authentifier,
                                  char const * session_probe_window_title,
                                  ClientExecute * client_execute, RDPVerbose verbose)
     : front(front)
@@ -194,7 +194,7 @@ public:
             if (!(device_flags & SlowPath::PTRFLAGS_DOWN) &&
                 (this->disconnect_now_button_rect.contains_pt(x, y))) {
                 LOG(LOG_INFO, "RemoteApp session initiated disconnect by user");
-                this->authentifier->disconnect_target();
+                this->authentifier.disconnect_target();
                 throw Error(ERR_DISCONNECT_BY_USER);
             }
         }
@@ -208,7 +208,7 @@ public:
         (void)param2;
         if ((28 == param1) && !(device_flags & SlowPath::KBDFLAGS_RELEASE)) {
             LOG(LOG_INFO, "RemoteApp session initiated disconnect by user");
-            this->authentifier->disconnect_target();
+            this->authentifier.disconnect_target();
             throw Error(ERR_DISCONNECT_BY_USER);
         }
     }
@@ -472,7 +472,7 @@ private:
             order.NumVisibilityRects(1);
             order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->protected_rect.cx, this->protected_rect.cy));
 
-            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+            if (this->verbose & RDPVerbose::rail) {
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
@@ -493,7 +493,7 @@ private:
             order.NumWindowIds(1);
             order.window_ids(0, this->dialog_box_window_id);
 
-            /*if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) */{
+            if (this->verbose & RDPVerbose::rail) {
                 StaticOutStream<256> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
@@ -520,7 +520,7 @@ private:
                 );
             order.header.WindowId(this->dialog_box_window_id);
 
-            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+            if (this->verbose & RDPVerbose::rail) {
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
@@ -695,7 +695,7 @@ public:
             order.NumVisibilityRects(1);
             order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, window_rect.cx, window_rect.cy));
 
-            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+            if (this->verbose & RDPVerbose::rail) {
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
@@ -718,7 +718,7 @@ public:
                 );
             order.header.WindowId(this->auxiliary_window_id);
 
-            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+            if (this->verbose & RDPVerbose::rail) {
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);

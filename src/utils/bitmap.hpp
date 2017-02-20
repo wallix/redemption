@@ -343,7 +343,7 @@ public:
         }
 
         this->data_bitmap = DataBitmap::construct(src_bmp.bpp(), r.cx, r.cy);
-        if (this->bpp() == 8){
+        if (this->bpp() == 8) {
             this->data_bitmap->palette() = src_bmp.data_bitmap->palette();
         }
 

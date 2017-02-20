@@ -96,7 +96,7 @@ class Session {
           FILE   * perf_file;
 
     static const time_t select_timeout_tv_sec = 3;
-    
+
     Authentifier authentifier;
 
 public:
@@ -104,11 +104,11 @@ public:
             : ini(ini)
             , perf_last_info_collect_time(0)
             , perf_pid(getpid())
-            , perf_file(nullptr) 
+            , perf_file(nullptr)
             , authentifier(Authentifier::Verbose(to_verbose_flags(ini.get<cfg::debug::auth>())))
     {
         try {
-        
+
             TRANSLATIONCONF.set_ini(&ini);
 
             SocketTransport front_trans(
@@ -123,7 +123,7 @@ public:
             time_t now = time(nullptr);
 
             this->front = new Front( front_trans, rnd
-                                   , this->ini, cctx, &authentifier, this->ini.get<cfg::client::fast_path>(), mem3blt_support
+                                   , this->ini, cctx, authentifier, this->ini.get<cfg::client::fast_path>(), mem3blt_support
                                    , now);
 
             ModuleManager mm(*this->front, this->ini, rnd, this->timeobj);
@@ -394,7 +394,7 @@ public:
                                     signal = BACK_EVENT_NEXT;
                                 }
                                 catch (...) {
-                                    mm.invoke_close_box("No authentifier available",signal, now);
+                                    mm.invoke_close_box("No authentifier available",signal, now, this->authentifier);
                                 }
                             }
                         }
@@ -438,7 +438,7 @@ public:
                         }
 
                         if (this->acl_serial) {
-                            run_session = this->acl_serial->check(&this->authentifier, mm, now, signal, front_signal, this->front->has_user_activity);
+                            run_session = this->acl_serial->check(this->authentifier, mm, now, signal, front_signal, this->front->has_user_activity);
                         }
                         else if (signal == BACK_EVENT_STOP) {
                             mm.mod->get_event().reset();
@@ -458,7 +458,7 @@ public:
                 } catch (Error & e) {
                     LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
                     time_t now = time(nullptr);
-                    mm.invoke_close_box(e.errmsg(), signal, now);
+                    mm.invoke_close_box(e.errmsg(), signal, now, this->authentifier);
                 };
             }
             if (mm.mod) {

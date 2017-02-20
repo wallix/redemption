@@ -279,7 +279,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         , is_socket_transport
         , mod_vnc::ClipboardEncodingType::UTF8
         , bogus_clipboard_infinite_loop
-        , &authentifier       // acl
+        , authentifier       // acl
         , verbose);
     mod.get_event().set();
 

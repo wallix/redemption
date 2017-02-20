@@ -51,8 +51,8 @@ struct LocallyIntegrableMod : public InternalMod {
         : mod_(mod)
         {}
 
-        void operator()(time_t now, gdi::GraphicApi& drawable) override {
-            this->mod_.process_first_click_down_event(now, drawable);
+        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+            this->mod_.process_first_click_down_event(now, event, drawable);
         }
     } first_click_down_event_handler;
 
@@ -82,7 +82,7 @@ struct LocallyIntegrableMod : public InternalMod {
         InternalMod::get_event_handlers(out_event_handlers);
     }
 
-    void process_first_click_down_event(time_t, gdi::GraphicApi&) {
+    void process_first_click_down_event(time_t, wait_obj* /*event*/, gdi::GraphicApi&) {
         if (this->first_click_down_event.object_and_time &&
             this->first_click_down_event.waked_up_by_time) {
             this->cancel_double_click_detection();

@@ -129,13 +129,13 @@ public:
         if (!bLaunchSuccessful) {
             if (!this->drive_redirection_initialized) {
                 LOG(LOG_ERR,
-                    "SessionProbeClipboardBasedLauncher :=> "
+                    "SessionProbeAlternateShellBasedLauncher :=> "
                         "File System Virtual Channel is unavailable. "
                         "Please allow the drive redirection in the Remote Desktop Services settings of the target.");
             }
             else if (!this->image_readed) {
                 LOG(LOG_ERR,
-                    "SessionProbeClipboardBasedLauncher :=> "
+                    "SessionProbeAlternateShellBasedLauncher :=> "
                         "Session Probe is not launched. "
                         "Maybe something blocks it on the target. "
                         "Is the target running under Microsoft Server products? "
@@ -144,7 +144,7 @@ public:
             }
             else {
                 LOG(LOG_ERR,
-                    "SessionProbeClipboardBasedLauncher :=> "
+                    "SessionProbeAlternateShellBasedLauncher :=> "
                         "Session Probe launch has failed for unknown reason.");
             }
         }

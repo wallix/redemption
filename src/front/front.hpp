@@ -541,6 +541,7 @@ private:
             }
 
             assert(this->gd);
+
             return *this->gd;
         }
     } orders;
@@ -664,7 +665,7 @@ private:
 
     rdp_mppc_enc * mppc_enc;
 
-    auth_api * authentifier;
+    auth_api & authentifier;
     bool       auth_info_sent;
 
     uint16_t rail_channel_id = 0;
@@ -719,12 +720,15 @@ public:
 
     BGRPalette const & get_palette() const { return this->mod_palette_rgb; }
 
+    // TODO: this is temporary, to remove after refactoring capture code
+    char basename[1024];
+
 public:
     Front(  Transport & trans
           , Random & gen
           , Inifile & ini
           , CryptoContext & cctx
-          , auth_api * authentifier
+          , auth_api & authentifier
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
           , time_t now
@@ -862,14 +866,6 @@ public:
 
         this->mod_bpp = bpp;
 
-        {
-            gdi::GraphicApi & gd_orders = this->orders.initialize_drawable(this->client_info.bpp);
-
-            if (!this->capture) {
-                this->set_gd(gd_orders);
-            }
-        }
-
         if (bpp == 8) {
             this->palette_sent = false;
             for (bool & b : this->palette_memblt_sent) {
@@ -990,13 +986,6 @@ public:
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16) ? 16 : 24);
         // TODO remove this after unifying capture interface
         bool full_video = false;
-        PngParams png_params = {
-                0, 0,
-                ini.get<cfg::video::png_interval>(),
-                100u,
-                ini.get<cfg::video::png_limit>(),
-                true
-        };
         FlvParams flv_params = flv_params_from_ini(this->client_info.width, this->client_info.height, ini);
 
         GraphicToFile::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
@@ -1009,14 +998,11 @@ public:
         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
         TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
-        WrmParams wrm_params = {};
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = ini.get<cfg::video::record_path>().c_str();
         const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
 
         bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        bool capture_png = bool(capture_flags & CaptureFlags::png)
-                        && (png_params.png_limit > 0);
         bool capture_pattern_checker = (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
                 || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
 
@@ -1039,19 +1025,6 @@ public:
                 ini.get<cfg::ocr::interval>()
         };
 
-        if (ini.get<cfg::debug::capture>()) {
-            LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
-                capture_wrm ?"wrm ":"",
-                capture_png ?"png ":"",
-                capture_kbd ? 1 : 0,
-                capture_flv ?"flv ":"",
-                capture_flv_full ?"flv_full ":"",
-                capture_pattern_checker ?"pattern ":"",
-                capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
-                capture_meta?"meta ":""
-            );
-        }
-
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
         const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
@@ -1067,27 +1040,112 @@ public:
             LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
         }
 
-        this->capture = new Capture(  capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
-                                    , capture_png, png_params
-                                    , capture_pattern_checker
-                                    , capture_ocr, ocr_params
-                                    , capture_flv
-                                    , capture_flv_full
-                                    , capture_meta
-                                    , capture_kbd
+        char path[1024];
+//        char basename[1024];
+        char extension[128];
 
+        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
+        strcpy(this->basename, movie_path);
+        strcpy(extension, "");          // extension is currently ignored
+
+        if (!canonical_path(movie_path, path, sizeof(path), this->basename, sizeof(this->basename), extension, sizeof(extension))
+        ) {
+            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
+            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
+        }
+
+        PngParams png_params = {
+                0, 0,
+                ini.get<cfg::video::png_interval>(),
+                100u,
+                ini.get<cfg::video::png_limit>(),
+                true,
+                &this->authentifier,
+                record_tmp_path,
+                this->basename,
+                groupid
+        };
+        bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
+
+        if (ini.get<cfg::debug::capture>()) {
+            LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
+                capture_wrm ?"wrm ":"",
+                capture_png ?"png ":"",
+                capture_kbd ? 1 : 0,
+                capture_flv ?"flv ":"",
+                capture_flv_full ?"flv_full ":"",
+                capture_pattern_checker ?"pattern ":"",
+                capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
+                capture_meta?"meta ":""
+            );
+        }
+
+        MetaParams meta_params;
+        KbdLogParams kbdlog_params;
+        PatternCheckerParams patter_checker_params;
+        SequencedVideoParams sequenced_video_params;
+        FullVideoParams full_video_params;
+
+        WrmParams wrm_params(
+            this->capture_bpp,
+            wrm_trace_type,
+            this->cctx,
+            this->gen,
+            record_path,
+            hash_path,
+            basename,
+            groupid,
+            wrm_frame_interval,
+            wrm_break_interval,
+            wrm_compression_algorithm,
+            int(wrm_verbose)
+        );
+
+        const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
+        const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
+        int debug_capture = ini.get<cfg::debug::capture>();
+        bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
+        bool meta_enable_session_log = ini.get<cfg::session_log::enable_session_log>();
+        const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
+        bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
+        bool rt_display = ini.get<cfg::video::rt_display>();
+        bool disable_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm);
+        bool session_log_enabled = ini.get<cfg::session_log::enable_session_log>();
+        bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
+             != ::KeyboardInputMaskingLevel::fully_masked;
+        bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
+
+        this->capture = new Capture(
+                                      capture_wrm, wrm_params
+                                    , capture_png, png_params
+                                    , capture_pattern_checker, patter_checker_params
+                                    , capture_ocr, ocr_params
+                                    , capture_flv, sequenced_video_params
+                                    , capture_flv_full, full_video_params
+                                    , capture_meta, meta_params
+                                    , capture_kbd, kbdlog_params
+                                    , this->basename
                                     , now
                                     , this->client_info.width, this->client_info.height
                                     , this->mod_bpp, this->capture_bpp
                                     , record_tmp_path
                                     , record_path
                                     , groupid
-                                    , hash_path
-                                    , movie_path
                                     , flv_params
-                                    , false, this->authentifier
-                                    , ini, this->cctx, this->gen
+                                    , false, &this->authentifier
                                     , nullptr
+                                    , pattern_kill
+                                    , pattern_notify
+                                    , debug_capture
+                                    , flv_capture_chunk
+                                    , meta_enable_session_log
+                                    , flv_break_interval
+                                    , syslog_keyboard_log
+                                    , rt_display
+                                    , disable_keyboard_log
+                                    , session_log_enabled
+                                    , keyboard_fully_masked
+                                    , meta_keyboard_log
                                     );
         if (this->nomouse) {
             this->capture->set_pointer_display();
@@ -1096,7 +1154,7 @@ public:
         this->capture_state = CAPTURE_STATE_STARTED;
         if (this->capture->get_graphic_api()) {
             this->set_gd(this->capture->get_graphic_api());
-            this->capture->add_graphic(this->orders.graphics_update_pdu());
+            this->capture->add_graphic(this->orders.get_graphics_api());
         }
 
         this->update_keyboard_input_mask_state();
@@ -1135,7 +1193,7 @@ public:
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
-            this->capture->snapshot(
+            this->capture->periodic_snapshot(
                 now, this->mouse_x, this->mouse_y
               , false  // ignore frame in time interval
             );
@@ -3270,9 +3328,9 @@ private:
                         LOG(LOG_INFO, "Receiving from client CAPSTYPE_GLYPHCACHE");
                     }
                     this->client_glyphcache_caps.recv(stream, capset_length);
-                    if (this->verbose) {
+                    //if (this->verbose) {
                         this->client_glyphcache_caps.log("Receiving from client");
-                    }
+                    //}
                     for (uint8_t i = 0; i < NUMBER_OF_GLYPH_CACHES; ++i) {
                         this->client_info.number_of_entries_in_glyph_cache[i] =
                             this->client_glyphcache_caps.GlyphCache[i].CacheEntries;
@@ -4110,6 +4168,9 @@ private:
                 if (this->verbose & (Verbose::basic_trace4 | Verbose::basic_trace)) {
                     LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");
                 }
+
+                this->set_gd(this->orders.initialize_drawable(this->client_info.bpp));
+
                 this->up_and_running = 1;
                 this->timeout.cancel_timeout();
                 cb.rdp_input_up_and_running();
@@ -4354,8 +4415,145 @@ protected:
         this->priv_draw_and_update_cache_brush(cmd, clip, color_ctx);
     }
 
+public:
+    using Color = Drawable::Color;
+
+    Color u32_to_color(uint32_t color) const {
+        return {uint8_t(color >> 16), uint8_t(color >> 8), uint8_t(color)};
+    }
+
+    Color u32rgb_to_color(gdi::ColorCtx color_ctx, BGRColor color) const {
+        using gdi::Depth;
+
+        switch (color_ctx.depth()){
+            // TODO color_ctx.palette()
+            case Depth::depth8():  color = decode_color8_opaquerect()(color, this->mod_palette_rgb); break;
+            case Depth::depth15(): color = decode_color15_opaquerect()(color); break;
+            case Depth::depth16(): color = decode_color16_opaquerect()(color); break;
+            case Depth::depth24(): break;
+            case Depth::unspecified(): default: REDASSERT(false);
+        }
+
+        return this->u32_to_color(color);
+    }
+
+    typedef struct GlyphTo24Bitmap {
+
+        uint8_t raw_data[256*3];
+
+        GlyphTo24Bitmap( FontChar const & fc
+                     , const Color color_fore
+                     , const Color color_back) {
+
+            for (int i = 0; i < 256*3; i += 3) {
+                this->raw_data[i  ] = color_fore.red();
+                this->raw_data[i+1] = color_fore.green();
+                this->raw_data[i+2] = color_fore.blue();
+            }
+
+            int height_bitmap = fc.height;
+            if (fc.width == 8) {
+                height_bitmap *=  2;
+            }
+
+            const uint8_t * fc_data = fc.data.get();
+
+            for (int y = 0 ; y < height_bitmap; y++) {
+                uint8_t   fc_bit_mask        = 128;
+                for (int x = 0 ; x < fc.width; x++) {
+                    if (!fc_bit_mask) {
+                        fc_data++;
+                        fc_bit_mask = 128;
+                    }
+
+                    const uint16_t xpix = x * 3;
+                    const uint16_t ypix = y * fc.width * 3;
+
+                    if (fc_bit_mask & *fc_data) {
+                        this->raw_data[xpix + ypix    ] = color_back.blue();
+                        this->raw_data[xpix + ypix + 1] = color_back.green();
+                        this->raw_data[xpix + ypix + 2] = color_back.red();
+                    }
+                    fc_bit_mask >>= 1;
+                }
+                fc_data++;
+            }
+        }
+    } GlyphTo24Bitmap;
+
+
+protected:
     void draw_impl(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) {
-        this->priv_draw_and_update_cache_brush(cmd, clip, color_ctx, gly_cache);
+
+        if (this->client_glyphcache_caps.GlyphSupportLevel == GlyphCacheCaps::GLYPH_SUPPORT_NONE) {
+            bool has_delta_bytes = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
+            const Color color_fore = this->u32rgb_to_color(color_ctx, cmd.fore_color);
+            const Color color_back = this->u32rgb_to_color(color_ctx, cmd.back_color);
+
+            uint16_t draw_pos_ref = 0;
+            InStream variable_bytes(cmd.data, cmd.data_len);
+
+            while (variable_bytes.in_remain()) {
+                uint8_t data = variable_bytes.in_uint8();
+                if (data <= 0xFD) {
+                    FontChar const & fc = gly_cache.glyphs[cmd.cache_id][data].font_item;
+                    if (!fc) {
+                        REDASSERT(fc);
+                    }
+
+                    if (has_delta_bytes) {
+                        data = variable_bytes.in_uint8();
+                        if (data == 0x80) {
+                            draw_pos_ref += variable_bytes.in_uint16_le();
+                        }
+                        else {
+                            draw_pos_ref += data;
+                        }
+                    }
+
+                    if (fc) {
+                        const int16_t x = cmd.bk.x + draw_pos_ref;
+                        const int16_t y = cmd.bk.y;
+
+                        const Rect rect = clip.intersect(Rect(x, y, fc.width, fc.height));
+                        if (rect.cx != 0 && rect.cy != 0) {
+
+                            GlyphTo24Bitmap glyphBitmap(fc, color_fore, color_back);
+
+                            RDPBitmapData rDPBitmapData;
+                            rDPBitmapData.dest_left = rect.x;
+                            rDPBitmapData.dest_top = rect.y;
+                            rDPBitmapData.dest_right = rect.cx + rect.x - 1;
+                            rDPBitmapData.dest_bottom = rect.cy + rect.y - 1;
+                            rDPBitmapData.width = rect.cx;
+                            rDPBitmapData.height = rect.cy;
+                            rDPBitmapData.bits_per_pixel = 24;
+                            rDPBitmapData.flags = 0x0401;
+                            rDPBitmapData.bitmap_length = rect.cx * rect.cy * 3;
+
+                             // Compressed Data Header (TS_CD_HEADER)
+//                             rDPBitmapData.cb_comp_main_body_size;
+//                             rDPBitmapData.cb_scan_width;
+//                             rDPBitmapData.cb_uncompressed_size;
+
+                            //RDPMemBlt cmd(cmd.cache_id, rect, 0xCC, rect.x, rect.y, 0);
+                            const Rect tile(rect.x - x, rect.y - y, rect.cx, rect.cy);
+                            Bitmap bmp(glyphBitmap.raw_data, fc.width, 16, 24, tile);
+                            draw_impl(rDPBitmapData, bmp);
+                        }
+                    }
+                }
+                else if (data == 0xFE) {
+                     LOG(LOG_WARNING, "Glyph fragment not implemented yet");
+                }
+                else if (data == 0xFF)  {
+                    LOG(LOG_WARNING, "Glyph fragment not implemented yet");
+                }
+            }
+
+        } else {
+            this->priv_draw_and_update_cache_brush(cmd, clip, color_ctx, gly_cache);
+        }
     }
 
     void draw_impl(RDPBitmapData const & bitmap_data, Bitmap const & bmp) {

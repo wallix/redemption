@@ -41,7 +41,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <time.h>
+#include <ctime>
 
 #define LOG_SESSION(normal_log, session_log, session_type, type, session_id,    \
         ip_client, ip_target, user, device, service, account, priority, format, \
@@ -206,7 +206,7 @@ public:
             // Keep alive timeout
             if (now > this->timeout) {
                 LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
-                // mm.invoke_close_box("Missed keepalive from ACL", signal, now);
+                // mm.invoke_close_box("Missed keepalive from ACL", signal, now, authentifier);
                 return true;
             }
 
@@ -275,7 +275,7 @@ public:
         if (!has_user_activity) {
             if (now > this->last_activity_time + this->inactivity_timeout) {
                 LOG(LOG_INFO, "Session User inactivity : closing");
-                // mm.invoke_close_box("Connection closed on inactivity", signal, now);
+                // mm.invoke_close_box("Connection closed on inactivity", signal, now, authentifier);
                 return true;
             }
         }
@@ -294,16 +294,13 @@ class AclSerializer{
 
 public:
     Inifile & ini;
-    
+
 private:
     Transport & auth_trans;
-    
 
-    
     char session_id[256];
 
 public:
-
     std::string session_type;
 
     bool remote_answer;       // false initialy, set to true once response is
@@ -311,7 +308,7 @@ public:
                               // set to false
 
     KeepAlive keepalive;
-    
+
     Inactivity inactivity;
 
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
@@ -330,7 +327,7 @@ public:
         , remote_answer(false)
         , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), to_verbose_flags(ini.get<cfg::debug::auth>()))
         , inactivity(ini.get<cfg::globals::session_timeout>(), acl_start_time, to_verbose_flags(ini.get<cfg::debug::auth>()))
-        
+
         , verbose(verbose)
     {
         std::snprintf(this->session_id, sizeof(this->session_id), "%d", getpid());
@@ -368,7 +365,7 @@ public:
         try {
             this->incoming();
 
-            if (!this->ini.get<cfg::context::module>().compare("RDP") 
+            if (!this->ini.get<cfg::context::module>().compare("RDP")
             ||  !this->ini.get<cfg::context::module>().compare("VNC")) {
                 this->session_type = this->ini.get<cfg::context::module>();
             }
@@ -389,7 +386,7 @@ public:
         }
     }
 
-    void log4(bool duplicate_with_pid, const char * type, const char * extra) 
+    void log4(bool duplicate_with_pid, const char * type, const char * extra)
     {
         const bool session_log =
             this->ini.get<cfg::session_log::enable_session_log>();
@@ -403,24 +400,17 @@ public:
             std::ofstream log_file(filename, std::ios::app);
 
             if(!log_file.is_open()) {
-                LOG(LOG_INFO, "auth::bad SIEM log file creation");
+                LOG(LOG_INFO, "auth::Bad SIEM log file creation");
             }
             else {
-                time_t seconds = time(nullptr);
-                struct tm * timeinfo = localtime(&seconds);
-                log_file << (1900+timeinfo->tm_year) << "-";
-                log_file << (timeinfo->tm_mon+1) << "-" << timeinfo->tm_mday << " " << timeinfo->tm_hour << ":" <<timeinfo->tm_min << ":" <<timeinfo->tm_sec << " ";
+                std::time_t t = std::time(NULL);
+                char mbstr[100];
+                if (std::strftime(mbstr, sizeof(mbstr), "%F %T", std::localtime(&t))) {
+                    log_file << mbstr;
+                }
+
                 log_file << " [" << (this->session_type.empty() ? "Neutral" : this->session_type.c_str()) << " Session] " << " " ;
                 log_file << "type=" << type << " " ;
-                log_file << "session_id=" << this->ini.get<cfg::context::session_id>() << " " ;
-                log_file << "client_ip=" << this->ini.get<cfg::globals::host>() << " " ;
-                log_file << "target_ip=" << (isdigit(this->ini.get<cfg::context::target_host>()[0]) ?
-                                             this->ini.get<cfg::context::target_host>() :
-                                             this->ini.get<cfg::context::ip_target>()) << " " ;
-                log_file << "user=" << this->ini.get<cfg::globals::auth_user>() << " " ;
-                log_file << "device=" << this->ini.get<cfg::globals::target_device>() << " " ;
-                log_file << "service=" << this->ini.get<cfg::context::target_service>() << " " ;
-                log_file << "account=" << this->ini.get<cfg::globals::target_user>() << " " ;
                 log_file << (extra ? extra : "") << std::endl;
                 log_file.close();
             }
@@ -448,7 +438,7 @@ public:
                    );
     }
 
-    bool check(auth_api * authentifier, MMApi & mm, time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity) {
+    bool check(auth_api & authentifier, MMApi & mm, time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity) {
         //LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u",
         //    (unsigned)now, static_cast<unsigned>(signal));
         if (signal == BACK_EVENT_STOP) {
@@ -468,7 +458,7 @@ public:
         if (enddate != 0 && (static_cast<uint32_t>(now) > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             const char * message = TR("session_out_time", language(this->ini));
-            mm.invoke_close_box(message, signal, now);
+            mm.invoke_close_box(message, signal, now, authentifier);
 
             return true;
         }
@@ -481,19 +471,19 @@ public:
             LOG(LOG_INFO, "Close by Rejected message received : %s",
                 this->ini.get<cfg::context::rejected>());
             this->ini.set_acl<cfg::context::rejected>("");
-            mm.invoke_close_box(nullptr, signal, now);
+            mm.invoke_close_box(nullptr, signal, now, authentifier);
             return true;
         }
 
         // Keep Alive
         if (this->keepalive.check(now, this->ini)) {
-            mm.invoke_close_box(TR("miss_keepalive", language(this->ini)), signal, now);
+            mm.invoke_close_box(TR("miss_keepalive", language(this->ini)), signal, now, authentifier);
             return true;
         }
 
         // Inactivity management
         if (this->inactivity.check_user_activity(now, has_user_activity)) {
-            mm.invoke_close_box(TR("close_inactivity", language(this->ini)), signal, now);
+            mm.invoke_close_box(TR("close_inactivity", language(this->ini)), signal, now, authentifier);
             return true;
         }
 
@@ -510,8 +500,8 @@ public:
                 this->send_acl_data();
             }
         }
-        else if (this->remote_answer 
-        || (signal == BACK_EVENT_RETRY_CURRENT) 
+        else if (this->remote_answer
+        || (signal == BACK_EVENT_RETRY_CURRENT)
         || (front_signal == BACK_EVENT_NEXT)) {
             this->remote_answer = false;
             if (signal == BACK_EVENT_REFRESH) {
@@ -522,10 +512,10 @@ public:
                 mm.mod->get_event().signal = BACK_EVENT_NONE;
                 mm.mod->get_event().set();
             }
-            else if ((signal == BACK_EVENT_NEXT) 
-                    || (signal == BACK_EVENT_RETRY_CURRENT) 
+            else if ((signal == BACK_EVENT_NEXT)
+                    || (signal == BACK_EVENT_RETRY_CURRENT)
                     || (front_signal == BACK_EVENT_NEXT)) {
-                if ((signal == BACK_EVENT_NEXT) 
+                if ((signal == BACK_EVENT_NEXT)
                    || (front_signal == BACK_EVENT_NEXT)) {
                     LOG(LOG_INFO, "===========> MODULE_NEXT");
                 }
@@ -535,7 +525,7 @@ public:
                     LOG(LOG_INFO, "===========> MODULE_RETRY_CURRENT");
                 }
 
-                int next_state = (((signal == BACK_EVENT_NEXT) 
+                int next_state = (((signal == BACK_EVENT_NEXT)
                                   || (front_signal == BACK_EVENT_NEXT)) ? mm.next_module() : MODULE_RDP);
 
                 front_signal = BACK_EVENT_NONE;
@@ -548,11 +538,14 @@ public:
 
                 signal = BACK_EVENT_NONE;
                 if (next_state == MODULE_INTERNAL_CLOSE) {
-                    mm.invoke_close_box(nullptr, signal, now);
+                    mm.invoke_close_box(nullptr, signal, now, authentifier);
                     return true;
                 }
                 if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
                     this->keepalive.stop();
+                }
+                if (mm.mod) {
+                    mm.mod->disconnect(now);
                 }
                 mm.remove_mod();
                 try {
@@ -577,7 +570,7 @@ public:
                         const char * password = char_ptr_cast(this->ini.get<cfg::mod_rdp::redir_info>().password);
                         const char * username = char_ptr_cast(this->ini.get<cfg::mod_rdp::redir_info>().username);
                         const char * change_user = "";
-                        if (this->ini.get<cfg::mod_rdp::redir_info>().dont_store_username 
+                        if (this->ini.get<cfg::mod_rdp::redir_info>().dont_store_username
                         && (username[0] != 0)) {
                             LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
                             this->ini.set_acl<cfg::globals::target_user>(username);
@@ -969,7 +962,4 @@ public:
             this->ini.clear_send_index();
         }
     }
-    
-    
-    
 };

@@ -31,4 +31,9 @@ struct PngParams
     unsigned zoom;
     uint32_t png_limit;
     bool real_time_image_capture;
+    auth_api * authentifier;
+    // TODO: record_tmp_path and basename should be copied, we have no control of these variable lifecycles
+    const char * record_tmp_path;
+    const char * basename;
+    int groupid;
 };

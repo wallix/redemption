@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     const bool fastpath_support = true;
     const bool mem3blt_support  = false;
     FakeAuthentifier authentifier;
-    Front front( front_trans, gen, ini, cctx, &authentifier, fastpath_support, mem3blt_support, now);
+    Front front( front_trans, gen, ini, cctx, authentifier, fastpath_support, mem3blt_support, now);
     null_mod no_mod(front);
 
     while (front.up_and_running == 0) {

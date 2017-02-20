@@ -26,9 +26,6 @@
 #define BOOST_TEST_MODULE TestConfig
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
-
 #define LOGNULL
 // #define LOGPRINT
 
@@ -161,7 +158,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_int>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
@@ -480,7 +477,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_int>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
@@ -702,7 +699,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_int>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
@@ -888,7 +885,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_int>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
@@ -1085,7 +1082,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_int>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
@@ -1257,7 +1254,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_int>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
@@ -1429,7 +1426,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_int>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
@@ -1588,7 +1585,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_int>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
@@ -1748,7 +1745,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_int>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());

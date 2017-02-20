@@ -23,6 +23,8 @@
 
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/rail_session_manager.hpp"
+#include "mod/rdp/channels/sespro_channel.hpp"
+#include "utils/log.hpp"
 
 class FrontAPI;
 
@@ -34,25 +36,43 @@ private:
 
     //FrontAPI& front;
 
-    uint16_t param_client_execute_flags;
-
+       uint16_t param_client_execute_flags;
     std::string param_client_execute_exe_or_file;
     std::string param_client_execute_working_dir;
     std::string param_client_execute_arguments;
 
-    RemoteProgramsSessionManager * param_rail_session_manager;
+       uint16_t param_client_execute_flags_2;
+    std::string param_client_execute_exe_or_file_2;
+    std::string param_client_execute_working_dir_2;
+    std::string param_client_execute_arguments_2;
+
+    RemoteProgramsSessionManager * param_rail_session_manager = nullptr;
 
     bool client_execute_pdu_sent = false;
 
+    SessionProbeVirtualChannel * session_probe_channel = nullptr;
+
+    SessionProbeLauncher* session_probe_stop_launch_sequence_notifier = nullptr;
+
+    bool exe_or_file_2_sent = false;
+
+    bool log_exe_or_file_2 = false;
+
 public:
     struct Params : public BaseVirtualChannel::Params {
-        uint16_t client_execute_flags;
-
+           uint16_t client_execute_flags;
         const char* client_execute_exe_or_file;
         const char* client_execute_working_dir;
         const char* client_execute_arguments;
 
+           uint16_t client_execute_flags_2;
+        const char* client_execute_exe_or_file_2;
+        const char* client_execute_working_dir_2;
+        const char* client_execute_arguments_2;
+
         RemoteProgramsSessionManager * rail_session_manager;
+
+        Params(auth_api & authentifier) : BaseVirtualChannel::Params(authentifier) {}
     };
 
     RemoteProgramsVirtualChannel(
@@ -63,11 +83,14 @@ public:
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          params)
-    //, front(front)
     , param_client_execute_flags(params.client_execute_flags)
     , param_client_execute_exe_or_file(params.client_execute_exe_or_file)
     , param_client_execute_working_dir(params.client_execute_working_dir)
     , param_client_execute_arguments(params.client_execute_arguments)
+    , param_client_execute_flags_2(params.client_execute_flags_2)
+    , param_client_execute_exe_or_file_2(params.client_execute_exe_or_file_2)
+    , param_client_execute_working_dir_2(params.client_execute_working_dir_2)
+    , param_client_execute_arguments_2(params.client_execute_arguments_2)
     , param_rail_session_manager(params.rail_session_manager) {}
 
 protected:
@@ -213,7 +236,11 @@ private:
             cepdu.log(LOG_INFO);
         }
 
-        return true;
+        if (::strcasecmp(cepdu.ExeOrFile(), DUMMY_REMOTEAPP)) {
+            return true;
+        }
+
+        return false;
     }
 
     bool process_client_get_application_id_pdu(uint32_t total_length,
@@ -413,39 +440,43 @@ private:
             cspupdu.log(LOG_INFO);
         }
 
-        if (!this->client_execute_pdu_sent && !this->param_client_execute_exe_or_file.empty()) {
-            StaticOutStream<16384> out_s;
-            RAILPDUHeader header;
-            header.emit_begin(out_s, TS_RAIL_ORDER_EXEC);
+        if (!this->client_execute_pdu_sent) {
+            if (!this->param_client_execute_exe_or_file.empty()) {
+                StaticOutStream<16384> out_s;
+                RAILPDUHeader header;
+                header.emit_begin(out_s, TS_RAIL_ORDER_EXEC);
 
-            ClientExecutePDU cepdu;
+                ClientExecutePDU cepdu;
 
-            cepdu.Flags(this->param_client_execute_flags);
-            cepdu.ExeOrFile(this->param_client_execute_exe_or_file.c_str());
-            cepdu.WorkingDir(this->param_client_execute_working_dir.c_str());
-            cepdu.Arguments(this->param_client_execute_arguments.c_str());
+                cepdu.Flags(this->param_client_execute_flags);
+                cepdu.ExeOrFile(this->param_client_execute_exe_or_file.c_str());
+                cepdu.WorkingDir(this->param_client_execute_working_dir.c_str());
+                cepdu.Arguments(this->param_client_execute_arguments.c_str());
 
-            cepdu.emit(out_s);
+                cepdu.emit(out_s);
 
-            header.emit_end();
+                header.emit_end();
 
-            const size_t   length = out_s.get_offset();
-            const uint32_t flags  =   CHANNELS::CHANNEL_FLAG_FIRST
-                                    | CHANNELS::CHANNEL_FLAG_LAST;
+                const size_t   length = out_s.get_offset();
+                const uint32_t flags  =   CHANNELS::CHANNEL_FLAG_FIRST
+                                        | CHANNELS::CHANNEL_FLAG_LAST;
 
-            {
-                const bool send              = true;
-                const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, length, flags,
-                    out_s.get_data(), length);
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags,
+                        out_s.get_data(), length);
+                }
+                if (this->verbose & RDPVerbose::rail) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
+                            "Send to server - Client Execute PDU");
+                    cepdu.log(LOG_INFO);
+                }
+
+                this->send_message_to_server(length, flags, out_s.get_data(),
+                    length);
             }
-            LOG(LOG_INFO,
-                "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                    "Send to server - Client Execute PDU");
-            cepdu.log(LOG_INFO);
-
-            this->send_message_to_server(length, flags, out_s.get_data(),
-                length);
 
             this->client_execute_pdu_sent = true;
         }
@@ -802,7 +833,100 @@ public:
             serpdu.log(LOG_INFO);
         }
 
-        return true;
+        if (serpdu.ExecResult() != RAIL_EXEC_S_OK) {
+            uint16_t ExecResult_ = serpdu.ExecResult();
+            LOG(LOG_WARNING,
+                "RemoteProgramsVirtualChannel::process_server_execute_result_pdu: "
+                    "Flags=0x%X ExecResult=%s(%d) RawResult=%u",
+                serpdu.Flags(),
+                get_RAIL_ExecResult_name(ExecResult_), ExecResult_,
+                serpdu.RawResult());
+        }
+        else {
+            if (!this->session_probe_channel ||
+                this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
+                std::string info("ExeOrFile='");
+                info += serpdu.ExeOrFile();
+                info += "'";
+                this->authentifier.log4(
+                    false,
+                    "CLIENT_EXECUTE_REMOTEAPP", info.c_str());
+            }
+        }
+
+        if (!this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
+            if (this->session_probe_channel) {
+                if (this->session_probe_stop_launch_sequence_notifier) {
+                    this->session_probe_stop_launch_sequence_notifier->stop(serpdu.ExecResult() == RAIL_EXEC_S_OK);
+                    this->session_probe_stop_launch_sequence_notifier = nullptr;
+                }
+
+                if (serpdu.ExecResult() != RAIL_EXEC_S_OK) {
+                    throw Error(ERR_SESSION_PROBE_LAUNCH);
+                }
+            }
+            else {
+                if (serpdu.ExecResult() != RAIL_EXEC_S_OK) {
+                    throw Error(ERR_RAIL_CLIENT_EXECUTE);
+                }
+            }
+
+            if (!this->exe_or_file_2_sent &&
+                !this->param_client_execute_exe_or_file_2.empty()) {
+                this->exe_or_file_2_sent = true;
+
+                StaticOutStream<16384> out_s;
+                RAILPDUHeader header;
+                header.emit_begin(out_s, TS_RAIL_ORDER_EXEC);
+
+                ClientExecutePDU cepdu;
+
+                cepdu.Flags(this->param_client_execute_flags_2);
+                cepdu.ExeOrFile(this->param_client_execute_exe_or_file_2.c_str());
+                cepdu.WorkingDir(this->param_client_execute_working_dir_2.c_str());
+                cepdu.Arguments(this->param_client_execute_arguments_2.c_str());
+
+                cepdu.emit(out_s);
+
+                header.emit_end();
+
+                const size_t   length = out_s.get_offset();
+                const uint32_t flags  =   CHANNELS::CHANNEL_FLAG_FIRST
+                                        | CHANNELS::CHANNEL_FLAG_LAST;
+
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags,
+                        out_s.get_data(), length);
+                }
+                LOG(LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_server_execute_result_pdu: "
+                        "Send to server - Client Execute PDU (2)");
+                cepdu.log(LOG_INFO);
+
+                this->send_message_to_server(length, flags, out_s.get_data(),
+                    length);
+            }
+        }
+        else if (!this->param_client_execute_exe_or_file_2.compare(serpdu.ExeOrFile())) {
+            if (this->session_probe_channel) {
+                this->session_probe_channel->start_end_session_check();
+            }
+
+            if (serpdu.ExecResult() != RAIL_EXEC_S_OK) {
+                if (serpdu.ExecResult() == RAIL_EXEC_E_NOT_IN_ALLOWLIST) {
+                    throw Error(ERR_RAIL_UNAUTHORIZED_PROGRAM);
+                }
+                else {
+                    throw Error(ERR_RAIL_STARTING_PROGRAM);
+                }
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     bool process_server_get_application_id_response_pdu(uint32_t total_length,
@@ -1181,4 +1305,12 @@ public:
                 chunk_data_length);
         }   // switch (this->server_order_type)
     }   // process_server_message
+
+    void set_session_probe_virtual_channel(SessionProbeVirtualChannel * session_probe_channel) {
+        this->session_probe_channel = session_probe_channel;
+    }
+
+    void set_session_probe_launcher(SessionProbeLauncher* launcher) {
+        this->session_probe_stop_launch_sequence_notifier = launcher;
+    }
 };

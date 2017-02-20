@@ -66,6 +66,7 @@ static inline int filesize(const char * path)
     if (status >= 0){
         return sb.st_size;
     }
+//    LOG(LOG_INFO, "%s", strerror(errno));
     return -1;
 }
 
