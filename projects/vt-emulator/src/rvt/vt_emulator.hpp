@@ -54,7 +54,6 @@ class VtEmulator
         Ansi            , // Use US Ascii for character sets G0-G3 (DECANM)
         Columns132      , // 80 <-> 132 column mode switch (DECCOLM)
         AllowColumns132 , // Allow DECCOLM mode
-        COUNT_          ,
     };
 
 public:

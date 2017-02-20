@@ -944,6 +944,10 @@ void VtEmulator::setMode(Mode m)
     case Mode::AppScreen :
         setScreen(1);
         break;
+
+    case Mode::AllowColumns132:
+    case Mode::Ansi:
+        break;
     }
 }
 
@@ -958,6 +962,10 @@ void VtEmulator::resetMode(Mode m)
 
     case Mode::AppScreen :
         setScreen(0);
+        break;
+
+    case Mode::AllowColumns132:
+    case Mode::Ansi:
         break;
     }
 }
