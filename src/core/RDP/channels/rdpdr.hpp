@@ -15,7 +15,7 @@
 *
 *   Product name: redemption, a FLOSS RDP proxy
 *   Copyright (C) Wallix 2010-2014
-*   Author(s): Jonathan Poelen
+*   Author(s): Jonathan Poelen, Clément Moroldo
 */
 
 
@@ -31,6 +31,7 @@
 #include "utils/utf.hpp"
 #include "core/SMB2/MessageSyntax.hpp"
 #include "core/FSCC/FileInformation.hpp"
+#include "core/ERREF/ntstatus.hpp"
 
 #include <vector>
 
@@ -704,6 +705,18 @@ public:
         return "<unknown>";
     }
 
+    static const char * get_DeviceType_friendly_name(uint32_t DeviceType) {
+        switch (DeviceType) {
+            case RDPDR_DTYP_SERIAL:     return "Serial port";
+            case RDPDR_DTYP_PARALLEL:   return "Parallel port";
+            case RDPDR_DTYP_PRINT:      return "Printer";
+            case RDPDR_DTYP_FILESYSTEM: return "File system";
+            case RDPDR_DTYP_SMARTCARD:  return "Smart card";
+        }
+
+        return "<unknown>";
+    }
+
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
@@ -732,7 +745,7 @@ public:
         LOG(LOG_INFO, "          * DeviceName       = \"%s\" (8 bytes)", DeviceName);
         LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->device_data.sz));
         std::string DeviceData(reinterpret_cast<const char *>(this->device_data.p), this->device_data.sz);
-        LOG(LOG_INFO, "          * DeviceData       = \"%s\" (%d byte(s))", DeviceData, int(this->device_data.sz));
+        LOG(LOG_INFO, "          * DeviceData       = \"%s\" (%d byte(s))", DeviceData, int(2*this->device_data.sz));
     }
 };  // DeviceAnnounceHeader
 
@@ -1210,7 +1223,7 @@ public:
         LOG(LOG_INFO, "          * CreateDisposition = 0x%08x (4 bytes): %s", this->CreateDisposition_, smb2::get_CreateDisposition_name(this->CreateDisposition_));
         LOG(LOG_INFO, "          * CreateOptions     = 0x%08x (4 bytes): %s", this->CreateOptions_, smb2::get_CreateOptions_name(this->CreateOptions_));
         LOG(LOG_INFO, "          * PathLength        = %d (4 bytes)", int(this->path.size()));
-        LOG(LOG_INFO, "          * Path              = \"%s\" (%d byte(s))", this->path, int(this->path.size()));
+        LOG(LOG_INFO, "          * Path              = \"%s\" (%d byte(s))", this->path, int(2*this->path.size()));
     }
 
 };  // DeviceCreateRequest
@@ -1693,7 +1706,7 @@ public:
         LOG(LOG_INFO, "     Device Control Request:");
         LOG(LOG_INFO, "          * OutputBufferLength = %d (4 bytes)", int(this->OutputBufferLength));
         LOG(LOG_INFO, "          * InputBufferLength  = %d (4 bytes)", int(this->input_buffer.sz));
-        LOG(LOG_INFO, "          * IoControlCode      = 0x%08x (4 bytes)", this->IoControlCode_);
+        LOG(LOG_INFO, "          * IoControlCode      = 0x%08x (4 bytes): %s", this->IoControlCode_, fscc::get_FSCTLStructures(this->IoControlCode_));
         LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
     }
 };  // DeviceControlRequest
@@ -1859,6 +1872,10 @@ public:
 
     uint32_t IoStatus() const { return this->IoStatus_; }
 
+    void set_IoStatus(uint32_t IoStatus) {
+        this->IoStatus_ = IoStatus;
+    }
+
     static size_t size() {
         return 12;  // DeviceId(4) + CompletionId(4) + IoStatus(4)
     }
@@ -1883,7 +1900,7 @@ public:
         LOG(LOG_INFO, "     Device I\\O Response:");
         LOG(LOG_INFO, "          * DeviceId     = 0x%08x (4 bytes)", this->DeviceId_);
         LOG(LOG_INFO, "          * CompletionId = 0x%08x (4 bytes)", this->CompletionId_);
-        LOG(LOG_INFO, "          * IoStatus     = 0x%08x (4 bytes)", this->IoStatus_);
+        LOG(LOG_INFO, "          * IoStatus     = 0x%08x (4 bytes): %s", this->IoStatus_, erref::get_NTStatus(this->IoStatus_));
     }
 };
 
@@ -1941,10 +1958,10 @@ public:
 //  | 0x00000003       |                                   |
 //  +------------------+-----------------------------------+
 
-enum {
-      FILE_SUPERSEDED  = 0x00000000
-    , FILE_OPENED      = 0x00000001
-    , FILE_OVERWRITTEN = 0x00000003
+enum : uint8_t {
+      FILE_SUPERSEDED  = 0x00
+    , FILE_OPENED      = 0x01
+    , FILE_OVERWRITTEN = 0x03
 };
 
 //  The values of the CreateDisposition field in the Device Create Request
@@ -2020,7 +2037,7 @@ public:
 
 
         this->FileId_     = stream.in_uint32_le();
-        if (stream.in_check_rem(5)) {
+        if (stream.in_check_rem(1)) {
             this->Information = stream.in_uint8();
         }
     }
@@ -2174,8 +2191,8 @@ struct DeviceReadResponse {
 
     void log() {
         LOG(LOG_INFO, "     Device Read Response:");
-        LOG(LOG_INFO, "          * Length   = %d (4 bytes)", int(this->ReadData.size()));
-        LOG(LOG_INFO, "          * ReadData - (%d byte(s))", int(this->ReadData.size()));
+        LOG(LOG_INFO, "          * Length   = %zu (4 bytes)", this->ReadData.size());
+        LOG(LOG_INFO, "          * ReadData - (%zu byte(s))", this->ReadData.size());
     }
 };
 
@@ -2721,8 +2738,8 @@ public:
         LOG(LOG_INFO, "     Client Name Request:");
         LOG(LOG_INFO, "          * UnicodeFlag     = 0x%08x (4 bytes)", this->UnicodeFlag);
         LOG(LOG_INFO, "          * CodePage        = 0x%08x (4 bytes)", this->CodePage);
-        LOG(LOG_INFO, "          * ComputerNameLen = %d (4 bytes)", int(this->computer_name.size()));
-        LOG(LOG_INFO, "          * ComputerName    = \"%s\" (%d byte(s))", this->computer_name, int(this->computer_name.size()));
+        LOG(LOG_INFO, "          * ComputerNameLen = %zu (4 bytes)", this->computer_name.size());
+        LOG(LOG_INFO, "          * ComputerName    = \"%s\" (%zu byte(s))", this->computer_name, this->computer_name.size());
     }
 
 };  // ClientNameRequest
@@ -3301,7 +3318,7 @@ public:
     void log() {
         LOG(LOG_INFO, "     Server Drive Query Information Request:");
         LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes): %s", this->FsInformationClass_, this->get_FsInformationClass_name(this->FsInformationClass_));
-        LOG(LOG_INFO, "          * Length             = %d (4 bytes)", int(this->query_buffer.sz));
+        LOG(LOG_INFO, "          * Length             = %zu (4 bytes)", this->query_buffer.sz);
         LOG(LOG_INFO, "          * Padding - (24 bytes) NOT USED");
     }
 
@@ -3551,7 +3568,7 @@ public:
     void log() {
         LOG(LOG_INFO, "     Server Drive Query Volume Information Request:");
         LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes): %s", this->FsInformationClass_, get_FsInformationClass_name(this->FsInformationClass_));
-        LOG(LOG_INFO, "          * Length             = %d (4 bytes)", int(this->query_volume_buffer.sz));
+        LOG(LOG_INFO, "          * Length             = %zu (4 bytes)", this->query_volume_buffer.sz);
         LOG(LOG_INFO, "          * Padding - (4 bytes) NOT USED");
     }
 };  // ServerDriveQueryVolumeInformationRequest
@@ -3810,7 +3827,7 @@ public:
     void log() {
         LOG(LOG_INFO, "     Server Drive Set Information Request:");
         LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes): %s", this->FsInformationClass_, get_FsInformationClass_name(this->FsInformationClass_));
-        LOG(LOG_INFO, "          * Length = %d (4 bytes)", int(this->Length_));
+        LOG(LOG_INFO, "          * Length = %u (4 bytes)", this->Length_);
         LOG(LOG_INFO, "          * Padding - (24 bytes) NOT USED");
     }
 };
@@ -4173,9 +4190,9 @@ public:
         LOG(LOG_INFO, "     Server Drive Query Directory Request:");
         LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes): %s", this->FsInformationClass_, this->get_FsInformationClass_name(this->FsInformationClass_));
         LOG(LOG_INFO, "          * InitialQuery       = 0x%02x (1 byte)", this->InitialQuery_);
-        LOG(LOG_INFO, "          * PathLength         = %d (4 bytes)", int(this->path.size()));
+        LOG(LOG_INFO, "          * PathLength         = %zu (4 bytes)", this->path.size());
         LOG(LOG_INFO, "          * Padding - (23 byte) NOT USED");
-        LOG(LOG_INFO, "          * path               = \"%s\" (%d byte(s))", this->path.c_str(), int(this->path.size()));
+        LOG(LOG_INFO, "          * path               = \"%s\" (%zu byte(s))", this->path.c_str(), 2*this->path.size());
     }
 };  // ServerDriveQueryDirectoryRequest
 
@@ -4312,6 +4329,11 @@ struct ClientDriveQueryDirectoryResponse {
 //  list of these structures, refer to [MS-FSCC] section 2.4. The "File
 //  information class" table defines all the possible values for the
 //  FsInformationClass field.
+
+enum : uint32_t {
+    FILE_STANDARD_INFORMATION_SIZE = 22,
+    FILE_BASIC_INFORMATION_SIZE    = 36
+};
 
 struct ClientDriveQueryInformationResponse {
 
@@ -5183,6 +5205,8 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                                 rgdb.log();
                                             }
                                             break;
+                                         case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID :
+                                            break;
                                         default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Data: Code = 0x%08x", dcr.IoControlCode());
                                             break;
                                     }
@@ -5426,8 +5450,13 @@ void streamLog( InStream & stream , RdpDrStatus & status)
 
                                 if (cdcr.OutputBufferLength > 0) {
                                     switch (status_dior.IOControlCode) {
-                                        //case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID:
-                                        //    break;
+                                        case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID:
+                                        {
+                                            fscc::FileObjectBuffer_Type1 rgdb;
+                                            rgdb.receive(s);
+                                            rgdb.log();
+                                        }
+                                            break;
                                         //case fscc::FSCTL_FILESYSTEM_GET_STATISTICS:
                                         //    break;
                                         default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Code: 0x%08x", status_dior.IOControlCode);

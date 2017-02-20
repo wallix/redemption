@@ -74,15 +74,57 @@ obj d3des : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 
 using qt : /usr ; #4
 
-obj front_Qt4.o : src/Qt4/front_Qt4.cpp :
+obj front_Qt4.o : src/front_Qt.cpp :
     $(EXE_DEPENDENCIES) ; 
 
 exe client_rdp_Qt4 :
-    src/Qt4/front_Qt4.hpp
-    src/Qt4/front_widget_Qt4.hpp
-    src/Qt4/keymaps/Qt4_ScanCode_KeyMap.hpp
+    src/Qt4/Qt.hpp
+    src/front_Qt.hpp
+    src/front_widget_Qt.hpp
+    src/keymaps/Qt_ScanCode_KeyMap.hpp
     front_Qt4.o
     /qt//QtGui       #4
+    bitmap
+    krb5
+    openssl
+    crypto
+    gssglue
+    png
+    d3des
+    ppocr
+    ocr
+    ffmpeg
+    dl
+    snappy
+:
+    $(EXE_DEPENDENCIES)
+;
+
+
+using qt5
+    : /usr/lib/x86_64-linux-gnu/qt5
+    : 5.3
+    :
+    :
+    :
+    :
+    : /usr/include/x86_64-linux-gnu/qt5
+    : /usr/lib/x86_64-linux-gnu
+
+    ;
+
+obj front_Qt5.o : src/front_Qt.cpp :
+    $(EXE_DEPENDENCIES) ;
+
+exe client_rdp_Qt5 :
+    src/Qt5/Qt.hpp
+    src/front_Qt.hpp
+    src/front_widget_Qt.hpp
+    src/keymaps/Qt_ScanCode_KeyMap.hpp
+    front_Qt5.o
+    /qt5//QtGui
+    /qt5//QtNetwork
+    /qt5//QtWidgets
     bitmap
     krb5
     openssl

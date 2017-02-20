@@ -23,10 +23,9 @@
 #define BOOST_TEST_MODULE TestStrings
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGPRINT
+#define LOGNULL
+// #define LOGPRINT
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 #include "configs/config.hpp"
 
 #include <chrono>

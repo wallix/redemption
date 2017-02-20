@@ -331,7 +331,9 @@ private:
             case RDP::RAIL::WINDOW_ORDER_ICON: {
                     RDP::RAIL::WindowIcon order;
                     order.receive(stream);
-                    order.log(LOG_INFO);
+                    if (this->verbose & RDPVerbose::rail_order) {
+                        order.log(LOG_INFO);
+                    }
                     gd.draw(order);
                 }
                 break;
@@ -339,7 +341,9 @@ private:
             case RDP::RAIL::WINDOW_ORDER_CACHEDICON: {
                     RDP::RAIL::CachedIcon order;
                     order.receive(stream);
-                    order.log(LOG_INFO);
+                    if (this->verbose & RDPVerbose::rail_order) {
+                        order.log(LOG_INFO);
+                    }
                     gd.draw(order);
                 }
                 break;
@@ -347,7 +351,9 @@ private:
             case RDP::RAIL::WINDOW_ORDER_STATE_DELETED: {
                     RDP::RAIL::DeletedWindow order;
                     order.receive(stream);
-                    order.log(LOG_INFO);
+                    if (this->verbose & RDPVerbose::rail_order) {
+                        order.log(LOG_INFO);
+                    }
                     gd.draw(order);
                 }
                 break;
@@ -356,7 +362,9 @@ private:
             case RDP::RAIL::WINDOW_ORDER_STATE_NEW: {
                     RDP::RAIL::NewOrExistingWindow order;
                     order.receive(stream);
-                    order.log(LOG_INFO);
+                    if (this->verbose & RDPVerbose::rail_order) {
+                        order.log(LOG_INFO);
+                    }
                     gd.draw(order);
                 }
                 break;
@@ -375,7 +383,9 @@ private:
             case RDP::RAIL::WINDOW_ORDER_STATE_DELETED: {
                     RDP::RAIL::DeletedNotificationIcons order;
                     order.receive(stream);
-                    order.log(LOG_INFO);
+                    if (this->verbose & RDPVerbose::rail_order) {
+                        order.log(LOG_INFO);
+                    }
                     gd.draw(order);
                 }
                 break;
@@ -384,7 +394,9 @@ private:
             case RDP::RAIL::WINDOW_ORDER_STATE_NEW: {
                     RDP::RAIL::NewOrExistingNotificationIcons order;
                     order.receive(stream);
-                    order.log(LOG_INFO);
+                    if (this->verbose & RDPVerbose::rail_order) {
+                        order.log(LOG_INFO);
+                    }
                     gd.draw(order);
                 }
                 break;
@@ -400,13 +412,17 @@ private:
         if (FieldsPresentFlags & RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_NONE) {
             RDP::RAIL::NonMonitoredDesktop order;
             order.receive(stream);
-            order.log(LOG_INFO);
+            if (this->verbose & RDPVerbose::rail_order) {
+                order.log(LOG_INFO);
+            }
             gd.draw(order);
         }
         else {
             RDP::RAIL::ActivelyMonitoredDesktop order;
             order.receive(stream);
-            order.log(LOG_INFO);
+            if (this->verbose & RDPVerbose::rail_order) {
+                order.log(LOG_INFO);
+            }
             gd.draw(order);
         }
     }

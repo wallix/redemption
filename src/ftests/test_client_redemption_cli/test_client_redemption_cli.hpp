@@ -240,13 +240,12 @@ public:
     //      CONSTRUCTOR
     //------------------------
 
-    TestClientCLI(ClientInfo const & info, uint32_t verbose)
+    TestClientCLI(ClientInfo const & info, auth_api & authentifier, uint32_t verbose)
     : FrontAPI(false, false)
     , _verbose(verbose)
-    , _clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [](){
-        ClipboardVirtualChannel::Params params;
+    , _clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [](auth_api & authentifier){
+        ClipboardVirtualChannel::Params params(authentifier);
 
-        params.authentifier = nullptr;
         params.exchanged_data_limit = ~decltype(params.exchanged_data_limit){};
         params.verbose = to_verbose_flags(0xfffffff);
 
@@ -258,7 +257,7 @@ public:
         params.dont_log_data_into_wrm = true;
 
         return params;
-    }())
+    }(authentifier))
     , mod_bpp(info.bpp)
     , mod_palette(BGRPalette::classic_332())
     , _info(info)
@@ -1167,14 +1166,14 @@ public:
         this->setAction(action);
     }
 
-    void setKey_press(TestClientCLI * front
+    void setKey_press( TestClientCLI * front
                      , uint32_t scanCode
                      , uint32_t flag) {
         EventConfig * action = new KeyPressed(front, scanCode, flag);
         this->setAction(action);
     }
 
-    void setKey_release(TestClientCLI * front
+    void setKey_release( TestClientCLI * front
                        , uint32_t scanCode
                        , uint32_t flag) {
         EventConfig * action = new KeyReleased(front, scanCode, flag);
@@ -1190,9 +1189,9 @@ public:
         this->setAction(action);
     }
 
-    void setKey(TestClientCLI * front
-                , uint32_t scanCode
-                , uint32_t flag) {
+    void setKey( TestClientCLI * front
+               , uint32_t scanCode
+               , uint32_t flag) {
         this->setKey_press(front, scanCode, flag);
         this->setKey_release(front, scanCode, flag);
     }

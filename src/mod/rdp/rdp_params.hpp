@@ -81,17 +81,19 @@ struct ModRDPParams {
 
     int key_flags;
 
-//    auth_api * acl = nullptr;
-
     const char * outbound_connection_monitoring_rules = "";
     const char * process_monitoring_rules           = "";
 
     bool         ignore_auth_channel = false;
     const char * auth_channel = "";
 
+    // Application WAB
     const char * alternate_shell = "";
-    const char * working_dir = "";
+    const char * shell_arguments = "";
+    const char * shell_working_dir = "";
+
     bool         use_client_provided_alternate_shell = false;
+
     const char * target_application_account = "";
     const char * target_application_password = "";
 
@@ -144,6 +146,8 @@ struct ModRDPParams {
     const char * client_execute_exe_or_file = "";
     const char * client_execute_working_dir = "";
     const char * client_execute_arguments = "";
+
+    bool         use_client_provided_remoteapp = false;
 
     bool remote_program = false;
 
@@ -238,7 +242,8 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             auth_channel);
 
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             alternate_shell);
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             working_dir);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             shell_arguments);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             shell_working_dir);
         RDP_PARAMS_LOG("%s",     yes_or_no,             use_client_provided_alternate_shell);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             target_application_account);
         RDP_PARAMS_LOG("\"%s\"", hidden_or_null,        target_application_password);
@@ -299,6 +304,8 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     s_or_none,             client_execute_exe_or_file);
         RDP_PARAMS_LOG("%s",     s_or_none,             client_execute_working_dir);
         RDP_PARAMS_LOG("%s",     s_or_none,             client_execute_arguments);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             use_client_provided_remoteapp);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             remote_program);
 

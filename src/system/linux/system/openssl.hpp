@@ -35,6 +35,7 @@
 // TODO -Wold-style-cast is ignored
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wzero-as-null-pointer-constant")
 
 extern "C" {
     inline int openssl_print_fp(const char *str, size_t len, void * error_message)

@@ -219,14 +219,14 @@ BOOST_AUTO_TEST_CASE(FileObjectBuffer_Type1Emit)
             "\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00"
             "\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00"
             "\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00"
-            "\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00";
+            "\x00\x00\00\x00\00\x00\00\x00\00\x00\x00\00\x00\00\x00\00\x00\00";
 
     StaticOutStream<128> stream;
     uint8_t ObjectId[fscc::GUID_SIZE]      = { 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0 };
     uint8_t BirthVolumeId[fscc::GUID_SIZE] = { 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0 };
     uint8_t BirthObjectId[fscc::GUID_SIZE] = { 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0 };
-    uint8_t DomainId[fscc::GUID_SIZE]      = { 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0 };
-    fscc::FileObjectBuffer_Type1 pdu(ObjectId, BirthVolumeId, BirthObjectId, DomainId);
+    //uint8_t DomainId[fscc::GUID_SIZE]      = { 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0 };
+    fscc::FileObjectBuffer_Type1 pdu(ObjectId, BirthVolumeId, BirthObjectId);
     pdu.emit(stream);
 
     std::string const out_data(data, len);
@@ -241,7 +241,7 @@ BOOST_AUTO_TEST_CASE(FileObjectBuffer_Type1Receive)
             "\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00"
             "\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00"
             "\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00"
-            "\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00";
+            "\x00\x00\00\x00\00\x00\00\x00\00\x00\x00\00\x00\00\x00\00\x00\00";
 
     InStream in_stream(data, len);
     fscc::FileObjectBuffer_Type1 pdu;
@@ -250,7 +250,11 @@ BOOST_AUTO_TEST_CASE(FileObjectBuffer_Type1Receive)
     BOOST_CHECK_EQUAL(pdu.ObjectId[0], 1);
     BOOST_CHECK_EQUAL(pdu.BirthVolumeId[0], 2);
     BOOST_CHECK_EQUAL(pdu.BirthObjectId[0], 3);
-    BOOST_CHECK_EQUAL(pdu.DomainId[0], 4);
+    BOOST_CHECK_EQUAL(pdu.DomainId[0], 0);
+    BOOST_CHECK_EQUAL(pdu.ObjectId[4], 1);
+    BOOST_CHECK_EQUAL(pdu.BirthVolumeId[4], 2);
+    BOOST_CHECK_EQUAL(pdu.BirthObjectId[4], 3);
+    BOOST_CHECK_EQUAL(pdu.DomainId[4], 0);
 }
 
 BOOST_AUTO_TEST_CASE(FileObjectBuffer_Type2Emit)

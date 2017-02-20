@@ -830,11 +830,11 @@ int main(int argc, char** argv){
     public:
         virtual void set_auth_channel_target(const char *) {}
         virtual void set_auth_error_message(const char *) {}
-        virtual void report(const char * reason, const char *) {}
-        virtual void log4(bool duplicate_with_pid, const char *, const char * = nullptr) {}
+        virtual void report(const char *, const char *) {}
+        virtual void log4(bool, const char *, const char * = nullptr) {}
         virtual void disconnect_target() {}
     } authentifier;
-    TestClientCLI front(info, 0);
+    TestClientCLI front(info, authentifier, 0);
 
 
 
@@ -889,7 +889,7 @@ int main(int argc, char** argv){
                                  , gen
                                  , timeSystem
                                  , mod_rdp_params
-                                 , &authentifier
+                                 , authentifier
                                  );
 
                 front._to_server_sender._callback = mod;

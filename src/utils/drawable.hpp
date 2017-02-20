@@ -2453,7 +2453,7 @@ private:
     }
 
 public:
-    void trace_timestamp(tm & now)
+    void trace_timestamp(const tm & now)
     {
         this->priv_trace_timestamp(now, false);
     }
@@ -2479,7 +2479,7 @@ private:
         return this->rowsize() * (this->height() / 2) + ((this->width() - timestamp_len*char_width)*Bpp) / 2;
     }
 
-    void priv_trace_timestamp(tm & now, bool has_clear)
+    void priv_trace_timestamp(const tm & now, bool has_clear)
     {
         const char * timezone = (daylight ? tzname[1] : tzname[0]);
         const uint8_t timestamp_length = 20 + strlen(timezone);

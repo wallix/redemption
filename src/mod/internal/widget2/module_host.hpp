@@ -264,7 +264,7 @@ public:
     WidgetModuleHost(gdi::GraphicApi& drawable, Widget2& parent,
                      NotifyApi* notifier,
                      std::unique_ptr<mod_api> managed_mod, Font const & font,
-                     Theme const & theme,
+                     Theme const & /*theme*/,
                      const GCC::UserData::CSMonitor& cs_monitor,
                      uint16_t front_width, uint16_t front_height,
                      int group_id = 0)

@@ -205,7 +205,7 @@ int main(int argc, char * argv[]) {
     CryptoContext cctx;
     const bool fastpath_support = true;
     const bool mem3blt_support  = true;
-    
+
     struct DummyAuthentifier : public auth_api
     {
     public:
@@ -215,8 +215,8 @@ int main(int argc, char * argv[]) {
         virtual void log4(bool duplicate_with_pid, const char *, const char * = nullptr) {}
         virtual void disconnect_target() {}
     } authentifier;
-    
-    Front front(front_trans, gen, ini, cctx, &authentifier,
+
+    Front front(front_trans, gen, ini, cctx, authentifier,
         fastpath_support, mem3blt_support, now, input_filename.c_str(), persistent_key_list_oft);
     null_mod no_mod(front);
 
@@ -290,7 +290,7 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.transparent_recorder_transport      = record_oft;
             mod_rdp_params.auth_channel                        = ini.get<cfg::mod_rdp::auth_channel>();
             mod_rdp_params.alternate_shell                     = ini.get<cfg::mod_rdp::alternate_shell>().c_str();
-            mod_rdp_params.working_dir                         = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
+            mod_rdp_params.shell_working_dir                   = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
             mod_rdp_params.rdp_compression                     = ini.get<cfg::mod_rdp::rdp_compression>();
             mod_rdp_params.disconnect_on_logon_user_change     = ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>();
             mod_rdp_params.open_session_timeout                = ini.get<cfg::mod_rdp::open_session_timeout>();
@@ -304,7 +304,7 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.deny_channels                       = &(ini.get<cfg::mod_rdp::deny_channels>());
 
             mod_rdp mod(mod_trans, front, client_info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-                        gen, timeobj, mod_rdp_params, &authentifier);
+                        gen, timeobj, mod_rdp_params, authentifier);
 
             run_mod(mod, front, front_event, &mod_trans, &front_trans);
 

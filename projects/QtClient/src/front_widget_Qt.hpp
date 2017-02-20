@@ -21,42 +21,15 @@
 
 #pragma once
 
+#define LOGPRINT
+#include "utils/log.hpp"
+
 #include "transport/socket_transport.hpp"
 #include "mod/rdp/rdp.hpp"
 
-#include "front_Qt4.hpp"
+#include "front_Qt.hpp"
 
-#include <QtGui/QWidget>
-#include <QtGui/QLabel>
-#include <QtGui/QPainter>
-#include <QtGui/QColor>
-#include <QtGui/QDesktopWidget>
-#include <QtGui/QApplication>
-#include <QtGui/QMouseEvent>
-#include <QtGui/QWheelEvent>
-#include <QtCore/QSocketNotifier>
-#include <QtGui/QLineEdit>
-#include <QtGui/QFormLayout>
-#include <QtGui/QDialog>
-#include <QtGui/QPushButton>
-#include <QtGui/QClipboard>
-#include <QtGui/QTabWidget>
-#include <QtGui/QGridLayout>
-#include <QtGui/QComboBox>
-#include <QtGui/QCheckBox>
-#include <QtGui/QScrollArea>
-#include <QtGui/QTableWidget>
-#include <QtCore/QList>
-#include <QtCore/QStringList>
-#include <QtCore/QTimer>
-#include <QtCore/QMimeData>
-#include <QtCore/QUrl>
-#include <QtGui/QCompleter>
-#include <QtGui/QFileDialog>
-#include <QtCore/QThread>
 
-#include <QtCore/QtGlobal>
-#include <QtCore/QDebug>
 
 
 
@@ -65,7 +38,7 @@ class Mod_Qt : public QObject
 
 Q_OBJECT
 
-public:
+
     Front_Qt                  * _front;
     QSocketNotifier           * _sckRead;
     mod_rdp                   * _callback;
@@ -74,7 +47,10 @@ public:
     TimeSystem                  _timeSystem;
 
     LCGRandom gen;
+    DummyAuthentifier authentifier;
+    std::string error_message;
 
+public:
     struct ModRDPParamsData
     {
         bool enable_tls                      = false;
@@ -116,7 +92,7 @@ public:
         if (this->_sck != nullptr) {
             delete (this->_sck);
             this->_sck = nullptr;
-            std::cout << "Disconnected from [" << this->_front->_targetIP << "]." << std::endl;
+            LOG(LOG_INFO, "Disconnected from [%s].", this->_front->_targetIP.c_str());
         }
     }
 
@@ -129,26 +105,26 @@ public:
 
         if (this->_client_sck > 0) {
             try {
-                std::string error_message;
+
                 this->_sck = new SocketTransport( name
                                                 , this->_client_sck
                                                 , targetIP
                                                 , this->_front->_port
                                                 , to_verbose_flags(0)
-                                                , &error_message
+                                                , &this->error_message
                                                 );
-                std::cout << "Connected to [" << targetIP <<  "]." << std::endl;
+                LOG(LOG_INFO, "Connected to [%s].", targetIP);
                 return true;
 
             } catch (const std::exception &) {
                 std::string windowErrorMsg(errorMsg+" Socket error.");
-                std::cout << windowErrorMsg << std::endl;
+                LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
                 this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
                 return false;
             }
         } else {
             std::string windowErrorMsg(errorMsg+" ip_connect error.");
-            std::cout << windowErrorMsg << std::endl;
+            LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
             this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
             return false;
         }
@@ -180,13 +156,12 @@ public:
         mod_rdp_params.enable_new_pointer              = true;
         mod_rdp_params.server_redirection_support      = true;
         mod_rdp_params.enable_new_pointer              = true;
+        mod_rdp_params.enable_glyph_cache              = true;
         std::string allow_channels = "*";
         mod_rdp_params.allow_channels                  = &allow_channels;
         //mod_rdp_params.allow_using_multiple_monitors   = true;
         //mod_rdp_params.bogus_refresh_rect              = true;
-        mod_rdp_params.verbose = to_verbose_flags(0);                      //MODRDP_LOGLEVEL_CLIPRDR | 16;
-
-         // To always get the same client random, in tests
+        mod_rdp_params.verbose = to_verbose_flags(0);
 
         try {
             this->_callback = new mod_rdp( *(this->_sck)
@@ -196,6 +171,7 @@ public:
                                          , this->gen
                                          , this->_timeSystem
                                          , mod_rdp_params
+                                         , this->authentifier
                                          );
 
             this->_front->_to_server_sender._callback = this->_callback;
@@ -205,7 +181,7 @@ public:
 
         } catch (const Error &) {
             const std::string errorMsg("Error: RDP Initialization failed.");
-            std::cout << errorMsg << std::endl;
+            LOG(LOG_WARNING, "%s", errorMsg.c_str());
             std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
             this->_front->dropScreen();
             this->_front->disconnect(labelErrorMsg);
@@ -219,7 +195,7 @@ public:
 
                 } catch (const Error &) {
                     const std::string errorMsg("Error: Failed during RDP early negociations.");
-                    std::cout << errorMsg << std::endl;
+                    LOG(LOG_WARNING, "%s", errorMsg.c_str());
                     std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
                     this->_front->dropScreen();
                     this->_front->disconnect(labelErrorMsg);
@@ -1118,6 +1094,9 @@ public:
     bool           _running;
     std::string    _movie_name;
 
+    uchar cursor_data[Pointer::DATA_SIZE*4];
+    bool mouse_out;
+
     Screen_Qt (Front_Qt_API * front, int screen_index, QPixmap * cache, QPixmap * trans_cache)
         : QWidget()
         , _front(front)
@@ -1133,6 +1112,7 @@ public:
         , _connexionLasted(false)
         , _screen_index(screen_index)
         , _running(false)
+        , mouse_out(false)
     {
         this->setMouseTracking(true);
         this->installEventFilter(this);
@@ -1180,6 +1160,7 @@ public:
         , _screen_index(0)
         , _running(false)
         , _movie_name(movie_path)
+        , mouse_out(false)
     {
         std::string title = "Remote Desktop Player " + this->_movie_name;
         this->setWindowTitle(QString(title.c_str()));
@@ -1213,7 +1194,6 @@ public:
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (closeReplay()));
         this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
 
-
         uint32_t centerW = 0;
         uint32_t centerH = 0;
         if (!this->_front->_span) {
@@ -1244,6 +1224,7 @@ public:
         , _connexionLasted(false)
         , _screen_index(0)
         , _running(false)
+        , mouse_out(false)
     {
         this->setMouseTracking(true);
         this->installEventFilter(this);
@@ -1262,7 +1243,7 @@ public:
         this->_buttonCtrlAltDel.setGeometry(rectCtrlAltDel);
         this->_buttonCtrlAltDel.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (pressed()),  this, SLOT (CtrlAltDelPressed()));
-        this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));
+        this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));;
         this->_buttonCtrlAltDel.setFocusPolicy(Qt::NoFocus);
 
         QRect rectRefresh(QPoint(this->_width/3, this->_height+1),QSize(this->_width/3, Front_Qt_API::BUTTON_HEIGHT));
@@ -1295,6 +1276,21 @@ public:
         if (!this->_connexionLasted) {
             this->_front->closeFromScreen(this->_screen_index);
         }
+    }
+
+    void set_mem_cursor(const uchar * data) {
+        for (int i = 0; i < Pointer::DATA_SIZE*4; i++) {
+            this->cursor_data[i] = data[i];
+        }
+        this->update_current_cursor();
+    }
+
+    void update_current_cursor() {
+        QImage image(this->cursor_data, 32, 32, QImage::Format_ARGB32_Premultiplied);
+        QPixmap map = QPixmap::fromImage(image);
+        QCursor qcursor(map, 10, 10);
+
+        this->setCursor(qcursor);
     }
 
     void update_view() {
@@ -1359,8 +1355,10 @@ private:
 
     void enterEvent(QEvent *event) {
         Q_UNUSED(event);
+        //this->update_current_cursor();
         this->_front->_current_screen_index =  this->_screen_index;
     }
+
     bool eventFilter(QObject *obj, QEvent *e) {
         this->_front->eventFilter(obj, e, this->_front->_info.cs_monitor.monitorDefArray[this->_screen_index].left);
         return false;
@@ -1386,7 +1384,6 @@ public Q_SLOTS:
         }
 
         if (this->_front->_replay_mod->get_break_privplay_qt()) {
-            std::cout <<  "movie over" <<  std::endl;
             this->_timer_replay.stop();
             this->slotRepaint();
             this->_buttonCtrlAltDel.setText("Replay");
@@ -1417,7 +1414,10 @@ public Q_SLOTS:
     }
 
     void CtrlAltDelReleased() {
+
         this->_front->CtrlAltDelReleased();
+//         this->update_current_cursor();
+//         this->_buttonCtrlAltDel.setCursor(Qt::PointingHandCursor);
     }
 
     void stopRelease() {
@@ -1550,7 +1550,7 @@ public:
         for (size_t i = 0; i < items_list.size(); i++) {
 
             std::string path(this->_front->CB_TEMP_DIR + std::string("/") + items_list[i].name);
-            std::cout <<  path <<  std::endl;
+            //std::cout <<  path <<  std::endl;
             QString qpath(path.c_str());
 
             qDebug() << "QUrl" << QUrl::fromLocalFile(qpath);
@@ -1607,6 +1607,7 @@ public Q_SLOTS:
     void mem_clipboard() {
         if (this->_front->_callback != nullptr && this->_local_clipboard_stream) {
             const QMimeData * mimeData = this->_clipboard->mimeData();
+            mimeData->hasImage();
 
             if (mimeData->hasImage()){
             //==================
@@ -1639,115 +1640,118 @@ public Q_SLOTS:
 
             } else if (mimeData->hasText()){                //  File or Text copy
 
-                this->emptyBuffer();
-                std::string str(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData());
+                QString qstr = this->_clipboard->text(QClipboard::Clipboard);
+                if (qstr.size() > 0) {
+                    this->emptyBuffer();
+                    std::string str(qstr.toUtf8().constData());
 
-                if (str.at(0) == '/') {
-            //==================
-            //    FILE COPY
-            //==================
-                    this->_bufferTypeID       = Front_Qt::ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
-                    this->_bufferTypeLongName = this->_front->_clipbrdFormatsList.FILEGROUPDESCRIPTORW;
+                    if (str.at(0) == '/') {
+                //==================
+                //    FILE COPY
+                //==================
+                        this->_bufferTypeID       = Front_Qt::ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
+                        this->_bufferTypeLongName = this->_front->_clipbrdFormatsList.FILEGROUPDESCRIPTORW;
 
-                    // retrieve each path
-                    const std::string delimiter = "\n";
-                    this->_cItems = 0;
-                    uint32_t pos = 0;
-                    while (pos <= str.size()) {
-                        pos = str.find(delimiter);
-                        std::string path = str.substr(0, pos);
-                        str = str.substr(pos+1, str.size());
+                        // retrieve each path
+                        const std::string delimiter = "\n";
+                        this->_cItems = 0;
+                        uint32_t pos = 0;
+                        while (pos <= str.size()) {
+                            pos = str.find(delimiter);
+                            std::string path = str.substr(0, pos);
+                            str = str.substr(pos+1, str.size());
 
-                        // double slash
-                        uint32_t posSlash(0);
-                        std::string slash = "/";
-                        bool stillSlash = true;
-                        while (stillSlash) {
-                            posSlash = path.find(slash, posSlash);
-                            if (posSlash < path.size()) {
-                                path = path.substr(0, posSlash) + "//" + path.substr(posSlash+1, path.size());
-                                posSlash += 2;
-                            } else {
-                                path = path.substr(0, path.size());
-                                stillSlash = false;
-                            }
-                        }
-
-                        // get file data
-                        uint64_t size(::filesize(path.c_str()));
-                        std::ifstream iFile(path.c_str(), std::ios::in | std::ios::binary);
-                        if (iFile.is_open()) {
-
-                            CB_out_File * file = new CB_out_File();
-                            file->size  = size;
-                            file->chunk = new char[file->size];
-                            iFile.read(file->chunk, file->size);
-                            iFile.close();
-
-                            int posName(path.size()-1);
-                            bool lookForName = true;
-                            while (posName >= 0 && lookForName) {
-                                if (path.at(posName) == '/') {
-                                    lookForName = false;
+                            // double slash
+                            uint32_t posSlash(0);
+                            std::string slash = "/";
+                            bool stillSlash = true;
+                            while (stillSlash) {
+                                posSlash = path.find(slash, posSlash);
+                                if (posSlash < path.size()) {
+                                    path = path.substr(0, posSlash) + "//" + path.substr(posSlash+1, path.size());
+                                    posSlash += 2;
+                                } else {
+                                    path = path.substr(0, path.size());
+                                    stillSlash = false;
                                 }
-                                posName--;
                             }
-                            file->nameUTF8 = path.substr(posName+2, path.size());
-                            //std::string name = file->nameUTF8;
-                            int UTF8nameSize(file->nameUTF8.size() *2);
-                            if (UTF8nameSize > 520) {
-                                UTF8nameSize = 520;
-                            }
-                            uint8_t UTF16nameData[520];
-                            int UTF16nameSize = ::UTF8toUTF16_CrLf(
-                                reinterpret_cast<const uint8_t *>(file->nameUTF8.c_str())
-                              , UTF16nameData
-                              , UTF8nameSize);
-                            file->name = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
-                            this->_cItems++;
-                            this->_items_list.push_back(file);
 
-                        } else {
-                            std::cout << "path \"" << path << "\" not found." <<  std::endl;
+                            // get file data
+                            uint64_t size(::filesize(path.c_str()));
+                            std::ifstream iFile(path.c_str(), std::ios::in | std::ios::binary);
+                            if (iFile.is_open()) {
+
+                                CB_out_File * file = new CB_out_File();
+                                file->size  = size;
+                                file->chunk = new char[file->size];
+                                iFile.read(file->chunk, file->size);
+                                iFile.close();
+
+                                int posName(path.size()-1);
+                                bool lookForName = true;
+                                while (posName >= 0 && lookForName) {
+                                    if (path.at(posName) == '/') {
+                                        lookForName = false;
+                                    }
+                                    posName--;
+                                }
+                                file->nameUTF8 = path.substr(posName+2, path.size());
+                                //std::string name = file->nameUTF8;
+                                int UTF8nameSize(file->nameUTF8.size() *2);
+                                if (UTF8nameSize > 520) {
+                                    UTF8nameSize = 520;
+                                }
+                                uint8_t UTF16nameData[520];
+                                int UTF16nameSize = ::UTF8toUTF16_CrLf(
+                                    reinterpret_cast<const uint8_t *>(file->nameUTF8.c_str())
+                                , UTF16nameData
+                                , UTF8nameSize);
+                                file->name = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
+                                this->_cItems++;
+                                this->_items_list.push_back(file);
+
+                            } else {
+                                LOG(LOG_WARNING, "Path \"%s\" not found.", path.c_str());
+                            }
                         }
+
+                        this->send_FormatListPDU();
+                //==========================================================================
+
+
+
+                    } else {
+                //==================
+                //    TEXT COPY
+                //==================
+                        this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
+                        this->_bufferTypeLongName = std::string("\0\0", 2);
+
+    //                     int cmptCR(0);
+    //                     std::string tmp(str);
+    //                     int pos(tmp.find("\n"));
+
+    //                     while (pos != -1) {
+    //                         cmptCR++;
+    //                         tmp = tmp.substr(pos+2, tmp.length());
+    //                         pos = tmp.find("\n"); // for linux install
+    //                     }
+
+                        size_t size( ( str.length() * 4) + 2 );
+
+                        this->_chunk = std::make_unique<uint8_t[]>(size);
+
+                        // UTF8toUTF16_CrLf for linux install
+                        this->_cliboard_data_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size);
+
+                        RDPECLIP::FormatDataResponsePDU_Text::Ender ender;
+                        ender.emit(this->_chunk.get(), this->_cliboard_data_length);
+
+                        this->_cliboard_data_length += RDPECLIP::FormatDataResponsePDU_Text::Ender::SIZE;
+
+                        this->send_FormatListPDU();
+                //==========================================================================
                     }
-
-                    this->send_FormatListPDU();
-            //==========================================================================
-
-
-
-                } else {
-            //==================
-            //    TEXT COPY
-            //==================
-                    this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
-                    this->_bufferTypeLongName = std::string("\0\0", 2);
-
-                    int cmptCR(0);
-                    std::string tmp(str);
-                    int pos(tmp.find("\n"));
-
-                    while (pos != -1) {
-                        cmptCR++;
-                        tmp = tmp.substr(pos+2, tmp.length());
-                        pos = tmp.find("\n"); // for linux install
-                    }
-
-                    size_t size( ( (str.length() + cmptCR*2) * 4) + 2 );
-
-                    this->_chunk = std::make_unique<uint8_t[]>(size);
-
-                    // UTF8toUTF16_CrLf for linux install
-                    this->_cliboard_data_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size);
-
-                    RDPECLIP::FormatDataResponsePDU_Text::Ender ender;
-                    ender.emit(this->_chunk.get(), this->_cliboard_data_length);
-
-                    this->_cliboard_data_length += RDPECLIP::FormatDataResponsePDU_Text::Ender::SIZE;
-
-                    this->send_FormatListPDU();
-            //==========================================================================
 
                 }
             }
