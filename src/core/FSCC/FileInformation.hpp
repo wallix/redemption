@@ -1320,13 +1320,15 @@ public:
         LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime);
         LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime);
         LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
+        LOG(LOG_INFO, "          * EndOfFile       = 0x%" PRIx64 " (8 bytes)", this->EndOfFile);
+        LOG(LOG_INFO, "          * AllocationSize  = 0x%" PRIx64 " (8 bytes)", this->AllocationSize);
         LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
         LOG(LOG_INFO, "          * FileNameLength  = %zu (4 bytes)", this->file_name.size());
-        LOG(LOG_INFO, "          * EaSize          = %d (4 bytes)", int(this->EaSize));
+        LOG(LOG_INFO, "          * EaSize          = %u (4 bytes)", this->EaSize);
         LOG(LOG_INFO, "          * ShortNameLength = %zu (1 byte)", this->short_name.size());
         LOG(LOG_INFO, "          * Reserved - (1 byte) NOT USED");
-        LOG(LOG_INFO, "          * short_name      = \"%s\" (%zu byte(s))", this->short_name, this->short_name.size());
-        LOG(LOG_INFO, "          * FileName        = \"%s\" (%zu byte(s))", this->file_name, this->file_name.size());
+        LOG(LOG_INFO, "          * short_name      = \"%s\" (24 bytes)", this->short_name);
+        LOG(LOG_INFO, "          * FileName        = \"%s\" (%zu byte(s))", this->file_name, this->file_name.size() *2);
     }
 };  // FileBothDirectoryInformation
 
@@ -2422,6 +2424,7 @@ public:
         LOG(LOG_INFO, "          * NumberOfLinks  = 0x%08x (4 bytes)", this->NumberOfLinks);
         LOG(LOG_INFO, "          * DeletePending  = 0x%02x (1 byte)", this->DeletePending);
         LOG(LOG_INFO, "          * Directory      = 0x%02x (1 byte)", this->Directory);
+        LOG(LOG_INFO, "          * Reserved - (2 bytes) Not Used");
     }
 };  // FileStandardInformation
 
@@ -2693,33 +2696,43 @@ private:
         return ((length < size) ? length : size - 1);
     }
 
-    static const char * get_FileSystemAttributes_name(uint32_t FileSystemAttribute) {
-        switch (FileSystemAttribute) {
-            case FILE_SUPPORTS_USN_JOURNAL:         return "FILE_SUPPORTS_USN_JOURNAL";
-            case FILE_SUPPORTS_OPEN_BY_FILE_ID:     return "FILE_SUPPORTS_OPEN_BY_FILE_ID";
-            case FILE_SUPPORTS_EXTENDED_ATTRIBUTES: return "FILE_SUPPORTS_EXTENDED_ATTRIBUTES";
-            case FILE_SUPPORTS_HARD_LINKS:          return "FILE_SUPPORTS_HARD_LINKS";
-            case FILE_SUPPORTS_TRANSACTIONS:        return "FILE_SUPPORTS_TRANSACTIONS";
-            case FILE_SEQUENTIAL_WRITE_ONCE:        return "FILE_SEQUENTIAL_WRITE_ONCE";
-            case FILE_READ_ONLY_VOLUME:             return "FILE_READ_ONLY_VOLUME";
-            case FILE_NAMED_STREAMS:                return "FILE_NAMED_STREAMS";
-            case FILE_SUPPORTS_ENCRYPTION:          return "FILE_SUPPORTS_ENCRYPTION";
-            case FILE_SUPPORTS_OBJECT_IDS:          return "FILE_SUPPORTS_OBJECT_IDS";
-            case FILE_VOLUME_IS_COMPRESSED:         return "FILE_VOLUME_IS_COMPRESSED";
-            case FILE_SUPPORTS_REMOTE_STORAGE:      return "FILE_SUPPORTS_REMOTE_STORAGE";
-            case FILE_SUPPORTS_REPARSE_POINTS:      return "FILE_SUPPORTS_REPARSE_POINTS";
-            case FILE_SUPPORTS_SPARSE_FILES:        return "FILE_SUPPORTS_SPARSE_FILES";
-            case FILE_VOLUME_QUOTAS:                return "FILE_VOLUME_QUOTAS";
-            case FILE_FILE_COMPRESSION:             return "FILE_FILE_COMPRESSION";
-            case FILE_PERSISTENT_ACLS:              return "FILE_PERSISTENT_ACLS";
-            case FILE_UNICODE_ON_DISK:              return "FILE_UNICODE_ON_DISK";
-            case FILE_CASE_PRESERVED_NAMES:         return "FILE_CASE_PRESERVED_NAMES";
-            case FILE_CASE_SENSITIVE_SEARCH:        return "FILE_CASE_SENSITIVE_SEARCH";
-            case FILE_SUPPORT_INTEGRITY_STREAMS:    return "FILE_SUPPORT_INTEGRITY_STREAMS";
-        }
 
-        return "<unknown>";
-    }
+    static inline
+std::string get_FileSystemAttributes_name(uint32_t FileSystemAttribute) {
+
+    std::string str;
+    (FileSystemAttribute & FILE_SUPPORTS_USN_JOURNAL) ? str+="FILE_SUPPORTS_USN_JOURNAL " :str;
+    (FileSystemAttribute & FILE_SUPPORTS_OPEN_BY_FILE_ID) ? str+="FILE_SUPPORTS_OPEN_BY_FILE_ID " :str;
+    (FileSystemAttribute & FILE_SUPPORTS_EXTENDED_ATTRIBUTES) ? str+="FILE_SUPPORTS_EXTENDED_ATTRIBUTES " :str;
+
+    (FileSystemAttribute & FILE_SUPPORTS_HARD_LINKS) ? str+="FILE_SUPPORTS_HARD_LINKS " : str;
+    (FileSystemAttribute & FILE_SUPPORTS_TRANSACTIONS) ? str+="FILE_SUPPORTS_TRANSACTIONS " : str;
+    (FileSystemAttribute & FILE_SEQUENTIAL_WRITE_ONCE) ? str+="FILE_SEQUENTIAL_WRITE_ONCE " : str;
+
+    (FileSystemAttribute & FILE_READ_ONLY_VOLUME) ? str+="FILE_READ_ONLY_VOLUME " : str;
+    (FileSystemAttribute & FILE_NAMED_STREAMS) ? str+="FILE_NAMED_STREAMS " : str;
+    (FileSystemAttribute & FILE_SUPPORTS_ENCRYPTION) ? str+="FILE_SUPPORTS_ENCRYPTION " : str;
+
+    (FileSystemAttribute & FILE_SUPPORTS_OBJECT_IDS) ? str+="FILE_SUPPORTS_OBJECT_IDS ":str;
+    (FileSystemAttribute & FILE_VOLUME_IS_COMPRESSED) ? str+="FILE_VOLUME_IS_COMPRESSED " : str;
+    (FileSystemAttribute & FILE_SUPPORTS_REMOTE_STORAGE) ? str+="FILE_SUPPORTS_REMOTE_STORAGE " : str;
+
+    (FileSystemAttribute & FILE_SUPPORTS_REPARSE_POINTS) ? str+="FILE_SUPPORTS_REPARSE_POINTS " : str;
+    (FileSystemAttribute & FILE_SUPPORTS_SPARSE_FILES) ? str+="FILE_SUPPORTS_SPARSE_FILES " : str;
+    (FileSystemAttribute & FILE_VOLUME_QUOTAS) ? str+="FILE_VOLUME_QUOTAS " : str;
+
+
+    (FileSystemAttribute & FILE_FILE_COMPRESSION) ? str+="FILE_FILE_COMPRESSION " : str;
+    (FileSystemAttribute & FILE_PERSISTENT_ACLS) ? str+="FILE_PERSISTENT_ACLS " : str;
+    (FileSystemAttribute & FILE_UNICODE_ON_DISK) ? str+="FILE_UNICODE_ON_DISK " : str;
+
+    (FileSystemAttribute & FILE_CASE_PRESERVED_NAMES) ? str+="FILE_CASE_PRESERVED_NAMES " : str;
+    (FileSystemAttribute & FILE_CASE_SENSITIVE_SEARCH) ? str+="FILE_CASE_SENSITIVE_SEARCH " : str;
+    (FileSystemAttribute & FILE_SUPPORT_INTEGRITY_STREAMS) ? str+="FILE_SUPPORT_INTEGRITY_STREAMS " : str;
+
+    return str;
+}
+
 
 
 public:
@@ -3451,7 +3464,7 @@ public:
 //  | Value                              | Meaning                                    |
 //  +------------------------------------+--------------------------------------------+
 //  | FILE_ACTION_ADDED                  | The file was added to the directory.       |
-//  | 0x00000001                         | configured to be excluded from the         |
+//  | 0x00000001                         |                                            |
 //  +------------------------------------+--------------------------------------------+
 //  | FILE_ACTION_REMOVED                | The file was removed from the              |
 //  | 0x00000002                         | directory.                                 |
@@ -3602,7 +3615,7 @@ struct FileNotifyInformation {
     void log() {
         LOG(LOG_INFO, "     File Notify Information:");
         LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
-        LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes): %s", this->Action, get_Action_name(this->Action));
+        LOG(LOG_INFO, "          * Action          = 0x%08x (4 bytes): %s", this->Action, get_Action_name(this->Action));
         LOG(LOG_INFO, "          * FileNameLength  = %zu (4 bytes)", this->FileName.size());
         LOG(LOG_INFO, "          * FileName        = \"%s\"", this->FileName);
     }

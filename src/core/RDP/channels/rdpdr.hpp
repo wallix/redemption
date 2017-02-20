@@ -4133,8 +4133,7 @@ public:
             stream.in_skip_bytes(PathLength);
 
             std::replace(this->path.begin(), this->path.end(), '\\', '/');
-        }
-        else {
+        } else {
             this->path.clear();
         }
     }
