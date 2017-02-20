@@ -5817,6 +5817,15 @@ public:
                     }
                 }
                 break;
+            case CAPSTYPE_POINTER:
+                {
+                    PointerCaps pointer_caps;
+                    pointer_caps.recv(stream, capset_length);
+                    if (this->verbose & RDPVerbose::basic_trace) {
+                        pointer_caps.log("Receiving from server");
+                    }
+                }
+                break;
             default:
                 if (this->verbose & RDPVerbose::basic_trace) {
                     LOG(LOG_WARNING,
@@ -6325,6 +6334,59 @@ public:
         // TODO this is modifiying cursor in place: we should not do that.
         memcpy(cursor.data, stream.in_uint8p(dlen), dlen);
         memcpy(cursor.mask, stream.in_uint8p(mlen), mlen);
+
+        //for (int i0 = 0; i0 < cursor.height; ++i0) {
+        //    printf("%02d  ", (cursor.height - i0 - 1));
+        //
+        //    const unsigned int xor_line_length_in_byte = cursor.width * 3;
+        //    const unsigned int xor_padded_line_length_in_byte =
+        //        ((xor_line_length_in_byte % 2) ?
+        //         xor_line_length_in_byte + 1 :
+        //         xor_line_length_in_byte);
+        //    uint8_t* xorMask = cursor.data + (cursor.height - i0 - 1) * xor_padded_line_length_in_byte;
+        //
+        //    const unsigned int and_line_length_in_byte = cursor.width / 8;
+        //    const unsigned int and_padded_line_length_in_byte =
+        //        ((and_line_length_in_byte % 2) ?
+        //         and_line_length_in_byte + 1 :
+        //         and_line_length_in_byte);
+        //    uint8_t* andMask = cursor.mask + (cursor.height - i0 - 1) * and_padded_line_length_in_byte;
+        //    unsigned char and_bit_extraction_mask = 7;
+        //
+        //    for (int i1 = 0; i1 < cursor.width; ++i1) {
+        //        unsigned int color = 0;
+        //        color |=  *xorMask             ;
+        //        color |= (*(xorMask + 1) <<  8);
+        //        color |= (*(xorMask + 2) << 16);
+        //
+        //        if ((*andMask) & (1 << and_bit_extraction_mask)) {
+        //            printf(".");
+        //        }
+        //        else {
+        //            if (color == 0xFFFFFF) {
+        //                printf("W");
+        //            }
+        //            else if (color) {
+        //                printf("C");
+        //            }
+        //            else  {
+        //                printf("B");
+        //            }
+        //        }
+        //
+        //        xorMask += 3;
+        //        if (and_bit_extraction_mask) {
+        //            and_bit_extraction_mask--;
+        //        }
+        //        else {
+        //            and_bit_extraction_mask = 7;
+        //            andMask++;
+        //        }
+        //    }
+        //
+        //    printf("\n");
+        //}
+        //printf("\n");
 
         this->front.set_pointer(cursor);
         if (this->verbose & RDPVerbose::basic_trace3) {
