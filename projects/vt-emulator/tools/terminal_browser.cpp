@@ -20,7 +20,7 @@
 *   Based on Konsole, an X terminal
 */
 
-#include "terminal_emulator.hpp"
+#include "rvt_lib/terminal_emulator.hpp"
 
 #include <iostream>
 #include <memory>

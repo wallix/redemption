@@ -30,9 +30,9 @@
 
 
 // Comment the code block below to generate testing data.
-//#define LOGNULL
+#define LOGNULL
 // Uncomment the code block below to generate testing data.
-#define LOGPRINT
+// #define LOGPRINT
 
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.

@@ -1,89 +1,11 @@
-<DOCTYPE html>
-<html>
-<head>
-    <title>Terminal</title>
-    <meta charset="UTF-8"/>
+var TTYHTMLRendering = (function(){
 
-<style>
-#tty-player {
-    font-family: monospace, monospace;
-    border: 2px solid #285577;
-    border-top: 1px solid #4c7899;
-    display: inline-block;
-    position: relative;
-
-    background-color: #333;
-    color: #eee;
-}
-
-#tty-player-title {
-    background: #285577;
-    border-bottom: 1px solid #4c7899;
-    color: #fff;
-    font-family: sans-serif;
-    font-weight: bold;
-    padding: 0.2em;
-    margin:0;
-    margin-bottom:0.2em;
-    line-height: 1;
-    height: 1em;
-    cursor: default;
-}
-
-#tty-player-terminal {
-    margin:0;
-    cursor: text;
-    line-height: initial;
-}
-#tty-player-terminal p {
-    margin:0;
-    padding:0;
-}
-</style>
-</head>
-<body>
-
-<pre id="tty-player">
-<!-- <p id="tty-player-title">No Title</p> -->
-<!-- <p id="tty-player-terminal">contents</p> -->
-</pre>
-
-<script type="text/javascript" src="jquery.js"></script>
-<script type="text/javascript">
-
-// python -m SimpleHTTPServer 4104
-// script -f >(~/projects/build/redemption-public@projects@vt-emulator/configs/clang-linux-3.8.0/san/terminal_browser screen.json)
-// firefox http://localhost:4104/view_browser.html
-
-var ajax_param = {
-    url: 'screen.json',
-    context: document.getElementById("tty-player"),
-    dataType: 'json'
-};
-
-var time = document.location.search.replace(/[^0-9]/g, '')*1000 || 5000;
-
-(function loop() {
-    $.ajax(ajax_param)
-    .done(function(screen){
-        //console.log(screen)
-        this.innerHTML = render(screen);
-        window.setTimeout(loop, time);
-    })
-    // file is truncated
-    .fail(function(jqxhr, status, e){
-        //console.log(e)
-        window.setTimeout(loop, time)
-    })
-})()
-
-
-function i2strcolor(int_color)
+var i2strcolor = function(int_color)
 {
     return ('00000' + int_color.toString(16)).slice(-6)
 }
 
-function elem2style(e)
+var elem2style = function(e)
 {
     var style = '';
     if (e.f) style += 'color:#'+i2strcolor(e.f)+';';
@@ -96,7 +18,7 @@ function elem2style(e)
     return style
 }
 
-function render(screen)
+return function(screen)
 {
     var estyle = screen.style;
 
@@ -138,7 +60,4 @@ function render(screen)
     ;
 }
 
-</script>
-
-</body>
-</html>
+})()
