@@ -202,6 +202,9 @@ std::string json_rendering(
                     buf.push_ucs(ch.character);
                 }
             }
+            else {
+                buf.push_c(' ');
+            }
 
             previous_ch = ch;
         }
