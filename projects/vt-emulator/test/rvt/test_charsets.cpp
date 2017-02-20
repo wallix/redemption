@@ -14,19 +14,18 @@
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
 *   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2015
+*   Copyright (C) Wallix 2010-2016
 *   Author(s): Jonathan Poelen
 */
 
-#pragma once
 
-#include <type_traits>
+#define BOOST_AUTO_TEST_MAIN
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE TestRect
+#include "system/redemption_unit_tests.hpp"
 
-template<class T>
-using underlying_type_t = typename std::underlying_type<T>::type;
+#include "rvt/charsets.hpp"
 
-template<class E>
-constexpr
-underlying_type_t<E>
-underlying_cast(E e)
-{ return static_cast<underlying_type_t<E>>(e); }
+BOOST_AUTO_TEST_CASE(TestCharsets)
+{
+}

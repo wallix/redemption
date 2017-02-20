@@ -14,19 +14,19 @@
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
 *   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2015
+*   Copyright (C) Wallix 2010-2016
 *   Author(s): Jonathan Poelen
 */
 
 #pragma once
 
-#include <type_traits>
+#include "rvt/character.hpp"
+#include <iosfwd>
 
-template<class T>
-using underlying_type_t = typename std::underlying_type<T>::type;
+namespace rvt {
 
-template<class E>
-constexpr
-underlying_type_t<E>
-underlying_cast(E e)
-{ return static_cast<underlying_type_t<E>>(e); }
+class Screen;
+
+void ansi_rendering(Screen const & screen, ColorTableView palette, std::ostream & out);
+
+}

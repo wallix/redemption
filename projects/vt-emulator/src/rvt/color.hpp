@@ -14,19 +14,45 @@
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
 *   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2015
+*   Copyright (C) Wallix 2010-2016
 *   Author(s): Jonathan Poelen
 */
 
 #pragma once
 
-#include <type_traits>
+#include <cstdint>
 
-template<class T>
-using underlying_type_t = typename std::underlying_type<T>::type;
+namespace rvt
+{
 
-template<class E>
-constexpr
-underlying_type_t<E>
-underlying_cast(E e)
-{ return static_cast<underlying_type_t<E>>(e); }
+struct Color
+{
+    constexpr Color() noexcept = default;
+
+    constexpr Color(uint8_t r, uint8_t g, uint8_t b) noexcept
+    : r(r)
+    , g(g)
+    , b(b)
+    {}
+
+    constexpr uint8_t red() const noexcept { return r; }
+    constexpr uint8_t green() const noexcept { return g; }
+    constexpr uint8_t blue() const noexcept { return b; }
+
+private:
+    uint8_t r = 0;
+    uint8_t g = 0;
+    uint8_t b = 0;
+};
+
+constexpr bool operator == (Color const & c1, Color const & c2) noexcept
+{
+    return c1.red() == c2.red()
+        && c1.green() == c2.green()
+        && c1.blue() == c2.blue();
+}
+
+constexpr bool operator != (Color const & c1, Color const & c2) noexcept
+{ return !operator==(c1, c2); }
+
+}

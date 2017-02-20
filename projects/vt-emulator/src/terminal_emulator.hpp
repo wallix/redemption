@@ -14,19 +14,25 @@
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
 *   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2015
+*   Copyright (C) Wallix 2010-2016
 *   Author(s): Jonathan Poelen
 */
 
 #pragma once
 
-#include <type_traits>
+#include "cxx/keyword.hpp"
 
-template<class T>
-using underlying_type_t = typename std::underlying_type<T>::type;
+class TerminalEmulator;
 
-template<class E>
-constexpr
-underlying_type_t<E>
-underlying_cast(E e)
-{ return static_cast<underlying_type_t<E>>(e); }
+extern "C" {
+
+REDEMPTION_LIB_EXPORT TerminalEmulator * terminal_emulator_init(int lines, int columns, int log_level);
+REDEMPTION_LIB_EXPORT void terminal_emulator_deinit(TerminalEmulator *);
+REDEMPTION_LIB_EXPORT int terminal_emulator_finish(TerminalEmulator *);
+
+REDEMPTION_LIB_EXPORT int terminal_emulator_set_title(TerminalEmulator *, char const * title);
+REDEMPTION_LIB_EXPORT int terminal_emulator_feed(TerminalEmulator *, char const * s, int n);
+REDEMPTION_LIB_EXPORT int terminal_emulator_resize(TerminalEmulator *, int lines, int columns);
+REDEMPTION_LIB_EXPORT int terminal_emulator_write(TerminalEmulator *, char const * filename);
+
+}

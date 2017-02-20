@@ -43,6 +43,9 @@ struct bytes_t
 
     explicit operator bool () const noexcept { return this->data_; }
 
+    uint8_t & operator[](std::size_t i) noexcept { return this->data_[i]; }
+    uint8_t const & operator[](std::size_t i) const noexcept { return this->data_[i]; }
+
 private:
     uint8_t * data_ = nullptr;
 };
@@ -70,6 +73,8 @@ struct const_bytes_t
     constexpr operator uint8_t const * () const noexcept { return this->data_; }
 
     constexpr explicit operator bool () const noexcept { return this->data_; }
+
+    uint8_t const & operator[](std::size_t i) const noexcept { return this->data_[i]; }
 
 private:
     uint8_t const * data_ = nullptr;
