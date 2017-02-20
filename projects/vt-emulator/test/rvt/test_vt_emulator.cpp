@@ -57,7 +57,7 @@ inline std::ostream & operator<<(std::ostream & out, Character const & ch)
 
 BOOST_AUTO_TEST_CASE(TestEmulator)
 {
-    rvt::VtEmulator emulator(7, 20);
+    rvt::VtEmulator emulator(7, 20, 1);
     rvt::Utf8Decoder text_decoder;
 
     auto send_ucs = [&emulator](rvt::ucs4_char ucs) { emulator.receiveChar(ucs); };

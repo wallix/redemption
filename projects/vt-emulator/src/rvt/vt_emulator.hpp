@@ -59,7 +59,7 @@ class VtEmulator
 
 public:
     /** Constructs a new emulation */
-    VtEmulator(int lines, int columns);
+    VtEmulator(int lines, int columns, int log_level);
     ~VtEmulator();
 
     // reimplemented from Emulation
@@ -153,6 +153,8 @@ private:
 
     Screen _screens[2];
     Screen * _currentScreen = &_screens[0];
+
+    int _logLevel;
 };
 
 }

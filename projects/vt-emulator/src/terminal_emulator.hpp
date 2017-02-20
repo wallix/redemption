@@ -26,7 +26,7 @@ class TerminalEmulator;
 
 extern "C" {
 
-REDEMPTION_LIB_EXPORT TerminalEmulator * terminal_emulator_init(int lines, int columns);
+REDEMPTION_LIB_EXPORT TerminalEmulator * terminal_emulator_init(int lines, int columns, int log_level);
 REDEMPTION_LIB_EXPORT void terminal_emulator_deinit(TerminalEmulator *);
 REDEMPTION_LIB_EXPORT int terminal_emulator_finish(TerminalEmulator *);
 

@@ -32,7 +32,7 @@
 
 int main()
 {
-    rvt::VtEmulator emulator(40, 40);
+    rvt::VtEmulator emulator(40, 40, 1);
 
     for (int i = 0; i < 20; ++i) {
         emulator.receiveChar('a');

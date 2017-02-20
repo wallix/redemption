@@ -40,8 +40,8 @@ struct TerminalEmulator
     rvt::VtEmulator emulator;
     rvt::Utf8Decoder decoder;
 
-    TerminalEmulator(int lines, int columns)
-    : emulator(lines, columns)
+    TerminalEmulator(int lines, int columns, int log_level)
+    : emulator(lines, columns, log_level)
     {}
 };
 
@@ -50,9 +50,9 @@ extern "C" {
 #define return_if(x) do { if (x) { return -1; } } while (0)
 #define return_errno_if(x) do { if (x) { return errno ? errno : -1; } } while (0)
 
-TerminalEmulator * terminal_emulator_init(int lines, int columns)
+TerminalEmulator * terminal_emulator_init(int lines, int columns, int log_level)
 {
-    return new TerminalEmulator(lines, columns);
+    return new TerminalEmulator(lines, columns, log_level);
 }
 
 void terminal_emulator_deinit(TerminalEmulator * emu)
@@ -121,7 +121,7 @@ int terminal_emulator_write(TerminalEmulator * emu, char const * filename)
 
     char tmpfilename[4096];
     tmpfilename[0] = 0;
-    int n = std::snprintf(tmpfilename, utils::size(tmpfilename) - 1, "%s-terermu-XXXXXX.tmp", filename);
+    int n = std::snprintf(tmpfilename, utils::size(tmpfilename) - 1, "%s-teremu-XXXXXX.tmp", filename);
     tmpfilename[n < 0 ? 0 : n] = 0;
 
     io::posix::fdbuf f;
