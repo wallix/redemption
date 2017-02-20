@@ -150,8 +150,9 @@ private:
     ModeFlags _currentModes;
     ModeFlags _savedModes;
 
-    Screen _screens[2];
-    Screen * _currentScreen = &_screens[0];
+    Screen _screen0;
+    Screen _screen1;
+    Screen * _currentScreen = &_screen1;
 
     int _logLevel;
 };

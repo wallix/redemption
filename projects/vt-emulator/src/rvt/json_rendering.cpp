@@ -154,7 +154,7 @@ std::string json_rendering(
                     buf.push_s("\"},{");
                 }
                 if (!is_same_rendition) {
-                    int const r = static_cast<int>(0
+                    int const r = (0
                         | (bool(ch.rendition & rvt::Rendition::Bold)      ? 1 : 0)
                         | (bool(ch.rendition & rvt::Rendition::Italic)    ? 2 : 0)
                         | (bool(ch.rendition & rvt::Rendition::Underline) ? 4 : 0)

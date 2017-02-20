@@ -38,7 +38,8 @@ namespace rvt
 {
 
 VtEmulator::VtEmulator(int lines, int columns, int log_level)
-: _screens{{lines, columns}, {lines, columns}}
+: _screen0{lines, columns}
+, _screen1{lines, columns}
 , _logLevel(log_level)
 {
     initTokenizer();
@@ -124,9 +125,9 @@ void VtEmulator::reset()
 */
 
 #define TY_CONSTRUCT(T,A,N) ( \
-    ((static_cast<int>(N) & 0xffff) << 16) | \
-    ((static_cast<int>(A) & 0xff) << 8) | \
-    ( static_cast<int>(T) & 0xff) )
+    (((N+0) & 0xffff) << 16) | \
+    (((A+0) & 0xff) << 8) | \
+    ( (T+0) & 0xff) )
 
 #define TY_CHR(   )     TY_CONSTRUCT(0,0,0)
 #define TY_CTL(A  )     TY_CONSTRUCT(1,A,0)
@@ -811,7 +812,7 @@ void VtEmulator::setWindowTitle(ucs4_carray_view title)
 
 // Apply current character map.
 
-#define CHARSET _charsets[_currentScreen == &_screens[1]]
+#define CHARSET _charsets[_currentScreen == &_screen1]
 
 ucs4_char VtEmulator::applyCharset(ucs4_char c) const
 {
@@ -866,7 +867,7 @@ void VtEmulator::setDefaultMargins()
 
 void VtEmulator::setScreen(int n)
 {
-    _currentScreen = &_screens[n & 1];
+    _currentScreen = (n & 1) ? &_screen1 : &_screen0;
 }
 
 void VtEmulator::setScreenSize(int lines, int columns)
@@ -875,8 +876,8 @@ void VtEmulator::setScreenSize(int lines, int columns)
         return;
     }
 
-    _screens[0].resizeImage(lines, columns);
-    _screens[1].resizeImage(lines, columns);
+    _screen0.resizeImage(lines, columns);
+    _screen1.resizeImage(lines, columns);
 }
 
 void VtEmulator::setMargins(int t, int b)
@@ -987,26 +988,26 @@ bool VtEmulator::getMode(Mode m)
 
 void VtEmulator::setMode(ScreenMode m)
 {
-    _screens[0].setMode(m);
-    _screens[1].setMode(m);
+    _screen0.setMode(m);
+    _screen1.setMode(m);
 }
 
 void VtEmulator::resetMode(ScreenMode m)
 {
-    _screens[0].resetMode(m);
-    _screens[1].resetMode(m);
+    _screen0.resetMode(m);
+    _screen1.resetMode(m);
 }
 
 void VtEmulator::saveMode(ScreenMode m)
 {
-    _screens[0].saveMode(m);
-    _screens[1].saveMode(m);
+    _screen0.saveMode(m);
+    _screen1.saveMode(m);
 }
 
 void VtEmulator::restoreMode(ScreenMode m)
 {
-    _screens[0].resetMode(m);
-    _screens[1].resetMode(m);
+    _screen0.resetMode(m);
+    _screen1.resetMode(m);
 }
 
 bool VtEmulator::getMode(ScreenMode m)
