@@ -33,6 +33,7 @@
 
 
 
+
 class Mod_Qt : public QObject
 {
 
@@ -215,6 +216,85 @@ public Q_SLOTS:
 
 
 };
+
+
+// class FileSysWatchWrapper_Qt : public QFileSystemWatcher
+// {
+//
+// Q_OBJECT
+//
+//     Front_Qt_API * front;
+//
+// public:
+//     FileSysWatchWrapper_Qt(Front_Qt * front, QObject * parent)
+//       : QFileSystemWatcher(parent)
+//       , front(front)
+//     {
+//         QString qpath(front->SHARE_DIR.c_str());
+//
+//         this->addPaths(this->scan_dir(qpath));
+// 
+//         //this->QObject::connect(this, SIGNAL (directoryChanged(const QString &)),  this, SLOT (sync_dir_change(const QString &)));
+//
+//         this->QObject::connect(this, SIGNAL (fileChanged(const QString &)),  this, SLOT (sync_file_change(const QString &)));
+//     }
+//
+//     QStringList scan_dir(const QString & path) {
+//
+//         QStringList list;
+//         list << path;
+//
+//         std::string str_path(path.toUtf8().constData());
+//         DIR *dir;
+//         struct dirent *ent;
+//         std::string ignored1("..");
+//         std::string ignored2(".");
+//         if ((dir = opendir (path.toUtf8().constData())) != nullptr) {
+//             try {
+//                 while ((ent = readdir (dir)) != nullptr) {
+//
+//                     std::string current_name = std::string (ent->d_name);
+//                     if (!(current_name == ignored1) && !(current_name == ignored2)) {
+//
+//                         std::string child_path(str_path + "/" + current_name);
+//                         struct stat buff_child;
+//                         if (stat(child_path.c_str(), &buff_child)) {
+//                             LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", child_path.c_str());
+//                         }
+//
+//                         QString qstr_child_dir(child_path.c_str());
+//                         if (S_ISDIR(buff_child.st_mode)) {
+//                             LOG(LOG_WARNING, "add dir \'%s\'.", child_path.c_str());
+//                             list << this->scan_dir(qstr_child_dir);
+//                         } else {
+//                             LOG(LOG_WARNING, "add file \'%s\'.", child_path.c_str());
+//                             list << qstr_child_dir;
+//                         }
+//                     }
+//                 }
+//             } catch (Error & e) {
+//                 LOG(LOG_WARNING, "readdir error: (%d) %s", e.id, e.errmsg());
+//             }
+//             closedir (dir);
+//         }
+//
+//         return list;
+//     }
+//
+// private Q_SLOTS:
+//
+//     void sync_dir_change(const QString & path) {
+//         LOG(LOG_WARNING, "Sync dir change for path \"%s\"", path.toUtf8().constData());
+//         QString qpath(this->front->SHARE_DIR.c_str());
+//         this->removePaths(this->directories() + this->files());
+//         this->addPaths(this->scan_dir(qpath));
+//     }
+//
+//     void sync_file_change(const QString & path) {
+//         LOG(LOG_WARNING, "Sync file change for path \"%s\"", path.toUtf8().constData());
+//     }
+//
+// };
 
 class DialogOptions_Qt : public QDialog
 {
@@ -1095,6 +1175,8 @@ public:
     std::string    _movie_name;
 
     uchar cursor_data[Pointer::DATA_SIZE*4];
+    int cursorHotx;
+    int cursorHoty;
     bool mouse_out;
 
     Screen_Qt (Front_Qt_API * front, int screen_index, QPixmap * cache, QPixmap * trans_cache)
@@ -1112,6 +1194,8 @@ public:
         , _connexionLasted(false)
         , _screen_index(screen_index)
         , _running(false)
+        , cursorHotx(0)
+        , cursorHoty(0)
         , mouse_out(false)
     {
         this->setMouseTracking(true);
@@ -1160,6 +1244,8 @@ public:
         , _screen_index(0)
         , _running(false)
         , _movie_name(movie_path)
+        , cursorHotx(0)
+        , cursorHoty(0)
         , mouse_out(false)
     {
         std::string title = "Remote Desktop Player " + this->_movie_name;
@@ -1224,6 +1310,8 @@ public:
         , _connexionLasted(false)
         , _screen_index(0)
         , _running(false)
+        , cursorHotx(0)
+        , cursorHoty(0)
         , mouse_out(false)
     {
         this->setMouseTracking(true);
@@ -1278,7 +1366,9 @@ public:
         }
     }
 
-    void set_mem_cursor(const uchar * data) {
+    void set_mem_cursor(const uchar * data, int x, int y) {
+        this->cursorHotx = x;
+        this->cursorHoty = y;
         for (int i = 0; i < Pointer::DATA_SIZE*4; i++) {
             this->cursor_data[i] = data[i];
         }
@@ -1288,7 +1378,7 @@ public:
     void update_current_cursor() {
         QImage image(this->cursor_data, 32, 32, QImage::Format_ARGB32_Premultiplied);
         QPixmap map = QPixmap::fromImage(image);
-        QCursor qcursor(map, 10, 10);
+        QCursor qcursor(map, this->cursorHotx, this->cursorHoty);
 
         this->setCursor(qcursor);
     }
