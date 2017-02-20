@@ -1832,21 +1832,21 @@ struct ClientDriveControlResponse {
 class DeviceIOResponse {
     uint32_t DeviceId_     = 0;
     uint32_t CompletionId_ = 0;
-    // TODO enum NTSTATUS
-    uint32_t IoStatus_     = 0;
+    erref::NTSTATUS IoStatus_ = erref::NTSTATUS::STATUS_SUCCESS;
 
 public:
     DeviceIOResponse() = default;
 
-    DeviceIOResponse(uint32_t DeviceId, uint32_t CompletionId, uint32_t IoStatus)
+    DeviceIOResponse(uint32_t DeviceId, uint32_t CompletionId, erref::NTSTATUS IoStatus)
     : DeviceId_(DeviceId)
     , CompletionId_(CompletionId)
-    , IoStatus_(IoStatus) {}
+    , IoStatus_(IoStatus)
+    {}
 
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceId_);
         stream.out_uint32_le(this->CompletionId_);
-        stream.out_uint32_le(this->IoStatus_);
+        stream.out_uint32_le(static_cast<uint32_t>(this->IoStatus_));
     }
 
     void receive(InStream & stream) {
@@ -1863,16 +1863,16 @@ public:
 
         this->DeviceId_     = stream.in_uint32_le();
         this->CompletionId_ = stream.in_uint32_le();
-        this->IoStatus_     = stream.in_uint32_le();
+        this->IoStatus_     = static_cast<erref::NTSTATUS>(stream.in_uint32_le());
     }
 
     uint32_t DeviceId() const { return this->DeviceId_; }
 
     uint32_t CompletionId() const { return this->CompletionId_; }
 
-    uint32_t IoStatus() const { return this->IoStatus_; }
+    erref::NTSTATUS IoStatus() const { return this->IoStatus_; }
 
-    void set_IoStatus(uint32_t IoStatus) {
+    void set_IoStatus(erref::NTSTATUS IoStatus) {
         this->IoStatus_ = IoStatus;
     }
 
@@ -1884,7 +1884,7 @@ private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceIOResponse: DeviceId=%u CompletionId=%u IoStatus=0x%08X",
-            this->DeviceId_, this->CompletionId_, this->IoStatus_);
+            this->DeviceId_, this->CompletionId_, static_cast<uint32_t>(this->IoStatus_));
         return ((length < size) ? length : size - 1);
     }
 
@@ -1958,6 +1958,7 @@ public:
 //  | 0x00000003       |                                   |
 //  +------------------+-----------------------------------+
 
+// TODO strong enum (FileStatus?)
 enum : uint8_t {
       FILE_SUPERSEDED  = 0x00
     , FILE_OPENED      = 0x01
@@ -1997,11 +1998,11 @@ public:
         stream.out_uint8(this->Information);
     }
 
-    void receive(InStream & stream, uint32_t IoStatus) {
+    void receive(InStream & stream, erref::NTSTATUS IoStatus) {
         {
             const unsigned expected =
                     4 +                 // FileId(4)
-                    (IoStatus ? 1 : 0)  // Information(1)
+                    (IoStatus != erref::NTSTATUS::STATUS_SUCCESS ? 1 : 0)  // Information(1)
                 ;
 
             if (!stream.in_check_rem(expected)) {
@@ -2013,7 +2014,7 @@ public:
         }
 
         this->FileId_     = stream.in_uint32_le();
-        this->Information = (IoStatus ? stream.in_uint8() : 0x00);
+        this->Information = (IoStatus != erref::NTSTATUS::STATUS_SUCCESS ? stream.in_uint8() : 0x00);
     }
 
     void receive(InStream & stream) {

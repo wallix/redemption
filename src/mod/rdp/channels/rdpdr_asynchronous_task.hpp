@@ -97,7 +97,7 @@ public:
             const rdpdr::DeviceIOResponse device_io_response(
                     DeviceId,
                     CompletionId,
-                    0x00000000 /* STATUS_SUCCESS */
+                    erref::NTSTATUS::STATUS_SUCCESS
                 );
             if (this->verbose & RDPVerbose::asynchronous_task) {
                 LOG(LOG_INFO, "RdpdrDriveReadTask::run");

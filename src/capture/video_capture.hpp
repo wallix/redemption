@@ -112,7 +112,7 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
                     // TODO: see if we can provide chmod in mkostemp
                 }
             }
-            
+
             size_t remaining_len = len;
             size_t total_sent = 0;
             while (remaining_len) {
@@ -131,7 +131,7 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
     } trans_tmp_file;
 
     RDPDrawable & drawable;
-    
+
     FlvParams flv_params;
     std::unique_ptr<video_recorder> recorder;
     timeval start_video_capture;
@@ -200,7 +200,7 @@ public:
                 } while (tick >= inter_frame_interval);
             }
         }
-        return std::chrono::microseconds(inter_frame_interval - tick);    
+        return std::chrono::microseconds(inter_frame_interval - tick);
     }
 
     std::chrono::microseconds periodic_snapshot(const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
@@ -245,7 +245,7 @@ public:
             this->flv_params.target_height,
             this->flv_params.verbosity
         ));
-    
+
         ::unlink((std::string(record_path) + basename + "." + flv_params.codec).c_str());
     }
 
@@ -304,7 +304,7 @@ class SequencedVideoCaptureImpl : public gdi::CaptureApi
 
             this->final_filename[0] = 0;
             this->tmp_filename[0] = 0;
-            
+
             if (authentifier) {
                 this->set_authentifier(authentifier);
             }
@@ -323,7 +323,7 @@ class SequencedVideoCaptureImpl : public gdi::CaptureApi
             ::close(this->fd);
             this->fd = -1;
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-            
+
             this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
             if (::rename(this->tmp_filename, this->final_filename) < 0)
             {
@@ -344,7 +344,7 @@ class SequencedVideoCaptureImpl : public gdi::CaptureApi
             if (this->fd != -1) {
                 ::close(this->fd);
                 // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                
+
                 this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
                 const int res = ::rename(this->tmp_filename, this->final_filename);
                 if (res < 0) {
@@ -473,7 +473,7 @@ public:
             return next_duration;
         }
 
-        void frame_marker_event(timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval) 
+        void frame_marker_event(timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
         {
             this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
         }
@@ -637,7 +637,7 @@ public:
 
             return std::chrono::microseconds(inter_frame_interval - tick);
         }
-        
+
         std::chrono::microseconds periodic_snapshot(
             timeval const & now,
             int cursor_x, int cursor_y,
@@ -650,7 +650,7 @@ public:
         }
 
     } vc;
- 
+
     SequenceTransport ic_trans;
 
     unsigned ic_zoom_factor;
@@ -742,14 +742,14 @@ public:
             timeval const & now,
             int cursor_x, int cursor_y,
             bool ignore_frame_in_timeval
-        ) {
+        ) override {
             // assert(now >= previous);
             auto next_duration = this->do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
             assert(next_duration.count() >= 0);
             return next_duration;
         }
 
-        void frame_marker_event(timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval) 
+        void frame_marker_event(timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval) override
         {
             this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
         }
