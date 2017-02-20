@@ -61,24 +61,26 @@ var ajax_param = {
     dataType: 'json'
 };
 
+var time = document.location.search.replace(/[^0-9]/g, '')*1000 || 5000;
+
 (function loop() {
     $.ajax(ajax_param)
     .done(function(screen){
         //console.log(screen)
         this.innerHTML = render(screen);
-        window.setTimeout(loop, 5000);
+        window.setTimeout(loop, time);
     })
     // file is truncated
     .fail(function(jqxhr, status, e){
         //console.log(e)
-        window.setTimeout(loop, 5000)
+        window.setTimeout(loop, time)
     })
 })()
 
 
 function i2strcolor(int_color)
 {
-    return ('000000' + int_color.toString(16)).slice(-6)
+    return ('00000' + int_color.toString(16)).slice(-6)
 }
 
 function elem2style(e)
@@ -103,7 +105,7 @@ function render(screen)
         empty_line += empty_line;
     }
 
-    //console.log(screen.props)
+    console.log(screen.props)
 
     var terminal = '';
     for (var lines of screen.data) {
@@ -111,7 +113,7 @@ function render(screen)
         for (var line of lines) {
             var sz_s = 0;
             for (var e of line) {
-                console.log(e)
+                //console.log(e)
                 if (e.r != undefined) estyle.r = e.r;
                 if (e.f != undefined) estyle.f = e.f;
                 if (e.b != undefined) estyle.b = e.b;
