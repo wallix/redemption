@@ -64,6 +64,8 @@ Front_Qt::Front_Qt(char* argv[], int argc, RDPVerbose verbose)
         params.dont_log_data_into_syslog = true;
         params.dont_log_data_into_wrm = true;
 
+        params.client_use_long_format_names = true;
+
         return params;
     }())
     , _capture(nullptr)
@@ -2577,26 +2579,52 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                 std::string new_path(this->SHARE_DIR + request.Path());
 
+
+                                std::string folderGif("/share-3/folder.gif");
+                                std::string folderJpg("/share-3/folder.jpg");
+
                                 if (id == 0) {
-                                    id = this->fileSystemData.get_file_id();
 
-                                    this->fileSystemData.paths.push_back(this->SHARE_DIR + request.Path());
 
-                                    std::ifstream file(this->fileSystemData.paths[id-1].c_str());
-                                    if (!file.good()) {
-                                        if (request.CreateOptions() == smb2::FILE_OPEN_REPARSE_POINT) {
-                                            LOG(LOG_WARNING, "new directory: \"%s\"", new_path);
-//                                             mkdir(new_path.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-//                                             id = 0;
+                                    std::ifstream file(new_path.c_str());
+                                    if (file.good()) {
+                                        id = this->fileSystemData.get_file_id();
+                                        this->fileSystemData.paths.push_back(new_path);
+//                                         struct stat buff;
+//                                         stat(new_path.c_str(), &buff);
+                                    } else {
+                                        if (request.CreateDisposition() & smb2::FILE_CREATE) {
+
+                                            if (request.Path() != folderGif && request.Path() != folderJpg) {
+
+                                                id = this->fileSystemData.get_file_id();
+                                                this->fileSystemData.paths.push_back(new_path);
+
+                                                if (request.CreateOptions() & smb2::FILE_DIRECTORY_FILE) {
+
+                                                    LOG(LOG_WARNING, "new directory: \"%s\"", new_path);
+                                                    mkdir(new_path.c_str(), ACCESSPERMS);
+                                                } else {
+                                                    LOG(LOG_WARNING, "new file: \"%s\"", new_path);
+                                                    std::ofstream oFile(new_path, std::ios::out | std::ios::binary);
+                                                }
+                                            } else {
+                                                LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", new_path.c_str());
+                                                deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
+                                                //id = 0;
+                                            }
+
                                         } else {
-                                            LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str());
+                                            LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", new_path.c_str());
+                                            deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
+                                            //id = 0;
                                         }
-                                        deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
+
+
                                     }
                                 }
 
-                                struct stat buff;
-                                stat(new_path.c_str(), &buff);
+
                                 uint8_t Information(rdpdr::FILE_SUPERSEDED);
 //                                 if (S_ISDIR(buff.st_mode)) {
 //                                     Information = rdpdr::FILE_SUPERSEDED;
