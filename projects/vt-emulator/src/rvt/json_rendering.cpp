@@ -115,16 +115,7 @@ std::string json_rendering(
     Buf buf;
     buf.s += std::sprintf(buf.s, R"({"lines":%d,"columns":%d,"title":")", screen.getLines(), screen.getColumns());
     buf.push_ucs_array(title);
-    buf.s += std::sprintf(buf.s, R"(","style":{"r":0,"f":%d,"b":%d},"props":")", color2int(palette[0]), color2int(palette[1]));
-
-    for (rvt::LineProperty prop : screen.getScreenLinesProperties()) {
-        assert(unsigned(prop) <= 9);
-        buf.push_c(char(int(prop) + '0'));
-        if (buf.remaining() <= 2) {
-            buf.flush(out);
-        }
-    }
-    buf.push_s(R"(","data":[)");
+    buf.s += std::sprintf(buf.s, R"(","style":{"r":0,"f":%d,"b":%d},"data":[)", color2int(palette[0]), color2int(palette[1]));
 
     if (!screen.getColumns() || !screen.getLines()) {
         buf.push_s("]}");
