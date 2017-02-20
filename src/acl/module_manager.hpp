@@ -1390,6 +1390,12 @@ public:
                         !mod_rdp_params.remote_program) {
                         LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
 
+                        std::string target_info = this->ini.get<cfg::context::target_str>().c_str();
+                        target_info += ":";
+                        target_info += this->ini.get<cfg::globals::primary_user_id>().c_str();
+
+                        this->client_execute.set_target_info(target_info.c_str());
+
                         this->set_mod(
                                 new RailModuleHostMod(
                                         this->ini,
@@ -1505,6 +1511,12 @@ public:
                                     this->front.client_info.height,
                                     this->front.client_info.cs_monitor
                                 ));
+
+                        std::string target_info = this->ini.get<cfg::context::target_str>().c_str();
+                        target_info += ":";
+                        target_info += this->ini.get<cfg::globals::primary_user_id>().c_str();
+
+                        this->client_execute.set_target_info(target_info.c_str());
 
                         this->set_mod(new RailModuleHostMod(
                                 this->ini,

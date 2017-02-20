@@ -383,7 +383,7 @@ protected:
 
     const uint32_t password_printing_mode;
 
-    bool deactivation_reactivation_in_progress;
+    bool deactivation_reactivation_in_progress = false;
 
     RedirectionInfo & redir_info;
 
@@ -401,7 +401,6 @@ protected:
     Translation::language_t lang;
 
     Font const & font;
-    Theme const & theme;
 
     const bool allow_using_multiple_monitors;
 
@@ -839,14 +838,12 @@ public:
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
         //, total_data_received(0)
         , password_printing_mode(mod_rdp_params.password_printing_mode)
-        , deactivation_reactivation_in_progress(false)
         , redir_info(redir_info)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , bogus_linux_cursor(mod_rdp_params.bogus_linux_cursor)
         , lang(mod_rdp_params.lang)
         , font(mod_rdp_params.font)
-        , theme(mod_rdp_params.theme)
         , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
         , server_notifier(authentifier,
                           mod_rdp_params.server_access_allowed_message,
@@ -1345,7 +1342,7 @@ public:
             this->remote_programs_session_manager =
                 std::make_unique<RemoteProgramsSessionManager>(front, *this,
                     this->lang, this->front_width, this->front_height,
-                    this->font, this->theme, this->authentifier,
+                    this->font, mod_rdp_params.theme, this->authentifier,
                     session_probe_window_title,
                     mod_rdp_params.client_execute, this->verbose);
         }
@@ -3301,14 +3298,23 @@ public:
 
 
                 case FastPath::UpdateType::COLOR:
+                    if (this->verbose & RDPVerbose::basic_trace3) {
+                        LOG(LOG_INFO, "Process pointer color (Fast)");
+                    }
                     this->process_color_pointer_pdu(upd.payload);
                     break;
 
                 case FastPath::UpdateType::CACHED:
+                    if (this->verbose & RDPVerbose::basic_trace3) {
+                        LOG(LOG_INFO, "Process pointer cached (Fast)");
+                    }
                     this->process_cached_pointer_pdu(upd.payload);
                     break;
 
                 case FastPath::UpdateType::POINTER:
+                    if (this->verbose & RDPVerbose::basic_trace3)  {
+                        LOG(LOG_INFO, "Process pointer new (Fast)");
+                    }
                     this->process_new_pointer_pdu(upd.payload);
                     break;
 
@@ -4365,17 +4371,17 @@ public:
         switch (message_type) {
         // Cached Pointer Update (section 2.2.9.1.1.4.6)
         case RDP_POINTER_CACHED:
-            if (this->verbose & RDPVerbose::basic_trace3){
+            if (this->verbose & RDPVerbose::basic_trace3) {
                 LOG(LOG_INFO, "Process pointer cached");
             }
             this->process_cached_pointer_pdu(stream);
-            if (this->verbose & RDPVerbose::basic_trace3){
+            if (this->verbose & RDPVerbose::basic_trace3) {
                 LOG(LOG_INFO, "Process pointer cached done");
             }
             break;
         // Color Pointer Update (section 2.2.9.1.1.4.4)
         case RDP_POINTER_COLOR:
-            if (this->verbose & RDPVerbose::basic_trace3){
+            if (this->verbose & RDPVerbose::basic_trace3) {
                 LOG(LOG_INFO, "Process pointer color");
             }
             this->process_color_pointer_pdu(stream);
@@ -4385,13 +4391,13 @@ public:
             break;
         // New Pointer Update (section 2.2.9.1.1.4.5)
         case RDP_POINTER_NEW:
-            if (this->verbose & RDPVerbose::basic_trace3){
+            if (this->verbose & RDPVerbose::basic_trace3) {
                 LOG(LOG_INFO, "Process pointer new");
             }
             if (enable_new_pointer) {
                 this->process_new_pointer_pdu(stream); // Pointer with arbitrary color depth
             }
-            if (this->verbose & RDPVerbose::basic_trace3){
+            if (this->verbose & RDPVerbose::basic_trace3) {
                 LOG(LOG_INFO, "Process pointer new done");
             }
             break;
@@ -4399,7 +4405,7 @@ public:
 
         case RDP_POINTER_SYSTEM:
         {
-            if (this->verbose & RDPVerbose::basic_trace3){
+            if (this->verbose & RDPVerbose::basic_trace3) {
                 LOG(LOG_INFO, "Process pointer system");
             }
             // TODO: actually show mouse cursor or get back to default

@@ -89,6 +89,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
         struct device_info_type
         {
             uint32_t device_id;
+            uint32_t device_type;
             std::string preferred_dos_name;
         };
         using device_info_inventory_type = std::vector<device_info_type>;
@@ -202,28 +203,28 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
         }
 
     private:
-        bool add_known_device(uint32_t DeviceId, const char* PreferredDosName) {
+        bool add_known_device(uint32_t DeviceId, uint32_t DeviceType, const char* PreferredDosName) {
             for (device_info_type const & info : this->device_info_inventory) {
                 if (info.device_id == DeviceId) {
                     if (this->verbose & RDPVerbose::rdpdr) {
                         LOG(LOG_INFO,
                             "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device: "
-                                "\"%s\"(DeviceId=%u) is already in the device list. "
-                                "Old=\"%s\"",
-                            PreferredDosName, DeviceId,
-                            info.preferred_dos_name.c_str());
+                                "\"%s\"(DeviceId=%u DeviceType=%u) is already in the device list. "
+                                "Old=\"%s\" (DeviceType=%u)",
+                            PreferredDosName, DeviceId, DeviceType,
+                            info.preferred_dos_name.c_str(), info.device_type);
                     }
 
                     return false;
                 }
             }
 
-            this->device_info_inventory.push_back({DeviceId, PreferredDosName});
+            this->device_info_inventory.push_back({DeviceId, DeviceType, PreferredDosName});
             if (this->verbose & RDPVerbose::rdpdr) {
                 LOG(LOG_INFO,
                     "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device: "
-                        "Add \"%s\"(DeviceId=%u) to known device list.",
-                    PreferredDosName, DeviceId);
+                        "Add \"%s\"(DeviceId=%u DeviceType=%u) to known device list.",
+                    PreferredDosName, DeviceId, DeviceType);
             }
 
             return true;
@@ -263,6 +264,16 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
             }
 
             return nullptr;
+        }
+
+        uint32_t get_device_type(uint32_t DeviceId) {
+            for (device_info_type const & info : this->device_info_inventory) {
+                if (info.device_id == DeviceId) {
+                    return info.device_type;
+                }
+            }
+
+            return 0;
         }
 
         bool is_known_device(uint32_t DeviceId) {
@@ -328,16 +339,14 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
 
                     device_announce_header.receive(chunk);
 
-                    if (device_announce_header.DeviceType() ==
-                        rdpdr::RDPDR_DTYP_FILESYSTEM) {
-                        if (!this->add_known_device(
-                                device_announce_header.DeviceId(),
-                                device_announce_header.PreferredDosName())) {
+                    if (!this->add_known_device(
+                            device_announce_header.DeviceId(),
+                            device_announce_header.DeviceType(),
+                            device_announce_header.PreferredDosName())) {
 
-                            this->device_announces.pop_front();
+                        this->device_announces.pop_front();
 
-                            continue;
-                        }
+                        continue;
                     }
                 }
 
@@ -863,7 +872,7 @@ public:
 
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
-        
+
         Params(auth_api & authentifier) : BaseVirtualChannel::Params(authentifier) {}
     };
 
@@ -1504,6 +1513,37 @@ public:
                     std::string const * device_name =
                         this->device_redirection_manager.get_device_name(
                             device_io_response.DeviceId());
+
+                    {
+                        uint32_t device_type =
+                            this->device_redirection_manager.get_device_type(
+                                device_io_response.DeviceId());
+
+                        if (rdpdr::RDPDR_DTYP_FILESYSTEM != device_type) {
+                            std::string info("device_name='");
+                            if (device_name) { info += device_name->c_str(); }
+                            info += "' device_type='";
+                            info += rdpdr::DeviceAnnounceHeader::get_DeviceType_friendly_name(
+                                device_type);
+                            info += "'";
+
+                            this->authentifier.log4(
+                                !this->param_dont_log_data_into_syslog,
+                                "DRIVE_REDIRECTION_USE",
+                                info.c_str());
+
+                            if (!this->param_dont_log_data_into_wrm) {
+                                std::string message("UseRedirectedDevice=");
+                                if (device_name) { message += device_name->c_str(); }
+                                message += "<";
+                                message += rdpdr::DeviceAnnounceHeader::get_DeviceType_friendly_name(
+                                    device_type);
+                                message += ">";
+
+                                this->front.session_update(message);
+                            }
+                        }
+                    }
 
                     if (device_name) {
                         std::string target_file_name = *device_name + file_path;
@@ -2153,7 +2193,7 @@ public:
             device_create_request.log(LOG_INFO);
         }
 
-              bool     access_ok     = true;
+        bool access_ok = true;
 
         if (this->device_redirection_manager.is_known_device(
                 this->server_device_io_request.DeviceId())) {

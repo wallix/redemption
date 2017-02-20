@@ -705,6 +705,18 @@ public:
         return "<unknown>";
     }
 
+    static const char * get_DeviceType_friendly_name(uint32_t DeviceType) {
+        switch (DeviceType) {
+            case RDPDR_DTYP_SERIAL:     return "Serial port";
+            case RDPDR_DTYP_PARALLEL:   return "Parallel port";
+            case RDPDR_DTYP_PRINT:      return "Printer";
+            case RDPDR_DTYP_FILESYSTEM: return "File system";
+            case RDPDR_DTYP_SMARTCARD:  return "Smart card";
+        }
+
+        return "<unknown>";
+    }
+
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,

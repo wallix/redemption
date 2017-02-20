@@ -38,7 +38,7 @@
 #include "utils/stream.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
 
-#define DUMMY_REMOTEAPP "||WABDummyRemoteApp"
+#define DUMMY_REMOTEAPP "||WABRemoteApp"
 
 #define INTERNAL_MODULE_WINDOW_ID    40000
 #define INTERNAL_MODULE_WINDOW_TITLE "Wallix AdminBastion"
@@ -143,12 +143,15 @@ class ClientExecute : public windowing_api
     uint16_t total_width_of_work_areas = 0;
     uint16_t total_height_of_work_areas = 0;
 
+    std::string window_title;
+
     bool verbose;
 
 public:
     ClientExecute(FrontAPI & front, bool verbose)
     : front_(&front)
     , wallix_icon_min(bitmap_from_file(SHARE_PATH "/wallix-icon-min.png"))
+    , window_title(INTERNAL_MODULE_WINDOW_TITLE)
     , verbose(verbose)
     {
     }   // ClientExecute
@@ -416,7 +419,7 @@ public:
                                       *this->font_,
                                       this->title_bar_rect.x + 1,
                                       this->title_bar_rect.y + 3,
-                                      INTERNAL_MODULE_WINDOW_TITLE,
+                                      this->window_title.c_str(),
                                       0x000000,
                                       0xFFFFFF,
                                       depth,
@@ -471,10 +474,9 @@ public:
     void input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos) {
         if (!this->channel_) return;
 
-        //LOG(LOG_INFO, "pointerFlags=0x%X pressed_mouse_button=%d", pointerFlags,
-        //    this->pressed_mouse_button);
-        //LOG(LOG_INFO, "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u",
-        //    pointerFlags, xPos, yPos);
+        //LOG(LOG_INFO,
+        //    "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u pressed_mouse_button=%d",
+        //    pointerFlags, xPos, yPos, this->pressed_mouse_button);
 
         if ((SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1) == pointerFlags) {
             if (MOUSE_BUTTON_PRESSED_NONE == this->pressed_mouse_button) {
@@ -604,8 +606,8 @@ public:
                         smmipdu.MaxPosY(work_area_rect.y);
                         smmipdu.MinTrackWidth(INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH);
                         smmipdu.MinTrackHeight(INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT);
-                        smmipdu.MaxTrackWidth(this->total_width_of_work_areas /*work_area_rect.cx*/ - 1);
-                        smmipdu.MaxTrackHeight(this->total_height_of_work_areas /*work_area_rect.cy*/ - 1);
+                        smmipdu.MaxTrackWidth(this->total_width_of_work_areas - 1);
+                        smmipdu.MaxTrackHeight(this->total_height_of_work_areas - 1);
 
                         smmipdu.emit(out_s);
 
@@ -860,7 +862,7 @@ public:
                     order.Style(0x14EE0000);
                     order.ExtendedStyle(0x40310);
                     order.ShowState(5);
-                    order.TitleInfo(INTERNAL_MODULE_WINDOW_TITLE);
+                    order.TitleInfo(this->window_title.c_str());
                     order.ClientOffsetX(this->window_rect.x + 6);
                     order.ClientOffsetY(this->window_rect.y + 25);
                     order.WindowOffsetX(this->window_rect.x);
@@ -1587,6 +1589,8 @@ public:
 
         this->work_area_count = 0;
 
+        this->set_target_info(nullptr);
+
         this->channel_ = nullptr;
     }   // reset
 
@@ -1728,7 +1732,7 @@ protected:
 
             ServerGetApplicationIDResponsePDU server_get_application_id_response_pdu;
             server_get_application_id_response_pdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
-            server_get_application_id_response_pdu.ApplicationId(INTERNAL_MODULE_WINDOW_TITLE);
+            server_get_application_id_response_pdu.ApplicationId(this->window_title.c_str());
             server_get_application_id_response_pdu.emit(out_s);
 
             header.emit_end();
@@ -1939,7 +1943,7 @@ protected:
                     order.Style(0x14EE0000);
                     order.ExtendedStyle(0x40310);
                     order.ShowState(5);
-                    order.TitleInfo(INTERNAL_MODULE_WINDOW_TITLE);
+                    order.TitleInfo(this->window_title.c_str());
                     order.ClientOffsetX(this->window_rect.x + 6);
                     order.ClientOffsetY(this->window_rect.y + 25);
                     order.WindowOffsetX(this->window_rect.x);
@@ -2131,7 +2135,7 @@ protected:
                 order.Style(0x14EE0000);
                 order.ExtendedStyle(0x40310);
                 order.ShowState(this->maximized ? 3 : 5);
-                order.TitleInfo(INTERNAL_MODULE_WINDOW_TITLE);
+                order.TitleInfo(this->window_title.c_str());
                 order.ClientOffsetX(this->window_rect.x + 6);
                 order.ClientOffsetY(this->window_rect.y + 25);
                 order.WindowOffsetX(this->window_rect.x);
@@ -2785,6 +2789,14 @@ public:
         }
 
         this->auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
+    }
+
+    void set_target_info(const char* ti) {
+        this->window_title = (ti ? ti : "");
+        if (!this->window_title.empty()) {
+            this->window_title += " - ";
+        }
+        this->window_title += INTERNAL_MODULE_WINDOW_TITLE;
     }
 
 private:

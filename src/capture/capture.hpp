@@ -2796,7 +2796,7 @@ public:
                              this->chunk_type,
                              (this->chunk_count-this->remaining_order_count), this->chunk_count,
                              this->stream.in_remain(), this->chunk_size);
-                return false;
+                throw Error(ERR_WRM);
             }
         }
         if (!this->remaining_order_count){
@@ -2825,8 +2825,8 @@ public:
                             this->statistics.timestamp_chunk++;       break;
                     }
                     if (this->chunk_size > 65536){
-                        LOG(LOG_INFO,"chunk_size (%d) > 65536", this->chunk_size);
-                        return false;
+                        LOG(LOG_ERR,"chunk_size (%d) > 65536", this->chunk_size);
+                        throw Error(ERR_WRM);
                     }
                     this->stream = InStream(this->stream_buf);
                     if (this->chunk_size - HEADER_SIZE > 0) {
@@ -2837,15 +2837,12 @@ public:
                 }
             }
             catch (Error & e){
-                if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
-                    throw;
+                if (e.id == ERR_TRANSPORT_NO_MORE_DATA) {
+                    return false;
                 }
 
-                if (this->verbose) {
-                    LOG(LOG_INFO,"receive error %u : end of transport", e.id);
-                }
-                // receive error, end of transport
-                return false;
+                LOG(LOG_ERR,"receive error \"%s\" (%u)", e.errmsg(false), e.id);
+                throw;
             }
         }
         if (this->remaining_order_count > 0){this->remaining_order_count--;}
@@ -2889,7 +2886,7 @@ public:
                         this->process_windowing(stream, header);
                     break;
                     default:
-                        LOG(LOG_ERR, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
+                        LOG(LOG_WARNING, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
                         /* error, unknown order */
                     break;
                 }
@@ -3434,6 +3431,40 @@ public:
                         gd->set_pointer(cursor);
                     }
                 }
+            }
+            break;
+            case POINTER2:
+            {
+                uint8_t cache_idx;
+
+                this->mouse_x = this->stream.in_uint16_le();
+                this->mouse_y = this->stream.in_uint16_le();
+                cache_idx     = this->stream.in_uint8();
+
+                this->statistics.CachePointer++;
+                struct Pointer cursor(Pointer::POINTER_NULL);
+
+                cursor.width    = this->stream.in_uint8();
+                cursor.height   = this->stream.in_uint8();
+                cursor.bpp      = this->stream.in_uint8();
+
+                cursor.x = this->stream.in_uint8();
+                cursor.y = this->stream.in_uint8();
+
+                uint16_t data_size = this->stream.in_uint16_le();
+                REDASSERT(data_size <= 32 * 32 * 3);
+
+                uint16_t mask_size = this->stream.in_uint16_le();
+                REDASSERT(mask_size <= 128);
+
+                stream.in_copy_bytes(cursor.data, std::min<size_t>(sizeof(cursor.data), data_size));
+                stream.in_copy_bytes(cursor.mask, std::min<size_t>(sizeof(cursor.mask), mask_size));
+
+                this->ptr_cache.add_pointer_static(cursor, cache_idx);
+
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->set_pointer(cursor);
+                    }
             }
             break;
             case RESET_CHUNK:
@@ -4100,7 +4131,7 @@ public:
 
     void flush() {
         if (this->kbd_stream.get_offset()) {
-            LOG(LOG_INFO, R"x(type="KBD input" data="%*s")x",
+            LOG(LOG_INFO, R"x(type="KBD input" data="%.*s")x",
                 int(this->kbd_stream.get_offset()),
                 reinterpret_cast<char const *>(this->kbd_stream.get_data()));
             this->kbd_stream.rewind();
@@ -5719,6 +5750,11 @@ public:
 
 protected:
     void send_pointer(int cache_idx, const Pointer & cursor) override {
+        if ((cursor.width != 32) || (cursor.height != 32) || (cursor.bpp != 24)) {
+            this->send_pointer2(cache_idx, cursor);
+            return;
+        }
+
         size_t size =   2           // mouse x
                       + 2           // mouse y
                       + 1           // cache index
@@ -5735,6 +5771,47 @@ protected:
         payload.out_uint8(cache_idx);
         payload.out_uint8(cursor.x);
         payload.out_uint8(cursor.y);
+        this->trans.send(payload.get_data(), payload.get_offset());
+
+        this->trans.send(cursor.data, cursor.data_size());
+        this->trans.send(cursor.mask, cursor.mask_size());
+    }
+
+    void send_pointer2(int cache_idx, const Pointer & cursor) {
+        size_t size =   2                   // mouse x
+                      + 2                   // mouse y
+                      + 1                   // cache index
+
+                      + 1                   // mouse width
+                      + 1                   // mouse height
+                      + 1                   // mouse bpp
+
+                      + 1                   // hotspot x
+                      + 1                   // hotspot y
+
+                      + 2                   // data_size
+                      + 2                   // mask_size
+
+                      + cursor.data_size()  // data
+                      + cursor.mask_size()  // mask
+                      ;
+        send_wrm_chunk(this->trans, POINTER2, size, 0);
+
+        StaticOutStream<32> payload;
+        payload.out_uint16_le(this->mouse_x);
+        payload.out_uint16_le(this->mouse_y);
+        payload.out_uint8(cache_idx);
+
+        payload.out_uint8(cursor.width);
+        payload.out_uint8(cursor.height);
+        payload.out_uint8(cursor.bpp);
+
+        payload.out_uint8(cursor.x);
+        payload.out_uint8(cursor.y);
+
+        payload.out_uint16_le(cursor.data_size());
+        payload.out_uint16_le(cursor.mask_size());
+
         this->trans.send(payload.get_data(), payload.get_offset());
 
         this->trans.send(cursor.data, cursor.data_size());
