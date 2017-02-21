@@ -71,120 +71,10 @@ enum {
 };
 
 
-//struct wrmcapture_FilenameGenerator
-//{
-//    enum Format {
-//        PATH_FILE_PID_COUNT_EXTENSION,
-//        PATH_FILE_COUNT_EXTENSION,
-//        PATH_FILE_PID_EXTENSION,
-//        PATH_FILE_EXTENSION
-//    };
-
-//private:
-//    char         path[1024];
-//    char         filename[1012];
-//    char         extension[12];
-//    Format       format;
-//    unsigned     pid;
-//    mutable char filename_gen[1024];
-
-//    const char * last_filename;
-//    unsigned     last_num;
-
-//public:
-//    wrmcapture_FilenameGenerator(
-//        Format format,
-//        const char * const prefix,
-//        const char * const filename,
-//        const char * const extension)
-//    : format(format)
-//    , pid(getpid())
-//    , last_filename(nullptr)
-//    , last_num(-1u)
-//    {
-//        if (strlen(prefix) > sizeof(this->path) - 1
-//         || strlen(filename) > sizeof(this->filename) - 1
-//         || strlen(extension) > sizeof(this->extension) - 1) {
-//            throw Error(ERR_TRANSPORT);
-//        }
-
-//        strcpy(this->path, prefix);
-//        strcpy(this->filename, filename);
-//        strcpy(this->extension, extension);
-
-//        this->filename_gen[0] = 0;
-//    }
-
-//    const char * get(unsigned count) const
-//    {
-//        if (count == this->last_num && this->last_filename) {
-//            return this->last_filename;
-//        }
-
-//        using std::snprintf;
-//        switch (this->format) {
-//            default:
-//            case PATH_FILE_PID_COUNT_EXTENSION:
-//                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u-%06u%s", this->path
-//                        , this->filename, this->pid, count, this->extension);
-//                break;
-//            case PATH_FILE_COUNT_EXTENSION:
-//                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
-//                        , this->filename, count, this->extension);
-//                break;
-//            case PATH_FILE_PID_EXTENSION:
-//                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
-//                        , this->filename, this->pid, this->extension);
-//                break;
-//            case PATH_FILE_EXTENSION:
-//                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s%s", this->path
-//                        , this->filename, this->extension);
-//                break;
-//        }
-//        return this->filename_gen;
-//    }
-
-//    void set_last_filename(unsigned num, const char * name)
-//    {
-//        this->last_num = num;
-//        this->last_filename = name;
-//    }
-
-//private:
-//    wrmcapture_FilenameGenerator(wrmcapture_FilenameGenerator const &) = delete;
-//    wrmcapture_FilenameGenerator& operator=(wrmcapture_FilenameGenerator const &) = delete;
-//};
-
-//typedef wrmcapture_FilenameGenerator::Format wrmcapture_FilenameFormat;
-
-
-struct dorecompress_out_sequence_filename_buf_param
-{
-    wrmcapture_FilenameGenerator::Format format;
-    const char * const prefix;
-    const char * const filename;
-    const char * const extension;
-    const int groupid;
-
-    dorecompress_out_sequence_filename_buf_param(
-        wrmcapture_FilenameGenerator::Format format,
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension,
-        const int groupid)
-    : format(format)
-    , prefix(prefix)
-    , filename(filename)
-    , extension(extension)
-    , groupid(groupid)
-    {}
-};
-
-
 template<class MetaParams = no_param>
 struct dorecompress_out_meta_sequence_filename_buf_param
 {
-    dorecompress_out_sequence_filename_buf_param sq_params;
+    wrmcapture_out_sequence_filename_buf_param sq_params;
     time_t sec;
     MetaParams meta_buf_params;
     const char * hash_prefix;
@@ -239,7 +129,7 @@ class dorecompress_out_sequence_filename_buf_impl
     int groupid_;
 
 public:
-    explicit dorecompress_out_sequence_filename_buf_impl(dorecompress_out_sequence_filename_buf_param const & params)
+    explicit dorecompress_out_sequence_filename_buf_impl(wrmcapture_out_sequence_filename_buf_param const & params)
     : filegen_(params.format, params.prefix, params.filename, params.extension)
     , buf_()
     , num_file_(0)
