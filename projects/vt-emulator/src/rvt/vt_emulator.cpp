@@ -1039,9 +1039,7 @@ void VtEmulator::reportDecodingError()
     if (!_logLevel || tokenBufferPos == 0 || (tokenBufferPos == 1 && (tokenBuffer[0] & 0xff) >= 32))
         return;
 
-    std::string outputError("Undecodable sequence: ");
-    outputError.append(hexdump2(tokenBuffer, tokenBufferPos));
-    LOG(LOG_INFO, "%s", outputError.c_str());
+    // TODO LOG(LOG_INFO, "Undecodable sequence: %s", hexdump2(tokenBuffer, tokenBufferPos));
     // std::cerr << outputError << std::endl;
 }
 

@@ -1,4 +1,4 @@
-include ../../jam/cxxflags.jam ;
+include jam/cxxflags.jam ;
 
 constant SRC : src ;
 constant SRC_TEST : test ;
@@ -8,9 +8,9 @@ constant RVT_SRC_TEST : $(SRC_TEST)/rvt ;
 
 project vt_emulator
 : requirements
-    <include>../../src
-    <include>../../src/system/linux
     <include>src
+    <include>redemption/src
+    <include>redemption/src/system/linux
 
     <cxxflags>-std=c++11
 
@@ -30,12 +30,11 @@ import testing ;
 
 obj screen : $(RVT_SRC)/screen.cpp ;
 obj emulator : $(RVT_SRC)/vt_emulator.cpp ;
-# obj ansi_rendering : $(RVT_SRC)/ansi_rendering.cpp ;
-obj json_rendering : $(RVT_SRC)/json_rendering.cpp ;
+obj text_rendering : $(RVT_SRC)/text_rendering.cpp ;
 
 alias libemu : emulator screen ;
 
-lib libterm : json_rendering libemu $(RVT_LIB_SRC)/terminal_emulator.cpp : <link>shared ;
+lib libterm : text_rendering libemu $(RVT_LIB_SRC)/terminal_emulator.cpp : <link>shared ;
 
 ## Tools
 ## @{

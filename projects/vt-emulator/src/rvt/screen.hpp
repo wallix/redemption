@@ -24,7 +24,6 @@
 
 #include "rvt/character.hpp"
 
-#include "utils/rect.hpp"
 #include "utils/sugar/enum_flags_operators.hpp"
 
 #include <vector>
@@ -418,29 +417,6 @@ public:
     void setLineProperty(LineProperty property , bool enable);
 
     /**
-     * Returns the number of lines that the image has been scrolled up or down by,
-     * since the last call to resetScrolledLines().
-     *
-     * a positive return value indicates that the image has been scrolled up,
-     * a negative return value indicates that the image has been scrolled down.
-     */
-    int scrolledLines() const;
-
-    /**
-     * Returns the region of the image which was last scrolled.
-     *
-     * This is the area of the image from the top margin to the
-     * bottom margin when the last scroll occurred.
-     */
-    Rect lastScrolledRegion() const;
-
-    /**
-     * Resets the count of the number of lines that the image has been scrolled up or down by,
-     * see scrolledLines()
-     */
-    void resetScrolledLines();
-
-    /**
       * Fills the buffer @p dest with @p count instances of the default (ie. blank)
       * Character style.
       */
@@ -491,9 +467,6 @@ public:
     ExtendedCharTable const & extendedCharTable() const { return _extendedCharTable;  }
 
 private:
-    int _scrolledLines;
-    Rect _lastScrolledRegion;
-
     std::vector<LineProperty> _lineProperties; // QVarLengthArray<LineProperty, 64>
 
     // cursor location

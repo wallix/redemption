@@ -20,15 +20,52 @@
 
 #pragma once
 
-#include "rvt/character.hpp"
+#include "rvt/ucs.hpp"
 
-#include "utils/utf.hpp"
+#include "cxx/keyword.hpp"
+#include "cxx/attributes.hpp"
 #include "utils/sugar/array.hpp"
 #include "utils/sugar/bytes_t.hpp"
 #include "utils/sugar/array_view.hpp"
 
+#include <cassert>
+
+
 namespace rvt
 {
+
+/// \return 1, 2, 3, 4 or 0 if an invalide unicode point
+inline std::size_t unsafe_ucs4_to_utf8(uint32_t uc, bytes_t s)
+{
+    if (REDEMPTION_LIKELY(uc <= 0x7f)) {
+        s[0] = uint8_t(uc);
+        return 1;
+    }
+
+    if (REDEMPTION_LIKELY(uc <= 0x7ff)) {
+        s[0] = uint8_t(0xc0 | ((uc >> 6)  & 0x1f));
+        s[1] = uint8_t(0x80 |  (uc        & 0x3f));
+        return 2;
+    }
+
+    if (uc <= 0xffff) {
+        s[0] = uint8_t(0xe0 | ((uc >> 12) & 0x0f));
+        s[1] = uint8_t(0x80 | ((uc >> 6)  & 0x3f));
+        s[2] = uint8_t(0x80 |  (uc        & 0x3f));
+        return 3;
+    }
+
+    if (uc <= 0x1ffff) {
+        s[0] = uint8_t(0xf0 | ((uc >> 18) & 0x07));
+        s[1] = uint8_t(0x80 | ((uc >> 12) & 0x3f));
+        s[2] = uint8_t(0x80 | ((uc >> 6)  & 0x3f));
+        s[3] = uint8_t(0x80 | ( uc        & 0x3f));
+        return 4;
+    }
+
+    assert(uc && "invalide unicode point");
+    return 0;
+}
 
 enum class Utf8ByteSize : unsigned char
 {
@@ -63,19 +100,37 @@ constexpr Utf8ByteSize utf8_byte_size(uint8_t c) noexcept
     return Utf8ByteSize(utf8_byte_size_table[(c >> 3)]);
 }
 
+
 constexpr bool is_valid_utf8_sequence(uint8_t a) noexcept
 {
     return (a & 0xc0) == 0x80;
 }
+
+constexpr uint32_t utf8_2_bytes_to_ucs(uint8_t a, uint8_t b) noexcept
+{
+    return ((a & 0x1F) << 6 ) | (b & 0x3F);
+}
+
 
 constexpr bool is_valid_utf8_sequence(uint8_t a, uint8_t b) noexcept
 {
     return ((a & b & 0x80) | ((a | b) & 0x40)) == 0x80;
 }
 
+constexpr uint32_t utf8_3_bytes_to_ucs(uint8_t a, uint8_t b, uint8_t c) noexcept
+{
+    return ((a & 0x0F) << 12) | ((b & 0x3F) << 6) | (c & 0x3F);
+}
+
+
 constexpr bool is_valid_utf8_sequence(uint8_t a, uint8_t b, uint8_t c) noexcept
 {
     return ((a & b & c & 0x80) | ((a | b | c) & 0x40)) == 0x80;
+}
+
+constexpr uint32_t utf8_4_bytes_to_ucs(uint8_t a, uint8_t b, uint8_t c, uint8_t d) noexcept
+{
+    return ((a & 0x07) << 18) | ((b & 0x3F) << 12) | ((c & 0x3F) << 6) | (d & 0x3F);
 }
 
 //constexpr ucs4_char replacement_character = 0xfffd; // � REPLACEMENT CHARACTER

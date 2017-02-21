@@ -37,8 +37,6 @@ BOOST_AUTO_TEST_CASE(TestScreenCtor)
     BOOST_CHECK_EQUAL(screen.cursorY(), 0);
     BOOST_CHECK_EQUAL(screen.getColumns(), 40);
     BOOST_CHECK_EQUAL(screen.getLines(), 40);
-    BOOST_CHECK_EQUAL(screen.lastScrolledRegion(), Rect(0, 0, 39, 39));
-    BOOST_CHECK_EQUAL(screen.scrolledLines(), -39);
 
     using Mode = rvt::Screen::Mode;
     BOOST_CHECK_EQUAL(screen.getMode(Mode::Cursor), true);

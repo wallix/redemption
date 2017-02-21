@@ -458,43 +458,6 @@ UTF8toUTF16_exit:
 }
 
 
-#include "utils/sugar/bytes_t.hpp"
-#include "cxx/keyword.hpp"
-#include <cassert>
-
-/// \return 1, 2, 3, 4 or 0 if an invalide unicode point
-inline std::size_t ucs4_to_utf8(uint32_t uc, bytes_t s)
-{
-    if (REDEMPTION_LIKELY(uc <= 0x7f)) {
-        s[0] = uint8_t(uc);
-        return 1;
-    }
-
-    if (REDEMPTION_LIKELY(uc <= 0x7ff)) {
-        s[0] = uint8_t(0xc0 | ((uc >> 6)  & 0x1f));
-        s[1] = uint8_t(0x80 |  (uc        & 0x3f));
-        return 2;
-    }
-
-    if (uc <= 0xffff) {
-        s[0] = uint8_t(0xe0 | ((uc >> 12) & 0x0f));
-        s[1] = uint8_t(0x80 | ((uc >> 6)  & 0x3f));
-        s[2] = uint8_t(0x80 |  (uc        & 0x3f));
-        return 3;
-    }
-
-    if (uc <= 0x1ffff) {
-        s[0] = uint8_t(0xf0 | ((uc >> 18) & 0x07));
-        s[1] = uint8_t(0x80 | ((uc >> 12) & 0x3f));
-        s[2] = uint8_t(0x80 | ((uc >> 6)  & 0x3f));
-        s[3] = uint8_t(0x80 | ( uc        & 0x3f));
-        return 4;
-    }
-
-    assert(uc && "invalide unicode point");
-    return 0;
-}
-
 constexpr uint32_t utf8_2_bytes_to_ucs(uint8_t a, uint8_t b) noexcept
 { return ((a & 0x1F) << 6 ) |  (b & 0x3F); }
 

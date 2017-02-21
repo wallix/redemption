@@ -21,7 +21,6 @@
 */
 
 #include "rvt/screen.hpp"
-#include "utils/sugar/make_unique.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -53,7 +52,6 @@ Screen::Screen(int lines, int columns):
     _lines(lines),
     _columns(columns),
     _screenLines(_lines + 1),
-    _scrolledLines(0),
     _cuX(0),
     _cuY(0),
     _currentRendition(Rendition::Default),
@@ -721,35 +719,15 @@ void Screen::displayCharacter(ucs4_char c)
     _cuX = newCursorX;
 }
 
-int Screen::scrolledLines() const
-{
-    return _scrolledLines;
-}
-void Screen::resetScrolledLines()
-{
-    _scrolledLines = 0;
-}
-
 void Screen::scrollUp(int n)
 {
     if (n == 0) n = 1; // Default
     scrollUp(_topMargin, n);
 }
 
-Rect Screen::lastScrolledRegion() const
-{
-    return _lastScrolledRegion;
-}
-
 void Screen::scrollUp(int from, int n)
 {
     if (n <= 0 || from + n > _bottomMargin) return;
-
-    _scrolledLines -= n;
-    _lastScrolledRegion = Rect(
-        0, static_cast<int16_t>(_topMargin),
-        static_cast<uint16_t>(_columns - 1), static_cast<uint16_t>(_bottomMargin - _topMargin)
-    );
 
     //FIXME: make sure `topMargin', `bottomMargin', `from', `n' is in bounds.
     moveImage(loc(0, from), loc(0, from + n), loc(_columns - 1, _bottomMargin));
@@ -764,8 +742,6 @@ void Screen::scrollDown(int n)
 
 void Screen::scrollDown(int from, int n)
 {
-    _scrolledLines += n;
-
     //FIXME: make sure `topMargin', `bottomMargin', `from', `n' is in bounds.
     if (n <= 0)
         return;

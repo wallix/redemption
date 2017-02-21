@@ -25,8 +25,6 @@
 #include "rvt/utf8_decoder.hpp"
 #include "rvt/json_rendering.hpp"
 
-#include "utils/fdbuf.hpp"
-
 #include <cerrno>
 #include <cstdlib>
 
@@ -43,6 +41,52 @@ struct TerminalEmulator
     TerminalEmulator(int lines, int columns, int log_level)
     : emulator(lines, columns, log_level)
     {}
+};
+
+
+class fdbuf
+{
+    int fd;
+
+public:
+    explicit fdbuf(const char * pathname, int flags, mode_t mode) noexcept
+    : fd(::open(pathname, flags, mode))
+    {}
+
+    ~fdbuf()
+    {
+        this->close();
+    }
+
+    void close()
+    {
+        if (this->is_open()) {
+            ::close(this->fd);
+        }
+    }
+
+    bool is_open() const noexcept
+    {
+        return -1 != this->fd;
+    }
+
+    ssize_t write_all(const void * data, size_t len) const noexcept
+    {
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            ssize_t ret = ::write(this->fd, static_cast<const char*>(data) + total_sent, remaining_len);
+            if (ret <= 0){
+                if (errno == EINTR){
+                    continue;
+                }
+                return -1;
+            }
+            remaining_len -= ret;
+            total_sent += ret;
+        }
+        return total_sent;
+    }
 };
 
 extern "C" {
@@ -124,11 +168,11 @@ int terminal_emulator_write(TerminalEmulator * emu, char const * filename)
     int n = std::snprintf(tmpfilename, utils::size(tmpfilename) - 1, "%s-teremu-XXXXXX.tmp", filename);
     tmpfilename[n < 0 ? 0 : n] = 0;
 
-    io::posix::fdbuf f;
-    return_errno_if(f.open(tmpfilename, O_WRONLY | O_CREAT, 0444) < 0);
+    fdbuf f(tmpfilename, O_WRONLY | O_CREAT, 0444);
+    return_errno_if(f.is_open());
 
     std::streamsize sz = f.write_all(out.c_str(), out.size());
-    return_errno_if(sz < 0);
+    return_errno_if(sz < 0 || sz != static_cast<ssize_t>(out.size()));
 
     f.close();
 

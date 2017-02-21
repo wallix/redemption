@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "rvt/ucs.hpp"
 #include "rvt/character_color.hpp"
 
 #include "cxx/attributes.hpp"
@@ -68,10 +69,6 @@ template<> struct is_enum_flags<rvt::Rendition> : std::true_type {};
 
 namespace rvt
 {
-
-using ucs4_char = uint32_t;
-using ucs4_carray_view = array_view<ucs4_char const>;
-
 
 /**
  * A single character in the terminal which consists of a unicode character

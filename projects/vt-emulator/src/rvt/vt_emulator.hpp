@@ -22,8 +22,6 @@
 
 #include <array>
 
-#include "utils/rect.hpp"
-
 #include "rvt/charsets.hpp"
 #include "rvt/screen.hpp"
 

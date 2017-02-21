@@ -18,12 +18,13 @@
 *   Author(s): Jonathan Poelen
 */
 
-#include "rvt/json_rendering.hpp"
+#include "rvt/text_rendering.hpp"
 
 #include "rvt/character.hpp"
 #include "rvt/screen.hpp"
 
-#include "utils/utf.hpp"
+#include "rvt/ucs.hpp"
+#include "rvt/utf8_decoder.hpp"
 
 #include <functional> // std::cref
 
@@ -39,7 +40,29 @@ struct Buf
         switch (ucs) {
             case '\\': assert(remaining() >= 2); *s++ = '\\'; *s++ = '\\'; break;
             case '"': assert(remaining() >= 2); *s++ = '\\'; *s++ = '"'; break;
-            default : assert(remaining() >= 4); s += ucs4_to_utf8(ucs, s); break;
+            default : assert(remaining() >= 4); s += unsafe_ucs4_to_utf8(ucs, s); break;
+        }
+    }
+
+    void push_character(Character const & ch, const rvt::ExtendedCharTable & extended_char_table, std::size_t max_size, std::string & out)
+    {
+        if (ch.isRealCharacter) {
+            if (ch.is_extended()) {
+                auto ucs_array = extended_char_table[ch.character];
+                while (ucs_array.size() * 4u + max_size >= this->remaining()) {
+                    auto const offset = this->remaining() / 4u;
+                    this->push_ucs_array(ucs_array.first(offset));
+                    ucs_array = ucs_array.subarray(offset);
+                    this->flush(out);
+                }
+                this->push_ucs_array(ucs_array);
+            }
+            else {
+                this->push_ucs(ch.character);
+            }
+        }
+        else {
+            this->push_c(' ');
         }
     }
 
@@ -81,9 +104,6 @@ struct Buf
     std::size_t remaining() const { return static_cast<std::size_t>(std::end(buf) - s); }
 };
 
-static int color2int(rvt::Color const & color)
-{ return (color.red() << 16) | (color.green() << 8) |  (color.blue() << 0); }
-
 // format = "{
 //      lines: %d,
 //      columns: %d,
@@ -108,6 +128,10 @@ std::string json_rendering(
     Screen const & screen,
     ColorTableView palette
 ) {
+    auto color2int = [](rvt::Color const & color){
+        return (color.red() << 16) | (color.green() << 8) |  (color.blue() << 0);
+    };
+
     std::string out;
     out.reserve(screen.getLines() * screen.getColumns() * 7);
     constexpr std::size_t max_size_by_loop = 111; // approximate
@@ -178,24 +202,7 @@ std::string json_rendering(
                 buf.push_s(R"("s":")");
             }
 
-            if (ch.isRealCharacter) {
-                if (ch.is_extended()) {
-                    auto ucs_array = screen.extendedCharTable()[ch.character];
-                    while (ucs_array.size() * 4u + max_size_by_loop >= buf.remaining()) {
-                        auto const offset = buf.remaining() / 4u;
-                        buf.push_ucs_array(ucs_array.first(offset));
-                        ucs_array = ucs_array.subarray(offset);
-                        buf.flush(out);
-                    }
-                    buf.push_ucs_array(ucs_array);
-                }
-                else {
-                    buf.push_ucs(ch.character);
-                }
-            }
-            else {
-                buf.push_c(' ');
-            }
+            buf.push_character(ch, screen.extendedCharTable(), max_size_by_loop, out);
 
             previous_ch = ch;
         }
@@ -207,6 +214,67 @@ std::string json_rendering(
     }
     --buf.s;
     buf.push_s("]}");
+
+    buf.flush(out);
+    return out;
+}
+
+std::string ansi_rendering(
+    array_view<ucs4_char const> title,
+    Screen const & screen,
+    ColorTableView palette
+) {
+    auto write_color = [palette](Buf & buf, char cmd, rvt::CharacterColor const & ch_color) {
+        auto color = ch_color.color(palette);
+        buf.s += std::sprintf(buf.s, ";%c8;2;%d;%d;%d", cmd, color.red()+0, color.green()+0, color.blue()+0);
+    };
+
+    std::string out;
+    out.reserve(screen.getLines() * screen.getColumns() * 4);
+
+    Buf buf;
+    buf.s += std::sprintf(buf.s, "\033]%*s\a", int(title.size()), title);
+
+    using CharacterRef = std::reference_wrapper<rvt::Character const>;
+    rvt::Character const default_ch; // Default format
+    CharacterRef previous_ch = std::cref(default_ch);
+    constexpr std::ptrdiff_t max_size_by_loop = 80; // approximate
+
+    for (auto const & line : screen.getScreenLines()) {
+        for (rvt::Character const & ch : line) {
+            if (!ch.isRealCharacter) {
+                continue;
+            }
+
+            if (buf.remaining() >= max_size_by_loop) {
+                buf.flush(out);
+            }
+
+            bool const is_same_bg = ch.backgroundColor == previous_ch.get().backgroundColor;
+            bool const is_same_fg = ch.foregroundColor == previous_ch.get().foregroundColor;
+            bool const is_same_rendition = ch.rendition == previous_ch.get().rendition;
+            bool const is_same_format = is_same_bg & is_same_fg & is_same_rendition;
+            if (!is_same_format) {
+                buf.push_s("\033[0");
+                if (!is_same_format) {
+                    auto const r = ch.rendition;
+                    if (bool(r & rvt::Rendition::Bold))     { buf.push_s(";1"); }
+                    if (bool(r & rvt::Rendition::Italic))   { buf.push_s(";3"); }
+                    if (bool(r & rvt::Rendition::Underline)){ buf.push_s(";4"); }
+                    if (bool(r & rvt::Rendition::Blink))    { buf.push_s(";5"); }
+                    if (bool(r & rvt::Rendition::Reverse))  { buf.push_s(";6"); }
+                }
+                if (!is_same_fg) write_color(buf, '3', ch.foregroundColor);
+                if (!is_same_bg) write_color(buf, '4', ch.backgroundColor);
+                buf.push_c('m');
+            }
+
+            buf.push_character(ch, screen.extendedCharTable(), max_size_by_loop, out);
+
+            previous_ch = ch;
+        }
+        buf.push_c('\n');
+    }
 
     buf.flush(out);
     return out;

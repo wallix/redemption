@@ -20,13 +20,10 @@
 
 #pragma once
 
-#include "rvt/character.hpp"
-#include <iosfwd>
-
-namespace rvt {
-
-class Screen;
-
-void ansi_rendering(Screen const & screen, ColorTableView palette, std::ostream & out);
-
-}
+#ifdef __has_include
+# define CXX_HAS_INCLUDE_ENABLE 1
+# define CXX_HAS_INCLUDE(path) __has_include(path)
+#else
+# define CXX_HAS_INCLUDE_ENABLE 0
+# define CXX_HAS_INCLUDE(path) 0
+#endif
