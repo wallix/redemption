@@ -51,6 +51,7 @@
 #include "transport/transport.hpp"
 
 #include "acl/auth_api.hpp"
+#include "utils/genrandom.hpp"
 #include "capture/capture.hpp"
 #include "capture/cryptofile.hpp"
 #include "utils/apps/recording_progress.hpp"
@@ -69,16 +70,103 @@ enum {
 };
 
 
+struct dorecompress_FilenameGenerator
+{
+    enum Format {
+        PATH_FILE_PID_COUNT_EXTENSION,
+        PATH_FILE_COUNT_EXTENSION,
+        PATH_FILE_PID_EXTENSION,
+        PATH_FILE_EXTENSION
+    };
+
+private:
+    char         path[1024];
+    char         filename[1012];
+    char         extension[12];
+    Format       format;
+    unsigned     pid;
+    mutable char filename_gen[1024];
+
+    const char * last_filename;
+    unsigned     last_num;
+
+public:
+    dorecompress_FilenameGenerator(
+        Format format,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension)
+    : format(format)
+    , pid(getpid())
+    , last_filename(nullptr)
+    , last_num(-1u)
+    {
+        if (strlen(prefix) > sizeof(this->path) - 1
+         || strlen(filename) > sizeof(this->filename) - 1
+         || strlen(extension) > sizeof(this->extension) - 1) {
+            throw Error(ERR_TRANSPORT);
+        }
+
+        strcpy(this->path, prefix);
+        strcpy(this->filename, filename);
+        strcpy(this->extension, extension);
+
+        this->filename_gen[0] = 0;
+    }
+
+    const char * get(unsigned count) const
+    {
+        if (count == this->last_num && this->last_filename) {
+            return this->last_filename;
+        }
+
+        using std::snprintf;
+        switch (this->format) {
+            default:
+            case PATH_FILE_PID_COUNT_EXTENSION:
+                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u-%06u%s", this->path
+                        , this->filename, this->pid, count, this->extension);
+                break;
+            case PATH_FILE_COUNT_EXTENSION:
+                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
+                        , this->filename, count, this->extension);
+                break;
+            case PATH_FILE_PID_EXTENSION:
+                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
+                        , this->filename, this->pid, this->extension);
+                break;
+            case PATH_FILE_EXTENSION:
+                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s%s", this->path
+                        , this->filename, this->extension);
+                break;
+        }
+        return this->filename_gen;
+    }
+
+    void set_last_filename(unsigned num, const char * name)
+    {
+        this->last_num = num;
+        this->last_filename = name;
+    }
+
+private:
+    dorecompress_FilenameGenerator(dorecompress_FilenameGenerator const &) = delete;
+    dorecompress_FilenameGenerator& operator=(dorecompress_FilenameGenerator const &) = delete;
+};
+
+typedef dorecompress_FilenameGenerator::Format dorecompress_FilenameFormat;
+
+
 struct dorecompress_out_sequence_filename_buf_param
 {
-    FilenameGenerator::Format format;
+    dorecompress_FilenameGenerator::Format format;
     const char * const prefix;
     const char * const filename;
     const char * const extension;
     const int groupid;
 
     dorecompress_out_sequence_filename_buf_param(
-        FilenameGenerator::Format format,
+        dorecompress_FilenameGenerator::Format format,
         const char * const prefix,
         const char * const filename,
         const char * const extension,
@@ -102,7 +190,7 @@ struct dorecompress_out_meta_sequence_filename_buf_param
 
     dorecompress_out_meta_sequence_filename_buf_param(
         time_t start_sec,
-        FilenameGenerator::Format format,
+        dorecompress_FilenameGenerator::Format format,
         const char * const hash_prefix,
         const char * const prefix,
         const char * const filename,
@@ -127,7 +215,7 @@ struct dorecompress_out_hash_meta_sequence_filename_buf_param
     dorecompress_out_hash_meta_sequence_filename_buf_param(
         CryptoContext & cctx,
         time_t start_sec,
-        FilenameGenerator::Format format,
+        dorecompress_FilenameGenerator::Format format,
         const char * const hash_prefix,
         const char * const prefix,
         const char * const filename,
@@ -144,7 +232,7 @@ struct dorecompress_out_hash_meta_sequence_filename_buf_param
 class dorecompress_out_sequence_filename_buf_impl
 {
     char current_filename_[1024];
-    FilenameGenerator filegen_;
+    dorecompress_FilenameGenerator filegen_;
     empty_ctor<io::posix::fdbuf> buf_;
     unsigned num_file_;
     int groupid_;
@@ -197,7 +285,7 @@ public:
     off64_t seek(int64_t offset, int whence)
     { return this->buf_.seek(offset, whence); }
 
-    const FilenameGenerator & seqgen() const noexcept
+    const dorecompress_FilenameGenerator & seqgen() const noexcept
     { return this->filegen_; }
 
     empty_ctor<io::posix::fdbuf> & buf() noexcept
@@ -318,11 +406,11 @@ struct dorecompress_MetaFilename
     char filename[2048];
 
     dorecompress_MetaFilename(const char * path, const char * basename,
-                 FilenameFormat format = FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
+                 dorecompress_FilenameFormat format = dorecompress_FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
     {
         int res =
-        (   format == FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
-         || format == FilenameGenerator::PATH_FILE_PID_EXTENSION)
+        (   format == dorecompress_FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
+         || format == dorecompress_FilenameGenerator::PATH_FILE_PID_EXTENSION)
         ? snprintf(this->filename, sizeof(this->filename)-1, "%s%s-%06u.mwrm", path, basename, unsigned(getpid()))
         : snprintf(this->filename, sizeof(this->filename)-1, "%s%s.mwrm", path, basename);
         if (res > int(sizeof(this->filename) - 6) || res < 0) {
@@ -777,7 +865,7 @@ struct dorecompress_OutMetaSequenceTransport : public Transport
         uint16_t height,
         const int groupid,
         auth_api * authentifier = nullptr,
-        FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
+        dorecompress_FilenameFormat format = dorecompress_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
     : buf(dorecompress_out_meta_sequence_filename_buf_param<>(
         now.tv_sec, format, hash_path, path, basename, ".wrm", groupid
     ))
@@ -793,7 +881,7 @@ struct dorecompress_OutMetaSequenceTransport : public Transport
         this->buffer().update_sec(now.tv_sec);
     }
 
-    const FilenameGenerator * seqgen() const noexcept
+    const dorecompress_FilenameGenerator * seqgen() const noexcept
     {
         return &(this->buffer().seqgen());
     }
@@ -974,7 +1062,7 @@ struct dorecompress_CryptoOutMetaSequenceTransport
         uint16_t height,
         const int groupid,
         auth_api * authentifier = nullptr,
-        FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
+        dorecompress_FilenameFormat format = dorecompress_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
     : buf(
         dorecompress_out_hash_meta_sequence_filename_buf_param<dorecompress_ocrypto_filename_params>(
             crypto_ctx,
@@ -992,7 +1080,7 @@ struct dorecompress_CryptoOutMetaSequenceTransport
         this->buffer().update_sec(now.tv_sec);
     }
 
-    const FilenameGenerator * seqgen() const noexcept
+    const dorecompress_FilenameGenerator * seqgen() const noexcept
     {
         return &(this->buffer().seqgen());
     }
