@@ -70,122 +70,6 @@ enum {
     USE_ORIGINAL_COLOR_DEPTH           = 0xFFFFFFFF
 };
 
-
-class dorecompress_out_sequence_filename_buf_impl
-{
-    char current_filename_[1024];
-    wrmcapture_FilenameGenerator filegen_;
-    wrmcapture_empty_ctor<io::posix::fdbuf> buf_;
-    unsigned num_file_;
-    int groupid_;
-
-public:
-    explicit dorecompress_out_sequence_filename_buf_impl(wrmcapture_out_sequence_filename_buf_param const & params)
-    : filegen_(params.format, params.prefix, params.filename, params.extension)
-    , buf_()
-    , num_file_(0)
-    , groupid_(params.groupid)
-    {
-        this->current_filename_[0] = 0;
-    }
-
-    int close()
-    { return this->next(); }
-
-    ssize_t write(const void * data, size_t len)
-    {
-        if (!this->buf_.is_open()) {
-            const int res = this->open_filename(this->filegen_.get(this->num_file_));
-            if (res < 0) {
-                return res;
-            }
-        }
-        return this->buf_.write(data, len);
-    }
-
-    /// \return 0 if success
-    int next()
-    {
-        if (this->buf_.is_open()) {
-            this->buf_.close();
-            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-            return this->rename_filename() ? 0 : 1;
-        }
-        return 1;
-    }
-
-    void request_full_cleaning()
-    {
-        unsigned i = this->num_file_ + 1;
-        while (i > 0 && !::unlink(this->filegen_.get(--i))) {
-        }
-        if (this->buf_.is_open()) {
-            this->buf_.close();
-        }
-    }
-
-    off64_t seek(int64_t offset, int whence)
-    { return this->buf_.seek(offset, whence); }
-
-    const wrmcapture_FilenameGenerator & seqgen() const noexcept
-    { return this->filegen_; }
-
-    wrmcapture_empty_ctor<io::posix::fdbuf> & buf() noexcept
-    { return this->buf_; }
-
-    const char * current_path() const
-    {
-        if (!this->current_filename_[0] && !this->num_file_) {
-            return nullptr;
-        }
-        return this->filegen_.get(this->num_file_ - 1);
-    }
-
-protected:
-    ssize_t open_filename(const char * filename)
-    {
-        snprintf(this->current_filename_, sizeof(this->current_filename_),
-                    "%sred-XXXXXX.tmp", filename);
-        const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
-        if (fd < 0) {
-            return fd;
-        }
-        if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-               , this->current_filename_
-               , this->groupid_ ? "u+r, g+r" : "u+r"
-               , strerror(errno), errno);
-        }
-        this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-        return this->buf_.open(fd);
-    }
-
-    const char * rename_filename()
-    {
-        const char * filename = this->get_filename_generate();
-        const int res = ::rename(this->current_filename_, filename);
-        if (res < 0) {
-            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-               , this->current_filename_, filename, errno, strerror(errno));
-            return nullptr;
-        }
-
-        this->current_filename_[0] = 0;
-        ++this->num_file_;
-        this->filegen_.set_last_filename(-1u, "");
-
-        return filename;
-    }
-
-    const char * get_filename_generate()
-    {
-        this->filegen_.set_last_filename(-1u, "");
-        const char * filename = this->filegen_.get(this->num_file_);
-        this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-        return filename;
-    }
-};
-
 class dorecompress_ofile_buf_out
 {
     int fd;
@@ -392,9 +276,9 @@ int dorecompress_write_meta_file(
 
 template<class BufMeta>
 class dorecompress_out_meta_sequence_filename_buf_impl
-: public dorecompress_out_sequence_filename_buf_impl
+: public wrmcapture_out_sequence_filename_buf_impl
 {
-    typedef dorecompress_out_sequence_filename_buf_impl sequence_base_type;
+    typedef wrmcapture_out_sequence_filename_buf_impl sequence_base_type;
 
     BufMeta meta_buf_;
     dorecompress_MetaFilename mf_;
@@ -407,7 +291,7 @@ public:
     explicit dorecompress_out_meta_sequence_filename_buf_impl(
         wrmcapture_out_meta_sequence_filename_buf_param<MetaParams> const & params
     )
-    : dorecompress_out_sequence_filename_buf_impl(params.sq_params)
+    : wrmcapture_out_sequence_filename_buf_impl(params.sq_params)
     , meta_buf_(params.meta_buf_params)
     , mf_(params.sq_params.prefix, params.sq_params.filename, params.sq_params.format)
     , hf_(params.hash_prefix, params.sq_params.filename, params.sq_params.format)
@@ -521,13 +405,13 @@ protected:
 public:
     void request_full_cleaning()
     {
-        this->dorecompress_out_sequence_filename_buf_impl::request_full_cleaning();
+        this->wrmcapture_out_sequence_filename_buf_impl::request_full_cleaning();
         ::unlink(this->mf_.filename);
     }
 
     int flush()
     {
-        const int res1 = this->dorecompress_out_sequence_filename_buf_impl::flush();
+        const int res1 = this->wrmcapture_out_sequence_filename_buf_impl::flush();
         const int res2 = this->meta_buf_.flush();
         return res1 == 0 ? res2 : res1;
     }
