@@ -41,8 +41,9 @@ namespace utils
         { return n; }
 
         template<class C>
-        constexpr std::size_t size(C & c)
+        constexpr auto size(C & c)
         noexcept(noexcept(c.size()))
+        -> decltype(c.size())
         { return c.size(); }
     }
 
@@ -58,8 +59,9 @@ namespace utils
         { return data(c); }
 
         template<class C>
-        constexpr std::size_t size_impl(C & c)
+        constexpr auto size_impl(C & c)
         noexcept(noexcept(size(c)))
+        -> decltype(size(c))
         { return size(c); }
     }
 
@@ -70,9 +72,10 @@ namespace utils
     { return detail_::data_impl(c); }
 
     template<class C>
-    constexpr std::size_t size(C & c)
+    constexpr auto size(C & c)
     noexcept(noexcept(detail_::size_impl(c)))
-    { return detail_::size_impl(c); }
+    -> decltype(static_cast<std::size_t>(detail_::size_impl(c)))
+    { return static_cast<std::size_t>(detail_::size_impl(c)); }
 
 
     template<std::size_t N, class T>

@@ -36,18 +36,6 @@ struct buffer_t : bytes_array
     buffer_t(T (& a)[n]) noexcept
     : bytes_array(a, n)
     {}
-
-
-    buffer_t & operator=(buffer_t const &) = default;
-
-    using bytes_array::operator=;
-
-    template<class T, std::size_t n>
-    buffer_t & operator=(T (& a)[n]) noexcept
-    {
-        *this = array_view<T>(a, n);
-        return *this;
-    }
 };
 
 /**
@@ -64,16 +52,4 @@ struct const_buffer_t : const_bytes_array
     const_buffer_t(T (& a)[n]) noexcept
     : const_bytes_array(a, n)
     {}
-
-
-    const_buffer_t & operator=(const_buffer_t const &) = default;
-
-    using const_bytes_array::operator=;
-
-    template<class T, std::size_t n>
-    const_buffer_t & operator=(T (& a)[n]) noexcept
-    {
-        *this = array_view<T>(a, n);
-        return *this;
-    }
 };
