@@ -71,55 +71,6 @@ enum {
 };
 
 
-//template<class MetaParams = wrmcapture_no_param>
-//struct wrmcapture_out_meta_sequence_filename_buf_param
-//{
-//    wrmcapture_out_sequence_filename_buf_param sq_params;
-//    time_t sec;
-//    MetaParams meta_buf_params;
-//    const char * hash_prefix;
-
-//    wrmcapture_out_meta_sequence_filename_buf_param(
-//        time_t start_sec,
-//        wrmcapture_FilenameGenerator::Format format,
-//        const char * const hash_prefix,
-//        const char * const prefix,
-//        const char * const filename,
-//        const char * const extension,
-//        const int groupid,
-//        MetaParams const & meta_buf_params = MetaParams())
-//    : sq_params(format, prefix, filename, extension, groupid)
-//    , sec(start_sec)
-//    , meta_buf_params(meta_buf_params)
-//    , hash_prefix(hash_prefix)
-//    {}
-//};
-
-
-template<class FilterParams = wrmcapture_no_param>
-struct dorecompress_out_hash_meta_sequence_filename_buf_param
-{
-    wrmcapture_out_meta_sequence_filename_buf_param<FilterParams> meta_sq_params;
-    FilterParams filter_params;
-    CryptoContext & cctx;
-
-    dorecompress_out_hash_meta_sequence_filename_buf_param(
-        CryptoContext & cctx,
-        time_t start_sec,
-        wrmcapture_FilenameGenerator::Format format,
-        const char * const hash_prefix,
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension,
-        const int groupid,
-        FilterParams const & filter_params = FilterParams())
-    : meta_sq_params(start_sec, format, hash_prefix, prefix, filename, extension, groupid, filter_params)
-    , filter_params(filter_params)
-    , cctx(cctx)
-    {}
-};
-
-
 class dorecompress_out_sequence_filename_buf_impl
 {
     char current_filename_[1024];
@@ -600,7 +551,7 @@ class dorecompress_out_hash_meta_sequence_filename_buf_impl
 
 public:
     explicit dorecompress_out_hash_meta_sequence_filename_buf_impl(
-        dorecompress_out_hash_meta_sequence_filename_buf_param<Params> const & params
+        wrmcapture_out_hash_meta_sequence_filename_buf_param<Params> const & params
     )
     : sequence_base_type(params.meta_sq_params)
     , cctx(params.cctx)
@@ -955,7 +906,7 @@ struct dorecompress_CryptoOutMetaSequenceTransport
         auth_api * authentifier = nullptr,
         wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
     : buf(
-        dorecompress_out_hash_meta_sequence_filename_buf_param<dorecompress_ocrypto_filename_params>(
+        wrmcapture_out_hash_meta_sequence_filename_buf_param<dorecompress_ocrypto_filename_params>(
             crypto_ctx,
             now.tv_sec, format, hash_path, path, basename, ".wrm", groupid,
             {crypto_ctx, rnd}
