@@ -48,16 +48,6 @@
 #include "system/openssl.hpp"
 
 
-
-class FakeAuthentifier : public auth_api {
-public:
-    virtual void set_auth_channel_target(const char *) {}
-    virtual void set_auth_error_message(const char *) {}
-    virtual void report(const char *, const char *) {}
-    virtual void log4(bool, const char *msg, const char * = nullptr) { LOG(LOG_INFO, "====== authentifier->log4 %s", msg);}
-    virtual void disconnect_target() {}
-};
-
 BOOST_AUTO_TEST_CASE(TestVncConnection0)
 {
 }
@@ -76,7 +66,7 @@ BOOST_AUTO_TEST_CASE(TestVncConnection0)
 //  info.build = 420;
 //  int verbose = 511;
 //  int port = 5900;
-//  FakeAuthentifier authentifier;
+//  NullAuthentifier authentifier;
 //  VncFront front(false, false, info, verbose);
 
 ////   BStream stream(65536);
@@ -86,7 +76,7 @@ BOOST_AUTO_TEST_CASE(TestVncConnection0)
 //  int retry_delai_ms = 1000;
 
 //  int sck = ip_connect(targetIP, port, nbretry, retry_delai_ms);
-// 
+//
 //  SocketTransport t(name, sck, targetIP, 5900, to_verbose_flags(verbose));
 //  t.connect();
 
@@ -159,6 +149,6 @@ BOOST_AUTO_TEST_CASE(TestVncConnection0)
 
 // mod.draw_event(time(nullptr), front);
 // // BOOST_CHECK(t.status);
-// 
+//
 //*/
 //}
