@@ -71,35 +71,35 @@ enum {
 };
 
 
-template<class MetaParams = no_param>
-struct dorecompress_out_meta_sequence_filename_buf_param
-{
-    wrmcapture_out_sequence_filename_buf_param sq_params;
-    time_t sec;
-    MetaParams meta_buf_params;
-    const char * hash_prefix;
+//template<class MetaParams = wrmcapture_no_param>
+//struct wrmcapture_out_meta_sequence_filename_buf_param
+//{
+//    wrmcapture_out_sequence_filename_buf_param sq_params;
+//    time_t sec;
+//    MetaParams meta_buf_params;
+//    const char * hash_prefix;
 
-    dorecompress_out_meta_sequence_filename_buf_param(
-        time_t start_sec,
-        wrmcapture_FilenameGenerator::Format format,
-        const char * const hash_prefix,
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension,
-        const int groupid,
-        MetaParams const & meta_buf_params = MetaParams())
-    : sq_params(format, prefix, filename, extension, groupid)
-    , sec(start_sec)
-    , meta_buf_params(meta_buf_params)
-    , hash_prefix(hash_prefix)
-    {}
-};
+//    wrmcapture_out_meta_sequence_filename_buf_param(
+//        time_t start_sec,
+//        wrmcapture_FilenameGenerator::Format format,
+//        const char * const hash_prefix,
+//        const char * const prefix,
+//        const char * const filename,
+//        const char * const extension,
+//        const int groupid,
+//        MetaParams const & meta_buf_params = MetaParams())
+//    : sq_params(format, prefix, filename, extension, groupid)
+//    , sec(start_sec)
+//    , meta_buf_params(meta_buf_params)
+//    , hash_prefix(hash_prefix)
+//    {}
+//};
 
 
-template<class FilterParams = no_param>
+template<class FilterParams = wrmcapture_no_param>
 struct dorecompress_out_hash_meta_sequence_filename_buf_param
 {
-    dorecompress_out_meta_sequence_filename_buf_param<FilterParams> meta_sq_params;
+    wrmcapture_out_meta_sequence_filename_buf_param<FilterParams> meta_sq_params;
     FilterParams filter_params;
     CryptoContext & cctx;
 
@@ -124,7 +124,7 @@ class dorecompress_out_sequence_filename_buf_impl
 {
     char current_filename_[1024];
     wrmcapture_FilenameGenerator filegen_;
-    empty_ctor<io::posix::fdbuf> buf_;
+    wrmcapture_empty_ctor<io::posix::fdbuf> buf_;
     unsigned num_file_;
     int groupid_;
 
@@ -179,7 +179,7 @@ public:
     const wrmcapture_FilenameGenerator & seqgen() const noexcept
     { return this->filegen_; }
 
-    empty_ctor<io::posix::fdbuf> & buf() noexcept
+    wrmcapture_empty_ctor<io::posix::fdbuf> & buf() noexcept
     { return this->buf_; }
 
     const char * current_path() const
@@ -454,7 +454,7 @@ class dorecompress_out_meta_sequence_filename_buf_impl
 public:
     template<class MetaParams>
     explicit dorecompress_out_meta_sequence_filename_buf_impl(
-        dorecompress_out_meta_sequence_filename_buf_param<MetaParams> const & params
+        wrmcapture_out_meta_sequence_filename_buf_param<MetaParams> const & params
     )
     : dorecompress_out_sequence_filename_buf_impl(params.sq_params)
     , meta_buf_(params.meta_buf_params)
@@ -757,7 +757,7 @@ struct dorecompress_OutMetaSequenceTransport : public Transport
         const int groupid,
         auth_api * authentifier = nullptr,
         wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    : buf(dorecompress_out_meta_sequence_filename_buf_param<>(
+    : buf(wrmcapture_out_meta_sequence_filename_buf_param<>(
         now.tv_sec, format, hash_path, path, basename, ".wrm", groupid
     ))
     {
@@ -776,7 +776,7 @@ struct dorecompress_OutMetaSequenceTransport : public Transport
     {
         return &(this->buffer().seqgen());
     }
-    using Buf = dorecompress_out_meta_sequence_filename_buf_impl<empty_ctor<dorecompress_ofile_buf_out>>;
+    using Buf = dorecompress_out_meta_sequence_filename_buf_impl<wrmcapture_empty_ctor<dorecompress_ofile_buf_out>>;
 
     bool next() override {
         if (this->status == false) {
