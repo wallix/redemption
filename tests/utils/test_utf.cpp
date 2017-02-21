@@ -67,6 +67,27 @@ BOOST_AUTO_TEST_CASE(TestUTF8LenChar)
     BOOST_CHECK_EQUAL(2, UTF8Len(source));
 }
 
+BOOST_AUTO_TEST_CASE(TestString)
+{
+    // toto is a 4 char length string
+    std::string str1("toto");
+    BOOST_CHECK_EQUAL(str1.length(), 4);
+
+    // but we can get the true length
+    int l = UTF8Len(byte_ptr_cast(str1.c_str()));
+    BOOST_CHECK_EQUAL(l, 4);
+
+    // olé is also a 4 char length string as it is internally UTF-8 encoded
+    std::string str_unicode("olé");
+    // It means length is the number of bytes
+    BOOST_CHECK_EQUAL(str_unicode.length(), 4);
+
+    // but we can get the true length
+    int len = UTF8Len(byte_ptr_cast(str_unicode.c_str()));
+    BOOST_CHECK_EQUAL(len, 3);
+
+}
+
 // BOOST_AUTO_TEST_CASE(TestUTF8TruncateAtPos)
 // {
 //     uint8_t source[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};

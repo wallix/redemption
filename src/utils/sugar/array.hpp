@@ -25,15 +25,55 @@
 
 namespace utils
 {
-    template<std::size_t N, class T>
-    constexpr std::integral_constant<std::size_t, N>
-    size(T const (&)[N])
-    { return {}; }
+    namespace adl_barrier_ {
+        template<class T, std::size_t n>
+        constexpr T * data(T (&a)[n]) noexcept
+        { return a; }
 
-    template<std::size_t N, class T>
-    constexpr std::integral_constant<std::size_t, N>
-    size(std::array<T, N> const &)
-    { return {}; }
+        template<class C>
+        constexpr auto data(C & c)
+        noexcept(noexcept(c.data()))
+        -> decltype(c.data())
+        { return c.data(); }
+
+        template<class T, std::size_t n>
+        constexpr std::size_t size(T (&)[n]) noexcept
+        { return n; }
+
+        template<class C>
+        constexpr std::size_t size(C & c)
+        noexcept(noexcept(c.size()))
+        { return c.size(); }
+    }
+
+    namespace detail_
+    {
+        using adl_barrier_::data;
+        using adl_barrier_::size;
+
+        template<class C>
+        constexpr auto data_impl(C & c)
+        noexcept(noexcept(data(c)))
+        -> decltype(data(c))
+        { return data(c); }
+
+        template<class C>
+        constexpr std::size_t size_impl(C & c)
+        noexcept(noexcept(size(c)))
+        { return size(c); }
+    }
+
+    template<class C>
+    constexpr auto data(C & c)
+    noexcept(noexcept(detail_::data(c)))
+    -> decltype(detail_::data_impl(c))
+    { return detail_::data_impl(c); }
+
+    template<class C>
+    constexpr std::size_t size(C & c)
+    noexcept(noexcept(detail_::size_impl(c)))
+    { return detail_::size_impl(c); }
+
 
     template<std::size_t N, class T>
     constexpr T const &

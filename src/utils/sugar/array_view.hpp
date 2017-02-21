@@ -25,7 +25,10 @@
 #include <cstdint>
 #include <cassert>
 
+#include "utils/sugar/array.hpp"
+
 #include "cxx/keyword.hpp"
+
 
 template<class T>
 struct array_view
@@ -41,32 +44,28 @@ struct array_view
     constexpr array_view(array_view const &) = default;
     array_view & operator = (array_view const &) = default;
 
-    constexpr array_view(std::nullptr_t)
+    constexpr array_view(std::nullptr_t) noexcept
     : array_view(nullptr, nullptr)
     {}
 
-    constexpr array_view(type * p, std::size_t sz)
+    constexpr array_view(type * p, std::size_t sz) noexcept
     : p(p)
     , sz(sz)
     {}
 
-    constexpr array_view(type * p, type * pright)
+    constexpr array_view(type * p, type * pright) noexcept
     : p(p)
     , sz(pright - p)
     {}
 
-    template<std::size_t N>
-    constexpr array_view(type (&a)[N])
-    : array_view(a, N)
-    {}
-
     template<class U, class = decltype(
-        *static_cast<type**>(nullptr) = static_cast<U*>(nullptr)->data(),
-        *static_cast<std::size_t*>(nullptr) = static_cast<U*>(nullptr)->size()
+        *static_cast<type**>(nullptr) = utils::data(std::declval<U&>()),
+        *static_cast<std::size_t*>(nullptr) = utils::size(std::declval<U&>())
     )>
     constexpr array_view(U & x)
-    : p(x.data())
-    , sz(x.size())
+    noexcept(noexcept((void(utils::data(x)), utils::size(x))))
+    : p(utils::data(x))
+    , sz(utils::size(x))
     {}
 
     constexpr bool empty() const noexcept { return !this->sz; }
@@ -76,13 +75,15 @@ struct array_view
     REDEMPTION_CONSTEXPR_AFTER_CXX11 type * data() noexcept { return this->p; }
     constexpr type const * data() const noexcept { return this->p; }
 
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 type * begin() { return this->data(); }
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 type * end() { return this->data() + this->size(); }
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 type * begin() noexcept { return this->data(); }
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 type * end() noexcept { return this->data() + this->size(); }
     constexpr type const * begin() const { return this->data(); }
     constexpr type const * end() const { return this->data() + this->size(); }
 
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 type & operator[](std::size_t i) { assert(i < this->size()); return this->data()[i]; }
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 type const & operator[](std::size_t i) const { assert(i < this->size()); return this->data()[i]; }
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 type & operator[](std::size_t i) noexcept
+    { assert(i < this->size()); return this->data()[i]; }
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 type const & operator[](std::size_t i) const noexcept
+    { assert(i < this->size()); return this->data()[i]; }
 
     REDEMPTION_CONSTEXPR_AFTER_CXX11 array_view first(std::size_t n) const noexcept
     {
@@ -116,46 +117,47 @@ private:
 
 
 template<class T>
-constexpr array_view<T> make_array_view(T * x, std::size_t n)
+constexpr array_view<T> make_array_view(T * x, std::size_t n) noexcept
 { return {x, n}; }
 
 template<class T>
-constexpr array_view<T> make_array_view(T * left, T * right)
+constexpr array_view<T> make_array_view(T * left, T * right) noexcept
 { return {left, right}; }
 
 template<class T>
-constexpr array_view<const T> make_array_view(T const * left, T * right)
+constexpr array_view<const T> make_array_view(T const * left, T * right) noexcept
 { return {left, right}; }
 
 template<class T>
-constexpr array_view<const T> make_array_view(T * left, T const * right)
+constexpr array_view<const T> make_array_view(T * left, T const * right) noexcept
 { return {left, right}; }
 
 template<class T, std::size_t N>
-constexpr array_view<T> make_array_view(T (&arr)[N])
+constexpr array_view<T> make_array_view(T (&arr)[N]) noexcept
 { return {arr, N}; }
 
 template<class Cont>
 constexpr auto make_array_view(Cont & cont)
+noexcept(noexcept(array_view<typename std::remove_pointer<decltype(cont.data())>::type>{cont}))
 -> array_view<typename std::remove_pointer<decltype(cont.data())>::type>
 { return {cont}; }
 
 template<class T>
-constexpr array_view<T const> make_const_array_view(T const * x, std::size_t n)
+constexpr array_view<T const> make_const_array_view(T const * x, std::size_t n) noexcept
 { return {x, n}; }
 
 template<class T>
-constexpr array_view<const T> make_const_array_view(T const * left, T const * right)
+constexpr array_view<const T> make_const_array_view(T const * left, T const * right) noexcept
 { return {left, right}; }
 
 template<class T, std::size_t N>
-constexpr array_view<T const> make_const_array_view(T const (&arr)[N])
+constexpr array_view<T const> make_const_array_view(T const (&arr)[N]) noexcept
 { return {arr, N}; }
 
 
 // TODO renamed to zstring_array
 template<std::size_t N>
-constexpr array_view<char const> cstr_array_view(char const (&str)[N])
+constexpr array_view<char const> cstr_array_view(char const (&str)[N]) noexcept
 { return {str, N-1}; }
 
 // TODO renamed to zstring_array
