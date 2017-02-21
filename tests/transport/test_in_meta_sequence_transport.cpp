@@ -258,7 +258,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
         const int groupid = 0;
-        CryptoOutMetaSequenceTransport crypto_trans(cctx, rnd, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid,
+        dorecompress_CryptoOutMetaSequenceTransport crypto_trans(cctx, rnd, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid,
                                                     nullptr, FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
         crypto_trans.send("AAAAX", 5);
         tv.tv_sec += 100;

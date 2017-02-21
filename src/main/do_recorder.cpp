@@ -400,7 +400,7 @@ static inline int check_encrypted_or_checksumed(
         auto full_mwrm_filename_tmp = full_mwrm_filename + ".tmp";
 
         // out_meta_sequence_filename_buf_impl ctor
-        transbuf::ofile_buf_out mwrm_file_cp;
+        dorecompress_ofile_buf_out mwrm_file_cp;
         if (mwrm_file_cp.open(full_mwrm_filename_tmp.c_str(), S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
             LOG(LOG_ERR, "Failed to open meta file %s", full_mwrm_filename_tmp);
             throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
@@ -435,7 +435,7 @@ static inline int check_encrypted_or_checksumed(
         for (MetaLine2CtxForRewriteStat & ctx : meta_line_ctx_list) {
             struct stat sb;
             if (lstat(ctx.wrm_filename.c_str(), &sb) < 0
-             || detail::write_meta_file_impl<true>(mwrm_file_cp, ctx.filename.c_str(), sb, ctx.start_time, ctx.stop_time)
+             || dorecompress_write_meta_file_impl<true>(mwrm_file_cp, ctx.filename.c_str(), sb, ctx.start_time, ctx.stop_time)
             ) {
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
             }
@@ -458,7 +458,7 @@ static inline int check_encrypted_or_checksumed(
         }
 
         auto const full_hash_path_tmp = (full_hash_path + ".tmp");
-        transbuf::ofile_buf_out hash_file_cp;
+        dorecompress_ofile_buf_out hash_file_cp;
 
         local_auto_remove auto_remove{full_hash_path_tmp.c_str()};
 
@@ -486,7 +486,7 @@ static inline int check_encrypted_or_checksumed(
             struct stat stat;
             int err = ::stat(meta_filename, &stat);
             if (!err) {
-                err = detail::write_meta_file_impl<false>(hash_file_cp, filename, stat, 0, 0, nullptr);
+                err = dorecompress_write_meta_file_impl<false>(hash_file_cp, filename, stat, 0, 0, nullptr);
             }
             if (!err) {
                 err = hash_file_cp.close(/*hash*/);

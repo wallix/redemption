@@ -3631,18 +3631,18 @@ public:
     Capture(
         bool capture_wrm, const WrmParams wrm_params,
         bool capture_png, const PngParams png_params,
-        bool capture_pattern_checker, const PatternCheckerParams pattern_checker_params,
+        bool capture_pattern_checker, const PatternCheckerParams /* pattern_checker_params */,
         bool capture_ocr, const OcrParams ocr_params,
-        bool capture_flv, const SequencedVideoParams sequenced_video_params,
-        bool capture_flv_full, const FullVideoParams full_video_params,
-        bool capture_meta, const MetaParams meta_params,
-        bool capture_kbd, const KbdLogParams kbd_log_params,
+        bool capture_flv, const SequencedVideoParams /*sequenced_video_params*/,
+        bool capture_flv_full, const FullVideoParams /*full_video_params*/,
+        bool capture_meta, const MetaParams /*meta_params*/,
+        bool capture_kbd, const KbdLogParams /*kbd_log_params*/,
         const char * basename,
         const timeval & now,
         int width,
         int height,
-        int order_bpp,
-        int capture_bpp,
+        int /*order_bpp*/,
+        int /*capture_bpp*/,
         const char * record_tmp_path,
         const char * record_path,
         const int groupid,
@@ -4719,7 +4719,7 @@ struct dorecompress_OutMetaSequenceTransport : public Transport
     {
         return &(this->buffer().seqgen());
     }
-    using Buf = dorecompress_out_meta_sequence_filename_buf_impl<empty_ctor<transbuf::ofile_buf_out>>;
+    using Buf = dorecompress_out_meta_sequence_filename_buf_impl<empty_ctor<dorecompress_ofile_buf_out>>;
 
     bool next() override {
         if (this->status == false) {
@@ -5187,7 +5187,7 @@ class dorecompress_ocrypto_filename_buf
     dorecompress_encrypt_filter encrypt;
     CryptoContext & cctx;
     Random & rnd;
-    ofile_buf_out file;
+    dorecompress_ofile_buf_out file;
 
 public:
     explicit dorecompress_ocrypto_filename_buf(dorecompress_ocrypto_filename_params params)

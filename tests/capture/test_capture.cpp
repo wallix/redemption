@@ -304,28 +304,28 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
                 return len;
             }
         } meta_len_writer;
-        detail::write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, false);
+        wrmcapture_write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, false);
 
         const char * filename;
 
         filename = wrm_seq.get(0);
         BOOST_CHECK_EQUAL(1646, ::filesize(filename));
-        detail::write_meta_file(meta_len_writer, filename, 1000, 1004);
+        wrmcapture_write_meta_file(meta_len_writer, filename, 1000, 1004);
         ::unlink(filename);
         filename = wrm_seq.get(1);
         BOOST_CHECK_EQUAL(3508, ::filesize(filename));
-        detail::write_meta_file(meta_len_writer, filename, 1003, 1007);
+        wrmcapture_write_meta_file(meta_len_writer, filename, 1003, 1007);
         ::unlink(filename);
         filename = wrm_seq.get(2);
         BOOST_CHECK_EQUAL(3463, ::filesize(filename));
-        detail::write_meta_file(meta_len_writer, filename, 1006, 1008);
+        wrmcapture_write_meta_file(meta_len_writer, filename, 1006, 1008);
         ::unlink(filename);
         filename = wrm_seq.get(3);
         BOOST_CHECK_EQUAL(false, file_exist(filename));
 
-        FilenameGenerator mwrm_seq(
+        wrmcapture_FilenameGenerator mwrm_seq(
 //            FilenameGenerator::PATH_FILE_PID_EXTENSION
-            FilenameGenerator::PATH_FILE_EXTENSION
+            wrmcapture_FilenameGenerator::PATH_FILE_EXTENSION
           , "./", "capture", ".mwrm"
         );
         filename = mwrm_seq.get(0);
@@ -526,7 +526,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 {
     Rect scr(0, 0, 800, 600);
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".wrm", groupid, nullptr);
+    PngCapture::OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".wrm", groupid, nullptr);
 
     struct timeval now;
     now.tv_sec = 1000;
@@ -1273,7 +1273,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     InFileTransport in_wrm_trans(fd);
 
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testcap", ".png", groupid, nullptr);
+    PngCapture::OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testcap", ".png", groupid, nullptr);
 
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
@@ -1425,7 +1425,7 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
 
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png", groupid, nullptr);
+    PngCapture::OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png", groupid, nullptr);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
@@ -1559,7 +1559,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
 
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png", groupid, nullptr);
+    PngCapture::OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png", groupid, nullptr);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
@@ -1650,7 +1650,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
 
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid, nullptr);
+    PngCapture::OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid, nullptr);
     const FilenameGenerator * seq = out_png_trans.seqgen();
     BOOST_CHECK(seq);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
@@ -1917,7 +1917,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
                  d.rowsize()
                 );
     const int groupid = 0;
-    OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
+    PngCapture::OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
     DumpPng24FromRDPDrawableAdapter(d).dump_png24(png_trans, true);
 //    d.dump_png24(png_trans, true);
     ::unlink(png_trans.seqgen()->get(0));
@@ -1980,7 +1980,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
 
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
+    PngCapture::OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
@@ -2051,11 +2051,11 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
+    PngCapture::OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable1.impl(), 100);
 
-    OutFilenameSequenceTransport second_out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid, nullptr);
+    PngCapture::OutFilenameSequenceTransport second_out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid, nullptr);
     DrawableToFile second_png_recorder(second_out_png_trans, drawable1.impl(), 100);
 
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
@@ -2133,7 +2133,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
+    PngCapture::OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
@@ -2297,14 +2297,14 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
 
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid, nullptr);
+    PngCapture::OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid, nullptr);
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable1.impl(), 100);
 
 //    png_recorder.update_config(ini);
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
 
-    OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid, nullptr);
+    PngCapture::OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid, nullptr);
 
     const struct ToCacheOption {
         ToCacheOption(){}
@@ -2427,7 +2427,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
                  d.rowsize()
                  );
     const int groupid = 0;
-    OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
+    PngCapture::OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
     DumpPng24FromRDPDrawableAdapter(d).dump_png24(png_trans, true);
 //    d.dump_png24(png_trans, true);
     ::unlink(png_trans.seqgen()->get(0));
@@ -2563,21 +2563,21 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
                 return len;
             }
         } meta_len_writer;
-        detail::write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, false);
+        wrmcapture_write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, false);
 
         const char * filename;
 
         filename = wrm_seq.get(0);
         BOOST_CHECK_EQUAL(1646, ::filesize(filename));
-        detail::write_meta_file(meta_len_writer, filename, 1000, 1004);
+        wrmcapture_write_meta_file(meta_len_writer, filename, 1000, 1004);
         ::unlink(filename);
         filename = wrm_seq.get(1);
         BOOST_CHECK_EQUAL(3508, ::filesize(filename));
-        detail::write_meta_file(meta_len_writer, filename, 1003, 1007);
+        wrmcapture_write_meta_file(meta_len_writer, filename, 1003, 1007);
         ::unlink(filename);
         filename = wrm_seq.get(2);
         BOOST_CHECK_EQUAL(3463, ::filesize(filename));
-        detail::write_meta_file(meta_len_writer, filename, 1006, 1008);
+        wrmcapture_write_meta_file(meta_len_writer, filename, 1006, 1008);
        ::unlink(filename);
         filename = wrm_seq.get(3);
         BOOST_CHECK_EQUAL(false, file_exist(filename));
@@ -2716,7 +2716,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid);
+        wrmcapture_OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -2736,22 +2736,22 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
     meta_len_writer.len = 5; // header
     struct stat stat;
     BOOST_CHECK(!::stat(meta_path, &stat));
-    BOOST_CHECK(!detail::write_meta_file_impl<false>(meta_len_writer, meta_path + 2, stat, 0, 0, nullptr));
+    BOOST_CHECK(!wrmcapture_write_meta_file_impl<false>(meta_len_writer, meta_path + 2, stat, 0, 0, nullptr));
     BOOST_CHECK_EQUAL(meta_len_writer.len, filesize(meta_hash_path));
     BOOST_CHECK_EQUAL(0, ::unlink(meta_hash_path));
 
 
     meta_len_writer.len = 0;
 
-    detail::write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, false);
+    wrmcapture_write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, false);
 
     const char * file1 = "./xxx-000000.wrm";
-    BOOST_CHECK(!detail::write_meta_file(meta_len_writer, file1, sec_start, sec_start+1));
+    BOOST_CHECK(!wrmcapture_write_meta_file(meta_len_writer, file1, sec_start, sec_start+1));
     BOOST_CHECK_EQUAL(10, filesize(file1));
     BOOST_CHECK_EQUAL(0, ::unlink(file1));
 
     const char * file2 = "./xxx-000001.wrm";
-    BOOST_CHECK(!detail::write_meta_file(meta_len_writer, file2, sec_start, sec_start+1));
+    BOOST_CHECK(!wrmcapture_write_meta_file(meta_len_writer, file2, sec_start, sec_start+1));
     BOOST_CHECK_EQUAL(5, filesize(file2));
     BOOST_CHECK_EQUAL(0, ::unlink(file2));
 
@@ -2774,7 +2774,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        OutMetaSequenceTransportWithSum wrm_trans(cctx, "./", "./", "xxx", now, 800, 600, groupid);
+        wrmcapture_OutMetaSequenceTransportWithSum wrm_trans(cctx, "./", "./", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -2788,14 +2788,14 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
             return len;
         }
     } meta_len_writer;
-    detail::write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, true);
+    wrmcapture_write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, true);
 
     const unsigned hash_size = (1 + MD_HASH_LENGTH*2) * 2;
 
 //    char file1[1024];
 //    snprintf(file1, 1024, "./xxx-%06u-%06u.wrm", getpid(), 0);
     const char * file1 = "./xxx-000000.wrm";
-    detail::write_meta_file(meta_len_writer, file1, sec_start, sec_start+1);
+    wrmcapture_write_meta_file(meta_len_writer, file1, sec_start, sec_start+1);
     meta_len_writer.len += hash_size;
     BOOST_CHECK_EQUAL(10, filesize(file1));
     BOOST_CHECK_EQUAL(0, ::unlink(file1));
@@ -2803,7 +2803,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 //    char file2[1024];
 //    snprintf(file2, 1024, "./xxx-%06u-%06u.wrm", getpid(), 1);
     const char * file2 = "./xxx-000001.wrm";
-    detail::write_meta_file(meta_len_writer, file2, sec_start, sec_start+1);
+    wrmcapture_write_meta_file(meta_len_writer, file2, sec_start, sec_start+1);
     meta_len_writer.len += hash_size;
     BOOST_CHECK_EQUAL(5, filesize(file2));
     BOOST_CHECK_EQUAL(0, ::unlink(file2));
@@ -2825,14 +2825,14 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
     now.tv_sec = 1352304810;
     now.tv_usec = 0;
     const int groupid = 0;
-    OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid, nullptr,
-                                       FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
+    wrmcapture_OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid, nullptr,
+                                       wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
     wrm_trans.send("AAAAX", 5);
     wrm_trans.send("BBBBX", 5);
     wrm_trans.next();
     wrm_trans.send("CCCCX", 5);
 
-    const FilenameGenerator * sqgen = wrm_trans.seqgen();
+    const wrmcapture_FilenameGenerator * sqgen = wrm_trans.seqgen();
 
     BOOST_CHECK(-1 != filesize(sqgen->get(0)));
     BOOST_CHECK(-1 != filesize(sqgen->get(1)));
@@ -2900,16 +2900,16 @@ BOOST_AUTO_TEST_CASE(TestOSumBuf)
         "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
     ));
     cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
-    transbuf::ochecksum_buf_null_buf buf(cctx.get_hmac_key());
+    wrmcapture_ochecksum_buf_null_buf buf(cctx.get_hmac_key());
     buf.open();
     BOOST_CHECK_EQUAL(buf.write("ab", 2), 2);
     BOOST_CHECK_EQUAL(buf.write("cde", 3), 3);
 
-    detail::hash_type hash;
+    wrmcapture_hash_type hash;
     buf.close(hash);
 
-    char hash_str[detail::hash_string_len + 1];
-    *detail::swrite_hash(hash_str, hash) = 0;
+    char hash_str[wrmcapture_hash_string_len + 1];
+    *wrmcapture_swrite_hash(hash_str, hash) = 0;
     BOOST_CHECK_EQUAL(
         hash_str,
         " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
@@ -2921,8 +2921,6 @@ BOOST_AUTO_TEST_CASE(TestOSumBuf)
 
 BOOST_AUTO_TEST_CASE(TestWriteFilename)
 {
-    using detail::write_filename;
-
     struct {
         std::string s;
 
@@ -2933,7 +2931,7 @@ BOOST_AUTO_TEST_CASE(TestWriteFilename)
     } writer;
 
 #define TEST_WRITE_FILENAME(origin_filename, wrote_filename) \
-    write_filename(writer, origin_filename);                 \
+    wrmcapture_write_filename(writer, origin_filename);                 \
     BOOST_CHECK_EQUAL(writer.s, wrote_filename);             \
     writer.s.clear()
 
@@ -2954,11 +2952,11 @@ BOOST_AUTO_TEST_CASE(TestWriteFilename)
 
 BOOST_AUTO_TEST_CASE(TestWriteHash)
 {
-    detail::hash_type hash;
+    wrmcapture_hash_type hash;
     std::iota(std::begin(hash), std::end(hash), 0);
 
-    char hash_str[detail::hash_string_len + 1];
-    *detail::swrite_hash(hash_str, hash) = 0;
+    char hash_str[wrmcapture_hash_string_len + 1];
+    *wrmcapture_swrite_hash(hash_str, hash) = 0;
     BOOST_CHECK_EQUAL(
         hash_str,
         " 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"
@@ -2970,7 +2968,7 @@ BOOST_AUTO_TEST_CASE(TestWriteHash)
 
 BOOST_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
 {
-    OutFilenameSequenceTransport fnt(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test_outfilenametransport", ".txt", getgid(), nullptr);
+    PngCapture::OutFilenameSequenceTransport fnt(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test_outfilenametransport", ".txt", getgid(), nullptr);
     fnt.send("We write, ", 10);
     fnt.send("and again, ", 11);
     fnt.send("and so on.", 10);

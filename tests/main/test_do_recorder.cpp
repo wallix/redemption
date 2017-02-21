@@ -282,7 +282,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 
     struct crypto_file
     {
-      transfil::encrypt_filter encrypt;
+      dorecompress_encrypt_filter encrypt;
       io::posix::fdbuf file;
 
       crypto_file(int fd)
