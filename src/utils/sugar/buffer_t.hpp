@@ -30,6 +30,8 @@ struct buffer_t : bytes_array
     buffer_t() = default;
     buffer_t(buffer_t const &) = default;
 
+    buffer_t & operator=(buffer_t const &) = default;
+
     using bytes_array::bytes_array;
 
     template<class T, std::size_t n>
@@ -45,6 +47,8 @@ struct const_buffer_t : const_bytes_array
 {
     const_buffer_t() = default;
     const_buffer_t(const_buffer_t const &) = default;
+
+    const_buffer_t & operator=(const_buffer_t const &) = default;
 
     using const_bytes_array::const_bytes_array;
 
