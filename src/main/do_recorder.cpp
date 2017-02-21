@@ -60,6 +60,1374 @@
 #include "capture/flv_params.hpp"
 #include "capture/ocr_params.hpp"
 
+enum {
+    USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF
+};
+
+enum {
+    USE_ORIGINAL_COLOR_DEPTH           = 0xFFFFFFFF
+};
+
+
+struct dorecompress_out_sequence_filename_buf_param
+{
+    FilenameGenerator::Format format;
+    const char * const prefix;
+    const char * const filename;
+    const char * const extension;
+    const int groupid;
+
+    dorecompress_out_sequence_filename_buf_param(
+        FilenameGenerator::Format format,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid)
+    : format(format)
+    , prefix(prefix)
+    , filename(filename)
+    , extension(extension)
+    , groupid(groupid)
+    {}
+};
+
+
+template<class MetaParams = no_param>
+struct dorecompress_out_meta_sequence_filename_buf_param
+{
+    dorecompress_out_sequence_filename_buf_param sq_params;
+    time_t sec;
+    MetaParams meta_buf_params;
+    const char * hash_prefix;
+
+    dorecompress_out_meta_sequence_filename_buf_param(
+        time_t start_sec,
+        FilenameGenerator::Format format,
+        const char * const hash_prefix,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        MetaParams const & meta_buf_params = MetaParams())
+    : sq_params(format, prefix, filename, extension, groupid)
+    , sec(start_sec)
+    , meta_buf_params(meta_buf_params)
+    , hash_prefix(hash_prefix)
+    {}
+};
+
+
+template<class FilterParams = no_param>
+struct dorecompress_out_hash_meta_sequence_filename_buf_param
+{
+    dorecompress_out_meta_sequence_filename_buf_param<FilterParams> meta_sq_params;
+    FilterParams filter_params;
+    CryptoContext & cctx;
+
+    dorecompress_out_hash_meta_sequence_filename_buf_param(
+        CryptoContext & cctx,
+        time_t start_sec,
+        FilenameGenerator::Format format,
+        const char * const hash_prefix,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        FilterParams const & filter_params = FilterParams())
+    : meta_sq_params(start_sec, format, hash_prefix, prefix, filename, extension, groupid, filter_params)
+    , filter_params(filter_params)
+    , cctx(cctx)
+    {}
+};
+
+
+class dorecompress_out_sequence_filename_buf_impl
+{
+    char current_filename_[1024];
+    FilenameGenerator filegen_;
+    empty_ctor<io::posix::fdbuf> buf_;
+    unsigned num_file_;
+    int groupid_;
+
+public:
+    explicit dorecompress_out_sequence_filename_buf_impl(dorecompress_out_sequence_filename_buf_param const & params)
+    : filegen_(params.format, params.prefix, params.filename, params.extension)
+    , buf_()
+    , num_file_(0)
+    , groupid_(params.groupid)
+    {
+        this->current_filename_[0] = 0;
+    }
+
+    int close()
+    { return this->next(); }
+
+    ssize_t write(const void * data, size_t len)
+    {
+        if (!this->buf_.is_open()) {
+            const int res = this->open_filename(this->filegen_.get(this->num_file_));
+            if (res < 0) {
+                return res;
+            }
+        }
+        return this->buf_.write(data, len);
+    }
+
+    /// \return 0 if success
+    int next()
+    {
+        if (this->buf_.is_open()) {
+            this->buf_.close();
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+            return this->rename_filename() ? 0 : 1;
+        }
+        return 1;
+    }
+
+    void request_full_cleaning()
+    {
+        unsigned i = this->num_file_ + 1;
+        while (i > 0 && !::unlink(this->filegen_.get(--i))) {
+        }
+        if (this->buf_.is_open()) {
+            this->buf_.close();
+        }
+    }
+
+    off64_t seek(int64_t offset, int whence)
+    { return this->buf_.seek(offset, whence); }
+
+    const FilenameGenerator & seqgen() const noexcept
+    { return this->filegen_; }
+
+    empty_ctor<io::posix::fdbuf> & buf() noexcept
+    { return this->buf_; }
+
+    const char * current_path() const
+    {
+        if (!this->current_filename_[0] && !this->num_file_) {
+            return nullptr;
+        }
+        return this->filegen_.get(this->num_file_ - 1);
+    }
+
+protected:
+    ssize_t open_filename(const char * filename)
+    {
+        snprintf(this->current_filename_, sizeof(this->current_filename_),
+                    "%sred-XXXXXX.tmp", filename);
+        const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+        if (fd < 0) {
+            return fd;
+        }
+        if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+               , this->current_filename_
+               , this->groupid_ ? "u+r, g+r" : "u+r"
+               , strerror(errno), errno);
+        }
+        this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+        return this->buf_.open(fd);
+    }
+
+    const char * rename_filename()
+    {
+        const char * filename = this->get_filename_generate();
+        const int res = ::rename(this->current_filename_, filename);
+        if (res < 0) {
+            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+               , this->current_filename_, filename, errno, strerror(errno));
+            return nullptr;
+        }
+
+        this->current_filename_[0] = 0;
+        ++this->num_file_;
+        this->filegen_.set_last_filename(-1u, "");
+
+        return filename;
+    }
+
+    const char * get_filename_generate()
+    {
+        this->filegen_.set_last_filename(-1u, "");
+        const char * filename = this->filegen_.get(this->num_file_);
+        this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+        return filename;
+    }
+};
+
+class dorecompress_ofile_buf_out
+{
+    int fd;
+public:
+    dorecompress_ofile_buf_out() : fd(-1) {}
+    ~dorecompress_ofile_buf_out()
+    {
+        this->close();
+    }
+
+    int open(const char * filename, mode_t mode)
+    {
+        this->close();
+        this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+        return this->fd;
+    }
+
+    int close()
+    {
+        if (this->is_open()) {
+            const int ret = ::close(this->fd);
+            this->fd = -1;
+            return ret;
+        }
+        return 0;
+    }
+
+    ssize_t write(const void * data, size_t len)
+    {
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            ssize_t ret = ::write(this->fd,
+                static_cast<const char*>(data) + total_sent, remaining_len);
+            if (ret <= 0){
+                if (errno == EINTR){
+                    continue;
+                }
+                return -1;
+            }
+            remaining_len -= ret;
+            total_sent += ret;
+        }
+        return total_sent;
+    }
+
+    bool is_open() const noexcept
+    { return -1 != this->fd; }
+
+    off64_t seek(off64_t offset, int whence) const
+    { return ::lseek64(this->fd, offset, whence); }
+
+    int flush() const
+    { return 0; }
+};
+
+
+struct dorecompress_MetaFilename
+{
+    char filename[2048];
+
+    dorecompress_MetaFilename(const char * path, const char * basename,
+                 FilenameFormat format = FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
+    {
+        int res =
+        (   format == FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
+         || format == FilenameGenerator::PATH_FILE_PID_EXTENSION)
+        ? snprintf(this->filename, sizeof(this->filename)-1, "%s%s-%06u.mwrm", path, basename, unsigned(getpid()))
+        : snprintf(this->filename, sizeof(this->filename)-1, "%s%s.mwrm", path, basename);
+        if (res > int(sizeof(this->filename) - 6) || res < 0) {
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+    }
+
+    dorecompress_MetaFilename(dorecompress_MetaFilename const &) = delete;
+    dorecompress_MetaFilename & operator = (dorecompress_MetaFilename const &) = delete;
+};
+
+
+template<class Writer>
+int dorecompress_write_filename(Writer & writer, const char * filename)
+{
+    auto pfile = filename;
+    auto epfile = filename;
+    for (; *epfile; ++epfile) {
+        if (*epfile == '\\') {
+            ssize_t len = epfile - pfile + 1;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+            pfile = epfile;
+        }
+        if (*epfile == ' ') {
+            ssize_t len = epfile - pfile;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+            res = writer.write("\\", 1u);
+            if (res < 1) {
+                return res < 0 ? res : 1;
+            }
+            pfile = epfile;
+        }
+    }
+
+    if (pfile != epfile) {
+        ssize_t len = epfile - pfile;
+        auto res = writer.write(pfile, len);
+        if (res < len) {
+            return res < 0 ? res : 1;
+        }
+    }
+
+    return 0;
+}
+
+using dorecompress_hash_type = unsigned char[MD_HASH_LENGTH*2];
+
+constexpr std::size_t dorecompress_hash_string_len = (1 + MD_HASH_LENGTH * 2) * 2;
+
+inline char * dorecompress_swrite_hash(char * p, dorecompress_hash_type const & hash)
+{
+    auto write = [&p](unsigned char const * hash) {
+        *p++ = ' ';                // 1 octet
+        for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+            sprintf(p, "%02x", c); // 64 octets (hash)
+            p += 2;
+        }
+    };
+    write(hash);
+    write(hash + MD_HASH_LENGTH);
+    return p;
+}
+
+
+template<bool write_time, class Writer>
+int dorecompress_write_meta_file_impl(
+    Writer & writer, const char * filename,
+    struct stat const & stat,
+    time_t start_sec, time_t stop_sec,
+    dorecompress_hash_type const * hash = nullptr
+) {
+    if (int err = dorecompress_write_filename(writer, filename)) {
+        return err;
+    }
+
+    using ull = unsigned long long;
+    using ll = long long;
+    char mes[
+        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+        dorecompress_hash_string_len + 1 +
+        2
+    ];
+    ssize_t len = std::sprintf(
+        mes,
+        " %lld %llu %lld %lld %llu %lld %lld %lld",
+        ll(stat.st_size),
+        ull(stat.st_mode),
+        ll(stat.st_uid),
+        ll(stat.st_gid),
+        ull(stat.st_dev),
+        ll(stat.st_ino),
+        ll(stat.st_mtim.tv_sec),
+        ll(stat.st_ctim.tv_sec)
+    );
+    if (write_time) {
+        len += std::sprintf(
+            mes + len,
+            " %lld %lld",
+            ll(start_sec),
+            ll(stop_sec)
+        );
+    }
+
+    char * p = mes + len;
+    if (hash) {
+        p = dorecompress_swrite_hash(p, *hash);
+    }
+    *p++ = '\n';
+
+    ssize_t res = writer.write(mes, p-mes);
+
+    if (res < p-mes) {
+        return res < 0 ? res : 1;
+    }
+
+    return 0;
+}
+
+template<class Writer>
+int dorecompress_write_meta_file(
+    Writer & writer, const char * filename,
+    time_t start_sec, time_t stop_sec,
+    dorecompress_hash_type const * hash = nullptr
+) {
+    struct stat stat;
+    int err = ::stat(filename, &stat);
+    return err ? err : dorecompress_write_meta_file_impl<true>(writer, filename, stat, start_sec, stop_sec, hash);
+}
+
+
+template<class BufMeta>
+class dorecompress_out_meta_sequence_filename_buf_impl
+: public dorecompress_out_sequence_filename_buf_impl
+{
+    typedef dorecompress_out_sequence_filename_buf_impl sequence_base_type;
+
+    BufMeta meta_buf_;
+    dorecompress_MetaFilename mf_;
+    dorecompress_MetaFilename hf_;
+    time_t start_sec_;
+    time_t stop_sec_;
+
+public:
+    template<class MetaParams>
+    explicit dorecompress_out_meta_sequence_filename_buf_impl(
+        dorecompress_out_meta_sequence_filename_buf_param<MetaParams> const & params
+    )
+    : dorecompress_out_sequence_filename_buf_impl(params.sq_params)
+    , meta_buf_(params.meta_buf_params)
+    , mf_(params.sq_params.prefix, params.sq_params.filename, params.sq_params.format)
+    , hf_(params.hash_prefix, params.sq_params.filename, params.sq_params.format)
+    , start_sec_(params.sec)
+    , stop_sec_(params.sec)
+    {
+        if (this->meta_buf_.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+            LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+        }
+        if (chmod(this->mf_.filename, S_IRUSR | S_IRGRP) == -1) {
+            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+               , this->mf_.filename
+               , "u+r, g+r"
+               , strerror(errno), errno);
+        }
+    }
+
+    int close()
+    {
+        const int res1 = this->next();
+        const int res2 = (this->meta_buf().is_open() ? this->meta_buf_.close() : 0);
+        int err = res1 ? res1 : res2;
+        if (!err) {
+            char const * hash_filename = this->hash_filename();
+            char const * meta_filename = this->meta_filename();
+            dorecompress_ofile_buf_out crypto_hash;
+
+            char path[1024] = {};
+            char basename[1024] = {};
+            char extension[256] = {};
+            char filename[2048] = {};
+
+            canonical_path(
+                meta_filename,
+                path, sizeof(path),
+                basename, sizeof(basename),
+                extension, sizeof(extension)
+            );
+
+            snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+            if (crypto_hash.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+                char header[] = "v2\n\n\n";
+                crypto_hash.write(header, sizeof(header)-1);
+
+                struct stat stat;
+                int err = ::stat(meta_filename, &stat);
+                if (!err) {
+                    err = dorecompress_write_meta_file_impl<false>(crypto_hash, filename, stat, 0, 0, nullptr);
+                }
+                if (!err) {
+                    err = crypto_hash.close(/*hash*/);
+                }
+                if (err) {
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                    return 1;
+                }
+            }
+            else {
+                int e = errno;
+                LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+                errno = e;
+                return 1;
+            }
+            return 0;
+        }
+        return err;
+    }
+
+    /// \return 0 if success
+    int next()
+    {
+        if (this->buf().is_open()) {
+            this->buf().close();
+            return this->next_meta_file();
+        }
+        return 1;
+    }
+
+protected:
+    int next_meta_file(dorecompress_hash_type const * hash = nullptr)
+    {
+        // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+        const char * filename = this->rename_filename();
+        if (!filename) {
+            return 1;
+        }
+
+        if (int err = dorecompress_write_meta_file(
+            this->meta_buf_, filename, this->start_sec_, this->stop_sec_+1, hash
+        )) {
+            return err;
+        }
+
+        this->start_sec_ = this->stop_sec_;
+
+        return 0;
+    }
+
+    char const * hash_filename() const noexcept
+    {
+        return this->hf_.filename;
+    }
+
+    char const * meta_filename() const noexcept
+    {
+        return this->mf_.filename;
+    }
+
+public:
+    void request_full_cleaning()
+    {
+        this->dorecompress_out_sequence_filename_buf_impl::request_full_cleaning();
+        ::unlink(this->mf_.filename);
+    }
+
+    int flush()
+    {
+        const int res1 = this->dorecompress_out_sequence_filename_buf_impl::flush();
+        const int res2 = this->meta_buf_.flush();
+        return res1 == 0 ? res2 : res1;
+    }
+
+    BufMeta & meta_buf() noexcept
+    { return this->meta_buf_; }
+
+    void update_sec(time_t sec)
+    { this->stop_sec_ = sec; }
+};
+
+template<class BufFilter, class BufMeta, class BufHash, class Params>
+class dorecompress_out_hash_meta_sequence_filename_buf_impl
+: public dorecompress_out_meta_sequence_filename_buf_impl<BufMeta>
+{
+    CryptoContext & cctx;
+    Params hash_ctx;
+    BufFilter wrm_filter;
+
+    using sequence_base_type = dorecompress_out_meta_sequence_filename_buf_impl<BufMeta>;
+
+public:
+    explicit dorecompress_out_hash_meta_sequence_filename_buf_impl(
+        dorecompress_out_hash_meta_sequence_filename_buf_param<Params> const & params
+    )
+    : sequence_base_type(params.meta_sq_params)
+    , cctx(params.cctx)
+    , hash_ctx(params.filter_params)
+    , wrm_filter(params.filter_params)
+    {}
+
+    ssize_t write(const void * data, size_t len)
+    {
+        if (!this->buf().is_open()) {
+            const char * filename = this->get_filename_generate();
+            const int res = this->open_filename(filename);
+            if (res < 0) {
+                return res;
+            }
+            if (int err = this->wrm_filter.open(this->buf(), filename)) {
+                return err;
+            }
+        }
+        return this->wrm_filter.write(this->buf(), data, len);
+    }
+
+    int close()
+    {
+        if (this->buf().is_open()) {
+            if (this->next()) {
+                return 1;
+            }
+        }
+
+        BufHash hash_buf(this->hash_ctx);
+
+        if (!this->meta_buf().is_open()) {
+            return 1;
+        }
+
+        dorecompress_hash_type hash;
+
+        if (this->meta_buf().close(hash)) {
+            return 1;
+        }
+
+        char const * hash_filename = this->hash_filename();
+        char const * meta_filename = this->meta_filename();
+
+        char path[1024] = {};
+        char basename[1024] = {};
+        char extension[256] = {};
+        char filename[2048] = {};
+
+        canonical_path(
+            meta_filename,
+            path, sizeof(path),
+            basename, sizeof(basename),
+            extension, sizeof(extension)
+        );
+
+        snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+        if (hash_buf.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+            char header[] = "v2\n\n\n";
+            hash_buf.write(header, sizeof(header)-1);
+
+            struct stat stat;
+            int err = ::stat(meta_filename, &stat);
+            if (!err) {
+                err = dorecompress_write_meta_file_impl<false>(hash_buf, filename, stat, 0, 0, &hash);
+            }
+            if (!err) {
+                err = hash_buf.close(/*hash*/);
+            }
+            if (err) {
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                return 1;
+            }
+        }
+        else {
+            int e = errno;
+            LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+            errno = e;
+            return 1;
+        }
+
+        return 0;
+    }
+
+    int next()
+    {
+        if (this->buf().is_open()) {
+            dorecompress_hash_type hash;
+            {
+                const int res1 = this->wrm_filter.close(this->buf(), hash, this->cctx.get_hmac_key());
+                const int res2 = this->buf().close();
+                if (res1) {
+                    return res1;
+                }
+                if (res2) {
+                    return res2;
+                }
+            }
+
+            return this->next_meta_file(&hash);
+        }
+        return 1;
+    }
+};
+
+template<class Writer>
+void dorecompress_write_meta_headers(Writer & writer, const char * path,
+                        uint16_t width, uint16_t height,
+                        auth_api * authentifier,
+                        bool has_checksum
+                       )
+{
+    char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
+    const int len = sprintf(
+        header1,
+        "v2\n"
+        "%u %u\n"
+        "%s\n"
+        "\n\n",
+        unsigned(width),
+        unsigned(height),
+        has_checksum  ? "checksum" : "nochecksum"
+    );
+    const ssize_t res = writer.write(header1, len);
+    if (res < 0) {
+        int err = errno;
+        LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
+
+        if (err == ENOSPC) {
+            char message[1024];
+            snprintf(message, sizeof(message), "100|%s", path);
+            authentifier->report("FILESYSTEM_FULL", message);
+
+            throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
+        }
+        else {
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
+        }
+    }
+}
+
+
+struct dorecompress_OutMetaSequenceTransport : public Transport
+{
+    dorecompress_OutMetaSequenceTransport(
+        const char * path,
+        const char * hash_path,
+        const char * basename,
+        timeval now,
+        uint16_t width,
+        uint16_t height,
+        const int groupid,
+        auth_api * authentifier = nullptr,
+        FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
+    : buf(dorecompress_out_meta_sequence_filename_buf_param<>(
+        now.tv_sec, format, hash_path, path, basename, ".wrm", groupid
+    ))
+    {
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+
+        dorecompress_write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, false);
+    }
+
+    void timestamp(timeval now) override {
+        this->buffer().update_sec(now.tv_sec);
+    }
+
+    const FilenameGenerator * seqgen() const noexcept
+    {
+        return &(this->buffer().seqgen());
+    }
+    using Buf = dorecompress_out_meta_sequence_filename_buf_impl<empty_ctor<dorecompress_ofile_buf_out>>;
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+    void request_full_cleaning() override {
+        this->buffer().request_full_cleaning();
+    }
+
+    ~dorecompress_OutMetaSequenceTransport() {
+        this->buf.close();
+    }
+
+private:
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", buf.current_path());
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+    Buf & buffer() noexcept
+    { return this->buf; }
+
+    const Buf & buffer() const noexcept
+    { return this->buf; }
+
+    Buf buf;
+
+};
+
+struct dorecompress_ocrypto_filename_params
+{
+    CryptoContext & crypto_ctx;
+    Random & rnd;
+};
+
+
+
+struct dorecompress_ocrypto_filter : dorecompress_encrypt_filter
+{
+    CryptoContext & cctx;
+    Random & rnd;
+
+    explicit dorecompress_ocrypto_filter(dorecompress_ocrypto_filename_params params)
+    : cctx(params.crypto_ctx)
+    , rnd(params.rnd)
+    {}
+
+    template<class Buf>
+    int open(Buf & buf, char const * filename) {
+        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+
+        size_t base_len = 0;
+        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
+
+        this->cctx.get_derived_key(trace_key, base, base_len);
+        unsigned char iv[32];
+        this->rnd.random(iv, 32);
+        return dorecompress_encrypt_filter::open(buf, trace_key, this->cctx, iv);
+    }
+};
+
+
+class dorecompress_ocrypto_filename_buf
+{
+    dorecompress_encrypt_filter encrypt;
+    CryptoContext & cctx;
+    Random & rnd;
+    dorecompress_ofile_buf_out file;
+
+public:
+    explicit dorecompress_ocrypto_filename_buf(dorecompress_ocrypto_filename_params params)
+    : cctx(params.crypto_ctx)
+    , rnd(params.rnd)
+    {}
+
+    ~dorecompress_ocrypto_filename_buf()
+    {
+        if (this->is_open()) {
+            this->close();
+        }
+    }
+
+    int open(const char * filename, mode_t mode = 0600)
+    {
+        int err = this->file.open(filename, mode);
+        if (err < 0) {
+            return err;
+        }
+
+        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+        size_t base_len = 0;
+        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
+        this->cctx.get_derived_key(trace_key, base, base_len);
+        unsigned char iv[32];
+        this->rnd.random(iv, 32);
+        return this->encrypt.open(this->file, trace_key, this->cctx, iv);
+    }
+
+    ssize_t write(const void * data, size_t len)
+    { return this->encrypt.write(this->file, data, len); }
+
+    int close(unsigned char hash[MD_HASH_LENGTH << 1])
+    {
+        const int res1 = this->encrypt.close(this->file, hash, this->cctx.get_hmac_key());
+        const int res2 = this->file.close();
+        return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
+    }
+
+    int close()
+    {
+        unsigned char hash[MD_HASH_LENGTH << 1];
+        return this->close(hash);
+    }
+
+    bool is_open() const noexcept
+    { return this->file.is_open(); }
+
+    off64_t seek(off64_t offset, int whence) const
+    { return this->file.seek(offset, whence); }
+
+    int flush() const
+    { return this->file.flush(); }
+};
+
+struct dorecompress_CryptoOutMetaSequenceTransport
+: public Transport {
+
+    using Buf =
+        dorecompress_out_hash_meta_sequence_filename_buf_impl<
+            dorecompress_ocrypto_filter,
+            dorecompress_ocrypto_filename_buf,
+            dorecompress_ocrypto_filename_buf,
+            dorecompress_ocrypto_filename_params
+        >;
+
+    dorecompress_CryptoOutMetaSequenceTransport(
+        CryptoContext & crypto_ctx,
+        Random & rnd,
+        const char * path,
+        const char * hash_path,
+        const char * basename,
+        timeval now,
+        uint16_t width,
+        uint16_t height,
+        const int groupid,
+        auth_api * authentifier = nullptr,
+        FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
+    : buf(
+        dorecompress_out_hash_meta_sequence_filename_buf_param<dorecompress_ocrypto_filename_params>(
+            crypto_ctx,
+            now.tv_sec, format, hash_path, path, basename, ".wrm", groupid,
+            {crypto_ctx, rnd}
+        )) {
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+
+        dorecompress_write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, true);
+    }
+
+    void timestamp(timeval now) override {
+        this->buffer().update_sec(now.tv_sec);
+    }
+
+    const FilenameGenerator * seqgen() const noexcept
+    {
+        return &(this->buffer().seqgen());
+    }
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+    void request_full_cleaning() override {
+        this->buffer().request_full_cleaning();
+    }
+
+    ~dorecompress_CryptoOutMetaSequenceTransport() {
+        this->buf.close();
+    }
+
+private:
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", buf.current_path());
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+    Buf & buffer() noexcept
+    { return this->buf; }
+
+    const Buf & buffer() const noexcept
+    { return this->buf; }
+
+    Buf buf;
+
+};
+
+
+using std::begin;
+using std::end;
+
+
+
+class FileToChunk
+{
+    unsigned char stream_buf[65536];
+    InStream stream;
+
+    CompressionInTransportBuilder compression_builder;
+
+    Transport * trans_source;
+    Transport * trans;
+
+    // variables used to read batch of orders "chunks"
+    uint32_t chunk_size;
+    uint16_t chunk_type;
+    uint16_t chunk_count;
+
+    uint16_t nbconsumers;
+
+    RDPChunkedDevice * consumers[10];
+
+public:
+    timeval record_now;
+
+    bool meta_ok;
+
+    uint16_t info_version;
+    uint16_t info_width;
+    uint16_t info_height;
+    uint16_t info_bpp;
+    uint16_t info_number_of_cache;
+    bool     info_use_waiting_list;
+    uint16_t info_cache_0_entries;
+    uint16_t info_cache_0_size;
+    bool     info_cache_0_persistent;
+    uint16_t info_cache_1_entries;
+    uint16_t info_cache_1_size;
+    bool     info_cache_1_persistent;
+    uint16_t info_cache_2_entries;
+    uint16_t info_cache_2_size;
+    bool     info_cache_2_persistent;
+    uint16_t info_cache_3_entries;
+    uint16_t info_cache_3_size;
+    bool     info_cache_3_persistent;
+    uint16_t info_cache_4_entries;
+    uint16_t info_cache_4_size;
+    bool     info_cache_4_persistent;
+    WrmCompressionAlgorithm info_compression_algorithm;
+
+    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    {
+        none,
+        end_of_transport = 1,
+    };
+
+    FileToChunk(Transport * trans, Verbose verbose)
+        : stream(this->stream_buf)
+        , compression_builder(*trans, WrmCompressionAlgorithm::no_compression)
+        , trans_source(trans)
+        , trans(trans)
+        // variables used to read batch of orders "chunks"
+        , chunk_size(0)
+        , chunk_type(0)
+        , chunk_count(0)
+        , nbconsumers(0)
+        , consumers()
+        , meta_ok(false)
+        , info_version(0)
+        , info_width(0)
+        , info_height(0)
+        , info_bpp(0)
+        , info_number_of_cache(0)
+        , info_use_waiting_list(true)
+        , info_cache_0_entries(0)
+        , info_cache_0_size(0)
+        , info_cache_0_persistent(false)
+        , info_cache_1_entries(0)
+        , info_cache_1_size(0)
+        , info_cache_1_persistent(false)
+        , info_cache_2_entries(0)
+        , info_cache_2_size(0)
+        , info_cache_2_persistent(false)
+        , info_cache_3_entries(0)
+        , info_cache_3_size(0)
+        , info_cache_3_persistent(false)
+        , info_cache_4_entries(0)
+        , info_cache_4_size(0)
+        , info_cache_4_persistent(false)
+        , info_compression_algorithm(WrmCompressionAlgorithm::no_compression)
+        , verbose(verbose)
+    {
+        while (this->next_chunk()) {
+            this->interpret_chunk();
+            if (this->meta_ok) {
+                break;
+            }
+        }
+    }
+
+    void add_consumer(RDPChunkedDevice * chunk_device) {
+        REDASSERT(nbconsumers < (sizeof(consumers) / sizeof(consumers[0]) - 1));
+        this->consumers[this->nbconsumers++] = chunk_device;
+    }
+
+    bool next_chunk() {
+        try {
+            {
+                auto const buf_sz = FileToGraphic::HEADER_SIZE;
+                unsigned char buf[buf_sz];
+                auto * p = buf;
+                this->trans->recv(&p, buf_sz);
+                InStream header(buf);
+                this->chunk_type  = header.in_uint16_le();
+                this->chunk_size  = header.in_uint32_le();
+                this->chunk_count = header.in_uint16_le();
+            }
+
+            if (this->chunk_size > 65536) {
+                LOG(LOG_INFO,"chunk_size (%d) > 65536", this->chunk_size);
+                return false;
+            }
+            this->stream = InStream(this->stream_buf, 0);   // empty stream
+            if (this->chunk_size - FileToGraphic::HEADER_SIZE > 0) {
+                auto * p = this->stream_buf;
+                this->trans->recv(&p, this->chunk_size - FileToGraphic::HEADER_SIZE);
+                this->stream = InStream(this->stream_buf, p - this->stream_buf);
+            }
+        }
+        catch (Error const & e) {
+            if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
+                throw;
+            }
+
+            if (this->verbose) {
+                LOG(LOG_INFO, "receive error %u : end of transport", e.id);
+            }
+            // receive error, end of transport
+            return false;
+        }
+
+        return true;
+    }
+
+    void interpret_chunk() {
+        switch (this->chunk_type) {
+        case META_FILE:
+            this->info_version                   = this->stream.in_uint16_le();
+            this->info_width                     = this->stream.in_uint16_le();
+            this->info_height                    = this->stream.in_uint16_le();
+            this->info_bpp                       = this->stream.in_uint16_le();
+            this->info_cache_0_entries           = this->stream.in_uint16_le();
+            this->info_cache_0_size              = this->stream.in_uint16_le();
+            this->info_cache_1_entries           = this->stream.in_uint16_le();
+            this->info_cache_1_size              = this->stream.in_uint16_le();
+            this->info_cache_2_entries           = this->stream.in_uint16_le();
+            this->info_cache_2_size              = this->stream.in_uint16_le();
+
+            if (this->info_version <= 3) {
+                this->info_number_of_cache       = 3;
+                this->info_use_waiting_list      = false;
+
+                this->info_cache_0_persistent    = false;
+                this->info_cache_1_persistent    = false;
+                this->info_cache_2_persistent    = false;
+            }
+            else {
+                this->info_number_of_cache       = this->stream.in_uint8();
+                this->info_use_waiting_list      = (this->stream.in_uint8() ? true : false);
+
+                this->info_cache_0_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_1_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_2_persistent    = (this->stream.in_uint8() ? true : false);
+
+                this->info_cache_3_entries       = this->stream.in_uint16_le();
+                this->info_cache_3_size          = this->stream.in_uint16_le();
+                this->info_cache_3_persistent    = (this->stream.in_uint8() ? true : false);
+
+                this->info_cache_4_entries       = this->stream.in_uint16_le();
+                this->info_cache_4_size          = this->stream.in_uint16_le();
+                this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
+
+                this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
+                REDASSERT(is_valid_enum_value(this->info_compression_algorithm));
+                if (!is_valid_enum_value(this->info_compression_algorithm)) {
+                    this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+                }
+
+                // re-init
+                this->trans = &this->compression_builder.reset(
+                    *this->trans_source, this->info_compression_algorithm
+                );
+            }
+
+            this->stream.rewind();
+
+            if (!this->meta_ok) {
+                this->meta_ok = true;
+            }
+            break;
+        case RESET_CHUNK:
+            this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+
+            this->trans = this->trans_source;
+            break;
+        }
+
+        for (size_t i = 0; i < this->nbconsumers ; i++) {
+            if (this->consumers[i]) {
+                this->consumers[i]->chunk(this->chunk_type, this->chunk_count, this->stream.clone());
+            }
+        }
+    }   // void interpret_chunk()
+
+    void play(bool const & requested_to_stop) {
+        while (!requested_to_stop && this->next_chunk()) {
+            this->interpret_chunk();
+        }
+    }
+};
+
+
+inline
+static int do_recompress(
+    CryptoContext & cctx, Random & rnd, Transport & in_wrm_trans, const timeval begin_record,
+    bool & program_requested_to_shutdown,
+    int wrm_compression_algorithm_, std::string const & output_filename, Inifile & ini, uint32_t verbose
+) {
+    FileToChunk player(&in_wrm_trans, to_verbose_flags(verbose));
+
+/*
+    char outfile_path     [1024] = PNG_PATH "/"   ; // default value, actual one should come from output_filename
+    char outfile_basename [1024] = "redrec_output"; // default value, actual one should come from output_filename
+    char outfile_extension[1024] = ""             ; // extension is ignored for targets anyway
+
+    canonical_path( output_filename.c_str()
+                  , outfile_path
+                  , sizeof(outfile_path)
+                  , outfile_basename
+                  , sizeof(outfile_basename)
+                  , outfile_extension
+                  , sizeof(outfile_extension)
+                  );
+*/
+    std::string outfile_path;
+    std::string outfile_basename;
+    std::string outfile_extension;
+    ParsePath(output_filename.c_str(), outfile_path, outfile_basename, outfile_extension);
+
+    if (verbose) {
+        std::cout << "Output file path: " << outfile_path << outfile_basename << outfile_extension << '\n' << std::endl;
+    }
+
+    if (recursive_create_directory(outfile_path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP, ini.get<cfg::video::capture_groupid>()) != 0) {
+        std::cerr << "Failed to create directory: \"" << outfile_path << "\"" << std::endl;
+    }
+
+//    if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
+//        ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
+//    }
+    ini.set<cfg::video::wrm_compression_algorithm>(
+        (wrm_compression_algorithm_ == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM))
+        ? player.info_compression_algorithm
+        : static_cast<WrmCompressionAlgorithm>(wrm_compression_algorithm_)
+    );
+
+    int return_code = 0;
+    try {
+        if (ini.get<cfg::globals::trace_type>() == TraceType::cryptofile) {
+            dorecompress_CryptoOutMetaSequenceTransport trans(
+                cctx,
+                rnd,
+                outfile_path.c_str(),
+                ini.get<cfg::video::hash_path>().c_str(),
+                outfile_basename.c_str(),
+                begin_record,
+                player.info_width,
+                player.info_height,
+                ini.get<cfg::video::capture_groupid>()
+            );
+            {
+                ChunkToFile recorder( &trans
+                            , player.info_width
+                            , player.info_height
+                            , player.info_bpp
+                            , player.info_cache_0_entries
+                            , player.info_cache_0_size
+                            , player.info_cache_1_entries
+                            , player.info_cache_1_size
+                            , player.info_cache_2_entries
+                            , player.info_cache_2_size
+
+                            , player.info_number_of_cache
+                            , player.info_use_waiting_list
+
+                            , player.info_cache_0_persistent
+                            , player.info_cache_1_persistent
+                            , player.info_cache_2_persistent
+
+                            , player.info_cache_3_entries
+                            , player.info_cache_3_size
+                            , player.info_cache_3_persistent
+                            , player.info_cache_4_entries
+                            , player.info_cache_4_size
+                            , player.info_cache_4_persistent
+                            , ini.get<cfg::video::wrm_compression_algorithm>());
+
+                player.add_consumer(&recorder);
+
+                player.play(program_requested_to_shutdown);
+            }
+
+            if (program_requested_to_shutdown) {
+                trans.request_full_cleaning();
+            }
+        }
+        else {
+            dorecompress_OutMetaSequenceTransport trans(
+                    outfile_path.c_str(),
+                    ini.get<cfg::video::hash_path>().c_str(),
+                    outfile_basename.c_str(),
+                    begin_record,
+                    player.info_width,
+                    player.info_height,
+                    ini.get<cfg::video::capture_groupid>()
+                );
+            {
+                ChunkToFile recorder( &trans
+                            , player.info_width
+                            , player.info_height
+                            , player.info_bpp
+                            , player.info_cache_0_entries
+                            , player.info_cache_0_size
+                            , player.info_cache_1_entries
+                            , player.info_cache_1_size
+                            , player.info_cache_2_entries
+                            , player.info_cache_2_size
+
+                            , player.info_number_of_cache
+                            , player.info_use_waiting_list
+
+                            , player.info_cache_0_persistent
+                            , player.info_cache_1_persistent
+                            , player.info_cache_2_persistent
+
+                            , player.info_cache_3_entries
+                            , player.info_cache_3_size
+                            , player.info_cache_3_persistent
+                            , player.info_cache_4_entries
+                            , player.info_cache_4_size
+                            , player.info_cache_4_persistent
+                            , ini.get<cfg::video::wrm_compression_algorithm>());
+
+                player.add_consumer(&recorder);
+
+                player.play(program_requested_to_shutdown);
+            }
+
+            if (program_requested_to_shutdown) {
+                trans.request_full_cleaning();
+            }
+        }
+    }
+    catch (...) {
+        return_code = -1;
+    }
+
+    return return_code;
+}   // do_recompress
+
+
 struct HashHeader {
     unsigned version;
 };
