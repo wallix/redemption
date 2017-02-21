@@ -248,568 +248,6 @@ struct empty_ctor
     {}
 };
 
-namespace detail
-{
-
-    template<class Writer>
-    void write_meta_headers(Writer & writer, const char * path,
-                            uint16_t width, uint16_t height,
-                            auth_api * authentifier,
-                            bool has_checksum
-                           )
-    {
-        char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
-        const int len = sprintf(
-            header1,
-            "v2\n"
-            "%u %u\n"
-            "%s\n"
-            "\n\n",
-            unsigned(width),
-            unsigned(height),
-            has_checksum  ? "checksum" : "nochecksum"
-        );
-        const ssize_t res = writer.write(header1, len);
-        if (res < 0) {
-            int err = errno;
-            LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
-
-            if (err == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|%s", path);
-                authentifier->report("FILESYSTEM_FULL", message);
-
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
-            }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
-            }
-        }
-    }
-
-    template<class Writer>
-    int write_filename(Writer & writer, const char * filename)
-    {
-        auto pfile = filename;
-        auto epfile = filename;
-        for (; *epfile; ++epfile) {
-            if (*epfile == '\\') {
-                ssize_t len = epfile - pfile + 1;
-                auto res = writer.write(pfile, len);
-                if (res < len) {
-                    return res < 0 ? res : 1;
-                }
-                pfile = epfile;
-            }
-            if (*epfile == ' ') {
-                ssize_t len = epfile - pfile;
-                auto res = writer.write(pfile, len);
-                if (res < len) {
-                    return res < 0 ? res : 1;
-                }
-                res = writer.write("\\", 1u);
-                if (res < 1) {
-                    return res < 0 ? res : 1;
-                }
-                pfile = epfile;
-            }
-        }
-
-        if (pfile != epfile) {
-            ssize_t len = epfile - pfile;
-            auto res = writer.write(pfile, len);
-            if (res < len) {
-                return res < 0 ? res : 1;
-            }
-        }
-
-        return 0;
-    }
-
-    using hash_type = unsigned char[MD_HASH_LENGTH*2];
-
-    constexpr std::size_t hash_string_len = (1 + MD_HASH_LENGTH * 2) * 2;
-
-    inline char * swrite_hash(char * p, hash_type const & hash)
-    {
-        auto write = [&p](unsigned char const * hash) {
-            *p++ = ' ';                // 1 octet
-            for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
-                sprintf(p, "%02x", c); // 64 octets (hash)
-                p += 2;
-            }
-        };
-        write(hash);
-        write(hash + MD_HASH_LENGTH);
-        return p;
-    }
-
-    template<bool write_time, class Writer>
-    int write_meta_file_impl(
-        Writer & writer, const char * filename,
-        struct stat const & stat,
-        time_t start_sec, time_t stop_sec,
-        hash_type const * hash = nullptr
-    ) {
-        if (int err = write_filename(writer, filename)) {
-            return err;
-        }
-
-        using ull = unsigned long long;
-        using ll = long long;
-        char mes[
-            (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-            (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-            hash_string_len + 1 +
-            2
-        ];
-        ssize_t len = std::sprintf(
-            mes,
-            " %lld %llu %lld %lld %llu %lld %lld %lld",
-            ll(stat.st_size),
-            ull(stat.st_mode),
-            ll(stat.st_uid),
-            ll(stat.st_gid),
-            ull(stat.st_dev),
-            ll(stat.st_ino),
-            ll(stat.st_mtim.tv_sec),
-            ll(stat.st_ctim.tv_sec)
-        );
-        if (write_time) {
-            len += std::sprintf(
-                mes + len,
-                " %lld %lld",
-                ll(start_sec),
-                ll(stop_sec)
-            );
-        }
-
-        char * p = mes + len;
-        if (hash) {
-            p = swrite_hash(p, *hash);
-        }
-        *p++ = '\n';
-
-        ssize_t res = writer.write(mes, p-mes);
-
-        if (res < p-mes) {
-            return res < 0 ? res : 1;
-        }
-
-        return 0;
-    }
-
-    template<class Writer>
-    int write_meta_file(
-        Writer & writer, const char * filename,
-        time_t start_sec, time_t stop_sec,
-        hash_type const * hash = nullptr
-    ) {
-        struct stat stat;
-        int err = ::stat(filename, &stat);
-        return err ? err : write_meta_file_impl<true>(writer, filename, stat, start_sec, stop_sec, hash);
-    }
-
-    struct out_sequence_filename_buf_param
-    {
-        FilenameGenerator::Format format;
-        const char * const prefix;
-        const char * const filename;
-        const char * const extension;
-        const int groupid;
-
-        out_sequence_filename_buf_param(
-            FilenameGenerator::Format format,
-            const char * const prefix,
-            const char * const filename,
-            const char * const extension,
-            const int groupid)
-        : format(format)
-        , prefix(prefix)
-        , filename(filename)
-        , extension(extension)
-        , groupid(groupid)
-        {}
-    };
-
-
-
-}
-
-namespace transfil {
-
-    class encrypt_filter
-    {
-        char           buf[CRYPTO_BUFFER_SIZE]; //
-        EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
-        EVP_MD_CTX     hctx;                    // hash context
-        EVP_MD_CTX     hctx4k;                  // hash context
-        uint32_t       pos;                     // current position in buf
-        uint32_t       raw_size;                // the unciphered/uncompressed file size
-        uint32_t       file_size;               // the current file size
-
-    public:
-        encrypt_filter() = default;
-        //: pos(0)
-        //, raw_size(0)
-        //, file_size(0)
-        //{}
-
-        template<class Sink>
-        int open(Sink & snk, const unsigned char * trace_key, CryptoContext & cctx, const unsigned char * iv)
-        {
-            ::memset(this->buf, 0, sizeof(this->buf));
-            ::memset(&this->ectx, 0, sizeof(this->ectx));
-            ::memset(&this->hctx, 0, sizeof(this->hctx));
-            ::memset(&this->hctx4k, 0, sizeof(this->hctx4k));
-            this->pos = 0;
-            this->raw_size = 0;
-            this->file_size = 0;
-
-            const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
-            const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
-            const int          nrounds = 5;
-            unsigned char      key[32];
-            const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
-                                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
-            if (i != 32) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
-                return -1;
-            }
-
-            ::EVP_CIPHER_CTX_init(&this->ectx);
-            if (::EVP_EncryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize encrypt context\n", ::getpid());
-                return -1;
-            }
-
-            // MD stuff
-            const EVP_MD * md = EVP_get_digestbyname(MD_HASH_NAME);
-            if (!md) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not find message digest algorithm!\n", ::getpid());
-                return -1;
-            }
-
-            ::EVP_MD_CTX_init(&this->hctx);
-            ::EVP_MD_CTX_init(&this->hctx4k);
-            if (::EVP_DigestInit_ex(&this->hctx, md, nullptr) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context!\n", ::getpid());
-                return -1;
-            }
-            if (::EVP_DigestInit_ex(&this->hctx4k, md, nullptr) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize 4k MD hash context!\n", ::getpid());
-                return -1;
-            }
-
-            // HMAC: key^ipad
-            const int     blocksize = ::EVP_MD_block_size(md);
-            unsigned char * key_buf = new(std::nothrow) unsigned char[blocksize];
-            {
-                if (key_buf == nullptr) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc!\n", ::getpid());
-                    return -1;
-                }
-                const std::unique_ptr<unsigned char[]> auto_free(key_buf);
-                ::memset(key_buf, 0, blocksize);
-                if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
-                    unsigned char keyhash[MD_HASH_LENGTH];
-                    if ( ! ::MD_HASH_FUNC(cctx.get_hmac_key(), CRYPTO_KEY_LENGTH, keyhash)) {
-                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key!\n", ::getpid());
-                        return -1;
-                    }
-                    ::memcpy(key_buf, keyhash, MIN(MD_HASH_LENGTH, blocksize));
-                }
-                else {
-                    ::memcpy(key_buf, cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
-                }
-                for (int idx = 0; idx <  blocksize; idx++) {
-                    key_buf[idx] = key_buf[idx] ^ 0x36;
-                }
-                if (::EVP_DigestUpdate(&this->hctx, key_buf, blocksize) != 1) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
-                    return -1;
-                }
-                if (::EVP_DigestUpdate(&this->hctx4k, key_buf, blocksize) != 1) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
-                    return -1;
-                }
-            }
-
-            // update context with previously written data
-            char tmp_buf[40];
-            tmp_buf[0] = WABCRYPTOFILE_MAGIC & 0xFF;
-            tmp_buf[1] = (WABCRYPTOFILE_MAGIC >> 8) & 0xFF;
-            tmp_buf[2] = (WABCRYPTOFILE_MAGIC >> 16) & 0xFF;
-            tmp_buf[3] = (WABCRYPTOFILE_MAGIC >> 24) & 0xFF;
-            tmp_buf[4] = WABCRYPTOFILE_VERSION & 0xFF;
-            tmp_buf[5] = (WABCRYPTOFILE_VERSION >> 8) & 0xFF;
-            tmp_buf[6] = (WABCRYPTOFILE_VERSION >> 16) & 0xFF;
-            tmp_buf[7] = (WABCRYPTOFILE_VERSION >> 24) & 0xFF;
-            ::memcpy(tmp_buf + 8, iv, 32);
-
-            // TODO: if I suceeded writing a broken file, wouldn't it be better to remove it ?
-            if (const ssize_t write_ret = this->raw_write(snk, tmp_buf, 40)){
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: write error! error=%s\n", ::getpid(), ::strerror(errno));
-                return write_ret;
-            }
-            // update file_size
-            this->file_size += 40;
-
-            return this->xmd_update(tmp_buf, 40);
-        }
-
-        template<class Sink>
-        ssize_t write(Sink & snk, const void * data, size_t len)
-        {
-            unsigned int remaining_size = len;
-            while (remaining_size > 0) {
-                // Check how much we can append into buffer
-                unsigned int available_size = MIN(CRYPTO_BUFFER_SIZE - this->pos, remaining_size);
-                // Append and update pos pointer
-                ::memcpy(this->buf + this->pos, static_cast<const char*>(data) + (len - remaining_size), available_size);
-                this->pos += available_size;
-                // If buffer is full, flush it to disk
-                if (this->pos == CRYPTO_BUFFER_SIZE) {
-                    if (this->flush(snk)) {
-                        return -1;
-                    }
-                }
-                remaining_size -= available_size;
-            }
-            // Update raw size counter
-            this->raw_size += len;
-            return len;
-        }
-
-        /* Flush procedure (compression, encryption, effective file writing)
-         * Return 0 on success, negatif on error
-         */
-        template<class Sink>
-        int flush(Sink & snk)
-        {
-            // No data to flush
-            if (!this->pos) {
-                return 0;
-            }
-
-            // Compress
-            // TODO: check this
-            char compressed_buf[65536];
-            //char compressed_buf[compressed_buf_sz];
-            size_t compressed_buf_sz = ::snappy_max_compressed_length(this->pos);
-            snappy_status status = snappy_compress(this->buf, this->pos, compressed_buf, &compressed_buf_sz);
-
-            switch (status)
-            {
-                case SNAPPY_OK:
-                    break;
-                case SNAPPY_INVALID_INPUT:
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with status code INVALID_INPUT!\n", getpid());
-                    return -1;
-                case SNAPPY_BUFFER_TOO_SMALL:
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with status code BUFFER_TOO_SMALL!\n", getpid());
-                    return -1;
-            }
-
-            // Encrypt
-            unsigned char ciphered_buf[4 + 65536];
-            //char ciphered_buf[ciphered_buf_sz];
-            uint32_t ciphered_buf_sz = compressed_buf_sz + AES_BLOCK_SIZE;
-            {
-                const unsigned char * src_buf = reinterpret_cast<unsigned char*>(compressed_buf);
-                if (this->xaes_encrypt(src_buf, compressed_buf_sz, ciphered_buf + 4, &ciphered_buf_sz)) {
-                    return -1;
-                }
-            }
-
-            ciphered_buf[0] = ciphered_buf_sz & 0xFF;
-            ciphered_buf[1] = (ciphered_buf_sz >> 8) & 0xFF;
-            ciphered_buf[2] = (ciphered_buf_sz >> 16) & 0xFF;
-            ciphered_buf[3] = (ciphered_buf_sz >> 24) & 0xFF;
-
-            ciphered_buf_sz += 4;
-
-            if (const ssize_t err = this->raw_write(snk, ciphered_buf, ciphered_buf_sz)) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
-                return err;
-            }
-            if (-1 == this->xmd_update(&ciphered_buf, ciphered_buf_sz)) {
-                return -1;
-            }
-            this->file_size += ciphered_buf_sz;
-
-            // Reset buffer
-            this->pos = 0;
-            return 0;
-        }
-
-        template<class Sink>
-        int close(Sink & snk, unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key)
-        {
-            int result = this->flush(snk);
-
-            const uint32_t eof_magic = WABCRYPTOFILE_EOF_MAGIC;
-            unsigned char tmp_buf[8] = {
-                eof_magic & 0xFF,
-                (eof_magic >> 8) & 0xFF,
-                (eof_magic >> 16) & 0xFF,
-                (eof_magic >> 24) & 0xFF,
-                uint8_t(this->raw_size & 0xFF),
-                uint8_t((this->raw_size >> 8) & 0xFF),
-                uint8_t((this->raw_size >> 16) & 0xFF),
-                uint8_t((this->raw_size >> 24) & 0xFF),
-            };
-
-            int write_ret1 = this->raw_write(snk, tmp_buf, 8);
-            if (write_ret1){
-                // TOOD: actual error code could help
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
-            }
-            this->file_size += 8;
-
-            this->xmd_update(tmp_buf, 8);
-
-            if (hash) {
-                unsigned char tmp_hash[MD_HASH_LENGTH << 1];
-                if (::EVP_DigestFinal_ex(&this->hctx4k, tmp_hash, nullptr) != 1) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute 4k MD digests\n", ::getpid());
-                    result = -1;
-                    tmp_hash[0] = '\0';
-                }
-                if (::EVP_DigestFinal_ex(&this->hctx, tmp_hash + MD_HASH_LENGTH, nullptr) != 1) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
-                    result = -1;
-                    tmp_hash[MD_HASH_LENGTH] = '\0';
-                }
-                // HMAC: MD(key^opad + MD(key^ipad))
-                const EVP_MD *md = ::EVP_get_digestbyname(MD_HASH_NAME);
-                if (!md) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not find MD message digest\n", ::getpid());
-                    return -1;
-                }
-                const int     blocksize = ::EVP_MD_block_size(md);
-                unsigned char * key_buf = new(std::nothrow) unsigned char[blocksize];
-                if (key_buf == nullptr) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc\n", ::getpid());
-                    return -1;
-                }
-                const std::unique_ptr<unsigned char[]> auto_free(key_buf);
-                ::memset(key_buf, '\0', blocksize);
-                if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
-                    unsigned char keyhash[MD_HASH_LENGTH];
-                    if ( ! ::MD_HASH_FUNC(hmac_key, CRYPTO_KEY_LENGTH, keyhash)) {
-                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key\n", ::getpid());
-                        return -1;
-                    }
-                    ::memcpy(key_buf, keyhash, MIN(MD_HASH_LENGTH, blocksize));
-                }
-                else {
-                    ::memcpy(key_buf, hmac_key, CRYPTO_KEY_LENGTH);
-                }
-                for (int idx = 0; idx <  blocksize; idx++) {
-                    key_buf[idx] = key_buf[idx] ^ 0x5c;
-                }
-
-                EVP_MD_CTX mdctx;
-                ::EVP_MD_CTX_init(&mdctx);
-                if (::EVP_DigestInit_ex(&mdctx, md, nullptr) != 1) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context\n", ::getpid());
-                    return -1;
-                }
-                if (::EVP_DigestUpdate(&mdctx, key_buf, blocksize) != 1) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
-                    return -1;
-                }
-                if (::EVP_DigestUpdate(&mdctx, tmp_hash, MD_HASH_LENGTH) != 1) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
-                    return -1;
-                }
-                if (::EVP_DigestFinal_ex(&mdctx, hash, nullptr) != 1) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
-                    result = -1;
-                    hash[0] = '\0';
-                }
-                ::EVP_MD_CTX_cleanup(&mdctx);
-                ::EVP_MD_CTX_init(&mdctx);
-                if (::EVP_DigestInit_ex(&mdctx, md, nullptr) != 1) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context\n", ::getpid());
-                    return -1;
-                }
-                if (::EVP_DigestUpdate(&mdctx, key_buf, blocksize) != 1){
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
-                    return -1;
-                }
-                if (::EVP_DigestUpdate(&mdctx, tmp_hash + MD_HASH_LENGTH, MD_HASH_LENGTH) != 1){
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
-                    return -1;
-                }
-                if (::EVP_DigestFinal_ex(&mdctx, hash + MD_HASH_LENGTH, nullptr) != 1) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
-                    result = -1;
-                    hash[MD_HASH_LENGTH] = '\0';
-                }
-                ::EVP_MD_CTX_cleanup(&mdctx);
-            }
-
-            return result;
-        }
-
-    private:
-        ///\return 0 if success, otherwise a negatif number
-        template<class Sink>
-        ssize_t raw_write(Sink & snk, void * data, size_t len)
-        {
-            ssize_t err = snk.write(data, len);
-            return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
-        }
-
-        /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
-         * Return 0 on success, negative value on error
-         */
-        int xaes_encrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
-        {
-            int safe_size = *dst_sz;
-            int remaining_size = 0;
-
-            /* allows reusing of ectx for multiple encryption cycles */
-            if (EVP_EncryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare encryption context!\n", getpid());
-                return -1;
-            }
-            if (EVP_EncryptUpdate(&this->ectx, dst_buf, &safe_size, src_buf, src_sz) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could encrypt data!\n", getpid());
-                return -1;
-            }
-            if (EVP_EncryptFinal_ex(&this->ectx, dst_buf + safe_size, &remaining_size) != 1){
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish encryption!\n", getpid());
-                return -1;
-            }
-            *dst_sz = safe_size + remaining_size;
-            return 0;
-        }
-
-        /* Update hash context with new data.
-         * Returns 0 on success, -1 on error
-         */
-        int xmd_update(const void * src_buf, uint32_t src_sz)
-        {
-            if (::EVP_DigestUpdate(&this->hctx, src_buf, src_sz) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
-                return -1;
-            }
-            if (this->file_size < 4096) {
-                size_t remaining_size = 4096 - this->file_size;
-                size_t hashable_size = MIN(remaining_size, src_sz);
-                if (::EVP_DigestUpdate(&this->hctx4k, src_buf, hashable_size) != 1) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
-                    return -1;
-                }
-            }
-            return 0;
-        }
-    };
-}
-
 
 class SaveStateChunk {
 public:
@@ -2811,228 +2249,6 @@ public:
 };
 
 
-using std::begin;
-using std::end;
-
-
-
-class FileToChunk
-{
-    unsigned char stream_buf[65536];
-    InStream stream;
-
-    CompressionInTransportBuilder compression_builder;
-
-    Transport * trans_source;
-    Transport * trans;
-
-    // variables used to read batch of orders "chunks"
-    uint32_t chunk_size;
-    uint16_t chunk_type;
-    uint16_t chunk_count;
-
-    uint16_t nbconsumers;
-
-    RDPChunkedDevice * consumers[10];
-
-public:
-    timeval record_now;
-
-    bool meta_ok;
-
-    uint16_t info_version;
-    uint16_t info_width;
-    uint16_t info_height;
-    uint16_t info_bpp;
-    uint16_t info_number_of_cache;
-    bool     info_use_waiting_list;
-    uint16_t info_cache_0_entries;
-    uint16_t info_cache_0_size;
-    bool     info_cache_0_persistent;
-    uint16_t info_cache_1_entries;
-    uint16_t info_cache_1_size;
-    bool     info_cache_1_persistent;
-    uint16_t info_cache_2_entries;
-    uint16_t info_cache_2_size;
-    bool     info_cache_2_persistent;
-    uint16_t info_cache_3_entries;
-    uint16_t info_cache_3_size;
-    bool     info_cache_3_persistent;
-    uint16_t info_cache_4_entries;
-    uint16_t info_cache_4_size;
-    bool     info_cache_4_persistent;
-    WrmCompressionAlgorithm info_compression_algorithm;
-
-    REDEMPTION_VERBOSE_FLAGS(private, verbose)
-    {
-        none,
-        end_of_transport = 1,
-    };
-
-    FileToChunk(Transport * trans, Verbose verbose)
-        : stream(this->stream_buf)
-        , compression_builder(*trans, WrmCompressionAlgorithm::no_compression)
-        , trans_source(trans)
-        , trans(trans)
-        // variables used to read batch of orders "chunks"
-        , chunk_size(0)
-        , chunk_type(0)
-        , chunk_count(0)
-        , nbconsumers(0)
-        , consumers()
-        , meta_ok(false)
-        , info_version(0)
-        , info_width(0)
-        , info_height(0)
-        , info_bpp(0)
-        , info_number_of_cache(0)
-        , info_use_waiting_list(true)
-        , info_cache_0_entries(0)
-        , info_cache_0_size(0)
-        , info_cache_0_persistent(false)
-        , info_cache_1_entries(0)
-        , info_cache_1_size(0)
-        , info_cache_1_persistent(false)
-        , info_cache_2_entries(0)
-        , info_cache_2_size(0)
-        , info_cache_2_persistent(false)
-        , info_cache_3_entries(0)
-        , info_cache_3_size(0)
-        , info_cache_3_persistent(false)
-        , info_cache_4_entries(0)
-        , info_cache_4_size(0)
-        , info_cache_4_persistent(false)
-        , info_compression_algorithm(WrmCompressionAlgorithm::no_compression)
-        , verbose(verbose)
-    {
-        while (this->next_chunk()) {
-            this->interpret_chunk();
-            if (this->meta_ok) {
-                break;
-            }
-        }
-    }
-
-    void add_consumer(RDPChunkedDevice * chunk_device) {
-        REDASSERT(nbconsumers < (sizeof(consumers) / sizeof(consumers[0]) - 1));
-        this->consumers[this->nbconsumers++] = chunk_device;
-    }
-
-    bool next_chunk() {
-        try {
-            {
-                auto const buf_sz = FileToGraphic::HEADER_SIZE;
-                unsigned char buf[buf_sz];
-                auto * p = buf;
-                this->trans->recv(&p, buf_sz);
-                InStream header(buf);
-                this->chunk_type  = header.in_uint16_le();
-                this->chunk_size  = header.in_uint32_le();
-                this->chunk_count = header.in_uint16_le();
-            }
-
-            if (this->chunk_size > 65536) {
-                LOG(LOG_INFO,"chunk_size (%d) > 65536", this->chunk_size);
-                return false;
-            }
-            this->stream = InStream(this->stream_buf, 0);   // empty stream
-            if (this->chunk_size - FileToGraphic::HEADER_SIZE > 0) {
-                auto * p = this->stream_buf;
-                this->trans->recv(&p, this->chunk_size - FileToGraphic::HEADER_SIZE);
-                this->stream = InStream(this->stream_buf, p - this->stream_buf);
-            }
-        }
-        catch (Error const & e) {
-            if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
-                throw;
-            }
-
-            if (this->verbose) {
-                LOG(LOG_INFO, "receive error %u : end of transport", e.id);
-            }
-            // receive error, end of transport
-            return false;
-        }
-
-        return true;
-    }
-
-    void interpret_chunk() {
-        switch (this->chunk_type) {
-        case META_FILE:
-            this->info_version                   = this->stream.in_uint16_le();
-            this->info_width                     = this->stream.in_uint16_le();
-            this->info_height                    = this->stream.in_uint16_le();
-            this->info_bpp                       = this->stream.in_uint16_le();
-            this->info_cache_0_entries           = this->stream.in_uint16_le();
-            this->info_cache_0_size              = this->stream.in_uint16_le();
-            this->info_cache_1_entries           = this->stream.in_uint16_le();
-            this->info_cache_1_size              = this->stream.in_uint16_le();
-            this->info_cache_2_entries           = this->stream.in_uint16_le();
-            this->info_cache_2_size              = this->stream.in_uint16_le();
-
-            if (this->info_version <= 3) {
-                this->info_number_of_cache       = 3;
-                this->info_use_waiting_list      = false;
-
-                this->info_cache_0_persistent    = false;
-                this->info_cache_1_persistent    = false;
-                this->info_cache_2_persistent    = false;
-            }
-            else {
-                this->info_number_of_cache       = this->stream.in_uint8();
-                this->info_use_waiting_list      = (this->stream.in_uint8() ? true : false);
-
-                this->info_cache_0_persistent    = (this->stream.in_uint8() ? true : false);
-                this->info_cache_1_persistent    = (this->stream.in_uint8() ? true : false);
-                this->info_cache_2_persistent    = (this->stream.in_uint8() ? true : false);
-
-                this->info_cache_3_entries       = this->stream.in_uint16_le();
-                this->info_cache_3_size          = this->stream.in_uint16_le();
-                this->info_cache_3_persistent    = (this->stream.in_uint8() ? true : false);
-
-                this->info_cache_4_entries       = this->stream.in_uint16_le();
-                this->info_cache_4_size          = this->stream.in_uint16_le();
-                this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
-
-                this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
-                REDASSERT(is_valid_enum_value(this->info_compression_algorithm));
-                if (!is_valid_enum_value(this->info_compression_algorithm)) {
-                    this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
-                }
-
-                // re-init
-                this->trans = &this->compression_builder.reset(
-                    *this->trans_source, this->info_compression_algorithm
-                );
-            }
-
-            this->stream.rewind();
-
-            if (!this->meta_ok) {
-                this->meta_ok = true;
-            }
-            break;
-        case RESET_CHUNK:
-            this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
-
-            this->trans = this->trans_source;
-            break;
-        }
-
-        for (size_t i = 0; i < this->nbconsumers ; i++) {
-            if (this->consumers[i]) {
-                this->consumers[i]->chunk(this->chunk_type, this->chunk_count, this->stream.clone());
-            }
-        }
-    }   // void interpret_chunk()
-
-    void play(bool const & requested_to_stop) {
-        while (!requested_to_stop && this->next_chunk()) {
-            this->interpret_chunk();
-        }
-    }
-};
 
 
 class PatternsChecker : noncopyable
@@ -3107,6 +2323,29 @@ class PngCapture : public gdi::CaptureApi
 {
 public:
 
+    struct capture_out_sequence_filename_buf_param
+    {
+        FilenameGenerator::Format format;
+        const char * const prefix;
+        const char * const filename;
+        const char * const extension;
+        const int groupid;
+
+        capture_out_sequence_filename_buf_param(
+            FilenameGenerator::Format format,
+            const char * const prefix,
+            const char * const filename,
+            const char * const extension,
+            const int groupid)
+        : format(format)
+        , prefix(prefix)
+        , filename(filename)
+        , extension(extension)
+        , groupid(groupid)
+        {}
+    };
+
+
     class pngcapture_out_sequence_filename_buf_impl
     {
         char current_filename_[1024];
@@ -3116,7 +2355,7 @@ public:
         int groupid_;
 
     public:
-        explicit pngcapture_out_sequence_filename_buf_impl(out_sequence_filename_buf_param const & params)
+        explicit pngcapture_out_sequence_filename_buf_impl(capture_out_sequence_filename_buf_param const & params)
         : filegen_(params.format, params.prefix, params.filename, params.extension)
         , buf_()
         , num_file_(0)
@@ -3235,7 +2474,7 @@ public:
             const char * const extension,
             const int groupid,
             auth_api * authentifier)
-        : buf(detail::out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
+        : buf(capture_out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
         {
             if (authentifier) {
                 this->set_authentifier(authentifier);
@@ -4153,456 +3392,6 @@ public:
 
 
 
-template <size_t SZ>
-class OutChunkedBufferingTransport : public Transport
-{
-    Transport & trans;
-    size_t max;
-    uint8_t buf[SZ];
-    OutStream stream;
-
-    static_assert(SZ >= 8, "");
-
-public:
-    explicit OutChunkedBufferingTransport(Transport & trans)
-        : trans(trans)
-        , max(SZ-8)
-        , stream(buf)
-    {
-    }
-
-    void flush() override {
-        if (this->stream.get_offset() > 0) {
-            send_wrm_chunk(this->trans, LAST_IMAGE_CHUNK, this->stream.get_offset(), 1);
-            this->trans.send(this->stream.get_data(), this->stream.get_offset());
-            this->stream = OutStream(buf);
-        }
-    }
-
-private:
-    void do_send(const uint8_t * const buffer, size_t len) override {
-        size_t to_buffer_len = len;
-        while (this->stream.get_offset() + to_buffer_len > this->max) {
-            send_wrm_chunk(this->trans, PARTIAL_IMAGE_CHUNK, this->max, 1);
-            this->trans.send(this->stream.get_data(), this->stream.get_offset());
-            size_t to_send = this->max - this->stream.get_offset();
-            this->trans.send(buffer + len - to_buffer_len, to_send);
-            to_buffer_len -= to_send;
-            this->stream = OutStream(buf);
-        }
-        this->stream.out_copy_bytes(buffer + len - to_buffer_len, to_buffer_len);
-    }
-};
-
-/**
- * To keep things easy all chunks have 8 bytes headers
- * starting with chunk_type, chunk_size and order_count
- *  (whatever it means, depending on chunks)
- */
-class GraphicToFile
-: public RDPSerializer
-, public gdi::KbdInputApi
-, public gdi::CaptureProbeApi
-{
-    enum {
-        GTF_SIZE_KEYBUF_REC = 1024
-    };
-
-    CompressionOutTransportBuilder compression_bullder;
-    Transport & trans_target;
-    Transport & trans;
-    StaticOutStream<65536> buffer_stream_orders;
-    StaticOutStream<65536> buffer_stream_bitmaps;
-
-    const std::chrono::microseconds delta_time = std::chrono::seconds(1);
-    timeval timer;
-    timeval last_sent_timer;
-    const uint16_t width;
-    const uint16_t height;
-    uint16_t mouse_x;
-    uint16_t mouse_y;
-    const bool send_input;
-    gdi::DumpPng24Api & dump_png24_api;
-
-
-    uint8_t keyboard_buffer_32_buf[GTF_SIZE_KEYBUF_REC * sizeof(uint32_t)];
-    // Extractor
-    OutStream keyboard_buffer_32;
-
-    const uint8_t wrm_format_version;
-
-public:
-    enum class SendInput { NO, YES };
-
-    GraphicToFile(const timeval & now
-                , Transport & trans
-                , const uint16_t width
-                , const uint16_t height
-                , const uint8_t  capture_bpp
-                , BmpCache & bmp_cache
-                , GlyphCache & gly_cache
-                , PointerCache & ptr_cache
-                , gdi::DumpPng24Api & dump_png24
-                , WrmCompressionAlgorithm wrm_compression_algorithm
-                , SendInput send_input = SendInput::NO
-                , Verbose verbose = Verbose::none)
-    : RDPSerializer( this->buffer_stream_orders, this->buffer_stream_bitmaps, capture_bpp
-                   , bmp_cache, gly_cache, ptr_cache, 0, true, true, 32 * 1024, verbose)
-    , compression_bullder(trans, wrm_compression_algorithm)
-    , trans_target(trans)
-    , trans(this->compression_bullder.get())
-    , timer(now)
-    , last_sent_timer{0, 0}
-    , width(width)
-    , height(height)
-    , mouse_x(0)
-    , mouse_y(0)
-    , send_input(send_input == SendInput::YES)
-    , dump_png24_api(dump_png24)
-    , keyboard_buffer_32(keyboard_buffer_32_buf)
-    , wrm_format_version(bool(this->compression_bullder.get_algorithm()) ? 4 : 3)
-    {
-        if (wrm_compression_algorithm != this->compression_bullder.get_algorithm()) {
-            LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
-               , static_cast<unsigned>(wrm_compression_algorithm));
-        }
-
-        this->order_count = 0;
-
-        this->send_meta_chunk();
-        this->send_image_chunk();
-    }
-
-    void dump_png24(Transport & trans, bool bgr) const {
-        this->dump_png24_api.dump_png24(trans, bgr);
-    }
-
-    /// \brief Update timestamp but send nothing, the timestamp will be sent later with the next effective event
-    void timestamp(const timeval& now)
-    {
-        if (this->timer < now) {
-            this->flush_orders();
-            this->flush_bitmaps();
-            this->timer = now;
-            this->trans.timestamp(now);
-        }
-    }
-
-    void mouse(uint16_t mouse_x, uint16_t mouse_y)
-    {
-        this->mouse_x = mouse_x;
-        this->mouse_y = mouse_y;
-    }
-
-    bool kbd_input(const timeval & now, uint32_t uchar) override {
-        (void)now;
-        if (keyboard_buffer_32.has_room(sizeof(uint32_t))) {
-            keyboard_buffer_32.out_uint32_le(uchar);
-        }
-        return true;
-    }
-
-    void enable_kbd_input_mask(bool) override {
-    }
-
-    void send_meta_chunk()
-    {
-        const BmpCache::cache_ & c0 = this->bmp_cache.get_cache(0);
-        const BmpCache::cache_ & c1 = this->bmp_cache.get_cache(1);
-        const BmpCache::cache_ & c2 = this->bmp_cache.get_cache(2);
-        const BmpCache::cache_ & c3 = this->bmp_cache.get_cache(3);
-        const BmpCache::cache_ & c4 = this->bmp_cache.get_cache(4);
-
-        ::send_meta_chunk(
-            this->trans_target
-          , this->wrm_format_version
-
-          , this->width
-          , this->height
-          , this->capture_bpp
-
-          , c0.entries()
-          , c0.bmp_size()
-          , c1.entries()
-          , c1.bmp_size()
-          , c2.entries()
-          , c2.bmp_size()
-
-          , this->bmp_cache.number_of_cache
-          , this->bmp_cache.use_waiting_list
-
-          , c0.persistent()
-          , c1.persistent()
-          , c2.persistent()
-
-          , c3.entries()
-          , c3.bmp_size()
-          , c3.persistent()
-          , c4.entries()
-          , c4.bmp_size()
-          , c4.persistent()
-
-          , static_cast<unsigned>(this->compression_bullder.get_algorithm())
-        );
-    }
-
-    // this one is used to store some embedded image inside WRM
-    void send_image_chunk(void)
-    {
-        OutChunkedBufferingTransport<65536> png_trans(this->trans);
-        this->dump_png24_api.dump_png24(png_trans, false);
-    }
-
-    void send_reset_chunk()
-    {
-        send_wrm_chunk(this->trans, RESET_CHUNK, 0, 1);
-    }
-
-    void send_timestamp_chunk(bool ignore_time_interval = false)
-    {
-        StaticOutStream<12 + GTF_SIZE_KEYBUF_REC * sizeof(uint32_t) + 1> payload;
-        payload.out_timeval_to_uint64le_usec(this->timer);
-        if (this->send_input) {
-            payload.out_uint16_le(this->mouse_x);
-            payload.out_uint16_le(this->mouse_y);
-
-            payload.out_uint8(ignore_time_interval ? 1 : 0);
-
-            payload.out_copy_bytes(keyboard_buffer_32.get_data(), keyboard_buffer_32.get_offset());
-            keyboard_buffer_32 = OutStream(keyboard_buffer_32_buf);
-        }
-
-        send_wrm_chunk(this->trans, TIMESTAMP, payload.get_offset(), 1);
-        this->trans.send(payload.get_data(), payload.get_offset());
-
-        this->last_sent_timer = this->timer;
-    }
-
-    void send_save_state_chunk()
-    {
-        StaticOutStream<4096> payload;
-        SaveStateChunk ssc;
-        ssc.send(payload, this->ssc);
-
-        //------------------------------ missing variable length ---------------
-
-        send_wrm_chunk(this->trans, SAVE_STATE, payload.get_offset(), 1);
-        this->trans.send(payload.get_data(), payload.get_offset());
-    }
-
-    void save_bmp_caches()
-    {
-        for (uint8_t cache_id = 0
-        ; cache_id < this->bmp_cache.number_of_cache
-        ; ++cache_id) {
-            const size_t entries = this->bmp_cache.get_cache(cache_id).entries();
-            for (size_t i = 0; i < entries; i++) {
-                this->bmp_cache.set_cached(cache_id, i, false);
-            }
-        }
-    }
-
-    void save_glyph_caches()
-    {
-        for (uint8_t cacheId = 0; cacheId < NUMBER_OF_GLYPH_CACHES; ++cacheId) {
-            for (uint8_t cacheIndex = 0; cacheIndex < NUMBER_OF_GLYPH_CACHE_ENTRIES; ++cacheIndex) {
-                this->glyph_cache.set_cached(cacheId, cacheIndex, false);
-            }
-        }
-    }
-
-    void save_ptr_cache() {
-        for (int index = 0; index < MAX_POINTER_COUNT; ++index) {
-            this->pointer_cache.set_cached(index, false);
-        }
-    }
-
-    void send_caches_chunk()
-    {
-        this->save_bmp_caches();
-        this->save_glyph_caches();
-        this->save_ptr_cache();
-        if (this->order_count > 0) {
-            this->send_orders_chunk();
-        }
-    }
-
-    void breakpoint()
-    {
-        this->flush_orders();
-        this->flush_bitmaps();
-        this->send_timestamp_chunk();
-        if (bool(this->compression_bullder.get_algorithm())) {
-            this->send_reset_chunk();
-        }
-        this->trans.next();
-        this->send_meta_chunk();
-        this->send_timestamp_chunk();
-        this->send_save_state_chunk();
-
-        OutChunkedBufferingTransport<65536> png_trans(this->trans);
-
-        this->dump_png24_api.dump_png24(png_trans, true);
-
-        this->send_caches_chunk();
-    }
-
-private:
-    std::chrono::microseconds elapsed_time() const
-    {
-        using us = std::chrono::microseconds;
-        return us(ustime(this->timer)) - us(ustime(this->last_sent_timer));
-    }
-
-protected:
-    void flush_orders() override {
-        if (this->order_count > 0) {
-            if (this->elapsed_time() >= delta_time) {
-                this->send_timestamp_chunk();
-            }
-            this->send_orders_chunk();
-        }
-    }
-
-public:
-    void send_orders_chunk()
-    {
-        send_wrm_chunk(this->trans, RDP_UPDATE_ORDERS, this->stream_orders.get_offset(), this->order_count);
-        this->trans.send(this->stream_orders.get_data(), this->stream_orders.get_offset());
-        this->order_count = 0;
-        this->stream_orders.rewind();
-    }
-
-protected:
-    void flush_bitmaps() override {
-        if (this->bitmap_count > 0) {
-            if (this->elapsed_time() >= delta_time) {
-                this->send_timestamp_chunk();
-            }
-            this->send_bitmaps_chunk();
-        }
-    }
-
-public:
-    void sync() override {
-        this->flush_bitmaps();
-        this->flush_orders();
-    }
-
-    void send_bitmaps_chunk()
-    {
-        send_wrm_chunk(this->trans, RDP_UPDATE_BITMAP, this->stream_bitmaps.get_offset(), this->bitmap_count);
-        this->trans.send(this->stream_bitmaps.get_data(), this->stream_bitmaps.get_offset());
-        this->bitmap_count = 0;
-        this->stream_bitmaps.rewind();
-    }
-
-protected:
-    void send_pointer(int cache_idx, const Pointer & cursor) override {
-        if ((cursor.width != 32) || (cursor.height != 32) || (cursor.bpp != 24)) {
-            this->send_pointer2(cache_idx, cursor);
-            return;
-        }
-
-        size_t size =   2           // mouse x
-                      + 2           // mouse y
-                      + 1           // cache index
-                      + 1           // hotspot x
-                      + 1           // hotspot y
-                      + 32 * 32 * 3 // data
-                      + 128         // mask
-                      ;
-        send_wrm_chunk(this->trans, POINTER, size, 0);
-
-        StaticOutStream<16> payload;
-        payload.out_uint16_le(this->mouse_x);
-        payload.out_uint16_le(this->mouse_y);
-        payload.out_uint8(cache_idx);
-        payload.out_uint8(cursor.x);
-        payload.out_uint8(cursor.y);
-        this->trans.send(payload.get_data(), payload.get_offset());
-
-        this->trans.send(cursor.data, cursor.data_size());
-        this->trans.send(cursor.mask, cursor.mask_size());
-    }
-
-    void send_pointer2(int cache_idx, const Pointer & cursor) {
-        size_t size =   2                   // mouse x
-                      + 2                   // mouse y
-                      + 1                   // cache index
-
-                      + 1                   // mouse width
-                      + 1                   // mouse height
-                      + 1                   // mouse bpp
-
-                      + 1                   // hotspot x
-                      + 1                   // hotspot y
-
-                      + 2                   // data_size
-                      + 2                   // mask_size
-
-                      + cursor.data_size()  // data
-                      + cursor.mask_size()  // mask
-                      ;
-        send_wrm_chunk(this->trans, POINTER2, size, 0);
-
-        StaticOutStream<32> payload;
-        payload.out_uint16_le(this->mouse_x);
-        payload.out_uint16_le(this->mouse_y);
-        payload.out_uint8(cache_idx);
-
-        payload.out_uint8(cursor.width);
-        payload.out_uint8(cursor.height);
-        payload.out_uint8(cursor.bpp);
-
-        payload.out_uint8(cursor.x);
-        payload.out_uint8(cursor.y);
-
-        payload.out_uint16_le(cursor.data_size());
-        payload.out_uint16_le(cursor.mask_size());
-
-        this->trans.send(payload.get_data(), payload.get_offset());
-
-        this->trans.send(cursor.data, cursor.data_size());
-        this->trans.send(cursor.mask, cursor.mask_size());
-    }
-
-    void set_pointer(int cache_idx) override {
-        size_t size =   2                   // mouse x
-                      + 2                   // mouse y
-                      + 1                   // cache index
-                      ;
-        send_wrm_chunk(this->trans, POINTER, size, 0);
-
-        StaticOutStream<16> payload;
-        payload.out_uint16_le(this->mouse_x);
-        payload.out_uint16_le(this->mouse_y);
-        payload.out_uint8(cache_idx);
-        this->trans.send(payload.get_data(), payload.get_offset());
-    }
-
-public:
-    void session_update(timeval const & now, array_view_const_char message) override {
-        uint16_t message_length = message.size() + 1;       // Null-terminator is included.
-
-        StaticOutStream<16> payload;
-        payload.out_timeval_to_uint64le_usec(now);
-        payload.out_uint16_le(message_length);
-
-        send_wrm_chunk(this->trans, SESSION_UPDATE, payload.get_offset() + message_length, 1);
-        this->trans.send(payload.get_data(), payload.get_offset());
-        this->trans.send(message.data(), message.size());
-        this->trans.send("\0", 1);
-
-        this->last_sent_timer = this->timer;
-    }
-
-    void possible_active_window_change() override {}
-
-    using RDPSerializer::set_pointer;
-};  // struct GraphicToFile
-
-
 
 
 class Capture final
@@ -5283,7 +4072,7 @@ class dorecompress_out_sequence_filename_buf_impl
     int groupid_;
 
 public:
-    explicit dorecompress_out_sequence_filename_buf_impl(out_sequence_filename_buf_param const & params)
+    explicit dorecompress_out_sequence_filename_buf_impl(dorecompress_out_sequence_filename_buf_param const & params)
     : filegen_(params.format, params.prefix, params.filename, params.extension)
     , buf_()
     , num_file_(0)
@@ -5467,6 +4256,132 @@ struct dorecompress_MetaFilename
     dorecompress_MetaFilename & operator = (dorecompress_MetaFilename const &) = delete;
 };
 
+
+template<class Writer>
+int dorecompress_write_filename(Writer & writer, const char * filename)
+{
+    auto pfile = filename;
+    auto epfile = filename;
+    for (; *epfile; ++epfile) {
+        if (*epfile == '\\') {
+            ssize_t len = epfile - pfile + 1;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+            pfile = epfile;
+        }
+        if (*epfile == ' ') {
+            ssize_t len = epfile - pfile;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+            res = writer.write("\\", 1u);
+            if (res < 1) {
+                return res < 0 ? res : 1;
+            }
+            pfile = epfile;
+        }
+    }
+
+    if (pfile != epfile) {
+        ssize_t len = epfile - pfile;
+        auto res = writer.write(pfile, len);
+        if (res < len) {
+            return res < 0 ? res : 1;
+        }
+    }
+
+    return 0;
+}
+
+using dorecompress_hash_type = unsigned char[MD_HASH_LENGTH*2];
+
+constexpr std::size_t dorecompress_hash_string_len = (1 + MD_HASH_LENGTH * 2) * 2;
+
+inline char * dorecompress_swrite_hash(char * p, dorecompress_hash_type const & hash)
+{
+    auto write = [&p](unsigned char const * hash) {
+        *p++ = ' ';                // 1 octet
+        for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+            sprintf(p, "%02x", c); // 64 octets (hash)
+            p += 2;
+        }
+    };
+    write(hash);
+    write(hash + MD_HASH_LENGTH);
+    return p;
+}
+
+
+template<bool write_time, class Writer>
+int dorecompress_write_meta_file_impl(
+    Writer & writer, const char * filename,
+    struct stat const & stat,
+    time_t start_sec, time_t stop_sec,
+    dorecompress_hash_type const * hash = nullptr
+) {
+    if (int err = dorecompress_write_filename(writer, filename)) {
+        return err;
+    }
+
+    using ull = unsigned long long;
+    using ll = long long;
+    char mes[
+        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+        dorecompress_hash_string_len + 1 +
+        2
+    ];
+    ssize_t len = std::sprintf(
+        mes,
+        " %lld %llu %lld %lld %llu %lld %lld %lld",
+        ll(stat.st_size),
+        ull(stat.st_mode),
+        ll(stat.st_uid),
+        ll(stat.st_gid),
+        ull(stat.st_dev),
+        ll(stat.st_ino),
+        ll(stat.st_mtim.tv_sec),
+        ll(stat.st_ctim.tv_sec)
+    );
+    if (write_time) {
+        len += std::sprintf(
+            mes + len,
+            " %lld %lld",
+            ll(start_sec),
+            ll(stop_sec)
+        );
+    }
+
+    char * p = mes + len;
+    if (hash) {
+        p = dorecompress_swrite_hash(p, *hash);
+    }
+    *p++ = '\n';
+
+    ssize_t res = writer.write(mes, p-mes);
+
+    if (res < p-mes) {
+        return res < 0 ? res : 1;
+    }
+
+    return 0;
+}
+
+template<class Writer>
+int dorecompress_write_meta_file(
+    Writer & writer, const char * filename,
+    time_t start_sec, time_t stop_sec,
+    dorecompress_hash_type const * hash = nullptr
+) {
+    struct stat stat;
+    int err = ::stat(filename, &stat);
+    return err ? err : dorecompress_write_meta_file_impl<true>(writer, filename, stat, start_sec, stop_sec, hash);
+}
+
+
 template<class BufMeta>
 class dorecompress_out_meta_sequence_filename_buf_impl
 : public dorecompress_out_sequence_filename_buf_impl
@@ -5534,7 +4449,7 @@ public:
                 struct stat stat;
                 int err = ::stat(meta_filename, &stat);
                 if (!err) {
-                    err = write_meta_file_impl<false>(crypto_hash, filename, stat, 0, 0, nullptr);
+                    err = dorecompress_write_meta_file_impl<false>(crypto_hash, filename, stat, 0, 0, nullptr);
                 }
                 if (!err) {
                     err = crypto_hash.close(/*hash*/);
@@ -5566,7 +4481,7 @@ public:
     }
 
 protected:
-    int next_meta_file(hash_type const * hash = nullptr)
+    int next_meta_file(dorecompress_hash_type const * hash = nullptr)
     {
         // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
         const char * filename = this->rename_filename();
@@ -5574,7 +4489,7 @@ protected:
             return 1;
         }
 
-        if (int err = write_meta_file(
+        if (int err = dorecompress_write_meta_file(
             this->meta_buf_, filename, this->start_sec_, this->stop_sec_+1, hash
         )) {
             return err;
@@ -5665,7 +4580,7 @@ public:
             return 1;
         }
 
-        hash_type hash;
+        dorecompress_hash_type hash;
 
         if (this->meta_buf().close(hash)) {
             return 1;
@@ -5695,7 +4610,7 @@ public:
             struct stat stat;
             int err = ::stat(meta_filename, &stat);
             if (!err) {
-                err = write_meta_file_impl<false>(hash_buf, filename, stat, 0, 0, &hash);
+                err = dorecompress_write_meta_file_impl<false>(hash_buf, filename, stat, 0, 0, &hash);
             }
             if (!err) {
                 err = hash_buf.close(/*hash*/);
@@ -5718,7 +4633,7 @@ public:
     int next()
     {
         if (this->buf().is_open()) {
-            hash_type hash;
+            dorecompress_hash_type hash;
             {
                 const int res1 = this->wrm_filter.close(this->buf(), hash, this->cctx.get_hmac_key());
                 const int res2 = this->buf().close();
@@ -5735,6 +4650,43 @@ public:
         return 1;
     }
 };
+
+template<class Writer>
+void dorecompress_write_meta_headers(Writer & writer, const char * path,
+                        uint16_t width, uint16_t height,
+                        auth_api * authentifier,
+                        bool has_checksum
+                       )
+{
+    char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
+    const int len = sprintf(
+        header1,
+        "v2\n"
+        "%u %u\n"
+        "%s\n"
+        "\n\n",
+        unsigned(width),
+        unsigned(height),
+        has_checksum  ? "checksum" : "nochecksum"
+    );
+    const ssize_t res = writer.write(header1, len);
+    if (res < 0) {
+        int err = errno;
+        LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
+
+        if (err == ENOSPC) {
+            char message[1024];
+            snprintf(message, sizeof(message), "100|%s", path);
+            authentifier->report("FILESYSTEM_FULL", message);
+
+            throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
+        }
+        else {
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
+        }
+    }
+}
+
 
 struct dorecompress_OutMetaSequenceTransport : public Transport
 {
@@ -5756,7 +4708,7 @@ struct dorecompress_OutMetaSequenceTransport : public Transport
             this->set_authentifier(authentifier);
         }
 
-        detail::write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, false);
+        dorecompress_write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, false);
     }
 
     void timestamp(timeval now) override {
@@ -5833,8 +4785,379 @@ struct dorecompress_ocrypto_filename_params
     Random & rnd;
 };
 
-struct dorecompress_ocrypto_filter
-: transfil::encrypt_filter
+class dorecompress_encrypt_filter
+{
+    char           buf[CRYPTO_BUFFER_SIZE]; //
+    EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
+    EVP_MD_CTX     hctx;                    // hash context
+    EVP_MD_CTX     hctx4k;                  // hash context
+    uint32_t       pos;                     // current position in buf
+    uint32_t       raw_size;                // the unciphered/uncompressed file size
+    uint32_t       file_size;               // the current file size
+
+public:
+    dorecompress_encrypt_filter() = default;
+    //: pos(0)
+    //, raw_size(0)
+    //, file_size(0)
+    //{}
+
+    template<class Sink>
+    int open(Sink & snk, const unsigned char * trace_key, CryptoContext & cctx, const unsigned char * iv)
+    {
+        ::memset(this->buf, 0, sizeof(this->buf));
+        ::memset(&this->ectx, 0, sizeof(this->ectx));
+        ::memset(&this->hctx, 0, sizeof(this->hctx));
+        ::memset(&this->hctx4k, 0, sizeof(this->hctx4k));
+        this->pos = 0;
+        this->raw_size = 0;
+        this->file_size = 0;
+
+        const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
+        const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
+        const int          nrounds = 5;
+        unsigned char      key[32];
+        const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
+                                       trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
+        if (i != 32) {
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
+            return -1;
+        }
+
+        ::EVP_CIPHER_CTX_init(&this->ectx);
+        if (::EVP_EncryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize encrypt context\n", ::getpid());
+            return -1;
+        }
+
+        // MD stuff
+        const EVP_MD * md = EVP_get_digestbyname(MD_HASH_NAME);
+        if (!md) {
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not find message digest algorithm!\n", ::getpid());
+            return -1;
+        }
+
+        ::EVP_MD_CTX_init(&this->hctx);
+        ::EVP_MD_CTX_init(&this->hctx4k);
+        if (::EVP_DigestInit_ex(&this->hctx, md, nullptr) != 1) {
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context!\n", ::getpid());
+            return -1;
+        }
+        if (::EVP_DigestInit_ex(&this->hctx4k, md, nullptr) != 1) {
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize 4k MD hash context!\n", ::getpid());
+            return -1;
+        }
+
+        // HMAC: key^ipad
+        const int     blocksize = ::EVP_MD_block_size(md);
+        unsigned char * key_buf = new(std::nothrow) unsigned char[blocksize];
+        {
+            if (key_buf == nullptr) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc!\n", ::getpid());
+                return -1;
+            }
+            const std::unique_ptr<unsigned char[]> auto_free(key_buf);
+            ::memset(key_buf, 0, blocksize);
+            if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
+                unsigned char keyhash[MD_HASH_LENGTH];
+                if ( ! ::MD_HASH_FUNC(cctx.get_hmac_key(), CRYPTO_KEY_LENGTH, keyhash)) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key!\n", ::getpid());
+                    return -1;
+                }
+                ::memcpy(key_buf, keyhash, MIN(MD_HASH_LENGTH, blocksize));
+            }
+            else {
+                ::memcpy(key_buf, cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
+            }
+            for (int idx = 0; idx <  blocksize; idx++) {
+                key_buf[idx] = key_buf[idx] ^ 0x36;
+            }
+            if (::EVP_DigestUpdate(&this->hctx, key_buf, blocksize) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
+                return -1;
+            }
+            if (::EVP_DigestUpdate(&this->hctx4k, key_buf, blocksize) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
+                return -1;
+            }
+        }
+
+        // update context with previously written data
+        char tmp_buf[40];
+        tmp_buf[0] = WABCRYPTOFILE_MAGIC & 0xFF;
+        tmp_buf[1] = (WABCRYPTOFILE_MAGIC >> 8) & 0xFF;
+        tmp_buf[2] = (WABCRYPTOFILE_MAGIC >> 16) & 0xFF;
+        tmp_buf[3] = (WABCRYPTOFILE_MAGIC >> 24) & 0xFF;
+        tmp_buf[4] = WABCRYPTOFILE_VERSION & 0xFF;
+        tmp_buf[5] = (WABCRYPTOFILE_VERSION >> 8) & 0xFF;
+        tmp_buf[6] = (WABCRYPTOFILE_VERSION >> 16) & 0xFF;
+        tmp_buf[7] = (WABCRYPTOFILE_VERSION >> 24) & 0xFF;
+        ::memcpy(tmp_buf + 8, iv, 32);
+
+        // TODO: if I suceeded writing a broken file, wouldn't it be better to remove it ?
+        if (const ssize_t write_ret = this->raw_write(snk, tmp_buf, 40)){
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: write error! error=%s\n", ::getpid(), ::strerror(errno));
+            return write_ret;
+        }
+        // update file_size
+        this->file_size += 40;
+
+        return this->xmd_update(tmp_buf, 40);
+    }
+
+    template<class Sink>
+    ssize_t write(Sink & snk, const void * data, size_t len)
+    {
+        unsigned int remaining_size = len;
+        while (remaining_size > 0) {
+            // Check how much we can append into buffer
+            unsigned int available_size = MIN(CRYPTO_BUFFER_SIZE - this->pos, remaining_size);
+            // Append and update pos pointer
+            ::memcpy(this->buf + this->pos, static_cast<const char*>(data) + (len - remaining_size), available_size);
+            this->pos += available_size;
+            // If buffer is full, flush it to disk
+            if (this->pos == CRYPTO_BUFFER_SIZE) {
+                if (this->flush(snk)) {
+                    return -1;
+                }
+            }
+            remaining_size -= available_size;
+        }
+        // Update raw size counter
+        this->raw_size += len;
+        return len;
+    }
+
+    /* Flush procedure (compression, encryption, effective file writing)
+     * Return 0 on success, negatif on error
+     */
+    template<class Sink>
+    int flush(Sink & snk)
+    {
+        // No data to flush
+        if (!this->pos) {
+            return 0;
+        }
+
+        // Compress
+        // TODO: check this
+        char compressed_buf[65536];
+        //char compressed_buf[compressed_buf_sz];
+        size_t compressed_buf_sz = ::snappy_max_compressed_length(this->pos);
+        snappy_status status = snappy_compress(this->buf, this->pos, compressed_buf, &compressed_buf_sz);
+
+        switch (status)
+        {
+            case SNAPPY_OK:
+                break;
+            case SNAPPY_INVALID_INPUT:
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with status code INVALID_INPUT!\n", getpid());
+                return -1;
+            case SNAPPY_BUFFER_TOO_SMALL:
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with status code BUFFER_TOO_SMALL!\n", getpid());
+                return -1;
+        }
+
+        // Encrypt
+        unsigned char ciphered_buf[4 + 65536];
+        //char ciphered_buf[ciphered_buf_sz];
+        uint32_t ciphered_buf_sz = compressed_buf_sz + AES_BLOCK_SIZE;
+        {
+            const unsigned char * src_buf = reinterpret_cast<unsigned char*>(compressed_buf);
+            if (this->xaes_encrypt(src_buf, compressed_buf_sz, ciphered_buf + 4, &ciphered_buf_sz)) {
+                return -1;
+            }
+        }
+
+        ciphered_buf[0] = ciphered_buf_sz & 0xFF;
+        ciphered_buf[1] = (ciphered_buf_sz >> 8) & 0xFF;
+        ciphered_buf[2] = (ciphered_buf_sz >> 16) & 0xFF;
+        ciphered_buf[3] = (ciphered_buf_sz >> 24) & 0xFF;
+
+        ciphered_buf_sz += 4;
+
+        if (const ssize_t err = this->raw_write(snk, ciphered_buf, ciphered_buf_sz)) {
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
+            return err;
+        }
+        if (-1 == this->xmd_update(&ciphered_buf, ciphered_buf_sz)) {
+            return -1;
+        }
+        this->file_size += ciphered_buf_sz;
+
+        // Reset buffer
+        this->pos = 0;
+        return 0;
+    }
+
+    template<class Sink>
+    int close(Sink & snk, unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key)
+    {
+        int result = this->flush(snk);
+
+        const uint32_t eof_magic = WABCRYPTOFILE_EOF_MAGIC;
+        unsigned char tmp_buf[8] = {
+            eof_magic & 0xFF,
+            (eof_magic >> 8) & 0xFF,
+            (eof_magic >> 16) & 0xFF,
+            (eof_magic >> 24) & 0xFF,
+            uint8_t(this->raw_size & 0xFF),
+            uint8_t((this->raw_size >> 8) & 0xFF),
+            uint8_t((this->raw_size >> 16) & 0xFF),
+            uint8_t((this->raw_size >> 24) & 0xFF),
+        };
+
+        int write_ret1 = this->raw_write(snk, tmp_buf, 8);
+        if (write_ret1){
+            // TOOD: actual error code could help
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
+        }
+        this->file_size += 8;
+
+        this->xmd_update(tmp_buf, 8);
+
+        if (hash) {
+            unsigned char tmp_hash[MD_HASH_LENGTH << 1];
+            if (::EVP_DigestFinal_ex(&this->hctx4k, tmp_hash, nullptr) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute 4k MD digests\n", ::getpid());
+                result = -1;
+                tmp_hash[0] = '\0';
+            }
+            if (::EVP_DigestFinal_ex(&this->hctx, tmp_hash + MD_HASH_LENGTH, nullptr) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
+                result = -1;
+                tmp_hash[MD_HASH_LENGTH] = '\0';
+            }
+            // HMAC: MD(key^opad + MD(key^ipad))
+            const EVP_MD *md = ::EVP_get_digestbyname(MD_HASH_NAME);
+            if (!md) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not find MD message digest\n", ::getpid());
+                return -1;
+            }
+            const int     blocksize = ::EVP_MD_block_size(md);
+            unsigned char * key_buf = new(std::nothrow) unsigned char[blocksize];
+            if (key_buf == nullptr) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc\n", ::getpid());
+                return -1;
+            }
+            const std::unique_ptr<unsigned char[]> auto_free(key_buf);
+            ::memset(key_buf, '\0', blocksize);
+            if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
+                unsigned char keyhash[MD_HASH_LENGTH];
+                if ( ! ::MD_HASH_FUNC(hmac_key, CRYPTO_KEY_LENGTH, keyhash)) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key\n", ::getpid());
+                    return -1;
+                }
+                ::memcpy(key_buf, keyhash, MIN(MD_HASH_LENGTH, blocksize));
+            }
+            else {
+                ::memcpy(key_buf, hmac_key, CRYPTO_KEY_LENGTH);
+            }
+            for (int idx = 0; idx <  blocksize; idx++) {
+                key_buf[idx] = key_buf[idx] ^ 0x5c;
+            }
+
+            EVP_MD_CTX mdctx;
+            ::EVP_MD_CTX_init(&mdctx);
+            if (::EVP_DigestInit_ex(&mdctx, md, nullptr) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context\n", ::getpid());
+                return -1;
+            }
+            if (::EVP_DigestUpdate(&mdctx, key_buf, blocksize) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
+                return -1;
+            }
+            if (::EVP_DigestUpdate(&mdctx, tmp_hash, MD_HASH_LENGTH) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
+                return -1;
+            }
+            if (::EVP_DigestFinal_ex(&mdctx, hash, nullptr) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
+                result = -1;
+                hash[0] = '\0';
+            }
+            ::EVP_MD_CTX_cleanup(&mdctx);
+            ::EVP_MD_CTX_init(&mdctx);
+            if (::EVP_DigestInit_ex(&mdctx, md, nullptr) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context\n", ::getpid());
+                return -1;
+            }
+            if (::EVP_DigestUpdate(&mdctx, key_buf, blocksize) != 1){
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
+                return -1;
+            }
+            if (::EVP_DigestUpdate(&mdctx, tmp_hash + MD_HASH_LENGTH, MD_HASH_LENGTH) != 1){
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
+                return -1;
+            }
+            if (::EVP_DigestFinal_ex(&mdctx, hash + MD_HASH_LENGTH, nullptr) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
+                result = -1;
+                hash[MD_HASH_LENGTH] = '\0';
+            }
+            ::EVP_MD_CTX_cleanup(&mdctx);
+        }
+
+        return result;
+    }
+
+private:
+    ///\return 0 if success, otherwise a negatif number
+    template<class Sink>
+    ssize_t raw_write(Sink & snk, void * data, size_t len)
+    {
+        ssize_t err = snk.write(data, len);
+        return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
+    }
+
+    /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
+     * Return 0 on success, negative value on error
+     */
+    int xaes_encrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
+    {
+        int safe_size = *dst_sz;
+        int remaining_size = 0;
+
+        /* allows reusing of ectx for multiple encryption cycles */
+        if (EVP_EncryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare encryption context!\n", getpid());
+            return -1;
+        }
+        if (EVP_EncryptUpdate(&this->ectx, dst_buf, &safe_size, src_buf, src_sz) != 1) {
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could encrypt data!\n", getpid());
+            return -1;
+        }
+        if (EVP_EncryptFinal_ex(&this->ectx, dst_buf + safe_size, &remaining_size) != 1){
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish encryption!\n", getpid());
+            return -1;
+        }
+        *dst_sz = safe_size + remaining_size;
+        return 0;
+    }
+
+    /* Update hash context with new data.
+     * Returns 0 on success, -1 on error
+     */
+    int xmd_update(const void * src_buf, uint32_t src_sz)
+    {
+        if (::EVP_DigestUpdate(&this->hctx, src_buf, src_sz) != 1) {
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
+            return -1;
+        }
+        if (this->file_size < 4096) {
+            size_t remaining_size = 4096 - this->file_size;
+            size_t hashable_size = MIN(remaining_size, src_sz);
+            if (::EVP_DigestUpdate(&this->hctx4k, src_buf, hashable_size) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
+                return -1;
+            }
+        }
+        return 0;
+    }
+};
+
+
+struct dorecompress_ocrypto_filter : dorecompress_encrypt_filter
 {
     CryptoContext & cctx;
     Random & rnd;
@@ -5854,14 +5177,14 @@ struct dorecompress_ocrypto_filter
         this->cctx.get_derived_key(trace_key, base, base_len);
         unsigned char iv[32];
         this->rnd.random(iv, 32);
-        return transfil::encrypt_filter::open(buf, trace_key, this->cctx, iv);
+        return dorecompress_encrypt_filter::open(buf, trace_key, this->cctx, iv);
     }
 };
 
 
 class dorecompress_ocrypto_filename_buf
 {
-    transfil::encrypt_filter encrypt;
+    dorecompress_encrypt_filter encrypt;
     CryptoContext & cctx;
     Random & rnd;
     ofile_buf_out file;
@@ -5954,7 +5277,7 @@ struct dorecompress_CryptoOutMetaSequenceTransport
             this->set_authentifier(authentifier);
         }
 
-        detail::write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, true);
+        dorecompress_write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, true);
     }
 
     void timestamp(timeval now) override {
@@ -6023,6 +5346,229 @@ private:
 
 };
 
+
+using std::begin;
+using std::end;
+
+
+
+class FileToChunk
+{
+    unsigned char stream_buf[65536];
+    InStream stream;
+
+    CompressionInTransportBuilder compression_builder;
+
+    Transport * trans_source;
+    Transport * trans;
+
+    // variables used to read batch of orders "chunks"
+    uint32_t chunk_size;
+    uint16_t chunk_type;
+    uint16_t chunk_count;
+
+    uint16_t nbconsumers;
+
+    RDPChunkedDevice * consumers[10];
+
+public:
+    timeval record_now;
+
+    bool meta_ok;
+
+    uint16_t info_version;
+    uint16_t info_width;
+    uint16_t info_height;
+    uint16_t info_bpp;
+    uint16_t info_number_of_cache;
+    bool     info_use_waiting_list;
+    uint16_t info_cache_0_entries;
+    uint16_t info_cache_0_size;
+    bool     info_cache_0_persistent;
+    uint16_t info_cache_1_entries;
+    uint16_t info_cache_1_size;
+    bool     info_cache_1_persistent;
+    uint16_t info_cache_2_entries;
+    uint16_t info_cache_2_size;
+    bool     info_cache_2_persistent;
+    uint16_t info_cache_3_entries;
+    uint16_t info_cache_3_size;
+    bool     info_cache_3_persistent;
+    uint16_t info_cache_4_entries;
+    uint16_t info_cache_4_size;
+    bool     info_cache_4_persistent;
+    WrmCompressionAlgorithm info_compression_algorithm;
+
+    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    {
+        none,
+        end_of_transport = 1,
+    };
+
+    FileToChunk(Transport * trans, Verbose verbose)
+        : stream(this->stream_buf)
+        , compression_builder(*trans, WrmCompressionAlgorithm::no_compression)
+        , trans_source(trans)
+        , trans(trans)
+        // variables used to read batch of orders "chunks"
+        , chunk_size(0)
+        , chunk_type(0)
+        , chunk_count(0)
+        , nbconsumers(0)
+        , consumers()
+        , meta_ok(false)
+        , info_version(0)
+        , info_width(0)
+        , info_height(0)
+        , info_bpp(0)
+        , info_number_of_cache(0)
+        , info_use_waiting_list(true)
+        , info_cache_0_entries(0)
+        , info_cache_0_size(0)
+        , info_cache_0_persistent(false)
+        , info_cache_1_entries(0)
+        , info_cache_1_size(0)
+        , info_cache_1_persistent(false)
+        , info_cache_2_entries(0)
+        , info_cache_2_size(0)
+        , info_cache_2_persistent(false)
+        , info_cache_3_entries(0)
+        , info_cache_3_size(0)
+        , info_cache_3_persistent(false)
+        , info_cache_4_entries(0)
+        , info_cache_4_size(0)
+        , info_cache_4_persistent(false)
+        , info_compression_algorithm(WrmCompressionAlgorithm::no_compression)
+        , verbose(verbose)
+    {
+        while (this->next_chunk()) {
+            this->interpret_chunk();
+            if (this->meta_ok) {
+                break;
+            }
+        }
+    }
+
+    void add_consumer(RDPChunkedDevice * chunk_device) {
+        REDASSERT(nbconsumers < (sizeof(consumers) / sizeof(consumers[0]) - 1));
+        this->consumers[this->nbconsumers++] = chunk_device;
+    }
+
+    bool next_chunk() {
+        try {
+            {
+                auto const buf_sz = FileToGraphic::HEADER_SIZE;
+                unsigned char buf[buf_sz];
+                auto * p = buf;
+                this->trans->recv(&p, buf_sz);
+                InStream header(buf);
+                this->chunk_type  = header.in_uint16_le();
+                this->chunk_size  = header.in_uint32_le();
+                this->chunk_count = header.in_uint16_le();
+            }
+
+            if (this->chunk_size > 65536) {
+                LOG(LOG_INFO,"chunk_size (%d) > 65536", this->chunk_size);
+                return false;
+            }
+            this->stream = InStream(this->stream_buf, 0);   // empty stream
+            if (this->chunk_size - FileToGraphic::HEADER_SIZE > 0) {
+                auto * p = this->stream_buf;
+                this->trans->recv(&p, this->chunk_size - FileToGraphic::HEADER_SIZE);
+                this->stream = InStream(this->stream_buf, p - this->stream_buf);
+            }
+        }
+        catch (Error const & e) {
+            if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
+                throw;
+            }
+
+            if (this->verbose) {
+                LOG(LOG_INFO, "receive error %u : end of transport", e.id);
+            }
+            // receive error, end of transport
+            return false;
+        }
+
+        return true;
+    }
+
+    void interpret_chunk() {
+        switch (this->chunk_type) {
+        case META_FILE:
+            this->info_version                   = this->stream.in_uint16_le();
+            this->info_width                     = this->stream.in_uint16_le();
+            this->info_height                    = this->stream.in_uint16_le();
+            this->info_bpp                       = this->stream.in_uint16_le();
+            this->info_cache_0_entries           = this->stream.in_uint16_le();
+            this->info_cache_0_size              = this->stream.in_uint16_le();
+            this->info_cache_1_entries           = this->stream.in_uint16_le();
+            this->info_cache_1_size              = this->stream.in_uint16_le();
+            this->info_cache_2_entries           = this->stream.in_uint16_le();
+            this->info_cache_2_size              = this->stream.in_uint16_le();
+
+            if (this->info_version <= 3) {
+                this->info_number_of_cache       = 3;
+                this->info_use_waiting_list      = false;
+
+                this->info_cache_0_persistent    = false;
+                this->info_cache_1_persistent    = false;
+                this->info_cache_2_persistent    = false;
+            }
+            else {
+                this->info_number_of_cache       = this->stream.in_uint8();
+                this->info_use_waiting_list      = (this->stream.in_uint8() ? true : false);
+
+                this->info_cache_0_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_1_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_2_persistent    = (this->stream.in_uint8() ? true : false);
+
+                this->info_cache_3_entries       = this->stream.in_uint16_le();
+                this->info_cache_3_size          = this->stream.in_uint16_le();
+                this->info_cache_3_persistent    = (this->stream.in_uint8() ? true : false);
+
+                this->info_cache_4_entries       = this->stream.in_uint16_le();
+                this->info_cache_4_size          = this->stream.in_uint16_le();
+                this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
+
+                this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
+                REDASSERT(is_valid_enum_value(this->info_compression_algorithm));
+                if (!is_valid_enum_value(this->info_compression_algorithm)) {
+                    this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+                }
+
+                // re-init
+                this->trans = &this->compression_builder.reset(
+                    *this->trans_source, this->info_compression_algorithm
+                );
+            }
+
+            this->stream.rewind();
+
+            if (!this->meta_ok) {
+                this->meta_ok = true;
+            }
+            break;
+        case RESET_CHUNK:
+            this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+
+            this->trans = this->trans_source;
+            break;
+        }
+
+        for (size_t i = 0; i < this->nbconsumers ; i++) {
+            if (this->consumers[i]) {
+                this->consumers[i]->chunk(this->chunk_type, this->chunk_count, this->stream.clone());
+            }
+        }
+    }   // void interpret_chunk()
+
+    void play(bool const & requested_to_stop) {
+        while (!requested_to_stop && this->next_chunk()) {
+            this->interpret_chunk();
+        }
+    }
+};
 
 
 inline
