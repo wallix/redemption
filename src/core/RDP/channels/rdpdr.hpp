@@ -741,11 +741,9 @@ public:
         LOG(LOG_INFO, "     Device Announce:");
         LOG(LOG_INFO, "          * DeviceType       = 0x%08x (4 bytes): %s", this->DeviceType_, get_DeviceType_name(this->DeviceType_));
         LOG(LOG_INFO, "          * DeviceId         = 0x%08x (4 bytes)", this->DeviceId_);
-        std::string DeviceName(reinterpret_cast<char *>(this->PreferredDosName_), 8);
-        LOG(LOG_INFO, "          * DeviceName       = \"%s\" (8 bytes)", DeviceName);
+        LOG(LOG_INFO, "          * DeviceName       = \"%*s\" (8 bytes)", 8, this->PreferredDosName_);
         LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->device_data.sz));
-        std::string DeviceData(reinterpret_cast<const char *>(this->device_data.p), this->device_data.sz);
-        LOG(LOG_INFO, "          * DeviceData       = \"%s\" (%d byte(s))", DeviceData, int(2*this->device_data.sz));
+        LOG(LOG_INFO, "          * DeviceData       = \"%*s\" (%d byte(s))", int(this->device_data.sz), this->device_data.p, int(2*this->device_data.sz));
     }
 };  // DeviceAnnounceHeader
 

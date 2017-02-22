@@ -5413,12 +5413,12 @@ class OutChunkedBufferingTransport : public Transport
     uint8_t buf[SZ];
     OutStream stream;
 
-    static_assert(SZ >= 8, "");
+    static_assert(SZ >= 8 /*send_wrm_chunk*/, "");
 
 public:
     explicit OutChunkedBufferingTransport(Transport & trans)
         : trans(trans)
-        , max(SZ-8)
+        , max(SZ-8 /*send_wrm_chunk*/)
         , stream(buf)
     {
     }
