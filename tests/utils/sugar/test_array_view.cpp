@@ -157,6 +157,18 @@ BOOST_AUTO_TEST_CASE(TestArrayView)
     }
 }
 
+BOOST_AUTO_TEST_CASE(TestSubArray)
+{
+    auto a = cstr_array_view("abcd");
+    BOOST_CHECK_EQUAL_RANGES(a.first(1), cstr_array_view("a"));
+    BOOST_CHECK_EQUAL_RANGES(a.first(3), cstr_array_view("abc"));
+    BOOST_CHECK_EQUAL_RANGES(a.last(1), cstr_array_view("d"));
+    BOOST_CHECK_EQUAL_RANGES(a.last(3), cstr_array_view("bcd"));
+    BOOST_CHECK_EQUAL_RANGES(a.subarray(3), cstr_array_view("d"));
+    BOOST_CHECK_EQUAL_RANGES(a.subarray(1), cstr_array_view("bcd"));
+    BOOST_CHECK_EQUAL_RANGES(a.subarray(1, 2), cstr_array_view("bc"));
+}
+
 template<class T>
 auto check_call(T && a, int) -> decltype(cstr_array_view(a), true)
 {
@@ -170,7 +182,7 @@ bool check_call(T &&, char)
     return false;
 }
 
-BOOST_AUTO_TEST_CASE(TestCStrOnlyWorksForLitterals)
+BOOST_AUTO_TEST_CASE(TestCStrOnlyWorksForLiterals)
 {
     char cstr[5] = {'0', '1', '2', '\0', '5'};
     BOOST_CHECK_EQUAL(check_call(cstr, 1), false);

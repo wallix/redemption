@@ -80,7 +80,7 @@
 #include "utils/png.hpp"
 #include "utils/fdbuf.hpp"
 
-#include "cxx/attributes.hpp"
+#include "cxx/cxx.hpp"
 
 #include "transport/transport.hpp"
 #include "transport/out_file_transport.hpp"
@@ -3403,7 +3403,7 @@ public:
                     struct Pointer cursor(Pointer::POINTER_NULL);
                     cursor.width = 32;
                     cursor.height = 32;
-                    cursor.bpp = 24;
+//                    cursor.bpp = 24;
                     cursor.x = this->stream.in_uint8();
                     cursor.y = this->stream.in_uint8();
                     stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
@@ -3421,7 +3421,7 @@ public:
                     Pointer cursor(Pointer::POINTER_NULL);
                     cursor.width = 32;
                     cursor.height = 32;
-                    cursor.bpp = 24;
+//                    cursor.bpp = 24;
                     cursor.x = pi.x;
                     cursor.y = pi.y;
                     memcpy(cursor.data, pi.data, sizeof(pi.data));
@@ -3446,7 +3446,8 @@ public:
 
                 cursor.width    = this->stream.in_uint8();
                 cursor.height   = this->stream.in_uint8();
-                cursor.bpp      = this->stream.in_uint8();
+//                cursor.bpp      = this->stream.in_uint8();
+                this->stream.in_skip_bytes(1);
 
                 cursor.x = this->stream.in_uint8();
                 cursor.y = this->stream.in_uint8();
@@ -5750,7 +5751,7 @@ public:
 
 protected:
     void send_pointer(int cache_idx, const Pointer & cursor) override {
-        if ((cursor.width != 32) || (cursor.height != 32) || (cursor.bpp != 24)) {
+        if ((cursor.width != 32) || (cursor.height != 32)/* || (cursor.bpp != 24)*/) {
             this->send_pointer2(cache_idx, cursor);
             return;
         }
@@ -5804,7 +5805,7 @@ protected:
 
         payload.out_uint8(cursor.width);
         payload.out_uint8(cursor.height);
-        payload.out_uint8(cursor.bpp);
+        payload.out_uint8(/*cursor.bpp*/24);
 
         payload.out_uint8(cursor.x);
         payload.out_uint8(cursor.y);

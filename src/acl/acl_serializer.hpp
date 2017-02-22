@@ -403,7 +403,7 @@ public:
                 LOG(LOG_INFO, "auth::Bad SIEM log file creation");
             }
             else {
-                std::time_t t = std::time(NULL);
+                std::time_t t = std::time(nullptr);
                 char mbstr[100];
                 if (std::strftime(mbstr, sizeof(mbstr), "%F %T", std::localtime(&t))) {
                     log_file << mbstr;

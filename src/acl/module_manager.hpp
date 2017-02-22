@@ -1347,6 +1347,8 @@ public:
                                                                         (*mod_rdp_params.client_execute_exe_or_file))));
                 mod_rdp_params.use_client_provided_remoteapp       = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
 
+                mod_rdp_params.clean_up_32_bpp_cursor              = this->ini.get<cfg::mod_rdp::clean_up_32_bpp_cursor>();
+
                 try {
                     const char * const name = "RDP Target";
 

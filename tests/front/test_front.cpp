@@ -62,15 +62,6 @@ namespace dump2008_PatBlt {
     #include "fixtures/dump_w2008_PatBlt.hpp"
 }
 
-class FakeAuthentifier : public auth_api {
-public:
-    virtual void set_auth_channel_target(const char *) {}
-    virtual void set_auth_error_message(const char *) {}
-    virtual void report(const char *, const char *) {}
-    virtual void log4(bool, const char *, const char * = nullptr) {}
-    virtual void disconnect_target() {}
-};
-
 
 class MyFront : public Front
 {
@@ -198,7 +189,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-        FakeAuthentifier authentifier;
+        NullAuthentifier authentifier;
         MyFront front( front_trans, gen1, ini , cctx, authentifier, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>().count());
         null_mod no_mod(front);
@@ -420,7 +411,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-        FakeAuthentifier authentifier;
+        NullAuthentifier authentifier;
         MyFront front( front_trans, gen1, ini
                      , cctx, authentifier, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>().count() - 1);
@@ -602,7 +593,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-        FakeAuthentifier authentifier;
+        NullAuthentifier authentifier;
 
         class MyFront : public Front
         {
@@ -657,7 +648,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
                 }
         };
 
-        FakeAuthentifier authentifier;
+        NullAuthentifier authentifier;
 
         MyFront front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
                      , cctx, authentifier, fastpath_support, mem3blt_support

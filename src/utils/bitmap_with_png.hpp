@@ -34,7 +34,7 @@
 #include "utils/bitmap.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/local_fd.hpp"
-#include "cxx/attributes.hpp"
+#include "cxx/cxx.hpp"
 
 #include <png.h>
 

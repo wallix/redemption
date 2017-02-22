@@ -30,9 +30,9 @@
 
 
 // Comment the code block below to generate testing data.
-//#define LOGNULL
+#define LOGNULL
 // Uncomment the code block below to generate testing data.
-#define LOGPRINT
+// #define LOGPRINT
 
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
@@ -42,15 +42,6 @@
 #include "mod/rdp/rdp.hpp"
 
 #include "../front/fake_front.hpp"
-
-class FakeAuthentifier : public auth_api {
-public:
-    virtual void set_auth_channel_target(const char *) {}
-    virtual void set_auth_error_message(const char *) {}
-    virtual void report(const char *, const char *) {}
-    virtual void log4(bool, const char *, const char * = nullptr) {}
-    virtual void disconnect_target() {}
-};
 
 
 BOOST_AUTO_TEST_CASE(TestDecodePacket)
@@ -128,7 +119,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     // To always get the same client random, in tests
     LCGRandom gen(0);
     LCGTime timeobj;
-    FakeAuthentifier authentifier;
+    NullAuthentifier authentifier;
     mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
         gen, timeobj, mod_rdp_params, authentifier);
     mod_api * mod = &mod_;
@@ -222,7 +213,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
     // To always get the same client random, in tests
     LCGRandom gen(0);
     LCGTime timeobj;
-    FakeAuthentifier authentifier;
+    NullAuthentifier authentifier;
     mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
         gen, timeobj, mod_rdp_params, authentifier);
     mod_api * mod = &mod_;
