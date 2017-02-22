@@ -29,7 +29,7 @@
 #include "utils/utf.hpp"
 #include "utils/parse.hpp"
 #include "utils/sugar/make_unique.hpp"
-#include "utils/sugar/bytes_t.hpp"
+#include "utils/sugar/buffer_t.hpp"
 
 #include <memory>
 #include <initializer_list>
@@ -64,8 +64,8 @@ public:
     {
     }
 
-    explicit InStream(const_bytes_array array)
-    : InStream(array.data(), array.size())
+    explicit InStream(const_buffer_t buf)
+    : InStream(buf.data(), buf.size())
     {
     }
 
@@ -356,7 +356,7 @@ public:
 
     // extract a zero terminated UTF16 string from stream
     // of at most length UTF16 chars
-    // return UTF16 string length (number of chars, not bytes) 
+    // return UTF16 string length (number of chars, not bytes)
     // if number returned in same as input length, it means no
     // zero char has been found
     size_t in_utf16_sz(uint16_t utf16[], size_t length)
@@ -372,6 +372,9 @@ public:
     }
 };
 
+
+// TODO: OutStream should be based on some output object (like it is done between InStream and Parse)
+// where output object doesn't care about checking boundaries (OutStream job)
 
 class OutStream
 {
@@ -393,8 +396,8 @@ public:
     {
     }
 
-    explicit OutStream(bytes_array array)
-    : OutStream(array.data(), array.size())
+    explicit OutStream(buffer_t buf)
+    : OutStream(buf.data(), buf.size())
     {
     }
 
@@ -785,14 +788,6 @@ public:
     // Output zero terminated string, non including trailing 0
     void out_string(const char * v) {
         this->out_copy_bytes(v, strlen(v));
-    }
-
-    void set_out_copy_bytes(const uint8_t * v, size_t n, size_t offset) {
-        memcpy(this->get_data()+offset, v, n);
-    }
-
-    void set_out_copy_bytes(const char * v, size_t n, size_t offset) {
-        this->set_out_copy_bytes(reinterpret_cast<uint8_t const*>(v), n, offset);
     }
 
     void out_clear_bytes(size_t n) {

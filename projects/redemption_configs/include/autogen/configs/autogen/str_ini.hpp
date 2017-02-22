@@ -112,7 +112,7 @@
 
 "# Log redirection in a file\n"
 "#_advanced\n"
-"#session_log_redirection = 0\n\n"
+"#session_log_redirection = 1\n\n"
 
 "#_advanced\n"
 "#log_path = \n\n"
@@ -216,6 +216,8 @@
 
 "#show_target_user_in_f12_message = 0\n\n"
 
+"#enable_new_pointer_update = 0\n\n"
+
 "[mod_rdp]\n\n"
 
 "# Specifies the highest compression package support available on the front side\n"
@@ -302,10 +304,19 @@
 "#alternate_shell = \n\n"
 
 "#_hidden\n"
-"#shell_working_directory = \n\n"
+"#shell_arguments = \n\n"
 
 "#_hidden\n"
+"#shell_working_directory = \n\n"
+
+"#_advanced\n"
 "#use_client_provided_alternate_shell = 0\n\n"
+
+"#_advanced\n"
+"#use_client_provided_remoteapp = 0\n\n"
+
+"#_advanced\n"
+"#use_native_remoteapp_capability = 1\n\n"
 
 "#_hidden\n"
 "#enable_session_probe = 0\n\n"
@@ -374,7 +385,7 @@
 "#session_probe_idle_session_limit = 0\n\n"
 
 "#_hidden\n"
-"#session_probe_exe_or_file = CMD\n\n"
+"#session_probe_exe_or_file = ||CMD\n\n"
 
 "#_hidden\n"
 "#session_probe_arguments = /K\n\n"
@@ -670,6 +681,9 @@
 "#secondary_orders = 0\n\n"
 
 "#_advanced\n"
+"#bitmap_update = 0\n\n"
+
+"#_advanced\n"
 "#bitmap = 0\n\n"
 
 "#_advanced\n"
@@ -691,7 +705,7 @@
 "#mod_vnc = 0\n\n"
 
 "#_advanced\n"
-"#mod_int = 0\n\n"
+"#mod_internal = 0\n\n"
 
 "#_advanced\n"
 "#mod_xup = 0\n\n"
@@ -712,16 +726,10 @@
 "#cache = 0\n\n"
 
 "#_advanced\n"
-"#bitmap_update = 0\n\n"
-
-"#_advanced\n"
 "#performance = 0\n\n"
 
 "#_advanced\n"
 "#pass_dialog_box = 0\n\n"
-
-"#_advanced\n"
-"#mod_internal = 0\n\n"
 
 "#_advanced\n"
 "#ocr = 0\n\n"

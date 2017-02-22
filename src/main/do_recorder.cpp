@@ -48,7 +48,6 @@
 
 #include "transport/in_meta_sequence_transport.hpp"
 #include "transport/out_file_transport.hpp"
-#include "transport/out_meta_sequence_transport.hpp"
 #include "transport/transport.hpp"
 
 #include "acl/auth_api.hpp"
@@ -463,10 +462,44 @@ static inline int check_encrypted_or_checksumed(
 
         local_auto_remove auto_remove{full_hash_path_tmp.c_str()};
 
-        if (detail::write_meta_hash(
-            full_hash_path_tmp.c_str(), full_mwrm_filename.c_str(),
-            hash_file_cp, nullptr
-        )) {
+        char const * hash_filename = full_hash_path_tmp.c_str();
+        char const * meta_filename = full_mwrm_filename.c_str();
+
+        char path[1024] = {};
+        char basename[1024] = {};
+        char extension[256] = {};
+        char filename[2048] = {};
+
+        canonical_path(
+            meta_filename,
+            path, sizeof(path),
+            basename, sizeof(basename),
+            extension, sizeof(extension)
+        );
+
+        snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+        if (hash_file_cp.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+            char header[] = "v2\n\n\n";
+            hash_file_cp.write(header, sizeof(header)-1);
+
+            struct stat stat;
+            int err = ::stat(meta_filename, &stat);
+            if (!err) {
+                err = detail::write_meta_file_impl<false>(hash_file_cp, filename, stat, 0, 0, nullptr);
+            }
+            if (!err) {
+                err = hash_file_cp.close(/*hash*/);
+            }
+            if (err) {
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                return 1;
+            }
+        }
+        else {
+            int e = errno;
+            LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+            errno = e;
             return 1;
         }
 
@@ -485,13 +518,6 @@ static inline int check_encrypted_or_checksumed(
     return 0;
 }
 
-enum {
-    USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF
-};
-
-enum {
-    USE_ORIGINAL_COLOR_DEPTH           = 0xFFFFFFFF
-};
 
 inline unsigned get_file_count(
     InMetaSequenceTransport & in_wrm_trans,
@@ -676,125 +702,6 @@ static void show_statistics(FileToGraphic::Statistics const & statistics) {
     << "\ntimestamp_chunk       : " << statistics.timestamp_chunk
     << std::endl;
 }
-
-
-inline
-static int do_recompress(
-    CryptoContext & cctx, Random & rnd, Transport & in_wrm_trans, const timeval begin_record,
-    int wrm_compression_algorithm_, std::string const & output_filename, Inifile & ini, uint32_t verbose
-) {
-    FileToChunk player(&in_wrm_trans, to_verbose_flags(verbose));
-
-/*
-    char outfile_path     [1024] = PNG_PATH "/"   ; // default value, actual one should come from output_filename
-    char outfile_basename [1024] = "redrec_output"; // default value, actual one should come from output_filename
-    char outfile_extension[1024] = ""             ; // extension is ignored for targets anyway
-
-    canonical_path( output_filename.c_str()
-                  , outfile_path
-                  , sizeof(outfile_path)
-                  , outfile_basename
-                  , sizeof(outfile_basename)
-                  , outfile_extension
-                  , sizeof(outfile_extension)
-                  );
-*/
-    std::string outfile_path;
-    std::string outfile_basename;
-    std::string outfile_extension;
-    ParsePath(output_filename.c_str(), outfile_path, outfile_basename, outfile_extension);
-
-    if (verbose) {
-        std::cout << "Output file path: " << outfile_path << outfile_basename << outfile_extension << '\n' << std::endl;
-    }
-
-    if (recursive_create_directory(outfile_path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP, ini.get<cfg::video::capture_groupid>()) != 0) {
-        std::cerr << "Failed to create directory: \"" << outfile_path << "\"" << std::endl;
-    }
-
-//    if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
-//        ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
-//    }
-    ini.set<cfg::video::wrm_compression_algorithm>(
-        (wrm_compression_algorithm_ == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM))
-        ? player.info_compression_algorithm
-        : static_cast<WrmCompressionAlgorithm>(wrm_compression_algorithm_)
-    );
-
-    int return_code = 0;
-    try {
-        auto run = [&](Transport && trans) {
-            {
-                ChunkToFile recorder( &trans
-                                    , player.info_width
-                                    , player.info_height
-                                    , player.info_bpp
-                                    , player.info_cache_0_entries
-                                    , player.info_cache_0_size
-                                    , player.info_cache_1_entries
-                                    , player.info_cache_1_size
-                                    , player.info_cache_2_entries
-                                    , player.info_cache_2_size
-
-                                    , player.info_number_of_cache
-                                    , player.info_use_waiting_list
-
-                                    , player.info_cache_0_persistent
-                                    , player.info_cache_1_persistent
-                                    , player.info_cache_2_persistent
-
-                                    , player.info_cache_3_entries
-                                    , player.info_cache_3_size
-                                    , player.info_cache_3_persistent
-                                    , player.info_cache_4_entries
-                                    , player.info_cache_4_size
-                                    , player.info_cache_4_persistent
-
-                                    , ini.get<cfg::video::wrm_compression_algorithm>());
-
-                player.add_consumer(&recorder);
-
-                player.play(program_requested_to_shutdown);
-            }
-
-            if (program_requested_to_shutdown) {
-                trans.request_full_cleaning();
-            }
-        };
-
-        if (ini.get<cfg::globals::trace_type>() == TraceType::cryptofile) {
-            run(CryptoOutMetaSequenceTransport(
-                cctx,
-                rnd,
-                outfile_path.c_str(),
-                ini.get<cfg::video::hash_path>().c_str(),
-                outfile_basename.c_str(),
-                begin_record,
-                player.info_width,
-                player.info_height,
-                ini.get<cfg::video::capture_groupid>()
-            ));
-        }
-        else {
-            run(OutMetaSequenceTransport(
-                outfile_path.c_str(),
-                ini.get<cfg::video::hash_path>().c_str(),
-                outfile_basename.c_str(),
-                begin_record,
-                player.info_width,
-                player.info_height,
-                ini.get<cfg::video::capture_groupid>()
-            ));
-        }
-    }
-    catch (...) {
-        return_code = -1;
-    }
-
-    return return_code;
-}   // do_recompress
-
-
 
 
 inline int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted)
@@ -1003,13 +910,12 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             | (ini.get<cfg::debug::primary_orders>() ?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
                             | (ini.get<cfg::debug::secondary_orders>() ?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
                             | (ini.get<cfg::debug::bitmap_update>() ?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
-                            
+
                         WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
                         std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
                         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
                         TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
-                        WrmParams wrm_params = {};
                         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
                         const char * record_path = record_tmp_path;
 
@@ -1050,14 +956,73 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
                         const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
 
-                        Capture capture( capture_wrm, wrm_verbose, wrm_compression_algorithm, wrm_frame_interval, wrm_break_interval, wrm_trace_type, wrm_params
+                        char path[1024];
+                        char basename[1024];
+                        char extension[128];
+                        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
+                        strcpy(basename, movie_path);
+                        strcpy(extension, "");          // extension is currently ignored
+
+                        if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
+                        ) {
+                            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
+                            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
+                        }
+
+                        LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
+
+                        // PngParams
+                        png_params.authentifier = nullptr;
+                        png_params.record_tmp_path = record_tmp_path;
+                        png_params.basename = basename;
+                        png_params.groupid = groupid;
+
+
+                        MetaParams meta_params;
+                        KbdLogParams kbdlog_params;
+                        PatternCheckerParams patter_checker_params;
+                        SequencedVideoParams sequenced_video_params;
+                        FullVideoParams full_video_params;
+
+                        WrmParams wrm_params(
+                            wrm_color_depth,
+                            wrm_trace_type,
+                            cctx,
+                            rnd,
+                            record_path,
+                            hash_path,
+                            basename,
+                            groupid,
+                            wrm_frame_interval,
+                            wrm_break_interval,
+                            wrm_compression_algorithm,
+                            int(wrm_verbose)
+                        );
+
+const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
+const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
+int debug_capture = ini.get<cfg::debug::capture>();
+bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
+bool meta_enable_session_log = false;
+const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
+bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
+bool rt_display = ini.get<cfg::video::rt_display>();
+bool disable_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm);
+bool session_log_enabled = false;
+bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
+     != ::KeyboardInputMaskingLevel::fully_masked;
+bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
+
+                        Capture capture( 
+                                  capture_wrm, wrm_params
                                 , capture_png, png_params
-                                , capture_pattern_checker
+                                , capture_pattern_checker, patter_checker_params
                                 , capture_ocr, ocr_params
-                                , capture_flv
-                                , capture_flv_full
-                                , capture_meta
-                                , capture_kbd
+                                , capture_flv, sequenced_video_params
+                                , capture_flv_full, full_video_params
+                                , capture_meta, meta_params
+                                , capture_kbd, kbdlog_params
+                                , basename
                                 , ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                                 , player.screen_rect.cx
                                 , player.screen_rect.cy
@@ -1066,15 +1031,23 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , record_tmp_path
                                 , record_path
                                 , groupid
-                                , hash_path
-                                , movie_path
                                 , flv_params
                                 , no_timestamp
                                 , nullptr
-                                , ini
-                                , cctx
-                                , rnd
-                                , &update_progress_data);
+                                , &update_progress_data
+                                , pattern_kill
+                                , pattern_notify
+                                , debug_capture
+                                , flv_capture_chunk
+                                , meta_enable_session_log
+                                , flv_break_interval
+                                , syslog_keyboard_log
+                                , rt_display
+                                , disable_keyboard_log
+                                , session_log_enabled
+                                , keyboard_fully_masked
+                                , meta_keyboard_log
+                                );
 
                         player.add_consumer(&capture, &capture, &capture, &capture, &capture);
 
@@ -1129,6 +1102,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                 rnd,
                 in_wrm_trans,
                 begin_record,
+                program_requested_to_shutdown,
                 wrm_compression_algorithm,
                 output_filename,
                 ini,
@@ -1184,7 +1158,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false };
+    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , nullptr, nullptr, nullptr, 0};
     FlvParams flv_params = {};
 
     // flv output options
@@ -1524,14 +1498,14 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 }
 
 extern "C" {
-    __attribute__((__visibility__("default")))
+    REDEMPTION_LIB_EXPORT
     int recmemcpy(char * dest, char * source, int len)
     {
         ::memcpy(dest, source, static_cast<size_t>(len));
         return 0;
     }
 
-    __attribute__((__visibility__("default")))
+    REDEMPTION_LIB_EXPORT
     int do_main(int argc, char const ** argv,
             get_hmac_key_prototype * hmac_fn,
             get_trace_key_prototype * trace_fn)

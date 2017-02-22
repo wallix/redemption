@@ -26,6 +26,7 @@ enum {
     META_FILE           = 1006,
     TIMESTAMP           = 1008,
     POINTER             = 1009,
+    POINTER2            = 1010,
     LAST_IMAGE_CHUNK    = 0x1000,   // 4096
     PARTIAL_IMAGE_CHUNK = 0x1001,   // 4097
     SAVE_STATE          = 0x1002,   // 4098

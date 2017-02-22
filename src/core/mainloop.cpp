@@ -93,6 +93,7 @@ void init_signals(void)
 
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
     sa.sa_handler = SIG_IGN;
     sigaction(SIGSEGV, &sa, nullptr);
 
@@ -248,6 +249,7 @@ void redemption_main_loop(Inifile & ini, CryptoContext & cctx, Random & rnd, uns
     uint32_t s_addr = inet_addr(ini.get<cfg::globals::listen_address>().c_str());
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+    REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wuseless-cast")
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }
     REDEMPTION_DIAGNOSTIC_POP
     int port = ini.get<cfg::globals::port>();

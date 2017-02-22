@@ -168,7 +168,7 @@ public:
 
     void remove_mod() override {}
 
-    void new_mod(int target_module, time_t now, auth_api *) override {
+    void new_mod(int target_module, time_t now, auth_api &) override {
         LOG(LOG_INFO, "new mod %d at time: %d\n", target_module, static_cast<int>(now));
         switch (target_module) {
         case MODULE_VNC:
@@ -182,7 +182,7 @@ public:
     }
 
     void invoke_close_box(const char * auth_error_message,
-                          BackEvent_t & signal, time_t now) override {
+                          BackEvent_t & signal, time_t now, auth_api & authentifier) override {
         LOG(LOG_INFO, "----------> ACL invoke_close_box <--------");
         this->last_module = true;
         if (auth_error_message) {
@@ -193,7 +193,7 @@ public:
         }
         this->remove_mod();
         if (this->ini.get<cfg::globals::enable_close_box>()) {
-            this->new_mod(MODULE_INTERNAL_CLOSE, now, nullptr);
+            this->new_mod(MODULE_INTERNAL_CLOSE, now, authentifier);
             signal = BACK_EVENT_NONE;
         }
         else {
@@ -387,7 +387,21 @@ private:
                 this->color = color_encode(color, this->mm.front.client_info.bpp);
                 this->background_color = color_encode(background_color, this->mm.front.client_info.bpp);
             }
-            this->clip = Rect(this->mm.front.client_info.width < w ? 0 : (this->mm.front.client_info.width - w) / 2, 0, w, h);
+
+            if (this->mm.front.client_info.remote_program &&
+                (this->mm.winapi == static_cast<windowing_api*>(&this->mm.client_execute))) {
+
+                Rect current_work_area_rect = this->mm.client_execute.get_current_work_area_rect();
+
+                this->clip = Rect(
+                    current_work_area_rect.x +
+                        (current_work_area_rect.cx < w ? 0 : (current_work_area_rect.cx - w) / 2),
+                    0, w, h);
+            }
+            else {
+                this->clip = Rect(this->mm.front.client_info.width < w ? 0 : (this->mm.front.client_info.width - w) / 2, 0, w, h);
+            }
+
             this->set_protected_rect(this->clip);
 
             if (this->mm.winapi) {
@@ -596,11 +610,6 @@ private:
         {
             return this->mm.internal_mod->get_dim();
         }
-
-        bool is_content_laid_out() override
-        {
-            return this->mm.internal_mod->is_content_laid_out();
-        }
     };
 
 public:
@@ -775,7 +784,7 @@ private:
     }
 
 public:
-    void new_mod(int target_module, time_t now, auth_api * acl) override {
+    void new_mod(int target_module, time_t now, auth_api & authentifier) override {
         LOG(LOG_INFO, "----------> ACL new_mod <--------");
         LOG(LOG_INFO, "target_module=%s(%d)", get_module_name(target_module), target_module);
         this->connected = false;
@@ -1112,9 +1121,7 @@ public:
                 in_addr s4_sin_addr;
                 int status = resolve_ipv4_address(ip, s4_sin_addr);
                 if (status){
-                    if (acl) {
-                        acl->log4(false, "CONNECTION_FAILED");
-                    }
+                    authentifier.log4(false, "CONNECTION_FAILED");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     // TODO: actually this is DNS Failure or invalid address
@@ -1126,9 +1133,7 @@ public:
                 int client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 4, 1000);
 
                 if (client_sck == -1){
-                    if (acl) {
-                        acl->log4(false, "CONNECTION_FAILED");
-                    }
+                    authentifier.log4(false, "CONNECTION_FAILED");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
@@ -1150,6 +1155,7 @@ public:
                     this->ini.get<cfg::context::opt_width>(),
                     this->ini.get<cfg::context::opt_height>(),
                     this->ini.get<cfg::context::opt_bpp>()
+                    // TODO: shouldn't alls mods have access to sesman authentifier ?
                 ));
 
                 this->ini.get_ref<cfg::context::auth_error_message>().clear();
@@ -1181,9 +1187,7 @@ public:
                 in_addr s4_sin_addr;
                 int status = resolve_ipv4_address(ip, s4_sin_addr);
                 if (status){
-                    if (acl) {
-                        acl->log4(false, "CONNECTION_FAILED");
-                    }
+                    authentifier.log4(false, "CONNECTION_FAILED");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     // TODO: actually this is DNS Failure or invalid address
@@ -1195,9 +1199,7 @@ public:
                 int client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
 
                 if (client_sck == -1) {
-                    if (acl) {
-                        acl->log4(false, "CONNECTION_FAILED");
-                    }
+                    authentifier.log4(false, "CONNECTION_FAILED");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
@@ -1274,7 +1276,6 @@ public:
                 mod_rdp_params.disable_clipboard_log_wrm           = bool(this->ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm);
                 mod_rdp_params.disable_file_system_log_syslog      = bool(this->ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::syslog);
                 mod_rdp_params.disable_file_system_log_wrm         = bool(this->ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm);
-                mod_rdp_params.acl                                 = acl;
                 mod_rdp_params.outbound_connection_monitoring_rules=
                     this->ini.get<cfg::context::outbound_connection_monitoring_rules>().c_str();
                 mod_rdp_params.process_monitoring_rules            =
@@ -1282,7 +1283,8 @@ public:
                 mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
                 mod_rdp_params.auth_channel                        = this->ini.get<cfg::mod_rdp::auth_channel>();
                 mod_rdp_params.alternate_shell                     = this->ini.get<cfg::mod_rdp::alternate_shell>().c_str();
-                mod_rdp_params.working_dir                         = this->ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
+                mod_rdp_params.shell_arguments                     = this->ini.get<cfg::mod_rdp::shell_arguments>().c_str();
+                mod_rdp_params.shell_working_dir                   = this->ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
                 mod_rdp_params.use_client_provided_alternate_shell = this->ini.get<cfg::mod_rdp::use_client_provided_alternate_shell>();
                 mod_rdp_params.target_application_account          = this->ini.get<cfg::globals::target_application_account>().c_str();
                 mod_rdp_params.target_application_password         = this->ini.get<cfg::globals::target_application_password>().c_str();
@@ -1330,14 +1332,20 @@ public:
                                                                       ((this->ini.get<cfg::video::capture_flags>() &
                                                                         (CaptureFlags::wrm | CaptureFlags::ocr)) !=
                                                                        CaptureFlags::none));
+                mod_rdp_params.client_execute                      = &this->client_execute;
                 mod_rdp_params.client_execute_flags                = this->client_execute.Flags();
                 mod_rdp_params.client_execute_exe_or_file          = this->client_execute.ExeOrFile();
                 mod_rdp_params.client_execute_working_dir          = this->client_execute.WorkingDir();
                 mod_rdp_params.client_execute_arguments            = this->client_execute.Arguments();
 
                 mod_rdp_params.remote_program                      = (client_info.remote_program &&
-                                                                      (mod_rdp_params.target_application &&
-                                                                       (*mod_rdp_params.target_application)));
+                                                                      this->ini.get<cfg::mod_rdp::use_native_remoteapp_capability>() &&
+                                                                      ((mod_rdp_params.target_application &&
+                                                                        (*mod_rdp_params.target_application)) ||
+                                                                       (this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>() &&
+                                                                        mod_rdp_params.client_execute_exe_or_file &&
+                                                                        (*mod_rdp_params.client_execute_exe_or_file))));
+                mod_rdp_params.use_client_provided_remoteapp       = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
 
                 try {
                     const char * const name = "RDP Target";
@@ -1350,8 +1358,7 @@ public:
                             ));
 
                     if (this->front.client_info.remote_program &&
-                        (!mod_rdp_params.target_application ||
-                         !(*mod_rdp_params.target_application))) {
+                        !mod_rdp_params.remote_program) {
                         client_info.width  = adjusted_client_execute_rect.cx / 4 * 4;
                         client_info.height = adjusted_client_execute_rect.cy;
 
@@ -1371,7 +1378,8 @@ public:
                                 ini.get_ref<cfg::mod_rdp::redir_info>(),
                                 this->gen,
                                 this->timeobj,
-                                mod_rdp_params
+                                mod_rdp_params,
+                                authentifier
                             );
 
                     windowing_api* winapi = new_mod->get_windowing_api();
@@ -1379,9 +1387,14 @@ public:
                     std::unique_ptr<mod_api> managed_mod(new_mod);
 
                     if (this->front.client_info.remote_program &&
-                        (!mod_rdp_params.target_application ||
-                         !(*mod_rdp_params.target_application))) {
+                        !mod_rdp_params.remote_program) {
                         LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
+
+                        std::string target_info = this->ini.get<cfg::context::target_str>().c_str();
+                        target_info += ":";
+                        target_info += this->ini.get<cfg::globals::primary_user_id>().c_str();
+
+                        this->client_execute.set_target_info(target_info.c_str());
 
                         this->set_mod(
                                 new RailModuleHostMod(
@@ -1404,9 +1417,7 @@ public:
                     }
                 }
                 catch (...) {
-                    if (acl) {
-                        acl->log4(false, "SESSION_CREATION_FAILED");
-                    }
+                    authentifier.log4(false, "SESSION_CREATION_FAILED");
 
                     throw;
                 }
@@ -1434,9 +1445,7 @@ public:
                 in_addr s4_sin_addr;
                 int status = resolve_ipv4_address(ip, s4_sin_addr);
                 if (status){
-                    if (acl) {
-                        acl->log4(false, "CONNECTION_FAILED");
-                    }
+                    authentifier.log4(false, "CONNECTION_FAILED");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     // TODO: actually this is DNS Failure or invalid address
@@ -1448,9 +1457,7 @@ public:
                 int client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
 
                 if (client_sck == -1) {
-                    if (acl) {
-                        acl->log4(false, "CONNECTION_FAILED");
-                    }
+                    authentifier.log4(false, "CONNECTION_FAILED");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
@@ -1490,7 +1497,7 @@ public:
                                         ? mod_vnc::ClipboardEncodingType::UTF8
                                         : mod_vnc::ClipboardEncodingType::Latin1,
                                     this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
-                                    acl,
+                                    authentifier,
                                     this->ini.get<cfg::debug::mod_vnc>()
                                 )
                         );
@@ -1504,6 +1511,12 @@ public:
                                     this->front.client_info.height,
                                     this->front.client_info.cs_monitor
                                 ));
+
+                        std::string target_info = this->ini.get<cfg::context::target_str>().c_str();
+                        target_info += ":";
+                        target_info += this->ini.get<cfg::globals::primary_user_id>().c_str();
+
+                        this->client_execute.set_target_info(target_info.c_str());
 
                         this->set_mod(new RailModuleHostMod(
                                 this->ini,
@@ -1522,9 +1535,7 @@ public:
                     }
                 }
                 catch (...) {
-                    if (acl) {
-                        acl->log4(false, "SESSION_CREATION_FAILED");
-                    }
+                    authentifier.log4(false, "SESSION_CREATION_FAILED");
 
                     throw;
                 }

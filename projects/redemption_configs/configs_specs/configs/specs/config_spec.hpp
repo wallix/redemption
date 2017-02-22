@@ -135,7 +135,7 @@ void config_spec_definition(Writer && W)
     W.section("session_log", [&]
     {
         W.member(V, type_<bool>(), "enable_session_log", set(true));
-        W.member(A, type_<bool>(), "session_log_redirection", desc{"Log redirection in a file"}, set(false), w);
+        W.member(A, type_<bool>(), "session_log_redirection", desc{"Log redirection in a file"}, set(true), w);
         W.member(A, type_<std::string>(), "log_path", sesman::name{"session_log_path"}, r);
         W.sep();
         W.member(A, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", set(KeyboardInputMaskingLevel::fully_masked));
@@ -190,6 +190,8 @@ void config_spec_definition(Writer && W)
         });
         W.sep();
         W.member(V, type_<bool>(), "show_target_user_in_f12_message", set(false));
+        W.sep();
+        W.member(V, type_<bool>(), "enable_new_pointer_update", set(false));
     });
 
     W.section("mod_rdp", [&]
@@ -238,9 +240,13 @@ void config_spec_definition(Writer && W)
         W.member(V, type_<types::fixed_string<7>>(), "auth_channel", set("*"), desc{"Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel."});
         W.sep();
         W.member(H, type_<std::string>(), "alternate_shell", r);
+        W.member(H, type_<std::string>(), "shell_arguments", r);
         W.member(H, type_<std::string>(), "shell_working_directory", r);
         W.sep();
-        W.member(H, type_<bool>(), "use_client_provided_alternate_shell", set(false), r);
+        W.member(A, type_<bool>(), "use_client_provided_alternate_shell", set(false), r);
+        W.member(A, type_<bool>(), "use_client_provided_remoteapp", set(false), r);
+        W.sep();
+        W.member(A, type_<bool>(), "use_native_remoteapp_capability", set(true), r);
         W.sep();
         W.member(H, type_<bool>(), "enable_session_probe", sesman::name{"session_probe"}, set(false), r);
         W.member(H, type_<bool>(), "session_probe_use_smart_launcher", desc{
@@ -279,7 +285,7 @@ void config_spec_definition(Writer && W)
             "0 to disable timeout."
         }, set(0), r);
 
-        W.member(H, type_<types::fixed_string<511>>(), "session_probe_exe_or_file", set("CMD"));
+        W.member(H, type_<types::fixed_string<511>>(), "session_probe_exe_or_file", set("||CMD"));
         W.member(H, type_<types::fixed_string<511>>(), "session_probe_arguments", set("/K"));
         W.sep();
 
@@ -415,26 +421,29 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<types::u32>(), "mcs");
         W.member(A, type_<types::u32>(), "sec");
         W.member(A, type_<types::u32>(), "rdp");
+
         W.member(A, type_<types::u32>(), "primary_orders");
         W.member(A, type_<types::u32>(), "secondary_orders");
+        W.member(A, type_<types::u32>(), "bitmap_update");
+
         W.member(A, type_<types::u32>(), "bitmap");
         W.member(A, type_<types::u32>(), "capture");
         W.member(A, type_<types::u32>(), "auth");
         W.member(A, type_<types::u32>(), "session");
         W.member(A, type_<types::u32>(), "front");
+
         W.member(A, type_<types::u32>(), "mod_rdp");
         W.member(A, type_<types::u32>(), "mod_vnc");
-        W.member(A, type_<types::u32>(), "mod_int");
+        W.member(A, type_<types::u32>(), "mod_internal");
         W.member(A, type_<types::u32>(), "mod_xup");
+
         W.member(A, type_<types::u32>(), "widget");
         W.member(A, type_<types::u32>(), "input");
         W.member(A, type_<types::u32>(), "password");
         W.member(A, type_<types::u32>(), "compression");
         W.member(A, type_<types::u32>(), "cache");
-        W.member(A, type_<types::u32>(), "bitmap_update");
         W.member(A, type_<types::u32>(), "performance");
         W.member(A, type_<types::u32>(), "pass_dialog_box");
-        W.member(A, type_<types::u32>(), "mod_internal");
         W.member(A, type_<types::u32>(), "ocr");
         W.member(A, type_<types::u32>(), "ffmpeg");
         W.sep();
@@ -479,6 +488,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(type_<std::string>(), "target_password", rw);
         W.member(type_<std::string>(), "target_host", rw);
+        W.member(type_<std::string>(), "target_str", r);
         W.member(type_<std::string>(), "target_service", r);
         W.member(type_<unsigned>(), "target_port", set(3389), rw);
         W.member(type_<std::string>(), "target_protocol", sesman::name{"proto_dest"}, set("RDP"), r);

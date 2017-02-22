@@ -45,7 +45,7 @@ public:
     public:
         virtual ~CB() = default;
 
-        virtual void operator()(time_t now, gdi::GraphicApi& drawable) = 0;
+        virtual void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) = 0;
     };
 
 private:
@@ -66,7 +66,7 @@ public:
 
     void operator()(time_t now, gdi::GraphicApi& drawable) {
         if (this->cb_) {
-            (*this->cb_)(now, drawable);
+            (*this->cb_)(now, this->event_, drawable);
         }
     }
 
@@ -125,8 +125,6 @@ public:
     virtual void display_osd_message(std::string const &) {}
 
     virtual void move_size_widget(int16_t/* left*/, int16_t/* top*/, uint16_t/* width*/, uint16_t/* height*/) {}
-
-    virtual bool is_content_laid_out() { return true; }
 
     virtual bool disable_input_event_and_graphics_update(
             bool disable_input_event, bool disable_graphics_update) {

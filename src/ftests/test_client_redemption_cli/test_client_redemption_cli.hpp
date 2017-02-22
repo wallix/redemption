@@ -72,47 +72,12 @@
 #include "core/RDP/bitmapupdate.hpp"
 #include "keyboard/keymap2.hpp"
 #include "core/client_info.hpp"
+#include "utils/word_identification.hpp"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #pragma GCC diagnostic pop
 
-
-struct ModRDPParamsConfig
-{
-    bool * param;
-    const bool default_value;
-    const std::string cmd;
-    const std::string descrpt;
-    const std::string name;
-
-    ModRDPParamsConfig( bool * param
-                      , bool default_value
-                      , std::string cmd
-                      , std::string descrpt
-                      , std::string name
-                      )
-    : param(param)
-    , default_value(default_value)
-    , cmd(cmd)
-    , descrpt(descrpt)
-    , name(name)
-    {
-        *param = default_value;
-    }
-
-    ModRDPParamsConfig( bool * param
-                      , std::string cmd
-                      , std::string descrpt
-                      , std::string name
-                      )
-    : param(param)
-    , default_value(false)
-    , cmd(cmd)
-    , descrpt(descrpt)
-    , name(name)
-    {}
-};
 
 
 
@@ -275,13 +240,12 @@ public:
     //      CONSTRUCTOR
     //------------------------
 
-    TestClientCLI(ClientInfo const & info, uint32_t verbose)
+    TestClientCLI(ClientInfo const & info, auth_api & authentifier, uint32_t verbose)
     : FrontAPI(false, false)
     , _verbose(verbose)
-    , _clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [](){
-        ClipboardVirtualChannel::Params params;
+    , _clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [](auth_api & authentifier){
+        ClipboardVirtualChannel::Params params(authentifier);
 
-        params.authentifier = nullptr;
         params.exchanged_data_limit = ~decltype(params.exchanged_data_limit){};
         params.verbose = to_verbose_flags(0xfffffff);
 
@@ -293,7 +257,7 @@ public:
         params.dont_log_data_into_wrm = true;
 
         return params;
-    }())
+    }(authentifier))
     , mod_bpp(info.bpp)
     , mod_palette(BGRPalette::classic_332())
     , _info(info)
@@ -353,7 +317,7 @@ public:
         return this->_running;
     }
 
-    virtual bool can_be_start_capture(auth_api *) override { return true; }
+    virtual bool can_be_start_capture() override { return true; }
     virtual bool must_be_stop_capture() override { return true; }
     virtual void begin_update() override {}
     virtual void end_update() override {}
@@ -1202,14 +1166,14 @@ public:
         this->setAction(action);
     }
 
-    void setKey_press(TestClientCLI * front
+    void setKey_press( TestClientCLI * front
                      , uint32_t scanCode
                      , uint32_t flag) {
         EventConfig * action = new KeyPressed(front, scanCode, flag);
         this->setAction(action);
     }
 
-    void setKey_release(TestClientCLI * front
+    void setKey_release( TestClientCLI * front
                        , uint32_t scanCode
                        , uint32_t flag) {
         EventConfig * action = new KeyReleased(front, scanCode, flag);
@@ -1225,9 +1189,9 @@ public:
         this->setAction(action);
     }
 
-    void setKey(TestClientCLI * front
-                , uint32_t scanCode
-                , uint32_t flag) {
+    void setKey( TestClientCLI * front
+               , uint32_t scanCode
+               , uint32_t flag) {
         this->setKey_press(front, scanCode, flag);
         this->setKey_release(front, scanCode, flag);
     }

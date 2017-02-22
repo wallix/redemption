@@ -57,7 +57,7 @@ alias install :
     install-etc-ppocr
     install-share
 ;
-alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient rdpheadless rdpinichecker ;
+alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient vncclient rdpheadless rdpinichecker ;
 alias libs    : libredrec ;
 
 alias ocr_tools : display_learning extract_text ppocr_extract_text ;
@@ -178,6 +178,32 @@ exe rdpproxy
         $(EXE_DEPENDENCIES)
     ;
 
+exe vnc_client_cli
+    :
+        $(REDEMPTION_SRC_PATH)/main/vnc_client.cpp
+        bitmap
+        program_options
+
+        d3des
+
+        openssl
+        crypto
+        z
+        dl
+        png
+
+#        snappy
+##        lzma
+
+#        krb5
+#        gssglue
+
+        rt
+    :
+#         <link>static
+        $(EXE_DEPENDENCIES)
+    ;
+
 lib libredrec
     :
         do_recorder
@@ -269,6 +295,40 @@ exe rdpclient
     :
         $(EXE_DEPENDENCIES)
     ;
+
+exe vncclient
+    : $(REDEMPTION_SRC_PATH)/main/vnc_client.cpp
+        program_options
+        bitmap
+        openssl
+        d3des
+        crypto
+        png
+        z
+        dl
+
+        ## @{
+        ocr
+        ppocr_static
+        #ppocr
+
+        ffmpeg
+        ## @}
+
+
+        ocr
+        ppocr
+
+
+
+        snappy
+        krb5
+        gssglue
+    :
+        $(EXE_DEPENDENCIES)
+    ;
+
+
 
 exe rdpheadless
     : $(REDEMPTION_SRC_PATH)/ftests/test_client_redemption_cli/test_client_redemption_cli.cpp
@@ -430,9 +490,12 @@ exe tls_test_server
 # ===================
 # bjam coverage test_utf.coverage
 
+test-canonical redemptionio/redemptionio.hpp ;
+
+
 ## Acl tests
 ## @{
-test-canonical acl/acl_serializer.hpp ;
+test-canonical acl/acl_serializer.hpp : <library>png ;
 test-canonical acl/auth_api.hpp ;
 test-canonical acl/authentifier.hpp : <library>crypto <library>png ;
 test-canonical acl/module_manager.hpp : <library>crypto <library>png ;
@@ -454,10 +517,11 @@ test-canonical capture/ocr/locale/latin_to_cyrillic.hpp : <library>ocr ;
 ## @{
 test-canonical capture/RDPChunkedDevice.hpp ;
 test-canonical capture/capture.hpp : <library>bitmap <library>png <library>crypto <library>dl <library>z <library>snappy <library>ppocr_test <library>ocr <library>ffmpeg ;
+test-canonical capture/video_capture.hpp : <library>bitmap <library>png <library>dl <library>ffmpeg ;
 test-canonical capture/transparentchunk.hpp ;
 test-canonical capture/transparentplayer.hpp ;
 test-canonical capture/transparentrecorder.hpp ;
-test-canonical capture/utils/match_finder.hpp : <covflag>nocover ;
+test-canonical capture/utils/match_finder.hpp : ;
 test-canonical capture/wrm_label.hpp ;
 ## @}
 
@@ -467,6 +531,7 @@ test-canonical capture/wrm_label.hpp ;
 test-canonical utils/sugar/algostring.hpp ;
 test-canonical utils/sugar/array_view.hpp ;
 test-canonical utils/sugar/bytes_t.hpp ;
+test-canonical utils/sugar/buffer_t.hpp ;
 test-canonical utils/sugar/cast.hpp ;
 test-canonical utils/sugar/exchange.hpp ;
 test-canonical utils/sugar/finally.hpp ;
@@ -525,9 +590,8 @@ test-canonical core/RDP/capabilities/window.hpp ;
 test-canonical transport/count_transport.hpp ;
 test-canonical transport/gzip_compression_transport.hpp : <library>z ;
 test-canonical transport/in_file_transport.hpp ;
-test-canonical transport/in_meta_sequence_transport.hpp : <library>crypto <library>snappy <library>dl <library>z ;
+test-canonical transport/in_meta_sequence_transport.hpp : <library>crypto <library>png <library>snappy <library>dl <library>z ;
 test-canonical transport/out_file_transport.hpp ;
-test-canonical transport/out_meta_sequence_transport.hpp : <library>crypto <library>snappy <library>dl <library>z ;
 test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
 test-canonical transport/socket_transport.hpp : <library>openssl <library>crypto <library>dl ;
 test-canonical transport/test_transport.hpp ;
@@ -570,7 +634,7 @@ test-canonical utils/netutils.hpp ;
 test-canonical utils/outbound_connection_monitor_rules.hpp ;
 test-canonical utils/parse.hpp ;
 test-canonical utils/parse_ip_conntrack.hpp ;
-test-canonical utils/parser.hpp ;
+#test-canonical utils/parser.hpp ;
 test-canonical utils/pattutils.hpp ;
 test-canonical utils/png.hpp : <library>png ;
 test-canonical utils/rdtsc.hpp ;
@@ -587,7 +651,6 @@ test-canonical utils/urandom_read.hpp ;
 test-canonical utils/utf.hpp ;
 test-canonical utils/virtual_channel_data_sender.hpp ;
 test-canonical utils/winpr/pattern.hpp ;
-test-run test_strings : test_strings.cpp : : <covflag>nocover ;
 ## @}
 
 
@@ -813,7 +876,7 @@ test-canonical mod/null/null.hpp ;
 test-canonical mod/rdp/rdp_log.hpp ;
 test-canonical mod/rdp/rdp_orders.hpp ;
 test-canonical mod/rdp/rdp_params.hpp ;
-test-canonical mod/vnc/vnc.hpp : <library>png ;
+test-canonical mod/vnc/vnc.hpp : <library>png <library>d3des ;
 test-canonical mod/xup/xup.hpp ;
 test-canonical mod/rdp/rdp.hpp : <library>bitmap <library>krb5 <library>gssglue <library>png <library>d3des <library>z <library>dl <library>crypto ;
 ## @}
@@ -911,6 +974,23 @@ test-run test_vnc_client_simple
       <library>krb5
       <library>gssglue
       <library>png
+      <library>crypto
+      <library>d3des
+      <library>dl
+      <covflag>nocover
+    ;
+## @}
+
+
+
+test-run cli_vnc_connection
+    : client_mods/cli_vnc_connection.cpp
+    :
+    : <library>bitmap
+      <library>krb5
+      <library>gssglue
+      <library>png
+      <library>openssl
       <library>crypto
       <library>d3des
       <library>dl

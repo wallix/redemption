@@ -32,7 +32,6 @@
 // Uncomment the code block below to generate testing data.
 //#define LOGPRINT
 
-
 #undef DEFAULT_FONT_NAME
 #define DEFAULT_FONT_NAME "sans-10.fv1"
 
@@ -114,7 +113,8 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     CryptoContext cctx;
     const bool fastpath_support = true;
     const bool mem3blt_support  = false;
-    Front front( front_trans, gen, ini, cctx, fastpath_support, mem3blt_support, now);
+    NullAuthentifier authentifier;
+    Front front( front_trans, gen, ini, cctx, authentifier, fastpath_support, mem3blt_support, now);
     null_mod no_mod(front);
 
     while (front.up_and_running == 0) {

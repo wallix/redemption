@@ -38,6 +38,7 @@
 
 #include "../../../front/fake_front.hpp"
 
+
 class TestToClientSender : public VirtualChannelDataSender {
     Transport& transport;
 
@@ -109,9 +110,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
 
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params;
+    NullAuthentifier authentifier;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
 
-    file_system_virtual_channel_params.authentifier                 = nullptr;
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
 
@@ -221,9 +222,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
 
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params;
+    NullAuthentifier authentifier;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
 
-    file_system_virtual_channel_params.authentifier                 = nullptr;
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
 
@@ -333,9 +334,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
 
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params;
+    NullAuthentifier authentifier;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
 
-    file_system_virtual_channel_params.authentifier                 = nullptr;
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
 
@@ -445,9 +446,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
 
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params;
+    NullAuthentifier authentifier;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
 
-    file_system_virtual_channel_params.authentifier                 = nullptr;
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
 
@@ -557,9 +558,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
 
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params;
+    NullAuthentifier authentifier;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
 
-    file_system_virtual_channel_params.authentifier                 = nullptr;
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
 
@@ -669,9 +670,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
 
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params;
+    NullAuthentifier authentifier;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
 
-    file_system_virtual_channel_params.authentifier                 = nullptr;
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
 
@@ -783,9 +784,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
 
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params;
+    NullAuthentifier authentifier;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
 
-    file_system_virtual_channel_params.authentifier                 = nullptr;
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
 

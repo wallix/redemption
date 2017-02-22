@@ -30,9 +30,31 @@
 //#define LOGPRINT
 #include "utils/log.hpp"
 
-//#include "path/to/file.hpp"
+#include "core/RDP/pointer.hpp"
 
-BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
+BOOST_AUTO_TEST_CASE(TestDataSize)
 {
-    BOOST_CHECK(true);
+    Pointer p;
+
+    BOOST_CHECK_EQUAL(p.data_size(), 32 * 32 * 3);
+}
+
+BOOST_AUTO_TEST_CASE(TestDataSize1)
+{
+    Pointer p;
+
+    p.width  = 24;
+    p.height = 24;
+
+    BOOST_CHECK_EQUAL(p.data_size(), 24 * 24 * 3);
+}
+
+BOOST_AUTO_TEST_CASE(TestMaskSize)
+{
+    Pointer p;
+
+    p.width  = 7;
+    p.height = 7;
+
+    BOOST_CHECK_EQUAL(p.mask_size(), 14);
 }

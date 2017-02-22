@@ -66,13 +66,14 @@ namespace dump2008_PatBlt {
 class MyFront : public Front
 {
 public:
-    bool can_be_start_capture(auth_api*) override { return false; }
+    bool can_be_start_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
 
     MyFront( Transport & trans
             , Random & gen
             , Inifile & ini
             , CryptoContext & cctx
+            , auth_api & authentifier
             , bool fp_support // If true, fast-path must be supported
             , bool mem3blt_support
             , time_t now
@@ -83,6 +84,7 @@ public:
             , gen
             , ini
             , cctx
+            , authentifier
             , fp_support
             , mem3blt_support
             , now
@@ -187,7 +189,8 @@ BOOST_AUTO_TEST_CASE(TestFront)
         ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-        MyFront front( front_trans, gen1, ini , cctx, fastpath_support, mem3blt_support
+        NullAuthentifier authentifier;
+        MyFront front( front_trans, gen1, ini , cctx, authentifier, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>().count());
         null_mod no_mod(front);
 
@@ -252,7 +255,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         BOOST_CHECK(true);
 
         front.clear_channels();
-        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params);
+        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier);
         mod_api * mod = &mod_;
         BOOST_CHECK(true);
 
@@ -275,8 +278,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
 
         LOG(LOG_INFO, "Before Start Capture");
 
-        NullAuthentifier blackhole;
-        front.can_be_start_capture(&blackhole);
+        front.can_be_start_capture();
 
         uint32_t count = 0;
         BackEvent_t res = BACK_EVENT_NONE;
@@ -296,6 +298,45 @@ BOOST_AUTO_TEST_CASE(TestFront)
         // TEST Error or not error...?
         LOG(LOG_INFO, "Exiting on Exception");
     };
+}
+
+BOOST_AUTO_TEST_CASE(TestFrontGlyph24Bitmap)
+{
+   const uint8_t bytes_data[] = "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
+                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
+                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
+                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
+                                "\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
+                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\xff\xff\xff\x60" "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
+                                "\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60"  "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff" "\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
+                                "\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60" "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff" "\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\xff\xff\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60" "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f" "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60" "\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\xff\xff\xff\x60\x1f" "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
+                                "\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60" "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f" "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\xff\xff\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff" "\xff\xff\xff\xff\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f" "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" "\xff\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f" "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff" "\xff\xff\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f" "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\xff" "\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f" "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\xff\xff\xff\x60\x1f\x08\x60" "\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f" "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60" "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f" "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60" "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"  "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
+                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
+                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
+                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08";
+
+    const uint8_t bits_data[] = "\x00\x00\x00\x08\x18\x10\x10\x30\x20\x20\x60\x40\x40\xc0\x80\x00"
+                                "\xc7\x00\x3e\x00\x05\x00\x14\x00\x31\x00\x00\x00\x00\x00\x00\x00";
+
+    std::unique_ptr<uint8_t[]> data;
+
+    int16_t offset = 0;
+    int16_t baseline = 2;
+    uint16_t width = 16;
+    uint16_t height = 16;
+    int16_t incby = 16;
+
+    FontChar fc(offset, baseline, width, height, incby);
+
+    for (int i = 0; i < 32; i++) {
+        fc.data[i] = reinterpret_cast<uint8_t>(bits_data[i]);
+    }
+
+    Front::GlyphTo24Bitmap g24b(fc, { 96,  31,   8}, {255, 255, 255});
+
+    std::string const out_data(reinterpret_cast<char *>(g24b.raw_data), 256*3);
+    std::string const expected(reinterpret_cast<const char *>(bytes_data), 256*3);
+    BOOST_CHECK_EQUAL(expected, out_data);
 }
 
 BOOST_AUTO_TEST_CASE(TestFront2)
@@ -370,8 +411,9 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
+        NullAuthentifier authentifier;
         MyFront front( front_trans, gen1, ini
-                     , cctx, fastpath_support, mem3blt_support
+                     , cctx, authentifier, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>().count() - 1);
         null_mod no_mod(front);
 
@@ -436,7 +478,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         BOOST_CHECK(true);
 
         front.clear_channels();
-        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params);
+        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier);
         mod_api * mod = &mod_;
          BOOST_CHECK(true);
 
@@ -457,8 +499,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
 
         LOG(LOG_INFO, "Before Start Capture");
 
-        NullAuthentifier blackhole;
-        front.can_be_start_capture(&blackhole);
+        front.can_be_start_capture();
 
         uint32_t count = 0;
         BackEvent_t res = BACK_EVENT_NONE;
@@ -552,6 +593,8 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
+        NullAuthentifier authentifier;
+
         class MyFront : public Front
         {
             public:
@@ -561,6 +604,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
                    , Random & gen
                    , Inifile & ini
                    , CryptoContext & cctx
+                   , auth_api * authentifier
                    , bool fp_support // If true, fast-path must be supported
                    , bool mem3blt_support
                    , time_t now
@@ -572,6 +616,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
                    , gen
                    , ini
                    , cctx
+                   , authentifier
                    , fp_support
                    , mem3blt_support
                    , now
@@ -603,8 +648,10 @@ BOOST_AUTO_TEST_CASE(TestFront3)
                 }
         };
 
+        NullAuthentifier authentifier;
+
         MyFront front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
-                     , cctx, fastpath_support, mem3blt_support
+                     , cctx, authentifier, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>());
         null_mod no_mod(front);
 
@@ -668,7 +715,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         BOOST_CHECK(true);
 
         front.clear_channels();
-        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params);
+        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params, authentifier);
         mod_api * mod = &mod_;
          BOOST_CHECK(true);
 
@@ -686,8 +733,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
 
         LOG(LOG_INFO, "Before Start Capture");
 
-        NullAuthentifier blackhole;
-        front.start_capture(1024, 768, ini, &blackhole);
+        front.can_be_start_capture();
 
         uint32_t count = 0;
         BackEvent_t res = BACK_EVENT_NONE;

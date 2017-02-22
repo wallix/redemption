@@ -40,13 +40,13 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 {
     Inifile ini;
     LogTransport trans;
-    AclSerializer acl(ini, trans, to_verbose_flags(0));
+    AclSerializer acl(ini, 10010, trans, to_verbose_flags(0));
     ini.set<cfg::context::forcemodule>(true);
     BOOST_CHECK_NO_THROW(acl.send_acl_data());
 
     // try exception
     CheckTransport transexcpt("", 0);
-    AclSerializer aclexcpt(ini, transexcpt, to_verbose_flags(0));
+    AclSerializer aclexcpt(ini, 10010, transexcpt, to_verbose_flags(0));
     ini.set_acl<cfg::globals::auth_user>("Newuser");
     aclexcpt.send_acl_data();
     BOOST_CHECK(!ini.get<cfg::context::authenticated>());
@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     stream.set_out_uint32_be(stream.get_offset() - 4 ,0);
 
     GeneratorTransport trans(stream.get_data(), stream.get_offset());
-    AclSerializer acl(ini, trans, to_verbose_flags(0));
+    AclSerializer acl(ini, 10010, trans, to_verbose_flags(0));
     ini.set<cfg::context::session_id>("");
     ini.set_acl<cfg::globals::auth_user>("testuser");
     BOOST_CHECK(ini.get<cfg::context::session_id>().empty());
@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     big_stream.out_string("a\n");
 
     GeneratorTransport transexcpt(u.get(), big_stream.get_offset());
-    AclSerializer aclexcpt(ini, transexcpt, to_verbose_flags(0));
+    AclSerializer aclexcpt(ini, 10010, transexcpt, to_verbose_flags(0));
     CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
 }
 
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerIncoming)
     OutStream(&s[0], 4).out_uint32_be(s.size() - 4u);
 
     GeneratorTransport trans(s.data(), s.size());
-    AclSerializer acl(ini, trans, to_verbose_flags(0));
+    AclSerializer acl(ini, 10010, trans, to_verbose_flags(0));
 
     BOOST_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), false);
     BOOST_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
@@ -162,7 +162,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 
     CheckTransport trans(u.get(), big_stream.get_offset());
 
-    AclSerializer acl(ini, trans, to_verbose_flags(0));
+    AclSerializer acl(ini, 10010, trans, to_verbose_flags(0));
 
     ini.set_acl<cfg::context::rejected>(std::string(sz_string, 'a'));
 
@@ -203,7 +203,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
 
     GeneratorTransport trans(u.get(), big_stream.get_offset());
 
-    AclSerializer acl(ini, trans, to_verbose_flags(0));
+    AclSerializer acl(ini, 10010, trans, to_verbose_flags(0));
 
     std::string result(sz_string, 'a');
     BOOST_REQUIRE_NE(ini.get<cfg::context::rejected>(), result);

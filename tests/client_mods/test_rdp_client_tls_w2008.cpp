@@ -24,13 +24,15 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestRdpClientTLSW2008
+
+
 #include "system/redemption_unit_tests.hpp"
 
 
 // Comment the code block below to generate testing data.
 #define LOGNULL
 // Uncomment the code block below to generate testing data.
-//#define LOGPRINT
+// #define LOGPRINT
 
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
@@ -40,6 +42,7 @@
 #include "mod/rdp/rdp.hpp"
 
 #include "../front/fake_front.hpp"
+
 
 BOOST_AUTO_TEST_CASE(TestDecodePacket)
 {
@@ -116,8 +119,9 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     // To always get the same client random, in tests
     LCGRandom gen(0);
     LCGTime timeobj;
+    NullAuthentifier authentifier;
     mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen, timeobj, mod_rdp_params);
+        gen, timeobj, mod_rdp_params, authentifier);
     mod_api * mod = &mod_;
 
     if (verbose > 2) {
@@ -188,7 +192,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
                                , 7
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
-                               , to_verbose_flags(511)
+                               , to_verbose_flags(2023)
                                );
     mod_rdp_params.device_id                       = "device_id";
     //mod_rdp_params.enable_tls                      = true;
@@ -209,8 +213,9 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
     // To always get the same client random, in tests
     LCGRandom gen(0);
     LCGTime timeobj;
+    NullAuthentifier authentifier;
     mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen, timeobj, mod_rdp_params);
+        gen, timeobj, mod_rdp_params, authentifier);
     mod_api * mod = &mod_;
 
     if (verbose > 2) {

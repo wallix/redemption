@@ -202,16 +202,6 @@ private:
 
             return mod_api::get_dim();
         }
-
-        bool is_content_laid_out() override
-        {
-            if (this->managed_mod)
-            {
-                return this->managed_mod->is_content_laid_out();
-            }
-
-            return mod_api::is_content_laid_out();
-        }
     } module_holder;
 
     CompositeArray composite_array;
@@ -274,7 +264,7 @@ public:
     WidgetModuleHost(gdi::GraphicApi& drawable, Widget2& parent,
                      NotifyApi* notifier,
                      std::unique_ptr<mod_api> managed_mod, Font const & font,
-                     Theme const & theme,
+                     Theme const & /*theme*/,
                      const GCC::UserData::CSMonitor& cs_monitor,
                      uint16_t front_width, uint16_t front_height,
                      int group_id = 0)
@@ -306,6 +296,11 @@ public:
     }
 
     mod_api& get_managed_mod()
+    {
+        return this->module_holder;
+    }
+
+    const mod_api& get_managed_mod() const
     {
         return this->module_holder;
     }
@@ -387,11 +382,9 @@ private:
         }
 
         this->mod_visible_rect.cx = std::min<uint16_t>(
-            this->vision_rect.cx - (this->vscroll_added ? this->vscroll_width : 0),
-            module_dim.w);
+            this->vision_rect.cx, module_dim.w);
         this->mod_visible_rect.cy = std::min<uint16_t>(
-            this->vision_rect.cy - (this->hscroll_added ? this->hscroll_height : 0),
-            module_dim.h);
+            this->vision_rect.cy, module_dim.h);
 
         if (this->hscroll_added) {
             const unsigned int new_max_value = module_dim.w - this->vision_rect.cx;

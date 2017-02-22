@@ -38,6 +38,8 @@
 #include "utils/stream.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
 
+#define DUMMY_REMOTEAPP "||WABRemoteApp"
+
 #define INTERNAL_MODULE_WINDOW_ID    40000
 #define INTERNAL_MODULE_WINDOW_TITLE "Wallix AdminBastion"
 
@@ -131,6 +133,8 @@ class ClientExecute : public windowing_api
 
     uint32_t auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
+    Rect auxiliary_window_rect;
+
     const static unsigned int max_work_area   = 32;
                  unsigned int work_area_count = 0;
 
@@ -139,12 +143,15 @@ class ClientExecute : public windowing_api
     uint16_t total_width_of_work_areas = 0;
     uint16_t total_height_of_work_areas = 0;
 
+    std::string window_title;
+
     bool verbose;
 
 public:
     ClientExecute(FrontAPI & front, bool verbose)
     : front_(&front)
     , wallix_icon_min(bitmap_from_file(SHARE_PATH "/wallix-icon-min.png"))
+    , window_title(INTERNAL_MODULE_WINDOW_TITLE)
     , verbose(verbose)
     {
     }   // ClientExecute
@@ -171,8 +178,7 @@ public:
         return result_rect;
     }   // adjust_rect
 
-private:
-    const Rect get_current_work_area_rect() {
+    Rect get_current_work_area_rect() const {
         REDASSERT(this->work_area_count);
 
         if (!this->window_rect.isempty()) {
@@ -195,6 +201,19 @@ private:
         return this->work_areas[0];
     }
 
+    Rect get_window_rect() const {
+        return this->window_rect;
+    }
+
+    Rect get_auxiliary_window_rect() const {
+        if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == this->auxiliary_window_id) {
+            return Rect();
+        }
+
+        return this->auxiliary_window_rect;
+    }
+
+private:
     void update_rects() {
         this->title_bar_rect = this->window_rect;
         this->title_bar_rect.cy = TITLE_BAR_HEIGHT;
@@ -400,7 +419,7 @@ public:
                                       *this->font_,
                                       this->title_bar_rect.x + 1,
                                       this->title_bar_rect.y + 3,
-                                      INTERNAL_MODULE_WINDOW_TITLE,
+                                      this->window_title.c_str(),
                                       0x000000,
                                       0xFFFFFF,
                                       depth,
@@ -455,10 +474,9 @@ public:
     void input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos) {
         if (!this->channel_) return;
 
-        //LOG(LOG_INFO, "pointerFlags=0x%X pressed_mouse_button=%d", pointerFlags,
-        //    this->pressed_mouse_button);
-        //LOG(LOG_INFO, "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u",
-        //    pointerFlags, xPos, yPos);
+        //LOG(LOG_INFO,
+        //    "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u pressed_mouse_button=%d",
+        //    pointerFlags, xPos, yPos, this->pressed_mouse_button);
 
         if ((SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1) == pointerFlags) {
             if (MOUSE_BUTTON_PRESSED_NONE == this->pressed_mouse_button) {
@@ -588,8 +606,8 @@ public:
                         smmipdu.MaxPosY(work_area_rect.y);
                         smmipdu.MinTrackWidth(INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH);
                         smmipdu.MinTrackHeight(INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT);
-                        smmipdu.MaxTrackWidth(this->total_width_of_work_areas /*work_area_rect.cx*/ - 1);
-                        smmipdu.MaxTrackHeight(this->total_height_of_work_areas /*work_area_rect.cy*/ - 1);
+                        smmipdu.MaxTrackWidth(this->total_width_of_work_areas - 1);
+                        smmipdu.MaxTrackHeight(this->total_height_of_work_areas - 1);
 
                         smmipdu.emit(out_s);
 
@@ -844,7 +862,7 @@ public:
                     order.Style(0x14EE0000);
                     order.ExtendedStyle(0x40310);
                     order.ShowState(5);
-                    order.TitleInfo(INTERNAL_MODULE_WINDOW_TITLE);
+                    order.TitleInfo(this->window_title.c_str());
                     order.ClientOffsetX(this->window_rect.x + 6);
                     order.ClientOffsetY(this->window_rect.y + 25);
                     order.WindowOffsetX(this->window_rect.x);
@@ -856,7 +874,7 @@ public:
                     order.VisibleOffsetX(this->window_rect.x);
                     order.VisibleOffsetY(this->window_rect.y);
                     order.NumVisibilityRects(1);
-                    order.VisibilityRects(0, RDP::RAIL::Rectangle(/*0*/this->window_rect.x, /*0*/this->window_rect.y, this->window_rect.cx, this->window_rect.cy));
+                    order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
                     if (this->verbose) {
                         StaticOutStream<1024> out_s;
@@ -1153,7 +1171,7 @@ public:
                         order.WindowWidth(this->window_rect.cx);
                         order.WindowHeight(this->window_rect.cy);
                         order.NumVisibilityRects(1);
-                        order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, this->window_rect.cx, this->window_rect.cy));
+                        order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
                         order.ClientOffsetX(this->window_rect.x + 6);
                         order.ClientOffsetY(this->window_rect.y + 25);
@@ -1263,7 +1281,7 @@ public:
                     order.WindowWidth(this->window_rect.cx);
                     order.WindowHeight(this->window_rect.cy);
                     order.NumVisibilityRects(1);
-                    order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, this->window_rect.cx, this->window_rect.cy));
+                    order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
                     order.ClientOffsetX(this->window_rect.x + 6);
                     order.ClientOffsetY(this->window_rect.y + 25);
@@ -1300,6 +1318,25 @@ public:
 
             this->window_rect = this->window_rect_normal;
 
+            Rect work_area_rect = this->get_current_work_area_rect();
+
+            Dimension module_dimension;
+            if (this->mod_) {
+                module_dimension = this->mod_->get_dim();
+            }
+
+            Dimension prefered_window_dimension(
+                    module_dimension.w + 2,
+                    module_dimension.h + 2 + TITLE_BAR_HEIGHT
+                );
+            if (((this->window_rect.cx != prefered_window_dimension.w) ||
+                 (this->window_rect.cy != prefered_window_dimension.h)) &&
+                (work_area_rect.cx > prefered_window_dimension.w) &&
+                (work_area_rect.cy > prefered_window_dimension.h)) {
+                this->window_rect.cx = prefered_window_dimension.w;
+                this->window_rect.cy = prefered_window_dimension.h;
+            }
+
             this->update_rects();
 
             {
@@ -1323,7 +1360,7 @@ public:
                 order.WindowWidth(this->window_rect.cx);
                 order.WindowHeight(this->window_rect.cy);
                 order.NumVisibilityRects(1);
-                order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, this->window_rect.cx, this->window_rect.cy));
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
                 order.ClientOffsetX(this->window_rect.x + 6);
                 order.ClientOffsetY(this->window_rect.y + 25);
@@ -1383,7 +1420,7 @@ public:
                 order.WindowWidth(work_area_rect.cx + 2);
                 order.WindowHeight(work_area_rect.cy + 2);
                 order.NumVisibilityRects(1);
-                order.VisibilityRects(0, RDP::RAIL::Rectangle(work_area_rect.x, work_area_rect.y, work_area_rect.cx, work_area_rect.cy + 1));
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, work_area_rect.cx, work_area_rect.cy + 1));
 
                 order.ClientOffsetX(work_area_rect.x/* + 0*/);
                 order.ClientOffsetY(work_area_rect.y + 25);
@@ -1552,6 +1589,8 @@ public:
 
         this->work_area_count = 0;
 
+        this->set_target_info(nullptr);
+
         this->channel_ = nullptr;
     }   // reset
 
@@ -1652,10 +1691,12 @@ protected:
             cepdu.log(LOG_INFO);
         }
 
-        this->client_execute_flags       = cepdu.Flags();
-        this->client_execute_exe_or_file = cepdu.ExeOrFile();
-        this->client_execute_working_dir = cepdu.WorkingDir();
-        this->client_execute_arguments   = cepdu.Arguments();
+        if (::strcasecmp(cepdu.ExeOrFile(), DUMMY_REMOTEAPP)) {
+            this->client_execute_flags       = cepdu.Flags();
+            this->client_execute_exe_or_file = cepdu.ExeOrFile();
+            this->client_execute_working_dir = cepdu.WorkingDir();
+            this->client_execute_arguments   = cepdu.Arguments();
+        }
     }   // process_client_execute_pdu
 
     void process_client_get_application_id_pdu(uint32_t total_length,
@@ -1691,7 +1732,7 @@ protected:
 
             ServerGetApplicationIDResponsePDU server_get_application_id_response_pdu;
             server_get_application_id_response_pdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
-            server_get_application_id_response_pdu.ApplicationId(INTERNAL_MODULE_WINDOW_TITLE);
+            server_get_application_id_response_pdu.ApplicationId(this->window_title.c_str());
             server_get_application_id_response_pdu.emit(out_s);
 
             header.emit_end();
@@ -1902,7 +1943,7 @@ protected:
                     order.Style(0x14EE0000);
                     order.ExtendedStyle(0x40310);
                     order.ShowState(5);
-                    order.TitleInfo(INTERNAL_MODULE_WINDOW_TITLE);
+                    order.TitleInfo(this->window_title.c_str());
                     order.ClientOffsetX(this->window_rect.x + 6);
                     order.ClientOffsetY(this->window_rect.y + 25);
                     order.WindowOffsetX(this->window_rect.x);
@@ -1914,7 +1955,7 @@ protected:
                     order.VisibleOffsetX(this->window_rect.x);
                     order.VisibleOffsetY(this->window_rect.y);
                     order.NumVisibilityRects(1);
-                    order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, this->window_rect.cx, this->window_rect.cy));
+                    order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
                     if (this->verbose) {
                         StaticOutStream<1024> out_s;
@@ -1986,26 +2027,6 @@ protected:
             }
 
             this->work_area_count++;
-
-/*
-            this->work_area_rect.x  = body_r.Left();
-            this->work_area_rect.y  = body_r.Top();
-            this->work_area_rect.cx = body_r.Right() - body_r.Left();
-            this->work_area_rect.cy = body_r.Bottom() - body_r.Top();
-
-LOG(LOG_INFO, "SPI_SETWORKAREA (%d %d %u %u)",
-        this->work_area_rect.x,
-        this->work_area_rect.y,
-        this->work_area_rect.cx,
-        this->work_area_rect.cy
-    );
-
-            if (this->verbose) {
-                LOG(LOG_INFO, "WorkAreaRect: (%u, %u, %u, %u)",
-                    this->work_area_rect.x, this->work_area_rect.y,
-                    this->work_area_rect.cx, this->work_area_rect.cy);
-            }
-*/
 
             {
                 RDP::RAIL::ActivelyMonitoredDesktop order;
@@ -2114,7 +2135,7 @@ LOG(LOG_INFO, "SPI_SETWORKAREA (%d %d %u %u)",
                 order.Style(0x14EE0000);
                 order.ExtendedStyle(0x40310);
                 order.ShowState(this->maximized ? 3 : 5);
-                order.TitleInfo(INTERNAL_MODULE_WINDOW_TITLE);
+                order.TitleInfo(this->window_title.c_str());
                 order.ClientOffsetX(this->window_rect.x + 6);
                 order.ClientOffsetY(this->window_rect.y + 25);
                 order.WindowOffsetX(this->window_rect.x);
@@ -2126,7 +2147,7 @@ LOG(LOG_INFO, "SPI_SETWORKAREA (%d %d %u %u)",
                 order.VisibleOffsetX(this->window_rect.x);
                 order.VisibleOffsetY(this->window_rect.y);
                 order.NumVisibilityRects(1);
-                order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, this->window_rect.cx, this->window_rect.cy));
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
                 if (this->verbose) {
                     StaticOutStream<1024> out_s;
@@ -2409,7 +2430,7 @@ LOG(LOG_INFO, "SPI_SETWORKAREA (%d %d %u %u)",
                 order.WindowWidth(this->window_rect.cx);
                 order.WindowHeight(this->window_rect.cy);
                 order.NumVisibilityRects(1);
-                order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, this->window_rect.cx, this->window_rect.cy));
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
                 order.ClientOffsetX(this->window_rect.x + 6);
                 order.ClientOffsetY(this->window_rect.y + 25);
@@ -2730,9 +2751,9 @@ public:
             order.VisibleOffsetX(window_rect.x);
             order.VisibleOffsetY(window_rect.y);
             order.NumVisibilityRects(1);
-            order.VisibilityRects(0, RDP::RAIL::Rectangle(this->window_rect.x/*0*/, this->window_rect.y/*0*/, window_rect.cx, window_rect.cy));
+            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, window_rect.cx, window_rect.cy));
 
-            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+            if (this->verbose) {
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
@@ -2741,6 +2762,8 @@ public:
 
             this->front_->draw(order);
         }
+
+        this->auxiliary_window_rect = window_rect;
     }
 
     void destroy_auxiliary_window() override {
@@ -2755,7 +2778,7 @@ public:
                 );
             order.header.WindowId(this->auxiliary_window_id);
 
-            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+            if (this->verbose) {
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
@@ -2766,6 +2789,14 @@ public:
         }
 
         this->auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
+    }
+
+    void set_target_info(const char* ti) {
+        this->window_title = (ti ? ti : "");
+        if (!this->window_title.empty()) {
+            this->window_title += " - ";
+        }
+        this->window_title += INTERNAL_MODULE_WINDOW_TITLE;
     }
 
 private:

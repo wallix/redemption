@@ -34,6 +34,7 @@
 #include "mod/vnc/vnc.hpp"
 #include "front/fake_front.hpp"
 
+
 BOOST_AUTO_TEST_CASE(TestDecodePacket)
 {
     BOOST_CHECK(1);
@@ -248,6 +249,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     const VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop {};
 
+    NullAuthentifier authentifier;
+
     mod_vnc mod(
           t
         , "10.10.3.103"
@@ -267,7 +270,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         , is_socket_transport
         , mod_vnc::ClipboardEncodingType::UTF8
         , bogus_clipboard_infinite_loop
-        , nullptr       // acl
+        , authentifier       // acl
         , verbose);
     mod.get_event().set();
 

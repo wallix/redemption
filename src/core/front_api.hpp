@@ -43,7 +43,7 @@ namespace CHANNELS {
 class FrontAPI : public gdi::GraphicApi
 {
 public:
-    virtual bool can_be_start_capture(auth_api * auth) = 0;
+    virtual bool can_be_start_capture() = 0;
     virtual bool must_be_stop_capture() = 0;
 
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const = 0;

@@ -14,17 +14,15 @@
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
 *   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2016
-*   Author(s): Jonathan Poelen
+*   Copyright (C) Wallix 2010-2017
+*   Author(s): Christophe Grosjean
 */
+
 
 #pragma once
 
-#ifdef __has_include
-# define CXX_HAS_INCLUDE_ENABLE 1
-# define CXX_HAS_SYSTEM_INCLUDE(path) __has_include(<path>)
-#else
-# define CXX_HAS_INCLUDE_ENABLE 0
-# define CXX_HAS_SYSTEM_INCLUDE(path) 0
-#endif
+#include <chrono>
 
+struct SequencedVideoParams
+{
+};

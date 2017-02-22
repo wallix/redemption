@@ -22,7 +22,7 @@
 #pragma once
 
 #include "core/front_api.hpp"
-#include "mod/rdp/channels/base_channel.hpp"
+#include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "utils/outbound_connection_monitor_rules.hpp"
 #include "utils/process_monitor_rules.hpp"
 #include "utils/stream.hpp"
@@ -92,6 +92,9 @@ private:
 
     uint16_t other_version = 0x0100;
 
+    bool start_application_query_processed = false;
+    bool start_application_started         = false;
+
 public:
     struct Params : public BaseVirtualChannel::Params {
         std::chrono::milliseconds session_probe_launch_timeout;
@@ -124,6 +127,8 @@ public:
         bool bogus_refresh_rect_ex;
 
         bool show_maximized;
+
+        Params(auth_api & authentifier) : BaseVirtualChannel::Params(authentifier) {}
     };
 
     SessionProbeVirtualChannel(
@@ -182,8 +187,6 @@ public:
         }
 
         this->session_probe_event.object_and_time = true;
-
-        REDASSERT(this->authentifier);
     }
 
     void start_launch_timeout_timer()
@@ -316,7 +319,7 @@ public:
                     }
 
                     if (this->param_session_probe_on_keepalive_timeout_disconnect_user) {
-                        this->authentifier->report("SESSION_PROBE_KEEPALIVE_MISSED", "");
+                        this->authentifier.report("SESSION_PROBE_KEEPALIVE_MISSED", "");
                     }
                     else {
                         this->front.session_probe_started(false);
@@ -671,53 +674,63 @@ public:
                 out_s.get_data(), out_s.get_offset());
         }
         else if (!this->server_message.compare(
-                    "Request=Get startup application")) {
-            StaticOutStream<8192> out_s;
+                     "Request=Get startup application")) {
+            if (this->param_real_alternate_shell.compare(
+                     "[None]") ||
+                this->start_application_started) {
+                StaticOutStream<8192> out_s;
 
-            const size_t message_length_offset = out_s.get_offset();
-            out_s.out_skip_bytes(sizeof(uint16_t));
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_skip_bytes(sizeof(uint16_t));
 
-            {
-                const char cstr[] = "StartupApplication=";
-                out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-            }
-
-            if (this->param_real_alternate_shell.empty()) {
-                const char cstr[] = "[Windows Explorer]";
-                out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-            }
-            else {
-                if (!this->param_real_working_dir.empty()) {
-                    out_s.out_copy_bytes(
-                        this->param_real_working_dir.data(),
-                        this->param_real_working_dir.size());
+                {
+                    const char cstr[] = "StartupApplication=";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                 }
-                out_s.out_uint8('\x01');
 
-                out_s.out_copy_bytes(
-                    this->param_real_alternate_shell.data(),
-                    this->param_real_alternate_shell.size());
+                if (this->param_real_alternate_shell.empty()) {
+                    const char cstr[] = "[Windows Explorer]";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+                else if (!this->param_real_alternate_shell.compare("[None]")) {
+                    const char cstr[] = "[None]";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+                else {
+                    if (!this->param_real_working_dir.empty()) {
+                        out_s.out_copy_bytes(
+                            this->param_real_working_dir.data(),
+                            this->param_real_working_dir.size());
+                    }
+                    out_s.out_uint8('\x01');
 
-                if (0x0102 <= this->other_version) {
-                    if (!this->param_show_maximized) {
-                        out_s.out_uint8('\x01');
+                    out_s.out_copy_bytes(
+                        this->param_real_alternate_shell.data(),
+                        this->param_real_alternate_shell.size());
 
-                        const char cstr[] = "Minimized";
-                        out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                    if (0x0102 <= this->other_version) {
+                        if (!this->param_show_maximized) {
+                            out_s.out_uint8('\x01');
+
+                            const char cstr[] = "Minimized";
+                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                        }
                     }
                 }
+
+                out_s.out_clear_bytes(1);   // Null-terminator.
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset -
+                        sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_message_to_server(out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    out_s.get_data(), out_s.get_offset());
             }
 
-            out_s.out_clear_bytes(1);   // Null-terminator.
-
-            out_s.set_out_uint16_le(
-                out_s.get_offset() - message_length_offset -
-                    sizeof(uint16_t),
-                message_length_offset);
-
-            this->send_message_to_server(out_s.get_offset(),
-                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-                out_s.get_data(), out_s.get_offset());
+            this->start_application_query_processed = true;
         }
         else if (!this->server_message.compare(
                      "Request=Disconnection-Reconnection")) {
@@ -922,7 +935,7 @@ public:
             this->session_probe_keep_alive_received = true;
         }
         else if (!this->server_message.compare("SESSION_ENDING_IN_PROGRESS")) {
-            this->authentifier->log4(
+            this->authentifier.log4(
                 (this->verbose & RDPVerbose::sesprobe),
                 "SESSION_ENDING_IN_PROGRESS");
 
@@ -958,7 +971,7 @@ public:
 
                 if (!order.compare("PASSWORD_TEXT_BOX_GET_FOCUS")) {
                     std::string info("status='" + parameters[0] + "'");
-                    this->authentifier->log4(
+                    this->authentifier.log4(
                         (this->verbose & RDPVerbose::sesprobe),
                         order.c_str(), info.c_str());
 
@@ -972,7 +985,7 @@ public:
                 }
                 else if (!order.compare("UAC_PROMPT_BECOME_VISIBLE")) {
                     std::string info("status='" + parameters[0] + "'");
-                    this->authentifier->log4
+                    this->authentifier.log4
                         ((this->verbose & RDPVerbose::sesprobe),
                         order.c_str(), info.c_str());
 
@@ -989,7 +1002,7 @@ public:
                         std::string info(
                             "identifier='" + parameters[0] +
                             "' display_name='" + parameters[1] + "'");
-                        this->authentifier->log4(
+                        this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
 
@@ -1004,7 +1017,7 @@ public:
                          !order.compare("COMPLETED_PROCESS")) {
                     if (parameters.size() == 1) {
                         std::string info("command_line='" + parameters[0] + "'");
-                        this->authentifier->log4(
+                        this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
                     }
@@ -1020,7 +1033,7 @@ public:
                         std::string info(
                             "rule='" + parameters[0] +
                             "' application_name='" + parameters[1]);
-                        this->authentifier->log4(
+                        this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
 
@@ -1067,7 +1080,7 @@ public:
                                 "' app_cmd_line='" + parameters[2] +
                                 "' dst_addr='" + parameters[3] +
                                 "' dst_port='" + parameters[4] + "'");
-                            this->authentifier->log4(
+                            this->authentifier.log4(
                                 (this->verbose & RDPVerbose::sesprobe),
                                 order.c_str(), info.c_str());
 
@@ -1075,7 +1088,7 @@ public:
                                 if (::strtoul(parameters[5].c_str(), nullptr, 10)) {
                                     LOG(LOG_ERR,
                                         "Session Probe failed to block outbound connection!");
-                                    this->authentifier->report(
+                                    this->authentifier.report(
                                         "SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED", "");
                                 }
                                 else {
@@ -1118,7 +1131,7 @@ public:
                                 "rule='" + description +
                                 "' app_name='" + parameters[1] +
                                 "' app_cmd_line='" + parameters[2] + "'");
-                            this->authentifier->log4(
+                            this->authentifier.log4(
                                 (this->verbose & RDPVerbose::sesprobe),
                                 order.c_str(), info.c_str());
 
@@ -1126,7 +1139,7 @@ public:
                                 if (::strtoul(parameters[3].c_str(), nullptr, 10)) {
                                     LOG(LOG_ERR,
                                         "Session Probe failed to block process!");
-                                    this->authentifier->report(
+                                    this->authentifier.report(
                                         "SESSION_PROBE_PROCESS_BLOCKING_FAILED", "");
                                 }
                                 else {
@@ -1152,10 +1165,10 @@ public:
                     }
                 }
                 else if (!order.compare("FOREGROUND_WINDOW_CHANGED")) {
-                    if (parameters.size() == 3) {
+                    if ((parameters.size() == 2) || (parameters.size() == 3)) {
                         std::string info(
                             "source='Probe' window='" + parameters[0] + "'");
-                        this->authentifier->log4(
+                        this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             "TITLE_BAR", info.c_str());
                     }
@@ -1168,7 +1181,7 @@ public:
                         std::string info(
                             "windows='" + parameters[0] +
                             "' button='" + parameters[1] + "'");
-                        this->authentifier->log4(
+                        this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
                     }
@@ -1181,7 +1194,7 @@ public:
                         std::string info(
                             "windows='" + parameters[0] +
                             "' edit='" + parameters[1] + "'");
-                        this->authentifier->log4(
+                        this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
                     }
@@ -1212,5 +1225,42 @@ public:
     void set_session_probe_launcher(SessionProbeLauncher* launcher) {
         this->session_probe_stop_launch_sequence_notifier = launcher;
     }
-};  // class SessionProbeVirtualChannel
 
+    void start_end_session_check() {
+        if (this->param_real_alternate_shell.compare("[None]")) {
+            return;
+        }
+
+        this->start_application_started = true;
+
+        if (!this->start_application_query_processed) {
+            return;
+        }
+
+        StaticOutStream<8192> out_s;
+
+        const size_t message_length_offset = out_s.get_offset();
+        out_s.out_skip_bytes(sizeof(uint16_t));
+
+        {
+            const char cstr[] = "StartupApplication=";
+            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+        }
+
+        {
+            const char cstr[] = "[None]";
+            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+        }
+
+        out_s.out_clear_bytes(1);   // Null-terminator.
+
+        out_s.set_out_uint16_le(
+            out_s.get_offset() - message_length_offset -
+                sizeof(uint16_t),
+            message_length_offset);
+
+        this->send_message_to_server(out_s.get_offset(),
+            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+            out_s.get_data(), out_s.get_offset());
+    }
+};  // class SessionProbeVirtualChannel

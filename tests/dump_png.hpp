@@ -37,6 +37,8 @@ inline void dump_png(const char * filename, const Drawable & drawable)
 
 inline void dump_png(const char * filename, const Bitmap & bmp)
 {
-    Drawable drawable(bmp.cx(), bmp.cy());
-    dump_png(filename, drawable);
+    if (FILE * f = fopen(filename, "wb")) {
+        dump_png24(f, bmp.data(), bmp.cx(), bmp.cy(), bmp.line_size(), true);
+        ::fclose(f);
+    }
 }

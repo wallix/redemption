@@ -241,7 +241,7 @@ private:
 #include "utils/stream.hpp"
 #include "utils/log.hpp"
 
-#include "cxx/attributes.hpp"
+#include "cxx/cxx.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>

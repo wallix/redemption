@@ -36,6 +36,7 @@
 #include <string>
 #include <vector>
 #include <boost/algorithm/string.hpp>
+#include <sys/stat.h>
 
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
@@ -76,15 +77,10 @@
 #include "core/RDP/bitmapupdate.hpp"
 #include "keyboard/keymap2.hpp"
 #include "core/client_info.hpp"
-#include "keymaps/Qt4_ScanCode_KeyMap.hpp"
+#include "keymaps/Qt_ScanCode_KeyMap.hpp"
 #include "capture/capture.hpp"
 
-#include <QtGui/QImage>
-#include <QtGui/QRgb>
-#include <QtGui/QBitmap>
-#include <QtGui/QColormap>
-#include <QtGui/QPainter>
-
+#include "Qt4/Qt.hpp"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
@@ -93,18 +89,33 @@
 #endif
 
 
+
+#define _WINDOWS_TICK 10000000
+#define _SEC_TO_UNIX_EPOCH 11644473600LL
+
 #define USER_CONF_PATH "/config/userConfig.config"
 #define CB_FILE_TEMP_PATH "/clipboard_temp"
 #define REPLAY_PATH "/replay"
 #define KEY_SETTING_PATH "/config/keySetting.config"
 #define LOGINS_PATH "/config/logins.config"
+#define _SHARE_PATH "/share"
 
 
 class Form_Qt;
 class Screen_Qt;
 class Mod_Qt;
 class ClipBoard_Qt;
+class FileSysWatchWrapper_Qt;
 
+struct DummyAuthentifier : public auth_api
+{
+public:
+    virtual void set_auth_channel_target(const char *) {}
+    virtual void set_auth_error_message(const char *) {}
+    virtual void report(const char * , const char *) {}
+    virtual void log4(bool , const char *, const char * = nullptr) {}
+    virtual void disconnect_target() {}
+};
 
 class Front_Qt_API : public FrontAPI
 {
@@ -176,6 +187,7 @@ public:
     const std::string    CB_TEMP_DIR;
     const std::string    USER_CONF_DIR;
     const std::string    REPLAY_DIR;
+    const std::string    SHARE_DIR;
     QPixmap            * _cache;
     QPixmap            * _cache_replay;
     bool                 _span;
@@ -185,6 +197,7 @@ public:
     int                  _delta_time;
     int                  _current_screen_index;
     bool                 _recv_disconnect_ultimatum;
+
 
 
     Front_Qt_API( bool param1
@@ -204,6 +217,7 @@ public:
     , CB_TEMP_DIR(MAIN_DIR + std::string(CB_FILE_TEMP_PATH))
     , USER_CONF_DIR(MAIN_DIR + std::string(USER_CONF_PATH))
     , REPLAY_DIR(MAIN_DIR + std::string(REPLAY_PATH))
+    , SHARE_DIR(MAIN_DIR + std::string(_SHARE_PATH))
     , _cache(nullptr)
     , _cache_replay(nullptr)
     , _span(false)
@@ -240,7 +254,7 @@ public:
     virtual void writeClientInfo() = 0;
     virtual void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) = 0;
     virtual void empty_buffer() = 0;
-    virtual bool can_be_start_capture(auth_api *) override { return true; }
+    virtual bool can_be_start_capture() override { return true; }
 //     virtual bool can_be_pause_capture() override { return true; }
 //     virtual bool can_be_resume_capture() override { return true; }
     virtual bool must_be_stop_capture() override { return true; }
@@ -325,11 +339,9 @@ public:
     CHANNELS::ChannelDefArray   _cl;
 
     // Clipboard Channel Management members
-    uint32_t                    _requestedFormatId = 0;
-    std::string                 _requestedFormatName;
-    bool                        _waiting_for_data;
-
-
+    uint32_t             _requestedFormatId = 0;
+    std::string          _requestedFormatName;
+    bool                 _waiting_for_data;
 
     struct ClipbrdFormatsList{
         enum : uint16_t {
@@ -391,6 +403,9 @@ public:
 
     } _cb_buffers;
 
+
+
+
     struct FileSystemData {
 
         struct DeviceData {
@@ -405,14 +420,27 @@ public:
         uint16_t versionMinor = 0;
 
         bool drives_created = false;
-
         bool fileSystemCapacity[5] = { false };
-
         const size_t drivesCount = 1;
-
         DeviceData drives[2];
 
+        uint32_t next_file_id = 0;
+
+        uint32_t get_file_id() {
+            this->next_file_id++;
+            return this->next_file_id;
+        }
+
+        std::vector<std::string> paths;
+
+        uint32_t current_dir_id = 0;
+        int current_file_index = 0;
+
+        std::string current_path;
+
     } fileSystemData;
+
+    FileSysWatchWrapper_Qt * file_watcher;
 
 
 
@@ -446,7 +474,7 @@ public:
 
     void empty_buffer() override;
 
-    void process_client_clipboard_out_data(const uint64_t total_length, OutStream & out_streamfirst, size_t firstPartSize, uint8_t const * data, const size_t data_len);
+    void process_client_clipboard_out_data(const char * const front_channel_name, const uint64_t total_length, OutStream & out_streamfirst, size_t firstPartSize, uint8_t const * data, const size_t data_len);
 
     virtual void set_pointer(Pointer const & cursor) override;
 
@@ -473,6 +501,17 @@ public:
     virtual void recv_disconnect_provider_ultimatum() override;
 
 //     virtual void set_depths(gdi::Depth const & depths) override {}
+
+    unsigned WindowsTickToUnixSeconds(long long windowsTicks)
+    {
+        return unsigned((windowsTicks / _WINDOWS_TICK) - _SEC_TO_UNIX_EPOCH);
+    }
+
+    long long UnixSecondsToWindowsTick(unsigned unixSeconds)
+    {
+        return ((unixSeconds + _SEC_TO_UNIX_EPOCH) * _WINDOWS_TICK);
+    }
+
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -578,31 +617,33 @@ public:
     //       DRAW FUNCTIONS
     //-----------------------------
 
-    virtual void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
+    using Front_Qt_API::draw;
 
-    virtual void draw(const RDPScrBlt & cmd, Rect clip) override;
+    void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override;
+    void draw(const RDPScrBlt & cmd, Rect clip) override;
 
-    virtual void draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
+    void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override;
 
-    virtual void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
+    void draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override;
+    void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
+
+    void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override;
 
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override;
 
-    virtual void draw(const RDPDestBlt & cmd, Rect clip) override;
+    void draw(const RDPDestBlt & cmd, Rect clip) override;
 
-    virtual void draw(const RDPMultiDstBlt & cmd, Rect clip) override;
+    void draw(const RDPMultiDstBlt & cmd, Rect clip) override;
 
-    virtual void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
+    void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
+    void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override;
+    void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override;
 
-    virtual void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override;
+    void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override;
 
     void draw(const RDPPolygonSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
@@ -610,31 +651,31 @@ public:
 
     void draw(const RDPPolyline & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDPEllipseSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
+    void draw(const RDPEllipseSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDPEllipseCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
+    void draw(const RDPEllipseCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    virtual void draw(const RDP::FrameMarker & order) override;
+    void draw(const RDP::FrameMarker & order) override;
 
-//     virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) override;
+//     void draw(const RDP::RAIL::NewOrExistingWindow & order) override;
 //
-//     virtual void draw(const RDP::RAIL::WindowIcon & order) override;
+//     void draw(const RDP::RAIL::WindowIcon & order) override;
 //
-//     virtual void draw(const RDP::RAIL::CachedIcon & order) override;
+//     void draw(const RDP::RAIL::CachedIcon & order) override;
 //
-//     virtual void draw(const RDP::RAIL::DeletedWindow & order) override;
+//     void draw(const RDP::RAIL::DeletedWindow & order) override;
 //
-//     virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override;
+//     void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override;
 //
-//     virtual void draw(const RDP::RAIL::DeletedNotificationIcons & order) override;
+//     void draw(const RDP::RAIL::DeletedNotificationIcons & order) override;
 //
-//     virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override;
+//     void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override;
 //
-//     virtual void draw(const RDP::RAIL::NonMonitoredDesktop & order) override;
+//     void draw(const RDP::RAIL::NonMonitoredDesktop & order) override;
 
-    virtual void draw(const RDPColCache   & cmd) override;
-
-    virtual void draw(const RDPBrushCache & cmd) override;
+//     void draw(const RDPColCache   & cmd) override;
+//
+//     void draw(const RDPBrushCache & cmd) override;
 
 
 

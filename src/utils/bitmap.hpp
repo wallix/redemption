@@ -42,7 +42,7 @@
 #include "utils/rect.hpp"
 #include "utils/bitmap_data_allocator.hpp"
 
-#include "cxx/attributes.hpp"
+#include "cxx/cxx.hpp"
 
 #include "utils/sugar/array_view.hpp"
 #include "system/ssl_sha1.hpp"
@@ -343,7 +343,7 @@ public:
         }
 
         this->data_bitmap = DataBitmap::construct(src_bmp.bpp(), r.cx, r.cy);
-        if (this->bpp() == 8){
+        if (this->bpp() == 8) {
             this->data_bitmap->palette() = src_bmp.data_bitmap->palette();
         }
 

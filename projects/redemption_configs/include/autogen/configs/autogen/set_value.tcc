@@ -669,6 +669,18 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 static_cast<cfg::client::show_target_user_in_f12_message&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "enable_new_pointer_update")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::client::enable_new_pointer_update&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::client::enable_new_pointer_update&>(this->variables)
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -904,6 +916,18 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 static_cast<cfg::mod_rdp::alternate_shell&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "shell_arguments")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::shell_arguments&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_rdp::shell_arguments&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "shell_working_directory")) {
             ::configs::parse_and_log(
                 context, key,
@@ -926,6 +950,30 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::post_set_value(
                 this->variables,
                 static_cast<cfg::mod_rdp::use_client_provided_alternate_shell&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "use_client_provided_remoteapp")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::use_client_provided_remoteapp&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_rdp::use_client_provided_remoteapp&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "use_native_remoteapp_capability")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::use_native_remoteapp_capability&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_rdp::use_native_remoteapp_capability&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "enable_session_probe")) {
@@ -1870,6 +1918,18 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 static_cast<cfg::debug::secondary_orders&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "bitmap_update")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::debug::bitmap_update&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::debug::bitmap_update&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "bitmap")) {
             ::configs::parse_and_log(
                 context, key,
@@ -1954,16 +2014,16 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 static_cast<cfg::debug::mod_vnc&>(this->variables)
             );
         }
-        else if (0 == strcmp(key, "mod_int")) {
+        else if (0 == strcmp(key, "mod_internal")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::debug::mod_int&>(this->variables).value,
+                static_cast<cfg::debug::mod_internal&>(this->variables).value,
                 ::configs::spec_type<uint32_t>{},
                 av
             );
             ::configs::post_set_value(
                 this->variables,
-                static_cast<cfg::debug::mod_int&>(this->variables)
+                static_cast<cfg::debug::mod_internal&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "mod_xup")) {
@@ -2038,18 +2098,6 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 static_cast<cfg::debug::cache&>(this->variables)
             );
         }
-        else if (0 == strcmp(key, "bitmap_update")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::debug::bitmap_update&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::bitmap_update&>(this->variables)
-            );
-        }
         else if (0 == strcmp(key, "performance")) {
             ::configs::parse_and_log(
                 context, key,
@@ -2072,18 +2120,6 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::post_set_value(
                 this->variables,
                 static_cast<cfg::debug::pass_dialog_box&>(this->variables)
-            );
-        }
-        else if (0 == strcmp(key, "mod_internal")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::debug::mod_internal&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::mod_internal&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "ocr")) {

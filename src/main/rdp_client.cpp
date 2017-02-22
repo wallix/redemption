@@ -53,7 +53,7 @@ class ClientFront : public FrontAPI
     CHANNELS::ChannelDefArray   cl;
 
 public:
-    bool can_be_start_capture(auth_api*) override { return false; }
+    bool can_be_start_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
 
     void flush() {
@@ -524,8 +524,10 @@ int main(int argc, char** argv)
     UdevRandom gen;
     TimeSystem timeobj;
 
+    NullAuthentifier authentifier;
+
     /* mod_api */
-    mod_rdp mod( mod_trans, front, client_info, redir_info, gen, timeobj, mod_rdp_params);
+    mod_rdp mod( mod_trans, front, client_info, redir_info, gen, timeobj, mod_rdp_params, authentifier);
 
     run_mod(mod, front, front_event, &mod_trans, nullptr);
 

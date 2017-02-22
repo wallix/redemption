@@ -27,6 +27,7 @@
 #include "gdi/clip_from_cmd.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/protected_graphics.hpp"
+#include "mod/internal/client_execute.hpp"
 #include "mod/internal/widget2/flat_button.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/rdp_log.hpp"
@@ -50,9 +51,6 @@ private:
 
     Translation::language_t lang;
 
-    uint16_t front_width;
-    uint16_t front_height;
-
     Font  const & font;
     Theme const & theme;
 
@@ -62,7 +60,6 @@ private:
 
     bool graphics_update_disabled = false;
 
-    Rect dialog_box_rect;
     Rect protected_rect;
 
     uint32_t dialog_box_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
@@ -79,13 +76,15 @@ private:
     Rect disconnect_now_button_rect;
     bool disconnect_now_button_clicked = false;
 
-    auth_api* acl = nullptr;
+    auth_api& authentifier;
 
     bool has_previous_window = false;
 
     std::string session_probe_window_title;
 
     uint32_t auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
+
+    const non_null_ptr<ClientExecute> client_execute;
 
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
@@ -112,20 +111,18 @@ public:
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
     RemoteProgramsSessionManager(FrontAPI& front, mod_api& mod, Translation::language_t lang,
-                                 uint16_t front_width, uint16_t front_height,
-                                 Font const & font, Theme const & theme, auth_api* acl,
-                                 char const* session_probe_window_title, RDPVerbose verbose)
+                                 Font const & font, Theme const & theme, auth_api & authentifier,
+                                 char const * session_probe_window_title,
+                                 non_null_ptr<ClientExecute> client_execute, RDPVerbose verbose)
     : front(front)
     , mod(mod)
     , lang(lang)
-    , front_width(front_width)
-    , front_height(front_height)
     , font(font)
     , theme(theme)
     , verbose(verbose)
-    , dialog_box_rect((front_width - 640) / 2, (front_height - 480) / 2, 640, 480)
-    , acl(acl)
+    , authentifier(authentifier)
     , session_probe_window_title(session_probe_window_title)
+    , client_execute(client_execute)
     {}
 
     void begin_update() override
@@ -189,9 +186,7 @@ public:
             if (!(device_flags & SlowPath::PTRFLAGS_DOWN) &&
                 (this->disconnect_now_button_rect.contains_pt(x, y))) {
                 LOG(LOG_INFO, "RemoteApp session initiated disconnect by user");
-                if (this->acl) {
-                    this->acl->disconnect_target();
-                }
+                this->authentifier.disconnect_target();
                 throw Error(ERR_DISCONNECT_BY_USER);
             }
         }
@@ -205,9 +200,7 @@ public:
         (void)param2;
         if ((28 == param1) && !(device_flags & SlowPath::KBDFLAGS_RELEASE)) {
             LOG(LOG_INFO, "RemoteApp session initiated disconnect by user");
-            if (this->acl) {
-                this->acl->disconnect_target();
-            }
+            this->authentifier.disconnect_target();
             throw Error(ERR_DISCONNECT_BY_USER);
         }
     }
@@ -423,7 +416,16 @@ private:
 
         this->dialog_box_window_id = this->register_client_window();
 
-        this->protected_rect = this->dialog_box_rect;
+        Rect mod_window_rect = this->client_execute->get_window_rect();
+
+        Rect dialog_box_rect(
+                mod_window_rect.x + (mod_window_rect.cx - 640) / 2,
+                mod_window_rect.y + (mod_window_rect.cy - 480) / 2,
+                640,
+                480
+            );
+
+        this->protected_rect = dialog_box_rect;
 
         {
             RDP::RAIL::NewOrExistingWindow order;
@@ -462,7 +464,7 @@ private:
             order.NumVisibilityRects(1);
             order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->protected_rect.cx, this->protected_rect.cy));
 
-            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+            if (this->verbose & RDPVerbose::rail) {
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
@@ -483,7 +485,7 @@ private:
             order.NumWindowIds(1);
             order.window_ids(0, this->dialog_box_window_id);
 
-            /*if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) */{
+            if (this->verbose & RDPVerbose::rail) {
                 StaticOutStream<256> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
@@ -510,7 +512,7 @@ private:
                 );
             order.header.WindowId(this->dialog_box_window_id);
 
-            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+            if (this->verbose & RDPVerbose::rail) {
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
@@ -555,8 +557,8 @@ private:
         gdi::TextMetrics tm(this->font, TR("starting_remoteapp", this->lang));
         gdi::server_draw_text(*this->drawable,
                               this->font,
-                              (this->front_width - tm.width) / 2,
-                              (this->front_height - tm.height) / 2,
+                              this->protected_rect.x + (this->protected_rect.cx - tm.width) / 2,
+                              this->protected_rect.y + (this->protected_rect.cy - tm.height) / 2,
                               TR("starting_remoteapp", this->lang),
                               this->theme.global.fgcolor,
                               this->theme.global.bgcolor,
@@ -598,11 +600,11 @@ private:
 
         const uint32_t height = tm_msg.height + interspace + dim_button.h;
 
-        int ypos = (this->front_height - height) / 2;
+        int ypos = this->protected_rect.y + (this->protected_rect.cy - height) / 2;
 
         gdi::server_draw_text(*this->drawable,
                               this->font,
-                              (this->front_width - tm_msg.width) / 2,
+                              this->protected_rect.x + (this->protected_rect.cx - tm_msg.width) / 2,
                               ypos,
                               TR("closing_remoteapp", this->lang),
                               this->theme.global.fgcolor,
@@ -613,7 +615,7 @@ private:
 
         ypos += (tm_msg.height + interspace);
 
-        this->disconnect_now_button_rect.x  = (this->front_width - dim_button.w) / 2;
+        this->disconnect_now_button_rect.x  = this->protected_rect.x + (this->protected_rect.cx - dim_button.w) / 2;
         this->disconnect_now_button_rect.y  = ypos;
         this->disconnect_now_button_rect.cx = dim_button.w;
         this->disconnect_now_button_rect.cy = dim_button.h;
@@ -685,7 +687,7 @@ public:
             order.NumVisibilityRects(1);
             order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, window_rect.cx, window_rect.cy));
 
-            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+            if (this->verbose & RDPVerbose::rail) {
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
@@ -708,7 +710,7 @@ public:
                 );
             order.header.WindowId(this->auxiliary_window_id);
 
-            /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+            if (this->verbose & RDPVerbose::rail) {
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);

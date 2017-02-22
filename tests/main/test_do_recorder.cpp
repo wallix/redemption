@@ -39,7 +39,7 @@
 #include <fstream>
 #include <sstream>
 #include "utils/fileutils.hpp"
-#include "transport/out_meta_sequence_transport.hpp"
+#include "capture/capture.hpp"
 
 #ifdef HASH_LEN
 #undef HASH_LEN

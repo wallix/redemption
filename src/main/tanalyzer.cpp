@@ -142,7 +142,7 @@ private:
 
 public:
     // DrawApi
-    bool can_be_start_capture(auth_api*) override { REDASSERT(false); return false; }
+    bool can_be_start_capture() override { REDASSERT(false); return false; }
     bool must_be_stop_capture() override { REDASSERT(false); return false; }
 
     // FrontAPI

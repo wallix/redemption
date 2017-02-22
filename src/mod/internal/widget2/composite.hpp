@@ -507,8 +507,14 @@ public:
         }
     }
 
-    void rdp_input_scancode( long param1, long param2, long param3
-                                   , long param4, Keymap2 * keymap) override {
+    void rdp_input_scancode(long param1, long param2, long param3,
+                            long param4, Keymap2 * keymap) override {
+        if (!keymap->nb_kevent_available()) {
+            if (this->current_focus) {
+                this->current_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
+            }
+        }
+
         while (keymap->nb_kevent_available() > 0) {
             uint32_t nb_kevent = keymap->nb_kevent_available();
             switch (keymap->top_kevent()) {

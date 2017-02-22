@@ -76,10 +76,10 @@
 #include "core/client_info.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/authorization_channels.hpp"
-#include "utils/parser.hpp"
 #include "core/channel_names.hpp"
 
 #include "core/FSCC/FileInformation.hpp"
+#include "mod/internal/client_execute.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/rail_channel.hpp"
 #include "mod/rdp/channels/rail_session_manager.hpp"
@@ -119,6 +119,8 @@ private:
     std::unique_ptr<RemoteProgramsVirtualChannel> remote_programs_virtual_channel;
 
     std::unique_ptr<RemoteProgramsSessionManager> remote_programs_session_manager;
+
+    bool remote_apps_not_enabled = false;
 
 protected:
     FileSystemDriveManager file_system_drive_manager;
@@ -245,14 +247,14 @@ protected:
     int      share_id;
     uint16_t userid;
 
-    char hostname[HOST_NAME_MAX + 1];
-    char username[128];
-    char password[2048];
-    char domain[256];
-    char program[512];
-    char directory[512];
+    char hostname[HOST_NAME_MAX + 1]  = {};
+    char username[128]  = {};
+    char password[2048]  = {};
+    char domain[256]  = {};
+    char program[512] = {};
+    char directory[512]  = {};
 
-    char client_name[128];
+    char client_name[128]  = {};
 
     int encryptionLevel;
     int encryptionMethod;
@@ -295,9 +297,8 @@ protected:
     char auth_channel[8];
     int  auth_channel_flags;
     int  auth_channel_chanid;
-    //int  auth_channel_state;    // 0 means unused, 1 means session running
 
-    auth_api * acl;
+    auth_api & authentifier;
 
     RdpNego nego;
 
@@ -331,9 +332,6 @@ protected:
     const std::chrono::milliseconds   session_probe_disconnected_application_limit;
     const std::chrono::milliseconds   session_probe_disconnected_session_limit;
     const std::chrono::milliseconds   session_probe_idle_session_limit;
-          std::string                 session_probe_alternate_shell;
-          std::string                 session_probe_exe_or_file;
-          std::string                 session_probe_arguments;
     const bool                        session_probe_use_clipboard_based_launcher;
 
     std::string session_probe_target_informations;
@@ -385,7 +383,7 @@ protected:
 
     const uint32_t password_printing_mode;
 
-    bool deactivation_reactivation_in_progress;
+    bool deactivation_reactivation_in_progress = false;
 
     RedirectionInfo & redir_info;
 
@@ -403,7 +401,6 @@ protected:
     Translation::language_t lang;
 
     Font const & font;
-    Theme const & theme;
 
     const bool allow_using_multiple_monitors;
 
@@ -575,7 +572,7 @@ protected:
 
     class RDPServerNotifier : public ServerNotifier {
     private:
-        auth_api * acl;
+        auth_api & authentifier;
 
         const ServerNotification server_access_allowed_message;
         const ServerNotification server_cert_create_message;
@@ -591,7 +588,7 @@ protected:
 
     public:
         RDPServerNotifier(
-                auth_api * acl,
+                auth_api & authentifier,
                 ServerNotification server_access_allowed_message,
                 ServerNotification server_cert_create_message,
                 ServerNotification server_cert_success_message,
@@ -599,7 +596,7 @@ protected:
                 ServerNotification server_cert_error_message,
                 RDPVerbose verbose
             )
-        : acl(acl)
+        : authentifier(authentifier)
         , server_access_allowed_message(server_access_allowed_message)
         , server_cert_create_message(server_cert_create_message)
         , server_cert_success_message(server_cert_success_message)
@@ -609,10 +606,8 @@ protected:
         {}
 
         void server_access_allowed() override {
-            if (is_syslog_notification_enabled(
-                    this->server_access_allowed_message) &&
-                this->acl) {
-                this->acl->log4((this->verbose & RDPVerbose::basic_trace),
+            if (is_syslog_notification_enabled(this->server_access_allowed_message)) {
+                this->authentifier.log4((this->verbose & RDPVerbose::basic_trace),
                         "CERTIFICATE_CHECK_SUCCESS",
                         "description='Connexion to server allowed'"
                     );
@@ -620,10 +615,8 @@ protected:
         }
 
         void server_cert_create() override {
-            if (is_syslog_notification_enabled(
-                    this->server_cert_create_message) &&
-                this->acl) {
-                this->acl->log4((this->verbose & RDPVerbose::basic_trace),
+            if (is_syslog_notification_enabled(this->server_cert_create_message)) {
+                this->authentifier.log4((this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_NEW",
                         "description='New X.509 certificate created'"
                     );
@@ -631,10 +624,8 @@ protected:
         }
 
         void server_cert_success() override {
-            if (is_syslog_notification_enabled(
-                    this->server_cert_success_message) &&
-                this->acl) {
-                this->acl->log4((this->verbose & RDPVerbose::basic_trace),
+            if (is_syslog_notification_enabled(this->server_cert_success_message)) {
+                this->authentifier.log4((this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_MATCH_SUCCESS",
                         "description='X.509 server certificate match'"
                     );
@@ -642,10 +633,8 @@ protected:
         }
 
         void server_cert_failure() override {
-            if (is_syslog_notification_enabled(
-                    this->server_cert_failure_message) &&
-                this->acl) {
-                this->acl->log4((this->verbose & RDPVerbose::basic_trace),
+            if (is_syslog_notification_enabled(this->server_cert_failure_message)) {
+                this->authentifier.log4((this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_MATCH_FAILURE",
                         "description='X.509 server certificate match failure'"
                     );
@@ -653,15 +642,13 @@ protected:
         }
 
         void server_cert_error(const char * str_error) override {
-            if (is_syslog_notification_enabled(
-                    this->server_cert_error_message) &&
-                this->acl) {
+            if (is_syslog_notification_enabled(this->server_cert_error_message)) {
                 char extra[512];
                 snprintf(extra, sizeof(extra),
                         "description='X.509 server certificate internal error: \"%s\"'",
                         (str_error ? str_error : "")
                     );
-                this->acl->log4((this->verbose & RDPVerbose::basic_trace),
+                this->authentifier.log4((this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_ERROR",
                         extra
                     );
@@ -673,10 +660,18 @@ protected:
 
     GCC::UserData::CSMonitor cs_monitor;
 
-    uint16_t    client_execute_flags;
+    uint16_t    client_execute_flags = 0;
     std::string client_execute_exe_or_file;
     std::string client_execute_working_dir;
     std::string client_execute_arguments;
+
+    bool use_client_provided_remoteapp;
+
+
+    uint16_t    real_client_execute_flags = 0;
+    std::string real_client_execute_exe_or_file;
+    std::string real_client_execute_working_dir;
+    std::string real_client_execute_arguments;
 
     time_t beginning;
     bool   session_disconnection_logged = false;
@@ -691,8 +686,8 @@ protected:
         : mod_(mod)
         {}
 
-        void operator()(time_t now, gdi::GraphicApi& drawable) override {
-            this->mod_.process_asynchronous_task_event(now, drawable);
+        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+            this->mod_.process_asynchronous_task_event(now, event, drawable);
         }
     } asynchronous_task_event_handler;
 
@@ -704,8 +699,8 @@ protected:
         : mod_(mod)
         {}
 
-        void operator()(time_t now, gdi::GraphicApi& drawable) override {
-            this->mod_.process_session_probe_launcher_event(now, drawable);
+        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+            this->mod_.process_session_probe_launcher_event(now, event, drawable);
         }
     } session_probe_launcher_event_handler;
 
@@ -717,8 +712,8 @@ protected:
         : mod_(mod)
         {}
 
-        void operator()(time_t now, gdi::GraphicApi& drawable) override {
-            this->mod_.process_session_probe_virtual_channel_event(now, drawable);
+        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+            this->mod_.process_session_probe_virtual_channel_event(now, event, drawable);
         }
     } session_probe_virtual_channel_event_handler;
 
@@ -736,6 +731,7 @@ public:
            , Random & gen
            , TimeObj & timeobj
            , const ModRDPParams & mod_rdp_params
+           , auth_api & authentifier
            )
         : front_width(info.width - (info.width % 4))
         , front_height(info.height)
@@ -768,8 +764,7 @@ public:
         , enable_auth_channel(mod_rdp_params.alternate_shell[0] && !mod_rdp_params.ignore_auth_channel)
         , auth_channel_flags(0)
         , auth_channel_chanid(0)
-        //, auth_channel_state(0) // 0 means unused
-        , acl(mod_rdp_params.acl)
+        , authentifier(authentifier)
         , nego( mod_rdp_params.enable_tls, trans, mod_rdp_params.target_user
               , mod_rdp_params.enable_nla, mod_rdp_params.target_host
               , mod_rdp_params.enable_krb, gen, timeobj
@@ -801,8 +796,6 @@ public:
         , session_probe_disconnected_application_limit(mod_rdp_params.session_probe_disconnected_application_limit)
         , session_probe_disconnected_session_limit(mod_rdp_params.session_probe_disconnected_session_limit)
         , session_probe_idle_session_limit(mod_rdp_params.session_probe_idle_session_limit)
-        , session_probe_exe_or_file(mod_rdp_params.session_probe_exe_or_file)
-        , session_probe_arguments(mod_rdp_params.session_probe_arguments)
         , session_probe_use_clipboard_based_launcher(mod_rdp_params.session_probe_use_clipboard_based_launcher &&
                                                      (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)) &&
                                                      (!mod_rdp_params.use_client_provided_alternate_shell ||
@@ -845,16 +838,14 @@ public:
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
         //, total_data_received(0)
         , password_printing_mode(mod_rdp_params.password_printing_mode)
-        , deactivation_reactivation_in_progress(false)
         , redir_info(redir_info)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , bogus_linux_cursor(mod_rdp_params.bogus_linux_cursor)
         , lang(mod_rdp_params.lang)
         , font(mod_rdp_params.font)
-        , theme(mod_rdp_params.theme)
         , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
-        , server_notifier(mod_rdp_params.acl,
+        , server_notifier(authentifier,
                           mod_rdp_params.server_access_allowed_message,
                           mod_rdp_params.server_cert_create_message,
                           mod_rdp_params.server_cert_success_message,
@@ -863,10 +854,7 @@ public:
                           mod_rdp_params.verbose
                          )
         , cs_monitor(info.cs_monitor)
-        , client_execute_flags(mod_rdp_params.client_execute_flags)
-        , client_execute_exe_or_file(mod_rdp_params.client_execute_exe_or_file)
-        , client_execute_working_dir(mod_rdp_params.client_execute_working_dir)
-        , client_execute_arguments(mod_rdp_params.client_execute_arguments)
+        , use_client_provided_remoteapp(mod_rdp_params.use_client_provided_remoteapp)
         , asynchronous_task_event_handler(*this)
         , session_probe_launcher_event_handler(*this)
         , session_probe_virtual_channel_event_handler(*this)
@@ -972,7 +960,6 @@ public:
             this->hostname[sizeof(this->hostname) - 1] = 0;
         }
 
-
         const char * domain_pos   = nullptr;
         size_t       domain_len   = 0;
         const char * username_pos = nullptr;
@@ -1020,7 +1007,6 @@ public:
         LOG(LOG_INFO, "Remote RDP Server domain=\"%s\" login=\"%s\" host=\"%s\"",
             this->domain, this->username, this->hostname);
 
-
         // Password is a multi-sz!
         // A multi-sz contains a sequence of null-terminated strings,
         //  terminated by an empty string (\0) so that the last two
@@ -1029,28 +1015,22 @@ public:
 
         snprintf(this->client_name, sizeof(this->client_name), "%s", info.hostname);
 
-        const char * tmp_alternate_shell =
-            (((mod_rdp_params.alternate_shell && (*mod_rdp_params.alternate_shell)) ||
-              !mod_rdp_params.use_client_provided_alternate_shell) ?
-             mod_rdp_params.alternate_shell : info.alternate_shell);
-        const char * tmp_working_dir     =
-            (((mod_rdp_params.working_dir && (*mod_rdp_params.working_dir)) ||
-              !mod_rdp_params.use_client_provided_alternate_shell) ?
-             mod_rdp_params.working_dir : info.working_dir);
-
-        std::string alternate_shell(tmp_alternate_shell);
-        if (mod_rdp_params.target_application_account && *mod_rdp_params.target_application_account) {
-            const char * user_marker = "${USER}";
-            size_t pos = alternate_shell.find(user_marker, 0);
-            if (pos != std::string::npos) {
-                alternate_shell.replace(pos, strlen(user_marker), mod_rdp_params.target_application_account);
+        std::string shell_arguments;
+        if (mod_rdp_params.target_application && (*mod_rdp_params.target_application)) {
+            shell_arguments = mod_rdp_params.shell_arguments;
+            if (mod_rdp_params.target_application_account && *mod_rdp_params.target_application_account) {
+                const char * user_marker = "${USER}";
+                size_t pos = shell_arguments.find(user_marker, 0);
+                if (pos != std::string::npos) {
+                    shell_arguments.replace(pos, strlen(user_marker), mod_rdp_params.target_application_account);
+                }
             }
-        }
-        if (mod_rdp_params.target_application_password && *mod_rdp_params.target_application_password) {
-            const char * password_marker = "${PASSWORD}";
-            size_t pos = alternate_shell.find(password_marker, 0);
-            if (pos != std::string::npos) {
-                alternate_shell.replace(pos, strlen(password_marker), mod_rdp_params.target_application_password);
+            if (mod_rdp_params.target_application_password && *mod_rdp_params.target_application_password) {
+                const char * password_marker = "${PASSWORD}";
+                size_t pos = shell_arguments.find(password_marker, 0);
+                if (pos != std::string::npos) {
+                    shell_arguments.replace(pos, strlen(password_marker), mod_rdp_params.target_application_password);
+                }
             }
         }
 
@@ -1060,6 +1040,9 @@ public:
             LOG(LOG_INFO, "enable_session_probe=%s",
                 (this->enable_session_probe ? "yes" : "no"));
         }
+
+        std::string session_probe_arguments = mod_rdp_params.session_probe_arguments;
+
         if (this->enable_session_probe) {
             auto replace_tag = [](std::string & str, const char * tag,
                                   const char * replacement_text) {
@@ -1081,16 +1064,13 @@ public:
             else {
                 ::memset(exe_var_str, 0, sizeof(exe_var_str));
             }
-            replace_tag(this->session_probe_arguments, "${EXE_VAR}",
+            replace_tag(session_probe_arguments, "${EXE_VAR}",
                 exe_var_str);
 
             // Target informations
             this->session_probe_target_informations  = mod_rdp_params.target_application;
             this->session_probe_target_informations += ":";
             this->session_probe_target_informations += mod_rdp_params.primary_user_id;
-
-            this->real_alternate_shell = std::move(alternate_shell);
-            this->real_working_dir     = tmp_working_dir;
 
             if (this->remote_program) {
                 char proxy_managed_connection_cookie[9];
@@ -1101,10 +1081,10 @@ public:
                 std::string param = "/#";
                 param += proxy_managed_connection_cookie;
                 param += " ";
-                replace_tag(this->session_probe_arguments,
+                replace_tag(session_probe_arguments,
                     "/${COOKIE_VAR} ", param.c_str());
 
-                replace_tag(this->session_probe_arguments,
+                replace_tag(session_probe_arguments,
                     "${CBSPL_VAR} ", "");
 
                 uint32_t r = this->gen.rand32();
@@ -1122,17 +1102,8 @@ public:
                 param += session_probe_window_title;
                 param += "&";
 
-                replace_tag(this->session_probe_arguments,
+                replace_tag(session_probe_arguments,
                     "${TITLE_VAR} ", param.c_str());
-
-                this->client_execute_exe_or_file = this->session_probe_exe_or_file;
-                this->client_execute_arguments   = this->session_probe_arguments;
-                this->client_execute_working_dir = "%TMP%";
-                this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
-
-                this->session_probe_launcher =
-                    std::make_unique<SessionProbeAlternateShellBasedLauncher>(
-                        this->verbose);
             }   // if (this->remote_program)
             else {
                 if (mod_rdp_params.session_probe_use_clipboard_based_launcher &&
@@ -1145,27 +1116,15 @@ public:
                             "Falled back to using AlternateShell based launcher.");
                 }
 
-                replace_tag(this->session_probe_arguments,
+                replace_tag(session_probe_arguments,
                     "${TITLE_VAR} ", "");
 
                 if (this->session_probe_use_clipboard_based_launcher) {
-                    replace_tag(this->session_probe_arguments,
+                    replace_tag(session_probe_arguments,
                         "/${COOKIE_VAR} ", "");
 
-                    replace_tag(this->session_probe_arguments,
+                    replace_tag(session_probe_arguments,
                         "${CBSPL_VAR} ", "CD %TMP%&");
-
-                    this->session_probe_alternate_shell  = this->session_probe_exe_or_file;
-                    this->session_probe_alternate_shell += " ";
-                    this->session_probe_alternate_shell += this->session_probe_arguments;
-
-                    if (!::strncmp(this->session_probe_alternate_shell.c_str(), "||", 2))
-                        this->session_probe_alternate_shell.erase(0, 2);
-
-                    this->session_probe_launcher =
-                        std::make_unique<SessionProbeClipboardBasedLauncher>(
-                            *this, this->session_probe_alternate_shell,
-                            this->verbose);
                 }
                 else {
                     char proxy_managed_connection_cookie[9];
@@ -1176,20 +1135,65 @@ public:
                     std::string param = "/#";
                     param += proxy_managed_connection_cookie;
                     param += " ";
-                    replace_tag(this->session_probe_arguments,
+                    replace_tag(session_probe_arguments,
                         "/${COOKIE_VAR} ", param.c_str());
 
-                    replace_tag(this->session_probe_arguments,
+                    replace_tag(session_probe_arguments,
                         "${CBSPL_VAR} ", "");
+                }
+            }   // if (!this->remote_program)
+        }
 
-                    this->session_probe_alternate_shell  = this->session_probe_exe_or_file;
-                    this->session_probe_alternate_shell += " ";
-                    this->session_probe_alternate_shell += this->session_probe_arguments;
+        if (mod_rdp_params.target_application && (*mod_rdp_params.target_application)) {
+            if (this->remote_program) {
+                if (this->enable_session_probe) {
+                    std::string alternate_shell(mod_rdp_params.alternate_shell);
 
-                    if (!::strncmp(this->session_probe_alternate_shell.c_str(), "||", 2))
-                        this->session_probe_alternate_shell.erase(0, 2);
+                    if (!shell_arguments.empty()) {
+                        alternate_shell += " ";
+                        alternate_shell += shell_arguments;
+                    }
 
-                    strncpy(this->program, this->session_probe_alternate_shell.c_str(), sizeof(this->program) - 1);
+                    this->real_alternate_shell = std::move(alternate_shell);
+                    this->real_working_dir     = mod_rdp_params.shell_working_dir;
+
+                    this->client_execute_exe_or_file = mod_rdp_params.session_probe_exe_or_file;
+                    this->client_execute_arguments   = session_probe_arguments;
+                    this->client_execute_working_dir = "%TMP%";
+                    this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
+
+                    this->session_probe_launcher =
+                        std::make_unique<SessionProbeAlternateShellBasedLauncher>(
+                            this->verbose);
+                }
+                else {
+                    this->client_execute_exe_or_file = mod_rdp_params.alternate_shell;
+                    this->client_execute_arguments   = std::move(shell_arguments);
+                    this->client_execute_working_dir = mod_rdp_params.shell_working_dir;
+                    this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
+                }
+            }
+            else {
+                if (this->enable_session_probe) {
+                    std::string alternate_shell(mod_rdp_params.alternate_shell);
+
+                    if (!shell_arguments.empty()) {
+                        alternate_shell += " ";
+                        alternate_shell += shell_arguments;
+                    }
+
+                    this->real_alternate_shell = std::move(alternate_shell);
+                    this->real_working_dir     = mod_rdp_params.shell_working_dir;
+
+                    alternate_shell = mod_rdp_params.session_probe_exe_or_file;
+
+                    if (!::strncmp(alternate_shell.c_str(), "||", 2))
+                        alternate_shell.erase(0, 2);
+
+                    alternate_shell += " ";
+                    alternate_shell += session_probe_arguments;
+
+                    strncpy(this->program, alternate_shell.c_str(), sizeof(this->program) - 1);
                     this->program[sizeof(this->program) - 1] = 0;
                     //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
 
@@ -1201,13 +1205,118 @@ public:
                         std::make_unique<SessionProbeAlternateShellBasedLauncher>(
                             this->verbose);
                 }
-            }   // if (!this->remote_program)
+                else {
+                    std::string alternate_shell(mod_rdp_params.alternate_shell);
+
+                    if (!shell_arguments.empty()) {
+                        alternate_shell += " ";
+                        alternate_shell += shell_arguments;
+                    }
+
+                    strncpy(this->program, alternate_shell.c_str(), sizeof(this->program) - 1);
+                    this->program[sizeof(this->program) - 1] = 0;
+                    strncpy(this->directory, mod_rdp_params.shell_working_dir, sizeof(this->directory) - 1);
+                    this->directory[sizeof(this->directory) - 1] = 0;
+                }
+            }
         }
         else {
-            strncpy(this->program, alternate_shell.c_str(), sizeof(this->program) - 1);
-            this->program[sizeof(this->program) - 1] = 0;
-            strncpy(this->directory, tmp_working_dir, sizeof(this->directory) - 1);
-            this->directory[sizeof(this->directory) - 1] = 0;
+            if (this->remote_program) {
+                if (mod_rdp_params.use_client_provided_remoteapp &&
+                    mod_rdp_params.client_execute_exe_or_file &&
+                    *mod_rdp_params.client_execute_exe_or_file) {
+                    if (this->enable_session_probe) {
+                        this->real_alternate_shell = "[None]";
+
+                        this->real_client_execute_flags       = mod_rdp_params.client_execute_flags;
+                        this->real_client_execute_exe_or_file = mod_rdp_params.client_execute_exe_or_file;
+                        this->real_client_execute_arguments   = mod_rdp_params.client_execute_arguments;
+                        this->real_client_execute_working_dir = mod_rdp_params.client_execute_working_dir;
+
+                        this->client_execute_exe_or_file = mod_rdp_params.session_probe_exe_or_file;
+                        this->client_execute_arguments   = session_probe_arguments;
+                        this->client_execute_working_dir = "%TMP%";
+                        this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
+
+                        this->session_probe_launcher =
+                            std::make_unique<SessionProbeAlternateShellBasedLauncher>(
+                                this->verbose);
+                    }
+                    else {
+                        this->client_execute_flags       = mod_rdp_params.client_execute_flags;
+                        this->client_execute_exe_or_file = mod_rdp_params.client_execute_exe_or_file;
+                        this->client_execute_arguments   = mod_rdp_params.client_execute_arguments;
+                        this->client_execute_working_dir = mod_rdp_params.client_execute_working_dir;
+                    }
+                }
+            }
+            else {
+                if (mod_rdp_params.use_client_provided_alternate_shell &&
+                        info.alternate_shell[0]) {
+                    if (this->enable_session_probe) {
+                        this->real_alternate_shell = info.alternate_shell;
+                        this->real_working_dir     = info.working_dir;
+
+                        std::string alternate_shell(mod_rdp_params.session_probe_exe_or_file);
+
+                        if (!::strncmp(alternate_shell.c_str(), "||", 2))
+                            alternate_shell.erase(0, 2);
+
+                        alternate_shell += " ";
+                        alternate_shell += session_probe_arguments;
+
+                        strncpy(this->program, alternate_shell.c_str(), sizeof(this->program) - 1);
+                        this->program[sizeof(this->program) - 1] = 0;
+                        //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
+
+                        const char * session_probe_working_dir = "%TMP%";
+                        strncpy(this->directory, session_probe_working_dir, sizeof(this->directory) - 1);
+                        this->directory[sizeof(this->directory) - 1] = 0;
+
+                        this->session_probe_launcher =
+                            std::make_unique<SessionProbeAlternateShellBasedLauncher>(
+                                this->verbose);
+                    }
+                    else {
+                        strncpy(this->program, info.alternate_shell, sizeof(this->program) - 1);
+                        this->program[sizeof(this->program) - 1] = 0;
+                        //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
+
+                        strncpy(this->directory, info.working_dir, sizeof(this->directory) - 1);
+                        this->directory[sizeof(this->directory) - 1] = 0;
+                    }
+                }
+                else {
+                    if (this->enable_session_probe) {
+                        std::string alternate_shell(mod_rdp_params.session_probe_exe_or_file);
+
+                        if (!::strncmp(alternate_shell.c_str(), "||", 2))
+                            alternate_shell.erase(0, 2);
+
+                        alternate_shell += " ";
+                        alternate_shell += session_probe_arguments;
+
+                        if (this->session_probe_use_clipboard_based_launcher) {
+                            this->session_probe_launcher =
+                                std::make_unique<SessionProbeClipboardBasedLauncher>(
+                                    *this, alternate_shell.c_str(), this->verbose);
+                        }
+                        else {
+                            strncpy(this->program, alternate_shell.c_str(), sizeof(this->program) - 1);
+                            this->program[sizeof(this->program) - 1] = 0;
+                            //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
+
+                            const char * session_probe_working_dir = "%TMP%";
+                            strncpy(this->directory, session_probe_working_dir, sizeof(this->directory) - 1);
+                            this->directory[sizeof(this->directory) - 1] = 0;
+
+                            this->session_probe_launcher =
+                                std::make_unique<SessionProbeAlternateShellBasedLauncher>(
+                                    this->verbose);
+                        }
+                    }
+                }
+            }
         }
 
         LOG(LOG_INFO, "Server key layout is %x", this->keylayout);
@@ -1231,10 +1340,12 @@ public:
 
         if (this->remote_program) {
             this->remote_programs_session_manager =
-                std::make_unique<RemoteProgramsSessionManager>(front, *this,
-                    this->lang, this->front_width, this->front_height,
-                    this->font, this->theme, this->acl,
-                    session_probe_window_title, this->verbose);
+                std::make_unique<RemoteProgramsSessionManager>(
+                    front, *this, this->lang, this->font,
+                    mod_rdp_params.theme, this->authentifier,
+                    session_probe_window_title,
+                    mod_rdp_params.client_execute, this->verbose
+                );
         }
     }   // mod_rdp
 
@@ -1248,9 +1359,10 @@ public:
 
         delete this->transparent_recorder;
 
-        if (this->acl && !this->end_session_reason.empty() &&
-            !this->end_session_message.empty()) {
-            this->acl->report(this->end_session_reason.c_str(),
+        if (!this->end_session_reason.empty()
+        &&  !this->end_session_message.empty()) {
+            this->authentifier.report(
+                this->end_session_reason.c_str(),
                 this->end_session_message.c_str());
         }
 
@@ -1338,10 +1450,8 @@ protected:
     const ClipboardVirtualChannel::Params
         get_clipboard_virtual_channel_params() const
     {
-        ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
+        ClipboardVirtualChannel::Params clipboard_virtual_channel_params(this->authentifier);
 
-        clipboard_virtual_channel_params.authentifier                    =
-            this->acl;
         clipboard_virtual_channel_params.exchanged_data_limit            =
             this->max_clipboard_data;
         clipboard_virtual_channel_params.verbose                         =
@@ -1365,10 +1475,8 @@ protected:
     const FileSystemVirtualChannel::Params
         get_file_system_virtual_channel_params() const
     {
-        FileSystemVirtualChannel::Params file_system_virtual_channel_params;
+        FileSystemVirtualChannel::Params file_system_virtual_channel_params(this->authentifier);
 
-        file_system_virtual_channel_params.authentifier                    =
-            this->acl;
         file_system_virtual_channel_params.exchanged_data_limit            =
             this->max_rdpdr_data;
         file_system_virtual_channel_params.verbose                         =
@@ -1407,10 +1515,8 @@ protected:
         get_session_probe_virtual_channel_params() const
     {
         SessionProbeVirtualChannel::Params
-            session_probe_virtual_channel_params;
+            session_probe_virtual_channel_params(this->authentifier);
 
-        session_probe_virtual_channel_params.authentifier                           =
-            this->acl;
         session_probe_virtual_channel_params.exchanged_data_limit                   =
             static_cast<data_size_type>(-1);
         session_probe_virtual_channel_params.verbose                                =
@@ -1472,10 +1578,8 @@ protected:
     const RemoteProgramsVirtualChannel::Params
         get_remote_programs_virtual_channel_params() const
     {
-        RemoteProgramsVirtualChannel::Params remote_programs_virtual_channel_params;
+        RemoteProgramsVirtualChannel::Params remote_programs_virtual_channel_params(this->authentifier);
 
-        remote_programs_virtual_channel_params.authentifier                    =
-            this->acl;
         remote_programs_virtual_channel_params.exchanged_data_limit            =
             this->max_clipboard_data;
         remote_programs_virtual_channel_params.verbose                         =
@@ -1489,6 +1593,16 @@ protected:
             this->client_execute_working_dir.c_str();
         remote_programs_virtual_channel_params.client_execute_arguments        =
             this->client_execute_arguments.c_str();
+
+        remote_programs_virtual_channel_params.client_execute_flags_2          =
+            this->real_client_execute_flags;
+        remote_programs_virtual_channel_params.client_execute_exe_or_file_2    =
+            this->real_client_execute_exe_or_file.c_str();
+        remote_programs_virtual_channel_params.client_execute_working_dir_2    =
+            this->real_client_execute_working_dir.c_str();
+        remote_programs_virtual_channel_params.client_execute_arguments_2      =
+            this->real_client_execute_arguments.c_str();
+
         remote_programs_virtual_channel_params.rail_session_manager            =
             this->remote_programs_session_manager.get();
 
@@ -1667,7 +1781,7 @@ public:
     }
 
 private:
-    void process_asynchronous_task_event(time_t, gdi::GraphicApi&) {
+    void process_asynchronous_task_event(time_t, wait_obj* /* event*/, gdi::GraphicApi&) {
         if (!this->asynchronous_tasks.front()->run(this->asynchronous_task_event)) {
             this->asynchronous_tasks.pop_front();
         }
@@ -1680,14 +1794,14 @@ private:
         }
     }
 
-    void process_session_probe_launcher_event(time_t, gdi::GraphicApi&) {
+    void process_session_probe_launcher_event(time_t, wait_obj* /*event*/, gdi::GraphicApi&) {
         if (this->session_probe_launcher) {
             this->session_probe_launcher->on_event();
         }
     }
 
-    void process_session_probe_virtual_channel_event(time_t, gdi::GraphicApi&) {
-        //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event()");
+    void process_session_probe_virtual_channel_event(time_t, wait_obj* event, gdi::GraphicApi&) {
+        //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event() ...");
         try{
             if (this->session_probe_virtual_channel_p) {
                 this->session_probe_virtual_channel_p->process_event();
@@ -1700,11 +1814,14 @@ private:
             this->end_session_reason.clear();
             this->end_session_message.clear();
 
-            this->acl->disconnect_target();
-            this->acl->set_auth_error_message(TR("session_logoff_in_progress", this->lang));
+            this->authentifier.disconnect_target();
+            this->authentifier.set_auth_error_message(TR("session_logoff_in_progress", this->lang));
 
-            session_probe_virtual_channel_p->get_event()->signal = BACK_EVENT_NEXT;
+            if (event) {
+                event->signal = BACK_EVENT_NEXT;
+            }
         }
+        //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event() done.");
     }
 
 public:
@@ -1836,10 +1953,6 @@ public:
     // Method used by session to transmit sesman answer for auth_channel
 
     void send_auth_channel_data(const char * string_data) override {
-        //if (strncmp("Error", string_data, 5)) {
-        //    this->auth_channel_state = 1; // session started
-        //}
-
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
         StaticOutStream<65536> stream_data;
@@ -3142,8 +3255,7 @@ public:
 
                 case FastPath::UpdateType::PTR_NULL:
                     {
-                        struct Pointer cursor;
-                        memset(cursor.mask, 0xff, sizeof(cursor.mask));
+                        Pointer cursor;
                         this->front.set_pointer(cursor);
                     }
                     break;
@@ -3186,14 +3298,23 @@ public:
 
 
                 case FastPath::UpdateType::COLOR:
+                    if (this->verbose & RDPVerbose::basic_trace3) {
+                        LOG(LOG_INFO, "Process pointer color (Fast)");
+                    }
                     this->process_color_pointer_pdu(upd.payload);
                     break;
 
                 case FastPath::UpdateType::CACHED:
+                    if (this->verbose & RDPVerbose::basic_trace3) {
+                        LOG(LOG_INFO, "Process pointer cached (Fast)");
+                    }
                     this->process_cached_pointer_pdu(upd.payload);
                     break;
 
                 case FastPath::UpdateType::POINTER:
+                    if (this->verbose & RDPVerbose::basic_trace3)  {
+                        LOG(LOG_INFO, "Process pointer new (Fast)");
+                    }
                     this->process_new_pointer_pdu(upd.payload);
                     break;
 
@@ -3221,27 +3342,26 @@ public:
             LOG(LOG_ERR, "mod::rdp::DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
             this->front.recv_disconnect_provider_ultimatum();
 
-            if (this->acl) {
-                this->end_session_reason.clear();
-                this->end_session_message.clear();
+            this->end_session_reason.clear();
+            this->end_session_message.clear();
 
-                if (!this->session_probe_virtual_channel_p ||
-                    !this->session_probe_virtual_channel_p->is_disconnection_reconnection_required()) {
-                    this->acl->disconnect_target();
-                }
-                this->acl->report("CLOSE_SESSION_SUCCESSFUL", "OK.");
+            if ((!this->session_probe_virtual_channel_p
+                || !this->session_probe_virtual_channel_p->is_disconnection_reconnection_required())
+             && !this->remote_apps_not_enabled) {
+                this->authentifier.disconnect_target();
+            }
+            this->authentifier.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
-                if (!this->session_disconnection_logged) {
-                    double seconds = ::difftime(now, this->beginning);
+            if (!this->session_disconnection_logged) {
+                double seconds = ::difftime(now, this->beginning);
 
-                    char extra[1024];
-                    snprintf(extra, sizeof(extra), "duration='%02d:%02d:%02d'",
-                        (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
-                        (int(seconds) % 60));
+                char extra[1024];
+                snprintf(extra, sizeof(extra), "duration='%02d:%02d:%02d'",
+                    (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
+                    (int(seconds) % 60));
 
-                    this->acl->log4(false, "SESSION_DISCONNECTION", extra);
-                    this->session_disconnection_logged = true;
-                }
+                this->authentifier.log4(false, "SESSION_DISCONNECTION", extra);
+                this->session_disconnection_logged = true;
             }
             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
         }
@@ -3401,8 +3521,8 @@ public:
                             }
                             this->connection_finalization_state = UP_AND_RUNNING;
 
-                            if (this->acl && !this->deactivation_reactivation_in_progress) {
-                                this->acl->log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
+                            if (!this->deactivation_reactivation_in_progress) {
+                                this->authentifier.log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -3423,7 +3543,7 @@ public:
                                 this->already_upped_and_running = true;
                             }
 
-                            if (this->front.can_be_start_capture(this->acl)) {
+                            if (this->front.can_be_start_capture()) {
                                 if (this->bogus_refresh_rect
                                  && allow_using_multiple_monitors
                                  && this->cs_monitor.monitorCount > 1
@@ -3754,14 +3874,17 @@ public:
                     throw Error(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION);
                 }
 
-                if (this->acl &&
-                    (e.id != ERR_MCS_APPID_IS_MCS_DPUM))
+                if (this->remote_apps_not_enabled) {
+                    throw Error(ERR_RAIL_NOT_ENABLED);
+                }
+
+                if (e.id != ERR_MCS_APPID_IS_MCS_DPUM)
                 {
                     char const* reason =
                         ((UP_AND_RUNNING == this->connection_finalization_state) ?
                          "SESSION_EXCEPTION" : "SESSION_EXCEPTION_NO_RECORD");
 
-                    this->acl->report(reason, e.errmsg());
+                    this->authentifier.report(reason, e.errmsg());
 
                     this->end_session_reason.clear();
                     this->end_session_message.clear();
@@ -3795,7 +3918,11 @@ public:
                 }
 
                 if ((e.id == ERR_LIC) ||
-                    (e.id == ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT)) {
+                    (e.id == ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT) ||
+                    (e.id == ERR_RAIL_CLIENT_EXECUTE) ||
+                    (e.id == ERR_RAIL_STARTING_PROGRAM) ||
+                    (e.id == ERR_RAIL_UNAUTHORIZED_PROGRAM) ||
+                    (e.id == ERR_SESSION_PROBE_LAUNCH)) {
                     throw;
                 }
 
@@ -3828,10 +3955,7 @@ public:
                     *this->error_message = "Logon timer expired!";
                 }
 
-                if (this->acl)
-                {
-                    this->acl->report("CONNECTION_FAILED", "Logon timer expired.");
-                }
+                this->authentifier.report("CONNECTION_FAILED", "Logon timer expired.");
 
                 if (this->enable_session_probe) {
                     const bool disable_input_event     = false;
@@ -3869,8 +3993,8 @@ public:
             this->end_session_reason.clear();
             this->end_session_message.clear();
 
-            this->acl->disconnect_target();
-            this->acl->set_auth_error_message(TR("session_logoff_in_progress", this->lang));
+            this->authentifier.disconnect_target();
+            this->authentifier.set_auth_error_message(TR("session_logoff_in_progress", this->lang));
 
             this->event.signal = BACK_EVENT_NEXT;
         }
@@ -4086,9 +4210,9 @@ public:
 
                     if (!this->enable_transparent_mode && !this->deactivation_reactivation_in_progress) {
                         this->orders.create_cache_bitmap(
-                            120,   nbbytes(this->orders.bpp) * 16 * 16, false,
-                            120,   nbbytes(this->orders.bpp) * 32 * 32, false,
-                            2553,  nbbytes(this->orders.bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
+                            this->BmpCacheRev2_Cache_NumEntries()[0], nbbytes(this->orders.bpp) * 16 * 16, false,
+                            this->BmpCacheRev2_Cache_NumEntries()[1], nbbytes(this->orders.bpp) * 32 * 32, false,
+                            this->BmpCacheRev2_Cache_NumEntries()[2], nbbytes(this->orders.bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
                             this->enable_cache_waiting_list,
                             this->cache_verbose);
                     }
@@ -4247,17 +4371,17 @@ public:
         switch (message_type) {
         // Cached Pointer Update (section 2.2.9.1.1.4.6)
         case RDP_POINTER_CACHED:
-            if (this->verbose & RDPVerbose::basic_trace3){
+            if (this->verbose & RDPVerbose::basic_trace3) {
                 LOG(LOG_INFO, "Process pointer cached");
             }
             this->process_cached_pointer_pdu(stream);
-            if (this->verbose & RDPVerbose::basic_trace3){
+            if (this->verbose & RDPVerbose::basic_trace3) {
                 LOG(LOG_INFO, "Process pointer cached done");
             }
             break;
         // Color Pointer Update (section 2.2.9.1.1.4.4)
         case RDP_POINTER_COLOR:
-            if (this->verbose & RDPVerbose::basic_trace3){
+            if (this->verbose & RDPVerbose::basic_trace3) {
                 LOG(LOG_INFO, "Process pointer color");
             }
             this->process_color_pointer_pdu(stream);
@@ -4267,13 +4391,13 @@ public:
             break;
         // New Pointer Update (section 2.2.9.1.1.4.5)
         case RDP_POINTER_NEW:
-            if (this->verbose & RDPVerbose::basic_trace3){
+            if (this->verbose & RDPVerbose::basic_trace3) {
                 LOG(LOG_INFO, "Process pointer new");
             }
             if (enable_new_pointer) {
                 this->process_new_pointer_pdu(stream); // Pointer with arbitrary color depth
             }
-            if (this->verbose & RDPVerbose::basic_trace3){
+            if (this->verbose & RDPVerbose::basic_trace3) {
                 LOG(LOG_INFO, "Process pointer new done");
             }
             break;
@@ -4281,7 +4405,7 @@ public:
 
         case RDP_POINTER_SYSTEM:
         {
-            if (this->verbose & RDPVerbose::basic_trace3){
+            if (this->verbose & RDPVerbose::basic_trace3) {
                 LOG(LOG_INFO, "Process pointer system");
             }
             // TODO: actually show mouse cursor or get back to default
@@ -5108,9 +5232,7 @@ public:
             break;
         case ERRINFO_DISCONNECTED_BY_OTHERCONNECTION:
             LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DISCONNECTED_BY_OTHERCONNECTION");
-            if (this->acl) {
-                this->acl->set_auth_error_message(TR("disconnected_by_otherconnection", this->lang));
-            }
+            this->authentifier.set_auth_error_message(TR("disconnected_by_otherconnection", this->lang));
             break;
         case ERRINFO_OUT_OF_MEMORY:
             LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "OUT_OF_MEMORY");
@@ -5291,6 +5413,8 @@ public:
             break;
         case ERRINFO_REMOTEAPPSNOTENABLED:
             LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "REMOTEAPPSNOTENABLED");
+
+            this->remote_apps_not_enabled = true;
             break;
         case ERRINFO_CACHECAPNOTSET:
             LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CACHECAPNOTSET");
@@ -5465,10 +5589,7 @@ public:
             this->session_probe_virtual_channel_p->start_launch_timeout_timer();
         }
 
-        if (this->acl)
-        {
-            this->acl->report("OPEN_SESSION_SUCCESSFUL", "OK.");
-        }
+        this->authentifier.report("OPEN_SESSION_SUCCESSFUL", "OK.");
         this->end_session_reason = "CLOSE_SESSION_SUCCESSFUL";
         this->end_session_message = "OK.";
 
@@ -5562,7 +5683,7 @@ public:
                     std::string errmsg = "(RemoteApp) ";
 
                     errmsg += RDP::LogonErrorsInfo_Recv::ErrorNotificationDataToShortMessage(lei.ErrorNotificationData);
-                    this->acl->set_auth_error_message(errmsg.c_str());
+                    this->authentifier.set_auth_error_message(errmsg.c_str());
                     throw Error(ERR_RAIL_LOGON_FAILED_OR_WARNING);
                 }
             }
@@ -5693,6 +5814,15 @@ public:
                     window_list_caps.recv(stream, capset_length);
                     if (this->verbose & RDPVerbose::basic_trace) {
                         window_list_caps.log("Received from server");
+                    }
+                }
+                break;
+            case CAPSTYPE_POINTER:
+                {
+                    PointerCaps pointer_caps;
+                    pointer_caps.recv(stream, capset_length);
+                    if (this->verbose & RDPVerbose::basic_trace) {
+                        pointer_caps.log("Receiving from server");
                     }
                 }
                 break;
@@ -6186,13 +6316,14 @@ public:
         Pointer & cursor = this->cursors[pointer_cache_idx];
 
         memset(&cursor, 0, sizeof(Pointer));
-        cursor.bpp = 24;
+//        cursor.bpp    = 24;
         cursor.x      = stream.in_uint16_le();
         cursor.y      = stream.in_uint16_le();
         cursor.width  = stream.in_uint16_le();
         cursor.height = stream.in_uint16_le();
-        unsigned mlen  = stream.in_uint16_le(); /* mask length */
-        unsigned dlen  = stream.in_uint16_le(); /* data length */
+
+        unsigned mlen = stream.in_uint16_le(); /* mask length */
+        unsigned dlen = stream.in_uint16_le(); /* data length */
 
         if ((mlen > sizeof(cursor.mask)) || (dlen > sizeof(cursor.data))) {
             LOG(LOG_ERR,
@@ -6204,6 +6335,62 @@ public:
         // TODO this is modifiying cursor in place: we should not do that.
         memcpy(cursor.data, stream.in_uint8p(dlen), dlen);
         memcpy(cursor.mask, stream.in_uint8p(mlen), mlen);
+
+        //const unsigned int xor_line_length_in_byte = cursor.width * 3;
+        //const unsigned int xor_padded_line_length_in_byte =
+        //    ((xor_line_length_in_byte % 2) ?
+        //     xor_line_length_in_byte + 1 :
+        //     xor_line_length_in_byte);
+        //const unsigned int remainder = (cursor.width % 8);
+        //const unsigned int and_line_length_in_byte = cursor.width / 8 + (remainder ? 1 : 0);
+        //const unsigned int and_padded_line_length_in_byte =
+        //    ((and_line_length_in_byte % 2) ?
+        //     and_line_length_in_byte + 1 :
+        //     and_line_length_in_byte);
+        //for (unsigned int i0 = 0; i0 < cursor.height; ++i0) {
+        //    printf("%02d  ", (cursor.height - i0 - 1));
+        //
+        //    const uint8_t* xorMask = cursor.data + (cursor.height - i0 - 1) * xor_padded_line_length_in_byte;
+        //
+        //    const uint8_t* andMask = cursor.mask + (cursor.height - i0 - 1) * and_padded_line_length_in_byte;
+        //    unsigned char and_bit_extraction_mask = 7;
+        //
+        //    for (unsigned int i1 = 0; i1 < cursor.width; ++i1) {
+        //        unsigned int color = 0;
+        //        color |=  *xorMask             ;
+        //        color |= (*(xorMask + 1) <<  8);
+        //        color |= (*(xorMask + 2) << 16);
+        //
+        //        if ((*andMask) & (1 << and_bit_extraction_mask)) {
+        //            printf(".");
+        //        }
+        //        else {
+        //            if (color == 0xFFFFFF) {
+        //                printf("W");
+        //            }
+        //            else if (color) {
+        //                printf("C");
+        //            }
+        //            else  {
+        //                printf("B");
+        //            }
+        //        }
+        //
+        //        xorMask += 3;
+        //        if (and_bit_extraction_mask) {
+        //            and_bit_extraction_mask--;
+        //        }
+        //        else {
+        //            and_bit_extraction_mask = 7;
+        //            andMask++;
+        //        }
+        //    }
+        //
+        //    printf("\n");
+        //}
+        //printf("\n");
+
+        cursor.update_bw();
 
         this->front.set_pointer(cursor);
         if (this->verbose & RDPVerbose::basic_trace3) {
@@ -6239,7 +6426,7 @@ public:
                 pointer_idx);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
-        struct Pointer & cursor = this->cursors[pointer_idx];
+        Pointer & cursor = this->cursors[pointer_idx];
         if (cursor.is_valid()) {
             this->front.set_pointer(cursor);
         }
@@ -6408,6 +6595,11 @@ public:
 
         unsigned data_bpp  = stream.in_uint16_le(); /* data bpp */
         unsigned pointer_idx = stream.in_uint16_le();
+        if (this->verbose & RDPVerbose::basic_trace3) {
+            LOG(LOG_INFO,
+                "mod_rdp::process_new_pointer_pdu xorBpp=%u pointer_idx=%u",
+                data_bpp, pointer_idx);
+        }
 
         if (pointer_idx >= (sizeof(this->cursors) / sizeof(Pointer))) {
             LOG(LOG_ERR,
@@ -6417,14 +6609,16 @@ public:
         }
 
         Pointer & cursor = this->cursors[pointer_idx];
-        memset(&cursor, 0, sizeof(struct Pointer));
-        cursor.bpp    = 24;
-        cursor.x      = stream.in_uint16_le();
-        cursor.y      = stream.in_uint16_le();
-        cursor.width  = stream.in_uint16_le();
-        cursor.height = stream.in_uint16_le();
-        uint16_t mlen  = stream.in_uint16_le(); /* mask length */
-        uint16_t dlen  = stream.in_uint16_le(); /* data length */
+        memset(&cursor, 0, sizeof(Pointer));
+//        cursor.bpp              = 24;
+        cursor.x                = stream.in_uint16_le();
+        cursor.y                = stream.in_uint16_le();
+        cursor.width            = stream.in_uint16_le();
+        cursor.height           = stream.in_uint16_le();
+        cursor.only_black_white = (data_bpp == 1);
+
+        uint16_t mlen = stream.in_uint16_le(); /* mask length */
+        uint16_t dlen = stream.in_uint16_le(); /* data length */
 
         if (cursor.width > Pointer::MAX_WIDTH){
             LOG(LOG_ERR, "mod_rdp::process_new_pointer_pdu pointer width overflow (%d)", cursor.width);
@@ -6456,11 +6650,14 @@ public:
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
+/*
         size_t out_data_len = 3 * (
             // BUG TODO cursor.bpp is always 24
             (cursor.bpp == 1) ? (cursor.width * cursor.height) / 8 :
             (cursor.bpp == 4) ? (cursor.width * cursor.height) / 2 :
             (dlen / nbbytes(data_bpp)));
+*/
+        size_t out_data_len = 3 * (dlen / nbbytes(data_bpp));
 
         if ((mlen > sizeof(cursor.mask)) ||
             (out_data_len > sizeof(cursor.data))) {
@@ -6498,6 +6695,60 @@ public:
             this->to_regular_mask(stream.get_current(), mlen, data_bpp, cursor.mask);
             stream.in_skip_bytes(mlen);
         }
+
+        //const unsigned int xor_line_length_in_byte = cursor.width * 3;
+        //const unsigned int xor_padded_line_length_in_byte =
+        //    ((xor_line_length_in_byte % 2) ?
+        //     xor_line_length_in_byte + 1 :
+        //     xor_line_length_in_byte);
+        //const unsigned int remainder = (cursor.width % 8);
+        //const unsigned int and_line_length_in_byte = cursor.width / 8 + (remainder ? 1 : 0);
+        //const unsigned int and_padded_line_length_in_byte =
+        //    ((and_line_length_in_byte % 2) ?
+        //     and_line_length_in_byte + 1 :
+        //     and_line_length_in_byte);
+        //for (unsigned int i0 = 0; i0 < cursor.height; ++i0) {
+        //    printf("%02d  ", (cursor.height - i0 - 1));
+        //
+        //    const uint8_t* xorMask = cursor.data + (cursor.height - i0 - 1) * xor_padded_line_length_in_byte;
+        //
+        //    const uint8_t* andMask = cursor.mask + (cursor.height - i0 - 1) * and_padded_line_length_in_byte;
+        //    unsigned char and_bit_extraction_mask = 7;
+        //
+        //    for (unsigned int i1 = 0; i1 < cursor.width; ++i1) {
+        //        unsigned int color = 0;
+        //        color |=  *xorMask             ;
+        //        color |= (*(xorMask + 1) <<  8);
+        //        color |= (*(xorMask + 2) << 16);
+        //
+        //        if ((*andMask) & (1 << and_bit_extraction_mask)) {
+        //            printf(".");
+        //        }
+        //        else {
+        //            if (color == 0xFFFFFF) {
+        //                printf("W");
+        //            }
+        //            else if (color) {
+        //                printf("C");
+        //            }
+        //            else  {
+        //                printf("B");
+        //            }
+        //        }
+        //
+        //        xorMask += 3;
+        //        if (and_bit_extraction_mask) {
+        //            and_bit_extraction_mask--;
+        //        }
+        //        else {
+        //            and_bit_extraction_mask = 7;
+        //            andMask++;
+        //        }
+        //    }
+        //
+        //    printf("\n");
+        //}
+        //printf("\n");
 
         this->front.set_pointer(cursor);
         if (this->verbose & RDPVerbose::basic_trace3) {
@@ -6707,6 +6958,7 @@ private:
         if (this->verbose & RDPVerbose::basic_trace){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu");
         }
+
         InfoPacket infoPacket( this->use_rdp5
                              , this->domain
                              , this->username
@@ -6776,18 +7028,16 @@ private:
             // this->draw_event(time(nullptr));
             this->send_disconnect_ultimatum();
         }
-        if (this->acl) {
-            if (!this->session_disconnection_logged) {
-                double seconds = ::difftime(now, this->beginning);
+        if (!this->session_disconnection_logged) {
+            double seconds = ::difftime(now, this->beginning);
 
-                char extra[1024];
-                snprintf(extra, sizeof(extra), "duration='%02d:%02d:%02d'",
-                    (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
-                    (int(seconds) % 60));
+            char extra[1024];
+            snprintf(extra, sizeof(extra), "duration='%02d:%02d:%02d'",
+                (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
+                (int(seconds) % 60));
 
-                this->acl->log4(false, "SESSION_DISCONNECTION", extra);
-                this->session_disconnection_logged = true;
-            }
+            this->authentifier.log4(false, "SESSION_DISCONNECTION", extra);
+            this->session_disconnection_logged = true;
         }
     }
 
@@ -6850,9 +7100,7 @@ private:
         this->auth_channel_flags  = flags;
         this->auth_channel_chanid = auth_channel.chanid;
 
-        if (this->acl) {
-            this->acl->set_auth_channel_target(auth_channel_message.c_str());
-        }
+        this->authentifier.set_auth_channel_target(auth_channel_message.c_str());
     }
 
     void process_session_probe_event(
@@ -7001,6 +7249,17 @@ private:
                 this->session_probe_launcher->set_session_probe_virtual_channel(
                     this->session_probe_virtual_channel_p);
             }
+
+            if (this->remote_program) {
+                RemoteProgramsVirtualChannel& rpvc =
+                    this->get_remote_programs_virtual_channel();
+
+                rpvc.set_session_probe_virtual_channel(
+                    this->session_probe_virtual_channel_p);
+
+                rpvc.set_session_probe_launcher(
+                    this->session_probe_launcher.get());
+            }
         }
     }
 
@@ -7015,9 +7274,4 @@ public:
 
     Dimension get_dim() const override
     { return Dimension(this->front_width, this->front_height); }
-
-    bool is_content_laid_out() override {
-LOG(LOG_INFO, "mod_rdp::is_content_laid_out");
-        return false;
-    }
 };

@@ -206,14 +206,14 @@ public:
             x = std::max<uint16_t>(this->timeleft_label.cx(), x);
         }
 
-        x += this->diagnostic_label.x() + 10;
+        x += 10;
 
         if (this->username_value.buffer[0]) {
             this->username_label.set_xy(this->username_label.x(), top + y);
 
             dim = this->username_value.get_optimal_dim();
             this->username_value.set_wh(dim);
-            this->username_value.set_xy(x, top + y);
+            this->username_value.set_xy(x + this->diagnostic_label.x(), top + y);
 
             y += this->username_label.cy() + 20;
 
@@ -221,7 +221,7 @@ public:
 
             dim = this->target_value.get_optimal_dim();
             this->target_value.set_wh(dim);
-            this->target_value.set_xy(x, top + y);
+            this->target_value.set_xy(x + this->diagnostic_label.x(), top + y);
 
             y += this->target_label.cy() + 20;
         }
@@ -234,11 +234,11 @@ public:
         if (this->diagnostic_label.cx() > this->cx() - (x + 10)) {
             y += this->diagnostic_label.cy() + 10;
 
-            this->diagnostic_value.set_xy(this->diagnostic_value.x(), top + y);
+            this->diagnostic_value.set_xy(x + this->diagnostic_label.x(), top + y);
             y += this->diagnostic_value.cy() + 20;
         }
         else {
-            this->diagnostic_value.set_xy(x, top + y);
+            this->diagnostic_value.set_xy(x + this->diagnostic_label.x(), top + y);
             y += std::max(this->diagnostic_value.cy(), this->diagnostic_label.cy()) + 20;
         }
 
@@ -247,7 +247,7 @@ public:
 
             dim = this->timeleft_value.get_optimal_dim();
             this->timeleft_value.set_wh(dim);
-            this->timeleft_value.set_xy(x, top + y);
+            this->timeleft_value.set_xy(x + this->diagnostic_label.x(), top + y);
 
             y += this->timeleft_label.cy() + 20;
         }

@@ -39,6 +39,17 @@
 #include <string>
 #include <chrono>
 #include <algorithm>
+#include <cerrno>
+#include <limits>
+#include <ctime>
+#include <stdio.h> //snprintf
+#include <stdlib.h> //mkostemps
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <cstddef>
+
+#include "core/error.hpp"
 
 #include "utils/log.hpp"
 
@@ -49,12 +60,15 @@
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/make_unique.hpp"
+#include "utils/sugar/iter.hpp"
+#include "utils/sugar/exchange.hpp"
 
 #include "utils/match_finder.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/drawable.hpp"
 #include "utils/apps/recording_progress.hpp"
 #include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
+#include "utils/genrandom.hpp"
 #include "utils/urandom_read.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/bitmap_shrink.hpp"
@@ -64,14 +78,14 @@
 #include "utils/stream.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/png.hpp"
+#include "utils/fdbuf.hpp"
 
-#include "cxx/attributes.hpp"
+#include "cxx/cxx.hpp"
 
 #include "transport/transport.hpp"
-#include "transport/out_meta_sequence_transport.hpp"
 #include "transport/out_file_transport.hpp"
+#include "transport/sequence_generator.hpp"
 
-#include "core/RDP/RDPDrawable.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
@@ -120,13 +134,2128 @@
 #include "capture/png_params.hpp"
 #include "capture/flv_params.hpp"
 #include "capture/ocr_params.hpp"
+#include "capture/meta_params.hpp"
+#include "capture/sequenced_video_params.hpp"
+#include "capture/full_video_params.hpp"
+#include "capture/pattern_checker_params.hpp"
+#include "capture/kbdlog_params.hpp"
+
 #include "capture/wrm_label.hpp"
 #include "capture/cryptofile.hpp"
-#include "capture/video_recorder.hpp"
+#include "capture/video_capture.hpp"
 
 #include "capture/RDPChunkedDevice.hpp"
 
 #include "openssl_crypto.hpp"
+
+struct FilenameGenerator
+{
+    enum Format {
+        PATH_FILE_PID_COUNT_EXTENSION,
+        PATH_FILE_COUNT_EXTENSION,
+        PATH_FILE_PID_EXTENSION,
+        PATH_FILE_EXTENSION
+    };
+
+private:
+    char         path[1024];
+    char         filename[1012];
+    char         extension[12];
+    Format       format;
+    unsigned     pid;
+    mutable char filename_gen[1024];
+
+    const char * last_filename;
+    unsigned     last_num;
+
+public:
+    FilenameGenerator(
+        Format format,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension)
+    : format(format)
+    , pid(getpid())
+    , last_filename(nullptr)
+    , last_num(-1u)
+    {
+        if (strlen(prefix) > sizeof(this->path) - 1
+         || strlen(filename) > sizeof(this->filename) - 1
+         || strlen(extension) > sizeof(this->extension) - 1) {
+            throw Error(ERR_TRANSPORT);
+        }
+
+        strcpy(this->path, prefix);
+        strcpy(this->filename, filename);
+        strcpy(this->extension, extension);
+
+        this->filename_gen[0] = 0;
+    }
+
+    const char * get(unsigned count) const
+    {
+        if (count == this->last_num && this->last_filename) {
+            return this->last_filename;
+        }
+
+        using std::snprintf;
+        switch (this->format) {
+            default:
+            case PATH_FILE_PID_COUNT_EXTENSION:
+                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u-%06u%s", this->path
+                        , this->filename, this->pid, count, this->extension);
+                break;
+            case PATH_FILE_COUNT_EXTENSION:
+                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
+                        , this->filename, count, this->extension);
+                break;
+            case PATH_FILE_PID_EXTENSION:
+                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
+                        , this->filename, this->pid, this->extension);
+                break;
+            case PATH_FILE_EXTENSION:
+                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s%s", this->path
+                        , this->filename, this->extension);
+                break;
+        }
+        return this->filename_gen;
+    }
+
+    void set_last_filename(unsigned num, const char * name)
+    {
+        this->last_num = num;
+        this->last_filename = name;
+    }
+
+private:
+    FilenameGenerator(FilenameGenerator const &) = delete;
+    FilenameGenerator& operator=(FilenameGenerator const &) = delete;
+};
+
+typedef FilenameGenerator::Format FilenameFormat;
+
+namespace transbuf {
+    class ofile_buf_out
+    {
+        int fd;
+    public:
+        ofile_buf_out() : fd(-1) {}
+        ~ofile_buf_out()
+        {
+            this->close();
+        }
+
+        int open(const char * filename, mode_t mode)
+        {
+            this->close();
+            this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+            return this->fd;
+        }
+
+        int close()
+        {
+            if (this->is_open()) {
+                const int ret = ::close(this->fd);
+                this->fd = -1;
+                return ret;
+            }
+            return 0;
+        }
+
+        ssize_t write(const void * data, size_t len)
+        {
+            size_t remaining_len = len;
+            size_t total_sent = 0;
+            while (remaining_len) {
+                ssize_t ret = ::write(this->fd,
+                    static_cast<const char*>(data) + total_sent, remaining_len);
+                if (ret <= 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    return -1;
+                }
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            return total_sent;
+        }
+
+        bool is_open() const noexcept
+        { return -1 != this->fd; }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return ::lseek64(this->fd, offset, whence); }
+
+        int flush() const
+        { return 0; }
+    };
+
+}
+
+
+namespace transbuf {
+
+using std::size_t;
+
+
+class ochecksum_buf_null_buf
+{
+    static constexpr size_t nosize = ~size_t{};
+    static constexpr size_t quick_size = 4096;
+
+    SslHMAC_Sha256_Delayed hmac;
+    SslHMAC_Sha256_Delayed quick_hmac;
+    unsigned char const (&hmac_key)[MD_HASH_LENGTH];
+    size_t file_size = nosize;
+
+public:
+    explicit ochecksum_buf_null_buf(unsigned char const (&hmac_key)[MD_HASH_LENGTH])
+    : hmac_key(hmac_key)
+    {}
+
+    ochecksum_buf_null_buf(ochecksum_buf_null_buf const &) = delete;
+    ochecksum_buf_null_buf & operator=(ochecksum_buf_null_buf const &) = delete;
+
+    template<class... Ts>
+    int open(Ts && ... args)
+    {
+        this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
+        this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
+        int ret = 0;
+        this->file_size = 0;
+        return ret;
+    }
+
+    ssize_t write(const void * data, size_t len)
+    {
+        REDASSERT(this->file_size != nosize);
+        this->hmac.update(static_cast<const uint8_t *>(data), len);
+        if (this->file_size < quick_size) {
+            auto const remaining = std::min(quick_size - this->file_size, len);
+            this->quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
+            this->file_size += remaining;
+        }
+        return len;
+    }
+
+    int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
+    {
+        REDASSERT(this->file_size != nosize);
+        this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
+        this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
+        this->file_size = nosize;
+        return 0;
+    }
+
+    int close() {
+        return 0;
+    }
+};
+
+}
+
+
+namespace detail
+{
+
+    struct no_param {};
+
+    template<class Buf>
+    struct empty_ctor
+    : Buf
+    {
+        explicit empty_ctor(no_param = no_param()) noexcept
+        {}
+    };
+
+    struct MetaFilename
+    {
+        char filename[2048];
+
+        MetaFilename(const char * path, const char * basename,
+                     FilenameFormat format = FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
+        {
+            int res =
+            (   format == FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
+             || format == FilenameGenerator::PATH_FILE_PID_EXTENSION)
+            ? snprintf(this->filename, sizeof(this->filename)-1, "%s%s-%06u.mwrm", path, basename, unsigned(getpid()))
+            : snprintf(this->filename, sizeof(this->filename)-1, "%s%s.mwrm", path, basename);
+            if (res > int(sizeof(this->filename) - 6) || res < 0) {
+                throw Error(ERR_TRANSPORT_OPEN_FAILED);
+            }
+        }
+
+        MetaFilename(MetaFilename const &) = delete;
+        MetaFilename & operator = (MetaFilename const &) = delete;
+    };
+
+    template<class Writer>
+    void write_meta_headers(Writer & writer, const char * path,
+                            uint16_t width, uint16_t height,
+                            auth_api * authentifier,
+                            bool has_checksum
+                           )
+    {
+        char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
+        const int len = sprintf(
+            header1,
+            "v2\n"
+            "%u %u\n"
+            "%s\n"
+            "\n\n",
+            unsigned(width),
+            unsigned(height),
+            has_checksum  ? "checksum" : "nochecksum"
+        );
+        const ssize_t res = writer.write(header1, len);
+        if (res < 0) {
+            int err = errno;
+            LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
+
+            if (err == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", path);
+                authentifier->report("FILESYSTEM_FULL", message);
+
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
+            }
+        }
+    }
+
+    template<class Writer>
+    int write_filename(Writer & writer, const char * filename)
+    {
+        auto pfile = filename;
+        auto epfile = filename;
+        for (; *epfile; ++epfile) {
+            if (*epfile == '\\') {
+                ssize_t len = epfile - pfile + 1;
+                auto res = writer.write(pfile, len);
+                if (res < len) {
+                    return res < 0 ? res : 1;
+                }
+                pfile = epfile;
+            }
+            if (*epfile == ' ') {
+                ssize_t len = epfile - pfile;
+                auto res = writer.write(pfile, len);
+                if (res < len) {
+                    return res < 0 ? res : 1;
+                }
+                res = writer.write("\\", 1u);
+                if (res < 1) {
+                    return res < 0 ? res : 1;
+                }
+                pfile = epfile;
+            }
+        }
+
+        if (pfile != epfile) {
+            ssize_t len = epfile - pfile;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+        }
+
+        return 0;
+    }
+
+    using hash_type = unsigned char[MD_HASH_LENGTH*2];
+
+    constexpr std::size_t hash_string_len = (1 + MD_HASH_LENGTH * 2) * 2;
+
+    inline char * swrite_hash(char * p, hash_type const & hash)
+    {
+        auto write = [&p](unsigned char const * hash) {
+            *p++ = ' ';                // 1 octet
+            for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+                sprintf(p, "%02x", c); // 64 octets (hash)
+                p += 2;
+            }
+        };
+        write(hash);
+        write(hash + MD_HASH_LENGTH);
+        return p;
+    }
+
+    template<bool write_time, class Writer>
+    int write_meta_file_impl(
+        Writer & writer, const char * filename,
+        struct stat const & stat,
+        time_t start_sec, time_t stop_sec,
+        hash_type const * hash = nullptr
+    ) {
+        if (int err = write_filename(writer, filename)) {
+            return err;
+        }
+
+        using ull = unsigned long long;
+        using ll = long long;
+        char mes[
+            (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+            (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+            hash_string_len + 1 +
+            2
+        ];
+        ssize_t len = std::sprintf(
+            mes,
+            " %lld %llu %lld %lld %llu %lld %lld %lld",
+            ll(stat.st_size),
+            ull(stat.st_mode),
+            ll(stat.st_uid),
+            ll(stat.st_gid),
+            ull(stat.st_dev),
+            ll(stat.st_ino),
+            ll(stat.st_mtim.tv_sec),
+            ll(stat.st_ctim.tv_sec)
+        );
+        if (write_time) {
+            len += std::sprintf(
+                mes + len,
+                " %lld %lld",
+                ll(start_sec),
+                ll(stop_sec)
+            );
+        }
+
+        char * p = mes + len;
+        if (hash) {
+            p = swrite_hash(p, *hash);
+        }
+        *p++ = '\n';
+
+        ssize_t res = writer.write(mes, p-mes);
+
+        if (res < p-mes) {
+            return res < 0 ? res : 1;
+        }
+
+        return 0;
+    }
+
+    template<class Writer>
+    int write_meta_file(
+        Writer & writer, const char * filename,
+        time_t start_sec, time_t stop_sec,
+        hash_type const * hash = nullptr
+    ) {
+        struct stat stat;
+        int err = ::stat(filename, &stat);
+        return err ? err : write_meta_file_impl<true>(writer, filename, stat, start_sec, stop_sec, hash);
+    }
+
+    struct out_sequence_filename_buf_param
+    {
+        FilenameGenerator::Format format;
+        const char * const prefix;
+        const char * const filename;
+        const char * const extension;
+        const int groupid;
+
+        out_sequence_filename_buf_param(
+            FilenameGenerator::Format format,
+            const char * const prefix,
+            const char * const filename,
+            const char * const extension,
+            const int groupid)
+        : format(format)
+        , prefix(prefix)
+        , filename(filename)
+        , extension(extension)
+        , groupid(groupid)
+        {}
+    };
+
+
+    class out_sequence_filename_buf_impl
+    {
+        char current_filename_[1024];
+        FilenameGenerator filegen_;
+        empty_ctor<io::posix::fdbuf> buf_;
+        unsigned num_file_;
+        int groupid_;
+
+    public:
+        explicit out_sequence_filename_buf_impl(out_sequence_filename_buf_param const & params)
+        : filegen_(params.format, params.prefix, params.filename, params.extension)
+        , buf_()
+        , num_file_(0)
+        , groupid_(params.groupid)
+        {
+            this->current_filename_[0] = 0;
+        }
+
+        int close()
+        { return this->next(); }
+
+        ssize_t write(const void * data, size_t len)
+        {
+            if (!this->buf_.is_open()) {
+                const int res = this->open_filename(this->filegen_.get(this->num_file_));
+                if (res < 0) {
+                    return res;
+                }
+            }
+            return this->buf_.write(data, len);
+        }
+
+        /// \return 0 if success
+        int next()
+        {
+            if (this->buf_.is_open()) {
+                this->buf_.close();
+                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+                return this->rename_filename() ? 0 : 1;
+            }
+            return 1;
+        }
+
+        void request_full_cleaning()
+        {
+            unsigned i = this->num_file_ + 1;
+            while (i > 0 && !::unlink(this->filegen_.get(--i))) {
+            }
+            if (this->buf_.is_open()) {
+                this->buf_.close();
+            }
+        }
+
+        off64_t seek(int64_t offset, int whence)
+        { return this->buf_.seek(offset, whence); }
+
+        const FilenameGenerator & seqgen() const noexcept
+        { return this->filegen_; }
+
+        empty_ctor<io::posix::fdbuf> & buf() noexcept
+        { return this->buf_; }
+
+        const char * current_path() const
+        {
+            if (!this->current_filename_[0] && !this->num_file_) {
+                return nullptr;
+            }
+            return this->filegen_.get(this->num_file_ - 1);
+        }
+
+    protected:
+        ssize_t open_filename(const char * filename)
+        {
+            snprintf(this->current_filename_, sizeof(this->current_filename_),
+                        "%sred-XXXXXX.tmp", filename);
+            const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+            if (fd < 0) {
+                return fd;
+            }
+            if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                   , this->current_filename_
+                   , this->groupid_ ? "u+r, g+r" : "u+r"
+                   , strerror(errno), errno);
+            }
+            this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+            return this->buf_.open(fd);
+        }
+
+        const char * rename_filename()
+        {
+            const char * filename = this->get_filename_generate();
+            const int res = ::rename(this->current_filename_, filename);
+            if (res < 0) {
+                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                   , this->current_filename_, filename, errno, strerror(errno));
+                return nullptr;
+            }
+
+            this->current_filename_[0] = 0;
+            ++this->num_file_;
+            this->filegen_.set_last_filename(-1u, "");
+
+            return filename;
+        }
+
+        const char * get_filename_generate()
+        {
+            this->filegen_.set_last_filename(-1u, "");
+            const char * filename = this->filegen_.get(this->num_file_);
+            this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+            return filename;
+        }
+    };
+
+
+
+    template<class MetaParams = no_param>
+    struct out_meta_sequence_filename_buf_param
+    {
+        out_sequence_filename_buf_param sq_params;
+        time_t sec;
+        MetaParams meta_buf_params;
+        const char * hash_prefix;
+
+        out_meta_sequence_filename_buf_param(
+            time_t start_sec,
+            FilenameGenerator::Format format,
+            const char * const hash_prefix,
+            const char * const prefix,
+            const char * const filename,
+            const char * const extension,
+            const int groupid,
+            MetaParams const & meta_buf_params = MetaParams())
+        : sq_params(format, prefix, filename, extension, groupid)
+        , sec(start_sec)
+        , meta_buf_params(meta_buf_params)
+        , hash_prefix(hash_prefix)
+        {}
+    };
+
+
+    template<class BufMeta>
+    class out_meta_sequence_filename_buf_impl
+    : public out_sequence_filename_buf_impl
+    {
+        typedef out_sequence_filename_buf_impl sequence_base_type;
+
+        BufMeta meta_buf_;
+        MetaFilename mf_;
+        MetaFilename hf_;
+        time_t start_sec_;
+        time_t stop_sec_;
+
+    public:
+        template<class MetaParams>
+        explicit out_meta_sequence_filename_buf_impl(
+            out_meta_sequence_filename_buf_param<MetaParams> const & params
+        )
+        : out_sequence_filename_buf_impl(params.sq_params)
+        , meta_buf_(params.meta_buf_params)
+        , mf_(params.sq_params.prefix, params.sq_params.filename, params.sq_params.format)
+        , hf_(params.hash_prefix, params.sq_params.filename, params.sq_params.format)
+        , start_sec_(params.sec)
+        , stop_sec_(params.sec)
+        {
+            if (this->meta_buf_.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+                LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
+                throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+            }
+            if (chmod(this->mf_.filename, S_IRUSR | S_IRGRP) == -1) {
+                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                   , this->mf_.filename
+                   , "u+r, g+r"
+                   , strerror(errno), errno);
+            }
+        }
+
+        int close()
+        {
+            const int res1 = this->next();
+            const int res2 = (this->meta_buf().is_open() ? this->meta_buf_.close() : 0);
+            int err = res1 ? res1 : res2;
+            if (!err) {
+                char const * hash_filename = this->hash_filename();
+                char const * meta_filename = this->meta_filename();
+                transbuf::ofile_buf_out crypto_hash;
+
+                char path[1024] = {};
+                char basename[1024] = {};
+                char extension[256] = {};
+                char filename[2048] = {};
+
+                canonical_path(
+                    meta_filename,
+                    path, sizeof(path),
+                    basename, sizeof(basename),
+                    extension, sizeof(extension)
+                );
+
+                snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+                if (crypto_hash.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+                    char header[] = "v2\n\n\n";
+                    crypto_hash.write(header, sizeof(header)-1);
+
+                    struct stat stat;
+                    int err = ::stat(meta_filename, &stat);
+                    if (!err) {
+                        err = write_meta_file_impl<false>(crypto_hash, filename, stat, 0, 0, nullptr);
+                    }
+                    if (!err) {
+                        err = crypto_hash.close(/*hash*/);
+                    }
+                    if (err) {
+                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                        return 1;
+                    }
+                }
+                else {
+                    int e = errno;
+                    LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+                    errno = e;
+                    return 1;
+                }
+                return 0;
+            }
+            return err;
+        }
+
+        /// \return 0 if success
+        int next()
+        {
+            if (this->buf().is_open()) {
+                this->buf().close();
+                return this->next_meta_file();
+            }
+            return 1;
+        }
+
+    protected:
+        int next_meta_file(hash_type const * hash = nullptr)
+        {
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+            const char * filename = this->rename_filename();
+            if (!filename) {
+                return 1;
+            }
+
+            if (int err = write_meta_file(
+                this->meta_buf_, filename, this->start_sec_, this->stop_sec_+1, hash
+            )) {
+                return err;
+            }
+
+            this->start_sec_ = this->stop_sec_;
+
+            return 0;
+        }
+
+        char const * hash_filename() const noexcept
+        {
+            return this->hf_.filename;
+        }
+
+        char const * meta_filename() const noexcept
+        {
+            return this->mf_.filename;
+        }
+
+    public:
+        void request_full_cleaning()
+        {
+            this->out_sequence_filename_buf_impl::request_full_cleaning();
+            ::unlink(this->mf_.filename);
+        }
+
+        int flush()
+        {
+            const int res1 = this->out_sequence_filename_buf_impl::flush();
+            const int res2 = this->meta_buf_.flush();
+            return res1 == 0 ? res2 : res1;
+        }
+
+        BufMeta & meta_buf() noexcept
+        { return this->meta_buf_; }
+
+        void update_sec(time_t sec)
+        { this->stop_sec_ = sec; }
+    };
+}
+
+struct OutFilenameSequenceTransport : public Transport
+{
+    using Buf = detail::out_sequence_filename_buf_impl;
+
+    OutFilenameSequenceTransport(
+        FilenameGenerator::Format format,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        auth_api * authentifier)
+    : buf(detail::out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
+    {
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+    }
+
+    const FilenameGenerator * seqgen() const noexcept
+    { return &(this->buffer().seqgen()); }
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+    void request_full_cleaning() override {
+        this->buffer().request_full_cleaning();
+    }
+
+    ~OutFilenameSequenceTransport() {
+        this->buf.close();
+    }
+
+private:
+
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|unknown");
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+    Buf & buffer() noexcept
+    { return this->buf; }
+
+    const Buf & buffer() const noexcept
+    { return this->buf; }
+
+    Buf buf;
+};
+
+
+namespace transfil {
+
+    class encrypt_filter
+    {
+        char           buf[CRYPTO_BUFFER_SIZE]; //
+        EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
+        EVP_MD_CTX     hctx;                    // hash context
+        EVP_MD_CTX     hctx4k;                  // hash context
+        uint32_t       pos;                     // current position in buf
+        uint32_t       raw_size;                // the unciphered/uncompressed file size
+        uint32_t       file_size;               // the current file size
+
+    public:
+        encrypt_filter() = default;
+        //: pos(0)
+        //, raw_size(0)
+        //, file_size(0)
+        //{}
+
+        template<class Sink>
+        int open(Sink & snk, const unsigned char * trace_key, CryptoContext & cctx, const unsigned char * iv)
+        {
+            ::memset(this->buf, 0, sizeof(this->buf));
+            ::memset(&this->ectx, 0, sizeof(this->ectx));
+            ::memset(&this->hctx, 0, sizeof(this->hctx));
+            ::memset(&this->hctx4k, 0, sizeof(this->hctx4k));
+            this->pos = 0;
+            this->raw_size = 0;
+            this->file_size = 0;
+
+            const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
+            const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
+            const int          nrounds = 5;
+            unsigned char      key[32];
+            const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
+                                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
+            if (i != 32) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
+                return -1;
+            }
+
+            ::EVP_CIPHER_CTX_init(&this->ectx);
+            if (::EVP_EncryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize encrypt context\n", ::getpid());
+                return -1;
+            }
+
+            // MD stuff
+            const EVP_MD * md = EVP_get_digestbyname(MD_HASH_NAME);
+            if (!md) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not find message digest algorithm!\n", ::getpid());
+                return -1;
+            }
+
+            ::EVP_MD_CTX_init(&this->hctx);
+            ::EVP_MD_CTX_init(&this->hctx4k);
+            if (::EVP_DigestInit_ex(&this->hctx, md, nullptr) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context!\n", ::getpid());
+                return -1;
+            }
+            if (::EVP_DigestInit_ex(&this->hctx4k, md, nullptr) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize 4k MD hash context!\n", ::getpid());
+                return -1;
+            }
+
+            // HMAC: key^ipad
+            const int     blocksize = ::EVP_MD_block_size(md);
+            unsigned char * key_buf = new(std::nothrow) unsigned char[blocksize];
+            {
+                if (key_buf == nullptr) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc!\n", ::getpid());
+                    return -1;
+                }
+                const std::unique_ptr<unsigned char[]> auto_free(key_buf);
+                ::memset(key_buf, 0, blocksize);
+                if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
+                    unsigned char keyhash[MD_HASH_LENGTH];
+                    if ( ! ::MD_HASH_FUNC(cctx.get_hmac_key(), CRYPTO_KEY_LENGTH, keyhash)) {
+                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key!\n", ::getpid());
+                        return -1;
+                    }
+                    ::memcpy(key_buf, keyhash, MIN(MD_HASH_LENGTH, blocksize));
+                }
+                else {
+                    ::memcpy(key_buf, cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
+                }
+                for (int idx = 0; idx <  blocksize; idx++) {
+                    key_buf[idx] = key_buf[idx] ^ 0x36;
+                }
+                if (::EVP_DigestUpdate(&this->hctx, key_buf, blocksize) != 1) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
+                    return -1;
+                }
+                if (::EVP_DigestUpdate(&this->hctx4k, key_buf, blocksize) != 1) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
+                    return -1;
+                }
+            }
+
+            // update context with previously written data
+            char tmp_buf[40];
+            tmp_buf[0] = WABCRYPTOFILE_MAGIC & 0xFF;
+            tmp_buf[1] = (WABCRYPTOFILE_MAGIC >> 8) & 0xFF;
+            tmp_buf[2] = (WABCRYPTOFILE_MAGIC >> 16) & 0xFF;
+            tmp_buf[3] = (WABCRYPTOFILE_MAGIC >> 24) & 0xFF;
+            tmp_buf[4] = WABCRYPTOFILE_VERSION & 0xFF;
+            tmp_buf[5] = (WABCRYPTOFILE_VERSION >> 8) & 0xFF;
+            tmp_buf[6] = (WABCRYPTOFILE_VERSION >> 16) & 0xFF;
+            tmp_buf[7] = (WABCRYPTOFILE_VERSION >> 24) & 0xFF;
+            ::memcpy(tmp_buf + 8, iv, 32);
+
+            // TODO: if I suceeded writing a broken file, wouldn't it be better to remove it ?
+            if (const ssize_t write_ret = this->raw_write(snk, tmp_buf, 40)){
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: write error! error=%s\n", ::getpid(), ::strerror(errno));
+                return write_ret;
+            }
+            // update file_size
+            this->file_size += 40;
+
+            return this->xmd_update(tmp_buf, 40);
+        }
+
+        template<class Sink>
+        ssize_t write(Sink & snk, const void * data, size_t len)
+        {
+            unsigned int remaining_size = len;
+            while (remaining_size > 0) {
+                // Check how much we can append into buffer
+                unsigned int available_size = MIN(CRYPTO_BUFFER_SIZE - this->pos, remaining_size);
+                // Append and update pos pointer
+                ::memcpy(this->buf + this->pos, static_cast<const char*>(data) + (len - remaining_size), available_size);
+                this->pos += available_size;
+                // If buffer is full, flush it to disk
+                if (this->pos == CRYPTO_BUFFER_SIZE) {
+                    if (this->flush(snk)) {
+                        return -1;
+                    }
+                }
+                remaining_size -= available_size;
+            }
+            // Update raw size counter
+            this->raw_size += len;
+            return len;
+        }
+
+        /* Flush procedure (compression, encryption, effective file writing)
+         * Return 0 on success, negatif on error
+         */
+        template<class Sink>
+        int flush(Sink & snk)
+        {
+            // No data to flush
+            if (!this->pos) {
+                return 0;
+            }
+
+            // Compress
+            // TODO: check this
+            char compressed_buf[65536];
+            //char compressed_buf[compressed_buf_sz];
+            size_t compressed_buf_sz = ::snappy_max_compressed_length(this->pos);
+            snappy_status status = snappy_compress(this->buf, this->pos, compressed_buf, &compressed_buf_sz);
+
+            switch (status)
+            {
+                case SNAPPY_OK:
+                    break;
+                case SNAPPY_INVALID_INPUT:
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with status code INVALID_INPUT!\n", getpid());
+                    return -1;
+                case SNAPPY_BUFFER_TOO_SMALL:
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with status code BUFFER_TOO_SMALL!\n", getpid());
+                    return -1;
+            }
+
+            // Encrypt
+            unsigned char ciphered_buf[4 + 65536];
+            //char ciphered_buf[ciphered_buf_sz];
+            uint32_t ciphered_buf_sz = compressed_buf_sz + AES_BLOCK_SIZE;
+            {
+                const unsigned char * src_buf = reinterpret_cast<unsigned char*>(compressed_buf);
+                if (this->xaes_encrypt(src_buf, compressed_buf_sz, ciphered_buf + 4, &ciphered_buf_sz)) {
+                    return -1;
+                }
+            }
+
+            ciphered_buf[0] = ciphered_buf_sz & 0xFF;
+            ciphered_buf[1] = (ciphered_buf_sz >> 8) & 0xFF;
+            ciphered_buf[2] = (ciphered_buf_sz >> 16) & 0xFF;
+            ciphered_buf[3] = (ciphered_buf_sz >> 24) & 0xFF;
+
+            ciphered_buf_sz += 4;
+
+            if (const ssize_t err = this->raw_write(snk, ciphered_buf, ciphered_buf_sz)) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
+                return err;
+            }
+            if (-1 == this->xmd_update(&ciphered_buf, ciphered_buf_sz)) {
+                return -1;
+            }
+            this->file_size += ciphered_buf_sz;
+
+            // Reset buffer
+            this->pos = 0;
+            return 0;
+        }
+
+        template<class Sink>
+        int close(Sink & snk, unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key)
+        {
+            int result = this->flush(snk);
+
+            const uint32_t eof_magic = WABCRYPTOFILE_EOF_MAGIC;
+            unsigned char tmp_buf[8] = {
+                eof_magic & 0xFF,
+                (eof_magic >> 8) & 0xFF,
+                (eof_magic >> 16) & 0xFF,
+                (eof_magic >> 24) & 0xFF,
+                uint8_t(this->raw_size & 0xFF),
+                uint8_t((this->raw_size >> 8) & 0xFF),
+                uint8_t((this->raw_size >> 16) & 0xFF),
+                uint8_t((this->raw_size >> 24) & 0xFF),
+            };
+
+            int write_ret1 = this->raw_write(snk, tmp_buf, 8);
+            if (write_ret1){
+                // TOOD: actual error code could help
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
+            }
+            this->file_size += 8;
+
+            this->xmd_update(tmp_buf, 8);
+
+            if (hash) {
+                unsigned char tmp_hash[MD_HASH_LENGTH << 1];
+                if (::EVP_DigestFinal_ex(&this->hctx4k, tmp_hash, nullptr) != 1) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute 4k MD digests\n", ::getpid());
+                    result = -1;
+                    tmp_hash[0] = '\0';
+                }
+                if (::EVP_DigestFinal_ex(&this->hctx, tmp_hash + MD_HASH_LENGTH, nullptr) != 1) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
+                    result = -1;
+                    tmp_hash[MD_HASH_LENGTH] = '\0';
+                }
+                // HMAC: MD(key^opad + MD(key^ipad))
+                const EVP_MD *md = ::EVP_get_digestbyname(MD_HASH_NAME);
+                if (!md) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not find MD message digest\n", ::getpid());
+                    return -1;
+                }
+                const int     blocksize = ::EVP_MD_block_size(md);
+                unsigned char * key_buf = new(std::nothrow) unsigned char[blocksize];
+                if (key_buf == nullptr) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc\n", ::getpid());
+                    return -1;
+                }
+                const std::unique_ptr<unsigned char[]> auto_free(key_buf);
+                ::memset(key_buf, '\0', blocksize);
+                if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
+                    unsigned char keyhash[MD_HASH_LENGTH];
+                    if ( ! ::MD_HASH_FUNC(hmac_key, CRYPTO_KEY_LENGTH, keyhash)) {
+                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key\n", ::getpid());
+                        return -1;
+                    }
+                    ::memcpy(key_buf, keyhash, MIN(MD_HASH_LENGTH, blocksize));
+                }
+                else {
+                    ::memcpy(key_buf, hmac_key, CRYPTO_KEY_LENGTH);
+                }
+                for (int idx = 0; idx <  blocksize; idx++) {
+                    key_buf[idx] = key_buf[idx] ^ 0x5c;
+                }
+
+                EVP_MD_CTX mdctx;
+                ::EVP_MD_CTX_init(&mdctx);
+                if (::EVP_DigestInit_ex(&mdctx, md, nullptr) != 1) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context\n", ::getpid());
+                    return -1;
+                }
+                if (::EVP_DigestUpdate(&mdctx, key_buf, blocksize) != 1) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
+                    return -1;
+                }
+                if (::EVP_DigestUpdate(&mdctx, tmp_hash, MD_HASH_LENGTH) != 1) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
+                    return -1;
+                }
+                if (::EVP_DigestFinal_ex(&mdctx, hash, nullptr) != 1) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
+                    result = -1;
+                    hash[0] = '\0';
+                }
+                ::EVP_MD_CTX_cleanup(&mdctx);
+                ::EVP_MD_CTX_init(&mdctx);
+                if (::EVP_DigestInit_ex(&mdctx, md, nullptr) != 1) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context\n", ::getpid());
+                    return -1;
+                }
+                if (::EVP_DigestUpdate(&mdctx, key_buf, blocksize) != 1){
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
+                    return -1;
+                }
+                if (::EVP_DigestUpdate(&mdctx, tmp_hash + MD_HASH_LENGTH, MD_HASH_LENGTH) != 1){
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
+                    return -1;
+                }
+                if (::EVP_DigestFinal_ex(&mdctx, hash + MD_HASH_LENGTH, nullptr) != 1) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
+                    result = -1;
+                    hash[MD_HASH_LENGTH] = '\0';
+                }
+                ::EVP_MD_CTX_cleanup(&mdctx);
+            }
+
+            return result;
+        }
+
+    private:
+        ///\return 0 if success, otherwise a negatif number
+        template<class Sink>
+        ssize_t raw_write(Sink & snk, void * data, size_t len)
+        {
+            ssize_t err = snk.write(data, len);
+            return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
+        }
+
+        /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
+         * Return 0 on success, negative value on error
+         */
+        int xaes_encrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
+        {
+            int safe_size = *dst_sz;
+            int remaining_size = 0;
+
+            /* allows reusing of ectx for multiple encryption cycles */
+            if (EVP_EncryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare encryption context!\n", getpid());
+                return -1;
+            }
+            if (EVP_EncryptUpdate(&this->ectx, dst_buf, &safe_size, src_buf, src_sz) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could encrypt data!\n", getpid());
+                return -1;
+            }
+            if (EVP_EncryptFinal_ex(&this->ectx, dst_buf + safe_size, &remaining_size) != 1){
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish encryption!\n", getpid());
+                return -1;
+            }
+            *dst_sz = safe_size + remaining_size;
+            return 0;
+        }
+
+        /* Update hash context with new data.
+         * Returns 0 on success, -1 on error
+         */
+        int xmd_update(const void * src_buf, uint32_t src_sz)
+        {
+            if (::EVP_DigestUpdate(&this->hctx, src_buf, src_sz) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
+                return -1;
+            }
+            if (this->file_size < 4096) {
+                size_t remaining_size = 4096 - this->file_size;
+                size_t hashable_size = MIN(remaining_size, src_sz);
+                if (::EVP_DigestUpdate(&this->hctx4k, src_buf, hashable_size) != 1) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
+                    return -1;
+                }
+            }
+            return 0;
+        }
+    };
+}
+
+namespace transbuf {
+    struct ocrypto_filename_params
+    {
+        CryptoContext & crypto_ctx;
+        Random & rnd;
+    };
+}
+
+namespace detail
+{
+    struct ocrypto_filter
+    : transfil::encrypt_filter
+    {
+        CryptoContext & cctx;
+        Random & rnd;
+
+        explicit ocrypto_filter(transbuf::ocrypto_filename_params params)
+        : cctx(params.crypto_ctx)
+        , rnd(params.rnd)
+        {}
+
+        template<class Buf>
+        int open(Buf & buf, char const * filename) {
+            unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+
+            size_t base_len = 0;
+            const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
+
+            this->cctx.get_derived_key(trace_key, base, base_len);
+            unsigned char iv[32];
+            this->rnd.random(iv, 32);
+            return transfil::encrypt_filter::open(buf, trace_key, this->cctx, iv);
+        }
+    };
+}
+
+namespace detail
+{
+
+    template<class FilterParams = no_param>
+    struct out_hash_meta_sequence_filename_buf_param
+    {
+        out_meta_sequence_filename_buf_param<FilterParams> meta_sq_params;
+        FilterParams filter_params;
+        CryptoContext & cctx;
+
+        out_hash_meta_sequence_filename_buf_param(
+            CryptoContext & cctx,
+            time_t start_sec,
+            FilenameGenerator::Format format,
+            const char * const hash_prefix,
+            const char * const prefix,
+            const char * const filename,
+            const char * const extension,
+            const int groupid,
+            FilterParams const & filter_params = FilterParams())
+        : meta_sq_params(start_sec, format, hash_prefix, prefix, filename, extension, groupid, filter_params)
+        , filter_params(filter_params)
+        , cctx(cctx)
+        {}
+    };
+
+
+
+
+
+    template<class BufFilter, class BufMeta, class BufHash, class Params>
+    class out_hash_meta_sequence_filename_buf_impl
+    : public out_meta_sequence_filename_buf_impl<BufMeta>
+    {
+        CryptoContext & cctx;
+        Params hash_ctx;
+        BufFilter wrm_filter;
+
+        using sequence_base_type = out_meta_sequence_filename_buf_impl<BufMeta>;
+
+    public:
+        explicit out_hash_meta_sequence_filename_buf_impl(
+            out_hash_meta_sequence_filename_buf_param<Params> const & params
+        )
+        : sequence_base_type(params.meta_sq_params)
+        , cctx(params.cctx)
+        , hash_ctx(params.filter_params)
+        , wrm_filter(params.filter_params)
+        {}
+
+        ssize_t write(const void * data, size_t len)
+        {
+            if (!this->buf().is_open()) {
+                const char * filename = this->get_filename_generate();
+                const int res = this->open_filename(filename);
+                if (res < 0) {
+                    return res;
+                }
+                if (int err = this->wrm_filter.open(this->buf(), filename)) {
+                    return err;
+                }
+            }
+            return this->wrm_filter.write(this->buf(), data, len);
+        }
+
+        int close()
+        {
+            if (this->buf().is_open()) {
+                if (this->next()) {
+                    return 1;
+                }
+            }
+
+            BufHash hash_buf(this->hash_ctx);
+
+            if (!this->meta_buf().is_open()) {
+                return 1;
+            }
+
+            hash_type hash;
+
+            if (this->meta_buf().close(hash)) {
+                return 1;
+            }
+
+            char const * hash_filename = this->hash_filename();
+            char const * meta_filename = this->meta_filename();
+
+            char path[1024] = {};
+            char basename[1024] = {};
+            char extension[256] = {};
+            char filename[2048] = {};
+
+            canonical_path(
+                meta_filename,
+                path, sizeof(path),
+                basename, sizeof(basename),
+                extension, sizeof(extension)
+            );
+
+            snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+            if (hash_buf.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+                char header[] = "v2\n\n\n";
+                hash_buf.write(header, sizeof(header)-1);
+
+                struct stat stat;
+                int err = ::stat(meta_filename, &stat);
+                if (!err) {
+                    err = write_meta_file_impl<false>(hash_buf, filename, stat, 0, 0, &hash);
+                }
+                if (!err) {
+                    err = hash_buf.close(/*hash*/);
+                }
+                if (err) {
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                    return 1;
+                }
+            }
+            else {
+                int e = errno;
+                LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+                errno = e;
+                return 1;
+            }
+
+            return 0;
+        }
+
+        int next()
+        {
+            if (this->buf().is_open()) {
+                hash_type hash;
+                {
+                    const int res1 = this->wrm_filter.close(this->buf(), hash, this->cctx.get_hmac_key());
+                    const int res2 = this->buf().close();
+                    if (res1) {
+                        return res1;
+                    }
+                    if (res2) {
+                        return res2;
+                    }
+                }
+
+                return this->next_meta_file(&hash);
+            }
+            return 1;
+        }
+    };
+
+    class ochecksum_filter
+    {
+        transbuf::ochecksum_buf_null_buf sum_buf;
+
+    public:
+        explicit ochecksum_filter(CryptoContext & cctx)
+        : sum_buf(cctx.get_hmac_key())
+        {}
+
+        template<class Buf>
+        int open(Buf &, char const * /*filename*/) {
+            return this->sum_buf.open();
+        }
+
+        template<class Buf>
+        int write(Buf & buf, const void * data, size_t len) {
+            this->sum_buf.write(data, len);
+            return buf.write(data, len);
+        }
+
+        template<class Buf>
+        int close(Buf &, hash_type & hash, unsigned char const (&)[MD_HASH_LENGTH]) {
+            return this->sum_buf.close(hash);
+        }
+    };
+
+    struct cctx_ofile_buf
+    : transbuf::ofile_buf_out
+    {
+        explicit cctx_ofile_buf(CryptoContext &)
+        {}
+    };
+
+
+    class cctx_ochecksum_file
+    {
+        int fd;
+
+        static constexpr size_t nosize = ~size_t{};
+        static constexpr size_t quick_size = 4096;
+
+        SslHMAC_Sha256_Delayed hmac;
+        SslHMAC_Sha256_Delayed quick_hmac;
+        unsigned char const (&hmac_key)[MD_HASH_LENGTH];
+        size_t file_size = nosize;
+
+    public:
+        explicit cctx_ochecksum_file(CryptoContext & cctx)
+        : fd(-1)
+        , hmac_key(cctx.get_hmac_key())
+        {}
+
+        ~cctx_ochecksum_file()
+        {
+            this->close();
+        }
+
+        cctx_ochecksum_file(cctx_ochecksum_file const &) = delete;
+        cctx_ochecksum_file & operator=(cctx_ochecksum_file const &) = delete;
+
+        int open(const char * filename, mode_t mode)
+        {
+            this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
+            this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
+            this->file_size = 0;
+            this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+            return this->fd;
+        }
+
+        ssize_t write(const void * data, size_t len)
+        {
+            REDASSERT(this->file_size != nosize);
+
+            // TODO: hmac returns error as exceptions while write errors are returned as -1
+            // this is inconsistent and probably need a fix.
+            // also, if we choose to raise exception every error should have it's own one
+            this->hmac.update(static_cast<const uint8_t *>(data), len);
+            if (this->file_size < quick_size) {
+                auto const remaining = std::min(quick_size - this->file_size, len);
+                this->quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
+                this->file_size += remaining;
+            }
+
+            size_t remaining_len = len;
+            size_t total_sent = 0;
+            while (remaining_len) {
+                ssize_t ret = ::write(this->fd,
+                    static_cast<const char*>(data) + total_sent, remaining_len);
+                if (ret <= 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    return -1;
+                }
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            return total_sent;
+        }
+
+        int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
+        {
+            REDASSERT(this->file_size != nosize);
+            this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
+            this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
+            this->file_size = nosize;
+            return this->close();
+        }
+
+        int close()
+        {
+            if (this->is_open()) {
+                const int ret = ::close(this->fd);
+                this->fd = -1;
+                return ret;
+            }
+            return 0;
+        }
+
+        bool is_open() const noexcept
+        { return -1 != this->fd; }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return ::lseek64(this->fd, offset, whence); }
+
+        int flush() const
+        { return 0; }
+    };
+}
+
+
+namespace transbuf {
+    class ocrypto_filename_buf
+    {
+        transfil::encrypt_filter encrypt;
+        CryptoContext & cctx;
+        Random & rnd;
+        ofile_buf_out file;
+
+    public:
+        explicit ocrypto_filename_buf(ocrypto_filename_params params)
+        : cctx(params.crypto_ctx)
+        , rnd(params.rnd)
+        {}
+
+        ~ocrypto_filename_buf()
+        {
+            if (this->is_open()) {
+                this->close();
+            }
+        }
+
+        int open(const char * filename, mode_t mode = 0600)
+        {
+            int err = this->file.open(filename, mode);
+            if (err < 0) {
+                return err;
+            }
+
+            unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+            size_t base_len = 0;
+            const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
+            this->cctx.get_derived_key(trace_key, base, base_len);
+            unsigned char iv[32];
+            this->rnd.random(iv, 32);
+            return this->encrypt.open(this->file, trace_key, this->cctx, iv);
+        }
+
+        ssize_t write(const void * data, size_t len)
+        { return this->encrypt.write(this->file, data, len); }
+
+        int close(unsigned char hash[MD_HASH_LENGTH << 1])
+        {
+            const int res1 = this->encrypt.close(this->file, hash, this->cctx.get_hmac_key());
+            const int res2 = this->file.close();
+            return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
+        }
+
+        int close()
+        {
+            unsigned char hash[MD_HASH_LENGTH << 1];
+            return this->close(hash);
+        }
+
+        bool is_open() const noexcept
+        { return this->file.is_open(); }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return this->file.seek(offset, whence); }
+
+        int flush() const
+        { return this->file.flush(); }
+    };
+}
+
+struct OutMetaSequenceTransport : public Transport
+{
+    OutMetaSequenceTransport(
+        const char * path,
+        const char * hash_path,
+        const char * basename,
+        timeval now,
+        uint16_t width,
+        uint16_t height,
+        const int groupid,
+        auth_api * authentifier = nullptr,
+        FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
+    : buf(detail::out_meta_sequence_filename_buf_param<>(
+        now.tv_sec, format, hash_path, path, basename, ".wrm", groupid
+    ))
+    {
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+
+        detail::write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, false);
+    }
+
+    void timestamp(timeval now) override {
+        this->buffer().update_sec(now.tv_sec);
+    }
+
+    const FilenameGenerator * seqgen() const noexcept
+    {
+        return &(this->buffer().seqgen());
+    }
+    using Buf = detail::out_meta_sequence_filename_buf_impl<detail::empty_ctor<transbuf::ofile_buf_out>>;
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+    void request_full_cleaning() override {
+        this->buffer().request_full_cleaning();
+    }
+
+    ~OutMetaSequenceTransport() {
+        this->buf.close();
+    }
+
+private:
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", buf.current_path());
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+    Buf & buffer() noexcept
+    { return this->buf; }
+
+    const Buf & buffer() const noexcept
+    { return this->buf; }
+
+    Buf buf;
+
+};
+
+namespace detail {
+
+    class out_meta_sequence_filename_buf_impl_cctx
+    : public out_sequence_filename_buf_impl
+    {
+        cctx_ochecksum_file meta_buf_;
+        MetaFilename mf_;
+        MetaFilename hf_;
+        time_t start_sec_;
+        time_t stop_sec_;
+
+    public:
+        template<class MetaParams>
+        explicit out_meta_sequence_filename_buf_impl_cctx(
+            out_meta_sequence_filename_buf_param<MetaParams> const & params
+        )
+        : out_sequence_filename_buf_impl(params.sq_params)
+        , meta_buf_(params.meta_buf_params)
+        , mf_(params.sq_params.prefix, params.sq_params.filename, params.sq_params.format)
+        , hf_(params.hash_prefix, params.sq_params.filename, params.sq_params.format)
+        , start_sec_(params.sec)
+        , stop_sec_(params.sec)
+        {
+            if (this->meta_buf_.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+                LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
+                throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+            }
+            if (chmod(this->mf_.filename, S_IRUSR | S_IRGRP) == -1) {
+                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                   , this->mf_.filename
+                   , "u+r, g+r"
+                   , strerror(errno), errno);
+            }
+        }
+
+        int close()
+        {
+            const int res1 = this->next();
+            const int res2 = (this->meta_buf().is_open() ? this->meta_buf_.close() : 0);
+            int err = res1 ? res1 : res2;
+            if (!err) {
+                char const * hash_filename = this->hash_filename();
+                char const * meta_filename = this->meta_filename();
+                transbuf::ofile_buf_out crypto_hash;
+
+                char path[1024] = {};
+                char basename[1024] = {};
+                char extension[256] = {};
+                char filename[2048] = {};
+
+                canonical_path(
+                    meta_filename,
+                    path, sizeof(path),
+                    basename, sizeof(basename),
+                    extension, sizeof(extension)
+                );
+
+                snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+                if (crypto_hash.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+                    char header[] = "v2\n\n\n";
+                    crypto_hash.write(header, sizeof(header)-1);
+
+                    struct stat stat;
+                    int err = ::stat(meta_filename, &stat);
+                    if (!err) {
+                        err = write_meta_file_impl<false>(crypto_hash, filename, stat, 0, 0, nullptr);
+                    }
+                    if (!err) {
+                        err = crypto_hash.close(/*hash*/);
+                    }
+                    if (err) {
+                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                        return 1;
+                    }
+                }
+                else {
+                    int e = errno;
+                    LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+                    errno = e;
+                    return 1;
+                }
+                return 0;
+            }
+            return err;
+        }
+
+        /// \return 0 if success
+        int next()
+        {
+            if (this->buf().is_open()) {
+                this->buf().close();
+                return this->next_meta_file();
+            }
+            return 1;
+        }
+
+    protected:
+        int next_meta_file(hash_type const * hash = nullptr)
+        {
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+            const char * filename = this->rename_filename();
+            if (!filename) {
+                return 1;
+            }
+
+            if (int err = write_meta_file(
+                this->meta_buf_, filename, this->start_sec_, this->stop_sec_+1, hash
+            )) {
+                return err;
+            }
+
+            this->start_sec_ = this->stop_sec_;
+
+            return 0;
+        }
+
+        char const * hash_filename() const noexcept
+        {
+            return this->hf_.filename;
+        }
+
+        char const * meta_filename() const noexcept
+        {
+            return this->mf_.filename;
+        }
+
+    public:
+        void request_full_cleaning()
+        {
+            this->out_sequence_filename_buf_impl::request_full_cleaning();
+            ::unlink(this->mf_.filename);
+        }
+
+        cctx_ochecksum_file & meta_buf() noexcept
+        { return this->meta_buf_; }
+
+        void update_sec(time_t sec)
+        { this->stop_sec_ = sec; }
+    };
+
+class out_hash_meta_sequence_filename_buf_impl_cctx
+: public out_meta_sequence_filename_buf_impl_cctx
+{
+    using BufFilter = detail::ochecksum_filter;
+//    using BufMeta = detail::cctx_ochecksum_file;
+    using BufHash = detail::cctx_ofile_buf;
+    using Params = CryptoContext&;
+
+    CryptoContext & cctx;
+    Params hash_ctx;
+    BufFilter wrm_filter;
+
+public:
+    explicit out_hash_meta_sequence_filename_buf_impl_cctx(
+        out_hash_meta_sequence_filename_buf_param<Params> const & params
+    )
+    : out_meta_sequence_filename_buf_impl_cctx(params.meta_sq_params)
+    , cctx(params.cctx)
+    , hash_ctx(params.filter_params)
+    , wrm_filter(params.filter_params)
+    {}
+
+    ssize_t write(const void * data, size_t len)
+    {
+        if (!this->buf().is_open()) {
+            const char * filename = this->get_filename_generate();
+            const int res = this->open_filename(filename);
+            if (res < 0) {
+                return res;
+            }
+            if (int err = this->wrm_filter.open(this->buf(), filename)) {
+                return err;
+            }
+        }
+        return this->wrm_filter.write(this->buf(), data, len);
+    }
+
+    int close()
+    {
+        if (this->buf().is_open()) {
+            if (this->next()) {
+                return 1;
+            }
+        }
+
+        BufHash hash_buf(this->hash_ctx);
+
+        if (!this->meta_buf().is_open()) {
+            return 1;
+        }
+
+        hash_type hash;
+
+        if (this->meta_buf().close(hash)) {
+            return 1;
+        }
+
+        char const * hash_filename = this->hash_filename();
+        char const * meta_filename = this->meta_filename();
+
+        char path[1024] = {};
+        char basename[1024] = {};
+        char extension[256] = {};
+        char filename[2048] = {};
+
+        canonical_path(
+            meta_filename,
+            path, sizeof(path),
+            basename, sizeof(basename),
+            extension, sizeof(extension)
+        );
+
+        snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+        if (hash_buf.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+            char header[] = "v2\n\n\n";
+            hash_buf.write(header, sizeof(header)-1);
+
+            struct stat stat;
+            int err = ::stat(meta_filename, &stat);
+            if (!err) {
+                err = write_meta_file_impl<false>(hash_buf, filename, stat, 0, 0, &hash);
+            }
+            if (!err) {
+                err = hash_buf.close(/*hash*/);
+            }
+            if (err) {
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                return 1;
+            }
+        }
+        else {
+            int e = errno;
+            LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+            errno = e;
+            return 1;
+        }
+
+        return 0;
+    }
+
+    int next()
+    {
+        if (this->buf().is_open()) {
+            hash_type hash;
+            {
+                const int res1 = this->wrm_filter.close(this->buf(), hash, this->cctx.get_hmac_key());
+                const int res2 = this->buf().close();
+                if (res1) {
+                    return res1;
+                }
+                if (res2) {
+                    return res2;
+                }
+            }
+
+            return this->next_meta_file(&hash);
+        }
+        return 1;
+    }
+};
+
+}
+
+struct OutMetaSequenceTransportWithSum : public Transport {
+
+    OutMetaSequenceTransportWithSum(
+        CryptoContext & crypto_ctx,
+        const char * path,
+        const char * hash_path,
+        const char * basename,
+        timeval now,
+        uint16_t width,
+        uint16_t height,
+        const int groupid,
+        auth_api * authentifier = nullptr,
+        FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
+    : buf(
+        detail::out_hash_meta_sequence_filename_buf_param<CryptoContext&>(
+            crypto_ctx,
+            now.tv_sec, format, hash_path, path, basename, ".wrm", groupid,
+            crypto_ctx
+        )
+    ) {
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+
+        detail::write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, true);
+    }
+
+    void timestamp(timeval now) override {
+        this->buffer().update_sec(now.tv_sec);
+    }
+
+    const FilenameGenerator * seqgen() const noexcept
+    {
+        return &(this->buffer().seqgen());
+    }
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+    void request_full_cleaning() override {
+        this->buffer().request_full_cleaning();
+    }
+
+    ~OutMetaSequenceTransportWithSum() {
+        this->buf.close();
+    }
+
+private:
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", buf.current_path());
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+protected:
+    detail::out_hash_meta_sequence_filename_buf_impl_cctx & buffer() noexcept
+    { return this->buf; }
+
+    const detail::out_hash_meta_sequence_filename_buf_impl_cctx & buffer() const noexcept
+    { return this->buf; }
+
+private:
+    detail::out_hash_meta_sequence_filename_buf_impl_cctx buf;
+
+};
+
+
+struct CryptoOutMetaSequenceTransport
+: public Transport {
+
+    using Buf =
+        detail::out_hash_meta_sequence_filename_buf_impl<
+            detail::ocrypto_filter,
+            transbuf::ocrypto_filename_buf,
+            transbuf::ocrypto_filename_buf,
+            transbuf::ocrypto_filename_params
+        >;
+
+    CryptoOutMetaSequenceTransport(
+        CryptoContext & crypto_ctx,
+        Random & rnd,
+        const char * path,
+        const char * hash_path,
+        const char * basename,
+        timeval now,
+        uint16_t width,
+        uint16_t height,
+        const int groupid,
+        auth_api * authentifier = nullptr,
+        FilenameFormat format = FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
+    : buf(
+        detail::out_hash_meta_sequence_filename_buf_param<transbuf::ocrypto_filename_params>(
+            crypto_ctx,
+            now.tv_sec, format, hash_path, path, basename, ".wrm", groupid,
+            {crypto_ctx, rnd}
+        )) {
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+
+        detail::write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, true);
+    }
+
+    void timestamp(timeval now) override {
+        this->buffer().update_sec(now.tv_sec);
+    }
+
+    const FilenameGenerator * seqgen() const noexcept
+    {
+        return &(this->buffer().seqgen());
+    }
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+    void request_full_cleaning() override {
+        this->buffer().request_full_cleaning();
+    }
+
+    ~CryptoOutMetaSequenceTransport() {
+        this->buf.close();
+    }
+
+private:
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", buf.current_path());
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+    Buf & buffer() noexcept
+    { return this->buf; }
+
+    const Buf & buffer() const noexcept
+    { return this->buf; }
+
+    typedef CryptoOutMetaSequenceTransport TransportType;
+
+    Buf buf;
+
+};
+
 
 class SaveStateChunk {
 public:
@@ -162,6 +2291,18 @@ private:
 
     static void io_uint32_le(InStream & stream, RDPColor & value) { value = RDPColor(stream.in_uint32_le()); }
     static void io_uint32_le(OutStream & stream, RDPColor value) { stream.out_uint32_le(value.as_bgr().to_u32()); }
+
+    static void io_color(InStream & stream, uint32_t & color) {
+        uint8_t const red   = stream.in_uint8();
+        uint8_t const green = stream.in_uint8();
+        uint8_t const blue  = stream.in_uint8();
+        color = red | green << 8 | blue << 16;
+    }
+    static void io_color(OutStream & stream, uint32_t color) {
+        stream.out_uint8(color);
+        stream.out_uint8(color >> 8);
+        stream.out_uint8(color >> 16);
+    }
 
     static void io_color(InStream & stream, RDPColor & color) {
         uint8_t const red   = stream.in_uint8();
@@ -670,7 +2811,7 @@ public:
                              this->chunk_type,
                              (this->chunk_count-this->remaining_order_count), this->chunk_count,
                              this->stream.in_remain(), this->chunk_size);
-                return false;
+                throw Error(ERR_WRM);
             }
         }
         if (!this->remaining_order_count){
@@ -699,8 +2840,8 @@ public:
                             this->statistics.timestamp_chunk++;       break;
                     }
                     if (this->chunk_size > 65536){
-                        LOG(LOG_INFO,"chunk_size (%d) > 65536", this->chunk_size);
-                        return false;
+                        LOG(LOG_ERR,"chunk_size (%d) > 65536", this->chunk_size);
+                        throw Error(ERR_WRM);
                     }
                     this->stream = InStream(this->stream_buf);
                     if (this->chunk_size - HEADER_SIZE > 0) {
@@ -711,15 +2852,12 @@ public:
                 }
             }
             catch (Error & e){
-                if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
-                    throw;
+                if (e.id == ERR_TRANSPORT_NO_MORE_DATA) {
+                    return false;
                 }
 
-                if (this->verbose) {
-                    LOG(LOG_INFO,"receive error %u : end of transport", e.id);
-                }
-                // receive error, end of transport
-                return false;
+                LOG(LOG_ERR,"receive error \"%s\" (%u)", e.errmsg(false), e.id);
+                throw;
             }
         }
         if (this->remaining_order_count > 0){this->remaining_order_count--;}
@@ -763,7 +2901,7 @@ public:
                         this->process_windowing(stream, header);
                     break;
                     default:
-                        LOG(LOG_ERR, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
+                        LOG(LOG_WARNING, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
                         /* error, unknown order */
                     break;
                 }
@@ -1280,7 +3418,7 @@ public:
                     struct Pointer cursor(Pointer::POINTER_NULL);
                     cursor.width = 32;
                     cursor.height = 32;
-                    cursor.bpp = 24;
+//                    cursor.bpp = 24;
                     cursor.x = this->stream.in_uint8();
                     cursor.y = this->stream.in_uint8();
                     stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
@@ -1298,7 +3436,7 @@ public:
                     Pointer cursor(Pointer::POINTER_NULL);
                     cursor.width = 32;
                     cursor.height = 32;
-                    cursor.bpp = 24;
+//                    cursor.bpp = 24;
                     cursor.x = pi.x;
                     cursor.y = pi.y;
                     memcpy(cursor.data, pi.data, sizeof(pi.data));
@@ -1308,6 +3446,41 @@ public:
                         gd->set_pointer(cursor);
                     }
                 }
+            }
+            break;
+            case POINTER2:
+            {
+                uint8_t cache_idx;
+
+                this->mouse_x = this->stream.in_uint16_le();
+                this->mouse_y = this->stream.in_uint16_le();
+                cache_idx     = this->stream.in_uint8();
+
+                this->statistics.CachePointer++;
+                struct Pointer cursor(Pointer::POINTER_NULL);
+
+                cursor.width    = this->stream.in_uint8();
+                cursor.height   = this->stream.in_uint8();
+//                cursor.bpp      = this->stream.in_uint8();
+                this->stream.in_skip_bytes(1);
+
+                cursor.x = this->stream.in_uint8();
+                cursor.y = this->stream.in_uint8();
+
+                uint16_t data_size = this->stream.in_uint16_le();
+                REDASSERT(data_size <= 32 * 32 * 3);
+
+                uint16_t mask_size = this->stream.in_uint16_le();
+                REDASSERT(mask_size <= 128);
+
+                stream.in_copy_bytes(cursor.data, std::min<size_t>(sizeof(cursor.data), data_size));
+                stream.in_copy_bytes(cursor.mask, std::min<size_t>(sizeof(cursor.mask), mask_size));
+
+                this->ptr_cache.add_pointer_static(cursor, cache_idx);
+
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->set_pointer(cursor);
+                    }
             }
             break;
             case RESET_CHUNK:
@@ -1552,7 +3725,7 @@ private:
             this->interpret_order();
             if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
                 for (gdi::CaptureApi * cap : this->capture_consumers){
-                    cap->snapshot(
+                    cap->periodic_snapshot(
                         this->record_now, this->mouse_x, this->mouse_y
                       , this->ignore_frame_in_timeval
                     );
@@ -1594,7 +3767,7 @@ private:
 
                 if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
                     for (gdi::CaptureApi * cap : this->capture_consumers){
-                        cap->snapshot(
+                        cap->periodic_snapshot(
                             this->record_now, this->mouse_x, this->mouse_y
                         , this->ignore_frame_in_timeval
                         );
@@ -1974,7 +4147,7 @@ public:
 
     void flush() {
         if (this->kbd_stream.get_offset()) {
-            LOG(LOG_INFO, R"x(type="KBD input" data="%*s")x",
+            LOG(LOG_INFO, R"x(type="KBD input" data="%.*s")x",
                 int(this->kbd_stream.get_offset()),
                 reinterpret_cast<char const *>(this->kbd_stream.get_data()));
             this->kbd_stream.rewind();
@@ -2103,33 +4276,6 @@ public:
 using std::begin;
 using std::end;
 
-template<class T>
-struct ApiRegisterElement
-{
-    using list_type = std::vector<std::reference_wrapper<T>>;
-
-    ApiRegisterElement() = default;
-
-    ApiRegisterElement(list_type & l, T & x)
-    : l(&l)
-    , i(l.size())
-    {
-        l.push_back(x);
-    }
-
-    ApiRegisterElement & operator = (ApiRegisterElement const &) = default;
-    ApiRegisterElement & operator = (T & x) { (*this->l)[this->i] = x; return *this; }
-
-    bool operator == (T const & x) const { return &this->get() == &x; }
-//    bool operator != (T const & x) const { return !(this == x); }
-
-    T & get() { return (*this->l)[this->i]; }
-    T const & get() const { return (*this->l)[this->i]; }
-
-private:
-    list_type * l = nullptr;
-    std::size_t i = ~std::size_t{};
-};
 
 
 class FileToChunk
@@ -2423,7 +4569,7 @@ class PngCapture : public gdi::CaptureApi
 {
 public:
     OutFilenameSequenceTransport trans;
-    Drawable & drawable;
+    RDPDrawable & drawable;
     timeval start_capture;
     std::chrono::microseconds frame_interval;
 
@@ -2433,11 +4579,9 @@ public:
 
     std::unique_ptr<uint8_t[]> scaled_buffer;
 
-    PngCapture(
-        const timeval & now, auth_api * authentifier, Drawable & drawable,
-        const char * record_tmp_path, const char * basename, int groupid,
-        const PngParams & png_params)
-    : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_tmp_path, basename, ".png", groupid, authentifier)
+
+    PngCapture(const timeval & now, RDPDrawable & drawable, const PngParams & png_params)
+    : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, png_params.record_tmp_path, png_params.basename, ".png", png_params.groupid, png_params.authentifier)
     , drawable(drawable)
     , start_capture(now)
     , frame_interval(png_params.png_interval)
@@ -2490,7 +4634,7 @@ public:
         uint64_t const interval = this->frame_interval.count();
         if (duration >= interval) {
              // Snapshot at end of Frame or force snapshot if diff_time_val >= 1.5 x frame_interval.
-            if (this->drawable.logical_frame_ended || (duration >= interval * 3 / 2)) {
+            if (this->drawable.logical_frame_ended() || (duration >= interval * 3 / 2)) {
                 this->drawable.trace_mouse();
                 tm ptm;
                 localtime_r(&now.tv_sec, &ptm);
@@ -2524,10 +4668,8 @@ public:
     bool enable_rt_display = false;
 
     PngCaptureRT(
-        const timeval & now, auth_api * authentifier, Drawable & drawable,
-        const char * record_tmp_path, const char * basename, int groupid,
-        const PngParams & png_params)
-    : PngCapture(now, authentifier, drawable, record_tmp_path, basename, groupid, png_params)
+        const timeval & now, RDPDrawable & drawable, const PngParams & png_params)
+    : PngCapture(now, drawable, png_params)
     , num_start(this->trans.get_seqno())
     , png_limit(png_params.png_limit)
     {
@@ -2548,449 +4690,14 @@ public:
     }
 
      virtual void clear_old() {
-        uint32_t num_start = this->trans.get_seqno() >= this->png_limit
-                           ? this->trans.get_seqno() - this->png_limit
-                           : 0;
+        if (this->trans.get_seqno() < this->png_limit) {
+            return;
+        }
+        uint32_t num_start = this->trans.get_seqno() - this->png_limit;
         this->clear_png_interval(num_start, num_start + 1);
     }
 };
 
-class VideoCapture : public gdi::CaptureApi
-{
-    Transport & trans;
-
-    FlvParams flv_params;
-
-    const Drawable & drawable;
-    std::unique_ptr<video_recorder> recorder;
-
-    timeval start_video_capture;
-    std::chrono::microseconds inter_frame_interval;
-    bool no_timestamp;
-
-public:
-    VideoCapture(
-        const timeval & now,
-        Transport & trans,
-        const Drawable & drawable,
-        bool no_timestamp,
-        FlvParams flv_params)
-    : trans(trans)
-    , flv_params(std::move(flv_params))
-    , drawable(drawable)
-    , start_video_capture(now)
-    , inter_frame_interval(1000000L / this->flv_params.frame_rate)
-    , no_timestamp(no_timestamp)
-    {
-        if (this->flv_params.verbosity) {
-            LOG(LOG_INFO, "Video recording %d x %d, rate: %d, qscale: %d, brate: %d, codec: %s",
-                this->flv_params.target_width, this->flv_params.target_height,
-                this->flv_params.frame_rate, this->flv_params.qscale, this->flv_params.bitrate,
-                this->flv_params.codec.c_str());
-        }
-
-        this->next_video();
-    }
-
-    void next_video() {
-        if (this->recorder) {
-            this->recorder.reset();
-            this->trans.next();
-        }
-
-        io_video_recorder_with_transport io{this->trans};
-        this->recorder.reset(new video_recorder(
-            io.write_fn(), io.seek_fn(), io.params(),
-            drawable.width(), drawable.height(),
-            drawable.pix_len(),
-            drawable.data(),
-            this->flv_params.bitrate,
-            this->flv_params.frame_rate,
-            this->flv_params.qscale,
-            this->flv_params.codec.c_str(),
-            this->flv_params.target_width,
-            this->flv_params.target_height,
-            this->flv_params.verbosity
-        ));
-    }
-
-    void preparing_video_frame() {
-        auto & drawable = const_cast<Drawable&>(this->drawable);
-        drawable.trace_mouse();
-        if (!this->no_timestamp) {
-            time_t rawtime = this->start_video_capture.tv_sec;
-            tm tm_result;
-            localtime_r(&rawtime, &tm_result);
-            drawable.trace_timestamp(tm_result);
-        }
-        this->recorder->preparing_video_frame(true);
-        if (!this->no_timestamp) { drawable.clear_timestamp(); }
-        drawable.clear_mouse();
-    }
-
-    void encoding_video_frame() {
-        this->recorder->encoding_video_frame();
-    }
-
-private:
-    std::chrono::microseconds do_snapshot(
-        const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool ignore_frame_in_timeval
-    ) override {
-        uint64_t tick = difftimeval(now, this->start_video_capture);
-        uint64_t const inter_frame_interval = this->inter_frame_interval.count();
-        if (tick >= inter_frame_interval) {
-            auto encoding_video_frame = [this](time_t rawtime){
-                auto & drawable = const_cast<Drawable&>(this->drawable);
-                drawable.trace_mouse();
-                if (!this->no_timestamp) {
-                    tm tm_result;
-                    localtime_r(&rawtime, &tm_result);
-                    drawable.trace_timestamp(tm_result);
-                    this->recorder->encoding_video_frame();
-                    drawable.clear_timestamp();
-                }
-                else {
-                    this->recorder->encoding_video_frame();
-                }
-                drawable.clear_mouse();
-            };
-
-            if (ignore_frame_in_timeval) {
-                auto const nframe = tick / inter_frame_interval;
-                encoding_video_frame(this->start_video_capture.tv_sec);
-                auto const usec = inter_frame_interval * nframe;
-                auto sec = usec / 1000000LL;
-                this->start_video_capture.tv_usec += usec - sec * inter_frame_interval;
-                if (this->start_video_capture.tv_usec >= 1000000LL){
-                    this->start_video_capture.tv_usec -= 1000000LL;
-                    ++sec;
-                }
-                this->start_video_capture.tv_sec += sec;
-                tick -= inter_frame_interval * nframe;
-            }
-            else {
-                do {
-                    encoding_video_frame(this->start_video_capture.tv_sec);
-                    this->start_video_capture.tv_usec += inter_frame_interval;
-                    if (this->start_video_capture.tv_usec >= 1000000LL){
-                        this->start_video_capture.tv_sec += 1;
-                        this->start_video_capture.tv_usec -= 1000000LL;
-                    }
-                    tick -= inter_frame_interval;
-                } while (tick >= inter_frame_interval);
-            }
-        }
-
-        return std::chrono::microseconds(inter_frame_interval - tick);
-    }
-};
-
-struct PreparingWhenFrameMarkerEnd final : gdi::CaptureApi
-{
-    PreparingWhenFrameMarkerEnd(VideoCapture & vc)
-    : vc(vc)
-    {}
-
-private:
-    VideoCapture & vc;
-
-    std::chrono::microseconds do_snapshot(
-        const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
-    ) override {
-        vc.preparing_video_frame();
-        return std::chrono::microseconds{};
-    }
-};
-
-class FullVideoCaptureImpl
-{
-    OutFilenameSequenceSeekableTransport trans;
-public:
-    VideoCapture vc;
-    PreparingWhenFrameMarkerEnd preparing_vc{vc};
-
-    FullVideoCaptureImpl(
-        const timeval & now,
-        const char * const record_path,
-        const char * const basename,
-        const int groupid,
-        bool no_timestamp,
-        const Drawable & drawable,
-        FlvParams flv_params)
-    : trans(
-        FilenameGenerator::PATH_FILE_EXTENSION,
-        record_path, basename, ("." + flv_params.codec).c_str(), groupid)
-    , vc(now, this->trans, drawable, no_timestamp, std::move(flv_params))
-    {
-        ::unlink((std::string(record_path) + basename + "." + flv_params.codec).c_str());
-    }
-
-    void encoding_video_frame() {
-        this->vc.encoding_video_frame();
-    }
-
-    void request_full_cleaning() {
-        this->trans.request_full_cleaning();
-    }
-};
-
-struct NotifyNextVideo : private noncopyable
-{
-    enum class reason { sequenced, external };
-    virtual void notify_next_video(const timeval& now, reason) = 0;
-    virtual ~NotifyNextVideo() = default;
-};
-
-class SequencedVideoCaptureImpl
-{
-    class VideoSequencer : public gdi::CaptureApi
-    {
-        timeval start_break;
-        std::chrono::microseconds break_interval;
-
-    protected:
-        SequencedVideoCaptureImpl & impl;
-
-    public:
-        VideoSequencer(const timeval & now, std::chrono::microseconds break_interval, SequencedVideoCaptureImpl & impl)
-        : start_break(now)
-        , break_interval(break_interval)
-        , impl(impl)
-        {}
-
-        std::chrono::microseconds get_interval() const {
-            return this->break_interval;
-        }
-
-        void reset_now(const timeval& now) {
-            this->start_break = now;
-        }
-
-    private:
-        std::chrono::microseconds do_snapshot(
-            const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
-        ) override {
-            assert(this->break_interval.count());
-            auto const interval = difftimeval(now, this->start_break);
-            if (interval >= uint64_t(this->break_interval.count())) {
-                this->impl.next_video_impl(now, NotifyNextVideo::reason::sequenced);
-                this->start_break = now;
-            }
-            return this->break_interval;
-        }
-    };
-
-    class VideoTransport final : public OutFilenameSequenceSeekableTransport
-    {
-        using transport_base = OutFilenameSequenceSeekableTransport;
-
-    public:
-        VideoTransport(
-            const char * const record_path,
-            const char * const basename,
-            const char * const suffix,
-            const int groupid
-        )
-        : transport_base(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_path, basename, suffix, groupid)
-        {
-            this->remove_current_path();
-        }
-
-        bool next() override {
-            if (transport_base::next()) {
-                this->remove_current_path();
-                return true;
-            }
-            return false;
-        }
-
-    private:
-        void remove_current_path() {
-            const char * const path = this->seqgen()->get(this->get_seqno());
-            ::unlink(path);
-        }
-    };
-
-
-
-    // first next_video is ignored
-    struct FirstImage : gdi::CaptureApi
-    {
-        SequencedVideoCaptureImpl & first_image_impl;
-        ApiRegisterElement<gdi::CaptureApi> first_image_cap_elem;
-        ApiRegisterElement<gdi::CaptureApi> first_image_gcap_elem;
-
-        const timeval first_image_start_capture;
-
-        FirstImage(timeval const & now, SequencedVideoCaptureImpl & impl)
-        : first_image_impl(impl)
-        , first_image_start_capture(now)
-        {}
-
-        std::chrono::microseconds do_snapshot(
-            const timeval& now, int x, int y, bool ignore_frame_in_timeval
-        ) override {
-            std::chrono::microseconds ret;
-
-            auto const duration = std::chrono::microseconds(difftimeval(now, this->first_image_start_capture));
-            auto const interval = std::chrono::microseconds(std::chrono::seconds(3))/2;
-            if (duration >= interval) {
-                auto video_interval = first_image_impl.video_sequencer.get_interval();
-                if (first_image_impl.ic_drawable.logical_frame_ended || duration > std::chrono::seconds(2) || duration >= video_interval) {
-                    first_image_impl.ic_breakpoint_image(now);
-                    assert(this->first_image_cap_elem == *this);
-                    assert(this->first_image_gcap_elem == *this);
-                    this->first_image_cap_elem = first_image_impl.video_sequencer;
-                    this->first_image_gcap_elem = first_image_impl.video_sequencer;
-
-                    ret = video_interval;
-                }
-                else {
-                    ret = interval / 3;
-                }
-            }
-            else {
-                ret = interval - duration;
-            }
-
-            return std::min(ret, first_image_impl.video_sequencer.snapshot(now, x, y, ignore_frame_in_timeval));
-        }
-
-    };
-
-public:
-    VideoTransport vc_trans;
-    VideoCapture vc;
-    PreparingWhenFrameMarkerEnd preparing_vc{vc};
-
-    OutFilenameSequenceTransport ic_trans;
-
-    unsigned ic_zoom_factor;
-    unsigned ic_scaled_width;
-    unsigned ic_scaled_height;
-
-    /* const */ Drawable & ic_drawable;
-
-    private:
-        std::unique_ptr<uint8_t[]> ic_scaled_buffer;
-
-    public:
-    void zoom(unsigned percent) {
-        percent = std::min(percent, 100u);
-        const unsigned zoom_width = (this->ic_drawable.width() * percent) / 100;
-        const unsigned zoom_height = (this->ic_drawable.height() * percent) / 100;
-        this->ic_zoom_factor = percent;
-        this->ic_scaled_width = (zoom_width + 3) & 0xFFC;
-        this->ic_scaled_height = zoom_height;
-        if (this->ic_zoom_factor != 100) {
-            this->ic_scaled_buffer.reset(new uint8_t[this->ic_scaled_width * this->ic_scaled_height * 3]);
-        }
-    }
-
-    void ic_flush() {
-        if (this->ic_zoom_factor == 100) {
-            this->dump24();
-        }
-        else {
-            this->scale_dump24();
-        }
-    }
-
-    void dump24() {
-        ::transport_dump_png24(
-            this->ic_trans, this->ic_drawable.data(),
-            this->ic_drawable.width(), this->ic_drawable.height(),
-            this->ic_drawable.rowsize(), true);
-    }
-
-    void scale_dump24() {
-        scale_data(
-            this->ic_scaled_buffer.get(), this->ic_drawable.data(),
-            this->ic_scaled_width, this->ic_drawable.width(),
-            this->ic_scaled_height, this->ic_drawable.height(),
-            this->ic_drawable.rowsize());
-        ::transport_dump_png24(
-            this->ic_trans, this->ic_scaled_buffer.get(),
-            this->ic_scaled_width, this->ic_scaled_height,
-            this->ic_scaled_width * 3, false);
-    }
-
-    bool ic_has_first_img = false;
-
-    void ic_breakpoint_image(const timeval& now)
-    {
-        tm ptm;
-        localtime_r(&now.tv_sec, &ptm);
-        this->ic_drawable.trace_timestamp(ptm);
-        this->ic_flush();
-        this->ic_drawable.clear_timestamp();
-        this->ic_has_first_img = true;
-        this->ic_trans.next();
-    }
-
-    VideoSequencer video_sequencer;
-    FirstImage first_image;
-
-    NotifyNextVideo & next_video_notifier;
-
-    void next_video_impl(const timeval& now, NotifyNextVideo::reason reason) {
-        this->video_sequencer.reset_now(now);
-        if (!this->ic_has_first_img) {
-            this->ic_breakpoint_image(now);
-            this->first_image.first_image_cap_elem = this->video_sequencer;
-            this->first_image.first_image_gcap_elem = this->video_sequencer;
-        }
-        this->vc.next_video();
-        this->ic_breakpoint_image(now);
-        this->next_video_notifier.notify_next_video(now, reason);
-    }
-
-public:
-    SequencedVideoCaptureImpl(
-        const timeval & now,
-        const char * const record_path,
-        const char * const basename,
-        const int groupid,
-        bool no_timestamp,
-        unsigned image_zoom,
-        /* const */Drawable & drawable,
-        FlvParams flv_params,
-        std::chrono::microseconds video_interval,
-        NotifyNextVideo & next_video_notifier)
-    : vc_trans(record_path, basename, ("." + flv_params.codec).c_str(), groupid)
-    , vc(now, this->vc_trans, drawable, no_timestamp, std::move(flv_params))
-    , ic_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, record_path, basename, ".png", groupid)
-    , ic_zoom_factor(std::min(image_zoom, 100u))
-    , ic_scaled_width(drawable.width())
-    , ic_scaled_height(drawable.height())
-    , ic_drawable(drawable)
-    , video_sequencer(
-        now, video_interval > std::chrono::microseconds(0) ? video_interval : std::chrono::microseconds::max(), *this)
-    , first_image(now, *this)
-    , next_video_notifier(next_video_notifier)
-    {
-        const unsigned zoom_width = (this->ic_drawable.width() * this->ic_zoom_factor) / 100;
-        const unsigned zoom_height = (this->ic_drawable.height() * this->ic_zoom_factor) / 100;
-        this->ic_scaled_width = (zoom_width + 3) & 0xFFC;
-        this->ic_scaled_height = zoom_height;
-        if (this->ic_zoom_factor != 100) {
-            this->ic_scaled_buffer.reset(new uint8_t[this->ic_scaled_width * this->ic_scaled_height * 3]);
-        }
-    }
-
-    void next_video(const timeval& now) {
-        this->next_video_impl(now, NotifyNextVideo::reason::external);
-    }
-
-    void encoding_video_frame() {
-        this->vc.encoding_video_frame();
-    }
-
-    void request_full_cleaning() {
-        this->vc_trans.request_full_cleaning();
-        this->ic_trans.request_full_cleaning();
-    }
-};
 
 namespace {
     template<std::size_t N>
@@ -3220,8 +4927,14 @@ public:
         this->last_flush = rawtime;
     }
 
-    void session_update(const timeval& /*now*/, array_view_const_char message) override {
+    void session_update(const timeval& now, array_view_const_char message) override {
         this->is_probe_enabled_session = (::strcmp(message.data(), "Probe.Status=Unknown") != 0);
+
+        this->send_kbd();
+        this->send_date(now.tv_sec, '-');
+        this->trans.send(message.data(), message.size());
+        this->trans.send("\n", 1);
+        this->last_flush = now.tv_sec;
     }
 
     void possible_active_window_change() override {
@@ -3369,11 +5082,11 @@ public:
     TitleCaptureImpl(
         const timeval & now,
         auth_api * authentifier,
-        const Drawable & drawable,
+        RDPDrawable & drawable,
         OcrParams ocr_params,
         NotifyTitleChanged & notify_title_changed)
     : ocr_title_extractor_builder(
-        drawable, authentifier != nullptr,
+        drawable.impl(), authentifier != nullptr,
         ocr_params.ocr_version,
         ocr_params.ocr_locale,
         ocr_params.ocr_on_title_bar_only,
@@ -4053,6 +5766,11 @@ public:
 
 protected:
     void send_pointer(int cache_idx, const Pointer & cursor) override {
+        if ((cursor.width != 32) || (cursor.height != 32)/* || (cursor.bpp != 24)*/) {
+            this->send_pointer2(cache_idx, cursor);
+            return;
+        }
+
         size_t size =   2           // mouse x
                       + 2           // mouse y
                       + 1           // cache index
@@ -4069,6 +5787,47 @@ protected:
         payload.out_uint8(cache_idx);
         payload.out_uint8(cursor.x);
         payload.out_uint8(cursor.y);
+        this->trans.send(payload.get_data(), payload.get_offset());
+
+        this->trans.send(cursor.data, cursor.data_size());
+        this->trans.send(cursor.mask, cursor.mask_size());
+    }
+
+    void send_pointer2(int cache_idx, const Pointer & cursor) {
+        size_t size =   2                   // mouse x
+                      + 2                   // mouse y
+                      + 1                   // cache index
+
+                      + 1                   // mouse width
+                      + 1                   // mouse height
+                      + 1                   // mouse bpp
+
+                      + 1                   // hotspot x
+                      + 1                   // hotspot y
+
+                      + 2                   // data_size
+                      + 2                   // mask_size
+
+                      + cursor.data_size()  // data
+                      + cursor.mask_size()  // mask
+                      ;
+        send_wrm_chunk(this->trans, POINTER2, size, 0);
+
+        StaticOutStream<32> payload;
+        payload.out_uint16_le(this->mouse_x);
+        payload.out_uint16_le(this->mouse_y);
+        payload.out_uint8(cache_idx);
+
+        payload.out_uint8(cursor.width);
+        payload.out_uint8(cursor.height);
+        payload.out_uint8(/*cursor.bpp*/24);
+
+        payload.out_uint8(cursor.x);
+        payload.out_uint8(cursor.y);
+
+        payload.out_uint16_le(cursor.data_size());
+        payload.out_uint16_le(cursor.mask_size());
+
         this->trans.send(payload.get_data(), payload.get_offset());
 
         this->trans.send(cursor.data, cursor.data_size());
@@ -4111,7 +5870,13 @@ public:
 };  // struct GraphicToFile
 
 
-class WrmCaptureImpl : public gdi::KbdInputApi, public gdi::CaptureApi
+
+class WrmCaptureImpl :
+    public gdi::KbdInputApi,
+    public gdi::CaptureApi,
+    public gdi::GraphicApi,
+    public gdi::CaptureProbeApi,
+    public gdi::ExternalCaptureApi
 {
 public:
     BmpCache     bmp_cache;
@@ -4153,22 +5918,16 @@ public:
             switch (trace_type) {
                 case TraceType::cryptofile:
                     this->trans = new (&this->variant.out_crypto)
-                    CryptoOutMetaSequenceTransport(
-                        cctx, rnd, path, hash_path, basename, now,
-                        width, height, groupid, authentifier);
+                    CryptoOutMetaSequenceTransport(cctx, rnd, path, hash_path, basename, now, width, height, groupid, authentifier);
                     break;
                 case TraceType::localfile_hashed:
                     this->trans = new (&this->variant.out_with_sum)
-                    OutMetaSequenceTransportWithSum(
-                        cctx, path, hash_path, basename, now,
-                        width, height, groupid, authentifier);
+                    OutMetaSequenceTransportWithSum(cctx, path, hash_path, basename, now, width, height, groupid, authentifier);
                     break;
                 default:
                 case TraceType::localfile:
                     this->trans = new (&this->variant.out)
-                    OutMetaSequenceTransport(
-                        path, hash_path, basename, now,
-                        width, height, groupid, authentifier);
+                    OutMetaSequenceTransport(path, hash_path, basename, now, width, height, groupid, authentifier);
                     break;
             }
         }
@@ -4181,6 +5940,7 @@ public:
     } trans_variant;
 
 
+private:
     struct Serializer final : GraphicToFile {
         Serializer(const timeval & now
                 , Transport & trans
@@ -4231,15 +5991,108 @@ public:
             }
         }
 
-        WrmCaptureImpl * impl = nullptr;
-        void enable_kbd_input_mask(bool enable) override {
-            this->impl->enable_kbd_input_mask(enable);
-        }
+        void enable_kbd_input_mask(bool) override {}
 
         bool kbd_input(const timeval & now, uint32_t uchar) override {
             return this->GraphicToFile::kbd_input(now, uchar);
         }
     } graphic_to_file;
+
+public:
+
+    // EXTERNAL CAPTURE API
+    void external_breakpoint() override {
+        this->nc.external_breakpoint();
+    }
+
+    void external_time(timeval const & now) override {
+        this->nc.external_time(now);
+    }
+
+    // CAPTURE PROBE API
+    void session_update(timeval const & now, array_view_const_char message) override {
+        this->graphic_to_file.session_update(now, message);
+    }
+    void possible_active_window_change() override { this->graphic_to_file.possible_active_window_change(); }
+
+    // GRAPHIC API
+    void draw(RDP::FrameMarker    const & cmd) override { this->graphic_to_file.draw(cmd);}
+    void draw(RDPDestBlt          const & cmd, Rect clip) override {this->graphic_to_file.draw(cmd, clip);}
+    void draw(RDPMultiDstBlt      const & cmd, Rect clip) override {this->graphic_to_file.draw(cmd, clip);}
+    void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_to_file.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_to_file.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_to_file.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_to_file.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDPScrBlt           const & cmd, Rect clip) override {this->graphic_to_file.draw(cmd, clip);}
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override {this->graphic_to_file.draw(cmd, clip);}
+    void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_to_file.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_to_file.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_to_file.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_to_file.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_to_file.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_to_file.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override {
+        this->graphic_to_file.draw(cmd, bmp);
+    }
+    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override {
+        this->graphic_to_file.draw(cmd, clip, bmp);
+    }
+    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
+        this->graphic_to_file.draw(cmd, clip, color_ctx, bmp);
+    }
+    void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override {
+        this->graphic_to_file.draw(cmd, clip, color_ctx, gly_cache);
+    }
+    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override {
+        this->graphic_to_file.draw(cmd);
+    }
+    void draw(const RDP::RAIL::WindowIcon                     & cmd) override {
+        this->graphic_to_file.draw(cmd);
+    }
+    void draw(const RDP::RAIL::CachedIcon                     & cmd) override {
+        this->graphic_to_file.draw(cmd);
+    }
+    void draw(const RDP::RAIL::DeletedWindow                  & cmd) override {
+        this->graphic_to_file.draw(cmd);
+    }
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override {
+        this->graphic_to_file.draw(cmd);
+    }
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override {
+        this->graphic_to_file.draw(cmd);
+    }
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override {
+        this->graphic_to_file.draw(cmd);
+    }
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override {
+        this->graphic_to_file.draw(cmd);
+    }
+    void draw(RDPColCache   const & cmd) override {
+        this->graphic_to_file.draw(cmd);
+    }
+    void draw(RDPBrushCache const & cmd) override {
+        this->graphic_to_file.draw(cmd);
+    }
 
     class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi
     {
@@ -4311,36 +6164,24 @@ public:
     bool kbd_input_mask_enabled;
 
 public:
-    WrmCaptureImpl(
-        const timeval & now,
-        const WrmParams wrm_params,
-        uint8_t capture_bpp, TraceType trace_type,
-        CryptoContext & cctx, Random & rnd,
-        const char * record_path, const char * hash_path, const char * basename,
-        int groupid, auth_api * authentifier,
-        RDPDrawable & drawable,
-        std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval,
-        std::chrono::seconds break_interval,
-        WrmCompressionAlgorithm wrm_compression_algorithm,
-        GraphicToFile::Verbose wrm_verbose = GraphicToFile::Verbose::none
-    )
+    WrmCaptureImpl(const timeval & now, const WrmParams wrm_params, auth_api * authentifier, RDPDrawable & drawable)
     : bmp_cache(
-        BmpCache::Recorder, capture_bpp, 3, false,
+        BmpCache::Recorder, wrm_params.capture_bpp, 3, false,
         BmpCache::CacheOption(600, 768, false),
         BmpCache::CacheOption(300, 3072, false),
         BmpCache::CacheOption(262, 12288, false))
     , ptr_cache(/*pointerCacheSize=*/0x19)
     , dump_png24_api{drawable}
     , trans_variant(
-        trace_type, cctx, rnd, record_path, hash_path, basename, now,
-        drawable.width(), drawable.height(), groupid, authentifier)
+        wrm_params.trace_type, wrm_params.cctx, wrm_params.rnd, wrm_params.record_path, wrm_params.hash_path, wrm_params.basename, now,
+        drawable.width(), drawable.height(), wrm_params.groupid, authentifier)
     , graphic_to_file(
-        now, *this->trans_variant.trans, drawable.width(), drawable.height(), capture_bpp,
+        now, *this->trans_variant.trans, drawable.width(), drawable.height(), wrm_params.capture_bpp,
         this->bmp_cache, this->gly_cache, this->ptr_cache, this->dump_png24_api,
-        wrm_compression_algorithm, GraphicToFile::SendInput::YES,
-        wrm_verbose
+        wrm_params.wrm_compression_algorithm, GraphicToFile::SendInput::YES,
+        GraphicToFile::Verbose(wrm_params.wrm_verbose)
     )
-    , nc(this->graphic_to_file, now, frame_interval, break_interval)
+    , nc(this->graphic_to_file, now, wrm_params.frame_interval, wrm_params.break_interval)
     , kbd_input_mask_enabled{false}
     {}
 
@@ -4351,6 +6192,12 @@ public:
 
     void enable_kbd_input_mask(bool enable) override {
         this->kbd_input_mask_enabled = enable;
+    }
+
+
+    void enable_keyboard_log()
+    {
+        this->kbd_input_mask_enabled = false;
     }
 
     void send_timestamp_chunk(timeval const & now, bool ignore_time_interval) {
@@ -4365,7 +6212,7 @@ public:
     std::chrono::microseconds do_snapshot(
         const timeval & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
-        return this->nc.snapshot(now, x, y, ignore_frame_in_timeval);
+        return this->nc.periodic_snapshot(now, x, y, ignore_frame_in_timeval);
     }
 
 };
@@ -4461,15 +6308,7 @@ private:
     } null_notifier_next_video;
     //@}
 
-// TODO
 public:
-    const bool capture_wrm;
-    const bool capture_png;
-    const bool capture_pattern_checker;
-    const bool capture_ocr;
-    const bool capture_flv;
-    const bool capture_flv_full; // capturewab only
-    const bool capture_meta; // capturewab only
 
     RDPDrawable * gd_drawable;
 
@@ -4560,13 +6399,8 @@ private:
             }
 
             if (cmd.action == RDP::FrameMarker::FrameEnd) {
-                for (gdi::CaptureApi & cap : this->snapshoters) {
-                    cap.snapshot(
-                        this->mouse.last_now,
-                        this->mouse.last_x,
-                        this->mouse.last_y,
-                        false
-                    );
+                for (gdi::CaptureApi & cap : this->caps) {
+                    cap.frame_marker_event(this->mouse.last_now, this->mouse.last_x, this->mouse.last_y, false);
                 }
             }
         }
@@ -4574,14 +6408,14 @@ private:
     public:
         MouseTrace const & mouse;
         const std::vector<std::reference_wrapper<gdi::GraphicApi>> & gds;
-        const std::vector<std::reference_wrapper<gdi::CaptureApi>> & snapshoters;
+        const std::vector<std::reference_wrapper<gdi::CaptureApi>> & caps;
 
         Graphic(MouseTrace const & mouse,
                 const std::vector<std::reference_wrapper<gdi::GraphicApi>> & gds,
-                const std::vector<std::reference_wrapper<gdi::CaptureApi>> & snapshoters)
+                const std::vector<std::reference_wrapper<gdi::CaptureApi>> & caps)
         : mouse(mouse)
         , gds(gds)
-        , snapshoters(snapshoters)
+        , caps(caps)
         {}
     };
 
@@ -4603,12 +6437,11 @@ private:
 
     UpdateProgressData * update_progress_data;
 
-    Drawable * drawable = nullptr;
     MouseTrace mouse_info;
     wait_obj capture_event;
 
     std::vector<std::reference_wrapper<gdi::GraphicApi>> gds;
-    std::vector<std::reference_wrapper<gdi::CaptureApi>> snapshoters;
+    // Objects willing to be warned of FrameMarker Events
     std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
     std::vector<std::reference_wrapper<gdi::KbdInputApi>> kbds;
     std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
@@ -4619,22 +6452,15 @@ private:
 
 public:
     Capture(
-        bool capture_wrm,
-        GraphicToFile::Verbose wrm_verbose,
-        WrmCompressionAlgorithm wrm_compression_algorithm,
-        std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval,
-        std::chrono::seconds wrm_break_interval,
-        TraceType wrm_trace_type,
-        const WrmParams wrm_params,
-        bool capture_png,
-        const PngParams png_params,
-        bool capture_pattern_checker,
-        bool capture_ocr,
-        OcrParams ocr_params,
-        bool capture_flv,
-        bool capture_flv_full,
-        bool capture_meta,
-        bool capture_kbd,
+        bool capture_wrm, const WrmParams wrm_params,
+        bool capture_png, const PngParams png_params,
+        bool capture_pattern_checker, const PatternCheckerParams pattern_checker_params,
+        bool capture_ocr, const OcrParams ocr_params,
+        bool capture_flv, const SequencedVideoParams sequenced_video_params,
+        bool capture_flv_full, const FullVideoParams full_video_params,
+        bool capture_meta, const MetaParams meta_params,
+        bool capture_kbd, const KbdLogParams kbd_log_params,
+        const char * basename,
         const timeval & now,
         int width,
         int height,
@@ -4643,123 +6469,91 @@ public:
         const char * record_tmp_path,
         const char * record_path,
         const int groupid,
-        const char * hash_path,
-        const char * movie_path,
         const FlvParams flv_params,
         bool no_timestamp,
         auth_api * authentifier,
-        const Inifile & ini,
-        CryptoContext & cctx,
-        Random & rnd,
-        UpdateProgressData * update_progress_data)
+        UpdateProgressData * update_progress_data,
+        const char * pattern_kill,
+        const char * pattern_notify,
+        int debug_capture,
+        bool flv_capture_chunk,
+        bool meta_enable_session_log,
+        const std::chrono::duration<long int> flv_break_interval,
+        bool syslog_keyboard_log,
+        bool rt_display,
+        bool disable_keyboard_log,
+        bool session_log_enabled,
+        bool keyboard_fully_masked,
+        bool meta_keyboard_log)
     : is_replay_mod(!authentifier)
-    , capture_wrm(capture_wrm)
-    , capture_png(capture_png)
-    , capture_pattern_checker(capture_pattern_checker)
-    , capture_ocr(capture_ocr)
-    , capture_flv(capture_flv)
-    , capture_flv_full(capture_flv_full)
-    , capture_meta(capture_meta)
     , gd_drawable(nullptr)
     , update_progress_data(update_progress_data)
-    , drawable{nullptr}
     , mouse_info{now, width / 2, height / 2}
     , capture_event{}
-    , capture_drawable(this->capture_wrm
-                    || this->capture_flv
-                    || this->capture_ocr
-                    || this->capture_png
-                    || this->capture_flv_full)
+    , capture_drawable(capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full)
     {
         REDASSERT(authentifier ? order_bpp == capture_bpp : true);
 
-        if (this->capture_png || (authentifier && (this->capture_flv || this->capture_ocr))) {
+        if (capture_png || (authentifier && (capture_flv || capture_ocr))) {
             if (recursive_create_directory(record_tmp_path, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {
                 LOG(LOG_INFO, "Failed to create directory: \"%s\"", record_tmp_path);
             }
         }
 
-        char path[1024];
-        char basename[1024];
-        char extension[128];
-        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
-        strcpy(basename, movie_path);
-        strcpy(extension, "");          // extension is currently ignored
-
-        if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
-        ) {
-            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
-            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
-        }
-
-        LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
-
-        if (this->capture_drawable) {
+        if (capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full) {
             this->gd_drawable = new RDPDrawable(width, height);
             this->gds.push_back(*this->gd_drawable);
 
-            this->graphic_api.reset(new Graphic(this->mouse_info, this->gds, this->snapshoters));
-            this->drawable = &this->gd_drawable->impl();
+            this->graphic_api.reset(new Graphic(this->mouse_info, this->gds, this->caps));
 
-            if (this->capture_png) {
+            if (capture_png) {
                 if (png_params.real_time_image_capture) {
                     this->png_capture_real_time_obj.reset(new PngCaptureRT(
-                        now, authentifier, this->gd_drawable->impl(),
-                        record_tmp_path, basename, groupid,
-                        png_params
-                    ));
+                        now, *this->gd_drawable, png_params));
                 }
                 else {
                     this->png_capture_obj.reset(new PngCapture(
-                        now, authentifier, this->gd_drawable->impl(),
-                        record_tmp_path, basename, groupid,
-                        png_params));
+                        now, *this->gd_drawable, png_params));
                 }
             }
 
-            if (this->capture_wrm) {
-                this->wrm_capture_obj.reset(new WrmCaptureImpl(
-                    now, wrm_params, capture_bpp, wrm_trace_type,
-                    cctx, rnd, record_path, hash_path, basename,
-                    groupid, authentifier, *this->gd_drawable,
-                    wrm_frame_interval,
-                    wrm_break_interval,
-                    wrm_compression_algorithm, wrm_verbose
-                ));
+            if (capture_wrm) {
+                this->wrm_capture_obj.reset(new WrmCaptureImpl(now, wrm_params, authentifier, *this->gd_drawable));
             }
 
-            if (this->capture_ocr) {
+            if (capture_meta) {
                 this->meta_capture_obj.reset(new MetaCaptureImpl(
                     now, record_tmp_path, basename,
-                    authentifier && ini.get<cfg::session_log::enable_session_log>()
+                    meta_enable_session_log
                 ));
             }
 
-            if (this->capture_flv) {
+            if (capture_flv) {
+
                 std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
-                if (ini.get<cfg::globals::capture_chunk>() && this->meta_capture_obj) {
+                if (flv_capture_chunk && this->meta_capture_obj) {
                     this->notifier_next_video.session_meta = &this->meta_capture_obj->get_session_meta();
                     notifier = this->notifier_next_video;
                 }
                 this->sequenced_video_capture_obj.reset(new SequencedVideoCaptureImpl(
-                    now, record_path, basename, groupid, no_timestamp, png_params.zoom, this->gd_drawable->impl(),
+                    now, record_path, basename, groupid, no_timestamp, png_params.zoom, *this->gd_drawable,
                     flv_params,
-                    ini.get<cfg::video::flv_break_interval>(), notifier
+                    flv_break_interval, notifier
                 ));
             }
 
-            if (this->capture_flv_full) {
+            if (capture_flv_full) {
                 this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
-                    now, record_path, basename, groupid, no_timestamp, this->gd_drawable->impl(),
+                    now, record_path, basename, groupid, no_timestamp, *this->gd_drawable,
                     flv_params));
             }
 
-            if (this->capture_pattern_checker) {
+            if (capture_pattern_checker) {
                 this->patterns_checker.reset(new PatternsChecker(
                     *authentifier,
-                    ini.get<cfg::context::pattern_kill>().c_str(),
-                    ini.get<cfg::context::pattern_notify>().c_str(),
-                    ini.get<cfg::debug::capture>())
+                    pattern_kill,
+                    pattern_notify,
+                    debug_capture)
                 );
                 if (!this->patterns_checker->contains_pattern()) {
                     LOG(LOG_WARNING, "Disable pattern_checker");
@@ -4767,10 +6561,10 @@ public:
                 }
             }
 
-            if (this->capture_ocr) {
+            if (capture_ocr) {
                 if (this->patterns_checker || this->meta_capture_obj || this->sequenced_video_capture_obj) {
                     this->title_capture_obj.reset(new TitleCaptureImpl(
-                        now, authentifier, this->gd_drawable->impl(),
+                        now, authentifier, *this->gd_drawable,
                         ocr_params,
                         this->notifier_title_changed
                     ));
@@ -4779,73 +6573,60 @@ public:
                     LOG(LOG_INFO, "Disable title_extractor");
                 }
             }
+
+            if (capture_wrm) {
+                this->gds.push_back(static_cast<gdi::GraphicApi&>(*this->wrm_capture_obj));   // gdi::GraphicApi
+                this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->wrm_capture_obj));
+                this->objs.push_back(*this->wrm_capture_obj);     // gdi::ExternalCaptureApi
+                this->probes.push_back(static_cast<gdi::CaptureProbeApi&>(*this->wrm_capture_obj)); // gdi::CaptureProbeApi
+
+                if (!disable_keyboard_log) {
+                    this->wrm_capture_obj->enable_keyboard_log();
+                }
+            }
+
+            if (this->png_capture_real_time_obj) {
+                this->png_capture_real_time_obj->enable_rt_display = rt_display;
+                this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_real_time_obj));
+            }
+
+            if (this->png_capture_obj) {
+                this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_obj));
+            }
+
+            if (this->sequenced_video_capture_obj) {
+//                this->caps.push_back(this->sequenced_video_capture_obj->vc);
+                this->caps.push_back(*this->sequenced_video_capture_obj);
+           }
+
+            if (this->full_video_capture_obj) {
+                this->caps.push_back(*this->full_video_capture_obj);
+            }
         }
 
         if (capture_kbd) {
             this->syslog_kbd_capture_obj.reset(new SyslogKbd(now));
             this->session_log_kbd_capture_obj.reset(new SessionLogKbd(*authentifier));
-            this->pattern_kbd_capture_obj.reset(new PatternKbd(authentifier, ini.get<cfg::context::pattern_kill>().c_str(), ini.get<cfg::context::pattern_notify>().c_str(), ini.get<cfg::debug::capture>()));
+            this->pattern_kbd_capture_obj.reset(new PatternKbd(authentifier, pattern_kill, pattern_notify, debug_capture));
         }
 
-        if (this->capture_wrm) {
-            this->gds.push_back(this->wrm_capture_obj->graphic_to_file);
-            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->wrm_capture_obj));
-            this->objs.push_back(this->wrm_capture_obj->nc);
-            this->probes.push_back(this->wrm_capture_obj->graphic_to_file);
-
-            if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm)) {
-                this->wrm_capture_obj->graphic_to_file.impl = this->wrm_capture_obj.get();
-            }
+        if (this->syslog_kbd_capture_obj.get() && (!syslog_keyboard_log)) {
+            this->kbds.push_back(*this->syslog_kbd_capture_obj.get());
+            this->caps.push_back(*this->syslog_kbd_capture_obj.get());
         }
 
-        if (this->capture_drawable && this->png_capture_real_time_obj) {
-            this->png_capture_real_time_obj->enable_rt_display = ini.get<cfg::video::rt_display>();
-            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_real_time_obj));
-            this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_real_time_obj));
+        if (this->session_log_kbd_capture_obj.get() && session_log_enabled && keyboard_fully_masked) {
+            this->kbds.push_back(*this->session_log_kbd_capture_obj.get());
+            this->probes.push_back(*this->session_log_kbd_capture_obj.get());
         }
 
-        if (this->capture_drawable && this->png_capture_obj) {
-            this->caps.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_obj));
-            this->snapshoters.push_back(static_cast<gdi::CaptureApi&>(*this->png_capture_obj));
+        if (this->pattern_kbd_capture_obj.get() && this->pattern_kbd_capture_obj->contains_pattern()) {
+            this->kbds.push_back(*this->pattern_kbd_capture_obj.get());
         }
 
-        if (this->syslog_kbd_capture_obj.get()) {
-            if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)) {
-                this->kbds.push_back(*this->syslog_kbd_capture_obj.get());
-                this->caps.push_back(*this->syslog_kbd_capture_obj.get());
-            }
-        }
-
-        if (this->session_log_kbd_capture_obj.get())
-        {
-            if (authentifier && ini.get<cfg::session_log::enable_session_log>() &&
-                (ini.get<cfg::session_log::keyboard_input_masking_level>()
-                 != ::KeyboardInputMaskingLevel::fully_masked)
-            ) {
-                this->kbds.push_back(*this->session_log_kbd_capture_obj.get());
-                this->probes.push_back(*this->session_log_kbd_capture_obj.get());
-            }
-        }
-
-        if (this->pattern_kbd_capture_obj.get()){
-            if (this->pattern_kbd_capture_obj->contains_pattern()) {
-                this->kbds.push_back(*this->pattern_kbd_capture_obj.get());
-            }
-        }
-
-        if (this->capture_drawable && this->sequenced_video_capture_obj) {
-            this->caps.push_back(this->sequenced_video_capture_obj->vc);
-            this->snapshoters.push_back(this->sequenced_video_capture_obj->preparing_vc);
-            this->sequenced_video_capture_obj->first_image.first_image_cap_elem = {this->caps, this->sequenced_video_capture_obj->first_image};
-            this->sequenced_video_capture_obj->first_image.first_image_gcap_elem = {this->snapshoters, this->sequenced_video_capture_obj->first_image};
-        }
-        if (this->capture_drawable && this->full_video_capture_obj) {
-            this->caps.push_back(this->full_video_capture_obj->vc);
-            this->snapshoters.push_back(this->full_video_capture_obj->preparing_vc);
-        }
         if (this->meta_capture_obj) {
             this->caps.push_back(this->meta_capture_obj->meta);
-            if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta)) {
+            if (!meta_keyboard_log) {
                 this->kbds.push_back(this->meta_capture_obj->meta);
                 this->probes.push_back(this->meta_capture_obj->meta);
             }
@@ -4870,7 +6651,6 @@ public:
                     this->sequenced_video_capture_obj->encoding_video_frame();
                 }
                 catch (Error const &) {
-                    this->sequenced_video_capture_obj->request_full_cleaning();
                     if (this->meta_capture_obj) {
                         this->meta_capture_obj->request_full_cleaning();
                     }
@@ -4882,7 +6662,6 @@ public:
                     this->full_video_capture_obj->encoding_video_frame();
                 }
                 catch (Error const &) {
-                    this->full_video_capture_obj->request_full_cleaning();
                 }
                 this->full_video_capture_obj.reset();
             }
@@ -4896,7 +6675,7 @@ public:
             this->png_capture_obj.reset();
             if (this->png_capture_real_time_obj) { this->png_capture_real_time_obj.reset(); }
 
-            if (this->capture_wrm) {
+            if (this->wrm_capture_obj) {
                 timeval now = tvtime();
                 this->wrm_capture_obj->send_timestamp_chunk(now, false);
                 this->wrm_capture_obj.reset();
@@ -4961,15 +6740,15 @@ protected:
     ) override {
         this->capture_event.reset();
 
-        if (this->drawable) {
-            this->drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
+        if (this->gd_drawable) {
+            this->gd_drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
         }
         this->mouse_info = {now, cursor_x, cursor_y};
 
         std::chrono::microseconds time = std::chrono::microseconds::max();
         if (!this->caps.empty()) {
             for (gdi::CaptureApi & cap : this->caps) {
-                time = std::min(time, cap.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
+                time = std::min(time, cap.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
             }
             this->capture_event.update(time.count());
         }
@@ -5026,3 +6805,160 @@ public:
         }
     }
 };
+
+enum {
+    USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF
+};
+
+enum {
+    USE_ORIGINAL_COLOR_DEPTH           = 0xFFFFFFFF
+};
+
+inline
+static int do_recompress(
+    CryptoContext & cctx, Random & rnd, Transport & in_wrm_trans, const timeval begin_record,
+    bool & program_requested_to_shutdown,
+    int wrm_compression_algorithm_, std::string const & output_filename, Inifile & ini, uint32_t verbose
+) {
+    FileToChunk player(&in_wrm_trans, to_verbose_flags(verbose));
+
+/*
+    char outfile_path     [1024] = PNG_PATH "/"   ; // default value, actual one should come from output_filename
+    char outfile_basename [1024] = "redrec_output"; // default value, actual one should come from output_filename
+    char outfile_extension[1024] = ""             ; // extension is ignored for targets anyway
+
+    canonical_path( output_filename.c_str()
+                  , outfile_path
+                  , sizeof(outfile_path)
+                  , outfile_basename
+                  , sizeof(outfile_basename)
+                  , outfile_extension
+                  , sizeof(outfile_extension)
+                  );
+*/
+    std::string outfile_path;
+    std::string outfile_basename;
+    std::string outfile_extension;
+    ParsePath(output_filename.c_str(), outfile_path, outfile_basename, outfile_extension);
+
+    if (verbose) {
+        std::cout << "Output file path: " << outfile_path << outfile_basename << outfile_extension << '\n' << std::endl;
+    }
+
+    if (recursive_create_directory(outfile_path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP, ini.get<cfg::video::capture_groupid>()) != 0) {
+        std::cerr << "Failed to create directory: \"" << outfile_path << "\"" << std::endl;
+    }
+
+//    if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
+//        ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
+//    }
+    ini.set<cfg::video::wrm_compression_algorithm>(
+        (wrm_compression_algorithm_ == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM))
+        ? player.info_compression_algorithm
+        : static_cast<WrmCompressionAlgorithm>(wrm_compression_algorithm_)
+    );
+
+    int return_code = 0;
+    try {
+        if (ini.get<cfg::globals::trace_type>() == TraceType::cryptofile) {
+            CryptoOutMetaSequenceTransport trans(
+                cctx,
+                rnd,
+                outfile_path.c_str(),
+                ini.get<cfg::video::hash_path>().c_str(),
+                outfile_basename.c_str(),
+                begin_record,
+                player.info_width,
+                player.info_height,
+                ini.get<cfg::video::capture_groupid>()
+            );
+            {
+                ChunkToFile recorder( &trans
+                            , player.info_width
+                            , player.info_height
+                            , player.info_bpp
+                            , player.info_cache_0_entries
+                            , player.info_cache_0_size
+                            , player.info_cache_1_entries
+                            , player.info_cache_1_size
+                            , player.info_cache_2_entries
+                            , player.info_cache_2_size
+
+                            , player.info_number_of_cache
+                            , player.info_use_waiting_list
+
+                            , player.info_cache_0_persistent
+                            , player.info_cache_1_persistent
+                            , player.info_cache_2_persistent
+
+                            , player.info_cache_3_entries
+                            , player.info_cache_3_size
+                            , player.info_cache_3_persistent
+                            , player.info_cache_4_entries
+                            , player.info_cache_4_size
+                            , player.info_cache_4_persistent
+                            , ini.get<cfg::video::wrm_compression_algorithm>());
+
+                player.add_consumer(&recorder);
+
+                player.play(program_requested_to_shutdown);
+            }
+
+            if (program_requested_to_shutdown) {
+                trans.request_full_cleaning();
+            }
+        }
+        else {
+            OutMetaSequenceTransport trans(
+                    outfile_path.c_str(),
+                    ini.get<cfg::video::hash_path>().c_str(),
+                    outfile_basename.c_str(),
+                    begin_record,
+                    player.info_width,
+                    player.info_height,
+                    ini.get<cfg::video::capture_groupid>()
+                );
+            {
+                ChunkToFile recorder( &trans
+                            , player.info_width
+                            , player.info_height
+                            , player.info_bpp
+                            , player.info_cache_0_entries
+                            , player.info_cache_0_size
+                            , player.info_cache_1_entries
+                            , player.info_cache_1_size
+                            , player.info_cache_2_entries
+                            , player.info_cache_2_size
+
+                            , player.info_number_of_cache
+                            , player.info_use_waiting_list
+
+                            , player.info_cache_0_persistent
+                            , player.info_cache_1_persistent
+                            , player.info_cache_2_persistent
+
+                            , player.info_cache_3_entries
+                            , player.info_cache_3_size
+                            , player.info_cache_3_persistent
+                            , player.info_cache_4_entries
+                            , player.info_cache_4_size
+                            , player.info_cache_4_persistent
+                            , ini.get<cfg::video::wrm_compression_algorithm>());
+
+                player.add_consumer(&recorder);
+
+                player.play(program_requested_to_shutdown);
+            }
+
+            if (program_requested_to_shutdown) {
+                trans.request_full_cleaning();
+            }
+        }
+    }
+    catch (...) {
+        return_code = -1;
+    }
+
+    return return_code;
+}   // do_recompress
+

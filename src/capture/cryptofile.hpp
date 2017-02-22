@@ -220,14 +220,14 @@ public:
 
         template<class T, std::size_t array_length>
         key_data(std::array<T, array_length> const & data) noexcept
-        : const_bytes_array(data)
+        : const_bytes_array(data.data(), data.size())
         {
             static_assert(array_length == key_length, "");
         }
 
         template<class T, std::size_t array_length>
         key_data(T const (& data)[array_length]) noexcept
-        : const_bytes_array(data)
+        : const_bytes_array(data, array_length)
         {
             static_assert(array_length == key_length, "");
         }

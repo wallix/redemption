@@ -15,7 +15,7 @@
 
     Product name: redemption, a FLOSS RDP proxy
     Copyright (C) Wallix 2015
-    Author(s): Christophe Grosjean, Raphael Zhou
+    Author(s): Christophe Grosjean, Raphael Zhou, Clément Moroldo
 */
 
 
@@ -210,6 +210,16 @@ enum {
 };
 
 
+static inline
+const char * get_FSCTLStructures(uint32_t FSCTLStructures) {
+
+    switch (FSCTLStructures) {
+        case FSCTL_CREATE_OR_GET_OBJECT_ID: return "FSCTL_CREATE_OR_GET_OBJECT_ID";
+        case FSCTL_DELETE_OBJECT_ID: return "FSCTL_DELETE_OBJECT_ID";
+    }
+
+    return "unknow";
+}
 
 // [MS-FSCC]: File System Control Codes
 
@@ -402,13 +412,12 @@ struct FileObjectBuffer_Type1 {                             // FSCTL_CREATE_OR_G
 
     FileObjectBuffer_Type1() = default;
 
-    FileObjectBuffer_Type1(uint8_t * ObjectId, uint8_t * BirthVolumeId, uint8_t * BirthObjectId, uint8_t * DomainId)
+    FileObjectBuffer_Type1(uint8_t * ObjectId, uint8_t * BirthVolumeId, uint8_t * BirthObjectId)
     {
         for (size_t i = 0; i < GUID_SIZE; i++) {
             this->ObjectId[i] = ObjectId[i];
             this->BirthVolumeId[i] = BirthVolumeId[i];
             this->BirthObjectId[i] = BirthObjectId[i];
-            this->DomainId[i] = DomainId[i];
         }
     }
 
@@ -434,8 +443,7 @@ struct FileObjectBuffer_Type1 {                             // FSCTL_CREATE_OR_G
         hexdump_c(this->BirthVolumeId,  GUID_SIZE);
         LOG(LOG_INFO, "          * BirthObjectId  (16 bytes):");
         hexdump_c(this->BirthObjectId,  GUID_SIZE);
-        LOG(LOG_INFO, "          * DomainId       (16 bytes):");
-        hexdump_c(this->DomainId,  GUID_SIZE);
+        LOG(LOG_INFO, "          * DomainId - (16 bytes) NOT USED");
     }
 };
 
@@ -1121,6 +1129,7 @@ public:
 //  +-----------------------------+--------------------------------------------+
 
 class FileBothDirectoryInformation {
+
     uint32_t NextEntryOffset = 0;
     uint32_t FileIndex       = 0;
     uint64_t CreationTime    = 0;
@@ -1311,13 +1320,15 @@ public:
         LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime);
         LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime);
         LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
+        LOG(LOG_INFO, "          * EndOfFile       = 0x%" PRIx64 " (8 bytes)", this->EndOfFile);
+        LOG(LOG_INFO, "          * AllocationSize  = 0x%" PRIx64 " (8 bytes)", this->AllocationSize);
         LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
-        LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->file_name.size()));
-        LOG(LOG_INFO, "          * EaSize          = %d (4 bytes)", int(this->EaSize));
-        LOG(LOG_INFO, "          * ShortNameLength = %d (1 byte)", int(this->short_name.size()));
+        LOG(LOG_INFO, "          * FileNameLength  = %zu (4 bytes)", this->file_name.size());
+        LOG(LOG_INFO, "          * EaSize          = %u (4 bytes)", this->EaSize);
+        LOG(LOG_INFO, "          * ShortNameLength = %zu (1 byte)", this->short_name.size());
         LOG(LOG_INFO, "          * Reserved - (1 byte) NOT USED");
-        LOG(LOG_INFO, "          * short_name      = \"%s\"", this->short_name);
-        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->file_name);
+        LOG(LOG_INFO, "          * short_name      = \"%s\" (24 bytes)", this->short_name);
+        LOG(LOG_INFO, "          * FileName        = \"%s\" (%zu byte(s))", this->file_name, this->file_name.size() *2);
     }
 };  // FileBothDirectoryInformation
 
@@ -1482,8 +1493,8 @@ public:
         LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime_);
         LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
         LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes_, get_FileAttributes_name(this->FileAttributes_));
-        LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->FileName.size()));
-        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->FileName);
+        LOG(LOG_INFO, "          * FileNameLength  = %zu (4 bytes)", this->FileName.size());
+        LOG(LOG_INFO, "          * FileName        = \"%s\" (%zu byte(s))", this->FileName, this->FileName.size());
     }
 };  //FileDirectoryInformation
 
@@ -1676,8 +1687,8 @@ struct FileFsLabelInformation {
 
     void log() {
         LOG(LOG_INFO, "     File Fs Label Information:");
-        LOG(LOG_INFO, "          * VolumeLabelLength = %d (4 bytes)", int(this->VolumeLabel.size()));
-        LOG(LOG_INFO, "          * VolumeLabel       = \"%s\"", this->VolumeLabel);
+        LOG(LOG_INFO, "          * VolumeLabelLength = %zu (4 bytes)", this->VolumeLabel.size());
+        LOG(LOG_INFO, "          * VolumeLabel       = \"%s\" (%zu byte(s))", this->VolumeLabel, this->VolumeLabel.size());
     }
 
 };
@@ -1971,9 +1982,9 @@ public:
         LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime);
         LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
         LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
-        LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->file_name.size()));
-        LOG(LOG_INFO, "          * EaSize          = %d (4 bytes)", int(this->EaSize));
-        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->file_name);
+        LOG(LOG_INFO, "          * FileNameLength  = %zu (4 bytes)", this->file_name.size());
+        LOG(LOG_INFO, "          * EaSize          = %d (4 bytes)", this->EaSize);
+        LOG(LOG_INFO, "          * FileName        = \"%s\" (%zu byte(s))", this->file_name, this->file_name.size());
     }
 };  // FileFullDirectoryInformation
 
@@ -2141,8 +2152,8 @@ public:
         LOG(LOG_INFO, "     File Directory Information:");
         LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
         LOG(LOG_INFO, "          * FileIndex       = 0x%08x (4 bytes)", this->FileIndex);
-        LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->file_name.size()));
-        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->file_name);
+        LOG(LOG_INFO, "          * FileNameLength  = %zu (4 bytes)", this->file_name.size());
+        LOG(LOG_INFO, "          * FileName        = \"%s\" (%zu byte(s))", this->file_name, this->file_name.size());
     }
 };
 
@@ -2262,8 +2273,8 @@ struct FileRenameInformation {
         LOG(LOG_INFO, "          * ReplaceIfExists = %02x (1 byte)", this->ReplaceIfExists);
         LOG(LOG_INFO, "          * Padding - (7 byte) NOT USED");
         LOG(LOG_INFO, "          * RootDirectory   = %" PRIx64 " (8 bytes)", this->RootDirectory);
-        LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->FileName.size()));
-        LOG(LOG_INFO, "          * VolumeLabel     = \"%s\"", this->FileName);
+        LOG(LOG_INFO, "          * FileNameLength  = %zu (4 bytes)", this->FileName.size());
+        LOG(LOG_INFO, "          * VolumeLabel     = \"%s\" (%zu bytes)", this->FileName, this->FileName.size());
     }
 };
 
@@ -2340,6 +2351,7 @@ class FileStandardInformation {
     uint8_t  Directory      = 0;
 
 public:
+
     FileStandardInformation() = default;
 
     FileStandardInformation(int64_t AllocationSize, int64_t EndOfFile,
@@ -2412,6 +2424,7 @@ public:
         LOG(LOG_INFO, "          * NumberOfLinks  = 0x%08x (4 bytes)", this->NumberOfLinks);
         LOG(LOG_INFO, "          * DeletePending  = 0x%02x (1 byte)", this->DeletePending);
         LOG(LOG_INFO, "          * Directory      = 0x%02x (1 byte)", this->Directory);
+        LOG(LOG_INFO, "          * Reserved - (2 bytes) Not Used");
     }
 };  // FileStandardInformation
 
@@ -2683,33 +2696,43 @@ private:
         return ((length < size) ? length : size - 1);
     }
 
-    static const char * get_FileSystemAttributes_name(uint32_t FileSystemAttribute) {
-        switch (FileSystemAttribute) {
-            case FILE_SUPPORTS_USN_JOURNAL:         return "FILE_SUPPORTS_USN_JOURNAL";
-            case FILE_SUPPORTS_OPEN_BY_FILE_ID:     return "FILE_SUPPORTS_OPEN_BY_FILE_ID";
-            case FILE_SUPPORTS_EXTENDED_ATTRIBUTES: return "FILE_SUPPORTS_EXTENDED_ATTRIBUTES";
-            case FILE_SUPPORTS_HARD_LINKS:          return "FILE_SUPPORTS_HARD_LINKS";
-            case FILE_SUPPORTS_TRANSACTIONS:        return "FILE_SUPPORTS_TRANSACTIONS";
-            case FILE_SEQUENTIAL_WRITE_ONCE:        return "FILE_SEQUENTIAL_WRITE_ONCE";
-            case FILE_READ_ONLY_VOLUME:             return "FILE_READ_ONLY_VOLUME";
-            case FILE_NAMED_STREAMS:                return "FILE_NAMED_STREAMS";
-            case FILE_SUPPORTS_ENCRYPTION:          return "FILE_SUPPORTS_ENCRYPTION";
-            case FILE_SUPPORTS_OBJECT_IDS:          return "FILE_SUPPORTS_OBJECT_IDS";
-            case FILE_VOLUME_IS_COMPRESSED:         return "FILE_VOLUME_IS_COMPRESSED";
-            case FILE_SUPPORTS_REMOTE_STORAGE:      return "FILE_SUPPORTS_REMOTE_STORAGE";
-            case FILE_SUPPORTS_REPARSE_POINTS:      return "FILE_SUPPORTS_REPARSE_POINTS";
-            case FILE_SUPPORTS_SPARSE_FILES:        return "FILE_SUPPORTS_SPARSE_FILES";
-            case FILE_VOLUME_QUOTAS:                return "FILE_VOLUME_QUOTAS";
-            case FILE_FILE_COMPRESSION:             return "FILE_FILE_COMPRESSION";
-            case FILE_PERSISTENT_ACLS:              return "FILE_PERSISTENT_ACLS";
-            case FILE_UNICODE_ON_DISK:              return "FILE_UNICODE_ON_DISK";
-            case FILE_CASE_PRESERVED_NAMES:         return "FILE_CASE_PRESERVED_NAMES";
-            case FILE_CASE_SENSITIVE_SEARCH:        return "FILE_CASE_SENSITIVE_SEARCH";
-            case FILE_SUPPORT_INTEGRITY_STREAMS:    return "FILE_SUPPORT_INTEGRITY_STREAMS";
-        }
 
-        return "<unknown>";
-    }
+    static inline
+std::string get_FileSystemAttributes_name(uint32_t FileSystemAttribute) {
+
+    std::string str;
+    (FileSystemAttribute & FILE_SUPPORTS_USN_JOURNAL) ? str+="FILE_SUPPORTS_USN_JOURNAL " :str;
+    (FileSystemAttribute & FILE_SUPPORTS_OPEN_BY_FILE_ID) ? str+="FILE_SUPPORTS_OPEN_BY_FILE_ID " :str;
+    (FileSystemAttribute & FILE_SUPPORTS_EXTENDED_ATTRIBUTES) ? str+="FILE_SUPPORTS_EXTENDED_ATTRIBUTES " :str;
+
+    (FileSystemAttribute & FILE_SUPPORTS_HARD_LINKS) ? str+="FILE_SUPPORTS_HARD_LINKS " : str;
+    (FileSystemAttribute & FILE_SUPPORTS_TRANSACTIONS) ? str+="FILE_SUPPORTS_TRANSACTIONS " : str;
+    (FileSystemAttribute & FILE_SEQUENTIAL_WRITE_ONCE) ? str+="FILE_SEQUENTIAL_WRITE_ONCE " : str;
+
+    (FileSystemAttribute & FILE_READ_ONLY_VOLUME) ? str+="FILE_READ_ONLY_VOLUME " : str;
+    (FileSystemAttribute & FILE_NAMED_STREAMS) ? str+="FILE_NAMED_STREAMS " : str;
+    (FileSystemAttribute & FILE_SUPPORTS_ENCRYPTION) ? str+="FILE_SUPPORTS_ENCRYPTION " : str;
+
+    (FileSystemAttribute & FILE_SUPPORTS_OBJECT_IDS) ? str+="FILE_SUPPORTS_OBJECT_IDS ":str;
+    (FileSystemAttribute & FILE_VOLUME_IS_COMPRESSED) ? str+="FILE_VOLUME_IS_COMPRESSED " : str;
+    (FileSystemAttribute & FILE_SUPPORTS_REMOTE_STORAGE) ? str+="FILE_SUPPORTS_REMOTE_STORAGE " : str;
+
+    (FileSystemAttribute & FILE_SUPPORTS_REPARSE_POINTS) ? str+="FILE_SUPPORTS_REPARSE_POINTS " : str;
+    (FileSystemAttribute & FILE_SUPPORTS_SPARSE_FILES) ? str+="FILE_SUPPORTS_SPARSE_FILES " : str;
+    (FileSystemAttribute & FILE_VOLUME_QUOTAS) ? str+="FILE_VOLUME_QUOTAS " : str;
+
+
+    (FileSystemAttribute & FILE_FILE_COMPRESSION) ? str+="FILE_FILE_COMPRESSION " : str;
+    (FileSystemAttribute & FILE_PERSISTENT_ACLS) ? str+="FILE_PERSISTENT_ACLS " : str;
+    (FileSystemAttribute & FILE_UNICODE_ON_DISK) ? str+="FILE_UNICODE_ON_DISK " : str;
+
+    (FileSystemAttribute & FILE_CASE_PRESERVED_NAMES) ? str+="FILE_CASE_PRESERVED_NAMES " : str;
+    (FileSystemAttribute & FILE_CASE_SENSITIVE_SEARCH) ? str+="FILE_CASE_SENSITIVE_SEARCH " : str;
+    (FileSystemAttribute & FILE_SUPPORT_INTEGRITY_STREAMS) ? str+="FILE_SUPPORT_INTEGRITY_STREAMS " : str;
+
+    return str;
+}
+
 
 
 public:
@@ -2724,8 +2747,8 @@ public:
         LOG(LOG_INFO, "     File Fs Attribute Information:");
         LOG(LOG_INFO, "          * FileSystemAttributes       = 0x%08x (4 bytes): %s", this->FileSystemAttributes_, get_FileSystemAttributes_name(this->FileSystemAttributes_));
         LOG(LOG_INFO, "          * MaximumComponentNameLength = %d (4 bytes)", int(this->MaximumComponentNameLength));
-        LOG(LOG_INFO, "          * FileSystemNameLength       = %d (4 bytes)", int(this->file_system_name.size()));
-        LOG(LOG_INFO, "          * FileSystemName             = \"%s\"", this->file_system_name);
+        LOG(LOG_INFO, "          * FileSystemNameLength       = %zu (4 bytes)", this->file_system_name.size());
+        LOG(LOG_INFO, "          * FileSystemName             = \"%s\" (%zu byte(s))", this->file_system_name, this->file_system_name.size());
     }
 };  // FileFsAttributeInformation
 
@@ -2875,8 +2898,8 @@ public:
         LOG(LOG_INFO, "          * TotalAllocationUnits           = 0x%" PRIx64 " (8 bytes)", this->TotalAllocationUnits);
         LOG(LOG_INFO, "          * CallerAvailableAllocationUnits = 0x%" PRIx64 " (8 bytes)", this->CallerAvailableAllocationUnits);
         LOG(LOG_INFO, "          * ActualAvailableAllocationUnits = 0x%" PRIx64 " (8 bytes)", this->ActualAvailableAllocationUnits);
-        LOG(LOG_INFO, "          * SectorsPerAllocationUnit       = %d (4 bytes)", int(SectorsPerAllocationUnit));
-        LOG(LOG_INFO, "          * BytesPerSector                 = %d (4 bytes)", int(BytesPerSector));
+        LOG(LOG_INFO, "          * SectorsPerAllocationUnit       = %u (4 bytes)", this->SectorsPerAllocationUnit);
+        LOG(LOG_INFO, "          * BytesPerSector                 = %u (4 bytes)", this->BytesPerSector);
     }
 };
 
@@ -3009,7 +3032,7 @@ public:
         LOG(LOG_INFO, "          * TotalAllocationUnits     = 0x%" PRIx64 " (8 bytes)", this->TotalAllocationUnits);
         LOG(LOG_INFO, "          * AvailableAllocationUnits = 0x%" PRIx64 " (8 bytes)", this->AvailableAllocationUnits);
         LOG(LOG_INFO, "          * SectorsPerAllocationUnit = 0x%08x (4 byte)", this->SectorsPerAllocationUnit);
-        LOG(LOG_INFO, "          * BytesPerSector           = %d (4 bytes)", int(this->BytesPerSector));
+        LOG(LOG_INFO, "          * BytesPerSector           = %u (4 bytes)", this->BytesPerSector);
     }
 };
 
@@ -3206,10 +3229,10 @@ public:
         LOG(LOG_INFO, "     File Fs Volume Information:");
         LOG(LOG_INFO, "          * VolumeCreationTime = 0x%" PRIx64 " (8 bytes)", this->VolumeCreationTime);
         LOG(LOG_INFO, "          * VolumeSerialNumber = 0x%08x (4 bytes)", this->VolumeSerialNumber);
-        LOG(LOG_INFO, "          * VolumeLabelLength  = %d (4 bytes)", int(this->volume_label.size()));
+        LOG(LOG_INFO, "          * VolumeLabelLength  = %zu (4 bytes)", this->volume_label.size());
         LOG(LOG_INFO, "          * SupportsObjects    = 0x%02x (1 byte)", this->SupportsObjects);
         LOG(LOG_INFO, "          * Padding - (1 byte) NOT USED");
-        LOG(LOG_INFO, "          * VolumeLabel        = \"%s\"", this->volume_label);
+        LOG(LOG_INFO, "          * VolumeLabel        = \"%s\" (%zu byte(s))", this->volume_label, this->volume_label.size());
     }
 };  // FileFsVolumeInformation
 
@@ -3441,7 +3464,7 @@ public:
 //  | Value                              | Meaning                                    |
 //  +------------------------------------+--------------------------------------------+
 //  | FILE_ACTION_ADDED                  | The file was added to the directory.       |
-//  | 0x00000001                         | configured to be excluded from the         |
+//  | 0x00000001                         |                                            |
 //  +------------------------------------+--------------------------------------------+
 //  | FILE_ACTION_REMOVED                | The file was removed from the              |
 //  | 0x00000002                         | directory.                                 |
@@ -3592,11 +3615,14 @@ struct FileNotifyInformation {
     void log() {
         LOG(LOG_INFO, "     File Notify Information:");
         LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
-        LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes): %s", this->Action, get_Action_name(this->Action));
-        LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->FileName.size()));
+        LOG(LOG_INFO, "          * Action          = 0x%08x (4 bytes): %s", this->Action, get_Action_name(this->Action));
+        LOG(LOG_INFO, "          * FileNameLength  = %zu (4 bytes)", this->FileName.size());
         LOG(LOG_INFO, "          * FileName        = \"%s\"", this->FileName);
     }
 };
+
+
+
 
 
 }   // namespace fscc

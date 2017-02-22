@@ -88,7 +88,7 @@ public:
 
         this->client_to_server[client_window_id] = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
-        LOG(LOG_INFO, "RemoteProgramsWindowIdManager::register_client_window: ClientWindowId=0x%X", client_window_id);
+        //LOG(LOG_INFO, "RemoteProgramsWindowIdManager::register_client_window: ClientWindowId=0x%X", client_window_id);
 
         return client_window_id;
     }
@@ -119,7 +119,7 @@ private:
         this->client_to_server[client_window_id] = server_window_id;
         this->server_to_client[server_window_id] = client_window_id;
 
-        LOG(LOG_INFO, "RemoteProgramsWindowIdManager::map_server_window: ServerWindowId=0x%X ClientWindowId=0x%X", server_window_id, client_window_id);
+        //LOG(LOG_INFO, "RemoteProgramsWindowIdManager::map_server_window: ServerWindowId=0x%X ClientWindowId=0x%X", server_window_id, client_window_id);
 
         return client_window_id;
     }
@@ -141,7 +141,7 @@ public:
             if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == iter->second) {
                 this->client_to_server.erase(window_id);
 
-                LOG(LOG_INFO, "RemoteProgramsWindowIdManager::unregister_client_window: ClientWindowId=0x%X", window_id);
+                //LOG(LOG_INFO, "RemoteProgramsWindowIdManager::unregister_client_window: ClientWindowId=0x%X", window_id);
 
                 return;
             }
@@ -160,12 +160,12 @@ public:
             if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != iter->second) {
                 this->client_to_server.erase(iter->second);
 
-                LOG(LOG_INFO, "RemoteProgramsWindowIdManager::unregister_server_window: ClientWindowId=0x%X", iter->second);
+                //LOG(LOG_INFO, "RemoteProgramsWindowIdManager::unregister_server_window: ClientWindowId=0x%X", iter->second);
             }
 
             this->server_to_client.erase(window_id);
 
-            LOG(LOG_INFO, "RemoteProgramsWindowIdManager::unregister_server_window: ServerWindowId=0x%X", window_id);
+            //LOG(LOG_INFO, "RemoteProgramsWindowIdManager::unregister_server_window: ServerWindowId=0x%X", window_id);
 
             return;
         }
