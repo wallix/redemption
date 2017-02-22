@@ -1509,7 +1509,7 @@ public:
                     device_create_response.log(LOG_INFO);
                 }
 
-                if (device_io_response.IoStatus() == 0x00000000 /* STATUS_SUCCESS */) {
+                if (device_io_response.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
                     std::string const * device_name =
                         this->device_redirection_manager.get_device_name(
                             device_io_response.DeviceId());
@@ -1625,7 +1625,7 @@ public:
                         Length);
                 }
 
-                if (device_io_response.IoStatus() == 0x00000000 /*STATUS_SUCCESS*/) {
+                if (device_io_response.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
                     this->update_exchanged_data(Length);
 
                     auto request_iter = this->find_request_response(device_io_response);
@@ -1694,7 +1694,7 @@ public:
                             "Write request.");
                 }
 
-                if (device_io_response.IoStatus() == 0x00000000 /*STATUS_SUCCESS*/) {
+                if (device_io_response.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
                     auto request_iter = this->find_request_response(device_io_response);
                     if (request_iter != this->device_io_request_info_inventory.end()) {
                         auto target_iter = this->find_target_response(device_io_response, request_iter->file_id);
@@ -1748,7 +1748,7 @@ public:
             break;
 
             case rdpdr::IRP_MJ_SET_INFORMATION:
-                if (device_io_response.IoStatus() == 0x00000000 /*STATUS_SUCCESS*/) {
+                if (device_io_response.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
                     switch (extra_data) {
                         case rdpdr::FileDispositionInformation:
                         {
@@ -2231,7 +2231,7 @@ public:
             const rdpdr::DeviceIOResponse device_io_response(
                     this->server_device_io_request.DeviceId(),
                     this->server_device_io_request.CompletionId(),
-                    0xC0000022  // STATUS_ACCESS_DENIED
+                    erref::NTSTATUS::STATUS_ACCESS_DENIED
                 );
 
             if (this->verbose & RDPVerbose::rdpdr) {

@@ -4452,9 +4452,9 @@ public:
             }
 
             int height_bitmap = fc.height;
-            if (fc.width == 8) {
-                height_bitmap *=  2;
-            }
+            //if (fc.width == 8) {
+                //height_bitmap *=  2;
+            //}
 
             const uint8_t * fc_data = fc.data.get();
 

@@ -51,7 +51,7 @@ namespace { namespace compiler_aux_ {
 #include <unistd.h> // getpid
 
 #include "cxx/diagnostic.hpp"
-#include "cxx/keywords.hpp"
+#include "cxx/features.hpp"
 
 #include <type_traits>
 
@@ -112,7 +112,7 @@ log_array_02x_format(uint8_t (&d)[n])
 template<std::size_t n>
 char const * log_value(redemption_log_s<n> && x) { return x.data; }
 
-#if ! defined(IN_IDE_PARSER) && CXX_HAS_SYSTEM_INCLUDE(boost/preprocessor/config/config.hpp)
+#if ! defined(IN_IDE_PARSER) && CXX_HAS_INCLUDE(<boost/preprocessor/config/config.hpp>)
 # include <boost/preprocessor/config/config.hpp>
 
 # if BOOST_PP_VARIADICS
@@ -156,9 +156,9 @@ char const * log_value(redemption_log_s<n> && x) { return x.data; }
 
 # ifndef REDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING
 #   if defined __GNUC__ || defined __clang__
-#       pragma GCC warning "Cannot checked format in \"LOG\" (no boost preprocessor)"
+#       pragma GCC warning "Cannot check format in 'LOG' (no boost preprocessor headers or unsupported variadic macro)"
 #   else
-#       warning "Cannot checked format in \"LOG\" (no boost preprocessor)"
+#       warning "Cannot check format in 'LOG' (no boost preprocessor headers or unsupported variadic macro)"
 #   endif
 # endif
 

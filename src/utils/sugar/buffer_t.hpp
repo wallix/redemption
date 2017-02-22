@@ -20,11 +20,40 @@
 
 #pragma once
 
-#ifdef __has_include
-# define CXX_HAS_INCLUDE_ENABLE 1
-# define CXX_HAS_SYSTEM_INCLUDE(path) __has_include(<path>)
-#else
-# define CXX_HAS_INCLUDE_ENABLE 0
-# define CXX_HAS_SYSTEM_INCLUDE(path) 0
-#endif
+#include "utils/sugar/bytes_t.hpp"
 
+/**
+ * \c array_view on \c uint8_t* and \c char*
+ */
+struct buffer_t : bytes_array
+{
+    buffer_t() = default;
+    buffer_t(buffer_t const &) = default;
+
+    buffer_t & operator=(buffer_t const &) = default;
+
+    using bytes_array::bytes_array;
+
+    template<class T, std::size_t n>
+    buffer_t(T (& a)[n]) noexcept
+    : bytes_array(a, n)
+    {}
+};
+
+/**
+ * \c array_view on \c uint8_t* and \c char*
+ */
+struct const_buffer_t : const_bytes_array
+{
+    const_buffer_t() = default;
+    const_buffer_t(const_buffer_t const &) = default;
+
+    const_buffer_t & operator=(const_buffer_t const &) = default;
+
+    using const_bytes_array::const_bytes_array;
+
+    template<class T, std::size_t n>
+    const_buffer_t(T (& a)[n]) noexcept
+    : const_bytes_array(a, n)
+    {}
+};

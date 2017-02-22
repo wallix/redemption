@@ -29,17 +29,17 @@ struct RedIO {
 };
 
 struct RedIn : public RedIO {
-    virtual ~RedIn() {};
+    virtual ~RedIn() {}
     virtual int read(uint8_t * buffer, size_t len) = 0;
 };
 
 struct RedOut : public RedIO {
-    virtual ~RedOut() {};
+    virtual ~RedOut() {}
     virtual int write(const uint8_t * buffer, size_t len) = 0;
 };
 
 struct RedSeekOut : public RedOut {
-    virtual ~RedSeekOut() {};
+    virtual ~RedSeekOut() {}
     // seek man for lseek
     virtual off_t lseek(off_t offset, int whence) = 0;
 };

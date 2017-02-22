@@ -29,7 +29,7 @@
 #include "utils/utf.hpp"
 #include "utils/parse.hpp"
 #include "utils/sugar/make_unique.hpp"
-#include "utils/sugar/bytes_t.hpp"
+#include "utils/sugar/buffer_t.hpp"
 
 #include <memory>
 #include <initializer_list>
@@ -64,8 +64,8 @@ public:
     {
     }
 
-    explicit InStream(const_bytes_array array)
-    : InStream(array.data(), array.size())
+    explicit InStream(const_buffer_t buf)
+    : InStream(buf.data(), buf.size())
     {
     }
 
@@ -356,7 +356,7 @@ public:
 
     // extract a zero terminated UTF16 string from stream
     // of at most length UTF16 chars
-    // return UTF16 string length (number of chars, not bytes) 
+    // return UTF16 string length (number of chars, not bytes)
     // if number returned in same as input length, it means no
     // zero char has been found
     size_t in_utf16_sz(uint16_t utf16[], size_t length)
@@ -396,8 +396,8 @@ public:
     {
     }
 
-    explicit OutStream(bytes_array array)
-    : OutStream(array.data(), array.size())
+    explicit OutStream(buffer_t buf)
+    : OutStream(buf.data(), buf.size())
     {
     }
 

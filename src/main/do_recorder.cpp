@@ -1293,7 +1293,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             | (ini.get<cfg::debug::primary_orders>() ?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
                             | (ini.get<cfg::debug::secondary_orders>() ?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
                             | (ini.get<cfg::debug::bitmap_update>() ?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
-                            
+
                         WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
                         std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
                         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
@@ -1881,14 +1881,14 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 }
 
 extern "C" {
-    __attribute__((__visibility__("default")))
+    REDEMPTION_LIB_EXPORT
     int recmemcpy(char * dest, char * source, int len)
     {
         ::memcpy(dest, source, static_cast<size_t>(len));
         return 0;
     }
 
-    __attribute__((__visibility__("default")))
+    REDEMPTION_LIB_EXPORT
     int do_main(int argc, char const ** argv,
             get_hmac_key_prototype * hmac_fn,
             get_trace_key_prototype * trace_fn)
