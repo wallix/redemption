@@ -59,7 +59,7 @@ public:
         return this->fd != -1;
     }
 
-    virtual ~RedOutFd() { if (this->is_open()) { ::close(this->fd); } };
+    virtual ~RedOutFd() { if (this->is_open()) { ::close(this->fd); } }
     virtual int write(const uint8_t * buffer, size_t len)
     {
         return ::write(this->fd, buffer, len);

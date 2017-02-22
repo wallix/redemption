@@ -26,7 +26,7 @@
 #include "edit.hpp"
 #include "keyboard/keymap2.hpp"
 #include "gdi/graphic_api.hpp"
-#include "cxx/attributes.hpp"
+#include "cxx/cxx.hpp"
 
 class WidgetPassword : public WidgetEdit {
 public:

@@ -27,10 +27,10 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <cerrno>
+#include <cstring>
 #include <cstdint>
 
 #include "utils/log.hpp"
-#include "cxx/attributes.hpp"
 
 
 class Random
