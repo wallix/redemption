@@ -669,6 +669,18 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 static_cast<cfg::client::show_target_user_in_f12_message&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "enable_new_pointer_update")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::client::enable_new_pointer_update&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::client::enable_new_pointer_update&>(this->variables)
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

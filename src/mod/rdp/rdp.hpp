@@ -6316,7 +6316,7 @@ public:
         Pointer & cursor = this->cursors[pointer_cache_idx];
 
         memset(&cursor, 0, sizeof(Pointer));
-        cursor.bpp = 24;
+//        cursor.bpp = 24;
         cursor.x      = stream.in_uint16_le();
         cursor.y      = stream.in_uint16_le();
         cursor.width  = stream.in_uint16_le();
@@ -6335,25 +6335,26 @@ public:
         memcpy(cursor.data, stream.in_uint8p(dlen), dlen);
         memcpy(cursor.mask, stream.in_uint8p(mlen), mlen);
 
-        //for (int i0 = 0; i0 < cursor.height; ++i0) {
+        //const unsigned int xor_line_length_in_byte = cursor.width * 3;
+        //const unsigned int xor_padded_line_length_in_byte =
+        //    ((xor_line_length_in_byte % 2) ?
+        //     xor_line_length_in_byte + 1 :
+        //     xor_line_length_in_byte);
+        //const unsigned int remainder = (cursor.width % 8);
+        //const unsigned int and_line_length_in_byte = cursor.width / 8 + (remainder ? 1 : 0);
+        //const unsigned int and_padded_line_length_in_byte =
+        //    ((and_line_length_in_byte % 2) ?
+        //     and_line_length_in_byte + 1 :
+        //     and_line_length_in_byte);
+        //for (unsigned int i0 = 0; i0 < cursor.height; ++i0) {
         //    printf("%02d  ", (cursor.height - i0 - 1));
         //
-        //    const unsigned int xor_line_length_in_byte = cursor.width * 3;
-        //    const unsigned int xor_padded_line_length_in_byte =
-        //        ((xor_line_length_in_byte % 2) ?
-        //         xor_line_length_in_byte + 1 :
-        //         xor_line_length_in_byte);
-        //    uint8_t* xorMask = cursor.data + (cursor.height - i0 - 1) * xor_padded_line_length_in_byte;
+        //    const uint8_t* xorMask = cursor.data + (cursor.height - i0 - 1) * xor_padded_line_length_in_byte;
         //
-        //    const unsigned int and_line_length_in_byte = cursor.width / 8;
-        //    const unsigned int and_padded_line_length_in_byte =
-        //        ((and_line_length_in_byte % 2) ?
-        //         and_line_length_in_byte + 1 :
-        //         and_line_length_in_byte);
-        //    uint8_t* andMask = cursor.mask + (cursor.height - i0 - 1) * and_padded_line_length_in_byte;
+        //    const uint8_t* andMask = cursor.mask + (cursor.height - i0 - 1) * and_padded_line_length_in_byte;
         //    unsigned char and_bit_extraction_mask = 7;
         //
-        //    for (int i1 = 0; i1 < cursor.width; ++i1) {
+        //    for (unsigned int i1 = 0; i1 < cursor.width; ++i1) {
         //        unsigned int color = 0;
         //        color |=  *xorMask             ;
         //        color |= (*(xorMask + 1) <<  8);
@@ -6387,6 +6388,8 @@ public:
         //    printf("\n");
         //}
         //printf("\n");
+
+        cursor.update_bw();
 
         this->front.set_pointer(cursor);
         if (this->verbose & RDPVerbose::basic_trace3) {
@@ -6591,6 +6594,11 @@ public:
 
         unsigned data_bpp  = stream.in_uint16_le(); /* data bpp */
         unsigned pointer_idx = stream.in_uint16_le();
+        if (this->verbose & RDPVerbose::basic_trace3) {
+            LOG(LOG_INFO,
+                "mod_rdp::process_new_pointer_pdu xorBpp=%u pointer_idx=%u",
+                data_bpp, pointer_idx);
+        }
 
         if (pointer_idx >= (sizeof(this->cursors) / sizeof(Pointer))) {
             LOG(LOG_ERR,
@@ -6601,11 +6609,12 @@ public:
 
         Pointer & cursor = this->cursors[pointer_idx];
         memset(&cursor, 0, sizeof(struct Pointer));
-        cursor.bpp    = 24;
-        cursor.x      = stream.in_uint16_le();
-        cursor.y      = stream.in_uint16_le();
-        cursor.width  = stream.in_uint16_le();
-        cursor.height = stream.in_uint16_le();
+//        cursor.bpp    = 24;
+        cursor.x                = stream.in_uint16_le();
+        cursor.y                = stream.in_uint16_le();
+        cursor.width            = stream.in_uint16_le();
+        cursor.height           = stream.in_uint16_le();
+        cursor.only_black_white = (data_bpp == 1);
         uint16_t mlen  = stream.in_uint16_le(); /* mask length */
         uint16_t dlen  = stream.in_uint16_le(); /* data length */
 
@@ -6639,11 +6648,14 @@ public:
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
+/*
         size_t out_data_len = 3 * (
             // BUG TODO cursor.bpp is always 24
             (cursor.bpp == 1) ? (cursor.width * cursor.height) / 8 :
             (cursor.bpp == 4) ? (cursor.width * cursor.height) / 2 :
             (dlen / nbbytes(data_bpp)));
+*/
+        size_t out_data_len = 3 * (dlen / nbbytes(data_bpp));
 
         if ((mlen > sizeof(cursor.mask)) ||
             (out_data_len > sizeof(cursor.data))) {
@@ -6681,6 +6693,60 @@ public:
             this->to_regular_mask(stream.get_current(), mlen, data_bpp, cursor.mask);
             stream.in_skip_bytes(mlen);
         }
+
+        //const unsigned int xor_line_length_in_byte = cursor.width * 3;
+        //const unsigned int xor_padded_line_length_in_byte =
+        //    ((xor_line_length_in_byte % 2) ?
+        //     xor_line_length_in_byte + 1 :
+        //     xor_line_length_in_byte);
+        //const unsigned int remainder = (cursor.width % 8);
+        //const unsigned int and_line_length_in_byte = cursor.width / 8 + (remainder ? 1 : 0);
+        //const unsigned int and_padded_line_length_in_byte =
+        //    ((and_line_length_in_byte % 2) ?
+        //     and_line_length_in_byte + 1 :
+        //     and_line_length_in_byte);
+        //for (unsigned int i0 = 0; i0 < cursor.height; ++i0) {
+        //    printf("%02d  ", (cursor.height - i0 - 1));
+        //
+        //    const uint8_t* xorMask = cursor.data + (cursor.height - i0 - 1) * xor_padded_line_length_in_byte;
+        //
+        //    const uint8_t* andMask = cursor.mask + (cursor.height - i0 - 1) * and_padded_line_length_in_byte;
+        //    unsigned char and_bit_extraction_mask = 7;
+        //
+        //    for (unsigned int i1 = 0; i1 < cursor.width; ++i1) {
+        //        unsigned int color = 0;
+        //        color |=  *xorMask             ;
+        //        color |= (*(xorMask + 1) <<  8);
+        //        color |= (*(xorMask + 2) << 16);
+        //
+        //        if ((*andMask) & (1 << and_bit_extraction_mask)) {
+        //            printf(".");
+        //        }
+        //        else {
+        //            if (color == 0xFFFFFF) {
+        //                printf("W");
+        //            }
+        //            else if (color) {
+        //                printf("C");
+        //            }
+        //            else  {
+        //                printf("B");
+        //            }
+        //        }
+        //
+        //        xorMask += 3;
+        //        if (and_bit_extraction_mask) {
+        //            and_bit_extraction_mask--;
+        //        }
+        //        else {
+        //            and_bit_extraction_mask = 7;
+        //            andMask++;
+        //        }
+        //    }
+        //
+        //    printf("\n");
+        //}
+        //printf("\n");
 
         this->front.set_pointer(cursor);
         if (this->verbose & RDPVerbose::basic_trace3) {

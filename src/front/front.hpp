@@ -186,6 +186,7 @@ private:
               , bool fastpath_support
               , rdp_mppc_enc * mppc_enc
               , bool compression
+              , bool send_new_pointer
               , GraphicsUpdatePDU::Verbose verbose
             )
             : GraphicsUpdatePDU(
@@ -205,6 +206,7 @@ private:
               , fastpath_support
               , mppc_enc
               , compression
+              , send_new_pointer
               , verbose
             )
             , client_order_caps(client_order_caps)
@@ -340,6 +342,7 @@ private:
           , fastpath_support
           , mppc_enc
           , bool(ini.get<cfg::client::rdp_compression>()) ? client_info.rdp_compression : 0
+          , bool(ini.get<cfg::client::enable_new_pointer_update>()) ? client_info.supported_new_pointer_update : 0
           , ( (ini.get<cfg::debug::primary_orders>()
                 ? RDPSerializer::Verbose::primary_orders   : RDPSerializer::Verbose::none)
             | (ini.get<cfg::debug::secondary_orders>()
@@ -3287,6 +3290,8 @@ private:
 
                     this->client_info.pointer_cache_entries =
                         std::min<int>(pointer_caps.colorPointerCacheSize, MAX_POINTER_COUNT);
+                    this->client_info.supported_new_pointer_update =
+                        (pointer_caps.pointerCacheSize != 0);
                 }
                 break;
             case CAPSTYPE_SHARE: /* 9 */

@@ -660,7 +660,7 @@ public:
                 Pointer cursor;
                 cursor.x = 3;
                 cursor.y = 3;
-                cursor.bpp = 24;
+//                cursor.bpp = 24;
                 cursor.width = 32;
                 cursor.height = 32;
                 memset(cursor.data + 31 * (32 * 3), 0xff, 9);
@@ -1923,7 +1923,7 @@ private:
                 //LOG(LOG_INFO, "Cursor x=%u y=%u", x, y);
                 cursor.x = x;
                 cursor.y = y;
-                cursor.bpp = 24;
+//                cursor.bpp = 24;
                 cursor.width = 32;
                 cursor.height = 32;
                 // a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead

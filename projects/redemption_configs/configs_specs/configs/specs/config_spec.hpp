@@ -190,6 +190,8 @@ void config_spec_definition(Writer && W)
         });
         W.sep();
         W.member(V, type_<bool>(), "show_target_user_in_f12_message", set(false));
+        W.sep();
+        W.member(V, type_<bool>(), "enable_new_pointer_update", set(false));
     });
 
     W.section("mod_rdp", [&]

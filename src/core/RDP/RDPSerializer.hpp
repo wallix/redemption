@@ -143,7 +143,7 @@ struct StateChunk {
     RDPPolyline             polyline;
     RDPEllipseSC            ellipseSC;
 
-    StateChunk()    
+    StateChunk()
         : common(RDP::PATBLT, Rect(0, 0, 1, 1))
         , destblt(Rect(), 0)
         , multidstblt()
