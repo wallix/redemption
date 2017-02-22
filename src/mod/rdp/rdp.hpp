@@ -3254,8 +3254,7 @@ public:
 
                 case FastPath::UpdateType::PTR_NULL:
                     {
-                        struct Pointer cursor;
-                        memset(cursor.mask, 0xff, sizeof(cursor.mask));
+                        Pointer cursor;
                         this->front.set_pointer(cursor);
                     }
                     break;
@@ -6316,13 +6315,14 @@ public:
         Pointer & cursor = this->cursors[pointer_cache_idx];
 
         memset(&cursor, 0, sizeof(Pointer));
-//        cursor.bpp = 24;
+//        cursor.bpp    = 24;
         cursor.x      = stream.in_uint16_le();
         cursor.y      = stream.in_uint16_le();
         cursor.width  = stream.in_uint16_le();
         cursor.height = stream.in_uint16_le();
-        unsigned mlen  = stream.in_uint16_le(); /* mask length */
-        unsigned dlen  = stream.in_uint16_le(); /* data length */
+
+        unsigned mlen = stream.in_uint16_le(); /* mask length */
+        unsigned dlen = stream.in_uint16_le(); /* data length */
 
         if ((mlen > sizeof(cursor.mask)) || (dlen > sizeof(cursor.data))) {
             LOG(LOG_ERR,
@@ -6425,7 +6425,7 @@ public:
                 pointer_idx);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
-        struct Pointer & cursor = this->cursors[pointer_idx];
+        Pointer & cursor = this->cursors[pointer_idx];
         if (cursor.is_valid()) {
             this->front.set_pointer(cursor);
         }
@@ -6608,15 +6608,16 @@ public:
         }
 
         Pointer & cursor = this->cursors[pointer_idx];
-        memset(&cursor, 0, sizeof(struct Pointer));
-//        cursor.bpp    = 24;
+        memset(&cursor, 0, sizeof(Pointer));
+//        cursor.bpp              = 24;
         cursor.x                = stream.in_uint16_le();
         cursor.y                = stream.in_uint16_le();
         cursor.width            = stream.in_uint16_le();
         cursor.height           = stream.in_uint16_le();
         cursor.only_black_white = (data_bpp == 1);
-        uint16_t mlen  = stream.in_uint16_le(); /* mask length */
-        uint16_t dlen  = stream.in_uint16_le(); /* data length */
+
+        uint16_t mlen = stream.in_uint16_le(); /* mask length */
+        uint16_t dlen = stream.in_uint16_le(); /* data length */
 
         if (cursor.width > Pointer::MAX_WIDTH){
             LOG(LOG_ERR, "mod_rdp::process_new_pointer_pdu pointer width overflow (%d)", cursor.width);
