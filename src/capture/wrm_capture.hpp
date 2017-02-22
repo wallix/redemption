@@ -2026,16 +2026,11 @@ struct wrmcapture_ocrypto_filter: wrmcapture_encrypt_filter
 class wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto
 : public wrmcapture_out_meta_sequence_filename_buf_impl<wrmcapture_ocrypto_filename_buf>
 {
-
-    using BufFilter = wrmcapture_ocrypto_filter;
-    using BufMeta = wrmcapture_ocrypto_filename_buf;
-    using BufHash = wrmcapture_ocrypto_filename_buf;
-
     CryptoContext & cctx;
     wrmcapture_ocrypto_filename_params hash_ctx;
-    BufFilter wrm_filter;
+    wrmcapture_ocrypto_filter wrm_filter;
 
-    using sequence_base_type = wrmcapture_out_meta_sequence_filename_buf_impl<BufMeta>;
+    using sequence_base_type = wrmcapture_out_meta_sequence_filename_buf_impl<wrmcapture_ocrypto_filename_buf>;
 
 public:
     explicit wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto(
@@ -2070,7 +2065,7 @@ public:
             }
         }
 
-        BufHash hash_buf(this->hash_ctx);
+        wrmcapture_ocrypto_filename_buf hash_buf(this->hash_ctx);
 
         if (!this->meta_buf().is_open()) {
             return 1;
