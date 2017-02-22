@@ -71,139 +71,16 @@ enum {
 };
 
 
-struct dorecompress_OutMetaSequenceTransport : public Transport
-{
-    dorecompress_OutMetaSequenceTransport(
-        const char * path,
-        const char * hash_path,
-        const char * basename,
-        timeval now,
-        uint16_t width,
-        uint16_t height,
-        const int groupid,
-        auth_api * authentifier = nullptr,
-        wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    : buf(wrmcapture_out_meta_sequence_filename_buf_param<>(
-        now.tv_sec, format, hash_path, path, basename, ".wrm", groupid
-    ))
-    {
-        if (authentifier) {
-            this->set_authentifier(authentifier);
-        }
-
-        wrmcapture_write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, false);
-    }
-
-    void timestamp(timeval now) override {
-        this->buffer().update_sec(now.tv_sec);
-    }
-
-    const wrmcapture_FilenameGenerator * seqgen() const noexcept
-    {
-        return &(this->buffer().seqgen());
-    }
-    using Buf = wrmcapture_out_meta_sequence_filename_buf_impl<wrmcapture_empty_ctor<wrmcapture_ofile_buf_out>>;
-
-    bool next() override {
-        if (this->status == false) {
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
-        const ssize_t res = this->buffer().next();
-        if (res) {
-            this->status = false;
-            if (res < 0){
-                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
-            }
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-        }
-        ++this->seqno;
-        return true;
-    }
-
-    bool disconnect() override {
-        return !this->buf.close();
-    }
-
-    void request_full_cleaning() override {
-        this->buffer().request_full_cleaning();
-    }
-
-    ~dorecompress_OutMetaSequenceTransport() {
-        this->buf.close();
-    }
-
-private:
-    void do_send(const uint8_t * data, size_t len) override {
-        const ssize_t res = this->buf.write(data, len);
-        if (res < 0) {
-            this->status = false;
-            if (errno == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|%s", buf.current_path());
-                this->authentifier->report("FILESYSTEM_FULL", message);
-                errno = ENOSPC;
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
-            }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
-        this->last_quantum_sent += res;
-    }
-
-    Buf & buffer() noexcept
-    { return this->buf; }
-
-    const Buf & buffer() const noexcept
-    { return this->buf; }
-
-    Buf buf;
-
-};
-
-struct dorecompress_ocrypto_filename_params
-{
-    CryptoContext & crypto_ctx;
-    Random & rnd;
-};
-
-
-
-struct dorecompress_ocrypto_filter : dorecompress_encrypt_filter
-{
-    CryptoContext & cctx;
-    Random & rnd;
-
-    explicit dorecompress_ocrypto_filter(dorecompress_ocrypto_filename_params params)
-    : cctx(params.crypto_ctx)
-    , rnd(params.rnd)
-    {}
-
-    template<class Buf>
-    int open(Buf & buf, char const * filename) {
-        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-
-        size_t base_len = 0;
-        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-
-        this->cctx.get_derived_key(trace_key, base, base_len);
-        unsigned char iv[32];
-        this->rnd.random(iv, 32);
-        return dorecompress_encrypt_filter::open(buf, trace_key, this->cctx, iv);
-    }
-};
-
 
 class dorecompress_ocrypto_filename_buf
 {
-    dorecompress_encrypt_filter encrypt;
+    wrmcapture_encrypt_filter encrypt;
     CryptoContext & cctx;
     Random & rnd;
     wrmcapture_ofile_buf_out file;
 
 public:
-    explicit dorecompress_ocrypto_filename_buf(dorecompress_ocrypto_filename_params params)
+    explicit dorecompress_ocrypto_filename_buf(wrmcapture_ocrypto_filename_params params)
     : cctx(params.crypto_ctx)
     , rnd(params.rnd)
     {}
@@ -262,10 +139,10 @@ struct dorecompress_CryptoOutMetaSequenceTransport
 
     using Buf =
         wrmcapture_out_hash_meta_sequence_filename_buf_impl<
-            dorecompress_ocrypto_filter,
+            wrmcapture_ocrypto_filter,
             dorecompress_ocrypto_filename_buf,
             dorecompress_ocrypto_filename_buf,
-            dorecompress_ocrypto_filename_params
+            wrmcapture_ocrypto_filename_params
         >;
 
     dorecompress_CryptoOutMetaSequenceTransport(
@@ -281,7 +158,7 @@ struct dorecompress_CryptoOutMetaSequenceTransport
         auth_api * authentifier = nullptr,
         wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
     : buf(
-        wrmcapture_out_hash_meta_sequence_filename_buf_param<dorecompress_ocrypto_filename_params>(
+        wrmcapture_out_hash_meta_sequence_filename_buf_param<wrmcapture_ocrypto_filename_params>(
             crypto_ctx,
             now.tv_sec, format, hash_path, path, basename, ".wrm", groupid,
             {crypto_ctx, rnd}
@@ -679,7 +556,7 @@ static int do_recompress(
             }
         }
         else {
-            dorecompress_OutMetaSequenceTransport trans(
+            wrmcapture_OutMetaSequenceTransport trans(
                     outfile_path.c_str(),
                     ini.get<cfg::video::hash_path>().c_str(),
                     outfile_basename.c_str(),
