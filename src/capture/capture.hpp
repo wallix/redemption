@@ -80,7 +80,7 @@
 #include "utils/png.hpp"
 #include "utils/fdbuf.hpp"
 
-#include "cxx/attributes.hpp"
+#include "cxx/cxx.hpp"
 
 #include "transport/transport.hpp"
 #include "transport/out_file_transport.hpp"

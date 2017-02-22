@@ -16,7 +16,7 @@
 #include "utils/chex_to_int.hpp"
 #include "utils/parse.hpp"
 #include "utils/fileutils.hpp"
-#include "cxx/features.hpp"
+#include "cxx/cxx.hpp"
 
 extern "C" {
     REDEMPTION_LIB_EXPORT
