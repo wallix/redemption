@@ -233,11 +233,6 @@ public:
         return -1 != this->fd;
     }
 
-//    explicit operator bool () const noexcept
-//    {
-//        return this->is_open();
-//    }
-
     ssize_t write(const void * data, size_t len) const
     {
         size_t remaining_len = len;
@@ -259,6 +254,12 @@ public:
 
 struct wrmcapture_no_param {};
 
+struct wrmcapture_empty_ctor_iobuf : iofdbuf
+{
+    explicit wrmcapture_empty_ctor_iobuf(wrmcapture_no_param = wrmcapture_no_param()) noexcept
+    {}
+};
+
 
 template<class Buf>
 struct wrmcapture_empty_ctor
@@ -273,7 +274,7 @@ class wrmcapture_out_sequence_filename_buf_impl
 {
     char current_filename_[1024];
     wrmcapture_FilenameGenerator filegen_;
-    wrmcapture_empty_ctor<iofdbuf> buf_;
+    wrmcapture_empty_ctor_iobuf buf_;
     unsigned num_file_;
     int groupid_;
 
@@ -325,7 +326,7 @@ public:
     const wrmcapture_FilenameGenerator & seqgen() const noexcept
     { return this->filegen_; }
 
-    wrmcapture_empty_ctor<iofdbuf> & buf() noexcept
+    wrmcapture_empty_ctor_iobuf & buf() noexcept
     { return this->buf_; }
 
     const char * current_path() const
