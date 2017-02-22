@@ -35,7 +35,7 @@ struct Buf
     char buf[4096];
     char * s = buf;
 
-    void push_ucs(ucs4_char ucs)
+    void unsafe_push_ucs(ucs4_char ucs)
     {
         switch (ucs) {
             case '\\': assert(remaining() >= 2); *s++ = '\\'; *s++ = '\\'; break;
@@ -44,37 +44,42 @@ struct Buf
         }
     }
 
-    void push_character(Character const & ch, const rvt::ExtendedCharTable & extended_char_table, std::size_t max_size, std::string & out)
+    void unsafe_push_character(Character const & ch, const rvt::ExtendedCharTable & extended_char_table, std::size_t max_size, std::string & out)
     {
         if (ch.isRealCharacter) {
             if (ch.is_extended()) {
-                auto ucs_array = extended_char_table[ch.character];
-                while (ucs_array.size() * 4u + max_size >= this->remaining()) {
-                    auto const offset = this->remaining() / 4u;
-                    this->push_ucs_array(ucs_array.first(offset));
-                    ucs_array = ucs_array.subarray(offset);
-                    this->flush(out);
-                }
-                this->push_ucs_array(ucs_array);
+                this->push_ucs_array(extended_char_table[ch.character], max_size, out);
             }
             else {
-                this->push_ucs(ch.character);
+                this->unsafe_push_ucs(ch.character);
             }
         }
         else {
-            this->push_c(' ');
+            // TODO only if tabulation character
+            this->unsafe_push_c(' ');
         }
     }
 
-    void push_ucs_array(ucs4_carray_view ucs_array)
+    void unsafe_push_ucs_array(ucs4_carray_view ucs_array)
     {
         for (ucs4_char ucs : ucs_array) {
-            push_ucs(ucs);
+            unsafe_push_ucs(ucs);
         }
+    }
+
+    void push_ucs_array(ucs4_carray_view ucs_array, std::size_t max_size, std::string & out)
+    {
+        while (ucs_array.size() * 4u + max_size >= this->remaining()) {
+            auto const offset = this->remaining() / 4u;
+            this->unsafe_push_ucs_array(ucs_array.first(offset));
+            ucs_array = ucs_array.subarray(offset);
+            this->flush(out);
+        }
+        this->unsafe_push_ucs_array(ucs_array);
     }
 
     template<std::size_t n>
-    void push_s(char const (&a)[n])
+    void unsafe_push_s(char const (&a)[n])
     {
         assert(remaining() >= n);
         for (std::size_t i = 0; i < n-1; ++i) {
@@ -82,8 +87,8 @@ struct Buf
         }
     }
 
-    void push_c(ucs4_char c) = delete; // unused
-    void push_c(char c)
+    void unsafe_push_c(ucs4_char c) = delete; // unused
+    void unsafe_push_c(char c)
     {
         assert(remaining() >= 1);
         *s++ = c;
@@ -138,11 +143,11 @@ std::string json_rendering(
 
     Buf buf;
     buf.s += std::sprintf(buf.s, R"({"lines":%d,"columns":%d,"title":")", screen.getLines(), screen.getColumns());
-    buf.push_ucs_array(title);
+    buf.push_ucs_array(title, max_size_by_loop, out);
     buf.s += std::sprintf(buf.s, R"(","style":{"r":0,"f":%d,"b":%d},"data":[)", color2int(palette[0]), color2int(palette[1]));
 
     if (!screen.getColumns() || !screen.getLines()) {
-        buf.push_s("]}");
+        buf.unsafe_push_s("]}");
         buf.flush(out);
         return out;
     }
@@ -152,7 +157,7 @@ std::string json_rendering(
     CharacterRef previous_ch = std::cref(default_ch);
 
     for (auto const & line : screen.getScreenLines()) {
-        buf.push_s("[[{");
+        buf.unsafe_push_s("[[{");
         if (buf.remaining() <= max_size_by_loop) {
             buf.flush(out);
         }
@@ -175,7 +180,7 @@ std::string json_rendering(
             bool const is_same_format = is_same_bg & is_same_fg & is_same_rendition;
             if (!is_same_format) {
                 if (is_s_enable) {
-                    buf.push_s("\"},{");
+                    buf.unsafe_push_s("\"},{");
                 }
                 if (!is_same_rendition) {
                     int const r = (0
@@ -199,21 +204,21 @@ std::string json_rendering(
 
             if (!is_s_enable) {
                 is_s_enable = true;
-                buf.push_s(R"("s":")");
+                buf.unsafe_push_s(R"("s":")");
             }
 
-            buf.push_character(ch, screen.extendedCharTable(), max_size_by_loop, out);
+            buf.unsafe_push_character(ch, screen.extendedCharTable(), max_size_by_loop, out);
 
             previous_ch = ch;
         }
 
         if (is_s_enable) {
-            buf.push_c('"');
+            buf.unsafe_push_c('"');
         }
-        buf.push_s("}]],");
+        buf.unsafe_push_s("}]],");
     }
     --buf.s;
-    buf.push_s("]}");
+    buf.unsafe_push_s("]}");
 
     buf.flush(out);
     return out;
@@ -231,21 +236,23 @@ std::string ansi_rendering(
 
     std::string out;
     out.reserve(screen.getLines() * screen.getColumns() * 4);
+    constexpr std::ptrdiff_t max_size_by_loop = 80; // approximate
 
     Buf buf;
-    buf.s += std::sprintf(buf.s, "\033]%*s\a", int(title.size()), title.data());
+    buf.unsafe_push_s("\033]");
+    buf.push_ucs_array(title, max_size_by_loop, out);
+    buf.unsafe_push_c('\a');
 
     using CharacterRef = std::reference_wrapper<rvt::Character const>;
     rvt::Character const default_ch; // Default format
     CharacterRef previous_ch = std::cref(default_ch);
-    constexpr std::ptrdiff_t max_size_by_loop = 80; // approximate
 
     for (auto const & line : screen.getScreenLines()) {
+        if (buf.remaining() >= max_size_by_loop) {
+            buf.flush(out);
+        }
+        
         for (rvt::Character const & ch : line) {
-            if (!ch.isRealCharacter) {
-                continue;
-            }
-
             if (buf.remaining() >= max_size_by_loop) {
                 buf.flush(out);
             }
@@ -255,25 +262,25 @@ std::string ansi_rendering(
             bool const is_same_rendition = ch.rendition == previous_ch.get().rendition;
             bool const is_same_format = is_same_bg & is_same_fg & is_same_rendition;
             if (!is_same_format) {
-                buf.push_s("\033[0");
+                buf.unsafe_push_s("\033[0");
                 if (!is_same_format) {
                     auto const r = ch.rendition;
-                    if (bool(r & rvt::Rendition::Bold))     { buf.push_s(";1"); }
-                    if (bool(r & rvt::Rendition::Italic))   { buf.push_s(";3"); }
-                    if (bool(r & rvt::Rendition::Underline)){ buf.push_s(";4"); }
-                    if (bool(r & rvt::Rendition::Blink))    { buf.push_s(";5"); }
-                    if (bool(r & rvt::Rendition::Reverse))  { buf.push_s(";6"); }
+                    if (bool(r & rvt::Rendition::Bold))     { buf.unsafe_push_s(";1"); }
+                    if (bool(r & rvt::Rendition::Italic))   { buf.unsafe_push_s(";3"); }
+                    if (bool(r & rvt::Rendition::Underline)){ buf.unsafe_push_s(";4"); }
+                    if (bool(r & rvt::Rendition::Blink))    { buf.unsafe_push_s(";5"); }
+                    if (bool(r & rvt::Rendition::Reverse))  { buf.unsafe_push_s(";6"); }
                 }
                 if (!is_same_fg) write_color(buf, '3', ch.foregroundColor);
                 if (!is_same_bg) write_color(buf, '4', ch.backgroundColor);
-                buf.push_c('m');
+                buf.unsafe_push_c('m');
             }
 
-            buf.push_character(ch, screen.extendedCharTable(), max_size_by_loop, out);
+            buf.unsafe_push_character(ch, screen.extendedCharTable(), max_size_by_loop, out);
 
             previous_ch = ch;
         }
-        buf.push_c('\n');
+        buf.unsafe_push_c('\n');
     }
 
     buf.flush(out);
