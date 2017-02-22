@@ -438,6 +438,12 @@ public:
 
         std::string current_path;
 
+        int writeData_to_wait = 0;
+        int writeData_buffered = 0;
+        int file_to_write_id = 0;
+        std::unique_ptr<uint8_t[]>  writeData = nullptr;
+
+
     } fileSystemData;
 
     FileSysWatchWrapper_Qt * file_watcher;
@@ -474,7 +480,7 @@ public:
 
     void empty_buffer() override;
 
-    void process_client_clipboard_out_data(const char * const front_channel_name, const uint64_t total_length, OutStream & out_streamfirst, size_t firstPartSize, uint8_t const * data, const size_t data_len);
+    void process_client_clipboard_out_data(const char * const front_channel_name, const uint64_t total_length, OutStream & out_streamfirst, size_t firstPartSize, uint8_t const * data, const size_t data_len, uint32_t flags);
 
     virtual void set_pointer(Pointer const & cursor) override;
 
