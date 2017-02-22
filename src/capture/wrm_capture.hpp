@@ -233,10 +233,10 @@ public:
         return -1 != this->fd;
     }
 
-    explicit operator bool () const noexcept
-    {
-        return this->is_open();
-    }
+//    explicit operator bool () const noexcept
+//    {
+//        return this->is_open();
+//    }
 
     ssize_t write(const void * data, size_t len) const
     {
