@@ -717,6 +717,8 @@ protected:
         }
     } session_probe_virtual_channel_event_handler;
 
+    bool clean_up_32_bpp_cursor;
+
 public:
     using Verbose = RDPVerbose;
 
@@ -858,6 +860,7 @@ public:
         , asynchronous_task_event_handler(*this)
         , session_probe_launcher_event_handler(*this)
         , session_probe_virtual_channel_event_handler(*this)
+        , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
     {
         if (this->verbose & RDPVerbose::basic_trace) {
             if (!enable_transparent_mode) {
@@ -6693,6 +6696,44 @@ public:
             stream.in_skip_bytes(dlen);
             this->to_regular_mask(stream.get_current(), mlen, data_bpp, cursor.mask);
             stream.in_skip_bytes(mlen);
+        }
+
+        if ((data_bpp == 32) && this->clean_up_32_bpp_cursor) {
+            const unsigned int xor_line_length_in_byte = cursor.width * 3;
+            const unsigned int xor_padded_line_length_in_byte =
+                ((xor_line_length_in_byte % 2) ?
+                 xor_line_length_in_byte + 1 :
+                 xor_line_length_in_byte);
+            const unsigned int remainder = (cursor.width % 8);
+            const unsigned int and_line_length_in_byte = cursor.width / 8 + (remainder ? 1 : 0);
+            const unsigned int and_padded_line_length_in_byte =
+                ((and_line_length_in_byte % 2) ?
+                 and_line_length_in_byte + 1 :
+                 and_line_length_in_byte);
+            for (unsigned int i0 = 0; i0 < cursor.height; ++i0) {
+                uint8_t* xorMask = const_cast<uint8_t*>(cursor.data) + (cursor.height - i0 - 1) * xor_padded_line_length_in_byte;
+
+                const uint8_t* andMask = cursor.mask + (cursor.height - i0 - 1) * and_padded_line_length_in_byte;
+                unsigned char and_bit_extraction_mask = 7;
+
+                for (unsigned int i1 = 0; i1 < cursor.width; ++i1) {
+                    unsigned int color = 0;
+                    if ((*andMask) & (1 << and_bit_extraction_mask)) {
+                        *xorMask         = 0;
+                        *(xorMask + 1)   = 0;
+                        *(xorMask + 2)   = 0;
+                    }
+
+                    xorMask += 3;
+                    if (and_bit_extraction_mask) {
+                        and_bit_extraction_mask--;
+                    }
+                    else {
+                        and_bit_extraction_mask = 7;
+                        andMask++;
+                    }
+                }
+            }
         }
 
         //const unsigned int xor_line_length_in_byte = cursor.width * 3;
