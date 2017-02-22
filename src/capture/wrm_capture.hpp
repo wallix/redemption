@@ -500,7 +500,7 @@ public:
 
 
 
-template<class MetaParams = wrmcapture_no_param>
+template<class MetaParams>
 struct wrmcapture_out_meta_sequence_filename_buf_param
 {
     wrmcapture_out_sequence_filename_buf_param sq_params;
@@ -1484,7 +1484,7 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
         const int groupid,
         auth_api * authentifier = nullptr,
         wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    : buf(wrmcapture_out_meta_sequence_filename_buf_param<>(
+    : buf(wrmcapture_out_meta_sequence_filename_buf_param<wrmcapture_no_param>(
         now.tv_sec, format, hash_path, path, basename, ".wrm", groupid
     ))
     {
