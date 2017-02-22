@@ -1558,224 +1558,11 @@ private:
 
 };
 
-
-template<class BufFilter, class BufMeta, class BufHash, class Params>
-class wrmcapture_out_hash_meta_sequence_filename_buf_impl
-: public wrmcapture_out_meta_sequence_filename_buf_impl<BufMeta>
+struct wrmcapture_ocrypto_filename_params
 {
-    CryptoContext & cctx;
-    Params hash_ctx;
-    BufFilter wrm_filter;
-
-    using sequence_base_type = wrmcapture_out_meta_sequence_filename_buf_impl<BufMeta>;
-
-public:
-    explicit wrmcapture_out_hash_meta_sequence_filename_buf_impl(
-        wrmcapture_out_hash_meta_sequence_filename_buf_param<Params> const & params
-    )
-    : sequence_base_type(params.meta_sq_params)
-    , cctx(params.cctx)
-    , hash_ctx(params.filter_params)
-    , wrm_filter(params.filter_params)
-    {}
-
-    ssize_t write(const void * data, size_t len)
-    {
-        if (!this->buf().is_open()) {
-            const char * filename = this->get_filename_generate();
-            const int res = this->open_filename(filename);
-            if (res < 0) {
-                return res;
-            }
-            if (int err = this->wrm_filter.open(this->buf(), filename)) {
-                return err;
-            }
-        }
-        return this->wrm_filter.write(this->buf(), data, len);
-    }
-
-    int close()
-    {
-        if (this->buf().is_open()) {
-            if (this->next()) {
-                return 1;
-            }
-        }
-
-        BufHash hash_buf(this->hash_ctx);
-
-        if (!this->meta_buf().is_open()) {
-            return 1;
-        }
-
-        wrmcapture_hash_type hash;
-
-        if (this->meta_buf().close(hash)) {
-            return 1;
-        }
-
-        char const * hash_filename = this->hash_filename();
-        char const * meta_filename = this->meta_filename();
-
-        char path[1024] = {};
-        char basename[1024] = {};
-        char extension[256] = {};
-        char filename[2048] = {};
-
-        canonical_path(
-            meta_filename,
-            path, sizeof(path),
-            basename, sizeof(basename),
-            extension, sizeof(extension)
-        );
-
-        snprintf(filename, sizeof(filename), "%s%s", basename, extension);
-
-        if (hash_buf.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
-            char header[] = "v2\n\n\n";
-            hash_buf.write(header, sizeof(header)-1);
-
-            struct stat stat;
-            int err = ::stat(meta_filename, &stat);
-            if (!err) {
-                err = wrmcapture_write_meta_file_impl<false>(hash_buf, filename, stat, 0, 0, &hash);
-            }
-            if (!err) {
-                err = hash_buf.close(/*hash*/);
-            }
-            if (err) {
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                return 1;
-            }
-        }
-        else {
-            int e = errno;
-            LOG(LOG_ERR, "Open to transport failed: code=%d", e);
-            errno = e;
-            return 1;
-        }
-
-        return 0;
-    }
-
-    int next()
-    {
-        if (this->buf().is_open()) {
-            wrmcapture_hash_type hash;
-            {
-                const int res1 = this->wrm_filter.close(this->buf(), hash, this->cctx.get_hmac_key());
-                const int res2 = this->buf().close();
-                if (res1) {
-                    return res1;
-                }
-                if (res2) {
-                    return res2;
-                }
-            }
-
-            return this->next_meta_file(&hash);
-        }
-        return 1;
-    }
+    CryptoContext & crypto_ctx;
+    Random & rnd;
 };
-
-
-struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
-
-    wrmcapture_OutMetaSequenceTransportWithSum(
-        CryptoContext & crypto_ctx,
-        const char * path,
-        const char * hash_path,
-        const char * basename,
-        timeval now,
-        uint16_t width,
-        uint16_t height,
-        const int groupid,
-        auth_api * authentifier = nullptr,
-        wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    : buf(
-        wrmcapture_out_hash_meta_sequence_filename_buf_param<CryptoContext&>(
-            crypto_ctx,
-            now.tv_sec, format, hash_path, path, basename, ".wrm", groupid,
-            crypto_ctx
-        )
-    ) {
-        if (authentifier) {
-            this->set_authentifier(authentifier);
-        }
-
-        wrmcapture_write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, true);
-    }
-
-    void timestamp(timeval now) override {
-        this->buffer().update_sec(now.tv_sec);
-    }
-
-    const wrmcapture_FilenameGenerator * seqgen() const noexcept
-    {
-        return &(this->buffer().seqgen());
-    }
-
-    bool next() override {
-        if (this->status == false) {
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
-        const ssize_t res = this->buffer().next();
-        if (res) {
-            this->status = false;
-            if (res < 0){
-                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
-            }
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-        }
-        ++this->seqno;
-        return true;
-    }
-
-    bool disconnect() override {
-        return !this->buf.close();
-    }
-
-    void request_full_cleaning() override {
-        this->buffer().request_full_cleaning();
-    }
-
-    ~wrmcapture_OutMetaSequenceTransportWithSum() {
-        this->buf.close();
-    }
-
-private:
-    void do_send(const uint8_t * data, size_t len) override {
-        const ssize_t res = this->buf.write(data, len);
-        if (res < 0) {
-            this->status = false;
-            if (errno == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|%s", buf.current_path());
-                this->authentifier->report("FILESYSTEM_FULL", message);
-                errno = ENOSPC;
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
-            }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
-        this->last_quantum_sent += res;
-    }
-
-protected:
-    wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx & buffer() noexcept
-    { return this->buf; }
-
-    const wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx & buffer() const noexcept
-    { return this->buf; }
-
-private:
-    wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx buf;
-
-};
-
 
 class wrmcapture_encrypt_filter
 {
@@ -2148,13 +1935,6 @@ private:
     }
 };
 
-struct wrmcapture_ocrypto_filename_params
-{
-    CryptoContext & crypto_ctx;
-    Random & rnd;
-};
-
-
 class wrmcapture_ocrypto_filename_buf
 {
     wrmcapture_encrypt_filter encrypt;
@@ -2242,16 +2022,237 @@ struct wrmcapture_ocrypto_filter: wrmcapture_encrypt_filter
     }
 };
 
+
+class wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto
+: public wrmcapture_out_meta_sequence_filename_buf_impl<wrmcapture_ocrypto_filename_buf>
+{
+
+    using BufFilter = wrmcapture_ocrypto_filter;
+    using BufMeta = wrmcapture_ocrypto_filename_buf;
+    using BufHash = wrmcapture_ocrypto_filename_buf;
+    using Params = wrmcapture_ocrypto_filename_params;
+
+    CryptoContext & cctx;
+    Params hash_ctx;
+    BufFilter wrm_filter;
+
+    using sequence_base_type = wrmcapture_out_meta_sequence_filename_buf_impl<BufMeta>;
+
+public:
+    explicit wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto(
+        wrmcapture_out_hash_meta_sequence_filename_buf_param<Params> const & params
+    )
+    : sequence_base_type(params.meta_sq_params)
+    , cctx(params.cctx)
+    , hash_ctx(params.filter_params)
+    , wrm_filter(params.filter_params)
+    {}
+
+    ssize_t write(const void * data, size_t len)
+    {
+        if (!this->buf().is_open()) {
+            const char * filename = this->get_filename_generate();
+            const int res = this->open_filename(filename);
+            if (res < 0) {
+                return res;
+            }
+            if (int err = this->wrm_filter.open(this->buf(), filename)) {
+                return err;
+            }
+        }
+        return this->wrm_filter.write(this->buf(), data, len);
+    }
+
+    int close()
+    {
+        if (this->buf().is_open()) {
+            if (this->next()) {
+                return 1;
+            }
+        }
+
+        BufHash hash_buf(this->hash_ctx);
+
+        if (!this->meta_buf().is_open()) {
+            return 1;
+        }
+
+        wrmcapture_hash_type hash;
+
+        if (this->meta_buf().close(hash)) {
+            return 1;
+        }
+
+        char const * hash_filename = this->hash_filename();
+        char const * meta_filename = this->meta_filename();
+
+        char path[1024] = {};
+        char basename[1024] = {};
+        char extension[256] = {};
+        char filename[2048] = {};
+
+        canonical_path(
+            meta_filename,
+            path, sizeof(path),
+            basename, sizeof(basename),
+            extension, sizeof(extension)
+        );
+
+        snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+        if (hash_buf.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+            char header[] = "v2\n\n\n";
+            hash_buf.write(header, sizeof(header)-1);
+
+            struct stat stat;
+            int err = ::stat(meta_filename, &stat);
+            if (!err) {
+                err = wrmcapture_write_meta_file_impl<false>(hash_buf, filename, stat, 0, 0, &hash);
+            }
+            if (!err) {
+                err = hash_buf.close(/*hash*/);
+            }
+            if (err) {
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                return 1;
+            }
+        }
+        else {
+            int e = errno;
+            LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+            errno = e;
+            return 1;
+        }
+
+        return 0;
+    }
+
+    int next()
+    {
+        if (this->buf().is_open()) {
+            wrmcapture_hash_type hash;
+            {
+                const int res1 = this->wrm_filter.close(this->buf(), hash, this->cctx.get_hmac_key());
+                const int res2 = this->buf().close();
+                if (res1) {
+                    return res1;
+                }
+                if (res2) {
+                    return res2;
+                }
+            }
+
+            return this->next_meta_file(&hash);
+        }
+        return 1;
+    }
+};
+
+
+struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
+
+    wrmcapture_OutMetaSequenceTransportWithSum(
+        CryptoContext & crypto_ctx,
+        const char * path,
+        const char * hash_path,
+        const char * basename,
+        timeval now,
+        uint16_t width,
+        uint16_t height,
+        const int groupid,
+        auth_api * authentifier = nullptr,
+        wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
+    : buf(
+        wrmcapture_out_hash_meta_sequence_filename_buf_param<CryptoContext&>(
+            crypto_ctx,
+            now.tv_sec, format, hash_path, path, basename, ".wrm", groupid,
+            crypto_ctx
+        )
+    ) {
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+
+        wrmcapture_write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, true);
+    }
+
+    void timestamp(timeval now) override {
+        this->buffer().update_sec(now.tv_sec);
+    }
+
+    const wrmcapture_FilenameGenerator * seqgen() const noexcept
+    {
+        return &(this->buffer().seqgen());
+    }
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+    void request_full_cleaning() override {
+        this->buffer().request_full_cleaning();
+    }
+
+    ~wrmcapture_OutMetaSequenceTransportWithSum() {
+        this->buf.close();
+    }
+
+private:
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", buf.current_path());
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+protected:
+    wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx & buffer() noexcept
+    { return this->buf; }
+
+    const wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx & buffer() const noexcept
+    { return this->buf; }
+
+private:
+    wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx buf;
+
+};
+
+
+
+
 struct wrmcapture_CryptoOutMetaSequenceTransport
 : public Transport {
 
     using Buf =
-        wrmcapture_out_hash_meta_sequence_filename_buf_impl<
-            wrmcapture_ocrypto_filter,
-            wrmcapture_ocrypto_filename_buf,
-            wrmcapture_ocrypto_filename_buf,
-            wrmcapture_ocrypto_filename_params
-        >;
+        wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto;
 
     wrmcapture_CryptoOutMetaSequenceTransport(
         CryptoContext & crypto_ctx,
