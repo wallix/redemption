@@ -2030,17 +2030,16 @@ class wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto
     using BufFilter = wrmcapture_ocrypto_filter;
     using BufMeta = wrmcapture_ocrypto_filename_buf;
     using BufHash = wrmcapture_ocrypto_filename_buf;
-    using Params = wrmcapture_ocrypto_filename_params;
 
     CryptoContext & cctx;
-    Params hash_ctx;
+    wrmcapture_ocrypto_filename_params hash_ctx;
     BufFilter wrm_filter;
 
     using sequence_base_type = wrmcapture_out_meta_sequence_filename_buf_impl<BufMeta>;
 
 public:
     explicit wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto(
-        wrmcapture_out_hash_meta_sequence_filename_buf_param<Params> const & params
+        wrmcapture_out_hash_meta_sequence_filename_buf_param<wrmcapture_ocrypto_filename_params> const & params
     )
     : sequence_base_type(params.meta_sq_params)
     , cctx(params.cctx)
