@@ -70,27 +70,6 @@ enum {
     USE_ORIGINAL_COLOR_DEPTH           = 0xFFFFFFFF
 };
 
-struct dorecompress_MetaFilename
-{
-    char filename[2048];
-
-    dorecompress_MetaFilename(const char * path, const char * basename,
-                 wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
-    {
-        int res =
-        (   format == wrmcapture_FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
-         || format == wrmcapture_FilenameGenerator::PATH_FILE_PID_EXTENSION)
-        ? snprintf(this->filename, sizeof(this->filename)-1, "%s%s-%06u.mwrm", path, basename, unsigned(getpid()))
-        : snprintf(this->filename, sizeof(this->filename)-1, "%s%s.mwrm", path, basename);
-        if (res > int(sizeof(this->filename) - 6) || res < 0) {
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
-        }
-    }
-
-    dorecompress_MetaFilename(dorecompress_MetaFilename const &) = delete;
-    dorecompress_MetaFilename & operator = (dorecompress_MetaFilename const &) = delete;
-};
-
 
 template<class Writer>
 int dorecompress_write_filename(Writer & writer, const char * filename)
@@ -224,8 +203,8 @@ class dorecompress_out_meta_sequence_filename_buf_impl
     typedef wrmcapture_out_sequence_filename_buf_impl sequence_base_type;
 
     BufMeta meta_buf_;
-    dorecompress_MetaFilename mf_;
-    dorecompress_MetaFilename hf_;
+    wrmcapture_MetaFilename mf_;
+    wrmcapture_MetaFilename hf_;
     time_t start_sec_;
     time_t stop_sec_;
 
