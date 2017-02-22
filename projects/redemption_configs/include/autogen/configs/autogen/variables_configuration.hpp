@@ -812,6 +812,17 @@ namespace cfg {
             using mapped_type = sesman_and_spec_type;
             type value{0};
         };
+        // type: bool
+        struct enable_new_pointer_update {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "client"; }
+            static constexpr char const * name() { return "enable_new_pointer_update"; }
+            using type = bool;
+            using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
+            type value{0};
+        };
     };
 
     struct mod_rdp {
@@ -3203,6 +3214,7 @@ struct client
 , cfg::client::enable_suppress_output
 , cfg::client::ssl_cipher_list
 , cfg::client::show_target_user_in_f12_message
+, cfg::client::enable_new_pointer_update
 { static constexpr bool is_section = true; };
 
 struct mod_rdp

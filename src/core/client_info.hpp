@@ -61,7 +61,8 @@ struct ClientInfo {
 
     /* pointer info */
     int pointer_cache_entries = 0;
-    /* other */
+    bool supported_new_pointer_update = false;
+
     //uint32_t desktop_cache = 0;
     bool use_compact_packets = false; /* rdp5 smaller packets */
     char hostname[16] = {0};
@@ -93,6 +94,7 @@ struct ClientInfo {
 
     uint16_t cbAutoReconnectCookie = 0;
     uint8_t  autoReconnectCookie[28] = { 0 };
+
 
     GlyphCache::number_of_entries_t number_of_entries_in_glyph_cache = { {
           NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES

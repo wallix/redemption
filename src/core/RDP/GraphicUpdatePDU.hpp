@@ -145,7 +145,8 @@ enum ServerUpdateType {
     SERVER_UPDATE_GRAPHICS_SYNCHRONIZE,
     SERVER_UPDATE_POINTER_COLOR,
     SERVER_UPDATE_POINTER_CACHED,
-    SERVER_UPDATE_POINTER_POSITION
+    SERVER_UPDATE_POINTER_POSITION,
+    SERVER_UPDATE_POINTER_NEW
 };
 
 inline
@@ -202,6 +203,11 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
 
             case SERVER_UPDATE_POINTER_POSITION:
                 updateCode = FastPath::UpdateType::PTR_POSITION;
+                break;
+
+            case SERVER_UPDATE_POINTER_NEW:
+LOG(LOG_INFO, "Send Fast-Path New Pointer Update");
+                updateCode = FastPath::UpdateType::POINTER;
                 break;
 
             default:
@@ -296,17 +302,24 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
             case SERVER_UPDATE_POINTER_COLOR:
             case SERVER_UPDATE_POINTER_CACHED:
             case SERVER_UPDATE_POINTER_POSITION:
+            case SERVER_UPDATE_POINTER_NEW:
                 {
                     pduType2 = PDUTYPE2_POINTER;
 
                     static constexpr uint16_t update_type_table[] {
                         RDP_POINTER_COLOR,
                         RDP_POINTER_CACHED,
-                        RDP_POINTER_MOVE
+                        RDP_POINTER_MOVE,
+                        RDP_POINTER_NEW
                     };
                     static_assert(SERVER_UPDATE_POINTER_COLOR + 1 == SERVER_UPDATE_POINTER_CACHED, "");
                     static_assert(SERVER_UPDATE_POINTER_CACHED + 1 == SERVER_UPDATE_POINTER_POSITION, "");
+                    static_assert(SERVER_UPDATE_POINTER_POSITION + 1 == SERVER_UPDATE_POINTER_NEW, "");
                     uint16_t const updateType = update_type_table[type - SERVER_UPDATE_POINTER_COLOR];
+
+if (updateType == RDP_POINTER_NEW) {
+    LOG(LOG_INFO, "Send Slow-Path New Pointer Update");
+}
 
                     StaticOutStream<64> data;
 
@@ -423,6 +436,8 @@ class GraphicsUpdatePDU : private detail::GraphicsUpdatePDUBuffer, public RDPSer
     rdp_mppc_enc * mppc_enc;
     bool           compression;
 
+    bool send_new_pointer;
+
     Transport & trans;
 
 public:
@@ -442,6 +457,7 @@ public:
                      , bool fastpath_support
                      , rdp_mppc_enc * mppc_enc
                      , bool compression
+                     , bool send_new_pointer
                      , Verbose verbose
                      )
         : RDPSerializer( this->buffer_stream_orders.get_data_stream()
@@ -456,6 +472,7 @@ public:
         , fastpath_support(fastpath_support)
         , mppc_enc(mppc_enc)
         , compression(compression)
+        , send_new_pointer(send_new_pointer)
         , trans(trans) {
         this->init_orders();
         this->init_bitmaps();
@@ -705,6 +722,163 @@ protected:
 //      The contents of this byte should be ignored.
     }
 
+    void GenerateNewPointerUpdateData(OutStream & stream, int cache_idx, const Pointer & cursor)
+    {
+//    xorBpp (2 bytes): A 16-bit, unsigned integer. The color depth in bits-per-pixel of the XOR mask
+//      contained in the colorPtrAttr field.
+        stream.out_uint16_le(cursor.only_black_white ? 1 : 32);
+
+        stream.out_uint16_le(cache_idx);
+
+//    hotSpot (4 bytes): Point (section 2.2.9.1.1.4.1) structure containing the
+//      x-coordinates and y-coordinates of the pointer hotspot.
+//            2.2.9.1.1.4.1  Point (TS_POINT16)
+//            ---------------------------------
+//            The TS_POINT16 structure specifies a point relative to the
+//            top-left corner of the server's desktop.
+
+//            xPos (2 bytes): A 16-bit, unsigned integer. The x-coordinate
+//              relative to the top-left corner of the server's desktop.
+
+        stream.out_uint16_le(cursor.x);
+
+//            yPos (2 bytes): A 16-bit, unsigned integer. The y-coordinate
+//              relative to the top-left corner of the server's desktop.
+
+        stream.out_uint16_le(cursor.y);
+
+//    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in
+//      pixels (the maximum allowed pointer width is 32 pixels).
+
+        stream.out_uint16_le(cursor.width);
+
+//    height (2 bytes): A 16-bit, unsigned integer. The height of the pointer
+//      in pixels (the maximum allowed pointer height is 32 pixels).
+
+        stream.out_uint16_le(cursor.height);
+
+
+        const unsigned int remainder = (cursor.width % 8);
+        const unsigned int and_line_length_in_byte = cursor.width / 8 + (remainder ? 1 : 0);
+        const unsigned int and_padded_line_length_in_byte =
+            ((and_line_length_in_byte % 2) ?
+             and_line_length_in_byte + 1 :
+             and_line_length_in_byte);
+
+        const unsigned int xor_padded_line_length_in_byte = (cursor.only_black_white ? and_padded_line_length_in_byte : cursor.width * 4);
+
+
+//    lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
+//      the andMaskData field.
+
+        stream.out_uint16_le(and_padded_line_length_in_byte * cursor.height);
+
+//    lengthXorMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
+//      the xorMaskData field.
+
+        stream.out_uint16_le(xor_padded_line_length_in_byte * cursor.height);
+
+//    xorMaskData (variable): Variable number of bytes: Contains the 24-bpp,
+//      bottom-up XOR mask scan-line data. The XOR mask is padded to a 2-byte
+//      boundary for each encoded scan-line. For example, if a 3x3 pixel cursor
+//      is being sent, then each scan-line will consume 10 bytes (3 pixels per
+//      scan-line multiplied by 3 bpp, rounded up to the next even number of
+//      bytes).
+
+        const unsigned int source_xor_line_length_in_byte = cursor.width * 3;
+        const unsigned int source_xor_padded_line_length_in_byte =
+            ((source_xor_line_length_in_byte % 2) ?
+             source_xor_line_length_in_byte + 1 :
+             source_xor_line_length_in_byte);
+
+        if (cursor.only_black_white) {
+            uint8_t xorMaskData[32 * 32 / 8] = { 0 };
+
+            for (unsigned int h = 0; h < cursor.height; ++h) {
+                const uint8_t* psource = cursor.data + (cursor.height - h - 1) * source_xor_padded_line_length_in_byte;
+                      uint8_t* pdest   = xorMaskData + h * xor_padded_line_length_in_byte;
+
+                      uint8_t  xor_bit_generation_mask = 7;
+
+                      uint8_t xor_byte = 0;
+
+                for (unsigned int w = 0; w < cursor.width; ++w) {
+                    if ((*psource) || (*(psource + 1)) || (*(psource + 2))) {
+                        if (xor_bit_generation_mask) {
+                            xor_byte |= (1 << xor_bit_generation_mask);
+                        }
+                        else {
+                            xor_byte |= 1;
+                        }
+                    }
+
+                    if (xor_bit_generation_mask) {
+                        xor_bit_generation_mask--;
+                    }
+                    else {
+                        xor_bit_generation_mask = 7;
+                        *pdest = xor_byte;
+                        xor_byte = 0;
+                        pdest++;
+                    }
+                    psource += 3;
+                }
+                if (xor_bit_generation_mask != 7) {
+                    *pdest = xor_byte;
+                    xor_byte = 0;
+                }
+            }
+
+            stream.out_copy_bytes(xorMaskData, xor_padded_line_length_in_byte * cursor.height);
+        }
+        else {
+            uint8_t xorMaskData[32 * 32 * 4] = { 0 };
+
+            for (unsigned int h = 0; h < cursor.height; ++h) {
+                const uint8_t* psource = cursor.data + (cursor.height - h - 1) * source_xor_padded_line_length_in_byte;
+                      uint8_t* pdest   = xorMaskData + (cursor.height - h - 1) * xor_padded_line_length_in_byte;
+
+                for (unsigned int w = 0; w < cursor.width; ++w) {
+                    * pdest      = * psource;
+                    *(pdest + 1) = *(psource + 1);
+                    *(pdest + 2) = *(psource + 2);
+                    *(pdest + 3) = 0;
+
+                    pdest   += 4;
+                    psource += 3;
+                }
+            }
+
+            stream.out_copy_bytes(xorMaskData, xor_padded_line_length_in_byte * cursor.height);
+        }
+
+//    andMaskData (variable): Variable number of bytes: Contains the 1-bpp,
+//      bottom-up AND mask scan-line data. The AND mask is padded to a 2-byte
+//      boundary for each encoded scan-line. For example, if a 7x7 pixel cursor
+//      is being sent, then each scan-line will consume 2 bytes (7 pixels per
+//      scan-line multiplied by 1 bpp, rounded up to the next even number of
+//      bytes).
+
+        if (cursor.only_black_white) {
+            uint8_t andMaskData[32 * 32 / 8] = { 0 };
+
+            for (unsigned int h = 0; h < cursor.height; ++h) {
+                const uint8_t* psource = cursor.mask + (cursor.height - h - 1) * and_padded_line_length_in_byte;
+                      uint8_t* pdest   = andMaskData + h * and_padded_line_length_in_byte;
+
+                memcpy(pdest, psource, and_padded_line_length_in_byte);
+            }
+
+            stream.out_copy_bytes(andMaskData, and_padded_line_length_in_byte * cursor.height); /* mask */
+        }
+        else {
+            stream.out_copy_bytes(cursor.mask, cursor.mask_size()); /* mask */
+        }
+
+//    colorPointerData (1 byte): Single byte representing unused padding.
+//      The contents of this byte should be ignored.
+    }
+
     void send_pointer(int cache_idx, const Pointer & cursor) override {
         if (this->verbose & Verbose::pointer) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer(cache_idx=%u x=%u y=%u)",
@@ -712,11 +886,18 @@ protected:
         }
 
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
-        GenerateColorPointerUpdateData(stream.get_data_stream(), cache_idx, cursor);
+
+        if (this->send_new_pointer) {
+            GenerateNewPointerUpdateData(stream.get_data_stream(), cache_idx, cursor);
+        }
+        else {
+            GenerateColorPointerUpdateData(stream.get_data_stream(), cache_idx, cursor);
+        }
 
         ::send_server_update( this->trans, this->fastpath_support, this->compression
                             , this->mppc_enc, this->shareid, this->encryptionLevel
-                            , this->encrypt, this->userid, SERVER_UPDATE_POINTER_COLOR
+                            , this->encrypt, this->userid
+                            , (this->send_new_pointer ? SERVER_UPDATE_POINTER_NEW : SERVER_UPDATE_POINTER_COLOR)
                             , 0, stream, this->verbose);
 
         if (this->verbose & Verbose::pointer) {

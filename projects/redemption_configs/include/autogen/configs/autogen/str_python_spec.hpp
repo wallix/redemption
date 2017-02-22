@@ -216,6 +216,8 @@
 
 "show_target_user_in_f12_message = boolean(default=False)\n\n"
 
+"enable_new_pointer_update = boolean(default=False)\n\n"
+
 "[mod_rdp]\n\n"
 
 "# Specifies the highest compression package support available on the front side\n"
