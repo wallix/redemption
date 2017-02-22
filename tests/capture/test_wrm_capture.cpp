@@ -97,6 +97,231 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 }
 
 
+BOOST_AUTO_TEST_CASE(TestWrmCapture)
+{
+    {
+        // Timestamps are applied only when flushing
+        timeval now;
+        now.tv_usec = 0;
+        now.tv_sec = 1000;
+
+        Rect scr(0, 0, 800, 600);
+
+        LCGRandom rnd(0);
+        CryptoContext cctx;
+
+        GraphicToFile::Verbose wrm_verbose = to_verbose_flags(0)
+//         |GraphicToFile::Verbose::primary_orders)
+//         |GraphicToFile::Verbose::secondary_orders)
+//         |GraphicToFile::Verbose::bitmap_update)
+        ;
+
+        WrmCompressionAlgorithm wrm_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+        std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = std::chrono::seconds{1};
+        std::chrono::seconds wrm_break_interval = std::chrono::seconds{3};
+        TraceType wrm_trace_type = TraceType::localfile;
+
+        const char * record_path = "./";
+        const int groupid = 0; // www-data
+        const char * hash_path = "/tmp";
+
+        char path[1024];
+        char basename[1024];
+        char extension[128];
+        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
+        strcpy(basename, "capture");
+        strcpy(extension, "");          // extension is currently ignored
+
+        WrmParams wrm_params(
+            24,
+            wrm_trace_type,
+            cctx,
+            rnd,
+            record_path,
+            hash_path,
+            basename,
+            groupid,
+            wrm_frame_interval,
+            wrm_break_interval,
+            wrm_compression_algorithm,
+            int(wrm_verbose)
+        );
+
+        RDPDrawable gd_drawable(scr.cx, scr.cy);
+
+        WrmCaptureImpl wrm(now, wrm_params, nullptr /* authentifier */, gd_drawable);
+
+        auto const color_cxt = gdi::ColorCtx::depth24();
+        bool ignore_frame_in_timeval = false;
+
+        gd_drawable.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
+        now.tv_sec++;
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        gd_drawable.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
+        now.tv_sec++;
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        gd_drawable.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
+        now.tv_sec++;
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        // ------------------------------ BREAKPOINT ------------------------------
+
+        gd_drawable.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
+        now.tv_sec++;
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        gd_drawable.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
+        now.tv_sec++;
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        gd_drawable.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
+        now.tv_sec++;
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        // ------------------------------ BREAKPOINT ------------------------------
+
+        gd_drawable.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
+        now.tv_sec++;
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        // The destruction of capture object will finalize the metafile content
+    }
+
+    {
+        struct CheckFiles {
+            const char * filename;
+            size_t size;
+        } fileinfo[] = {
+            {"./capture-000000.wrm", 1646},
+            {"./capture-000001.wrm", 3508},
+            {"./capture-000002.wrm", 3463},
+            {"./capture-000003.wrm", static_cast<size_t>(-1)},
+            {"./capture.mwrm", 285},
+        };
+        for (auto x: fileinfo) {
+            size_t fsize = filesize(x.filename);
+            BOOST_CHECK_EQUAL(x.size, fsize);
+            ::unlink(x.filename);
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
+{
+    {
+        // Timestamps are applied only when flushing
+        timeval now;
+        now.tv_usec = 0;
+        now.tv_sec = 1000;
+
+        Rect scr(0, 0, 800, 600);
+
+        LCGRandom rnd(0);
+        CryptoContext cctx;
+        cctx.set_master_key(cstr_array_view(
+            "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+            "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+            "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+            "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+        ));
+        cctx.set_hmac_key(cstr_array_view(
+             "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+             "\x49\x21\x57\x87\x47\x74\x08\x8a"
+             "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+             "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+        ));
+
+
+        WrmParams wrm_params(
+            24,
+            TraceType::localfile_hashed,
+            cctx,
+            rnd,
+            "./",
+            "/tmp",
+            "capture",
+            1000, // ini.get<cfg::video::capture_groupid>()
+            std::chrono::seconds{1},
+            std::chrono::seconds{3},
+            WrmCompressionAlgorithm::no_compression,
+            0xFFFF
+        );
+
+        RDPDrawable gd_drawable(scr.cx, scr.cy);
+
+        WrmCaptureImpl wrm(now, wrm_params, nullptr /* authentifier */, gd_drawable);
+
+        auto const color_cxt = gdi::ColorCtx::depth24();
+        bool ignore_frame_in_timeval = false;
+
+        gd_drawable.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
+        now.tv_sec++;
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        gd_drawable.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
+        now.tv_sec++;
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        gd_drawable.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
+        now.tv_sec++;
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        // ------------------------------ BREAKPOINT ------------------------------
+
+        gd_drawable.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
+        now.tv_sec++;
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        gd_drawable.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
+        now.tv_sec++;
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        gd_drawable.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
+        now.tv_sec++;
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        // ------------------------------ BREAKPOINT ------------------------------
+
+        gd_drawable.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
+        now.tv_sec++;
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        // The destruction of capture object will finalize the metafile content
+    }
+
+    struct CheckFiles {
+        const char * filename;
+        size_t size;
+    } fileinfo[] = {
+        {"./capture-000000.wrm", 1646},
+        {"./capture-000001.wrm", 3508},
+        {"./capture-000002.wrm", 3463},
+        {"./capture-000003.wrm", static_cast<size_t>(-1)},
+        {"./capture.mwrm", 673},
+    };
+    for (auto x: fileinfo) {
+        size_t fsize = filesize(x.filename);
+        BOOST_CHECK_EQUAL(x.size, fsize);
+        ::unlink(x.filename);
+    }
+
+}
+
+
 //void simple_movie(timeval now, unsigned duration, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse);
 
 //void simple_movie(timeval now, unsigned duration, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse)
