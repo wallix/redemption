@@ -30,6 +30,9 @@
 #define LOGPRINT
 
 #include "utils/log.hpp"
+#include "utils/genrandom.hpp"
+#include "utils/sugar/iter.hpp"
+#include <snappy-c.h>
 
 #include <memory>
 
@@ -49,36 +52,81 @@
 
 #include "capture/wrm_capture.hpp"
 
-void simple_movie(timeval now, unsigned duration, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse);
 
-void simple_movie(timeval now, unsigned duration, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse)
+BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 {
-    Rect screen(0, 0, drawable.width(), drawable.height());
-    auto const color_cxt = gdi::ColorCtx::depth24();
-    drawable.draw(RDPOpaqueRect(screen, BLUE), screen, color_cxt);
+    Rect scr(0, 0, 800, 600);
+    const int groupid = 0;
+    wrmcapture_OutFilenameSequenceTransport trans(wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION, "./", "test", ".wrm", groupid, nullptr);
 
-    uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
-    Rect r(10, 10, 50, 50);
-    int vx = 5;
-    int vy = 4;
-    for (size_t x = 0; x < duration; x++) {
-        drawable.draw(RDPOpaqueRect(r, BLUE), screen, color_cxt);
-        r.y += vy;
-        r.x += vx;
-        drawable.draw(RDPOpaqueRect(r, WABGREEN), screen, color_cxt);
-        usec += 40000LL;
-        now.tv_sec  = usec / 1000000LL;
-        now.tv_usec = (usec % 1000000LL);
-        //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
-        int cursor_x = mouse?r.x + 10:0;
-        int cursor_y = mouse?r.y + 10:0;
-        drawable.set_mouse_cursor_pos(cursor_x, cursor_y);
-        capture.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
-        capture.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
-        if ((r.x + r.cx >= drawable.width())  || (r.x < 0)) { vx = -vx; }
-        if ((r.y + r.cy >= drawable.height()) || (r.y < 0)) { vy = -vy; }
-    }
+    struct timeval now;
+    now.tv_sec = 1000;
+    now.tv_usec = 0;
+
+    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
+                       BmpCache::CacheOption(600, 768, false),
+                       BmpCache::CacheOption(300, 3072, false),
+                       BmpCache::CacheOption(262, 12288, false));
+    GlyphCache gly_cache;
+    PointerCache ptr_cache;
+    RDPDrawable drawable(800, 600);
+    DumpPng24FromRDPDrawableAdapter dump_png{drawable};
+    GraphicToFile graphic_to_file(now, trans, 800, 600, 24,
+        bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression
+    );
+    WrmCaptureImpl::NativeCaptureLocal consumer(graphic_to_file, now, std::chrono::seconds{1}, std::chrono::seconds{5});
+    auto const color_cxt = gdi::ColorCtx::depth24();
+
+    drawable.show_mouse_cursor(false);
+
+    bool ignore_frame_in_timeval = false;
+
+    drawable.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
+    graphic_to_file.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
+    consumer.periodic_snapshot(now, 10, 10, ignore_frame_in_timeval);
+    now.tv_sec += 6;
+    consumer.periodic_snapshot(now, 10, 10, ignore_frame_in_timeval);
+    trans.disconnect();
+
+    const char * filename0 = "./test-000000.wrm";
+    BOOST_CHECK_EQUAL(1560, ::filesize(filename0));
+//    ::unlink(filename);
+    const char * filename1 = "./test-000001.wrm";
+    BOOST_CHECK_EQUAL(3365, ::filesize(filename1));
+//    ::unlink(filename);
 }
+
+
+//void simple_movie(timeval now, unsigned duration, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse);
+
+//void simple_movie(timeval now, unsigned duration, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse)
+//{
+//    Rect screen(0, 0, drawable.width(), drawable.height());
+//    auto const color_cxt = gdi::ColorCtx::depth24();
+//    drawable.draw(RDPOpaqueRect(screen, BLUE), screen, color_cxt);
+
+//    uint64_t usec = now.tv_sec * 1000000LL + now.tv_usec;
+//    Rect r(10, 10, 50, 50);
+//    int vx = 5;
+//    int vy = 4;
+//    for (size_t x = 0; x < duration; x++) {
+//        drawable.draw(RDPOpaqueRect(r, BLUE), screen, color_cxt);
+//        r.y += vy;
+//        r.x += vx;
+//        drawable.draw(RDPOpaqueRect(r, WABGREEN), screen, color_cxt);
+//        usec += 40000LL;
+//        now.tv_sec  = usec / 1000000LL;
+//        now.tv_usec = (usec % 1000000LL);
+//        //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
+//        int cursor_x = mouse?r.x + 10:0;
+//        int cursor_y = mouse?r.y + 10:0;
+//        drawable.set_mouse_cursor_pos(cursor_x, cursor_y);
+//        capture.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+//        capture.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+//        if ((r.x + r.cx >= drawable.width())  || (r.x < 0)) { vx = -vx; }
+//        if ((r.y + r.cy >= drawable.height()) || (r.y < 0)) { vy = -vy; }
+//    }
+//}
 
 //BOOST_AUTO_TEST_CASE(TestSequencedVideoCapture)
 //{

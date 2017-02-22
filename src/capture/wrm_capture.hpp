@@ -44,65 +44,24 @@
 
 #include "gdi/dump_png24.hpp"
 #include "core/RDP/RDPDrawable.hpp"
+#include "core/RDP/RDPSerializer.hpp"
+#include "utils/compression_transport_builder.hpp"
+#include "core/RDP/share.hpp"
 
-struct wrmcapture_no_param {};
+// TODO enum class
+enum {
+    META_FILE           = 1006,
+    TIMESTAMP           = 1008,
+    POINTER             = 1009,
+    POINTER2            = 1010,
+    LAST_IMAGE_CHUNK    = 0x1000,   // 4096
+    PARTIAL_IMAGE_CHUNK = 0x1001,   // 4097
+    SAVE_STATE          = 0x1002,   // 4098
+    RESET_CHUNK         = 0x1003,   // 4099
+    SESSION_UPDATE      = 0x1004,
 
-class wrmcapture_ofile_buf_out
-{
-    int fd;
-public:
-    wrmcapture_ofile_buf_out() : fd(-1) {}
-    ~wrmcapture_ofile_buf_out()
-    {
-        this->close();
-    }
-
-    int open(const char * filename, mode_t mode)
-    {
-        this->close();
-        this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-        return this->fd;
-    }
-
-    int close()
-    {
-        if (this->is_open()) {
-            const int ret = ::close(this->fd);
-            this->fd = -1;
-            return ret;
-        }
-        return 0;
-    }
-
-    ssize_t write(const void * data, size_t len)
-    {
-        size_t remaining_len = len;
-        size_t total_sent = 0;
-        while (remaining_len) {
-            ssize_t ret = ::write(this->fd,
-                static_cast<const char*>(data) + total_sent, remaining_len);
-            if (ret <= 0){
-                if (errno == EINTR){
-                    continue;
-                }
-                return -1;
-            }
-            remaining_len -= ret;
-            total_sent += ret;
-        }
-        return total_sent;
-    }
-
-    bool is_open() const noexcept
-    { return -1 != this->fd; }
-
-    off64_t seek(off64_t offset, int whence) const
-    { return ::lseek64(this->fd, offset, whence); }
-
-    int flush() const
-    { return 0; }
+    INVALID_CHUNK       = 0x8000
 };
-
 
 struct wrmcapture_FilenameGenerator
 {
@@ -212,75 +171,8 @@ struct wrmcapture_out_sequence_filename_buf_param
     {}
 };
 
+struct wrmcapture_no_param {};
 
-template<class MetaParams = wrmcapture_no_param>
-struct wrmcapture_out_meta_sequence_filename_buf_param
-{
-    wrmcapture_out_sequence_filename_buf_param sq_params;
-    time_t sec;
-    MetaParams meta_buf_params;
-    const char * hash_prefix;
-
-    wrmcapture_out_meta_sequence_filename_buf_param(
-        time_t start_sec,
-        wrmcapture_FilenameGenerator::Format format,
-        const char * const hash_prefix,
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension,
-        const int groupid,
-        MetaParams const & meta_buf_params = MetaParams())
-    : sq_params(format, prefix, filename, extension, groupid)
-    , sec(start_sec)
-    , meta_buf_params(meta_buf_params)
-    , hash_prefix(hash_prefix)
-    {}
-};
-
-
-template<class FilterParams = wrmcapture_no_param>
-struct wrmcapture_out_hash_meta_sequence_filename_buf_param
-{
-    wrmcapture_out_meta_sequence_filename_buf_param<FilterParams> meta_sq_params;
-    FilterParams filter_params;
-    CryptoContext & cctx;
-
-    wrmcapture_out_hash_meta_sequence_filename_buf_param(
-        CryptoContext & cctx,
-        time_t start_sec,
-        wrmcapture_FilenameGenerator::Format format,
-        const char * const hash_prefix,
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension,
-        const int groupid,
-        FilterParams const & filter_params = FilterParams())
-    : meta_sq_params(start_sec, format, hash_prefix, prefix, filename, extension, groupid, filter_params)
-    , filter_params(filter_params)
-    , cctx(cctx)
-    {}
-};
-
-struct wrmcapture_MetaFilename
-{
-    char filename[2048];
-
-    wrmcapture_MetaFilename(const char * path, const char * basename,
-                 wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
-    {
-        int res =
-        (   format == wrmcapture_FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
-         || format == wrmcapture_FilenameGenerator::PATH_FILE_PID_EXTENSION)
-        ? snprintf(this->filename, sizeof(this->filename)-1, "%s%s-%06u.mwrm", path, basename, unsigned(getpid()))
-        : snprintf(this->filename, sizeof(this->filename)-1, "%s%s.mwrm", path, basename);
-        if (res > int(sizeof(this->filename) - 6) || res < 0) {
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
-        }
-    }
-
-    wrmcapture_MetaFilename(wrmcapture_MetaFilename const &) = delete;
-    wrmcapture_MetaFilename & operator = (wrmcapture_MetaFilename const &) = delete;
-};
 
 template<class Buf>
 struct wrmcapture_empty_ctor
@@ -405,6 +297,218 @@ protected:
         return filename;
     }
 };
+
+
+struct wrmcapture_OutFilenameSequenceTransport : public Transport
+{
+    using Buf = wrmcapture_out_sequence_filename_buf_impl;
+
+    wrmcapture_OutFilenameSequenceTransport(
+        wrmcapture_FilenameGenerator::Format format,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        auth_api * authentifier)
+    : buf(wrmcapture_out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
+    {
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+    }
+
+    const wrmcapture_FilenameGenerator * seqgen() const noexcept
+    { return &(this->buffer().seqgen()); }
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+    void request_full_cleaning() override {
+        this->buffer().request_full_cleaning();
+    }
+
+    ~wrmcapture_OutFilenameSequenceTransport() {
+        this->buf.close();
+    }
+
+private:
+
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|unknown");
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+    Buf & buffer() noexcept
+    { return this->buf; }
+
+    const Buf & buffer() const noexcept
+    { return this->buf; }
+
+    Buf buf;
+};
+
+
+class wrmcapture_ofile_buf_out
+{
+    int fd;
+public:
+    wrmcapture_ofile_buf_out() : fd(-1) {}
+    ~wrmcapture_ofile_buf_out()
+    {
+        this->close();
+    }
+
+    int open(const char * filename, mode_t mode)
+    {
+        this->close();
+        this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+        return this->fd;
+    }
+
+    int close()
+    {
+        if (this->is_open()) {
+            const int ret = ::close(this->fd);
+            this->fd = -1;
+            return ret;
+        }
+        return 0;
+    }
+
+    ssize_t write(const void * data, size_t len)
+    {
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            ssize_t ret = ::write(this->fd,
+                static_cast<const char*>(data) + total_sent, remaining_len);
+            if (ret <= 0){
+                if (errno == EINTR){
+                    continue;
+                }
+                return -1;
+            }
+            remaining_len -= ret;
+            total_sent += ret;
+        }
+        return total_sent;
+    }
+
+    bool is_open() const noexcept
+    { return -1 != this->fd; }
+
+    off64_t seek(off64_t offset, int whence) const
+    { return ::lseek64(this->fd, offset, whence); }
+
+    int flush() const
+    { return 0; }
+};
+
+
+
+
+template<class MetaParams = wrmcapture_no_param>
+struct wrmcapture_out_meta_sequence_filename_buf_param
+{
+    wrmcapture_out_sequence_filename_buf_param sq_params;
+    time_t sec;
+    MetaParams meta_buf_params;
+    const char * hash_prefix;
+
+    wrmcapture_out_meta_sequence_filename_buf_param(
+        time_t start_sec,
+        wrmcapture_FilenameGenerator::Format format,
+        const char * const hash_prefix,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        MetaParams const & meta_buf_params = MetaParams())
+    : sq_params(format, prefix, filename, extension, groupid)
+    , sec(start_sec)
+    , meta_buf_params(meta_buf_params)
+    , hash_prefix(hash_prefix)
+    {}
+};
+
+
+template<class FilterParams = wrmcapture_no_param>
+struct wrmcapture_out_hash_meta_sequence_filename_buf_param
+{
+    wrmcapture_out_meta_sequence_filename_buf_param<FilterParams> meta_sq_params;
+    FilterParams filter_params;
+    CryptoContext & cctx;
+
+    wrmcapture_out_hash_meta_sequence_filename_buf_param(
+        CryptoContext & cctx,
+        time_t start_sec,
+        wrmcapture_FilenameGenerator::Format format,
+        const char * const hash_prefix,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        FilterParams const & filter_params = FilterParams())
+    : meta_sq_params(start_sec, format, hash_prefix, prefix, filename, extension, groupid, filter_params)
+    , filter_params(filter_params)
+    , cctx(cctx)
+    {}
+};
+
+struct wrmcapture_MetaFilename
+{
+    char filename[2048];
+
+    wrmcapture_MetaFilename(const char * path, const char * basename,
+                 wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
+    {
+        int res =
+        (   format == wrmcapture_FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
+         || format == wrmcapture_FilenameGenerator::PATH_FILE_PID_EXTENSION)
+        ? snprintf(this->filename, sizeof(this->filename)-1, "%s%s-%06u.mwrm", path, basename, unsigned(getpid()))
+        : snprintf(this->filename, sizeof(this->filename)-1, "%s%s.mwrm", path, basename);
+        if (res > int(sizeof(this->filename) - 6) || res < 0) {
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+    }
+
+    wrmcapture_MetaFilename(wrmcapture_MetaFilename const &) = delete;
+    wrmcapture_MetaFilename & operator = (wrmcapture_MetaFilename const &) = delete;
+};
+
+
+
 
 using wrmcapture_hash_type = unsigned char[MD_HASH_LENGTH*2];
 

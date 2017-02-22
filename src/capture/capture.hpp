@@ -139,7 +139,6 @@
 #include "capture/pattern_checker_params.hpp"
 #include "capture/kbdlog_params.hpp"
 
-#include "capture/wrm_label.hpp"
 #include "capture/cryptofile.hpp"
 
 #include "capture/video_capture.hpp"

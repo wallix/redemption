@@ -522,51 +522,6 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     ::unlink(filename);
 }
 
-BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
-{
-    Rect scr(0, 0, 800, 600);
-    const int groupid = 0;
-    PngCapture::OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".wrm", groupid, nullptr);
-
-    struct timeval now;
-    now.tv_sec = 1000;
-    now.tv_usec = 0;
-
-    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
-                       BmpCache::CacheOption(600, 768, false),
-                       BmpCache::CacheOption(300, 3072, false),
-                       BmpCache::CacheOption(262, 12288, false));
-    GlyphCache gly_cache;
-    PointerCache ptr_cache;
-    RDPDrawable drawable(800, 600);
-    DumpPng24FromRDPDrawableAdapter dump_png{drawable};
-    GraphicToFile graphic_to_file(
-        now, trans, 800, 600, 24,
-        bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression
-    );
-    WrmCaptureImpl::NativeCaptureLocal consumer(graphic_to_file, now, std::chrono::seconds{1}, std::chrono::seconds{5});
-    auto const color_cxt = gdi::ColorCtx::depth24();
-
-    drawable.show_mouse_cursor(false);
-
-    bool ignore_frame_in_timeval = false;
-
-    drawable.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
-    graphic_to_file.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
-    consumer.periodic_snapshot(now, 10, 10, ignore_frame_in_timeval);
-    now.tv_sec += 6;
-    consumer.periodic_snapshot(now, 10, 10, ignore_frame_in_timeval);
-    trans.disconnect();
-
-    const char * filename;
-
-    filename = trans.seqgen()->get(0);
-    BOOST_CHECK_EQUAL(1560, ::filesize(filename));
-    ::unlink(filename);
-    filename = trans.seqgen()->get(1);
-    BOOST_CHECK_EQUAL(3365, ::filesize(filename));
-    ::unlink(filename);
-}
 
 
 BOOST_AUTO_TEST_CASE(TestPattern)
@@ -2503,49 +2458,49 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
 
         RDPDrawable gd_drawable(scr.cx, scr.cy);
 
-        WrmCaptureImpl wrmcapture(now, wrm_params, nullptr /* authentifier */, gd_drawable);
+        WrmCaptureImpl wrm(now, wrm_params, nullptr /* authentifier */, gd_drawable);
 
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
 
         gd_drawable.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
-        wrmcapture.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
-        wrmcapture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
-        wrmcapture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         gd_drawable.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
-        wrmcapture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
-        wrmcapture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
-        wrmcapture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         gd_drawable.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
-        wrmcapture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
     }
 
@@ -2636,49 +2591,49 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 
         RDPDrawable gd_drawable(scr.cx, scr.cy);
 
-        WrmCaptureImpl wrmcapture(now, wrm_params, nullptr /* authentifier */, gd_drawable);
+        WrmCaptureImpl wrm(now, wrm_params, nullptr /* authentifier */, gd_drawable);
 
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
 
         gd_drawable.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
-        wrmcapture.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
-        wrmcapture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
-        wrmcapture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         gd_drawable.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
-        wrmcapture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
-        wrmcapture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
-        wrmcapture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         gd_drawable.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
-        wrmcapture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
+        wrm.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
         now.tv_sec++;
-        wrmcapture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
     }
 
