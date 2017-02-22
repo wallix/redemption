@@ -71,45 +71,6 @@ enum {
 };
 
 
-template<class Writer>
-int dorecompress_write_filename(Writer & writer, const char * filename)
-{
-    auto pfile = filename;
-    auto epfile = filename;
-    for (; *epfile; ++epfile) {
-        if (*epfile == '\\') {
-            ssize_t len = epfile - pfile + 1;
-            auto res = writer.write(pfile, len);
-            if (res < len) {
-                return res < 0 ? res : 1;
-            }
-            pfile = epfile;
-        }
-        if (*epfile == ' ') {
-            ssize_t len = epfile - pfile;
-            auto res = writer.write(pfile, len);
-            if (res < len) {
-                return res < 0 ? res : 1;
-            }
-            res = writer.write("\\", 1u);
-            if (res < 1) {
-                return res < 0 ? res : 1;
-            }
-            pfile = epfile;
-        }
-    }
-
-    if (pfile != epfile) {
-        ssize_t len = epfile - pfile;
-        auto res = writer.write(pfile, len);
-        if (res < len) {
-            return res < 0 ? res : 1;
-        }
-    }
-
-    return 0;
-}
-
 using dorecompress_hash_type = unsigned char[MD_HASH_LENGTH*2];
 
 constexpr std::size_t dorecompress_hash_string_len = (1 + MD_HASH_LENGTH * 2) * 2;
@@ -136,7 +97,7 @@ int dorecompress_write_meta_file_impl(
     time_t start_sec, time_t stop_sec,
     dorecompress_hash_type const * hash = nullptr
 ) {
-    if (int err = dorecompress_write_filename(writer, filename)) {
+    if (int err = wrmcapture_write_filename(writer, filename)) {
         return err;
     }
 
