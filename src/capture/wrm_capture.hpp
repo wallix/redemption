@@ -248,15 +248,6 @@ public:
 };
 
 
-template<class Buf>
-struct wrmcapture_empty_ctor
-: Buf
-{
-    explicit wrmcapture_empty_ctor(wrmcapture_no_param = wrmcapture_no_param()) noexcept
-    {}
-};
-
-
 class wrmcapture_out_sequence_filename_buf_impl
 {
     char current_filename_[1024];
