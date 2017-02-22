@@ -233,7 +233,7 @@ std::string ansi_rendering(
     out.reserve(screen.getLines() * screen.getColumns() * 4);
 
     Buf buf;
-    buf.s += std::sprintf(buf.s, "\033]%*s\a", int(title.size()), title);
+    buf.s += std::sprintf(buf.s, "\033]%*s\a", int(title.size()), title.data());
 
     using CharacterRef = std::reference_wrapper<rvt::Character const>;
     rvt::Character const default_ch; // Default format

@@ -839,27 +839,3 @@ BOOST_AUTO_TEST_CASE(TestUTF16StrLen) {
 
     BOOST_CHECK_EQUAL(UTF16StrLen(byte_ptr_cast("\x31\x00\x30\x00\x30\x00\x00\x00\x31\x00\x30\x00\x30\x00")), 3);
 }
-
-BOOST_AUTO_TEST_CASE(Test_uc_to_utf8) {
-    uint8_t utf8_ch[4]{};
-
-    for (uint8_t c = 0; c <= 126; ++c) {
-        BOOST_CHECK_EQUAL(1, ucs4_to_utf8(c, utf8_ch));
-        BOOST_CHECK_EQUAL(c, utf8_ch[0]);
-    }
-
-    BOOST_CHECK_EQUAL(2, ucs4_to_utf8(0xa2, utf8_ch));
-    BOOST_CHECK_EQUAL(0xc2, utf8_ch[0]);
-    BOOST_CHECK_EQUAL(0xa2, utf8_ch[1]);
-
-    BOOST_CHECK_EQUAL(3, ucs4_to_utf8(0xac00, utf8_ch));
-    BOOST_CHECK_EQUAL(0xea, utf8_ch[0]);
-    BOOST_CHECK_EQUAL(0xb0, utf8_ch[1]);
-    BOOST_CHECK_EQUAL(0x80, utf8_ch[2]);
-
-    BOOST_CHECK_EQUAL(4, ucs4_to_utf8(0x10348, utf8_ch));
-    BOOST_CHECK_EQUAL(0xf0, utf8_ch[0]);
-    BOOST_CHECK_EQUAL(0x90, utf8_ch[1]);
-    BOOST_CHECK_EQUAL(0x8d, utf8_ch[2]);
-    BOOST_CHECK_EQUAL(0x88, utf8_ch[3]);
-}
