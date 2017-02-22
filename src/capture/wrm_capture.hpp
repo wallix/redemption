@@ -1277,18 +1277,13 @@ public:
 class wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx
 : public wrmcapture_out_meta_sequence_filename_buf_impl_cctx
 {
-    using BufFilter = wrmcapture_ochecksum_filter;
-//    using BufMeta = wrmcapture_cctx_ochecksum_file;
-    using BufHash = wrmcapture_cctx_ofile_buf;
-    using Params = CryptoContext&;
-
     CryptoContext & cctx;
-    Params hash_ctx;
-    BufFilter wrm_filter;
+    CryptoContext& hash_ctx;
+    wrmcapture_ochecksum_filter wrm_filter;
 
 public:
     explicit wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx(
-        wrmcapture_out_hash_meta_sequence_filename_buf_param<Params> const & params
+        wrmcapture_out_hash_meta_sequence_filename_buf_param<CryptoContext&> const & params
     )
     : wrmcapture_out_meta_sequence_filename_buf_impl_cctx(params.meta_sq_params)
     , cctx(params.cctx)
@@ -1319,7 +1314,7 @@ public:
             }
         }
 
-        BufHash hash_buf(this->hash_ctx);
+        wrmcapture_cctx_ofile_buf hash_buf(this->hash_ctx);
 
         if (!this->meta_buf().is_open()) {
             return 1;
