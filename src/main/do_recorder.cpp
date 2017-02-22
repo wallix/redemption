@@ -71,92 +71,6 @@ enum {
 };
 
 
-using dorecompress_hash_type = unsigned char[MD_HASH_LENGTH*2];
-
-constexpr std::size_t dorecompress_hash_string_len = (1 + MD_HASH_LENGTH * 2) * 2;
-
-inline char * dorecompress_swrite_hash(char * p, dorecompress_hash_type const & hash)
-{
-    auto write = [&p](unsigned char const * hash) {
-        *p++ = ' ';                // 1 octet
-        for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
-            sprintf(p, "%02x", c); // 64 octets (hash)
-            p += 2;
-        }
-    };
-    write(hash);
-    write(hash + MD_HASH_LENGTH);
-    return p;
-}
-
-
-template<bool write_time, class Writer>
-int dorecompress_write_meta_file_impl(
-    Writer & writer, const char * filename,
-    struct stat const & stat,
-    time_t start_sec, time_t stop_sec,
-    dorecompress_hash_type const * hash = nullptr
-) {
-    if (int err = wrmcapture_write_filename(writer, filename)) {
-        return err;
-    }
-
-    using ull = unsigned long long;
-    using ll = long long;
-    char mes[
-        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-        dorecompress_hash_string_len + 1 +
-        2
-    ];
-    ssize_t len = std::sprintf(
-        mes,
-        " %lld %llu %lld %lld %llu %lld %lld %lld",
-        ll(stat.st_size),
-        ull(stat.st_mode),
-        ll(stat.st_uid),
-        ll(stat.st_gid),
-        ull(stat.st_dev),
-        ll(stat.st_ino),
-        ll(stat.st_mtim.tv_sec),
-        ll(stat.st_ctim.tv_sec)
-    );
-    if (write_time) {
-        len += std::sprintf(
-            mes + len,
-            " %lld %lld",
-            ll(start_sec),
-            ll(stop_sec)
-        );
-    }
-
-    char * p = mes + len;
-    if (hash) {
-        p = dorecompress_swrite_hash(p, *hash);
-    }
-    *p++ = '\n';
-
-    ssize_t res = writer.write(mes, p-mes);
-
-    if (res < p-mes) {
-        return res < 0 ? res : 1;
-    }
-
-    return 0;
-}
-
-template<class Writer>
-int dorecompress_write_meta_file(
-    Writer & writer, const char * filename,
-    time_t start_sec, time_t stop_sec,
-    dorecompress_hash_type const * hash = nullptr
-) {
-    struct stat stat;
-    int err = ::stat(filename, &stat);
-    return err ? err : dorecompress_write_meta_file_impl<true>(writer, filename, stat, start_sec, stop_sec, hash);
-}
-
-
 template<class BufMeta>
 class dorecompress_out_meta_sequence_filename_buf_impl
 : public wrmcapture_out_sequence_filename_buf_impl
@@ -224,7 +138,7 @@ public:
                 struct stat stat;
                 int err = ::stat(meta_filename, &stat);
                 if (!err) {
-                    err = dorecompress_write_meta_file_impl<false>(crypto_hash, filename, stat, 0, 0, nullptr);
+                    err = wrmcapture_write_meta_file_impl<false>(crypto_hash, filename, stat, 0, 0, nullptr);
                 }
                 if (!err) {
                     err = crypto_hash.close(/*hash*/);
@@ -256,7 +170,7 @@ public:
     }
 
 protected:
-    int next_meta_file(dorecompress_hash_type const * hash = nullptr)
+    int next_meta_file(wrmcapture_hash_type const * hash = nullptr)
     {
         // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
         const char * filename = this->rename_filename();
@@ -264,7 +178,7 @@ protected:
             return 1;
         }
 
-        if (int err = dorecompress_write_meta_file(
+        if (int err = wrmcapture_write_meta_file(
             this->meta_buf_, filename, this->start_sec_, this->stop_sec_+1, hash
         )) {
             return err;
@@ -355,7 +269,7 @@ public:
             return 1;
         }
 
-        dorecompress_hash_type hash;
+        wrmcapture_hash_type hash;
 
         if (this->meta_buf().close(hash)) {
             return 1;
@@ -385,7 +299,7 @@ public:
             struct stat stat;
             int err = ::stat(meta_filename, &stat);
             if (!err) {
-                err = dorecompress_write_meta_file_impl<false>(hash_buf, filename, stat, 0, 0, &hash);
+                err = wrmcapture_write_meta_file_impl<false>(hash_buf, filename, stat, 0, 0, &hash);
             }
             if (!err) {
                 err = hash_buf.close(/*hash*/);
@@ -408,7 +322,7 @@ public:
     int next()
     {
         if (this->buf().is_open()) {
-            dorecompress_hash_type hash;
+            wrmcapture_hash_type hash;
             {
                 const int res1 = this->wrm_filter.close(this->buf(), hash, this->cctx.get_hmac_key());
                 const int res2 = this->buf().close();
@@ -1500,7 +1414,7 @@ static inline int check_encrypted_or_checksumed(
         for (MetaLine2CtxForRewriteStat & ctx : meta_line_ctx_list) {
             struct stat sb;
             if (lstat(ctx.wrm_filename.c_str(), &sb) < 0
-             || dorecompress_write_meta_file_impl<true>(mwrm_file_cp, ctx.filename.c_str(), sb, ctx.start_time, ctx.stop_time)
+             || wrmcapture_write_meta_file_impl<true>(mwrm_file_cp, ctx.filename.c_str(), sb, ctx.start_time, ctx.stop_time)
             ) {
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
             }
@@ -1551,7 +1465,7 @@ static inline int check_encrypted_or_checksumed(
             struct stat stat;
             int err = ::stat(meta_filename, &stat);
             if (!err) {
-                err = dorecompress_write_meta_file_impl<false>(hash_file_cp, filename, stat, 0, 0, nullptr);
+                err = wrmcapture_write_meta_file_impl<false>(hash_file_cp, filename, stat, 0, 0, nullptr);
             }
             if (!err) {
                 err = hash_file_cp.close(/*hash*/);
