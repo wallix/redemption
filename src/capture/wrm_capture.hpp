@@ -22,10 +22,6 @@
 
 
 #include "utils/log.hpp"
-#include "utils/difftimeval.hpp"
-
-#include "gdi/capture_api.hpp"
-#include "capture/wrm_params.hpp"
 
 #include <cerrno>
 #include <cstddef>
@@ -33,6 +29,11 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#include "utils/difftimeval.hpp"
+
+#include "gdi/capture_api.hpp"
+#include "capture/wrm_params.hpp"
 
 #include "gdi/kbd_input_api.hpp"
 #include "gdi/capture_api.hpp"
@@ -47,15 +48,6 @@
 #include "core/RDP/RDPSerializer.hpp"
 #include "utils/compression_transport_builder.hpp"
 #include "core/RDP/share.hpp"
-
-#include "utils/sugar/exchange.hpp"
-
-#include <cerrno>
-#include <cstddef>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 
 // TODO enum class
 enum {
