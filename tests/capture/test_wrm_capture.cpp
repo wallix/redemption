@@ -318,7 +318,80 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         BOOST_CHECK_EQUAL(x.size, fsize);
         ::unlink(x.filename);
     }
+}
 
+BOOST_AUTO_TEST_CASE(TestOSumBuf)
+{
+    CryptoContext cctx;
+    cctx.set_master_key(cstr_array_view(
+        "\x00\x01\x02\x03\x04\x05\x06\x07"
+        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        "\x10\x11\x12\x13\x14\x15\x16\x17"
+        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+    ));
+    cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
+    wrmcapture_ochecksum_buf_null_buf buf(cctx.get_hmac_key());
+    buf.open();
+    BOOST_CHECK_EQUAL(buf.write("ab", 2), 2);
+    BOOST_CHECK_EQUAL(buf.write("cde", 3), 3);
+
+    wrmcapture_hash_type hash;
+    buf.close(hash);
+
+    char hash_str[wrmcapture_hash_string_len + 1];
+    *wrmcapture_swrite_hash(hash_str, hash) = 0;
+    BOOST_CHECK_EQUAL(
+        hash_str,
+        " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
+        " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
+    );
+}
+
+#include <string>
+
+BOOST_AUTO_TEST_CASE(TestWriteFilename)
+{
+    struct {
+        std::string s;
+
+        int write(char const * data, std::size_t len) {
+            s.append(data, len);
+            return len;
+        }
+    } writer;
+
+#define TEST_WRITE_FILENAME(origin_filename, wrote_filename) \
+    wrmcapture_write_filename(writer, origin_filename);                 \
+    BOOST_CHECK_EQUAL(writer.s, wrote_filename);             \
+    writer.s.clear()
+
+    TEST_WRITE_FILENAME("abcde.txt", "abcde.txt");
+
+    TEST_WRITE_FILENAME(R"(\abcde.txt)", R"(\\abcde.txt)");
+    TEST_WRITE_FILENAME(R"(abc\de.txt)", R"(abc\\de.txt)");
+    TEST_WRITE_FILENAME(R"(abcde.txt\)", R"(abcde.txt\\)");
+    TEST_WRITE_FILENAME(R"(abc\\de.txt)", R"(abc\\\\de.txt)");
+    TEST_WRITE_FILENAME(R"(\\\\)", R"(\\\\\\\\)");
+
+    TEST_WRITE_FILENAME(R"( abcde.txt)", R"(\ abcde.txt)");
+    TEST_WRITE_FILENAME(R"(abc de.txt)", R"(abc\ de.txt)");
+    TEST_WRITE_FILENAME(R"(abcde.txt )", R"(abcde.txt\ )");
+    TEST_WRITE_FILENAME(R"(abc  de.txt)", R"(abc\ \ de.txt)");
+    TEST_WRITE_FILENAME(R"(    )", R"(\ \ \ \ )");
+}
+
+BOOST_AUTO_TEST_CASE(TestWriteHash)
+{
+    wrmcapture_hash_type hash;
+    std::iota(std::begin(hash), std::end(hash), 0);
+
+    char hash_str[wrmcapture_hash_string_len + 1];
+    *wrmcapture_swrite_hash(hash_str, hash) = 0;
+    BOOST_CHECK_EQUAL(
+        hash_str,
+        " 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"
+        " 202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"
+    );
 }
 
 
