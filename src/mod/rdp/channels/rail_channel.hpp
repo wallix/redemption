@@ -56,8 +56,6 @@ private:
 
     bool exe_or_file_2_sent = false;
 
-    bool log_exe_or_file_2 = false;
-
 public:
     struct Params : public BaseVirtualChannel::Params {
            uint16_t client_execute_flags;

@@ -51,9 +51,6 @@ private:
 
     Translation::language_t lang;
 
-    uint16_t front_width;
-    uint16_t front_height;
-
     Font  const & font;
     Theme const & theme;
 
@@ -87,7 +84,7 @@ private:
 
     uint32_t auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
-    ClientExecute * client_execute;
+    const non_null_ptr<ClientExecute> client_execute;
 
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
@@ -114,24 +111,19 @@ public:
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
     RemoteProgramsSessionManager(FrontAPI& front, mod_api& mod, Translation::language_t lang,
-                                 uint16_t front_width, uint16_t front_height,
                                  Font const & font, Theme const & theme, auth_api & authentifier,
                                  char const * session_probe_window_title,
-                                 ClientExecute * client_execute, RDPVerbose verbose)
+                                 non_null_ptr<ClientExecute> client_execute, RDPVerbose verbose)
     : front(front)
     , mod(mod)
     , lang(lang)
-    , front_width(front_width)
-    , front_height(front_height)
     , font(font)
     , theme(theme)
     , verbose(verbose)
     , authentifier(authentifier)
     , session_probe_window_title(session_probe_window_title)
     , client_execute(client_execute)
-    {
-        REDASSERT(this->client_execute);
-    }
+    {}
 
     void begin_update() override
     {
