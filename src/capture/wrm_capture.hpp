@@ -185,34 +185,17 @@ class iofdbuf
     int fd;
 
 public:
-    explicit iofdbuf(int fd = -1) noexcept
-    : fd(fd)
+    explicit iofdbuf() noexcept
+    : fd(-1)
     {}
 
     iofdbuf(iofdbuf const &) = delete ;
     iofdbuf&operator=(iofdbuf const &) = delete ;
 
-    iofdbuf(iofdbuf && other) noexcept
-    : fd(other.fd)
-    {
-        other.fd = -1;
-    }
-
-    iofdbuf& operator=(iofdbuf && other) noexcept
-    {
-        this->fd = exchange(other.fd, -1);
-        return *this;
-    }
-
     ~iofdbuf()
     {
         this->close();
     }
-
-    //int get_fd() const
-    //{
-    //   return this->fd;
-    //}
 
     int open(const char *pathname, int flags)
     {
@@ -257,11 +240,6 @@ public:
 
     ssize_t write(const void * data, size_t len) const
     {
-        return this->write_all(data, len);
-    }
-
-    ssize_t write_all(const void * data, size_t len) const
-    {
         size_t remaining_len = len;
         size_t total_sent = 0;
         while (remaining_len) {
@@ -276,14 +254,6 @@ public:
             total_sent += ret;
         }
         return total_sent;
-    }
-
-    int release() noexcept {
-        int old_fd = this->fd;
-
-        this->fd = -1;
-
-        return old_fd;
     }
 };
 
