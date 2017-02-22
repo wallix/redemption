@@ -56,7 +56,7 @@ struct Rect {
     Rect() : x(0), y(0), cx(0), cy(0) {
     }
 
-    Rect(int left, int top, uint16_t width, uint16_t height)
+    Rect(int16_t left, int16_t top, uint16_t width, uint16_t height)
         : x(left), y(top), cx(width), cy(height)
     {
         // fast detection of overflow, works for valid width/height range 0..4096
@@ -120,29 +120,37 @@ struct Rect {
     }
 
     // compute a new rect containing old rect and given point
-    Rect enlarge_to(int x, int y) const {
+    Rect enlarge_to(int16_t x, int16_t y) const {
         if (this->isempty()){
             return Rect(x, y, 1, 1);
         }
         else {
-            const int x0 = std::min<int>(this->x, x);
-            const int y0 = std::min<int>(this->y, y);
-            const int x1 = std::max<int>(this->right() - 1, x);
-            const int y1 = std::max<int>(this->bottom() - 1, y);
-            return Rect(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+            const int16_t x0 = std::min(this->x, x);
+            const int16_t y0 = std::min(this->y, y);
+            const int16_t x1 = std::max(static_cast<int16_t>(this->right() - 1), x);
+            const int16_t y1 = std::max(static_cast<int16_t>(this->bottom() - 1), y);
+            return Rect(x0, y0, uint16_t(x1 - x0 + 1), uint16_t(y1 - y0 + 1));
         }
     }
 
-    Rect offset(int dx, int dy) const {
-        return Rect(this->x + dx, this->y + dy, this->cx, this->cy);
+    Rect offset(int16_t dx, int16_t dy) const {
+        return Rect(
+            static_cast<int16_t>(this->x + dx),
+            static_cast<int16_t>(this->y + dy),
+            this->cx,
+            this->cy
+        );
     }
 
     Rect shrink(uint16_t margin) const {
         REDASSERT((this->cx >= margin * 2) &&
                   (this->cy >= margin * 2));
-        return Rect(this->x + margin, this->y + margin,
-                    static_cast<uint16_t>(this->cx - margin * 2),
-                    static_cast<uint16_t>(this->cy - margin * 2));
+        return Rect(
+            static_cast<int16_t>(this->x + margin),
+            static_cast<int16_t>(this->y + margin),
+            static_cast<uint16_t>(this->cx - margin * 2),
+            static_cast<uint16_t>(this->cy - margin * 2)
+        );
     }
 
     //Rect upper_side() const {
@@ -168,12 +176,12 @@ struct Rect {
 
     Rect intersect(Rect in) const
     {
-        int max_x = std::max(in.x, this->x);
-        int max_y = std::max(in.y, this->y);
-        int min_right = std::min<int>(in.right(), this->right());
-        int min_bottom = std::min<int>(in.bottom(), this->bottom());
+        int16_t max_x = std::max(in.x, this->x);
+        int16_t max_y = std::max(in.y, this->y);
+        int16_t min_right = std::min(in.right(), this->right());
+        int16_t min_bottom = std::min(in.bottom(), this->bottom());
 
-        return Rect(max_x, max_y, min_right - max_x, min_bottom - max_y);
+        return Rect(max_x, max_y, uint16_t(min_right - max_x), uint16_t(min_bottom - max_y));
     }
 
     bool has_intersection(Rect in) const
@@ -248,7 +256,7 @@ struct Rect {
     };
     // Region of a point outside rect
     // 0x00 means inside
-    t_region region_pt(int x, int y) const {
+    t_region region_pt(int16_t x, int16_t y) const {
         int res = IN;
         if (x < this->x) {
             res |= LEFT;
@@ -409,8 +417,8 @@ struct LineEquation {
     }
 
     bool resolve(Rect rect) {
-        int aPosition = rect.region_pt(this->seg.a.x, this->seg.a.y);
-        int bPosition = rect.region_pt(this->seg.b.x, this->seg.b.y);
+        Rect::t_region aPosition = rect.region_pt(int16_t(this->seg.a.x), int16_t(this->seg.a.y));
+        Rect::t_region bPosition = rect.region_pt(int16_t(this->seg.b.x), int16_t(this->seg.b.y));
 
         if (aPosition & bPosition) {
             return false;

@@ -76,7 +76,9 @@ public:
 
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
-        
+
+        bool client_use_long_format_names = true;
+
         Params(auth_api & authentifier) : BaseVirtualChannel::Params(authentifier) {}
     };
 
@@ -88,11 +90,13 @@ public:
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          params)
+    , client_use_long_format_names(params.client_use_long_format_names)
     , param_clipboard_down_authorized(params.clipboard_down_authorized)
     , param_clipboard_up_authorized(params.clipboard_up_authorized)
     , param_clipboard_file_authorized(params.clipboard_file_authorized)
     , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
+
     , front(front)
     , proxy_managed(to_client_sender_ == nullptr) {}
 

@@ -2703,6 +2703,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
           , "./", "capture", ".mwrm"
         );
         filename = mwrm_seq.get(0);
+        // BUG TEST inode and others have a random length
         BOOST_CHECK_EQUAL(673, ::filesize(filename));
         ::unlink(filename);
     }

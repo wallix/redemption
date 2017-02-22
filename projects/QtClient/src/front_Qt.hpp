@@ -37,8 +37,6 @@
 #include <vector>
 #include <boost/algorithm/string.hpp>
 #include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <linux/hdreg.h>
 
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
@@ -91,6 +89,7 @@
 #endif
 
 
+
 #define _WINDOWS_TICK 10000000
 #define _SEC_TO_UNIX_EPOCH 11644473600LL
 
@@ -106,6 +105,7 @@ class Form_Qt;
 class Screen_Qt;
 class Mod_Qt;
 class ClipBoard_Qt;
+class FileSysWatchWrapper_Qt;
 
 struct DummyAuthentifier : public auth_api
 {
@@ -113,8 +113,7 @@ public:
     virtual void set_auth_channel_target(const char *) {}
     virtual void set_auth_error_message(const char *) {}
     virtual void report(const char * , const char *) {}
-    virtual void log4(bool , const char *, const char * = nullptr) {
-    }
+    virtual void log4(bool , const char *, const char * = nullptr) {}
     virtual void disconnect_target() {}
 };
 
@@ -198,6 +197,7 @@ public:
     int                  _delta_time;
     int                  _current_screen_index;
     bool                 _recv_disconnect_ultimatum;
+
 
 
     Front_Qt_API( bool param1
@@ -440,6 +440,8 @@ public:
 
     } fileSystemData;
 
+    FileSysWatchWrapper_Qt * file_watcher;
+
 
 
     bool setClientInfo() override;
@@ -507,7 +509,6 @@ public:
 
     long long UnixSecondsToWindowsTick(unsigned unixSeconds)
     {
-        //(long long)
         return ((unixSeconds + _SEC_TO_UNIX_EPOCH) * _WINDOWS_TICK);
     }
 

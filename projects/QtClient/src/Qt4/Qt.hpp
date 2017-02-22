@@ -56,4 +56,5 @@
 #include <QtCore/QThread>
 #include <QtCore/QtGlobal>
 #include <QtCore/QDebug>
+#include <QtCore/QFileSystemWatcher>
 

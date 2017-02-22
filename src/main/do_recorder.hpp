@@ -16,12 +16,13 @@
 #include "utils/chex_to_int.hpp"
 #include "utils/parse.hpp"
 #include "utils/fileutils.hpp"
+#include "cxx/features.hpp"
 
 extern "C" {
-    __attribute__((__visibility__("default")))
+    REDEMPTION_LIB_EXPORT
     int recmemcpy(char * dest, char * source, int len);
 
-    __attribute__((__visibility__("default")))
+    REDEMPTION_LIB_EXPORT
     int do_main(int argc, char const ** argv,
             get_hmac_key_prototype * hmac_fn,
             get_trace_key_prototype * trace_fn);

@@ -206,15 +206,7 @@ int main(int argc, char * argv[]) {
     const bool fastpath_support = true;
     const bool mem3blt_support  = true;
 
-    struct DummyAuthentifier : public auth_api
-    {
-    public:
-        virtual void set_auth_channel_target(const char *) {}
-        virtual void set_auth_error_message(const char *) {}
-        virtual void report(const char * reason, const char *) {}
-        virtual void log4(bool duplicate_with_pid, const char *, const char * = nullptr) {}
-        virtual void disconnect_target() {}
-    } authentifier;
+    NullAuthentifier authentifier;
 
     Front front(front_trans, gen, ini, cctx, authentifier,
         fastpath_support, mem3blt_support, now, input_filename.c_str(), persistent_key_list_oft);

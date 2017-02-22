@@ -1,0 +1,47 @@
+<DOCTYPE html>
+<html>
+<head>
+    <title>Terminal</title>
+    <meta charset="UTF-8"/>
+    <link rel="stylesheet" type="text/css" href="tty-emulator/player.css"/>
+</head>
+<body>
+
+<pre id="tty-player">
+<!-- <p id="tty-player-title">No Title</p> -->
+<!-- <p id="tty-player-terminal">contents</p> -->
+</pre>
+
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="tty-emulator/html_rendering.js"></script>
+
+<script type="text/javascript">
+// python -m SimpleHTTPServer 4104
+// script -f >(~/projects/build/redemption-public@projects@vt-emulator/configs/clang-linux-3.8.0/san/terminal_browser screen.json)
+// firefox http://localhost:4104/view_browser.html
+
+var ajax_param = {
+    url: 'screen.json',
+    context: document.getElementById("tty-player"),
+    dataType: 'json'
+};
+
+var time = document.location.search.replace(/[^0-9]/g, '')*1000 || 5000;
+
+(function loop() {
+    $.ajax(ajax_param)
+    .done(function(screen){
+        //console.log(screen)
+        this.innerHTML = TTYHTMLRendering(screen);
+        window.setTimeout(loop, time);
+    })
+    // file is truncated
+    .fail(function(jqxhr, status, e){
+        //console.log(e)
+        window.setTimeout(loop, time)
+    })
+})()
+</script>
+
+</body>
+</html>

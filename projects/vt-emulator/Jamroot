@@ -1,0 +1,56 @@
+include jam/cxxflags.jam ;
+
+constant SRC : src ;
+constant SRC_TEST : test ;
+constant RVT_SRC : $(SRC)/rvt ;
+constant RVT_LIB_SRC : $(SRC)/rvt_lib ;
+constant RVT_SRC_TEST : $(SRC_TEST)/rvt ;
+
+project vt_emulator
+: requirements
+    <include>src
+    <include>redemption/src
+    <include>redemption/src/system/linux
+
+    <cxxflags>-std=c++11
+
+    $(CXXFLAGS)
+
+   : default-build release
+;
+
+lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
+
+constant TEST_DEPENDENCIES :
+    <cxxflags>-frtti
+    <library>libboost_unit_test
+;
+
+import testing ;
+
+obj screen : $(RVT_SRC)/screen.cpp ;
+obj emulator : $(RVT_SRC)/vt_emulator.cpp ;
+obj text_rendering : $(RVT_SRC)/text_rendering.cpp ;
+
+alias libemu : emulator screen ;
+
+lib libterm : text_rendering libemu $(RVT_LIB_SRC)/terminal_emulator.cpp : <link>shared ;
+
+## Tools
+## @{
+exe terminal_browser : tools/terminal_browser.cpp libterm : ;
+## @}
+
+
+## Tests
+## @{
+unit-test test_character_color : $(RVT_SRC_TEST)/test_character_color.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_character : $(RVT_SRC_TEST)/test_character.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_charsets : $(RVT_SRC_TEST)/test_charsets.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_screen : $(RVT_SRC_TEST)/test_screen.cpp screen : $(TEST_DEPENDENCIES) ;
+
+unit-test test_utf8_decoder : $(RVT_SRC_TEST)/test_utf8_decoder.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_vt_emulator : $(RVT_SRC_TEST)/test_vt_emulator.cpp libemu : $(TEST_DEPENDENCIES) ;
+## }
