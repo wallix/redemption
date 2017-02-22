@@ -23,7 +23,7 @@
 #include "rvt/character_color.hpp"
 #include "rvt/vt_emulator.hpp"
 #include "rvt/utf8_decoder.hpp"
-#include "rvt/json_rendering.hpp"
+#include "rvt/text_rendering.hpp"
 
 #include <cerrno>
 #include <cstdlib>
