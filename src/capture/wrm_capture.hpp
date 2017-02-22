@@ -48,6 +48,15 @@
 #include "utils/compression_transport_builder.hpp"
 #include "core/RDP/share.hpp"
 
+#include "utils/sugar/exchange.hpp"
+
+#include <cerrno>
+#include <cstddef>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 // TODO enum class
 enum {
     META_FILE           = 1006,
@@ -171,21 +180,15 @@ struct wrmcapture_out_sequence_filename_buf_param
     {}
 };
 
-#include "utils/sugar/exchange.hpp"
 
-#include <cerrno>
-#include <cstddef>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+struct wrmcapture_no_param {};
 
 class iofdbuf
 {
     int fd;
 
 public:
-    explicit iofdbuf() noexcept
+    explicit iofdbuf(wrmcapture_no_param = wrmcapture_no_param()) noexcept
     : fd(-1)
     {}
 
@@ -252,14 +255,6 @@ public:
     }
 };
 
-struct wrmcapture_no_param {};
-
-struct wrmcapture_empty_ctor_iobuf : iofdbuf
-{
-    explicit wrmcapture_empty_ctor_iobuf(wrmcapture_no_param = wrmcapture_no_param()) noexcept
-    {}
-};
-
 
 template<class Buf>
 struct wrmcapture_empty_ctor
@@ -274,7 +269,7 @@ class wrmcapture_out_sequence_filename_buf_impl
 {
     char current_filename_[1024];
     wrmcapture_FilenameGenerator filegen_;
-    wrmcapture_empty_ctor_iobuf buf_;
+    iofdbuf buf_;
     unsigned num_file_;
     int groupid_;
 
@@ -326,7 +321,7 @@ public:
     const wrmcapture_FilenameGenerator & seqgen() const noexcept
     { return this->filegen_; }
 
-    wrmcapture_empty_ctor_iobuf & buf() noexcept
+    iofdbuf & buf() noexcept
     { return this->buf_; }
 
     const char * current_path() const
