@@ -38,8 +38,8 @@ struct TerminalEmulator
     rvt::VtEmulator emulator;
     rvt::Utf8Decoder decoder;
 
-    TerminalEmulator(int lines, int columns, int log_level)
-    : emulator(lines, columns, log_level)
+    TerminalEmulator(int lines, int columns)
+    : emulator(lines, columns)
     {}
 };
 
@@ -94,14 +94,15 @@ extern "C" {
 #define return_if(x) do { if (x) { return -1; } } while (0)
 #define return_errno_if(x) do { if (x) { return errno ? errno : -1; } } while (0)
 
-TerminalEmulator * terminal_emulator_init(int lines, int columns, int log_level)
+TerminalEmulator * terminal_emulator_init(int lines, int columns)
 {
-    return new TerminalEmulator(lines, columns, log_level);
+    return new TerminalEmulator(lines, columns);
 }
 
-void terminal_emulator_deinit(TerminalEmulator * emu)
+int terminal_emulator_deinit(TerminalEmulator * emu)
 {
     delete emu;
+    return 0;
 }
 
 int terminal_emulator_finish(TerminalEmulator * emu)
@@ -133,6 +134,22 @@ int terminal_emulator_set_title(TerminalEmulator* emu, char const * title)
     emu->decoder.end_decode(send_fn);
 
     emu->emulator.setWindowTitle({ucs_title, std::size_t(e-ucs_title)});
+    return 0;
+}
+
+int terminal_emulator_set_log_function(TerminalEmulator * emu, void(*log_func)(char const*))
+{
+    return_if(!emu);
+
+    emu->emulator.setLogFunction(log_func);
+    return 0;
+}
+
+int terminal_emulator_set_log_function_ctx(TerminalEmulator * emu, void(*log_func)(void *, char const *), void * ctx)
+{
+    return_if(!emu);
+
+    emu->emulator.setLogFunction([log_func, ctx](char const * s) { log_func(ctx, s); });
     return 0;
 }
 

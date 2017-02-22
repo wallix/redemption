@@ -37,10 +37,9 @@
 namespace rvt
 {
 
-VtEmulator::VtEmulator(int lines, int columns, int log_level)
+VtEmulator::VtEmulator(int lines, int columns)
 : _screen0{lines, columns}
 , _screen1{lines, columns}
-, _logLevel(log_level)
 {
     initTokenizer();
     reset();
@@ -1020,7 +1019,7 @@ static std::string hexdump2(ucs4_char const * s, int len)
 {
     int i;
     char dump[128];
-    std::string returnDump;
+    std::string returnDump = "Undecodable sequence: ";
 
     for (i = 0; i < len; i++) {
         if (s[i] == '\\')
@@ -1036,11 +1035,11 @@ static std::string hexdump2(ucs4_char const * s, int len)
 
 void VtEmulator::reportDecodingError()
 {
-    if (!_logLevel || tokenBufferPos == 0 || (tokenBufferPos == 1 && (tokenBuffer[0] & 0xff) >= 32))
+    if (!_logFunction || tokenBufferPos == 0 || (tokenBufferPos == 1 && (tokenBuffer[0] & 0xff) >= 32)) {
         return;
+    }
 
-    // TODO LOG(LOG_INFO, "Undecodable sequence: %s", hexdump2(tokenBuffer, tokenBufferPos));
-    // std::cerr << outputError << std::endl;
+    _logFunction(hexdump2(tokenBuffer, tokenBufferPos).c_str());
 }
 
 }

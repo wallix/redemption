@@ -21,6 +21,7 @@
 */
 
 #include <array>
+#include <functional> // std::function
 
 #include "rvt/charsets.hpp"
 #include "rvt/screen.hpp"
@@ -56,7 +57,7 @@ class VtEmulator
 
 public:
     /** Constructs a new emulation */
-    VtEmulator(int lines, int columns, int log_level);
+    VtEmulator(int lines, int columns);
     ~VtEmulator();
 
     // reimplemented from Emulation
@@ -67,11 +68,13 @@ public:
     array_view<ucs4_char const> getWindowTitle() const { return {windowTitle, windowTitleLen}; }
 
     void setWindowTitle(ucs4_carray_view title);
+    void setLogFunction(std::function<void(char const *)> f)
+    { this->_logFunction = std::move(f); }
 
     void receiveChar(ucs4_char cc);
     void setScreenSize(int lines, int columns);
 
-protected:
+private:
     // reimplemented from Emulation
     void setMode(Mode mode);
     void resetMode(Mode mode);
@@ -81,7 +84,6 @@ protected:
     void setMode(ScreenMode mode);
     void resetMode(ScreenMode mode);
 
-private:
     ucs4_char applyCharset(ucs4_char  c) const;
     void setCharset(int n, CharsetId cs);
     void useCharset(int n);
@@ -152,7 +154,7 @@ private:
     Screen _screen1;
     Screen * _currentScreen = &_screen1;
 
-    int _logLevel;
+    std::function<void(char const *)> _logFunction;
 };
 
 }

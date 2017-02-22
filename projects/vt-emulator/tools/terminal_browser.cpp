@@ -36,12 +36,13 @@ struct TerminalEmulatorDeleter
 
 int main(int ac, char ** av)
 {
-    std::unique_ptr<TerminalEmulator, TerminalEmulatorDeleter> uptr{terminal_emulator_init(68, 117, 1)};
+    std::unique_ptr<TerminalEmulator, TerminalEmulatorDeleter> uptr{terminal_emulator_init(68, 117)};
+    auto emu = uptr.get();
+    terminal_emulator_set_log_function(emu, [](char const * s) { std::cerr << s << std::endl; });
 
     auto filename = ac > 1 ? av[1] : "screen.json";
     char c;
     int n = 0;
-    auto emu = uptr.get();
     #define PError(x) do { if (int err = (x)) std::cerr << (err < 0 ? "internal error" : strerror(err)) << std::endl; } while (0)
     while (std::cin.get(c)) {
         PError(terminal_emulator_feed(emu, &c, 1));
