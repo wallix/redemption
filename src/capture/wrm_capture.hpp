@@ -525,7 +525,7 @@ struct wrmcapture_out_meta_sequence_filename_buf_param
 };
 
 
-template<class FilterParams = wrmcapture_no_param>
+template<class FilterParams>
 struct wrmcapture_out_hash_meta_sequence_filename_buf_param
 {
     wrmcapture_out_meta_sequence_filename_buf_param<FilterParams> meta_sq_params;
