@@ -363,8 +363,6 @@ protected:
 
 struct wrmcapture_OutFilenameSequenceTransport : public Transport
 {
-    using Buf = wrmcapture_out_sequence_filename_buf_impl;
-
     wrmcapture_OutFilenameSequenceTransport(
         wrmcapture_FilenameGenerator::Format format,
         const char * const prefix,
@@ -431,13 +429,13 @@ private:
         this->last_quantum_sent += res;
     }
 
-    Buf & buffer() noexcept
+    wrmcapture_out_sequence_filename_buf_impl & buffer() noexcept
     { return this->buf; }
 
-    const Buf & buffer() const noexcept
+    const wrmcapture_out_sequence_filename_buf_impl & buffer() const noexcept
     { return this->buf; }
 
-    Buf buf;
+    wrmcapture_out_sequence_filename_buf_impl buf;
 };
 
 
@@ -498,6 +496,28 @@ public:
 };
 
 
+struct wrmcapture_out_meta_sequence_filename_buf_noparam
+{
+    wrmcapture_out_sequence_filename_buf_param sq_params;
+    time_t sec;
+    wrmcapture_no_param meta_buf_params;
+    const char * hash_prefix;
+
+    wrmcapture_out_meta_sequence_filename_buf_noparam(
+        time_t start_sec,
+        wrmcapture_FilenameGenerator::Format format,
+        const char * const hash_prefix,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        wrmcapture_no_param const & meta_buf_params = wrmcapture_no_param())
+    : sq_params(format, prefix, filename, extension, groupid)
+    , sec(start_sec)
+    , meta_buf_params(meta_buf_params)
+    , hash_prefix(hash_prefix)
+    {}
+};
 
 
 template<class MetaParams>
@@ -1293,7 +1313,7 @@ class wrmcapture_out_meta_sequence_filename_buf_impl_ofile_buf_out
 
 public:
     explicit wrmcapture_out_meta_sequence_filename_buf_impl_ofile_buf_out(
-        wrmcapture_out_meta_sequence_filename_buf_param<wrmcapture_no_param> const & params
+        wrmcapture_out_meta_sequence_filename_buf_noparam const & params
     )
     : wrmcapture_out_sequence_filename_buf_impl(params.sq_params)
     , meta_buf_{}
@@ -1491,19 +1511,16 @@ public:
     : sum_buf(cctx.get_hmac_key())
     {}
 
-    template<class Buf>
-    int open(Buf &, char const * /*filename*/) {
+    int open(iofdbuf &, char const * /*filename*/) {
         return this->sum_buf.open();
     }
 
-    template<class Buf>
-    int write(Buf & buf, const void * data, size_t len) {
+    int write(iofdbuf & buf, const void * data, size_t len) {
         this->sum_buf.write(data, len);
         return buf.write(data, len);
     }
 
-    template<class Buf>
-    int close(Buf &, wrmcapture_hash_type & hash, unsigned char const (&)[MD_HASH_LENGTH]) {
+    int close(iofdbuf &, wrmcapture_hash_type & hash, unsigned char const (&)[MD_HASH_LENGTH]) {
         return this->sum_buf.close(hash);
     }
 };
@@ -2096,7 +2113,7 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
         const int groupid,
         auth_api * authentifier = nullptr,
         wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    : buf(wrmcapture_out_meta_sequence_filename_buf_param<wrmcapture_no_param>(
+    : buf(wrmcapture_out_meta_sequence_filename_buf_noparam(
         now.tv_sec, format, hash_path, path, basename, ".wrm", groupid
     ))
     {
