@@ -496,10 +496,10 @@ test-canonical redemptionio/redemptionio.hpp ;
 
 ## Acl tests
 ## @{
-test-canonical acl/acl_serializer.hpp : <library>png ;
+test-canonical acl/acl_serializer.hpp : <library>png <library>crypto <library>snappy ;
 test-canonical acl/auth_api.hpp ;
-test-canonical acl/authentifier.hpp : <library>crypto <library>png ;
-test-canonical acl/module_manager.hpp : <library>crypto <library>png ;
+test-canonical acl/authentifier.hpp : <library>crypto <library>png <library>snappy ;
+test-canonical acl/module_manager.hpp : <library>crypto <library>png <library>snappy ;
 test-canonical acl/mm_api.hpp ;
 ## @}
 
