@@ -1145,8 +1145,6 @@ public:
 class wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf
 : public wrmcapture_out_sequence_filename_buf_impl
 {
-//    typedef wrmcapture_out_sequence_filename_buf_impl sequence_base_type;
-
     wrmcapture_ocrypto_filename_buf meta_buf_;
     wrmcapture_MetaFilename mf_;
     wrmcapture_MetaFilename hf_;
@@ -1286,7 +1284,7 @@ public:
 class wrmcapture_out_meta_sequence_filename_buf_impl_ofile_buf_out
 : public wrmcapture_out_sequence_filename_buf_impl
 {
-    typedef wrmcapture_out_sequence_filename_buf_impl sequence_base_type;
+//    typedef wrmcapture_out_sequence_filename_buf_impl sequence_base_type;
 
     wrmcapture_ofile_buf_out meta_buf_;
     wrmcapture_MetaFilename mf_;
@@ -1977,13 +1975,11 @@ class wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto
     wrmcapture_ocrypto_filename_params hash_ctx;
     wrmcapture_ocrypto_filter wrm_filter;
 
-    using sequence_base_type = wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf;
-
 public:
     explicit wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto(
         wrmcapture_out_hash_meta_sequence_filename_buf_param_ocrypto const & params
     )
-    : sequence_base_type(params.meta_sq_params)
+    : wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf(params.meta_sq_params)
     , cctx(params.cctx)
     , hash_ctx(params.filter_params)
     , wrm_filter(params.filter_params)
