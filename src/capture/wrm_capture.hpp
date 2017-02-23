@@ -661,8 +661,8 @@ inline char * wrmcapture_swrite_hash(char * p, wrmcapture_hash_type const & hash
 }
 
 
-template<bool write_time, class Writer>
-int wrmcapture_write_meta_file_impl(
+template<class Writer>
+int wrmcapture_write_meta_file_impl_true(
     Writer & writer, const char * filename,
     struct stat const & stat,
     time_t start_sec, time_t stop_sec,
@@ -692,14 +692,12 @@ int wrmcapture_write_meta_file_impl(
         ll(stat.st_mtim.tv_sec),
         ll(stat.st_ctim.tv_sec)
     );
-    if (write_time) {
-        len += std::sprintf(
-            mes + len,
-            " %lld %lld",
-            ll(start_sec),
-            ll(stop_sec)
-        );
-    }
+    len += std::sprintf(
+        mes + len,
+        " %lld %lld",
+        ll(start_sec),
+        ll(stop_sec)
+    );
 
     char * p = mes + len;
     if (hash) {
@@ -716,6 +714,51 @@ int wrmcapture_write_meta_file_impl(
     return 0;
 }
 
+template<class Writer>
+int wrmcapture_write_meta_file_impl_false(
+    Writer & writer, const char * filename,
+    struct stat const & stat,
+    wrmcapture_hash_type const * hash = nullptr
+) {
+    if (int err = wrmcapture_write_filename(writer, filename)) {
+        return err;
+    }
+
+    using ull = unsigned long long;
+    using ll = long long;
+    char mes[
+        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+        wrmcapture_hash_string_len + 1 +
+        2
+    ];
+    ssize_t len = std::sprintf(
+        mes,
+        " %lld %llu %lld %lld %llu %lld %lld %lld",
+        ll(stat.st_size),
+        ull(stat.st_mode),
+        ll(stat.st_uid),
+        ll(stat.st_gid),
+        ull(stat.st_dev),
+        ll(stat.st_ino),
+        ll(stat.st_mtim.tv_sec),
+        ll(stat.st_ctim.tv_sec)
+    );
+
+    char * p = mes + len;
+    if (hash) {
+        p = wrmcapture_swrite_hash(p, *hash);
+    }
+    *p++ = '\n';
+
+    ssize_t res = writer.write(mes, p-mes);
+
+    if (res < p-mes) {
+        return res < 0 ? res : 1;
+    }
+
+    return 0;
+}
 
 template<class Writer>
 int wrmcapture_write_meta_file(
@@ -725,7 +768,7 @@ int wrmcapture_write_meta_file(
 ) {
     struct stat stat;
     int err = ::stat(filename, &stat);
-    return err ? err : wrmcapture_write_meta_file_impl<true>(writer, filename, stat, start_sec, stop_sec, hash);
+    return err ? err : wrmcapture_write_meta_file_impl_true(writer, filename, stat, start_sec, stop_sec, hash);
 }
 
 class wrmcapture_encrypt_filter
@@ -1225,7 +1268,7 @@ public:
                 struct stat stat;
                 int err = ::stat(meta_filename, &stat);
                 if (!err) {
-                    err = wrmcapture_write_meta_file_impl<false>(crypto_hash, filename, stat, 0, 0, nullptr);
+                    err = wrmcapture_write_meta_file_impl_false(crypto_hash, filename, stat, nullptr);
                 }
                 if (!err) {
                     err = crypto_hash.close(/*hash*/);
@@ -1365,7 +1408,7 @@ public:
                 struct stat stat;
                 int err = ::stat(meta_filename, &stat);
                 if (!err) {
-                    err = wrmcapture_write_meta_file_impl<false>(crypto_hash, filename, stat, 0, 0, nullptr);
+                    err = wrmcapture_write_meta_file_impl_false(crypto_hash, filename, stat, nullptr);
                 }
                 if (!err) {
                     err = crypto_hash.close(/*hash*/);
@@ -1684,7 +1727,7 @@ public:
                 struct stat stat;
                 int err = ::stat(meta_filename, &stat);
                 if (!err) {
-                    err = wrmcapture_write_meta_file_impl<false>(crypto_hash, filename, stat, 0, 0, nullptr);
+                    err = wrmcapture_write_meta_file_impl_false(crypto_hash, filename, stat, nullptr);
                 }
                 if (!err) {
                     err = crypto_hash.close(/*hash*/);
@@ -1836,7 +1879,7 @@ public:
             struct stat stat;
             int err = ::stat(meta_filename, &stat);
             if (!err) {
-                err = wrmcapture_write_meta_file_impl<false>(hash_buf, filename, stat, 0, 0, &hash);
+                err = wrmcapture_write_meta_file_impl_false(hash_buf, filename, stat, &hash);
             }
             if (!err) {
                 err = hash_buf.close(/*hash*/);
@@ -2059,7 +2102,7 @@ public:
             struct stat stat;
             int err = ::stat(meta_filename, &stat);
             if (!err) {
-                err = wrmcapture_write_meta_file_impl<false>(hash_buf, filename, stat, 0, 0, &hash);
+                err = wrmcapture_write_meta_file_impl_false(hash_buf, filename, stat, &hash);
             }
             if (!err) {
                 err = hash_buf.close(/*hash*/);
