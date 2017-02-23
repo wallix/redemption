@@ -6729,7 +6729,6 @@ public:
                 unsigned char and_bit_extraction_mask = 7;
 
                 for (unsigned int i1 = 0; i1 < cursor.width; ++i1) {
-                    unsigned int color = 0;
                     if ((*andMask) & (1 << and_bit_extraction_mask)) {
                         *xorMask         = 0;
                         *(xorMask + 1)   = 0;
