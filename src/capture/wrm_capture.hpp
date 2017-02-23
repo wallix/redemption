@@ -519,13 +519,18 @@ struct wrmcapture_out_meta_sequence_filename_buf_noparam
     {}
 };
 
+struct wrmcapture_ocrypto_filename_params
+{
+    CryptoContext & crypto_ctx;
+    Random & rnd;
+};
 
-template<class MetaParams>
+
 struct wrmcapture_out_meta_sequence_filename_buf_param
 {
     wrmcapture_out_sequence_filename_buf_param sq_params;
     time_t sec;
-    MetaParams meta_buf_params;
+    wrmcapture_ocrypto_filename_params meta_buf_params;
     const char * hash_prefix;
 
     wrmcapture_out_meta_sequence_filename_buf_param(
@@ -536,7 +541,7 @@ struct wrmcapture_out_meta_sequence_filename_buf_param
         const char * const filename,
         const char * const extension,
         const int groupid,
-        MetaParams const & meta_buf_params = MetaParams())
+        wrmcapture_ocrypto_filename_params const & meta_buf_params)
     : sq_params(format, prefix, filename, extension, groupid)
     , sec(start_sec)
     , meta_buf_params(meta_buf_params)
@@ -590,15 +595,10 @@ struct wrmcapture_out_hash_meta_sequence_filename_buf_param_cctx
     {}
 };
 
-struct wrmcapture_ocrypto_filename_params
-{
-    CryptoContext & crypto_ctx;
-    Random & rnd;
-};
 
 struct wrmcapture_out_hash_meta_sequence_filename_buf_param_ocrypto
 {
-    wrmcapture_out_meta_sequence_filename_buf_param<wrmcapture_ocrypto_filename_params> meta_sq_params;
+    wrmcapture_out_meta_sequence_filename_buf_param meta_sq_params;
     wrmcapture_ocrypto_filename_params filter_params;
     CryptoContext & cctx;
 
@@ -1173,7 +1173,7 @@ class wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf
 
 public:
     explicit wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf(
-        wrmcapture_out_meta_sequence_filename_buf_param<wrmcapture_ocrypto_filename_params> const & params
+        wrmcapture_out_meta_sequence_filename_buf_param const & params
     )
     : wrmcapture_out_sequence_filename_buf_impl(params.sq_params)
     , meta_buf_(params.meta_buf_params)
