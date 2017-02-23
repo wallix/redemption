@@ -524,9 +524,33 @@ struct wrmcapture_out_meta_sequence_filename_buf_param
     {}
 };
 
+struct wrmcapture_out_meta_sequence_filename_buf_param_cctx
+{
+    wrmcapture_out_sequence_filename_buf_param sq_params;
+    time_t sec;
+    CryptoContext& meta_buf_params;
+    const char * hash_prefix;
+
+    wrmcapture_out_meta_sequence_filename_buf_param_cctx(
+        time_t start_sec,
+        wrmcapture_FilenameGenerator::Format format,
+        const char * const hash_prefix,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        CryptoContext& meta_buf_params)
+    : sq_params(format, prefix, filename, extension, groupid)
+    , sec(start_sec)
+    , meta_buf_params(meta_buf_params)
+    , hash_prefix(hash_prefix)
+    {}
+};
+
+
 struct wrmcapture_out_hash_meta_sequence_filename_buf_param_cctx
 {
-    wrmcapture_out_meta_sequence_filename_buf_param<CryptoContext&> meta_sq_params;
+    wrmcapture_out_meta_sequence_filename_buf_param_cctx meta_sq_params;
     CryptoContext& filter_params;
     CryptoContext & cctx;
 
@@ -1595,9 +1619,8 @@ class wrmcapture_out_meta_sequence_filename_buf_impl_cctx
     time_t stop_sec_;
 
 public:
-    template<class MetaParams>
     explicit wrmcapture_out_meta_sequence_filename_buf_impl_cctx(
-        wrmcapture_out_meta_sequence_filename_buf_param<MetaParams> const & params
+        wrmcapture_out_meta_sequence_filename_buf_param_cctx const & params
     )
     : wrmcapture_out_sequence_filename_buf_impl(params.sq_params)
     , meta_buf_(params.meta_buf_params)
