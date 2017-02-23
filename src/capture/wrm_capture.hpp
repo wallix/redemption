@@ -570,15 +570,19 @@ struct wrmcapture_out_hash_meta_sequence_filename_buf_param_cctx
     {}
 };
 
-
-template<class FilterParams>
-struct wrmcapture_out_hash_meta_sequence_filename_buf_param
+struct wrmcapture_ocrypto_filename_params
 {
-    wrmcapture_out_meta_sequence_filename_buf_param<FilterParams> meta_sq_params;
-    FilterParams filter_params;
+    CryptoContext & crypto_ctx;
+    Random & rnd;
+};
+
+struct wrmcapture_out_hash_meta_sequence_filename_buf_param_ocrypto
+{
+    wrmcapture_out_meta_sequence_filename_buf_param<wrmcapture_ocrypto_filename_params> meta_sq_params;
+    wrmcapture_ocrypto_filename_params filter_params;
     CryptoContext & cctx;
 
-    wrmcapture_out_hash_meta_sequence_filename_buf_param(
+    wrmcapture_out_hash_meta_sequence_filename_buf_param_ocrypto(
         CryptoContext & cctx,
         time_t start_sec,
         wrmcapture_FilenameGenerator::Format format,
@@ -587,7 +591,7 @@ struct wrmcapture_out_hash_meta_sequence_filename_buf_param
         const char * const filename,
         const char * const extension,
         const int groupid,
-        FilterParams const & filter_params = FilterParams())
+        wrmcapture_ocrypto_filename_params const & filter_params)
     : meta_sq_params(start_sec, format, hash_prefix, prefix, filename, extension, groupid, filter_params)
     , filter_params(filter_params)
     , cctx(cctx)
@@ -1075,11 +1079,6 @@ private:
     }
 };
 
-struct wrmcapture_ocrypto_filename_params
-{
-    CryptoContext & crypto_ctx;
-    Random & rnd;
-};
 
 class wrmcapture_ocrypto_filename_buf
 {
@@ -1982,7 +1981,7 @@ class wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto
 
 public:
     explicit wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto(
-        wrmcapture_out_hash_meta_sequence_filename_buf_param<wrmcapture_ocrypto_filename_params> const & params
+        wrmcapture_out_hash_meta_sequence_filename_buf_param_ocrypto const & params
     )
     : sequence_base_type(params.meta_sq_params)
     , cctx(params.cctx)
@@ -2295,7 +2294,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport
         auth_api * authentifier = nullptr,
         wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
     : buf(
-        wrmcapture_out_hash_meta_sequence_filename_buf_param<wrmcapture_ocrypto_filename_params>(
+        wrmcapture_out_hash_meta_sequence_filename_buf_param_ocrypto(
             crypto_ctx,
             now.tv_sec, format, hash_path, path, basename, ".wrm", groupid,
             {crypto_ctx, rnd}
