@@ -422,7 +422,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
     meta_len_writer.len = 5; // header
     struct stat stat;
     BOOST_CHECK(!::stat(meta_path, &stat));
-    BOOST_CHECK(!wrmcapture_write_meta_file_impl<false>(meta_len_writer, meta_path + 2, stat, 0, 0, nullptr));
+    BOOST_CHECK(!wrmcapture_write_meta_file_impl_false(meta_len_writer, meta_path + 2, stat, nullptr));
     BOOST_CHECK_EQUAL(meta_len_writer.len, filesize(meta_hash_path));
     BOOST_CHECK_EQUAL(0, ::unlink(meta_hash_path));
 

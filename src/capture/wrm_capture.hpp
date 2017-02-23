@@ -660,117 +660,6 @@ inline char * wrmcapture_swrite_hash(char * p, wrmcapture_hash_type const & hash
     return p;
 }
 
-
-template<class Writer>
-int wrmcapture_write_meta_file_impl_true(
-    Writer & writer, const char * filename,
-    struct stat const & stat,
-    time_t start_sec, time_t stop_sec,
-    wrmcapture_hash_type const * hash = nullptr
-) {
-    if (int err = wrmcapture_write_filename(writer, filename)) {
-        return err;
-    }
-
-    using ull = unsigned long long;
-    using ll = long long;
-    char mes[
-        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-        wrmcapture_hash_string_len + 1 +
-        2
-    ];
-    ssize_t len = std::sprintf(
-        mes,
-        " %lld %llu %lld %lld %llu %lld %lld %lld",
-        ll(stat.st_size),
-        ull(stat.st_mode),
-        ll(stat.st_uid),
-        ll(stat.st_gid),
-        ull(stat.st_dev),
-        ll(stat.st_ino),
-        ll(stat.st_mtim.tv_sec),
-        ll(stat.st_ctim.tv_sec)
-    );
-    len += std::sprintf(
-        mes + len,
-        " %lld %lld",
-        ll(start_sec),
-        ll(stop_sec)
-    );
-
-    char * p = mes + len;
-    if (hash) {
-        p = wrmcapture_swrite_hash(p, *hash);
-    }
-    *p++ = '\n';
-
-    ssize_t res = writer.write(mes, p-mes);
-
-    if (res < p-mes) {
-        return res < 0 ? res : 1;
-    }
-
-    return 0;
-}
-
-template<class Writer>
-int wrmcapture_write_meta_file_impl_false(
-    Writer & writer, const char * filename,
-    struct stat const & stat,
-    wrmcapture_hash_type const * hash = nullptr
-) {
-    if (int err = wrmcapture_write_filename(writer, filename)) {
-        return err;
-    }
-
-    using ull = unsigned long long;
-    using ll = long long;
-    char mes[
-        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-        wrmcapture_hash_string_len + 1 +
-        2
-    ];
-    ssize_t len = std::sprintf(
-        mes,
-        " %lld %llu %lld %lld %llu %lld %lld %lld",
-        ll(stat.st_size),
-        ull(stat.st_mode),
-        ll(stat.st_uid),
-        ll(stat.st_gid),
-        ull(stat.st_dev),
-        ll(stat.st_ino),
-        ll(stat.st_mtim.tv_sec),
-        ll(stat.st_ctim.tv_sec)
-    );
-
-    char * p = mes + len;
-    if (hash) {
-        p = wrmcapture_swrite_hash(p, *hash);
-    }
-    *p++ = '\n';
-
-    ssize_t res = writer.write(mes, p-mes);
-
-    if (res < p-mes) {
-        return res < 0 ? res : 1;
-    }
-
-    return 0;
-}
-
-template<class Writer>
-int wrmcapture_write_meta_file(
-    Writer & writer, const char * filename,
-    time_t start_sec, time_t stop_sec,
-    wrmcapture_hash_type const * hash = nullptr
-) {
-    struct stat stat;
-    int err = ::stat(filename, &stat);
-    return err ? err : wrmcapture_write_meta_file_impl_true(writer, filename, stat, start_sec, stop_sec, hash);
-}
-
 class wrmcapture_encrypt_filter
 {
     char           buf[CRYPTO_BUFFER_SIZE]; //
@@ -1142,7 +1031,6 @@ private:
     }
 };
 
-
 class wrmcapture_ocrypto_filename_buf
 {
     wrmcapture_encrypt_filter encrypt;
@@ -1204,6 +1092,264 @@ public:
     int flush() const
     { return this->file.flush(); }
 };
+
+class wrmcapture_cctx_ochecksum_file
+{
+    int fd;
+
+    static constexpr size_t nosize = ~size_t{};
+    static constexpr size_t quick_size = 4096;
+
+    SslHMAC_Sha256_Delayed hmac;
+    SslHMAC_Sha256_Delayed quick_hmac;
+    unsigned char const (&hmac_key)[MD_HASH_LENGTH];
+    size_t file_size = nosize;
+
+public:
+    explicit wrmcapture_cctx_ochecksum_file(CryptoContext & cctx)
+    : fd(-1)
+    , hmac_key(cctx.get_hmac_key())
+    {}
+
+    ~wrmcapture_cctx_ochecksum_file()
+    {
+        this->close();
+    }
+
+    wrmcapture_cctx_ochecksum_file(wrmcapture_cctx_ochecksum_file const &) = delete;
+    wrmcapture_cctx_ochecksum_file & operator=(wrmcapture_cctx_ochecksum_file const &) = delete;
+
+    int open(const char * filename, mode_t mode)
+    {
+        this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
+        this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
+        this->file_size = 0;
+        this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+        return this->fd;
+    }
+
+    ssize_t write(const void * data, size_t len)
+    {
+        REDASSERT(this->file_size != nosize);
+
+        // TODO: hmac returns error as exceptions while write errors are returned as -1
+        // this is inconsistent and probably need a fix.
+        // also, if we choose to raise exception every error should have it's own one
+        this->hmac.update(static_cast<const uint8_t *>(data), len);
+        if (this->file_size < quick_size) {
+            auto const remaining = std::min(quick_size - this->file_size, len);
+            this->quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
+            this->file_size += remaining;
+        }
+
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            ssize_t ret = ::write(this->fd,
+                static_cast<const char*>(data) + total_sent, remaining_len);
+            if (ret <= 0){
+                if (errno == EINTR){
+                    continue;
+                }
+                return -1;
+            }
+            remaining_len -= ret;
+            total_sent += ret;
+        }
+        return total_sent;
+    }
+
+    int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
+    {
+        REDASSERT(this->file_size != nosize);
+        this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
+        this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
+        this->file_size = nosize;
+        return this->close();
+    }
+
+    int close()
+    {
+        if (this->is_open()) {
+            const int ret = ::close(this->fd);
+            this->fd = -1;
+            return ret;
+        }
+        return 0;
+    }
+
+    bool is_open() const noexcept
+    { return -1 != this->fd; }
+
+    off64_t seek(off64_t offset, int whence) const
+    { return ::lseek64(this->fd, offset, whence); }
+
+    int flush() const
+    { return 0; }
+};
+
+
+template<class Writer>
+int wrmcapture_write_meta_file_impl_true(
+    Writer & writer, const char * filename,
+    struct stat const & stat,
+    time_t start_sec, time_t stop_sec,
+    wrmcapture_hash_type const * hash = nullptr
+) {
+    if (int err = wrmcapture_write_filename(writer, filename)) {
+        return err;
+    }
+
+    using ull = unsigned long long;
+    using ll = long long;
+    char mes[
+        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+        wrmcapture_hash_string_len + 1 +
+        2
+    ];
+    ssize_t len = std::sprintf(
+        mes,
+        " %lld %llu %lld %lld %llu %lld %lld %lld",
+        ll(stat.st_size),
+        ull(stat.st_mode),
+        ll(stat.st_uid),
+        ll(stat.st_gid),
+        ull(stat.st_dev),
+        ll(stat.st_ino),
+        ll(stat.st_mtim.tv_sec),
+        ll(stat.st_ctim.tv_sec)
+    );
+    len += std::sprintf(
+        mes + len,
+        " %lld %lld",
+        ll(start_sec),
+        ll(stop_sec)
+    );
+
+    char * p = mes + len;
+    if (hash) {
+        p = wrmcapture_swrite_hash(p, *hash);
+    }
+    *p++ = '\n';
+
+    ssize_t res = writer.write(mes, p-mes);
+
+    if (res < p-mes) {
+        return res < 0 ? res : 1;
+    }
+
+    return 0;
+}
+
+template<class Writer>
+int wrmcapture_write_meta_file_impl_false(
+    Writer & writer, const char * filename,
+    struct stat const & stat,
+    wrmcapture_hash_type const * hash = nullptr
+) {
+    if (int err = wrmcapture_write_filename(writer, filename)) {
+        return err;
+    }
+
+    using ull = unsigned long long;
+    using ll = long long;
+    char mes[
+        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+        wrmcapture_hash_string_len + 1 +
+        2
+    ];
+    ssize_t len = std::sprintf(
+        mes,
+        " %lld %llu %lld %lld %llu %lld %lld %lld",
+        ll(stat.st_size),
+        ull(stat.st_mode),
+        ll(stat.st_uid),
+        ll(stat.st_gid),
+        ull(stat.st_dev),
+        ll(stat.st_ino),
+        ll(stat.st_mtim.tv_sec),
+        ll(stat.st_ctim.tv_sec)
+    );
+
+    char * p = mes + len;
+    if (hash) {
+        p = wrmcapture_swrite_hash(p, *hash);
+    }
+    *p++ = '\n';
+
+    ssize_t res = writer.write(mes, p-mes);
+
+    if (res < p-mes) {
+        return res < 0 ? res : 1;
+    }
+
+    return 0;
+}
+
+template<class Writer>
+int wrmcapture_write_meta_file(
+    Writer & writer, const char * filename,
+    time_t start_sec, time_t stop_sec,
+    wrmcapture_hash_type const * hash = nullptr
+) {
+    struct stat stat;
+    int err = ::stat(filename, &stat);
+    return err ? err : wrmcapture_write_meta_file_impl_true(writer, filename, stat, start_sec, stop_sec, hash);
+}
+
+int wrmcapture_write_meta_file_ocrypto(
+    wrmcapture_ocrypto_filename_buf & writer, const char * filename,
+    time_t start_sec, time_t stop_sec,
+    wrmcapture_hash_type const * hash
+);
+
+int wrmcapture_write_meta_file_ocrypto(
+    wrmcapture_ocrypto_filename_buf & writer, const char * filename,
+    time_t start_sec, time_t stop_sec,
+    wrmcapture_hash_type const * hash
+) {
+    struct stat stat;
+    int err = ::stat(filename, &stat);
+    return err ? err : wrmcapture_write_meta_file_impl_true(writer, filename, stat, start_sec, stop_sec, hash);
+}
+
+int wrmcapture_write_meta_file_out(
+    wrmcapture_ofile_buf_out & writer, const char * filename,
+    time_t start_sec, time_t stop_sec,
+    wrmcapture_hash_type const * hash
+);
+
+int wrmcapture_write_meta_file_out(
+    wrmcapture_ofile_buf_out & writer, const char * filename,
+    time_t start_sec, time_t stop_sec,
+    wrmcapture_hash_type const * hash
+) {
+    struct stat stat;
+    int err = ::stat(filename, &stat);
+    return err ? err : wrmcapture_write_meta_file_impl_true(writer, filename, stat, start_sec, stop_sec, hash);
+}
+
+int wrmcapture_write_meta_file_cctx(
+    wrmcapture_cctx_ochecksum_file & writer, const char * filename,
+    time_t start_sec, time_t stop_sec,
+    wrmcapture_hash_type const * hash
+);
+
+int wrmcapture_write_meta_file_cctx(
+    wrmcapture_cctx_ochecksum_file & writer, const char * filename,
+    time_t start_sec, time_t stop_sec,
+    wrmcapture_hash_type const * hash
+) {
+    struct stat stat;
+    int err = ::stat(filename, &stat);
+    return err ? err : wrmcapture_write_meta_file_impl_true(writer, filename, stat, start_sec, stop_sec, hash);
+}
+
+
+
+
 
 class wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf
 : public wrmcapture_out_sequence_filename_buf_impl
@@ -1308,7 +1454,7 @@ protected:
             return 1;
         }
 
-        if (int err = wrmcapture_write_meta_file(
+        if (int err = wrmcapture_write_meta_file_ocrypto(
             this->meta_buf_, filename, this->start_sec_, this->stop_sec_+1, hash
         )) {
             return err;
@@ -1348,6 +1494,7 @@ class wrmcapture_out_meta_sequence_filename_buf_impl_ofile_buf_out
 {
 //    typedef wrmcapture_out_sequence_filename_buf_impl sequence_base_type;
 
+    //wrmcapture_ocrypto_filename_buf
     wrmcapture_ofile_buf_out meta_buf_;
     wrmcapture_MetaFilename mf_;
     wrmcapture_MetaFilename hf_;
@@ -1448,7 +1595,7 @@ protected:
             return 1;
         }
 
-        if (int err = wrmcapture_write_meta_file(
+        if (int err = wrmcapture_write_meta_file_out(
             this->meta_buf_, filename, this->start_sec_, this->stop_sec_+1, hash
         )) {
             return err;
@@ -1568,100 +1715,6 @@ public:
     }
 };
 
-class wrmcapture_cctx_ochecksum_file
-{
-    int fd;
-
-    static constexpr size_t nosize = ~size_t{};
-    static constexpr size_t quick_size = 4096;
-
-    SslHMAC_Sha256_Delayed hmac;
-    SslHMAC_Sha256_Delayed quick_hmac;
-    unsigned char const (&hmac_key)[MD_HASH_LENGTH];
-    size_t file_size = nosize;
-
-public:
-    explicit wrmcapture_cctx_ochecksum_file(CryptoContext & cctx)
-    : fd(-1)
-    , hmac_key(cctx.get_hmac_key())
-    {}
-
-    ~wrmcapture_cctx_ochecksum_file()
-    {
-        this->close();
-    }
-
-    wrmcapture_cctx_ochecksum_file(wrmcapture_cctx_ochecksum_file const &) = delete;
-    wrmcapture_cctx_ochecksum_file & operator=(wrmcapture_cctx_ochecksum_file const &) = delete;
-
-    int open(const char * filename, mode_t mode)
-    {
-        this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
-        this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
-        this->file_size = 0;
-        this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-        return this->fd;
-    }
-
-    ssize_t write(const void * data, size_t len)
-    {
-        REDASSERT(this->file_size != nosize);
-
-        // TODO: hmac returns error as exceptions while write errors are returned as -1
-        // this is inconsistent and probably need a fix.
-        // also, if we choose to raise exception every error should have it's own one
-        this->hmac.update(static_cast<const uint8_t *>(data), len);
-        if (this->file_size < quick_size) {
-            auto const remaining = std::min(quick_size - this->file_size, len);
-            this->quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
-            this->file_size += remaining;
-        }
-
-        size_t remaining_len = len;
-        size_t total_sent = 0;
-        while (remaining_len) {
-            ssize_t ret = ::write(this->fd,
-                static_cast<const char*>(data) + total_sent, remaining_len);
-            if (ret <= 0){
-                if (errno == EINTR){
-                    continue;
-                }
-                return -1;
-            }
-            remaining_len -= ret;
-            total_sent += ret;
-        }
-        return total_sent;
-    }
-
-    int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
-    {
-        REDASSERT(this->file_size != nosize);
-        this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
-        this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
-        this->file_size = nosize;
-        return this->close();
-    }
-
-    int close()
-    {
-        if (this->is_open()) {
-            const int ret = ::close(this->fd);
-            this->fd = -1;
-            return ret;
-        }
-        return 0;
-    }
-
-    bool is_open() const noexcept
-    { return -1 != this->fd; }
-
-    off64_t seek(off64_t offset, int whence) const
-    { return ::lseek64(this->fd, offset, whence); }
-
-    int flush() const
-    { return 0; }
-};
 
 
 class wrmcapture_out_meta_sequence_filename_buf_impl_cctx
@@ -1767,7 +1820,7 @@ protected:
             return 1;
         }
 
-        if (int err = wrmcapture_write_meta_file(
+        if (int err = wrmcapture_write_meta_file_cctx(
             this->meta_buf_, filename, this->start_sec_, this->stop_sec_+1, hash
         )) {
             return err;

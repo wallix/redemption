@@ -192,6 +192,7 @@ exe vnc_client_cli
         dl
         png
 
+        snappy
 #        snappy
 ##        lzma
 
@@ -1072,8 +1073,8 @@ test-canonical core/listen.hpp ;
 test-canonical core/mainloop.hpp ;
 test-canonical core/server.hpp ;
 test-canonical core/server_notifier_api.hpp ;
-test-canonical core/session.hpp : <library>png ;
-test-canonical core/session_server.hpp : <library>png ;
+test-canonical core/session.hpp : <library>png <library>crypto <library>z <library>snappy <library>dl ;
+test-canonical core/session_server.hpp :  <library>png <library>crypto <library>z <library>snappy <library>dl ;
 test-canonical core/wait_obj.hpp ;
 ## @}
 
@@ -1098,7 +1099,7 @@ test-canonical keyboard/keymap2.hpp ;
 test-canonical keyboard/keymapSym.hpp ;
 
 test-canonical gdi/graphic_cmd_color.hpp ;
-test-canonical gdi/protected_graphics.hpp : <library>bitmap <library>png ;
+test-canonical gdi/protected_graphics.hpp : <library>bitmap  <library>png <library>crypto <library>z <library>snappy <library>dl ;
 
 
 #explicit test_show_data.o bitmap_data_allocator.o test_data_draw ; #

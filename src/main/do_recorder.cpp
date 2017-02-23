@@ -818,7 +818,7 @@ static inline int check_encrypted_or_checksumed(
         for (MetaLine2CtxForRewriteStat & ctx : meta_line_ctx_list) {
             struct stat sb;
             if (lstat(ctx.wrm_filename.c_str(), &sb) < 0
-             || wrmcapture_write_meta_file_impl<true>(mwrm_file_cp, ctx.filename.c_str(), sb, ctx.start_time, ctx.stop_time)
+             || wrmcapture_write_meta_file_impl_true(mwrm_file_cp, ctx.filename.c_str(), sb, ctx.start_time, ctx.stop_time)
             ) {
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
             }
@@ -869,7 +869,7 @@ static inline int check_encrypted_or_checksumed(
             struct stat stat;
             int err = ::stat(meta_filename, &stat);
             if (!err) {
-                err = wrmcapture_write_meta_file_impl<false>(hash_file_cp, filename, stat, 0, 0, nullptr);
+                err = wrmcapture_write_meta_file_impl_false(hash_file_cp, filename, stat, nullptr);
             }
             if (!err) {
                 err = hash_file_cp.close(/*hash*/);
