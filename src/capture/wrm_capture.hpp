@@ -1292,9 +1292,8 @@ class wrmcapture_out_meta_sequence_filename_buf_impl_ofile_buf_out
     time_t stop_sec_;
 
 public:
-    template<class MetaParams>
     explicit wrmcapture_out_meta_sequence_filename_buf_impl_ofile_buf_out(
-        wrmcapture_out_meta_sequence_filename_buf_param<MetaParams> const & params
+        wrmcapture_out_meta_sequence_filename_buf_param<wrmcapture_no_param> const & params
     )
     : wrmcapture_out_sequence_filename_buf_impl(params.sq_params)
     , meta_buf_{}
