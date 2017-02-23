@@ -1395,7 +1395,7 @@ public:
                     struct Pointer cursor(Pointer::POINTER_NULL);
                     cursor.width = 32;
                     cursor.height = 32;
-                    cursor.bpp = 24;
+//                    cursor.bpp = 24;
                     cursor.x = this->stream.in_uint8();
                     cursor.y = this->stream.in_uint8();
                     stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
@@ -1413,7 +1413,7 @@ public:
                     Pointer cursor(Pointer::POINTER_NULL);
                     cursor.width = 32;
                     cursor.height = 32;
-                    cursor.bpp = 24;
+//                    cursor.bpp = 24;
                     cursor.x = pi.x;
                     cursor.y = pi.y;
                     memcpy(cursor.data, pi.data, sizeof(pi.data));
@@ -1438,7 +1438,8 @@ public:
 
                 cursor.width    = this->stream.in_uint8();
                 cursor.height   = this->stream.in_uint8();
-                cursor.bpp      = this->stream.in_uint8();
+                /* cursor.bpp   = this->stream.in_uint8();*/
+                this->stream.in_skip_bytes(1);
 
                 cursor.x = this->stream.in_uint8();
                 cursor.y = this->stream.in_uint8();

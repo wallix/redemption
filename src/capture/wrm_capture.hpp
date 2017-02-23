@@ -2997,7 +2997,7 @@ public:
 
 protected:
     void send_pointer(int cache_idx, const Pointer & cursor) override {
-        if ((cursor.width != 32) || (cursor.height != 32) || (cursor.bpp != 24)) {
+        if ((cursor.width != 32) || (cursor.height != 32)) {
             this->send_pointer2(cache_idx, cursor);
             return;
         }
@@ -3051,7 +3051,7 @@ protected:
 
         payload.out_uint8(cursor.width);
         payload.out_uint8(cursor.height);
-        payload.out_uint8(cursor.bpp);
+        payload.out_uint8(24);
 
         payload.out_uint8(cursor.x);
         payload.out_uint8(cursor.y);
