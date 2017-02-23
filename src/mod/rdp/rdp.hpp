@@ -3258,6 +3258,9 @@ public:
 
                 case FastPath::UpdateType::PTR_NULL:
                     {
+                        if (this->verbose & RDPVerbose::basic_trace3) {
+                            LOG(LOG_INFO, "Process pointer null (Fast)");
+                        }
                         Pointer cursor;
                         this->front.set_pointer(cursor);
                     }
@@ -3265,6 +3268,9 @@ public:
 
                 case FastPath::UpdateType::PTR_DEFAULT:
                     {
+                        if (this->verbose & RDPVerbose::basic_trace3) {
+                            LOG(LOG_INFO, "Process pointer default (Fast)");
+                        }
                         Pointer cursor(Pointer::POINTER_SYSTEM_DEFAULT);
                         this->front.set_pointer(cursor);
                     }
@@ -3315,7 +3321,7 @@ public:
                     break;
 
                 case FastPath::UpdateType::POINTER:
-                    if (this->verbose & RDPVerbose::basic_trace3)  {
+                    if (this->verbose & RDPVerbose::basic_trace3) {
                         LOG(LOG_INFO, "Process pointer new (Fast)");
                     }
                     this->process_new_pointer_pdu(upd.payload);
@@ -4305,16 +4311,15 @@ public:
 
                 if (this->remote_program) {
                     RailCaps rail_caps;
-                    rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED;
+                    this->front.retrieve_client_capability_set(rail_caps);
+                    rail_caps.RailSupportLevel &= (TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED);
                     if (this->verbose & RDPVerbose::basic_trace) {
                         rail_caps.log("Sending to server");
                     }
                     confirm_active_pdu.emit_capability_set(rail_caps);
 
                     WindowListCaps window_list_caps;
-                    window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED_EX;
-                    window_list_caps.NumIconCaches = 3;
-                    window_list_caps.NumIconCacheEntries = 12;
+                    this->front.retrieve_client_capability_set(window_list_caps);
                     if (this->verbose & RDPVerbose::basic_trace) {
                         window_list_caps.log("Sending to server");
                     }
@@ -6468,6 +6473,9 @@ public:
         switch (system_pointer_type) {
         case RDP_NULL_POINTER:
             {
+                if (this->verbose & RDPVerbose::basic_trace3) {
+                    LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - null");
+                }
                 Pointer cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
                 this->front.set_pointer(cursor);
@@ -6475,6 +6483,9 @@ public:
             break;
         default:
             {
+                if (this->verbose & RDPVerbose::basic_trace3) {
+                    LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - default");
+                }
                 Pointer cursor(Pointer::POINTER_NORMAL);
                 this->front.set_pointer(cursor);
             }
