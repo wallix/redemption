@@ -28,6 +28,7 @@
 
 #include "utils/sugar/cast.hpp"
 #include "utils/stream.hpp"
+#include "core/ERREF/ntstatus.hpp"
 
 namespace fscc {
 
@@ -2274,7 +2275,7 @@ struct FileRenameInformation {
         LOG(LOG_INFO, "          * Padding - (7 byte) NOT USED");
         LOG(LOG_INFO, "          * RootDirectory   = %" PRIx64 " (8 bytes)", this->RootDirectory);
         LOG(LOG_INFO, "          * FileNameLength  = %zu (4 bytes)", this->FileName.size());
-        LOG(LOG_INFO, "          * VolumeLabel     = \"%s\" (%zu bytes)", this->FileName, this->FileName.size());
+        LOG(LOG_INFO, "          * VolumeLabel     = \"%s\" (%zu byte(s)", this->FileName, this->FileName.size());
     }
 };
 

@@ -330,7 +330,7 @@ void Front_Qt::writeClientInfo() {
 
 void Front_Qt::set_pointer(Pointer const & cursor) {
 
-    QImage image_data(cursor.data, cursor.width, cursor.height, this->bpp_to_QFormat(cursor.bpp, false));
+    QImage image_data(cursor.data, cursor.width, cursor.height, this->bpp_to_QFormat(this->_info.bpp, false));
     QImage image_mask(cursor.mask, cursor.width, cursor.height, QImage::Format_Mono);
 
     if (cursor.mask[0x48] == 0xFF &&
@@ -2569,7 +2569,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                         rdpdr::DeviceIOResponse deviceIOResponse( deviceIORequest.DeviceId()
                                                                 , deviceIORequest.CompletionId()
-                                                                , 0);
+                                                                , erref::NTSTATUS::STATUS_SUCCESS);
 
                         switch (deviceIORequest.MajorFunction()) {
 
@@ -2587,33 +2587,30 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     if (file.good()) {
                                         id = this->fileSystemData.get_file_id();
                                         this->fileSystemData.paths.push_back(new_path);
-//                                         struct stat buff;
-//                                         stat(new_path.c_str(), &buff);
                                     } else {
                                         if (request.CreateDisposition() & smb2::FILE_CREATE) {
 
-                                        id = this->fileSystemData.get_file_id();
-                                        this->fileSystemData.paths.push_back(new_path);
+                                            id = this->fileSystemData.get_file_id();
+                                            this->fileSystemData.paths.push_back(new_path);
 
-                                        if (request.CreateOptions() & smb2::FILE_DIRECTORY_FILE) {
-
-                                            LOG(LOG_WARNING, "new directory: \"%s\"", new_path);
-                                            mkdir(new_path.c_str(), ACCESSPERMS);
-                                        } else {
-                                            LOG(LOG_WARNING, "new file: \"%s\"", new_path);
-                                            std::ofstream oFile(new_path, std::ios::out | std::ios::binary);
-                                        }
+                                            if (request.CreateOptions() & smb2::FILE_DIRECTORY_FILE) {
+                                                LOG(LOG_WARNING, "new directory: \"%s\"", new_path);
+                                                mkdir(new_path.c_str(), ACCESSPERMS);
+                                            } else {
+                                                LOG(LOG_WARNING, "new file: \"%s\"", new_path);
+                                                std::ofstream oFile(new_path, std::ios::out | std::ios::binary);
+                                                if (!oFile.good()) {
+                                                    LOG(LOG_WARNING, "  Can't open create such file: \'%s\'.", new_path.c_str());
+                                                    deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
+                                                }
+                                            }
 
                                         } else {
                                             LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", new_path.c_str());
-                                            deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
-                                            //id = 0;
+                                            deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                         }
-
-
                                     }
                                 }
-
 
                                 uint8_t Information(rdpdr::FILE_SUPERSEDED);
                                 if (request.CreateDisposition() & smb2::FILE_OPEN_IF) {
@@ -2650,10 +2647,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         {
 
                                         std::ifstream file(this->fileSystemData.paths[id-1].c_str());
-                                        if (file.good()) {
-
-                                        } else {
-                                            deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
+                                        if (!file.good()) {
+                                            deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                             LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str());
                                         }
 
@@ -2719,12 +2714,11 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                          , Directory);
                                         fsi.emit(out_stream);
 
-                                        int total_length(out_stream.get_offset());
                                         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
                                         this->_callback->send_to_mod_channel( channel_names::rdpdr
                                                                             , chunk_to_send
-                                                                            , total_length
+                                                                            , out_stream.get_offset()
                                                                             , CHANNELS::CHANNEL_FLAG_LAST  |
                                                                               CHANNELS::CHANNEL_FLAG_FIRST
                                                                             );
@@ -2735,7 +2729,39 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     case rdpdr::FileAttributeTagInformation:
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query File Attribute Tag Information Request");
                                         {
-                                            //LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query File Attribute Tag Information Response");
+                                            std::ifstream file(this->fileSystemData.paths[id-1].c_str());
+                                            if (!file.good()) {
+                                                deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_ACCESS_DENIED);
+                                                LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str());
+                                            }
+                                            deviceIOResponse.emit(out_stream);
+
+                                            struct stat buff;
+                                            stat(this->fileSystemData.paths[id-1].c_str(), &buff);
+                                            uint32_t fileAttributes(0);
+                                            if (!S_ISDIR(buff.st_mode)) {
+                                                fileAttributes = fscc::FILE_ATTRIBUTE_ARCHIVE;
+                                            }
+
+                                            rdpdr::ClientDriveQueryInformationResponse cdqir(8);
+                                            cdqir.emit(out_stream);
+
+                                            fscc::FileAttributeTagInformation fati( fileAttributes
+                                                                                  , 0);
+                                            fati.emit(out_stream);
+
+                                            InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                                            this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                                                , chunk_to_send
+                                                                                , out_stream.get_offset()
+                                                                                , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                                                  CHANNELS::CHANNEL_FLAG_FIRST
+                                                                                );
+
+
+
+                                            LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query File Attribute Tag Information Response");
                                         }
                                         break;
 
@@ -2788,11 +2814,11 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         inFile.read(reinterpret_cast<char *>(ReadData), file_size);
                                         inFile.close();
                                     } else {
-                                        deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
+                                        deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                         LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", this->fileSystemData.paths[id-1].c_str());
                                     }
                                 } else {
-                                    deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
+                                    deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                     LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", this->fileSystemData.paths[id-1].c_str());
                                 }
 
@@ -2845,7 +2871,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                             std::string str_file_path_slash(this->SHARE_DIR + path);
                                             if (stat(str_file_path_slash.c_str(), &buff_child)) {
-                                                deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
+                                                deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                                 LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());
                                             }
 
@@ -2897,16 +2923,16 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                 }
                                                 closedir (dir);
                                             } else {
-                                                deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
+                                                deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                                 LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_dir).", str_dir_path.c_str());
                                             }
 
                                             if (str_file_name.length() == 0) {
-                                                deviceIOResponse.set_IoStatus(erref::STATUS_NO_MORE_FILES);
+                                                deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_MORE_FILES);
                                             } else {
                                                 std::string str_file_path_slash(str_dir_path + "/" + str_file_name);
                                                 if (stat(str_file_path_slash.c_str(), &buff_child)) {
-                                                    deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
+                                                    deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                                     LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());
                                                 }
                                             }
@@ -2914,7 +2940,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                         deviceIOResponse.emit(out_stream);
 
-                                        //if (deviceIOResponse.IoStatus() == erref::STATUS_SUCCESS) {
+                                        //if (deviceIOResponse.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
                                         uint64_t LastAccessTime  = UnixSecondsToWindowsTick(buff_child.st_atime);
                                         uint64_t LastWriteTime   = UnixSecondsToWindowsTick(buff_child.st_mtime);
                                         //UnixSecondsToWindowsTick(buff_child.st_ctime);
@@ -2987,7 +3013,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                     struct stat buff;
                                     if (stat(str_path.c_str(), &buff)) {
-                                        deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
+                                        deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                         LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_path.c_str());
                                     }
 
@@ -3002,24 +3028,13 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     int device = open(str_path.c_str(), O_RDONLY);
 
                                     if (device < 0) {
-                                        deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
+                                        deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                         LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_path.c_str());
                                     }
 
-                                    //int resioctl = ioctl(device, HDIO_GET_IDENTITY, &hd);
-
-                                    //std:: cout << "hd.serial_no = " << hd.serial_no << " for Device = " << device << " resioctl = " << resioctl << std::endl;
-
-
-//                                     for (int i = 0; i < 20; i++) {
-//                                         VolumeSerialNumber = hd.serial_no;
-//                                     }
-
-                                    //uint32_t VolumeSerialNumber = hd.serial_no;
-
                                     deviceIOResponse.emit(out_stream);
 
-                                    if (deviceIOResponse.IoStatus() == erref::STATUS_SUCCESS) {
+                                    if (deviceIOResponse.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
                                         switch (sdqvir.FsInformationClass()) {
                                             case rdpdr::FileFsVolumeInformation:
                                             {
@@ -3095,7 +3110,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                             oFile.close();
                                         }  else {
                                             LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", this->fileSystemData.paths[id-1].c_str());
-                                            deviceIOResponse.set_IoStatus(erref::STATUS_NO_SUCH_FILE);
+                                            deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                         }
 
                                         deviceIOResponse.emit(out_stream);
@@ -3123,10 +3138,61 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     rdpdr::ServerDriveSetInformationRequest sdsir;
                                     sdsir.receive(chunk);
 
-                                    deviceIOResponse.emit(out_stream);
+                                    std::ifstream file(this->fileSystemData.paths[id-1].c_str(), std::ios::in |std::ios::binary);
+                                    if (!file.good()) {
+                                        LOG(LOG_WARNING, "  Can't open such file of directory : \'%s\'.", this->fileSystemData.paths[id-1].c_str());
+                                        deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
+                                        file.close();
+                                    }
+
 
                                     rdpdr::ClientDriveSetInformationResponse cdsir(sdsir.Length());
-                                    cdsir.emit(out_stream);
+
+
+                                    switch (sdsir.FsInformationClass()) {
+
+                                        case rdpdr::FileRenameInformation:
+                                        {
+                                            rdpdr::RDPFileRenameInformation rdpfri;
+                                            rdpfri.receive(chunk);
+
+                                            std::string fileName = std::string(this->SHARE_DIR + rdpfri.FileName());
+                                            if (rename(this->fileSystemData.paths[id-1].c_str(), fileName.c_str()) !=  0) {
+                                                LOG(LOG_WARNING, "  Can't rename such file of directory : \'%s\' to \'%s\'.", this->fileSystemData.paths[id-1].c_str(), fileName.c_str());
+                                                deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_OBJECT_NAME_INVALID);
+                                            }
+
+                                            deviceIOResponse.emit(out_stream);
+                                            cdsir.emit(out_stream);
+                                        }
+                                            break;
+
+                                        case rdpdr::FileAllocationInformation :
+                                            deviceIOResponse.emit(out_stream);
+                                            cdsir.emit(out_stream);
+                                            break;
+
+                                        case rdpdr::FileEndOfFileInformation:
+                                            deviceIOResponse.emit(out_stream);
+                                            cdsir.emit(out_stream);
+                                            break;
+
+                                        case rdpdr::FileDispositionInformation:
+
+                                            uint8_t DeletePending = 1;
+
+                                            if (remove(this->fileSystemData.paths[id-1].c_str()) != 0) {
+                                                DeletePending = 0;
+                                                deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_ACCESS_DENIED);
+                                                LOG(LOG_WARNING, "  Can't delete such file of directory : \'%s\'.", this->fileSystemData.paths[id-1].c_str());
+                                            }
+
+                                            deviceIOResponse.emit(out_stream);
+                                            cdsir.emit(out_stream);
+                                            fscc::FileDispositionInformation fdi(DeletePending);
+                                            fdi.emit(out_stream);
+                                            break;
+                                    }
 
                                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
@@ -3137,7 +3203,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                           CHANNELS::CHANNEL_FLAG_FIRST
                                                                         );
 
-                                    LOG(LOG_INFO, "SERVER >> RDPDR: Client Drive Set Informatio Response");
+                                    LOG(LOG_INFO, "SERVER >> RDPDR: Client Drive Set Information Response");
                                 }
 
                                 break;
