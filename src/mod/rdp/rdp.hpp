@@ -1932,7 +1932,7 @@ private:
                     const bool from_or_to_client = false;
                     uint32_t total_length = length;
                     if (total_length > CHANNELS::CHANNEL_CHUNK_LENGTH) {
-                        total_length = CHANNELS::CHANNEL_CHUNK_LENGTH;
+                        total_length = chunk.get_capacity() - chunk.get_offset();
                     }
                     ::msgdump_d(send, from_or_to_client, length, flags,
                     chunk.get_data(), total_length);
@@ -7203,7 +7203,7 @@ private:
         if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
             !this->file_system_drive_manager.HasManagedDrive()) {
 
-            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 if ((this->verbose & RDPVerbose::rdpdr) || (this->verbose & RDPVerbose::rdpdr_dump)) {
 
                     LOG(LOG_INFO,

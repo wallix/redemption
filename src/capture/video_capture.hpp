@@ -140,7 +140,7 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
 
 public:
 
-    void frame_marker_event(const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
+    void frame_marker_event(const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
     override {
         this->drawable.trace_mouse();
         if (!this->no_timestamp) {
@@ -155,7 +155,7 @@ public:
     }
 
     std::chrono::microseconds do_snapshot(
-        const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
+        const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool ignore_frame_in_timeval)
     override {
         uint64_t tick = difftimeval(now, this->start_video_capture);
         uint64_t const inter_frame_interval = this->inter_frame_interval.count();

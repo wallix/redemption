@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <snappy-c.h>
 #include <iostream>
+#include <memory>
+
 #include "capture/cryptofile.hpp"
 #include "utils/sugar/local_fd.hpp"
 #include "utils/chex_to_int.hpp"

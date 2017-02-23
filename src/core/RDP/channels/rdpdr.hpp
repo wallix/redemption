@@ -31,7 +31,6 @@
 #include "utils/utf.hpp"
 #include "core/SMB2/MessageSyntax.hpp"
 #include "core/FSCC/FileInformation.hpp"
-#include "core/ERREF/ntstatus.hpp"
 
 #include <vector>
 
@@ -1533,7 +1532,11 @@ struct DeviceWriteRequest {
         this->Offset = stream.in_uint64_le();
         stream.in_skip_bytes(20);
         {
-            const unsigned expected = this->Length;
+            int exp = this->Length;
+            if (exp > 1600-56) {
+                exp = 1600-56;
+            }
+            const unsigned expected = exp;
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
@@ -1550,9 +1553,9 @@ struct DeviceWriteRequest {
         LOG(LOG_INFO, "          * Length    = %d (4 bytes)", int(this->Length));
         LOG(LOG_INFO, "          * Offset    = 0x%" PRIx64 " (8 bytes)", this->Offset);
         LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
-        auto s = reinterpret_cast<char const *>(this->WriteData);
+        //auto s = reinterpret_cast<char const *>(this->WriteData);
         int len = int(this->Length);
-        LOG(LOG_INFO, "          * WriteData = \"%*s\" (%d byte(s))", len, s, len);
+        LOG(LOG_INFO, "          * WriteData (%d byte(s))", len);
     }
 };
 
@@ -2151,18 +2154,15 @@ public:
 struct DeviceReadResponse {
 
     uint32_t Length = 0;
-    std::string ReadData;
 
     DeviceReadResponse() = default;
 
     DeviceReadResponse( uint32_t Length)
       : Length(Length)
-                      //: ReadData(reinterpret_cast<char *>(ReadData), Length)
     {}
 
     void emit(OutStream & stream) {
         stream.out_uint32_le(Length);
-        //stream.out_copy_bytes(reinterpret_cast<const uint8_t *>(this->ReadData.data()), this->ReadData.size());
     }
 
     void receive(InStream & stream) {
@@ -2192,8 +2192,7 @@ struct DeviceReadResponse {
 
     void log() {
         LOG(LOG_INFO, "     Device Read Response:");
-        LOG(LOG_INFO, "          * Length   = %zu (4 bytes)", this->ReadData.size());
-        LOG(LOG_INFO, "          * ReadData - (%zu byte(s))", this->ReadData.size());
+        LOG(LOG_INFO, "          * Length   = %u (4 bytes)", this->Length);
     }
 };
 
@@ -2246,6 +2245,7 @@ struct DeviceWriteResponse {
 
     void emit(OutStream & stream) {
         stream.out_uint32_le(this->Length);
+        stream.out_clear_bytes(1);
     }
 
     void receive(InStream & stream) {
@@ -3769,7 +3769,7 @@ public:
         stream.out_uint32_le(this->FsInformationClass_);
         stream.out_uint32_le(this->Length_);
 
-        stream.out_clear_bytes(24); // Padding(24)
+        stream.out_clear_bytes(24);                        // Padding(24)
     }
 
     void receive(InStream & stream) {
@@ -3788,7 +3788,7 @@ public:
         this->FsInformationClass_ = stream.in_uint32_le();
         this->Length_             = stream.in_uint32_le();
 
-        stream.in_skip_bytes(24);   // Padding(24)
+        stream.in_skip_bytes(24);                          // Padding(24)
     }
 
     uint32_t FsInformationClass() const { return this->FsInformationClass_; }
@@ -3965,6 +3965,14 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Rename Information:");
+        LOG(LOG_INFO, "          * ReplaceIfExists = %d (1 byte)", this->replace_if_exists_);
+        LOG(LOG_INFO, "          * RootDirectory   = %02x (1 byte)", this->RootDirectory_);
+        LOG(LOG_INFO, "          * FileNameLength  = %zu (4 bytes)", this->file_name.size());
+        LOG(LOG_INFO, "          * VolumeLabel     = \"%s\" (%zu byte(s)", this->file_name.c_str(), this->file_name.size());
     }
 };
 
@@ -5341,7 +5349,7 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                                 break;
                                             case FileRenameInformation:
                                                 {
-                                                    fscc::FileRenameInformation fri;
+                                                    RDPFileRenameInformation fri;
                                                     fri.receive(s);
                                                     fri.log();
                                                 }
