@@ -524,6 +524,28 @@ struct wrmcapture_out_meta_sequence_filename_buf_param
     {}
 };
 
+struct wrmcapture_out_hash_meta_sequence_filename_buf_param_cctx
+{
+    wrmcapture_out_meta_sequence_filename_buf_param<CryptoContext&> meta_sq_params;
+    CryptoContext& filter_params;
+    CryptoContext & cctx;
+
+    wrmcapture_out_hash_meta_sequence_filename_buf_param_cctx(
+        CryptoContext & cctx,
+        time_t start_sec,
+        wrmcapture_FilenameGenerator::Format format,
+        const char * const hash_prefix,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        CryptoContext & filter_params)
+    : meta_sq_params(start_sec, format, hash_prefix, prefix, filename, extension, groupid, filter_params)
+    , filter_params(filter_params)
+    , cctx(cctx)
+    {}
+};
+
 
 template<class FilterParams>
 struct wrmcapture_out_hash_meta_sequence_filename_buf_param
@@ -1712,7 +1734,7 @@ class wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx
 
 public:
     explicit wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx(
-        wrmcapture_out_hash_meta_sequence_filename_buf_param<CryptoContext&> const & params
+        wrmcapture_out_hash_meta_sequence_filename_buf_param_cctx const & params
     )
     : wrmcapture_out_meta_sequence_filename_buf_impl_cctx(params.meta_sq_params)
     , cctx(params.cctx)
@@ -2150,7 +2172,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         auth_api * authentifier = nullptr,
         wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
     : buf(
-        wrmcapture_out_hash_meta_sequence_filename_buf_param<CryptoContext&>(
+        wrmcapture_out_hash_meta_sequence_filename_buf_param_cctx(
             crypto_ctx,
             now.tv_sec, format, hash_path, path, basename, ".wrm", groupid,
             crypto_ctx
