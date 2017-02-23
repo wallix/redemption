@@ -79,7 +79,7 @@
 #include "utils/png.hpp"
 #include "utils/fdbuf.hpp"
 
-#include "cxx/attributes.hpp"
+#include "cxx/cxx.hpp"
 
 #include "transport/transport.hpp"
 #include "transport/out_file_transport.hpp"
@@ -949,6 +949,7 @@ public:
                     if (this->verbose & Verbose::rdp_orders){
                         this->ssc.destblt.log(LOG_INFO, clip);
                     }
+
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
                         gd->draw(this->ssc.destblt, clip);
                     }
@@ -3145,7 +3146,6 @@ inline void send_meta_chunk(
   , uint16_t info_cache_4_entries
   , uint16_t info_cache_4_size
   , bool     info_cache_4_persistent
-
   , uint8_t  index_algorithm
 ) {
     StaticOutStream<36> payload;
@@ -3153,7 +3153,6 @@ inline void send_meta_chunk(
     payload.out_uint16_le(info_width);
     payload.out_uint16_le(info_height);
     payload.out_uint16_le(info_bpp);
-
     payload.out_uint16_le(info_cache_0_entries);
     payload.out_uint16_le(info_cache_0_size);
     payload.out_uint16_le(info_cache_1_entries);

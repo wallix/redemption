@@ -20,6 +20,7 @@
 
 #pragma once
 
+// https://github.com/jonathanpoelen/falcon.cxx/blob/master/include/falcon/cxx/cxx.hpp
 
 # define REDEMPTION_PRAGMA(X) _Pragma(#X)
 

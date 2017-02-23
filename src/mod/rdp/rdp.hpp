@@ -717,6 +717,8 @@ protected:
         }
     } session_probe_virtual_channel_event_handler;
 
+    bool clean_up_32_bpp_cursor;
+
 public:
     using Verbose = RDPVerbose;
 
@@ -858,6 +860,7 @@ public:
         , asynchronous_task_event_handler(*this)
         , session_probe_launcher_event_handler(*this)
         , session_probe_virtual_channel_event_handler(*this)
+        , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
     {
         if (this->verbose & RDPVerbose::basic_trace) {
             if (!enable_transparent_mode) {
@@ -1340,11 +1343,12 @@ public:
 
         if (this->remote_program) {
             this->remote_programs_session_manager =
-                std::make_unique<RemoteProgramsSessionManager>(front, *this,
-                    this->lang, this->front_width, this->front_height,
-                    this->font, mod_rdp_params.theme, this->authentifier,
+                std::make_unique<RemoteProgramsSessionManager>(
+                    front, *this, this->lang, this->font,
+                    mod_rdp_params.theme, this->authentifier,
                     session_probe_window_title,
-                    mod_rdp_params.client_execute, this->verbose);
+                    mod_rdp_params.client_execute, this->verbose
+                );
         }
     }   // mod_rdp
 
@@ -1928,7 +1932,7 @@ private:
                     const bool from_or_to_client = false;
                     uint32_t total_length = length;
                     if (total_length > CHANNELS::CHANNEL_CHUNK_LENGTH) {
-                        total_length = CHANNELS::CHANNEL_CHUNK_LENGTH;
+                        total_length = chunk.get_capacity() - chunk.get_offset();
                     }
                     ::msgdump_d(send, from_or_to_client, length, flags,
                     chunk.get_data(), total_length);
@@ -3254,8 +3258,7 @@ public:
 
                 case FastPath::UpdateType::PTR_NULL:
                     {
-                        struct Pointer cursor;
-                        memset(cursor.mask, 0xff, sizeof(cursor.mask));
+                        Pointer cursor;
                         this->front.set_pointer(cursor);
                     }
                     break;
@@ -5817,6 +5820,15 @@ public:
                     }
                 }
                 break;
+            case CAPSTYPE_POINTER:
+                {
+                    PointerCaps pointer_caps;
+                    pointer_caps.recv(stream, capset_length);
+                    if (this->verbose & RDPVerbose::basic_trace) {
+                        pointer_caps.log("Receiving from server");
+                    }
+                }
+                break;
             default:
                 if (this->verbose & RDPVerbose::basic_trace) {
                     LOG(LOG_WARNING,
@@ -6307,13 +6319,14 @@ public:
         Pointer & cursor = this->cursors[pointer_cache_idx];
 
         memset(&cursor, 0, sizeof(Pointer));
-        cursor.bpp = 24;
+//        cursor.bpp    = 24;
         cursor.x      = stream.in_uint16_le();
         cursor.y      = stream.in_uint16_le();
         cursor.width  = stream.in_uint16_le();
         cursor.height = stream.in_uint16_le();
-        unsigned mlen  = stream.in_uint16_le(); /* mask length */
-        unsigned dlen  = stream.in_uint16_le(); /* data length */
+
+        unsigned mlen = stream.in_uint16_le(); /* mask length */
+        unsigned dlen = stream.in_uint16_le(); /* data length */
 
         if ((mlen > sizeof(cursor.mask)) || (dlen > sizeof(cursor.data))) {
             LOG(LOG_ERR,
@@ -6325,6 +6338,62 @@ public:
         // TODO this is modifiying cursor in place: we should not do that.
         memcpy(cursor.data, stream.in_uint8p(dlen), dlen);
         memcpy(cursor.mask, stream.in_uint8p(mlen), mlen);
+
+        //const unsigned int xor_line_length_in_byte = cursor.width * 3;
+        //const unsigned int xor_padded_line_length_in_byte =
+        //    ((xor_line_length_in_byte % 2) ?
+        //     xor_line_length_in_byte + 1 :
+        //     xor_line_length_in_byte);
+        //const unsigned int remainder = (cursor.width % 8);
+        //const unsigned int and_line_length_in_byte = cursor.width / 8 + (remainder ? 1 : 0);
+        //const unsigned int and_padded_line_length_in_byte =
+        //    ((and_line_length_in_byte % 2) ?
+        //     and_line_length_in_byte + 1 :
+        //     and_line_length_in_byte);
+        //for (unsigned int i0 = 0; i0 < cursor.height; ++i0) {
+        //    printf("%02d  ", (cursor.height - i0 - 1));
+        //
+        //    const uint8_t* xorMask = cursor.data + (cursor.height - i0 - 1) * xor_padded_line_length_in_byte;
+        //
+        //    const uint8_t* andMask = cursor.mask + (cursor.height - i0 - 1) * and_padded_line_length_in_byte;
+        //    unsigned char and_bit_extraction_mask = 7;
+        //
+        //    for (unsigned int i1 = 0; i1 < cursor.width; ++i1) {
+        //        unsigned int color = 0;
+        //        color |=  *xorMask             ;
+        //        color |= (*(xorMask + 1) <<  8);
+        //        color |= (*(xorMask + 2) << 16);
+        //
+        //        if ((*andMask) & (1 << and_bit_extraction_mask)) {
+        //            printf(".");
+        //        }
+        //        else {
+        //            if (color == 0xFFFFFF) {
+        //                printf("W");
+        //            }
+        //            else if (color) {
+        //                printf("C");
+        //            }
+        //            else  {
+        //                printf("B");
+        //            }
+        //        }
+        //
+        //        xorMask += 3;
+        //        if (and_bit_extraction_mask) {
+        //            and_bit_extraction_mask--;
+        //        }
+        //        else {
+        //            and_bit_extraction_mask = 7;
+        //            andMask++;
+        //        }
+        //    }
+        //
+        //    printf("\n");
+        //}
+        //printf("\n");
+
+        cursor.update_bw();
 
         this->front.set_pointer(cursor);
         if (this->verbose & RDPVerbose::basic_trace3) {
@@ -6360,7 +6429,7 @@ public:
                 pointer_idx);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
-        struct Pointer & cursor = this->cursors[pointer_idx];
+        Pointer & cursor = this->cursors[pointer_idx];
         if (cursor.is_valid()) {
             this->front.set_pointer(cursor);
         }
@@ -6529,6 +6598,11 @@ public:
 
         unsigned data_bpp  = stream.in_uint16_le(); /* data bpp */
         unsigned pointer_idx = stream.in_uint16_le();
+        if (this->verbose & RDPVerbose::basic_trace3) {
+            LOG(LOG_INFO,
+                "mod_rdp::process_new_pointer_pdu xorBpp=%u pointer_idx=%u",
+                data_bpp, pointer_idx);
+        }
 
         if (pointer_idx >= (sizeof(this->cursors) / sizeof(Pointer))) {
             LOG(LOG_ERR,
@@ -6538,14 +6612,16 @@ public:
         }
 
         Pointer & cursor = this->cursors[pointer_idx];
-        memset(&cursor, 0, sizeof(struct Pointer));
-        cursor.bpp    = 24;
-        cursor.x      = stream.in_uint16_le();
-        cursor.y      = stream.in_uint16_le();
-        cursor.width  = stream.in_uint16_le();
-        cursor.height = stream.in_uint16_le();
-        uint16_t mlen  = stream.in_uint16_le(); /* mask length */
-        uint16_t dlen  = stream.in_uint16_le(); /* data length */
+        memset(&cursor, 0, sizeof(Pointer));
+//        cursor.bpp              = 24;
+        cursor.x                = stream.in_uint16_le();
+        cursor.y                = stream.in_uint16_le();
+        cursor.width            = stream.in_uint16_le();
+        cursor.height           = stream.in_uint16_le();
+        cursor.only_black_white = (data_bpp == 1);
+
+        uint16_t mlen = stream.in_uint16_le(); /* mask length */
+        uint16_t dlen = stream.in_uint16_le(); /* data length */
 
         if (cursor.width > Pointer::MAX_WIDTH){
             LOG(LOG_ERR, "mod_rdp::process_new_pointer_pdu pointer width overflow (%d)", cursor.width);
@@ -6577,11 +6653,14 @@ public:
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
+/*
         size_t out_data_len = 3 * (
             // BUG TODO cursor.bpp is always 24
             (cursor.bpp == 1) ? (cursor.width * cursor.height) / 8 :
             (cursor.bpp == 4) ? (cursor.width * cursor.height) / 2 :
             (dlen / nbbytes(data_bpp)));
+*/
+        size_t out_data_len = 3 * (dlen / nbbytes(data_bpp));
 
         if ((mlen > sizeof(cursor.mask)) ||
             (out_data_len > sizeof(cursor.data))) {
@@ -6619,6 +6698,98 @@ public:
             this->to_regular_mask(stream.get_current(), mlen, data_bpp, cursor.mask);
             stream.in_skip_bytes(mlen);
         }
+
+        if ((data_bpp == 32) && this->clean_up_32_bpp_cursor) {
+            const unsigned int xor_line_length_in_byte = cursor.width * 3;
+            const unsigned int xor_padded_line_length_in_byte =
+                ((xor_line_length_in_byte % 2) ?
+                 xor_line_length_in_byte + 1 :
+                 xor_line_length_in_byte);
+            const unsigned int remainder = (cursor.width % 8);
+            const unsigned int and_line_length_in_byte = cursor.width / 8 + (remainder ? 1 : 0);
+            const unsigned int and_padded_line_length_in_byte =
+                ((and_line_length_in_byte % 2) ?
+                 and_line_length_in_byte + 1 :
+                 and_line_length_in_byte);
+            for (unsigned int i0 = 0; i0 < cursor.height; ++i0) {
+                uint8_t* xorMask = const_cast<uint8_t*>(cursor.data) + (cursor.height - i0 - 1) * xor_padded_line_length_in_byte;
+
+                const uint8_t* andMask = cursor.mask + (cursor.height - i0 - 1) * and_padded_line_length_in_byte;
+                unsigned char and_bit_extraction_mask = 7;
+
+                for (unsigned int i1 = 0; i1 < cursor.width; ++i1) {
+                    unsigned int color = 0;
+                    if ((*andMask) & (1 << and_bit_extraction_mask)) {
+                        *xorMask         = 0;
+                        *(xorMask + 1)   = 0;
+                        *(xorMask + 2)   = 0;
+                    }
+
+                    xorMask += 3;
+                    if (and_bit_extraction_mask) {
+                        and_bit_extraction_mask--;
+                    }
+                    else {
+                        and_bit_extraction_mask = 7;
+                        andMask++;
+                    }
+                }
+            }
+        }
+
+        //const unsigned int xor_line_length_in_byte = cursor.width * 3;
+        //const unsigned int xor_padded_line_length_in_byte =
+        //    ((xor_line_length_in_byte % 2) ?
+        //     xor_line_length_in_byte + 1 :
+        //     xor_line_length_in_byte);
+        //const unsigned int remainder = (cursor.width % 8);
+        //const unsigned int and_line_length_in_byte = cursor.width / 8 + (remainder ? 1 : 0);
+        //const unsigned int and_padded_line_length_in_byte =
+        //    ((and_line_length_in_byte % 2) ?
+        //     and_line_length_in_byte + 1 :
+        //     and_line_length_in_byte);
+        //for (unsigned int i0 = 0; i0 < cursor.height; ++i0) {
+        //    printf("%02d  ", (cursor.height - i0 - 1));
+        //
+        //    const uint8_t* xorMask = cursor.data + (cursor.height - i0 - 1) * xor_padded_line_length_in_byte;
+        //
+        //    const uint8_t* andMask = cursor.mask + (cursor.height - i0 - 1) * and_padded_line_length_in_byte;
+        //    unsigned char and_bit_extraction_mask = 7;
+        //
+        //    for (unsigned int i1 = 0; i1 < cursor.width; ++i1) {
+        //        unsigned int color = 0;
+        //        color |=  *xorMask             ;
+        //        color |= (*(xorMask + 1) <<  8);
+        //        color |= (*(xorMask + 2) << 16);
+        //
+        //        if ((*andMask) & (1 << and_bit_extraction_mask)) {
+        //            printf(".");
+        //        }
+        //        else {
+        //            if (color == 0xFFFFFF) {
+        //                printf("W");
+        //            }
+        //            else if (color) {
+        //                printf("C");
+        //            }
+        //            else  {
+        //                printf("B");
+        //            }
+        //        }
+        //
+        //        xorMask += 3;
+        //        if (and_bit_extraction_mask) {
+        //            and_bit_extraction_mask--;
+        //        }
+        //        else {
+        //            and_bit_extraction_mask = 7;
+        //            andMask++;
+        //        }
+        //    }
+        //
+        //    printf("\n");
+        //}
+        //printf("\n");
 
         this->front.set_pointer(cursor);
         if (this->verbose & RDPVerbose::basic_trace3) {
@@ -7021,7 +7192,7 @@ private:
         if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
             !this->file_system_drive_manager.HasManagedDrive()) {
 
-            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 if ((this->verbose & RDPVerbose::rdpdr) || (this->verbose & RDPVerbose::rdpdr_dump)) {
 
                     LOG(LOG_INFO,

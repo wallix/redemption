@@ -20,6 +20,21 @@
 
 #pragma once
 
+// https://github.com/jonathanpoelen/falcon.cxx/blob/master/include/falcon/cxx/cxx.hpp
+
+
+#define REDEMPTION_CXX_STD_11 201103
+#define REDEMPTION_CXX_STD_14 201402
+
+#ifdef __has_include
+# define REDEMPTION_HAS_INCLUDE(path) __has_include(path)
+#else
+# define REDEMPTION_HAS_INCLUDE(path) 0
+#endif
+
+
+// Attributes
+//@{
 #ifdef __has_cpp_attribute
 # define REDEMPTION_CXX_HAS_ATTRIBUTE(attr) __has_cpp_attribute(attr)
 #else
@@ -54,7 +69,6 @@
 #else
 #  define REDEMPTION_CXX_MAYBE_UNUSED
 #endif
-
 
 
 #if defined(__clang__)
@@ -92,3 +106,34 @@
 #define REDEMPTION_CXX_ATTRIBUTE_NO_SANITIZE_UNDEFINED                   \
     REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_CLANG_(no_sanitize("undefined")) \
     REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_(no_sanitize_undefined)
+//@}
+
+
+// Keywords
+//@{
+// C++14 constexpr functions are inline in C++11
+#if __cplusplus >= REDEMPTION_CXX_STD_14
+# define REDEMPTION_CXX14_CONSTEXPR constexpr
+# define REDEMPTION_CONSTEXPR_AFTER_CXX11 constexpr
+#else
+# define REDEMPTION_CXX14_CONSTEXPR inline
+# define REDEMPTION_CONSTEXPR_AFTER_CXX11
+#endif
+
+#if defined(__clang__) || defined(__GNUC__)
+# define REDEMPTION_LIKELY(x) __builtin_expect(!!(x), 1)
+# define REDEMPTION_UNLIKELY(x) __builtin_expect(!!(x), 0)
+# define REDEMPTION_ALWAYS_INLINE __attribute__((always_inline))
+# define REDEMPTION_LIB_EXPORT __attribute__((visibility("default")))
+#else
+# define REDEMPTION_LIKELY(x) (x)
+# define REDEMPTION_UNLIKELY(x) (x)
+# ifdef _MSC_VER
+#  define REDEMPTION_ALWAYS_INLINE __forceinline
+#  define REDEMPTION_LIB_EXPORT __declspec(dllexport)
+# else
+#  define REDEMPTION_ALWAYS_INLINE
+#  define REDEMPTION_LIB_EXPORT // REDEMPTION_WARNING("Unknown dynamic link import semantics.")
+# endif
+#endif
+//@}

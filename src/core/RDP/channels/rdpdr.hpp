@@ -1533,7 +1533,11 @@ struct DeviceWriteRequest {
         this->Offset = stream.in_uint64_le();
         stream.in_skip_bytes(20);
         {
-            const unsigned expected = this->Length;
+            int exp = this->Length;
+            if (exp > 1600-56) {
+                exp = 1600-56;
+            }
+            const unsigned expected = exp;
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
@@ -1552,7 +1556,7 @@ struct DeviceWriteRequest {
         LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
         auto s = reinterpret_cast<char const *>(this->WriteData);
         int len = int(this->Length);
-        LOG(LOG_INFO, "          * WriteData = \"%*s\" (%d byte(s))", len, s, len);
+        LOG(LOG_INFO, "          * WriteData (%d byte(s))", len, s, len);
     }
 };
 
@@ -2151,18 +2155,15 @@ public:
 struct DeviceReadResponse {
 
     uint32_t Length = 0;
-    std::string ReadData;
 
     DeviceReadResponse() = default;
 
     DeviceReadResponse( uint32_t Length)
       : Length(Length)
-                      //: ReadData(reinterpret_cast<char *>(ReadData), Length)
     {}
 
     void emit(OutStream & stream) {
         stream.out_uint32_le(Length);
-        //stream.out_copy_bytes(reinterpret_cast<const uint8_t *>(this->ReadData.data()), this->ReadData.size());
     }
 
     void receive(InStream & stream) {
@@ -2192,8 +2193,7 @@ struct DeviceReadResponse {
 
     void log() {
         LOG(LOG_INFO, "     Device Read Response:");
-        LOG(LOG_INFO, "          * Length   = %zu (4 bytes)", this->ReadData.size());
-        LOG(LOG_INFO, "          * ReadData - (%zu byte(s))", this->ReadData.size());
+        LOG(LOG_INFO, "          * Length   = %u (4 bytes)", this->Length);
     }
 };
 
@@ -2246,6 +2246,7 @@ struct DeviceWriteResponse {
 
     void emit(OutStream & stream) {
         stream.out_uint32_le(this->Length);
+        stream.out_clear_bytes(1);
     }
 
     void receive(InStream & stream) {

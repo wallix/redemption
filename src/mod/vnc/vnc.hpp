@@ -660,13 +660,14 @@ public:
                 Pointer cursor;
                 cursor.x = 3;
                 cursor.y = 3;
-                cursor.bpp = 24;
+//                cursor.bpp = 24;
                 cursor.width = 32;
                 cursor.height = 32;
                 memset(cursor.data + 31 * (32 * 3), 0xff, 9);
                 memset(cursor.data + 30 * (32 * 3), 0xff, 9);
                 memset(cursor.data + 29 * (32 * 3), 0xff, 9);
                 memset(cursor.mask, 0xff, 32 * (32 / 8));
+                cursor.update_bw();
                 this->front.set_pointer(cursor);
 
                 this->authentifier.log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
@@ -1923,7 +1924,7 @@ private:
                 //LOG(LOG_INFO, "Cursor x=%u y=%u", x, y);
                 cursor.x = x;
                 cursor.y = y;
-                cursor.bpp = 24;
+//                cursor.bpp = 24;
                 cursor.width = 32;
                 cursor.height = 32;
                 // a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead
@@ -1973,6 +1974,7 @@ private:
                     //if (x > 31) { x = 31; }
                     //if (y > 31) { y = 31; }
                 }
+                cursor.update_bw();
                 // TODO we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation
                 this->front.begin_update();
                 this->front.set_pointer(cursor);

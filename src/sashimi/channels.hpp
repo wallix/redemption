@@ -35,7 +35,7 @@
 #include "sashimi/pki.hpp"
 #include "sashimi/buffer.hpp"
 
-#include "cxx/attributes.hpp"
+#include "cxx/cxx.hpp"
 
 /*
  * All implementations MUST be able to process packets with an
