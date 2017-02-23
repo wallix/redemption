@@ -1145,7 +1145,7 @@ public:
 class wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf
 : public wrmcapture_out_sequence_filename_buf_impl
 {
-    typedef wrmcapture_out_sequence_filename_buf_impl sequence_base_type;
+//    typedef wrmcapture_out_sequence_filename_buf_impl sequence_base_type;
 
     wrmcapture_ocrypto_filename_buf meta_buf_;
     wrmcapture_MetaFilename mf_;
