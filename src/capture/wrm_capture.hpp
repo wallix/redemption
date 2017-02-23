@@ -1152,9 +1152,8 @@ class wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf
     time_t stop_sec_;
 
 public:
-    template<class MetaParams>
     explicit wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf(
-        wrmcapture_out_meta_sequence_filename_buf_param<MetaParams> const & params
+        wrmcapture_out_meta_sequence_filename_buf_param<wrmcapture_ocrypto_filename_params> const & params
     )
     : wrmcapture_out_sequence_filename_buf_impl(params.sq_params)
     , meta_buf_(params.meta_buf_params)
