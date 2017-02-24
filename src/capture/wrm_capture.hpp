@@ -1188,55 +1188,40 @@ public:
     { return 0; }
 };
 
-
 template<class Writer>
-int wrmcapture_write_meta_file_impl_true(
-    Writer & writer, const char * filename,
-    struct stat const & stat,
-    time_t start_sec, time_t stop_sec,
-    wrmcapture_hash_type const * hash = nullptr
-) {
-    if (int err = wrmcapture_write_filename(writer, filename)) {
-        return err;
+int wrmcapture_write_filename(Writer & writer, const char * filename)
+{
+    auto pfile = filename;
+    auto epfile = filename;
+    for (; *epfile; ++epfile) {
+        if (*epfile == '\\') {
+            ssize_t len = epfile - pfile + 1;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+            pfile = epfile;
+        }
+        if (*epfile == ' ') {
+            ssize_t len = epfile - pfile;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+            res = writer.write("\\", 1u);
+            if (res < 1) {
+                return res < 0 ? res : 1;
+            }
+            pfile = epfile;
+        }
     }
 
-    using ull = unsigned long long;
-    using ll = long long;
-    char mes[
-        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-        wrmcapture_hash_string_len + 1 +
-        2
-    ];
-    ssize_t len = std::sprintf(
-        mes,
-        " %lld %llu %lld %lld %llu %lld %lld %lld",
-        ll(stat.st_size),
-        ull(stat.st_mode),
-        ll(stat.st_uid),
-        ll(stat.st_gid),
-        ull(stat.st_dev),
-        ll(stat.st_ino),
-        ll(stat.st_mtim.tv_sec),
-        ll(stat.st_ctim.tv_sec)
-    );
-    len += std::sprintf(
-        mes + len,
-        " %lld %lld",
-        ll(start_sec),
-        ll(stop_sec)
-    );
-
-    char * p = mes + len;
-    if (hash) {
-        p = wrmcapture_swrite_hash(p, *hash);
-    }
-    *p++ = '\n';
-
-    ssize_t res = writer.write(mes, p-mes);
-
-    if (res < p-mes) {
-        return res < 0 ? res : 1;
+    if (pfile != epfile) {
+        ssize_t len = epfile - pfile;
+        auto res = writer.write(pfile, len);
+        if (res < len) {
+            return res < 0 ? res : 1;
+        }
     }
 
     return 0;
@@ -1296,55 +1281,177 @@ int wrmcapture_write_meta_file(
 ) {
     struct stat stat;
     int err = ::stat(filename, &stat);
-    return err ? err : wrmcapture_write_meta_file_impl_true(writer, filename, stat, start_sec, stop_sec, hash);
+    if (err){
+        return err;
+    }
+    err = wrmcapture_write_filename(writer, filename);
+    if (err) {
+        return err;
+    }
+
+    using ull = unsigned long long;
+    using ll = long long;
+    char mes[
+        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+        wrmcapture_hash_string_len + 1 +
+        2
+    ];
+    ssize_t len = std::sprintf(
+        mes,
+        " %lld %llu %lld %lld %llu %lld %lld %lld",
+        ll(stat.st_size),
+        ull(stat.st_mode),
+        ll(stat.st_uid),
+        ll(stat.st_gid),
+        ull(stat.st_dev),
+        ll(stat.st_ino),
+        ll(stat.st_mtim.tv_sec),
+        ll(stat.st_ctim.tv_sec)
+    );
+    len += std::sprintf(
+        mes + len,
+        " %lld %lld",
+        ll(start_sec),
+        ll(stop_sec)
+    );
+
+    char * p = mes + len;
+    if (hash) {
+        p = wrmcapture_swrite_hash(p, *hash);
+    }
+    *p++ = '\n';
+
+    ssize_t res = writer.write(mes, p-mes);
+
+    if (res < p-mes) {
+        return res < 0 ? res : 1;
+    }
+    return 0;
 }
 
-int wrmcapture_write_meta_file_ocrypto(
+static inline int wrmcapture_write_meta_file_ocrypto(
     wrmcapture_ocrypto_filename_buf & writer, const char * filename,
     time_t start_sec, time_t stop_sec,
     wrmcapture_hash_type const * hash
 );
 
-int wrmcapture_write_meta_file_ocrypto(
+static inline int wrmcapture_write_meta_file_ocrypto(
     wrmcapture_ocrypto_filename_buf & writer, const char * filename,
     time_t start_sec, time_t stop_sec,
     wrmcapture_hash_type const * hash
 ) {
     struct stat stat;
     int err = ::stat(filename, &stat);
-    return err ? err : wrmcapture_write_meta_file_impl_true(writer, filename, stat, start_sec, stop_sec, hash);
+    if (err){
+        return err;
+    }
+    err = wrmcapture_write_filename(writer, filename);
+    if (err) {
+        return err;
+    }
+
+    using ull = unsigned long long;
+    using ll = long long;
+    char mes[
+        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+        wrmcapture_hash_string_len + 1 +
+        2
+    ];
+    ssize_t len = std::sprintf(
+        mes,
+        " %lld %llu %lld %lld %llu %lld %lld %lld",
+        ll(stat.st_size),
+        ull(stat.st_mode),
+        ll(stat.st_uid),
+        ll(stat.st_gid),
+        ull(stat.st_dev),
+        ll(stat.st_ino),
+        ll(stat.st_mtim.tv_sec),
+        ll(stat.st_ctim.tv_sec)
+    );
+    len += std::sprintf(
+        mes + len,
+        " %lld %lld",
+        ll(start_sec),
+        ll(stop_sec)
+    );
+
+    char * p = mes + len;
+    if (hash) {
+        p = wrmcapture_swrite_hash(p, *hash);
+    }
+    *p++ = '\n';
+
+    ssize_t res = writer.write(mes, p-mes);
+
+    if (res < p-mes) {
+        return res < 0 ? res : 1;
+    }
+    return 0;
 }
 
-int wrmcapture_write_meta_file_out(
-    wrmcapture_ofile_buf_out & writer, const char * filename,
-    time_t start_sec, time_t stop_sec,
-    wrmcapture_hash_type const * hash
-);
-
-int wrmcapture_write_meta_file_out(
-    wrmcapture_ofile_buf_out & writer, const char * filename,
-    time_t start_sec, time_t stop_sec,
-    wrmcapture_hash_type const * hash
-) {
-    struct stat stat;
-    int err = ::stat(filename, &stat);
-    return err ? err : wrmcapture_write_meta_file_impl_true(writer, filename, stat, start_sec, stop_sec, hash);
-}
-
-int wrmcapture_write_meta_file_cctx(
+static inline int wrmcapture_write_meta_file_cctx(
     wrmcapture_cctx_ochecksum_file & writer, const char * filename,
     time_t start_sec, time_t stop_sec,
     wrmcapture_hash_type const * hash
 );
 
-int wrmcapture_write_meta_file_cctx(
+static inline int wrmcapture_write_meta_file_cctx(
     wrmcapture_cctx_ochecksum_file & writer, const char * filename,
     time_t start_sec, time_t stop_sec,
     wrmcapture_hash_type const * hash
 ) {
     struct stat stat;
     int err = ::stat(filename, &stat);
-    return err ? err : wrmcapture_write_meta_file_impl_true(writer, filename, stat, start_sec, stop_sec, hash);
+    if (err){
+        return err;
+    }
+    err = wrmcapture_write_filename(writer, filename);
+    if (err) {
+        return err;
+    }
+
+    using ull = unsigned long long;
+    using ll = long long;
+    char mes[
+        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+        wrmcapture_hash_string_len + 1 +
+        2
+    ];
+    ssize_t len = std::sprintf(
+        mes,
+        " %lld %llu %lld %lld %llu %lld %lld %lld",
+        ll(stat.st_size),
+        ull(stat.st_mode),
+        ll(stat.st_uid),
+        ll(stat.st_gid),
+        ull(stat.st_dev),
+        ll(stat.st_ino),
+        ll(stat.st_mtim.tv_sec),
+        ll(stat.st_ctim.tv_sec)
+    );
+    len += std::sprintf(
+        mes + len,
+        " %lld %lld",
+        ll(start_sec),
+        ll(stop_sec)
+    );
+
+    char * p = mes + len;
+    if (hash) {
+        p = wrmcapture_swrite_hash(p, *hash);
+    }
+    *p++ = '\n';
+
+    ssize_t res = writer.write(mes, p-mes);
+
+    if (res < p-mes) {
+        return res < 0 ? res : 1;
+    }
+    return 0;
 }
 
 
@@ -1595,14 +1702,57 @@ protected:
             return 1;
         }
 
-        if (int err = wrmcapture_write_meta_file_out(
-            this->meta_buf_, filename, this->start_sec_, this->stop_sec_+1, hash
-        )) {
+        struct stat stat;
+        int err = ::stat(filename, &stat);
+
+        if (err){
+            return err;
+        }
+        err = wrmcapture_write_filename(this->meta_buf_, filename);
+        if (err) {
             return err;
         }
 
-        this->start_sec_ = this->stop_sec_;
+        using ull = unsigned long long;
+        using ll = long long;
+        char mes[
+            (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+            (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+            wrmcapture_hash_string_len + 1 +
+            2
+        ];
+        ssize_t len = std::sprintf(
+            mes,
+            " %lld %llu %lld %lld %llu %lld %lld %lld",
+            ll(stat.st_size),
+            ull(stat.st_mode),
+            ll(stat.st_uid),
+            ll(stat.st_gid),
+            ull(stat.st_dev),
+            ll(stat.st_ino),
+            ll(stat.st_mtim.tv_sec),
+            ll(stat.st_ctim.tv_sec)
+        );
+        len += std::sprintf(
+            mes + len,
+            " %lld %lld",
+            ll(this->start_sec_),
+            ll(this->stop_sec_+1)
+        );
 
+        char * p = mes + len;
+        if (hash) {
+            p = wrmcapture_swrite_hash(p, *hash);
+        }
+        *p++ = '\n';
+
+        ssize_t res = this->meta_buf_.write(mes, p-mes);
+
+        if (res < p-mes) {
+            return res < 0 ? res : 1;
+        }
+
+        this->start_sec_ = this->stop_sec_;
         return 0;
     }
 
@@ -2008,49 +2158,6 @@ void wrmcapture_write_meta_headers(Writer & writer, const char * path,
         }
     }
 }
-
-template<class Writer>
-int wrmcapture_write_filename(Writer & writer, const char * filename)
-{
-    auto pfile = filename;
-    auto epfile = filename;
-    for (; *epfile; ++epfile) {
-        if (*epfile == '\\') {
-            ssize_t len = epfile - pfile + 1;
-            auto res = writer.write(pfile, len);
-            if (res < len) {
-                return res < 0 ? res : 1;
-            }
-            pfile = epfile;
-        }
-        if (*epfile == ' ') {
-            ssize_t len = epfile - pfile;
-            auto res = writer.write(pfile, len);
-            if (res < len) {
-                return res < 0 ? res : 1;
-            }
-            res = writer.write("\\", 1u);
-            if (res < 1) {
-                return res < 0 ? res : 1;
-            }
-            pfile = epfile;
-        }
-    }
-
-    if (pfile != epfile) {
-        ssize_t len = epfile - pfile;
-        auto res = writer.write(pfile, len);
-        if (res < len) {
-            return res < 0 ? res : 1;
-        }
-    }
-
-    return 0;
-}
-
-
-
-
 
 
 
