@@ -1231,46 +1231,44 @@ template<class Writer>
 int wrmcapture_write_meta_file_impl_false(
     Writer & writer, const char * filename,
     struct stat const & stat,
-    wrmcapture_hash_type const * hash = nullptr
+    wrmcapture_hash_type const * hash
 ) {
-    if (int err = wrmcapture_write_filename(writer, filename)) {
-        return err;
+    int err = wrmcapture_write_filename(writer, filename);
+    if (!err) {
+        using ull = unsigned long long;
+        using ll = long long;
+        char mes[
+            (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+            (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+            wrmcapture_hash_string_len + 1 +
+            2
+        ];
+        ssize_t len = std::sprintf(
+            mes,
+            " %lld %llu %lld %lld %llu %lld %lld %lld",
+            ll(stat.st_size),
+            ull(stat.st_mode),
+            ll(stat.st_uid),
+            ll(stat.st_gid),
+            ull(stat.st_dev),
+            ll(stat.st_ino),
+            ll(stat.st_mtim.tv_sec),
+            ll(stat.st_ctim.tv_sec)
+        );
+
+        char * p = mes + len;
+        if (hash) {
+            p = wrmcapture_swrite_hash(p, *hash);
+        }
+        *p++ = '\n';
+
+        ssize_t res = writer.write(mes, p-mes);
+
+        if (res < p-mes) {
+            err = res < 0 ? res : 1;
+        }
     }
-
-    using ull = unsigned long long;
-    using ll = long long;
-    char mes[
-        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-        wrmcapture_hash_string_len + 1 +
-        2
-    ];
-    ssize_t len = std::sprintf(
-        mes,
-        " %lld %llu %lld %lld %llu %lld %lld %lld",
-        ll(stat.st_size),
-        ull(stat.st_mode),
-        ll(stat.st_uid),
-        ll(stat.st_gid),
-        ull(stat.st_dev),
-        ll(stat.st_ino),
-        ll(stat.st_mtim.tv_sec),
-        ll(stat.st_ctim.tv_sec)
-    );
-
-    char * p = mes + len;
-    if (hash) {
-        p = wrmcapture_swrite_hash(p, *hash);
-    }
-    *p++ = '\n';
-
-    ssize_t res = writer.write(mes, p-mes);
-
-    if (res < p-mes) {
-        return res < 0 ? res : 1;
-    }
-
-    return 0;
+    return err;
 }
 
 template<class Writer>
