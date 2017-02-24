@@ -3668,7 +3668,7 @@ public:
     , capture_event{}
     , capture_drawable(capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full)
     {
-        REDASSERT(authentifier ? order_bpp == capture_bpp : true);
+        //REDASSERT(authentifier ? order_bpp == capture_bpp : true);
 
         if (capture_png || (authentifier && (capture_flv || capture_ocr))) {
             if (recursive_create_directory(record_tmp_path, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {

@@ -330,7 +330,7 @@ void Front_Qt::writeClientInfo() {
 
 void Front_Qt::set_pointer(Pointer const & cursor) {
 
-    QImage image_data(cursor.data, cursor.width, cursor.height, this->bpp_to_QFormat(this->_info.bpp, false));
+    QImage image_data(cursor.data, cursor.width, cursor.height, this->bpp_to_QFormat(24, false));
     QImage image_mask(cursor.mask, cursor.width, cursor.height, QImage::Format_Mono);
 
     if (cursor.mask[0x48] == 0xFF &&
@@ -2288,8 +2288,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 }
                                 fileRange.emit(out_stream_first_part);
 
-
-
                                 this->process_client_clipboard_out_data( channel_names::cliprdr
                                                                        , total_length
                                                                        , out_stream_first_part
@@ -2345,6 +2343,24 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
     } else if (!strcmp(channel.name, channel_names::rdpdr)) {
 
+        if (this->fileSystemData.writeData_to_wait) {
+
+            size_t length(chunk.in_remain());
+
+            this->fileSystemData.writeData_to_wait -= length;
+
+            std::ofstream oFile(this->fileSystemData.paths[this->fileSystemData.file_to_write_id-1].c_str(), std::ios::out | std::ios::binary | std::ios::app);
+            if (oFile.good()) {
+                oFile.write(reinterpret_cast<const char *>(chunk.get_current()), length);
+                oFile.close();
+            }  else {
+                LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", this->fileSystemData.paths[this->fileSystemData.file_to_write_id-1].c_str());
+            }
+
+            return;
+        }
+
+
         uint16_t component = chunk.in_uint16_le();
         uint16_t packetId  = chunk.in_uint16_le();
 
@@ -2358,9 +2374,9 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Announce Request");
                         //this->show_in_stream(0, chunk_series, chunk_size);
 
-                        this->fileSystemData.versionMajor = chunk.in_uint16_le();      // 0x0001
-                        this->fileSystemData.versionMinor = chunk.in_uint16_le();      //  0x000C
-                        this->fileSystemData.clientID = chunk.in_uint32_le();
+                        uint16_t versionMajor = chunk.in_uint16_le();
+                        uint16_t versionMinor = chunk.in_uint16_le();
+                        uint32_t clientID = chunk.in_uint32_le();
 
                         StaticOutStream<32> stream;
 
@@ -2368,9 +2384,9 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                         , rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM);
                         sharedHeader.emit(stream);
 
-                        rdpdr::ClientAnnounceReply clientAnnounceReply( this->fileSystemData.versionMajor
-                                                                      , this->fileSystemData.versionMinor
-                                                                      , this->fileSystemData.clientID);
+                        rdpdr::ClientAnnounceReply clientAnnounceReply( versionMajor
+                                                                      , versionMinor
+                                                                      , clientID);
                         clientAnnounceReply.emit(stream);
 
                         int total_length(stream.get_offset());
@@ -2602,6 +2618,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                 if (!oFile.good()) {
                                                     LOG(LOG_WARNING, "  Can't open create such file: \'%s\'.", new_path.c_str());
                                                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
+                                                } else {
+                                                    oFile.close();
                                                 }
                                             }
 
@@ -2700,7 +2718,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         int64_t  AllocationSize = buff.st_size;;
                                         int64_t  EndOfFile      = buff.st_size;
                                         uint32_t NumberOfLinks  = buff.st_nlink;
-                                        uint8_t  DeletePending  = 0;
+                                        uint8_t  DeletePending  = 1;
                                         uint8_t  Directory      = 0;
 
                                         if (S_ISDIR(buff.st_mode)) {
@@ -2776,8 +2794,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 {
                                 deviceIOResponse.emit(out_stream);
 
-                                out_stream.out_uint32_le(deviceIORequest.FileId());
-                                out_stream.out_uint8(rdpdr::FILE_SUPERSEDED);
+                                out_stream.out_uint32_le(0);
 
                                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
@@ -2940,10 +2957,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                         deviceIOResponse.emit(out_stream);
 
-                                        //if (deviceIOResponse.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
                                         uint64_t LastAccessTime  = UnixSecondsToWindowsTick(buff_child.st_atime);
                                         uint64_t LastWriteTime   = UnixSecondsToWindowsTick(buff_child.st_mtime);
-                                        //UnixSecondsToWindowsTick(buff_child.st_ctime);
                                         uint64_t ChangeTime      = 0;
                                         uint64_t CreationTime    = LastWriteTime + 1;
                                         int64_t  EndOfFile       = buff_child.st_size;;
@@ -2955,10 +2970,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                         switch (sdqdr.FsInformationClass()) {
 
-                                            case rdpdr::FileDirectoryInformation:
-                                                break;
-                                            case rdpdr::FileFullDirectoryInformation:
-                                                break;
+//                                             case rdpdr::FileDirectoryInformation:
+//                                                 break;
+//                                             case rdpdr::FileFullDirectoryInformation:
+//                                                 break;
                                             case rdpdr::FileBothDirectoryInformation:
                                                 {
                                                 rdpdr::ClientDriveQueryDirectoryResponse cdqdr(93 + (str_file_name.length()*2));
@@ -2969,8 +2984,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                 fbdi.emit(out_stream);
                                                 }
                                                 break;
-                                            case rdpdr::FileNamesInformation:
-                                                break;
+//                                             case rdpdr::FileNamesInformation:
+//                                                 break;
+                                            default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: unknow  FsInformationClass = 0x%x", sdqdr.FsInformationClass());
+                                                    break;
                                         }
 
                                         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
@@ -3017,22 +3034,20 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_path.c_str());
                                     }
 
-                                    //uint64_t LastWriteTime   = UnixSecondsToWindowsTick(buff.st_mtime);
-                                    //uint64_t CreationTime    = UnixSecondsToWindowsTick(buff.st_mtime);;
-                                    //int64_t  AllocationSize  = buff.st_size;
-                                    uint64_t VolumeCreationTime = 0;
-                                    uint32_t VolumeSerialNumber = 0xb035dca6;
-                                    const char * VolumeLabel = "";
-
-                                    //static struct hd_driveid hd;
-                                    int device = open(str_path.c_str(), O_RDONLY);
-
-                                    if (device < 0) {
-                                        deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                        LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_path.c_str());
-                                    }
-
                                     deviceIOResponse.emit(out_stream);
+
+                                    uint64_t VolumeCreationTime             = 0;
+                                    uint32_t VolumeSerialNumber             = 0xb035dca6;
+                                    const char * VolumeLabel                = "";
+                                    uint32_t FileSystemAttributes           = 0x03e700ff;
+                                    uint64_t TotalAllocationUnits           = 0x7cf8ff;
+                                    uint64_t CallerAvailableAllocationUnits = 0x3b21cd;
+                                    uint64_t AvailableAllocationUnits       = 0x3b21cd;
+                                    uint64_t ActualAvailableAllocationUnits = 0x3b21cd;
+                                    uint32_t SectorsPerAllocationUnit       = 8;
+                                    uint32_t BytesPerSector                 = 512;
+                                    uint32_t MaximumComponentNameLength     = 255;
+                                    const char * FileSystemName             = "ext4";
 
                                     if (deviceIOResponse.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
                                         switch (sdqvir.FsInformationClass()) {
@@ -3045,14 +3060,23 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                 ffvi.emit(out_stream);
                                             }
                                                 break;
-//                                             case rdpdr::FileFsSizeInformation:
-//                                                 break;
+
+                                            case rdpdr::FileFsSizeInformation:
+                                            {
+                                                rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(24);
+                                                cdqvir.emit(out_stream);
+
+                                                fscc::FileFsSizeInformation ffsi(TotalAllocationUnits, AvailableAllocationUnits, SectorsPerAllocationUnit, BytesPerSector);
+                                                ffsi.emit(out_stream);
+                                            }
+                                                break;
+
                                             case rdpdr::FileFsAttributeInformation:
                                             {
                                                 rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(20);
                                                 cdqvir.emit(out_stream);
 
-                                                fscc::FileFsAttributeInformation ffai(0x03e700ff, 255, "ext4");
+                                                fscc::FileFsAttributeInformation ffai(FileSystemAttributes, MaximumComponentNameLength, FileSystemName);
                                                 ffai.emit(out_stream);
                                             }
                                                 break;
@@ -3061,14 +3085,23 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                 rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(32);
                                                 cdqvir.emit(out_stream);
 
-                                                fscc::FileFsFullSizeInformation fffsi(0x7cf8ff, 0x3b21cd, 0x3b21cd, 8, 512);
+                                                fscc::FileFsFullSizeInformation fffsi(TotalAllocationUnits, CallerAvailableAllocationUnits, ActualAvailableAllocationUnits, SectorsPerAllocationUnit, BytesPerSector);
                                                 fffsi.emit(out_stream);
                                             }
                                                 break;
-//                                             case rdpdr::FileFsDeviceInformation:
-//                                                 break;
+
+                                            case rdpdr::FileFsDeviceInformation:
+                                            {
+                                                rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(8);
+                                                cdqvir.emit(out_stream);
+
+                                                fscc::FileFsDeviceInformation ffdi(fscc::FILE_DEVICE_DISK, fscc::FILE_REMOTE_DEVICE | fscc::FILE_DEVICE_IS_MOUNTED);
+                                                ffdi.emit(out_stream);
+                                            }
+                                                break;
+
                                             default:
-                                                LOG(LOG_WARNING, "SERVER >> RDPDR Channel: unknow FsInformationClass = %x", sdqvir.FsInformationClass());
+                                                LOG(LOG_WARNING, "SERVER >> RDPDR Channel: unknow FsInformationClass = 0x%x", sdqvir.FsInformationClass());
                                                 break;
                                         }
                                     }
@@ -3095,13 +3128,17 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                     if (dwr.Length > CHANNELS::CHANNEL_CHUNK_LENGTH) {
                                         this->fileSystemData.writeData_to_wait = dwr.Length - 1544;
-                                        this->fileSystemData.writeData_buffered = 1544;
                                         this->fileSystemData.file_to_write_id = id;
-                                        this->fileSystemData.writeData = std::make_unique<uint8_t[]>(dwr.Length);
 
-                                        for (int i = 0; i < 1544; i++) {
-                                            this->fileSystemData.writeData.get()[i] = dwr.WriteData[i];
+                                        std::ofstream oFile(this->fileSystemData.paths[id-1].c_str(), std::ios::out | std::ios::binary);
+                                        if (oFile.good()) {
+                                            oFile.write(reinterpret_cast<const char *>(dwr.WriteData), 1544);
+                                            oFile.close();
+                                        }  else {
+                                            LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", this->fileSystemData.paths[id-1].c_str());
+                                            deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                         }
+
                                     } else {
 
                                         std::ofstream oFile(this->fileSystemData.paths[id-1].c_str(), std::ios::out | std::ios::binary);
@@ -3112,22 +3149,22 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                             LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", this->fileSystemData.paths[id-1].c_str());
                                             deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                         }
-
-                                        deviceIOResponse.emit(out_stream);
-                                        rdpdr::DeviceWriteResponse dwrp(dwr.Length);
-                                        dwrp.emit(out_stream);
-
-                                        InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-
-                                        this->_callback->send_to_mod_channel( channel_names::rdpdr
-                                                                            , chunk_to_send
-                                                                            , out_stream.get_offset()
-                                                                            , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                              CHANNELS::CHANNEL_FLAG_FIRST
-                                                                            );
-
-                                        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Write Response");
                                     }
+
+                                    deviceIOResponse.emit(out_stream);
+                                    rdpdr::DeviceWriteResponse dwrp(dwr.Length);
+                                    dwrp.emit(out_stream);
+
+                                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                                    this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                                        , chunk_to_send
+                                                                        , out_stream.get_offset()
+                                                                        , CHANNELS::CHANNEL_FLAG_LAST |
+                                                                            CHANNELS::CHANNEL_FLAG_FIRST
+                                                                        );
+
+                                    LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Write Response");
                                 }
 
                                 break;
@@ -3156,7 +3193,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                             rdpdr::RDPFileRenameInformation rdpfri;
                                             rdpfri.receive(chunk);
 
-                                            std::string fileName = std::string(this->SHARE_DIR + rdpfri.FileName());
+                                            std::string fileName(this->SHARE_DIR + rdpfri.FileName());
                                             if (rename(this->fileSystemData.paths[id-1].c_str(), fileName.c_str()) !=  0) {
                                                 LOG(LOG_WARNING, "  Can't rename such file of directory : \'%s\' to \'%s\'.", this->fileSystemData.paths[id-1].c_str(), fileName.c_str());
                                                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_OBJECT_NAME_INVALID);
@@ -3178,7 +3215,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                             break;
 
                                         case rdpdr::FileDispositionInformation:
-
+                                        {
                                             uint8_t DeletePending = 1;
 
                                             if (remove(this->fileSystemData.paths[id-1].c_str()) != 0) {
@@ -3191,6 +3228,18 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                             cdsir.emit(out_stream);
                                             fscc::FileDispositionInformation fdi(DeletePending);
                                             fdi.emit(out_stream);
+                                        }
+                                            break;
+
+                                        case rdpdr::FileBasicInformation:
+                                        {
+                                            deviceIOResponse.emit(out_stream);
+                                            cdsir.emit(out_stream);
+                                        }
+                                            break;
+
+                                        default:  LOG(LOG_INFO, "SERVER >> RDPDR: unknow FsInformationClass = 0x%x", sdsir.FsInformationClass());
+
                                             break;
                                     }
 
@@ -3203,7 +3252,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                           CHANNELS::CHANNEL_FLAG_FIRST
                                                                         );
 
-                                    LOG(LOG_INFO, "SERVER >> RDPDR: Client Drive Set Information Response");
+                                    LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Client Drive Set Information Response");
                                 }
 
                                 break;
@@ -3408,23 +3457,22 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk, CB_B
         case ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS:
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                cb_buffers.sizeTotal = cb_filesList.itemslist[cb_filesList.lindexToRequest].size;
+                //cb_buffers.sizeTotal = cb_filesList.itemslist[cb_filesList.lindexToRequest].size;
                 cb_filesList.streamIDToRequest = chunk.in_uint32_le();
-                cb_buffers.data = std::make_unique<uint8_t[]>(cb_filesList.itemslist[cb_filesList.lindexToRequest].size);
+                //cb_buffers.data = std::make_unique<uint8_t[]>(cb_filesList.itemslist[cb_filesList.lindexToRequest].size);
             }
 
-            this->send_to_clipboard_Buffer(chunk);
+            clipboard_qt->write_clipboard_temp_file( cb_filesList.itemslist[cb_filesList.lindexToRequest].name
+                                                   , chunk.get_current()
+                                                   , chunk.in_remain()
+                                                   );
 
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                 this->_waiting_for_data = false;
 
-                 clipboard_qt->write_clipboard_temp_file( cb_filesList.itemslist[cb_filesList.lindexToRequest].name
-                                                        , cb_buffers.data.get()
-                                                        , cb_filesList.itemslist[cb_filesList.lindexToRequest].size
-                                                        );
                 cb_filesList.lindexToRequest++;
 
-                if (cb_filesList.lindexToRequest>= cb_filesList.cItems) {
+                if (cb_filesList.lindexToRequest >= cb_filesList.cItems) {
 
                     clipboard_qt->_local_clipboard_stream = false;
                     clipboard_qt->setClipboard_files(cb_filesList.itemslist);
@@ -3447,11 +3495,12 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk, CB_B
 
                 } else {
                     cb_filesList.streamIDToRequest++;
+
+                    StaticOutStream<32> out_streamRequest;
                     RDPECLIP::FileContentsRequestPDU fileContentsRequest( cb_filesList.streamIDToRequest
                                                                         , RDPECLIP::FILECONTENTS_RANGE
                                                                         , cb_filesList.lindexToRequest
                                                                         ,   cb_filesList.itemslist[cb_filesList.lindexToRequest].size);
-                    StaticOutStream<32> out_streamRequest;
                     fileContentsRequest.emit(out_streamRequest);
                     const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
 
@@ -3665,7 +3714,7 @@ void Front_Qt::process_client_clipboard_out_data(const char * const front_channe
                                                 , CHANNELS::CHANNEL_FLAG_FIRST | flags
                                                 );
 
-            msgdump_c(false, false, total_length, 0, out_stream_first_part.get_data(), out_stream_first_part.get_offset());
+//             msgdump_c(false, false, total_length, 0, out_stream_first_part.get_data(), out_stream_first_part.get_offset());
 
 
         for (int i = 0; i < cmpt_PDU_part; i++) {
@@ -3682,7 +3731,7 @@ void Front_Qt::process_client_clipboard_out_data(const char * const front_channe
                                                 , total_length
                                                 , flags
                                                 );
-            msgdump_c(false, false, total_length, 0, out_stream_next_part.get_data(), out_stream_next_part.get_offset());
+//             msgdump_c(false, false, total_length, 0, out_stream_next_part.get_data(), out_stream_next_part.get_offset());
         }
 
         // Last part
@@ -3697,7 +3746,7 @@ void Front_Qt::process_client_clipboard_out_data(const char * const front_channe
                                                 , total_length
                                                 , CHANNELS::CHANNEL_FLAG_LAST | flags
                                                 );
-            msgdump_c(false, false, total_length, 0, out_stream_last_part.get_data(), out_stream_last_part.get_offset());
+//             msgdump_c(false, false, total_length, 0, out_stream_last_part.get_data(), out_stream_last_part.get_offset());
 
     } else {
 
@@ -3852,7 +3901,7 @@ int main(int argc, char** argv){
 
     QApplication app(argc, argv);
 
-    RDPVerbose verbose =  RDPVerbose::rdpdr_dump;              // to_verbose_flags(0);
+    RDPVerbose verbose =   RDPVerbose::cliprdr;       // RDPVerbose::rdpdr_dump | (0);
 
     Front_Qt front_qt(argv, argc, verbose);
 
