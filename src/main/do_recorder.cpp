@@ -636,6 +636,44 @@ static inline int check_file(const std::string & filename, const MetaLine2 & met
     return true;
 }
 
+static inline int dorecorder_write_filename(wrmcapture_ofile_buf_out & writer, const char * filename)
+{
+    auto pfile = filename;
+    auto epfile = filename;
+    for (; *epfile; ++epfile) {
+        if (*epfile == '\\') {
+            ssize_t len = epfile - pfile + 1;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+            pfile = epfile;
+        }
+        if (*epfile == ' ') {
+            ssize_t len = epfile - pfile;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+            res = writer.write("\\", 1u);
+            if (res < 1) {
+                return res < 0 ? res : 1;
+            }
+            pfile = epfile;
+        }
+    }
+
+    if (pfile != epfile) {
+        ssize_t len = epfile - pfile;
+        auto res = writer.write(pfile, len);
+        if (res < len) {
+            return res < 0 ? res : 1;
+        }
+    }
+
+    return 0;
+}
+
 static inline int check_encrypted_or_checksumed(
     std::string const & input_filename,
     std::string const & mwrm_path,
@@ -815,11 +853,55 @@ static inline int check_encrypted_or_checksumed(
             }
         }
 
+
+        // TODO: this is much too complicated, use factorized code from wrm_capture to compute hash file
         for (MetaLine2CtxForRewriteStat & ctx : meta_line_ctx_list) {
             struct stat sb;
-            if (lstat(ctx.wrm_filename.c_str(), &sb) < 0
-             || wrmcapture_write_meta_file_impl<true>(mwrm_file_cp, ctx.filename.c_str(), sb, ctx.start_time, ctx.stop_time)
-            ) {
+            if (lstat(ctx.wrm_filename.c_str(), &sb) < 0) {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
+            }
+            
+            const char * filename = ctx.filename.c_str();
+            auto start_sec = ctx.start_time;
+            auto stop_sec = ctx.stop_time;
+            int err = dorecorder_write_filename(mwrm_file_cp, filename);
+            if (err){
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
+            }
+
+            using ull = unsigned long long;
+            using ll = long long;
+            char mes[
+                (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+                (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+                wrmcapture_hash_string_len + 1 +
+                2
+            ];
+            ssize_t len = std::sprintf(
+                mes,
+                " %lld %llu %lld %lld %llu %lld %lld %lld",
+                ll(sb.st_size),
+                ull(sb.st_mode),
+                ll(sb.st_uid),
+                ll(sb.st_gid),
+                ull(sb.st_dev),
+                ll(sb.st_ino),
+                ll(sb.st_mtim.tv_sec),
+                ll(sb.st_ctim.tv_sec)
+            );
+            len += std::sprintf(
+                mes + len,
+                " %lld %lld",
+                ll(start_sec),
+                ll(stop_sec)
+            );
+
+            char * p = mes + len;
+            *p++ = '\n';
+
+            ssize_t res = mwrm_file_cp.write(mes, p-mes);
+
+            if (res < p-mes) {
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
             }
         }
@@ -869,7 +951,42 @@ static inline int check_encrypted_or_checksumed(
             struct stat stat;
             int err = ::stat(meta_filename, &stat);
             if (!err) {
-                err = wrmcapture_write_meta_file_impl<false>(hash_file_cp, filename, stat, 0, 0, nullptr);
+               err = dorecorder_write_filename(hash_file_cp, filename);
+                if (err) {
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                    return 1;
+                }
+
+                using ull = unsigned long long;
+                using ll = long long;
+                char mes[
+                    (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+                    (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+                    wrmcapture_hash_string_len + 1 +
+                    2
+                ];
+                ssize_t len = std::sprintf(
+                    mes,
+                    " %lld %llu %lld %lld %llu %lld %lld %lld",
+                    ll(stat.st_size),
+                    ull(stat.st_mode),
+                    ll(stat.st_uid),
+                    ll(stat.st_gid),
+                    ull(stat.st_dev),
+                    ll(stat.st_ino),
+                    ll(stat.st_mtim.tv_sec),
+                    ll(stat.st_ctim.tv_sec)
+                );
+
+                char * p = mes + len;
+                *p++ = '\n';
+
+                ssize_t res = hash_file_cp.write(mes, p-mes);
+
+                if (res < p-mes) {
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", filename, err);
+                    return 1;
+                }
             }
             if (!err) {
                 err = hash_file_cp.close(/*hash*/);

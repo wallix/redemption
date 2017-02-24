@@ -418,11 +418,49 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
     } meta_len_writer;
 
     const char * meta_path = "./xxx.mwrm";
+    const char * filename = meta_path + 2;
     const char * meta_hash_path = "./hash-xxx.mwrm";
     meta_len_writer.len = 5; // header
     struct stat stat;
     BOOST_CHECK(!::stat(meta_path, &stat));
-    BOOST_CHECK(!wrmcapture_write_meta_file_impl<false>(meta_len_writer, meta_path + 2, stat, 0, 0, nullptr));
+    
+    int err = wrmcapture_write_filename(meta_len_writer, filename);
+    if (!err) {
+        using ull = unsigned long long;
+        using ll = long long;
+        char mes[
+            (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+            (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+            wrmcapture_hash_string_len + 1 +
+            2
+        ];
+        ssize_t len = std::sprintf(
+            mes,
+            " %lld %llu %lld %lld %llu %lld %lld %lld",
+            ll(stat.st_size),
+            ull(stat.st_mode),
+            ll(stat.st_uid),
+            ll(stat.st_gid),
+            ull(stat.st_dev),
+            ll(stat.st_ino),
+            ll(stat.st_mtim.tv_sec),
+            ll(stat.st_ctim.tv_sec)
+        );
+
+        char * p = mes + len;
+        *p++ = '\n';
+
+        ssize_t res = meta_len_writer.write(mes, p-mes);
+
+        if (res < p-mes) {
+            err = res < 0 ? res : 1;
+        }
+        else {
+            err = 0;
+        }
+    }
+    
+    BOOST_CHECK_EQUAL(err, 0);
     BOOST_CHECK_EQUAL(meta_len_writer.len, filesize(meta_hash_path));
     BOOST_CHECK_EQUAL(0, ::unlink(meta_hash_path));
 
@@ -432,12 +470,12 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
     wrmcapture_write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, false);
 
     const char * file1 = "./xxx-000000.wrm";
-    BOOST_CHECK(!wrmcapture_write_meta_file(meta_len_writer, file1, sec_start, sec_start+1));
+    BOOST_CHECK(!wrmcapture_write_meta_file(meta_len_writer, file1, sec_start, sec_start+1, nullptr));
     BOOST_CHECK_EQUAL(10, filesize(file1));
     BOOST_CHECK_EQUAL(0, ::unlink(file1));
 
     const char * file2 = "./xxx-000001.wrm";
-    BOOST_CHECK(!wrmcapture_write_meta_file(meta_len_writer, file2, sec_start, sec_start+1));
+    BOOST_CHECK(!wrmcapture_write_meta_file(meta_len_writer, file2, sec_start, sec_start+1, nullptr));
     BOOST_CHECK_EQUAL(5, filesize(file2));
     BOOST_CHECK_EQUAL(0, ::unlink(file2));
 
@@ -481,7 +519,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 //    char file1[1024];
 //    snprintf(file1, 1024, "./xxx-%06u-%06u.wrm", getpid(), 0);
     const char * file1 = "./xxx-000000.wrm";
-    wrmcapture_write_meta_file(meta_len_writer, file1, sec_start, sec_start+1);
+    wrmcapture_write_meta_file(meta_len_writer, file1, sec_start, sec_start+1, nullptr);
     meta_len_writer.len += hash_size;
     BOOST_CHECK_EQUAL(10, filesize(file1));
     BOOST_CHECK_EQUAL(0, ::unlink(file1));
@@ -489,7 +527,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 //    char file2[1024];
 //    snprintf(file2, 1024, "./xxx-%06u-%06u.wrm", getpid(), 1);
     const char * file2 = "./xxx-000001.wrm";
-    wrmcapture_write_meta_file(meta_len_writer, file2, sec_start, sec_start+1);
+    wrmcapture_write_meta_file(meta_len_writer, file2, sec_start, sec_start+1, nullptr);
     meta_len_writer.len += hash_size;
     BOOST_CHECK_EQUAL(5, filesize(file2));
     BOOST_CHECK_EQUAL(0, ::unlink(file2));
@@ -500,6 +538,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
     BOOST_CHECK_EQUAL(meta_len_writer.len, filesize(meta_path));
     BOOST_CHECK_EQUAL(0, ::unlink(meta_path));
 }
+
 
 BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 {
