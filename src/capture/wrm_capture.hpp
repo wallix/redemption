@@ -974,31 +974,6 @@ class wrmcapture_ocrypto_filename_buf
 {
     int file_fd;
 
-    ssize_t file_write(const void * data, size_t len)
-    {
-        size_t remaining_len = len;
-        size_t total_sent = 0;
-        while (remaining_len) {
-            ssize_t ret = ::write(this->file_fd,
-                static_cast<const char*>(data) + total_sent, remaining_len);
-            if (ret <= 0){
-                if (errno == EINTR){
-                    continue;
-                }
-                return -1;
-            }
-            remaining_len -= ret;
-            total_sent += ret;
-        }
-        return total_sent;
-    }
-
-    bool file_is_open() const noexcept
-    { return -1 != this->file_fd; }
-
-    int file_flush() const
-    { return 0; }
-
     char           encrypt_buf[CRYPTO_BUFFER_SIZE]; //
     EVP_CIPHER_CTX encrypt_ectx;                    // [en|de]cryption context
     EVP_MD_CTX     encrypt_hctx;                    // hash context
@@ -1305,8 +1280,21 @@ class wrmcapture_ocrypto_filename_buf
     ///\return 0 if success, otherwise a negatif number
     ssize_t encrypt_raw_write(void * data, size_t len)
     {
-        ssize_t err = this->file_write(data, len);
-        return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            ssize_t ret = ::write(this->file_fd,
+                static_cast<const char*>(data) + total_sent, remaining_len);
+            if (ret <= 0){
+                if (errno == EINTR){
+                    continue;
+                }
+                return -1;
+            }
+            remaining_len -= ret;
+            total_sent += ret;
+        }
+        return total_sent < ssize_t(len) ? -1 : 0;
     }
 
     /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
@@ -1363,7 +1351,7 @@ public:
     , cctx(params.crypto_ctx)
     , rnd(params.rnd)
     {
-        if (this->file_is_open()) {
+        if (-1 != this->file_fd) {
             ::close(this->file_fd);
             this->file_fd = -1;
         }
@@ -1378,7 +1366,7 @@ public:
 
     int open(const char * filename, mode_t mode = 0600)
     {
-        if (this->file_is_open()) {
+        if (-1 != this->file_fd) {
             ::close(this->file_fd);
             this->file_fd = -1;
         }
@@ -1405,7 +1393,7 @@ public:
     {
         const int res1 = this->encrypt_close(hash, this->cctx.get_hmac_key());
         int res2 = 0;
-        if (this->file_is_open()) {
+        if (-1 != this->file_fd) {
             res2 = ::close(this->file_fd);
             this->file_fd = -1;
         }
@@ -1419,10 +1407,10 @@ public:
     }
 
     bool is_open() const noexcept
-    { return this->file_is_open(); }
+    { return -1 != this->file_fd; }
 
     int flush() const
-    { return this->file_flush(); }
+    { return 0; }
 };
 
 class wrmcapture_cctx_ochecksum_file
