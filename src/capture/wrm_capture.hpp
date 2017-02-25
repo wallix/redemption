@@ -1050,7 +1050,7 @@ class wrmcapture_ocrypto_filename_buf
         //, file_size(0)
         //{}
 
-        int encrypt_open(wrmcapture_ofile_buf_out & snk, const unsigned char * trace_key, CryptoContext & cctx, const unsigned char * iv)
+        int encrypt_open(const unsigned char * trace_key, CryptoContext & cctx, const unsigned char * iv)
         {
             ::memset(this->buf, 0, sizeof(this->buf));
             ::memset(&this->ectx, 0, sizeof(this->ectx));
@@ -1142,7 +1142,7 @@ class wrmcapture_ocrypto_filename_buf
             ::memcpy(tmp_buf + 8, iv, 32);
 
             // TODO: if I suceeded writing a broken file, wouldn't it be better to remove it ?
-            if (const ssize_t write_ret = this->encrypt_raw_write(snk, tmp_buf, 40)){
+            if (const ssize_t write_ret = this->encrypt_raw_write(tmp_buf, 40)){
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: write error! error=%s\n", ::getpid(), ::strerror(errno));
                 return write_ret;
             }
@@ -1152,7 +1152,7 @@ class wrmcapture_ocrypto_filename_buf
             return this->encrypt_xmd_update(tmp_buf, 40);
         }
 
-        ssize_t encrypt_write(wrmcapture_ofile_buf_out & snk, const void * data, size_t len)
+        ssize_t encrypt_write(const void * data, size_t len)
         {
             unsigned int remaining_size = len;
             while (remaining_size > 0) {
@@ -1163,7 +1163,7 @@ class wrmcapture_ocrypto_filename_buf
                 this->pos += available_size;
                 // If buffer is full, flush it to disk
                 if (this->pos == CRYPTO_BUFFER_SIZE) {
-                    if (this->encrypt_flush(snk)) {
+                    if (this->encrypt_flush()) {
                         return -1;
                     }
                 }
@@ -1177,7 +1177,7 @@ class wrmcapture_ocrypto_filename_buf
         /* Flush procedure (compression, encryption, effective file writing)
          * Return 0 on success, negatif on error
          */
-        int encrypt_flush(wrmcapture_ofile_buf_out & snk)
+        int encrypt_flush()
         {
             // No data to flush
             if (!this->pos) {
@@ -1221,7 +1221,7 @@ class wrmcapture_ocrypto_filename_buf
 
             ciphered_buf_sz += 4;
 
-            if (const ssize_t err = this->encrypt_raw_write(snk, ciphered_buf, ciphered_buf_sz)) {
+            if (const ssize_t err = this->encrypt_raw_write(ciphered_buf, ciphered_buf_sz)) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
                 return err;
             }
@@ -1235,9 +1235,9 @@ class wrmcapture_ocrypto_filename_buf
             return 0;
         }
 
-        int encrypt_close(wrmcapture_ofile_buf_out & snk, unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key)
+        int encrypt_close(unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key)
         {
-            int result = this->encrypt_flush(snk);
+            int result = this->encrypt_flush();
 
             const uint32_t eof_magic = WABCRYPTOFILE_EOF_MAGIC;
             unsigned char tmp_buf[8] = {
@@ -1251,7 +1251,7 @@ class wrmcapture_ocrypto_filename_buf
                 uint8_t((this->raw_size >> 24) & 0xFF),
             };
 
-            int write_ret1 = this->encrypt_raw_write(snk, tmp_buf, 8);
+            int write_ret1 = this->encrypt_raw_write(tmp_buf, 8);
             if (write_ret1){
                 // TOOD: actual error code could help
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
@@ -1347,7 +1347,7 @@ class wrmcapture_ocrypto_filename_buf
 
     private:
         ///\return 0 if success, otherwise a negatif number
-        ssize_t encrypt_raw_write(wrmcapture_ofile_buf_out & snk, void * data, size_t len)
+        ssize_t encrypt_raw_write(void * data, size_t len)
         {
             ssize_t err = snk.write(data, len);
             return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
@@ -1428,15 +1428,15 @@ public:
         this->cctx.get_derived_key(trace_key, base, base_len);
         unsigned char iv[32];
         this->rnd.random(iv, 32);
-        return this->encrypt.encrypt_open(this->file, trace_key, this->cctx, iv);
+        return this->encrypt.encrypt_open(trace_key, this->cctx, iv);
     }
 
     ssize_t write(const void * data, size_t len)
-    { return this->encrypt.encrypt_write(this->file, data, len); }
+    { return this->encrypt.encrypt_write(data, len); }
 
     int close(unsigned char hash[MD_HASH_LENGTH << 1])
     {
-        const int res1 = this->encrypt.encrypt_close(this->file, hash, this->cctx.get_hmac_key());
+        const int res1 = this->encrypt.encrypt_close(hash, this->cctx.get_hmac_key());
         const int res2 = this->file.close();
         return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
     }
