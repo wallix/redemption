@@ -439,63 +439,6 @@ private:
 };
 
 
-class wrmcapture_ofile_buf_out
-{
-    int fd;
-public:
-    wrmcapture_ofile_buf_out() : fd(-1) {}
-    ~wrmcapture_ofile_buf_out()
-    {
-        this->close();
-    }
-
-    int open(const char * filename, mode_t mode)
-    {
-        this->close();
-        this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-        return this->fd;
-    }
-
-    int close()
-    {
-        if (this->is_open()) {
-            const int ret = ::close(this->fd);
-            this->fd = -1;
-            return ret;
-        }
-        return 0;
-    }
-
-    ssize_t write(const void * data, size_t len)
-    {
-        size_t remaining_len = len;
-        size_t total_sent = 0;
-        while (remaining_len) {
-            ssize_t ret = ::write(this->fd,
-                static_cast<const char*>(data) + total_sent, remaining_len);
-            if (ret <= 0){
-                if (errno == EINTR){
-                    continue;
-                }
-                return -1;
-            }
-            remaining_len -= ret;
-            total_sent += ret;
-        }
-        return total_sent;
-    }
-
-    bool is_open() const noexcept
-    { return -1 != this->fd; }
-
-    off64_t seek(off64_t offset, int whence) const
-    { return ::lseek64(this->fd, offset, whence); }
-
-    int flush() const
-    { return 0; }
-};
-
-
 struct wrmcapture_out_meta_sequence_filename_buf_noparam
 {
     wrmcapture_out_sequence_filename_buf_param sq_params;
@@ -1029,7 +972,61 @@ private:
 
 class wrmcapture_ocrypto_filename_buf
 {
-    wrmcapture_ofile_buf_out file;
+    class wrmcapture_ofile_buf_out
+    {
+        int fd;
+    public:
+        wrmcapture_ofile_buf_out() : fd(-1) {}
+        ~wrmcapture_ofile_buf_out()
+        {
+            this->close();
+        }
+
+        int open(const char * filename, mode_t mode)
+        {
+            this->close();
+            this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+            return this->fd;
+        }
+
+        int close()
+        {
+            if (this->is_open()) {
+                const int ret = ::close(this->fd);
+                this->fd = -1;
+                return ret;
+            }
+            return 0;
+        }
+
+        ssize_t write(const void * data, size_t len)
+        {
+            size_t remaining_len = len;
+            size_t total_sent = 0;
+            while (remaining_len) {
+                ssize_t ret = ::write(this->fd,
+                    static_cast<const char*>(data) + total_sent, remaining_len);
+                if (ret <= 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    return -1;
+                }
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            return total_sent;
+        }
+
+        bool is_open() const noexcept
+        { return -1 != this->fd; }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return ::lseek64(this->fd, offset, whence); }
+
+        int flush() const
+        { return 0; }
+    } file;
 
     char           encrypt_buf[CRYPTO_BUFFER_SIZE]; //
     EVP_CIPHER_CTX encrypt_ectx;                    // [en|de]cryption context
@@ -1825,7 +1822,61 @@ public:
         if (!err) {
             char const * hash_filename = this->hash_filename();
             char const * meta_filename = this->meta_filename();
-            wrmcapture_ofile_buf_out crypto_hash;
+            class wrmcapture_ofile_buf_out
+            {
+                int fd;
+            public:
+                wrmcapture_ofile_buf_out() : fd(-1) {}
+                ~wrmcapture_ofile_buf_out()
+                {
+                    this->close();
+                }
+
+                int open(const char * filename, mode_t mode)
+                {
+                    this->close();
+                    this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+                    return this->fd;
+                }
+
+                int close()
+                {
+                    if (this->is_open()) {
+                        const int ret = ::close(this->fd);
+                        this->fd = -1;
+                        return ret;
+                    }
+                    return 0;
+                }
+
+                ssize_t write(const void * data, size_t len)
+                {
+                    size_t remaining_len = len;
+                    size_t total_sent = 0;
+                    while (remaining_len) {
+                        ssize_t ret = ::write(this->fd,
+                            static_cast<const char*>(data) + total_sent, remaining_len);
+                        if (ret <= 0){
+                            if (errno == EINTR){
+                                continue;
+                            }
+                            return -1;
+                        }
+                        remaining_len -= ret;
+                        total_sent += ret;
+                    }
+                    return total_sent;
+                }
+
+                bool is_open() const noexcept
+                { return -1 != this->fd; }
+
+                off64_t seek(off64_t offset, int whence) const
+                { return ::lseek64(this->fd, offset, whence); }
+
+                int flush() const
+                { return 0; }
+            } crypto_hash;
 
             char path[1024] = {};
             char basename[1024] = {};
@@ -1961,7 +2012,61 @@ class wrmcapture_out_meta_sequence_filename_buf_impl_ofile_buf_out
 //    typedef wrmcapture_out_sequence_filename_buf_impl sequence_base_type;
 
     //wrmcapture_ocrypto_filename_buf
-    wrmcapture_ofile_buf_out meta_buf_;
+    class wrmcapture_ofile_buf_out
+    {
+        int fd;
+    public:
+        wrmcapture_ofile_buf_out() : fd(-1) {}
+        ~wrmcapture_ofile_buf_out()
+        {
+            this->close();
+        }
+
+        int open(const char * filename, mode_t mode)
+        {
+            this->close();
+            this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+            return this->fd;
+        }
+
+        int close()
+        {
+            if (this->is_open()) {
+                const int ret = ::close(this->fd);
+                this->fd = -1;
+                return ret;
+            }
+            return 0;
+        }
+
+        ssize_t write(const void * data, size_t len)
+        {
+            size_t remaining_len = len;
+            size_t total_sent = 0;
+            while (remaining_len) {
+                ssize_t ret = ::write(this->fd,
+                    static_cast<const char*>(data) + total_sent, remaining_len);
+                if (ret <= 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    return -1;
+                }
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            return total_sent;
+        }
+
+        bool is_open() const noexcept
+        { return -1 != this->fd; }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return ::lseek64(this->fd, offset, whence); }
+
+        int flush() const
+        { return 0; }
+    } meta_buf_;
     wrmcapture_MetaFilename mf_;
     wrmcapture_MetaFilename hf_;
     time_t start_sec_;
@@ -1998,7 +2103,61 @@ public:
         if (!err) {
             char const * hash_filename = this->hash_filename();
             char const * meta_filename = this->meta_filename();
-            wrmcapture_ofile_buf_out crypto_hash;
+            class wrmcapture_ofile_buf_out
+            {
+                int fd;
+            public:
+                wrmcapture_ofile_buf_out() : fd(-1) {}
+                ~wrmcapture_ofile_buf_out()
+                {
+                    this->close();
+                }
+
+                int open(const char * filename, mode_t mode)
+                {
+                    this->close();
+                    this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+                    return this->fd;
+                }
+
+                int close()
+                {
+                    if (this->is_open()) {
+                        const int ret = ::close(this->fd);
+                        this->fd = -1;
+                        return ret;
+                    }
+                    return 0;
+                }
+
+                ssize_t write(const void * data, size_t len)
+                {
+                    size_t remaining_len = len;
+                    size_t total_sent = 0;
+                    while (remaining_len) {
+                        ssize_t ret = ::write(this->fd,
+                            static_cast<const char*>(data) + total_sent, remaining_len);
+                        if (ret <= 0){
+                            if (errno == EINTR){
+                                continue;
+                            }
+                            return -1;
+                        }
+                        remaining_len -= ret;
+                        total_sent += ret;
+                    }
+                    return total_sent;
+                }
+
+                bool is_open() const noexcept
+                { return -1 != this->fd; }
+
+                off64_t seek(off64_t offset, int whence) const
+                { return ::lseek64(this->fd, offset, whence); }
+
+                int flush() const
+                { return 0; }
+            } crypto_hash;
 
             char path[1024] = {};
             char basename[1024] = {};
@@ -2299,7 +2458,61 @@ public:
         if (!err) {
             char const * hash_filename = this->hash_filename();
             char const * meta_filename = this->meta_filename();
-            wrmcapture_ofile_buf_out crypto_hash;
+            class wrmcapture_ofile_buf_out
+            {
+                int fd;
+            public:
+                wrmcapture_ofile_buf_out() : fd(-1) {}
+                ~wrmcapture_ofile_buf_out()
+                {
+                    this->close();
+                }
+
+                int open(const char * filename, mode_t mode)
+                {
+                    this->close();
+                    this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+                    return this->fd;
+                }
+
+                int close()
+                {
+                    if (this->is_open()) {
+                        const int ret = ::close(this->fd);
+                        this->fd = -1;
+                        return ret;
+                    }
+                    return 0;
+                }
+
+                ssize_t write(const void * data, size_t len)
+                {
+                    size_t remaining_len = len;
+                    size_t total_sent = 0;
+                    while (remaining_len) {
+                        ssize_t ret = ::write(this->fd,
+                            static_cast<const char*>(data) + total_sent, remaining_len);
+                        if (ret <= 0){
+                            if (errno == EINTR){
+                                continue;
+                            }
+                            return -1;
+                        }
+                        remaining_len -= ret;
+                        total_sent += ret;
+                    }
+                    return total_sent;
+                }
+
+                bool is_open() const noexcept
+                { return -1 != this->fd; }
+
+                off64_t seek(off64_t offset, int whence) const
+                { return ::lseek64(this->fd, offset, whence); }
+
+                int flush() const
+                { return 0; }
+            } crypto_hash;
 
             char path[1024] = {};
             char basename[1024] = {};
@@ -2470,7 +2683,61 @@ public:
             }
         }
 
-        wrmcapture_ofile_buf_out hash_buf;
+        class wrmcapture_ofile_buf_out
+        {
+            int fd;
+        public:
+            wrmcapture_ofile_buf_out() : fd(-1) {}
+            ~wrmcapture_ofile_buf_out()
+            {
+                this->close();
+            }
+
+            int open(const char * filename, mode_t mode)
+            {
+                this->close();
+                this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+                return this->fd;
+            }
+
+            int close()
+            {
+                if (this->is_open()) {
+                    const int ret = ::close(this->fd);
+                    this->fd = -1;
+                    return ret;
+                }
+                return 0;
+            }
+
+            ssize_t write(const void * data, size_t len)
+            {
+                size_t remaining_len = len;
+                size_t total_sent = 0;
+                while (remaining_len) {
+                    ssize_t ret = ::write(this->fd,
+                        static_cast<const char*>(data) + total_sent, remaining_len);
+                    if (ret <= 0){
+                        if (errno == EINTR){
+                            continue;
+                        }
+                        return -1;
+                    }
+                    remaining_len -= ret;
+                    total_sent += ret;
+                }
+                return total_sent;
+            }
+
+            bool is_open() const noexcept
+            { return -1 != this->fd; }
+
+            off64_t seek(off64_t offset, int whence) const
+            { return ::lseek64(this->fd, offset, whence); }
+
+            int flush() const
+            { return 0; }
+        } hash_buf;
 
         if (!this->meta_buf().is_open()) {
             return 1;
