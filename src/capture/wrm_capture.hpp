@@ -1294,7 +1294,7 @@ class wrmcapture_ocrypto_filename_buf
             remaining_len -= ret;
             total_sent += ret;
         }
-        return total_sent < ssize_t(len) ? -1 : 0;
+        return 0;
     }
 
     /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
