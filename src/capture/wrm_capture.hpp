@@ -974,13 +974,6 @@ class wrmcapture_ocrypto_filename_buf
 {
     int file_fd;
 
-    int file_open(const char * filename, mode_t mode)
-    {
-        this->file_close();
-        this->file_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-        return this->file_fd;
-    }
-
     int file_close()
     {
         if (this->is_open()) {
@@ -1395,7 +1388,10 @@ public:
 
     int open(const char * filename, mode_t mode = 0600)
     {
-        int err = this->file_open(filename, mode);
+        this->file_close();
+        this->file_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+        int err = this->file_fd;
+
         if (err < 0) {
             return err;
         }
