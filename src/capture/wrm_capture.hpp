@@ -657,8 +657,7 @@ inline char * wrmcapture_swrite_hash(char * p, wrmcapture_hash_type const & hash
     return p;
 }
 
-template<class Sink>
-class wrmcapture_encrypt_filter
+class wrmcapture_encrypt_filter_ofile
 {
     char           buf[CRYPTO_BUFFER_SIZE]; //
     EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
@@ -668,17 +667,17 @@ class wrmcapture_encrypt_filter
     uint32_t       raw_size;                // the unciphered/uncompressed file size
     uint32_t       file_size;               // the current file size
 
-    Sink & snk;
+    wrmcapture_ofile_buf_out & snk;
 
 public:
-    wrmcapture_encrypt_filter(Sink & snk) : snk(snk) {}
-    wrmcapture_encrypt_filter() = delete;
+    wrmcapture_encrypt_filter_ofile(wrmcapture_ofile_buf_out & snk) : snk(snk) {}
+    wrmcapture_encrypt_filter_ofile() = delete;
     //: pos(0)
     //, raw_size(0)
     //, file_size(0)
     //{}
 
-    int open(Sink & snk, const unsigned char * trace_key, CryptoContext & cctx, const unsigned char * iv)
+    int open(wrmcapture_ofile_buf_out & snk, const unsigned char * trace_key, CryptoContext & cctx, const unsigned char * iv)
     {
         ::memset(this->buf, 0, sizeof(this->buf));
         ::memset(&this->ectx, 0, sizeof(this->ectx));
@@ -780,7 +779,7 @@ public:
         return this->xmd_update(tmp_buf, 40);
     }
 
-    ssize_t write(Sink & snk, const void * data, size_t len)
+    ssize_t write(wrmcapture_ofile_buf_out & snk, const void * data, size_t len)
     {
         unsigned int remaining_size = len;
         while (remaining_size > 0) {
@@ -805,7 +804,7 @@ public:
     /* Flush procedure (compression, encryption, effective file writing)
      * Return 0 on success, negatif on error
      */
-    int flush(Sink & snk)
+    int flush(wrmcapture_ofile_buf_out & snk)
     {
         // No data to flush
         if (!this->pos) {
@@ -863,7 +862,7 @@ public:
         return 0;
     }
 
-    int close(Sink & snk, unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key)
+    int close(wrmcapture_ofile_buf_out & snk, unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key)
     {
         int result = this->flush(snk);
 
@@ -975,7 +974,7 @@ public:
 
 private:
     ///\return 0 if success, otherwise a negatif number
-    ssize_t raw_write(Sink & snk, void * data, size_t len)
+    ssize_t raw_write(wrmcapture_ofile_buf_out & snk, void * data, size_t len)
     {
         ssize_t err = snk.write(data, len);
         return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
@@ -1037,7 +1036,6 @@ class wrmcapture_encrypt_filter_iofdbuf
     uint32_t       raw_size;                // the unciphered/uncompressed file size
     uint32_t       file_size;               // the current file size
 
-    using Sink = iofdbuf;
     iofdbuf & snk;
 
 public:
@@ -1400,7 +1398,7 @@ private:
 class wrmcapture_ocrypto_filename_buf
 {
     wrmcapture_ofile_buf_out file;
-    wrmcapture_encrypt_filter<wrmcapture_ofile_buf_out> encrypt;
+    wrmcapture_encrypt_filter_ofile encrypt;
     CryptoContext & cctx;
     Random & rnd;
 
