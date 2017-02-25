@@ -282,12 +282,14 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 
     struct crypto_file
     {
-      wrmcapture_encrypt_filter encrypt;
-      io::posix::fdbuf file;
+      iofdbuf file;
+      wrmcapture_encrypt_filter<iofdbuf> encrypt;
 
       crypto_file(int fd)
-      : file(fd)
-      {}
+      : encrypt(this->file)
+      {
+        this->file.fd = fd;
+      }
     } * cf_struct = new (std::nothrow) crypto_file(system_fd);
 
     if (cf_struct) {

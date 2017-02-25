@@ -177,9 +177,9 @@ struct wrmcapture_no_param {};
 
 class iofdbuf
 {
+public:
     int fd;
 
-public:
     explicit iofdbuf(wrmcapture_no_param = wrmcapture_no_param()) noexcept
     : fd(-1)
     {}
@@ -657,6 +657,7 @@ inline char * wrmcapture_swrite_hash(char * p, wrmcapture_hash_type const & hash
     return p;
 }
 
+template<class ClassSink>
 class wrmcapture_encrypt_filter
 {
     char           buf[CRYPTO_BUFFER_SIZE]; //
@@ -667,8 +668,11 @@ class wrmcapture_encrypt_filter
     uint32_t       raw_size;                // the unciphered/uncompressed file size
     uint32_t       file_size;               // the current file size
 
+    ClassSink & snk;
+
 public:
-    wrmcapture_encrypt_filter() = default;
+    wrmcapture_encrypt_filter(ClassSink & snk) : snk(snk) {}
+    wrmcapture_encrypt_filter() = delete;
     //: pos(0)
     //, raw_size(0)
     //, file_size(0)
@@ -1030,14 +1034,15 @@ private:
 
 class wrmcapture_ocrypto_filename_buf
 {
-    wrmcapture_encrypt_filter encrypt;
+    wrmcapture_ofile_buf_out file;
+    wrmcapture_encrypt_filter<wrmcapture_ofile_buf_out> encrypt;
     CryptoContext & cctx;
     Random & rnd;
-    wrmcapture_ofile_buf_out file;
 
 public:
     explicit wrmcapture_ocrypto_filename_buf(wrmcapture_ocrypto_filename_params params)
-    : cctx(params.crypto_ctx)
+    : encrypt(this->file)
+    , cctx(params.crypto_ctx)
     , rnd(params.rnd)
     {}
 
@@ -2279,18 +2284,18 @@ void wrmcapture_write_meta_headers(Writer & writer, const char * path,
 
 
 
-struct wrmcapture_ocrypto_filter: wrmcapture_encrypt_filter
+struct wrmcapture_ocrypto_filter: wrmcapture_encrypt_filter<iofdbuf>
 {
     CryptoContext & cctx;
     Random & rnd;
 
-    explicit wrmcapture_ocrypto_filter(wrmcapture_ocrypto_filename_params params)
-    : cctx(params.crypto_ctx)
+    explicit wrmcapture_ocrypto_filter(iofdbuf & buf, wrmcapture_ocrypto_filename_params params)
+    : wrmcapture_encrypt_filter<iofdbuf>(buf)
+    , cctx(params.crypto_ctx)
     , rnd(params.rnd)
     {}
 
-    template<class Buf>
-    int open(Buf & buf, char const * filename) {
+    int open(iofdbuf & buf, char const * filename) {
         unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
 
         size_t base_len = 0;
@@ -2318,7 +2323,7 @@ public:
     : wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf(params.meta_sq_params)
     , cctx(params.cctx)
     , hash_ctx(params.filter_params)
-    , wrm_filter(params.filter_params)
+    , wrm_filter(this->buf(), params.filter_params)
     {}
 
     ssize_t write(const void * data, size_t len)
