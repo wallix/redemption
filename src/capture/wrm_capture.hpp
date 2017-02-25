@@ -2179,13 +2179,6 @@ public:
     { this->stop_sec_ = sec; }
 };
 
-struct wrmcapture_cctx_ofile_buf
-: wrmcapture_ofile_buf_out
-{
-    explicit wrmcapture_cctx_ofile_buf(CryptoContext &)
-    {}
-};
-
 class wrmcapture_ochecksum_buf_null_buf
 {
     static constexpr size_t nosize = ~size_t{};
@@ -2477,7 +2470,7 @@ public:
             }
         }
 
-        wrmcapture_cctx_ofile_buf hash_buf(this->hash_ctx);
+        wrmcapture_ofile_buf_out hash_buf;
 
         if (!this->meta_buf().is_open()) {
             return 1;
