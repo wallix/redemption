@@ -283,7 +283,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     struct crypto_file
     {
       iofdbuf file;
-      wrmcapture_encrypt_filter<iofdbuf> encrypt;
+      wrmcapture_encrypt_filter_iofdbuf encrypt;
 
       crypto_file(int fd)
       : encrypt(this->file)
