@@ -996,9 +996,6 @@ class wrmcapture_ocrypto_filename_buf
     bool file_is_open() const noexcept
     { return -1 != this->file_fd; }
 
-    off64_t file_seek(off64_t offset, int whence) const
-    { return ::lseek64(this->file_fd, offset, whence); }
-
     int file_flush() const
     { return 0; }
 
@@ -1424,9 +1421,6 @@ public:
     bool is_open() const noexcept
     { return this->file_is_open(); }
 
-    off64_t seek(off64_t offset, int whence) const
-    { return this->file_seek(offset, whence); }
-
     int flush() const
     { return this->file_flush(); }
 };
@@ -1518,9 +1512,6 @@ public:
 
     bool is_open() const noexcept
     { return -1 != this->fd; }
-
-    off64_t seek(off64_t offset, int whence) const
-    { return ::lseek64(this->fd, offset, whence); }
 
     int flush() const
     { return 0; }
@@ -1861,9 +1852,6 @@ public:
                 bool is_open() const noexcept
                 { return -1 != this->fd; }
 
-                off64_t seek(off64_t offset, int whence) const
-                { return ::lseek64(this->fd, offset, whence); }
-
                 int flush() const
                 { return 0; }
             } crypto_hash;
@@ -2051,9 +2039,6 @@ class wrmcapture_out_meta_sequence_filename_buf_impl_ofile_buf_out
         bool is_open() const noexcept
         { return -1 != this->fd; }
 
-        off64_t seek(off64_t offset, int whence) const
-        { return ::lseek64(this->fd, offset, whence); }
-
         int flush() const
         { return 0; }
     } meta_buf_;
@@ -2141,9 +2126,6 @@ public:
 
                 bool is_open() const noexcept
                 { return -1 != this->fd; }
-
-                off64_t seek(off64_t offset, int whence) const
-                { return ::lseek64(this->fd, offset, whence); }
 
                 int flush() const
                 { return 0; }
@@ -2497,9 +2479,6 @@ public:
                 bool is_open() const noexcept
                 { return -1 != this->fd; }
 
-                off64_t seek(off64_t offset, int whence) const
-                { return ::lseek64(this->fd, offset, whence); }
-
                 int flush() const
                 { return 0; }
             } crypto_hash;
@@ -2721,9 +2700,6 @@ public:
 
             bool is_open() const noexcept
             { return -1 != this->fd; }
-
-            off64_t seek(off64_t offset, int whence) const
-            { return ::lseek64(this->fd, offset, whence); }
 
             int flush() const
             { return 0; }
