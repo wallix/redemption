@@ -972,61 +972,52 @@ private:
 
 class wrmcapture_ocrypto_filename_buf
 {
-    class wrmcapture_ofile_buf_out
+    int file_fd;
+
+    int file_open(const char * filename, mode_t mode)
     {
-        int fd;
-    public:
-        wrmcapture_ofile_buf_out() : fd(-1) {}
-        ~wrmcapture_ofile_buf_out()
-        {
-            this->close();
-        }
+        this->file_close();
+        this->file_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+        return this->file_fd;
+    }
 
-        int open(const char * filename, mode_t mode)
-        {
-            this->close();
-            this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-            return this->fd;
+    int file_close()
+    {
+        if (this->is_open()) {
+            const int ret = ::close(this->file_fd);
+            this->file_fd = -1;
+            return ret;
         }
+        return 0;
+    }
 
-        int close()
-        {
-            if (this->is_open()) {
-                const int ret = ::close(this->fd);
-                this->fd = -1;
-                return ret;
-            }
-            return 0;
-        }
-
-        ssize_t write(const void * data, size_t len)
-        {
-            size_t remaining_len = len;
-            size_t total_sent = 0;
-            while (remaining_len) {
-                ssize_t ret = ::write(this->fd,
-                    static_cast<const char*>(data) + total_sent, remaining_len);
-                if (ret <= 0){
-                    if (errno == EINTR){
-                        continue;
-                    }
-                    return -1;
+    ssize_t file_write(const void * data, size_t len)
+    {
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            ssize_t ret = ::write(this->file_fd,
+                static_cast<const char*>(data) + total_sent, remaining_len);
+            if (ret <= 0){
+                if (errno == EINTR){
+                    continue;
                 }
-                remaining_len -= ret;
-                total_sent += ret;
+                return -1;
             }
-            return total_sent;
+            remaining_len -= ret;
+            total_sent += ret;
         }
+        return total_sent;
+    }
 
-        bool is_open() const noexcept
-        { return -1 != this->fd; }
+    bool file_is_open() const noexcept
+    { return -1 != this->file_fd; }
 
-        off64_t seek(off64_t offset, int whence) const
-        { return ::lseek64(this->fd, offset, whence); }
+    off64_t file_seek(off64_t offset, int whence) const
+    { return ::lseek64(this->file_fd, offset, whence); }
 
-        int flush() const
-        { return 0; }
-    } file;
+    int file_flush() const
+    { return 0; }
 
     char           encrypt_buf[CRYPTO_BUFFER_SIZE]; //
     EVP_CIPHER_CTX encrypt_ectx;                    // [en|de]cryption context
@@ -1334,7 +1325,7 @@ class wrmcapture_ocrypto_filename_buf
     ///\return 0 if success, otherwise a negatif number
     ssize_t encrypt_raw_write(void * data, size_t len)
     {
-        ssize_t err = this->file.write(data, len);
+        ssize_t err = this->file_write(data, len);
         return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
     }
 
@@ -1388,9 +1379,12 @@ class wrmcapture_ocrypto_filename_buf
 
 public:
     explicit wrmcapture_ocrypto_filename_buf(wrmcapture_ocrypto_filename_params params)
-    : cctx(params.crypto_ctx)
+    : file_fd(-1)
+    , cctx(params.crypto_ctx)
     , rnd(params.rnd)
-    {}
+    {
+        this->file_close();
+    }
 
     ~wrmcapture_ocrypto_filename_buf()
     {
@@ -1401,7 +1395,7 @@ public:
 
     int open(const char * filename, mode_t mode = 0600)
     {
-        int err = this->file.open(filename, mode);
+        int err = this->file_open(filename, mode);
         if (err < 0) {
             return err;
         }
@@ -1421,7 +1415,7 @@ public:
     int close(unsigned char hash[MD_HASH_LENGTH << 1])
     {
         const int res1 = this->encrypt_close(hash, this->cctx.get_hmac_key());
-        const int res2 = this->file.close();
+        const int res2 = this->file_close();
         return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
     }
 
@@ -1432,13 +1426,13 @@ public:
     }
 
     bool is_open() const noexcept
-    { return this->file.is_open(); }
+    { return this->file_is_open(); }
 
     off64_t seek(off64_t offset, int whence) const
-    { return this->file.seek(offset, whence); }
+    { return this->file_seek(offset, whence); }
 
     int flush() const
-    { return this->file.flush(); }
+    { return this->file_flush(); }
 };
 
 class wrmcapture_cctx_ochecksum_file
