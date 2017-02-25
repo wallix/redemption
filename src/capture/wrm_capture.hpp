@@ -974,16 +974,6 @@ class wrmcapture_ocrypto_filename_buf
 {
     int file_fd;
 
-    int file_close()
-    {
-        if (this->is_open()) {
-            const int ret = ::close(this->file_fd);
-            this->file_fd = -1;
-            return ret;
-        }
-        return 0;
-    }
-
     ssize_t file_write(const void * data, size_t len)
     {
         size_t remaining_len = len;
@@ -1376,7 +1366,10 @@ public:
     , cctx(params.crypto_ctx)
     , rnd(params.rnd)
     {
-        this->file_close();
+        if (this->file_is_open()) {
+            ::close(this->file_fd);
+            this->file_fd = -1;
+        }
     }
 
     ~wrmcapture_ocrypto_filename_buf()
@@ -1388,7 +1381,10 @@ public:
 
     int open(const char * filename, mode_t mode = 0600)
     {
-        this->file_close();
+        if (this->file_is_open()) {
+            ::close(this->file_fd);
+            this->file_fd = -1;
+        }
         this->file_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
         int err = this->file_fd;
 
@@ -1411,7 +1407,11 @@ public:
     int close(unsigned char hash[MD_HASH_LENGTH << 1])
     {
         const int res1 = this->encrypt_close(hash, this->cctx.get_hmac_key());
-        const int res2 = this->file_close();
+        int res2 = 0;
+        if (this->file_is_open()) {
+            res2 = ::close(this->file_fd);
+            this->file_fd = -1;
+        }
         return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
     }
 
