@@ -1579,60 +1579,94 @@ public:
 
             snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
-            if (crypto_hash.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
-                char header[] = "v2\n\n\n";
-                crypto_hash.write(header, sizeof(header)-1);
-
-                struct stat stat;
-                int err = ::stat(meta_filename, &stat);
-                if (!err) {
-                    auto & writer = crypto_hash;
-                    int err = wrmcapture_write_filename(writer, filename);
-                    if (!err) {
-                        using ull = unsigned long long;
-                        using ll = long long;
-                        char mes[
-                            (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-                            (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-                            wrmcapture_hash_string_len + 1 +
-                            2
-                        ];
-                        ssize_t len = std::sprintf(
-                            mes,
-                            " %lld %llu %lld %lld %llu %lld %lld %lld",
-                            ll(stat.st_size),
-                            ull(stat.st_mode),
-                            ll(stat.st_uid),
-                            ll(stat.st_gid),
-                            ull(stat.st_dev),
-                            ll(stat.st_ino),
-                            ll(stat.st_mtim.tv_sec),
-                            ll(stat.st_ctim.tv_sec)
-                        );
-
-                        char * p = mes + len;
-                        *p++ = '\n';
-
-                        ssize_t res = writer.write(mes, p-mes);
-
-                        if (res < p-mes) {
-                            err = res < 0 ? res : 1;
-                        }
-                    }
-                }
-                if (!err) {
-                    err = crypto_hash.close(/*hash*/);
-                }
-                if (err) {
-                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                    return 1;
-                }
-            }
-            else {
+            if (crypto_hash.open(hash_filename, S_IRUSR|S_IRGRP) < 0) {
                 int e = errno;
                 LOG(LOG_ERR, "Open to transport failed: code=%d", e);
                 errno = e;
                 return 1;
+            }
+
+            char header[] = "v2\n\n\n";
+            crypto_hash.write(header, sizeof(header)-1);
+
+            struct stat stat;
+            int err = ::stat(meta_filename, &stat);
+            if (err) {
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                return 1;
+            }
+
+            auto & writer = crypto_hash;
+            auto pfile = filename;
+            auto epfile = filename;
+            for (; *epfile; ++epfile) {
+                if (*epfile == '\\') {
+                    ssize_t len = epfile - pfile + 1;
+                    auto res = writer.write(pfile, len);
+                    if (res < len) {
+                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                        return 1;
+                    }
+                    pfile = epfile;
+                }
+                if (*epfile == ' ') {
+                    ssize_t len = epfile - pfile;
+                    auto res = writer.write(pfile, len);
+                    if (res < len) {
+                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                        return 1;
+                    }
+                    res = writer.write("\\", 1u);
+                    if (res < 1) {
+                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                        return 1;
+                    }
+                    pfile = epfile;
+                }
+            }
+
+            if (pfile != epfile) {
+                ssize_t len = epfile - pfile;
+                auto res = writer.write(pfile, len);
+                if (res < len) {
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                    return 1;
+                }
+            }
+
+            using ull = unsigned long long;
+            using ll = long long;
+            char mes[
+                (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+                (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+                wrmcapture_hash_string_len + 1 +
+                2
+            ];
+            ssize_t len = std::sprintf(
+                mes,
+                " %lld %llu %lld %lld %llu %lld %lld %lld",
+                ll(stat.st_size),
+                ull(stat.st_mode),
+                ll(stat.st_uid),
+                ll(stat.st_gid),
+                ull(stat.st_dev),
+                ll(stat.st_ino),
+                ll(stat.st_mtim.tv_sec),
+                ll(stat.st_ctim.tv_sec)
+            );
+
+            char * p = mes + len;
+            *p++ = '\n';
+
+            ssize_t res = writer.write(mes, p-mes);
+
+            if (res < p-mes) {
+                err = res < 0 ? res : 1;
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                return 1;
+            }
+            if (!err) {
+                err = crypto_hash.close(/*hash*/);
             }
             return 0;
         }
