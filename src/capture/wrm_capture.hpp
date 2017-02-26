@@ -1512,58 +1512,6 @@ public:
         if (!err) {
             char const * hash_filename = this->hash_filename();
             char const * meta_filename = this->meta_filename();
-            class wrmcapture_ofile_buf_out
-            {
-                int fd;
-            public:
-                wrmcapture_ofile_buf_out() : fd(-1) {}
-                ~wrmcapture_ofile_buf_out()
-                {
-                    this->close();
-                }
-
-                int open(const char * filename, mode_t mode)
-                {
-                    this->close();
-                    this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-                    return this->fd;
-                }
-
-                int close()
-                {
-                    if (this->is_open()) {
-                        const int ret = ::close(this->fd);
-                        this->fd = -1;
-                        return ret;
-                    }
-                    return 0;
-                }
-
-                ssize_t write(const void * data, size_t len)
-                {
-                    size_t remaining_len = len;
-                    size_t total_sent = 0;
-                    while (remaining_len) {
-                        ssize_t ret = ::write(this->fd,
-                            static_cast<const char*>(data) + total_sent, remaining_len);
-                        if (ret <= 0){
-                            if (errno == EINTR){
-                                continue;
-                            }
-                            return -1;
-                        }
-                        remaining_len -= ret;
-                        total_sent += ret;
-                    }
-                    return total_sent;
-                }
-
-                bool is_open() const noexcept
-                { return -1 != this->fd; }
-
-                int flush() const
-                { return 0; }
-            } crypto_hash;
 
             char path[1024] = {};
             char basename[1024] = {};
@@ -1579,7 +1527,11 @@ public:
 
             snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
-            if (crypto_hash.open(hash_filename, S_IRUSR|S_IRGRP) < 0) {
+
+            // TODO: CGR make that a function and use it to write hash file
+            int fd = ::open(filename, O_WRONLY | O_CREAT, S_IRUSR|S_IRGRP);
+
+            if (fd < 0) {
                 int e = errno;
                 LOG(LOG_ERR, "Open to transport failed: code=%d", e);
                 errno = e;
@@ -1587,39 +1539,82 @@ public:
             }
 
             char header[] = "v2\n\n\n";
-            crypto_hash.write(header, sizeof(header)-1);
+
+            size_t remaining_len = sizeof(header)-1;
+            size_t total_sent = 0;
+            while (remaining_len) {
+                ssize_t ret = ::write(fd,  header + total_sent, remaining_len);
+                if (ret <= 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    ::close(fd);
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                    return 1;
+                }
+                remaining_len -= ret;
+                total_sent += ret;
+            }
 
             struct stat stat;
             int err = ::stat(meta_filename, &stat);
             if (err) {
+                ::close(fd);
                 LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
                 return 1;
             }
 
-            auto & writer = crypto_hash;
             auto pfile = filename;
             auto epfile = filename;
             for (; *epfile; ++epfile) {
                 if (*epfile == '\\') {
                     ssize_t len = epfile - pfile + 1;
-                    auto res = writer.write(pfile, len);
-                    if (res < len) {
-                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                        return 1;
+                    size_t remaining_len = len;
+                    size_t total_sent = 0;
+                    while (remaining_len) {
+                        ssize_t ret = ::write(fd,  pfile + total_sent, remaining_len);
+                        if (ret <= 0){
+                            if (errno == EINTR){
+                                continue;
+                            }
+                            ::close(fd);
+                            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                            return 1;
+                        }
+                        remaining_len -= ret;
+                        total_sent += ret;
                     }
                     pfile = epfile;
                 }
                 if (*epfile == ' ') {
                     ssize_t len = epfile - pfile;
-                    auto res = writer.write(pfile, len);
-                    if (res < len) {
-                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                        return 1;
+                    size_t remaining_len = len;
+                    size_t total_sent = 0;
+                    while (remaining_len) {
+                        ssize_t ret = ::write(fd,  pfile + total_sent, remaining_len);
+                        if (ret <= 0){
+                            if (errno == EINTR){
+                                continue;
+                            }
+                            ::close(fd);
+                            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                            return 1;
+                        }
+                        remaining_len -= ret;
+                        total_sent += ret;
                     }
-                    res = writer.write("\\", 1u);
-                    if (res < 1) {
-                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                        return 1;
+                    remaining_len = 1u;
+                    total_sent = 0;
+                    for (;;) {
+                        ssize_t ret = ::write(fd,  "\\" + total_sent, 1u);
+                        if (ret <= 0){
+                            if (errno == EINTR){
+                                continue;
+                            }
+                            ::close(fd);
+                            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                            return 1;
+                        }
                     }
                     pfile = epfile;
                 }
@@ -1627,10 +1622,20 @@ public:
 
             if (pfile != epfile) {
                 ssize_t len = epfile - pfile;
-                auto res = writer.write(pfile, len);
-                if (res < len) {
-                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                    return 1;
+                size_t remaining_len = len;
+                size_t total_sent = 0;
+                while (remaining_len) {
+                    ssize_t ret = ::write(fd,  pfile + total_sent, remaining_len);
+                    if (ret <= 0){
+                        if (errno == EINTR){
+                            continue;
+                        }
+                        ::close(fd);
+                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                        return 1;
+                    }
+                    remaining_len -= ret;
+                    total_sent += ret;
                 }
             }
 
@@ -1658,16 +1663,22 @@ public:
             char * p = mes + len;
             *p++ = '\n';
 
-            ssize_t res = writer.write(mes, p-mes);
-
-            if (res < p-mes) {
-                err = res < 0 ? res : 1;
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                return 1;
+            remaining_len = p-mes;
+            total_sent = 0;
+            while (remaining_len) {
+                ssize_t ret = ::write(fd,  mes + total_sent, remaining_len);
+                if (ret <= 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    ::close(fd);
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                    return 1;
+                }
+                remaining_len -= ret;
+                total_sent += ret;
             }
-            if (!err) {
-                err = crypto_hash.close(/*hash*/);
-            }
+            ::close(fd);
             return 0;
         }
         return err;
