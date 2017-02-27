@@ -1906,58 +1906,50 @@ protected:
         return filename;
     }
 
-    class wrmcapture_ofile_buf_out
+    int meta_buf_fd;
+public:
+
+    int meta_buf_open(const char * filename, mode_t mode)
     {
-        int meta_buf_fd;
-    public:
-        wrmcapture_ofile_buf_out() : meta_buf_fd(-1) {}
-        ~wrmcapture_ofile_buf_out()
-        {
-            this->meta_buf_close();
-        }
+        this->meta_buf_close();
+        this->meta_buf_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+        return this->meta_buf_fd;
+    }
 
-        int meta_buf_open(const char * filename, mode_t mode)
-        {
-            this->meta_buf_close();
-            this->meta_buf_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-            return this->meta_buf_fd;
+    int meta_buf_close()
+    {
+        if (this->meta_buf_is_open()) {
+            const int ret = ::close(this->meta_buf_fd);
+            this->meta_buf_fd = -1;
+            return ret;
         }
+        return 0;
+    }
 
-        int meta_buf_close()
-        {
-            if (this->meta_buf_is_open()) {
-                const int ret = ::close(this->meta_buf_fd);
-                this->meta_buf_fd = -1;
-                return ret;
-            }
-            return 0;
-        }
-
-        ssize_t meta_buf_write(const void * data, size_t len)
-        {
-            size_t remaining_len = len;
-            size_t total_sent = 0;
-            while (remaining_len) {
-                ssize_t ret = ::write(this->meta_buf_fd,
-                    static_cast<const char*>(data) + total_sent, remaining_len);
-                if (ret <= 0){
-                    if (errno == EINTR){
-                        continue;
-                    }
-                    return -1;
+    ssize_t meta_buf_write(const void * data, size_t len)
+    {
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            ssize_t ret = ::write(this->meta_buf_fd,
+                static_cast<const char*>(data) + total_sent, remaining_len);
+            if (ret <= 0){
+                if (errno == EINTR){
+                    continue;
                 }
-                remaining_len -= ret;
-                total_sent += ret;
+                return -1;
             }
-            return total_sent;
+            remaining_len -= ret;
+            total_sent += ret;
         }
+        return total_sent;
+    }
 
-        bool meta_buf_is_open() const noexcept
-        { return -1 != this->meta_buf_fd; }
+    bool meta_buf_is_open() const noexcept
+    { return -1 != this->meta_buf_fd; }
 
-        int meta_buf_flush() const
-        { return 0; }
-    } meta_buf_;
+    int meta_buf_flush() const
+    { return 0; }
 
     wrmcapture_MetaFilename mf_;
     wrmcapture_MetaFilename hf_;
@@ -1972,14 +1964,14 @@ public:
     , buf_()
     , num_file_(0)
     , groupid_(params.sq_params.groupid)
-    , meta_buf_{}
+    , meta_buf_fd(-1)
     , mf_(params.sq_params.prefix, params.sq_params.filename, params.sq_params.format)
     , hf_(params.hash_prefix, params.sq_params.filename, params.sq_params.format)
     , start_sec_(params.sec)
     , stop_sec_(params.sec)
     {
         this->current_filename_[0] = 0;
-        if (this->meta_buf_.meta_buf_open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+        if (this->meta_buf_open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
             LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
         }
@@ -1991,10 +1983,15 @@ public:
         }
     }
 
+    ~wrmcapture_out_meta_sequence_filename_buf_impl_ofile_buf_out()
+    {
+        this->meta_buf_close();
+    }
+
     int close()
     {
         const int res1 = this->next();
-        const int res2 = (this->meta_buf().meta_buf_is_open() ? this->meta_buf_.meta_buf_close() : 0);
+        const int res2 = (this->meta_buf_is_open() ? this->meta_buf_close() : 0);
         int err = res1 ? res1 : res2;
         if (!err) {
             char const * hash_filename = this->hf_.filename;
@@ -2156,7 +2153,7 @@ protected:
         for (; *epfile; ++epfile) {
             if (*epfile == '\\') {
                 ssize_t len = epfile - pfile + 1;
-                auto res = this->meta_buf_.meta_buf_write(pfile, len);
+                auto res = this->meta_buf_write(pfile, len);
                 if (res < len) {
                     return res < 0 ? res : 1;
                 }
@@ -2164,11 +2161,11 @@ protected:
             }
             if (*epfile == ' ') {
                 ssize_t len = epfile - pfile;
-                auto res = this->meta_buf_.meta_buf_write(pfile, len);
+                auto res = this->meta_buf_write(pfile, len);
                 if (res < len) {
                     return res < 0 ? res : 1;
                 }
-                res = this->meta_buf_.meta_buf_write("\\", 1u);
+                res = this->meta_buf_write("\\", 1u);
                 if (res < 1) {
                     return res < 0 ? res : 1;
                 }
@@ -2178,7 +2175,7 @@ protected:
 
         if (pfile != epfile) {
             ssize_t len = epfile - pfile;
-            auto res = this->meta_buf_.meta_buf_write(pfile, len);
+            auto res = this->meta_buf_write(pfile, len);
             if (res < len) {
                 return res < 0 ? res : 1;
             }
@@ -2225,7 +2222,7 @@ protected:
         }
         *p++ = '\n';
 
-        ssize_t res = this->meta_buf_.meta_buf_write(mes, p-mes);
+        ssize_t res = this->meta_buf_write(mes, p-mes);
 
         if (res < p-mes) {
             return res < 0 ? res : 1;
@@ -2256,9 +2253,6 @@ public:
         }
         ::unlink(this->mf_.filename);
     }
-
-    wrmcapture_ofile_buf_out & meta_buf() noexcept
-    { return this->meta_buf_; }
 
     void update_sec(time_t sec)
     { this->stop_sec_ = sec; }
@@ -3388,7 +3382,7 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
             unsigned(height),
             "nochecksum"
         );
-        const ssize_t res = this->buffer().meta_buf().meta_buf_write(header1, len);
+        const ssize_t res = this->buffer().meta_buf_write(header1, len);
         if (res < 0) {
             int err = errno;
             LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
