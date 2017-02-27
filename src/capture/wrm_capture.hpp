@@ -587,6 +587,51 @@ struct ocrypto {
     uint32_t       encrypt_raw_size;                // the unciphered/uncompressed file size
     uint32_t       encrypt_file_size;               // the current file size
 
+    /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
+     * Return 0 on success, negative value on error
+     */
+    int xaes_encrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
+    {
+        int safe_size = *dst_sz;
+        int remaining_size = 0;
+
+        /* allows reusing of ectx for multiple encryption cycles */
+        if (EVP_EncryptInit_ex(&this->encrypt_ectx, nullptr, nullptr, nullptr, nullptr) != 1){
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare encryption context!\n", getpid());
+            return -1;
+        }
+        if (EVP_EncryptUpdate(&this->encrypt_ectx, dst_buf, &safe_size, src_buf, src_sz) != 1) {
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could encrypt data!\n", getpid());
+            return -1;
+        }
+        if (EVP_EncryptFinal_ex(&this->encrypt_ectx, dst_buf + safe_size, &remaining_size) != 1){
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish encryption!\n", getpid());
+            return -1;
+        }
+        *dst_sz = safe_size + remaining_size;
+        return 0;
+    }
+
+    /* Update hash context with new data.
+     * Returns 0 on success, -1 on error
+     */
+    int xmd_update(const void * src_buf, uint32_t src_sz)
+    {
+        if (::EVP_DigestUpdate(&this->encrypt_hctx, src_buf, src_sz) != 1) {
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
+            return -1;
+        }
+        if (this->encrypt_file_size < 4096) {
+            size_t remaining_size = 4096 - this->encrypt_file_size;
+            size_t hashable_size = MIN(remaining_size, src_sz);
+            if (::EVP_DigestUpdate(&this->encrypt_hctx4k, src_buf, hashable_size) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
+                return -1;
+            }
+        }
+        return 0;
+    }
+
 };
 
 class wrmcapture_ocrypto_filename_buf : ocrypto
@@ -928,51 +973,6 @@ public:
             }
             remaining_len -= ret;
             total_sent += ret;
-        }
-        return 0;
-    }
-
-    /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
-     * Return 0 on success, negative value on error
-     */
-    int xaes_encrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
-    {
-        int safe_size = *dst_sz;
-        int remaining_size = 0;
-
-        /* allows reusing of encrypt_ectx for multiple encryption cycles */
-        if (EVP_EncryptInit_ex(&this->encrypt_ectx, nullptr, nullptr, nullptr, nullptr) != 1){
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare encryption context!\n", getpid());
-            return -1;
-        }
-        if (EVP_EncryptUpdate(&this->encrypt_ectx, dst_buf, &safe_size, src_buf, src_sz) != 1) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could encrypt data!\n", getpid());
-            return -1;
-        }
-        if (EVP_EncryptFinal_ex(&this->encrypt_ectx, dst_buf + safe_size, &remaining_size) != 1){
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish encryption!\n", getpid());
-            return -1;
-        }
-        *dst_sz = safe_size + remaining_size;
-        return 0;
-    }
-
-    /* Update hash context with new data.
-     * Returns 0 on success, -1 on error
-     */
-    int xmd_update(const void * src_buf, uint32_t src_sz)
-    {
-        if (::EVP_DigestUpdate(&this->encrypt_hctx, src_buf, src_sz) != 1) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
-            return -1;
-        }
-        if (this->encrypt_file_size < 4096) {
-            size_t remaining_size = 4096 - this->encrypt_file_size;
-            size_t hashable_size = MIN(remaining_size, src_sz);
-            if (::EVP_DigestUpdate(&this->encrypt_hctx4k, src_buf, hashable_size) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
-                return -1;
-            }
         }
         return 0;
     }
@@ -1353,50 +1353,6 @@ private:
         return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
     }
 
-    /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
-     * Return 0 on success, negative value on error
-     */
-    int xaes_encrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
-    {
-        int safe_size = *dst_sz;
-        int remaining_size = 0;
-
-        /* allows reusing of ectx for multiple encryption cycles */
-        if (EVP_EncryptInit_ex(&this->encrypt_ectx, nullptr, nullptr, nullptr, nullptr) != 1){
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare encryption context!\n", getpid());
-            return -1;
-        }
-        if (EVP_EncryptUpdate(&this->encrypt_ectx, dst_buf, &safe_size, src_buf, src_sz) != 1) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could encrypt data!\n", getpid());
-            return -1;
-        }
-        if (EVP_EncryptFinal_ex(&this->encrypt_ectx, dst_buf + safe_size, &remaining_size) != 1){
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish encryption!\n", getpid());
-            return -1;
-        }
-        *dst_sz = safe_size + remaining_size;
-        return 0;
-    }
-
-    /* Update hash context with new data.
-     * Returns 0 on success, -1 on error
-     */
-    int xmd_update(const void * src_buf, uint32_t src_sz)
-    {
-        if (::EVP_DigestUpdate(&this->encrypt_hctx, src_buf, src_sz) != 1) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
-            return -1;
-        }
-        if (this->encrypt_file_size < 4096) {
-            size_t remaining_size = 4096 - this->encrypt_file_size;
-            size_t hashable_size = MIN(remaining_size, src_sz);
-            if (::EVP_DigestUpdate(&this->encrypt_hctx4k, src_buf, hashable_size) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
-                return -1;
-            }
-        }
-        return 0;
-    }
 
 };
 
