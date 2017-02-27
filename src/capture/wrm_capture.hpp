@@ -578,12 +578,7 @@ inline char * wrmcapture_swrite_hash(char * p, wrmcapture_hash_type const & hash
     return p;
 }
 
-
-
-class wrmcapture_ocrypto_filename_buf
-{
-    int file_fd;
-
+struct ocrypto {
     char           encrypt_buf[CRYPTO_BUFFER_SIZE]; //
     EVP_CIPHER_CTX encrypt_ectx;                    // [en|de]cryption context
     EVP_MD_CTX     encrypt_hctx;                    // hash context
@@ -591,6 +586,34 @@ class wrmcapture_ocrypto_filename_buf
     uint32_t       encrypt_pos;                     // current position in buf
     uint32_t       encrypt_raw_size;                // the unciphered/uncompressed file size
     uint32_t       encrypt_file_size;               // the current file size
+
+};
+
+class wrmcapture_ocrypto_filename_buf : ocrypto
+{
+    int file_fd;
+
+    CryptoContext & cctx;
+    Random & rnd;
+
+public:
+    explicit wrmcapture_ocrypto_filename_buf(wrmcapture_ocrypto_filename_params params)
+    : file_fd(-1)
+    , cctx(params.crypto_ctx)
+    , rnd(params.rnd)
+    {
+        if (-1 != this->file_fd) {
+            ::close(this->file_fd);
+            this->file_fd = -1;
+        }
+    }
+
+    ~wrmcapture_ocrypto_filename_buf()
+    {
+        if (this->is_open()) {
+            this->close();
+        }
+    }
 
     int encrypt_open(const unsigned char * trace_key, CryptoContext & cctx, const unsigned char * iv)
     {
@@ -954,28 +977,6 @@ class wrmcapture_ocrypto_filename_buf
         return 0;
     }
 
-    CryptoContext & cctx;
-    Random & rnd;
-
-public:
-    explicit wrmcapture_ocrypto_filename_buf(wrmcapture_ocrypto_filename_params params)
-    : file_fd(-1)
-    , cctx(params.crypto_ctx)
-    , rnd(params.rnd)
-    {
-        if (-1 != this->file_fd) {
-            ::close(this->file_fd);
-            this->file_fd = -1;
-        }
-    }
-
-    ~wrmcapture_ocrypto_filename_buf()
-    {
-        if (this->is_open()) {
-            this->close();
-        }
-    }
-
     int open(const char * filename, mode_t mode = 0600)
     {
         if (-1 != this->file_fd) {
@@ -1026,15 +1027,8 @@ public:
 };
 
 
-class wrmcapture_ocrypto_filter
+class wrmcapture_ocrypto_filter : ocrypto
 {
-    char           buf[CRYPTO_BUFFER_SIZE]; //
-    EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
-    EVP_MD_CTX     hctx;                    // hash context
-    EVP_MD_CTX     hctx4k;                  // hash context
-    uint32_t       pos;                     // current position in buf
-    uint32_t       raw_size;                // the unciphered/uncompressed file size
-    uint32_t       file_size;               // the current file size
 
     iofdbuf & snk;
 
@@ -1058,13 +1052,13 @@ public:
         unsigned char iv[32];
         this->rnd.random(iv, 32);
 
-        ::memset(this->buf, 0, sizeof(this->buf));
-        ::memset(&this->ectx, 0, sizeof(this->ectx));
-        ::memset(&this->hctx, 0, sizeof(this->hctx));
-        ::memset(&this->hctx4k, 0, sizeof(this->hctx4k));
-        this->pos = 0;
-        this->raw_size = 0;
-        this->file_size = 0;
+        ::memset(this->encrypt_buf, 0, sizeof(this->encrypt_buf));
+        ::memset(&this->encrypt_ectx, 0, sizeof(this->encrypt_ectx));
+        ::memset(&this->encrypt_hctx, 0, sizeof(this->encrypt_hctx));
+        ::memset(&this->encrypt_hctx4k, 0, sizeof(this->encrypt_hctx4k));
+        this->encrypt_pos = 0;
+        this->encrypt_raw_size = 0;
+        this->encrypt_file_size = 0;
 
         const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
         const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
@@ -1077,8 +1071,8 @@ public:
             return -1;
         }
 
-        ::EVP_CIPHER_CTX_init(&this->ectx);
-        if (::EVP_EncryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
+        ::EVP_CIPHER_CTX_init(&this->encrypt_ectx);
+        if (::EVP_EncryptInit_ex(&this->encrypt_ectx, cipher, nullptr, key, iv) != 1) {
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize encrypt context\n", ::getpid());
             return -1;
         }
@@ -1090,13 +1084,13 @@ public:
             return -1;
         }
 
-        ::EVP_MD_CTX_init(&this->hctx);
-        ::EVP_MD_CTX_init(&this->hctx4k);
-        if (::EVP_DigestInit_ex(&this->hctx, md, nullptr) != 1) {
+        ::EVP_MD_CTX_init(&this->encrypt_hctx);
+        ::EVP_MD_CTX_init(&this->encrypt_hctx4k);
+        if (::EVP_DigestInit_ex(&this->encrypt_hctx, md, nullptr) != 1) {
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context!\n", ::getpid());
             return -1;
         }
-        if (::EVP_DigestInit_ex(&this->hctx4k, md, nullptr) != 1) {
+        if (::EVP_DigestInit_ex(&this->encrypt_hctx4k, md, nullptr) != 1) {
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize 4k MD hash context!\n", ::getpid());
             return -1;
         }
@@ -1125,11 +1119,11 @@ public:
             for (int idx = 0; idx <  blocksize; idx++) {
                 key_buf[idx] = key_buf[idx] ^ 0x36;
             }
-            if (::EVP_DigestUpdate(&this->hctx, key_buf, blocksize) != 1) {
+            if (::EVP_DigestUpdate(&this->encrypt_hctx, key_buf, blocksize) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
                 return -1;
             }
-            if (::EVP_DigestUpdate(&this->hctx4k, key_buf, blocksize) != 1) {
+            if (::EVP_DigestUpdate(&this->encrypt_hctx4k, key_buf, blocksize) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
                 return -1;
             }
@@ -1153,7 +1147,7 @@ public:
             return write_ret;
         }
         // update file_size
-        this->file_size += 40;
+        this->encrypt_file_size += 40;
 
         return this->xmd_update(tmp_buf, 40);
     }
@@ -1163,12 +1157,12 @@ public:
         unsigned int remaining_size = len;
         while (remaining_size > 0) {
             // Check how much we can append into buffer
-            unsigned int available_size = MIN(CRYPTO_BUFFER_SIZE - this->pos, remaining_size);
+            unsigned int available_size = MIN(CRYPTO_BUFFER_SIZE - this->encrypt_pos, remaining_size);
             // Append and update pos pointer
-            ::memcpy(this->buf + this->pos, static_cast<const char*>(data) + (len - remaining_size), available_size);
-            this->pos += available_size;
+            ::memcpy(this->encrypt_buf + this->encrypt_pos, static_cast<const char*>(data) + (len - remaining_size), available_size);
+            this->encrypt_pos += available_size;
             // If buffer is full, flush it to disk
-            if (this->pos == CRYPTO_BUFFER_SIZE) {
+            if (this->encrypt_pos == CRYPTO_BUFFER_SIZE) {
                 if (this->flush()) {
                     return -1;
                 }
@@ -1176,7 +1170,7 @@ public:
             remaining_size -= available_size;
         }
         // Update raw size counter
-        this->raw_size += len;
+        this->encrypt_raw_size += len;
         return len;
     }
 
@@ -1186,7 +1180,7 @@ public:
     int flush()
     {
         // No data to flush
-        if (!this->pos) {
+        if (!this->encrypt_pos) {
             return 0;
         }
 
@@ -1194,8 +1188,8 @@ public:
         // TODO: check this
         char compressed_buf[65536];
         //char compressed_buf[compressed_buf_sz];
-        size_t compressed_buf_sz = ::snappy_max_compressed_length(this->pos);
-        snappy_status status = snappy_compress(this->buf, this->pos, compressed_buf, &compressed_buf_sz);
+        size_t compressed_buf_sz = ::snappy_max_compressed_length(this->encrypt_pos);
+        snappy_status status = snappy_compress(this->encrypt_buf, this->encrypt_pos, compressed_buf, &compressed_buf_sz);
 
         switch (status)
         {
@@ -1234,10 +1228,10 @@ public:
         if (-1 == this->xmd_update(&ciphered_buf, ciphered_buf_sz)) {
             return -1;
         }
-        this->file_size += ciphered_buf_sz;
+        this->encrypt_file_size += ciphered_buf_sz;
 
         // Reset buffer
-        this->pos = 0;
+        this->encrypt_pos = 0;
         return 0;
     }
 
@@ -1251,10 +1245,10 @@ public:
             (eof_magic >> 8) & 0xFF,
             (eof_magic >> 16) & 0xFF,
             (eof_magic >> 24) & 0xFF,
-            uint8_t(this->raw_size & 0xFF),
-            uint8_t((this->raw_size >> 8) & 0xFF),
-            uint8_t((this->raw_size >> 16) & 0xFF),
-            uint8_t((this->raw_size >> 24) & 0xFF),
+            uint8_t(this->encrypt_raw_size & 0xFF),
+            uint8_t((this->encrypt_raw_size >> 8) & 0xFF),
+            uint8_t((this->encrypt_raw_size >> 16) & 0xFF),
+            uint8_t((this->encrypt_raw_size >> 24) & 0xFF),
         };
 
         int write_ret1 = this->raw_write(tmp_buf, 8);
@@ -1262,18 +1256,18 @@ public:
             // TOOD: actual error code could help
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
         }
-        this->file_size += 8;
+        this->encrypt_file_size += 8;
 
         this->xmd_update(tmp_buf, 8);
 
         if (hash) {
             unsigned char tmp_hash[MD_HASH_LENGTH << 1];
-            if (::EVP_DigestFinal_ex(&this->hctx4k, tmp_hash, nullptr) != 1) {
+            if (::EVP_DigestFinal_ex(&this->encrypt_hctx4k, tmp_hash, nullptr) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute 4k MD digests\n", ::getpid());
                 result = -1;
                 tmp_hash[0] = '\0';
             }
-            if (::EVP_DigestFinal_ex(&this->hctx, tmp_hash + MD_HASH_LENGTH, nullptr) != 1) {
+            if (::EVP_DigestFinal_ex(&this->encrypt_hctx, tmp_hash + MD_HASH_LENGTH, nullptr) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
                 result = -1;
                 tmp_hash[MD_HASH_LENGTH] = '\0';
@@ -1368,15 +1362,15 @@ private:
         int remaining_size = 0;
 
         /* allows reusing of ectx for multiple encryption cycles */
-        if (EVP_EncryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
+        if (EVP_EncryptInit_ex(&this->encrypt_ectx, nullptr, nullptr, nullptr, nullptr) != 1){
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare encryption context!\n", getpid());
             return -1;
         }
-        if (EVP_EncryptUpdate(&this->ectx, dst_buf, &safe_size, src_buf, src_sz) != 1) {
+        if (EVP_EncryptUpdate(&this->encrypt_ectx, dst_buf, &safe_size, src_buf, src_sz) != 1) {
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could encrypt data!\n", getpid());
             return -1;
         }
-        if (EVP_EncryptFinal_ex(&this->ectx, dst_buf + safe_size, &remaining_size) != 1){
+        if (EVP_EncryptFinal_ex(&this->encrypt_ectx, dst_buf + safe_size, &remaining_size) != 1){
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish encryption!\n", getpid());
             return -1;
         }
@@ -1389,14 +1383,14 @@ private:
      */
     int xmd_update(const void * src_buf, uint32_t src_sz)
     {
-        if (::EVP_DigestUpdate(&this->hctx, src_buf, src_sz) != 1) {
+        if (::EVP_DigestUpdate(&this->encrypt_hctx, src_buf, src_sz) != 1) {
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
             return -1;
         }
-        if (this->file_size < 4096) {
-            size_t remaining_size = 4096 - this->file_size;
+        if (this->encrypt_file_size < 4096) {
+            size_t remaining_size = 4096 - this->encrypt_file_size;
             size_t hashable_size = MIN(remaining_size, src_sz);
-            if (::EVP_DigestUpdate(&this->hctx4k, src_buf, hashable_size) != 1) {
+            if (::EVP_DigestUpdate(&this->encrypt_hctx4k, src_buf, hashable_size) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
                 return -1;
             }
