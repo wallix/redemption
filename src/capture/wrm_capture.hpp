@@ -248,117 +248,6 @@ public:
 };
 
 
-class wrmcapture_out_sequence_filename_buf_impl
-{
-    char current_filename_[1024];
-    wrmcapture_FilenameGenerator filegen_;
-    iofdbuf buf_;
-    unsigned num_file_;
-    int groupid_;
-
-public:
-    explicit wrmcapture_out_sequence_filename_buf_impl(wrmcapture_out_sequence_filename_buf_param const & params)
-    : filegen_(params.format, params.prefix, params.filename, params.extension)
-    , buf_()
-    , num_file_(0)
-    , groupid_(params.groupid)
-    {
-        this->current_filename_[0] = 0;
-    }
-
-    int close()
-    { return this->next(); }
-
-    ssize_t write(const void * data, size_t len)
-    {
-        if (!this->buf_.is_open()) {
-            const int res = this->open_filename(this->filegen_.get(this->num_file_));
-            if (res < 0) {
-                return res;
-            }
-        }
-        return this->buf_.write(data, len);
-    }
-
-    /// \return 0 if success
-    int next()
-    {
-        if (this->buf_.is_open()) {
-            this->buf_.close();
-            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-            return this->rename_filename() ? 0 : 1;
-        }
-        return 1;
-    }
-
-    void request_full_cleaning()
-    {
-        unsigned i = this->num_file_ + 1;
-        while (i > 0 && !::unlink(this->filegen_.get(--i))) {
-        }
-        if (this->buf_.is_open()) {
-            this->buf_.close();
-        }
-    }
-
-    const wrmcapture_FilenameGenerator & seqgen() const noexcept
-    { return this->filegen_; }
-
-    iofdbuf & buf() noexcept
-    { return this->buf_; }
-
-    const char * current_path() const
-    {
-        if (!this->current_filename_[0] && !this->num_file_) {
-            return nullptr;
-        }
-        return this->filegen_.get(this->num_file_ - 1);
-    }
-
-protected:
-    ssize_t open_filename(const char * filename)
-    {
-        snprintf(this->current_filename_, sizeof(this->current_filename_),
-                    "%sred-XXXXXX.tmp", filename);
-        const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
-        if (fd < 0) {
-            return fd;
-        }
-        if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-               , this->current_filename_
-               , this->groupid_ ? "u+r, g+r" : "u+r"
-               , strerror(errno), errno);
-        }
-        this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-        return this->buf_.open(fd);
-    }
-
-    const char * rename_filename()
-    {
-        const char * filename = this->get_filename_generate();
-        const int res = ::rename(this->current_filename_, filename);
-        if (res < 0) {
-            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-               , this->current_filename_, filename, errno, strerror(errno));
-            return nullptr;
-        }
-
-        this->current_filename_[0] = 0;
-        ++this->num_file_;
-        this->filegen_.set_last_filename(-1u, "");
-
-        return filename;
-    }
-
-    const char * get_filename_generate()
-    {
-        this->filegen_.set_last_filename(-1u, "");
-        const char * filename = this->filegen_.get(this->num_file_);
-        this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-        return filename;
-    }
-};
 
 
 struct wrmcapture_OutFilenameSequenceTransport : public Transport
@@ -378,13 +267,13 @@ struct wrmcapture_OutFilenameSequenceTransport : public Transport
     }
 
     const wrmcapture_FilenameGenerator * seqgen() const noexcept
-    { return &(this->buffer().seqgen()); }
+    { return &(this->buf.seqgen()); }
 
     bool next() override {
         if (this->status == false) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
-        const ssize_t res = this->buffer().next();
+        const ssize_t res = this->buf.next();
         if (res) {
             this->status = false;
             if (res < 0){
@@ -402,7 +291,7 @@ struct wrmcapture_OutFilenameSequenceTransport : public Transport
     }
 
     void request_full_cleaning() override {
-        this->buffer().request_full_cleaning();
+        this->buf.request_full_cleaning();
     }
 
     ~wrmcapture_OutFilenameSequenceTransport() {
@@ -429,13 +318,117 @@ private:
         this->last_quantum_sent += res;
     }
 
-    wrmcapture_out_sequence_filename_buf_impl & buffer() noexcept
-    { return this->buf; }
+    class wrmcapture_out_sequence_filename_buf_impl
+    {
+        char current_filename_[1024];
+        wrmcapture_FilenameGenerator filegen_;
+        iofdbuf buf_;
+        unsigned num_file_;
+        int groupid_;
 
-    const wrmcapture_out_sequence_filename_buf_impl & buffer() const noexcept
-    { return this->buf; }
+    public:
+        explicit wrmcapture_out_sequence_filename_buf_impl(wrmcapture_out_sequence_filename_buf_param const & params)
+        : filegen_(params.format, params.prefix, params.filename, params.extension)
+        , buf_()
+        , num_file_(0)
+        , groupid_(params.groupid)
+        {
+            this->current_filename_[0] = 0;
+        }
 
-    wrmcapture_out_sequence_filename_buf_impl buf;
+        int close()
+        { return this->next(); }
+
+        ssize_t write(const void * data, size_t len)
+        {
+            if (!this->buf_.is_open()) {
+                const int res = this->open_filename(this->filegen_.get(this->num_file_));
+                if (res < 0) {
+                    return res;
+                }
+            }
+            return this->buf_.write(data, len);
+        }
+
+        /// \return 0 if success
+        int next()
+        {
+            if (this->buf_.is_open()) {
+                this->buf_.close();
+                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+                return this->rename_filename() ? 0 : 1;
+            }
+            return 1;
+        }
+
+        void request_full_cleaning()
+        {
+            unsigned i = this->num_file_ + 1;
+            while (i > 0 && !::unlink(this->filegen_.get(--i))) {
+            }
+            if (this->buf_.is_open()) {
+                this->buf_.close();
+            }
+        }
+
+        const wrmcapture_FilenameGenerator & seqgen() const noexcept
+        { return this->filegen_; }
+
+        iofdbuf & buf() noexcept
+        { return this->buf_; }
+
+        const char * current_path() const
+        {
+            if (!this->current_filename_[0] && !this->num_file_) {
+                return nullptr;
+            }
+            return this->filegen_.get(this->num_file_ - 1);
+        }
+
+    protected:
+        ssize_t open_filename(const char * filename)
+        {
+            snprintf(this->current_filename_, sizeof(this->current_filename_),
+                        "%sred-XXXXXX.tmp", filename);
+            const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+            if (fd < 0) {
+                return fd;
+            }
+            if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                   , this->current_filename_
+                   , this->groupid_ ? "u+r, g+r" : "u+r"
+                   , strerror(errno), errno);
+            }
+            this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+            return this->buf_.open(fd);
+        }
+
+        const char * rename_filename()
+        {
+            const char * filename = this->get_filename_generate();
+            const int res = ::rename(this->current_filename_, filename);
+            if (res < 0) {
+                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                   , this->current_filename_, filename, errno, strerror(errno));
+                return nullptr;
+            }
+
+            this->current_filename_[0] = 0;
+            ++this->num_file_;
+            this->filegen_.set_last_filename(-1u, "");
+
+            return filename;
+        }
+
+        const char * get_filename_generate()
+        {
+            this->filegen_.set_last_filename(-1u, "");
+            const char * filename = this->filegen_.get(this->num_file_);
+            this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+            return filename;
+        }
+    } buf;
 };
 
 
@@ -453,8 +446,7 @@ struct wrmcapture_out_meta_sequence_filename_buf_noparam
         const char * const prefix,
         const char * const filename,
         const char * const extension,
-        const int groupid,
-        wrmcapture_no_param const & meta_buf_params = wrmcapture_no_param())
+        const int groupid)
     : sq_params(format, prefix, filename, extension, groupid)
     , sec(start_sec)
     , meta_buf_params(meta_buf_params)
@@ -2276,8 +2268,88 @@ public:
 
 
 class wrmcapture_out_meta_sequence_filename_buf_impl_cctx
-: public wrmcapture_out_sequence_filename_buf_impl
 {
+
+// =====================================================================
+
+        char current_filename_[1024];
+        wrmcapture_FilenameGenerator filegen_;
+        iofdbuf buf_;
+        unsigned num_file_;
+        int groupid_;
+
+    public:
+
+        ssize_t write(const void * data, size_t len)
+        {
+            if (!this->buf_.is_open()) {
+                const int res = this->open_filename(this->filegen_.get(this->num_file_));
+                if (res < 0) {
+                    return res;
+                }
+            }
+            return this->buf_.write(data, len);
+        }
+
+        const wrmcapture_FilenameGenerator & seqgen() const noexcept
+        { return this->filegen_; }
+
+        iofdbuf & buf() noexcept
+        { return this->buf_; }
+
+        const char * current_path() const
+        {
+            if (!this->current_filename_[0] && !this->num_file_) {
+                return nullptr;
+            }
+            return this->filegen_.get(this->num_file_ - 1);
+        }
+
+    protected:
+        ssize_t open_filename(const char * filename)
+        {
+            snprintf(this->current_filename_, sizeof(this->current_filename_),
+                        "%sred-XXXXXX.tmp", filename);
+            const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+            if (fd < 0) {
+                return fd;
+            }
+            if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                   , this->current_filename_
+                   , this->groupid_ ? "u+r, g+r" : "u+r"
+                   , strerror(errno), errno);
+            }
+            this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+            return this->buf_.open(fd);
+        }
+
+        const char * rename_filename()
+        {
+            const char * filename = this->get_filename_generate();
+            const int res = ::rename(this->current_filename_, filename);
+            if (res < 0) {
+                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                   , this->current_filename_, filename, errno, strerror(errno));
+                return nullptr;
+            }
+
+            this->current_filename_[0] = 0;
+            ++this->num_file_;
+            this->filegen_.set_last_filename(-1u, "");
+
+            return filename;
+        }
+
+        const char * get_filename_generate()
+        {
+            this->filegen_.set_last_filename(-1u, "");
+            const char * filename = this->filegen_.get(this->num_file_);
+            this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+            return filename;
+        }
+
+// =====================================================================
     wrmcapture_cctx_ochecksum_file meta_buf_;
     wrmcapture_MetaFilename mf_;
     wrmcapture_MetaFilename hf_;
@@ -2288,13 +2360,17 @@ public:
     explicit wrmcapture_out_meta_sequence_filename_buf_impl_cctx(
         wrmcapture_out_meta_sequence_filename_buf_param_cctx const & params
     )
-    : wrmcapture_out_sequence_filename_buf_impl(params.sq_params)
+    : filegen_(params.sq_params.format, params.sq_params.prefix, params.sq_params.filename, params.sq_params.extension)
+    , buf_()
+    , num_file_(0)
+    , groupid_(params.sq_params.groupid)
     , meta_buf_(params.meta_buf_params)
     , mf_(params.sq_params.prefix, params.sq_params.filename, params.sq_params.format)
     , hf_(params.hash_prefix, params.sq_params.filename, params.sq_params.format)
     , start_sec_(params.sec)
     , stop_sec_(params.sec)
     {
+        this->current_filename_[0] = 0;
         if (this->meta_buf_.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
             LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
@@ -2445,6 +2521,7 @@ public:
         return 0;
     }
 
+
     /// \return 0 if success
     int next()
     {
@@ -2488,7 +2565,12 @@ protected:
 public:
     void request_full_cleaning()
     {
-        this->wrmcapture_out_sequence_filename_buf_impl::request_full_cleaning();
+        unsigned i = this->num_file_ + 1;
+        while (i > 0 && !::unlink(this->filegen_.get(--i))) {
+        }
+        if (this->buf_.is_open()) {
+            this->buf_.close();
+        }
         ::unlink(this->mf_.filename);
     }
 
