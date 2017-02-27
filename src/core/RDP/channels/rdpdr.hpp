@@ -1788,7 +1788,7 @@ struct ClientDriveControlResponse {
 
     void log() {
         LOG(LOG_INFO, "     Client Drive Control Response:");
-        LOG(LOG_INFO, "          * OutputBufferLength = %d (4 bytes)", this->OutputBufferLength);
+        LOG(LOG_INFO, "          * OutputBufferLength = %u (4 bytes)", this->OutputBufferLength);
     }
 };
 
@@ -4720,6 +4720,61 @@ struct ServerDriveLockControlRequest {
 
 
 
+// 2.2.3.4.12 Client Drive Lock Control Response (DR_DRIVE_LOCK_RSP)
+//
+// This message is sent by the client as a response to the Server Drive Lock Control Request (section 2.2.3.3.12).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                    DeviceIoReply (16 bytes)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                            Padding                            |
+// +---------------+-----------------------------------------------+
+// |      ...      |                                               |
+// +---------------+-----------------------------------------------+
+
+// DeviceIoReply (16 bytes):  A DR_DEVICE_IOCOMPLETION (section 2.2.1.5) header. The CompletionId field of the DR_DEVICE_IOCOMPLETION header MUST match a Device I/O Request (section 2.2.1.4) that has the MajorFunction field set to IRP_MJ_LOCK_CONTROL.
+//
+// Padding (5 bytes): 5 bytes of padding. This field is unused and MUST be ignored.
+
+struct ClientDriveLockControlResponse {
+
+    ClientDriveLockControlResponse() = default;
+
+    void emit(OutStream & stream) {
+        stream.out_clear_bytes(5);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 5;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientDriveLockControlResponse (0): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        stream.in_skip_bytes(5);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Client Drive Lock Control Response:");
+        LOG(LOG_INFO, "          * Padding - (5 bytes) NOT USED");
+
+    }
+};
+
+
+
 // [MS-RDPEFS]: Remote Desktop Protocol: File System Virtual Channel Extension
 
 // 2.2.1.6 RDP_LOCK_INFO
@@ -5456,8 +5511,9 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                 cdcr.receive(s);
                                 cdcr.log();
 
-                                if (cdcr.OutputBufferLength > 0) {
+                                //if (cdcr.OutputBufferLength > 0) {
                                     switch (status_dior.IOControlCode) {
+                                        case fscc::FSCTL_GET_OBJECT_ID:
                                         case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID:
                                         {
                                             fscc::FileObjectBuffer_Type1 rgdb;
@@ -5470,7 +5526,7 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                         default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Code: 0x%08x", status_dior.IOControlCode);
                                             break;
                                     }
-                                }
+                                //}
                             }
                             break;
                         case IRP_MJ_QUERY_VOLUME_INFORMATION:

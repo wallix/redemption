@@ -444,6 +444,8 @@ public:
 //
 //         virtual const uint8_t * get_data(size_t size) = 0;
 //
+//         virtual ~OutStreamData() {}
+//
 //     };
 //
 //     struct OutStreamDataRaw : OutStreamData {
@@ -465,13 +467,16 @@ public:
 //         char data_to_send[1600];
 //
 //         OutStreamDataFStream(std::string & file_name)
-//           : ifile(file_name.c_str(), std::ios::in | std::ios::binary)
+//           : ifile(file_name.x, std::ios::in | std::ios::binary)
 //           {}
 //
 //         const uint8_t * get_data(size_t size) {
-//
 //             this->ifile.read(this->data_to_send, size);
 //             return reinterpret_cast<const uint8_t *>(this->data_to_send);
+//         }
+//
+//         bool is_open() {
+//             return this->ifile.is_open();
 //         }
 //
 //         ~OutStreamDataFStream() {

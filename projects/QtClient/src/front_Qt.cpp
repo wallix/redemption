@@ -2132,7 +2132,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                            , out_stream_first_part
                                                                            , first_part_data_size
                                                                            , this->_clipboard_qt->_chunk.get()
-                                                                           , total_length + RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender::SIZE
+                                                                           , this->_clipboard_qt->_cliboard_data_length + RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender::SIZE
                                                                            , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                                            );
                                 }
@@ -2244,7 +2244,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Resquest PDU FAIL");
                     } else {
                         if (this->verbose & RDPVerbose::cliprdr) {
-                            LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Resquest PDU");
+                            LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Resquest PDU");
                         }
 
                         chunk.in_skip_bytes(4);                 // data_len
@@ -2294,7 +2294,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                        , first_part_data_size
                                                                        , reinterpret_cast<uint8_t *>(
                                                                          this->_clipboard_qt->_items_list[lindex]->chunk)
-                                                                       , total_length
+                                                                       , this->_clipboard_qt->_items_list[lindex]->size
                                                                        , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                                        );
 
@@ -2589,6 +2589,24 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                         switch (deviceIORequest.MajorFunction()) {
 
+                            case rdpdr::IRP_MJ_LOCK_CONTROL:
+                            {
+                                deviceIOResponse.emit(out_stream);
+
+                                rdpdr::ClientDriveLockControlResponse cdlcr;
+                                cdlcr.emit(out_stream);
+
+                                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                                this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                                    , chunk_to_send
+                                                                    , out_stream.get_offset()
+                                                                    , CHANNELS::CHANNEL_FLAG_LAST |
+                                                                      CHANNELS::CHANNEL_FLAG_FIRST
+                                                                    );
+                            }
+                                break;
+
                             case rdpdr::IRP_MJ_CREATE:
                                 LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Create Request");
                                 {
@@ -2681,7 +2699,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         uint64_t LastAccessTime = UnixSecondsToWindowsTick(buff.st_atime);
                                         uint64_t LastWriteTime  = UnixSecondsToWindowsTick(buff.st_mtime);
                                         //UnixSecondsToWindowsTick(buff.st_ctime);
-                                        uint64_t ChangeTime     = 0;
+                                        uint64_t ChangeTime     = UnixSecondsToWindowsTick(buff.st_ctime);
                                         uint32_t FileAttributes = fscc::FILE_ATTRIBUTE_ARCHIVE;
                                         if (S_ISDIR(buff.st_mode)) {
                                             FileAttributes = fscc::FILE_ATTRIBUTE_DIRECTORY;
@@ -2818,11 +2836,15 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 deviceIOResponse.emit(out_stream);
 
                                 uint8_t * ReadData(nullptr);
-                                int file_size(0);
+                                int file_size(drr.Length());
+                                int offset(drr.Offset());
+                                int shift(file_size*offset);
 
                                 std::ifstream ateFile(this->fileSystemData.paths[id-1], std::ios::binary| std::ios::ate);
                                 if(ateFile.is_open()) {
-                                    file_size = ateFile.tellg();
+                                    if (shift > ateFile.tellg()) {
+                                        file_size = 0;
+                                    }
                                     ateFile.close();
 
                                     std::ifstream inFile(this->fileSystemData.paths[id-1], std::ios::in | std::ios::binary);
@@ -2846,7 +2868,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                        , 20 + file_size
                                                                        , out_stream
                                                                        , 236
-                                                                       , ReadData
+                                                                       , ReadData + (file_size*offset)
                                                                        , file_size
                                                                        , 0);
 
@@ -3268,26 +3290,49 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     switch (dcr.IoControlCode()) {
                                         case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID :
                                             {
+                                                rdpdr::ClientDriveControlResponse cdcr(64);
+                                                cdcr.emit(out_stream);
+
                                                 uint8_t ObjectId[16] =  { 0 };
+                                                ObjectId[0] = 1;
                                                 uint8_t BirthVolumeId[16] =  { 0 };
+                                                BirthVolumeId[15] = 1;
                                                 uint8_t BirthObjectId[16] =  { 0 };
+                                                BirthObjectId[15] = 1;
 
                                                 fscc::FileObjectBuffer_Type1 rgdb(ObjectId, BirthVolumeId, BirthObjectId);
                                                 rgdb.emit(out_stream);
                                             }
                                             break;
+
+                                        case fscc::FSCTL_GET_OBJECT_ID :
+                                        {
+                                            rdpdr::ClientDriveControlResponse cdcr(64);
+                                            cdcr.emit(out_stream);
+
+                                            uint8_t ObjectId[16] =  { 0 };
+                                            ObjectId[0] = 1;
+                                            uint8_t BirthVolumeId[16] =  { 0 };
+                                            uint8_t BirthObjectId[16] =  { 0 };
+
+                                            fscc::FileObjectBuffer_Type1 rgdb(ObjectId, BirthVolumeId, BirthObjectId);
+                                            rgdb.emit(out_stream);
+
+                                        }
+                                            break;
+
                                         default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Data: Code = 0x%08x", dcr.IoControlCode());
                                             break;
                                     }
 
-//                                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-//
-//                                     this->_callback->send_to_mod_channel( channel_names::rdpdr
-//                                                                         , chunk_to_send
-//                                                                         , out_stream.get_offset()
-//                                                                         , CHANNELS::CHANNEL_FLAG_LAST |
-//                                                                           CHANNELS::CHANNEL_FLAG_FIRST
-//                                                                         );
+                                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                                    this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                                        , chunk_to_send
+                                                                        , out_stream.get_offset()
+                                                                        , CHANNELS::CHANNEL_FLAG_LAST |
+                                                                          CHANNELS::CHANNEL_FLAG_FIRST
+                                                                        );
                                 }
                                 LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Client Drive Control Response");
                                 break;
@@ -3457,9 +3502,11 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk, CB_B
         case ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS:
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                //cb_buffers.sizeTotal = cb_filesList.itemslist[cb_filesList.lindexToRequest].size;
                 cb_filesList.streamIDToRequest = chunk.in_uint32_le();
-                //cb_buffers.data = std::make_unique<uint8_t[]>(cb_filesList.itemslist[cb_filesList.lindexToRequest].size);
+            }
+
+            if (cb_filesList.lindexToRequest == 1 && cb_filesList.itemslist.size() == 1) {
+                cb_filesList.lindexToRequest = 0;
             }
 
             clipboard_qt->write_clipboard_temp_file( cb_filesList.itemslist[cb_filesList.lindexToRequest].name
@@ -3694,12 +3741,6 @@ void Front_Qt::process_client_clipboard_out_data(const char * const front_channe
         int real_total = data_len - first_part_data_size;
         const int cmpt_PDU_part(real_total  / CHANNELS::CHANNEL_CHUNK_LENGTH);
         const int remains_PDU  (real_total  % CHANNELS::CHANNEL_CHUNK_LENGTH);
-//         LOG(LOG_WARNING, "first_part_data_size = %d", first_part_data_size);
-//         LOG(LOG_WARNING, "cmpt_PDU_part = %d", cmpt_PDU_part);
-//         LOG(LOG_WARNING, "remains_PDU = %d", remains_PDU);
-//         LOG(LOG_WARNING, "recalc total = %d", (cmpt_PDU_part*CHANNELS::CHANNEL_CHUNK_LENGTH)+remains_PDU+first_part_data_size);
-//         LOG(LOG_WARNING, "data_len = %d", data_len);
-//         LOG(LOG_WARNING, "total_length = %d", total_length);
         int data_sent(0);
 
         // First Part
@@ -3731,6 +3772,7 @@ void Front_Qt::process_client_clipboard_out_data(const char * const front_channe
                                                 , total_length
                                                 , flags
                                                 );
+
 //             msgdump_c(false, false, total_length, 0, out_stream_next_part.get_data(), out_stream_next_part.get_offset());
         }
 
@@ -3746,6 +3788,7 @@ void Front_Qt::process_client_clipboard_out_data(const char * const front_channe
                                                 , total_length
                                                 , CHANNELS::CHANNEL_FLAG_LAST | flags
                                                 );
+
 //             msgdump_c(false, false, total_length, 0, out_stream_last_part.get_data(), out_stream_last_part.get_offset());
 
     } else {
