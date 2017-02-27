@@ -717,6 +717,8 @@ protected:
         }
     } session_probe_virtual_channel_event_handler;
 
+    bool clean_up_32_bpp_cursor;
+
 public:
     using Verbose = RDPVerbose;
 
@@ -858,6 +860,7 @@ public:
         , asynchronous_task_event_handler(*this)
         , session_probe_launcher_event_handler(*this)
         , session_probe_virtual_channel_event_handler(*this)
+        , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
     {
         if (this->verbose & RDPVerbose::basic_trace) {
             if (!enable_transparent_mode) {
@@ -1929,7 +1932,7 @@ private:
                     const bool from_or_to_client = false;
                     uint32_t total_length = length;
                     if (total_length > CHANNELS::CHANNEL_CHUNK_LENGTH) {
-                        total_length = CHANNELS::CHANNEL_CHUNK_LENGTH;
+                        total_length = chunk.get_capacity() - chunk.get_offset();
                     }
                     ::msgdump_d(send, from_or_to_client, length, flags,
                     chunk.get_data(), total_length);
@@ -3255,6 +3258,9 @@ public:
 
                 case FastPath::UpdateType::PTR_NULL:
                     {
+                        if (this->verbose & RDPVerbose::basic_trace3) {
+                            LOG(LOG_INFO, "Process pointer null (Fast)");
+                        }
                         Pointer cursor;
                         this->front.set_pointer(cursor);
                     }
@@ -3262,6 +3268,9 @@ public:
 
                 case FastPath::UpdateType::PTR_DEFAULT:
                     {
+                        if (this->verbose & RDPVerbose::basic_trace3) {
+                            LOG(LOG_INFO, "Process pointer default (Fast)");
+                        }
                         Pointer cursor(Pointer::POINTER_SYSTEM_DEFAULT);
                         this->front.set_pointer(cursor);
                     }
@@ -3312,7 +3321,7 @@ public:
                     break;
 
                 case FastPath::UpdateType::POINTER:
-                    if (this->verbose & RDPVerbose::basic_trace3)  {
+                    if (this->verbose & RDPVerbose::basic_trace3) {
                         LOG(LOG_INFO, "Process pointer new (Fast)");
                     }
                     this->process_new_pointer_pdu(upd.payload);
@@ -4302,16 +4311,15 @@ public:
 
                 if (this->remote_program) {
                     RailCaps rail_caps;
-                    rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED;
+                    this->front.retrieve_client_capability_set(rail_caps);
+                    rail_caps.RailSupportLevel &= (TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED);
                     if (this->verbose & RDPVerbose::basic_trace) {
                         rail_caps.log("Sending to server");
                     }
                     confirm_active_pdu.emit_capability_set(rail_caps);
 
                     WindowListCaps window_list_caps;
-                    window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED_EX;
-                    window_list_caps.NumIconCaches = 3;
-                    window_list_caps.NumIconCacheEntries = 12;
+                    this->front.retrieve_client_capability_set(window_list_caps);
                     if (this->verbose & RDPVerbose::basic_trace) {
                         window_list_caps.log("Sending to server");
                     }
@@ -6465,6 +6473,9 @@ public:
         switch (system_pointer_type) {
         case RDP_NULL_POINTER:
             {
+                if (this->verbose & RDPVerbose::basic_trace3) {
+                    LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - null");
+                }
                 Pointer cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
                 this->front.set_pointer(cursor);
@@ -6472,6 +6483,9 @@ public:
             break;
         default:
             {
+                if (this->verbose & RDPVerbose::basic_trace3) {
+                    LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - default");
+                }
                 Pointer cursor(Pointer::POINTER_NORMAL);
                 this->front.set_pointer(cursor);
             }
@@ -6694,6 +6708,43 @@ public:
             stream.in_skip_bytes(dlen);
             this->to_regular_mask(stream.get_current(), mlen, data_bpp, cursor.mask);
             stream.in_skip_bytes(mlen);
+        }
+
+        if ((data_bpp == 32) && this->clean_up_32_bpp_cursor) {
+            const unsigned int xor_line_length_in_byte = cursor.width * 3;
+            const unsigned int xor_padded_line_length_in_byte =
+                ((xor_line_length_in_byte % 2) ?
+                 xor_line_length_in_byte + 1 :
+                 xor_line_length_in_byte);
+            const unsigned int remainder = (cursor.width % 8);
+            const unsigned int and_line_length_in_byte = cursor.width / 8 + (remainder ? 1 : 0);
+            const unsigned int and_padded_line_length_in_byte =
+                ((and_line_length_in_byte % 2) ?
+                 and_line_length_in_byte + 1 :
+                 and_line_length_in_byte);
+            for (unsigned int i0 = 0; i0 < cursor.height; ++i0) {
+                uint8_t* xorMask = const_cast<uint8_t*>(cursor.data) + (cursor.height - i0 - 1) * xor_padded_line_length_in_byte;
+
+                const uint8_t* andMask = cursor.mask + (cursor.height - i0 - 1) * and_padded_line_length_in_byte;
+                unsigned char and_bit_extraction_mask = 7;
+
+                for (unsigned int i1 = 0; i1 < cursor.width; ++i1) {
+                    if ((*andMask) & (1 << and_bit_extraction_mask)) {
+                        *xorMask         = 0;
+                        *(xorMask + 1)   = 0;
+                        *(xorMask + 2)   = 0;
+                    }
+
+                    xorMask += 3;
+                    if (and_bit_extraction_mask) {
+                        and_bit_extraction_mask--;
+                    }
+                    else {
+                        and_bit_extraction_mask = 7;
+                        andMask++;
+                    }
+                }
+            }
         }
 
         //const unsigned int xor_line_length_in_byte = cursor.width * 3;
@@ -7151,7 +7202,7 @@ private:
         if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
             !this->file_system_drive_manager.HasManagedDrive()) {
 
-            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 if ((this->verbose & RDPVerbose::rdpdr) || (this->verbose & RDPVerbose::rdpdr_dump)) {
 
                     LOG(LOG_INFO,

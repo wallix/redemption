@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleShrink)
 //   const int width = 800;
 //    const int height = 600;
 //    const int groupid = 0;
-//    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid);
+//    PngCapture::OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid);
 //    Rect scr(0, 0, width, height);
 //    RDPDrawable drawable(scr.cx, scr.cy, 24);
 

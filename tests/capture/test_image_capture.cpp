@@ -354,7 +354,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
 BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
 {
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
+    PngCapture::OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
     RDPDrawable drawable(800, 600, 24);
     DrawableToFile d(trans, drawable.impl(), 100);
     Rect screen_rect(0, 0, 800, 600);
@@ -385,9 +385,9 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     Rect screen_rect(0, 0, 800, 600);
     const int groupid = 0;
-    struct CleanupTransport : OutFilenameSequenceTransport {
+    struct CleanupTransport : PngCapture::OutFilenameSequenceTransport {
         CleanupTransport()
-        : OutFilenameSequenceTransport(
+        : PngCapture::OutFilenameSequenceTransport(
             FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION,
             "./", "xxxtest", ".png", groupid)
         {}
@@ -403,7 +403,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
                 // unlink may fail, for instance if file does not exist, just don't care
                 ::unlink(this->seqgen()->get(this->get_seqno() - this->png_limit));
             }
-            return OutFilenameSequenceTransport::next();
+            return PngCapture::OutFilenameSequenceTransport::next();
         }
 
         unsigned num_start = 0;
@@ -505,7 +505,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 BOOST_AUTO_TEST_CASE(TestSmallImage)
 {
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid);
+    PngCapture::OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid);
     Rect scr(0, 0, 20, 10);
     RDPDrawable drawable(20, 10, 24);
     DrawableToFile d(trans, drawable.impl(), 100);
@@ -523,7 +523,7 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
     const int width = 800;
     const int height = 600;
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid);
+    PngCapture::OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid);
     Rect scr(0, 0, width, height);
     RDPDrawable drawable(scr.cx, scr.cy, 24);
     DrawableToFile d(trans, drawable.impl(), 100);
@@ -547,7 +547,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
 {
     BOOST_CHECK(1);
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid);
+    PngCapture::OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600, 24);
     DrawableToFile d(trans, drawable.impl(), 100);
@@ -675,7 +675,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
 {
     BOOST_CHECK(1);
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid);
+    PngCapture::OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600, 24);
     DrawableToFile d(trans, drawable.impl(), 100);

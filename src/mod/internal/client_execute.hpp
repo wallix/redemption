@@ -23,6 +23,7 @@
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "core/front_api.hpp"
+#include "core/RDP/capabilities/window.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
@@ -144,6 +145,8 @@ class ClientExecute : public windowing_api
     uint16_t total_height_of_work_areas = 0;
 
     std::string window_title;
+
+    bool window_level_supported_ex = false;
 
     bool verbose;
 
@@ -1049,7 +1052,7 @@ public:
 
                     order.header.FieldsPresentFlags(
                               RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                            | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
+                            | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
                             | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTDELTA
                             | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
                             | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
@@ -1157,7 +1160,7 @@ public:
 
                         order.header.FieldsPresentFlags(
                                   RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
+                                | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
                                 | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
                                 | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
                                 | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
@@ -1187,6 +1190,7 @@ public:
                             LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (2)", out_s.get_offset() - 1);
                         }
 
+//LOG(LOG_INFO, "not sent");
                         this->front_->draw(order);
                     }
 
@@ -1267,7 +1271,7 @@ public:
 
                     order.header.FieldsPresentFlags(
                               RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                            | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
+                            | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
                             | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
                             | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
                             | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
@@ -1344,7 +1348,7 @@ public:
 
                 order.header.FieldsPresentFlags(
                           RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
+                        | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
                         | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
                         | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
                         | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
@@ -1404,7 +1408,7 @@ public:
 
                 order.header.FieldsPresentFlags(
                           RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
+                        | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
                         | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
                         | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
                         | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
@@ -1451,6 +1455,11 @@ public:
     void ready(mod_api & mod, uint16_t front_width, uint16_t front_height, Font const & font) {
         this->mod_  = &mod;
         this->font_ = &font;
+
+        WindowListCaps window_list_caps;
+        this->front_->retrieve_client_capability_set(window_list_caps);
+
+        this->window_level_supported_ex = (window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX);
 
         this->front_width  = front_width;
         this->front_height = front_height;
@@ -1870,7 +1879,7 @@ protected:
 
                         order.header.FieldsPresentFlags(
                                   RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
+                                | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
                                 | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTDELTA
                                 | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
                                 | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
@@ -2416,7 +2425,7 @@ protected:
 
                 order.header.FieldsPresentFlags(
                           RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
+                        | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
                         | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
                         | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
                         | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET

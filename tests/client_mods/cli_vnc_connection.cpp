@@ -30,22 +30,21 @@
 //#define LOGNULL
 #define LOGPRINT
 
-#include "transport/socket_transport.hpp"
-#include "core/client_info.hpp"
+// #include "transport/socket_transport.hpp"
+// #include "core/client_info.hpp"
 #include "mod/vnc/vnc.hpp"
-#include "core/vnc_front.hpp"
+// #include "core/vnc_front.hpp"
 //jni #include "utils/stream.hpp
 
-#include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include "openssl_tls.hpp"
-#include "system/openssl.hpp"
+// #include <cstdio>
+// #include <cstdlib>
+// #include <cerrno>
+// #include <sys/types.h>
+// #include <sys/socket.h>
+// #include <netinet/in.h>
+// #include <netinet/tcp.h>
+// #include "openssl_tls.hpp"
+// #include "system/openssl.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestVncConnection0)
