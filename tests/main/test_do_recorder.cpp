@@ -656,7 +656,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
       crypto_file(int fd)
       : encrypt(this->file)
       {
-        this->file.fd = fd;
+        this->file.iofdbuf_fd = fd;
       }
     } * cf_struct = new (std::nothrow) crypto_file(system_fd);
 
