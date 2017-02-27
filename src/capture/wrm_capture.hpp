@@ -176,10 +176,10 @@ struct wrmcapture_out_sequence_filename_buf_param
 class iofdbuf
 {
 public:
-    int fd;
+    int iofdbuf_fd;
 
     explicit iofdbuf() noexcept
-    : fd(-1)
+    : iofdbuf_fd(-1)
     {}
 
     iofdbuf(iofdbuf const &) = delete ;
@@ -187,35 +187,25 @@ public:
 
     ~iofdbuf()
     {
-        this->close();
+        if (-1 != this->iofdbuf_fd) {
+            ::close(this->iofdbuf_fd);
+        }
     }
-
-//    int open(const char *pathname, int flags)
-//    {
-//        this->close();
-//        this->fd = ::open(pathname, flags);
-//        return fd;
-//    }
-
-//    int open(const char *pathname, int flags, mode_t mode)
-//    {
-//        this->close();
-//        this->fd = ::open(pathname, flags, mode);
-//        return fd;
-//    }
 
     int open(int fd)
     {
-        this->close();
-        this->fd = fd;
+        if (-1 != this->iofdbuf_fd) {
+            ::close(this->iofdbuf_fd);
+        }
+        this->iofdbuf_fd = fd;
         return fd;
     }
 
     int close()
     {
-        if (this->is_open()) {
-            const int ret = ::close(this->fd);
-            this->fd = -1;
+        if (-1 != this->iofdbuf_fd) {
+            const int ret = ::close(this->iofdbuf_fd);
+            this->iofdbuf_fd = -1;
             return ret;
         }
         return 0;
@@ -223,7 +213,7 @@ public:
 
     bool is_open() const noexcept
     {
-        return -1 != this->fd;
+        return -1 != this->iofdbuf_fd;
     }
 
     ssize_t write(const void * data, size_t len) const
@@ -231,7 +221,7 @@ public:
         size_t remaining_len = len;
         size_t total_sent = 0;
         while (remaining_len) {
-            ssize_t ret = ::write(this->fd, static_cast<const char*>(data) + total_sent, remaining_len);
+            ssize_t ret = ::write(this->iofdbuf_fd, static_cast<const char*>(data) + total_sent, remaining_len);
             if (ret <= 0){
                 if (errno == EINTR){
                     continue;
@@ -2478,11 +2468,48 @@ public:
         }
         
         auto & writer = crypto_hash;
-        err = wrmcapture_write_filename(writer, filename);
-        if (err) {
-            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-            return 1;
+        
+        auto pfile = filename;
+        auto epfile = filename;
+        for (; *epfile; ++epfile) {
+            if (*epfile == '\\') {
+                ssize_t len = epfile - pfile + 1;
+                auto res = writer.write(pfile, len);
+                if (res < len) {
+                    err = res < 0 ? res : 1;
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                    return 1;
+                }
+                pfile = epfile;
+            }
+            if (*epfile == ' ') {
+                ssize_t len = epfile - pfile;
+                auto res = writer.write(pfile, len);
+                if (res < len) {
+                    err = res < 0 ? res : 1;
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                    return 1;
+                }
+                res = writer.write("\\", 1u);
+                if (res < 1) {
+                    err = res < 0 ? res : 1;
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                    return 1;
+                }
+                pfile = epfile;
+            }
         }
+
+        if (pfile != epfile) {
+            ssize_t len = epfile - pfile;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                err = res < 0 ? res : 1;
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                return 1;
+            }
+        }
+
         using ull = unsigned long long;
         using ll = long long;
         char mes[
