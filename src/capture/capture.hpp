@@ -2707,8 +2707,8 @@ inline void agent_data_extractor(std::string & line, array_view_const_char data)
     auto separator = find(data, '=');
 
     if (separator) {
-        auto right = [](Av s, char const * pos) { return Av(begin(s), pos - begin(s)); };
-        auto left = [](Av s, char const * pos) { return Av(pos + 1, begin(s) - (pos + 1)); };
+        auto left = [](Av s, char const * pos) { return Av(begin(s), pos - begin(s)); };
+        auto right = [](Av s, char const * pos) { return Av(pos + 1, begin(s) + s.size() - (pos + 1)); };
 
         auto order = left(data, separator);
         auto parameters = right(data, separator);
@@ -2772,7 +2772,7 @@ inline void agent_data_extractor(std::string & line, array_view_const_char data)
         }
         else {
             LOG(LOG_WARNING,
-                "MetaDataExtractor(): Unexpected order. Data=\"%*s\"",
+                "MetaDataExtractor(): Unexpected order. Data=\"%.*s\"",
                 int(data.size()), data.data());
             return;
         }
@@ -2780,7 +2780,7 @@ inline void agent_data_extractor(std::string & line, array_view_const_char data)
 
     if (line.empty()) {
         LOG(LOG_WARNING,
-            "MetaDataExtractor(): Invalid data format. Data=\"%*s\"",
+            "MetaDataExtractor(): Invalid data format. Data=\"%.*s\"",
             int(data.size()), data.data());
         return;
     }
