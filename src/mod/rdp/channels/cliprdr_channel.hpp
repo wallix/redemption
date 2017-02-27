@@ -340,7 +340,7 @@ private:
                     const size_t length_of_utf8_string = ::UTF16toUTF8(
                         chunk.get_current(), length_of_data_to_dump / 2,
                         utf8_string, size_of_utf8_string);
-                    LOG(LOG_INFO, "%*s", int(length_of_utf8_string), ::char_ptr_cast(utf8_string));
+                    LOG(LOG_INFO, "%.*s", int(length_of_utf8_string), ::char_ptr_cast(utf8_string));
                 }
                 break;
 

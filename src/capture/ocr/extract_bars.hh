@@ -9,7 +9,6 @@
 #include <cstdlib>
 #include <stdint.h>
 
-#include <iostream>
 
 namespace ocr
 {

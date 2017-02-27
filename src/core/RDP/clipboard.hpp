@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include <iostream>
 #include <cinttypes>
 
 #include "utils/stream.hpp"

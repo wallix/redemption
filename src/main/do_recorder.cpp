@@ -636,7 +636,60 @@ static inline int check_file(const std::string & filename, const MetaLine2 & met
     return true;
 }
 
-static inline int dorecorder_write_filename(wrmcapture_ofile_buf_out & writer, const char * filename)
+class dorecorder_ofile_buf_out
+{
+    int fd;
+public:
+    dorecorder_ofile_buf_out() : fd(-1) {}
+    ~dorecorder_ofile_buf_out()
+    {
+        this->close();
+    }
+
+    int open(const char * filename, mode_t mode)
+    {
+        this->close();
+        this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+        return this->fd;
+    }
+
+    int close()
+    {
+        if (this->is_open()) {
+            const int ret = ::close(this->fd);
+            this->fd = -1;
+            return ret;
+        }
+        return 0;
+    }
+
+    ssize_t write(const void * data, size_t len)
+    {
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            ssize_t ret = ::write(this->fd,
+                static_cast<const char*>(data) + total_sent, remaining_len);
+            if (ret <= 0){
+                if (errno == EINTR){
+                    continue;
+                }
+                return -1;
+            }
+            remaining_len -= ret;
+            total_sent += ret;
+        }
+        return total_sent;
+    }
+
+    bool is_open() const noexcept
+    { return -1 != this->fd; }
+
+    int flush() const
+    { return 0; }
+};
+
+static inline int dorecorder_write_filename(dorecorder_ofile_buf_out & writer, const char * filename)
 {
     auto pfile = filename;
     auto epfile = filename;
@@ -821,7 +874,7 @@ static inline int check_encrypted_or_checksumed(
         auto full_mwrm_filename_tmp = full_mwrm_filename + ".tmp";
 
         // out_meta_sequence_filename_buf_impl ctor
-        wrmcapture_ofile_buf_out mwrm_file_cp;
+        dorecorder_ofile_buf_out mwrm_file_cp;
         if (mwrm_file_cp.open(full_mwrm_filename_tmp.c_str(), S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
             LOG(LOG_ERR, "Failed to open meta file %s", full_mwrm_filename_tmp);
             throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
@@ -923,7 +976,7 @@ static inline int check_encrypted_or_checksumed(
         }
 
         auto const full_hash_path_tmp = (full_hash_path + ".tmp");
-        wrmcapture_ofile_buf_out hash_file_cp;
+        dorecorder_ofile_buf_out hash_file_cp;
 
         local_auto_remove auto_remove{full_hash_path_tmp.c_str()};
 
