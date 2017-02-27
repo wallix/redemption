@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(TestDeviceCreateResponse1)
 
     rdpdr::DeviceCreateResponse device_create_response;
 
-    uint32_t IoStatus = 0x00000000;
+    erref::NTSTATUS IoStatus = erref::NTSTATUS::STATUS_SUCCESS;
 
     device_create_response.receive(in_stream, IoStatus);
 
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(TestDeviceCreateResponse2)
 
     rdpdr::DeviceCreateResponse device_create_response;
 
-    uint32_t IoStatus = 0x00000000;
+    erref::NTSTATUS IoStatus = erref::NTSTATUS::STATUS_SUCCESS;
 
     device_create_response.receive(in_stream, IoStatus);
 
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(TestDeviceCreateResponse3)
 
     rdpdr::DeviceCreateResponse device_create_response;
 
-    uint32_t IoStatus = 0xC0000022;
+    erref::NTSTATUS IoStatus = erref::NTSTATUS::STATUS_ACCESS_DENIED;
 
     device_create_response.receive(in_stream, IoStatus);
 

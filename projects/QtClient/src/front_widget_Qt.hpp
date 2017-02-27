@@ -27,39 +27,8 @@
 #include "transport/socket_transport.hpp"
 #include "mod/rdp/rdp.hpp"
 
-#include "front_Qt4.hpp"
+#include "front_Qt.hpp"
 
-#include <QtGui/QWidget>
-#include <QtGui/QLabel>
-#include <QtGui/QPainter>
-#include <QtGui/QColor>
-#include <QtGui/QDesktopWidget>
-#include <QtGui/QApplication>
-#include <QtGui/QMouseEvent>
-#include <QtGui/QWheelEvent>
-#include <QtCore/QSocketNotifier>
-#include <QtGui/QLineEdit>
-#include <QtGui/QFormLayout>
-#include <QtGui/QDialog>
-#include <QtGui/QPushButton>
-#include <QtGui/QClipboard>
-#include <QtGui/QTabWidget>
-#include <QtGui/QGridLayout>
-#include <QtGui/QComboBox>
-#include <QtGui/QCheckBox>
-#include <QtGui/QScrollArea>
-#include <QtGui/QTableWidget>
-#include <QtCore/QList>
-#include <QtCore/QStringList>
-#include <QtCore/QTimer>
-#include <QtCore/QMimeData>
-#include <QtCore/QUrl>
-#include <QtGui/QCompleter>
-#include <QtGui/QFileDialog>
-#include <QtCore/QThread>
-
-#include <QtCore/QtGlobal>
-#include <QtCore/QDebug>
 
 
 
@@ -247,6 +216,85 @@ public Q_SLOTS:
 
 
 };
+
+
+// class FileSysWatchWrapper_Qt : public QFileSystemWatcher
+// {
+//
+// Q_OBJECT
+//
+//     Front_Qt_API * front;
+//
+// public:
+//     FileSysWatchWrapper_Qt(Front_Qt * front, QObject * parent)
+//       : QFileSystemWatcher(parent)
+//       , front(front)
+//     {
+//         QString qpath(front->SHARE_DIR.c_str());
+//
+//         this->addPaths(this->scan_dir(qpath));
+// 
+//         //this->QObject::connect(this, SIGNAL (directoryChanged(const QString &)),  this, SLOT (sync_dir_change(const QString &)));
+//
+//         this->QObject::connect(this, SIGNAL (fileChanged(const QString &)),  this, SLOT (sync_file_change(const QString &)));
+//     }
+//
+//     QStringList scan_dir(const QString & path) {
+//
+//         QStringList list;
+//         list << path;
+//
+//         std::string str_path(path.toUtf8().constData());
+//         DIR *dir;
+//         struct dirent *ent;
+//         std::string ignored1("..");
+//         std::string ignored2(".");
+//         if ((dir = opendir (path.toUtf8().constData())) != nullptr) {
+//             try {
+//                 while ((ent = readdir (dir)) != nullptr) {
+//
+//                     std::string current_name = std::string (ent->d_name);
+//                     if (!(current_name == ignored1) && !(current_name == ignored2)) {
+//
+//                         std::string child_path(str_path + "/" + current_name);
+//                         struct stat buff_child;
+//                         if (stat(child_path.c_str(), &buff_child)) {
+//                             LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", child_path.c_str());
+//                         }
+//
+//                         QString qstr_child_dir(child_path.c_str());
+//                         if (S_ISDIR(buff_child.st_mode)) {
+//                             LOG(LOG_WARNING, "add dir \'%s\'.", child_path.c_str());
+//                             list << this->scan_dir(qstr_child_dir);
+//                         } else {
+//                             LOG(LOG_WARNING, "add file \'%s\'.", child_path.c_str());
+//                             list << qstr_child_dir;
+//                         }
+//                     }
+//                 }
+//             } catch (Error & e) {
+//                 LOG(LOG_WARNING, "readdir error: (%d) %s", e.id, e.errmsg());
+//             }
+//             closedir (dir);
+//         }
+//
+//         return list;
+//     }
+//
+// private Q_SLOTS:
+//
+//     void sync_dir_change(const QString & path) {
+//         LOG(LOG_WARNING, "Sync dir change for path \"%s\"", path.toUtf8().constData());
+//         QString qpath(this->front->SHARE_DIR.c_str());
+//         this->removePaths(this->directories() + this->files());
+//         this->addPaths(this->scan_dir(qpath));
+//     }
+//
+//     void sync_file_change(const QString & path) {
+//         LOG(LOG_WARNING, "Sync file change for path \"%s\"", path.toUtf8().constData());
+//     }
+//
+// };
 
 class DialogOptions_Qt : public QDialog
 {
@@ -1126,6 +1174,11 @@ public:
     bool           _running;
     std::string    _movie_name;
 
+    uchar cursor_data[Pointer::DATA_SIZE*4];
+    int cursorHotx;
+    int cursorHoty;
+    bool mouse_out;
+
     Screen_Qt (Front_Qt_API * front, int screen_index, QPixmap * cache, QPixmap * trans_cache)
         : QWidget()
         , _front(front)
@@ -1141,6 +1194,9 @@ public:
         , _connexionLasted(false)
         , _screen_index(screen_index)
         , _running(false)
+        , cursorHotx(0)
+        , cursorHoty(0)
+        , mouse_out(false)
     {
         this->setMouseTracking(true);
         this->installEventFilter(this);
@@ -1188,6 +1244,9 @@ public:
         , _screen_index(0)
         , _running(false)
         , _movie_name(movie_path)
+        , cursorHotx(0)
+        , cursorHoty(0)
+        , mouse_out(false)
     {
         std::string title = "Remote Desktop Player " + this->_movie_name;
         this->setWindowTitle(QString(title.c_str()));
@@ -1221,7 +1280,6 @@ public:
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (closeReplay()));
         this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
 
-
         uint32_t centerW = 0;
         uint32_t centerH = 0;
         if (!this->_front->_span) {
@@ -1252,6 +1310,9 @@ public:
         , _connexionLasted(false)
         , _screen_index(0)
         , _running(false)
+        , cursorHotx(0)
+        , cursorHoty(0)
+        , mouse_out(false)
     {
         this->setMouseTracking(true);
         this->installEventFilter(this);
@@ -1270,7 +1331,7 @@ public:
         this->_buttonCtrlAltDel.setGeometry(rectCtrlAltDel);
         this->_buttonCtrlAltDel.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (pressed()),  this, SLOT (CtrlAltDelPressed()));
-        this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));
+        this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));;
         this->_buttonCtrlAltDel.setFocusPolicy(Qt::NoFocus);
 
         QRect rectRefresh(QPoint(this->_width/3, this->_height+1),QSize(this->_width/3, Front_Qt_API::BUTTON_HEIGHT));
@@ -1303,6 +1364,23 @@ public:
         if (!this->_connexionLasted) {
             this->_front->closeFromScreen(this->_screen_index);
         }
+    }
+
+    void set_mem_cursor(const uchar * data, int x, int y) {
+        this->cursorHotx = x;
+        this->cursorHoty = y;
+        for (int i = 0; i < Pointer::DATA_SIZE*4; i++) {
+            this->cursor_data[i] = data[i];
+        }
+        this->update_current_cursor();
+    }
+
+    void update_current_cursor() {
+        QImage image(this->cursor_data, 32, 32, QImage::Format_ARGB32_Premultiplied);
+        QPixmap map = QPixmap::fromImage(image);
+        QCursor qcursor(map, this->cursorHotx, this->cursorHoty);
+
+        this->setCursor(qcursor);
     }
 
     void update_view() {
@@ -1367,8 +1445,10 @@ private:
 
     void enterEvent(QEvent *event) {
         Q_UNUSED(event);
+        //this->update_current_cursor();
         this->_front->_current_screen_index =  this->_screen_index;
     }
+
     bool eventFilter(QObject *obj, QEvent *e) {
         this->_front->eventFilter(obj, e, this->_front->_info.cs_monitor.monitorDefArray[this->_screen_index].left);
         return false;
@@ -1424,7 +1504,10 @@ public Q_SLOTS:
     }
 
     void CtrlAltDelReleased() {
+
         this->_front->CtrlAltDelReleased();
+//         this->update_current_cursor();
+//         this->_buttonCtrlAltDel.setCursor(Qt::PointingHandCursor);
     }
 
     void stopRelease() {

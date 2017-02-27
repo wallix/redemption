@@ -51,6 +51,7 @@
 #include "transport/transport.hpp"
 
 #include "acl/auth_api.hpp"
+#include "utils/genrandom.hpp"
 #include "capture/capture.hpp"
 #include "capture/cryptofile.hpp"
 #include "utils/apps/recording_progress.hpp"
@@ -59,6 +60,388 @@
 #include "capture/wrm_params.hpp"
 #include "capture/flv_params.hpp"
 #include "capture/ocr_params.hpp"
+#include "capture/wrm_capture.hpp"
+
+enum {
+    USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF
+};
+
+enum {
+    USE_ORIGINAL_COLOR_DEPTH           = 0xFFFFFFFF
+};
+
+
+using std::begin;
+using std::end;
+
+
+class FileToChunk
+{
+    unsigned char stream_buf[65536];
+    InStream stream;
+
+    CompressionInTransportBuilder compression_builder;
+
+    Transport * trans_source;
+    Transport * trans;
+
+    // variables used to read batch of orders "chunks"
+    uint32_t chunk_size;
+    uint16_t chunk_type;
+    uint16_t chunk_count;
+
+    uint16_t nbconsumers;
+
+    RDPChunkedDevice * consumers[10];
+
+public:
+    timeval record_now;
+
+    bool meta_ok;
+
+    uint16_t info_version;
+    uint16_t info_width;
+    uint16_t info_height;
+    uint16_t info_bpp;
+    uint16_t info_number_of_cache;
+    bool     info_use_waiting_list;
+    uint16_t info_cache_0_entries;
+    uint16_t info_cache_0_size;
+    bool     info_cache_0_persistent;
+    uint16_t info_cache_1_entries;
+    uint16_t info_cache_1_size;
+    bool     info_cache_1_persistent;
+    uint16_t info_cache_2_entries;
+    uint16_t info_cache_2_size;
+    bool     info_cache_2_persistent;
+    uint16_t info_cache_3_entries;
+    uint16_t info_cache_3_size;
+    bool     info_cache_3_persistent;
+    uint16_t info_cache_4_entries;
+    uint16_t info_cache_4_size;
+    bool     info_cache_4_persistent;
+    WrmCompressionAlgorithm info_compression_algorithm;
+
+    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    {
+        none,
+        end_of_transport = 1,
+    };
+
+    FileToChunk(Transport * trans, Verbose verbose)
+        : stream(this->stream_buf)
+        , compression_builder(*trans, WrmCompressionAlgorithm::no_compression)
+        , trans_source(trans)
+        , trans(trans)
+        // variables used to read batch of orders "chunks"
+        , chunk_size(0)
+        , chunk_type(0)
+        , chunk_count(0)
+        , nbconsumers(0)
+        , consumers()
+        , meta_ok(false)
+        , info_version(0)
+        , info_width(0)
+        , info_height(0)
+        , info_bpp(0)
+        , info_number_of_cache(0)
+        , info_use_waiting_list(true)
+        , info_cache_0_entries(0)
+        , info_cache_0_size(0)
+        , info_cache_0_persistent(false)
+        , info_cache_1_entries(0)
+        , info_cache_1_size(0)
+        , info_cache_1_persistent(false)
+        , info_cache_2_entries(0)
+        , info_cache_2_size(0)
+        , info_cache_2_persistent(false)
+        , info_cache_3_entries(0)
+        , info_cache_3_size(0)
+        , info_cache_3_persistent(false)
+        , info_cache_4_entries(0)
+        , info_cache_4_size(0)
+        , info_cache_4_persistent(false)
+        , info_compression_algorithm(WrmCompressionAlgorithm::no_compression)
+        , verbose(verbose)
+    {
+        while (this->next_chunk()) {
+            this->interpret_chunk();
+            if (this->meta_ok) {
+                break;
+            }
+        }
+    }
+
+    void add_consumer(RDPChunkedDevice * chunk_device) {
+        REDASSERT(nbconsumers < (sizeof(consumers) / sizeof(consumers[0]) - 1));
+        this->consumers[this->nbconsumers++] = chunk_device;
+    }
+
+    bool next_chunk() {
+        try {
+            {
+                auto const buf_sz = FileToGraphic::HEADER_SIZE;
+                unsigned char buf[buf_sz];
+                auto * p = buf;
+                this->trans->recv(&p, buf_sz);
+                InStream header(buf);
+                this->chunk_type  = header.in_uint16_le();
+                this->chunk_size  = header.in_uint32_le();
+                this->chunk_count = header.in_uint16_le();
+            }
+
+            if (this->chunk_size > 65536) {
+                LOG(LOG_INFO,"chunk_size (%d) > 65536", this->chunk_size);
+                return false;
+            }
+            this->stream = InStream(this->stream_buf, 0);   // empty stream
+            if (this->chunk_size - FileToGraphic::HEADER_SIZE > 0) {
+                auto * p = this->stream_buf;
+                this->trans->recv(&p, this->chunk_size - FileToGraphic::HEADER_SIZE);
+                this->stream = InStream(this->stream_buf, p - this->stream_buf);
+            }
+        }
+        catch (Error const & e) {
+            if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
+                throw;
+            }
+
+            if (this->verbose) {
+                LOG(LOG_INFO, "receive error %u : end of transport", e.id);
+            }
+            // receive error, end of transport
+            return false;
+        }
+
+        return true;
+    }
+
+    void interpret_chunk() {
+        switch (this->chunk_type) {
+        case META_FILE:
+            this->info_version                   = this->stream.in_uint16_le();
+            this->info_width                     = this->stream.in_uint16_le();
+            this->info_height                    = this->stream.in_uint16_le();
+            this->info_bpp                       = this->stream.in_uint16_le();
+            this->info_cache_0_entries           = this->stream.in_uint16_le();
+            this->info_cache_0_size              = this->stream.in_uint16_le();
+            this->info_cache_1_entries           = this->stream.in_uint16_le();
+            this->info_cache_1_size              = this->stream.in_uint16_le();
+            this->info_cache_2_entries           = this->stream.in_uint16_le();
+            this->info_cache_2_size              = this->stream.in_uint16_le();
+
+            if (this->info_version <= 3) {
+                this->info_number_of_cache       = 3;
+                this->info_use_waiting_list      = false;
+
+                this->info_cache_0_persistent    = false;
+                this->info_cache_1_persistent    = false;
+                this->info_cache_2_persistent    = false;
+            }
+            else {
+                this->info_number_of_cache       = this->stream.in_uint8();
+                this->info_use_waiting_list      = (this->stream.in_uint8() ? true : false);
+
+                this->info_cache_0_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_1_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_2_persistent    = (this->stream.in_uint8() ? true : false);
+
+                this->info_cache_3_entries       = this->stream.in_uint16_le();
+                this->info_cache_3_size          = this->stream.in_uint16_le();
+                this->info_cache_3_persistent    = (this->stream.in_uint8() ? true : false);
+
+                this->info_cache_4_entries       = this->stream.in_uint16_le();
+                this->info_cache_4_size          = this->stream.in_uint16_le();
+                this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
+
+                this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
+                REDASSERT(is_valid_enum_value(this->info_compression_algorithm));
+                if (!is_valid_enum_value(this->info_compression_algorithm)) {
+                    this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+                }
+
+                // re-init
+                this->trans = &this->compression_builder.reset(
+                    *this->trans_source, this->info_compression_algorithm
+                );
+            }
+
+            this->stream.rewind();
+
+            if (!this->meta_ok) {
+                this->meta_ok = true;
+            }
+            break;
+        case RESET_CHUNK:
+            this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+
+            this->trans = this->trans_source;
+            break;
+        }
+
+        for (size_t i = 0; i < this->nbconsumers ; i++) {
+            if (this->consumers[i]) {
+                this->consumers[i]->chunk(this->chunk_type, this->chunk_count, this->stream.clone());
+            }
+        }
+    }   // void interpret_chunk()
+
+    void play(bool const & requested_to_stop) {
+        while (!requested_to_stop && this->next_chunk()) {
+            this->interpret_chunk();
+        }
+    }
+};
+
+
+inline
+static int do_recompress(
+    CryptoContext & cctx, Random & rnd, Transport & in_wrm_trans, const timeval begin_record,
+    bool & program_requested_to_shutdown,
+    int wrm_compression_algorithm_, std::string const & output_filename, Inifile & ini, uint32_t verbose
+) {
+    FileToChunk player(&in_wrm_trans, to_verbose_flags(verbose));
+
+/*
+    char outfile_path     [1024] = PNG_PATH "/"   ; // default value, actual one should come from output_filename
+    char outfile_basename [1024] = "redrec_output"; // default value, actual one should come from output_filename
+    char outfile_extension[1024] = ""             ; // extension is ignored for targets anyway
+
+    canonical_path( output_filename.c_str()
+                  , outfile_path
+                  , sizeof(outfile_path)
+                  , outfile_basename
+                  , sizeof(outfile_basename)
+                  , outfile_extension
+                  , sizeof(outfile_extension)
+                  );
+*/
+    std::string outfile_path;
+    std::string outfile_basename;
+    std::string outfile_extension;
+    ParsePath(output_filename.c_str(), outfile_path, outfile_basename, outfile_extension);
+
+    if (verbose) {
+        std::cout << "Output file path: " << outfile_path << outfile_basename << outfile_extension << '\n' << std::endl;
+    }
+
+    if (recursive_create_directory(outfile_path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP, ini.get<cfg::video::capture_groupid>()) != 0) {
+        std::cerr << "Failed to create directory: \"" << outfile_path << "\"" << std::endl;
+    }
+
+//    if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
+//        ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
+//    }
+    ini.set<cfg::video::wrm_compression_algorithm>(
+        (wrm_compression_algorithm_ == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM))
+        ? player.info_compression_algorithm
+        : static_cast<WrmCompressionAlgorithm>(wrm_compression_algorithm_)
+    );
+
+    int return_code = 0;
+    try {
+        if (ini.get<cfg::globals::trace_type>() == TraceType::cryptofile) {
+            wrmcapture_CryptoOutMetaSequenceTransport trans(
+                cctx,
+                rnd,
+                outfile_path.c_str(),
+                ini.get<cfg::video::hash_path>().c_str(),
+                outfile_basename.c_str(),
+                begin_record,
+                player.info_width,
+                player.info_height,
+                ini.get<cfg::video::capture_groupid>()
+            );
+            {
+                ChunkToFile recorder( &trans
+                            , player.info_width
+                            , player.info_height
+                            , player.info_bpp
+                            , player.info_cache_0_entries
+                            , player.info_cache_0_size
+                            , player.info_cache_1_entries
+                            , player.info_cache_1_size
+                            , player.info_cache_2_entries
+                            , player.info_cache_2_size
+
+                            , player.info_number_of_cache
+                            , player.info_use_waiting_list
+
+                            , player.info_cache_0_persistent
+                            , player.info_cache_1_persistent
+                            , player.info_cache_2_persistent
+
+                            , player.info_cache_3_entries
+                            , player.info_cache_3_size
+                            , player.info_cache_3_persistent
+                            , player.info_cache_4_entries
+                            , player.info_cache_4_size
+                            , player.info_cache_4_persistent
+                            , ini.get<cfg::video::wrm_compression_algorithm>());
+
+                player.add_consumer(&recorder);
+
+                player.play(program_requested_to_shutdown);
+            }
+
+            if (program_requested_to_shutdown) {
+                trans.request_full_cleaning();
+            }
+        }
+        else {
+            wrmcapture_OutMetaSequenceTransport trans(
+                    outfile_path.c_str(),
+                    ini.get<cfg::video::hash_path>().c_str(),
+                    outfile_basename.c_str(),
+                    begin_record,
+                    player.info_width,
+                    player.info_height,
+                    ini.get<cfg::video::capture_groupid>()
+                );
+            {
+                ChunkToFile recorder( &trans
+                            , player.info_width
+                            , player.info_height
+                            , player.info_bpp
+                            , player.info_cache_0_entries
+                            , player.info_cache_0_size
+                            , player.info_cache_1_entries
+                            , player.info_cache_1_size
+                            , player.info_cache_2_entries
+                            , player.info_cache_2_size
+
+                            , player.info_number_of_cache
+                            , player.info_use_waiting_list
+
+                            , player.info_cache_0_persistent
+                            , player.info_cache_1_persistent
+                            , player.info_cache_2_persistent
+
+                            , player.info_cache_3_entries
+                            , player.info_cache_3_size
+                            , player.info_cache_3_persistent
+                            , player.info_cache_4_entries
+                            , player.info_cache_4_size
+                            , player.info_cache_4_persistent
+                            , ini.get<cfg::video::wrm_compression_algorithm>());
+
+                player.add_consumer(&recorder);
+
+                player.play(program_requested_to_shutdown);
+            }
+
+            if (program_requested_to_shutdown) {
+                trans.request_full_cleaning();
+            }
+        }
+    }
+    catch (...) {
+        return_code = -1;
+    }
+
+    return return_code;
+}   // do_recompress
+
 
 struct HashHeader {
     unsigned version;
@@ -253,6 +636,97 @@ static inline int check_file(const std::string & filename, const MetaLine2 & met
     return true;
 }
 
+class dorecorder_ofile_buf_out
+{
+    int fd;
+public:
+    dorecorder_ofile_buf_out() : fd(-1) {}
+    ~dorecorder_ofile_buf_out()
+    {
+        this->close();
+    }
+
+    int open(const char * filename, mode_t mode)
+    {
+        this->close();
+        this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+        return this->fd;
+    }
+
+    int close()
+    {
+        if (this->is_open()) {
+            const int ret = ::close(this->fd);
+            this->fd = -1;
+            return ret;
+        }
+        return 0;
+    }
+
+    ssize_t write(const void * data, size_t len)
+    {
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            ssize_t ret = ::write(this->fd,
+                static_cast<const char*>(data) + total_sent, remaining_len);
+            if (ret <= 0){
+                if (errno == EINTR){
+                    continue;
+                }
+                return -1;
+            }
+            remaining_len -= ret;
+            total_sent += ret;
+        }
+        return total_sent;
+    }
+
+    bool is_open() const noexcept
+    { return -1 != this->fd; }
+
+    int flush() const
+    { return 0; }
+};
+
+static inline int dorecorder_write_filename(dorecorder_ofile_buf_out & writer, const char * filename)
+{
+    auto pfile = filename;
+    auto epfile = filename;
+    for (; *epfile; ++epfile) {
+        if (*epfile == '\\') {
+            ssize_t len = epfile - pfile + 1;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+            pfile = epfile;
+        }
+        if (*epfile == ' ') {
+            ssize_t len = epfile - pfile;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+            res = writer.write("\\", 1u);
+            if (res < 1) {
+                return res < 0 ? res : 1;
+            }
+            pfile = epfile;
+        }
+    }
+
+    if (pfile != epfile) {
+        ssize_t len = epfile - pfile;
+        auto res = writer.write(pfile, len);
+        if (res < len) {
+            return res < 0 ? res : 1;
+        }
+    }
+
+    return 0;
+}
+
 static inline int check_encrypted_or_checksumed(
     std::string const & input_filename,
     std::string const & mwrm_path,
@@ -400,7 +874,7 @@ static inline int check_encrypted_or_checksumed(
         auto full_mwrm_filename_tmp = full_mwrm_filename + ".tmp";
 
         // out_meta_sequence_filename_buf_impl ctor
-        transbuf::ofile_buf_out mwrm_file_cp;
+        dorecorder_ofile_buf_out mwrm_file_cp;
         if (mwrm_file_cp.open(full_mwrm_filename_tmp.c_str(), S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
             LOG(LOG_ERR, "Failed to open meta file %s", full_mwrm_filename_tmp);
             throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
@@ -432,11 +906,55 @@ static inline int check_encrypted_or_checksumed(
             }
         }
 
+
+        // TODO: this is much too complicated, use factorized code from wrm_capture to compute hash file
         for (MetaLine2CtxForRewriteStat & ctx : meta_line_ctx_list) {
             struct stat sb;
-            if (lstat(ctx.wrm_filename.c_str(), &sb) < 0
-             || detail::write_meta_file_impl<true>(mwrm_file_cp, ctx.filename.c_str(), sb, ctx.start_time, ctx.stop_time)
-            ) {
+            if (lstat(ctx.wrm_filename.c_str(), &sb) < 0) {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
+            }
+            
+            const char * filename = ctx.filename.c_str();
+            auto start_sec = ctx.start_time;
+            auto stop_sec = ctx.stop_time;
+            int err = dorecorder_write_filename(mwrm_file_cp, filename);
+            if (err){
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
+            }
+
+            using ull = unsigned long long;
+            using ll = long long;
+            char mes[
+                (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+                (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+                wrmcapture_hash_string_len + 1 +
+                2
+            ];
+            ssize_t len = std::sprintf(
+                mes,
+                " %lld %llu %lld %lld %llu %lld %lld %lld",
+                ll(sb.st_size),
+                ull(sb.st_mode),
+                ll(sb.st_uid),
+                ll(sb.st_gid),
+                ull(sb.st_dev),
+                ll(sb.st_ino),
+                ll(sb.st_mtim.tv_sec),
+                ll(sb.st_ctim.tv_sec)
+            );
+            len += std::sprintf(
+                mes + len,
+                " %lld %lld",
+                ll(start_sec),
+                ll(stop_sec)
+            );
+
+            char * p = mes + len;
+            *p++ = '\n';
+
+            ssize_t res = mwrm_file_cp.write(mes, p-mes);
+
+            if (res < p-mes) {
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
             }
         }
@@ -458,7 +976,7 @@ static inline int check_encrypted_or_checksumed(
         }
 
         auto const full_hash_path_tmp = (full_hash_path + ".tmp");
-        transbuf::ofile_buf_out hash_file_cp;
+        dorecorder_ofile_buf_out hash_file_cp;
 
         local_auto_remove auto_remove{full_hash_path_tmp.c_str()};
 
@@ -486,7 +1004,42 @@ static inline int check_encrypted_or_checksumed(
             struct stat stat;
             int err = ::stat(meta_filename, &stat);
             if (!err) {
-                err = detail::write_meta_file_impl<false>(hash_file_cp, filename, stat, 0, 0, nullptr);
+               err = dorecorder_write_filename(hash_file_cp, filename);
+                if (err) {
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                    return 1;
+                }
+
+                using ull = unsigned long long;
+                using ll = long long;
+                char mes[
+                    (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+                    (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+                    wrmcapture_hash_string_len + 1 +
+                    2
+                ];
+                ssize_t len = std::sprintf(
+                    mes,
+                    " %lld %llu %lld %lld %llu %lld %lld %lld",
+                    ll(stat.st_size),
+                    ull(stat.st_mode),
+                    ll(stat.st_uid),
+                    ll(stat.st_gid),
+                    ull(stat.st_dev),
+                    ll(stat.st_ino),
+                    ll(stat.st_mtim.tv_sec),
+                    ll(stat.st_ctim.tv_sec)
+                );
+
+                char * p = mes + len;
+                *p++ = '\n';
+
+                ssize_t res = hash_file_cp.write(mes, p-mes);
+
+                if (res < p-mes) {
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", filename, err);
+                    return 1;
+                }
             }
             if (!err) {
                 err = hash_file_cp.close(/*hash*/);
@@ -910,7 +1463,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             | (ini.get<cfg::debug::primary_orders>() ?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
                             | (ini.get<cfg::debug::secondary_orders>() ?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
                             | (ini.get<cfg::debug::bitmap_update>() ?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
-                            
+
                         WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
                         std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
                         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
@@ -1498,14 +2051,14 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 }
 
 extern "C" {
-    __attribute__((__visibility__("default")))
+    REDEMPTION_LIB_EXPORT
     int recmemcpy(char * dest, char * source, int len)
     {
         ::memcpy(dest, source, static_cast<size_t>(len));
         return 0;
     }
 
-    __attribute__((__visibility__("default")))
+    REDEMPTION_LIB_EXPORT
     int do_main(int argc, char const ** argv,
             get_hmac_key_prototype * hmac_fn,
             get_trace_key_prototype * trace_fn)

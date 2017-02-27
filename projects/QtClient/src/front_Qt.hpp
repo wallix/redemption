@@ -37,8 +37,6 @@
 #include <vector>
 #include <boost/algorithm/string.hpp>
 #include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <linux/hdreg.h>
 
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
@@ -79,22 +77,17 @@
 #include "core/RDP/bitmapupdate.hpp"
 #include "keyboard/keymap2.hpp"
 #include "core/client_info.hpp"
-#include "keymaps/Qt4_ScanCode_KeyMap.hpp"
+#include "keymaps/Qt_ScanCode_KeyMap.hpp"
 #include "capture/capture.hpp"
 
-
-#include <QtGui/QImage>
-#include <QtGui/QRgb>
-#include <QtGui/QBitmap>
-#include <QtGui/QColormap>
-#include <QtGui/QPainter>
-
+#include "Qt4/Qt.hpp"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #pragma GCC diagnostic pop
 
 #endif
+
 
 
 #define _WINDOWS_TICK 10000000
@@ -112,6 +105,7 @@ class Form_Qt;
 class Screen_Qt;
 class Mod_Qt;
 class ClipBoard_Qt;
+class FileSysWatchWrapper_Qt;
 
 struct DummyAuthentifier : public auth_api
 {
@@ -119,8 +113,7 @@ public:
     virtual void set_auth_channel_target(const char *) {}
     virtual void set_auth_error_message(const char *) {}
     virtual void report(const char * , const char *) {}
-    virtual void log4(bool , const char *, const char * = nullptr) {
-    }
+    virtual void log4(bool , const char *, const char * = nullptr) {}
     virtual void disconnect_target() {}
 };
 
@@ -204,6 +197,7 @@ public:
     int                  _delta_time;
     int                  _current_screen_index;
     bool                 _recv_disconnect_ultimatum;
+
 
 
     Front_Qt_API( bool param1
@@ -444,7 +438,15 @@ public:
 
         std::string current_path;
 
+        int writeData_to_wait = 0;
+        int writeData_buffered = 0;
+        int file_to_write_id = 0;
+        std::unique_ptr<uint8_t[]>  writeData = nullptr;
+
+
     } fileSystemData;
+
+    FileSysWatchWrapper_Qt * file_watcher;
 
 
 
@@ -478,7 +480,7 @@ public:
 
     void empty_buffer() override;
 
-    void process_client_clipboard_out_data(const char * const front_channel_name, const uint64_t total_length, OutStream & out_streamfirst, size_t firstPartSize, uint8_t const * data, const size_t data_len);
+    void process_client_clipboard_out_data(const char * const front_channel_name, const uint64_t total_length, OutStream & out_streamfirst, size_t firstPartSize, uint8_t const * data, const size_t data_len, uint32_t flags);
 
     virtual void set_pointer(Pointer const & cursor) override;
 
@@ -513,7 +515,6 @@ public:
 
     long long UnixSecondsToWindowsTick(unsigned unixSeconds)
     {
-        //(long long)
         return ((unixSeconds + _SEC_TO_UNIX_EPOCH) * _WINDOWS_TICK);
     }
 

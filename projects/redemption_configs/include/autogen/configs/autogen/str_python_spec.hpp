@@ -216,6 +216,8 @@
 
 "show_target_user_in_f12_message = boolean(default=False)\n\n"
 
+"enable_new_pointer_update = boolean(default=False)\n\n"
+
 "[mod_rdp]\n\n"
 
 "# Specifies the highest compression package support available on the front side\n"
@@ -314,7 +316,7 @@
 "use_client_provided_remoteapp = boolean(default=False)\n\n"
 
 "#_advanced\n"
-"use_native_remoteapp_capability = boolean(default=False)\n\n"
+"use_native_remoteapp_capability = boolean(default=True)\n\n"
 
 "#_hidden\n"
 "enable_session_probe = boolean(default=False)\n\n"
@@ -448,6 +450,9 @@
 
 "# Do not transmit client machine name or RDP server.\n"
 "hide_client_name = boolean(default=False)\n\n"
+
+"#_advanced\n"
+"clean_up_32_bpp_cursor = boolean(default=False)\n\n"
 
 "[mod_vnc]\n\n"
 

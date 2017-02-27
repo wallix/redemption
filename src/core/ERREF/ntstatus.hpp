@@ -57,24 +57,37 @@ namespace erref {
 //  |                        |                                                       |
 //
 
-enum : uint32_t {
-    STATUS_SUCCESS       = 0x00000000,
-    STATUS_NO_SUCH_FILE  = 0xC000000F,
-    STATUS_NO_MORE_FILES = 0x80000006
-//  ...
-
+// TODO strong enum: NTSTATUS::Success, etc
+enum class NTSTATUS : uint32_t
+{
+    STATUS_SUCCESS                  = 0x00000000,
+    STATUS_UNSUCCESSFUL             = 0xC0000001,
+    STATUS_INVALID_PARAMETER        = 0xC000000D,
+    STATUS_NO_SUCH_FILE             = 0xC000000F,
+    STATUS_NO_MORE_FILES            = 0x80000006,
+    STATUS_ACCESS_DENIED            = 0xC0000022,
+    STATUS_OBJECT_NAME_INVALID      = 0xC0000033,
+    STATUS_OBJECT_NAME_COLLISION    = 0xC0000035,
+    // ...
 };
 
- static const char * get_NTStatus(uint32_t ntstatus) {
-        switch (ntstatus) {
-            case STATUS_SUCCESS:       return "STATUS_SUCCESS";
-            case STATUS_NO_SUCH_FILE:  return "STATUS_NO_SUCH_FILE";
-            case STATUS_NO_MORE_FILES: return "STATUS_NO_MORE_FILES";
-//          ...
-
-        }
-
-        return "<unknown>";
+inline const char * get_NTStatus(NTSTATUS ntstatus) noexcept
+{
+#define CASE_TO_STR(name) case NTSTATUS::name: return #name;
+    switch (ntstatus) {
+        CASE_TO_STR(STATUS_SUCCESS)
+        CASE_TO_STR(STATUS_UNSUCCESSFUL)
+        CASE_TO_STR(STATUS_INVALID_PARAMETER)
+        CASE_TO_STR(STATUS_NO_SUCH_FILE)
+        CASE_TO_STR(STATUS_NO_MORE_FILES)
+        CASE_TO_STR(STATUS_ACCESS_DENIED)
+        CASE_TO_STR(STATUS_OBJECT_NAME_INVALID)
+        CASE_TO_STR(STATUS_OBJECT_NAME_COLLISION)
+        // ...
     }
+#undef CASE_TO_STR
+
+    return "<unknown>";
+}
 
 }

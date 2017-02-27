@@ -467,10 +467,10 @@ test-canonical redemptionio/redemptionio.hpp ;
 
 ## Acl tests
 ## @{
-test-canonical acl/acl_serializer.hpp : <library>png ;
+test-canonical acl/acl_serializer.hpp : <library>png <library>crypto <library>snappy ;
 test-canonical acl/auth_api.hpp ;
-test-canonical acl/authentifier.hpp : <library>crypto <library>png ;
-test-canonical acl/module_manager.hpp : <library>crypto <library>png ;
+test-canonical acl/authentifier.hpp : <library>crypto <library>png <library>snappy ;
+test-canonical acl/module_manager.hpp : <library>crypto <library>png <library>snappy ;
 test-canonical acl/mm_api.hpp ;
 ## @}
 
@@ -489,12 +489,12 @@ test-canonical capture/ocr/locale/latin_to_cyrillic.hpp : <library>ocr ;
 ## @{
 test-canonical capture/RDPChunkedDevice.hpp ;
 test-canonical capture/capture.hpp : <library>bitmap <library>png <library>crypto <library>dl <library>z <library>snappy <library>ppocr_test <library>ocr <library>ffmpeg ;
-test-canonical capture/video_capture.hpp : <library>bitmap <library>png <library>crypto <library>dl <library>z <library>snappy <library>ppocr_test <library>ocr <library>ffmpeg ;
+test-canonical capture/video_capture.hpp : <library>bitmap <library>png <library>dl <library>ffmpeg ;
+test-canonical capture/wrm_capture.hpp : <library>bitmap <library>crypto <library>png <library>z <library>snappy <library>dl ;
 test-canonical capture/transparentchunk.hpp ;
 test-canonical capture/transparentplayer.hpp ;
 test-canonical capture/transparentrecorder.hpp ;
-test-canonical capture/utils/match_finder.hpp : <covflag>nocover ;
-test-canonical capture/wrm_label.hpp ;
+test-canonical capture/utils/match_finder.hpp : ;
 ## @}
 
 
@@ -503,6 +503,7 @@ test-canonical capture/wrm_label.hpp ;
 test-canonical utils/sugar/algostring.hpp ;
 test-canonical utils/sugar/array_view.hpp ;
 test-canonical utils/sugar/bytes_t.hpp ;
+test-canonical utils/sugar/buffer_t.hpp ;
 test-canonical utils/sugar/cast.hpp ;
 test-canonical utils/sugar/exchange.hpp ;
 test-canonical utils/sugar/finally.hpp ;
@@ -622,7 +623,6 @@ test-canonical utils/urandom_read.hpp ;
 test-canonical utils/utf.hpp ;
 test-canonical utils/virtual_channel_data_sender.hpp ;
 test-canonical utils/winpr/pattern.hpp ;
-test-run test_strings : test_strings.cpp : : <covflag>nocover ;
 ## @}
 
 
@@ -1044,8 +1044,8 @@ test-canonical core/listen.hpp ;
 test-canonical core/mainloop.hpp ;
 test-canonical core/server.hpp ;
 test-canonical core/server_notifier_api.hpp ;
-test-canonical core/session.hpp : <library>png ;
-test-canonical core/session_server.hpp : <library>png ;
+test-canonical core/session.hpp : <library>png <library>crypto <library>z <library>snappy <library>dl ;
+test-canonical core/session_server.hpp :  <library>png <library>crypto <library>z <library>snappy <library>dl ;
 test-canonical core/wait_obj.hpp ;
 ## @}
 
@@ -1070,7 +1070,7 @@ test-canonical keyboard/keymap2.hpp ;
 test-canonical keyboard/keymapSym.hpp ;
 
 test-canonical gdi/graphic_cmd_color.hpp ;
-test-canonical gdi/protected_graphics.hpp : <library>bitmap <library>png ;
+test-canonical gdi/protected_graphics.hpp : <library>bitmap  <library>png <library>crypto <library>z <library>snappy <library>dl ;
 
 
 #explicit test_show_data.o bitmap_data_allocator.o test_data_draw ; #

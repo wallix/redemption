@@ -825,15 +825,7 @@ int main(int argc, char** argv){
 
 
 
-    struct DummyAuthentifier : public auth_api
-    {
-    public:
-        virtual void set_auth_channel_target(const char *) {}
-        virtual void set_auth_error_message(const char *) {}
-        virtual void report(const char *, const char *) {}
-        virtual void log4(bool, const char *, const char * = nullptr) {}
-        virtual void disconnect_target() {}
-    } authentifier;
+    NullAuthentifier authentifier;
     TestClientCLI front(info, authentifier, 0);
 
 

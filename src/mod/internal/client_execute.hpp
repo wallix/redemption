@@ -23,6 +23,7 @@
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "core/front_api.hpp"
+#include "core/RDP/capabilities/window.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
@@ -38,7 +39,7 @@
 #include "utils/stream.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
 
-#define DUMMY_REMOTEAPP "||WABDummyRemoteApp"
+#define DUMMY_REMOTEAPP "||WABRemoteApp"
 
 #define INTERNAL_MODULE_WINDOW_ID    40000
 #define INTERNAL_MODULE_WINDOW_TITLE "Wallix AdminBastion"
@@ -143,12 +144,17 @@ class ClientExecute : public windowing_api
     uint16_t total_width_of_work_areas = 0;
     uint16_t total_height_of_work_areas = 0;
 
+    std::string window_title;
+
+    bool window_level_supported_ex = false;
+
     bool verbose;
 
 public:
     ClientExecute(FrontAPI & front, bool verbose)
     : front_(&front)
     , wallix_icon_min(bitmap_from_file(SHARE_PATH "/wallix-icon-min.png"))
+    , window_title(INTERNAL_MODULE_WINDOW_TITLE)
     , verbose(verbose)
     {
     }   // ClientExecute
@@ -416,7 +422,7 @@ public:
                                       *this->font_,
                                       this->title_bar_rect.x + 1,
                                       this->title_bar_rect.y + 3,
-                                      INTERNAL_MODULE_WINDOW_TITLE,
+                                      this->window_title.c_str(),
                                       0x000000,
                                       0xFFFFFF,
                                       depth,
@@ -471,10 +477,9 @@ public:
     void input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos) {
         if (!this->channel_) return;
 
-        //LOG(LOG_INFO, "pointerFlags=0x%X pressed_mouse_button=%d", pointerFlags,
-        //    this->pressed_mouse_button);
-        //LOG(LOG_INFO, "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u",
-        //    pointerFlags, xPos, yPos);
+        //LOG(LOG_INFO,
+        //    "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u pressed_mouse_button=%d",
+        //    pointerFlags, xPos, yPos, this->pressed_mouse_button);
 
         if ((SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1) == pointerFlags) {
             if (MOUSE_BUTTON_PRESSED_NONE == this->pressed_mouse_button) {
@@ -604,8 +609,8 @@ public:
                         smmipdu.MaxPosY(work_area_rect.y);
                         smmipdu.MinTrackWidth(INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH);
                         smmipdu.MinTrackHeight(INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT);
-                        smmipdu.MaxTrackWidth(this->total_width_of_work_areas /*work_area_rect.cx*/ - 1);
-                        smmipdu.MaxTrackHeight(this->total_height_of_work_areas /*work_area_rect.cy*/ - 1);
+                        smmipdu.MaxTrackWidth(this->total_width_of_work_areas - 1);
+                        smmipdu.MaxTrackHeight(this->total_height_of_work_areas - 1);
 
                         smmipdu.emit(out_s);
 
@@ -860,7 +865,7 @@ public:
                     order.Style(0x14EE0000);
                     order.ExtendedStyle(0x40310);
                     order.ShowState(5);
-                    order.TitleInfo(INTERNAL_MODULE_WINDOW_TITLE);
+                    order.TitleInfo(this->window_title.c_str());
                     order.ClientOffsetX(this->window_rect.x + 6);
                     order.ClientOffsetY(this->window_rect.y + 25);
                     order.WindowOffsetX(this->window_rect.x);
@@ -1047,7 +1052,7 @@ public:
 
                     order.header.FieldsPresentFlags(
                               RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                            | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
+                            | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
                             | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTDELTA
                             | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
                             | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
@@ -1155,7 +1160,7 @@ public:
 
                         order.header.FieldsPresentFlags(
                                   RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
+                                | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
                                 | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
                                 | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
                                 | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
@@ -1185,6 +1190,7 @@ public:
                             LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (2)", out_s.get_offset() - 1);
                         }
 
+//LOG(LOG_INFO, "not sent");
                         this->front_->draw(order);
                     }
 
@@ -1265,7 +1271,7 @@ public:
 
                     order.header.FieldsPresentFlags(
                               RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                            | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
+                            | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
                             | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
                             | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
                             | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
@@ -1342,7 +1348,7 @@ public:
 
                 order.header.FieldsPresentFlags(
                           RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
+                        | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
                         | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
                         | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
                         | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
@@ -1402,7 +1408,7 @@ public:
 
                 order.header.FieldsPresentFlags(
                           RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
+                        | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
                         | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
                         | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
                         | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
@@ -1449,6 +1455,11 @@ public:
     void ready(mod_api & mod, uint16_t front_width, uint16_t front_height, Font const & font) {
         this->mod_  = &mod;
         this->font_ = &font;
+
+        WindowListCaps window_list_caps;
+        this->front_->retrieve_client_capability_set(window_list_caps);
+
+        this->window_level_supported_ex = (window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX);
 
         this->front_width  = front_width;
         this->front_height = front_height;
@@ -1586,6 +1597,8 @@ public:
         auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
         this->work_area_count = 0;
+
+        this->set_target_info(nullptr);
 
         this->channel_ = nullptr;
     }   // reset
@@ -1728,7 +1741,7 @@ protected:
 
             ServerGetApplicationIDResponsePDU server_get_application_id_response_pdu;
             server_get_application_id_response_pdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
-            server_get_application_id_response_pdu.ApplicationId(INTERNAL_MODULE_WINDOW_TITLE);
+            server_get_application_id_response_pdu.ApplicationId(this->window_title.c_str());
             server_get_application_id_response_pdu.emit(out_s);
 
             header.emit_end();
@@ -1866,7 +1879,7 @@ protected:
 
                         order.header.FieldsPresentFlags(
                                   RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
+                                | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
                                 | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTDELTA
                                 | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
                                 | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
@@ -1939,7 +1952,7 @@ protected:
                     order.Style(0x14EE0000);
                     order.ExtendedStyle(0x40310);
                     order.ShowState(5);
-                    order.TitleInfo(INTERNAL_MODULE_WINDOW_TITLE);
+                    order.TitleInfo(this->window_title.c_str());
                     order.ClientOffsetX(this->window_rect.x + 6);
                     order.ClientOffsetY(this->window_rect.y + 25);
                     order.WindowOffsetX(this->window_rect.x);
@@ -2131,7 +2144,7 @@ protected:
                 order.Style(0x14EE0000);
                 order.ExtendedStyle(0x40310);
                 order.ShowState(this->maximized ? 3 : 5);
-                order.TitleInfo(INTERNAL_MODULE_WINDOW_TITLE);
+                order.TitleInfo(this->window_title.c_str());
                 order.ClientOffsetX(this->window_rect.x + 6);
                 order.ClientOffsetY(this->window_rect.y + 25);
                 order.WindowOffsetX(this->window_rect.x);
@@ -2412,7 +2425,7 @@ protected:
 
                 order.header.FieldsPresentFlags(
                           RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
+                        | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
                         | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
                         | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
                         | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
@@ -2785,6 +2798,14 @@ public:
         }
 
         this->auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
+    }
+
+    void set_target_info(const char* ti) {
+        this->window_title = (ti ? ti : "");
+        if (!this->window_title.empty()) {
+            this->window_title += " - ";
+        }
+        this->window_title += INTERNAL_MODULE_WINDOW_TITLE;
     }
 
 private:

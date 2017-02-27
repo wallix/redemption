@@ -39,235 +39,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-struct videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION
-{
-private:
-    char         path[1024];
-    char         filename[1012];
-    char         extension[12];
-    unsigned     pid;
-    mutable char filename_gen[1024];
-
-    const char * last_filename;
-    unsigned     last_num;
-
-public:
-    videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION(
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension)
-    : pid(getpid())
-    , last_filename(nullptr)
-    , last_num(-1u)
-    {
-        if (strlen(prefix) > sizeof(this->path) - 1
-         || strlen(filename) > sizeof(this->filename) - 1
-         || strlen(extension) > sizeof(this->extension) - 1) {
-            throw Error(ERR_TRANSPORT);
-        }
-
-        strcpy(this->path, prefix);
-        strcpy(this->filename, filename);
-        strcpy(this->extension, extension);
-
-        this->filename_gen[0] = 0;
-    }
-
-    const char * get(unsigned count) const
-    {
-        if (count == this->last_num && this->last_filename) {
-            return this->last_filename;
-        }
-
-        using std::snprintf;
-        snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
-                , this->filename, count, this->extension);
-        return this->filename_gen;
-    }
-
-    void set_last_filename(unsigned num, const char * name)
-    {
-        this->last_num = num;
-        this->last_filename = name;
-    }
-
-private:
-    videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION(videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION const &) = delete;
-    videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION& operator=(videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION const &) = delete;
-};
-
-
-
-
-struct videocapture_OutFilenameSequenceSeekableTransport_COUNT : public Transport
-{
-    char buf_current_filename_[1024];
-    videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION buf_filegen_;
-    int buf_buf_fd;
-    unsigned buf_num_file_;
-    int buf_groupid_;
-
-public:
-    videocapture_OutFilenameSequenceSeekableTransport_COUNT(
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension,
-        const int groupid,
-        auth_api * authentifier = nullptr)
-    : buf_filegen_(prefix, filename, extension)
-    , buf_buf_fd(-1)
-    , buf_num_file_(0)
-    , buf_groupid_(groupid)
-    {
-            this->buf_current_filename_[0] = 0;
-            if (authentifier) {
-                this->set_authentifier(authentifier);
-            }
-    }
-
-    const videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION * seqgen() const noexcept
-    { return &this->buf_filegen_; }
-
-    void seek(int64_t offset, int whence) override {
-        if (static_cast<off64_t>(-1) == lseek64(this->buf_buf_fd, offset, whence)){
-            throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
-        }
-    }
-
-    bool next() override {
-        if (this->status == false) {
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
-        ssize_t tmpres = 1;
-        if (this->buf_buf_fd != -1) {
-            ::close(this->buf_buf_fd);
-            this->buf_buf_fd = -1;
-            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-            
-            this->buf_filegen_.set_last_filename(-1u, "");
-            const char * filename = this->buf_filegen_.get(this->buf_num_file_);
-            this->buf_filegen_.set_last_filename(this->buf_num_file_, this->buf_current_filename_);
-            
-            const int res = ::rename(this->buf_current_filename_, filename);
-            if (res < 0) {
-                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                   , this->buf_current_filename_, filename, errno, strerror(errno));
-                tmpres = 1;
-            }
-            else {
-                this->buf_current_filename_[0] = 0;
-                ++this->buf_num_file_;
-                this->buf_filegen_.set_last_filename(-1u, "");
-                tmpres = 0;
-            }
-        }
-        const ssize_t res = tmpres;
-        if (res) {
-            this->status = false;
-            if (res < 0){
-                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
-            }
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-        }
-        ++this->seqno;
-        return true;
-    }
-
-    void request_full_cleaning() override {
-        unsigned i = this->buf_num_file_ + 1;
-        while (i > 0 && !::unlink(this->buf_filegen_.get(--i))) {
-        }
-        if (-1 != this->buf_buf_fd) {
-            ::close(this->buf_buf_fd);
-            this->buf_buf_fd = -1;
-        }
-    }
-
-    ~videocapture_OutFilenameSequenceSeekableTransport_COUNT() {
-        if (this->buf_buf_fd != -1) {
-            ::close(this->buf_buf_fd);
-            this->buf_buf_fd = -1;
-            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-            
-            this->buf_filegen_.set_last_filename(-1u, "");
-            const char * filename = this->buf_filegen_.get(this->buf_num_file_);
-            this->buf_filegen_.set_last_filename(this->buf_num_file_, this->buf_current_filename_);
-            
-            const int res = ::rename(this->buf_current_filename_, filename);
-            if (res < 0) {
-                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                   , this->buf_current_filename_, filename, errno, strerror(errno));
-            }
-            else {
-                this->buf_current_filename_[0] = 0;
-                ++this->buf_num_file_;
-                this->buf_filegen_.set_last_filename(-1u, "");
-            }
-        }
-    }
-
-private:
-    void do_send(const uint8_t * data, size_t len) override {
-        ssize_t tmpres = 0;
-        if (this->buf_buf_fd == -1) {
-            const char * filename = this->buf_filegen_.get(this->buf_num_file_);
-            snprintf(this->buf_current_filename_, sizeof(this->buf_current_filename_),
-                        "%sred-XXXXXX.tmp", filename);
-            this->buf_buf_fd = ::mkostemps(this->buf_current_filename_, 4, O_WRONLY | O_CREAT);
-            if (this->buf_buf_fd == -1) {
-                tmpres = -1;
-            }
-            else {
-                if (chmod(this->buf_current_filename_, this->buf_groupid_ ?
-                    (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                   , this->buf_current_filename_
-                   , this->buf_groupid_ ? "u+r, g+r" : "u+r"
-                   , strerror(errno), errno);
-                }
-                this->buf_filegen_.set_last_filename(this->buf_num_file_, this->buf_current_filename_);
-            }
-        }
-        if (tmpres != -1){
-            size_t remaining_len = len;
-            size_t total_sent = 0;
-            while (remaining_len) {
-                ssize_t ret = ::write(this->buf_buf_fd, data + total_sent, remaining_len);
-                if (ret <= 0){
-                    if (errno == EINTR){
-                        continue;
-                    }
-                    tmpres = -1;
-                    break;
-                }
-                remaining_len -= ret;
-                total_sent += ret;
-            }
-            if (tmpres != -1){
-                tmpres = total_sent;
-            }
-        }
-    
-        const ssize_t res = tmpres;
-        if (res < 0) {
-            this->status = false;
-            if (errno == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|unknown");
-                this->authentifier->report("FILESYSTEM_FULL", message);
-                errno = ENOSPC;
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
-            }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
-        this->last_quantum_sent += res;
-    }
-};
-
-
 struct NotifyNextVideo : private noncopyable
 {
     enum class reason { sequenced, external };
@@ -278,136 +49,89 @@ struct NotifyNextVideo : private noncopyable
 
 class FullVideoCaptureImpl : public gdi::CaptureApi
 {
-    struct videocapture_OutFilenameSequenceSeekableTransport : public Transport
+    struct TmpFileTransport : public Transport
     {
-        char buf_current_filename_[1024];
+        char tmp_filename[1024];
+        char final_filename[1024];
 
-        struct videocapture_FilenameGenerator_PATH_FILE_EXTENSION
-        {
-        private:
-            mutable char filename_gen[1024];
-
-        public:
-            videocapture_FilenameGenerator_PATH_FILE_EXTENSION(const char * const prefix, const char * const filename, const char * const extension)
-            {
-                using std::snprintf;
-                this->filename_gen[0] = 0;
-                // TODO: s'assurer que filename_gen ne sature pas ou lever une exception
-                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s%s", prefix, filename, extension);
-
-            }
-
-            const char * get_gen_filename() const
-            {
-                return this->filename_gen;
-            }
-
-        } buf_filegen_;
-
-        int buf_buf_fd;
-        unsigned buf_num_file_;
-        int buf_groupid_;
+        int fd;
+        int groupid;
 
     public:
-        videocapture_OutFilenameSequenceSeekableTransport(
+        TmpFileTransport(
             const char * const prefix,
             const char * const filename,
             const char * const extension,
-            const int groupid,
-            auth_api * authentifier = nullptr)
-        : buf_filegen_(prefix, filename, extension)
-        , buf_buf_fd(-1)
-        , buf_num_file_(0)
-        , buf_groupid_(groupid)
+            const int groupid)
+        : fd(-1)
+        , groupid(groupid)
         {
-                this->buf_current_filename_[0] = 0;
-                if (authentifier) {
-                    this->set_authentifier(authentifier);
-                }
+                using std::snprintf;
+                this->final_filename[0] = 0;
+                // TODO: check that filename_gen is not too large of throw some exception
+                snprintf( this->final_filename
+                        , sizeof(this->final_filename)
+                        , "%s%s%s", prefix, filename, extension);
+                this->tmp_filename[0] = 0;
         }
 
         void seek(int64_t offset, int whence) override {
-            if (static_cast<off64_t>(-1) == lseek64(this->buf_buf_fd, offset, whence)){
+            if (static_cast<off64_t>(-1) == lseek64(this->fd, offset, whence)){
                 throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
             }
         }
 
-        ~videocapture_OutFilenameSequenceSeekableTransport() {
-            if (this->buf_buf_fd != -1) {
-                ::close(this->buf_buf_fd);
-                this->buf_buf_fd = -1;
+        ~TmpFileTransport() {
+            if (this->fd != -1) {
+                ::close(this->fd);
                 // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                
-                const char * filename = this->buf_filegen_.get_gen_filename();
-                const int res = ::rename(this->buf_current_filename_, filename);
-                if (res < 0) {
+                if (::rename(this->tmp_filename, this->final_filename) < 0) {
                     LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                       , this->buf_current_filename_, filename, errno, strerror(errno));
+                       , this->tmp_filename, this->final_filename, errno, strerror(errno));
                 }
             }
         }
 
     private:
         void do_send(const uint8_t * data, size_t len) override {
-            ssize_t tmpres = 0;
-            if (this->buf_buf_fd == -1) {
-                const char * filename = this->buf_filegen_.get_gen_filename();
-                snprintf(this->buf_current_filename_, sizeof(this->buf_current_filename_),
-                            "%sred-XXXXXX.tmp", filename);
-                this->buf_buf_fd = ::mkostemps(this->buf_current_filename_, 4, O_WRONLY | O_CREAT);
-                if (this->buf_buf_fd == -1) {
-                    tmpres = -1;
+            if (this->fd == -1) {
+                snprintf(this->tmp_filename, sizeof(this->tmp_filename),
+                            "%sred-XXXXXX.tmp", this->final_filename);
+                this->fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
+                if (this->fd == -1) {
+                    this->status = false;
+                    auto eid = (errno == ENOSPC)?ERR_TRANSPORT_WRITE_NO_ROOM:ERR_TRANSPORT_WRITE_FAILED;
+                    throw Error(eid, errno);
                 }
-                else {
-                    if (chmod(this->buf_current_filename_, this->buf_groupid_ ?
-                        (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                if (chmod(this->tmp_filename, this->groupid ?(S_IRUSR|S_IRGRP):S_IRUSR) == -1) {
                     LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                       , this->buf_current_filename_
-                       , this->buf_groupid_ ? "u+r, g+r" : "u+r"
+                       , this->tmp_filename
+                       , this->groupid ? "u+r, g+r" : "u+r"
                        , strerror(errno), errno);
-                    }
+                    // TODO: throw error if chmod fails
+                    // TODO: see if we can provide chmod in mkostemp
                 }
             }
-            if (tmpres != -1){
-                size_t remaining_len = len;
-                size_t total_sent = 0;
-                while (remaining_len) {
-                    ssize_t ret = ::write(this->buf_buf_fd, data + total_sent, remaining_len);
-                    if (ret <= 0){
-                        if (errno == EINTR){
-                            continue;
-                        }
-                        tmpres = -1;
-                        break;
-                    }
-                    remaining_len -= ret;
-                    total_sent += ret;
+
+            size_t remaining_len = len;
+            size_t total_sent = 0;
+            while (remaining_len) {
+                ssize_t ret = ::write(this->fd, data + total_sent, remaining_len);
+                if (ret <= 0){
+                    if (errno == EINTR){ continue; }
+                    this->status = false;
+                    auto eid = (errno == ENOSPC)?ERR_TRANSPORT_WRITE_NO_ROOM:ERR_TRANSPORT_WRITE_FAILED;
+                    throw Error(eid, errno);
                 }
-                if (tmpres != -1){
-                    tmpres = total_sent;
-                }
+                remaining_len -= ret;
+                total_sent += ret;
             }
-        
-            const ssize_t res = tmpres;
-            if (res < 0) {
-                this->status = false;
-                if (errno == ENOSPC) {
-                    char message[1024];
-                    snprintf(message, sizeof(message), "100|unknown");
-                    this->authentifier->report("FILESYSTEM_FULL", message);
-                    errno = ENOSPC;
-                    throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
-                }
-                else {
-                    throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-                }
-            }
-            this->last_quantum_sent += res;
+            this->last_quantum_sent += total_sent;
         }
-    } trans;
+    } trans_tmp_file;
 
     RDPDrawable & drawable;
-    
+
     FlvParams flv_params;
     std::unique_ptr<video_recorder> recorder;
     timeval start_video_capture;
@@ -416,7 +140,7 @@ class FullVideoCaptureImpl : public gdi::CaptureApi
 
 public:
 
-    std::chrono::microseconds frame_marker_event(const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
+    void frame_marker_event(const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
     override {
         this->drawable.trace_mouse();
         if (!this->no_timestamp) {
@@ -428,11 +152,10 @@ public:
         this->recorder->preparing_video_frame(true);
         if (!this->no_timestamp) { this->drawable.clear_timestamp(); }
         this->drawable.clear_mouse();
-        return std::chrono::microseconds{};
     }
 
     std::chrono::microseconds do_snapshot(
-        const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
+        const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool ignore_frame_in_timeval)
     override {
         uint64_t tick = difftimeval(now, this->start_video_capture);
         uint64_t const inter_frame_interval = this->inter_frame_interval.count();
@@ -477,7 +200,7 @@ public:
                 } while (tick >= inter_frame_interval);
             }
         }
-        return std::chrono::microseconds(inter_frame_interval - tick);    
+        return std::chrono::microseconds(inter_frame_interval - tick);
     }
 
     std::chrono::microseconds periodic_snapshot(const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
@@ -489,7 +212,7 @@ public:
 
     FullVideoCaptureImpl(const timeval & now, const char * const record_path, const char * const basename,
         const int groupid, bool no_timestamp, RDPDrawable & drawable, FlvParams flv_params)
-    : trans(record_path, basename, ("." + flv_params.codec).c_str(), groupid)
+    : trans_tmp_file(record_path, basename, ("." + flv_params.codec).c_str(), groupid)
     , drawable(drawable)
     , flv_params(std::move(flv_params))
     , start_video_capture(now)
@@ -505,10 +228,10 @@ public:
 
         if (this->recorder) {
             this->recorder.reset();
-            this->trans.next();
+            this->trans_tmp_file.next();
         }
 
-        io_video_recorder_with_transport io{this->trans};
+        io_video_recorder_with_transport io{this->trans_tmp_file};
         this->recorder.reset(new video_recorder(
             io.write_fn(), io.seek_fn(), io.params(),
             drawable.width(), drawable.height(),
@@ -522,7 +245,7 @@ public:
             this->flv_params.target_height,
             this->flv_params.verbosity
         ));
-    
+
         ::unlink((std::string(record_path) + basename + "." + flv_params.codec).c_str());
     }
 
@@ -532,13 +255,160 @@ public:
         this->recorder->encoding_video_frame();
     }
 
-    void request_full_cleaning() {
-        this->trans.request_full_cleaning();
-    }
 };
 
 class SequencedVideoCaptureImpl : public gdi::CaptureApi
 {
+
+    struct SequenceTransport : public Transport
+    {
+        char tmp_filename[1024];
+        char final_filename[1024];
+
+        struct FileGen {
+            char path[1024];
+            char base[1012];
+            char ext[12];
+            unsigned num = 0;
+
+            void set_final_filename(char * final_filename, size_t final_filename_size)
+            {
+                using std::snprintf;
+                snprintf( final_filename, final_filename_size, "%s%s-%06u%s"
+                        , this->path, this->base, this->num, this->ext);
+            }
+        } filegen;
+
+        int fd;
+        int groupid;
+
+    public:
+        SequenceTransport(
+            const char * const prefix,
+            const char * const filename,
+            const char * const extension,
+            const int groupid,
+            auth_api * authentifier)
+        : fd(-1)
+        , groupid(groupid)
+        {
+            if (strlen(prefix) > sizeof(this->filegen.path) - 1
+             || strlen(filename) > sizeof(this->filegen.base) - 1
+             || strlen(extension) > sizeof(this->filegen.ext) - 1) {
+                throw Error(ERR_TRANSPORT);
+            }
+
+            strcpy(this->filegen.path, prefix);
+            strcpy(this->filegen.base, filename);
+            strcpy(this->filegen.ext, extension);
+
+            this->final_filename[0] = 0;
+            this->tmp_filename[0] = 0;
+
+            if (authentifier) {
+                this->set_authentifier(authentifier);
+            }
+        }
+
+        void seek(int64_t offset, int whence) override {
+            if (static_cast<off64_t>(-1) == lseek64(this->fd, offset, whence)){
+                throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
+            }
+        }
+
+        bool next() override {
+            if (this->status == false) {
+                throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+            }
+            ::close(this->fd);
+            this->fd = -1;
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+
+            this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
+            if (::rename(this->tmp_filename, this->final_filename) < 0)
+            {
+                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                   , this->tmp_filename, this->final_filename, errno, strerror(errno));
+                this->status = false;
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+            this->tmp_filename[0] = 0;
+
+            ++this->filegen.num;
+            ++this->seqno;
+            return true;
+        }
+
+        ~SequenceTransport() {
+            if (this->fd != -1) {
+                ::close(this->fd);
+                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+
+                this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
+                const int res = ::rename(this->tmp_filename, this->final_filename);
+                if (res < 0) {
+                    LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                       , this->tmp_filename, this->final_filename, errno, strerror(errno));
+                }
+            }
+        }
+
+    private:
+        void do_send(const uint8_t * data, size_t len) override {
+            if (this->fd == -1) {
+
+                this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
+                snprintf(this->tmp_filename, sizeof(this->tmp_filename),
+                            "%sred-XXXXXX.tmp", this->final_filename);
+                this->fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
+                if (this->fd == -1) {
+                    this->status = false;
+                    auto id = ERR_TRANSPORT_WRITE_FAILED;
+                    if (errno == ENOSPC) {
+                        char message[1024];
+                        snprintf(message, sizeof(message), "100|unknown");
+                        this->authentifier->report("FILESYSTEM_FULL", message);
+                        id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                        errno = ENOSPC;
+                    }
+                    throw Error(id, errno);
+                }
+                if (chmod(this->tmp_filename, this->groupid ?
+                    (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                    LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                       , this->tmp_filename
+                       , this->groupid ? "u+r, g+r" : "u+r"
+                       , strerror(errno), errno);
+                }
+            }
+
+            size_t remaining_len = len;
+            size_t total_sent = 0;
+            while (remaining_len) {
+                ssize_t ret = ::write(this->fd, data + total_sent, remaining_len);
+                if (ret <= 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    this->status = false;
+                    auto id = ERR_TRANSPORT_WRITE_FAILED;
+                    if (errno == ENOSPC) {
+                        char message[1024];
+                        snprintf(message, sizeof(message), "100|unknown");
+                        this->authentifier->report("FILESYSTEM_FULL", message);
+                        id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                        errno = ENOSPC;
+                    }
+                    throw Error(id, errno);
+                }
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            this->last_quantum_sent += total_sent;
+        }
+    };
+
     bool ic_has_first_img = false;
 
 public:
@@ -555,17 +425,15 @@ public:
         return this->video_sequencer.do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
     }
 
-    std::chrono::microseconds frame_marker_event(
-        timeval const & now,
-        int cursor_x, int cursor_y,
-        bool ignore_frame_in_timeval
-    ) override
+    void frame_marker_event(timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval) override
     {
         this->vc.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
         if (!this->ic_has_first_img) {
-            return this->first_image.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+            this->first_image.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
         }
-        return this->video_sequencer.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        else {
+            this->video_sequencer.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        }
     }
 
     std::chrono::microseconds periodic_snapshot(
@@ -580,41 +448,6 @@ public:
         }
         return this->video_sequencer.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
     }
-
-private:
-
-    class VideoTransport final : public videocapture_OutFilenameSequenceSeekableTransport_COUNT
-    {
-        using transport_base = videocapture_OutFilenameSequenceSeekableTransport_COUNT;
-
-    public:
-        VideoTransport(
-            const char * const record_path,
-            const char * const basename,
-            const char * const suffix,
-            const int groupid
-        )
-        : transport_base(record_path, basename, suffix, groupid)
-        {
-            this->remove_current_path();
-        }
-
-        bool next() override {
-            if (transport_base::next()) {
-                this->remove_current_path();
-                return true;
-            }
-            return false;
-        }
-
-    private:
-        void remove_current_path() {
-            const char * const path = this->seqgen()->get(this->get_seqno());
-            ::unlink(path);
-        }
-    };
-
-
 
 public:
     // first next_video is ignored
@@ -640,13 +473,9 @@ public:
             return next_duration;
         }
 
-        std::chrono::microseconds frame_marker_event(
-            timeval const & now,
-            int cursor_x, int cursor_y,
-            bool ignore_frame_in_timeval
-        ) 
+        void frame_marker_event(timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
         {
-            return this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+            this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
         }
 
         std::chrono::microseconds do_snapshot(
@@ -682,11 +511,11 @@ public:
     } first_image;
 
 public:
-    VideoTransport vc_trans;
+    SequenceTransport vc_trans;
+
     class VideoCapture
     {
         Transport & trans;
-
         FlvParams flv_params;
 
         RDPDrawable & drawable;
@@ -742,7 +571,11 @@ public:
             ));
         }
 
-        void preparing_video_frame() {
+        void encoding_video_frame() {
+            this->recorder->encoding_video_frame();
+        }
+
+        void frame_marker_event(const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/) {
             this->drawable.trace_mouse();
             if (!this->no_timestamp) {
                 time_t rawtime = this->start_video_capture.tv_sec;
@@ -753,17 +586,6 @@ public:
             this->recorder->preparing_video_frame(true);
             if (!this->no_timestamp) { this->drawable.clear_timestamp(); }
             this->drawable.clear_mouse();
-        }
-
-        void encoding_video_frame() {
-            this->recorder->encoding_video_frame();
-        }
-
-        std::chrono::microseconds frame_marker_event(
-            const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
-        ) {
-            this->preparing_video_frame();
-            return std::chrono::microseconds{};
         }
 
         std::chrono::microseconds do_snapshot(
@@ -815,7 +637,7 @@ public:
 
             return std::chrono::microseconds(inter_frame_interval - tick);
         }
-        
+
         std::chrono::microseconds periodic_snapshot(
             timeval const & now,
             int cursor_x, int cursor_y,
@@ -828,167 +650,8 @@ public:
         }
 
     } vc;
- 
-    struct videocapture_OutFilenameSequenceTransport_COUNT : public Transport
-    {
-        char buf_current_filename_[1024];
-        videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION buf_filegen_;
-        int buf_buf_fd;
-        unsigned buf_num_file_;
-        int buf_groupid_;
 
-        videocapture_OutFilenameSequenceTransport_COUNT(
-            const char * const prefix,
-            const char * const filename,
-            const char * const extension,
-            const int groupid,
-            auth_api * authentifier)
-        : buf_filegen_(prefix, filename, extension)
-            , buf_buf_fd(-1)
-            , buf_num_file_(0)
-            , buf_groupid_(groupid)
-        {
-                this->buf_current_filename_[0] = 0;
-                if (authentifier) {
-                    this->set_authentifier(authentifier);
-                }
-        }
-
-        const videocapture_FilenameGenerator_PATH_FILE_COUNT_EXTENSION * seqgen() const noexcept
-        { return &(this->buf_filegen_); }
-
-        bool next() override {
-            if (this->status == false) {
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-            }
-            ssize_t tmpres = 1;
-            if (this->buf_buf_fd != -1) {
-                ::close(this->buf_buf_fd);
-                this->buf_buf_fd = -1;
-                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                this->buf_filegen_.set_last_filename(-1u, "");
-                const char * filename = this->buf_filegen_.get(this->buf_num_file_);
-                this->buf_filegen_.set_last_filename(this->buf_num_file_, this->buf_current_filename_);
-
-                const int res = ::rename(this->buf_current_filename_, filename);
-                if (res < 0) {
-                    LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                       , this->buf_current_filename_, filename, errno, strerror(errno));
-                }
-                else {
-                    this->buf_current_filename_[0] = 0;
-                    ++this->buf_num_file_;
-                    this->buf_filegen_.set_last_filename(-1u, "");
-                    tmpres = 0;
-                }
-            }
-            const ssize_t res = tmpres;
-            if (res) {
-                this->status = false;
-                if (res < 0){
-                    LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
-                    throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
-                }
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-            ++this->seqno;
-            return true;
-        }
-
-        void request_full_cleaning() override {
-            unsigned i = this->buf_num_file_ + 1;
-            while (i > 0 && !::unlink(this->buf_filegen_.get(--i))) {
-            }
-            if (-1 != this->buf_buf_fd) {
-                ::close(this->buf_buf_fd);
-                this->buf_buf_fd = -1;
-            }
-        }
-
-        ~videocapture_OutFilenameSequenceTransport_COUNT() {
-            if (this->buf_buf_fd != -1) {
-                ::close(this->buf_buf_fd);
-                this->buf_buf_fd = -1;
-                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->buf_current_filename, this->buf_rename_to);
-                this->buf_filegen_.set_last_filename(-1u, "");
-                const char * filename = this->buf_filegen_.get(this->buf_num_file_);
-                this->buf_filegen_.set_last_filename(this->buf_num_file_, this->buf_current_filename_);
-                const int res = ::rename(this->buf_current_filename_, filename);
-                if (res < 0) {
-                    LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                       , this->buf_current_filename_, filename, errno, strerror(errno));
-                }
-                else {
-                    this->buf_current_filename_[0] = 0;
-                    ++this->buf_num_file_;
-                    this->buf_filegen_.set_last_filename(-1u, "");
-                }
-            }
-        }
-
-    private:
-
-        void do_send(const uint8_t * data, size_t len) override {
-        {
-            if (this->buf_buf_fd == -1) {
-                const char * filename = this->buf_filegen_.get(this->buf_num_file_);
-                snprintf(this->buf_current_filename_, sizeof(this->buf_current_filename_),
-                            "%sred-XXXXXX.tmp", filename);
-                this->buf_buf_fd = ::mkostemps(this->buf_current_filename_, 4, O_WRONLY | O_CREAT);
-                if (this->buf_buf_fd >= 0) {
-                    }
-                    if (chmod(this->buf_current_filename_, this->buf_groupid_
-                        ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-                        LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                           , this->buf_current_filename_
-                           , this->buf_groupid_ ? "u+r, g+r" : "u+r"
-                           , strerror(errno), errno);
-                           // TODO: this should be an error
-                    }
-                    this->buf_filegen_.set_last_filename(this->buf_num_file_, this->buf_current_filename_);
-                }
-            }
-
-            int tmpres = -1;
-            if (this->buf_buf_fd >= 0){
-                tmpres = 0;
-                size_t remaining_len = len;
-                size_t total_sent = 0;
-                while (remaining_len) {
-                    ssize_t ret = ::write(this->buf_buf_fd, data + total_sent, remaining_len);
-                    if (ret <= 0){
-                        if (errno == EINTR){
-                            continue;
-                        }
-                        tmpres = -1;
-                        break;
-                    }
-                    remaining_len -= ret;
-                    total_sent += ret;
-                }
-                if (tmpres == 0){
-                    tmpres = total_sent;
-                }
-            }
-
-            const ssize_t res = tmpres;
-            if (res < 0) {
-                this->status = false;
-                if (errno == ENOSPC) {
-                    char message[1024];
-                    snprintf(message, sizeof(message), "100|unknown");
-                    this->authentifier->report("FILESYSTEM_FULL", message);
-                    errno = ENOSPC;
-                    throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
-                }
-                else {
-                    throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-                }
-            }
-            this->last_quantum_sent += res;
-        }
-
-    } ic_trans;
+    SequenceTransport ic_trans;
 
     unsigned ic_zoom_factor;
     unsigned ic_scaled_width;
@@ -1079,20 +742,16 @@ public:
             timeval const & now,
             int cursor_x, int cursor_y,
             bool ignore_frame_in_timeval
-        ) {
+        ) override {
             // assert(now >= previous);
             auto next_duration = this->do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
             assert(next_duration.count() >= 0);
             return next_duration;
         }
 
-        std::chrono::microseconds frame_marker_event(
-            timeval const & now,
-            int cursor_x, int cursor_y,
-            bool ignore_frame_in_timeval
-        ) 
+        void frame_marker_event(timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval) override
         {
-            return this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+            this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
         }
 
     } video_sequencer;
@@ -1134,7 +793,7 @@ public:
         NotifyNextVideo & next_video_notifier)
     : first_image(now, *this)
 
-    , vc_trans(record_path, basename, ("." + flv_params.codec).c_str(), groupid)
+    , vc_trans(record_path, basename, ("." + flv_params.codec).c_str(), groupid, nullptr)
     , vc(now, this->vc_trans, drawable, no_timestamp, std::move(flv_params))
     , ic_trans(record_path, basename, ".png", groupid, nullptr)
     , ic_zoom_factor(std::min(image_zoom, 100u))
@@ -1160,11 +819,6 @@ public:
 
     void encoding_video_frame() {
         this->vc.encoding_video_frame();
-    }
-
-    void request_full_cleaning() {
-        this->vc_trans.request_full_cleaning();
-        this->ic_trans.request_full_cleaning();
     }
 };
 

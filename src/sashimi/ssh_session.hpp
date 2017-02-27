@@ -33,7 +33,7 @@
 #include "sashimi/pki.hpp"
 #include "sashimi/libcrypto.hpp"
 
-#include "cxx/attributes.hpp"
+#include "cxx/cxx.hpp"
 #include "cxx/diagnostic.hpp"
 
 #include <gssapi/gssapi.h>

@@ -29,6 +29,19 @@
 
 #include <type_traits>
 
+template<class T, class U>
+constexpr auto is_callable_impl(U & x, int)
+-> decltype(void(T(x)), std::true_type{})
+{ return 1; }
+
+template<class T, class U>
+constexpr std::false_type is_callable_impl(U &, char)
+{ return {}; }
+
+template<class T, class U>
+constexpr auto is_callable(U & x)
+-> decltype(is_callable_impl<T>(x, 1))
+{ return {}; }
 
 BOOST_AUTO_TEST_CASE(TestBytesT)
 {
@@ -91,41 +104,43 @@ BOOST_AUTO_TEST_CASE(TestBytesT)
     array_view_const_char cav{cs, 1};
     array_view_const_u8 cuav{cus, 1};
 
+    std::false_type no;
+
     bytes_array{bs, 1};
-    bytes_array{a};
-    bytes_array{ua};
+    is_callable<bytes_array>(a) = no;
+    is_callable<bytes_array>(ua) = no;
     bytes_array{av};
     bytes_array{uav};
     bytes_array{ba};
 
     const_bytes_array{bs, 1};
-    const_bytes_array{a};
-    const_bytes_array{ua};
+    is_callable<const_bytes_array>(a) = no;
+    is_callable<const_bytes_array>(ua) = no;
     const_bytes_array{av};
     const_bytes_array{uav};
     const_bytes_array{ba};
 
     const_bytes_array{cbs, 1};
-    const_bytes_array{ca};
-    const_bytes_array{cua};
+    is_callable<const_bytes_array>(ca) = no;
+    is_callable<const_bytes_array>(cua) = no;
     const_bytes_array{cav};
     const_bytes_array{cuav};
     const_bytes_array{cba};
 
-    bytes_array{} = a;
-    bytes_array{} = ua;
+    std::is_assignable<bytes_array, decltype(a)>::type{} = no;
+    std::is_assignable<bytes_array, decltype(ua)>::type{} = no;
     bytes_array{} = av;
     bytes_array{} = uav;
     bytes_array{} = ba;
 
-    const_bytes_array{} = a;
-    const_bytes_array{} = ua;
+    std::is_assignable<const_bytes_array, decltype(a)>::type{} = no;
+    std::is_assignable<const_bytes_array, decltype(ua)>::type{} = no;
     const_bytes_array{} = av;
     const_bytes_array{} = uav;
     const_bytes_array{} = ba;
 
-    const_bytes_array{} = ca;
-    const_bytes_array{} = cua;
+    std::is_assignable<const_bytes_array, decltype(ca)>::type{} = no;
+    std::is_assignable<const_bytes_array, decltype(cua)>::type{} = no;
     const_bytes_array{} = cav;
     const_bytes_array{} = cuav;
     const_bytes_array{} = cba;
@@ -134,20 +149,14 @@ BOOST_AUTO_TEST_CASE(TestBytesT)
     array_view_const_u8{} = ba;
     array_view_const_u8{} = cba;
 
-    [](bytes_array){}(a);
-    [](bytes_array){}(ua);
     [](bytes_array){}(av);
     [](bytes_array){}(uav);
     [](bytes_array){}(ba);
 
-    [](const_bytes_array){}(a);
-    [](const_bytes_array){}(ua);
     [](const_bytes_array){}(av);
     [](const_bytes_array){}(uav);
     [](const_bytes_array){}(ba);
 
-    [](const_bytes_array){}(ca);
-    [](const_bytes_array){}(cua);
     [](const_bytes_array){}(cav);
     [](const_bytes_array){}(cuav);
     [](const_bytes_array){}(cba);

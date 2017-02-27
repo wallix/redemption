@@ -190,6 +190,8 @@ void config_spec_definition(Writer && W)
         });
         W.sep();
         W.member(V, type_<bool>(), "show_target_user_in_f12_message", set(false));
+        W.sep();
+        W.member(V, type_<bool>(), "enable_new_pointer_update", set(false));
     });
 
     W.section("mod_rdp", [&]
@@ -244,7 +246,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<bool>(), "use_client_provided_alternate_shell", set(false), r);
         W.member(A, type_<bool>(), "use_client_provided_remoteapp", set(false), r);
         W.sep();
-        W.member(A, type_<bool>(), "use_native_remoteapp_capability", set(false), r);
+        W.member(A, type_<bool>(), "use_native_remoteapp_capability", set(true), r);
         W.sep();
         W.member(H, type_<bool>(), "enable_session_probe", sesman::name{"session_probe"}, set(false), r);
         W.member(H, type_<bool>(), "session_probe_use_smart_launcher", desc{
@@ -303,6 +305,9 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(V, type_<bool>(), "hide_client_name", desc{"Do not transmit client machine name or RDP server."}, set(false));
+        W.sep();
+
+        W.member(A, type_<bool>(), "clean_up_32_bpp_cursor", set(false));
     });
 
     W.section("mod_vnc", [&]
@@ -486,6 +491,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(type_<std::string>(), "target_password", rw);
         W.member(type_<std::string>(), "target_host", rw);
+        W.member(type_<std::string>(), "target_str", r);
         W.member(type_<std::string>(), "target_service", r);
         W.member(type_<unsigned>(), "target_port", set(3389), rw);
         W.member(type_<std::string>(), "target_protocol", sesman::name{"proto_dest"}, set("RDP"), r);

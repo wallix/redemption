@@ -22,7 +22,7 @@
 */
 
 #include "system/ssl_md5.hpp"
-#include "cxx/attributes.hpp"
+#include "cxx/cxx.hpp"
 
 
 // les cibles devraient toutes avoir une session cible, même celles gérées par FD => remplace fd_poll

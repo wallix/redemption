@@ -1347,6 +1347,8 @@ public:
                                                                         (*mod_rdp_params.client_execute_exe_or_file))));
                 mod_rdp_params.use_client_provided_remoteapp       = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
 
+                mod_rdp_params.clean_up_32_bpp_cursor              = this->ini.get<cfg::mod_rdp::clean_up_32_bpp_cursor>();
+
                 try {
                     const char * const name = "RDP Target";
 
@@ -1389,6 +1391,12 @@ public:
                     if (this->front.client_info.remote_program &&
                         !mod_rdp_params.remote_program) {
                         LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
+
+                        std::string target_info = this->ini.get<cfg::context::target_str>().c_str();
+                        target_info += ":";
+                        target_info += this->ini.get<cfg::globals::primary_user_id>().c_str();
+
+                        this->client_execute.set_target_info(target_info.c_str());
 
                         this->set_mod(
                                 new RailModuleHostMod(
@@ -1505,6 +1513,12 @@ public:
                                     this->front.client_info.height,
                                     this->front.client_info.cs_monitor
                                 ));
+
+                        std::string target_info = this->ini.get<cfg::context::target_str>().c_str();
+                        target_info += ":";
+                        target_info += this->ini.get<cfg::globals::primary_user_id>().c_str();
+
+                        this->client_execute.set_target_info(target_info.c_str());
 
                         this->set_mod(new RailModuleHostMod(
                                 this->ini,

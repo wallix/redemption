@@ -363,7 +363,9 @@ private:
         return false;
     }
 
+    // TODO sorted ChannelName{ uint64_t internal_name; };
     std::string allow_;
+    // TODO sorted ChannelName{ uint64_t internal_name; };
     std::string deny_;
     bool all_allow_ = false;
     bool all_deny_ = false;

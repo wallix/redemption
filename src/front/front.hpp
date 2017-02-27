@@ -186,6 +186,7 @@ private:
               , bool fastpath_support
               , rdp_mppc_enc * mppc_enc
               , bool compression
+              , bool send_new_pointer
               , GraphicsUpdatePDU::Verbose verbose
             )
             : GraphicsUpdatePDU(
@@ -205,6 +206,7 @@ private:
               , fastpath_support
               , mppc_enc
               , compression
+              , send_new_pointer
               , verbose
             )
             , client_order_caps(client_order_caps)
@@ -340,6 +342,7 @@ private:
           , fastpath_support
           , mppc_enc
           , bool(ini.get<cfg::client::rdp_compression>()) ? client_info.rdp_compression : 0
+          , bool(ini.get<cfg::client::enable_new_pointer_update>()) ? client_info.supported_new_pointer_update : 0
           , ( (ini.get<cfg::debug::primary_orders>()
                 ? RDPSerializer::Verbose::primary_orders   : RDPSerializer::Verbose::none)
             | (ini.get<cfg::debug::secondary_orders>()
@@ -657,6 +660,8 @@ private:
     OffScreenCacheCaps client_offscreencache_caps;
     BmpCache2Caps      client_bmpcache2_caps;
     GlyphCacheCaps     client_glyphcache_caps;
+    RailCaps           client_rail_caps;
+    WindowListCaps     client_window_list_caps;
     bool               use_bitmapcache_rev2;
 
     std::string server_capabilities_filename;
@@ -2877,6 +2882,14 @@ private:
             case CAPSTYPE_GLYPHCACHE:
                 ::memcpy(&caps, &this->client_glyphcache_caps, sizeof(this->client_glyphcache_caps));
             break;
+
+            case CAPSTYPE_RAIL:
+                ::memcpy(&caps, &this->client_rail_caps, sizeof(this->client_rail_caps));
+            break;
+
+            case CAPSTYPE_WINDOW:
+                ::memcpy(&caps, &this->client_window_list_caps, sizeof(this->client_window_list_caps));
+            break;
         }
 #ifdef __clang__
     #pragma GCC diagnostic pop
@@ -3287,6 +3300,8 @@ private:
 
                     this->client_info.pointer_cache_entries =
                         std::min<int>(pointer_caps.colorPointerCacheSize, MAX_POINTER_COUNT);
+                    this->client_info.supported_new_pointer_update =
+                        (pointer_caps.pointerCacheSize != 0);
                 }
                 break;
             case CAPSTYPE_SHARE: /* 9 */
@@ -3422,18 +3437,16 @@ private:
                 }
                 break;
             case CAPSTYPE_RAIL: { /* 23 */
-                    RailCaps cap;
-                    cap.recv(stream, capset_length);
+                    this->client_rail_caps.recv(stream, capset_length);
                     if (this->verbose) {
-                        cap.log("Receiving from client");
+                        this->client_rail_caps.log("Receiving from client");
                     }
                 }
                 break;
             case CAPSTYPE_WINDOW: { /* 24 */
-                    WindowListCaps cap;
-                    cap.recv(stream, capset_length);
-                    if (this->verbose) {
-                        cap.log("Receiving from client");
+                    this->client_window_list_caps.recv(stream, capset_length);
+/*                    if (this->verbose)*/ {
+                        this->client_window_list_caps.log("Receiving from client");
                     }
                 }
                 break;
@@ -4452,9 +4465,9 @@ public:
             }
 
             int height_bitmap = fc.height;
-            if (fc.width == 8) {
-                height_bitmap *=  2;
-            }
+            //if (fc.width == 8) {
+                //height_bitmap *=  2;
+            //}
 
             const uint8_t * fc_data = fc.data.get();
 

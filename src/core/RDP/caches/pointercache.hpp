@@ -62,7 +62,7 @@ public:
         this->Pointers[index].y = cursor.y;
         this->Pointers[index].width = cursor.width;
         this->Pointers[index].height = cursor.height;
-        this->Pointers[index].bpp = cursor.bpp;
+//        this->Pointers[index].bpp = cursor.bpp;
         memcpy(this->Pointers[index].data, cursor.data, cursor.data_size());
         memcpy(this->Pointers[index].mask, cursor.mask, cursor.mask_size());
         this->stamps[index] = this->pointer_stamp;
@@ -84,7 +84,7 @@ public:
             &&  this->Pointers[i].y == cursor.y
             &&  this->Pointers[i].width == cursor.width
             &&  this->Pointers[i].height == cursor.height
-            &&  this->Pointers[i].bpp == cursor.bpp
+//            &&  this->Pointers[i].bpp == cursor.bpp
             &&  (memcmp(this->Pointers[i].data, cursor.data, cursor.data_size()) == 0)
             &&  (memcmp(this->Pointers[i].mask, cursor.mask, cursor.mask_size()) == 0)) {
                 this->stamps[i] = this->pointer_stamp;
