@@ -196,7 +196,7 @@ struct CSNet {
 
         for (size_t i = 0; i < this->channelCount ; i++){
             uint32_t options = channelDefArray[i].options;
-            LOG(LOG_INFO, "cs_net::channel '%*s' [%zu]%s%s%s%s%s%s%s%s"
+            LOG(LOG_INFO, "cs_net::channel '%.*s' [%zu]%s%s%s%s%s%s%s%s"
                 , 8
                 , channelDefArray[i].name, GCC::MCS_GLOBAL_CHANNEL + i + 1u
                 , (options & CHANNEL_OPTION_INITIALIZED)?" INITIALIZED":""
