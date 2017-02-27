@@ -348,6 +348,46 @@ BOOST_AUTO_TEST_CASE(TestOSumBuf)
 }
 
 template<class Writer>
+int wrmcapture_write_filename(Writer & writer, const char * filename)
+{
+    auto pfile = filename;
+    auto epfile = filename;
+    for (; *epfile; ++epfile) {
+        if (*epfile == '\\') {
+            ssize_t len = epfile - pfile + 1;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+            pfile = epfile;
+        }
+        if (*epfile == ' ') {
+            ssize_t len = epfile - pfile;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+            res = writer.write("\\", 1u);
+            if (res < 1) {
+                return res < 0 ? res : 1;
+            }
+            pfile = epfile;
+        }
+    }
+
+    if (pfile != epfile) {
+        ssize_t len = epfile - pfile;
+        auto res = writer.write(pfile, len);
+        if (res < len) {
+            return res < 0 ? res : 1;
+        }
+    }
+
+    return 0;
+}
+
+
+template<class Writer>
 int wrmcapture_write_meta_file(
     Writer & writer, const char * filename,
     time_t start_sec, time_t stop_sec,
