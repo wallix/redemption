@@ -173,8 +173,6 @@ struct wrmcapture_out_sequence_filename_buf_param
 };
 
 
-struct wrmcapture_no_param {};
-
 class iofdbuf
 {
 public:
@@ -192,19 +190,19 @@ public:
         this->close();
     }
 
-    int open(const char *pathname, int flags)
-    {
-        this->close();
-        this->fd = ::open(pathname, flags);
-        return fd;
-    }
+//    int open(const char *pathname, int flags)
+//    {
+//        this->close();
+//        this->fd = ::open(pathname, flags);
+//        return fd;
+//    }
 
-    int open(const char *pathname, int flags, mode_t mode)
-    {
-        this->close();
-        this->fd = ::open(pathname, flags, mode);
-        return fd;
-    }
+//    int open(const char *pathname, int flags, mode_t mode)
+//    {
+//        this->close();
+//        this->fd = ::open(pathname, flags, mode);
+//        return fd;
+//    }
 
     int open(int fd)
     {
