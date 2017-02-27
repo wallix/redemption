@@ -2842,6 +2842,9 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                 std::ifstream ateFile(this->fileSystemData.paths[id-1], std::ios::binary| std::ios::ate);
                                 if(ateFile.is_open()) {
+                                    if (file_size > ateFile.tellg()) {
+                                        file_size = ateFile.tellg();
+                                    }
                                     if (shift > ateFile.tellg()) {
                                         file_size = 0;
                                     }
@@ -3466,7 +3469,7 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk, CB_B
 
                 RDPECLIP::FileDescriptor fd;
 
-                for (int i = 0; i < cb_filesList.cItems; i++) {
+                for (uint32_t i = 0; i < cb_filesList.cItems; i++) {
                     fd.receive(stream);
                     CB_FilesList::CB_in_Files file;
                     file.size = fd.file_size();
@@ -3505,8 +3508,8 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk, CB_B
                 cb_filesList.streamIDToRequest = chunk.in_uint32_le();
             }
 
-            if (cb_filesList.lindexToRequest == 1 && cb_filesList.itemslist.size() == 1) {
-                cb_filesList.lindexToRequest = 0;
+            if (cb_filesList.lindexToRequest == cb_filesList.itemslist.size()) {
+                cb_filesList.lindexToRequest--;
             }
 
             clipboard_qt->write_clipboard_temp_file( cb_filesList.itemslist[cb_filesList.lindexToRequest].name

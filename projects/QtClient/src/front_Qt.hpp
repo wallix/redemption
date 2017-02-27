@@ -385,8 +385,8 @@ public:
             int         size;
             std::string name;
         };
-        int                      cItems = 0;
-        int                      lindexToRequest = 0;
+        uint32_t                 cItems = 0;
+        uint32_t                 lindexToRequest = 0;
         int                      streamIDToRequest = 0;
         std::vector<CB_in_Files> itemslist;
         int                      lindex = 0;
