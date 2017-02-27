@@ -180,7 +180,7 @@ class iofdbuf
 public:
     int fd;
 
-    explicit iofdbuf(wrmcapture_no_param = wrmcapture_no_param()) noexcept
+    explicit iofdbuf() noexcept
     : fd(-1)
     {}
 
@@ -436,7 +436,6 @@ struct wrmcapture_out_meta_sequence_filename_buf_noparam
 {
     wrmcapture_out_sequence_filename_buf_param sq_params;
     time_t sec;
-    wrmcapture_no_param meta_buf_params;
     const char * hash_prefix;
 
     wrmcapture_out_meta_sequence_filename_buf_noparam(
@@ -449,7 +448,6 @@ struct wrmcapture_out_meta_sequence_filename_buf_noparam
         const int groupid)
     : sq_params(format, prefix, filename, extension, groupid)
     , sec(start_sec)
-    , meta_buf_params(meta_buf_params)
     , hash_prefix(hash_prefix)
     {}
 };
