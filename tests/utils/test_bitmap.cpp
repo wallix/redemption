@@ -35,7 +35,6 @@
 #include "check_sig.hpp"
 #include "dump_png.hpp"
 #include <cstdio>
-#include <iostream>
 
 
 BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)

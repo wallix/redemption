@@ -2426,6 +2426,7 @@ public:
             if (fd < 0) {
                 return fd;
             }
+            // TODO PERF used fchmod
             if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                 LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
                    , this->current_filename_
@@ -3669,6 +3670,7 @@ public:
     , capture_drawable(capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full)
     {
 //        REDASSERT(authentifier ? order_bpp == capture_bpp : true);
+
 
         if (capture_png || (authentifier && (capture_flv || capture_ocr))) {
             if (recursive_create_directory(record_tmp_path, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {

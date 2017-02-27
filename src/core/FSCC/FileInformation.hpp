@@ -216,7 +216,8 @@ const char * get_FSCTLStructures(uint32_t FSCTLStructures) {
 
     switch (FSCTLStructures) {
         case FSCTL_CREATE_OR_GET_OBJECT_ID: return "FSCTL_CREATE_OR_GET_OBJECT_ID";
-        case FSCTL_DELETE_OBJECT_ID: return "FSCTL_DELETE_OBJECT_ID";
+        case FSCTL_DELETE_OBJECT_ID:        return "FSCTL_DELETE_OBJECT_ID";
+        case FSCTL_GET_OBJECT_ID:           return "FSCTL_GET_OBJECT_ID";
     }
 
     return "unknow";

@@ -21,10 +21,9 @@
 
 #pragma once
 
-#include <stdio.h>
+#include <cstdio>
 #include <openssl/ssl.h>
-#include <iostream>
-#include <stdint.h>
+#include <cstdint>
 
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
@@ -51,9 +50,6 @@
 
 #include <algorithm>
 #include <fstream>
-#include <sstream>
-#include <string>
-#include <vector>
 //#include <boost/algorithm/string.hpp>
 
 #include "core/RDP/pointer.hpp"
@@ -82,22 +78,21 @@ public:
     , mod_palette(BGRPalette::classic_332())
     , fichier("projects/browser_client_JS/src/test_rdp_client_test_card_JS_2.cpp", std::ios::out | std::ios::trunc)
     {
-        fichier << "#define LOGNULL" << std::endl;
+        fichier << "#define LOGNULL\n";
 
-        fichier << "#include \"../projects/browser_client_JS/src/front_JS_natif.hpp\"" << std::endl;
+        fichier << "#include \"../projects/browser_client_JS/src/front_JS_natif.hpp\"\n";
 
-        fichier << "extern \"C\" int main(int argc, char** argv) {" << std::endl;
+        fichier << "extern \"C\" int main(int argc, char** argv) {\n";
 
-        fichier << "ClientInfo info;" << std::endl;
-        fichier << "info.keylayout = 0x040C;" << std::endl;
-        fichier << "info.console_session = 0;" << std::endl;
-        fichier << "info.brush_cache_code = 0;" << std::endl;
-        fichier << "info.bpp = 16;" << std::endl;
-        fichier << "info.width = 1024;" << std::endl;
-        fichier << "info.height = 768;" << std::endl;
+        fichier << "ClientInfo info;\n";
+        fichier << "info.keylayout = 0x040C;\n";
+        fichier << "info.console_session = 0;\n";
+        fichier << "info.brush_cache_code = 0;\n";
+        fichier << "info.bpp = 16;\n";
+        fichier << "info.width = 1024;\n";
+        fichier << "info.height = 768;\n";
 
         fichier << "front.init_front(info);" << std::endl;
-
     }
 
 
@@ -113,9 +108,9 @@ public:
 
 
     void over() {
-       //fichier << "     emscripten_set_main_loop(eventLoop, front._fps, 0); " << std::endl;
+       //fichier << "     emscripten_set_main_loop(eventLoop, front._fps, 0); \n";
 
-       fichier << "     return 0;" << std::endl;
+       fichier << "     return 0;\n";
        fichier << "}" << std::endl;
     }
 
@@ -158,15 +153,15 @@ public:
     }
 
     void draw(const RDPMemBlt & cmd, const Rect clip, const Bitmap & bitmap) override {
-        fichier << "{" << std::endl;
-        fichier << "const uint8_t * data = {" << std::endl;
+        fichier << "{\n";
+        fichier << "const uint8_t * data = {\n";
         for (int i = 0; i < int(bitmap.bmp_size()) - 1; i++) {
             fichier << int(bitmap.data()[i]) << ", ";
         }
-        fichier << int(bitmap.data()[bitmap.bmp_size()-1]) << std::endl;
+        fichier << int(bitmap.data()[bitmap.bmp_size()-1]) << "\n";
         fichier << "};" << std::endl;
 
-        fichier << "front.draw(RDPMemBlt(" << int(cmd.cache_id) << ", " << "Rect("<< int(cmd.rect.x) << ", " << int(cmd.rect.y) << ", " << int(cmd.rect.cx) << ", " << int(cmd.rect.cy) << ")," << int(cmd.rop) << ", " << int(cmd.srcx) << ", " << int(cmd.srcy) << ", " << int(cmd.cache_idx) << "), Rect(" << int(clip.x) << ", " << int(clip.y) << ", " << int(clip.cx) << ", " << int(clip.cy) << "), Bitmap(" << int(bitmap.bpp())  << ", " << int(bitmap.bpp()) << ", &(BGRPalette::classic_332()), " << int(bitmap.cx()) << ", " << bitmap.cy() << ", data, " << int(bitmap.bmp_size()) << ", false));" << std::endl;
+        fichier << "front.draw(RDPMemBlt(" << int(cmd.cache_id) << ", " << "Rect("<< int(cmd.rect.x) << ", " << int(cmd.rect.y) << ", " << int(cmd.rect.cx) << ", " << int(cmd.rect.cy) << ")," << int(cmd.rop) << ", " << int(cmd.srcx) << ", " << int(cmd.srcy) << ", " << int(cmd.cache_idx) << "), Rect(" << int(clip.x) << ", " << int(clip.y) << ", " << int(clip.cx) << ", " << int(clip.cy) << "), Bitmap(" << int(bitmap.bpp())  << ", " << int(bitmap.bpp()) << ", &(BGRPalette::classic_332()), " << int(bitmap.cx()) << ", " << bitmap.cy() << ", data, " << int(bitmap.bmp_size()) << ", false));\n";
         fichier << "}" << std::endl;
     }
 
@@ -180,41 +175,41 @@ public:
     }
 
     void draw(const RDPMem3Blt & cmd, const Rect clip, const Bitmap & bitmap) override {
-        fichier << "{" << std::endl;
-        fichier << "const uint8_t * data = {" << std::endl;
+        fichier << "{\n";
+        fichier << "const uint8_t * data = {\n";
         for (int i = 0; i < bitmap.bmp_size() - 1; i++) {
             fichier << int(bitmap.data()[i]) << ", ";
         }
-        fichier << int(bitmap.data()[bitmap.bmp_size()-1]) << std::endl;
+        fichier << int(bitmap.data()[bitmap.bmp_size()-1]) << "\n";
         fichier << "};" << std::endl;
 
-        fichier << "front.draw(RDPMem3Blt( " << int(cmd.cache_id) << ", Rect(" << int(cmd.rect.x) << ", " << int(cmd.rect.y) << ", " << int(cmd.rect.cx) << ", " << int(cmd.rect.cy) << "), " <<  int(cmd.rop) << ", " << int(cmd.srcx) <<  ", " << int(cmd.srcy) << ", " << int(cmd.back_color) <<  ", " << int(cmd.fore_color) << ",  RDPBrush(" << int(cmd.brush.org_x) <<  ", " << int(cmd.brush.org_y) <<  ", " << int(cmd.brush.style) <<   ", " << int(cmd.brush.hatch) << ") ), " << int(cmd.cache_idx) << ", Rect(" << int(clip.x) << ", " << int(clip.y) << ", " << int(clip.cx) << ", " << int(clip.cy) << "),  " << "data" <<  ");" <<  std::endl;
+        fichier << "front.draw(RDPMem3Blt( " << int(cmd.cache_id) << ", Rect(" << int(cmd.rect.x) << ", " << int(cmd.rect.y) << ", " << int(cmd.rect.cx) << ", " << int(cmd.rect.cy) << "), " <<  int(cmd.rop) << ", " << int(cmd.srcx) <<  ", " << int(cmd.srcy) << ", " << int(cmd.back_color) <<  ", " << int(cmd.fore_color) << ",  RDPBrush(" << int(cmd.brush.org_x) <<  ", " << int(cmd.brush.org_y) <<  ", " << int(cmd.brush.style) <<   ", " << int(cmd.brush.hatch) << ") ), " << int(cmd.cache_idx) << ", Rect(" << int(clip.x) << ", " << int(clip.y) << ", " << int(clip.cx) << ", " << int(clip.cy) << "),  " << "data" <<  ");\n";
         fichier << "}" << std::endl;
     }
 
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
         //fichier << "RDPBitmapData" << std::endl;
-        fichier << "{" << std::endl;
-        fichier << "RDPBitmapData bitmapData;" << std::endl;
-        fichier << "bitmapData.dest_left = " << int(bitmap_data.dest_left) << ";" << std::endl;
-        fichier << "bitmapData.dest_top = " << int(bitmap_data.dest_top) << ";" << std::endl;
-        fichier << "bitmapData.dest_right = " << int(bitmap_data.dest_right) << ";" << std::endl;
-        fichier << "bitmapData.dest_bottom = " << int(bitmap_data.dest_bottom) << ";" << std::endl;
+        fichier << "{\n";
+        fichier << "RDPBitmapData bitmapData;\n";
+        fichier << "bitmapData.dest_left = " << int(bitmap_data.dest_left) << ";\n";
+        fichier << "bitmapData.dest_top = " << int(bitmap_data.dest_top) << ";\n";
+        fichier << "bitmapData.dest_right = " << int(bitmap_data.dest_right) << ";\n";
+        fichier << "bitmapData.dest_bottom = " << int(bitmap_data.dest_bottom) << ";\n";
 
 
-        fichier << "const uint8_t data[] = {" << std::endl;
+        fichier << "const uint8_t data[] = {\n";
         fichier << int(bmp.data()[0]) << ", ";
         for (int i = 1; i < bmp.bmp_size() - 1; i++) {
             fichier << int(bmp.data()[i]) << ", ";
             if (i%20 == 0) {
-                fichier << std::endl;
+                fichier << "\n";
             }
         }
-        fichier << int(bmp.data()[bmp.bmp_size() - 1]) << std::endl;
+        fichier << int(bmp.data()[bmp.bmp_size() - 1]) << "\n";
         fichier << "};" << std::endl;
 
 
-        fichier << "front.draw(bitmapData, Bitmap(" << int(bmp.bpp())  << ", " << int(bmp.bpp()) << ", &(BGRPalette::classic_332()), " << int(bmp.cx()) << ", " << int(bmp.cy()) << ", data, " << int(bmp.bmp_size()) << ", false));" << std::endl;
+        fichier << "front.draw(bitmapData, Bitmap(" << int(bmp.bpp())  << ", " << int(bmp.bpp()) << ", &(BGRPalette::classic_332()), " << int(bmp.cx()) << ", " << int(bmp.cy()) << ", data, " << int(bmp.bmp_size()) << ", false));\n";
 
         fichier << "}" << std::endl;
     }

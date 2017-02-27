@@ -233,7 +233,7 @@ public Q_SLOTS:
 //         QString qpath(front->SHARE_DIR.c_str());
 //
 //         this->addPaths(this->scan_dir(qpath));
-// 
+//
 //         //this->QObject::connect(this, SIGNAL (directoryChanged(const QString &)),  this, SLOT (sync_dir_change(const QString &)));
 //
 //         this->QObject::connect(this, SIGNAL (fileChanged(const QString &)),  this, SLOT (sync_file_change(const QString &)));
@@ -1587,13 +1587,13 @@ public:
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
     }
 
-    void write_clipboard_temp_file(std::string fileName, uint8_t * data, size_t data_len) {
+    void write_clipboard_temp_file(std::string fileName, const uint8_t * data, size_t data_len) {
         std::string filePath(this->_front->CB_TEMP_DIR + std::string("/") + fileName);
         std::string filePath_mem(filePath);
         this->_temp_files_list.push_back(filePath_mem);
-        std::ofstream oFile(filePath, std::ios::out | std::ios::binary);
+        std::ofstream oFile(filePath, std::ios::out | std::ios::binary | std::ios::app);
         if(oFile.is_open()) {
-            oFile.write(reinterpret_cast<char *>(data), data_len);
+            oFile.write(reinterpret_cast<const char *>(data), data_len);
             oFile.close();
         }
     }
@@ -1643,7 +1643,7 @@ public:
             //std::cout <<  path <<  std::endl;
             QString qpath(path.c_str());
 
-            qDebug() << "QUrl" << QUrl::fromLocalFile(qpath);
+            //qDebug() << "QUrl" << QUrl::fromLocalFile(qpath);
 
             gnomeFormat.append(QUrl::fromLocalFile(qpath).toEncoded());
         }
