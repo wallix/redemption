@@ -1176,103 +1176,6 @@ int wrmcapture_write_filename(Writer & writer, const char * filename)
     return 0;
 }
 
-template<class Writer>
-int wrmcapture_write_meta_file(
-    Writer & writer, const char * filename,
-    time_t start_sec, time_t stop_sec,
-    wrmcapture_hash_type const * hash
-) {
-    struct stat stat;
-    int err = ::stat(filename, &stat);
-    if (err){
-        return err;
-    }
-    
-    auto pfile = filename;
-    auto epfile = filename;
-    for (; *epfile; ++epfile) {
-        if (*epfile == '\\') {
-            ssize_t len = epfile - pfile + 1;
-            auto res = writer.write(pfile, len);
-            if (res < len) {
-                return res < 0 ? res : 1;
-            }
-            pfile = epfile;
-        }
-        if (*epfile == ' ') {
-            ssize_t len = epfile - pfile;
-            auto res = writer.write(pfile, len);
-            if (res < len) {
-                return res < 0 ? res : 1;
-            }
-            res = writer.write("\\", 1u);
-            if (res < 1) {
-                return res < 0 ? res : 1;
-            }
-            pfile = epfile;
-        }
-    }
-
-    if (pfile != epfile) {
-        ssize_t len = epfile - pfile;
-        auto res = writer.write(pfile, len);
-        if (res < len) {
-            return res < 0 ? res : 1;
-        }
-    }
-    
-    if (err) {
-        return err;
-    }
-
-    using ull = unsigned long long;
-    using ll = long long;
-    char mes[
-        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-        wrmcapture_hash_string_len + 1 +
-        2
-    ];
-    ssize_t len = std::sprintf(
-        mes,
-        " %lld %llu %lld %lld %llu %lld %lld %lld",
-        ll(stat.st_size),
-        ull(stat.st_mode),
-        ll(stat.st_uid),
-        ll(stat.st_gid),
-        ull(stat.st_dev),
-        ll(stat.st_ino),
-        ll(stat.st_mtim.tv_sec),
-        ll(stat.st_ctim.tv_sec)
-    );
-    len += std::sprintf(
-        mes + len,
-        " %lld %lld",
-        ll(start_sec),
-        ll(stop_sec)
-    );
-
-    char * p = mes + len;
-    if (hash) {
-        auto write = [&p](unsigned char const * hash) {
-            *p++ = ' ';                // 1 octet
-            for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
-                sprintf(p, "%02x", c); // 64 octets (hash)
-                p += 2;
-            }
-        };
-        write(&(*hash)[0]);
-        write(&(*hash)[MD_HASH_LENGTH]);
-    }
-    *p++ = '\n';
-
-    ssize_t res = writer.write(mes, p-mes);
-
-    if (res < p-mes) {
-        return res < 0 ? res : 1;
-    }
-    return 0;
-}
 
 static inline int wrmcapture_write_meta_file_ocrypto(
     wrmcapture_ocrypto_filename_buf & writer, const char * filename,
@@ -2071,7 +1974,51 @@ public:
                 int err = ::stat(meta_filename, &stat);
                 if (!err) {
                     auto & writer = crypto_hash;
-                    int err = wrmcapture_write_filename(writer, filename);
+                    auto pfile = filename;
+                    auto epfile = filename;
+                    for (; *epfile; ++epfile) {
+                        if (*epfile == '\\') {
+                            ssize_t len = epfile - pfile + 1;
+                            auto res = writer.write(pfile, len);
+                            if (res < len) {
+                                err = res < 0 ? res : 1;
+                                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
+                                    hash_filename, err);
+                                return 1;
+                            }
+                            pfile = epfile;
+                        }
+                        if (*epfile == ' ') {
+                            ssize_t len = epfile - pfile;
+                            auto res = writer.write(pfile, len);
+                            if (res < len) {
+                                err = res < 0 ? res : 1;
+                                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
+                                    hash_filename, err);
+                                return 1;
+                            }
+                            res = writer.write("\\", 1u);
+                            if (res < 1) {
+                                err = res < 0 ? res : 1;
+                                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
+                                    hash_filename, err);
+                                return 1;
+                            }
+                            pfile = epfile;
+                        }
+                    }
+
+                    if (pfile != epfile) {
+                        ssize_t len = epfile - pfile;
+                        auto res = writer.write(pfile, len);
+                        if (res < len) {
+                            err = res < 0 ? res : 1;
+                            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
+                                hash_filename, err);
+                            return 1;
+                        }
+                    }
+                    
                     if (!err) {
                         using ull = unsigned long long;
                         using ll = long long;
