@@ -3341,68 +3341,114 @@ public:
 
         snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
-        if (hash_buf.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
-            char header[] = "v2\n\n\n";
-            hash_buf.write(header, sizeof(header)-1);
+        if (hash_buf.open(hash_filename, S_IRUSR|S_IRGRP) < 0) {
+            int e = errno;
+            LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+            errno = e;
+            return 1;
+        }
 
-            struct stat stat;
-            int err = ::stat(meta_filename, &stat);
-            if (!err) {
-                auto & writer = hash_buf;
-                int err = wrmcapture_write_filename(writer, filename);
-                if (!err) {
-                    using ull = unsigned long long;
-                    using ll = long long;
-                    char mes[
-                        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-                        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-                        wrmcapture_hash_string_len + 1 +
-                        2
-                    ];
-                    ssize_t len = std::sprintf(
-                        mes,
-                        " %lld %llu %lld %lld %llu %lld %lld %lld",
-                        ll(stat.st_size),
-                        ull(stat.st_mode),
-                        ll(stat.st_uid),
-                        ll(stat.st_gid),
-                        ull(stat.st_dev),
-                        ll(stat.st_ino),
-                        ll(stat.st_mtim.tv_sec),
-                        ll(stat.st_ctim.tv_sec)
-                    );
+        char header[] = "v2\n\n\n";
+        hash_buf.write(header, sizeof(header)-1);
 
-                    char * p = mes + len;
-                    auto write = [&p](unsigned char const * hash) {
-                        *p++ = ' ';                // 1 octet
-                        for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
-                            sprintf(p, "%02x", c); // 64 octets (hash)
-                            p += 2;
-                        }
-                    };
-                    write(&hash[0]);
-                    write(&hash[MD_HASH_LENGTH]);
-                    *p++ = '\n';
+        struct stat stat;
+        int err = ::stat(meta_filename, &stat);
+        if (err) {
+            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
+                hash_filename, err);
+            return 1;
+        }
 
-                    ssize_t res = writer.write(mes, p-mes);
-
-                    if (res < p-mes) {
-                        err = res < 0 ? res : 1;
-                    }
+        auto & writer = hash_buf;
+        
+        auto pfile = filename;
+        auto epfile = filename;
+        for (; *epfile; ++epfile) {
+            if (*epfile == '\\') {
+                ssize_t len = epfile - pfile + 1;
+                auto res = writer.write(pfile, len);
+                if (res < len) {
+                    err = res < 0 ? res : 1;
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
+                        hash_filename, err);
+                    return 1;
                 }
+                pfile = epfile;
             }
-            if (!err) {
-                err = hash_buf.close(/*hash*/);
+            if (*epfile == ' ') {
+                ssize_t len = epfile - pfile;
+                auto res = writer.write(pfile, len);
+                if (res < len) {
+                    err = res < 0 ? res : 1;
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
+                        hash_filename, err);
+                    return 1;
             }
-            if (err) {
+                res = writer.write("\\", 1u);
+                if (res < 1) {
+                    err = res < 0 ? res : 1;
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
+                        hash_filename, err);
+                    return 1;
+                }
+                pfile = epfile;
+            }
+        }
+
+        if (pfile != epfile) {
+            ssize_t len = epfile - pfile;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                err = res < 0 ? res : 1;
                 LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
                 return 1;
             }
         }
-        else {
-            int e = errno;
-            LOG(LOG_ERR, "Open to transport failed: code=%d", e);
-            errno = e;
+            
+        using ull = unsigned long long;
+        using ll = long long;
+        char mes[
+            (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+            (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+            wrmcapture_hash_string_len + 1 +
+            2
+        ];
+        ssize_t len = std::sprintf(
+            mes,
+            " %lld %llu %lld %lld %llu %lld %lld %lld",
+            ll(stat.st_size),
+            ull(stat.st_mode),
+            ll(stat.st_uid),
+            ll(stat.st_gid),
+            ull(stat.st_dev),
+            ll(stat.st_ino),
+            ll(stat.st_mtim.tv_sec),
+            ll(stat.st_ctim.tv_sec)
+        );
+
+        char * p = mes + len;
+        auto write = [&p](unsigned char const * hash) {
+            *p++ = ' ';                // 1 octet
+            for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+                sprintf(p, "%02x", c); // 64 octets (hash)
+                p += 2;
+            }
+        };
+        write(&hash[0]);
+        write(&hash[MD_HASH_LENGTH]);
+        *p++ = '\n';
+
+        ssize_t res = writer.write(mes, p-mes);
+
+        if (res < p-mes) {
+            err = res < 0 ? res : 1;
+            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+            return 1;
+        }
+
+        err = hash_buf.close(/*hash*/);
+        if (err) {
+            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
             return 1;
         }
 
@@ -3571,7 +3617,34 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             this->set_authentifier(authentifier);
         }
 
-        wrmcapture_write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, true);
+        auto & writer = this->buffer().meta_buf();
+        char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
+        const int len = sprintf(
+            header1,
+            "v2\n"
+            "%u %u\n"
+            "%s\n"
+            "\n\n",
+            unsigned(width),
+            unsigned(height),
+            "checksum"
+        );
+        const ssize_t res = writer.write(header1, len);
+        if (res < 0) {
+            int err = errno;
+            LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
+
+            if (err == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", path);
+                this->authentifier->report("FILESYSTEM_FULL", message);
+
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
+            }
+        }
     }
 
     void timestamp(timeval now) override {
