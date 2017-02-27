@@ -716,6 +716,8 @@ class wrmcapture_ocrypto_filename_buf
         return this->encrypt_xmd_update(tmp_buf, 40);
     }
 
+    
+
     ssize_t encrypt_write(const void * data, size_t len)
     {
         unsigned int remaining_size = len;
@@ -1357,7 +1359,10 @@ protected:
     }
 // =======================================================================
 
+public:
     wrmcapture_ocrypto_filename_buf meta_buf_;
+
+protected:
     wrmcapture_MetaFilename mf_;
     wrmcapture_MetaFilename hf_;
     time_t start_sec_;
@@ -1393,7 +1398,7 @@ public:
     int close()
     {
         const int res1 = this->next();
-        const int res2 = (this->meta_buf().is_open() ? this->meta_buf_.close() : 0);
+        const int res2 = (this->meta_buf_.is_open() ? this->meta_buf_.close() : 0);
         int err = res1 ? res1 : res2;
         if (!err) {
             char const * hash_filename = this->hf_.filename;
@@ -1704,9 +1709,6 @@ public:
         }
         ::unlink(this->mf_.filename);
     }
-
-    wrmcapture_ocrypto_filename_buf & meta_buf() noexcept
-    { return this->meta_buf_; }
 
     void update_sec(time_t sec)
     { this->stop_sec_ = sec; }
@@ -3167,13 +3169,13 @@ public:
 
         wrmcapture_ocrypto_filename_buf hash_buf(this->hash_ctx);
 
-        if (!this->meta_buf().is_open()) {
+        if (!this->meta_buf_.is_open()) {
             return 1;
         }
 
         wrmcapture_hash_type hash;
 
-        if (this->meta_buf().close(hash)) {
+        if (this->meta_buf_.close(hash)) {
             return 1;
         }
 
@@ -3523,7 +3525,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport
             this->set_authentifier(authentifier);
         }
 
-        wrmcapture_write_meta_headers(this->buffer().meta_buf(), path, width, height, this->authentifier, true);
+        wrmcapture_write_meta_headers(this->buffer().meta_buf_, path, width, height, this->authentifier, true);
     }
 
     void timestamp(timeval now) override {
