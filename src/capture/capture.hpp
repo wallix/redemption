@@ -2426,6 +2426,7 @@ public:
             if (fd < 0) {
                 return fd;
             }
+            // TODO PERF used fchmod
             if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                 LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
                    , this->current_filename_
