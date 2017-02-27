@@ -1461,6 +1461,17 @@ namespace cfg {
             using mapped_type = sesman_and_spec_type;
             type value{0};
         };
+        // type: bool
+        struct clean_up_32_bpp_cursor {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "mod_rdp"; }
+            static constexpr char const * name() { return "clean_up_32_bpp_cursor"; }
+            using type = bool;
+            using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
+            type value{0};
+        };
     };
 
     struct mod_vnc {
@@ -3267,6 +3278,7 @@ struct mod_rdp
 , cfg::mod_rdp::server_cert_failure_message
 , cfg::mod_rdp::server_cert_error_message
 , cfg::mod_rdp::hide_client_name
+, cfg::mod_rdp::clean_up_32_bpp_cursor
 { static constexpr bool is_section = true; };
 
 struct mod_vnc

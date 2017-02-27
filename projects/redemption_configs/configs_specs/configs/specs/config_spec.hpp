@@ -305,6 +305,9 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(V, type_<bool>(), "hide_client_name", desc{"Do not transmit client machine name or RDP server."}, set(false));
+        W.sep();
+
+        W.member(A, type_<bool>(), "clean_up_32_bpp_cursor", set(false));
     });
 
     W.section("mod_vnc", [&]

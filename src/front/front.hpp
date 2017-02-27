@@ -660,6 +660,8 @@ private:
     OffScreenCacheCaps client_offscreencache_caps;
     BmpCache2Caps      client_bmpcache2_caps;
     GlyphCacheCaps     client_glyphcache_caps;
+    RailCaps           client_rail_caps;
+    WindowListCaps     client_window_list_caps;
     bool               use_bitmapcache_rev2;
 
     std::string server_capabilities_filename;
@@ -2880,6 +2882,14 @@ private:
             case CAPSTYPE_GLYPHCACHE:
                 ::memcpy(&caps, &this->client_glyphcache_caps, sizeof(this->client_glyphcache_caps));
             break;
+
+            case CAPSTYPE_RAIL:
+                ::memcpy(&caps, &this->client_rail_caps, sizeof(this->client_rail_caps));
+            break;
+
+            case CAPSTYPE_WINDOW:
+                ::memcpy(&caps, &this->client_window_list_caps, sizeof(this->client_window_list_caps));
+            break;
         }
 #ifdef __clang__
     #pragma GCC diagnostic pop
@@ -3427,18 +3437,16 @@ private:
                 }
                 break;
             case CAPSTYPE_RAIL: { /* 23 */
-                    RailCaps cap;
-                    cap.recv(stream, capset_length);
+                    this->client_rail_caps.recv(stream, capset_length);
                     if (this->verbose) {
-                        cap.log("Receiving from client");
+                        this->client_rail_caps.log("Receiving from client");
                     }
                 }
                 break;
             case CAPSTYPE_WINDOW: { /* 24 */
-                    WindowListCaps cap;
-                    cap.recv(stream, capset_length);
-                    if (this->verbose) {
-                        cap.log("Receiving from client");
+                    this->client_window_list_caps.recv(stream, capset_length);
+/*                    if (this->verbose)*/ {
+                        this->client_window_list_caps.log("Receiving from client");
                     }
                 }
                 break;

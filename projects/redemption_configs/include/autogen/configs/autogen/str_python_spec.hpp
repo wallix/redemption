@@ -451,6 +451,9 @@
 "# Do not transmit client machine name or RDP server.\n"
 "hide_client_name = boolean(default=False)\n\n"
 
+"#_advanced\n"
+"clean_up_32_bpp_cursor = boolean(default=False)\n\n"
+
 "[mod_vnc]\n\n"
 
 "# Enable or disable the clipboard from client (client to server).\n"

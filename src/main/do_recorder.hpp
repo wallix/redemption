@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <snappy-c.h>
 #include <iostream>
+#include <memory>
+
 #include "capture/cryptofile.hpp"
 #include "utils/sugar/local_fd.hpp"
 #include "utils/chex_to_int.hpp"
@@ -396,7 +398,7 @@ public:
         ++cur;
         meta_line.filename[path_len] = 0;
 
-//        LOG(LOG_INFO, "read_meta_file [3] filename='%s' %*s", meta_line.filename, static_cast<int>(eol-cur), cur);
+//        LOG(LOG_INFO, "read_meta_file [3] filename='%s' %.*s", meta_line.filename, static_cast<int>(eol-cur), cur);
 
         if (this->header.version == 1){
 //            LOG(LOG_INFO, "read_meta_file [4]");
@@ -411,7 +413,7 @@ public:
             meta_line.ctime = 0;
         }
         else{ // v2
-//            LOG(LOG_INFO, "read_meta_file [5] %*s", static_cast<int>(eol-cur), cur);
+//            LOG(LOG_INFO, "read_meta_file [5] %.*s", static_cast<int>(eol-cur), cur);
 
             meta_line.size = get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
             meta_line.mode = get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
@@ -423,13 +425,13 @@ public:
             meta_line.ctime = get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
         }
 
-//        LOG(LOG_INFO, "read_meta_file [6] %*s", static_cast<int>(eol-cur), cur);
+//        LOG(LOG_INFO, "read_meta_file [6] %.*s", static_cast<int>(eol-cur), cur);
 
         meta_line.start_time = get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
         meta_line.stop_time = get_ll(cur, eol, this->header.has_checksum?' ':'\n',
                                             ERR_TRANSPORT_READ_FAILED);
 
-//        LOG(LOG_INFO, "read_meta_file [7] %*s", static_cast<int>(eol-cur), cur);
+//        LOG(LOG_INFO, "read_meta_file [7] %.*s", static_cast<int>(eol-cur), cur);
         if (header.has_checksum){
             // HASH1 + space
             in_hex256(meta_line.hash1, MD_HASH_LENGTH, cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
@@ -441,7 +443,7 @@ public:
             memset(meta_line.hash2, 0, sizeof(meta_line.hash2));
         }
 
-//        LOG(LOG_INFO, "read_meta_file [8] %*s", static_cast<int>(eol-cur), cur);
+//        LOG(LOG_INFO, "read_meta_file [8] %.*s", static_cast<int>(eol-cur), cur);
         // TODO: check the whole line has been consumed (or it's an error)
 //        LOG(LOG_INFO, "read_meta_file: done %s", this->line_reader.get_buf().begin());
         return true;
