@@ -318,8 +318,6 @@ BOOST_AUTO_TEST_CASE(TestFrontGlyph24Bitmap)
     const uint8_t bits_data[] = "\x00\x00\x00\x08\x18\x10\x10\x30\x20\x20\x60\x40\x40\xc0\x80\x00"
                                 "\xc7\x00\x3e\x00\x05\x00\x14\x00\x31\x00\x00\x00\x00\x00\x00\x00";
 
-    std::unique_ptr<uint8_t[]> data;
-
     int16_t offset = 0;
     int16_t baseline = 2;
     uint16_t width = 16;

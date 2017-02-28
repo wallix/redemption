@@ -4450,8 +4450,9 @@ public:
         return this->u32_to_color(color);
     }
 
-    typedef struct GlyphTo24Bitmap {
-
+    struct GlyphTo24Bitmap
+    {
+        // TODO BGRArray<256>
         uint8_t raw_data[256*3];
 
         GlyphTo24Bitmap( FontChar const & fc
@@ -4459,9 +4460,9 @@ public:
                      , const Color color_back) {
 
             for (int i = 0; i < 256*3; i += 3) {
-                this->raw_data[i  ] = color_fore.red();
+                this->raw_data[i  ] = color_fore.blue();
                 this->raw_data[i+1] = color_fore.green();
-                this->raw_data[i+2] = color_fore.blue();
+                this->raw_data[i+2] = color_fore.red();
             }
 
             int height_bitmap = fc.height;
@@ -4492,7 +4493,7 @@ public:
                 fc_data++;
             }
         }
-    } GlyphTo24Bitmap;
+    };
 
 
 protected:

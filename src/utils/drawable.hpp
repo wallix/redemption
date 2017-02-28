@@ -230,15 +230,15 @@ struct DrawableTraitColor24
     static const size_t Bpp = 3;
 
     class color_t {
-        uint8_t r;
-        uint8_t g;
         uint8_t b;
+        uint8_t g;
+        uint8_t r;
 
     public:
-        constexpr color_t(uint8_t r_, uint8_t g_, uint8_t b_) noexcept
-        : r(r_)
+        constexpr color_t(uint8_t b_, uint8_t g_, uint8_t r_) noexcept
+        : b(b_)
         , g(g_)
-        , b(b_)
+        , r(r_)
         {}
 
         constexpr uint8_t red() const noexcept
@@ -251,32 +251,32 @@ struct DrawableTraitColor24
         { return b; }
 
         constexpr color_t operator~() const noexcept
-        { return {uint8_t(~r), uint8_t(~g), uint8_t(~b)}; }
+        { return {uint8_t(~b), uint8_t(~g), uint8_t(~r)}; }
     };
 
     static uint8_t * assign(uint8_t * dest, color_t color)
     {
-        *dest++ = color.red();
-        *dest++ = color.green();
         *dest++ = color.blue();
+        *dest++ = color.green();
+        *dest++ = color.red();
         return dest;
     }
 
     template<class BinaryOp>
     static uint8_t * assign(uint8_t * dest, color_t color, BinaryOp op)
     {
-        *dest = op(*dest, color.red());   ++dest;
-        *dest = op(*dest, color.green()); ++dest;
         *dest = op(*dest, color.blue());  ++dest;
+        *dest = op(*dest, color.green()); ++dest;
+        *dest = op(*dest, color.red());   ++dest;
         return dest;
     }
 
     template<class BinaryOp>
     static uint8_t * assign(uint8_t * dest, color_t color, color_t color2, BinaryOp op)
     {
-        *dest = op(*dest, color.red(),   color2.red());   ++dest;
-        *dest = op(*dest, color.green(), color2.green()); ++dest;
         *dest = op(*dest, color.blue(),  color2.blue());  ++dest;
+        *dest = op(*dest, color.green(), color2.green()); ++dest;
+        *dest = op(*dest, color.red(),   color2.red());   ++dest;
         return dest;
     }
 
@@ -913,9 +913,9 @@ private:
     {
         const uint8_t * e = dest + n;
         while (dest != e) {
-            *dest = op(*dest, *src, c.red());   ++dest; ++src;
-            *dest = op(*dest, *src, c.green()); ++dest; ++src;
             *dest = op(*dest, *src, c.blue());  ++dest; ++src;
+            *dest = op(*dest, *src, c.green()); ++dest; ++src;
+            *dest = op(*dest, *src, c.red());   ++dest; ++src;
         }
     }
 

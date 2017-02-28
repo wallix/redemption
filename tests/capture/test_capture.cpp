@@ -298,7 +298,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         {"./capture-000001.wrm", 3508},
         {"./capture-000002.wrm", 3463},
         {"./capture-000003.wrm", static_cast<size_t>(-1)},
-        {"./capture.mwrm", 285},
+        {"./capture.mwrm", 288},
     };
     for (auto x: fileinfo) {
         size_t fsize = filesize(x.filename);
