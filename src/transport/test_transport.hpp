@@ -178,6 +178,20 @@ private:
         }
     }
 
+    void do_recv_new(uint8_t * buffer, size_t len) override {
+        const ssize_t res = this->buf.read(buffer, len);
+        if (res < 0){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_READ_FAILED, res);
+        }
+        buffer += res;
+        this->last_quantum_received += res;
+        if (static_cast<size_t>(res) != len){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
+    }
+
 protected:
     transbuf::dynarray_buf & buffer() noexcept
     { return this->buf; }
