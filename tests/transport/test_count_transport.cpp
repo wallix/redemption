@@ -39,17 +39,19 @@ BOOST_AUTO_TEST_CASE(TestCountTransport)
 
     char buffer[128] = {};
     char * p = buffer;
-    ct.recv(&p, 0);
+    ct.recv_new(p, 0);
     BOOST_CHECK_EQUAL(0, ct.get_total_received());
     BOOST_CHECK_EQUAL(0, ct.get_last_quantum_received());
 
-    ct.recv(&p, 1);
+    ct.recv_new(p, 1);
+    p +=  1;
     BOOST_CHECK_EQUAL(1, ct.get_total_received());
     BOOST_CHECK_EQUAL(1, ct.get_last_quantum_received());
 
     ct.tick();
 
-    ct.recv(&p, 3);
+    ct.recv_new(p, 3);
+    p += 3;
     BOOST_CHECK_EQUAL(4, ct.get_total_received());
     BOOST_CHECK_EQUAL(3, ct.get_last_quantum_received());
 

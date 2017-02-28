@@ -2835,22 +2835,18 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 uint8_t * ReadData(nullptr);
                                 int file_size(drr.Length());
                                 int offset(drr.Offset());
-                                int shift(file_size*offset);
 
                                 std::ifstream ateFile(this->fileSystemData.paths[id-1], std::ios::binary| std::ios::ate);
                                 if(ateFile.is_open()) {
                                     if (file_size > ateFile.tellg()) {
                                         file_size = ateFile.tellg();
                                     }
-                                    if (shift > ateFile.tellg()) {
-                                        file_size = 0;
-                                    }
                                     ateFile.close();
 
                                     std::ifstream inFile(this->fileSystemData.paths[id-1], std::ios::in | std::ios::binary);
                                     if(inFile.is_open()) {
-                                        ReadData = new uint8_t[file_size];
-                                        inFile.read(reinterpret_cast<char *>(ReadData), file_size);
+                                        ReadData = new uint8_t[file_size+offset];
+                                        inFile.read(reinterpret_cast<char *>(ReadData), file_size+offset);
                                         inFile.close();
                                     } else {
                                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
@@ -2862,16 +2858,14 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 }
 
                                 deviceIOResponse.emit(out_stream);
-
                                 rdpdr::DeviceReadResponse deviceReadResponse(file_size);
                                 deviceReadResponse.emit(out_stream);
 
                                 this->process_client_clipboard_out_data( channel_names::rdpdr
                                                                        , 20 + file_size
                                                                        , out_stream
-                                                                       //out_stream.get_offset() - 20
-                                                                       , 236
-                                                                       , ReadData + (file_size*offset)
+                                                                       , out_stream.get_capacity() - 20
+                                                                       , ReadData + offset
                                                                        , file_size
                                                                        , 0);
 
