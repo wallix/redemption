@@ -39,8 +39,10 @@
 #include "module_manager.hpp"
 
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <ctime>
+#include "utils/log.hpp"
 
 #define LOG_SESSION(normal_log, session_log, session_type, type, session_id,    \
         ip_client, ip_target, user, device, service, account, priority, format, \
@@ -404,12 +406,11 @@ public:
             else {
                 std::time_t t = std::time(nullptr);
                 char mbstr[100];
-                if (std::strftime(mbstr, sizeof(mbstr), "%F %T", std::localtime(&t))) {
+                if (std::strftime(mbstr, sizeof(mbstr), "%F %T ", std::localtime(&t))) {
                     log_file << mbstr;
                 }
 
-                log_file << " [" << (this->session_type.empty() ? "Neutral" : this->session_type.c_str()) << " Session] " << " " ;
-                log_file << "type=" << type << " " ;
+                log_file << "type=\"" << type << "\" " ;
                 log_file << (extra ? extra : "") << std::endl;
                 log_file.close();
             }

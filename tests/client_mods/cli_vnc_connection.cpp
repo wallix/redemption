@@ -152,4 +152,3 @@ BOOST_AUTO_TEST_CASE(TestVncConnection0)
 //
 //*/
 //}
->>>>>>> 77c28667649e71034dc9152e3900f779d31f52c3

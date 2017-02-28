@@ -470,7 +470,6 @@ protected:
     void rdp_input_clip_data(uint8_t * data, size_t data_length) {
         auto client_cut_text = [this](char * str) {
             ::in_place_windows_to_linux_newline_convert(str);
-
             size_t const str_len = ::strlen(str);
 
             StreamBufMaker<65536> buf_maker;
@@ -678,13 +677,12 @@ public:
                 RDPOpaqueRect orect(Rect(0, 0, this->width, this->height), 0);
                 drawable.draw(orect, Rect(0, 0, this->width, this->height), gdi::ColorCtx::from_bpp(this->bpp, this->palette));
                 this->front.end_update();
-LOG(LOG_INFO, "JNI front.end_update \n");
+
                 this->state = UP_AND_RUNNING;
                 this->front.can_be_start_capture();
                 this->update_screen(Rect(0, 0, this->width, this->height));
-LOG(LOG_INFO, "JNI DO_INITIAL_CLEAR_SCREEN : update_screen \n");
                 this->lib_open_clip_channel();
-LOG(LOG_INFO, "JNI  lib_open_clip_channel\n");
+
                 this->event.object_and_time = false;
                 if (this->verbose & 1) {
                     LOG(LOG_INFO, "VNC screen cleaning ok\n");
@@ -726,13 +724,13 @@ LOG(LOG_INFO, "JNI  lib_open_clip_channel\n");
                                            ,   CHANNELS::CHANNEL_FLAG_FIRST
                                              | CHANNELS::CHANNEL_FLAG_LAST
                                            );
-LOG(LOG_INFO, "JNI  send_to_front_channel\n");
+
                 RDPECLIP::ServerMonitorReadyPDU server_monitor_ready_pdu;
 
                 out_s.rewind();
-LOG(LOG_INFO, "JNI rewind \n");
+
                 server_monitor_ready_pdu.emit(out_s);
-LOG(LOG_INFO, "JNI  server_monitor_ready_pdu.emit\n");
+
                 length     = out_s.get_offset();
                 chunk_size = length;
 
@@ -741,7 +739,7 @@ LOG(LOG_INFO, "JNI  server_monitor_ready_pdu.emit\n");
                         RDPECLIP::get_msgType_name(server_monitor_ready_pdu.header.msgType()),
                         server_monitor_ready_pdu.header.msgType()
                         );
-                }LOG(LOG_INFO, "JNI mod_vnc server clipboard PDU \n");
+                }
 
                 this->send_to_front_channel( channel_names::cliprdr
                                            , out_s.get_data()
@@ -755,7 +753,7 @@ LOG(LOG_INFO, "JNI  server_monitor_ready_pdu.emit\n");
         case RETRY_CONNECTION:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "state=RETRY_CONNECTION");
-            }LOG(LOG_INFO, "JNI  RETRY_CONNECTION\n");
+            }
             try
             {
                 this->t.connect();
@@ -771,12 +769,11 @@ LOG(LOG_INFO, "JNI  server_monitor_ready_pdu.emit\n");
         case UP_AND_RUNNING:
             if (this->verbose & 2) {
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
-            }LOG(LOG_INFO, "JNI UP_AND_RUNNING \n");
+            }
             if (this->is_socket_transport && static_cast<SocketTransport&>(this->t).can_recv()) {
-                try {LOG(LOG_INFO, "JNI try \n");
+                try {
                     uint8_t type; /* message-type */
                     uint8_t * end = &type;
-                    LOG(LOG_INFO, "JNI this->t.recv \n");
                     this->t.recv(&end, 1);
                     switch (type) {
                         case 0: /* framebuffer update */
@@ -805,12 +802,10 @@ LOG(LOG_INFO, "JNI  server_monitor_ready_pdu.emit\n");
                 }
                 if (this->event.signal != BACK_EVENT_NEXT) {
                     this->event.set(1000);
-                    LOG(LOG_INFO, "JNI BACK_EVENT_NEXT \n");
                 }
             }
             else {
                 this->update_screen(Rect(0, 0, this->width, this->height));
-                LOG(LOG_INFO, "@draw_event : JNI UP_AND_RUNNING : update_screen \n");
             }
             break;
         case WAIT_PASSWORD:
@@ -824,7 +819,7 @@ LOG(LOG_INFO, "JNI  server_monitor_ready_pdu.emit\n");
             {
                 if (this->verbose & 1) {
                     LOG(LOG_INFO, "state=WAIT_SECURITY_TYPES");
-                }LOG(LOG_INFO, "JNI  WAIT_SECURITY_TYPES\n");
+                }
 
                 /* protocol version */
                 uint8_t server_protoversion[12];
@@ -967,7 +962,6 @@ LOG(LOG_INFO, "JNI  server_monitor_ready_pdu.emit\n");
 
                 // 7.3.2   ServerInit
                 // ------------------
-LOG(LOG_INFO, "JNI  ServerInit\n");
                 // After receiving the ClientInit message, the server sends a
                 // ServerInit message. This tells the client the width and
                 // height of the server's framebuffer, its pixel format and the
@@ -1082,7 +1076,6 @@ LOG(LOG_INFO, "JNI  ServerInit\n");
                 {
                 // 7.4.1   SetPixelFormat
                 // ----------------------
-LOG(LOG_INFO, "JNI  SetPixelFormat\n");
                 // Sets the format in which pixel values should be sent in
                 // FramebufferUpdate messages. If the client does not send
                 // a SetPixelFormat message then the server sends pixel values
@@ -1242,7 +1235,6 @@ LOG(LOG_INFO, "JNI  SetPixelFormat\n");
                     // resizing done
                     this->front_width  = this->width;
                     this->front_height = this->height;
- LOG(LOG_INFO, "this->front_width = %d and this->front_height = %d", this->front_width, this->front_height);
 
                     this->state = WAIT_CLIENT_UP_AND_RUNNING;
                     this->event.object_and_time = true;
@@ -1292,7 +1284,6 @@ LOG(LOG_INFO, "JNI  SetPixelFormat\n");
                 size_t chunk_size = length;
 
                 this->clipboard_requesting_for_data_is_delayed = false;
-LOG(LOG_INFO, "JNI   send_to_front_channel ");
                 this->send_to_front_channel( channel_names::cliprdr
                                            , out_s.get_data()
                                            , length
@@ -2748,7 +2739,7 @@ public:
         if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
             if (this->verbose) {
                 LOG(LOG_INFO, "Client up and running");
-            }LOG(LOG_INFO, "JNI Client up and running");
+            }
             this->state = DO_INITIAL_CLEAR_SCREEN;
             this->event.set();
         }
@@ -2816,9 +2807,10 @@ public:
         LOG(LOG_INFO, "Client disconnect");
 
         char extra[1024];
-        snprintf(extra, sizeof(extra), "duration='%02d:%02d:%02d'",
-            (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
-            (int(seconds) % 60));
+        snprintf(extra, sizeof(extra), "duration=\"%02d:%02d:%02d\"",
+                        (int(seconds) / 3600),
+                        ((int(seconds) % 3600) / 60),
+                        (int(seconds) % 60));
 
         this->authentifier.log4(false, "SESSION_DISCONNECTION", extra);
     }

@@ -843,9 +843,9 @@ public:
         else {
             if (!this->session_probe_channel ||
                 this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
-                std::string info("ExeOrFile='");
-                info += serpdu.ExeOrFile();
-                info += "'";
+                std::string info("ExeOrFile=\"");
+                info += escape_double_quotes(serpdu.ExeOrFile());
+                info += "\"";
                 this->authentifier.log4(
                     false,
                     "CLIENT_EXECUTE_REMOTEAPP", info.c_str());
