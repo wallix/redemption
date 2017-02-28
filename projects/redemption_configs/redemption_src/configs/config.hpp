@@ -135,7 +135,8 @@ namespace configs
             theme_path[sizeof(theme_path) - 1] = 0;
 
             ConfigurationLoader theme_load;
-            theme_load.cparse(theme, theme_path);
+            ThemeHolder theme_holder(theme);
+            theme_load.cparse(theme_holder, theme_path);
         }
 
         if (theme.global.logo) {

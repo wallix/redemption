@@ -86,9 +86,9 @@ public:
             this->tooltip = new WidgetTooltip(this->drawable,
                                               *this, widget,
                                               text,
-                                              this->theme.tooltip.fgcolor,
-                                              this->theme.tooltip.bgcolor,
-                                              this->theme.tooltip.border_color,
+                                              this->theme.tooltip.fgcolor.to_u32(),
+                                              this->theme.tooltip.bgcolor.to_u32(),
+                                              this->theme.tooltip.border_color.to_u32(),
                                               this->font);
             Dimension dim = this->tooltip->get_optimal_dim();
             this->tooltip->set_wh(dim);

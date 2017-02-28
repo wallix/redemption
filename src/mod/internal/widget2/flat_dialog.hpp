@@ -67,27 +67,27 @@ public:
                ChallengeOpt has_challenge = NO_CHALLENGE)
         : WidgetParent(drawable, parent, notifier)
         , title(drawable, *this, nullptr, caption, -9,
-                theme.global.fgcolor, theme.global.bgcolor, font, 5)
+                theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font, 5)
         , separator(drawable, *this, this, -12,
-                    theme.global.separator_color)
+                    theme.global.separator_color.to_u32())
         , dialog(drawable, *this, nullptr, text, -10,
-                 theme.global.fgcolor, theme.global.bgcolor, font, 10, 2)
+                 theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font, 10, 2)
         , challenge(nullptr)
         , ok(drawable, *this, this, ok_text ? ok_text : "Ok", -12,
-             theme.global.fgcolor, theme.global.bgcolor,
-             theme.global.focus_color, 2, font, 6, 2)
+             theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(),
+             theme.global.focus_color.to_u32(), 2, font, 6, 2)
         , cancel(cancel_text ? new WidgetFlatButton(drawable, *this, this,
                                                     cancel_text, -11,
-                                                    theme.global.fgcolor,
-                                                    theme.global.bgcolor,
-                                                    theme.global.focus_color, 2, font,
+                                                    theme.global.fgcolor.to_u32(),
+                                                    theme.global.bgcolor.to_u32(),
+                                                    theme.global.focus_color.to_u32(), 2, font,
                                                     6, 2) : nullptr)
         , img(drawable,
               theme.global.logo ? theme.global.logo_path :
               SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -8)
         , extra_button(extra_button)
         , font(font)
-        , bg_color(theme.global.bgcolor)
+        , bg_color(theme.global.bgcolor.to_u32())
     {
         this->impl = &composite_array;
 
@@ -101,16 +101,16 @@ public:
             if (CHALLENGE_ECHO == has_challenge) {
                 this->challenge = new WidgetEdit(this->drawable,
                                                  *this, this, nullptr, -13,
-                                                 theme.edit.fgcolor,
-                                                 theme.edit.bgcolor,
-                                                 theme.edit.focus_color,
+                                                 theme.edit.fgcolor.to_u32(),
+                                                 theme.edit.bgcolor.to_u32(),
+                                                 theme.edit.focus_color.to_u32(),
                                                  font, -1u, 1, 1);
             } else {
                 this->challenge = new WidgetPassword(this->drawable,
                                                      *this, this, nullptr, -13,
-                                                     theme.edit.fgcolor,
-                                                     theme.edit.bgcolor,
-                                                     theme.edit.focus_color,
+                                                     theme.edit.fgcolor.to_u32(),
+                                                     theme.edit.bgcolor.to_u32(),
+                                                     theme.edit.focus_color.to_u32(),
                                                      font, -1u, 1, 1);
             }
             this->add_widget(this->challenge);

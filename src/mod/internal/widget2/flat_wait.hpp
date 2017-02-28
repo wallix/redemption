@@ -62,19 +62,19 @@ public:
              bool showform = false, int required = FlatForm::NONE)
         : WidgetParent(drawable, parent, notifier, group_id)
         , groupbox(drawable, *this, nullptr, caption,
-                   theme.global.fgcolor, theme.global.bgcolor, font)
+                   theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
         , dialog(drawable, this->groupbox, nullptr, text, -10,
-                 theme.global.fgcolor, theme.global.bgcolor, font, 10, 2)
+                 theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font, 10, 2)
         , form(drawable, *this, this, -20, font, theme, lang, required)
         , goselector(drawable, this->groupbox, this, TR("back_selector", lang), -12,
-                     theme.global.fgcolor, theme.global.bgcolor,
-                     theme.global.focus_color, 2, font, 6, 2)
+                     theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(),
+                     theme.global.focus_color.to_u32(), 2, font, 6, 2)
         , exit(drawable, this->groupbox, this, TR("exit", lang), -11,
-               theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
+               theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), theme.global.focus_color.to_u32(), 2, font,
                6, 2)
         , extra_button(extra_button)
         , hasform(showform)
-        , bg_color(theme.global.bgcolor)
+        , bg_color(theme.global.bgcolor.to_u32())
     {
         this->impl = &composite_array;
 
