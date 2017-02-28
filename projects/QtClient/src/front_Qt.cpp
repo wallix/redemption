@@ -2698,7 +2698,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                         uint64_t LastAccessTime = UnixSecondsToWindowsTick(buff.st_atime);
                                         uint64_t LastWriteTime  = UnixSecondsToWindowsTick(buff.st_mtime);
-                                        //UnixSecondsToWindowsTick(buff.st_ctime);
                                         uint64_t ChangeTime     = UnixSecondsToWindowsTick(buff.st_ctime);
                                         uint32_t FileAttributes = fscc::FILE_ATTRIBUTE_ARCHIVE;
                                         if (S_ISDIR(buff.st_mode)) {
@@ -2833,8 +2832,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 rdpdr::DeviceReadRequest drr;
                                 drr.receive(chunk);
 
-                                deviceIOResponse.emit(out_stream);
-
                                 uint8_t * ReadData(nullptr);
                                 int file_size(drr.Length());
                                 int offset(drr.Offset());
@@ -2864,12 +2861,15 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", this->fileSystemData.paths[id-1].c_str());
                                 }
 
+                                deviceIOResponse.emit(out_stream);
+
                                 rdpdr::DeviceReadResponse deviceReadResponse(file_size);
                                 deviceReadResponse.emit(out_stream);
 
                                 this->process_client_clipboard_out_data( channel_names::rdpdr
                                                                        , 20 + file_size
                                                                        , out_stream
+                                                                       //out_stream.get_offset() - 20
                                                                        , 236
                                                                        , ReadData + (file_size*offset)
                                                                        , file_size
@@ -2995,10 +2995,12 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                         switch (sdqdr.FsInformationClass()) {
 
-//                                             case rdpdr::FileDirectoryInformation:
-//                                                 break;
-//                                             case rdpdr::FileFullDirectoryInformation:
-//                                                 break;
+                                            case rdpdr::FileDirectoryInformation:
+                                                LOG(LOG_WARNING, "SERVER >> RDPDR Channel: Query Directory FsInformationClass = FileDirectoryInformation");
+                                                break;
+                                            case rdpdr::FileFullDirectoryInformation:
+                                                LOG(LOG_WARNING, "SERVER >> RDPDR Channel: Query Directory FsInformationClass = FileFullDirectoryInformation");
+                                                break;
                                             case rdpdr::FileBothDirectoryInformation:
                                                 {
                                                 rdpdr::ClientDriveQueryDirectoryResponse cdqdr(93 + (str_file_name.length()*2));
@@ -3009,8 +3011,9 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                 fbdi.emit(out_stream);
                                                 }
                                                 break;
-//                                             case rdpdr::FileNamesInformation:
-//                                                 break;
+                                            case rdpdr::FileNamesInformation:
+                                                LOG(LOG_WARNING, "SERVER >> RDPDR Channel: Query Directory FsInformationClass = FileNamesInformation");
+                                                break;
                                             default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: unknow  FsInformationClass = 0x%x", sdqdr.FsInformationClass());
                                                     break;
                                         }
@@ -3045,6 +3048,20 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     rdpdr::ServerDriveQueryVolumeInformationRequest sdqvir;
                                     sdqvir.receive(chunk);
 
+                                    uint64_t VolumeCreationTime             = 0;
+                                    const char * VolumeLabel                = "";
+                                    const char * FileSystemName             = "ext4";
+                                    uint32_t FileSystemAttributes           = 0x03e700ff;
+                                    uint32_t SectorsPerAllocationUnit       = 8;
+
+                                    uint32_t BytesPerSector                 = 0;
+                                    uint32_t MaximumComponentNameLength     = 0;
+                                    uint64_t TotalAllocationUnits           = 0;
+                                    uint64_t CallerAvailableAllocationUnits = 0;
+                                    uint64_t AvailableAllocationUnits       = 0;
+                                    uint64_t ActualAvailableAllocationUnits = 0;
+                                    uint32_t VolumeSerialNumber             = 0;
+
                                     std::string str_path;
                                     if (id <= this->fileSystemData.paths.size()) {
                                         str_path = this->fileSystemData.paths[id-1];
@@ -3053,26 +3070,33 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         return;
                                     }
 
-                                    struct stat buff;
-                                    if (stat(str_path.c_str(), &buff)) {
+                                    struct statvfs buffvfs;
+                                    if (statvfs(str_path.c_str(), &buffvfs)) {
                                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                        LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_path.c_str());
+                                        LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buffvfs).", str_path.c_str());
+                                    } else {
+                                        uint64_t freespace(buffvfs.f_bfree * buffvfs.f_bsize);
+
+                                        TotalAllocationUnits           = freespace + 0x1000000;
+                                        CallerAvailableAllocationUnits = freespace;
+                                        AvailableAllocationUnits       = freespace;
+                                        ActualAvailableAllocationUnits = freespace;
+
+                                        BytesPerSector                 = buffvfs.f_bsize;
+                                        MaximumComponentNameLength     = buffvfs.f_namemax;
+                                    }
+
+                                    static struct hd_driveid hd;
+                                    int device = open(str_path.c_str(), O_RDONLY | O_NONBLOCK);
+                                    if (device < 0) {
+                                        deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
+                                        LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (hd_driveid).", str_path.c_str());
+                                    } else {
+                                        ioctl(device, HDIO_GET_IDENTITY, &hd);
+                                        VolumeSerialNumber             = this->string_to_hex32(hd.serial_no);
                                     }
 
                                     deviceIOResponse.emit(out_stream);
-
-                                    uint64_t VolumeCreationTime             = 0;
-                                    uint32_t VolumeSerialNumber             = 0xb035dca6;
-                                    const char * VolumeLabel                = "";
-                                    uint32_t FileSystemAttributes           = 0x03e700ff;
-                                    uint64_t TotalAllocationUnits           = 0x7cf8ff;
-                                    uint64_t CallerAvailableAllocationUnits = 0x3b21cd;
-                                    uint64_t AvailableAllocationUnits       = 0x3b21cd;
-                                    uint64_t ActualAvailableAllocationUnits = 0x3b21cd;
-                                    uint32_t SectorsPerAllocationUnit       = 8;
-                                    uint32_t BytesPerSector                 = 512;
-                                    uint32_t MaximumComponentNameLength     = 255;
-                                    const char * FileSystemName             = "ext4";
 
                                     if (deviceIOResponse.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
                                         switch (sdqvir.FsInformationClass()) {

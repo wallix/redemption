@@ -36,7 +36,13 @@
 #include <string>
 #include <vector>
 #include <boost/algorithm/string.hpp>
+
 #include <sys/stat.h>
+#include <sys/statvfs.h>
+#include <sys/ioctl.h>
+#include <linux/types.h>
+#include <linux/hdreg.h>
+//#include <linux/fcntl.h>
 
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
@@ -553,6 +559,21 @@ public:
     long long UnixSecondsToWindowsTick(unsigned unixSeconds)
     {
         return ((unixSeconds + _SEC_TO_UNIX_EPOCH) * _WINDOWS_TICK);
+    }
+
+    uint32_t string_to_hex32(unsigned char * str) {
+        size_t size = sizeof(str);
+        uint32_t hex32(0);
+        for (size_t i = 0; i < size; i++) {
+            int s = str[i];
+            if(s > 47 && s < 58) {                           //this covers 0-9
+                hex32 += (s - 48) << (size - i - 1);
+            } else if (s > 64 && s < 71) {                 // this covers A-F
+                hex32 += (s - 55) << (size - i - 1);
+            }
+        }
+
+        return hex32;
     }
 
 
