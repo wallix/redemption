@@ -39,7 +39,6 @@
 #include "module_manager.hpp"
 
 #include <fstream>
-#include <iostream>
 #include <string>
 #include <ctime>
 

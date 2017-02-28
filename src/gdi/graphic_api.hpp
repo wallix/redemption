@@ -25,7 +25,6 @@
 
 #include <cassert>
 #include <cstdint>
-#include <iostream>
 
 #include "utils/sugar/noncopyable.hpp"
 #include "core/RDP/orders/RDPOrdersCommon.hpp"

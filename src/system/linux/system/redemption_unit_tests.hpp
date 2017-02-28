@@ -25,6 +25,7 @@ namespace boost { namespace unit_test { namespace ut_detail {
 # define BOOST_REQUIRE_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
 # define BOOST_REQUIRE_EQUAL(a, b) (a) == (b)
 # define BOOST_REQUIRE_NE(a, b) (a) != (b)
+# define BOOST_REQUIRE(a) (a)
 # define BOOST_REQUIRE_EQUAL_RANGES(a, b) (a) != (b)
 #else
 # define CHECK_EXCEPTION_ERROR_ID(stmt, ErrId)  \

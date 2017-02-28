@@ -105,7 +105,7 @@ class Form_Qt;
 class Screen_Qt;
 class Mod_Qt;
 class ClipBoard_Qt;
-class FileSysWatchWrapper_Qt;
+
 
 struct DummyAuthentifier : public auth_api
 {
@@ -385,8 +385,8 @@ public:
             int         size;
             std::string name;
         };
-        int                      cItems = 0;
-        int                      lindexToRequest = 0;
+        uint32_t                 cItems = 0;
+        uint32_t                 lindexToRequest = 0;
         int                      streamIDToRequest = 0;
         std::vector<CB_in_Files> itemslist;
         int                      lindex = 0;
@@ -415,10 +415,6 @@ public:
             uint32_t file_id = 0;
         };
 
-        uint32_t clientID = 0;
-        uint16_t versionMajor = 0;
-        uint16_t versionMinor = 0;
-
         bool drives_created = false;
         bool fileSystemCapacity[5] = { false };
         const size_t drivesCount = 1;
@@ -436,17 +432,58 @@ public:
         uint32_t current_dir_id = 0;
         int current_file_index = 0;
 
-        std::string current_path;
-
         int writeData_to_wait = 0;
-        int writeData_buffered = 0;
         int file_to_write_id = 0;
-        std::unique_ptr<uint8_t[]>  writeData = nullptr;
-
 
     } fileSystemData;
 
-    FileSysWatchWrapper_Qt * file_watcher;
+
+//     struct OutStreamData {
+//
+//         size_t current_pos = 0;
+//
+//         virtual const uint8_t * get_data(size_t size) = 0;
+//
+//         virtual ~OutStreamData() {}
+//
+//     };
+//
+//     struct OutStreamDataRaw : OutStreamData {
+//         const uint8_t * data;
+//
+//         OutStreamDataRaw(const uint8_t * data)
+//           : data(data)
+//           {}
+//
+//         virtual const uint8_t * get_data(size_t size) {
+//             const uint8_t * data_to_send = data;
+//             data += size;
+//             return data_to_send;
+//         }
+//     };
+//
+//     struct OutStreamDataFStream : OutStreamData {
+//         std::ifstream ifile;
+//         char data_to_send[1600];
+//
+//         OutStreamDataFStream(std::string & file_name)
+//           : ifile(file_name.x, std::ios::in | std::ios::binary)
+//           {}
+//
+//         const uint8_t * get_data(size_t size) {
+//             this->ifile.read(this->data_to_send, size);
+//             return reinterpret_cast<const uint8_t *>(this->data_to_send);
+//         }
+//
+//         bool is_open() {
+//             return this->ifile.is_open();
+//         }
+//
+//         ~OutStreamDataFStream() {
+//             this->ifile.close();
+//         }
+//     };
+
 
 
 
@@ -480,7 +517,7 @@ public:
 
     void empty_buffer() override;
 
-    void process_client_clipboard_out_data(const char * const front_channel_name, const uint64_t total_length, OutStream & out_streamfirst, size_t firstPartSize, uint8_t const * data, const size_t data_len, uint32_t flags);
+    void process_client_clipboard_out_data(const char * const front_channel_name, const uint64_t total_length, OutStream & out_streamfirst, size_t firstPartSize, const uint8_t * data, const size_t data_len, uint32_t flags);
 
     virtual void set_pointer(Pointer const & cursor) override;
 

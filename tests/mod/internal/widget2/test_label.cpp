@@ -31,7 +31,6 @@
 #include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 
-#include <iostream>
 #include "fake_draw.hpp"
 
 BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
