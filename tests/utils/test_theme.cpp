@@ -59,7 +59,8 @@ BOOST_AUTO_TEST_CASE(TestColorFromFile)
     BOOST_CHECK_EQUAL(static_cast<int>(WHITE),          colors.selector_label.fgcolor);
 
 
-    ConfigurationLoader cfg_loader(colors, FIXTURES_PATH "/rdpcolor.ini");
+    ThemeHolder theme_holder(colors);
+    ConfigurationLoader cfg_loader(theme_holder, FIXTURES_PATH "/rdpcolor.ini");
 
     BOOST_CHECK_EQUAL(0xdc8115,                         colors.global.bgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(WHITE),          colors.global.fgcolor);
@@ -88,7 +89,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
 {
     std::stringstream   oss("");
     Theme          colors;
-    ConfigurationLoader cfg_loader(colors, oss);
+    ThemeHolder theme_holder(colors);
+    ConfigurationLoader cfg_loader(theme_holder, oss);
     BOOST_CHECK_EQUAL(static_cast<int>(DARK_BLUE_BIS),  colors.global.bgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(WHITE),          colors.global.fgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(LIGHT_BLUE),     colors.global.separator_color);
@@ -129,7 +131,8 @@ BOOST_AUTO_TEST_CASE(TestConfigPartial)
                             "\n"
                             );
     Theme          colors;
-    ConfigurationLoader cfg_loader(colors, oss);
+    ThemeHolder theme_holder(colors);
+    ConfigurationLoader cfg_loader(theme_holder, oss);
     BOOST_CHECK_EQUAL(static_cast<int>(DARK_BLUE_BIS),  colors.global.bgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(GREY),           colors.global.fgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(RED),            colors.global.separator_color);
@@ -158,7 +161,8 @@ BOOST_AUTO_TEST_CASE(TestConfigPartial)
 BOOST_AUTO_TEST_CASE(TestConfigPartialFile)
 {
     Theme          colors;
-    ConfigurationLoader cfg_loader(colors, CFG_PATH "/themes/test_theme/theme.ini");
+    ThemeHolder theme_holder(colors);
+    ConfigurationLoader cfg_loader(theme_holder, CFG_PATH "/themes/test_theme/theme.ini");
     BOOST_CHECK_EQUAL(static_cast<int>(DARK_BLUE_BIS),  colors.global.bgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(GREY),           colors.global.fgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(RED),            colors.global.separator_color);
