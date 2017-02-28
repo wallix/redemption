@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(Testmatch_finder)
         void log4(bool duplicate_with_pid, const char* type, const char* extra) override {
             BOOST_CHECK_EQUAL(duplicate_with_pid, false);
             BOOST_CHECK_EQUAL(type, "NOTIFY_PATTERN_DETECTED");
-            BOOST_CHECK_EQUAL(extra, "pattern='$kbd:c| cacao'");
+            BOOST_CHECK_EQUAL(extra, "pattern=\"$kbd:c| cacao\"");
         }
         void report(const char* reason, const char* message) override {
             BOOST_CHECK_EQUAL(reason, "FINDPATTERN_NOTIFY");

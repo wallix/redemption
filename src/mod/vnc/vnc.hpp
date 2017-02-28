@@ -471,7 +471,6 @@ protected:
     void rdp_input_clip_data(uint8_t * data, size_t data_length) {
         auto client_cut_text = [this](char * str) {
             ::in_place_windows_to_linux_newline_convert(str);
-
             size_t const str_len = ::strlen(str);
 
             StreamBufMaker<65536> buf_maker;
@@ -576,6 +575,7 @@ private:
         stream.out_uint16_be(r.cx);
         stream.out_uint16_be(r.cy);
         this->t.send(stream.get_data(), stream.get_offset());
+        LOG(LOG_INFO, "<< JNI @ update_screen : this->t.send(stream.get_data(), stream.get_offset());\n");
     } // update_screen
 
 public:
@@ -682,7 +682,6 @@ public:
                 this->state = UP_AND_RUNNING;
                 this->front.can_be_start_capture();
                 this->update_screen(Rect(0, 0, this->width, this->height));
-
                 this->lib_open_clip_channel();
 
                 this->event.object_and_time = false;
@@ -749,7 +748,7 @@ public:
                                            , chunk_size
                                            ,   CHANNELS::CHANNEL_FLAG_FIRST
                                              | CHANNELS::CHANNEL_FLAG_LAST
-                                           );
+                                           );LOG(LOG_INFO, "JNI  send_to_front_channel\n");
             }
             break;
         case RETRY_CONNECTION:
@@ -779,13 +778,13 @@ public:
                     this->t.recv_new(end, 1);
                     switch (type) {
                         case 0: /* framebuffer update */
-                            this->lib_framebuffer_update(drawable);
+                            this->lib_framebuffer_update(drawable);LOG(LOG_INFO, "JNI  lib_framebuffer_update\n");
                         break;
                         case 1: /* palette */
-                            this->lib_palette_update(drawable);
+                            this->lib_palette_update(drawable);LOG(LOG_INFO, "JNI  lib_palette_update\n");
                         break;
                         case 3: /* clipboard */ /* ServerCutText */
-                            this->lib_clip_data();
+                            this->lib_clip_data();LOG(LOG_INFO, "JNI  lib_clip_data\n");
                         break;
                         default:
                             LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", type);
@@ -813,7 +812,7 @@ public:
         case WAIT_PASSWORD:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "state=WAIT_PASSWORD");
-            }
+            }LOG(LOG_INFO, "JNI WAIT_PASSWORD \n");
             this->event.object_and_time = false;
             this->event.reset();
             break;
@@ -887,7 +886,7 @@ public:
                         int i = Parse(buf).in_uint32_be();
                         if (i != 0) {
                             // vnc password failed
-
+                            LOG(LOG_INFO, "JNI    vnc password failed");
                             // Optionnal
                             try
                             {
@@ -965,7 +964,6 @@ public:
 
                 // 7.3.2   ServerInit
                 // ------------------
-
                 // After receiving the ClientInit message, the server sends a
                 // ServerInit message. This tells the client the width and
                 // height of the server's framebuffer, its pixel format and the
@@ -1080,7 +1078,6 @@ public:
                 {
                 // 7.4.1   SetPixelFormat
                 // ----------------------
-
                 // Sets the format in which pixel values should be sent in
                 // FramebufferUpdate messages. If the client does not send
                 // a SetPixelFormat message then the server sends pixel values
@@ -1289,7 +1286,6 @@ public:
                 size_t chunk_size = length;
 
                 this->clipboard_requesting_for_data_is_delayed = false;
-
                 this->send_to_front_channel( channel_names::cliprdr
                                            , out_s.get_data()
                                            , length
@@ -2810,12 +2806,15 @@ private:
 
 public:
     void disconnect(time_t now) override {
+
         double seconds = ::difftime(now, this->beginning);
+        LOG(LOG_INFO, "Client disconnect");
 
         char extra[1024];
-        snprintf(extra, sizeof(extra), "duration='%02d:%02d:%02d'",
-            (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
-            (int(seconds) % 60));
+        snprintf(extra, sizeof(extra), "duration=\"%02d:%02d:%02d\"",
+                        (int(seconds) / 3600),
+                        ((int(seconds) % 3600) / 60),
+                        (int(seconds) % 60));
 
         this->authentifier.log4(false, "SESSION_DISCONNECTION", extra);
     }
