@@ -53,9 +53,11 @@ BOOST_AUTO_TEST_CASE(TestInFileTransport)
         char buf[128];
         char * pbuf = buf;
         InFileTransport ft(fd);
-        ft.recv(&pbuf, 10);
-        ft.recv(&pbuf, 11);
-        ft.recv(&pbuf, 10);
+        ft.recv_new(pbuf, 10);
+        pbuf += 10;
+        ft.recv_new(pbuf, 11);
+        pbuf += 11;
+        ft.recv_new(pbuf, 10);
         BOOST_CHECK_EQUAL(0, strncmp(buf, "We write, and again, and so on.", 31));
         pbuf = buf;
         CHECK_EXCEPTION_ERROR_ID(ft.recv(&pbuf, 1), ERR_TRANSPORT_NO_MORE_DATA);

@@ -53,14 +53,14 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv(&end, sz);
+    gt.recv_new(end, sz);
     GCC::UserData::CSMonitor cs_monitor;
     InStream stream(buf);
     cs_monitor.recv(stream);
     BOOST_CHECK_EQUAL(32, cs_monitor.length);
     BOOST_CHECK_EQUAL(CS_MONITOR, cs_monitor.userDataType);
     BOOST_CHECK_EQUAL(1, cs_monitor.monitorCount);
-    
+
     BOOST_CHECK_EQUAL(0, cs_monitor.monitorDefArray[0].left);  //(left, top) = (0,0)
     BOOST_CHECK_EQUAL(0, cs_monitor.monitorDefArray[0].top);
     BOOST_CHECK_EQUAL(100, cs_monitor.monitorDefArray[0].right); //(right, bottom) = (100,-60)

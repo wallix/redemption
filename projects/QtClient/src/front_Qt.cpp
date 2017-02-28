@@ -2837,6 +2837,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 int offset(drr.Offset());
                                 int shift(file_size*offset);
 
+                                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Read Request 1");
+
                                 std::ifstream ateFile(this->fileSystemData.paths[id-1], std::ios::binary| std::ios::ate);
                                 if(ateFile.is_open()) {
                                     if (file_size > ateFile.tellg()) {
@@ -2844,6 +2846,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     }
                                     if (shift > ateFile.tellg()) {
                                         file_size = 0;
+                                        shift = 0;
                                     }
                                     ateFile.close();
 
@@ -2861,17 +2864,23 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", this->fileSystemData.paths[id-1].c_str());
                                 }
 
+                                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Read Request 2");
+
                                 deviceIOResponse.emit(out_stream);
 
                                 rdpdr::DeviceReadResponse deviceReadResponse(file_size);
+                                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Read Request 3");
                                 deviceReadResponse.emit(out_stream);
+
+                                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Read Request file_size = %d  offset = %d  shift = %d", file_size, offset, shift);
+
+
 
                                 this->process_client_clipboard_out_data( channel_names::rdpdr
                                                                        , 20 + file_size
                                                                        , out_stream
-                                                                       //out_stream.get_offset() - 20
-                                                                       , 236
-                                                                       , ReadData + (file_size*offset)
+                                                                       , out_stream.get_offset() - 20
+                                                                       , ReadData + shift
                                                                        , file_size
                                                                        , 0);
 
