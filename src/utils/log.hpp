@@ -468,31 +468,21 @@ inline void hexdump8_c(const char * data, size_t size)
 
 } // anonymous namespace
 
-inline char * escape_double_quotes(const char * subject) {
+inline const char * escape_double_quotes(const char * subject) {
 
-    if (subject ==  nullptr)
-        return "";
-
+    size_t subject_len = (subject ==  nullptr)?0:strlen(subject);
     size_t pos = 0;
+    char * escaped_subject = new char[1+2*subject_len];
 
-    char * escaped_subject= new char[strlen(subject)*2]();
- //   std::fill(escaped_subject, escaped_subject + subject.size()*2, 0);
-
-
-    for (uint32_t i = 0; i < strlen(escaped_subject); i++) {
-        escaped_subject[i] = '\0';
-    }
-
-    for (uint32_t i = 0; i < strlen(subject); i++) {
+    for (uint32_t i = 0; i < subject_len; i++) {
         if(subject[i] == '\"') {
             escaped_subject[pos] = '\\';
-            escaped_subject[++pos] = '\"';
+            pos++;
         }
-        else
-            escaped_subject[pos] = subject[i];
+        escaped_subject[pos] = subject[i];
         pos++;
     }
-
+    escaped_subject[pos] = 0;
     return escaped_subject;
 }
 

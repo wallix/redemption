@@ -107,6 +107,7 @@ public:
         if (this->connected_to_acl){
             char * escaped_extra = escape_double_quotes(extra);
             this->acl_serial->log4(duplicate_with_pid, type, escaped_extra);
+            delete escaped_extra[];
         }
     }
 };
