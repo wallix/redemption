@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(TestSnappyCompressionTransport)
             char * in_buffer   = in_data;
 
 
-            in_trans.recv(&in_buffer, 21);
+            in_trans.recv_new(in_buffer, 21);
             BOOST_CHECK_EQUAL(in_data,
                 "azert"
                 "azert"
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(TestSnappyCompressionTransport)
                 "azert");
 
             in_buffer = in_data;
-            in_trans.recv(&in_buffer, 31);
+            in_trans.recv_new(in_buffer, 31);
             BOOST_CHECK_EQUAL(in_data,
                 "wallix"
                 "wallix"
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(TestSnappyCompressionTransport)
                 "wallix");
 
             in_buffer = in_data;
-            in_trans.recv(&in_buffer, 65);
+            in_trans.recv_new(in_buffer, 65);
             BOOST_CHECK_EQUAL(in_data,
                 "0123456789ABCDEF"
                 "0123456789ABCDEF"
