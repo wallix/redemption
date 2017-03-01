@@ -723,7 +723,6 @@ struct ocrypto {
         tmp_buf[7] = (WABCRYPTOFILE_VERSION >> 24) & 0xFF;
         ::memcpy(tmp_buf + 8, iv, 32);
 
-
         if (buflen < 40){
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: buffer too small!\n", ::getpid());
             return -1;
@@ -736,64 +735,10 @@ struct ocrypto {
         return this->xmd_update(tmp_buf, 40);
     }
 
-
-};
-
-class wrmcapture_ocrypto_filename_buf : ocrypto
-{
-    int file_fd;
-
-    CryptoContext & cctx;
-    Random & rnd;
-
-public:
-    explicit wrmcapture_ocrypto_filename_buf(wrmcapture_ocrypto_filename_params params)
-    : file_fd(-1)
-    , cctx(params.crypto_ctx)
-    , rnd(params.rnd)
-    {
-        if (-1 != this->file_fd) {
-            ::close(this->file_fd);
-            this->file_fd = -1;
-        }
-    }
-
-    ~wrmcapture_ocrypto_filename_buf()
-    {
-        if (this->is_open()) {
-            this->close();
-        }
-    }
-
-
-    
-
-    ssize_t encrypt_write(const void * data, size_t len)
-    {
-        unsigned int remaining_size = len;
-        while (remaining_size > 0) {
-            // Check how much we can append into buffer
-            unsigned int available_size = MIN(CRYPTO_BUFFER_SIZE - this->encrypt_pos, remaining_size);
-            // Append and update pos pointer
-            ::memcpy(this->encrypt_buf + this->encrypt_pos, static_cast<const char*>(data) + (len - remaining_size), available_size);
-            this->encrypt_pos += available_size;
-            // If buffer is full, flush it to disk
-            if (this->encrypt_pos == CRYPTO_BUFFER_SIZE) {
-                if (this->encrypt_flush()) {
-                    return -1;
-                }
-            }
-            remaining_size -= available_size;
-        }
-        // Update raw size counter
-        this->encrypt_raw_size += len;
-        return len;
-    }
-
     /* Flush procedure (compression, encryption, effective file writing)
      * Return 0 on success, negatif on error
      */
-    int encrypt_flush()
+    int encrypt_flush(uint8_t * buffer, size_t buflen, size_t & towrite)
     {
         // No data to flush
         if (!this->encrypt_pos) {
@@ -836,11 +781,13 @@ public:
         ciphered_buf[3] = (ciphered_buf_sz >> 24) & 0xFF;
 
         ciphered_buf_sz += 4;
-
-        if (const ssize_t err = this->encrypt_raw_write(ciphered_buf, ciphered_buf_sz)) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
-            return err;
+        if (ciphered_buf_sz > buflen){
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Encryption buffer too small\n", ::getpid());
+            return -1;
         }
+        ::memcpy(ciphered_buf, buffer, ciphered_buf_sz);
+        towrite += ciphered_buf_sz;
+
         if (-1 == this->xmd_update(&ciphered_buf, ciphered_buf_sz)) {
             return -1;
         }
@@ -851,9 +798,11 @@ public:
         return 0;
     }
 
-    int encrypt_close(unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key)
+    int encrypt_close(uint8_t * buffer, size_t buflen, size_t & towrite, unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key)
     {
-        int result = this->encrypt_flush();
+        if (this->encrypt_flush(buffer, sizeof(buffer), towrite)) {
+            return -1;
+        }
 
         const uint32_t eof_magic = WABCRYPTOFILE_EOF_MAGIC;
         unsigned char tmp_buf[8] = {
@@ -867,15 +816,17 @@ public:
             uint8_t((this->encrypt_raw_size >> 24) & 0xFF),
         };
 
-        int write_ret1 = this->encrypt_raw_write(tmp_buf, 8);
-        if (write_ret1){
-            // TOOD: actual error code could help
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
+        if (towrite + 8 > buflen){
+            return -1;
         }
+        ::memcpy(tmp_buf, buffer+towrite, 8);
+        towrite += 8;
+        
         this->encrypt_file_size += 8;
 
         this->xmd_update(tmp_buf, 8);
 
+        int result = 0;
         if (hash) {
             unsigned char tmp_hash[MD_HASH_LENGTH << 1];
             if (::EVP_DigestFinal_ex(&this->encrypt_hctx4k, tmp_hash, nullptr) != 1) {
@@ -961,6 +912,68 @@ public:
         return result;
     }
 
+
+};
+
+class wrmcapture_ocrypto_filename_buf : ocrypto
+{
+    int file_fd;
+
+    CryptoContext & cctx;
+    Random & rnd;
+
+public:
+    explicit wrmcapture_ocrypto_filename_buf(wrmcapture_ocrypto_filename_params params)
+    : file_fd(-1)
+    , cctx(params.crypto_ctx)
+    , rnd(params.rnd)
+    {
+        if (-1 != this->file_fd) {
+            ::close(this->file_fd);
+            this->file_fd = -1;
+        }
+    }
+
+    ~wrmcapture_ocrypto_filename_buf()
+    {
+        if (this->is_open()) {
+            this->close();
+        }
+    }
+
+
+    
+
+    ssize_t encrypt_write(const void * data, size_t len)
+    {
+        unsigned int remaining_size = len;
+        while (remaining_size > 0) {
+            // Check how much we can append into buffer
+            unsigned int available_size = MIN(CRYPTO_BUFFER_SIZE - this->encrypt_pos, remaining_size);
+            // Append and update pos pointer
+            ::memcpy(this->encrypt_buf + this->encrypt_pos, static_cast<const char*>(data) + (len - remaining_size), available_size);
+            this->encrypt_pos += available_size;
+            // If buffer is full, flush it to disk
+            if (this->encrypt_pos == CRYPTO_BUFFER_SIZE) {
+                uint8_t buffer[65536];
+                size_t towrite = 0;
+                if (this->encrypt_flush(buffer, sizeof(buffer), towrite)) {
+                    return -1;
+                }
+                if (this->encrypt_raw_write(buffer, towrite))
+                {
+                    return -1;
+                }
+            }
+            remaining_size -= available_size;
+        }
+        // Update raw size counter
+        this->encrypt_raw_size += len;
+        return len;
+    }
+
+
+
     ///\return 0 if success, otherwise a negatif number
     ssize_t encrypt_raw_write(void * data, size_t len)
     {
@@ -1016,7 +1029,17 @@ public:
 
     int close(unsigned char hash[MD_HASH_LENGTH << 1])
     {
-        const int res1 = this->encrypt_close(hash, this->cctx.get_hmac_key());
+        uint8_t buffer[65536];
+        size_t towrite = 0;
+        const int res1 = this->encrypt_close(buffer, sizeof(buffer), towrite, hash, this->cctx.get_hmac_key());
+        if (res1) {
+            return -1;
+        }
+        if (this->encrypt_raw_write(buffer, towrite))
+        {
+            return -1;
+        }
+    
         int res2 = 0;
         if (-1 != this->file_fd) {
             res2 = ::close(this->file_fd);
