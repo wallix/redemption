@@ -395,6 +395,11 @@ public:
         *pbuffer = buffer + len;
     }
 
+    void do_recv_new(uint8_t * buffer, size_t len) override {
+        this->in_stream.in_copy_bytes(buffer, len);
+        //*pbuffer = buffer + len;
+    }
+
     void do_send(const uint8_t * const buffer, size_t len) override {
         this->out_stream.out_copy_bytes(buffer, len);
     }

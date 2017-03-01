@@ -70,13 +70,13 @@ BOOST_AUTO_TEST_CASE(TestFilename)
         char s[5];
         char * sp = s;
         char ** p = &sp;
-        in.recv(p, 5);
+        in.recv_new(*p, 5);
         BOOST_CHECK_EQUAL(sp-s, 5);
         BOOST_CHECK_EQUAL(strncmp(s, "ABCDE", 5), 0);
         try {
             sp = s;
             p = &sp;
-            in.recv(p, 1);
+            in.recv_new(*p, 1);
 // Behavior changed, first return 0, then exception
 //            BOOST_CHECK(false);
         }
@@ -127,13 +127,13 @@ BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
         char s[5];
         char * sp = s;
         char ** p = &sp;
-        in.recv(p, 5);
+        in.recv(*p, 5);
         BOOST_CHECK_EQUAL(sp-s, 5);
         BOOST_CHECK_EQUAL(strncmp(s, "ABCDE", 5), 0);
         try {
             sp = s;
             p = &sp;
-            in.recv(p, 1);
+            in.recv_new(*p, 1);
 // BEhavior changed. IS it OK ?
             BOOST_CHECK_EQUAL(sp-s, 0);
 //            BOOST_CHECK(false);
