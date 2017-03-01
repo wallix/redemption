@@ -74,7 +74,7 @@ private:
                 uint8_t data_buf[SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
 
                 auto end = data_buf;
-                this->source_transport.recv_new(end, sizeof(uint16_t));  // compressed_data_length(2);
+                this->source_transport.recv(&end, sizeof(uint16_t));  // compressed_data_length(2);
 
                 const uint16_t compressed_data_length = Parse(data_buf).in_uint16_le();
                 //if (this->verbose) {
@@ -82,8 +82,7 @@ private:
                 //}
 
                 end = data_buf;
-                this->source_transport.recv_new(end, compressed_data_length);
-                end += compressed_data_length;
+                this->source_transport.recv(&end, compressed_data_length);
 
                 this->uncompressed_data        = this->uncompressed_data_buffer;
                 this->uncompressed_data_length = sizeof(this->uncompressed_data_buffer);
@@ -106,6 +105,7 @@ private:
     }
 
     void do_recv_new(uint8_t * buffer, size_t len) override {
+        uint8_t * temp_data        = buffer;
         size_t    temp_data_length = len;
 
         while (temp_data_length) {
@@ -114,18 +114,19 @@ private:
 
                 const size_t data_length = std::min<size_t>(temp_data_length, this->uncompressed_data_length);
 
-                ::memcpy(buffer, this->uncompressed_data, data_length);
+                ::memcpy(temp_data, this->uncompressed_data, data_length);
 
                 this->uncompressed_data        += data_length;
                 this->uncompressed_data_length -= data_length;
 
+                temp_data        += data_length;
                 temp_data_length -= data_length;
             }
             else {
                 uint8_t data_buf[SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
 
                 auto end = data_buf;
-                this->source_transport.recv_new(end, sizeof(uint16_t));  // compressed_data_length(2);
+                this->source_transport.recv(&end, sizeof(uint16_t));  // compressed_data_length(2);
 
                 const uint16_t compressed_data_length = Parse(data_buf).in_uint16_le();
                 //if (this->verbose) {
@@ -133,8 +134,7 @@ private:
                 //}
 
                 end = data_buf;
-                this->source_transport.recv_new(end, compressed_data_length);
-                end += compressed_data_length;
+                this->source_transport.recv(&end, compressed_data_length);
 
                 this->uncompressed_data        = this->uncompressed_data_buffer;
                 this->uncompressed_data_length = sizeof(this->uncompressed_data_buffer);
@@ -152,6 +152,8 @@ private:
                 //}
             }
         }
+
+        //(*pbuffer) = (*pbuffer) + len;
     }
 };  // class SnappyCompressionInTransport
 

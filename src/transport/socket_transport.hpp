@@ -276,6 +276,7 @@ public:
         if (res < 0){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
+        //*pbuffer += res;
 
         if (static_cast<size_t>(res) < len){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);

@@ -100,7 +100,7 @@ class TransportWebSocket :  public Transport
         }
     }
 
-    void do__new(uint8_t * buffer, size_t len) override {
+    void do_recv_new(uint8_t * pbuffer, size_t len) override {
 
         if (this->buffer !=  nullptr) {
 
@@ -113,19 +113,18 @@ class TransportWebSocket :  public Transport
                 //std::copy(std::begin(this->buffer), std::end(this->buffer+len), std::begin(*pbuffer));
 
                 for (int i = 0; i < len; i++) {
-                    buffer[i] = this->buffer[i + this->sentSize];
+                    pbuffer[i] = this->buffer[i + this->sentSize];
                 }
                 this->sentSize += len;
-                buffer += lenMax;
+                //pbuffer += lenMax;
 
             } else {
-                EM_ASM_({ console.log('do_recv_new len='+$0); }, len);
+                EM_ASM_({ console.log('do_recv len='+$0); }, len);
             }
         } else {
 
         }
     }
-
 
 public:
     TransportWebSocket(FrontAPI * draw)

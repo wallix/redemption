@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor_ex)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv(&end, sz);
     GCC::UserData::CSMonitorEx cs_monitor_ex;
     InStream stream(buf);
     cs_monitor_ex.recv(stream);
@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor_ex)
     BOOST_CHECK_EQUAL(CS_MONITOR_EX, cs_monitor_ex.userDataType);
     BOOST_CHECK_EQUAL(20, cs_monitor_ex.monitorAttributeSize);
     BOOST_CHECK_EQUAL(1, cs_monitor_ex.monitorCount);
-
+    
     BOOST_CHECK_EQUAL(150, cs_monitor_ex.monitorAttributesArray[0].physicalWidth);
     BOOST_CHECK_EQUAL(100, cs_monitor_ex.monitorAttributesArray[0].physicalHeight);
     BOOST_CHECK_EQUAL(90, cs_monitor_ex.monitorAttributesArray[0].orientation); // ORIENTATION_PORTRAIT = 90

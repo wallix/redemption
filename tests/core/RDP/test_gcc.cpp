@@ -194,7 +194,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv(&end, sz);
     InStream stream(buf, sz);
     GCC::UserData::CSNet cs_net;
     cs_net.recv(stream);
@@ -226,7 +226,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv(&end, sz);
     InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv(&end, sz);
     InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
@@ -361,7 +361,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv(&end, sz);
     InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
@@ -408,7 +408,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv(&end, sz);
     InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
@@ -446,7 +446,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv(&end, sz);
     InStream stream(buf, sz);
     GCC::UserData::CSCluster cs_cluster;
     cs_cluster.recv(stream);
@@ -504,7 +504,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_core)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv(&end, sz);
     InStream stream(buf, sz);
     GCC::UserData::CSCore cs_core;
     cs_core.recv(stream);
@@ -537,7 +537,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv(&end, sz);
     GCC::UserData::CSSecurity cs_security;
     InStream stream(buf);
     cs_security.recv(stream);
@@ -586,7 +586,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_lage_rsa_key_blob)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv(&end, sz);
     GCC::UserData::SCSecurity sc_sec1;
     InStream stream(buf);
     sc_sec1.recv(stream);
@@ -628,7 +628,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_mcs_msgchannel)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv(&end, sz);
     GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;
     InStream stream(buf);
     cs_mcs_msgchannel.recv(stream);
@@ -652,7 +652,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_multitransport)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv(&end, sz);
     GCC::UserData::CSMultiTransport cs_multitransport;
     InStream stream(buf);
     cs_multitransport.recv(stream);

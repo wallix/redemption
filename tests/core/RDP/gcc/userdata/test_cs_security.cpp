@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv(&end, sz);
     GCC::UserData::CSSecurity cs_security;
     InStream stream(buf);
     cs_security.recv(stream);

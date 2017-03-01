@@ -96,7 +96,7 @@ private:
             remaining_len -= res;
         }
         res = len - remaining_len;
-
+        //*pbuffer += res;
         this->last_quantum_received += res;
         if (remaining_len != 0){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
