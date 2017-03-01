@@ -472,7 +472,7 @@ inline char * escape_double_quotes(const char * subject) {
 
     if (subject ==  nullptr)
         return "";
-        
+
     size_t pos = 0;
 
     char * escaped_subject= new char[strlen(subject)*2]();
