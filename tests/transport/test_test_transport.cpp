@@ -172,12 +172,12 @@ BOOST_AUTO_TEST_CASE(TestMemoryTransport)
     uint32_t r_data_size = 0;
 
     char * r_buffer = reinterpret_cast<char *>(&r_data_size);
-    mt.recv(&r_buffer, sizeof(uint32_t));
+    mt.recv_new(reinterpret_cast<uint8_t *>(r_buffer), sizeof(uint32_t));
     BOOST_CHECK_EQUAL(r_data_size, s_data_size);
     //LOG(LOG_INFO, "r_data_size=%u", r_data_size);
 
     r_buffer = r_data;
-    mt.recv(&r_buffer, r_data_size);
+    mt.recv_new(reinterpret_cast<uint8_t *>(r_buffer), r_data_size);
     BOOST_CHECK_EQUAL(memcmp(r_data, s_data, r_data_size), 0);
     //LOG(LOG_INFO, "r_data=\"%s\"", r_data);
 }
