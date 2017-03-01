@@ -36,38 +36,42 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport)
     GeneratorTransport gt("We read what we provide!", 24);
     char buffer[128] = {};
     char * p = buffer;
-    gt.recv(&p, 0);
+    gt.recv_new(p, 0);
     BOOST_CHECK_EQUAL(p-buffer, 0);
 
     p = buffer;
-    gt.recv(&p, 1);
+    gt.recv_new(p, 1);
+    p += 1;
     BOOST_CHECK_EQUAL(p-buffer, 1);
     BOOST_CHECK_EQUAL(buffer[0], 'W');
     BOOST_CHECK_EQUAL(buffer[1], 0); // unchanged, not put by GeneratorTransport
 
     p = buffer;
-    gt.recv(&p, 2);
+    gt.recv_new(p, 2);
+    p += 2;
     BOOST_CHECK_EQUAL(p-buffer, 2);
     BOOST_CHECK_EQUAL(buffer[0], 'e');
     BOOST_CHECK_EQUAL(buffer[1], ' ');
     BOOST_CHECK_EQUAL(buffer[2], 0); // unchanged, not put by GeneratorTransport
 
     p = buffer;
-    gt.recv(&p, 9);
+    gt.recv_new(p, 9);
+    p += 9;
     BOOST_CHECK_EQUAL(p-buffer, 9);
     BOOST_CHECK_EQUAL(0, strncmp(buffer, "read what", 9));
 
     p = buffer;
-    gt.recv(&p, 12);
+    gt.recv_new(p, 12);
+    p += 12;
     BOOST_CHECK_EQUAL(p-buffer, 12);
     BOOST_CHECK_EQUAL(0, strncmp(buffer, " we provide!", 12));
 
     p = buffer;
-    gt.recv(&p, 0);
+    gt.recv_new(p, 0);
     BOOST_CHECK_EQUAL(p-buffer, 0);
 
     p = buffer;
-    CHECK_EXCEPTION_ERROR_ID(gt.recv(&p, 1), ERR_TRANSPORT_NO_MORE_DATA);
+    CHECK_EXCEPTION_ERROR_ID(gt.recv_new(p, 1), ERR_TRANSPORT_NO_MORE_DATA);
     BOOST_CHECK_EQUAL(p-buffer, 0);
 }
 
@@ -77,31 +81,34 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport2)
     GeneratorTransport gt("We read what we provide!", 24);
     char buffer[128] = {};
     char * p = buffer;
-    gt.recv(&p, 0);
+    gt.recv_new(p, 0);
     BOOST_CHECK_EQUAL(p-buffer, 0);
 
     p = buffer;
-    gt.recv(&p, 1);
+    gt.recv_new(p, 1);
+    p += 1;
     BOOST_CHECK_EQUAL(p-buffer, 1);
     BOOST_CHECK_EQUAL(buffer[0], 'W');
     BOOST_CHECK_EQUAL(buffer[1], 0); // unchanged, not put by GeneratorTransport
 
     p = buffer;
-    gt.recv(&p, 2);
+    gt.recv_new(p, 2);
+    p += 2;
     BOOST_CHECK_EQUAL(p-buffer, 2);
     BOOST_CHECK_EQUAL(buffer[0], 'e');
     BOOST_CHECK_EQUAL(buffer[1], ' ');
     BOOST_CHECK_EQUAL(buffer[2], 0); // unchanged, not put by GeneratorTransport
 
     p = buffer;
-    gt.recv(&p, 9);
+    gt.recv_new(p, 9);
+    p += 9;
     BOOST_CHECK_EQUAL(p-buffer, 9);
     BOOST_CHECK_EQUAL(0, strncmp(buffer, "read what", 9));
 
     p = buffer;
-    CHECK_EXCEPTION_ERROR_ID(gt.recv(&p, 13), ERR_TRANSPORT_NO_MORE_DATA);
-    BOOST_CHECK_EQUAL(p-buffer, 12);
-    BOOST_CHECK_EQUAL(0, strncmp(buffer, " we provide!", 12));
+    CHECK_EXCEPTION_ERROR_ID(gt.recv_new(p, 13), ERR_TRANSPORT_NO_MORE_DATA);
+    BOOST_CHECK_EQUAL(p-buffer, 0);
+    BOOST_CHECK_EQUAL(0, strncmp(buffer, " we provide!", 0));
 }
 
 BOOST_AUTO_TEST_CASE(TestCheckTransport)
@@ -138,12 +145,14 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
     char buf[128] = {};
     char * p = buf;
     uint32_t sz = 3;
-    gt.recv(&p, sz);
+    gt.recv_new(p, sz);
+    p += sz;
     BOOST_CHECK(0 == memcmp(p - sz, "OUT", sz));
     gt.send("in", 2);
     BOOST_CHECK_EQUAL(gt.get_status(), true);
     sz = 3;
-    gt.recv(&p, sz);
+    gt.recv_new(p, sz);
+    p += sz;
     BOOST_CHECK(0 == memcmp(p - sz, "PUT", sz));
     CHECK_EXCEPTION_ERROR_ID(gt.send("pot", 3), ERR_TRANSPORT_DIFFERS);
     BOOST_CHECK(!gt.get_status());
