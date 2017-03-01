@@ -90,10 +90,10 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 
     const char * filename0 = "./test-000000.wrm";
     BOOST_CHECK_EQUAL(1560, ::filesize(filename0));
-//    ::unlink(filename);
+   ::unlink(filename0);
     const char * filename1 = "./test-000001.wrm";
     BOOST_CHECK_EQUAL(3365, ::filesize(filename1));
-//    ::unlink(filename);
+   ::unlink(filename1);
 }
 
 
@@ -398,7 +398,7 @@ int wrmcapture_write_meta_file(
     if (err){
         return err;
     }
-    
+
     auto pfile = filename;
     auto epfile = filename;
     for (; *epfile; ++epfile) {
@@ -431,7 +431,7 @@ int wrmcapture_write_meta_file(
             return res < 0 ? res : 1;
         }
     }
-    
+
     if (err) {
         return err;
     }
@@ -561,7 +561,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
     meta_len_writer.len = 5; // header
     struct stat stat;
     BOOST_CHECK(!::stat(meta_path, &stat));
-    
+
     int err = wrmcapture_write_filename(meta_len_writer, filename);
     if (!err) {
         using ull = unsigned long long;
@@ -597,7 +597,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
             err = 0;
         }
     }
-    
+
     BOOST_CHECK_EQUAL(err, 0);
     BOOST_CHECK_EQUAL(meta_len_writer.len, filesize(meta_hash_path));
     BOOST_CHECK_EQUAL(0, ::unlink(meta_hash_path));
@@ -744,9 +744,9 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 //    {
 //        struct notified_on_video_change : public NotifyNextVideo
 //        {
-//            void notify_next_video(const timeval& now, reason reason) 
+//            void notify_next_video(const timeval& now, reason reason)
 //            {
-//                LOG(LOG_INFO, "next video: now=%u:%u reason=%u", 
+//                LOG(LOG_INFO, "next video: now=%u:%u reason=%u",
 //                    static_cast<unsigned>(now.tv_sec),
 //                    static_cast<unsigned>(now.tv_usec),
 //                    static_cast<unsigned>(reason));
@@ -756,8 +756,8 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 //        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
 //        RDPDrawable drawable(800, 600);
 //        FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", 0};
-//        SequencedVideoCaptureImpl video_capture(now, 
-//            "./", "opaquerect_videocapture", 
+//        SequencedVideoCaptureImpl video_capture(now,
+//            "./", "opaquerect_videocapture",
 //            0 /* groupid */, false /* no_timestamp */, 100 /* zoom */, drawable, flv_params,
 //            std::chrono::microseconds{2 * 1000000l}, next_video_notifier);
 //        simple_movie(now, 250, drawable, video_capture, false, true);
@@ -792,9 +792,9 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 //    {
 //        struct notified_on_video_change : public NotifyNextVideo
 //        {
-//            void notify_next_video(const timeval& now, reason reason) 
+//            void notify_next_video(const timeval& now, reason reason)
 //            {
-//                LOG(LOG_INFO, "next video: now=%u:%u reason=%u", 
+//                LOG(LOG_INFO, "next video: now=%u:%u reason=%u",
 //                    static_cast<unsigned>(now.tv_sec),
 //                    static_cast<unsigned>(now.tv_usec),
 //                    static_cast<unsigned>(reason));
@@ -804,8 +804,8 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 //        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
 //        RDPDrawable drawable(800, 600);
 //        FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "mp4", 0};
-//        SequencedVideoCaptureImpl video_capture(now, 
-//            "./", "opaquerect_videocapture", 
+//        SequencedVideoCaptureImpl video_capture(now,
+//            "./", "opaquerect_videocapture",
 //            0 /* groupid */, false /* no_timestamp */, 100 /* zoom */, drawable, flv_params,
 //            std::chrono::microseconds{2 * 1000000l}, next_video_notifier);
 //        simple_movie(now, 250, drawable, video_capture, false, true);
@@ -842,9 +842,9 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 //{
 //    struct notified_on_video_change : public NotifyNextVideo
 //    {
-//        void notify_next_video(const timeval& now, reason reason) 
+//        void notify_next_video(const timeval& now, reason reason)
 //        {
-//            LOG(LOG_INFO, "next video: now=%u:%u reason=%u", 
+//            LOG(LOG_INFO, "next video: now=%u:%u reason=%u",
 //                static_cast<unsigned>(now.tv_sec),
 //                static_cast<unsigned>(now.tv_usec),
 //                static_cast<unsigned>(reason));
@@ -855,8 +855,8 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 //        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
 //        RDPDrawable drawable(800, 600);
 //        FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", 0};
-//        SequencedVideoCaptureImpl video_capture(now, 
-//            "./", "opaquerect_videocapture_one_chunk_xxx", 
+//        SequencedVideoCaptureImpl video_capture(now,
+//            "./", "opaquerect_videocapture_one_chunk_xxx",
 //            0 /* groupid */, false /* no_timestamp */, 100 /* zoom */, drawable, flv_params,
 //            std::chrono::microseconds{1000 * 1000000l}, next_video_notifier);
 //        simple_movie(now, 1000, drawable, video_capture, false, true);
@@ -884,8 +884,8 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 //        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
 //        RDPDrawable drawable(800, 600);
 //        FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", 0};
-//        FullVideoCaptureImpl video_capture(now, 
-//            "./", "opaquerect_fullvideocapture_timestamp1", 
+//        FullVideoCaptureImpl video_capture(now,
+//            "./", "opaquerect_fullvideocapture_timestamp1",
 //            0 /* groupid */, false /* no_timestamp */, drawable, flv_params);
 //        simple_movie(now, 250, drawable, video_capture, false, true);
 //    }
@@ -901,8 +901,8 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 //        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
 //        RDPDrawable drawable(800, 600);
 //        FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", 0};
-//        FullVideoCaptureImpl video_capture(now, 
-//            "./", "opaquerect_fullvideocapture_timestamp_mouse0", 
+//        FullVideoCaptureImpl video_capture(now,
+//            "./", "opaquerect_fullvideocapture_timestamp_mouse0",
 //            0 /* groupid */, false /* no_timestamp */, drawable, flv_params);
 //        simple_movie(now, 250, drawable, video_capture, false, false);
 //    }
@@ -918,7 +918,7 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 //        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
 //        RDPDrawable drawable(800, 600);
 //        FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "mp4", 0};
-//        FullVideoCaptureImpl video_capture(now, 
+//        FullVideoCaptureImpl video_capture(now,
 //            "./", "opaquerect_fullvideocapture_timestamp2",
 //            0 /* groupid */, false /* no_timestamp */, drawable, flv_params);
 //        simple_movie(now, 250, drawable, video_capture, false, true);
@@ -937,9 +937,9 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 //{
 //    struct notified_on_video_change : public NotifyNextVideo
 //    {
-//        void notify_next_video(const timeval& now, reason reason) 
+//        void notify_next_video(const timeval& now, reason reason)
 //        {
-//            LOG(LOG_INFO, "next video: now=%u:%u reason=%u", 
+//            LOG(LOG_INFO, "next video: now=%u:%u reason=%u",
 //                static_cast<unsigned>(now.tv_sec),
 //                static_cast<unsigned>(now.tv_usec),
 //                static_cast<unsigned>(reason));
@@ -950,13 +950,13 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 //        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
 //        RDPDrawable drawable(800, 600);
 //        FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", 0};
-//        SequencedVideoCaptureImpl video_capture(now, 
+//        SequencedVideoCaptureImpl video_capture(now,
 //            "./", "opaquerect_seqvideocapture",
 //            0 /* groupid */, false /* no_timestamp */, 100 /* zoom */, drawable, flv_params,
 //            std::chrono::microseconds{1000000}, next_video_notifier);
 //        simple_movie(now, 250, drawable, video_capture, false, true);
 //    }
-//    
+//
 //    struct CheckFiles {
 //        const char * filename;
 //        size_t size;
@@ -996,9 +996,9 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 //{
 //    struct notified_on_video_change : public NotifyNextVideo
 //    {
-//        void notify_next_video(const timeval& now, reason reason) 
+//        void notify_next_video(const timeval& now, reason reason)
 //        {
-//            LOG(LOG_INFO, "next video: now=%u:%u reason=%u", 
+//            LOG(LOG_INFO, "next video: now=%u:%u reason=%u",
 //                static_cast<unsigned>(now.tv_sec),
 //                static_cast<unsigned>(now.tv_usec),
 //                static_cast<unsigned>(reason));
@@ -1009,7 +1009,7 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 //        timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
 //        RDPDrawable drawable(800, 600);
 //        FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "mp4", 0};
-//        SequencedVideoCaptureImpl video_capture(now, 
+//        SequencedVideoCaptureImpl video_capture(now,
 //            "./", "opaquerect_seqvideocapture_timestamp2",
 //            0 /* groupid */, false /* no_timestamp */, 100 /* zoom */, drawable, flv_params,
 //            std::chrono::microseconds{1000000}, next_video_notifier);

@@ -1180,4 +1180,18 @@ public:
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
     }
+
+    void do_recv_new(uint8_t * buffer, size_t len) override {
+        const ssize_t res = this->buf_read(buffer, len);
+        if (res < 0){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_READ_FAILED, res);
+        }
+        //*pbuffer += res;
+        this->last_quantum_received += res;
+        if (static_cast<size_t>(res) != len){
+            this->status = false;
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
+    }
 };

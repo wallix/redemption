@@ -6016,6 +6016,7 @@ public:
                         std::size_t pdu_size = Parse(data).in_uint16_le();
                         end = data;
                         this->persistent_key_list_transport->recv(&end, pdu_size);
+
                         pdu_data_stream.out_skip_bytes(pdu_size);
 
                         if (this->verbose & RDPVerbose::basic_trace) {

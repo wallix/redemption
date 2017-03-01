@@ -2886,6 +2886,14 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         rdpdr::ServerDriveQueryDirectoryRequest sdqdr;
                                         sdqdr.receive(chunk);
 
+                                        uint64_t LastAccessTime  = 0;
+                                        uint64_t LastWriteTime   = 0;
+                                        uint64_t ChangeTime      = 0;
+                                        uint64_t CreationTime    = 0;
+                                        int64_t  EndOfFile       = 0;
+                                        int64_t  AllocationSize  = 0;
+                                        uint32_t FileAttributes  = fscc::FILE_ATTRIBUTE_ARCHIVE;
+
                                         std::string path = sdqdr.Path();
                                         std::string endPath;
                                         if (path.length() > 0) {
@@ -2970,22 +2978,21 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                 if (stat(str_file_path_slash.c_str(), &buff_child)) {
                                                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                                     LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());
+                                                } else {
+                                                    LastAccessTime  = UnixSecondsToWindowsTick(buff_child.st_atime);
+                                                    LastWriteTime   = UnixSecondsToWindowsTick(buff_child.st_mtime);
+                                                    CreationTime    = LastWriteTime + 1;
+                                                    EndOfFile       = buff_child.st_size;
+                                                    AllocationSize  = buff_child.st_size;
+                                                    if (S_ISDIR(buff_child.st_mode)) {
+                                                        FileAttributes = fscc::FILE_ATTRIBUTE_DIRECTORY;
+                                                    }
+
                                                 }
                                             }
                                         }
 
                                         deviceIOResponse.emit(out_stream);
-
-                                        uint64_t LastAccessTime  = UnixSecondsToWindowsTick(buff_child.st_atime);
-                                        uint64_t LastWriteTime   = UnixSecondsToWindowsTick(buff_child.st_mtime);
-                                        uint64_t ChangeTime      = 0;
-                                        uint64_t CreationTime    = LastWriteTime + 1;
-                                        int64_t  EndOfFile       = buff_child.st_size;;
-                                        int64_t  AllocationSize  = buff_child.st_size;;
-                                        uint32_t FileAttributes  = fscc::FILE_ATTRIBUTE_ARCHIVE;
-                                        if (S_ISDIR(buff_child.st_mode)) {
-                                            FileAttributes = fscc::FILE_ATTRIBUTE_DIRECTORY;
-                                        }
 
                                         switch (sdqdr.FsInformationClass()) {
 

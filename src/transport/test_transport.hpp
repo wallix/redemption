@@ -184,7 +184,7 @@ private:
             this->status = false;
             throw Error(ERR_TRANSPORT_READ_FAILED, res);
         }
-        buffer += res;
+        //buffer += res;
         this->last_quantum_received += res;
         if (static_cast<size_t>(res) != len){
             this->status = false;
