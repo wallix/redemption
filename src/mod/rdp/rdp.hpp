@@ -6012,10 +6012,10 @@ public:
                     [this](StreamSize<65535>, OutStream & pdu_data_stream) {
                         uint8_t * data = pdu_data_stream.get_data();
                         uint8_t * end = data;
-                        this->persistent_key_list_transport->recv_new(end, 2/*pdu_size(2)*/);
+                        this->persistent_key_list_transport->recv(&end, 2/*pdu_size(2)*/);
                         std::size_t pdu_size = Parse(data).in_uint16_le();
                         end = data;
-                        this->persistent_key_list_transport->recv_new(end, pdu_size);
+                        this->persistent_key_list_transport->recv(&end, pdu_size);
                         pdu_data_stream.out_skip_bytes(pdu_size);
 
                         if (this->verbose & RDPVerbose::basic_trace) {

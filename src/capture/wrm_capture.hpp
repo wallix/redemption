@@ -632,35 +632,7 @@ struct ocrypto {
         return 0;
     }
 
-};
-
-class wrmcapture_ocrypto_filename_buf : ocrypto
-{
-    int file_fd;
-
-    CryptoContext & cctx;
-    Random & rnd;
-
-public:
-    explicit wrmcapture_ocrypto_filename_buf(wrmcapture_ocrypto_filename_params params)
-    : file_fd(-1)
-    , cctx(params.crypto_ctx)
-    , rnd(params.rnd)
-    {
-        if (-1 != this->file_fd) {
-            ::close(this->file_fd);
-            this->file_fd = -1;
-        }
-    }
-
-    ~wrmcapture_ocrypto_filename_buf()
-    {
-        if (this->is_open()) {
-            this->close();
-        }
-    }
-
-    int encrypt_open(const unsigned char * trace_key, CryptoContext & cctx, const unsigned char * iv)
+    int encrypt_open(uint8_t * buffer, size_t buflen, size_t & towrite, const unsigned char * trace_key, CryptoContext & cctx, const unsigned char * iv)
     {
         ::memset(this->encrypt_buf, 0, sizeof(this->encrypt_buf));
         ::memset(&this->encrypt_ectx, 0, sizeof(this->encrypt_ectx));
@@ -751,16 +723,48 @@ public:
         tmp_buf[7] = (WABCRYPTOFILE_VERSION >> 24) & 0xFF;
         ::memcpy(tmp_buf + 8, iv, 32);
 
-        // TODO: if I suceeded writing a broken file, wouldn't it be better to remove it ?
-        if (const ssize_t write_ret = this->encrypt_raw_write(tmp_buf, 40)){
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: write error! error=%s\n", ::getpid(), ::strerror(errno));
-            return write_ret;
+
+        if (buflen < 40){
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: buffer too small!\n", ::getpid());
+            return -1;
         }
+        ::memcpy(buffer, tmp_buf, 40);
+        towrite += 40;
         // update file_size
         this->encrypt_file_size += 40;
 
         return this->xmd_update(tmp_buf, 40);
     }
+
+
+};
+
+class wrmcapture_ocrypto_filename_buf : ocrypto
+{
+    int file_fd;
+
+    CryptoContext & cctx;
+    Random & rnd;
+
+public:
+    explicit wrmcapture_ocrypto_filename_buf(wrmcapture_ocrypto_filename_params params)
+    : file_fd(-1)
+    , cctx(params.crypto_ctx)
+    , rnd(params.rnd)
+    {
+        if (-1 != this->file_fd) {
+            ::close(this->file_fd);
+            this->file_fd = -1;
+        }
+    }
+
+    ~wrmcapture_ocrypto_filename_buf()
+    {
+        if (this->is_open()) {
+            this->close();
+        }
+    }
+
 
     
 
@@ -996,7 +1000,15 @@ public:
         this->cctx.get_derived_key(trace_key, base, base_len);
         unsigned char iv[32];
         this->rnd.random(iv, 32);
-        return this->encrypt_open(trace_key, this->cctx, iv);
+        
+        uint8_t buffer[40];
+        size_t towrite = 0;
+        
+        err = this->encrypt_open(buffer, sizeof(buffer), towrite, trace_key, this->cctx, iv);
+        if (!err) {
+            err = this->encrypt_raw_write(buffer, towrite);
+        }
+        return err;
     }
 
     ssize_t write(const void * data, size_t len)

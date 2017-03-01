@@ -441,9 +441,6 @@ public:
         int writeData_to_wait = 0;
         int file_to_write_id = 0;
 
-        int last_file_read_id = 0;
-        int last_file_read_offset = 0;
-
     } fileSystemData;
 
 
