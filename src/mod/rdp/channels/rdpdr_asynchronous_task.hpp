@@ -133,7 +133,7 @@ public:
 
         try {
             auto end = out_stream.get_current();
-            this->transport->recv(&end, number_of_bytes_to_read);
+            this->transport->recv_new(end, number_of_bytes_to_read);
             out_stream.out_skip_bytes(number_of_bytes_to_read);
         }
         catch (const Error & e) {
