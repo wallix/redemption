@@ -207,7 +207,7 @@ enum {
             uint8_t buf[32768];
             {
                 auto end = buf;
-                this->t.recv_new(end, 8);
+                this->t.recv(&end, 8);
             }
             InStream stream(buf);
             unsigned type = stream.in_uint16_le();
@@ -226,7 +226,7 @@ enum {
 
                 {
                     auto end = buf;
-                    this->t.recv_new(end, len);
+                    this->t.recv(&end, len);
                 }
 
                 for (unsigned index = 0; index < num_orders; index++) {

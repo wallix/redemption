@@ -175,7 +175,7 @@ inline void read_png24(FILE * fd, const uint8_t * data,
 
 static inline void png_read_data_fn(png_structp png_ptr, png_bytep data, png_size_t length) {
     uint8_t * tmp_data = data;
-    static_cast<Transport*>(png_ptr->io_ptr)->recv_new(tmp_data, length);
+    static_cast<Transport*>(png_ptr->io_ptr)->recv(&tmp_data, length);
 }
 
 

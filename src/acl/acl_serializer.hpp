@@ -767,7 +767,7 @@ private:
             uint16_t buf_sz = 0;
             do {
                 auto end = this->buf;
-                this->trans.recv_new(end, HEADER_SIZE);
+                this->trans.recv(&end, HEADER_SIZE);
 
                 InStream in_stream(this->buf, 4);
                 this->has_next_buffer = in_stream.in_uint16_be();
@@ -776,8 +776,7 @@ private:
 
             this->p = this->buf;
             this->e = this->buf;
-            this->trans.recv_new(e, buf_sz);
-            e += buf_sz;
+            this->trans.recv(&e, buf_sz);
 
             if (this->verbose & Verbose::buffer){
                 if (this->has_next_buffer){

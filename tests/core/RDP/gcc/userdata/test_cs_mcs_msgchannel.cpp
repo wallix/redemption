@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_mcs_msgchannel)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv(&end, sz);
     GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;
     InStream stream(buf);
     cs_mcs_msgchannel.recv(stream);

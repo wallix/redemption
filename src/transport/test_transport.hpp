@@ -358,11 +358,6 @@ private:
         this->gen.recv(pbuffer, len);
     }
 
-    void do_recv_new(uint8_t * buffer, size_t len) override {
-
-        this->gen.recv_new(buffer, len);
-    }
-
     void do_send(const uint8_t * const buffer, size_t len) override {
         this->check.send(buffer, len);
     }
@@ -389,12 +384,10 @@ public:
     InStream    in_stream{buf};
     OutStream   out_stream{buf};
 
-    void do_recv(uint8_t ** buffer, size_t len) override {
-        this->in_stream.in_copy_bytes(*buffer, len);
-    }
-
-    void do_recv_new(uint8_t * buffer, size_t len) override {
+    void do_recv(uint8_t ** pbuffer, size_t len) override {
+        uint8_t * buffer = *pbuffer;
         this->in_stream.in_copy_bytes(buffer, len);
+        *pbuffer = buffer + len;
     }
 
     void do_send(const uint8_t * const buffer, size_t len) override {
