@@ -271,7 +271,7 @@ public:
 
         y += this->cancel.cy();
 
-        this->move_xy(0, (height - y) / 2);
+        this->move_children_xy(0, (height - y) / 2);
 
         dim = this->img.get_optimal_dim();
         this->img.set_wh(dim);

@@ -333,7 +333,8 @@ namespace X224
             Parse data(*end);
             // TODO We should have less calls to read, one to get length, the other to get data, other short packets are error
 
-            t.recv(end, 1);
+            t.recv_new(*end, 1);
+            *end += 1;
 
             nbbytes++;
             uint8_t tpkt_version = data.in_uint8();
@@ -351,12 +352,14 @@ namespace X224
                     throw Error(ERR_RDP_FASTPATH);
                 }
 
-                t.recv(end, 1);
+                t.recv_new(*end, 1);
+                *end += 1;
                 nbbytes++;
 
                 uint16_t lg = data.in_uint8();
                 if (lg & 0x80){
-                    t.recv(end, 1);
+                    t.recv_new(*end, 1);
+                    *end += 1;
                     nbbytes++;
                     uint8_t byte = data.in_uint8();
                     lg = (lg & 0x7F) << 8 | byte;
@@ -368,13 +371,15 @@ namespace X224
                         this->length, bufsize );
                     throw Error(ERR_X224);
                 };
-                t.recv(end, this->length - nbbytes);
+                t.recv_new(*end, this->length - nbbytes);
+                *end += this->length - nbbytes;
 
                 return;
             }
             else if (action == FastPath::FASTPATH_OUTPUT_ACTION_X224) {
                 /* 4 bytes */
-                t.recv(end, X224::TPKT_HEADER_LEN - nbbytes);
+                t.recv_new(*end, X224::TPKT_HEADER_LEN - nbbytes);
+                *end += X224::TPKT_HEADER_LEN - nbbytes;
                 nbbytes = X224::TPKT_HEADER_LEN;
                 data.in_skip_bytes(1);
                 uint16_t tpkt_len = data.in_uint16_be();
@@ -388,7 +393,8 @@ namespace X224
                         this->length, bufsize );
                     throw Error(ERR_X224);
                 }
-                t.recv(end, tpkt_len - nbbytes );
+                t.recv_new(*end, tpkt_len - nbbytes );
+                *end += tpkt_len - nbbytes;
                 data.in_skip_bytes(1);
                 uint8_t tpdu_type = data.in_uint8();
                 switch (tpdu_type & 0xF0) {

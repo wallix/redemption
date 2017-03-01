@@ -468,7 +468,12 @@ inline void hexdump8_c(const char * data, size_t size)
 
 } // anonymous namespace
 
-inline const char * escape_double_quotes(const char * subject) {
+inline char * escape_double_quotes(const char * subject) {
+
+    if (subject == nullptr) {
+        char * null_char = nullptr;
+        return null_char;
+    }
 
     size_t subject_len = (subject ==  nullptr)?0:strlen(subject);
     size_t pos = 0;

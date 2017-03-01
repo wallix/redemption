@@ -554,14 +554,14 @@ private:
                 const size_t header_sz = 8;
                 char header_buf[header_sz];
                 InStream header(header_buf);
-                auto * p = header_buf;
-                this->trans->recv(&p, header_sz);
+                //auto * p = header_buf;
+                this->trans->recv_new(header_buf, header_sz);
                 this->chunk_type = header.in_uint16_le();
                 this->chunk_size = header.in_uint32_le();
                 this->chunk_count = header.in_uint16_le();
                 this->in_stream = InStream(this->buf, this->chunk_size - 8);
-                p = this->buf;
-                this->trans->recv(&p, this->chunk_size - 8);
+                //p = this->buf;
+                this->trans->recv_new(this->buf, this->chunk_size - 8);
             }
             break;
             case LAST_IMAGE_CHUNK:

@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecExchangePacket)
 
     uint8_t buf[1024];
     auto end = buf;
-    t.recv(&end, length);
+    t.recv_new(end, length);
 
     InStream stream(buf, length);
     SEC::SecExchangePacket_Recv sec(stream);
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 
     uint8_t buf[1024];
     auto end = buf;
-    t.recv(&end, length);
+    t.recv_new(end, length);
 
     InStream stream(buf, length);
 

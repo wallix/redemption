@@ -199,7 +199,7 @@ public:
 
         total_height += this->ok.cy();
 
-        this->move_xy(0, (height - total_height) / 2);
+        this->move_children_xy(0, (height - total_height) / 2);
 
         dim = this->img.get_optimal_dim();
         this->img.set_wh(dim);

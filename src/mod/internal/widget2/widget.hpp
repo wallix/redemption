@@ -199,6 +199,11 @@ public:
         (void)fg_color;
     }
 
+    virtual void move_xy(int16_t x, int16_t y)
+    {
+        this->set_xy(this->rect.x + x, this->rect.y + y);
+    }
+
     enum {
           focus_reason_tabkey
         , focus_reason_backtabkey
