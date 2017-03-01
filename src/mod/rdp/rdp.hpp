@@ -3531,7 +3531,7 @@ public:
                             this->connection_finalization_state = UP_AND_RUNNING;
 
                             if (!this->deactivation_reactivation_in_progress) {
-                                this->authentifier.log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
+                                this->authentifier.log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY", "");
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -6013,9 +6013,11 @@ public:
                         uint8_t * data = pdu_data_stream.get_data();
                         uint8_t * end = data;
                         this->persistent_key_list_transport->recv_new(end, 2/*pdu_size(2)*/);
+                        end += 2;
                         std::size_t pdu_size = Parse(data).in_uint16_le();
                         end = data;
                         this->persistent_key_list_transport->recv_new(end, pdu_size);
+                        end += pdu_size;
                         pdu_data_stream.out_skip_bytes(pdu_size);
 
                         if (this->verbose & RDPVerbose::basic_trace) {

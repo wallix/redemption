@@ -470,12 +470,17 @@ inline void hexdump8_c(const char * data, size_t size)
 
 inline char * escape_double_quotes(const char * subject) {
     size_t pos = 0;
+    printf("throw strlen %s", subject);
+    std::cout << "throw strlen 1 " <<  subject << std::endl;
     char * escaped_subject= new char[strlen(subject)*2]();
  //   std::fill(escaped_subject, escaped_subject + subject.size()*2, 0);
+
+    std::cout << "throw strlen 2" << std::endl;
 
     for (uint32_t i = 0; i < strlen(escaped_subject); i++) {
         escaped_subject[i] = '\0';
     }
+    std::cout << "throw strlen 3" << std::endl;
 
     for (uint32_t i = 0; i < strlen(subject); i++) {
         if(subject[i] == '\"') {
