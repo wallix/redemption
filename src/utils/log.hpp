@@ -470,8 +470,10 @@ inline void hexdump8_c(const char * data, size_t size)
 
 inline char * escape_double_quotes(const char * subject) {
 
-    if (subject ==  nullptr)
-        return "";
+    if (subject == nullptr) {
+        char * null_char = nullptr;
+        return null_char;
+    }
 
     size_t pos = 0;
 
