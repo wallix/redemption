@@ -723,7 +723,6 @@ struct ocrypto {
         tmp_buf[7] = (WABCRYPTOFILE_VERSION >> 24) & 0xFF;
         ::memcpy(tmp_buf + 8, iv, 32);
 
-
         if (buflen < 40){
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: buffer too small!\n", ::getpid());
             return -1;
@@ -736,6 +735,68 @@ struct ocrypto {
         return this->xmd_update(tmp_buf, 40);
     }
 
+    /* Flush procedure (compression, encryption, effective file writing)
+     * Return 0 on success, negatif on error
+     */
+    int encrypt_flush(uint8_t * buffer, size_t buflen, size_t & towrite)
+    {
+        // No data to flush
+        if (!this->encrypt_pos) {
+            return 0;
+        }
+
+        // Compress
+        // TODO: check this
+        char compressed_buf[65536];
+        //char compressed_buf[compressed_buf_sz];
+        size_t compressed_buf_sz = ::snappy_max_compressed_length(this->encrypt_pos);
+        snappy_status status = snappy_compress(this->encrypt_buf, this->encrypt_pos, compressed_buf, &compressed_buf_sz);
+
+        switch (status)
+        {
+            case SNAPPY_OK:
+                break;
+            case SNAPPY_INVALID_INPUT:
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with status code INVALID_INPUT!\n", getpid());
+                return -1;
+            case SNAPPY_BUFFER_TOO_SMALL:
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with status code BUFFER_TOO_SMALL!\n", getpid());
+                return -1;
+        }
+
+        // Encrypt
+        unsigned char ciphered_buf[4 + 65536];
+        //char ciphered_buf[ciphered_buf_sz];
+        uint32_t ciphered_buf_sz = compressed_buf_sz + AES_BLOCK_SIZE;
+        {
+            const unsigned char * src_buf = reinterpret_cast<unsigned char*>(compressed_buf);
+            if (this->xaes_encrypt(src_buf, compressed_buf_sz, ciphered_buf + 4, &ciphered_buf_sz)) {
+                return -1;
+            }
+        }
+
+        ciphered_buf[0] = ciphered_buf_sz & 0xFF;
+        ciphered_buf[1] = (ciphered_buf_sz >> 8) & 0xFF;
+        ciphered_buf[2] = (ciphered_buf_sz >> 16) & 0xFF;
+        ciphered_buf[3] = (ciphered_buf_sz >> 24) & 0xFF;
+
+        ciphered_buf_sz += 4;
+        if (ciphered_buf_sz > buflen){
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Encryption buffer too small\n", ::getpid());
+            return -1;
+        }
+        ::memcpy(ciphered_buf, buffer, ciphered_buf_sz);
+        towrite += ciphered_buf_sz;
+
+        if (-1 == this->xmd_update(&ciphered_buf, ciphered_buf_sz)) {
+            return -1;
+        }
+        this->encrypt_file_size += ciphered_buf_sz;
+
+        // Reset buffer
+        this->encrypt_pos = 0;
+        return 0;
+    }
 
 };
 
@@ -779,7 +840,13 @@ public:
             this->encrypt_pos += available_size;
             // If buffer is full, flush it to disk
             if (this->encrypt_pos == CRYPTO_BUFFER_SIZE) {
-                if (this->encrypt_flush()) {
+                uint8_t buffer[65536];
+                size_t towrite = 0;
+                if (this->encrypt_flush(buffer, sizeof(buffer), towrite)) {
+                    return -1;
+                }
+                if (this->encrypt_raw_write(buffer, towrite))
+                {
                     return -1;
                 }
             }
@@ -790,70 +857,18 @@ public:
         return len;
     }
 
-    /* Flush procedure (compression, encryption, effective file writing)
-     * Return 0 on success, negatif on error
-     */
-    int encrypt_flush()
-    {
-        // No data to flush
-        if (!this->encrypt_pos) {
-            return 0;
-        }
-
-        // Compress
-        // TODO: check this
-        char compressed_buf[65536];
-        //char compressed_buf[compressed_buf_sz];
-        size_t compressed_buf_sz = ::snappy_max_compressed_length(this->encrypt_pos);
-        snappy_status status = snappy_compress(this->encrypt_buf, this->encrypt_pos, compressed_buf, &compressed_buf_sz);
-
-        switch (status)
-        {
-            case SNAPPY_OK:
-                break;
-            case SNAPPY_INVALID_INPUT:
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with status code INVALID_INPUT!\n", getpid());
-                return -1;
-            case SNAPPY_BUFFER_TOO_SMALL:
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with status code BUFFER_TOO_SMALL!\n", getpid());
-                return -1;
-        }
-
-        // Encrypt
-        unsigned char ciphered_buf[4 + 65536];
-        //char ciphered_buf[ciphered_buf_sz];
-        uint32_t ciphered_buf_sz = compressed_buf_sz + AES_BLOCK_SIZE;
-        {
-            const unsigned char * src_buf = reinterpret_cast<unsigned char*>(compressed_buf);
-            if (this->xaes_encrypt(src_buf, compressed_buf_sz, ciphered_buf + 4, &ciphered_buf_sz)) {
-                return -1;
-            }
-        }
-
-        ciphered_buf[0] = ciphered_buf_sz & 0xFF;
-        ciphered_buf[1] = (ciphered_buf_sz >> 8) & 0xFF;
-        ciphered_buf[2] = (ciphered_buf_sz >> 16) & 0xFF;
-        ciphered_buf[3] = (ciphered_buf_sz >> 24) & 0xFF;
-
-        ciphered_buf_sz += 4;
-
-        if (const ssize_t err = this->encrypt_raw_write(ciphered_buf, ciphered_buf_sz)) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
-            return err;
-        }
-        if (-1 == this->xmd_update(&ciphered_buf, ciphered_buf_sz)) {
-            return -1;
-        }
-        this->encrypt_file_size += ciphered_buf_sz;
-
-        // Reset buffer
-        this->encrypt_pos = 0;
-        return 0;
-    }
 
     int encrypt_close(unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key)
     {
-        int result = this->encrypt_flush();
+        uint8_t buffer[65536];
+        size_t towrite = 0;
+        if (this->encrypt_flush(buffer, sizeof(buffer), towrite)) {
+            return -1;
+        }
+        if (this->encrypt_raw_write(buffer, towrite))
+        {
+            return -1;
+        }
 
         const uint32_t eof_magic = WABCRYPTOFILE_EOF_MAGIC;
         unsigned char tmp_buf[8] = {
@@ -876,6 +891,7 @@ public:
 
         this->xmd_update(tmp_buf, 8);
 
+        int result = 0;
         if (hash) {
             unsigned char tmp_hash[MD_HASH_LENGTH << 1];
             if (::EVP_DigestFinal_ex(&this->encrypt_hctx4k, tmp_hash, nullptr) != 1) {
