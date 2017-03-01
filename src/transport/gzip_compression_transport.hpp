@@ -181,8 +181,8 @@ private:
             else {
                 if (!this->inflate_pending) {
                     auto end = this->compressed_data_buf;
-                    this->source_transport.recv(
-                          &end
+                    this->source_transport.recv_new(
+                          end
                         , 5                 // reset_decompressor(1) + compressed_data_length(4)
                         );
 
@@ -212,7 +212,7 @@ private:
                     //}
 
                     end = this->compressed_data_buf;
-                    this->source_transport.recv(&end, compressed_data_length);
+                    this->source_transport.recv_new(end, compressed_data_length);
 
                     this->compression_stream.avail_in = compressed_data_length;
                     this->compression_stream.next_in  = this->compressed_data_buf;
