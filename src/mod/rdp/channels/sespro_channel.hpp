@@ -970,7 +970,7 @@ public:
                 }
 
                 if (!order.compare("PASSWORD_TEXT_BOX_GET_FOCUS")) {
-                    std::string info("status='" + parameters[0] + "'");
+                    std::string info("status=\"" + escape_double_quotes_string(parameters[0]) + "\"");
                     this->authentifier.log4(
                         (this->verbose & RDPVerbose::sesprobe),
                         order.c_str(), info.c_str());
@@ -984,7 +984,7 @@ public:
                     }
                 }
                 else if (!order.compare("UAC_PROMPT_BECOME_VISIBLE")) {
-                    std::string info("status='" + parameters[0] + "'");
+                    std::string info("status=\"" + escape_double_quotes_string(parameters[0]) + "\"");
                     this->authentifier.log4
                         ((this->verbose & RDPVerbose::sesprobe),
                         order.c_str(), info.c_str());
@@ -1000,8 +1000,8 @@ public:
                 else if (!order.compare("INPUT_LANGUAGE")) {
                     if (parameters.size() == 2) {
                         std::string info(
-                            "identifier='" + parameters[0] +
-                            "' display_name='" + parameters[1] + "'");
+                            "identifier=\"" + escape_double_quotes_string(parameters[0]) +
+                            "\" display_name=\"" + escape_double_quotes_string(parameters[1]) + "\"");
                         this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
@@ -1016,7 +1016,7 @@ public:
                 else if (!order.compare("NEW_PROCESS") ||
                          !order.compare("COMPLETED_PROCESS")) {
                     if (parameters.size() == 1) {
-                        std::string info("command_line='" + parameters[0] + "'");
+                        std::string info("command_line=\"" + escape_double_quotes_string(parameters[0]) + "\"");
                         this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
@@ -1031,8 +1031,8 @@ public:
 
                     if (parameters.size() == 2) {
                         std::string info(
-                            "rule='" + parameters[0] +
-                            "' application_name='" + parameters[1]);
+                            "rule=\"" + escape_double_quotes_string(parameters[0]) +
+                            "\" application_name=\"" + escape_double_quotes_string(parameters[1]));
                         this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
@@ -1075,11 +1075,11 @@ public:
 
                         if (result) {
                             std::string info(
-                                "rule='" + description +
-                                "' app_name='" + parameters[1] +
-                                "' app_cmd_line='" + parameters[2] +
-                                "' dst_addr='" + parameters[3] +
-                                "' dst_port='" + parameters[4] + "'");
+                                "rule=\"" + escape_double_quotes_string(description) +
+                                "\" app_name=\"" + escape_double_quotes_string(parameters[1]) +
+                                "\" app_cmd_line=\"" + escape_double_quotes_string(parameters[2]) +
+                                "\" dst_addr=\"" + escape_double_quotes_string(parameters[3]) +
+                                "\" dst_port=\"" + escape_double_quotes_string(parameters[4]) + "\"");
                             this->authentifier.log4(
                                 (this->verbose & RDPVerbose::sesprobe),
                                 order.c_str(), info.c_str());
@@ -1128,9 +1128,9 @@ public:
 
                         if (result) {
                             std::string info(
-                                "rule='" + description +
-                                "' app_name='" + parameters[1] +
-                                "' app_cmd_line='" + parameters[2] + "'");
+                                "rule=\"" + escape_double_quotes_string(description) +
+                                "\" app_name=\"" + escape_double_quotes_string(parameters[1]) +
+                                "\" app_cmd_line=\"" + escape_double_quotes_string(parameters[2]) + "\"");
                             this->authentifier.log4(
                                 (this->verbose & RDPVerbose::sesprobe),
                                 order.c_str(), info.c_str());
@@ -1167,7 +1167,7 @@ public:
                 else if (!order.compare("FOREGROUND_WINDOW_CHANGED")) {
                     if ((parameters.size() == 2) || (parameters.size() == 3)) {
                         std::string info(
-                            "source='Probe' window='" + parameters[0] + "'");
+                            "source=\"Probe\" window=\"" + escape_double_quotes_string(parameters[0]) + "\"");
                         this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             "TITLE_BAR", info.c_str());
@@ -1179,8 +1179,8 @@ public:
                 else if (!order.compare("BUTTON_CLICKED")) {
                     if (parameters.size() == 2) {
                         std::string info(
-                            "windows='" + parameters[0] +
-                            "' button='" + parameters[1] + "'");
+                            "windows=\"" + escape_double_quotes_string(parameters[0]) +
+                            "\" button=\"" + escape_double_quotes_string(parameters[1]) + "\"");
                         this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
@@ -1192,8 +1192,8 @@ public:
                 else if (!order.compare("EDIT_CHANGED")) {
                     if (parameters.size() == 2) {
                         std::string info(
-                            "windows='" + parameters[0] +
-                            "' edit='" + parameters[1] + "'");
+                            "windows=\"" + escape_double_quotes_string(parameters[0]) +
+                            "\" edit=\"" + escape_double_quotes_string(parameters[1]) + "\"");
                         this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());

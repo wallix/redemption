@@ -28,31 +28,9 @@
 
 #include "core/RDP/clipboard.hpp"
 
-#include <iostream>
-
 
 BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
 {
-
-/*uint8_t * data = out_stream.get_data();
-    size_t length = out_stream.get_offset();
-    std::cout << std::hex << std::endl;
-    std::cout << "\"";
-    for (size_t i = 0; i < length; i++) {
-        int byte(data[i]);
-        if ((i % 16) == 0 && i != 0) {
-            std::cout << "\"" << std::endl << "\"";
-        }
-
-        std::cout << "\\x";
-        if (byte < 0x10) {
-            std::cout << "0";
-        }
-        std::cout  <<  byte;
-    }
-    std::cout << "\"" << std::dec << std::endl;*/
-
-
     {
         //  emit_fileList
         StaticOutStream<1024> ou_stream_fileList;

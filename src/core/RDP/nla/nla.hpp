@@ -484,11 +484,13 @@ public:
         uint8_t head[4] = {};
         uint8_t * point = head;
         size_t length = 0;
-        this->trans.recv(&point, 2);
+        this->trans.recv_new(point, 2);
+        point += 2;
         uint8_t byte = head[1];
         if (byte & 0x80) {
             byte &= ~(0x80);
-            this->trans.recv(&point, byte);
+            this->trans.recv_new(point, byte);
+
             if (byte == 1) {
                 length = head[2];
             }

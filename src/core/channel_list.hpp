@@ -58,6 +58,7 @@ namespace CHANNELS {
     {
         static const size_t max_size_name = 7;
 
+        // TODO ChannelName{ uint64_t internal_name; };
         char     name[max_size_name+1];
         uint32_t flags;
         int      chanid;

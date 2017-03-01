@@ -1658,9 +1658,9 @@ public:
                                     "/desktop.ini",
                                     sizeof("/desktop.ini")-1
                                 )) {
-                                    std::string info("file_name='");
-                                    info += target_info.file_path;
-                                    info += "'";
+                                    std::string info("file_name=\"");
+                                    info += escape_double_quotes_string(target_info.file_path);
+                                    info += "\"";
 
                                     this->authentifier.log4(
                                         !this->param_dont_log_data_into_syslog,
@@ -1701,9 +1701,9 @@ public:
                         if (target_iter != this->device_io_target_info_inventory.end()) {
                             device_io_target_info_type & target_info = *target_iter;
                             if (!target_info.for_writing) {
-                                std::string info("file_name='");
-                                info += target_info.file_path;
-                                info += "'";
+                                std::string info("file_name=\"");
+                                info += escape_double_quotes_string(target_info.file_path);
+                                info += "\"";
 
                                 this->authentifier.log4(
                                     !this->param_dont_log_data_into_syslog,
@@ -1755,9 +1755,9 @@ public:
                             auto target_iter = this->find_target_response(device_io_response, FileId);
                             if (target_iter != this->device_io_target_info_inventory.end()) {
                                 device_io_target_info_type & target_info = *target_iter;
-                                std::string info("file_name='");
-                                info += target_info.file_path;
-                                info += "'";
+                                std::string info("file_name=\"");
+                                info += escape_double_quotes_string(target_info.file_path);
+                                info += "\"";
 
                                 this->authentifier.log4(
                                     !this->param_dont_log_data_into_syslog,
@@ -1772,11 +1772,11 @@ public:
                             auto target_iter = this->find_target_response(device_io_response, FileId);
                             if (target_iter != this->device_io_target_info_inventory.end()) {
                                 device_io_target_info_type & target_info = *target_iter;
-                                std::string info("old_file_name='");
+                                std::string info("old_file_name=\"");
                                 info += target_info.file_path;
-                                info += "' new_file_name='";
-                                info += file_path;
-                                info += "'";
+                                info += "\" new_file_name=\"";
+                                info += escape_double_quotes_string(file_path);
+                                info += "\"";
 
                                 this->authentifier.log4(
                                     !this->param_dont_log_data_into_syslog,

@@ -419,11 +419,11 @@ private:
                     fd.log(LOG_INFO);
                 }
 
-                std::string info("file_name='");
-                info += fd.fileName();
-                info += "' size='";
+                std::string info("file_name=\"");
+                info += escape_double_quotes(fd.fileName());
+                info += "\" size=\"";
                 info += std::to_string(fd.file_size());
-                info += "'";
+                info += "\"";
 
                 this->authentifier.log4(
                     !this->param_dont_log_data_into_syslog,
@@ -460,11 +460,11 @@ private:
                     fd.log(LOG_INFO);
                 }
 
-                std::string info("file_name='");
-                info += fd.fileName();
-                info += "' size='";
+                std::string info("file_name=\"");
+                info += escape_double_quotes(fd.fileName());
+                info += "\" size=\"";
                 info += std::to_string(fd.file_size());
-                info += "'";
+                info += "\"";
 
                 this->authentifier.log4(
                     !this->param_dont_log_data_into_syslog,
@@ -1050,11 +1050,11 @@ public:
                     fd.log(LOG_INFO);
                 }
 
-                std::string info("file_name='");
-                info += fd.fileName();
-                info += "' size='";
+                std::string info("file_name=\"");
+                info += escape_double_quotes(fd.fileName());
+                info += "\" size=\"";
                 info += std::to_string(fd.file_size());
-                info += "'";
+                info += "\"";
 
                 this->authentifier.log4(
                     !this->param_dont_log_data_into_syslog,
@@ -1082,11 +1082,11 @@ public:
                     fd.log(LOG_INFO);
                 }
 
-                std::string info("file_name='");
-                info += fd.fileName();
-                info += "' size='";
+                std::string info("file_name=\"");
+                info += escape_double_quotes(fd.fileName());
+                info += "\" size=\"";
                 info += std::to_string(fd.file_size());
-                info += "'";
+                info += "\"";
 
                 this->authentifier.log4(
                     !this->param_dont_log_data_into_syslog,

@@ -28,9 +28,6 @@
 
 #include "core/WMF/MetaFileFormat.hpp"
 
-#include <iostream>
-
-
 
 BOOST_AUTO_TEST_CASE(TestMetaHeader)
 {

@@ -65,7 +65,8 @@ BOOST_AUTO_TEST_CASE(TestGZipCompressionTransport)
             char   in_data[128] = { 0 };
             char * in_buffer   = in_data;
 
-            in_trans.recv(&in_buffer, 21); in_buffer = in_data;
+            in_trans.recv_new(in_buffer, 21);
+            in_buffer = in_data;
             BOOST_CHECK_EQUAL(in_buffer,
                 "azert"
                 "azert"
@@ -74,7 +75,8 @@ BOOST_AUTO_TEST_CASE(TestGZipCompressionTransport)
             );
 
             in_buffer = in_data;
-            in_trans.recv(&in_buffer, 31); in_buffer = in_data;
+            in_trans.recv_new(in_buffer, 31);
+            in_buffer = in_data;
             BOOST_CHECK_EQUAL(in_buffer,
                 "wallix"
                 "wallix"
@@ -84,7 +86,8 @@ BOOST_AUTO_TEST_CASE(TestGZipCompressionTransport)
             );
 
             in_buffer = in_data;
-            in_trans.recv(&in_buffer, 65); in_buffer = in_data;
+            in_trans.recv_new(in_buffer, 65);
+            in_buffer = in_data;
             BOOST_CHECK_EQUAL(in_buffer,
                 "0123456789ABCDEF"
                 "0123456789ABCDEF"

@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
     auto test = [&]{
         while (true) {
             auto * end = virtual_channel_data;
-            t.recv(&end,
+            t.recv_new(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
             uint8_t * chunk_data = virtual_channel_data;
 
             end = virtual_channel_data;
-            t.recv(&end, chunk_data_length);
+            t.recv_new(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv(&end,
+            t.recv_new(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -291,7 +291,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv(&end, chunk_data_length);
+            t.recv_new(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -380,7 +380,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv(&end,
+            t.recv_new(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -403,7 +403,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv(&end, chunk_data_length);
+            t.recv_new(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -492,7 +492,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv(&end,
+            t.recv_new(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -515,7 +515,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv(&end, chunk_data_length);
+            t.recv_new(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -604,7 +604,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv(&end,
+            t.recv_new(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -627,7 +627,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv(&end, chunk_data_length);
+            t.recv_new(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -716,7 +716,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv(&end,
+            t.recv_new(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -741,7 +741,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
             memset(virtual_channel_data, 0, sizeof(virtual_channel_data));
 
             end = virtual_channel_data;
-            t.recv(&end, chunk_data_length);
+            t.recv_new(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -823,7 +823,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv(&end,
+            t.recv_new(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -848,7 +848,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
             memset(virtual_channel_data, 0, sizeof(virtual_channel_data));
 
             end = virtual_channel_data;
-            t.recv(&end, chunk_data_length);
+            t.recv_new(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 

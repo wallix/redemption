@@ -609,7 +609,7 @@ protected:
             if (is_syslog_notification_enabled(this->server_access_allowed_message)) {
                 this->authentifier.log4((this->verbose & RDPVerbose::basic_trace),
                         "CERTIFICATE_CHECK_SUCCESS",
-                        "description='Connexion to server allowed'"
+                        "description=\"Connexion to server allowed\""
                     );
             }
         }
@@ -618,7 +618,7 @@ protected:
             if (is_syslog_notification_enabled(this->server_cert_create_message)) {
                 this->authentifier.log4((this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_NEW",
-                        "description='New X.509 certificate created'"
+                        "description=\"New X.509 certificate created\""
                     );
             }
         }
@@ -627,7 +627,7 @@ protected:
             if (is_syslog_notification_enabled(this->server_cert_success_message)) {
                 this->authentifier.log4((this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_MATCH_SUCCESS",
-                        "description='X.509 server certificate match'"
+                        "description=\"X.509 server certificate match\""
                     );
             }
         }
@@ -636,7 +636,7 @@ protected:
             if (is_syslog_notification_enabled(this->server_cert_failure_message)) {
                 this->authentifier.log4((this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_MATCH_FAILURE",
-                        "description='X.509 server certificate match failure'"
+                        "description=\"X.509 server certificate match failure\""
                     );
             }
         }
@@ -645,8 +645,8 @@ protected:
             if (is_syslog_notification_enabled(this->server_cert_error_message)) {
                 char extra[512];
                 snprintf(extra, sizeof(extra),
-                        "description='X.509 server certificate internal error: \"%s\"'",
-                        (str_error ? str_error : "")
+                        "description=\"X.509 server certificate internal error: \\\"%s\\\"\"",
+                        (str_error ? escape_double_quotes(str_error) : "")
                     );
                 this->authentifier.log4((this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_ERROR",
@@ -3365,7 +3365,7 @@ public:
                 double seconds = ::difftime(now, this->beginning);
 
                 char extra[1024];
-                snprintf(extra, sizeof(extra), "duration='%02d:%02d:%02d'",
+                snprintf(extra, sizeof(extra), "duration=\"%02d:%02d:%02d\"",
                     (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
                     (int(seconds) % 60));
 
@@ -6012,10 +6012,11 @@ public:
                     [this](StreamSize<65535>, OutStream & pdu_data_stream) {
                         uint8_t * data = pdu_data_stream.get_data();
                         uint8_t * end = data;
-                        this->persistent_key_list_transport->recv(&end, 2/*pdu_size(2)*/);
+                        this->persistent_key_list_transport->recv_new(end, 2/*pdu_size(2)*/);
                         std::size_t pdu_size = Parse(data).in_uint16_le();
                         end = data;
-                        this->persistent_key_list_transport->recv(&end, pdu_size);
+                        this->persistent_key_list_transport->recv_new(end, pdu_size);
+
                         pdu_data_stream.out_skip_bytes(pdu_size);
 
                         if (this->verbose & RDPVerbose::basic_trace) {
@@ -7083,7 +7084,7 @@ private:
             double seconds = ::difftime(now, this->beginning);
 
             char extra[1024];
-            snprintf(extra, sizeof(extra), "duration='%02d:%02d:%02d'",
+            snprintf(extra, sizeof(extra), "duration=\"%02d:%02d:%02d\"",
                 (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
                 (int(seconds) % 60));
 

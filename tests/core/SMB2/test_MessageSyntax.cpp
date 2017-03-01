@@ -23,8 +23,6 @@
 #define BOOST_TEST_MODULE TestGCC
 #include "system/redemption_unit_tests.hpp"
 
-#include <iostream>
-
 #define LOGNULL
 //#define LOGPRINT
 

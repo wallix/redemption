@@ -167,6 +167,10 @@ constant CXXFLAGS-debug :
     <define>REDASSERT_AS_ASSERT
     <define>_GLIBCXX_DEBUG
 ;
+constant CXXFLAGS-debug-only :
+    <variant>debug:<define>REDASSERT_AS_ASSERT
+    <variant>debug:<define>_GLIBCXX_DEBUG
+;
 ## @}
 
 
@@ -285,7 +289,7 @@ variant strict :
 
 constant CXXFLAGS :
     $(CXXFLAGS-COMMON)
-    $(CXXFLAGS-debug)
+    $(CXXFLAGS-debug-only)
     $(CXXFLAGS-clang)
     $(CXXFLAGS-gcc)
     <variant>san:<define>CXX_ENABLE_ASAN

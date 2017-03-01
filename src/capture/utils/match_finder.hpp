@@ -195,9 +195,9 @@ public:
         snprintf(message, sizeof(message), "$%s:%s|%s",
             ((conf_regex == ConfigureRegexes::OCR) ? "ocr" : "kbd" ), pattern, data);
 
-        std::string extra = "pattern='";
-        extra += message;
-        extra += "'";
+        std::string extra = "pattern=\"";
+        extra += escape_double_quotes(message);
+        extra += "\"";
         authentifier.log4(false,
             (is_pattern_kill ? "KILL_PATTERN_DETECTED" : "NOTIFY_PATTERN_DETECTED"),
             extra.c_str());

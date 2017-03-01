@@ -42,6 +42,7 @@
 #include <iostream>
 #include <string>
 #include <ctime>
+#include "utils/log.hpp"
 
 #define LOG_SESSION(normal_log, session_log, session_type, type, session_id,    \
         ip_client, ip_target, user, device, service, account, priority, format, \
@@ -405,12 +406,11 @@ public:
             else {
                 std::time_t t = std::time(nullptr);
                 char mbstr[100];
-                if (std::strftime(mbstr, sizeof(mbstr), "%F %T", std::localtime(&t))) {
+                if (std::strftime(mbstr, sizeof(mbstr), "%F %T ", std::localtime(&t))) {
                     log_file << mbstr;
                 }
 
-                log_file << " [" << (this->session_type.empty() ? "Neutral" : this->session_type.c_str()) << " Session] " << " " ;
-                log_file << "type=" << type << " " ;
+                log_file << "type=\"" << type << "\" " ;
                 log_file << (extra ? extra : "") << std::endl;
                 log_file.close();
             }
@@ -766,8 +766,7 @@ private:
         void safe_read_packet() {
             uint16_t buf_sz = 0;
             do {
-                auto end = this->buf;
-                this->trans.recv(&end, HEADER_SIZE);
+                this->trans.recv_new(this->buf, HEADER_SIZE);
 
                 InStream in_stream(this->buf, 4);
                 this->has_next_buffer = in_stream.in_uint16_be();
@@ -776,7 +775,8 @@ private:
 
             this->p = this->buf;
             this->e = this->buf;
-            this->trans.recv(&e, buf_sz);
+            this->trans.recv_new(e, buf_sz);
+            e += buf_sz;
 
             if (this->verbose & Verbose::buffer){
                 if (this->has_next_buffer){

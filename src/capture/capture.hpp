@@ -536,6 +536,43 @@ private:
             }
         }
     }
+
+    void do_recv_new(uint8_t * buffer, size_t len) override {
+        size_t total_len = 0;
+        while (total_len < len){
+            size_t remaining = in_stream.in_remain();
+            if (remaining >= (len - total_len)){
+                in_stream.in_copy_bytes(buffer + total_len, len - total_len);
+                //*pbuffer += len;
+                return;
+            }
+            in_stream.in_copy_bytes(buffer + total_len, remaining);
+            total_len += remaining;
+            switch (this->chunk_type){
+            case PARTIAL_IMAGE_CHUNK:
+            {
+                const size_t header_sz = 8;
+                char header_buf[header_sz];
+                InStream header(header_buf);
+                //auto * p = header_buf;
+                this->trans->recv_new(header_buf, header_sz);
+                this->chunk_type = header.in_uint16_le();
+                this->chunk_size = header.in_uint32_le();
+                this->chunk_count = header.in_uint16_le();
+                this->in_stream = InStream(this->buf, this->chunk_size - 8);
+                //p = this->buf;
+                this->trans->recv_new(this->buf, this->chunk_size - 8);
+            }
+            break;
+            case LAST_IMAGE_CHUNK:
+                LOG(LOG_ERR, "Failed to read embedded image from WRM (transport closed)");
+                throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+            default:
+                LOG(LOG_ERR, "Failed to read embedded image from WRM");
+                throw Error(ERR_TRANSPORT_READ_FAILED);
+            }
+        }
+    }
 };
 
 struct FileToGraphic
@@ -2426,6 +2463,7 @@ public:
             if (fd < 0) {
                 return fd;
             }
+            // TODO PERF used fchmod
             if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                 LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
                    , this->current_filename_
@@ -3669,6 +3707,7 @@ public:
     , capture_drawable(capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full)
     {
 //        REDASSERT(authentifier ? order_bpp == capture_bpp : true);
+
 
         if (capture_png || (authentifier && (capture_flv || capture_ocr))) {
             if (recursive_create_directory(record_tmp_path, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {

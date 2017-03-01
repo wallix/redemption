@@ -59,6 +59,8 @@ namespace { namespace compiler_aux_ {
 #include <cstdio> // std::printf family
 
 #include <syslog.h>
+#include <iostream>
+#include <cstring>
 
 // enum type
 template<class T, typename std::enable_if<std::is_enum<T>::value, bool>::type = 1>
@@ -466,3 +468,46 @@ inline void hexdump8_c(const char * data, size_t size)
 
 } // anonymous namespace
 
+inline char * escape_double_quotes(const char * subject) {
+
+    if (subject == nullptr) {
+        char * null_char = nullptr;
+        return null_char;
+    }
+
+    size_t pos = 0;
+
+    char * escaped_subject= new char[strlen(subject)*2]();
+ //   std::fill(escaped_subject, escaped_subject + subject.size()*2, 0);
+
+
+    for (uint32_t i = 0; i < strlen(escaped_subject); i++) {
+        escaped_subject[i] = '\0';
+    }
+
+    for (uint32_t i = 0; i < strlen(subject); i++) {
+        if(subject[i] == '\"') {
+            escaped_subject[pos] = '\\';
+            escaped_subject[++pos] = '\"';
+        }
+        else
+            escaped_subject[pos] = subject[i];
+        pos++;
+    }
+
+    return escaped_subject;
+}
+
+inline std::string escape_double_quotes_string(const std::string subject) {
+    size_t pos = 0;
+    std::string double_quotes("\"");
+    std::string escaped_double_quotes("\\\"");
+
+    std::string escaped_subject = subject;
+    while ((pos = escaped_subject.find(double_quotes, pos)) != std::string::npos) {
+         escaped_subject.replace(pos, double_quotes.length(), escaped_double_quotes);
+         pos += escaped_double_quotes.length();
+    }
+
+    return escaped_subject;
+}

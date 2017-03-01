@@ -72,6 +72,7 @@ public:
         int flags) override {
         const CHANNELS::ChannelDef * front_channel =
             this->front.get_channel_list().get_by_name(mod_channel_name);
+            LOG(LOG_INFO, "Channel \"%s\"", mod_channel_name);
         if (front_channel) {
             this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
         }
