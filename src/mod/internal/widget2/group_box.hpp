@@ -117,11 +117,6 @@ public:
         return this->bg_color;
     }
 
-    void move_xy(int16_t x, int16_t y) {
-        this->set_xy(this->x() + x, this->y() + y);
-        this->WidgetParent::move_xy(x,y);
-    }
-
     const char * get_text() const {
         return this->buffer;
     }
