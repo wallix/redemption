@@ -1440,6 +1440,7 @@ public:
 
                     this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
+LOG(LOG_INFO, "FileToGraphic::POINTER set_pointer(1)");
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
                         gd->set_pointer(cursor);
                     }
@@ -1448,14 +1449,15 @@ public:
                     this->statistics.PointerIndex++;
                     Pointer & pi = this->ptr_cache.Pointers[cache_idx];
                     Pointer cursor(Pointer::POINTER_NULL);
-                    cursor.width = 32;
-                    cursor.height = 32;
+                    cursor.width = pi.width;
+                    cursor.height = pi.height;
 //                    cursor.bpp = 24;
                     cursor.x = pi.x;
                     cursor.y = pi.y;
                     memcpy(cursor.data, pi.data, sizeof(pi.data));
                     memcpy(cursor.mask, pi.mask, sizeof(pi.mask));
 
+LOG(LOG_INFO, "FileToGraphic::POINTER set_pointer(2)");
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
                         gd->set_pointer(cursor);
                     }
@@ -1482,19 +1484,21 @@ public:
                 cursor.y = this->stream.in_uint8();
 
                 uint16_t data_size = this->stream.in_uint16_le();
-                REDASSERT(data_size <= 32 * 32 * 3);
+                REDASSERT(data_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 3);
 
                 uint16_t mask_size = this->stream.in_uint16_le();
-                REDASSERT(mask_size <= 128);
+                REDASSERT(mask_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8);
 
                 stream.in_copy_bytes(cursor.data, std::min<size_t>(sizeof(cursor.data), data_size));
                 stream.in_copy_bytes(cursor.mask, std::min<size_t>(sizeof(cursor.mask), mask_size));
 
                 this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->set_pointer(cursor);
-                    }
+LOG(LOG_INFO, "FileToGraphic::POINTER set_pointer(3) width=%u height=%u", unsigned(cursor.width), unsigned(cursor.height));
+printf("FileToGraphic::POINTER set_pointer(3) width=%u height=%u", unsigned(cursor.width), unsigned(cursor.height));
+                for (gdi::GraphicApi * gd : this->graphic_consumers){
+                    gd->set_pointer(cursor);
+                }
             }
             break;
             case RESET_CHUNK:
@@ -3564,9 +3568,11 @@ private:
         void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
         void set_pointer(Pointer    const & pointer) override {
+LOG(LOG_INFO, "Capture::Graphic::set_pointer(Pointer) ...");
             for (gdi::GraphicApi & gd : this->gds){
                 gd.set_pointer(pointer);
             }
+LOG(LOG_INFO, "Capture::Graphic::set_pointer(Pointer) done.");
         }
 
         void set_palette(BGRPalette const & palette) override {
@@ -3979,6 +3985,7 @@ protected:
 
 public:
     void set_pointer(const Pointer & cursor) override {
+LOG(LOG_INFO, "Capture::set_pointer(Pointer)");
         if (this->capture_drawable) {
             this->graphic_api->set_pointer(cursor);
         }
@@ -4020,4 +4027,3 @@ public:
         }
     }
 };
-

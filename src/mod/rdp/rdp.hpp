@@ -68,6 +68,8 @@
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
 #include "core/RDP/capabilities/rail.hpp"
 #include "core/RDP/capabilities/window.hpp"
+#include "core/RDP/capabilities/largepointer.hpp"
+#include "core/RDP/capabilities/multifragmentupdate.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/remote_programs.hpp"
@@ -718,6 +720,8 @@ protected:
     } session_probe_virtual_channel_event_handler;
 
     bool clean_up_32_bpp_cursor;
+
+    StaticOutStream<65536> multifragment_update_data;
 
 public:
     using Verbose = RDPVerbose;
@@ -3206,7 +3210,7 @@ public:
                 FastPath::Update_Recv upd(su.payload, &this->mppc_dec);
 
                 using FU = FastPath::UpdateType;
-                if (this->verbose & RDPVerbose::basic_trace4) {
+/*                if (this->verbose & RDPVerbose::basic_trace4)*/ {
                     const char * m = "UNKNOWN ORDER";
                     switch (static_cast<FastPath::UpdateType>(upd.updateCode))
                     {
@@ -3223,26 +3227,48 @@ public:
                     case FU::POINTER:     m = "POINTER"; break;
                     }
                     LOG(LOG_INFO, "FastPath::UpdateType::%s", m);
+                    upd.log(LOG_INFO);
                 }
+
+                if (upd.fragmentation != FastPath::FASTPATH_FRAGMENT_SINGLE) {
+                    if (upd.fragmentation == FastPath::FASTPATH_FRAGMENT_FIRST) {
+                        this->multifragment_update_data.rewind();
+                    }
+
+                    this->multifragment_update_data.out_copy_bytes(
+                        upd.payload.get_data(), upd.payload.get_capacity());
+
+                    if (upd.fragmentation != FastPath::FASTPATH_FRAGMENT_LAST) {
+LOG(LOG_INFO, "upd.fragmentation != FastPath::FASTPATH_FRAGMENT_LAST");
+                        continue;
+                    }
+                }
+
+                InStream fud(this->multifragment_update_data.get_data(),
+                    this->multifragment_update_data.get_offset());
+
+                InStream& stream =
+                    ((upd.fragmentation == FastPath::FASTPATH_FRAGMENT_SINGLE) ?
+                     upd.payload : fud);
 
                 switch (static_cast<FastPath::UpdateType>(upd.updateCode)) {
                 case FastPath::UpdateType::ORDERS:
                     this->front.begin_update();
                     this->orders.process_orders(
-                        upd.payload, true, drawable,
+                        /*upd.payload*/stream, true, drawable,
                         this->front_width, this->front_height);
                     this->front.end_update();
                     break;
 
                 case FastPath::UpdateType::BITMAP:
                     this->front.begin_update();
-                    this->process_bitmap_updates(upd.payload, true, drawable);
+                    this->process_bitmap_updates(/*upd.payload*/stream, true, drawable);
                     this->front.end_update();
                     break;
 
                 case FastPath::UpdateType::PALETTE:
                     this->front.begin_update();
-                    this->process_palette(upd.payload, true);
+                    this->process_palette(/*upd.payload*/stream, true);
                     this->front.end_update();
                     break;
 
@@ -3258,7 +3284,7 @@ public:
 
                 case FastPath::UpdateType::PTR_NULL:
                     {
-                        if (this->verbose & RDPVerbose::basic_trace3) {
+/*                        if (this->verbose & RDPVerbose::basic_trace3)*/ {
                             LOG(LOG_INFO, "Process pointer null (Fast)");
                         }
                         Pointer cursor;
@@ -3268,7 +3294,7 @@ public:
 
                 case FastPath::UpdateType::PTR_DEFAULT:
                     {
-                        if (this->verbose & RDPVerbose::basic_trace3) {
+/*                        if (this->verbose & RDPVerbose::basic_trace3)*/ {
                             LOG(LOG_INFO, "Process pointer default (Fast)");
                         }
                         Pointer cursor(Pointer::POINTER_SYSTEM_DEFAULT);
@@ -3278,8 +3304,8 @@ public:
 
                 case FastPath::UpdateType::PTR_POSITION:
                     {
-                        uint16_t xPos = upd.payload.in_uint16_le();
-                        uint16_t yPos = upd.payload.in_uint16_le();
+                        uint16_t xPos = /*upd.payload*/stream.in_uint16_le();
+                        uint16_t yPos = /*upd.payload*/stream.in_uint16_le();
                         this->front.update_pointer_position(xPos, yPos);
                     }
                     break;
@@ -3307,24 +3333,24 @@ public:
 
 
                 case FastPath::UpdateType::COLOR:
-                    if (this->verbose & RDPVerbose::basic_trace3) {
+/*                    if (this->verbose & RDPVerbose::basic_trace3)*/ {
                         LOG(LOG_INFO, "Process pointer color (Fast)");
                     }
-                    this->process_color_pointer_pdu(upd.payload);
+                    this->process_color_pointer_pdu(/*upd.payload*/stream);
                     break;
 
                 case FastPath::UpdateType::CACHED:
-                    if (this->verbose & RDPVerbose::basic_trace3) {
+/*                    if (this->verbose & RDPVerbose::basic_trace3)*/ {
                         LOG(LOG_INFO, "Process pointer cached (Fast)");
                     }
-                    this->process_cached_pointer_pdu(upd.payload);
+                    this->process_cached_pointer_pdu(/*upd.payload*/stream);
                     break;
 
                 case FastPath::UpdateType::POINTER:
-                    if (this->verbose & RDPVerbose::basic_trace3) {
+/*                    if (this->verbose & RDPVerbose::basic_trace3)*/ {
                         LOG(LOG_INFO, "Process pointer new (Fast)");
                     }
-                    this->process_new_pointer_pdu(upd.payload);
+                    this->process_new_pointer_pdu(/*upd.payload*/stream);
                     break;
 
                 default:
@@ -4325,6 +4351,21 @@ public:
                     }
                     confirm_active_pdu.emit_capability_set(window_list_caps);
                 }
+
+                LargePointerCaps largeptr_caps;
+                largeptr_caps.largePointerSupportFlags = LARGE_POINTER_FLAG_96x96;
+                if (this->verbose & RDPVerbose::basic_trace) {
+                    largeptr_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(largeptr_caps);
+
+                MultiFragmentUpdateCaps multifragupd_caps;
+                multifragupd_caps.MaxRequestSize = 38055;
+                if (this->verbose & RDPVerbose::basic_trace) {
+                    multifragupd_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(multifragupd_caps);
+
                 confirm_active_pdu.emit_end();
             },
             [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
@@ -4379,7 +4420,7 @@ public:
         switch (message_type) {
         // Cached Pointer Update (section 2.2.9.1.1.4.6)
         case RDP_POINTER_CACHED:
-            if (this->verbose & RDPVerbose::basic_trace3) {
+/*            if (this->verbose & RDPVerbose::basic_trace3)*/ {
                 LOG(LOG_INFO, "Process pointer cached");
             }
             this->process_cached_pointer_pdu(stream);
@@ -4389,17 +4430,17 @@ public:
             break;
         // Color Pointer Update (section 2.2.9.1.1.4.4)
         case RDP_POINTER_COLOR:
-            if (this->verbose & RDPVerbose::basic_trace3) {
+/*            if (this->verbose & RDPVerbose::basic_trace3)*/ {
                 LOG(LOG_INFO, "Process pointer color");
             }
             this->process_color_pointer_pdu(stream);
             if (this->verbose & RDPVerbose::basic_trace3){
-                LOG(LOG_INFO, "Process pointer system done");
+                LOG(LOG_INFO, "Process pointer color done");
             }
             break;
         // New Pointer Update (section 2.2.9.1.1.4.5)
         case RDP_POINTER_NEW:
-            if (this->verbose & RDPVerbose::basic_trace3) {
+/*            if (this->verbose & RDPVerbose::basic_trace3)*/ {
                 LOG(LOG_INFO, "Process pointer new");
             }
             if (enable_new_pointer) {
@@ -4413,7 +4454,7 @@ public:
 
         case RDP_POINTER_SYSTEM:
         {
-            if (this->verbose & RDPVerbose::basic_trace3) {
+/*            if (this->verbose & RDPVerbose::basic_trace3)*/ {
                 LOG(LOG_INFO, "Process pointer system");
             }
             // TODO: actually show mouse cursor or get back to default
@@ -6429,6 +6470,7 @@ public:
 
         // TODO Add check that the idx transmitted is actually an used pointer
         uint16_t pointer_idx = stream.in_uint16_le();
+LOG(LOG_INFO, "pointer_idx=%u", unsigned(pointer_idx));
         if (pointer_idx >= (sizeof(this->cursors) / sizeof(Pointer))) {
             LOG(LOG_ERR,
                 "mod_rdp::process_cached_pointer_pdu pointer cache idx overflow (%d)",
@@ -6467,14 +6509,14 @@ public:
 
     void process_system_pointer_pdu(InStream & stream)
     {
-        if (this->verbose & RDPVerbose::basic_trace3){
+        if (this->verbose & RDPVerbose::basic_trace3) {
             LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu");
         }
         int system_pointer_type = stream.in_uint32_le();
         switch (system_pointer_type) {
         case RDP_NULL_POINTER:
             {
-                if (this->verbose & RDPVerbose::basic_trace3) {
+/*                if (this->verbose & RDPVerbose::basic_trace3)*/ {
                     LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - null");
                 }
                 Pointer cursor;
@@ -6484,7 +6526,7 @@ public:
             break;
         default:
             {
-                if (this->verbose & RDPVerbose::basic_trace3) {
+/*                if (this->verbose & RDPVerbose::basic_trace3)*/ {
                     LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - default");
                 }
                 Pointer cursor(Pointer::POINTER_NORMAL);
@@ -6497,7 +6539,7 @@ public:
         }
     }
 
-    void to_regular_mask(const uint8_t * indata, unsigned mlen, uint8_t bpp, uint8_t * mask) {
+    void to_regular_mask(const uint8_t * indata, unsigned mlen, unsigned width, unsigned height, uint8_t bpp, uint8_t * mask) {
         if (this->verbose & RDPVerbose::basic_trace3) {
             LOG(LOG_INFO, "mod_rdp::to_regular_mask");
         }
@@ -6510,10 +6552,23 @@ public:
         switch (bpp) {
         case 1 :
         {
+/*
             for (unsigned x = 0; x < mlen ; x++) {
                 BGRColor px = indata[x];
                 // incoming new pointer mask is upside down, revert it
                 mask[128 - 4 - (x & 0x7C) + (x & 3)] = px;
+            }
+*/
+            const unsigned int remainder = (width % 8);
+            const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
+            const unsigned int and_padded_line_length_in_byte =
+                ((and_line_length_in_byte % 2) ?
+                 and_line_length_in_byte + 1 :
+                 and_line_length_in_byte);
+            for (unsigned int i = 0; i < height; ++i) {
+                const uint8_t* src  = indata + (height - i - 1) * and_padded_line_length_in_byte;
+                      uint8_t* dest = mask + i * and_padded_line_length_in_byte;
+                ::memcpy(dest, src, and_padded_line_length_in_byte);
             }
         }
         break;
@@ -6527,13 +6582,14 @@ public:
         }
     }
 
-    void to_regular_pointer(const uint8_t * indata, unsigned dlen, uint8_t bpp, uint8_t * data) {
+    void to_regular_pointer(const uint8_t * indata, unsigned dlen, unsigned width, unsigned height, uint8_t bpp, uint8_t * data) {
         if (this->verbose & RDPVerbose::basic_trace3) {
             LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
         switch (bpp) {
         case 1 :
         {
+/*
             for (unsigned x = 0; x < dlen ; x ++) {
                 BGRColor px = indata[x];
                 // target cursor will receive 8 bits input at once
@@ -6551,6 +6607,38 @@ public:
                     ::out_bytes_le(bstart + 21, 3, (px &    1) ? 0xFFFFFF : 0);
                 }
             }
+*/
+            const unsigned int remainder = (width % 8);
+            const unsigned int src_xor_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
+            const unsigned int src_xor_padded_line_length_in_byte =
+                ((src_xor_line_length_in_byte % 2) ?
+                 src_xor_line_length_in_byte + 1 :
+                 src_xor_line_length_in_byte);
+
+            const unsigned int dest_xor_line_length_in_byte        = width * 3;
+            const unsigned int dest_xor_padded_line_length_in_byte =
+                dest_xor_line_length_in_byte + ((dest_xor_line_length_in_byte % 2) ? 1 : 0);
+
+            for (unsigned int i = 0; i < height; ++i) {
+                const uint8_t* src  = indata + (height - i - 1) * src_xor_padded_line_length_in_byte;
+                      uint8_t* dest = data + i * dest_xor_line_length_in_byte;
+
+                unsigned char and_bit_extraction_mask = 7;
+
+                for (unsigned int j = 0; j < width; ++j) {
+                    ::out_bytes_le(dest, 3, (((*src) & (1 << and_bit_extraction_mask)) ? 0xFFFFFF : 0));
+
+                    dest += 3;
+
+                    if (and_bit_extraction_mask) {
+                        and_bit_extraction_mask--;
+                    }
+                    else {
+                        src++;
+                        and_bit_extraction_mask = 7;
+                    }
+                }
+            }
         }
         break;
         case 4 :
@@ -6566,10 +6654,42 @@ public:
         case 32: case 24: case 16: case 15: case 8:
         {
             uint8_t BPP = nbbytes(bpp);
+/*
+LOG(LOG_INFO, "dlen=%u BPP=%u", dlen, uint32_t(BPP));
             for (unsigned i = 0; i + BPP <= dlen; i += BPP) {
-                BGRColor px = in_uint32_from_nb_bytes_le(BPP, indata + i);
+//                BGRColor px = in_uint32_from_nb_bytes_le(BPP, indata + i);
+unsigned tmp= in_uint32_from_nb_bytes_le(BPP, indata + i);
+BGRColor px = tmp;
                 ::out_bytes_le(&(data[(i/BPP)*3]), 3, color_decode(px, bpp, this->orders.global_palette));
+//LOG(LOG_INFO, "In=0x%08X Out=0x%08X", tmp, color_decode(px, bpp, this->orders.global_palette));
             }
+*/
+
+
+            const unsigned int src_xor_line_length_in_byte = width * BPP;
+            const unsigned int src_xor_padded_line_length_in_byte =
+                ((src_xor_line_length_in_byte % 2) ?
+                 src_xor_line_length_in_byte + 1 :
+                 src_xor_line_length_in_byte);
+
+            const unsigned int dest_xor_line_length_in_byte = width * 3;
+            const unsigned int dest_xor_padded_line_length_in_byte =
+                ((dest_xor_line_length_in_byte % 2) ?
+                 dest_xor_line_length_in_byte + 1 :
+                 dest_xor_line_length_in_byte);
+
+            for (unsigned int i0 = 0; i0 < height; ++i0) {
+                const uint8_t* src  = indata + (height - i0 - 1) * src_xor_padded_line_length_in_byte;
+                      uint8_t* dest = data + (height - i0 - 1) * dest_xor_padded_line_length_in_byte;
+
+                for (unsigned int i1 = 0; i1 < width; ++i1) {
+                    BGRColor px = in_uint32_from_nb_bytes_le(BPP, src);
+                    src += BPP;
+                    ::out_bytes_le(dest, 3, color_decode(px, bpp, this->orders.global_palette));
+                    dest += 3;
+                }
+            }
+
         }
         break;
         default:
@@ -6610,7 +6730,7 @@ public:
 
         unsigned data_bpp  = stream.in_uint16_le(); /* data bpp */
         unsigned pointer_idx = stream.in_uint16_le();
-        if (this->verbose & RDPVerbose::basic_trace3) {
+/*        if (this->verbose & RDPVerbose::basic_trace3)*/ {
             LOG(LOG_INFO,
                 "mod_rdp::process_new_pointer_pdu xorBpp=%u pointer_idx=%u",
                 data_bpp, pointer_idx);
@@ -6644,6 +6764,10 @@ public:
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
 
+        LOG(LOG_INFO,
+            "mod_rdp::process_new_pointer_pdu width=%u height=%u",
+            cursor.width, cursor.height);
+
         if (static_cast<unsigned>(cursor.x) >= cursor.width){
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot x out of pointer (%d >= %d)", cursor.x, cursor.width);
             cursor.x = 0;
@@ -6672,6 +6796,7 @@ public:
             (cursor.bpp == 4) ? (cursor.width * cursor.height) / 2 :
             (dlen / nbbytes(data_bpp)));
 */
+/*
         size_t out_data_len = 3 * (dlen / nbbytes(data_bpp));
 
         if ((mlen > sizeof(cursor.mask)) ||
@@ -6683,10 +6808,11 @@ public:
                 data_bpp, out_data_len, nbbytes(data_bpp));
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
+*/
 
         if (data_bpp == 1) {
-            uint8_t data_data[32*32/8];
-            uint8_t mask_data[32*32/8];
+            uint8_t data_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8];
+            uint8_t mask_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8];
             stream.in_copy_bytes(data_data, dlen);
             stream.in_copy_bytes(mask_data, mlen);
 
@@ -6700,14 +6826,14 @@ public:
             }
 
             // TODO move that into cursor
-            this->to_regular_pointer(data_data, dlen, 1, cursor.data);
-            this->to_regular_mask(mask_data, mlen, 1, cursor.mask);
+            this->to_regular_pointer(data_data, dlen, cursor.width, cursor.height, 1, cursor.data);
+            this->to_regular_mask(mask_data, mlen, cursor.width, cursor.height, 1, cursor.mask);
         }
         else {
             // TODO move that into cursor
-            this->to_regular_pointer(stream.get_current(), dlen, data_bpp, cursor.data);
+            this->to_regular_pointer(stream.get_current(), dlen, cursor.width, cursor.height, data_bpp, cursor.data);
             stream.in_skip_bytes(dlen);
-            this->to_regular_mask(stream.get_current(), mlen, data_bpp, cursor.mask);
+            this->to_regular_mask(stream.get_current(), mlen, cursor.width, cursor.height, data_bpp, cursor.mask);
             stream.in_skip_bytes(mlen);
         }
 
@@ -7029,6 +7155,9 @@ private:
                 sizeof(infoPacket.extendedInfoPacket.autoReconnectCookie));
         }
 
+LOG(LOG_INFO, "performanceFlags=0x%X", this->performanceFlags);
+LOG(LOG_INFO, "");
+LOG(LOG_INFO, "");
         this->send_data_request(
             GCC::MCS_GLOBAL_CHANNEL,
             [this, &infoPacket](StreamSize<1024>, OutStream & stream) {

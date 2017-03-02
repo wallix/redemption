@@ -945,6 +945,11 @@ private:
 
 
 struct DrawablePointer {
+    enum {
+          MAX_WIDTH  = 96
+        , MAX_HEIGHT = 96
+    };
+
     struct ContiguousPixels {
         int             x;
         int             y;
@@ -952,17 +957,76 @@ struct DrawablePointer {
         const uint8_t * data;
     };
 
-    ContiguousPixels contiguous_pixels[16 * 32];    // 16 contiguous pixels per line * 32 lines
+    ContiguousPixels contiguous_pixels[MAX_WIDTH / 2 * MAX_HEIGHT];    // MAX_WIDTH / 2 contiguous pixels per line * MAX_HEIGHT lines
     uint8_t          number_of_contiguous_pixels;
 
-    uint8_t data[32 * 32 * 3];  // 32 pixels per line * 32 lines * 3 bytes per pixel
+    uint8_t data[MAX_WIDTH * MAX_HEIGHT * 3];  // 32 pixels per line * 32 lines * 3 bytes per pixel
 
     int hotspot_x;
     int hotspot_y;
 
     DrawablePointer() : contiguous_pixels(), number_of_contiguous_pixels(0), data(), hotspot_x(0), hotspot_y(0) {}
 
-    void initialize(int hotspot_x, int hotspot_y, const uint8_t * pointer_data, const uint8_t * pointer_mask) {
+    void initialize(int hotspot_x, int hotspot_y, unsigned int width, unsigned int height, const uint8_t * pointer_data, const uint8_t * pointer_mask) {
+LOG(LOG_INFO, "DrawablePointer::initialize: width=%u height=%u\n", width, height);
+
+printf("DrawablePointer::initialize: width=%u height=%u\n", width, height);
+{
+const unsigned int xor_line_length_in_byte = width * 3;
+const unsigned int xor_padded_line_length_in_byte =
+   ((xor_line_length_in_byte % 2) ?
+    xor_line_length_in_byte + 1 :
+    xor_line_length_in_byte);
+const unsigned int remainder = (width % 8);
+const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
+const unsigned int and_padded_line_length_in_byte =
+   ((and_line_length_in_byte % 2) ?
+    and_line_length_in_byte + 1 :
+    and_line_length_in_byte);
+for (unsigned int i0 = 0; i0 < height; ++i0) {
+   printf("%02d  ", (height - i0 - 1));
+
+   const uint8_t* xorMask = pointer_data + (height - i0 - 1) * xor_padded_line_length_in_byte;
+
+   const uint8_t* andMask = pointer_mask + (height - i0 - 1) * and_padded_line_length_in_byte;
+   unsigned char and_bit_extraction_mask = 7;
+
+   for (unsigned int i1 = 0; i1 < width; ++i1) {
+       unsigned int color = 0;
+       color |=  *xorMask             ;
+       color |= (*(xorMask + 1) <<  8);
+       color |= (*(xorMask + 2) << 16);
+
+       if ((*andMask) & (1 << and_bit_extraction_mask)) {
+           printf(".");
+       }
+       else {
+           if (color == 0xFFFFFF) {
+               printf("W");
+           }
+           else if (color) {
+               printf("C");
+           }
+           else  {
+               printf("B");
+           }
+       }
+
+       xorMask += 3;
+       if (and_bit_extraction_mask) {
+           and_bit_extraction_mask--;
+       }
+       else {
+           and_bit_extraction_mask = 7;
+           andMask++;
+       }
+   }
+
+   printf("\n");
+}
+printf("\n");
+}
+
         ::memset(this->contiguous_pixels, 0, sizeof(this->contiguous_pixels));
         this->number_of_contiguous_pixels = 0;
         ::memset(this->data, 0, sizeof(this->data));
@@ -975,17 +1039,30 @@ struct DrawablePointer {
         uint8_t          * current_data               = this->data;
         ContiguousPixels * current_contiguous_pixels  = this->contiguous_pixels;
 
-        for (unsigned int line = 0; line < 32; line++) {
+        const unsigned int xor_line_length_in_byte = width * 3;
+        const unsigned int xor_padded_line_length_in_byte =
+            ((xor_line_length_in_byte % 2) ?
+             xor_line_length_in_byte + 1 :
+             xor_line_length_in_byte);
+        const unsigned int remainder = (width % 8);
+        const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
+        const unsigned int and_padded_line_length_in_byte =
+            ((and_line_length_in_byte % 2) ?
+             and_line_length_in_byte + 1 :
+             and_line_length_in_byte);
+
+        for (unsigned int line = 0; line < height; line++) {
             bool in_contiguous_mouse_pixels = false;
 
-            for (unsigned int column = 0; column < 32; column++) {
+            for (unsigned int column = 0; column < width; column++) {
                 const div_t        res = div(column, 8);
                 const unsigned int rem = 7 - res.rem;
 
-                non_transparent_pixel = !(((*(pointer_mask + 128 - (line + 1) * 32 / 8 + res.quot)) & (1 << rem)) >> rem);
+//                non_transparent_pixel = !(((*(pointer_mask + 128 - (line + 1) * 32 / 8 + res.quot)) & (1 << rem)) >> rem);
+                non_transparent_pixel = !(((*(pointer_mask + and_padded_line_length_in_byte * (height - (line + 1)) + res.quot)) & (1 << rem)) >> rem);
                 //printf("%c", (non_transparent_pixel ? 'X' : '.'));
 
-                const uint8_t * pixel = pointer_data + 32 * 32 * 3 - (line + 1) * 32 * 3 + column * 3;
+                const uint8_t * pixel = pointer_data + xor_padded_line_length_in_byte * (height - (line + 1)) + column * 3;
                 //printf("%02X%02X%02X", *pixel, *(pixel + 1), *(pixel+2));
 
                 if (non_transparent_pixel && !in_contiguous_mouse_pixels) {
@@ -2376,8 +2453,8 @@ public:
         }
     }
 
-    void use_pointer(int hotspot_x, int hotspot_y, const uint8_t * pointer_data, const uint8_t * pointer_mask) {
-        this->dynamic_pointer.initialize(hotspot_x, hotspot_y, pointer_data, pointer_mask);
+    void use_pointer(int hotspot_x, int hotspot_y, unsigned int width, unsigned int height, const uint8_t * pointer_data, const uint8_t * pointer_mask) {
+        this->dynamic_pointer.initialize(hotspot_x, hotspot_y, width, height, pointer_data, pointer_mask);
 
         this->current_pointer = &this->dynamic_pointer;
     }
@@ -2786,6 +2863,6 @@ private:
 /* 0070 */ 0x0f, 0xff, 0xff, 0xff, 0x1f, 0xff, 0xff, 0xff, 0x3f, 0xff, 0xff, 0xff, 0x7f, 0xff, 0xff, 0xff,  // ........?.......
         };
 
-        this->default_pointer.initialize(0, 0, pointer_data, pointer_mask);
+        this->default_pointer.initialize(0, 0, 32, 32, pointer_data, pointer_mask);
     }
 };

@@ -792,7 +792,7 @@ protected:
              source_xor_line_length_in_byte);
 
         if (cursor.only_black_white) {
-            uint8_t xorMaskData[32 * 32 / 8] = { 0 };
+            uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8] = { 0 };
 
             for (unsigned int h = 0; h < cursor.height; ++h) {
                 const uint8_t* psource = cursor.data + (cursor.height - h - 1) * source_xor_padded_line_length_in_byte;
@@ -832,7 +832,7 @@ protected:
             stream.out_copy_bytes(xorMaskData, xor_padded_line_length_in_byte * cursor.height);
         }
         else {
-            uint8_t xorMaskData[32 * 32 * 4] = { 0 };
+            uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 4] = { 0 };
 
             for (unsigned int h = 0; h < cursor.height; ++h) {
                 const uint8_t* psource = cursor.data + (cursor.height - h - 1) * source_xor_padded_line_length_in_byte;
@@ -860,7 +860,7 @@ protected:
 //      bytes).
 
         if (cursor.only_black_white) {
-            uint8_t andMaskData[32 * 32 / 8] = { 0 };
+            uint8_t andMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8] = { 0 };
 
             for (unsigned int h = 0; h < cursor.height; ++h) {
                 const uint8_t* psource = cursor.mask + (cursor.height - h - 1) * and_padded_line_length_in_byte;

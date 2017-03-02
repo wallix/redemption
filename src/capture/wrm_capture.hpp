@@ -821,7 +821,7 @@ struct ocrypto {
         }
         ::memcpy(tmp_buf, buffer+towrite, 8);
         towrite += 8;
-        
+
         this->encrypt_file_size += 8;
 
         this->xmd_update(tmp_buf, 8);
@@ -942,7 +942,7 @@ public:
     }
 
 
-    
+
 
     ssize_t encrypt_write(const void * data, size_t len)
     {
@@ -1013,10 +1013,10 @@ public:
         this->cctx.get_derived_key(trace_key, base, base_len);
         unsigned char iv[32];
         this->rnd.random(iv, 32);
-        
+
         uint8_t buffer[40];
         size_t towrite = 0;
-        
+
         err = this->encrypt_open(buffer, sizeof(buffer), towrite, trace_key, this->cctx, iv);
         if (!err) {
             err = this->encrypt_raw_write(buffer, towrite);
@@ -1039,7 +1039,7 @@ public:
         {
             return -1;
         }
-    
+
         int res2 = 0;
         if (-1 != this->file_fd) {
             res2 = ::close(this->file_fd);
@@ -2311,7 +2311,7 @@ public:
                             return 1;
                         }
                     }
-                    
+
                     if (!err) {
                         using ull = unsigned long long;
                         using ll = long long;
@@ -2793,9 +2793,9 @@ public:
             LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
             return 1;
         }
-        
+
         auto & writer = crypto_hash;
-        
+
         auto pfile = filename;
         auto epfile = filename;
         for (; *epfile; ++epfile) {
@@ -3067,7 +3067,7 @@ public:
             LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
             return 1;
         }
-        
+
         auto & writer = hash_buf;
         auto pfile = filename;
         auto epfile = filename;
@@ -3306,7 +3306,7 @@ public:
         }
 
         auto & writer = hash_buf;
-        
+
         auto pfile = filename;
         auto epfile = filename;
         for (; *epfile; ++epfile) {
@@ -3350,7 +3350,7 @@ public:
                 return 1;
             }
         }
-            
+
         using ull = unsigned long long;
         using ll = long long;
         char mes[
@@ -4452,6 +4452,7 @@ protected:
 
         this->trans.send(cursor.data, cursor.data_size());
         this->trans.send(cursor.mask, cursor.mask_size());
+LOG(LOG_INFO, "send_pointer");
     }
 
     void send_pointer2(int cache_idx, const Pointer & cursor) {
@@ -4493,6 +4494,7 @@ protected:
 
         this->trans.send(cursor.data, cursor.data_size());
         this->trans.send(cursor.mask, cursor.mask_size());
+LOG(LOG_INFO, "send_pointer2");
     }
 
     void set_pointer(int cache_idx) override {
@@ -4753,6 +4755,15 @@ public:
     }
     void draw(RDPBrushCache const & cmd) override {
         this->graphic_to_file.draw(cmd);
+    }
+
+    void set_pointer(Pointer const & pointer) override {
+LOG(LOG_INFO, "WrmCaptureImpl::set_pointer");
+        this->graphic_to_file.set_pointer(pointer);
+    }
+
+    void set_palette(BGRPalette const & palette) override {
+        this->graphic_to_file.set_palette(palette);
     }
 
     class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi

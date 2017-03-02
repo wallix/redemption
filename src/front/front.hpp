@@ -932,6 +932,7 @@ public:
     }
 
     void set_pointer(const Pointer & cursor) override {
+LOG(LOG_INFO, "Front::set_pointer");
         this->graphics_update->set_pointer(cursor);
     }
 
