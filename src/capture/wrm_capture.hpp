@@ -2996,114 +2996,114 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
     
         struct wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf
         {
-            char current_filename_[1024];
-            wrmcapture_FilenameGenerator filegen_;
-            iofdbuf buf_;
-            unsigned num_file_;
-            int groupid_;
+            char xxx_current_filename_[1024];
+            wrmcapture_FilenameGenerator xxx_filegen_;
+            iofdbuf xxx_buf_;
+            unsigned xxx_num_file_;
+            int xxx_groupid_;
 
         public:
             ssize_t xxx_write(const void * data, size_t len)
             {
-                if (!this->buf_.is_open()) {
-                    const int res = this->xxx_open_filename(this->filegen_.get(this->num_file_));
+                if (!this->xxx_buf_.is_open()) {
+                    const int res = this->xxx_open_filename(this->xxx_filegen_.get(this->xxx_num_file_));
                     if (res < 0) {
                         return res;
                     }
                 }
-                return this->buf_.write(data, len);
+                return this->xxx_buf_.write(data, len);
             }
 
             const wrmcapture_FilenameGenerator & xxx_seqgen() const noexcept
-            { return this->filegen_; }
+            { return this->xxx_filegen_; }
 
             iofdbuf & xxx_buf() noexcept
-            { return this->buf_; }
+            { return this->xxx_buf_; }
 
             const char * xxx_current_path() const
             {
-                if (!this->current_filename_[0] && !this->num_file_) {
+                if (!this->xxx_current_filename_[0] && !this->xxx_num_file_) {
                     return nullptr;
                 }
-                return this->filegen_.get(this->num_file_ - 1);
+                return this->xxx_filegen_.get(this->xxx_num_file_ - 1);
             }
 
         protected:
             ssize_t xxx_open_filename(const char * filename)
             {
-                snprintf(this->current_filename_, sizeof(this->current_filename_),
+                snprintf(this->xxx_current_filename_, sizeof(this->xxx_current_filename_),
                             "%sred-XXXXXX.tmp", filename);
-                const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+                const int fd = ::mkostemps(this->xxx_current_filename_, 4, O_WRONLY | O_CREAT);
                 if (fd < 0) {
                     return fd;
                 }
-                if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                if (chmod(this->xxx_current_filename_, this->xxx_groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                     LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                       , this->current_filename_
-                       , this->groupid_ ? "u+r, g+r" : "u+r"
+                       , this->xxx_current_filename_
+                       , this->xxx_groupid_ ? "u+r, g+r" : "u+r"
                        , strerror(errno), errno);
                 }
-                this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-                return this->buf_.open(fd);
+                this->xxx_filegen_.set_last_filename(this->xxx_num_file_, this->xxx_current_filename_);
+                return this->xxx_buf_.open(fd);
             }
 
             const char * xxx_rename_filename()
             {
                 const char * filename = this->xxx_get_filename_generate();
-                const int res = ::rename(this->current_filename_, filename);
+                const int res = ::rename(this->xxx_current_filename_, filename);
                 if (res < 0) {
                     LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                       , this->current_filename_, filename, errno, strerror(errno));
+                       , this->xxx_current_filename_, filename, errno, strerror(errno));
                     return nullptr;
                 }
 
-                this->current_filename_[0] = 0;
-                ++this->num_file_;
-                this->filegen_.set_last_filename(-1u, "");
+                this->xxx_current_filename_[0] = 0;
+                ++this->xxx_num_file_;
+                this->xxx_filegen_.set_last_filename(-1u, "");
 
                 return filename;
             }
 
             const char * xxx_get_filename_generate()
             {
-                this->filegen_.set_last_filename(-1u, "");
-                const char * filename = this->filegen_.get(this->num_file_);
-                this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+                this->xxx_filegen_.set_last_filename(-1u, "");
+                const char * filename = this->xxx_filegen_.get(this->xxx_num_file_);
+                this->xxx_filegen_.set_last_filename(this->xxx_num_file_, this->xxx_current_filename_);
                 return filename;
             }
         // =======================================================================
 
         public:
-            wrmcapture_ocrypto_filename_buf meta_buf_;
+            wrmcapture_ocrypto_filename_buf xxx_meta_buf_;
 
         protected:
-            wrmcapture_MetaFilename mf_;
-            wrmcapture_MetaFilename hf_;
-            time_t start_sec_;
-            time_t stop_sec_;
+            wrmcapture_MetaFilename xxx_mf_;
+            wrmcapture_MetaFilename xxx_hf_;
+            time_t xxx_start_sec_;
+            time_t xxx_stop_sec_;
 
         public:
             explicit wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf(
                 wrmcapture_out_meta_sequence_filename_buf_param const & params
             )
-            : filegen_(params.sq_params.format, params.sq_params.prefix, params.sq_params.filename, params.sq_params.extension)
-            , buf_()
-            , num_file_(0)
-            , groupid_(params.sq_params.groupid)
-            , meta_buf_(params.meta_buf_params)
-            , mf_(params.sq_params.prefix, params.sq_params.filename, params.sq_params.format)
-            , hf_(params.hash_prefix, params.sq_params.filename, params.sq_params.format)
-            , start_sec_(params.sec)
-            , stop_sec_(params.sec)
+            : xxx_filegen_(params.sq_params.format, params.sq_params.prefix, params.sq_params.filename, params.sq_params.extension)
+            , xxx_buf_()
+            , xxx_num_file_(0)
+            , xxx_groupid_(params.sq_params.groupid)
+            , xxx_meta_buf_(params.meta_buf_params)
+            , xxx_mf_(params.sq_params.prefix, params.sq_params.filename, params.sq_params.format)
+            , xxx_hf_(params.hash_prefix, params.sq_params.filename, params.sq_params.format)
+            , xxx_start_sec_(params.sec)
+            , xxx_stop_sec_(params.sec)
             {
-                this->current_filename_[0] = 0;
-                if (this->meta_buf_.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
-                    LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
+                this->xxx_current_filename_[0] = 0;
+                if (this->xxx_meta_buf_.open(this->xxx_mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+                    LOG(LOG_ERR, "Failed to open meta file %s", this->xxx_mf_.filename);
                     throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
                 }
-                if (chmod(this->mf_.filename, S_IRUSR | S_IRGRP) == -1) {
+                if (chmod(this->xxx_mf_.filename, S_IRUSR | S_IRGRP) == -1) {
                     LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                       , this->mf_.filename
+                       , this->xxx_mf_.filename
                        , "u+r, g+r"
                        , strerror(errno), errno);
                 }
@@ -3112,11 +3112,11 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             int xxx_close()
             {
                 const int res1 = this->xxx_next();
-                const int res2 = (this->meta_buf_.is_open() ? this->meta_buf_.close() : 0);
+                const int res2 = (this->xxx_meta_buf_.is_open() ? this->xxx_meta_buf_.close() : 0);
                 int err = res1 ? res1 : res2;
                 if (!err) {
-                    char const * hash_filename = this->hf_.filename;
-                    char const * meta_filename = this->mf_.filename;
+                    char const * hash_filename = this->xxx_hf_.filename;
+                    char const * meta_filename = this->xxx_mf_.filename;
 
                     char path[1024] = {};
                     char basename[1024] = {};
@@ -3308,9 +3308,9 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                     return 1;
                 }
 
-                auto & writer = this->meta_buf_;
-                auto start_sec = this->start_sec_;
-                auto stop_sec = this->stop_sec_+1;
+                auto & writer = this->xxx_meta_buf_;
+                auto start_sec = this->xxx_start_sec_;
+                auto stop_sec = this->xxx_stop_sec_+1;
 
                 struct stat stat;
                 int err = ::stat(filename, &stat);
@@ -3397,7 +3397,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                     return res < 0 ? res : 1;
                 }
 
-                this->start_sec_ = this->stop_sec_;
+                this->xxx_start_sec_ = this->xxx_stop_sec_;
 
                 return 0;
             }
@@ -3405,17 +3405,17 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
         public:
             void xxx_request_full_cleaning()
             {
-                unsigned i = this->num_file_ + 1;
-                while (i > 0 && !::unlink(this->filegen_.get(--i))) {
+                unsigned i = this->xxx_num_file_ + 1;
+                while (i > 0 && !::unlink(this->xxx_filegen_.get(--i))) {
                 }
-                if (this->buf_.is_open()) {
-                    this->buf_.close();
+                if (this->xxx_buf_.is_open()) {
+                    this->xxx_buf_.close();
                 }
-                ::unlink(this->mf_.filename);
+                ::unlink(this->xxx_mf_.filename);
             }
 
             void xxx_update_sec(time_t sec)
-            { this->stop_sec_ = sec; }
+            { this->xxx_stop_sec_ = sec; }
         };    
     
         class wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto
@@ -3460,18 +3460,18 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 
                 wrmcapture_ocrypto_filename_buf hash_buf(this->hash_ctx);
 
-                if (!this->meta_buf_.is_open()) {
+                if (!this->xxx_meta_buf_.is_open()) {
                     return 1;
                 }
 
                 wrmcapture_hash_type hash;
 
-                if (this->meta_buf_.close(hash)) {
+                if (this->xxx_meta_buf_.close(hash)) {
                     return 1;
                 }
 
-                char const * hash_filename = this->hf_.filename;
-                char const * meta_filename = this->mf_.filename;
+                char const * hash_filename = this->xxx_hf_.filename;
+                char const * meta_filename = this->xxx_mf_.filename;
 
                 char path[1024] = {};
                 char basename[1024] = {};
@@ -3653,7 +3653,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             unsigned(height),
             has_checksum  ? "checksum" : "nochecksum"
         );
-        const ssize_t res = this->buf.meta_buf_.write(header1, len);
+        const ssize_t res = this->buf.xxx_meta_buf_.write(header1, len);
         if (res < 0) {
             int err = errno;
             LOG(LOG_ERR, "Write to transport failed (M2.0): code=%d", err);
