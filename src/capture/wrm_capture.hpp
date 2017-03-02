@@ -3187,212 +3187,6 @@ public:
 };
 
 
-
-class wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto
-: public wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf
-{
-    CryptoContext & cctx;
-    wrmcapture_ocrypto_filename_params hash_ctx;
-    wrmcapture_ocrypto_filter wrm_filter;
-
-public:
-    explicit wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto(
-        wrmcapture_out_hash_meta_sequence_filename_buf_param_ocrypto const & params
-    )
-    : wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf(params.meta_sq_params)
-    , cctx(params.cctx)
-    , hash_ctx(params.filter_params)
-    , wrm_filter(this->buf(), params.filter_params)
-    {}
-
-    ssize_t write(const void * data, size_t len)
-    {
-        if (!this->buf().is_open()) {
-            const char * filename = this->get_filename_generate();
-            const int res = this->open_filename(filename);
-            if (res < 0) {
-                return res;
-            }
-            if (int err = this->wrm_filter.open(filename)) {
-                return err;
-            }
-        }
-        return this->wrm_filter.write(data, len);
-    }
-
-    int close()
-    {
-        if (this->buf().is_open()) {
-            if (this->next()) {
-                return 1;
-            }
-        }
-
-        wrmcapture_ocrypto_filename_buf hash_buf(this->hash_ctx);
-
-        if (!this->meta_buf_.is_open()) {
-            return 1;
-        }
-
-        wrmcapture_hash_type hash;
-
-        if (this->meta_buf_.close(hash)) {
-            return 1;
-        }
-
-        char const * hash_filename = this->hf_.filename;
-        char const * meta_filename = this->meta_filename();
-
-        char path[1024] = {};
-        char basename[1024] = {};
-        char extension[256] = {};
-        char filename[2048] = {};
-
-        canonical_path(
-            meta_filename,
-            path, sizeof(path),
-            basename, sizeof(basename),
-            extension, sizeof(extension)
-        );
-
-        snprintf(filename, sizeof(filename), "%s%s", basename, extension);
-
-        if (hash_buf.open(hash_filename, S_IRUSR|S_IRGRP) < 0) {
-            int e = errno;
-            LOG(LOG_ERR, "Open to transport failed: code=%d", e);
-            errno = e;
-            return 1;
-        }
-
-        char header[] = "v2\n\n\n";
-        hash_buf.write(header, sizeof(header)-1);
-
-        struct stat stat;
-        int err = ::stat(meta_filename, &stat);
-        if (err) {
-            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
-                hash_filename, err);
-            return 1;
-        }
-
-        auto & writer = hash_buf;
-        
-        auto pfile = filename;
-        auto epfile = filename;
-        for (; *epfile; ++epfile) {
-            if (*epfile == '\\') {
-                ssize_t len = epfile - pfile + 1;
-                auto res = writer.write(pfile, len);
-                if (res < len) {
-                    err = res < 0 ? res : 1;
-                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
-                        hash_filename, err);
-                    return 1;
-                }
-                pfile = epfile;
-            }
-            if (*epfile == ' ') {
-                ssize_t len = epfile - pfile;
-                auto res = writer.write(pfile, len);
-                if (res < len) {
-                    err = res < 0 ? res : 1;
-                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
-                        hash_filename, err);
-                    return 1;
-            }
-                res = writer.write("\\", 1u);
-                if (res < 1) {
-                    err = res < 0 ? res : 1;
-                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
-                        hash_filename, err);
-                    return 1;
-                }
-                pfile = epfile;
-            }
-        }
-
-        if (pfile != epfile) {
-            ssize_t len = epfile - pfile;
-            auto res = writer.write(pfile, len);
-            if (res < len) {
-                err = res < 0 ? res : 1;
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                return 1;
-            }
-        }
-            
-        using ull = unsigned long long;
-        using ll = long long;
-        char mes[
-            (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-            (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-            wrmcapture_hash_string_len + 1 +
-            2
-        ];
-        ssize_t len = std::sprintf(
-            mes,
-            " %lld %llu %lld %lld %llu %lld %lld %lld",
-            ll(stat.st_size),
-            ull(stat.st_mode),
-            ll(stat.st_uid),
-            ll(stat.st_gid),
-            ull(stat.st_dev),
-            ll(stat.st_ino),
-            ll(stat.st_mtim.tv_sec),
-            ll(stat.st_ctim.tv_sec)
-        );
-
-        char * p = mes + len;
-        auto write = [&p](unsigned char const * hash) {
-            *p++ = ' ';                // 1 octet
-            for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
-                sprintf(p, "%02x", c); // 64 octets (hash)
-                p += 2;
-            }
-        };
-        write(&hash[0]);
-        write(&hash[MD_HASH_LENGTH]);
-        *p++ = '\n';
-
-        ssize_t res = writer.write(mes, p-mes);
-
-        if (res < p-mes) {
-            err = res < 0 ? res : 1;
-            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-            return 1;
-        }
-
-        err = hash_buf.close(/*hash*/);
-        if (err) {
-            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-            return 1;
-        }
-
-        return 0;
-    }
-
-    int next()
-    {
-        if (this->buf().is_open()) {
-            wrmcapture_hash_type hash;
-            {
-                const int res1 = this->wrm_filter.close(hash, this->cctx.get_hmac_key());
-                const int res2 = this->buf().close();
-                if (res1) {
-                    return res1;
-                }
-                if (res2) {
-                    return res2;
-                }
-            }
-
-            return this->next_meta_file(&hash);
-        }
-        return 1;
-    }
-};
-
-
 struct wrmcapture_OutMetaSequenceTransport : public Transport
 {
     wrmcapture_OutMetaSequenceTransport(
@@ -3637,8 +3431,209 @@ private:
 struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport 
 {
     private:
-        typedef wrmcapture_CryptoOutMetaSequenceTransport TransportType;
-        wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto buf;
+        class wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto
+        : public wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf
+        {
+            CryptoContext & cctx;
+            wrmcapture_ocrypto_filename_params hash_ctx;
+            wrmcapture_ocrypto_filter wrm_filter;
+
+        public:
+            explicit wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto(
+                wrmcapture_out_hash_meta_sequence_filename_buf_param_ocrypto const & params
+            )
+            : wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf(params.meta_sq_params)
+            , cctx(params.cctx)
+            , hash_ctx(params.filter_params)
+            , wrm_filter(this->buf(), params.filter_params)
+            {}
+
+            ssize_t write(const void * data, size_t len)
+            {
+                if (!this->buf().is_open()) {
+                    const char * filename = this->get_filename_generate();
+                    const int res = this->open_filename(filename);
+                    if (res < 0) {
+                        return res;
+                    }
+                    if (int err = this->wrm_filter.open(filename)) {
+                        return err;
+                    }
+                }
+                return this->wrm_filter.write(data, len);
+            }
+
+            int close()
+            {
+                if (this->buf().is_open()) {
+                    if (this->next()) {
+                        return 1;
+                    }
+                }
+
+                wrmcapture_ocrypto_filename_buf hash_buf(this->hash_ctx);
+
+                if (!this->meta_buf_.is_open()) {
+                    return 1;
+                }
+
+                wrmcapture_hash_type hash;
+
+                if (this->meta_buf_.close(hash)) {
+                    return 1;
+                }
+
+                char const * hash_filename = this->hf_.filename;
+                char const * meta_filename = this->meta_filename();
+
+                char path[1024] = {};
+                char basename[1024] = {};
+                char extension[256] = {};
+                char filename[2048] = {};
+
+                canonical_path(
+                    meta_filename,
+                    path, sizeof(path),
+                    basename, sizeof(basename),
+                    extension, sizeof(extension)
+                );
+
+                snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+                if (hash_buf.open(hash_filename, S_IRUSR|S_IRGRP) < 0) {
+                    int e = errno;
+                    LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+                    errno = e;
+                    return 1;
+                }
+
+                char header[] = "v2\n\n\n";
+                hash_buf.write(header, sizeof(header)-1);
+
+                struct stat stat;
+                int err = ::stat(meta_filename, &stat);
+                if (err) {
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
+                        hash_filename, err);
+                    return 1;
+                }
+
+                auto & writer = hash_buf;
+                
+                auto pfile = filename;
+                auto epfile = filename;
+                for (; *epfile; ++epfile) {
+                    if (*epfile == '\\') {
+                        ssize_t len = epfile - pfile + 1;
+                        auto res = writer.write(pfile, len);
+                        if (res < len) {
+                            err = res < 0 ? res : 1;
+                            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
+                                hash_filename, err);
+                            return 1;
+                        }
+                        pfile = epfile;
+                    }
+                    if (*epfile == ' ') {
+                        ssize_t len = epfile - pfile;
+                        auto res = writer.write(pfile, len);
+                        if (res < len) {
+                            err = res < 0 ? res : 1;
+                            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
+                                hash_filename, err);
+                            return 1;
+                    }
+                        res = writer.write("\\", 1u);
+                        if (res < 1) {
+                            err = res < 0 ? res : 1;
+                            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
+                                hash_filename, err);
+                            return 1;
+                        }
+                        pfile = epfile;
+                    }
+                }
+
+                if (pfile != epfile) {
+                    ssize_t len = epfile - pfile;
+                    auto res = writer.write(pfile, len);
+                    if (res < len) {
+                        err = res < 0 ? res : 1;
+                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                        return 1;
+                    }
+                }
+                    
+                using ull = unsigned long long;
+                using ll = long long;
+                char mes[
+                    (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+                    (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+                    wrmcapture_hash_string_len + 1 +
+                    2
+                ];
+                ssize_t len = std::sprintf(
+                    mes,
+                    " %lld %llu %lld %lld %llu %lld %lld %lld",
+                    ll(stat.st_size),
+                    ull(stat.st_mode),
+                    ll(stat.st_uid),
+                    ll(stat.st_gid),
+                    ull(stat.st_dev),
+                    ll(stat.st_ino),
+                    ll(stat.st_mtim.tv_sec),
+                    ll(stat.st_ctim.tv_sec)
+                );
+
+                char * p = mes + len;
+                auto write = [&p](unsigned char const * hash) {
+                    *p++ = ' ';                // 1 octet
+                    for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+                        sprintf(p, "%02x", c); // 64 octets (hash)
+                        p += 2;
+                    }
+                };
+                write(&hash[0]);
+                write(&hash[MD_HASH_LENGTH]);
+                *p++ = '\n';
+
+                ssize_t res = writer.write(mes, p-mes);
+
+                if (res < p-mes) {
+                    err = res < 0 ? res : 1;
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                    return 1;
+                }
+
+                err = hash_buf.close(/*hash*/);
+                if (err) {
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                    return 1;
+                }
+
+                return 0;
+            }
+
+            int next()
+            {
+                if (this->buf().is_open()) {
+                    wrmcapture_hash_type hash;
+                    {
+                        const int res1 = this->wrm_filter.close(hash, this->cctx.get_hmac_key());
+                        const int res2 = this->buf().close();
+                        if (res1) {
+                            return res1;
+                        }
+                        if (res2) {
+                            return res2;
+                        }
+                    }
+
+                    return this->next_meta_file(&hash);
+                }
+                return 1;
+            }
+        } buf;
 
     public:
     wrmcapture_CryptoOutMetaSequenceTransport(
