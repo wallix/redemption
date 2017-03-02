@@ -468,39 +468,28 @@ inline void hexdump8_c(const char * data, size_t size)
 
 } // anonymous namespace
 
-inline char * escape_double_quotes(const char * subject) {
-
-    if (subject == nullptr) {
-        char * null_char = nullptr;
-        return null_char;
-    }
-
-    size_t subject_len = (subject ==  nullptr)?0:strlen(subject);
+inline std::string escape_delimiters(const std::string subject) {
     size_t pos = 0;
-    char * escaped_subject = new char[1+2*subject_len];
-
-    for (uint32_t i = 0; i < subject_len; i++) {
-        if(subject[i] == '\"') {
-            escaped_subject[pos] = '\\';
-            pos++;
-        }
-        escaped_subject[pos] = subject[i];
-        pos++;
-    }
-    escaped_subject[pos] = 0;
-    return escaped_subject;
-}
-
-inline std::string escape_double_quotes_string(const std::string subject) {
-    size_t pos = 0;
+    std::string backslash("\\");
+    std::string escaped_backslash("\\\\");
     std::string double_quotes("\"");
     std::string escaped_double_quotes("\\\"");
 
+    if (subject.empty()) {
+        return nullptr;
+    }
+
     std::string escaped_subject = subject;
+
+    while ((pos = escaped_subject.find(backslash, pos)) != std::string::npos) {
+         escaped_subject.replace(pos, backslash.length(), escaped_backslash);
+         pos += escaped_backslash.length();
+    }
+    pos = 0;
+
     while ((pos = escaped_subject.find(double_quotes, pos)) != std::string::npos) {
          escaped_subject.replace(pos, double_quotes.length(), escaped_double_quotes);
          pos += escaped_double_quotes.length();
     }
-
     return escaped_subject;
 }
