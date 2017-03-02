@@ -228,13 +228,12 @@ struct wrmcapture_OutFilenameSequenceTransport : public Transport
     int bufxxx_groupid_;
 
     wrmcapture_OutFilenameSequenceTransport(
-        wrmcapture_FilenameGenerator::Format format,
         const char * const prefix,
         const char * const filename,
         const char * const extension,
         const int groupid,
         auth_api * authentifier)
-    : bufxxx_filegen_(format, prefix, filename, extension)
+    : bufxxx_filegen_(wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION, prefix, filename, extension)
     , bufxxx_buf_()
     , bufxxx_num_file_(0)
     , bufxxx_groupid_(groupid)
@@ -2381,9 +2380,8 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
         uint16_t width,
         uint16_t height,
         const int groupid,
-        auth_api * authentifier = nullptr,
-        wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    : buf(now.tv_sec, format, hash_path, path, basename, ".wrm", groupid)
+        auth_api * authentifier = nullptr)
+    : buf(now.tv_sec, wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION, hash_path, path, basename, ".wrm", groupid)
     {
         if (authentifier) {
             this->set_authentifier(authentifier);
@@ -2496,9 +2494,8 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         uint16_t width,
         uint16_t height,
         const int groupid,
-        auth_api * authentifier = nullptr,
-        wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    : buf(cctx, now.tv_sec, format, hash_path, path, basename, ".wrm", groupid)
+        auth_api * authentifier = nullptr)
+    : buf(cctx, now.tv_sec, wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION, hash_path, path, basename, ".wrm", groupid)
     {
         if (authentifier) {
             this->set_authentifier(authentifier);
@@ -3232,9 +3229,8 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
         uint16_t width,
         uint16_t height,
         const int groupid,
-        auth_api * authentifier = nullptr,
-        wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    : buf(cctx, now.tv_sec, format, hash_path, path, basename, ".wrm", groupid, rnd) {
+        auth_api * authentifier = nullptr)
+    : buf(cctx, now.tv_sec, wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION, hash_path, path, basename, ".wrm", groupid, rnd) {
         if (authentifier) {
             this->set_authentifier(authentifier);
         }

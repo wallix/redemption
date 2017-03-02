@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 {
     Rect scr(0, 0, 800, 600);
     const int groupid = 0;
-    wrmcapture_OutFilenameSequenceTransport trans(wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION, "./", "test", ".wrm", groupid, nullptr);
+    wrmcapture_OutFilenameSequenceTransport trans("./", "test", ".wrm", groupid, nullptr);
 
     struct timeval now;
     now.tv_sec = 1000;
@@ -720,8 +720,7 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
     now.tv_sec = 1352304810;
     now.tv_usec = 0;
     const int groupid = 0;
-    wrmcapture_OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid, nullptr,
-                                       wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
+    wrmcapture_OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid, nullptr);
     wrm_trans.send("AAAAX", 5);
     wrm_trans.send("BBBBX", 5);
     wrm_trans.next();
@@ -1310,8 +1309,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
         const int groupid = 0;
-        wrmcapture_CryptoOutMetaSequenceTransport crypto_trans(cctx, rnd, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid,
-                                                    nullptr, wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
+        wrmcapture_CryptoOutMetaSequenceTransport crypto_trans(cctx, rnd, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid, nullptr);
         crypto_trans.send("AAAAX", 5);
         tv.tv_sec += 100;
         crypto_trans.timestamp(tv);
