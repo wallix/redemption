@@ -265,7 +265,7 @@ struct wrmcapture_OutFilenameSequenceTransport : public Transport
         if (res) {
             this->status = false;
             if (res < 0){
-                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                LOG(LOG_ERR, "Write to transport failed (M1): code=%d", errno);
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
             }
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
@@ -785,7 +785,7 @@ struct ocrypto {
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Encryption buffer too small\n", ::getpid());
             return -1;
         }
-        ::memcpy(ciphered_buf, buffer, ciphered_buf_sz);
+        ::memcpy(buffer, ciphered_buf, ciphered_buf_sz);
         towrite += ciphered_buf_sz;
 
         if (-1 == this->xmd_update(&ciphered_buf, ciphered_buf_sz)) {
@@ -822,7 +822,7 @@ struct ocrypto {
         if (towrite + 8 > buflen){
             return -1;
         }
-        ::memcpy(tmp_buf, buffer+towrite, 8);
+        ::memcpy(buffer + towrite, tmp_buf, 8);
         towrite += 8;
         
         this->encrypt_file_size += 8;
@@ -1010,7 +1010,6 @@ public:
         
         uint8_t buffer[40];
         size_t towrite = 0;
-        
         err = this->encrypt_open(buffer, sizeof(buffer), towrite, trace_key, this->cctx, iv);
         if (!err) {
             err = this->raw_write(buffer, towrite);
@@ -3187,41 +3186,6 @@ public:
     }
 };
 
-template<class Writer>
-void wrmcapture_write_meta_headers(Writer & writer, const char * path,
-                        uint16_t width, uint16_t height,
-                        auth_api * authentifier,
-                        bool has_checksum
-                       )
-{
-    char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
-    const int len = sprintf(
-        header1,
-        "v2\n"
-        "%u %u\n"
-        "%s\n"
-        "\n\n",
-        unsigned(width),
-        unsigned(height),
-        has_checksum  ? "checksum" : "nochecksum"
-    );
-    const ssize_t res = writer.write(header1, len);
-    if (res < 0) {
-        int err = errno;
-        LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
-
-        if (err == ENOSPC) {
-            char message[1024];
-            snprintf(message, sizeof(message), "100|%s", path);
-            authentifier->report("FILESYSTEM_FULL", message);
-
-            throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
-        }
-        else {
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
-        }
-    }
-}
 
 
 class wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto
@@ -3463,7 +3427,7 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
         const ssize_t res = this->buffer().meta_buf_write(header1, len);
         if (res < 0) {
             int err = errno;
-            LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
+            LOG(LOG_ERR, "Write to transport failed (M3): code=%d", err);
 
             if (err == ENOSPC) {
                 char message[1024];
@@ -3495,7 +3459,7 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
         if (res) {
             this->status = false;
             if (res < 0){
-                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                LOG(LOG_ERR, "Write to transport failed (M4): code=%d", errno);
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
             }
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
@@ -3584,7 +3548,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         const ssize_t res = writer.write(header1, len);
         if (res < 0) {
             int err = errno;
-            LOG(LOG_ERR, "Write to transport failed (M): code=%d", err);
+            LOG(LOG_ERR, "Write to transport failed (M5): code=%d", err);
 
             if (err == ENOSPC) {
                 char message[1024];
@@ -3616,7 +3580,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         if (res) {
             this->status = false;
             if (res < 0){
-                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                LOG(LOG_ERR, "Write to transport failed (M6): code=%d", errno);
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
             }
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
@@ -3670,9 +3634,13 @@ private:
 
 
 
-struct wrmcapture_CryptoOutMetaSequenceTransport
-: public Transport {
+struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport 
+{
+    private:
+        typedef wrmcapture_CryptoOutMetaSequenceTransport TransportType;
+        wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto buf;
 
+    public:
     wrmcapture_CryptoOutMetaSequenceTransport(
         CryptoContext & crypto_ctx,
         Random & rnd,
@@ -3685,36 +3653,60 @@ struct wrmcapture_CryptoOutMetaSequenceTransport
         const int groupid,
         auth_api * authentifier = nullptr,
         wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    : buf(
-        wrmcapture_out_hash_meta_sequence_filename_buf_param_ocrypto(
-            crypto_ctx,
-            now.tv_sec, format, hash_path, path, basename, ".wrm", groupid,
-            {crypto_ctx, rnd}
-        )) {
+    : buf(wrmcapture_out_hash_meta_sequence_filename_buf_param_ocrypto(crypto_ctx, now.tv_sec, format, hash_path, path, basename, ".wrm", groupid, {crypto_ctx, rnd})) {
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
 
-        wrmcapture_write_meta_headers(this->buffer().meta_buf_, path, width, height, this->authentifier, true);
+       bool has_checksum = true;
+
+        char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
+        const int len = sprintf(
+            header1,
+            "v2\n"
+            "%u %u\n"
+            "%s\n"
+            "\n\n",
+            unsigned(width),
+            unsigned(height),
+            has_checksum  ? "checksum" : "nochecksum"
+        );
+        const ssize_t res = this->buf.meta_buf_.write(header1, len);
+        if (res < 0) {
+            int err = errno;
+            LOG(LOG_ERR, "Write to transport failed (M2.0): code=%d", err);
+
+            if (err == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", path);
+                this->authentifier->report("FILESYSTEM_FULL", message);
+
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
+            }
+        }
     }
 
     void timestamp(timeval now) override {
-        this->buffer().update_sec(now.tv_sec);
+        this->buf.update_sec(now.tv_sec);
     }
 
     const wrmcapture_FilenameGenerator * seqgen() const noexcept
     {
-        return &(this->buffer().seqgen());
+        return &(this->buf.seqgen());
     }
+
     bool next() override {
         if (this->status == false) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
-        const ssize_t res = this->buffer().next();
+        const ssize_t res = this->buf.next();
         if (res) {
             this->status = false;
             if (res < 0){
-                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                LOG(LOG_ERR, "Write to transport failed (M7): code=%d", errno);
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
             }
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
@@ -3728,7 +3720,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport
     }
 
     void request_full_cleaning() override {
-        this->buffer().request_full_cleaning();
+        this->buf.request_full_cleaning();
     }
 
     ~wrmcapture_CryptoOutMetaSequenceTransport() {
@@ -3753,16 +3745,6 @@ private:
         }
         this->last_quantum_sent += res;
     }
-
-    wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto & buffer() noexcept
-    { return this->buf; }
-
-    const wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto & buffer() const noexcept
-    { return this->buf; }
-
-    typedef wrmcapture_CryptoOutMetaSequenceTransport TransportType;
-
-    wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto buf;
 };
 
 
