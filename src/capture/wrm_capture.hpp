@@ -2993,8 +2993,7 @@ private:
 struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport 
 {
     private:
-    
-        struct wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf
+        class wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto
         {
             char xxx_current_filename_[1024];
             wrmcapture_FilenameGenerator xxx_filegen_;
@@ -3071,7 +3070,6 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 this->xxx_filegen_.set_last_filename(this->xxx_num_file_, this->xxx_current_filename_);
                 return filename;
             }
-        // =======================================================================
 
         public:
             wrmcapture_ocrypto_filename_buf xxx_meta_buf_;
@@ -3083,31 +3081,6 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             time_t xxx_stop_sec_;
 
         public:
-            explicit wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf(
-                wrmcapture_out_meta_sequence_filename_buf_param const & params
-            )
-            : xxx_filegen_(params.sq_params.format, params.sq_params.prefix, params.sq_params.filename, params.sq_params.extension)
-            , xxx_buf_()
-            , xxx_num_file_(0)
-            , xxx_groupid_(params.sq_params.groupid)
-            , xxx_meta_buf_(params.meta_buf_params)
-            , xxx_mf_(params.sq_params.prefix, params.sq_params.filename, params.sq_params.format)
-            , xxx_hf_(params.hash_prefix, params.sq_params.filename, params.sq_params.format)
-            , xxx_start_sec_(params.sec)
-            , xxx_stop_sec_(params.sec)
-            {
-                this->xxx_current_filename_[0] = 0;
-                if (this->xxx_meta_buf_.open(this->xxx_mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
-                    LOG(LOG_ERR, "Failed to open meta file %s", this->xxx_mf_.filename);
-                    throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-                }
-                if (chmod(this->xxx_mf_.filename, S_IRUSR | S_IRGRP) == -1) {
-                    LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                       , this->xxx_mf_.filename
-                       , "u+r, g+r"
-                       , strerror(errno), errno);
-                }
-            }
 
             int xxx_close()
             {
@@ -3416,11 +3389,8 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 
             void xxx_update_sec(time_t sec)
             { this->xxx_stop_sec_ = sec; }
-        };    
-    
-        class wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto
-        : public wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf
-        {
+
+        private:
             CryptoContext & cctx;
             wrmcapture_ocrypto_filename_params hash_ctx;
             wrmcapture_ocrypto_filter wrm_filter;
@@ -3429,11 +3399,38 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             explicit wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto(
                 wrmcapture_out_hash_meta_sequence_filename_buf_param_ocrypto const & params
             )
-            : wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf(params.meta_sq_params)
+            : xxx_filegen_(params.meta_sq_params.sq_params.format,
+                           params.meta_sq_params.sq_params.prefix,
+                           params.meta_sq_params.sq_params.filename,
+                           params.meta_sq_params.sq_params.extension)
+            , xxx_buf_()
+            , xxx_num_file_(0)
+            , xxx_groupid_(params.meta_sq_params.sq_params.groupid)
+            , xxx_meta_buf_(params.meta_sq_params.meta_buf_params)
+            , xxx_mf_(params.meta_sq_params.sq_params.prefix, 
+                      params.meta_sq_params.sq_params.filename, 
+                      params.meta_sq_params.sq_params.format)
+            , xxx_hf_(params.meta_sq_params.hash_prefix, 
+                      params.meta_sq_params.sq_params.filename,
+                      params.meta_sq_params.sq_params.format)
+            , xxx_start_sec_(params.meta_sq_params.sec)
+            , xxx_stop_sec_(params.meta_sq_params.sec)
             , cctx(params.cctx)
             , hash_ctx(params.filter_params)
             , wrm_filter(this->xxx_buf(), params.filter_params)
-            {}
+            {
+                this->xxx_current_filename_[0] = 0;
+                if (this->xxx_meta_buf_.open(this->xxx_mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+                    LOG(LOG_ERR, "Failed to open meta file %s", this->xxx_mf_.filename);
+                    throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+                }
+                if (chmod(this->xxx_mf_.filename, S_IRUSR | S_IRGRP) == -1) {
+                    LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                       , this->xxx_mf_.filename
+                       , "u+r, g+r"
+                       , strerror(errno), errno);
+                }
+            }
 
             ssize_t write(const void * data, size_t len)
             {
