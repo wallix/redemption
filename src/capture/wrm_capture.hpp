@@ -31,6 +31,10 @@
 #include <sys/types.h>
 
 #include "utils/difftimeval.hpp"
+#include "utils/genrandom.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/sugar/iter.hpp"
+#include "utils/stream.hpp"
 
 #include "gdi/capture_api.hpp"
 #include "capture/wrm_params.hpp"

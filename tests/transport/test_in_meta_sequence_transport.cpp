@@ -27,8 +27,9 @@
 //#define LOGNULL
 #define LOGPRINT
 
+#include "utils/sugar/iter.hpp"
 
-#include "capture/capture.hpp"
+#include "capture/wrm_capture.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "core/error.hpp"
 
