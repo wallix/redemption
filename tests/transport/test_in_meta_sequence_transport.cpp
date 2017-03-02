@@ -24,8 +24,8 @@
 #define BOOST_TEST_MODULE TestInMetaSequenceTransport
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 
 
 #include "capture/capture.hpp"

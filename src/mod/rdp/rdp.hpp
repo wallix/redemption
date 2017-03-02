@@ -643,15 +643,12 @@ protected:
 
         void server_cert_error(const char * str_error) override {
             if (is_syslog_notification_enabled(this->server_cert_error_message)) {
-                char extra[512];
-                snprintf(extra, sizeof(extra),
-                        "description=\"X.509 server certificate internal error: \\\"%s\\\"\"",
-                        (str_error ? escape_double_quotes(str_error) : "")
-                    );
+                std::string extra("description=\"X.509 server certificate internal error: \\\"");
+                extra += (str_error ? escape_delimiters(str_error) : std::string(""));
+                extra += std::string("\\\"\""); 
                 this->authentifier.log4((this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_ERROR",
-                        extra
-                    );
+                        extra.c_str());
             }
         }
     } server_notifier;

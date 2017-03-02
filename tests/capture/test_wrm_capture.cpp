@@ -52,6 +52,41 @@
 
 #include "capture/wrm_capture.hpp"
 
+template<class Writer>
+void wrmcapture_write_meta_headers(Writer & writer, const char * path,
+                        uint16_t width, uint16_t height,
+                        auth_api * authentifier,
+                        bool has_checksum
+                       )
+{
+    char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
+    const int len = sprintf(
+        header1,
+        "v2\n"
+        "%u %u\n"
+        "%s\n"
+        "\n\n",
+        unsigned(width),
+        unsigned(height),
+        has_checksum  ? "checksum" : "nochecksum"
+    );
+    const ssize_t res = writer.write(header1, len);
+    if (res < 0) {
+        int err = errno;
+        LOG(LOG_ERR, "Write to transport failed (M2): code=%d", err);
+
+        if (err == ENOSPC) {
+            char message[1024];
+            snprintf(message, sizeof(message), "100|%s", path);
+            authentifier->report("FILESYSTEM_FULL", message);
+
+            throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
+        }
+        else {
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
+        }
+    }
+}
 
 BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 {
