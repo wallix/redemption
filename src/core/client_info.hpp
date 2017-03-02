@@ -151,7 +151,7 @@ struct ClientInfo {
         const uint32_t mandatory_flags = INFO_MOUSE
                                        | INFO_DISABLECTRLALTDEL
                                        | INFO_UNICODE
-                                       | INFO_MAXIMIZESHELL
+                                       // | INFO_MAXIMIZESHELL // unnecessary. Following by "'RDP' failed at RDP_GET_LICENSE state" if absent.
                                        ;
 
         if ((infoPacket.flags & mandatory_flags) != mandatory_flags){
