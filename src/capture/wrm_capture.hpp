@@ -240,6 +240,12 @@ public:
 
 struct wrmcapture_OutFilenameSequenceTransport : public Transport
 {
+    char bufxxx_current_filename_[1024];
+    wrmcapture_FilenameGenerator bufxxx_filegen_;
+    iofdbuf bufxxx_buf_;
+    unsigned bufxxx_num_file_;
+    int bufxxx_groupid_;
+
     wrmcapture_OutFilenameSequenceTransport(
         wrmcapture_FilenameGenerator::Format format,
         const char * const prefix,
@@ -247,21 +253,25 @@ struct wrmcapture_OutFilenameSequenceTransport : public Transport
         const char * const extension,
         const int groupid,
         auth_api * authentifier)
-    : buf(wrmcapture_out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
+    : bufxxx_filegen_(format, prefix, filename, extension)
+    , bufxxx_buf_()
+    , bufxxx_num_file_(0)
+    , bufxxx_groupid_(groupid)
     {
+        this->bufxxx_current_filename_[0] = 0;
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
     }
 
     const wrmcapture_FilenameGenerator * seqgen() const noexcept
-    { return &(this->buf.seqgen()); }
+    { return &(this->bufxxx_seqgen()); }
 
     bool next() override {
         if (this->status == false) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
-        const ssize_t res = this->buf.next();
+        const ssize_t res = this->bufxxx_next();
         if (res) {
             this->status = false;
             if (res < 0){
@@ -275,21 +285,21 @@ struct wrmcapture_OutFilenameSequenceTransport : public Transport
     }
 
     bool disconnect() override {
-        return !this->buf.close();
+        return !this->bufxxx_close();
     }
 
     void request_full_cleaning() override {
-        this->buf.request_full_cleaning();
+        this->bufxxx_request_full_cleaning();
     }
 
     ~wrmcapture_OutFilenameSequenceTransport() {
-        this->buf.close();
+        this->bufxxx_close();
     }
 
 private:
 
     void do_send(const uint8_t * data, size_t len) override {
-        const ssize_t res = this->buf.write(data, len);
+        const ssize_t res = this->bufxxx_write(data, len);
         if (res < 0) {
             this->status = false;
             if (errno == ENOSPC) {
@@ -306,117 +316,100 @@ private:
         this->last_quantum_sent += res;
     }
 
-    class wrmcapture_out_sequence_filename_buf_impl
-    {
-        char current_filename_[1024];
-        wrmcapture_FilenameGenerator filegen_;
-        iofdbuf buf_;
-        unsigned num_file_;
-        int groupid_;
-
     public:
-        explicit wrmcapture_out_sequence_filename_buf_impl(wrmcapture_out_sequence_filename_buf_param const & params)
-        : filegen_(params.format, params.prefix, params.filename, params.extension)
-        , buf_()
-        , num_file_(0)
-        , groupid_(params.groupid)
-        {
-            this->current_filename_[0] = 0;
-        }
 
-        int close()
-        { return this->next(); }
+    int bufxxx_close()
+    { return this->bufxxx_next(); }
 
-        ssize_t write(const void * data, size_t len)
-        {
-            if (!this->buf_.is_open()) {
-                const int res = this->open_filename(this->filegen_.get(this->num_file_));
-                if (res < 0) {
-                    return res;
-                }
-            }
-            return this->buf_.write(data, len);
-        }
-
-        /// \return 0 if success
-        int next()
-        {
-            if (this->buf_.is_open()) {
-                this->buf_.close();
-                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                return this->rename_filename() ? 0 : 1;
-            }
-            return 1;
-        }
-
-        void request_full_cleaning()
-        {
-            unsigned i = this->num_file_ + 1;
-            while (i > 0 && !::unlink(this->filegen_.get(--i))) {
-            }
-            if (this->buf_.is_open()) {
-                this->buf_.close();
-            }
-        }
-
-        const wrmcapture_FilenameGenerator & seqgen() const noexcept
-        { return this->filegen_; }
-
-        iofdbuf & buf() noexcept
-        { return this->buf_; }
-
-        const char * current_path() const
-        {
-            if (!this->current_filename_[0] && !this->num_file_) {
-                return nullptr;
-            }
-            return this->filegen_.get(this->num_file_ - 1);
-        }
-
-    protected:
-        ssize_t open_filename(const char * filename)
-        {
-            snprintf(this->current_filename_, sizeof(this->current_filename_),
-                        "%sred-XXXXXX.tmp", filename);
-            const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
-            if (fd < 0) {
-                return fd;
-            }
-            if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                   , this->current_filename_
-                   , this->groupid_ ? "u+r, g+r" : "u+r"
-                   , strerror(errno), errno);
-            }
-            this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-            return this->buf_.open(fd);
-        }
-
-        const char * rename_filename()
-        {
-            const char * filename = this->get_filename_generate();
-            const int res = ::rename(this->current_filename_, filename);
+    ssize_t bufxxx_write(const void * data, size_t len)
+    {
+        if (!this->bufxxx_buf_.is_open()) {
+            const int res = this->bufxxx_open_filename(this->bufxxx_filegen_.get(this->bufxxx_num_file_));
             if (res < 0) {
-                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                   , this->current_filename_, filename, errno, strerror(errno));
-                return nullptr;
+                return res;
             }
+        }
+        return this->bufxxx_buf_.write(data, len);
+    }
 
-            this->current_filename_[0] = 0;
-            ++this->num_file_;
-            this->filegen_.set_last_filename(-1u, "");
+    /// \return 0 if success
+    int bufxxx_next()
+    {
+        if (this->bufxxx_buf_.is_open()) {
+            this->bufxxx_buf_.close();
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->bufxxx_current_filename, this->bufxxx_rename_to);
+            return this->bufxxx_rename_filename() ? 0 : 1;
+        }
+        return 1;
+    }
 
-            return filename;
+    void bufxxx_request_full_cleaning()
+    {
+        unsigned i = this->bufxxx_num_file_ + 1;
+        while (i > 0 && !::unlink(this->bufxxx_filegen_.get(--i))) {
+        }
+        if (this->bufxxx_buf_.is_open()) {
+            this->bufxxx_buf_.close();
+        }
+    }
+
+    const wrmcapture_FilenameGenerator & bufxxx_seqgen() const noexcept
+    { return this->bufxxx_filegen_; }
+
+    iofdbuf & bufxxx_buf() noexcept
+    { return this->bufxxx_buf_; }
+
+    const char * bufxxx_current_path() const
+    {
+        if (!this->bufxxx_current_filename_[0] && !this->bufxxx_num_file_) {
+            return nullptr;
+        }
+        return this->bufxxx_filegen_.get(this->bufxxx_num_file_ - 1);
+    }
+
+protected:
+    ssize_t bufxxx_open_filename(const char * filename)
+    {
+        snprintf(this->bufxxx_current_filename_, sizeof(this->bufxxx_current_filename_),
+                    "%sred-XXXXXX.tmp", filename);
+        const int fd = ::mkostemps(this->bufxxx_current_filename_, 4, O_WRONLY | O_CREAT);
+        if (fd < 0) {
+            return fd;
+        }
+        if (chmod(this->bufxxx_current_filename_, this->bufxxx_groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+               , this->bufxxx_current_filename_
+               , this->bufxxx_groupid_ ? "u+r, g+r" : "u+r"
+               , strerror(errno), errno);
+        }
+        this->bufxxx_filegen_.set_last_filename(this->bufxxx_num_file_, this->bufxxx_current_filename_);
+        return this->bufxxx_buf_.open(fd);
+    }
+
+    const char * bufxxx_rename_filename()
+    {
+        const char * filename = this->bufxxx_get_filename_generate();
+        const int res = ::rename(this->bufxxx_current_filename_, filename);
+        if (res < 0) {
+            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+               , this->bufxxx_current_filename_, filename, errno, strerror(errno));
+            return nullptr;
         }
 
-        const char * get_filename_generate()
-        {
-            this->filegen_.set_last_filename(-1u, "");
-            const char * filename = this->filegen_.get(this->num_file_);
-            this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-            return filename;
-        }
-    } buf;
+        this->bufxxx_current_filename_[0] = 0;
+        ++this->bufxxx_num_file_;
+        this->bufxxx_filegen_.set_last_filename(-1u, "");
+
+        return filename;
+    }
+
+    const char * bufxxx_get_filename_generate()
+    {
+        this->bufxxx_filegen_.set_last_filename(-1u, "");
+        const char * filename = this->bufxxx_filegen_.get(this->bufxxx_num_file_);
+        this->bufxxx_filegen_.set_last_filename(this->bufxxx_num_file_, this->bufxxx_current_filename_);
+        return filename;
+    }
 };
 
 
@@ -1061,15 +1054,11 @@ public:
 
     bool is_open() const noexcept
     { return -1 != this->file_fd; }
-
-    int flush() const
-    { return 0; }
 };
 
 
 class wrmcapture_ocrypto_filter : ocrypto
 {
-
     iofdbuf & snk;
 
 public:
@@ -1091,298 +1080,52 @@ public:
         this->cctx.get_derived_key(trace_key, base, base_len);
         unsigned char iv[32];
         this->rnd.random(iv, 32);
-
-        ::memset(this->encrypt_buf, 0, sizeof(this->encrypt_buf));
-        ::memset(&this->encrypt_ectx, 0, sizeof(this->encrypt_ectx));
-        ::memset(&this->encrypt_hctx, 0, sizeof(this->encrypt_hctx));
-        ::memset(&this->encrypt_hctx4k, 0, sizeof(this->encrypt_hctx4k));
-        this->encrypt_pos = 0;
-        this->encrypt_raw_size = 0;
-        this->encrypt_file_size = 0;
-
-        const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
-        const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
-        const int          nrounds = 5;
-        unsigned char      key[32];
-        const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
-                                       trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
-        if (i != 32) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
-            return -1;
+        
+        uint8_t buffer[40];
+        size_t towrite = 0;
+        int err = this->encrypt_open(buffer, sizeof(buffer), towrite, trace_key, this->cctx, iv);
+        if (!err) {
+            err = this->raw_write(buffer, towrite);
         }
-
-        ::EVP_CIPHER_CTX_init(&this->encrypt_ectx);
-        if (::EVP_EncryptInit_ex(&this->encrypt_ectx, cipher, nullptr, key, iv) != 1) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize encrypt context\n", ::getpid());
-            return -1;
-        }
-
-        // MD stuff
-        const EVP_MD * md = EVP_get_digestbyname(MD_HASH_NAME);
-        if (!md) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not find message digest algorithm!\n", ::getpid());
-            return -1;
-        }
-
-        ::EVP_MD_CTX_init(&this->encrypt_hctx);
-        ::EVP_MD_CTX_init(&this->encrypt_hctx4k);
-        if (::EVP_DigestInit_ex(&this->encrypt_hctx, md, nullptr) != 1) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context!\n", ::getpid());
-            return -1;
-        }
-        if (::EVP_DigestInit_ex(&this->encrypt_hctx4k, md, nullptr) != 1) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize 4k MD hash context!\n", ::getpid());
-            return -1;
-        }
-
-        // HMAC: key^ipad
-        const int     blocksize = ::EVP_MD_block_size(md);
-        unsigned char * key_buf = new(std::nothrow) unsigned char[blocksize];
-        {
-            if (key_buf == nullptr) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc!\n", ::getpid());
-                return -1;
-            }
-            const std::unique_ptr<unsigned char[]> auto_free(key_buf);
-            ::memset(key_buf, 0, blocksize);
-            if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
-                unsigned char keyhash[MD_HASH_LENGTH];
-                if ( ! ::MD_HASH_FUNC(cctx.get_hmac_key(), CRYPTO_KEY_LENGTH, keyhash)) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key!\n", ::getpid());
-                    return -1;
-                }
-                ::memcpy(key_buf, keyhash, MIN(MD_HASH_LENGTH, blocksize));
-            }
-            else {
-                ::memcpy(key_buf, cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
-            }
-            for (int idx = 0; idx <  blocksize; idx++) {
-                key_buf[idx] = key_buf[idx] ^ 0x36;
-            }
-            if (::EVP_DigestUpdate(&this->encrypt_hctx, key_buf, blocksize) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
-                return -1;
-            }
-            if (::EVP_DigestUpdate(&this->encrypt_hctx4k, key_buf, blocksize) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
-                return -1;
-            }
-        }
-
-        // update context with previously written data
-        char tmp_buf[40];
-        tmp_buf[0] = WABCRYPTOFILE_MAGIC & 0xFF;
-        tmp_buf[1] = (WABCRYPTOFILE_MAGIC >> 8) & 0xFF;
-        tmp_buf[2] = (WABCRYPTOFILE_MAGIC >> 16) & 0xFF;
-        tmp_buf[3] = (WABCRYPTOFILE_MAGIC >> 24) & 0xFF;
-        tmp_buf[4] = WABCRYPTOFILE_VERSION & 0xFF;
-        tmp_buf[5] = (WABCRYPTOFILE_VERSION >> 8) & 0xFF;
-        tmp_buf[6] = (WABCRYPTOFILE_VERSION >> 16) & 0xFF;
-        tmp_buf[7] = (WABCRYPTOFILE_VERSION >> 24) & 0xFF;
-        ::memcpy(tmp_buf + 8, iv, 32);
-
-        // TODO: if I suceeded writing a broken file, wouldn't it be better to remove it ?
-        if (const ssize_t write_ret = this->raw_write(tmp_buf, 40)){
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: write error! error=%s\n", ::getpid(), ::strerror(errno));
-            return write_ret;
-        }
-        // update file_size
-        this->encrypt_file_size += 40;
-
-        return this->xmd_update(tmp_buf, 40);
+        return err;
     }
 
     ssize_t write(const void * data, size_t len)
-    {
-        unsigned int remaining_size = len;
-        while (remaining_size > 0) {
-            // Check how much we can append into buffer
-            unsigned int available_size = MIN(CRYPTO_BUFFER_SIZE - this->encrypt_pos, remaining_size);
-            // Append and update pos pointer
-            ::memcpy(this->encrypt_buf + this->encrypt_pos, static_cast<const char*>(data) + (len - remaining_size), available_size);
-            this->encrypt_pos += available_size;
-            // If buffer is full, flush it to disk
-            if (this->encrypt_pos == CRYPTO_BUFFER_SIZE) {
-                if (this->flush()) {
-                    return -1;
-                }
-            }
-            remaining_size -= available_size;
-        }
-        // Update raw size counter
-        this->encrypt_raw_size += len;
-        return len;
-    }
-
-    /* Flush procedure (compression, encryption, effective file writing)
-     * Return 0 on success, negatif on error
-     */
-    int flush()
-    {
-        // No data to flush
-        if (!this->encrypt_pos) {
-            return 0;
-        }
-
-        // Compress
-        // TODO: check this
-        char compressed_buf[65536];
-        //char compressed_buf[compressed_buf_sz];
-        size_t compressed_buf_sz = ::snappy_max_compressed_length(this->encrypt_pos);
-        snappy_status status = snappy_compress(this->encrypt_buf, this->encrypt_pos, compressed_buf, &compressed_buf_sz);
-
-        switch (status)
+    { 
+        uint8_t buffer[65536];
+        size_t towrite = 0;
+        int lentobuf = this->encrypt_write(buffer, sizeof(buffer), towrite, data, len); 
+        if (lentobuf < 0) {
+            return -1;
+        }        
+        if (this->raw_write(buffer, towrite))
         {
-            case SNAPPY_OK:
-                break;
-            case SNAPPY_INVALID_INPUT:
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with status code INVALID_INPUT!\n", getpid());
-                return -1;
-            case SNAPPY_BUFFER_TOO_SMALL:
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with status code BUFFER_TOO_SMALL!\n", getpid());
-                return -1;
-        }
-
-        // Encrypt
-        unsigned char ciphered_buf[4 + 65536];
-        //char ciphered_buf[ciphered_buf_sz];
-        uint32_t ciphered_buf_sz = compressed_buf_sz + AES_BLOCK_SIZE;
-        {
-            const unsigned char * src_buf = reinterpret_cast<unsigned char*>(compressed_buf);
-            if (this->xaes_encrypt(src_buf, compressed_buf_sz, ciphered_buf + 4, &ciphered_buf_sz)) {
-                return -1;
-            }
-        }
-
-        ciphered_buf[0] = ciphered_buf_sz & 0xFF;
-        ciphered_buf[1] = (ciphered_buf_sz >> 8) & 0xFF;
-        ciphered_buf[2] = (ciphered_buf_sz >> 16) & 0xFF;
-        ciphered_buf[3] = (ciphered_buf_sz >> 24) & 0xFF;
-
-        ciphered_buf_sz += 4;
-
-        if (const ssize_t err = this->raw_write(ciphered_buf, ciphered_buf_sz)) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
-            return err;
-        }
-        if (-1 == this->xmd_update(&ciphered_buf, ciphered_buf_sz)) {
             return -1;
         }
-        this->encrypt_file_size += ciphered_buf_sz;
-
-        // Reset buffer
-        this->encrypt_pos = 0;
-        return 0;
+        return lentobuf;
     }
 
-    int close(unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key)
+    int close(unsigned char hash[MD_HASH_LENGTH << 1])
     {
-        int result = this->flush();
-
-        const uint32_t eof_magic = WABCRYPTOFILE_EOF_MAGIC;
-        unsigned char tmp_buf[8] = {
-            eof_magic & 0xFF,
-            (eof_magic >> 8) & 0xFF,
-            (eof_magic >> 16) & 0xFF,
-            (eof_magic >> 24) & 0xFF,
-            uint8_t(this->encrypt_raw_size & 0xFF),
-            uint8_t((this->encrypt_raw_size >> 8) & 0xFF),
-            uint8_t((this->encrypt_raw_size >> 16) & 0xFF),
-            uint8_t((this->encrypt_raw_size >> 24) & 0xFF),
-        };
-
-        int write_ret1 = this->raw_write(tmp_buf, 8);
-        if (write_ret1){
-            // TOOD: actual error code could help
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Write error : %s\n", ::getpid(), ::strerror(errno));
+        uint8_t buffer[65536];
+        size_t towrite = 0;
+        const int res1 = this->encrypt_close(buffer, sizeof(buffer), towrite, hash, this->cctx.get_hmac_key());
+        if (res1) {
+            return -1;
         }
-        this->encrypt_file_size += 8;
-
-        this->xmd_update(tmp_buf, 8);
-
-        if (hash) {
-            unsigned char tmp_hash[MD_HASH_LENGTH << 1];
-            if (::EVP_DigestFinal_ex(&this->encrypt_hctx4k, tmp_hash, nullptr) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute 4k MD digests\n", ::getpid());
-                result = -1;
-                tmp_hash[0] = '\0';
-            }
-            if (::EVP_DigestFinal_ex(&this->encrypt_hctx, tmp_hash + MD_HASH_LENGTH, nullptr) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
-                result = -1;
-                tmp_hash[MD_HASH_LENGTH] = '\0';
-            }
-            // HMAC: MD(key^opad + MD(key^ipad))
-            const EVP_MD *md = ::EVP_get_digestbyname(MD_HASH_NAME);
-            if (!md) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not find MD message digest\n", ::getpid());
-                return -1;
-            }
-            const int     blocksize = ::EVP_MD_block_size(md);
-            unsigned char * key_buf = new(std::nothrow) unsigned char[blocksize];
-            if (key_buf == nullptr) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc\n", ::getpid());
-                return -1;
-            }
-            const std::unique_ptr<unsigned char[]> auto_free(key_buf);
-            ::memset(key_buf, '\0', blocksize);
-            if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
-                unsigned char keyhash[MD_HASH_LENGTH];
-                if ( ! ::MD_HASH_FUNC(hmac_key, CRYPTO_KEY_LENGTH, keyhash)) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key\n", ::getpid());
-                    return -1;
-                }
-                ::memcpy(key_buf, keyhash, MIN(MD_HASH_LENGTH, blocksize));
-            }
-            else {
-                ::memcpy(key_buf, hmac_key, CRYPTO_KEY_LENGTH);
-            }
-            for (int idx = 0; idx <  blocksize; idx++) {
-                key_buf[idx] = key_buf[idx] ^ 0x5c;
-            }
-
-            EVP_MD_CTX mdctx;
-            ::EVP_MD_CTX_init(&mdctx);
-            if (::EVP_DigestInit_ex(&mdctx, md, nullptr) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context\n", ::getpid());
-                return -1;
-            }
-            if (::EVP_DigestUpdate(&mdctx, key_buf, blocksize) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
-                return -1;
-            }
-            if (::EVP_DigestUpdate(&mdctx, tmp_hash, MD_HASH_LENGTH) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
-                return -1;
-            }
-            if (::EVP_DigestFinal_ex(&mdctx, hash, nullptr) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
-                result = -1;
-                hash[0] = '\0';
-            }
-            ::EVP_MD_CTX_cleanup(&mdctx);
-            ::EVP_MD_CTX_init(&mdctx);
-            if (::EVP_DigestInit_ex(&mdctx, md, nullptr) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context\n", ::getpid());
-                return -1;
-            }
-            if (::EVP_DigestUpdate(&mdctx, key_buf, blocksize) != 1){
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
-                return -1;
-            }
-            if (::EVP_DigestUpdate(&mdctx, tmp_hash + MD_HASH_LENGTH, MD_HASH_LENGTH) != 1){
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
-                return -1;
-            }
-            if (::EVP_DigestFinal_ex(&mdctx, hash + MD_HASH_LENGTH, nullptr) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
-                result = -1;
-                hash[MD_HASH_LENGTH] = '\0';
-            }
-            ::EVP_MD_CTX_cleanup(&mdctx);
+        if (this->raw_write(buffer, towrite))
+        {
+            return -1;
         }
+    
+        int res2 = snk.close();
+        return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
+    }
 
-        return result;
+    int close()
+    {
+        unsigned char hash[MD_HASH_LENGTH << 1];
+        return this->close(hash);
     }
 
 private:
@@ -1392,7 +1135,6 @@ private:
         ssize_t err = this->snk.write(data, len);
         return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
     }
-
 
 };
 
@@ -3378,6 +3120,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
         private:
             CryptoContext & cctx;
             wrmcapture_ocrypto_filename_params hash_ctx;
+            
             wrmcapture_ocrypto_filter wrm_filter;
 
         public:
@@ -3588,7 +3331,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 if (this->xxx_buf_.is_open()) {
                     wrmcapture_hash_type hash;
                     {
-                        const int res1 = this->wrm_filter.close(hash, this->cctx.get_hmac_key());
+                        const int res1 = this->wrm_filter.close(hash);
                         const int res2 = this->xxx_buf_.close();
                         if (res1) {
                             return res1;
