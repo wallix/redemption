@@ -413,26 +413,6 @@ protected:
 };
 
 
-struct wrmcapture_out_meta_sequence_filename_buf_noparam
-{
-    wrmcapture_out_sequence_filename_buf_param sq_params;
-    time_t sec;
-    const char * hash_prefix;
-
-    wrmcapture_out_meta_sequence_filename_buf_noparam(
-        time_t start_sec,
-        wrmcapture_FilenameGenerator::Format format,
-        const char * const hash_prefix,
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension,
-        const int groupid)
-    : sq_params(format, prefix, filename, extension, groupid)
-    , sec(start_sec)
-    , hash_prefix(hash_prefix)
-    {}
-};
-
 struct wrmcapture_ocrypto_filename_params
 {
     CryptoContext & crypto_ctx;
@@ -1463,17 +1443,23 @@ public:
 
 public:
     explicit wrmcapture_out_meta_sequence_filename_buf_impl_ofile_buf_out(
-        wrmcapture_out_meta_sequence_filename_buf_noparam const & params
+        time_t start_sec,
+        wrmcapture_FilenameGenerator::Format format,
+        const char * const hash_prefix,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid
     )
-    : filegen_(params.sq_params.format, params.sq_params.prefix, params.sq_params.filename, params.sq_params.extension)
+    : filegen_(format, prefix, filename, extension)
     , buf_()
     , num_file_(0)
-    , groupid_(params.sq_params.groupid)
+    , groupid_(groupid)
     , meta_buf_fd(-1)
-    , mf_(params.sq_params.prefix, params.sq_params.filename, params.sq_params.format)
-    , hf_(params.hash_prefix, params.sq_params.filename, params.sq_params.format)
-    , start_sec_(params.sec)
-    , stop_sec_(params.sec)
+    , mf_(prefix, filename, format)
+    , hf_(hash_prefix, filename, format)
+    , start_sec_(start_sec)
+    , stop_sec_(start_sec)
     {
         this->current_filename_[0] = 0;
         if (this->meta_buf_open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
@@ -2503,9 +2489,7 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
         const int groupid,
         auth_api * authentifier = nullptr,
         wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    : buf(wrmcapture_out_meta_sequence_filename_buf_noparam(
-        now.tv_sec, format, hash_path, path, basename, ".wrm", groupid
-    ))
+    : buf(now.tv_sec, format, hash_path, path, basename, ".wrm", groupid)
     {
         if (authentifier) {
             this->set_authentifier(authentifier);
