@@ -2994,7 +2994,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 {
     private:
     
-        class wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf
+        struct wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf
         {
             char current_filename_[1024];
             wrmcapture_FilenameGenerator filegen_;
@@ -3109,14 +3109,14 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 }
             }
 
-            int close()
+            int xxx_close()
             {
-                const int res1 = this->next();
+                const int res1 = this->xxx_next();
                 const int res2 = (this->meta_buf_.is_open() ? this->meta_buf_.close() : 0);
                 int err = res1 ? res1 : res2;
                 if (!err) {
                     char const * hash_filename = this->hf_.filename;
-                    char const * meta_filename = this->meta_filename();
+                    char const * meta_filename = this->mf_.filename;
 
                     char path[1024] = {};
                     char basename[1024] = {};
@@ -3290,17 +3290,17 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             }
 
             /// \return 0 if success
-            int next()
+            int xxx_next()
             {
                 if (this->buf().is_open()) {
                     this->buf().close();
-                    return this->next_meta_file();
+                    return this->xxx_next_meta_file();
                 }
                 return 1;
             }
 
         protected:
-            int next_meta_file(wrmcapture_hash_type const * hash = nullptr)
+            int xxx_next_meta_file(wrmcapture_hash_type const * hash = nullptr)
             {
                 // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
                 const char * filename = this->rename_filename();
@@ -3402,18 +3402,13 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 return 0;
             }
 
-            char const * hash_filename() const noexcept
-            {
-                return this->hf_.filename;
-            }
-
-            char const * meta_filename() const noexcept
-            {
-                return this->mf_.filename;
-            }
+//            char const * xxx_hash_filename() const noexcept
+//            {
+//                return this->hf_.filename;
+//            }
 
         public:
-            void request_full_cleaning()
+            void xxx_request_full_cleaning()
             {
                 unsigned i = this->num_file_ + 1;
                 while (i > 0 && !::unlink(this->filegen_.get(--i))) {
@@ -3424,7 +3419,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 ::unlink(this->mf_.filename);
             }
 
-            void update_sec(time_t sec)
+            void xxx_update_sec(time_t sec)
             { this->stop_sec_ = sec; }
         };    
     
@@ -3481,7 +3476,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 }
 
                 char const * hash_filename = this->hf_.filename;
-                char const * meta_filename = this->meta_filename();
+                char const * meta_filename = this->mf_.filename;
 
                 char path[1024] = {};
                 char basename[1024] = {};
@@ -3626,7 +3621,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                         }
                     }
 
-                    return this->next_meta_file(&hash);
+                    return this->xxx_next_meta_file(&hash);
                 }
                 return 1;
             }
@@ -3682,7 +3677,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
     }
 
     void timestamp(timeval now) override {
-        this->buf.update_sec(now.tv_sec);
+        this->buf.xxx_update_sec(now.tv_sec);
     }
 
     const wrmcapture_FilenameGenerator * seqgen() const noexcept
@@ -3712,7 +3707,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
     }
 
     void request_full_cleaning() override {
-        this->buf.request_full_cleaning();
+        this->buf.xxx_request_full_cleaning();
     }
 
     ~wrmcapture_CryptoOutMetaSequenceTransport() {
