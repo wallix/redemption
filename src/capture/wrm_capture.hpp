@@ -3003,10 +3003,10 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             int groupid_;
 
         public:
-            ssize_t write(const void * data, size_t len)
+            ssize_t xxx_write(const void * data, size_t len)
             {
                 if (!this->buf_.is_open()) {
-                    const int res = this->open_filename(this->filegen_.get(this->num_file_));
+                    const int res = this->xxx_open_filename(this->filegen_.get(this->num_file_));
                     if (res < 0) {
                         return res;
                     }
@@ -3014,13 +3014,13 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 return this->buf_.write(data, len);
             }
 
-            const wrmcapture_FilenameGenerator & seqgen() const noexcept
+            const wrmcapture_FilenameGenerator & xxx_seqgen() const noexcept
             { return this->filegen_; }
 
-            iofdbuf & buf() noexcept
+            iofdbuf & xxx_buf() noexcept
             { return this->buf_; }
 
-            const char * current_path() const
+            const char * xxx_current_path() const
             {
                 if (!this->current_filename_[0] && !this->num_file_) {
                     return nullptr;
@@ -3029,7 +3029,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             }
 
         protected:
-            ssize_t open_filename(const char * filename)
+            ssize_t xxx_open_filename(const char * filename)
             {
                 snprintf(this->current_filename_, sizeof(this->current_filename_),
                             "%sred-XXXXXX.tmp", filename);
@@ -3047,9 +3047,9 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 return this->buf_.open(fd);
             }
 
-            const char * rename_filename()
+            const char * xxx_rename_filename()
             {
-                const char * filename = this->get_filename_generate();
+                const char * filename = this->xxx_get_filename_generate();
                 const int res = ::rename(this->current_filename_, filename);
                 if (res < 0) {
                     LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
@@ -3064,7 +3064,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 return filename;
             }
 
-            const char * get_filename_generate()
+            const char * xxx_get_filename_generate()
             {
                 this->filegen_.set_last_filename(-1u, "");
                 const char * filename = this->filegen_.get(this->num_file_);
@@ -3292,8 +3292,8 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             /// \return 0 if success
             int xxx_next()
             {
-                if (this->buf().is_open()) {
-                    this->buf().close();
+                if (this->xxx_buf().is_open()) {
+                    this->xxx_buf().close();
                     return this->xxx_next_meta_file();
                 }
                 return 1;
@@ -3303,7 +3303,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             int xxx_next_meta_file(wrmcapture_hash_type const * hash = nullptr)
             {
                 // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                const char * filename = this->rename_filename();
+                const char * filename = this->xxx_rename_filename();
                 if (!filename) {
                     return 1;
                 }
@@ -3402,11 +3402,6 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 return 0;
             }
 
-//            char const * xxx_hash_filename() const noexcept
-//            {
-//                return this->hf_.filename;
-//            }
-
         public:
             void xxx_request_full_cleaning()
             {
@@ -3437,14 +3432,14 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             : wrmcapture_out_meta_sequence_filename_buf_impl_ocrypto_filename_buf(params.meta_sq_params)
             , cctx(params.cctx)
             , hash_ctx(params.filter_params)
-            , wrm_filter(this->buf(), params.filter_params)
+            , wrm_filter(this->xxx_buf(), params.filter_params)
             {}
 
             ssize_t write(const void * data, size_t len)
             {
-                if (!this->buf().is_open()) {
-                    const char * filename = this->get_filename_generate();
-                    const int res = this->open_filename(filename);
+                if (!this->xxx_buf().is_open()) {
+                    const char * filename = this->xxx_get_filename_generate();
+                    const int res = this->xxx_open_filename(filename);
                     if (res < 0) {
                         return res;
                     }
@@ -3457,7 +3452,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 
             int close()
             {
-                if (this->buf().is_open()) {
+                if (this->xxx_buf().is_open()) {
                     if (this->next()) {
                         return 1;
                     }
@@ -3608,11 +3603,11 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 
             int next()
             {
-                if (this->buf().is_open()) {
+                if (this->xxx_buf().is_open()) {
                     wrmcapture_hash_type hash;
                     {
                         const int res1 = this->wrm_filter.close(hash, this->cctx.get_hmac_key());
-                        const int res2 = this->buf().close();
+                        const int res2 = this->xxx_buf().close();
                         if (res1) {
                             return res1;
                         }
@@ -3682,7 +3677,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 
     const wrmcapture_FilenameGenerator * seqgen() const noexcept
     {
-        return &(this->buf.seqgen());
+        return &(this->buf.xxx_seqgen());
     }
 
     bool next() override {
@@ -3721,7 +3716,7 @@ private:
             this->status = false;
             if (errno == ENOSPC) {
                 char message[1024];
-                snprintf(message, sizeof(message), "100|%s", buf.current_path());
+                snprintf(message, sizeof(message), "100|%s", buf.xxx_current_path());
                 this->authentifier->report("FILESYSTEM_FULL", message);
                 errno = ENOSPC;
                 throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
