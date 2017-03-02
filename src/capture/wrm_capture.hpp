@@ -1021,15 +1021,15 @@ public:
     { 
         uint8_t buffer[65536];
         size_t towrite = 0;
-        int err = this->encrypt_write(buffer, sizeof(buffer), towrite, data, len); 
-        if (err) {
+        int lentobuf = this->encrypt_write(buffer, sizeof(buffer), towrite, data, len); 
+        if (lentobuf < 0) {
             return -1;
         }        
         if (this->raw_write(buffer, towrite))
         {
             return -1;
         }
-        return towrite;
+        return lentobuf;
     }
 
     int close(unsigned char hash[MD_HASH_LENGTH << 1])
