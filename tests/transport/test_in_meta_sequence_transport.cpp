@@ -46,8 +46,8 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
     auto test = [&]{
         for (size_t i = 0; i < 221 ; i++){
             pbuffer = buffer;
-            const int size = wrm_trans.recv_new_partial(pbuffer, sizeof(buffer)-FileToGraphic::HEADER_SIZE);
-            total += size + FileToGraphic::HEADER_SIZE;
+            wrm_trans.recv_new(pbuffer, sizeof(buffer));
+            total += sizeof(buffer);
         }
     };
     CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
@@ -66,8 +66,8 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
     auto test = [&]{
         for (size_t i = 0; i < 221 ; i++){
             pbuffer = buffer;
-            const int size = wrm_trans.recv_new_partial(pbuffer, sizeof(buffer)-FileToGraphic::HEADER_SIZE);
-            total += size + FileToGraphic::HEADER_SIZE;
+            wrm_trans.recv_new(pbuffer, sizeof(buffer));
+            total += sizeof(buffer);
         }
     };
     CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
