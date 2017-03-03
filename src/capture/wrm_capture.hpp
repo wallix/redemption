@@ -154,6 +154,53 @@ private:
 
 typedef wrmcapture_FilenameGenerator::Format wrmcapture_FilenameFormat;
 
+struct WrmFGen
+{
+private:
+    char         path[1024];
+    char         filename[1012];
+    char         extension[12];
+    mutable char filename_gen[1024];
+
+    const char * last_filename;
+    unsigned     last_num;
+
+public:
+    WrmFGen(const char * const prefix, const char * const filename, const char * const extension)
+    : last_filename(nullptr)
+    , last_num(-1u)
+    {
+        if (strlen(prefix) > sizeof(this->path) - 1
+         || strlen(filename) > sizeof(this->filename) - 1
+         || strlen(extension) > sizeof(this->extension) - 1) {
+            throw Error(ERR_TRANSPORT);
+        }
+
+        strcpy(this->path, prefix);
+        strcpy(this->filename, filename);
+        strcpy(this->extension, extension);
+
+        this->filename_gen[0] = 0;
+    }
+
+    const char * get(unsigned count) const
+    {
+        if (count == this->last_num && this->last_filename) {
+            return this->last_filename;
+        }
+
+        std::snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
+                , this->filename, count, this->extension);
+        return this->filename_gen;
+    }
+
+    void set_last_filename(unsigned num, const char * name)
+    {
+        this->last_num = num;
+        this->last_filename = name;
+    }
+};
+
 class iofdbuf
 {
 public:
@@ -222,52 +269,7 @@ public:
 struct wrmcapture_OutFilenameSequenceTransport : public Transport
 {
     char bufxxx_current_filename_[1024];
-    struct FGen
-    {
-    private:
-        char         path[1024];
-        char         filename[1012];
-        char         extension[12];
-        mutable char filename_gen[1024];
-
-        const char * last_filename;
-        unsigned     last_num;
-
-    public:
-        FGen(const char * const prefix, const char * const filename, const char * const extension)
-        : last_filename(nullptr)
-        , last_num(-1u)
-        {
-            if (strlen(prefix) > sizeof(this->path) - 1
-             || strlen(filename) > sizeof(this->filename) - 1
-             || strlen(extension) > sizeof(this->extension) - 1) {
-                throw Error(ERR_TRANSPORT);
-            }
-
-            strcpy(this->path, prefix);
-            strcpy(this->filename, filename);
-            strcpy(this->extension, extension);
-
-            this->filename_gen[0] = 0;
-        }
-
-        const char * get(unsigned count) const
-        {
-            if (count == this->last_num && this->last_filename) {
-                return this->last_filename;
-            }
-
-            std::snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
-                    , this->filename, count, this->extension);
-            return this->filename_gen;
-        }
-
-        void set_last_filename(unsigned num, const char * name)
-        {
-            this->last_num = num;
-            this->last_filename = name;
-        }
-    } bufxxx_filegen_;
+    WrmFGen bufxxx_filegen_;
     iofdbuf bufxxx_buf_;
     unsigned bufxxx_num_file_;
     int bufxxx_groupid_;
@@ -431,24 +433,16 @@ protected:
     }
 };
 
-struct wrmcapture_MetaFilename
+struct MetaFilename
 {
     char filename[2048];
-
-    wrmcapture_MetaFilename(const char * path, const char * basename, wrmcapture_FilenameFormat format)
+    MetaFilename(const char * path, const char * basename)
     {
-        int res =
-        (   format == wrmcapture_FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
-         || format == wrmcapture_FilenameGenerator::PATH_FILE_PID_EXTENSION)
-        ? snprintf(this->filename, sizeof(this->filename)-1, "%s%s-%06u.mwrm", path, basename, unsigned(getpid()))
-        : snprintf(this->filename, sizeof(this->filename)-1, "%s%s.mwrm", path, basename);
+        int res = snprintf(this->filename, sizeof(this->filename)-1, "%s%s.mwrm", path, basename);
         if (res > int(sizeof(this->filename) - 6) || res < 0) {
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
     }
-
-    wrmcapture_MetaFilename(wrmcapture_MetaFilename const &) = delete;
-    wrmcapture_MetaFilename & operator = (wrmcapture_MetaFilename const &) = delete;
 };
 
 typedef unsigned char wrmcapture_hash_type[MD_HASH_LENGTH*2];
@@ -1314,7 +1308,7 @@ class wrmcapture_out_meta_sequence_filename_buf_impl_cctx
 {
 
         char current_filename_[1024];
-        wrmcapture_FilenameGenerator filegen_;
+        WrmFGen filegen_;
         iofdbuf buf_;
         unsigned num_file_;
         int groupid_;
@@ -1332,7 +1326,7 @@ class wrmcapture_out_meta_sequence_filename_buf_impl_cctx
             return this->buf_.write(data, len);
         }
 
-        const wrmcapture_FilenameGenerator & seqgen() const noexcept
+        const WrmFGen & seqgen() const noexcept
         { return this->filegen_; }
 
         iofdbuf & buf() noexcept
@@ -1392,8 +1386,8 @@ class wrmcapture_out_meta_sequence_filename_buf_impl_cctx
 
 // =====================================================================
     wrmcapture_cctx_ochecksum_file meta_buf_;
-    wrmcapture_MetaFilename mf_;
-    wrmcapture_MetaFilename hf_;
+    MetaFilename mf_;
+    MetaFilename hf_;
     time_t start_sec_;
     time_t stop_sec_;
 
@@ -1407,13 +1401,13 @@ public:
         const int groupid,
         CryptoContext& cctx
     )
-    : filegen_(wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION, prefix, filename, extension)
+    : filegen_(prefix, filename, extension)
     , buf_()
     , num_file_(0)
     , groupid_(groupid)
     , meta_buf_(cctx)
-    , mf_(prefix, filename, wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-    , hf_(hash_prefix, filename, wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
+    , mf_(prefix, filename)
+    , hf_(hash_prefix, filename)
     , start_sec_(start_sec)
     , stop_sec_(start_sec)
     {
@@ -1673,15 +1667,15 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
     class MetaSeqBuf
     {
         char current_filename_[1024];
-        wrmcapture_FilenameGenerator filegen_;
+        WrmFGen filegen_;
         iofdbuf buf_;
         unsigned num_file_;
         int groupid_;
 
         int meta_buf_fd;
 
-        wrmcapture_MetaFilename mf_;
-        wrmcapture_MetaFilename hf_;
+        MetaFilename mf_;
+        MetaFilename hf_;
         time_t start_sec_;
         time_t stop_sec_;
 
@@ -1806,13 +1800,13 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
             const char * const extension,
             const int groupid
         )
-        : filegen_(wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION, prefix, filename, extension)
+        : filegen_(prefix, filename, extension)
         , buf_()
         , num_file_(0)
         , groupid_(groupid)
         , meta_buf_fd(-1)
-        , mf_(prefix, filename, wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-        , hf_(hash_prefix, filename, wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
+        , mf_(prefix, filename)
+        , hf_(hash_prefix, filename)
         , start_sec_(start_sec)
         , stop_sec_(start_sec)
         {
@@ -2304,7 +2298,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         this->buffer().update_sec(now.tv_sec);
     }
 
-    const wrmcapture_FilenameGenerator * seqgen() const noexcept
+    const WrmFGen * seqgen() const noexcept
     {
         return &(this->buffer().seqgen());
     }
@@ -2633,7 +2627,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
         {
             char xxx_current_filename_[1024];
         public:
-            wrmcapture_FilenameGenerator xxx_filegen_;
+            WrmFGen xxx_filegen_;
         private:
             iofdbuf xxx_buf_;
             unsigned xxx_num_file_;
@@ -2696,8 +2690,8 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             wrmcapture_ocrypto_filename_buf xxx_meta_buf_;
 
         protected:
-            wrmcapture_MetaFilename mf_;
-            wrmcapture_MetaFilename xxx_hf_;
+            MetaFilename mf_;
+            MetaFilename hf_;
             time_t xxx_start_sec_;
             time_t xxx_stop_sec_;
 
@@ -2709,7 +2703,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 const int res2 = (this->xxx_meta_buf_.is_open() ? this->xxx_meta_buf_.close() : 0);
                 int err = res1 ? res1 : res2;
                 if (!err) {
-                    char const * hash_filename = this->xxx_hf_.filename;
+                    char const * hash_filename = this->hf_.filename;
                     char const * meta_filename = this->mf_.filename;
 
                     char path[1024] = {};
@@ -3028,13 +3022,13 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 const int groupid,
                 Random & rnd
             )
-            : xxx_filegen_(wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION, prefix, filename, extension)
+            : xxx_filegen_(prefix, filename, extension)
             , xxx_buf_{}
             , xxx_num_file_(0)
             , xxx_groupid_(groupid)
             , xxx_meta_buf_(cctx, rnd)
-            , mf_(prefix, filename, wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
-            , xxx_hf_(hash_prefix, filename, wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
+            , mf_(prefix, filename)
+            , hf_(hash_prefix, filename)
             , xxx_start_sec_(start_sec)
             , xxx_stop_sec_(start_sec)
             , cctx(cctx)
@@ -3089,7 +3083,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                     return 1;
                 }
 
-                char const * hash_filename = this->xxx_hf_.filename;
+                char const * hash_filename = this->hf_.filename;
                 char const * meta_filename = this->mf_.filename;
 
                 char path[1024] = {};
@@ -3293,7 +3287,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
         this->buf.xxx_update_sec(now.tv_sec);
     }
 
-    const wrmcapture_FilenameGenerator * seqgen() const noexcept
+    const WrmFGen * seqgen() const noexcept
     {
         return &(this->buf.xxx_filegen_);
     }
