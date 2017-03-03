@@ -420,7 +420,7 @@ private:
                 }
 
                 std::string info("file_name=\"");
-                info += escape_double_quotes(fd.fileName());
+                info += escape_delimiters(std::string(fd.fileName()));
                 info += "\" size=\"";
                 info += std::to_string(fd.file_size());
                 info += "\"";
@@ -461,7 +461,7 @@ private:
                 }
 
                 std::string info("file_name=\"");
-                info += escape_double_quotes(fd.fileName());
+                info += escape_delimiters(std::string(fd.fileName()));
                 info += "\" size=\"";
                 info += std::to_string(fd.file_size());
                 info += "\"";
@@ -1051,7 +1051,7 @@ public:
                 }
 
                 std::string info("file_name=\"");
-                info += escape_double_quotes(fd.fileName());
+                info += escape_delimiters(std::string(fd.fileName()));
                 info += "\" size=\"";
                 info += std::to_string(fd.file_size());
                 info += "\"";
@@ -1083,7 +1083,7 @@ public:
                 }
 
                 std::string info("file_name=\"");
-                info += escape_double_quotes(fd.fileName());
+                info += escape_delimiters(std::string(fd.fileName()));
                 info += "\" size=\"";
                 info += std::to_string(fd.file_size());
                 info += "\"";

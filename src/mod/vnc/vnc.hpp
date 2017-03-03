@@ -575,7 +575,6 @@ private:
         stream.out_uint16_be(r.cx);
         stream.out_uint16_be(r.cy);
         this->t.send(stream.get_data(), stream.get_offset());
-        LOG(LOG_INFO, "<< JNI @ update_screen : this->t.send(stream.get_data(), stream.get_offset());\n");
     } // update_screen
 
 public:
@@ -748,7 +747,7 @@ public:
                                            , chunk_size
                                            ,   CHANNELS::CHANNEL_FLAG_FIRST
                                              | CHANNELS::CHANNEL_FLAG_LAST
-                                           );LOG(LOG_INFO, "JNI  send_to_front_channel\n");
+                                           );
             }
             break;
         case RETRY_CONNECTION:
@@ -778,13 +777,13 @@ public:
                     this->t.recv_new(end, 1);
                     switch (type) {
                         case 0: /* framebuffer update */
-                            this->lib_framebuffer_update(drawable);LOG(LOG_INFO, "JNI  lib_framebuffer_update\n");
+                            this->lib_framebuffer_update(drawable);
                         break;
                         case 1: /* palette */
-                            this->lib_palette_update(drawable);LOG(LOG_INFO, "JNI  lib_palette_update\n");
+                            this->lib_palette_update(drawable);
                         break;
                         case 3: /* clipboard */ /* ServerCutText */
-                            this->lib_clip_data();LOG(LOG_INFO, "JNI  lib_clip_data\n");
+                            this->lib_clip_data();
                         break;
                         default:
                             LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", type);
@@ -812,7 +811,7 @@ public:
         case WAIT_PASSWORD:
             if (this->verbose & 1) {
                 LOG(LOG_INFO, "state=WAIT_PASSWORD");
-            }LOG(LOG_INFO, "JNI WAIT_PASSWORD \n");
+            }
             this->event.object_and_time = false;
             this->event.reset();
             break;
@@ -886,7 +885,6 @@ public:
                         int i = Parse(buf).in_uint32_be();
                         if (i != 0) {
                             // vnc password failed
-                            LOG(LOG_INFO, "JNI    vnc password failed");
                             // Optionnal
                             try
                             {

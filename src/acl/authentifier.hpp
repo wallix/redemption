@@ -105,8 +105,7 @@ public:
 
     void log4(bool duplicate_with_pid, const char * type, const char * extra = nullptr) override {
         if (this->connected_to_acl){
-            char * escaped_extra = escape_double_quotes(extra);
-            this->acl_serial->log4(duplicate_with_pid, type, escaped_extra);
+            this->acl_serial->log4(duplicate_with_pid, type, extra);
         }
     }
 };

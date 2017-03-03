@@ -24,11 +24,12 @@
 #define BOOST_TEST_MODULE TestInMetaSequenceTransport
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 
+#include "utils/sugar/iter.hpp"
 
-#include "capture/capture.hpp"
+#include "capture/wrm_capture.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "core/error.hpp"
 
@@ -258,8 +259,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
         const int groupid = 0;
-        wrmcapture_CryptoOutMetaSequenceTransport crypto_trans(cctx, rnd, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid,
-                                                    nullptr, wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
+        wrmcapture_CryptoOutMetaSequenceTransport crypto_trans(cctx, rnd, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid, nullptr);
         crypto_trans.send("AAAAX", 5);
         tv.tv_sec += 100;
         crypto_trans.timestamp(tv);
