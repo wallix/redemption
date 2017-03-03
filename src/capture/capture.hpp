@@ -834,10 +834,7 @@ public:
 
             try {
                 uint8_t buf[HEADER_SIZE];
-                {
-                    auto end = buf;
-                    this->trans->recv(&end, HEADER_SIZE);
-                }
+                this->trans->recv_new(buf, HEADER_SIZE);
                 InStream header(buf);
                 this->chunk_type = header.in_uint16_le();
                 this->chunk_size = header.in_uint32_le();
@@ -859,8 +856,7 @@ public:
                     this->stream = InStream(this->stream_buf);
                     if (this->chunk_size - HEADER_SIZE > 0) {
                         this->stream = InStream(this->stream_buf, this->chunk_size - HEADER_SIZE);
-                        auto end = this->stream_buf;
-                        this->trans->recv(&end, this->chunk_size - HEADER_SIZE);
+                        this->trans->recv_new(this->stream_buf, this->chunk_size - HEADER_SIZE);
                     }
                 }
             }
@@ -1374,8 +1370,7 @@ public:
                     // If no drawable is available ignore images chunks
                     this->stream.rewind();
                     std::size_t sz = this->chunk_size - HEADER_SIZE;
-                    auto end = this->stream_buf;
-                    this->trans->recv(&end, sz);
+                    this->trans->recv_new(this->stream_buf, sz);
                     this->stream = InStream(this->stream_buf, sz, sz);
                 }
                 this->remaining_order_count = 0;

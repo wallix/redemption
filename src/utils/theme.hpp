@@ -35,7 +35,7 @@ struct Theme final
         int error_color = YELLOW;
         bool logo = false;
         char logo_path[1024] {};
-    } global;
+    } global {};
 
     struct {
         int bgcolor = WHITE;
