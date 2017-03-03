@@ -435,8 +435,7 @@ struct wrmcapture_MetaFilename
 {
     char filename[2048];
 
-    wrmcapture_MetaFilename(const char * path, const char * basename,
-                 wrmcapture_FilenameFormat format = wrmcapture_FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION)
+    wrmcapture_MetaFilename(const char * path, const char * basename, wrmcapture_FilenameFormat format)
     {
         int res =
         (   format == wrmcapture_FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
@@ -3022,7 +3021,6 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             explicit wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto(
                 CryptoContext & cctx,
                 time_t start_sec,
-                wrmcapture_FilenameGenerator::Format format,
                 const char * const hash_prefix,
                 const char * const prefix,
                 const char * const filename,
@@ -3030,13 +3028,13 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 const int groupid,
                 Random & rnd
             )
-            : xxx_filegen_(format, prefix, filename, extension)
+            : xxx_filegen_(wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION, prefix, filename, extension)
             , xxx_buf_{}
             , xxx_num_file_(0)
             , xxx_groupid_(groupid)
             , xxx_meta_buf_(cctx, rnd)
-            , xxx_mf_(prefix, filename, format)
-            , xxx_hf_(hash_prefix, filename, format)
+            , xxx_mf_(prefix, filename, wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
+            , xxx_hf_(hash_prefix, filename, wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
             , xxx_start_sec_(start_sec)
             , xxx_stop_sec_(start_sec)
             , cctx(cctx)
@@ -3255,7 +3253,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
         uint16_t height,
         const int groupid,
         auth_api * authentifier = nullptr)
-    : buf(cctx, now.tv_sec, wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION, hash_path, path, basename, ".wrm", groupid, rnd) {
+    : buf(cctx, now.tv_sec, hash_path, path, basename, ".wrm", groupid, rnd) {
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
