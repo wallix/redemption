@@ -1349,6 +1349,8 @@ public:
 
                 mod_rdp_params.clean_up_32_bpp_cursor              = this->ini.get<cfg::mod_rdp::clean_up_32_bpp_cursor>();
 
+                mod_rdp_params.large_pointer_support               = this->ini.get<cfg::globals::large_pointer_support>();
+
                 try {
                     const char * const name = "RDP Target";
 

@@ -914,6 +914,7 @@ public:
         {
             REDASSERT(request_info.major_function != rdpdr::IRP_MJ_DIRECTORY_CONTROL);
 
+#ifndef NDEBUG
             LOG(LOG_WARNING,
                 "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
                     "There is Device I/O request information "
@@ -927,8 +928,10 @@ public:
                 request_info.extra_data,
                 request_info.path.c_str()
             );
+#endif  // #ifndef NDEBUG
         }
 
+#ifndef NDEBUG
         for (device_io_target_info_type & target_info : this->device_io_target_info_inventory)
         {
             LOG(LOG_WARNING,
@@ -944,6 +947,7 @@ public:
                 target_info.for_writing ? "yes" : "no"
             );
         }
+#endif  // #ifndef NDEBUG
     }
 
     void disable_session_probe_drive() {

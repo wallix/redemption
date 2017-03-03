@@ -896,8 +896,6 @@ public:
     void set_palette(const BGRPalette & palette) override {
         this->mod_palette_rgb = palette;
     }
-
-
 };
 
 inline void dump_png24(Drawable & drawable,  Transport & trans, bool bgr) {

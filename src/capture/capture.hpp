@@ -1432,7 +1432,6 @@ public:
                     struct Pointer cursor(Pointer::POINTER_NULL);
                     cursor.width = 32;
                     cursor.height = 32;
-//                    cursor.bpp = 24;
                     cursor.x = this->stream.in_uint8();
                     cursor.y = this->stream.in_uint8();
                     stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
@@ -1440,7 +1439,6 @@ public:
 
                     this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
-LOG(LOG_INFO, "FileToGraphic::POINTER set_pointer(1)");
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
                         gd->set_pointer(cursor);
                     }
@@ -1451,13 +1449,11 @@ LOG(LOG_INFO, "FileToGraphic::POINTER set_pointer(1)");
                     Pointer cursor(Pointer::POINTER_NULL);
                     cursor.width = pi.width;
                     cursor.height = pi.height;
-//                    cursor.bpp = 24;
                     cursor.x = pi.x;
                     cursor.y = pi.y;
                     memcpy(cursor.data, pi.data, sizeof(pi.data));
                     memcpy(cursor.mask, pi.mask, sizeof(pi.mask));
 
-LOG(LOG_INFO, "FileToGraphic::POINTER set_pointer(2)");
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
                         gd->set_pointer(cursor);
                     }
@@ -1494,8 +1490,6 @@ LOG(LOG_INFO, "FileToGraphic::POINTER set_pointer(2)");
 
                 this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
-LOG(LOG_INFO, "FileToGraphic::POINTER set_pointer(3) width=%u height=%u", unsigned(cursor.width), unsigned(cursor.height));
-printf("FileToGraphic::POINTER set_pointer(3) width=%u height=%u", unsigned(cursor.width), unsigned(cursor.height));
                 for (gdi::GraphicApi * gd : this->graphic_consumers){
                     gd->set_pointer(cursor);
                 }
@@ -3568,11 +3562,9 @@ private:
         void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
         void set_pointer(Pointer    const & pointer) override {
-LOG(LOG_INFO, "Capture::Graphic::set_pointer(Pointer) ...");
             for (gdi::GraphicApi & gd : this->gds){
                 gd.set_pointer(pointer);
             }
-LOG(LOG_INFO, "Capture::Graphic::set_pointer(Pointer) done.");
         }
 
         void set_palette(BGRPalette const & palette) override {
@@ -3985,7 +3977,6 @@ protected:
 
 public:
     void set_pointer(const Pointer & cursor) override {
-LOG(LOG_INFO, "Capture::set_pointer(Pointer)");
         if (this->capture_drawable) {
             this->graphic_api->set_pointer(cursor);
         }

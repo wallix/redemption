@@ -4017,7 +4017,6 @@ protected:
 
         this->trans.send(cursor.data, cursor.data_size());
         this->trans.send(cursor.mask, cursor.mask_size());
-LOG(LOG_INFO, "send_pointer");
     }
 
     void send_pointer2(int cache_idx, const Pointer & cursor) {
@@ -4059,7 +4058,6 @@ LOG(LOG_INFO, "send_pointer");
 
         this->trans.send(cursor.data, cursor.data_size());
         this->trans.send(cursor.mask, cursor.mask_size());
-LOG(LOG_INFO, "send_pointer2");
     }
 
     void set_pointer(int cache_idx) override {
@@ -4323,7 +4321,6 @@ public:
     }
 
     void set_pointer(Pointer const & pointer) override {
-LOG(LOG_INFO, "WrmCaptureImpl::set_pointer");
         this->graphic_to_file.set_pointer(pointer);
     }
 

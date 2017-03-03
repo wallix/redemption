@@ -968,65 +968,6 @@ struct DrawablePointer {
     DrawablePointer() : contiguous_pixels(), number_of_contiguous_pixels(0), data(), hotspot_x(0), hotspot_y(0) {}
 
     void initialize(int hotspot_x, int hotspot_y, unsigned int width, unsigned int height, const uint8_t * pointer_data, const uint8_t * pointer_mask) {
-LOG(LOG_INFO, "DrawablePointer::initialize: width=%u height=%u\n", width, height);
-
-printf("DrawablePointer::initialize: width=%u height=%u\n", width, height);
-{
-const unsigned int xor_line_length_in_byte = width * 3;
-const unsigned int xor_padded_line_length_in_byte =
-   ((xor_line_length_in_byte % 2) ?
-    xor_line_length_in_byte + 1 :
-    xor_line_length_in_byte);
-const unsigned int remainder = (width % 8);
-const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
-const unsigned int and_padded_line_length_in_byte =
-   ((and_line_length_in_byte % 2) ?
-    and_line_length_in_byte + 1 :
-    and_line_length_in_byte);
-for (unsigned int i0 = 0; i0 < height; ++i0) {
-   printf("%02d  ", (height - i0 - 1));
-
-   const uint8_t* xorMask = pointer_data + (height - i0 - 1) * xor_padded_line_length_in_byte;
-
-   const uint8_t* andMask = pointer_mask + (height - i0 - 1) * and_padded_line_length_in_byte;
-   unsigned char and_bit_extraction_mask = 7;
-
-   for (unsigned int i1 = 0; i1 < width; ++i1) {
-       unsigned int color = 0;
-       color |=  *xorMask             ;
-       color |= (*(xorMask + 1) <<  8);
-       color |= (*(xorMask + 2) << 16);
-
-       if ((*andMask) & (1 << and_bit_extraction_mask)) {
-           printf(".");
-       }
-       else {
-           if (color == 0xFFFFFF) {
-               printf("W");
-           }
-           else if (color) {
-               printf("C");
-           }
-           else  {
-               printf("B");
-           }
-       }
-
-       xorMask += 3;
-       if (and_bit_extraction_mask) {
-           and_bit_extraction_mask--;
-       }
-       else {
-           and_bit_extraction_mask = 7;
-           andMask++;
-       }
-   }
-
-   printf("\n");
-}
-printf("\n");
-}
-
         ::memset(this->contiguous_pixels, 0, sizeof(this->contiguous_pixels));
         this->number_of_contiguous_pixels = 0;
         ::memset(this->data, 0, sizeof(this->data));
@@ -1058,7 +999,6 @@ printf("\n");
                 const div_t        res = div(column, 8);
                 const unsigned int rem = 7 - res.rem;
 
-//                non_transparent_pixel = !(((*(pointer_mask + 128 - (line + 1) * 32 / 8 + res.quot)) & (1 << rem)) >> rem);
                 non_transparent_pixel = !(((*(pointer_mask + and_padded_line_length_in_byte * (height - (line + 1)) + res.quot)) & (1 << rem)) >> rem);
                 //printf("%c", (non_transparent_pixel ? 'X' : '.'));
 
