@@ -182,8 +182,7 @@ public:
             {
                 auto const buf_sz = FileToGraphic::HEADER_SIZE;
                 unsigned char buf[buf_sz];
-                auto * p = buf;
-                p += this->trans->recv_new_partial(p, buf_sz);
+                this->trans->recv_new(buf, buf_sz);
                 InStream header(buf);
                 this->chunk_type  = header.in_uint16_le();
                 this->chunk_size  = header.in_uint32_le();
@@ -195,8 +194,10 @@ public:
                 return false;
             }
             this->stream = InStream(this->stream_buf, 0);   // empty stream
-            if (this->chunk_size - FileToGraphic::HEADER_SIZE > 0) {
-                ssize_t size = this->trans->recv_new_partial(this->stream_buf, this->chunk_size - FileToGraphic::HEADER_SIZE);
+            auto const ssize = this->chunk_size - FileToGraphic::HEADER_SIZE;
+            if (ssize > 0) {
+                auto const size = size_t(ssize);
+                this->trans->recv_new(this->stream_buf, size);
                 this->stream = InStream(this->stream_buf, size);
             }
         }
