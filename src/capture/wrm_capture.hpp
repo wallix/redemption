@@ -222,7 +222,52 @@ public:
 struct wrmcapture_OutFilenameSequenceTransport : public Transport
 {
     char bufxxx_current_filename_[1024];
-    wrmcapture_FilenameGenerator bufxxx_filegen_;
+    struct FGen
+    {
+    private:
+        char         path[1024];
+        char         filename[1012];
+        char         extension[12];
+        mutable char filename_gen[1024];
+
+        const char * last_filename;
+        unsigned     last_num;
+
+    public:
+        FGen(const char * const prefix, const char * const filename, const char * const extension)
+        : last_filename(nullptr)
+        , last_num(-1u)
+        {
+            if (strlen(prefix) > sizeof(this->path) - 1
+             || strlen(filename) > sizeof(this->filename) - 1
+             || strlen(extension) > sizeof(this->extension) - 1) {
+                throw Error(ERR_TRANSPORT);
+            }
+
+            strcpy(this->path, prefix);
+            strcpy(this->filename, filename);
+            strcpy(this->extension, extension);
+
+            this->filename_gen[0] = 0;
+        }
+
+        const char * get(unsigned count) const
+        {
+            if (count == this->last_num && this->last_filename) {
+                return this->last_filename;
+            }
+
+            std::snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
+                    , this->filename, count, this->extension);
+            return this->filename_gen;
+        }
+
+        void set_last_filename(unsigned num, const char * name)
+        {
+            this->last_num = num;
+            this->last_filename = name;
+        }
+    } bufxxx_filegen_;
     iofdbuf bufxxx_buf_;
     unsigned bufxxx_num_file_;
     int bufxxx_groupid_;
@@ -233,7 +278,7 @@ struct wrmcapture_OutFilenameSequenceTransport : public Transport
         const char * const extension,
         const int groupid,
         auth_api * authentifier)
-    : bufxxx_filegen_(wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION, prefix, filename, extension)
+    : bufxxx_filegen_(prefix, filename, extension)
     , bufxxx_buf_()
     , bufxxx_num_file_(0)
     , bufxxx_groupid_(groupid)
@@ -244,8 +289,8 @@ struct wrmcapture_OutFilenameSequenceTransport : public Transport
         }
     }
 
-    const wrmcapture_FilenameGenerator * seqgen() const noexcept
-    { return &(this->bufxxx_seqgen()); }
+    const FGen * seqgen() const noexcept
+    { return &(this->bufxxx_filegen_); }
 
     bool next() override {
         if (this->status == false) {
@@ -332,9 +377,6 @@ private:
             this->bufxxx_buf_.close();
         }
     }
-
-    const wrmcapture_FilenameGenerator & bufxxx_seqgen() const noexcept
-    { return this->bufxxx_filegen_; }
 
     iofdbuf & bufxxx_buf() noexcept
     { return this->bufxxx_buf_; }
