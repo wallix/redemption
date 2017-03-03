@@ -476,7 +476,7 @@ inline std::string escape_delimiters(const std::string subject) {
     std::string escaped_double_quotes("\\\"");
 
     if (subject.empty()) {
-        return nullptr;
+        return {};
     }
 
     std::string escaped_subject = subject;

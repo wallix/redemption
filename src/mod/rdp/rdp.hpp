@@ -4462,6 +4462,9 @@ public:
             }
             // TODO: actually show mouse cursor or get back to default
             this->process_system_pointer_pdu(stream);
+            if (this->verbose & RDPVerbose::basic_trace3) {
+                LOG(LOG_INFO, "Process pointer system done");
+            }
         }
         break;
         // Pointer Position Update (section 2.2.9.1.1.4.2)

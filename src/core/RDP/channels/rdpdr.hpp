@@ -740,9 +740,9 @@ public:
         LOG(LOG_INFO, "     Device Announce:");
         LOG(LOG_INFO, "          * DeviceType       = 0x%08x (4 bytes): %s", this->DeviceType_, get_DeviceType_name(this->DeviceType_));
         LOG(LOG_INFO, "          * DeviceId         = 0x%08x (4 bytes)", this->DeviceId_);
-        LOG(LOG_INFO, "          * DeviceName       = \"%*s\" (8 bytes)", 8, this->PreferredDosName_);
+        LOG(LOG_INFO, "          * DeviceName       = \"%.*s\" (8 bytes)", 8, this->PreferredDosName_);
         LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->device_data.sz));
-        LOG(LOG_INFO, "          * DeviceData       = \"%*s\" (%d byte(s))", int(this->device_data.sz), this->device_data.p, int(2*this->device_data.sz));
+        LOG(LOG_INFO, "          * DeviceData       = \"%.*s\" (%d byte(s))", int(this->device_data.sz), this->device_data.p, int(2*this->device_data.sz));
     }
 };  // DeviceAnnounceHeader
 
