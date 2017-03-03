@@ -44,3 +44,18 @@ BOOST_AUTO_TEST_CASE(TestTrim)
     BOOST_CHECK(trim(first, last) == trimmed);
     BOOST_CHECK(trim(r) == trimmed);
 }
+
+BOOST_AUTO_TEST_CASE(Test_escape_delimiters)
+{
+    BOOST_CHECK_EQUAL("", escape_delimiters(""));
+    BOOST_CHECK_EQUAL("\\\\", escape_delimiters("\\"));
+    BOOST_CHECK_EQUAL("\\\"", escape_delimiters("\""));
+    BOOST_CHECK_EQUAL("\\\"\\\"", escape_delimiters("\"\""));
+    BOOST_CHECK_EQUAL("\\\"\\\"\\\"", escape_delimiters("\"\"\""));
+    BOOST_CHECK_EQUAL("abcd", escape_delimiters("abcd"));
+    BOOST_CHECK_EQUAL("ab\\\"cd", escape_delimiters("ab\"cd"));
+    BOOST_CHECK_EQUAL("ab\\\\cd", escape_delimiters("ab\\cd"));
+    BOOST_CHECK_EQUAL("ab\\\\\\\"cd", escape_delimiters("ab\\\"cd"));
+    BOOST_CHECK_EQUAL("\\\\ab\\\\\\\"cd", escape_delimiters("\\ab\\\"cd"));
+    BOOST_CHECK_EQUAL("\\\\ab\\\\\\\"cd\\\"", escape_delimiters("\\ab\\\"cd\""));
+}

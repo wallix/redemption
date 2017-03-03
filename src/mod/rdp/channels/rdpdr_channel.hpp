@@ -26,6 +26,7 @@
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "utils/sugar/strutils.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include <deque>
 

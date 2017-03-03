@@ -27,6 +27,7 @@
 #include "utils/process_monitor_rules.hpp"
 #include "utils/stream.hpp"
 #include "utils/translation.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "core/error.hpp"
 #include "mod/mod_api.hpp"
 
