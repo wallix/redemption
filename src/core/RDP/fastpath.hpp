@@ -698,20 +698,20 @@ namespace FastPath {
 
 //          * Surface Commands Update (section 2.2.9.1.2.1.10)
 
-// If Enhanced RDP Security (section 5.4) is in effect, the External 
+// If Enhanced RDP Security (section 5.4) is in effect, the External
 // Security Protocol (section 5.4.5) being used to secure the connection
-// MUST be used to decrypt and verify the integrity of the entire PDU 
+// MUST be used to decrypt and verify the integrity of the entire PDU
 // prior to any processing taking place.
 
 // The contents of the embedded action field of the fpOutputHeader field
-// MUST be set to FASTPATH_OUTPUT_ACTION_FASTPATH (0). If it is not set 
-// to this value, the PDU is not a Fast-Path Update PDU and MUST be 
+// MUST be set to FASTPATH_OUTPUT_ACTION_FASTPATH (0). If it is not set
+// to this value, the PDU is not a Fast-Path Update PDU and MUST be
 // processed as a slow-path PDU (section 3.2.5.2).
 
-// If the embedded secFlags field of the fpOutputHeader field contains 
-// the FASTPATH_OUTPUT_ENCRYPTED (2) flag, then the data following the 
-// optional dataSignature field (which in this case MUST be present) 
-// MUST be verified and decrypted using the methods and techniques 
+// If the embedded secFlags field of the fpOutputHeader field contains
+// the FASTPATH_OUTPUT_ENCRYPTED (2) flag, then the data following the
+// optional dataSignature field (which in this case MUST be present)
+// MUST be verified and decrypted using the methods and techniques
 // described in section 5.3.6. If the MAC signature is incorrect or the
 // data cannot be decrypted correctly, the connection SHOULD be dropped.
 // If Enhanced RDP Security is in effect and the FASTPATH_OUTPUT_ENCRYPTED (2)
@@ -734,16 +734,16 @@ namespace FastPath {
 // 2.2.9.1.2 Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
 // ========================================================
 
-// 
-// fpOutputHeader (1 byte): An 8-bit, unsigned integer. One-byte, 
-// bit-packed header. This byte coincides with the first byte of the 
+//
+// fpOutputHeader (1 byte): An 8-bit, unsigned integer. One-byte,
+// bit-packed header. This byte coincides with the first byte of the
 // TPKT Header ([T123] section 8). Two pieces of information are collapsed
 // into this byte:
 
 // * Security flags
 // * Action code
 
-// The format of the fpOutputHeader byte is described by the following 
+// The format of the fpOutputHeader byte is described by the following
 // bitmask diagram.
 
 // bits 0-1: action     (B1 & 0x3)
@@ -753,15 +753,15 @@ namespace FastPath {
 // action (2 bits): A 2-bit, unsigned integer that indicates whether the
 // PDU is in fast-path or slow-path format.
 
-// FASTPATH_OUTPUT_ACTION_FASTPATH (0x0) Indicates that the PDU is a 
+// FASTPATH_OUTPUT_ACTION_FASTPATH (0x0) Indicates that the PDU is a
 //  fast-path output PDU.
 
-// FASTPATH_OUTPUT_ACTION_X224     (0x3) Indicates the presence of a 
+// FASTPATH_OUTPUT_ACTION_X224     (0x3) Indicates the presence of a
 //  TPKT Header ([T123] section 8) initial version byte which indicates
 //  that the PDU is a slow-path output PDU (in this case the full value
 //  of the initial byte MUST be 0x03).
 
-// reserved (4 bits): A 4-bit, unsigned integer that is unused and 
+// reserved (4 bits): A 4-bit, unsigned integer that is unused and
 // reserved for future use. This field MUST be set to zero.
 
 // secFlags (2 bits): A 2-bit, unsigned integer that contains flags
@@ -772,17 +772,17 @@ namespace FastPath {
 // (section 5.3.6.1.1). If this bit is not set, then the standard technique
 // was used (sections 2.2.8.1.1.2.2 and 2.2.8.1.1.2.3).
 
-// FASTPATH_OUTPUT_ENCRYPTED (0x2) : Indicates that the PDU contains an 
+// FASTPATH_OUTPUT_ENCRYPTED (0x2) : Indicates that the PDU contains an
 // 8-byte MAC signature after the optional length2 field (that is, the
 // dataSignature field is present), and the contents of the PDU are
 // encrypted using the negotiated encryption package (sections 5.3.2 and
 // 5.3.6).
 
 // length1 (1 byte): An 8-bit, unsigned integer. If the most significant
-// bit of the length1 field is not set, then the size of the PDU is in 
-// the range 1 to 127 bytes and the length1 field contains the overall 
+// bit of the length1 field is not set, then the size of the PDU is in
+// the range 1 to 127 bytes and the length1 field contains the overall
 // PDU length (the length2 field is not present in this case). However,
-// if the most significant bit of the length1 field is set, then the 
+// if the most significant bit of the length1 field is set, then the
 // overall PDU length is given by the low 7 bits of the length1 field
 // concatenated with the 8 bits of the length2 field, in big-endian order
 // (the length2 field contains the low-order bits).
@@ -799,13 +799,13 @@ namespace FastPath {
 // 2.2.1.4.3) is ENCRYPTION_METHOD_FIPS (0x00000010). The Fast-Path FIPS
 // Information structure is specified in section 2.2.8.1.2.1.
 
-// dataSignature (8 bytes): MAC generated over the packet using one of 
+// dataSignature (8 bytes): MAC generated over the packet using one of
 // the techniques specified in section 5.3.6 (the FASTPATH_OUTPUT_SECURE_CHECKSUM
 // flag, which is set in the fpOutputHeader field, describes the method
-// used to generate the signature). This field MUST be present if the 
+// used to generate the signature). This field MUST be present if the
 // FASTPATH_OUTPUT_ENCRYPTED flag is set in the fpOutputHeader field.
 
-// fpOutputUpdates (variable): An array of Fast-Path Update (section 
+// fpOutputUpdates (variable): An array of Fast-Path Update (section
 // 2.2.9.1.2.1) structures to be processed by the client.
 
 
@@ -813,7 +813,7 @@ namespace FastPath {
 // =======================================================================
 
 // Fast-path revises server output packets from the first byte with the
-// goal of improving bandwidth. The TPKT Header ([T123] section 8), 
+// goal of improving bandwidth. The TPKT Header ([T123] section 8),
 // X.224 Class 0 Data TPDU ([X224] section 13.7), and MCS Send Data Indication
 // ([T125] section 11.33) are replaced; the Security Header (section
 // 2.2.8.1.1.2) is collapsed into the fast-path output header; and the
@@ -1311,6 +1311,26 @@ namespace FastPath {
         // Body of constructor
         {
             stream.in_skip_bytes(this->size);
+        }
+
+
+        size_t str(char * buffer, size_t sz) const
+        {
+            size_t lg = snprintf(buffer, sz,
+                "Update_Recv(updateCode=%d fragmentation=0x%X compression=0x%X compressionFlags=0x%X size=%u)",
+                unsigned(this->updateCode), unsigned(this->fragmentation), unsigned(this->compression),
+                unsigned(compressionFlags), unsigned(this->size));
+            if (lg >= sz){
+                return sz;
+            }
+            return lg;
+        }
+
+        void log(int level) const
+        {
+            char buffer[1024];
+            this->str(buffer, 1024);
+            LOG(level, "%s", buffer);
         }
     };
 

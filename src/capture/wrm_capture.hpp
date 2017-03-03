@@ -677,7 +677,7 @@ struct ocrypto {
         }
         ::memcpy(buffer + towrite, tmp_buf, 8);
         towrite += 8;
-        
+
         this->encrypt_file_size += 8;
 
         this->xmd_update(tmp_buf, 8);
@@ -860,7 +860,7 @@ public:
         this->cctx.get_derived_key(trace_key, base, base_len);
         unsigned char iv[32];
         this->rnd.random(iv, 32);
-        
+
         uint8_t buffer[40];
         size_t towrite = 0;
         err = this->encrypt_open(buffer, sizeof(buffer), towrite, trace_key, this->cctx, iv);
@@ -871,13 +871,13 @@ public:
     }
 
     ssize_t write(const void * data, size_t len)
-    { 
+    {
         uint8_t buffer[65536];
         size_t towrite = 0;
-        int lentobuf = this->encrypt_write(buffer, sizeof(buffer), towrite, data, len); 
+        int lentobuf = this->encrypt_write(buffer, sizeof(buffer), towrite, data, len);
         if (lentobuf < 0) {
             return -1;
-        }        
+        }
         if (this->raw_write(buffer, towrite))
         {
             return -1;
@@ -897,7 +897,7 @@ public:
         {
             return -1;
         }
-    
+
         int res2 = 0;
         if (-1 != this->file_fd) {
             res2 = ::close(this->file_fd);
@@ -940,7 +940,7 @@ public:
         this->cctx.get_derived_key(trace_key, base, base_len);
         unsigned char iv[32];
         this->rnd.random(iv, 32);
-        
+
         uint8_t buffer[40];
         size_t towrite = 0;
         int err = this->encrypt_open(buffer, sizeof(buffer), towrite, trace_key, this->cctx, iv);
@@ -951,13 +951,13 @@ public:
     }
 
     ssize_t write(const void * data, size_t len)
-    { 
+    {
         uint8_t buffer[65536];
         size_t towrite = 0;
-        int lentobuf = this->encrypt_write(buffer, sizeof(buffer), towrite, data, len); 
+        int lentobuf = this->encrypt_write(buffer, sizeof(buffer), towrite, data, len);
         if (lentobuf < 0) {
             return -1;
-        }        
+        }
         if (this->raw_write(buffer, towrite))
         {
             return -1;
@@ -977,7 +977,7 @@ public:
         {
             return -1;
         }
-    
+
         int res2 = snk.close();
         return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
     }
@@ -1486,7 +1486,7 @@ public:
                             return 1;
                         }
                     }
-                    
+
                     if (!err) {
                         using ull = unsigned long long;
                         using ll = long long;
@@ -1975,9 +1975,9 @@ public:
             LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
             return 1;
         }
-        
+
         auto & writer = crypto_hash;
-        
+
         auto pfile = filename;
         auto epfile = filename;
         for (; *epfile; ++epfile) {
@@ -2131,7 +2131,7 @@ public:
         const char * const extension,
         const int groupid
     )
-    
+
     : wrmcapture_out_meta_sequence_filename_buf_impl_cctx(start_sec, format, hash_prefix, prefix, filename, extension, groupid, cctx)
     , cctx(cctx)
     , wrm_filter(cctx)
@@ -2255,7 +2255,7 @@ public:
             LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
             return 1;
         }
-        
+
         auto & writer = hash_buf;
         auto pfile = filename;
         auto epfile = filename;
@@ -2602,7 +2602,7 @@ private:
 
 
 
-struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport 
+struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 {
     private:
         class wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto
@@ -2990,7 +2990,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
         private:
             CryptoContext & cctx;
             Random & rnd;
-            
+
             wrmcapture_ocrypto_filter wrm_filter;
 
         public:
@@ -3102,7 +3102,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 }
 
                 auto & writer = hash_buf;
-                
+
                 auto pfile = filename;
                 auto epfile = filename;
                 for (; *epfile; ++epfile) {
@@ -3146,7 +3146,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                         return 1;
                     }
                 }
-                    
+
                 using ull = unsigned long long;
                 using ll = long long;
                 char mes[
@@ -4318,6 +4318,14 @@ public:
     }
     void draw(RDPBrushCache const & cmd) override {
         this->graphic_to_file.draw(cmd);
+    }
+
+    void set_pointer(Pointer const & pointer) override {
+        this->graphic_to_file.set_pointer(pointer);
+    }
+
+    void set_palette(BGRPalette const & palette) override {
+        this->graphic_to_file.set_palette(palette);
     }
 
     class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi

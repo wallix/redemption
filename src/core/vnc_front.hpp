@@ -390,7 +390,7 @@ public:
     void set_pointer(const Pointer & cursor) override {
         if (this->verbose) {
             LOG(LOG_INFO, "--------- VncFront ------------------");
-            LOG(LOG_INFO, "server_set_pointer");
+            LOG(LOG_INFO, "set_pointer");
             LOG(LOG_INFO, "========================================\n");
         }
 

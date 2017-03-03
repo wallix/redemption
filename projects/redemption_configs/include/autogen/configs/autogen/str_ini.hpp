@@ -106,6 +106,9 @@
 "#_advanced\n"
 "#video_quality = high\n\n"
 
+"#_advanced\n"
+"#large_pointer_support = 1\n\n"
+
 "[session_log]\n\n"
 
 "#enable_session_log = 1\n\n"

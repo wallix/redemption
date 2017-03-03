@@ -494,6 +494,17 @@ namespace cfg {
             using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(2)};
         };
+        // type: bool
+        struct large_pointer_support {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "globals"; }
+            static constexpr char const * name() { return "large_pointer_support"; }
+            using type = bool;
+            using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
+            type value{1};
+        };
     };
 
     struct session_log {
@@ -3193,6 +3204,7 @@ struct globals
 , cfg::globals::bogus_refresh_rect
 , cfg::globals::codec_id
 , cfg::globals::video_quality
+, cfg::globals::large_pointer_support
 { static constexpr bool is_section = true; };
 
 struct session_log
