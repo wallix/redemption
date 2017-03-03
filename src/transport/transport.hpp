@@ -156,6 +156,11 @@ public:
         return this->do_recv_new(reinterpret_cast<uint8_t*>(buffer), len);
     }
 
+    const ssize_t recv_new_partial(unsigned char * buffer, size_t len)
+    {
+        return this->do_recv_new_partial(buffer, len);
+    }
+
     void recv_new(uint8_t * buffer, size_t len)
     {
         return this->do_recv_new(buffer, len);
@@ -190,7 +195,15 @@ private:
     // As the curent recv API is blocking and not
     // receiving the expected amount of data throw an Error
     // it is pretty useless to update buffer position
-    
+
+    virtual const ssize_t do_recv_new_partial(unsigned char * buffer, size_t len) {
+        (void)buffer;
+        (void)len;
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
+
+        return -42;
+    }
+
     virtual void do_recv_new(uint8_t * buffer, size_t len) {
         (void)buffer;
         (void)len;

@@ -2371,7 +2371,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                 switch (packetId) {
                     case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
                         {
-                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Announce Request");
+                        if (this->verbose & RDPVerbose::rdpdr)
+                            LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Announce Request");
                         //this->show_in_stream(0, chunk_series, chunk_size);
 
                         uint16_t versionMajor = chunk.in_uint16_le();
@@ -2398,8 +2399,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                             , CHANNELS::CHANNEL_FLAG_LAST  |
                                                               CHANNELS::CHANNEL_FLAG_FIRST
                                                             );
-
-                        LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Announce Reply");
+                        if (this->verbose & RDPVerbose::rdpdr)
+                            LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Announce Reply");
                         }
 
                         {
@@ -2424,8 +2425,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                             , CHANNELS::CHANNEL_FLAG_LAST  |
                                                               CHANNELS::CHANNEL_FLAG_FIRST
                                                             );
-
-                        LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Name Request");
+                        if (this->verbose & RDPVerbose::rdpdr)
+                            LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Name Request");
                         }
                         break;
 
@@ -2444,19 +2445,22 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             }
                         }
 
-                        if (driveEnable) {
-                            LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Core Capability Request - Drive Capability Enable");
-                            //this->show_in_stream(0, chunk_series, chunk_size);
-                        } else {
-                            LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Core Capability Request - Drive Not Allowed");
-                            //this->show_in_stream(0, chunk_series, chunk_size);
+                        if (this->verbose & RDPVerbose::rdpdr) {
+                            if (driveEnable) {
+                                LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Core Capability Request - Drive Capability Enable");
+                                //this->show_in_stream(0, chunk_series, chunk_size);
+                            } else {
+                                LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Core Capability Request - Drive Not Allowed");
+                                //this->show_in_stream(0, chunk_series, chunk_size);
+                            }
                         }
                         }
 
                         break;
 
                     case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
-                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Client ID Confirm");
+                        if (this->verbose & RDPVerbose::rdpdr)
+                            LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Client ID Confirm");
                         //this->show_in_stream(0, chunk_series, chunk_size);
                         {
                         StaticOutStream<1024> out_stream;
@@ -2520,8 +2524,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                             , CHANNELS::CHANNEL_FLAG_LAST |
                                                               CHANNELS::CHANNEL_FLAG_FIRST
                                                             );
-
-                        LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Core Capability Response");
+                        if (this->verbose & RDPVerbose::rdpdr)
+                            LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Core Capability Response");
                         }
 
                         {
@@ -2548,8 +2552,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                             , CHANNELS::CHANNEL_FLAG_LAST  |
                                                               CHANNELS::CHANNEL_FLAG_FIRST
                                                             );
-
-                        LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Device List Announce Request");
+                        if (this->verbose & RDPVerbose::rdpdr)
+                            LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Device List Announce Request");
                         }
                         break;
 
@@ -2563,12 +2567,14 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         } else {
                             this->fileSystemData.drives_created = false;
                         }
-                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Device Announce Response ID=%x Hres=%x", deviceID, resultCod);
+                        if (this->verbose & RDPVerbose::rdpdr)
+                            LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Device Announce Response ID=%x Hres=%x", deviceID, resultCod);
                         }
                         break;
 
                     case rdpdr::PAKID_CORE_USER_LOGGEDON:
-                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server User Logged On");
+                        if (this->verbose & RDPVerbose::rdpdr)
+                            LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server User Logged On");
                         break;
 
                     case rdpdr::PAKID_CORE_DEVICE_IOREQUEST:
@@ -2608,7 +2614,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 break;
 
                             case rdpdr::IRP_MJ_CREATE:
-                                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Create Request");
+                                if (this->verbose & RDPVerbose::rdpdr)
+                                    LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Create Request");
                                 {
                                 rdpdr::DeviceCreateRequest request;
                                 request.receive(chunk);
@@ -2667,7 +2674,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                     , CHANNELS::CHANNEL_FLAG_LAST |
                                                                       CHANNELS::CHANNEL_FLAG_FIRST
                                                                     );
-                                LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Create Response");
+                                if (this->verbose & RDPVerbose::rdpdr)
+                                    LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Create Response");
                                 }
                                 break;
 
@@ -2679,7 +2687,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 switch (sdqir.FsInformationClass()) {
 
                                     case rdpdr::FileBasicInformation:
-                                        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Basic Query Information Request");
+                                        if (this->verbose & RDPVerbose::rdpdr)
+                                            LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Basic Query Information Request");
                                         {
 
                                         std::ifstream file(this->fileSystemData.paths[id-1].c_str());
@@ -2716,13 +2725,14 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                             , CHANNELS::CHANNEL_FLAG_LAST  |
                                                                               CHANNELS::CHANNEL_FLAG_FIRST
                                                                             );
-
-                                        LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Basic Query Information Response");
+                                        if (this->verbose & RDPVerbose::rdpdr)
+                                            LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Basic Query Information Response");
                                         }
                                         break;
 
                                     case rdpdr::FileStandardInformation:
-                                        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Standard Information Request");
+                                        if (this->verbose & RDPVerbose::rdpdr)
+                                            LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Standard Information Request");
                                         {
                                         deviceIOResponse.emit(out_stream);
 
@@ -2757,12 +2767,14 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                             , CHANNELS::CHANNEL_FLAG_LAST  |
                                                                               CHANNELS::CHANNEL_FLAG_FIRST
                                                                             );
-                                        LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Standard Information Response");
+                                        if (this->verbose & RDPVerbose::rdpdr)
+                                            LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Standard Information Response");
                                         }
                                         break;
 
                                     case rdpdr::FileAttributeTagInformation:
-                                        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query File Attribute Tag Information Request");
+                                        if (this->verbose & RDPVerbose::rdpdr)
+                                            LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query File Attribute Tag Information Request");
                                         {
                                             std::ifstream file(this->fileSystemData.paths[id-1].c_str());
                                             if (!file.good()) {
@@ -2795,8 +2807,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                                 );
 
 
-
-                                            LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query File Attribute Tag Information Response");
+                                            if (this->verbose & RDPVerbose::rdpdr)
+                                                LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query File Attribute Tag Information Response");
                                         }
                                         break;
 
@@ -2807,7 +2819,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 break;
 
                             case rdpdr::IRP_MJ_CLOSE:
-                                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Close Request");
+                                if (this->verbose & RDPVerbose::rdpdr)
+                                    LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Close Request");
                                 {
                                 deviceIOResponse.emit(out_stream);
 
@@ -2821,13 +2834,14 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                     , CHANNELS::CHANNEL_FLAG_LAST  |
                                                                       CHANNELS::CHANNEL_FLAG_FIRST
                                                                     );
-
-                                LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Close Response");
+                                if (this->verbose & RDPVerbose::rdpdr)
+                                    LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Close Response");
                                 }
                                 break;
 
                             case rdpdr::IRP_MJ_READ:
-                                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Read Request");
+                                if (this->verbose & RDPVerbose::rdpdr)
+                                    LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Read Request");
                                 {
                                 rdpdr::DeviceReadRequest drr;
                                 drr.receive(chunk);
@@ -2868,8 +2882,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                        , ReadData + offset
                                                                        , file_size
                                                                        , 0);
-
-                                LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Read Response");
+                                if (this->verbose & RDPVerbose::rdpdr)
+                                    LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Read Response");
                                 }
                                 break;
 
@@ -2878,7 +2892,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 switch (deviceIORequest.MinorFunction()) {
 
                                     case rdpdr::IRP_MN_QUERY_DIRECTORY:
-                                        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Directory Request");
+                                        if (this->verbose & RDPVerbose::rdpdr)
+                                            LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Directory Request");
                                         {
                                         std::string slash("/");
                                         std::string asterix("*");
@@ -2997,10 +3012,36 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         switch (sdqdr.FsInformationClass()) {
 
                                             case rdpdr::FileDirectoryInformation:
-                                                LOG(LOG_WARNING, "SERVER >> RDPDR Channel: Query Directory FsInformationClass = FileDirectoryInformation");
+                                            {
+                                                rdpdr::ClientDriveQueryDirectoryResponse cdqdr(64 + (str_file_name.length()*2));
+                                                cdqdr.emit(out_stream);
+
+                                                fscc::FileDirectoryInformation fbdi(CreationTime,
+                                                                                        LastAccessTime,
+                                                                                        LastWriteTime,
+                                                                                        ChangeTime,
+                                                                                        EndOfFile,
+                                                                                        AllocationSize,
+                                                                                        FileAttributes,
+                                                                                        str_file_name.c_str());
+                                                fbdi.emit(out_stream);
+                                            }
                                                 break;
                                             case rdpdr::FileFullDirectoryInformation:
-                                                LOG(LOG_WARNING, "SERVER >> RDPDR Channel: Query Directory FsInformationClass = FileFullDirectoryInformation");
+                                            {
+                                                rdpdr::ClientDriveQueryDirectoryResponse cdqdr(68 + (str_file_name.length()*2));
+                                                cdqdr.emit(out_stream);
+
+                                                fscc::FileFullDirectoryInformation ffdi(CreationTime,
+                                                                                        LastAccessTime,
+                                                                                        LastWriteTime,
+                                                                                        ChangeTime,
+                                                                                        EndOfFile,
+                                                                                        AllocationSize,
+                                                                                        FileAttributes,
+                                                                                        str_file_name.c_str());
+                                                ffdi.emit(out_stream);
+                                            }
                                                 break;
                                             case rdpdr::FileBothDirectoryInformation:
                                                 {
@@ -3008,12 +3049,17 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                 cdqdr.emit(out_stream);
 
                                                 fscc::FileBothDirectoryInformation fbdi(CreationTime, LastAccessTime, LastWriteTime, ChangeTime, EndOfFile, AllocationSize, FileAttributes, str_file_name.c_str());
-
                                                 fbdi.emit(out_stream);
                                                 }
                                                 break;
                                             case rdpdr::FileNamesInformation:
-                                                LOG(LOG_WARNING, "SERVER >> RDPDR Channel: Query Directory FsInformationClass = FileNamesInformation");
+                                            {
+                                                rdpdr::ClientDriveQueryDirectoryResponse cdqdr(8 + (str_file_name.length()*2));
+                                                cdqdr.emit(out_stream);
+
+                                                fscc::FileNamesInformation ffi(str_file_name.c_str());
+                                                ffi.emit(out_stream);
+                                            }
                                                 break;
                                             default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: unknow  FsInformationClass = 0x%x", sdqdr.FsInformationClass());
                                                     break;
@@ -3027,13 +3073,14 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                             , CHANNELS::CHANNEL_FLAG_LAST |
                                                                               CHANNELS::CHANNEL_FLAG_FIRST
                                                                             );
-
-                                        LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Directory Response");
+                                        if (this->verbose & RDPVerbose::rdpdr)
+                                            LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Directory Response");
                                         }
                                         break;
 
                                     case rdpdr::IRP_MN_NOTIFY_CHANGE_DIRECTORY:
-                                        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Notify Change Directory Request");
+                                        if (this->verbose & RDPVerbose::rdpdr)
+                                            LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Notify Change Directory Request");
                                         {
                                         //deviceIOResponse.emit(out_stream);
                                         }
@@ -3044,7 +3091,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 break;
 
                             case rdpdr::IRP_MJ_QUERY_VOLUME_INFORMATION:
-                                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Volume Information Request");
+                                if (this->verbose & RDPVerbose::rdpdr)
+                                    LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Volume Information Request");
                                 {
                                     rdpdr::ServerDriveQueryVolumeInformationRequest sdqvir;
                                     sdqvir.receive(chunk);
@@ -3164,14 +3212,15 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                         , CHANNELS::CHANNEL_FLAG_LAST |
                                                                           CHANNELS::CHANNEL_FLAG_FIRST
                                                                         );
-
-                                    LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Volume Information Response");
+                                    if (this->verbose & RDPVerbose::rdpdr)
+                                        LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Volume Information Response");
 
                                 }
                                 break;
 
                             case rdpdr::IRP_MJ_WRITE:
-                                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Write Request");
+                                if (this->verbose & RDPVerbose::rdpdr)
+                                    LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Write Request");
                                 {
                                     rdpdr::DeviceWriteRequest dwr;
                                     dwr.receive(chunk);
@@ -3213,14 +3262,15 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                         , CHANNELS::CHANNEL_FLAG_LAST |
                                                                             CHANNELS::CHANNEL_FLAG_FIRST
                                                                         );
-
-                                    LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Write Response");
+                                    if (this->verbose & RDPVerbose::rdpdr)
+                                        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Write Response");
                                 }
 
                                 break;
 
                             case rdpdr::IRP_MJ_SET_INFORMATION:
-                                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Server Drive Set Information Request");
+                                if (this->verbose & RDPVerbose::rdpdr)
+                                    LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Server Drive Set Information Request");
                                 {
                                     rdpdr::ServerDriveSetInformationRequest sdsir;
                                     sdsir.receive(chunk);
@@ -3301,14 +3351,15 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                         , CHANNELS::CHANNEL_FLAG_LAST |
                                                                           CHANNELS::CHANNEL_FLAG_FIRST
                                                                         );
-
-                                    LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Client Drive Set Information Response");
+                                    if (this->verbose & RDPVerbose::rdpdr)
+                                        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Client Drive Set Information Response");
                                 }
 
                                 break;
 
                             case rdpdr::IRP_MJ_DEVICE_CONTROL:
-                                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Client Drive Control Response");
+                                if (this->verbose & RDPVerbose::rdpdr)
+                                    LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Client Drive Control Response");
                                 {
                                     rdpdr::DeviceControlRequest dcr;
                                     dcr.receive(chunk);
@@ -3362,7 +3413,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                           CHANNELS::CHANNEL_FLAG_FIRST
                                                                         );
                                 }
-                                LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Client Drive Control Response");
+                                if (this->verbose & RDPVerbose::rdpdr)
+                                    LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Client Drive Control Response");
                                 break;
 
                             default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT: Device I/O Request unknow MajorFunction = %x",       deviceIORequest.MajorFunction());
@@ -3632,9 +3684,8 @@ void Front_Qt::removeDriveDevice(const FileSystemData::DeviceData * devices, con
                                         , CHANNELS::CHANNEL_FLAG_LAST  |
                                           CHANNELS::CHANNEL_FLAG_FIRST
                                         );
-    //if (this->verbose & RDPVerbose::rdpdr) {
+    if (this->verbose & RDPVerbose::rdpdr)
         LOG(LOG_INFO, "CLIENT >> RDPDR: Client Drive Device List Remove");
-    //}
 }
 
 void Front_Qt::send_to_clipboard_Buffer(InStream & chunk) {
@@ -3972,7 +4023,7 @@ int main(int argc, char** argv){
 
     QApplication app(argc, argv);
 
-    RDPVerbose verbose =   RDPVerbose::cliprdr;       // RDPVerbose::rdpdr_dump | (0);
+    RDPVerbose verbose = RDPVerbose::none;       // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
 
     Front_Qt front_qt(argv, argc, verbose);
 

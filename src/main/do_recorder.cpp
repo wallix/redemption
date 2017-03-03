@@ -183,7 +183,7 @@ public:
                 auto const buf_sz = FileToGraphic::HEADER_SIZE;
                 unsigned char buf[buf_sz];
                 auto * p = buf;
-                this->trans->recv(&p, buf_sz);
+                p += this->trans->recv_new_partial(p, buf_sz);
                 InStream header(buf);
                 this->chunk_type  = header.in_uint16_le();
                 this->chunk_size  = header.in_uint32_le();
@@ -196,9 +196,8 @@ public:
             }
             this->stream = InStream(this->stream_buf, 0);   // empty stream
             if (this->chunk_size - FileToGraphic::HEADER_SIZE > 0) {
-                auto * p = this->stream_buf;
-                this->trans->recv(&p, this->chunk_size - FileToGraphic::HEADER_SIZE);
-                this->stream = InStream(this->stream_buf, p - this->stream_buf);
+                ssize_t size = this->trans->recv_new_partial(this->stream_buf, this->chunk_size - FileToGraphic::HEADER_SIZE);
+                this->stream = InStream(this->stream_buf, size);
             }
         }
         catch (Error const & e) {
@@ -913,7 +912,7 @@ static inline int check_encrypted_or_checksumed(
             if (lstat(ctx.wrm_filename.c_str(), &sb) < 0) {
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
             }
-            
+
             const char * filename = ctx.filename.c_str();
             auto start_sec = ctx.start_time;
             auto stop_sec = ctx.stop_time;
@@ -1566,7 +1565,7 @@ bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_le
      != ::KeyboardInputMaskingLevel::fully_masked;
 bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
 
-                        Capture capture( 
+                        Capture capture(
                                   capture_wrm, wrm_params
                                 , capture_png, png_params
                                 , capture_pattern_checker, patter_checker_params

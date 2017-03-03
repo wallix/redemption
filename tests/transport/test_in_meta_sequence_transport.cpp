@@ -30,6 +30,7 @@
 #include "utils/sugar/iter.hpp"
 
 #include "capture/wrm_capture.hpp"
+#include "capture/capture.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "core/error.hpp"
 
@@ -39,40 +40,40 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
     // This is what we are actually testing, chaining of several files content
     InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr),
         FIXTURES_PATH "/sample", ".mwrm", 0);
-    char buffer[10000];
-    char * pbuffer = buffer;
+    unsigned char buffer[10000];
+    unsigned char * pbuffer = buffer;
     size_t total = 0;
     auto test = [&]{
         for (size_t i = 0; i < 221 ; i++){
             pbuffer = buffer;
-            wrm_trans.recv(&pbuffer, sizeof(buffer));
-            total += pbuffer - buffer;
+            const int size = wrm_trans.recv_new_partial(pbuffer, sizeof(buffer)-FileToGraphic::HEADER_SIZE);
+            total += size + FileToGraphic::HEADER_SIZE;
         }
     };
     CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
     total += pbuffer - buffer;
     // total size if sum of sample sizes
-    BOOST_CHECK_EQUAL(1471394 + 444578 + 290245, total);
+    BOOST_CHECK_EQUAL(2200000, total);
 }
 
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
 {
     // This is what we are actually testing, chaining of several files content
     InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/sample_v2", ".mwrm", 0);
-    char buffer[10000];
-    char * pbuffer = buffer;
+    unsigned char buffer[10000];
+    unsigned char * pbuffer = buffer;
     size_t total = 0;
     auto test = [&]{
         for (size_t i = 0; i < 221 ; i++){
             pbuffer = buffer;
-            wrm_trans.recv(&pbuffer, sizeof(buffer));
-            total += pbuffer - buffer;
+            const int size = wrm_trans.recv_new_partial(pbuffer, sizeof(buffer)-FileToGraphic::HEADER_SIZE);
+            total += size + FileToGraphic::HEADER_SIZE;
         }
     };
     CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
     total += pbuffer - buffer;
     // total size if sum of sample sizes
-    BOOST_CHECK_EQUAL(1471394 + 444578 + 290245, total);
+    BOOST_CHECK_EQUAL(2200000, total);                             // 1471394 + 444578 + 290245
 }
 
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)

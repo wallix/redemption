@@ -2403,7 +2403,7 @@ public:
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "FileBothDirectoryInformation: AllocationSize=%" PRId64
+            "FileStandardInformation: AllocationSize=%" PRId64
                 " EndOfFile=%" PRId64 " NumberOfLinks=%" PRIu32 " "
                 "DeletePending=%" PRId8 " Directory=%" PRId8,
             this->AllocationSize, this->EndOfFile, this->NumberOfLinks,
