@@ -834,10 +834,7 @@ public:
 
             try {
                 uint8_t buf[HEADER_SIZE];
-                {
-                    auto end = buf;
-                    this->trans->recv(&end, HEADER_SIZE);
-                }
+                this->trans->recv_new(buf, HEADER_SIZE);
                 InStream header(buf);
                 this->chunk_type = header.in_uint16_le();
                 this->chunk_size = header.in_uint32_le();
@@ -859,8 +856,7 @@ public:
                     this->stream = InStream(this->stream_buf);
                     if (this->chunk_size - HEADER_SIZE > 0) {
                         this->stream = InStream(this->stream_buf, this->chunk_size - HEADER_SIZE);
-                        auto end = this->stream_buf;
-                        this->trans->recv(&end, this->chunk_size - HEADER_SIZE);
+                        this->trans->recv_new(this->stream_buf, this->chunk_size - HEADER_SIZE);
                     }
                 }
             }
@@ -1374,8 +1370,7 @@ public:
                     // If no drawable is available ignore images chunks
                     this->stream.rewind();
                     std::size_t sz = this->chunk_size - HEADER_SIZE;
-                    auto end = this->stream_buf;
-                    this->trans->recv(&end, sz);
+                    this->trans->recv_new(this->stream_buf, sz);
                     this->stream = InStream(this->stream_buf, sz, sz);
                 }
                 this->remaining_order_count = 0;
@@ -1432,7 +1427,6 @@ public:
                     struct Pointer cursor(Pointer::POINTER_NULL);
                     cursor.width = 32;
                     cursor.height = 32;
-//                    cursor.bpp = 24;
                     cursor.x = this->stream.in_uint8();
                     cursor.y = this->stream.in_uint8();
                     stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
@@ -1448,9 +1442,8 @@ public:
                     this->statistics.PointerIndex++;
                     Pointer & pi = this->ptr_cache.Pointers[cache_idx];
                     Pointer cursor(Pointer::POINTER_NULL);
-                    cursor.width = 32;
-                    cursor.height = 32;
-//                    cursor.bpp = 24;
+                    cursor.width = pi.width;
+                    cursor.height = pi.height;
                     cursor.x = pi.x;
                     cursor.y = pi.y;
                     memcpy(cursor.data, pi.data, sizeof(pi.data));
@@ -1482,19 +1475,19 @@ public:
                 cursor.y = this->stream.in_uint8();
 
                 uint16_t data_size = this->stream.in_uint16_le();
-                REDASSERT(data_size <= 32 * 32 * 3);
+                REDASSERT(data_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 3);
 
                 uint16_t mask_size = this->stream.in_uint16_le();
-                REDASSERT(mask_size <= 128);
+                REDASSERT(mask_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8);
 
                 stream.in_copy_bytes(cursor.data, std::min<size_t>(sizeof(cursor.data), data_size));
                 stream.in_copy_bytes(cursor.mask, std::min<size_t>(sizeof(cursor.mask), mask_size));
 
                 this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->set_pointer(cursor);
-                    }
+                for (gdi::GraphicApi * gd : this->graphic_consumers){
+                    gd->set_pointer(cursor);
+                }
             }
             break;
             case RESET_CHUNK:
@@ -4020,4 +4013,3 @@ public:
         }
     }
 };
-

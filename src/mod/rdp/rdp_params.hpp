@@ -156,6 +156,8 @@ struct ModRDPParams {
 
     bool clean_up_32_bpp_cursor = false;
 
+    bool large_pointer_support = true;
+
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
@@ -311,6 +313,8 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,             remote_program);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             clean_up_32_bpp_cursor);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             large_pointer_support);
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, verbose);
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);

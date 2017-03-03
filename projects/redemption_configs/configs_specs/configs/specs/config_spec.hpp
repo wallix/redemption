@@ -130,6 +130,9 @@ void config_spec_definition(Writer && W)
 
         W.member(A, type_<std::string>(), "codec_id", set("flv"));
         W.member(A, type_<Level>(), "video_quality", set(Level::high));
+        W.sep();
+
+        W.member(A, type_<bool>(), "large_pointer_support", set(true));
     });
 
     W.section("session_log", [&]
@@ -308,6 +311,7 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(A, type_<bool>(), "clean_up_32_bpp_cursor", set(false));
+        W.sep();
     });
 
     W.section("mod_vnc", [&]

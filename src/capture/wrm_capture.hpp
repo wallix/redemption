@@ -2696,7 +2696,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             wrmcapture_ocrypto_filename_buf xxx_meta_buf_;
 
         protected:
-            wrmcapture_MetaFilename xxx_mf_;
+            wrmcapture_MetaFilename mf_;
             wrmcapture_MetaFilename xxx_hf_;
             time_t xxx_start_sec_;
             time_t xxx_stop_sec_;
@@ -2710,7 +2710,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 int err = res1 ? res1 : res2;
                 if (!err) {
                     char const * hash_filename = this->xxx_hf_.filename;
-                    char const * meta_filename = this->xxx_mf_.filename;
+                    char const * meta_filename = this->mf_.filename;
 
                     char path[1024] = {};
                     char basename[1024] = {};
@@ -3005,7 +3005,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 if (this->xxx_buf_.is_open()) {
                     this->xxx_buf_.close();
                 }
-                ::unlink(this->xxx_mf_.filename);
+                ::unlink(this->mf_.filename);
             }
 
             void xxx_update_sec(time_t sec)
@@ -3033,7 +3033,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             , xxx_num_file_(0)
             , xxx_groupid_(groupid)
             , xxx_meta_buf_(cctx, rnd)
-            , xxx_mf_(prefix, filename, wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
+            , mf_(prefix, filename, wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
             , xxx_hf_(hash_prefix, filename, wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION)
             , xxx_start_sec_(start_sec)
             , xxx_stop_sec_(start_sec)
@@ -3042,13 +3042,13 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             , wrm_filter(this->xxx_buf_, cctx, rnd)
             {
                 this->xxx_current_filename_[0] = 0;
-                if (this->xxx_meta_buf_.open(this->xxx_mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
-                    LOG(LOG_ERR, "Failed to open meta file %s", this->xxx_mf_.filename);
+                if (this->xxx_meta_buf_.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+                    LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
                     throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
                 }
-                if (chmod(this->xxx_mf_.filename, S_IRUSR | S_IRGRP) == -1) {
+                if (chmod(this->mf_.filename, S_IRUSR | S_IRGRP) == -1) {
                     LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                       , this->xxx_mf_.filename
+                       , this->mf_.filename
                        , "u+r, g+r"
                        , strerror(errno), errno);
                 }
@@ -3090,7 +3090,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 }
 
                 char const * hash_filename = this->xxx_hf_.filename;
-                char const * meta_filename = this->xxx_mf_.filename;
+                char const * meta_filename = this->mf_.filename;
 
                 char path[1024] = {};
                 char basename[1024] = {};

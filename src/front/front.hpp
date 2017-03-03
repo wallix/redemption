@@ -90,6 +90,7 @@
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
 #include "core/RDP/capabilities/rail.hpp"
 #include "core/RDP/capabilities/window.hpp"
+#include "core/RDP/capabilities/largepointer.hpp"
 
 #include "core/RDP/SaveSessionInfoPDU.hpp"
 
@@ -653,16 +654,19 @@ private:
     bool mem3blt_support;
     int clientRequestedProtocols;
 
-    GeneralCaps        client_general_caps;
-    BitmapCaps         client_bitmap_caps;
-    OrderCaps          client_order_caps;
-    BmpCacheCaps       client_bmpcache_caps;
-    OffScreenCacheCaps client_offscreencache_caps;
-    BmpCache2Caps      client_bmpcache2_caps;
-    GlyphCacheCaps     client_glyphcache_caps;
-    RailCaps           client_rail_caps;
-    WindowListCaps     client_window_list_caps;
-    bool               use_bitmapcache_rev2;
+    GeneralCaps             client_general_caps;
+    BitmapCaps              client_bitmap_caps;
+    OrderCaps               client_order_caps;
+    BmpCacheCaps            client_bmpcache_caps;
+    OffScreenCacheCaps      client_offscreencache_caps;
+    BmpCache2Caps           client_bmpcache2_caps;
+    GlyphCacheCaps          client_glyphcache_caps;
+    RailCaps                client_rail_caps;
+    WindowListCaps          client_window_list_caps;
+    LargePointerCaps        client_large_pointer_caps;
+    MultiFragmentUpdateCaps client_multi_frag_caps;
+    bool                    use_bitmapcache_rev2;
+    bool                    use_multi_frag = false;
 
     std::string server_capabilities_filename;
 
@@ -2862,7 +2866,7 @@ private:
             break;
 
             case CAPSTYPE_BITMAPCACHE:
-                if (use_bitmapcache_rev2) {
+                if (this->use_bitmapcache_rev2) {
                     return false;
                 }
                 ::memcpy(&caps, &this->client_bmpcache_caps, sizeof(this->client_bmpcache_caps));
@@ -2873,7 +2877,7 @@ private:
             break;
 
             case CAPSTYPE_BITMAPCACHE_REV2:
-                if (!use_bitmapcache_rev2) {
+                if (!this->use_bitmapcache_rev2) {
                     return false;
                 }
                 ::memcpy(&caps, &this->client_bmpcache2_caps, sizeof(this->client_bmpcache2_caps));
@@ -2889,6 +2893,17 @@ private:
 
             case CAPSTYPE_WINDOW:
                 ::memcpy(&caps, &this->client_window_list_caps, sizeof(this->client_window_list_caps));
+            break;
+
+            case CAPSETTYPE_MULTIFRAGMENTUPDATE:
+                if (!this->use_multi_frag) {
+                    return false;
+                }
+                ::memcpy(&caps, &this->client_multi_frag_caps, sizeof(this->client_multi_frag_caps));
+            break;
+
+            case CAPSETTYPE_LARGE_POINTER:
+                ::memcpy(&caps, &this->client_large_pointer_caps, sizeof(this->client_large_pointer_caps));
             break;
         }
 #ifdef __clang__
@@ -3126,6 +3141,25 @@ private:
                     caps_count++;
                 }
 
+                if (this->ini.get<cfg::globals::large_pointer_support>()) {
+                    LargePointerCaps large_pointer_caps;
+
+                    large_pointer_caps.largePointerSupportFlags = LARGE_POINTER_FLAG_96x96;
+                    if (this->verbose) {
+                        large_pointer_caps.log("Sending to client");
+                    }
+                    large_pointer_caps.emit(stream);
+                    caps_count++;
+
+                    MultiFragmentUpdateCaps multifrag_caps;
+                    multifrag_caps.MaxRequestSize = 38055;
+                    if (this->verbose) {
+                        multifrag_caps.log("Sending to client");
+                    }
+                    multifrag_caps.emit(stream);
+                    caps_count++;
+                }
+
                 size_t caps_size = stream.get_offset() - caps_count_offset;
                 stream.set_out_uint16_le(caps_size, caps_size_offset);
                 stream.set_out_uint32_le(caps_count, caps_count_offset);
@@ -3343,9 +3377,9 @@ private:
                         LOG(LOG_INFO, "Receiving from client CAPSTYPE_GLYPHCACHE");
                     }
                     this->client_glyphcache_caps.recv(stream, capset_length);
-                    //if (this->verbose) {
+                    if (this->verbose) {
                         this->client_glyphcache_caps.log("Receiving from client");
-                    //}
+                    }
                     for (uint8_t i = 0; i < NUMBER_OF_GLYPH_CACHES; ++i) {
                         this->client_info.number_of_entries_in_glyph_cache[i] =
                             this->client_glyphcache_caps.GlyphCache[i].CacheEntries;
@@ -3436,18 +3470,16 @@ private:
                     LOG(LOG_INFO, "Receiving from client CAPSTYPE_DRAWGDIPLUS");
                 }
                 break;
-            case CAPSTYPE_RAIL: { /* 23 */
-                    this->client_rail_caps.recv(stream, capset_length);
-                    if (this->verbose) {
-                        this->client_rail_caps.log("Receiving from client");
-                    }
+            case CAPSTYPE_RAIL: /* 23 */
+                this->client_rail_caps.recv(stream, capset_length);
+                if (this->verbose) {
+                    this->client_rail_caps.log("Receiving from client");
                 }
                 break;
-            case CAPSTYPE_WINDOW: { /* 24 */
-                    this->client_window_list_caps.recv(stream, capset_length);
-/*                    if (this->verbose)*/ {
-                        this->client_window_list_caps.log("Receiving from client");
-                    }
+            case CAPSTYPE_WINDOW: /* 24 */
+                this->client_window_list_caps.recv(stream, capset_length);
+                if (this->verbose) {
+                    this->client_window_list_caps.log("Receiving from client");
                 }
                 break;
             case CAPSETTYPE_COMPDESK: { /* 25 */
@@ -3458,17 +3490,17 @@ private:
                     }
                 }
                 break;
-            case CAPSETTYPE_MULTIFRAGMENTUPDATE: { /* 26 */
-                    MultiFragmentUpdateCaps cap;
-                    cap.recv(stream, capset_length);
-                    if (this->verbose) {
-                        cap.log("Receiving from client");
-                    }
+            case CAPSETTYPE_MULTIFRAGMENTUPDATE: /* 26 */
+                this->client_multi_frag_caps.recv(stream, capset_length);
+                if (this->verbose) {
+                    this->client_multi_frag_caps.log("Receiving from client");
                 }
+                this->use_multi_frag = true;
                 break;
             case CAPSETTYPE_LARGE_POINTER: /* 27 */
+                this->client_large_pointer_caps.recv(stream, capset_length);
                 if (this->verbose) {
-                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_LARGE_POINTER");
+                    this->client_large_pointer_caps.log("Receiving from client");
                 }
                 break;
             case CAPSETTYPE_SURFACE_COMMANDS: /* 28 */

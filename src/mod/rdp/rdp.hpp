@@ -68,6 +68,8 @@
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
 #include "core/RDP/capabilities/rail.hpp"
 #include "core/RDP/capabilities/window.hpp"
+#include "core/RDP/capabilities/largepointer.hpp"
+#include "core/RDP/capabilities/multifragmentupdate.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/remote_programs.hpp"
@@ -645,7 +647,7 @@ protected:
             if (is_syslog_notification_enabled(this->server_cert_error_message)) {
                 std::string extra("description=\"X.509 server certificate internal error: \\\"");
                 extra += (str_error ? escape_delimiters(str_error) : std::string(""));
-                extra += std::string("\\\"\""); 
+                extra += std::string("\\\"\"");
                 this->authentifier.log4((this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_ERROR",
                         extra.c_str());
@@ -715,6 +717,9 @@ protected:
     } session_probe_virtual_channel_event_handler;
 
     bool clean_up_32_bpp_cursor;
+    bool large_pointer_support;
+
+    StaticOutStream<65536> multifragment_update_data;
 
 public:
     using Verbose = RDPVerbose;
@@ -858,6 +863,7 @@ public:
         , session_probe_launcher_event_handler(*this)
         , session_probe_virtual_channel_event_handler(*this)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
+        , large_pointer_support(mod_rdp_params.large_pointer_support)
     {
         if (this->verbose & RDPVerbose::basic_trace) {
             if (!enable_transparent_mode) {
@@ -3220,26 +3226,47 @@ public:
                     case FU::POINTER:     m = "POINTER"; break;
                     }
                     LOG(LOG_INFO, "FastPath::UpdateType::%s", m);
+                    upd.log(LOG_INFO);
                 }
+
+                if (upd.fragmentation != FastPath::FASTPATH_FRAGMENT_SINGLE) {
+                    if (upd.fragmentation == FastPath::FASTPATH_FRAGMENT_FIRST) {
+                        this->multifragment_update_data.rewind();
+                    }
+
+                    this->multifragment_update_data.out_copy_bytes(
+                        upd.payload.get_data(), upd.payload.get_capacity());
+
+                    if (upd.fragmentation != FastPath::FASTPATH_FRAGMENT_LAST) {
+                        continue;
+                    }
+                }
+
+                InStream fud(this->multifragment_update_data.get_data(),
+                    this->multifragment_update_data.get_offset());
+
+                InStream& stream =
+                    ((upd.fragmentation == FastPath::FASTPATH_FRAGMENT_SINGLE) ?
+                     upd.payload : fud);
 
                 switch (static_cast<FastPath::UpdateType>(upd.updateCode)) {
                 case FastPath::UpdateType::ORDERS:
                     this->front.begin_update();
                     this->orders.process_orders(
-                        upd.payload, true, drawable,
+                        stream, true, drawable,
                         this->front_width, this->front_height);
                     this->front.end_update();
                     break;
 
                 case FastPath::UpdateType::BITMAP:
                     this->front.begin_update();
-                    this->process_bitmap_updates(upd.payload, true, drawable);
+                    this->process_bitmap_updates(stream, true, drawable);
                     this->front.end_update();
                     break;
 
                 case FastPath::UpdateType::PALETTE:
                     this->front.begin_update();
-                    this->process_palette(upd.payload, true);
+                    this->process_palette(stream, true);
                     this->front.end_update();
                     break;
 
@@ -3275,8 +3302,8 @@ public:
 
                 case FastPath::UpdateType::PTR_POSITION:
                     {
-                        uint16_t xPos = upd.payload.in_uint16_le();
-                        uint16_t yPos = upd.payload.in_uint16_le();
+                        uint16_t xPos = stream.in_uint16_le();
+                        uint16_t yPos = stream.in_uint16_le();
                         this->front.update_pointer_position(xPos, yPos);
                     }
                     break;
@@ -3307,21 +3334,21 @@ public:
                     if (this->verbose & RDPVerbose::basic_trace3) {
                         LOG(LOG_INFO, "Process pointer color (Fast)");
                     }
-                    this->process_color_pointer_pdu(upd.payload);
+                    this->process_color_pointer_pdu(stream);
                     break;
 
                 case FastPath::UpdateType::CACHED:
                     if (this->verbose & RDPVerbose::basic_trace3) {
                         LOG(LOG_INFO, "Process pointer cached (Fast)");
                     }
-                    this->process_cached_pointer_pdu(upd.payload);
+                    this->process_cached_pointer_pdu(stream);
                     break;
 
                 case FastPath::UpdateType::POINTER:
                     if (this->verbose & RDPVerbose::basic_trace3) {
                         LOG(LOG_INFO, "Process pointer new (Fast)");
                     }
-                    this->process_new_pointer_pdu(upd.payload);
+                    this->process_new_pointer_pdu(stream);
                     break;
 
                 default:
@@ -4322,6 +4349,27 @@ public:
                     }
                     confirm_active_pdu.emit_capability_set(window_list_caps);
                 }
+
+                if (this->large_pointer_support) {
+                    LargePointerCaps largeptr_caps;
+                    this->front.retrieve_client_capability_set(largeptr_caps);
+                    if (this->verbose & RDPVerbose::basic_trace) {
+                        largeptr_caps.log("Sending to server");
+                    }
+                    confirm_active_pdu.emit_capability_set(largeptr_caps);
+
+                    MultiFragmentUpdateCaps multifragupd_caps;
+                    if (this->front.retrieve_client_capability_set(multifragupd_caps)) {
+                        if (multifragupd_caps.MaxRequestSize > this->multifragment_update_data.get_capacity()) {
+                            multifragupd_caps.MaxRequestSize = this->multifragment_update_data.get_capacity();
+                        }
+                        if (this->verbose & RDPVerbose::basic_trace) {
+                            multifragupd_caps.log("Sending to server");
+                        }
+                        confirm_active_pdu.emit_capability_set(multifragupd_caps);
+                    }
+                }
+
                 confirm_active_pdu.emit_end();
             },
             [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
@@ -4391,7 +4439,7 @@ public:
             }
             this->process_color_pointer_pdu(stream);
             if (this->verbose & RDPVerbose::basic_trace3){
-                LOG(LOG_INFO, "Process pointer system done");
+                LOG(LOG_INFO, "Process pointer color done");
             }
             break;
         // New Pointer Update (section 2.2.9.1.1.4.5)
@@ -4407,7 +4455,6 @@ public:
             }
             break;
         // System Pointer Update (section 2.2.9.1.1.4.3)
-
         case RDP_POINTER_SYSTEM:
         {
             if (this->verbose & RDPVerbose::basic_trace3) {
@@ -5831,6 +5878,24 @@ public:
                     }
                 }
                 break;
+            case CAPSETTYPE_MULTIFRAGMENTUPDATE:
+                {
+                    MultiFragmentUpdateCaps multifrag_caps;
+                    multifrag_caps.recv(stream, capset_length);
+                    if (this->verbose & RDPVerbose::basic_trace) {
+                        multifrag_caps.log("Receiving from server");
+                    }
+                }
+                break;
+            case CAPSETTYPE_LARGE_POINTER:
+                {
+                    LargePointerCaps large_pointer_caps;
+                    large_pointer_caps.recv(stream, capset_length);
+                    if (this->verbose & RDPVerbose::basic_trace) {
+                        large_pointer_caps.log("Receiving from server");
+                    }
+                }
+                break;
             default:
                 if (this->verbose & RDPVerbose::basic_trace) {
                     LOG(LOG_WARNING,
@@ -6322,7 +6387,6 @@ public:
         Pointer & cursor = this->cursors[pointer_cache_idx];
 
         memset(&cursor, 0, sizeof(Pointer));
-//        cursor.bpp    = 24;
         cursor.x      = stream.in_uint16_le();
         cursor.y      = stream.in_uint16_le();
         cursor.width  = stream.in_uint16_le();
@@ -6464,7 +6528,7 @@ public:
 
     void process_system_pointer_pdu(InStream & stream)
     {
-        if (this->verbose & RDPVerbose::basic_trace3){
+        if (this->verbose & RDPVerbose::basic_trace3) {
             LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu");
         }
         int system_pointer_type = stream.in_uint32_le();
@@ -6494,7 +6558,7 @@ public:
         }
     }
 
-    void to_regular_mask(const uint8_t * indata, unsigned mlen, uint8_t bpp, uint8_t * mask) {
+    void to_regular_mask(const uint8_t * indata, unsigned mlen, unsigned width, unsigned height, uint8_t bpp, uint8_t * mask) {
         if (this->verbose & RDPVerbose::basic_trace3) {
             LOG(LOG_INFO, "mod_rdp::to_regular_mask");
         }
@@ -6507,10 +6571,16 @@ public:
         switch (bpp) {
         case 1 :
         {
-            for (unsigned x = 0; x < mlen ; x++) {
-                BGRColor px = indata[x];
-                // incoming new pointer mask is upside down, revert it
-                mask[128 - 4 - (x & 0x7C) + (x & 3)] = px;
+            const unsigned int remainder = (width % 8);
+            const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
+            const unsigned int and_padded_line_length_in_byte =
+                ((and_line_length_in_byte % 2) ?
+                 and_line_length_in_byte + 1 :
+                 and_line_length_in_byte);
+            for (unsigned int i = 0; i < height; ++i) {
+                const uint8_t* src  = indata + (height - i - 1) * and_padded_line_length_in_byte;
+                      uint8_t* dest = mask + i * and_padded_line_length_in_byte;
+                ::memcpy(dest, src, and_padded_line_length_in_byte);
             }
         }
         break;
@@ -6524,28 +6594,42 @@ public:
         }
     }
 
-    void to_regular_pointer(const uint8_t * indata, unsigned dlen, uint8_t bpp, uint8_t * data) {
+    void to_regular_pointer(const uint8_t * indata, unsigned dlen, unsigned width, unsigned height, uint8_t bpp, uint8_t * data) {
         if (this->verbose & RDPVerbose::basic_trace3) {
             LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
         switch (bpp) {
         case 1 :
         {
-            for (unsigned x = 0; x < dlen ; x ++) {
-                BGRColor px = indata[x];
-                // target cursor will receive 8 bits input at once
-                for (unsigned b = 0 ; b < 8 ; b++) {
-                    // incoming new pointer is upside down, revert it
-                    uint8_t * bstart = &(data[24 * (128 - 4 - (x & 0xFFFC) + (x & 3))]);
-                    // emit all individual bits
-                    ::out_bytes_le(bstart,      3, (px & 0x80) ? 0xFFFFFF : 0);
-                    ::out_bytes_le(bstart +  3, 3, (px & 0x40) ? 0xFFFFFF : 0);
-                    ::out_bytes_le(bstart +  6, 3, (px & 0x20) ? 0xFFFFFF : 0);
-                    ::out_bytes_le(bstart +  9, 3, (px & 0x10) ? 0xFFFFFF : 0);
-                    ::out_bytes_le(bstart + 12, 3, (px &    8) ? 0xFFFFFF : 0);
-                    ::out_bytes_le(bstart + 15, 3, (px &    4) ? 0xFFFFFF : 0);
-                    ::out_bytes_le(bstart + 18, 3, (px &    2) ? 0xFFFFFF : 0);
-                    ::out_bytes_le(bstart + 21, 3, (px &    1) ? 0xFFFFFF : 0);
+            const unsigned int remainder = (width % 8);
+            const unsigned int src_xor_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
+            const unsigned int src_xor_padded_line_length_in_byte =
+                ((src_xor_line_length_in_byte % 2) ?
+                 src_xor_line_length_in_byte + 1 :
+                 src_xor_line_length_in_byte);
+
+            const unsigned int dest_xor_line_length_in_byte        = width * 3;
+            const unsigned int dest_xor_padded_line_length_in_byte =
+                dest_xor_line_length_in_byte + ((dest_xor_line_length_in_byte % 2) ? 1 : 0);
+
+            for (unsigned int i = 0; i < height; ++i) {
+                const uint8_t* src  = indata + (height - i - 1) * src_xor_padded_line_length_in_byte;
+                      uint8_t* dest = data + i * dest_xor_line_length_in_byte;
+
+                unsigned char and_bit_extraction_mask = 7;
+
+                for (unsigned int j = 0; j < width; ++j) {
+                    ::out_bytes_le(dest, 3, (((*src) & (1 << and_bit_extraction_mask)) ? 0xFFFFFF : 0));
+
+                    dest += 3;
+
+                    if (and_bit_extraction_mask) {
+                        and_bit_extraction_mask--;
+                    }
+                    else {
+                        src++;
+                        and_bit_extraction_mask = 7;
+                    }
                 }
             }
         }
@@ -6563,10 +6647,31 @@ public:
         case 32: case 24: case 16: case 15: case 8:
         {
             uint8_t BPP = nbbytes(bpp);
-            for (unsigned i = 0; i + BPP <= dlen; i += BPP) {
-                BGRColor px = in_uint32_from_nb_bytes_le(BPP, indata + i);
-                ::out_bytes_le(&(data[(i/BPP)*3]), 3, color_decode(px, bpp, this->orders.global_palette));
+
+            const unsigned int src_xor_line_length_in_byte = width * BPP;
+            const unsigned int src_xor_padded_line_length_in_byte =
+                ((src_xor_line_length_in_byte % 2) ?
+                 src_xor_line_length_in_byte + 1 :
+                 src_xor_line_length_in_byte);
+
+            const unsigned int dest_xor_line_length_in_byte = width * 3;
+            const unsigned int dest_xor_padded_line_length_in_byte =
+                ((dest_xor_line_length_in_byte % 2) ?
+                 dest_xor_line_length_in_byte + 1 :
+                 dest_xor_line_length_in_byte);
+
+            for (unsigned int i0 = 0; i0 < height; ++i0) {
+                const uint8_t* src  = indata + (height - i0 - 1) * src_xor_padded_line_length_in_byte;
+                      uint8_t* dest = data + (height - i0 - 1) * dest_xor_padded_line_length_in_byte;
+
+                for (unsigned int i1 = 0; i1 < width; ++i1) {
+                    BGRColor px = in_uint32_from_nb_bytes_le(BPP, src);
+                    src += BPP;
+                    ::out_bytes_le(dest, 3, color_decode(px, bpp, this->orders.global_palette));
+                    dest += 3;
+                }
             }
+
         }
         break;
         default:
@@ -6622,7 +6727,6 @@ public:
 
         Pointer & cursor = this->cursors[pointer_idx];
         memset(&cursor, 0, sizeof(Pointer));
-//        cursor.bpp              = 24;
         cursor.x                = stream.in_uint16_le();
         cursor.y                = stream.in_uint16_le();
         cursor.width            = stream.in_uint16_le();
@@ -6640,6 +6744,10 @@ public:
             LOG(LOG_ERR, "mod_rdp::process_new_pointer_pdu pointer height overflow (%d)", cursor.height);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
+
+        //LOG(LOG_INFO,
+        //    "mod_rdp::process_new_pointer_pdu width=%u height=%u",
+        //    cursor.width, cursor.height);
 
         if (static_cast<unsigned>(cursor.x) >= cursor.width){
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot x out of pointer (%d >= %d)", cursor.x, cursor.width);
@@ -6662,28 +6770,9 @@ public:
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
-/*
-        size_t out_data_len = 3 * (
-            // BUG TODO cursor.bpp is always 24
-            (cursor.bpp == 1) ? (cursor.width * cursor.height) / 8 :
-            (cursor.bpp == 4) ? (cursor.width * cursor.height) / 2 :
-            (dlen / nbbytes(data_bpp)));
-*/
-        size_t out_data_len = 3 * (dlen / nbbytes(data_bpp));
-
-        if ((mlen > sizeof(cursor.mask)) ||
-            (out_data_len > sizeof(cursor.data))) {
-            LOG(LOG_ERR,
-                "mod_rdp::Bad length for color pointer mask_len=%" PRIu16 " "
-                    "data_len=%" PRIu16 " Width = %u Height = %u bpp = %u out_data_len = %zu nbbytes=%" PRIu8,
-                mlen, dlen, cursor.width, cursor.height,
-                data_bpp, out_data_len, nbbytes(data_bpp));
-            throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
-        }
-
         if (data_bpp == 1) {
-            uint8_t data_data[32*32/8];
-            uint8_t mask_data[32*32/8];
+            uint8_t data_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8];
+            uint8_t mask_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8];
             stream.in_copy_bytes(data_data, dlen);
             stream.in_copy_bytes(mask_data, mlen);
 
@@ -6697,14 +6786,14 @@ public:
             }
 
             // TODO move that into cursor
-            this->to_regular_pointer(data_data, dlen, 1, cursor.data);
-            this->to_regular_mask(mask_data, mlen, 1, cursor.mask);
+            this->to_regular_pointer(data_data, dlen, cursor.width, cursor.height, 1, cursor.data);
+            this->to_regular_mask(mask_data, mlen, cursor.width, cursor.height, 1, cursor.mask);
         }
         else {
             // TODO move that into cursor
-            this->to_regular_pointer(stream.get_current(), dlen, data_bpp, cursor.data);
+            this->to_regular_pointer(stream.get_current(), dlen, cursor.width, cursor.height, data_bpp, cursor.data);
             stream.in_skip_bytes(dlen);
-            this->to_regular_mask(stream.get_current(), mlen, data_bpp, cursor.mask);
+            this->to_regular_mask(stream.get_current(), mlen, cursor.width, cursor.height, data_bpp, cursor.mask);
             stream.in_skip_bytes(mlen);
         }
 

@@ -108,6 +108,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     ini.set<cfg::client::tls_fallback_legacy>(false);
     ini.set<cfg::client::bogus_user_id>(false);
     ini.set<cfg::client::rdp_compression>(RdpCompression::rdp5);
+    ini.set<cfg::globals::large_pointer_support>(false);
 
     time_t now = 1450864840;
 

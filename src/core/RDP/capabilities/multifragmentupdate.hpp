@@ -46,7 +46,7 @@
 //    reassembly).
 
 enum {
-    CAPLEN_MULTIFRAGMENTUPDATE = 6
+    CAPLEN_MULTIFRAGMENTUPDATE = 8
 };
 
 struct MultiFragmentUpdateCaps : public Capability {
