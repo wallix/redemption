@@ -2376,23 +2376,6 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             }
 
         protected:
-            ssize_t open_filename(const char * filename)
-            {
-                snprintf(this->xxx_current_filename_, sizeof(this->xxx_current_filename_),
-                            "%sred-XXXXXX.tmp", filename);
-                const int fd = ::mkostemps(this->xxx_current_filename_, 4, O_WRONLY | O_CREAT);
-                if (fd < 0) {
-                    return fd;
-                }
-                if (chmod(this->xxx_current_filename_, this->xxx_groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-                    LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                       , this->xxx_current_filename_
-                       , this->xxx_groupid_ ? "u+r, g+r" : "u+r"
-                       , strerror(errno), errno);
-                }
-                this->xxx_filegen_.set_last_filename(this->xxx_num_file_, this->xxx_current_filename_);
-                return this->xxx_buf_.open(fd);
-            }
 
             const char * xxx_rename_filename()
             {
@@ -2785,7 +2768,22 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             {
                 if (!this->xxx_buf_.is_open()) {
                     const char * filename = this->xxx_get_filename_generate();
-                    const int res = this->open_filename(filename);
+                    snprintf(this->xxx_current_filename_, sizeof(this->xxx_current_filename_),
+                            "%sred-XXXXXX.tmp", filename);
+                    const int fd = ::mkostemps(this->xxx_current_filename_, 4
+                                              , O_WRONLY | O_CREAT);
+                    if (fd < 0) {
+                        return fd;
+                    }
+                    if (chmod(this->xxx_current_filename_
+                             , this->xxx_groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                        LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                            , this->xxx_current_filename_
+                            , this->xxx_groupid_ ? "u+r, g+r" : "u+r"
+                            , strerror(errno), errno);
+                    }
+                    this->xxx_filegen_.set_last_filename(this->xxx_num_file_, this->xxx_current_filename_);
+                    const int res = this->xxx_buf_.open(fd);
                     if (res < 0) {
                         return res;
                     }
