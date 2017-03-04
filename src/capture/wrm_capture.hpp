@@ -957,63 +957,6 @@ static inline int wrmcapture_write_meta_file_cctx(
 
 
 
-class wrmcapture_ochecksum_buf_null_buf
-{
-    static constexpr size_t nosize = ~size_t{};
-    static constexpr size_t quick_size = 4096;
-
-    SslHMAC_Sha256_Delayed hmac;
-    SslHMAC_Sha256_Delayed quick_hmac;
-    unsigned char const (&hmac_key)[MD_HASH_LENGTH];
-    size_t file_size = nosize;
-
-public:
-    explicit wrmcapture_ochecksum_buf_null_buf(unsigned char const (&hmac_key)[MD_HASH_LENGTH])
-    : hmac_key(hmac_key)
-    {}
-
-    wrmcapture_ochecksum_buf_null_buf(wrmcapture_ochecksum_buf_null_buf const &) = delete;
-    wrmcapture_ochecksum_buf_null_buf & operator=(wrmcapture_ochecksum_buf_null_buf const &) = delete;
-
-    template<class... Ts>
-    int open(Ts && ... args)
-    {
-        this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
-        this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
-        int ret = 0;
-        this->file_size = 0;
-        return ret;
-    }
-
-    ssize_t write(const void * data, size_t len)
-    {
-        REDASSERT(this->file_size != nosize);
-        this->hmac.update(static_cast<const uint8_t *>(data), len);
-        if (this->file_size < quick_size) {
-            auto const remaining = std::min(quick_size - this->file_size, len);
-            this->quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
-            this->file_size += remaining;
-        }
-        return len;
-    }
-
-    int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
-    {
-        REDASSERT(this->file_size != nosize);
-        this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
-        this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
-        this->file_size = nosize;
-        return 0;
-    }
-
-    int close() {
-        return 0;
-    }
-};
-
-
-
-
 
 class wrmcapture_out_meta_sequence_filename_buf_impl_cctx
 {
@@ -2067,7 +2010,56 @@ private:
     : public wrmcapture_out_meta_sequence_filename_buf_impl_cctx
     {
         CryptoContext & cctx;
-        wrmcapture_ochecksum_buf_null_buf sum_buf;
+        class wrmcapture_ochecksum_buf_null_buf
+        {
+            static constexpr size_t zzz_nosize = ~size_t{};
+            static constexpr size_t zzz_quick_size = 4096;
+
+            SslHMAC_Sha256_Delayed zzz_hmac;
+            SslHMAC_Sha256_Delayed zzz_quick_hmac;
+            unsigned char const (&zzz_hmac_key)[MD_HASH_LENGTH];
+            size_t zzz_file_size = zzz_nosize;
+
+        public:
+            explicit wrmcapture_ochecksum_buf_null_buf(unsigned char const (&hmac_key)[MD_HASH_LENGTH])
+            : zzz_hmac_key(hmac_key)
+            {}
+
+            template<class... Ts>
+            int zzz_open(Ts && ... args)
+            {
+                this->zzz_hmac.init(this->zzz_hmac_key, sizeof(this->zzz_hmac_key));
+                this->zzz_quick_hmac.init(this->zzz_hmac_key, sizeof(this->zzz_hmac_key));
+                int ret = 0;
+                this->zzz_file_size = 0;
+                return ret;
+            }
+
+            ssize_t zzz_write(const void * data, size_t len)
+            {
+                REDASSERT(this->zzz_file_size != nosize);
+                this->zzz_hmac.update(static_cast<const uint8_t *>(data), len);
+                if (this->zzz_file_size < zzz_quick_size) {
+                    auto const remaining = std::min(zzz_quick_size - this->zzz_file_size, len);
+                    this->zzz_quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
+                    this->zzz_file_size += remaining;
+                }
+                return len;
+            }
+
+            int zzz_close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
+            {
+                REDASSERT(this->zzz_file_size != nosize);
+                this->zzz_quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
+                this->zzz_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
+                this->zzz_file_size = zzz_nosize;
+                return 0;
+            }
+
+            int zzz_close() {
+                return 0;
+            }
+        } sum_buf;
 
     public:
         explicit wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx(
@@ -2094,11 +2086,11 @@ private:
                 if (res < 0) {
                     return res;
                 }
-                if (int err = this->sum_buf.open()) {
+                if (int err = this->sum_buf.zzz_open()) {
                     return err;
                 }
             }
-            this->sum_buf.write(data, len);
+            this->sum_buf.zzz_write(data, len);
             return this->buf().write(data, len);
         }
 
@@ -2303,7 +2295,7 @@ private:
             if (this->buf().is_open()) {
                 wrmcapture_hash_type hash;
                 {
-                    const int res1 = this->sum_buf.close(hash);
+                    const int res1 = this->sum_buf.zzz_close(hash);
                     const int res2 = this->buf().close();
                     if (res1) {
                         return res1;
