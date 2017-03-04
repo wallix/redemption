@@ -1012,28 +1012,6 @@ public:
 };
 
 
-class wrmcapture_ochecksum_filter
-{
-    wrmcapture_ochecksum_buf_null_buf sum_buf;
-
-public:
-    explicit wrmcapture_ochecksum_filter(CryptoContext & cctx)
-    : sum_buf(cctx.get_hmac_key())
-    {}
-
-    int open(iofdbuf &, char const * /*filename*/) {
-        return this->sum_buf.open();
-    }
-
-    int write(iofdbuf & buf, const void * data, size_t len) {
-        this->sum_buf.write(data, len);
-        return buf.write(data, len);
-    }
-
-    int close(iofdbuf &, wrmcapture_hash_type & hash, unsigned char const (&)[MD_HASH_LENGTH]) {
-        return this->sum_buf.close(hash);
-    }
-};
 
 
 
@@ -2089,7 +2067,28 @@ private:
     : public wrmcapture_out_meta_sequence_filename_buf_impl_cctx
     {
         CryptoContext & cctx;
-        wrmcapture_ochecksum_filter wrm_filter;
+        class wrmcapture_ochecksum_filter
+        {
+            wrmcapture_ochecksum_buf_null_buf zzz_sum_buf;
+
+        public:
+            explicit wrmcapture_ochecksum_filter(CryptoContext & cctx)
+            : zzz_sum_buf(cctx.get_hmac_key())
+            {}
+
+            int zzz_open(iofdbuf &, char const * /*filename*/) {
+                return this->zzz_sum_buf.open();
+            }
+
+            int zzz_write(iofdbuf & buf, const void * data, size_t len) {
+                this->zzz_sum_buf.write(data, len);
+                return buf.write(data, len);
+            }
+
+            int zzz_close(iofdbuf &, wrmcapture_hash_type & hash, unsigned char const (&)[MD_HASH_LENGTH]) {
+                return this->zzz_sum_buf.close(hash);
+            }
+        } wrm_filter;
 
     public:
         explicit wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx(
@@ -2116,11 +2115,11 @@ private:
                 if (res < 0) {
                     return res;
                 }
-                if (int err = this->wrm_filter.open(this->buf(), filename)) {
+                if (int err = this->wrm_filter.zzz_open(this->buf(), filename)) {
                     return err;
                 }
             }
-            return this->wrm_filter.write(this->buf(), data, len);
+            return this->wrm_filter.zzz_write(this->buf(), data, len);
         }
 
         int close()
@@ -2324,7 +2323,7 @@ private:
             if (this->buf().is_open()) {
                 wrmcapture_hash_type hash;
                 {
-                    const int res1 = this->wrm_filter.close(this->buf(), hash, this->cctx.get_hmac_key());
+                    const int res1 = this->wrm_filter.zzz_close(this->buf(), hash, this->cctx.get_hmac_key());
                     const int res2 = this->buf().close();
                     if (res1) {
                         return res1;

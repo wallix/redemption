@@ -519,7 +519,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         {"./capture-000000.wrm", 1646, 0},
         {"./capture-000001.wrm", 3508, 0},
         {"./capture-000002.wrm", 3463, 0},
-        {"./capture-000003.wrm", static_cast<size_t>(-1)},
+        {"./capture-000003.wrm", static_cast<size_t>(-1), static_cast<size_t>(-1)},
         {"./capture.mwrm", 676, 673},
     };
     for (auto x: fileinfo) {
