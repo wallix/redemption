@@ -2067,7 +2067,7 @@ private:
     : public wrmcapture_out_meta_sequence_filename_buf_impl_cctx
     {
         CryptoContext & cctx;
-        wrmcapture_ochecksum_buf_null_buf zzz_sum_buf;
+        wrmcapture_ochecksum_buf_null_buf sum_buf;
 
     public:
         explicit wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx(
@@ -2083,7 +2083,7 @@ private:
         : wrmcapture_out_meta_sequence_filename_buf_impl_cctx(start_sec,
             hash_prefix, prefix, filename, extension, groupid, cctx)
         , cctx(cctx)
-        , zzz_sum_buf(cctx.get_hmac_key())
+        , sum_buf(cctx.get_hmac_key())
         {}
 
         ssize_t write(const void * data, size_t len)
@@ -2094,11 +2094,11 @@ private:
                 if (res < 0) {
                     return res;
                 }
-                if (int err = this->zzz_sum_buf.open()) {
+                if (int err = this->sum_buf.open()) {
                     return err;
                 }
             }
-            this->zzz_sum_buf.write(data, len);
+            this->sum_buf.write(data, len);
             return this->buf().write(data, len);
         }
 
@@ -2303,7 +2303,7 @@ private:
             if (this->buf().is_open()) {
                 wrmcapture_hash_type hash;
                 {
-                    const int res1 = this->zzz_sum_buf.close(hash);
+                    const int res1 = this->sum_buf.close(hash);
                     const int res2 = this->buf().close();
                     if (res1) {
                         return res1;
