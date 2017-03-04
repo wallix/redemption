@@ -50,6 +50,175 @@
 #include "capture/wrm_capture.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 
+
+struct wrmcapture_OutFilenameSequenceTransport : public Transport
+{
+    char current_filename_[1024];
+    WrmFGen filegen_;
+    iofdbuf buf_;
+    unsigned num_file_;
+    int groupid_;
+
+    wrmcapture_OutFilenameSequenceTransport(
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        auth_api * authentifier)
+    : filegen_(prefix, filename, extension)
+    , buf_()
+    , num_file_(0)
+    , groupid_(groupid)
+    {
+        this->current_filename_[0] = 0;
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+    }
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->yyy_next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M1): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->close();
+    }
+
+    void request_full_cleaning() override {
+        this->yyy_request_full_cleaning();
+    }
+
+    ~wrmcapture_OutFilenameSequenceTransport() {
+        this->close();
+    }
+
+private:
+
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|unknown");
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+    public:
+
+    int close()
+    { return this->yyy_next(); }
+
+    ssize_t write(const void * data, size_t len)
+    {
+        if (!this->buf_.is_open()) {
+            const int res = this->open_filename(this->filegen_.get(this->num_file_));
+            if (res < 0) {
+                return res;
+            }
+        }
+        return this->buf_.write(data, len);
+    }
+
+    /// \return 0 if success
+    int yyy_next()
+    {
+        if (this->buf_.is_open()) {
+            this->buf_.close();
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+            return this->rename_filename() ? 0 : 1;
+        }
+        return 1;
+    }
+
+    void yyy_request_full_cleaning()
+    {
+        unsigned i = this->num_file_ + 1;
+        while (i > 0 && !::unlink(this->filegen_.get(--i))) {
+        }
+        if (this->buf_.is_open()) {
+            this->buf_.close();
+        }
+    }
+
+    iofdbuf & buf() noexcept
+    { return this->buf_; }
+
+    const char * current_path() const
+    {
+        if (!this->current_filename_[0] && !this->num_file_) {
+            return nullptr;
+        }
+        return this->filegen_.get(this->num_file_ - 1);
+    }
+
+protected:
+    ssize_t open_filename(const char * filename)
+    {
+        snprintf(this->current_filename_, sizeof(this->current_filename_),
+                    "%sred-XXXXXX.tmp", filename);
+        const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+        if (fd < 0) {
+            return fd;
+        }
+        if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+               , this->current_filename_
+               , this->groupid_ ? "u+r, g+r" : "u+r"
+               , strerror(errno), errno);
+        }
+        this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+        return this->buf_.open(fd);
+    }
+
+    const char * rename_filename()
+    {
+        const char * filename = this->get_filename_generate();
+        const int res = ::rename(this->current_filename_, filename);
+        if (res < 0) {
+            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+               , this->current_filename_, filename, errno, strerror(errno));
+            return nullptr;
+        }
+
+        this->current_filename_[0] = 0;
+        ++this->num_file_;
+        this->filegen_.set_last_filename(-1u, "");
+
+        return filename;
+    }
+
+    const char * get_filename_generate()
+    {
+        this->filegen_.set_last_filename(-1u, "");
+        const char * filename = this->filegen_.get(this->num_file_);
+        this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+        return filename;
+    }
+};
+
+
 template<class Writer>
 void wrmcapture_write_meta_headers(Writer & writer, const char * path,
                         uint16_t width, uint16_t height,
