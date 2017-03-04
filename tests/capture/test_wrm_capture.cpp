@@ -531,6 +531,21 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
     }
 }
 
+inline char * wrmcapture_swrite_hash(char * p, wrmcapture_hash_type const & hash)
+{
+    auto write = [&p](unsigned char const * hash) {
+        *p++ = ' ';                // 1 octet
+        for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+            sprintf(p, "%02x", c); // 64 octets (hash)
+            p += 2;
+        }
+    };
+    write(hash);
+    write(hash + MD_HASH_LENGTH);
+    return p;
+}
+
+
 BOOST_AUTO_TEST_CASE(TestOSumBuf)
 {
     CryptoContext cctx;
