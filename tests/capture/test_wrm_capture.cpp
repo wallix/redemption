@@ -80,7 +80,13 @@ struct wrmcapture_OutFilenameSequenceTransport : public Transport
         if (this->status == false) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
-        const ssize_t res = this->yyy_next();
+        ssize_t res = 1;
+        if (this->buf_.is_open()) {
+            this->buf_.close();
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+            res = this->rename_filename() ? 0 : 1;
+        }
+
         if (res) {
             this->status = false;
             if (res < 0){
@@ -98,7 +104,11 @@ struct wrmcapture_OutFilenameSequenceTransport : public Transport
     }
 
     void request_full_cleaning() override {
-        this->yyy_request_full_cleaning();
+        unsigned i = this->num_file_ + 1;
+        while (i > 0 && !::unlink(this->filegen_.get(--i))) {}
+        if (this->buf_.is_open()) {
+            this->buf_.close();
+        }
     }
 
     ~wrmcapture_OutFilenameSequenceTransport() {
@@ -128,7 +138,15 @@ private:
     public:
 
     int close()
-    { return this->yyy_next(); }
+    {
+        ssize_t res = 1;
+        if (this->buf_.is_open()) {
+            this->buf_.close();
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+            res = this->rename_filename() ? 0 : 1;
+        }
+        return res;
+    }
 
     ssize_t write(const void * data, size_t len)
     {
@@ -141,26 +159,6 @@ private:
         return this->buf_.write(data, len);
     }
 
-    /// \return 0 if success
-    int yyy_next()
-    {
-        if (this->buf_.is_open()) {
-            this->buf_.close();
-            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-            return this->rename_filename() ? 0 : 1;
-        }
-        return 1;
-    }
-
-    void yyy_request_full_cleaning()
-    {
-        unsigned i = this->num_file_ + 1;
-        while (i > 0 && !::unlink(this->filegen_.get(--i))) {
-        }
-        if (this->buf_.is_open()) {
-            this->buf_.close();
-        }
-    }
 
     iofdbuf & buf() noexcept
     { return this->buf_; }
