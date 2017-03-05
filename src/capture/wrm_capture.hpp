@@ -2037,7 +2037,7 @@ private:
 
             ssize_t zzz_write(const void * data, size_t len)
             {
-                REDASSERT(this->zzz_file_size != nosize);
+                REDASSERT(this->zzz_file_size != zzz_nosize);
                 this->zzz_hmac.update(static_cast<const uint8_t *>(data), len);
                 if (this->zzz_file_size < zzz_quick_size) {
                     auto const remaining = std::min(zzz_quick_size - this->zzz_file_size, len);
@@ -2049,7 +2049,7 @@ private:
 
             int zzz_close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
             {
-                REDASSERT(this->zzz_file_size != nosize);
+                REDASSERT(this->zzz_file_size != zzz_nosize);
                 this->zzz_quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
                 this->zzz_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
                 this->zzz_file_size = zzz_nosize;
