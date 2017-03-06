@@ -2859,7 +2859,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     std::ifstream inFile(this->fileSystemData.paths[id-1], std::ios::in | std::ios::binary);
                                     if(inFile.is_open()) {
                                         ReadData = std::make_unique<uint8_t[]>(file_size+offset);
-                                        inFile.read(reinterpret_cast<char *>(ReadData), file_size+offset);
+                                        inFile.read(reinterpret_cast<char *>(ReadData.get(), file_size+offset);
                                         inFile.close();
                                     } else {
                                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
@@ -2878,7 +2878,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                        , 20 + file_size
                                                                        , out_stream
                                                                        , out_stream.get_capacity() - 20
-                                                                       , ReadData + offset
+                                                                       , ReadData.get() + offset
                                                                        , file_size
                                                                        , 0);
                                 if (this->verbose & RDPVerbose::rdpdr)
