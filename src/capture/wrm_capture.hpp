@@ -1449,14 +1449,14 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         uint16_t width,
         uint16_t height,
         const int groupid,
-        auth_api * authentifier = nullptr)
+        auth_api * authentifier)
     : buf(cctx, now.tv_sec, hash_path, path, basename, ".wrm", groupid)
     {
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
 
-        auto & writer = this->buffer().meta_buf();
+        auto & writer = this->buffer().ttt_meta_buf();
         char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
         const int len = sprintf(
             header1,
@@ -1474,10 +1474,11 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             LOG(LOG_ERR, "Write to transport failed (M5): code=%d", err);
 
             if (err == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|%s", path);
-                this->authentifier->report("FILESYSTEM_FULL", message);
-
+                if (this->authentifier) {
+                    char message[1024];
+                    snprintf(message, sizeof(message), "100|%s", path);
+                    this->authentifier->report("FILESYSTEM_FULL", message);
+                }
                 throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
             }
             else {
@@ -1487,12 +1488,12 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
     }
 
     void timestamp(timeval now) override {
-        this->buffer().update_sec(now.tv_sec);
+        this->buffer().ttt_update_sec(now.tv_sec);
     }
 
     const WrmFGen * seqgen() const noexcept
     {
-        return &(this->buffer().seqgen());
+        return &(this->buffer().ttt_seqgen());
     }
 
     bool next() override {
@@ -1517,7 +1518,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
     }
 
     void request_full_cleaning() override {
-        this->buffer().request_full_cleaning();
+        this->buffer().ttt_request_full_cleaning();
     }
 
     ~wrmcapture_OutMetaSequenceTransportWithSum() {
@@ -1531,7 +1532,7 @@ private:
             this->status = false;
             if (errno == ENOSPC) {
                 char message[1024];
-                snprintf(message, sizeof(message), "100|%s", buf.current_path());
+                snprintf(message, sizeof(message), "100|%s", this->buf.ttt_current_path());
                 this->authentifier->report("FILESYSTEM_FULL", message);
                 errno = ENOSPC;
                 throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
@@ -1549,89 +1550,89 @@ private:
     class wrmcapture_out_meta_sequence_filename_buf_impl_cctx
     {
 
-            char current_filename_[1024];
-            WrmFGen filegen_;
-            iofdbuf buf_;
-            unsigned num_file_;
-            int groupid_;
+            char ttt_current_filename_[1024];
+            WrmFGen ttt_filegen_;
+            iofdbuf ttt_buf_;
+            unsigned ttt_num_file_;
+            int ttt_groupid_;
+
+            wrmcapture_cctx_ochecksum_file ttt_meta_buf_;
+            MetaFilename ttt_mf_;
+            MetaFilename ttt_hf_;
+            time_t ttt_start_sec_;
+            time_t ttt_stop_sec_;
+
 
         public:
 
-            ssize_t write(const void * data, size_t len)
+            ssize_t ttt_write(const void * data, size_t len)
             {
-                if (!this->buf_.is_open()) {
-                    const int res = this->open_filename(this->filegen_.get(this->num_file_));
+                if (!this->ttt_buf_.is_open()) {
+                    const int res = this->ttt_open_filename(ttt_filegen_.get(this->ttt_num_file_));
                     if (res < 0) {
                         return res;
                     }
                 }
-                return this->buf_.write(data, len);
+                return this->ttt_buf_.write(data, len);
             }
 
-            const WrmFGen & seqgen() const noexcept
-            { return this->filegen_; }
+            const WrmFGen & ttt_seqgen() const noexcept
+            { return this->ttt_filegen_; }
 
-            iofdbuf & buf() noexcept
-            { return this->buf_; }
+            iofdbuf & ttt_buf() noexcept
+            { return this->ttt_buf_; }
 
-            const char * current_path() const
+            const char * ttt_current_path() const
             {
-                if (!this->current_filename_[0] && !this->num_file_) {
+                if (!this->ttt_current_filename_[0] && !this->ttt_num_file_) {
                     return nullptr;
                 }
-                return this->filegen_.get(this->num_file_ - 1);
+                return this->ttt_filegen_.get(this->ttt_num_file_ - 1);
             }
 
         protected:
-            ssize_t open_filename(const char * filename)
+            ssize_t ttt_open_filename(const char * filename)
             {
-                snprintf(this->current_filename_, sizeof(this->current_filename_),
+                snprintf(this->ttt_current_filename_, sizeof(this->ttt_current_filename_),
                             "%sred-XXXXXX.tmp", filename);
-                const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+                const int fd = ::mkostemps(this->ttt_current_filename_, 4, O_WRONLY | O_CREAT);
                 if (fd < 0) {
                     return fd;
                 }
-                if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                if (chmod(this->ttt_current_filename_, this->ttt_groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                     LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                       , this->current_filename_
-                       , this->groupid_ ? "u+r, g+r" : "u+r"
+                       , this->ttt_current_filename_
+                       , this->ttt_groupid_ ? "u+r, g+r" : "u+r"
                        , strerror(errno), errno);
                 }
-                this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-                return this->buf_.open(fd);
+                this->ttt_filegen_.set_last_filename(this->ttt_num_file_, this->ttt_current_filename_);
+                return this->ttt_buf_.open(fd);
             }
 
-            const char * rename_filename()
+            const char * ttt_rename_filename()
             {
-                const char * filename = this->get_filename_generate();
-                const int res = ::rename(this->current_filename_, filename);
+                const char * filename = this->ttt_get_filename_generate();
+                const int res = ::rename(this->ttt_current_filename_, filename);
                 if (res < 0) {
                     LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                       , this->current_filename_, filename, errno, strerror(errno));
+                       , this->ttt_current_filename_, filename, errno, strerror(errno));
                     return nullptr;
                 }
 
-                this->current_filename_[0] = 0;
-                ++this->num_file_;
-                this->filegen_.set_last_filename(-1u, "");
+                this->ttt_current_filename_[0] = 0;
+                ++this->ttt_num_file_;
+                this->ttt_filegen_.set_last_filename(-1u, "");
 
                 return filename;
             }
 
-            const char * get_filename_generate()
+            const char * ttt_get_filename_generate()
             {
-                this->filegen_.set_last_filename(-1u, "");
-                const char * filename = this->filegen_.get(this->num_file_);
-                this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+                this->ttt_filegen_.set_last_filename(-1u, "");
+                const char * filename = this->ttt_filegen_.get(this->ttt_num_file_);
+                this->ttt_filegen_.set_last_filename(this->ttt_num_file_, this->ttt_current_filename_);
                 return filename;
             }
-
-    // =====================================================================
-        wrmcapture_cctx_ochecksum_file meta_buf_;
-        MetaFilename mf_;
-        MetaFilename hf_;
-        time_t start_sec_;
-        time_t stop_sec_;
 
     public:
         explicit wrmcapture_out_meta_sequence_filename_buf_impl_cctx(
@@ -1643,43 +1644,43 @@ private:
             const int groupid,
             CryptoContext& cctx
         )
-        : filegen_(prefix, filename, extension)
-        , buf_()
-        , num_file_(0)
-        , groupid_(groupid)
-        , meta_buf_(cctx)
-        , mf_(prefix, filename)
-        , hf_(hash_prefix, filename)
-        , start_sec_(start_sec)
-        , stop_sec_(start_sec)
+        : ttt_filegen_(prefix, filename, extension)
+        , ttt_buf_()
+        , ttt_num_file_(0)
+        , ttt_groupid_(groupid)
+        , ttt_meta_buf_(cctx)
+        , ttt_mf_(prefix, filename)
+        , ttt_hf_(hash_prefix, filename)
+        , ttt_start_sec_(start_sec)
+        , ttt_stop_sec_(start_sec)
         {
-            this->current_filename_[0] = 0;
-            if (this->meta_buf_.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
-                LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
+            this->ttt_current_filename_[0] = 0;
+            if (this->ttt_meta_buf_.open(this->ttt_mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+                LOG(LOG_ERR, "Failed to open meta file %s", this->ttt_mf_.filename);
                 throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
             }
-            if (chmod(this->mf_.filename, S_IRUSR | S_IRGRP) == -1) {
+            if (chmod(this->ttt_mf_.filename, S_IRUSR | S_IRGRP) == -1) {
                 LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                   , this->mf_.filename
+                   , this->ttt_mf_.filename
                    , "u+r, g+r"
                    , strerror(errno), errno);
             }
         }
 
-        int close()
+        int ttt_close()
         {
             int err = this->next();
             if (err) {
                 return err;
             }
-            if (this->meta_buf().is_open()){
-                err = this->meta_buf_.close();
+            if (this->ttt_meta_buf().is_open()){
+                err = this->ttt_meta_buf_.close();
                 if (err) {
                     return err;
                 }
             }
-            char const * hash_filename = this->hf_.filename;
-            char const * meta_filename = this->meta_filename();
+            char const * hash_filename = this->ttt_hf_.filename;
+            char const * meta_filename = this->ttt_meta_filename();
             class wrmcapture_ofile_buf_out
             {
                 int fd;
@@ -1728,9 +1729,6 @@ private:
 
                 bool is_open() const noexcept
                 { return -1 != this->fd; }
-
-                int flush() const
-                { return 0; }
             } crypto_hash;
 
             char path[1024] = {};
@@ -1843,8 +1841,8 @@ private:
         /// \return 0 if success
         int next()
         {
-            if (this->buf().is_open()) {
-                this->buf().close();
+            if (this->ttt_buf().is_open()) {
+                this->ttt_buf().close();
                 return this->next_meta_file();
             }
             return 1;
@@ -1853,14 +1851,14 @@ private:
     protected:
         int next_meta_file(wrmcapture_hash_type const * hash = nullptr)
         {
-            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-            const char * filename = this->rename_filename();
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->ttt_current_filename, this->ttt_rename_to);
+            const char * filename = this->ttt_rename_filename();
             if (!filename) {
                 return 1;
             }
 
-            auto start_sec = this->start_sec_;
-            auto stop_sec = this->stop_sec_+1;
+            auto start_sec = this->ttt_start_sec_;
+            auto stop_sec = this->ttt_stop_sec_+1;
 
             struct stat stat;
             int err = ::stat(filename, &stat);
@@ -1872,7 +1870,7 @@ private:
             for (; *epfile; ++epfile) {
                 if (*epfile == '\\') {
                     ssize_t len = epfile - pfile + 1;
-                    auto res = this->meta_buf_.write(pfile, len);
+                    auto res = this->ttt_meta_buf_.write(pfile, len);
                     if (res < len) {
                         return res < 0 ? res : 1;
                     }
@@ -1880,11 +1878,11 @@ private:
                 }
                 if (*epfile == ' ') {
                     ssize_t len = epfile - pfile;
-                    auto res = this->meta_buf_.write(pfile, len);
+                    auto res = this->ttt_meta_buf_.write(pfile, len);
                     if (res < len) {
                         return res < 0 ? res : 1;
                     }
-                    res = this->meta_buf_.write("\\", 1u);
+                    res = this->ttt_meta_buf_.write("\\", 1u);
                     if (res < 1) {
                         return res < 0 ? res : 1;
                     }
@@ -1894,7 +1892,7 @@ private:
 
             if (pfile != epfile) {
                 ssize_t len = epfile - pfile;
-                auto res = this->meta_buf_.write(pfile, len);
+                auto res = this->ttt_meta_buf_.write(pfile, len);
                 if (res < len) {
                     return res < 0 ? res : 1;
                 }
@@ -1939,44 +1937,44 @@ private:
             write(reinterpret_cast<const unsigned char *>(&hash[MD_HASH_LENGTH]));
             *p++ = '\n';
 
-            ssize_t res = this->meta_buf_.write(mes, p-mes);
+            ssize_t res = this->ttt_meta_buf_.write(mes, p-mes);
 
             if (res < p-mes) {
                 return res < 0 ? res : 1;
             }
 
-            this->start_sec_ = this->stop_sec_;
+            this->ttt_start_sec_ = this->ttt_stop_sec_;
 
             return 0;
         }
 
-        char const * hash_filename() const noexcept
+        char const * ttt_hash_filename() const noexcept
         {
-            return this->hf_.filename;
+            return this->ttt_hf_.filename;
         }
 
-        char const * meta_filename() const noexcept
+        char const * ttt_meta_filename() const noexcept
         {
-            return this->mf_.filename;
+            return this->ttt_mf_.filename;
         }
 
     public:
-        void request_full_cleaning()
+        void ttt_request_full_cleaning()
         {
-            unsigned i = this->num_file_ + 1;
-            while (i > 0 && !::unlink(this->filegen_.get(--i))) {
+            unsigned i = this->ttt_num_file_ + 1;
+            while (i > 0 && !::unlink(this->ttt_filegen_.get(--i))) {
             }
-            if (this->buf_.is_open()) {
-                this->buf_.close();
+            if (this->ttt_buf_.is_open()) {
+                this->ttt_buf_.close();
             }
-            ::unlink(this->mf_.filename);
+            ::unlink(this->ttt_mf_.filename);
         }
 
-        wrmcapture_cctx_ochecksum_file & meta_buf() noexcept
-        { return this->meta_buf_; }
+        wrmcapture_cctx_ochecksum_file & ttt_meta_buf() noexcept
+        { return this->ttt_meta_buf_; }
 
-        void update_sec(time_t sec)
-        { this->stop_sec_ = sec; }
+        void ttt_update_sec(time_t sec)
+        { this->ttt_stop_sec_ = sec; }
     };
 
     class wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx
@@ -2053,9 +2051,9 @@ private:
 
         ssize_t write(const void * data, size_t len)
         {
-            if (!this->buf().is_open()) {
-                const char * filename = this->get_filename_generate();
-                const int res = this->open_filename(filename);
+            if (!this->ttt_buf().is_open()) {
+                const char * filename = this->ttt_get_filename_generate();
+                const int res = this->ttt_open_filename(filename);
                 if (res < 0) {
                     return res;
                 }
@@ -2064,12 +2062,12 @@ private:
                 }
             }
             this->sum_buf.zzz_write(data, len);
-            return this->buf().write(data, len);
+            return this->ttt_buf().write(data, len);
         }
 
         int close()
         {
-            if (this->buf().is_open()) {
+            if (this->ttt_buf().is_open()) {
                 if (this->next()) {
                     return 1;
                 }
@@ -2128,18 +2126,18 @@ private:
                 { return 0; }
             } hash_buf;
 
-            if (!this->meta_buf().is_open()) {
+            if (!this->ttt_meta_buf().is_open()) {
                 return 1;
             }
 
             wrmcapture_hash_type hash;
 
-            if (this->meta_buf().close(hash)) {
+            if (this->ttt_meta_buf().close(hash)) {
                 return 1;
             }
 
-            char const * hash_filename = this->hash_filename();
-            char const * meta_filename = this->meta_filename();
+            char const * hash_filename = this->ttt_hash_filename();
+            char const * meta_filename = this->ttt_meta_filename();
 
             char path[1024] = {};
             char basename[1024] = {};
@@ -2264,11 +2262,11 @@ private:
 
         int next()
         {
-            if (this->buf().is_open()) {
+            if (this->ttt_buf().is_open()) {
                 wrmcapture_hash_type hash;
                 {
                     const int res1 = this->sum_buf.zzz_close(hash);
-                    const int res2 = this->buf().close();
+                    const int res2 = this->ttt_buf().close();
                     if (res1) {
                         return res1;
                     }
