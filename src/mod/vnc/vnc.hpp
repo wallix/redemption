@@ -325,8 +325,7 @@ public:
 
         auto in_uint32_be = [&]{
             uint8_t buf_stream[4];
-            auto end = buf_stream;
-            this->t.recv_new(end, 4);
+            this->t.recv_new(buf_stream, 4);
             return Parse(buf_stream).in_uint32_be();
 
         };
@@ -773,8 +772,7 @@ public:
             if (this->is_socket_transport && static_cast<SocketTransport&>(this->t).can_recv()) {
                 try {
                     uint8_t type; /* message-type */
-                    uint8_t * end = &type;
-                    this->t.recv_new(end, 1);
+                    this->t.recv_new(&type, 1);
                     switch (type) {
                         case 0: /* framebuffer update */
                             this->lib_framebuffer_update(drawable);
@@ -823,10 +821,7 @@ public:
 
                 /* protocol version */
                 uint8_t server_protoversion[12];
-                {
-                    auto end = server_protoversion;
-                    this->t.recv_new(end, 12);
-                }
+                this->t.recv_new(server_protoversion, 12);
                 server_protoversion[11] = 0;
                 if (this->verbose) {
                     LOG(LOG_INFO, "Server Protocol Version=%s\n", server_protoversion);
@@ -836,8 +831,7 @@ public:
 
                 int32_t const security_level = [this](){
                     uint8_t buf[4];
-                    auto end = buf;
-                    this->t.recv_new(end, sizeof(buf));
+                    this->t.recv_new(buf, sizeof(buf));
                     return Parse(buf).in_sint32_be();
                 }();
 
@@ -857,8 +851,7 @@ public:
                         }
                         uint8_t buf[16];
                         auto recv = [&](size_t len) {
-                            auto end = buf;
-                            this->t.recv_new(end, len);
+                            this->t.recv_new(buf, len);
                         };
                         recv(16);
 
@@ -932,8 +925,7 @@ public:
                     {
                         LOG(LOG_INFO, "VNC MS-LOGON Auth");
                         uint8_t buf[8+8+8];
-                        auto end = buf;
-                        this->t.recv_new(end, sizeof(buf));
+                        this->t.recv_new(buf, sizeof(buf));
                         InStream stream(buf);
                         uint64_t gen = stream.in_uint64_be();
                         uint64_t mod = stream.in_uint64_be();
@@ -945,11 +937,9 @@ public:
                     {
                         LOG(LOG_INFO, "VNC INVALID Auth");
                         uint8_t buf[8192];
-                        auto end = buf;
-                        this->t.recv_new(end, 4);
+                        this->t.recv_new(buf, 4);
                         size_t reason_length = Parse(buf).in_uint32_be();
-                        end = buf;
-                        this->t.recv_new(end, reason_length);
+                        this->t.recv_new(buf, reason_length);
                         hexdump_c(buf, reason_length);
                         throw Error(ERR_VNC_CONNECTION_ERROR);
 
@@ -1038,10 +1028,8 @@ public:
 
                 {
                     uint8_t buf[24];
-                    {
-                        auto end = buf;
-                        this->t.recv_new(end, sizeof(buf)); // server init
-                    }
+                    this->t.recv_new(buf, sizeof(buf)); // server init
+
                     InStream stream(buf);
                     this->width = stream.in_uint16_be();
                     this->height = stream.in_uint16_be();
@@ -1065,8 +1053,7 @@ public:
                         LOG(LOG_ERR, "VNC connection error");
                         throw Error(ERR_VNC_CONNECTION_ERROR);
                     }
-                    char * end = this->mod_name;
-                    this->t.recv_new(end, lg);
+                    this->t.recv_new(this->mod_name, lg);
                     this->mod_name[lg] = 0;
                     // LOG(LOG_INFO, "VNC received: mod_name='%s'", this->mod_name);
                 }
