@@ -25,6 +25,7 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
+//#define LOGPRINT
 
 #include "core/font.hpp"
 #include "mod/internal/widget2/flat_wait.hpp"
@@ -89,7 +90,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
 
-//    drawable.save_to_png(OUTPUT_FILE_PATH "flat_wait.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "flat_wait.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
@@ -98,6 +99,75 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
+
+BOOST_AUTO_TEST_CASE(TraceFlatWaitWithForm)
+{
+    TestDraw drawable(800, 600);
+
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
+    NotifyApi * notifier = nullptr;
+    Theme colors;
+    colors.global.bgcolor = DARK_BLUE_BIS;
+    colors.global.fgcolor = WHITE;
+
+    // const char * text =
+    //     "The target trucmuch@machinbidule:serv is invalid<br>"
+    //     "please enter a valid target<br>"
+    //     "You can either return to selector<br>"
+    //     "or exit<br>"
+    //     "Sorry for the inconvenience";
+
+    // const char * text_timeframe =
+    //     "Access to \"trucmuch@machinbidule:serv\" is not allowed because of out of timeframe.<br>"
+    //     "It will be available on Oct 4 at 7:00 am.<br>"
+    //     "You can either return to selector or exit.";
+
+    const char * text_invalid =
+        "Target \"trucmuch@machinbidule:serv\" is not allowed because you either<br>"
+        "has no right to access it or it does not exist.<br>"
+        "you can either return to selector or exit.";
+
+    // const char * text_pending =
+    //     "An approbation demand is currently pending for \"trucmuch@machinbidule:serv\".<br>"
+    //     "Please wait for approbator confirmation.<br>"
+    //     "Otherwise, you can either return to selector or exit.";
+
+    // const char * text_approb =
+    //     "An approbation is required for \"trucmuch@machinbidule:serv\".<br>"
+    //     "Please fill following form and enter confirm to ask for an approbation.<br>"
+    //     "Otherwise, you can either return to selector or exit.";
+
+    WidgetFlatButton * extra_button = nullptr;
+    FlatWait flat_dialog(drawable.gd, 0, 0, 800, 600, parent, notifier, "Invalid Target",
+                         text_invalid, 0, extra_button, font, colors, Translation::EN, true,
+                         FlatForm::COMMENT_DISPLAY | FlatForm::COMMENT_MANDATORY |
+                            FlatForm::TICKET_DISPLAY | FlatForm::TICKET_MANDATORY |
+                            FlatForm::DURATION_DISPLAY);
+    // FlatWait flat_dialog(drawable.gd, 800, 600, parent, notifier, "Pending Approbation",
+    //                      text_pending, 0, colors);
+    // FlatWait flat_dialog(drawable.gd, 800, 600, parent, notifier, "Out of Timeframe",
+    //                      text_timeframe, 0, colors);
+    // FlatWait flat_dialog(drawable.gd, 800, 600, parent, notifier, "Approbation needed",
+    //                      text_approb, 0, colors, true);
+
+    // ask to widget to redraw at it's current position
+    flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
+
+    //drawable.save_to_png(OUTPUT_FILE_PATH "flat_wait_1.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.impl(), message,
+        "\x2b\xae\xee\xd5\x35\xca\x1d\x42\x1a\x1b\xf2\x67\x39\xbf\x38\xfb\x51\xb4\xab\x5f"
+    )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
 
 // BOOST_AUTO_TEST_CASE(TraceFlatWait2)
 // {
