@@ -79,11 +79,11 @@ void rdp_request(SocketTransport & sockettransport)
         );
 
     char * pbuf = buf;
-    sockettransport.recv(&pbuf, 29);
+    sockettransport.recv_new(pbuf, 29);
     //(std::cout << "receive: ").write(buf, 29).flush();
 
     pbuf = buf;
-    sockettransport.recv(&pbuf, 18);
+    sockettransport.recv_new(pbuf, 18);
 }
 
 int tcp_connect(const char *host, int port)

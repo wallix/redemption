@@ -6617,7 +6617,7 @@ public:
 
             for (unsigned int i = 0; i < height; ++i) {
                 const uint8_t* src  = indata + (height - i - 1) * src_xor_padded_line_length_in_byte;
-                      uint8_t* dest = data + i * dest_xor_line_length_in_byte;
+                      uint8_t* dest = data + i * dest_xor_padded_line_length_in_byte;
 
                 unsigned char and_bit_extraction_mask = 7;
 
