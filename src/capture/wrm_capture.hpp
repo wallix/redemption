@@ -1355,7 +1355,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             unsigned num_file_;
             int groupid_;
 
-            int ttt_meta_buf_fd;
+            int meta_buf_fd;
 
             static constexpr size_t nosize = ~size_t{};
             static constexpr size_t quick_size = 4096;
@@ -1378,8 +1378,8 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                 this->ttt_meta_buf_hmac.init(this->ttt_meta_buf_hmac_key, sizeof(this->ttt_meta_buf_hmac_key));
                 this->ttt_meta_buf_quick_hmac.init(this->ttt_meta_buf_hmac_key, sizeof(this->ttt_meta_buf_hmac_key));
                 this->ttt_meta_buf_file_size = 0;
-                this->ttt_meta_buf_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-                return this->ttt_meta_buf_fd;
+                this->meta_buf_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+                return this->meta_buf_fd;
             }
 
             ssize_t ttt_meta_buf_write(const void * data, size_t len)
@@ -1399,7 +1399,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                 size_t remaining_len = len;
                 size_t total_sent = 0;
                 while (remaining_len) {
-                    ssize_t ret = ::write(this->ttt_meta_buf_fd,
+                    ssize_t ret = ::write(this->meta_buf_fd,
                         static_cast<const char*>(data) + total_sent, remaining_len);
                     if (ret <= 0){
                         if (errno == EINTR){
@@ -1424,19 +1424,13 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
 
             int ttt_meta_buf_close()
             {
-                if (this->ttt_meta_buf_is_open()) {
-                    const int ret = ::close(this->ttt_meta_buf_fd);
-                    this->ttt_meta_buf_fd = -1;
+                if (-1 != this->meta_buf_fd) {
+                    const int ret = ::close(this->meta_buf_fd);
+                    this->meta_buf_fd = -1;
                     return ret;
                 }
                 return 0;
             }
-
-            bool ttt_meta_buf_is_open() const noexcept
-            { return -1 != this->ttt_meta_buf_fd; }
-
-            int ttt_meta_buf_flush() const
-            { return 0; }
 
             ssize_t ttt_write(const void * data, size_t len)
             {
@@ -1516,7 +1510,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             if (err) {
                 return err;
             }
-            if (this->ttt_meta_buf_is_open()){
+            if (-1 != this->meta_buf_fd){
                 err = this->ttt_meta_buf_close();
                 if (err) {
                     return err;
@@ -1882,7 +1876,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         , buf_()
         , num_file_(0)
         , groupid_(groupid)
-        , ttt_meta_buf_fd(-1)
+        , meta_buf_fd(-1)
         , ttt_meta_buf_hmac_key(cctx.get_hmac_key())
         , ttt_mf_(prefix, filename)
         , ttt_hf_(hash_prefix, filename)
@@ -1986,7 +1980,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                 { return 0; }
             } hash_buf;
 
-            if (!this->ttt_meta_buf_is_open()) {
+            if (-1 == this->meta_buf_fd) {
                 return 1;
             }
 
