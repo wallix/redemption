@@ -140,9 +140,12 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     fd_wrapper.release();
 
     uint8_t buf[65536];
+    auto p = buf;
 
-    const auto len_buf = CHANNELS::CHANNEL_CHUNK_LENGTH + 1024;
-    CHECK_EXCEPTION_ERROR_ID(transport->recv_new(buf, len_buf), ERR_TRANSPORT_NO_MORE_DATA);
+    const auto len = CHANNELS::CHANNEL_CHUNK_LENGTH + 1024;
+
+    CHECK_EXCEPTION_ERROR_ID(transport->recv(&p, len), ERR_TRANSPORT_NO_MORE_DATA);
+    BOOST_CHECK_EQUAL(1974, p-buf); // partial read
 
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);
@@ -154,7 +157,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     RdpdrSendDriveIOResponseTask rdpdr_send_drive_io_response_task(
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
         buf,
-        len_buf,
+        p-buf,
         test_to_server_sender,
         to_verbose_flags(verbose));
 
