@@ -2089,16 +2089,16 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         }
 
 
-        ssize_t ttt_write(const void * data, size_t len)
-        {
-            if (!this->buf_.is_open()) {
-                const int res = this->ttt_open_filename(filegen_.get(this->num_file_));
-                if (res < 0) {
-                    return res;
-                }
-            }
-            return this->buf_.write(data, len);
-        }
+//        ssize_t ttt_write(const void * data, size_t len)
+//        {
+//            if (!this->buf_.is_open()) {
+//                const int res = this->ttt_open_filename(filegen_.get(this->num_file_));
+//                if (res < 0) {
+//                    return res;
+//                }
+//            }
+//            return this->buf_.write(data, len);
+//        }
     } buf;
 
     wrmcapture_OutMetaSequenceTransportWithSum(
