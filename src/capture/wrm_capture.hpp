@@ -68,92 +68,6 @@ enum {
     INVALID_CHUNK       = 0x8000
 };
 
-struct wrmcapture_FilenameGenerator
-{
-    enum Format {
-        PATH_FILE_PID_COUNT_EXTENSION,
-        PATH_FILE_COUNT_EXTENSION,
-        PATH_FILE_PID_EXTENSION,
-        PATH_FILE_EXTENSION
-    };
-
-private:
-    char         path[1024];
-    char         filename[1012];
-    char         extension[12];
-    Format       format;
-    unsigned     pid;
-    mutable char filename_gen[1024];
-
-    const char * last_filename;
-    unsigned     last_num;
-
-public:
-    wrmcapture_FilenameGenerator(
-        Format format,
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension)
-    : format(format)
-    , pid(getpid())
-    , last_filename(nullptr)
-    , last_num(-1u)
-    {
-        if (strlen(prefix) > sizeof(this->path) - 1
-         || strlen(filename) > sizeof(this->filename) - 1
-         || strlen(extension) > sizeof(this->extension) - 1) {
-            throw Error(ERR_TRANSPORT);
-        }
-
-        strcpy(this->path, prefix);
-        strcpy(this->filename, filename);
-        strcpy(this->extension, extension);
-
-        this->filename_gen[0] = 0;
-    }
-
-    const char * get(unsigned count) const
-    {
-        if (count == this->last_num && this->last_filename) {
-            return this->last_filename;
-        }
-
-        using std::snprintf;
-        switch (this->format) {
-            default:
-            case PATH_FILE_PID_COUNT_EXTENSION:
-                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u-%06u%s", this->path
-                        , this->filename, this->pid, count, this->extension);
-                break;
-            case PATH_FILE_COUNT_EXTENSION:
-                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
-                        , this->filename, count, this->extension);
-                break;
-            case PATH_FILE_PID_EXTENSION:
-                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
-                        , this->filename, this->pid, this->extension);
-                break;
-            case PATH_FILE_EXTENSION:
-                snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s%s", this->path
-                        , this->filename, this->extension);
-                break;
-        }
-        return this->filename_gen;
-    }
-
-    void set_last_filename(unsigned num, const char * name)
-    {
-        this->last_num = num;
-        this->last_filename = name;
-    }
-
-private:
-    wrmcapture_FilenameGenerator(wrmcapture_FilenameGenerator const &) = delete;
-    wrmcapture_FilenameGenerator& operator=(wrmcapture_FilenameGenerator const &) = delete;
-};
-
-typedef wrmcapture_FilenameGenerator::Format wrmcapture_FilenameFormat;
-
 struct WrmFGen
 {
 private:
@@ -263,176 +177,6 @@ public:
     }
 };
 
-
-
-
-struct wrmcapture_OutFilenameSequenceTransport : public Transport
-{
-    char bufxxx_current_filename_[1024];
-    WrmFGen bufxxx_filegen_;
-    iofdbuf bufxxx_buf_;
-    unsigned bufxxx_num_file_;
-    int bufxxx_groupid_;
-
-    wrmcapture_OutFilenameSequenceTransport(
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension,
-        const int groupid,
-        auth_api * authentifier)
-    : bufxxx_filegen_(prefix, filename, extension)
-    , bufxxx_buf_()
-    , bufxxx_num_file_(0)
-    , bufxxx_groupid_(groupid)
-    {
-        this->bufxxx_current_filename_[0] = 0;
-        if (authentifier) {
-            this->set_authentifier(authentifier);
-        }
-    }
-
-    bool next() override {
-        if (this->status == false) {
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
-        const ssize_t res = this->bufxxx_next();
-        if (res) {
-            this->status = false;
-            if (res < 0){
-                LOG(LOG_ERR, "Write to transport failed (M1): code=%d", errno);
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
-            }
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-        }
-        ++this->seqno;
-        return true;
-    }
-
-    bool disconnect() override {
-        return !this->bufxxx_close();
-    }
-
-    void request_full_cleaning() override {
-        this->bufxxx_request_full_cleaning();
-    }
-
-    ~wrmcapture_OutFilenameSequenceTransport() {
-        this->bufxxx_close();
-    }
-
-private:
-
-    void do_send(const uint8_t * data, size_t len) override {
-        const ssize_t res = this->bufxxx_write(data, len);
-        if (res < 0) {
-            this->status = false;
-            if (errno == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|unknown");
-                this->authentifier->report("FILESYSTEM_FULL", message);
-                errno = ENOSPC;
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
-            }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
-        this->last_quantum_sent += res;
-    }
-
-    public:
-
-    int bufxxx_close()
-    { return this->bufxxx_next(); }
-
-    ssize_t bufxxx_write(const void * data, size_t len)
-    {
-        if (!this->bufxxx_buf_.is_open()) {
-            const int res = this->bufxxx_open_filename(this->bufxxx_filegen_.get(this->bufxxx_num_file_));
-            if (res < 0) {
-                return res;
-            }
-        }
-        return this->bufxxx_buf_.write(data, len);
-    }
-
-    /// \return 0 if success
-    int bufxxx_next()
-    {
-        if (this->bufxxx_buf_.is_open()) {
-            this->bufxxx_buf_.close();
-            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->bufxxx_current_filename, this->bufxxx_rename_to);
-            return this->bufxxx_rename_filename() ? 0 : 1;
-        }
-        return 1;
-    }
-
-    void bufxxx_request_full_cleaning()
-    {
-        unsigned i = this->bufxxx_num_file_ + 1;
-        while (i > 0 && !::unlink(this->bufxxx_filegen_.get(--i))) {
-        }
-        if (this->bufxxx_buf_.is_open()) {
-            this->bufxxx_buf_.close();
-        }
-    }
-
-    iofdbuf & bufxxx_buf() noexcept
-    { return this->bufxxx_buf_; }
-
-    const char * bufxxx_current_path() const
-    {
-        if (!this->bufxxx_current_filename_[0] && !this->bufxxx_num_file_) {
-            return nullptr;
-        }
-        return this->bufxxx_filegen_.get(this->bufxxx_num_file_ - 1);
-    }
-
-protected:
-    ssize_t bufxxx_open_filename(const char * filename)
-    {
-        snprintf(this->bufxxx_current_filename_, sizeof(this->bufxxx_current_filename_),
-                    "%sred-XXXXXX.tmp", filename);
-        const int fd = ::mkostemps(this->bufxxx_current_filename_, 4, O_WRONLY | O_CREAT);
-        if (fd < 0) {
-            return fd;
-        }
-        if (chmod(this->bufxxx_current_filename_, this->bufxxx_groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-               , this->bufxxx_current_filename_
-               , this->bufxxx_groupid_ ? "u+r, g+r" : "u+r"
-               , strerror(errno), errno);
-        }
-        this->bufxxx_filegen_.set_last_filename(this->bufxxx_num_file_, this->bufxxx_current_filename_);
-        return this->bufxxx_buf_.open(fd);
-    }
-
-    const char * bufxxx_rename_filename()
-    {
-        const char * filename = this->bufxxx_get_filename_generate();
-        const int res = ::rename(this->bufxxx_current_filename_, filename);
-        if (res < 0) {
-            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-               , this->bufxxx_current_filename_, filename, errno, strerror(errno));
-            return nullptr;
-        }
-
-        this->bufxxx_current_filename_[0] = 0;
-        ++this->bufxxx_num_file_;
-        this->bufxxx_filegen_.set_last_filename(-1u, "");
-
-        return filename;
-    }
-
-    const char * bufxxx_get_filename_generate()
-    {
-        this->bufxxx_filegen_.set_last_filename(-1u, "");
-        const char * filename = this->bufxxx_filegen_.get(this->bufxxx_num_file_);
-        this->bufxxx_filegen_.set_last_filename(this->bufxxx_num_file_, this->bufxxx_current_filename_);
-        return filename;
-    }
-};
-
 struct MetaFilename
 {
     char filename[2048];
@@ -449,28 +193,14 @@ typedef unsigned char wrmcapture_hash_type[MD_HASH_LENGTH*2];
 
 constexpr std::size_t wrmcapture_hash_string_len = (1 + MD_HASH_LENGTH * 2) * 2;
 
-inline char * wrmcapture_swrite_hash(char * p, wrmcapture_hash_type const & hash)
-{
-    auto write = [&p](unsigned char const * hash) {
-        *p++ = ' ';                // 1 octet
-        for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
-            sprintf(p, "%02x", c); // 64 octets (hash)
-            p += 2;
-        }
-    };
-    write(hash);
-    write(hash + MD_HASH_LENGTH);
-    return p;
-}
-
 struct ocrypto {
-    char           encrypt_buf[CRYPTO_BUFFER_SIZE]; //
-    EVP_CIPHER_CTX encrypt_ectx;                    // [en|de]cryption context
-    EVP_MD_CTX     encrypt_hctx;                    // hash context
-    EVP_MD_CTX     encrypt_hctx4k;                  // hash context
-    uint32_t       encrypt_pos;                     // current position in buf
-    uint32_t       encrypt_raw_size;                // the unciphered/uncompressed file size
-    uint32_t       encrypt_file_size;               // the current file size
+    char           buf[CRYPTO_BUFFER_SIZE]; //
+    EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
+    EVP_MD_CTX     hctx;                    // hash context
+    EVP_MD_CTX     hctx4k;                  // hash context
+    uint32_t       pos;                     // current position in buf
+    uint32_t       raw_size;                // the unciphered/uncompressed file size
+    uint32_t       file_size;               // the current file size
 
     /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
      * Return 0 on success, negative value on error
@@ -481,15 +211,15 @@ struct ocrypto {
         int remaining_size = 0;
 
         /* allows reusing of ectx for multiple encryption cycles */
-        if (EVP_EncryptInit_ex(&this->encrypt_ectx, nullptr, nullptr, nullptr, nullptr) != 1){
+        if (EVP_EncryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare encryption context!\n", getpid());
             return -1;
         }
-        if (EVP_EncryptUpdate(&this->encrypt_ectx, dst_buf, &safe_size, src_buf, src_sz) != 1) {
+        if (EVP_EncryptUpdate(&this->ectx, dst_buf, &safe_size, src_buf, src_sz) != 1) {
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could encrypt data!\n", getpid());
             return -1;
         }
-        if (EVP_EncryptFinal_ex(&this->encrypt_ectx, dst_buf + safe_size, &remaining_size) != 1){
+        if (EVP_EncryptFinal_ex(&this->ectx, dst_buf + safe_size, &remaining_size) != 1){
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish encryption!\n", getpid());
             return -1;
         }
@@ -502,14 +232,14 @@ struct ocrypto {
      */
     int xmd_update(const void * src_buf, uint32_t src_sz)
     {
-        if (::EVP_DigestUpdate(&this->encrypt_hctx, src_buf, src_sz) != 1) {
+        if (::EVP_DigestUpdate(&this->hctx, src_buf, src_sz) != 1) {
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
             return -1;
         }
-        if (this->encrypt_file_size < 4096) {
-            size_t remaining_size = 4096 - this->encrypt_file_size;
+        if (this->file_size < 4096) {
+            size_t remaining_size = 4096 - this->file_size;
             size_t hashable_size = MIN(remaining_size, src_sz);
-            if (::EVP_DigestUpdate(&this->encrypt_hctx4k, src_buf, hashable_size) != 1) {
+            if (::EVP_DigestUpdate(&this->hctx4k, src_buf, hashable_size) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
                 return -1;
             }
@@ -517,15 +247,15 @@ struct ocrypto {
         return 0;
     }
 
-    int encrypt_open(uint8_t * buffer, size_t buflen, size_t & towrite, const unsigned char * trace_key, CryptoContext & cctx, const unsigned char * iv)
+    int open(uint8_t * buffer, size_t buflen, size_t & towrite, const unsigned char * trace_key, CryptoContext & cctx, const unsigned char * iv)
     {
-        ::memset(this->encrypt_buf, 0, sizeof(this->encrypt_buf));
-        ::memset(&this->encrypt_ectx, 0, sizeof(this->encrypt_ectx));
-        ::memset(&this->encrypt_hctx, 0, sizeof(this->encrypt_hctx));
-        ::memset(&this->encrypt_hctx4k, 0, sizeof(this->encrypt_hctx4k));
-        this->encrypt_pos = 0;
-        this->encrypt_raw_size = 0;
-        this->encrypt_file_size = 0;
+        ::memset(this->buf, 0, sizeof(this->buf));
+        ::memset(&this->ectx, 0, sizeof(this->ectx));
+        ::memset(&this->hctx, 0, sizeof(this->hctx));
+        ::memset(&this->hctx4k, 0, sizeof(this->hctx4k));
+        this->pos = 0;
+        this->raw_size = 0;
+        this->file_size = 0;
 
         const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
         const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
@@ -538,8 +268,8 @@ struct ocrypto {
             return -1;
         }
 
-        ::EVP_CIPHER_CTX_init(&this->encrypt_ectx);
-        if (::EVP_EncryptInit_ex(&this->encrypt_ectx, cipher, nullptr, key, iv) != 1) {
+        ::EVP_CIPHER_CTX_init(&this->ectx);
+        if (::EVP_EncryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize encrypt context\n", ::getpid());
             return -1;
         }
@@ -551,13 +281,13 @@ struct ocrypto {
             return -1;
         }
 
-        ::EVP_MD_CTX_init(&this->encrypt_hctx);
-        ::EVP_MD_CTX_init(&this->encrypt_hctx4k);
-        if (::EVP_DigestInit_ex(&this->encrypt_hctx, md, nullptr) != 1) {
+        ::EVP_MD_CTX_init(&this->hctx);
+        ::EVP_MD_CTX_init(&this->hctx4k);
+        if (::EVP_DigestInit_ex(&this->hctx, md, nullptr) != 1) {
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context!\n", ::getpid());
             return -1;
         }
-        if (::EVP_DigestInit_ex(&this->encrypt_hctx4k, md, nullptr) != 1) {
+        if (::EVP_DigestInit_ex(&this->hctx4k, md, nullptr) != 1) {
             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize 4k MD hash context!\n", ::getpid());
             return -1;
         }
@@ -586,11 +316,11 @@ struct ocrypto {
             for (int idx = 0; idx <  blocksize; idx++) {
                 key_buf[idx] = key_buf[idx] ^ 0x36;
             }
-            if (::EVP_DigestUpdate(&this->encrypt_hctx, key_buf, blocksize) != 1) {
+            if (::EVP_DigestUpdate(&this->hctx, key_buf, blocksize) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
                 return -1;
             }
-            if (::EVP_DigestUpdate(&this->encrypt_hctx4k, key_buf, blocksize) != 1) {
+            if (::EVP_DigestUpdate(&this->hctx4k, key_buf, blocksize) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
                 return -1;
             }
@@ -615,7 +345,7 @@ struct ocrypto {
         ::memcpy(buffer + towrite, tmp_buf, 40);
         towrite += 40;
         // update file_size
-        this->encrypt_file_size += 40;
+        this->file_size += 40;
 
         return this->xmd_update(tmp_buf, 40);
     }
@@ -623,10 +353,10 @@ struct ocrypto {
     /* Flush procedure (compression, encryption, effective file writing)
      * Return 0 on success, negatif on error
      */
-    int encrypt_flush(uint8_t * buffer, size_t buflen, size_t & towrite)
+    int flush(uint8_t * buffer, size_t buflen, size_t & towrite)
     {
         // No data to flush
-        if (!this->encrypt_pos) {
+        if (!this->pos) {
             return 0;
         }
 
@@ -634,8 +364,8 @@ struct ocrypto {
         // TODO: check this
         char compressed_buf[65536];
         //char compressed_buf[compressed_buf_sz];
-        size_t compressed_buf_sz = ::snappy_max_compressed_length(this->encrypt_pos);
-        snappy_status status = snappy_compress(this->encrypt_buf, this->encrypt_pos, compressed_buf, &compressed_buf_sz);
+        size_t compressed_buf_sz = ::snappy_max_compressed_length(this->pos);
+        snappy_status status = snappy_compress(this->buf, this->pos, compressed_buf, &compressed_buf_sz);
 
         switch (status)
         {
@@ -676,17 +406,17 @@ struct ocrypto {
         if (-1 == this->xmd_update(&ciphered_buf, ciphered_buf_sz)) {
             return -1;
         }
-        this->encrypt_file_size += ciphered_buf_sz;
+        this->file_size += ciphered_buf_sz;
 
         // Reset buffer
-        this->encrypt_pos = 0;
+        this->pos = 0;
         return 0;
     }
 
-    int encrypt_close(uint8_t * buffer, size_t buflen, size_t & towrite, unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key)
+    int close(uint8_t * buffer, size_t buflen, size_t & towrite, unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key)
     {
         size_t tmp_towrite = 0;
-        int err = this->encrypt_flush(buffer + towrite, buflen - towrite, tmp_towrite);
+        int err = this->flush(buffer + towrite, buflen - towrite, tmp_towrite);
         towrite += tmp_towrite;
         if (err) {
             return -1;
@@ -698,10 +428,10 @@ struct ocrypto {
             (eof_magic >> 8) & 0xFF,
             (eof_magic >> 16) & 0xFF,
             (eof_magic >> 24) & 0xFF,
-            uint8_t(this->encrypt_raw_size & 0xFF),
-            uint8_t((this->encrypt_raw_size >> 8) & 0xFF),
-            uint8_t((this->encrypt_raw_size >> 16) & 0xFF),
-            uint8_t((this->encrypt_raw_size >> 24) & 0xFF),
+            uint8_t(this->raw_size & 0xFF),
+            uint8_t((this->raw_size >> 8) & 0xFF),
+            uint8_t((this->raw_size >> 16) & 0xFF),
+            uint8_t((this->raw_size >> 24) & 0xFF),
         };
 
         if (towrite + 8 > buflen){
@@ -710,19 +440,19 @@ struct ocrypto {
         ::memcpy(buffer + towrite, tmp_buf, 8);
         towrite += 8;
         
-        this->encrypt_file_size += 8;
+        this->file_size += 8;
 
         this->xmd_update(tmp_buf, 8);
 
         int result = 0;
         if (hash) {
             unsigned char tmp_hash[MD_HASH_LENGTH << 1];
-            if (::EVP_DigestFinal_ex(&this->encrypt_hctx4k, tmp_hash, nullptr) != 1) {
+            if (::EVP_DigestFinal_ex(&this->hctx4k, tmp_hash, nullptr) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute 4k MD digests\n", ::getpid());
                 result = -1;
                 tmp_hash[0] = '\0';
             }
-            if (::EVP_DigestFinal_ex(&this->encrypt_hctx, tmp_hash + MD_HASH_LENGTH, nullptr) != 1) {
+            if (::EVP_DigestFinal_ex(&this->hctx, tmp_hash + MD_HASH_LENGTH, nullptr) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
                 result = -1;
                 tmp_hash[MD_HASH_LENGTH] = '\0';
@@ -800,19 +530,19 @@ struct ocrypto {
         return result;
     }
 
-    ssize_t encrypt_write(uint8_t * buffer, size_t buflen, size_t & towrite, const void * data, size_t len)
+    ssize_t write(uint8_t * buffer, size_t buflen, size_t & towrite, const void * data, size_t len)
     {
         unsigned int remaining_size = len;
         while (remaining_size > 0) {
             // Check how much we can append into buffer
-            unsigned int available_size = MIN(CRYPTO_BUFFER_SIZE - this->encrypt_pos, remaining_size);
+            unsigned int available_size = MIN(CRYPTO_BUFFER_SIZE - this->pos, remaining_size);
             // Append and update pos pointer
-            ::memcpy(this->encrypt_buf + this->encrypt_pos, static_cast<const char*>(data) + (len - remaining_size), available_size);
-            this->encrypt_pos += available_size;
+            ::memcpy(this->buf + this->pos, static_cast<const char*>(data) + (len - remaining_size), available_size);
+            this->pos += available_size;
             // If buffer is full, flush it to disk
-            if (this->encrypt_pos == CRYPTO_BUFFER_SIZE) {
+            if (this->pos == CRYPTO_BUFFER_SIZE) {
                 size_t tmp_towrite = 0;
-                int err = this->encrypt_flush(buffer + towrite, buflen - towrite, tmp_towrite);
+                int err = this->flush(buffer + towrite, buflen - towrite, tmp_towrite);
                 towrite += tmp_towrite;
                 if (err) {
                     return -1;
@@ -821,14 +551,15 @@ struct ocrypto {
             remaining_size -= available_size;
         }
         // Update raw size counter
-        this->encrypt_raw_size += len;
+        this->raw_size += len;
         return len;
     }
 
 };
 
-class wrmcapture_ocrypto_filename_buf : ocrypto
+class wrmcapture_ocrypto_filename_buf 
 {
+    ocrypto encrypt;
     int file_fd;
 
     CryptoContext & cctx;
@@ -836,7 +567,8 @@ class wrmcapture_ocrypto_filename_buf : ocrypto
 
 public:
     explicit wrmcapture_ocrypto_filename_buf(CryptoContext & cctx, Random & rnd)
-    : file_fd(-1)
+    : encrypt{} 
+    , file_fd(-1)
     , cctx(cctx)
     , rnd(rnd)
     {
@@ -895,7 +627,7 @@ public:
         
         uint8_t buffer[40];
         size_t towrite = 0;
-        err = this->encrypt_open(buffer, sizeof(buffer), towrite, trace_key, this->cctx, iv);
+        err = this->encrypt.open(buffer, sizeof(buffer), towrite, trace_key, this->cctx, iv);
         if (!err) {
             err = this->raw_write(buffer, towrite);
         }
@@ -906,7 +638,7 @@ public:
     { 
         uint8_t buffer[65536];
         size_t towrite = 0;
-        int lentobuf = this->encrypt_write(buffer, sizeof(buffer), towrite, data, len); 
+        int lentobuf = this->encrypt.write(buffer, sizeof(buffer), towrite, data, len); 
         if (lentobuf < 0) {
             return -1;
         }        
@@ -921,7 +653,7 @@ public:
     {
         uint8_t buffer[65536];
         size_t towrite = 0;
-        const int res1 = this->encrypt_close(buffer, sizeof(buffer), towrite, hash, this->cctx.get_hmac_key());
+        const int res1 = this->encrypt.close(buffer, sizeof(buffer), towrite, hash, this->cctx.get_hmac_key());
         if (res1) {
             return -1;
         }
@@ -949,8 +681,9 @@ public:
 };
 
 
-class wrmcapture_ocrypto_filter : ocrypto
+class wrmcapture_ocrypto_filter
 {
+    ocrypto encrypt;
     iofdbuf & snk;
 
 public:
@@ -975,7 +708,7 @@ public:
         
         uint8_t buffer[40];
         size_t towrite = 0;
-        int err = this->encrypt_open(buffer, sizeof(buffer), towrite, trace_key, this->cctx, iv);
+        int err = this->encrypt.open(buffer, sizeof(buffer), towrite, trace_key, this->cctx, iv);
         if (!err) {
             err = this->raw_write(buffer, towrite);
         }
@@ -986,7 +719,7 @@ public:
     { 
         uint8_t buffer[65536];
         size_t towrite = 0;
-        int lentobuf = this->encrypt_write(buffer, sizeof(buffer), towrite, data, len); 
+        int lentobuf = this->encrypt.write(buffer, sizeof(buffer), towrite, data, len); 
         if (lentobuf < 0) {
             return -1;
         }        
@@ -1001,7 +734,7 @@ public:
     {
         uint8_t buffer[65536];
         size_t towrite = 0;
-        const int res1 = this->encrypt_close(buffer, sizeof(buffer), towrite, hash, this->cctx.get_hmac_key());
+        const int res1 = this->encrypt.close(buffer, sizeof(buffer), towrite, hash, this->cctx.get_hmac_key());
         if (res1) {
             return -1;
         }
@@ -1122,544 +855,6 @@ public:
     int flush() const
     { return 0; }
 };
-
-
-static inline int wrmcapture_write_meta_file_cctx(
-    wrmcapture_cctx_ochecksum_file & writer, const char * filename,
-    time_t start_sec, time_t stop_sec,
-    wrmcapture_hash_type const * hash
-);
-
-static inline int wrmcapture_write_meta_file_cctx(
-    wrmcapture_cctx_ochecksum_file & writer, const char * filename,
-    time_t start_sec, time_t stop_sec,
-    wrmcapture_hash_type const * hash
-) {
-    struct stat stat;
-    int err = ::stat(filename, &stat);
-    if (err){
-        return err;
-    }
-    auto pfile = filename;
-    auto epfile = filename;
-    for (; *epfile; ++epfile) {
-        if (*epfile == '\\') {
-            ssize_t len = epfile - pfile + 1;
-            auto res = writer.write(pfile, len);
-            if (res < len) {
-                return res < 0 ? res : 1;
-            }
-            pfile = epfile;
-        }
-        if (*epfile == ' ') {
-            ssize_t len = epfile - pfile;
-            auto res = writer.write(pfile, len);
-            if (res < len) {
-                return res < 0 ? res : 1;
-            }
-            res = writer.write("\\", 1u);
-            if (res < 1) {
-                return res < 0 ? res : 1;
-            }
-            pfile = epfile;
-        }
-    }
-
-    if (pfile != epfile) {
-        ssize_t len = epfile - pfile;
-        auto res = writer.write(pfile, len);
-        if (res < len) {
-            return res < 0 ? res : 1;
-        }
-    }
-
-    using ull = unsigned long long;
-    using ll = long long;
-    char mes[
-        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-        wrmcapture_hash_string_len + 1 +
-        2
-    ];
-    ssize_t len = std::sprintf(
-        mes,
-        " %lld %llu %lld %lld %llu %lld %lld %lld",
-        ll(stat.st_size),
-        ull(stat.st_mode),
-        ll(stat.st_uid),
-        ll(stat.st_gid),
-        ull(stat.st_dev),
-        ll(stat.st_ino),
-        ll(stat.st_mtim.tv_sec),
-        ll(stat.st_ctim.tv_sec)
-    );
-    len += std::sprintf(
-        mes + len,
-        " %lld %lld",
-        ll(start_sec),
-        ll(stop_sec)
-    );
-
-    char * p = mes + len;
-    auto write = [&p](unsigned char const * hash) {
-        *p++ = ' ';                // 1 octet
-        for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
-            sprintf(p, "%02x", c); // 64 octets (hash)
-            p += 2;
-        }
-    };
-    write(reinterpret_cast<const unsigned char *>(&hash[0]));
-    write(reinterpret_cast<const unsigned char *>(&hash[MD_HASH_LENGTH]));
-    *p++ = '\n';
-
-    ssize_t res = writer.write(mes, p-mes);
-
-    if (res < p-mes) {
-        return res < 0 ? res : 1;
-    }
-    return 0;
-}
-
-
-
-
-
-class wrmcapture_ochecksum_buf_null_buf
-{
-    static constexpr size_t nosize = ~size_t{};
-    static constexpr size_t quick_size = 4096;
-
-    SslHMAC_Sha256_Delayed hmac;
-    SslHMAC_Sha256_Delayed quick_hmac;
-    unsigned char const (&hmac_key)[MD_HASH_LENGTH];
-    size_t file_size = nosize;
-
-public:
-    explicit wrmcapture_ochecksum_buf_null_buf(unsigned char const (&hmac_key)[MD_HASH_LENGTH])
-    : hmac_key(hmac_key)
-    {}
-
-    wrmcapture_ochecksum_buf_null_buf(wrmcapture_ochecksum_buf_null_buf const &) = delete;
-    wrmcapture_ochecksum_buf_null_buf & operator=(wrmcapture_ochecksum_buf_null_buf const &) = delete;
-
-    template<class... Ts>
-    int open(Ts && ... args)
-    {
-        this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
-        this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
-        int ret = 0;
-        this->file_size = 0;
-        return ret;
-    }
-
-    ssize_t write(const void * data, size_t len)
-    {
-        REDASSERT(this->file_size != nosize);
-        this->hmac.update(static_cast<const uint8_t *>(data), len);
-        if (this->file_size < quick_size) {
-            auto const remaining = std::min(quick_size - this->file_size, len);
-            this->quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
-            this->file_size += remaining;
-        }
-        return len;
-    }
-
-    int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
-    {
-        REDASSERT(this->file_size != nosize);
-        this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
-        this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
-        this->file_size = nosize;
-        return 0;
-    }
-
-    int close() {
-        return 0;
-    }
-};
-
-
-class wrmcapture_ochecksum_filter
-{
-    wrmcapture_ochecksum_buf_null_buf sum_buf;
-
-public:
-    explicit wrmcapture_ochecksum_filter(CryptoContext & cctx)
-    : sum_buf(cctx.get_hmac_key())
-    {}
-
-    int open(iofdbuf &, char const * /*filename*/) {
-        return this->sum_buf.open();
-    }
-
-    int write(iofdbuf & buf, const void * data, size_t len) {
-        this->sum_buf.write(data, len);
-        return buf.write(data, len);
-    }
-
-    int close(iofdbuf &, wrmcapture_hash_type & hash, unsigned char const (&)[MD_HASH_LENGTH]) {
-        return this->sum_buf.close(hash);
-    }
-};
-
-
-
-class wrmcapture_out_meta_sequence_filename_buf_impl_cctx
-{
-
-        char current_filename_[1024];
-        WrmFGen filegen_;
-        iofdbuf buf_;
-        unsigned num_file_;
-        int groupid_;
-
-    public:
-
-        ssize_t write(const void * data, size_t len)
-        {
-            if (!this->buf_.is_open()) {
-                const int res = this->open_filename(this->filegen_.get(this->num_file_));
-                if (res < 0) {
-                    return res;
-                }
-            }
-            return this->buf_.write(data, len);
-        }
-
-        const WrmFGen & seqgen() const noexcept
-        { return this->filegen_; }
-
-        iofdbuf & buf() noexcept
-        { return this->buf_; }
-
-        const char * current_path() const
-        {
-            if (!this->current_filename_[0] && !this->num_file_) {
-                return nullptr;
-            }
-            return this->filegen_.get(this->num_file_ - 1);
-        }
-
-    protected:
-        ssize_t open_filename(const char * filename)
-        {
-            snprintf(this->current_filename_, sizeof(this->current_filename_),
-                        "%sred-XXXXXX.tmp", filename);
-            const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
-            if (fd < 0) {
-                return fd;
-            }
-            if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                   , this->current_filename_
-                   , this->groupid_ ? "u+r, g+r" : "u+r"
-                   , strerror(errno), errno);
-            }
-            this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-            return this->buf_.open(fd);
-        }
-
-        const char * rename_filename()
-        {
-            const char * filename = this->get_filename_generate();
-            const int res = ::rename(this->current_filename_, filename);
-            if (res < 0) {
-                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                   , this->current_filename_, filename, errno, strerror(errno));
-                return nullptr;
-            }
-
-            this->current_filename_[0] = 0;
-            ++this->num_file_;
-            this->filegen_.set_last_filename(-1u, "");
-
-            return filename;
-        }
-
-        const char * get_filename_generate()
-        {
-            this->filegen_.set_last_filename(-1u, "");
-            const char * filename = this->filegen_.get(this->num_file_);
-            this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-            return filename;
-        }
-
-// =====================================================================
-    wrmcapture_cctx_ochecksum_file meta_buf_;
-    MetaFilename mf_;
-    MetaFilename hf_;
-    time_t start_sec_;
-    time_t stop_sec_;
-
-public:
-    explicit wrmcapture_out_meta_sequence_filename_buf_impl_cctx(
-        time_t start_sec,
-        const char * const hash_prefix,
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension,
-        const int groupid,
-        CryptoContext& cctx
-    )
-    : filegen_(prefix, filename, extension)
-    , buf_()
-    , num_file_(0)
-    , groupid_(groupid)
-    , meta_buf_(cctx)
-    , mf_(prefix, filename)
-    , hf_(hash_prefix, filename)
-    , start_sec_(start_sec)
-    , stop_sec_(start_sec)
-    {
-        this->current_filename_[0] = 0;
-        if (this->meta_buf_.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
-            LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
-            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-        }
-        if (chmod(this->mf_.filename, S_IRUSR | S_IRGRP) == -1) {
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-               , this->mf_.filename
-               , "u+r, g+r"
-               , strerror(errno), errno);
-        }
-    }
-
-    int close()
-    {
-        int err = this->next();
-        if (err) {
-            return err;
-        }
-        if (this->meta_buf().is_open()){
-            err = this->meta_buf_.close();
-            if (err) {
-                return err;
-            }
-        }
-        char const * hash_filename = this->hf_.filename;
-        char const * meta_filename = this->meta_filename();
-        class wrmcapture_ofile_buf_out
-        {
-            int fd;
-        public:
-            wrmcapture_ofile_buf_out() : fd(-1) {}
-            ~wrmcapture_ofile_buf_out()
-            {
-                this->close();
-            }
-
-            int open(const char * filename, mode_t mode)
-            {
-                this->close();
-                this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-                return this->fd;
-            }
-
-            int close()
-            {
-                if (this->is_open()) {
-                    const int ret = ::close(this->fd);
-                    this->fd = -1;
-                    return ret;
-                }
-                return 0;
-            }
-
-            ssize_t write(const void * data, size_t len)
-            {
-                size_t remaining_len = len;
-                size_t total_sent = 0;
-                while (remaining_len) {
-                    ssize_t ret = ::write(this->fd,
-                        static_cast<const char*>(data) + total_sent, remaining_len);
-                    if (ret <= 0){
-                        if (errno == EINTR){
-                            continue;
-                        }
-                        return -1;
-                    }
-                    remaining_len -= ret;
-                    total_sent += ret;
-                }
-                return total_sent;
-            }
-
-            bool is_open() const noexcept
-            { return -1 != this->fd; }
-
-            int flush() const
-            { return 0; }
-        } crypto_hash;
-
-        char path[1024] = {};
-        char basename[1024] = {};
-        char extension[256] = {};
-        char filename[2048] = {};
-
-        canonical_path(
-            meta_filename,
-            path, sizeof(path),
-            basename, sizeof(basename),
-            extension, sizeof(extension)
-        );
-
-        snprintf(filename, sizeof(filename), "%s%s", basename, extension);
-
-        err = crypto_hash.open(hash_filename, S_IRUSR|S_IRGRP) < 0;
-        if (err) {
-            int e = errno;
-            LOG(LOG_ERR, "Open to transport failed: code=%d", e);
-            errno = e;
-            return 1;
-        }
-        char header[] = "v2\n\n\n";
-        crypto_hash.write(header, sizeof(header)-1);
-
-        struct stat stat;
-        err = ::stat(meta_filename, &stat);
-        if (err) {
-            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-            return 1;
-        }
-        
-        auto & writer = crypto_hash;
-        
-        auto pfile = filename;
-        auto epfile = filename;
-        for (; *epfile; ++epfile) {
-            if (*epfile == '\\') {
-                ssize_t len = epfile - pfile + 1;
-                auto res = writer.write(pfile, len);
-                if (res < len) {
-                    err = res < 0 ? res : 1;
-                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                    return 1;
-                }
-                pfile = epfile;
-            }
-            if (*epfile == ' ') {
-                ssize_t len = epfile - pfile;
-                auto res = writer.write(pfile, len);
-                if (res < len) {
-                    err = res < 0 ? res : 1;
-                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                    return 1;
-                }
-                res = writer.write("\\", 1u);
-                if (res < 1) {
-                    err = res < 0 ? res : 1;
-                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                    return 1;
-                }
-                pfile = epfile;
-            }
-        }
-
-        if (pfile != epfile) {
-            ssize_t len = epfile - pfile;
-            auto res = writer.write(pfile, len);
-            if (res < len) {
-                err = res < 0 ? res : 1;
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                return 1;
-            }
-        }
-
-        using ull = unsigned long long;
-        using ll = long long;
-        char mes[
-            (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-            (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-            wrmcapture_hash_string_len + 1 +
-            2
-        ];
-        ssize_t len = std::sprintf(
-            mes,
-            " %lld %llu %lld %lld %llu %lld %lld %lld",
-            ll(stat.st_size),
-            ull(stat.st_mode),
-            ll(stat.st_uid),
-            ll(stat.st_gid),
-            ull(stat.st_dev),
-            ll(stat.st_ino),
-            ll(stat.st_mtim.tv_sec),
-            ll(stat.st_ctim.tv_sec)
-        );
-
-        char * p = mes + len;
-        *p++ = '\n';
-
-        ssize_t res = writer.write(mes, p-mes);
-
-        if (res < p-mes) {
-            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-            return 1;
-        }
-        err = crypto_hash.close(/*hash*/);
-        return 0;
-    }
-
-
-    /// \return 0 if success
-    int next()
-    {
-        if (this->buf().is_open()) {
-            this->buf().close();
-            return this->next_meta_file();
-        }
-        return 1;
-    }
-
-protected:
-    int next_meta_file(wrmcapture_hash_type const * hash = nullptr)
-    {
-        // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-        const char * filename = this->rename_filename();
-        if (!filename) {
-            return 1;
-        }
-
-        if (int err = wrmcapture_write_meta_file_cctx(
-            this->meta_buf_, filename, this->start_sec_, this->stop_sec_+1, hash
-        )) {
-            return err;
-        }
-
-        this->start_sec_ = this->stop_sec_;
-
-        return 0;
-    }
-
-    char const * hash_filename() const noexcept
-    {
-        return this->hf_.filename;
-    }
-
-    char const * meta_filename() const noexcept
-    {
-        return this->mf_.filename;
-    }
-
-public:
-    void request_full_cleaning()
-    {
-        unsigned i = this->num_file_ + 1;
-        while (i > 0 && !::unlink(this->filegen_.get(--i))) {
-        }
-        if (this->buf_.is_open()) {
-            this->buf_.close();
-        }
-        ::unlink(this->mf_.filename);
-    }
-
-    wrmcapture_cctx_ochecksum_file & meta_buf() noexcept
-    { return this->meta_buf_; }
-
-    void update_sec(time_t sec)
-    { this->stop_sec_ = sec; }
-};
-
-
 
 
 struct wrmcapture_OutMetaSequenceTransport : public Transport
@@ -1910,13 +1105,12 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
                     struct stat stat;
                     int err = ::stat(meta_filename, &stat);
                     if (!err) {
-                        auto & writer = crypto_hash;
                         auto pfile = filename;
                         auto epfile = filename;
                         for (; *epfile; ++epfile) {
                             if (*epfile == '\\') {
                                 ssize_t len = epfile - pfile + 1;
-                                auto res = writer.write(pfile, len);
+                                auto res = crypto_hash.write(pfile, len);
                                 if (res < len) {
                                     err = res < 0 ? res : 1;
                                     LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
@@ -1927,14 +1121,14 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
                             }
                             if (*epfile == ' ') {
                                 ssize_t len = epfile - pfile;
-                                auto res = writer.write(pfile, len);
+                                auto res = crypto_hash.write(pfile, len);
                                 if (res < len) {
                                     err = res < 0 ? res : 1;
                                     LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
                                         hash_filename, err);
                                     return 1;
                                 }
-                                res = writer.write("\\", 1u);
+                                res = crypto_hash.write("\\", 1u);
                                 if (res < 1) {
                                     err = res < 0 ? res : 1;
                                     LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
@@ -1947,7 +1141,7 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
 
                         if (pfile != epfile) {
                             ssize_t len = epfile - pfile;
-                            auto res = writer.write(pfile, len);
+                            auto res = crypto_hash.write(pfile, len);
                             if (res < len) {
                                 err = res < 0 ? res : 1;
                                 LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
@@ -1981,7 +1175,7 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
                             char * p = mes + len;
                             *p++ = '\n';
 
-                            ssize_t res = writer.write(mes, p-mes);
+                            ssize_t res = crypto_hash.write(mes, p-mes);
 
                             if (res < p-mes) {
                                 err = res < 0 ? res : 1;
@@ -2352,11 +1546,495 @@ private:
     }
 
 private:
+
+
+    class wrmcapture_out_meta_sequence_filename_buf_impl_cctx
+    {
+
+            char current_filename_[1024];
+            WrmFGen filegen_;
+            iofdbuf buf_;
+            unsigned num_file_;
+            int groupid_;
+
+        public:
+
+            ssize_t write(const void * data, size_t len)
+            {
+                if (!this->buf_.is_open()) {
+                    const int res = this->open_filename(this->filegen_.get(this->num_file_));
+                    if (res < 0) {
+                        return res;
+                    }
+                }
+                return this->buf_.write(data, len);
+            }
+
+            const WrmFGen & seqgen() const noexcept
+            { return this->filegen_; }
+
+            iofdbuf & buf() noexcept
+            { return this->buf_; }
+
+            const char * current_path() const
+            {
+                if (!this->current_filename_[0] && !this->num_file_) {
+                    return nullptr;
+                }
+                return this->filegen_.get(this->num_file_ - 1);
+            }
+
+        protected:
+            ssize_t open_filename(const char * filename)
+            {
+                snprintf(this->current_filename_, sizeof(this->current_filename_),
+                            "%sred-XXXXXX.tmp", filename);
+                const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+                if (fd < 0) {
+                    return fd;
+                }
+                if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                    LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                       , this->current_filename_
+                       , this->groupid_ ? "u+r, g+r" : "u+r"
+                       , strerror(errno), errno);
+                }
+                this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+                return this->buf_.open(fd);
+            }
+
+            const char * rename_filename()
+            {
+                const char * filename = this->get_filename_generate();
+                const int res = ::rename(this->current_filename_, filename);
+                if (res < 0) {
+                    LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                       , this->current_filename_, filename, errno, strerror(errno));
+                    return nullptr;
+                }
+
+                this->current_filename_[0] = 0;
+                ++this->num_file_;
+                this->filegen_.set_last_filename(-1u, "");
+
+                return filename;
+            }
+
+            const char * get_filename_generate()
+            {
+                this->filegen_.set_last_filename(-1u, "");
+                const char * filename = this->filegen_.get(this->num_file_);
+                this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+                return filename;
+            }
+
+    // =====================================================================
+        wrmcapture_cctx_ochecksum_file meta_buf_;
+        MetaFilename mf_;
+        MetaFilename hf_;
+        time_t start_sec_;
+        time_t stop_sec_;
+
+    public:
+        explicit wrmcapture_out_meta_sequence_filename_buf_impl_cctx(
+            time_t start_sec,
+            const char * const hash_prefix,
+            const char * const prefix,
+            const char * const filename,
+            const char * const extension,
+            const int groupid,
+            CryptoContext& cctx
+        )
+        : filegen_(prefix, filename, extension)
+        , buf_()
+        , num_file_(0)
+        , groupid_(groupid)
+        , meta_buf_(cctx)
+        , mf_(prefix, filename)
+        , hf_(hash_prefix, filename)
+        , start_sec_(start_sec)
+        , stop_sec_(start_sec)
+        {
+            this->current_filename_[0] = 0;
+            if (this->meta_buf_.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+                LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
+                throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+            }
+            if (chmod(this->mf_.filename, S_IRUSR | S_IRGRP) == -1) {
+                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                   , this->mf_.filename
+                   , "u+r, g+r"
+                   , strerror(errno), errno);
+            }
+        }
+
+        int close()
+        {
+            int err = this->next();
+            if (err) {
+                return err;
+            }
+            if (this->meta_buf().is_open()){
+                err = this->meta_buf_.close();
+                if (err) {
+                    return err;
+                }
+            }
+            char const * hash_filename = this->hf_.filename;
+            char const * meta_filename = this->meta_filename();
+            class wrmcapture_ofile_buf_out
+            {
+                int fd;
+            public:
+                wrmcapture_ofile_buf_out() : fd(-1) {}
+                ~wrmcapture_ofile_buf_out()
+                {
+                    this->close();
+                }
+
+                int open(const char * filename, mode_t mode)
+                {
+                    this->close();
+                    this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+                    return this->fd;
+                }
+
+                int close()
+                {
+                    if (this->is_open()) {
+                        const int ret = ::close(this->fd);
+                        this->fd = -1;
+                        return ret;
+                    }
+                    return 0;
+                }
+
+                ssize_t write(const void * data, size_t len)
+                {
+                    size_t remaining_len = len;
+                    size_t total_sent = 0;
+                    while (remaining_len) {
+                        ssize_t ret = ::write(this->fd,
+                            static_cast<const char*>(data) + total_sent, remaining_len);
+                        if (ret <= 0){
+                            if (errno == EINTR){
+                                continue;
+                            }
+                            return -1;
+                        }
+                        remaining_len -= ret;
+                        total_sent += ret;
+                    }
+                    return total_sent;
+                }
+
+                bool is_open() const noexcept
+                { return -1 != this->fd; }
+
+                int flush() const
+                { return 0; }
+            } crypto_hash;
+
+            char path[1024] = {};
+            char basename[1024] = {};
+            char extension[256] = {};
+            char filename[2048] = {};
+
+            canonical_path(
+                meta_filename,
+                path, sizeof(path),
+                basename, sizeof(basename),
+                extension, sizeof(extension)
+            );
+
+            snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+            err = crypto_hash.open(hash_filename, S_IRUSR|S_IRGRP) < 0;
+            if (err) {
+                int e = errno;
+                LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+                errno = e;
+                return 1;
+            }
+            char header[] = "v2\n\n\n";
+            crypto_hash.write(header, sizeof(header)-1);
+
+            struct stat stat;
+            err = ::stat(meta_filename, &stat);
+            if (err) {
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                return 1;
+            }
+            
+            auto pfile = filename;
+            auto epfile = filename;
+            for (; *epfile; ++epfile) {
+                if (*epfile == '\\') {
+                    ssize_t len = epfile - pfile + 1;
+                    auto res = crypto_hash.write(pfile, len);
+                    if (res < len) {
+                        err = res < 0 ? res : 1;
+                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                        return 1;
+                    }
+                    pfile = epfile;
+                }
+                if (*epfile == ' ') {
+                    ssize_t len = epfile - pfile;
+                    auto res = crypto_hash.write(pfile, len);
+                    if (res < len) {
+                        err = res < 0 ? res : 1;
+                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                        return 1;
+                    }
+                    res = crypto_hash.write("\\", 1u);
+                    if (res < 1) {
+                        err = res < 0 ? res : 1;
+                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                        return 1;
+                    }
+                    pfile = epfile;
+                }
+            }
+
+            if (pfile != epfile) {
+                ssize_t len = epfile - pfile;
+                auto res = crypto_hash.write(pfile, len);
+                if (res < len) {
+                    err = res < 0 ? res : 1;
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                    return 1;
+                }
+            }
+
+            using ull = unsigned long long;
+            using ll = long long;
+            char mes[
+                (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+                (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+                wrmcapture_hash_string_len + 1 +
+                2
+            ];
+            ssize_t len = std::sprintf(
+                mes,
+                " %lld %llu %lld %lld %llu %lld %lld %lld",
+                ll(stat.st_size),
+                ull(stat.st_mode),
+                ll(stat.st_uid),
+                ll(stat.st_gid),
+                ull(stat.st_dev),
+                ll(stat.st_ino),
+                ll(stat.st_mtim.tv_sec),
+                ll(stat.st_ctim.tv_sec)
+            );
+
+            char * p = mes + len;
+            *p++ = '\n';
+
+            ssize_t res = crypto_hash.write(mes, p-mes);
+
+            if (res < p-mes) {
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                return 1;
+            }
+            err = crypto_hash.close(/*hash*/);
+            return 0;
+        }
+
+
+        /// \return 0 if success
+        int next()
+        {
+            if (this->buf().is_open()) {
+                this->buf().close();
+                return this->next_meta_file();
+            }
+            return 1;
+        }
+
+    protected:
+        int next_meta_file(wrmcapture_hash_type const * hash = nullptr)
+        {
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+            const char * filename = this->rename_filename();
+            if (!filename) {
+                return 1;
+            }
+
+            auto start_sec = this->start_sec_;
+            auto stop_sec = this->stop_sec_+1;
+
+            struct stat stat;
+            int err = ::stat(filename, &stat);
+            if (err){
+                return err;
+            }
+            auto pfile = filename;
+            auto epfile = filename;
+            for (; *epfile; ++epfile) {
+                if (*epfile == '\\') {
+                    ssize_t len = epfile - pfile + 1;
+                    auto res = this->meta_buf_.write(pfile, len);
+                    if (res < len) {
+                        return res < 0 ? res : 1;
+                    }
+                    pfile = epfile;
+                }
+                if (*epfile == ' ') {
+                    ssize_t len = epfile - pfile;
+                    auto res = this->meta_buf_.write(pfile, len);
+                    if (res < len) {
+                        return res < 0 ? res : 1;
+                    }
+                    res = this->meta_buf_.write("\\", 1u);
+                    if (res < 1) {
+                        return res < 0 ? res : 1;
+                    }
+                    pfile = epfile;
+                }
+            }
+
+            if (pfile != epfile) {
+                ssize_t len = epfile - pfile;
+                auto res = this->meta_buf_.write(pfile, len);
+                if (res < len) {
+                    return res < 0 ? res : 1;
+                }
+            }
+
+            using ull = unsigned long long;
+            using ll = long long;
+            char mes[
+                (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+                (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+                wrmcapture_hash_string_len + 1 +
+                2
+            ];
+            ssize_t len = std::sprintf(
+                mes,
+                " %lld %llu %lld %lld %llu %lld %lld %lld",
+                ll(stat.st_size),
+                ull(stat.st_mode),
+                ll(stat.st_uid),
+                ll(stat.st_gid),
+                ull(stat.st_dev),
+                ll(stat.st_ino),
+                ll(stat.st_mtim.tv_sec),
+                ll(stat.st_ctim.tv_sec)
+            );
+            len += std::sprintf(
+                mes + len,
+                " %lld %lld",
+                ll(start_sec),
+                ll(stop_sec)
+            );
+
+            char * p = mes + len;
+            auto write = [&p](unsigned char const * hash) {
+                *p++ = ' ';                // 1 octet
+                for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+                    sprintf(p, "%02x", c); // 64 octets (hash)
+                    p += 2;
+                }
+            };
+            write(reinterpret_cast<const unsigned char *>(&hash[0]));
+            write(reinterpret_cast<const unsigned char *>(&hash[MD_HASH_LENGTH]));
+            *p++ = '\n';
+
+            ssize_t res = this->meta_buf_.write(mes, p-mes);
+
+            if (res < p-mes) {
+                return res < 0 ? res : 1;
+            }
+
+            this->start_sec_ = this->stop_sec_;
+
+            return 0;
+        }
+
+        char const * hash_filename() const noexcept
+        {
+            return this->hf_.filename;
+        }
+
+        char const * meta_filename() const noexcept
+        {
+            return this->mf_.filename;
+        }
+
+    public:
+        void request_full_cleaning()
+        {
+            unsigned i = this->num_file_ + 1;
+            while (i > 0 && !::unlink(this->filegen_.get(--i))) {
+            }
+            if (this->buf_.is_open()) {
+                this->buf_.close();
+            }
+            ::unlink(this->mf_.filename);
+        }
+
+        wrmcapture_cctx_ochecksum_file & meta_buf() noexcept
+        { return this->meta_buf_; }
+
+        void update_sec(time_t sec)
+        { this->stop_sec_ = sec; }
+    };
+
     class wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx
     : public wrmcapture_out_meta_sequence_filename_buf_impl_cctx
     {
         CryptoContext & cctx;
-        wrmcapture_ochecksum_filter wrm_filter;
+        class wrmcapture_ochecksum_buf_null_buf
+        {
+            static constexpr size_t zzz_nosize = ~size_t{};
+            static constexpr size_t zzz_quick_size = 4096;
+
+            SslHMAC_Sha256_Delayed zzz_hmac;
+            SslHMAC_Sha256_Delayed zzz_quick_hmac;
+            unsigned char const (&zzz_hmac_key)[MD_HASH_LENGTH];
+            size_t zzz_file_size = zzz_nosize;
+
+        public:
+            explicit wrmcapture_ochecksum_buf_null_buf(unsigned char const (&hmac_key)[MD_HASH_LENGTH])
+            : zzz_hmac_key(hmac_key)
+            {}
+
+            template<class... Ts>
+            int zzz_open(Ts && ... args)
+            {
+                this->zzz_hmac.init(this->zzz_hmac_key, sizeof(this->zzz_hmac_key));
+                this->zzz_quick_hmac.init(this->zzz_hmac_key, sizeof(this->zzz_hmac_key));
+                int ret = 0;
+                this->zzz_file_size = 0;
+                return ret;
+            }
+
+            ssize_t zzz_write(const void * data, size_t len)
+            {
+                REDASSERT(this->zzz_file_size != zzz_nosize);
+                this->zzz_hmac.update(static_cast<const uint8_t *>(data), len);
+                if (this->zzz_file_size < zzz_quick_size) {
+                    auto const remaining = std::min(zzz_quick_size - this->zzz_file_size, len);
+                    this->zzz_quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
+                    this->zzz_file_size += remaining;
+                }
+                return len;
+            }
+
+            int zzz_close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
+            {
+                REDASSERT(this->zzz_file_size != zzz_nosize);
+                this->zzz_quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
+                this->zzz_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
+                this->zzz_file_size = zzz_nosize;
+                return 0;
+            }
+
+            int zzz_close() {
+                return 0;
+            }
+        } sum_buf;
 
     public:
         explicit wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx(
@@ -2372,7 +2050,7 @@ private:
         : wrmcapture_out_meta_sequence_filename_buf_impl_cctx(start_sec,
             hash_prefix, prefix, filename, extension, groupid, cctx)
         , cctx(cctx)
-        , wrm_filter(cctx)
+        , sum_buf(cctx.get_hmac_key())
         {}
 
         ssize_t write(const void * data, size_t len)
@@ -2383,11 +2061,12 @@ private:
                 if (res < 0) {
                     return res;
                 }
-                if (int err = this->wrm_filter.open(this->buf(), filename)) {
+                if (int err = this->sum_buf.zzz_open()) {
                     return err;
                 }
             }
-            return this->wrm_filter.write(this->buf(), data, len);
+            this->sum_buf.zzz_write(data, len);
+            return this->buf().write(data, len);
         }
 
         int close()
@@ -2494,13 +2173,12 @@ private:
                 return 1;
             }
             
-            auto & writer = hash_buf;
             auto pfile = filename;
             auto epfile = filename;
             for (; *epfile; ++epfile) {
                 if (*epfile == '\\') {
                     ssize_t len = epfile - pfile + 1;
-                    auto res = writer.write(pfile, len);
+                    auto res = hash_buf.write(pfile, len);
                     if (res < len) {
                         err = res < 0 ? res : 1;
                         LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
@@ -2510,13 +2188,13 @@ private:
                 }
                 if (*epfile == ' ') {
                     ssize_t len = epfile - pfile;
-                    auto res = writer.write(pfile, len);
+                    auto res = hash_buf.write(pfile, len);
                     if (res < len) {
                         err = res < 0 ? res : 1;
                         LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
                         return 1;
                     }
-                    res = writer.write("\\", 1u);
+                    res = hash_buf.write("\\", 1u);
                     if (res < 1) {
                         err = res < 0 ? res : 1;
                         LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
@@ -2528,7 +2206,7 @@ private:
 
             if (pfile != epfile) {
                 ssize_t len = epfile - pfile;
-                auto res = writer.write(pfile, len);
+                auto res = hash_buf.write(pfile, len);
                 if (res < len) {
                     err = res < 0 ? res : 1;
                     LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
@@ -2569,7 +2247,7 @@ private:
             write(&hash[MD_HASH_LENGTH]);
             *p++ = '\n';
 
-            ssize_t res = writer.write(mes, p-mes);
+            ssize_t res = hash_buf.write(mes, p-mes);
 
             if (res < p-mes) {
                 err = res < 0 ? res : 1;
@@ -2591,7 +2269,7 @@ private:
             if (this->buf().is_open()) {
                 wrmcapture_hash_type hash;
                 {
-                    const int res1 = this->wrm_filter.close(this->buf(), hash, this->cctx.get_hmac_key());
+                    const int res1 = this->sum_buf.zzz_close(hash);
                     const int res2 = this->buf().close();
                     if (res1) {
                         return res1;
@@ -2625,82 +2303,70 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
     private:
         class wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto
         {
-            char xxx_current_filename_[1024];
+            char current_filename_[1024];
         public:
-            WrmFGen xxx_filegen_;
+            WrmFGen filegen_;
         private:
-            iofdbuf xxx_buf_;
-            unsigned xxx_num_file_;
-            int xxx_groupid_;
+            iofdbuf buf_;
+            unsigned num_file_;
+            int groupid_;
 
         public:
             const char * current_path() const
             {
-                if (!this->xxx_current_filename_[0] && !this->xxx_num_file_) {
+                if (!this->current_filename_[0] && !this->num_file_) {
                     return nullptr;
                 }
-                return this->xxx_filegen_.get(this->xxx_num_file_ - 1);
+                return this->filegen_.get(this->num_file_ - 1);
             }
 
         protected:
-            ssize_t open_filename(const char * filename)
-            {
-                snprintf(this->xxx_current_filename_, sizeof(this->xxx_current_filename_),
-                            "%sred-XXXXXX.tmp", filename);
-                const int fd = ::mkostemps(this->xxx_current_filename_, 4, O_WRONLY | O_CREAT);
-                if (fd < 0) {
-                    return fd;
-                }
-                if (chmod(this->xxx_current_filename_, this->xxx_groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-                    LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                       , this->xxx_current_filename_
-                       , this->xxx_groupid_ ? "u+r, g+r" : "u+r"
-                       , strerror(errno), errno);
-                }
-                this->xxx_filegen_.set_last_filename(this->xxx_num_file_, this->xxx_current_filename_);
-                return this->xxx_buf_.open(fd);
-            }
 
-            const char * xxx_rename_filename()
+            const char * rename_filename()
             {
-                const char * filename = this->xxx_get_filename_generate();
-                const int res = ::rename(this->xxx_current_filename_, filename);
+                const char * filename = this->get_filename_generate();
+                const int res = ::rename(this->current_filename_, filename);
                 if (res < 0) {
                     LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                       , this->xxx_current_filename_, filename, errno, strerror(errno));
+                       , this->current_filename_, filename, errno, strerror(errno));
                     return nullptr;
                 }
 
-                this->xxx_current_filename_[0] = 0;
-                ++this->xxx_num_file_;
-                this->xxx_filegen_.set_last_filename(-1u, "");
+                this->current_filename_[0] = 0;
+                ++this->num_file_;
+                this->filegen_.set_last_filename(-1u, "");
 
                 return filename;
             }
 
-            const char * xxx_get_filename_generate()
+            const char * get_filename_generate()
             {
-                this->xxx_filegen_.set_last_filename(-1u, "");
-                const char * filename = this->xxx_filegen_.get(this->xxx_num_file_);
-                this->xxx_filegen_.set_last_filename(this->xxx_num_file_, this->xxx_current_filename_);
+                this->filegen_.set_last_filename(-1u, "");
+                const char * filename = this->filegen_.get(this->num_file_);
+                this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
                 return filename;
             }
 
         public:
-            wrmcapture_ocrypto_filename_buf xxx_meta_buf_;
+            wrmcapture_ocrypto_filename_buf meta_buf_;
 
         protected:
             MetaFilename mf_;
             MetaFilename hf_;
-            time_t xxx_start_sec_;
-            time_t xxx_stop_sec_;
+            time_t start_sec_;
+            time_t stop_sec_;
 
         public:
 
             int xxx_close()
             {
-                const int res1 = this->xxx_next();
-                const int res2 = (this->xxx_meta_buf_.is_open() ? this->xxx_meta_buf_.close() : 0);
+                int res1 = 1;
+                if (this->buf_.is_open()) {
+                    this->buf_.close();
+                    res1 = this->next_meta_file();
+                }
+
+                const int res2 = (this->meta_buf_.is_open() ? this->meta_buf_.close() : 0);
                 int err = res1 ? res1 : res2;
                 if (!err) {
                     char const * hash_filename = this->hf_.filename;
@@ -2877,28 +2543,18 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 return err;
             }
 
-            /// \return 0 if success
-            int xxx_next()
-            {
-                if (this->xxx_buf_.is_open()) {
-                    this->xxx_buf_.close();
-                    return this->xxx_next_meta_file();
-                }
-                return 1;
-            }
 
         protected:
-            int xxx_next_meta_file(wrmcapture_hash_type const * hash = nullptr)
+            int next_meta_file(wrmcapture_hash_type const * hash = nullptr)
             {
                 // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                const char * filename = this->xxx_rename_filename();
+                const char * filename = this->rename_filename();
                 if (!filename) {
                     return 1;
                 }
 
-                auto & writer = this->xxx_meta_buf_;
-                auto start_sec = this->xxx_start_sec_;
-                auto stop_sec = this->xxx_stop_sec_+1;
+                auto start_sec = this->start_sec_;
+                auto stop_sec = this->stop_sec_+1;
 
                 struct stat stat;
                 int err = ::stat(filename, &stat);
@@ -2910,7 +2566,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 for (; *epfile; ++epfile) {
                     if (*epfile == '\\') {
                         ssize_t len = epfile - pfile + 1;
-                        auto res = writer.write(pfile, len);
+                        auto res = this->meta_buf_.write(pfile, len);
                         if (res < len) {
                             return res < 0 ? res : 1;
                         }
@@ -2918,11 +2574,11 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                     }
                     if (*epfile == ' ') {
                         ssize_t len = epfile - pfile;
-                        auto res = writer.write(pfile, len);
+                        auto res = this->meta_buf_.write(pfile, len);
                         if (res < len) {
                             return res < 0 ? res : 1;
                         }
-                        res = writer.write("\\", 1u);
+                        res = this->meta_buf_.write("\\", 1u);
                         if (res < 1) {
                             return res < 0 ? res : 1;
                         }
@@ -2932,7 +2588,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 
                 if (pfile != epfile) {
                     ssize_t len = epfile - pfile;
-                    auto res = writer.write(pfile, len);
+                    auto res = this->meta_buf_.write(pfile, len);
                     if (res < len) {
                         return res < 0 ? res : 1;
                     }
@@ -2979,13 +2635,13 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 }
                 *p++ = '\n';
 
-                ssize_t res = writer.write(mes, p-mes);
+                ssize_t res = this->meta_buf_.write(mes, p-mes);
 
                 if (res < p-mes) {
                     return res < 0 ? res : 1;
                 }
 
-                this->xxx_start_sec_ = this->xxx_stop_sec_;
+                this->start_sec_ = this->stop_sec_;
 
                 return 0;
             }
@@ -2993,17 +2649,17 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
         public:
             void xxx_request_full_cleaning()
             {
-                unsigned i = this->xxx_num_file_ + 1;
-                while (i > 0 && !::unlink(this->xxx_filegen_.get(--i))) {
+                unsigned i = this->num_file_ + 1;
+                while (i > 0 && !::unlink(this->filegen_.get(--i))) {
                 }
-                if (this->xxx_buf_.is_open()) {
-                    this->xxx_buf_.close();
+                if (this->buf_.is_open()) {
+                    this->buf_.close();
                 }
                 ::unlink(this->mf_.filename);
             }
 
             void xxx_update_sec(time_t sec)
-            { this->xxx_stop_sec_ = sec; }
+            { this->stop_sec_ = sec; }
 
         private:
             CryptoContext & cctx;
@@ -3022,21 +2678,21 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 const int groupid,
                 Random & rnd
             )
-            : xxx_filegen_(prefix, filename, extension)
-            , xxx_buf_{}
-            , xxx_num_file_(0)
-            , xxx_groupid_(groupid)
-            , xxx_meta_buf_(cctx, rnd)
+            : filegen_(prefix, filename, extension)
+            , buf_{}
+            , num_file_(0)
+            , groupid_(groupid)
+            , meta_buf_(cctx, rnd)
             , mf_(prefix, filename)
             , hf_(hash_prefix, filename)
-            , xxx_start_sec_(start_sec)
-            , xxx_stop_sec_(start_sec)
+            , start_sec_(start_sec)
+            , stop_sec_(start_sec)
             , cctx(cctx)
             , rnd(rnd)
-            , wrm_filter(this->xxx_buf_, cctx, rnd)
+            , wrm_filter(this->buf_, cctx, rnd)
             {
-                this->xxx_current_filename_[0] = 0;
-                if (this->xxx_meta_buf_.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+                this->current_filename_[0] = 0;
+                if (this->meta_buf_.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
                     LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
                     throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
                 }
@@ -3050,9 +2706,24 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 
             ssize_t write(const void * data, size_t len)
             {
-                if (!this->xxx_buf_.is_open()) {
-                    const char * filename = this->xxx_get_filename_generate();
-                    const int res = this->open_filename(filename);
+                if (!this->buf_.is_open()) {
+                    const char * filename = this->get_filename_generate();
+                    snprintf(this->current_filename_, sizeof(this->current_filename_),
+                            "%sred-XXXXXX.tmp", filename);
+                    const int fd = ::mkostemps(this->current_filename_, 4
+                                              , O_WRONLY | O_CREAT);
+                    if (fd < 0) {
+                        return fd;
+                    }
+                    if (chmod(this->current_filename_
+                             , this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                        LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                            , this->current_filename_
+                            , this->groupid_ ? "u+r, g+r" : "u+r"
+                            , strerror(errno), errno);
+                    }
+                    this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+                    const int res = this->buf_.open(fd);
                     if (res < 0) {
                         return res;
                     }
@@ -3065,7 +2736,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 
             int close()
             {
-                if (this->xxx_buf_.is_open()) {
+                if (this->buf_.is_open()) {
                     if (this->next()) {
                         return 1;
                     }
@@ -3073,13 +2744,13 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 
                 wrmcapture_ocrypto_filename_buf hash_buf(this->cctx, this->rnd);
 
-                if (!this->xxx_meta_buf_.is_open()) {
+                if (!this->meta_buf_.is_open()) {
                     return 1;
                 }
 
                 wrmcapture_hash_type hash;
 
-                if (this->xxx_meta_buf_.close(hash)) {
+                if (this->meta_buf_.close(hash)) {
                     return 1;
                 }
 
@@ -3118,14 +2789,12 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                     return 1;
                 }
 
-                auto & writer = hash_buf;
-                
                 auto pfile = filename;
                 auto epfile = filename;
                 for (; *epfile; ++epfile) {
                     if (*epfile == '\\') {
                         ssize_t len = epfile - pfile + 1;
-                        auto res = writer.write(pfile, len);
+                        auto res = hash_buf.write(pfile, len);
                         if (res < len) {
                             err = res < 0 ? res : 1;
                             LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
@@ -3136,14 +2805,14 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                     }
                     if (*epfile == ' ') {
                         ssize_t len = epfile - pfile;
-                        auto res = writer.write(pfile, len);
+                        auto res = hash_buf.write(pfile, len);
                         if (res < len) {
                             err = res < 0 ? res : 1;
                             LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
                                 hash_filename, err);
                             return 1;
                     }
-                        res = writer.write("\\", 1u);
+                        res = hash_buf.write("\\", 1u);
                         if (res < 1) {
                             err = res < 0 ? res : 1;
                             LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
@@ -3156,7 +2825,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 
                 if (pfile != epfile) {
                     ssize_t len = epfile - pfile;
-                    auto res = writer.write(pfile, len);
+                    auto res = hash_buf.write(pfile, len);
                     if (res < len) {
                         err = res < 0 ? res : 1;
                         LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
@@ -3197,7 +2866,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 write(&hash[MD_HASH_LENGTH]);
                 *p++ = '\n';
 
-                ssize_t res = writer.write(mes, p-mes);
+                ssize_t res = hash_buf.write(mes, p-mes);
 
                 if (res < p-mes) {
                     err = res < 0 ? res : 1;
@@ -3216,11 +2885,11 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 
             int next()
             {
-                if (this->xxx_buf_.is_open()) {
+                if (this->buf_.is_open()) {
                     wrmcapture_hash_type hash;
                     {
                         const int res1 = this->wrm_filter.close(hash);
-                        const int res2 = this->xxx_buf_.close();
+                        const int res2 = this->buf_.close();
                         if (res1) {
                             return res1;
                         }
@@ -3229,7 +2898,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                         }
                     }
 
-                    return this->xxx_next_meta_file(&hash);
+                    return this->next_meta_file(&hash);
                 }
                 return 1;
             }
@@ -3265,7 +2934,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             unsigned(height),
             has_checksum  ? "checksum" : "nochecksum"
         );
-        const ssize_t res = this->buf.xxx_meta_buf_.write(header1, len);
+        const ssize_t res = this->buf.meta_buf_.write(header1, len);
         if (res < 0) {
             int err = errno;
             LOG(LOG_ERR, "Write to transport failed (M2.0): code=%d", err);
@@ -3289,7 +2958,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 
     const WrmFGen * seqgen() const noexcept
     {
-        return &(this->buf.xxx_filegen_);
+        return &(this->buf.filegen_);
     }
 
     bool next() override {

@@ -50,6 +50,173 @@
 #include "capture/wrm_capture.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 
+
+struct wrmcapture_OutFilenameSequenceTransport : public Transport
+{
+    char current_filename_[1024];
+    WrmFGen filegen_;
+    iofdbuf buf_;
+    unsigned num_file_;
+    int groupid_;
+
+    wrmcapture_OutFilenameSequenceTransport(
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        auth_api * authentifier)
+    : filegen_(prefix, filename, extension)
+    , buf_()
+    , num_file_(0)
+    , groupid_(groupid)
+    {
+        this->current_filename_[0] = 0;
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+    }
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        ssize_t res = 1;
+        if (this->buf_.is_open()) {
+            this->buf_.close();
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+            res = this->rename_filename() ? 0 : 1;
+        }
+
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M1): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->close();
+    }
+
+    void request_full_cleaning() override {
+        unsigned i = this->num_file_ + 1;
+        while (i > 0 && !::unlink(this->filegen_.get(--i))) {}
+        if (this->buf_.is_open()) {
+            this->buf_.close();
+        }
+    }
+
+    ~wrmcapture_OutFilenameSequenceTransport() {
+        this->close();
+    }
+
+private:
+
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|unknown");
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+    public:
+
+    int close()
+    {
+        ssize_t res = 1;
+        if (this->buf_.is_open()) {
+            this->buf_.close();
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+            res = this->rename_filename() ? 0 : 1;
+        }
+        return res;
+    }
+
+    ssize_t write(const void * data, size_t len)
+    {
+        if (!this->buf_.is_open()) {
+            const int res = this->open_filename(this->filegen_.get(this->num_file_));
+            if (res < 0) {
+                return res;
+            }
+        }
+        return this->buf_.write(data, len);
+    }
+
+
+    iofdbuf & buf() noexcept
+    { return this->buf_; }
+
+    const char * current_path() const
+    {
+        if (!this->current_filename_[0] && !this->num_file_) {
+            return nullptr;
+        }
+        return this->filegen_.get(this->num_file_ - 1);
+    }
+
+protected:
+    ssize_t open_filename(const char * filename)
+    {
+        snprintf(this->current_filename_, sizeof(this->current_filename_),
+                    "%sred-XXXXXX.tmp", filename);
+        const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+        if (fd < 0) {
+            return fd;
+        }
+        if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+               , this->current_filename_
+               , this->groupid_ ? "u+r, g+r" : "u+r"
+               , strerror(errno), errno);
+        }
+        this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+        return this->buf_.open(fd);
+    }
+
+    const char * rename_filename()
+    {
+        const char * filename = this->get_filename_generate();
+        const int res = ::rename(this->current_filename_, filename);
+        if (res < 0) {
+            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+               , this->current_filename_, filename, errno, strerror(errno));
+            return nullptr;
+        }
+
+        this->current_filename_[0] = 0;
+        ++this->num_file_;
+        this->filegen_.set_last_filename(-1u, "");
+
+        return filename;
+    }
+
+    const char * get_filename_generate()
+    {
+        this->filegen_.set_last_filename(-1u, "");
+        const char * filename = this->filegen_.get(this->num_file_);
+        this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+        return filename;
+    }
+};
+
+
 template<class Writer>
 void wrmcapture_write_meta_headers(Writer & writer, const char * path,
                         uint16_t width, uint16_t height,
@@ -352,7 +519,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         {"./capture-000000.wrm", 1646, 0},
         {"./capture-000001.wrm", 3508, 0},
         {"./capture-000002.wrm", 3463, 0},
-        {"./capture-000003.wrm", static_cast<size_t>(-1)},
+        {"./capture-000003.wrm", static_cast<size_t>(-1), static_cast<size_t>(-1)},
         {"./capture.mwrm", 676, 673},
     };
     for (auto x: fileinfo) {
@@ -364,32 +531,47 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestOSumBuf)
+inline char * wrmcapture_swrite_hash(char * p, wrmcapture_hash_type const & hash)
 {
-    CryptoContext cctx;
-    cctx.set_master_key(cstr_array_view(
-        "\x00\x01\x02\x03\x04\x05\x06\x07"
-        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-        "\x10\x11\x12\x13\x14\x15\x16\x17"
-        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-    ));
-    cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
-    wrmcapture_ochecksum_buf_null_buf buf(cctx.get_hmac_key());
-    buf.open();
-    BOOST_CHECK_EQUAL(buf.write("ab", 2), 2);
-    BOOST_CHECK_EQUAL(buf.write("cde", 3), 3);
-
-    wrmcapture_hash_type hash;
-    buf.close(hash);
-
-    char hash_str[wrmcapture_hash_string_len + 1];
-    *wrmcapture_swrite_hash(hash_str, hash) = 0;
-    BOOST_CHECK_EQUAL(
-        hash_str,
-        " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
-        " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
-    );
+    auto write = [&p](unsigned char const * hash) {
+        *p++ = ' ';                // 1 octet
+        for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+            sprintf(p, "%02x", c); // 64 octets (hash)
+            p += 2;
+        }
+    };
+    write(hash);
+    write(hash + MD_HASH_LENGTH);
+    return p;
 }
+
+
+//BOOST_AUTO_TEST_CASE(TestOSumBuf)
+//{
+//    CryptoContext cctx;
+//    cctx.set_master_key(cstr_array_view(
+//        "\x00\x01\x02\x03\x04\x05\x06\x07"
+//        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+//        "\x10\x11\x12\x13\x14\x15\x16\x17"
+//        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+//    ));
+//    cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
+//    wrmcapture_ochecksum_buf_null_buf buf(cctx.get_hmac_key());
+//    buf.open();
+//    BOOST_CHECK_EQUAL(buf.write("ab", 2), 2);
+//    BOOST_CHECK_EQUAL(buf.write("cde", 3), 3);
+
+//    wrmcapture_hash_type hash;
+//    buf.close(hash);
+
+//    char hash_str[wrmcapture_hash_string_len + 1];
+//    *wrmcapture_swrite_hash(hash_str, hash) = 0;
+//    BOOST_CHECK_EQUAL(
+//        hash_str,
+//        " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
+//        " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
+//    );
+//}
 
 template<class Writer>
 int wrmcapture_write_filename(Writer & writer, const char * filename)
