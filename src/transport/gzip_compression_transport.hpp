@@ -73,90 +73,90 @@ public:
     }
 
 private:
-    void do_recv(uint8_t ** pbuffer, size_t len) override {
-        uint8_t * temp_data        = *pbuffer;
-        size_t    temp_data_length = len;
-
-        while (temp_data_length) {
-            if (this->uncompressed_data_length) {
-                REDASSERT(this->uncompressed_data);
-
-                const size_t data_length = std::min<size_t>(temp_data_length, this->uncompressed_data_length);
-
-                ::memcpy(temp_data, this->uncompressed_data, data_length);
-
-                this->uncompressed_data        += data_length;
-                this->uncompressed_data_length -= data_length;
-
-                temp_data        += data_length;
-                temp_data_length -= data_length;
-            }
-            else {
-                if (!this->inflate_pending) {
-                    this->source_transport.recv_new(
-                          this->compressed_data_buf
-                        , 5                 // reset_decompressor(1) + compressed_data_length(4)
-                        );
-
-                    InStream compressed_data(this->compressed_data_buf);
-
-                    if (compressed_data.in_uint8() == 1) {
-                        REDASSERT(this->inflate_pending == false);
-
-                        //if (this->verbose) {
-                        //    LOG(LOG_INFO, "GZipCompressionInTransport::do_recv: Decompressor reset");
-                        //}
-                        ::inflateEnd(&this->compression_stream);
-
-                        ::memset(&this->compression_stream, 0, sizeof(this->compression_stream));
-
-                        REDEMPTION_DIAGNOSTIC_PUSH
-                        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
-                        int ret = ::inflateInit(&this->compression_stream);
-                        REDEMPTION_DIAGNOSTIC_POP
-                        (void)ret;
-                    }
-
-                    const size_t compressed_data_length = compressed_data.in_uint32_le();
-                    //if (this->verbose) {
-                    //    LOG( LOG_INFO, "GZipCompressionInTransport::do_recv: compressed_data_length=%zu"
-                    //       , compressed_data_length);
-                    //}
-
-                    this->source_transport.recv_new(this->compressed_data_buf, compressed_data_length);
-
-                    this->compression_stream.avail_in = compressed_data_length;
-                    this->compression_stream.next_in  = this->compressed_data_buf;
-                }
-
-                this->uncompressed_data = this->uncompressed_data_buffer;
-
-                const size_t uncompressed_data_capacity = sizeof(this->uncompressed_data_buffer);
-
-                this->compression_stream.avail_out = uncompressed_data_capacity;
-                this->compression_stream.next_out  = this->uncompressed_data;
-
-                int ret = ::inflate(&this->compression_stream, Z_NO_FLUSH);
-                //if (this->verbose & 0x2) {
-                //    LOG(LOG_INFO, "GZipCompressionInTransport::do_recv: inflate return %d", ret);
-                //}
-
-                //if (this->verbose & 0x2) {
-                //    LOG( LOG_INFO, "GZipCompressionInTransport::do_recv: uncompressed_data_capacity=%zu avail_out=%u"
-                //       , uncompressed_data_capacity, this->compression_stream.avail_out);
-                //}
-                this->uncompressed_data_length = uncompressed_data_capacity - this->compression_stream.avail_out;
-                //if (this->verbose) {
-                //    LOG( LOG_INFO, "GZipCompressionInTransport::do_recv: uncompressed_data_length=%zu"
-                //       , this->uncompressed_data_length);
-                //}
-
-                this->inflate_pending = ((ret == 0) && (this->compression_stream.avail_out == 0));
-            }
-        }
-
-        (*pbuffer) = (*pbuffer) + len;
-    }
+//     void do_recv(uint8_t ** pbuffer, size_t len) override {
+//         uint8_t * temp_data        = *pbuffer;
+//         size_t    temp_data_length = len;
+//
+//         while (temp_data_length) {
+//             if (this->uncompressed_data_length) {
+//                 REDASSERT(this->uncompressed_data);
+//
+//                 const size_t data_length = std::min<size_t>(temp_data_length, this->uncompressed_data_length);
+//
+//                 ::memcpy(temp_data, this->uncompressed_data, data_length);
+//
+//                 this->uncompressed_data        += data_length;
+//                 this->uncompressed_data_length -= data_length;
+//
+//                 temp_data        += data_length;
+//                 temp_data_length -= data_length;
+//             }
+//             else {
+//                 if (!this->inflate_pending) {
+//                     this->source_transport.recv_new(
+//                           this->compressed_data_buf
+//                         , 5                 // reset_decompressor(1) + compressed_data_length(4)
+//                         );
+//
+//                     InStream compressed_data(this->compressed_data_buf);
+//
+//                     if (compressed_data.in_uint8() == 1) {
+//                         REDASSERT(this->inflate_pending == false);
+//
+//                         //if (this->verbose) {
+//                         //    LOG(LOG_INFO, "GZipCompressionInTransport::do_recv: Decompressor reset");
+//                         //}
+//                         ::inflateEnd(&this->compression_stream);
+//
+//                         ::memset(&this->compression_stream, 0, sizeof(this->compression_stream));
+//
+//                         REDEMPTION_DIAGNOSTIC_PUSH
+//                         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+//                         int ret = ::inflateInit(&this->compression_stream);
+//                         REDEMPTION_DIAGNOSTIC_POP
+//                         (void)ret;
+//                     }
+//
+//                     const size_t compressed_data_length = compressed_data.in_uint32_le();
+//                     //if (this->verbose) {
+//                     //    LOG( LOG_INFO, "GZipCompressionInTransport::do_recv: compressed_data_length=%zu"
+//                     //       , compressed_data_length);
+//                     //}
+//
+//                     this->source_transport.recv_new(this->compressed_data_buf, compressed_data_length);
+//
+//                     this->compression_stream.avail_in = compressed_data_length;
+//                     this->compression_stream.next_in  = this->compressed_data_buf;
+//                 }
+//
+//                 this->uncompressed_data = this->uncompressed_data_buffer;
+//
+//                 const size_t uncompressed_data_capacity = sizeof(this->uncompressed_data_buffer);
+//
+//                 this->compression_stream.avail_out = uncompressed_data_capacity;
+//                 this->compression_stream.next_out  = this->uncompressed_data;
+//
+//                 int ret = ::inflate(&this->compression_stream, Z_NO_FLUSH);
+//                 //if (this->verbose & 0x2) {
+//                 //    LOG(LOG_INFO, "GZipCompressionInTransport::do_recv: inflate return %d", ret);
+//                 //}
+//
+//                 //if (this->verbose & 0x2) {
+//                 //    LOG( LOG_INFO, "GZipCompressionInTransport::do_recv: uncompressed_data_capacity=%zu avail_out=%u"
+//                 //       , uncompressed_data_capacity, this->compression_stream.avail_out);
+//                 //}
+//                 this->uncompressed_data_length = uncompressed_data_capacity - this->compression_stream.avail_out;
+//                 //if (this->verbose) {
+//                 //    LOG( LOG_INFO, "GZipCompressionInTransport::do_recv: uncompressed_data_length=%zu"
+//                 //       , this->uncompressed_data_length);
+//                 //}
+//
+//                 this->inflate_pending = ((ret == 0) && (this->compression_stream.avail_out == 0));
+//             }
+//         }
+//
+//         (*pbuffer) = (*pbuffer) + len;
+//     }
 
     void do_recv_new(uint8_t * buffer, size_t len) override {
         uint8_t * temp_data        = buffer;
