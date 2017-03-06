@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2012
    Author(s): Christophe Grosjean
 
-   Unit test to capture interface to video recording to flv or mp4
+   Unit test to capture interface to video recording to flv or mp4frecv
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -922,7 +922,7 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
         wrm_trans.send("CCCCX", 5);
-        
+
 // TODO: we can't really check files are here and of expected size
 // because they will only be flushed when wrm_trans object destructor is called.
 // we should call a flush or explicit close for that purpose
@@ -1533,15 +1533,14 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
         char buffer[1024] = {};
         char * bob = buffer;
-        char ** pbuffer = &bob;
 
         BOOST_CHECK(true);
 
-        BOOST_CHECK_NO_THROW(crypto_trans.recv(pbuffer, 15));
+        int size(0);
+
+        BOOST_CHECK_NO_THROW(crypto_trans.recv_new(bob, 15));
 
         BOOST_CHECK(true);
-
-        BOOST_CHECK_EQUAL(15, *pbuffer - buffer);
 
         if (0 != memcmp(buffer, "AAAAXBBBBXCCCCX", 15)){
             BOOST_CHECK_EQUAL(0, buffer[15]); // this one should not have changed

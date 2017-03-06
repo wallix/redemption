@@ -136,20 +136,20 @@ public:
         return 0;
     }
 
-    void recv(char ** pbuffer, size_t len) __attribute__((deprecated))
-    {
-        this->do_recv(reinterpret_cast<uint8_t **>(pbuffer), len);
-    }
+//     void recv(char ** pbuffer, size_t len) __attribute__((deprecated))
+//     {
+//         this->do_recv(reinterpret_cast<uint8_t **>(pbuffer), len);
+//     }
 
     void send(const char * const buffer, size_t len)
     {
         this->do_send(reinterpret_cast<const uint8_t * const>(buffer), len);
     }
 
-    void recv(uint8_t ** pbuffer, size_t len) __attribute__((deprecated))
-    {
-        this->do_recv(pbuffer, len);
-    }
+//     void recv(uint8_t ** pbuffer, size_t len) __attribute__((deprecated))
+//     {
+//         this->do_recv(pbuffer, len);
+//     }
 
     void recv_new(char * buffer, size_t len)
     {
@@ -177,12 +177,12 @@ public:
     }
 
 private:
-    virtual void do_recv(uint8_t ** pbuffer, size_t len) __attribute__((deprecated))
-    {
-        (void)pbuffer;
-        (void)len;
-        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
-    }
+//     virtual void do_recv(uint8_t ** pbuffer, size_t len) __attribute__((deprecated))
+//     {
+//         (void)pbuffer;
+//         (void)len;
+//         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
+//     }
 
     // Note by CGR:
     // ============

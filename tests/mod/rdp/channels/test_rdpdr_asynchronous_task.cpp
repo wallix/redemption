@@ -132,8 +132,13 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     //TestToServerSender test_to_server_sender(log_transport);
 
     #include "../../../fixtures/test_rdpdr_send_drive_io_response_task.hpp"
+    LOG(LOG_INFO, "CHECK_EXCEPTION_ERROR_ID");
     CheckTransport check_transport(outdata, sizeof(outdata)-1, verbose);
+
+    LOG(LOG_INFO, "check_transport");
     TestToServerSender test_to_server_sender(check_transport);
+
+    LOG(LOG_INFO, "TestToServerSender");
 
     RdpdrSendDriveIOResponseTask rdpdr_send_drive_io_response_task(
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
@@ -142,10 +147,13 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
         test_to_server_sender,
         to_verbose_flags(verbose));
 
+    LOG(LOG_INFO, "RdpdrSendDriveIOResponseTask");
+
     bool run_task = true;
 
     do
     {
+        LOG(LOG_INFO, "do");
         wait_obj event;
 
         rdpdr_send_drive_io_response_task.configure_wait_object(event);
