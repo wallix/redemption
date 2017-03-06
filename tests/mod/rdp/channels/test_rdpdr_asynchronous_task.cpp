@@ -27,12 +27,17 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "utils/fdbuf.hpp"
+#include "get_file_contents.hpp"
 #include "transport/in_file_transport.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/make_unique.hpp"
 #include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "transport/test_transport.hpp"
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 class TestToServerSender : public VirtualChannelDataSender {
     Transport & transport;
@@ -58,16 +63,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     uint32_t verbose = 1;
 
     int fd = ::open(FIXTURES_PATH "/rfc959.txt", O_RDONLY);
-    if (fd == -1) {
-        BOOST_CHECK(false);
-        throw Error(ERR_TRANSPORT_OPEN_FAILED);
-    }
+    BOOST_CHECK_NE(fd, -1);
 
-    io::posix::fdbuf fd_wrapper(fd);
-
-    std::unique_ptr<InFileSeekableTransport> transport = std::make_unique<InFileSeekableTransport>(fd);
-
-    fd_wrapper.release();
+    InFileSeekableTransport transport(fd);
 
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);
@@ -81,7 +79,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
     const uint32_t number_of_bytes_to_read = 2 * 1024;
 
-    RdpdrDriveReadTask rdpdr_drive_read_task(transport.get(), fd,
+    RdpdrDriveReadTask rdpdr_drive_read_task(&transport, fd,
         DeviceId, CompletionId, number_of_bytes_to_read, 1024 * 32,
         test_to_server_sender, to_verbose_flags(verbose));
 
@@ -127,26 +125,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 {
     uint32_t verbose = 1;
 
-    int fd = ::open(FIXTURES_PATH "/sample.bmp", O_RDONLY);
-    if (fd == -1) {
-        BOOST_CHECK(false);
-        throw Error(ERR_TRANSPORT_OPEN_FAILED);
-    }
-
-    io::posix::fdbuf fd_wrapper(fd);
-
-    std::unique_ptr<InFileSeekableTransport> transport = std::make_unique<InFileSeekableTransport>(fd);
-
-    fd_wrapper.release();
-
-    uint8_t buf[65536];
-    auto p = buf;
-
-    const auto len = CHANNELS::CHANNEL_CHUNK_LENGTH + 1024;
-
-    // TODO use a new interface for partial reading
-    CHECK_EXCEPTION_ERROR_ID(transport->recv_new(p, len), ERR_TRANSPORT_NO_MORE_DATA);
-    BOOST_CHECK_EQUAL(1974, p-buf); // partial read
+    auto contents = get_file_contents<std::string>(FIXTURES_PATH "/sample.bmp");
+    BOOST_CHECK_EQUAL(1974u, contents.size());
 
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);
@@ -162,8 +142,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
     RdpdrSendDriveIOResponseTask rdpdr_send_drive_io_response_task(
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-        buf,
-        p-buf,
+        reinterpret_cast<uint8_t const *>(contents.data()),
+        contents.size(),
         test_to_server_sender,
         to_verbose_flags(verbose));
 

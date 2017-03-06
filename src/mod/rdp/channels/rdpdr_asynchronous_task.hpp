@@ -133,6 +133,7 @@ public:
 
         auto end = out_stream.get_current();
         try {
+            #pragma warning PARTIAL READ !!!!!!!!!!!!!!!!
             this->transport->recv_new(end, number_of_bytes_to_read);
             end += number_of_bytes_to_read;
         }
