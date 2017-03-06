@@ -28,10 +28,10 @@
 class CountTransport
 : public Transport
 {
-    void do_recv(uint8_t **, size_t len) override {
-        // TODO move that to base class : accounting_recv(len) (or base class recv could just do accounting)
-        this->last_quantum_received += len;
-    }
+//     void do_recv(uint8_t **, size_t len) override {
+//         // TODO move that to base class : accounting_recv(len) (or base class recv could just do accounting)
+//         this->last_quantum_received += len;
+//     }
 
     void do_recv_new(uint8_t *, size_t len) override {
         // TODO move that to base class : accounting_recv(len) (or base class recv could just do accounting)
