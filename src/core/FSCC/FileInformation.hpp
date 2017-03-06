@@ -1147,6 +1147,10 @@ class FileBothDirectoryInformation {
     std::string file_name;
 
 public:
+    enum : unsigned {
+      MIN_SIZE = 93
+    };
+
     FileBothDirectoryInformation() = default;
 
     FileBothDirectoryInformation(uint64_t CreationTime,
@@ -1208,13 +1212,13 @@ public:
 
     inline void receive(InStream & stream) {
         {
-            const unsigned expected = 93;   // NextEntryOffset(4) + FileIndex(4) +
-                                            //     CreationTime(8) + LastAccessTime(8) +
-                                            //     LastWriteTime(8) + ChangeTime(8) +
-                                            //     EndOfFile(8) + AllocationSize(8) +
-                                            //     FileAttributes(4) + FileNameLength(4) +
-                                            //     EaSize(4) + ShortNameLength(1) +
-                                            //     ShortName(24)
+            const unsigned expected = MIN_SIZE;   // NextEntryOffset(4) + FileIndex(4) +
+                                                  //     CreationTime(8) + LastAccessTime(8) +
+                                                  //     LastWriteTime(8) + ChangeTime(8) +
+                                                  //     EndOfFile(8) + AllocationSize(8) +
+                                                  //     FileAttributes(4) + FileNameLength(4) +
+                                                  //     EaSize(4) + ShortNameLength(1) +
+                                                  //     ShortName(24)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
                     "Truncated FileBothDirectoryInformation (0): expected=%u remains=%zu",
@@ -1430,8 +1434,11 @@ class FileDirectoryInformation {
     uint32_t FileAttributes_ = 0;
     std::string FileName;
 
-
 public:
+    enum : unsigned {
+        MIN_SIZE = 64
+    };
+
     FileDirectoryInformation() = default;
 
     FileDirectoryInformation(uint32_t NextEntryOffset, uint32_t FileIndex,
@@ -1465,6 +1472,21 @@ public:
     }
 
     void receive(InStream & stream) {
+
+        {
+            const unsigned expected = MIN_SIZE; // NextEntryOffset(4) + FileIndex(4) +
+                                                //     CreationTime(8) + LastAccessTime(8) +
+                                                //     LastWriteTime(8) + ChangeTime(8) +
+                                                //     EndOfFile(8) + AllocationSize(8) +
+                                                //     FileAttributes(4) + FileNameLength(4)
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated FileBothDirectoryInformation (0): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_FSCC_DATA_TRUNCATED);
+            }
+        }
+
         this->NextEntryOffset = stream.in_uint32_le();
         this->FileIndex       = stream.in_uint32_le();
 
@@ -1840,7 +1862,12 @@ class FileFullDirectoryInformation {
 
     std::string file_name;
 
+
 public:
+     enum : unsigned {
+      MIN_SIZE = 68
+    };
+
     FileFullDirectoryInformation() = default;
 
     FileFullDirectoryInformation(uint64_t CreationTime,
@@ -1887,12 +1914,12 @@ public:
 
     inline void receive(InStream & stream) {
         {
-            const unsigned expected = 68;   // NextEntryOffset(4) + FileIndex(4) +
-                                            //     CreationTime(8) + LastAccessTime(8) +
-                                            //     LastWriteTime(8) + ChangeTime(8) +
-                                            //     EndOfFile(8) + AllocationSize(8) +
-                                            //     FileAttributes(4) + FileNameLength(4) +
-                                            //     EaSize(4)
+            const unsigned expected = MIN_SIZE;   // NextEntryOffset(4) + FileIndex(4) +
+                                                 //     CreationTime(8) + LastAccessTime(8) +
+                                                 //     LastWriteTime(8) + ChangeTime(8) +
+                                                 //     EndOfFile(8) + AllocationSize(8) +
+                                                 //     FileAttributes(4) + FileNameLength(4) +
+                                                 //     EaSize(4)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
                     "Truncated FileFullDirectoryInformation (0): expected=%u remains=%zu",
@@ -2066,6 +2093,10 @@ class FileNamesInformation {
     std::string file_name;
 
 public:
+    enum : unsigned {
+        MIN_SIZE = 8
+    };
+
     FileNamesInformation() = default;
 
     explicit FileNamesInformation(const char * file_name)
@@ -2087,7 +2118,7 @@ public:
 
     inline void receive(InStream & stream) {
         {
-            const unsigned expected = 8;    // NextEntryOffset(4) + FileIndex(4)
+            const unsigned expected = MIN_SIZE;    // NextEntryOffset(4) + FileIndex(4)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
                     "Truncated FileNamesInformation (0): expected=%u remains=%zu",

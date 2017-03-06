@@ -29,6 +29,7 @@
 #include "core/wait_obj.hpp"
 #include "mod/rdp/rdp_log.hpp"
 
+
 class RdpdrDriveReadTask : public AsynchronousTask {
     InFileSeekableTransport * transport;
 
@@ -134,7 +135,7 @@ public:
         auto end = out_stream.get_current();
         try {
             #pragma warning PARTIAL READ !!!!!!!!!!!!!!!!
-            this->transport->recv_new(end, number_of_bytes_to_read);
+            this->transport->recv(end, number_of_bytes_to_read);
             end += number_of_bytes_to_read;
         }
         catch (const Error & e) {
