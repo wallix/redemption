@@ -1357,6 +1357,11 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
 
             int meta_buf_fd;
 
+            MetaFilename mf_;
+            MetaFilename hf_;
+            time_t start_sec_;
+            time_t stop_sec_;
+
             static constexpr size_t nosize = ~size_t{};
             static constexpr size_t quick_size = 4096;
 
@@ -1366,10 +1371,6 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             unsigned char const (&ttt_meta_buf_hmac_key)[MD_HASH_LENGTH];
             size_t ttt_meta_buf_file_size = nosize;
 
-            MetaFilename ttt_mf_;
-            MetaFilename ttt_hf_;
-            time_t ttt_start_sec_;
-            time_t ttt_stop_sec_;
 
         public:
 
@@ -1516,7 +1517,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                     return err;
                 }
             }
-            char const * hash_filename = this->ttt_hf_.filename;
+            char const * hash_filename = this->hf_.filename;
             char const * meta_filename = this->ttt_meta_filename();
             class wrmcapture_ofile_buf_out
             {
@@ -1694,8 +1695,8 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                 return 1;
             }
 
-            auto start_sec = this->ttt_start_sec_;
-            auto stop_sec = this->ttt_stop_sec_+1;
+            auto start_sec = this->start_sec_;
+            auto stop_sec = this->stop_sec_+1;
 
             struct stat stat;
             int err = ::stat(filename, &stat);
@@ -1780,19 +1781,19 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                 return res < 0 ? res : 1;
             }
 
-            this->ttt_start_sec_ = this->ttt_stop_sec_;
+            this->start_sec_ = this->stop_sec_;
 
             return 0;
         }
 
         char const * ttt_hash_filename() const noexcept
         {
-            return this->ttt_hf_.filename;
+            return this->hf_.filename;
         }
 
         char const * ttt_meta_filename() const noexcept
         {
-            return this->ttt_mf_.filename;
+            return this->mf_.filename;
         }
 
     public:
@@ -1804,11 +1805,11 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             if (this->buf_.is_open()) {
                 this->buf_.close();
             }
-            ::unlink(this->ttt_mf_.filename);
+            ::unlink(this->mf_.filename);
         }
 
         void ttt_update_sec(time_t sec)
-        { this->ttt_stop_sec_ = sec; }
+        { this->stop_sec_ = sec; }
 
         CryptoContext & cctx;
         class wrmcapture_ochecksum_buf_null_buf
@@ -1878,21 +1879,21 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         , groupid_(groupid)
         , meta_buf_fd(-1)
         , ttt_meta_buf_hmac_key(cctx.get_hmac_key())
-        , ttt_mf_(prefix, filename)
-        , ttt_hf_(hash_prefix, filename)
-        , ttt_start_sec_(start_sec)
-        , ttt_stop_sec_(start_sec)
+        , mf_(prefix, filename)
+        , hf_(hash_prefix, filename)
+        , start_sec_(start_sec)
+        , stop_sec_(start_sec)
         , cctx(cctx)
         , sum_buf(cctx.get_hmac_key())
         {
             this->current_filename_[0] = 0;
-            if (this->ttt_meta_buf_open(this->ttt_mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
-                LOG(LOG_ERR, "Failed to open meta file %s", this->ttt_mf_.filename);
+            if (this->ttt_meta_buf_open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+                LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
                 throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
             }
-            if (chmod(this->ttt_mf_.filename, S_IRUSR | S_IRGRP) == -1) {
+            if (chmod(this->mf_.filename, S_IRUSR | S_IRGRP) == -1) {
                 LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                   , this->ttt_mf_.filename
+                   , this->mf_.filename
                    , "u+r, g+r"
                    , strerror(errno), errno);
             }
