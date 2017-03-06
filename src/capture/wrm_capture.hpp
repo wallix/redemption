@@ -1408,7 +1408,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
 
 
         public:
-            const WrmFGen & ttt_seqgen() const noexcept
+            const WrmFGen & seqgen() const noexcept
             { return this->filegen_; }
 
         public:
@@ -1760,7 +1760,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         }
 
     public:
-        void ttt_request_full_cleaning()
+        void request_full_cleaning()
         {
             unsigned i = this->num_file_ + 1;
             while (i > 0 && !::unlink(this->filegen_.get(--i))) {
@@ -1771,7 +1771,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             ::unlink(this->mf_.filename);
         }
 
-        void ttt_update_sec(time_t sec)
+        void update_sec(time_t sec)
         { this->stop_sec_ = sec; }
 
     public:
@@ -2148,12 +2148,12 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
     }
 
     void timestamp(timeval now) override {
-        this->buf.ttt_update_sec(now.tv_sec);
+        this->buf.update_sec(now.tv_sec);
     }
 
     const WrmFGen * seqgen() const noexcept
     {
-        return &(this->buf.ttt_seqgen());
+        return &(this->buf.seqgen());
     }
 
     bool next() override {
@@ -2178,7 +2178,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
     }
 
     void request_full_cleaning() override {
-        this->buf.ttt_request_full_cleaning();
+        this->buf.request_full_cleaning();
     }
 
     ~wrmcapture_OutMetaSequenceTransportWithSum() {
