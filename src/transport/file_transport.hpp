@@ -39,7 +39,7 @@
 
 using std::size_t;
 
-class Transport : noncopyable
+class FileTransport : noncopyable
 {
     uint64_t total_received;
     uint64_t total_sent;
@@ -55,7 +55,7 @@ protected:
     auth_api * authentifier;
 
 public:
-    Transport()
+    FileTransport()
     : total_received(0)
     , total_sent(0)
     , seqno(0)
@@ -65,7 +65,7 @@ public:
     , authentifier(get_null_authentifier())
     {}
 
-    virtual ~Transport()
+    virtual ~FileTransport()
     {}
 
     uint32_t get_seqno() const
@@ -136,29 +136,19 @@ public:
         return 0;
     }
 
-//     void recv(char ** pbuffer, size_t len) __attribute__((deprecated))
-//     {
-//         this->do_recv(reinterpret_cast<uint8_t **>(pbuffer), len);
-//     }
-
     void send(const char * const buffer, size_t len)
     {
         this->do_send(reinterpret_cast<const uint8_t * const>(buffer), len);
     }
 
-//     void recv(uint8_t ** pbuffer, size_t len) __attribute__((deprecated))
-//     {
-//         this->do_recv(pbuffer, len);
-//     }
-
-    void recv_new(char * buffer, size_t len)
+    void recv(char * buffer, size_t len)
     {
-        return this->do_recv_new(reinterpret_cast<uint8_t*>(buffer), len);
+        return this->do_recv(reinterpret_cast<uint8_t*>(buffer), len);
     }
 
-    void recv_new(uint8_t * buffer, size_t len)
+    void recv(uint8_t * buffer, size_t len)
     {
-        return this->do_recv_new(buffer, len);
+        return this->do_recv(buffer, len);
     }
 
     void send(const uint8_t * const buffer, size_t len)
@@ -191,7 +181,7 @@ private:
     // receiving the expected amount of data throw an Error
     // it is pretty useless to update buffer position
 
-    virtual void do_recv_new(uint8_t * buffer, size_t len) {
+    virtual void do_recv(uint8_t * buffer, size_t len) {
         (void)buffer;
         (void)len;
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
@@ -234,6 +224,6 @@ public:
     virtual int get_fd() const { return INVALID_SOCKET; }
 
 private:
-    Transport(const Transport &) = delete;
-    Transport& operator=(const Transport &) = delete;
+    FileTransport(const Transport &) = delete;
+    FileTransport& operator=(const Transport &) = delete;
 };

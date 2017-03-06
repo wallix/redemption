@@ -131,10 +131,11 @@ public:
 
         this->transport->seek(this->Offset, SEEK_SET);
 
+        auto end = out_stream.get_current();
         try {
-            auto end = out_stream.get_current();
+            #pragma warning PARTIAL READ !!!!!!!!!!!!!!!!
             this->transport->recv_new(end, number_of_bytes_to_read);
-            out_stream.out_skip_bytes(number_of_bytes_to_read);
+            end += number_of_bytes_to_read;
         }
         catch (const Error & e) {
             if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
@@ -147,6 +148,7 @@ public:
                     e.id);
             }
         }
+        out_stream.out_skip_bytes(number_of_bytes_to_read);
 
         const uint32_t number_of_bytes_read = out_stream.get_current() - saved_out_stream_p;
 

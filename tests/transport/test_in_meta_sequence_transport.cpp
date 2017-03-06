@@ -276,38 +276,20 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
         char buffer[1024] = {};
         char * bob = buffer;
-        char ** pbuffer = &bob;
 
-        BOOST_CHECK(true);
+        BOOST_CHECK_NO_THROW(crypto_trans.recv_new(bob, 15));
 
-        BOOST_CHECK_NO_THROW(crypto_trans.recv(pbuffer, 15));
-
-        BOOST_CHECK(true);
-
-        BOOST_CHECK_EQUAL(15, *pbuffer - buffer);
-
-        if (0 != memcmp(buffer, "AAAAXBBBBXCCCCX", 15)){
-            BOOST_CHECK_EQUAL(0, buffer[15]); // this one should not have changed
-            buffer[15] = 0;
-            BOOST_CHECK(true);
-            LOG(LOG_ERR, "expected \"AAAAXBBBBXCCCCX\" got \"%s\"", buffer);
-            BOOST_CHECK(false);
-        }
-
-        BOOST_CHECK(true);
+        BOOST_CHECK_EQUAL_RANGES(make_array_view(buffer, 15), cstr_array_view("AAAAXBBBBXCCCCX"));
     }
 
-    const char * file[] = {
+    const char * files[] = {
         "/tmp/TESTOFS.mwrm", // hash
         "TESTOFS.mwrm",
         "TESTOFS-000000.wrm",
         "TESTOFS-000001.wrm"
     };
-    for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
-        if (::unlink(file[i])){
-            BOOST_CHECK(false);
-            LOG(LOG_ERR, "failed to unlink %s", file[i]);
-        }
+    for (const char * file : files){
+        BOOST_CHECK_MESSAGE(!::unlink(file), "failed to unlink " << file);
     }
 }
 

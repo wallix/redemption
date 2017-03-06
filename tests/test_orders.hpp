@@ -22,6 +22,7 @@
 */
 
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
+#include "system/redemption_unit_tests.hpp"
 
 
 inline

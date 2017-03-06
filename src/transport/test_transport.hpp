@@ -164,19 +164,19 @@ public:
     }
 
 private:
-    void do_recv(uint8_t ** pbuffer, size_t len) override {
-        const ssize_t res = this->buf.read(*pbuffer, len);
-        if (res < 0){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_READ_FAILED, res);
-        }
-        *pbuffer += res;
-        this->last_quantum_received += res;
-        if (static_cast<size_t>(res) != len){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-        }
-    }
+//     void do_recv(uint8_t ** pbuffer, size_t len) override {
+//         const ssize_t res = this->buf.read(*pbuffer, len);
+//         if (res < 0){
+//             this->status = false;
+//             throw Error(ERR_TRANSPORT_READ_FAILED, res);
+//         }
+//         *pbuffer += res;
+//         this->last_quantum_received += res;
+//         if (static_cast<size_t>(res) != len){
+//             this->status = false;
+//             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+//         }
+//     }
 
     void do_recv_new(uint8_t * buffer, size_t len) override {
         const ssize_t res = this->buf.read(buffer, len);
@@ -184,7 +184,7 @@ private:
             this->status = false;
             throw Error(ERR_TRANSPORT_READ_FAILED, res);
         }
-        //buffer += res;
+
         this->last_quantum_received += res;
         if (static_cast<size_t>(res) != len){
             this->status = false;
@@ -353,10 +353,10 @@ public:
     }
 
 private:
-    void do_recv(uint8_t ** pbuffer, size_t len) override {
-
-        this->gen.recv(pbuffer, len);
-    }
+//     void do_recv(uint8_t ** pbuffer, size_t len) override {
+//
+//         this->gen.recv(pbuffer, len);
+//     }
 
     void do_recv_new(uint8_t * buffer, size_t len) override {
 
@@ -389,15 +389,14 @@ public:
     InStream    in_stream{buf};
     OutStream   out_stream{buf};
 
-    void do_recv(uint8_t ** pbuffer, size_t len) override {
-        uint8_t * buffer = *pbuffer;
-        this->in_stream.in_copy_bytes(buffer, len);
-        *pbuffer = buffer + len;
-    }
+//     void do_recv(uint8_t ** pbuffer, size_t len) override {
+//         uint8_t * buffer = *pbuffer;
+//         this->in_stream.in_copy_bytes(buffer, len);
+//         *pbuffer = buffer + len;
+//     }
 
     void do_recv_new(uint8_t * buffer, size_t len) override {
         this->in_stream.in_copy_bytes(buffer, len);
-        //*pbuffer = buffer + len;
     }
 
     void do_send(const uint8_t * const buffer, size_t len) override {
