@@ -762,99 +762,6 @@ private:
 };
 
 
-class wrmcapture_cctx_ochecksum_file
-{
-    int fd;
-
-    static constexpr size_t nosize = ~size_t{};
-    static constexpr size_t quick_size = 4096;
-
-    SslHMAC_Sha256_Delayed hmac;
-    SslHMAC_Sha256_Delayed quick_hmac;
-    unsigned char const (&hmac_key)[MD_HASH_LENGTH];
-    size_t file_size = nosize;
-
-public:
-    explicit wrmcapture_cctx_ochecksum_file(CryptoContext & cctx)
-    : fd(-1)
-    , hmac_key(cctx.get_hmac_key())
-    {}
-
-    ~wrmcapture_cctx_ochecksum_file()
-    {
-        this->close();
-    }
-
-    wrmcapture_cctx_ochecksum_file(wrmcapture_cctx_ochecksum_file const &) = delete;
-    wrmcapture_cctx_ochecksum_file & operator=(wrmcapture_cctx_ochecksum_file const &) = delete;
-
-    int open(const char * filename, mode_t mode)
-    {
-        this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
-        this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
-        this->file_size = 0;
-        this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-        return this->fd;
-    }
-
-    ssize_t write(const void * data, size_t len)
-    {
-        REDASSERT(this->file_size != nosize);
-
-        // TODO: hmac returns error as exceptions while write errors are returned as -1
-        // this is inconsistent and probably need a fix.
-        // also, if we choose to raise exception every error should have it's own one
-        this->hmac.update(static_cast<const uint8_t *>(data), len);
-        if (this->file_size < quick_size) {
-            auto const remaining = std::min(quick_size - this->file_size, len);
-            this->quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
-            this->file_size += remaining;
-        }
-
-        size_t remaining_len = len;
-        size_t total_sent = 0;
-        while (remaining_len) {
-            ssize_t ret = ::write(this->fd,
-                static_cast<const char*>(data) + total_sent, remaining_len);
-            if (ret <= 0){
-                if (errno == EINTR){
-                    continue;
-                }
-                return -1;
-            }
-            remaining_len -= ret;
-            total_sent += ret;
-        }
-        return total_sent;
-    }
-
-    int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
-    {
-        REDASSERT(this->file_size != nosize);
-        this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
-        this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
-        this->file_size = nosize;
-        return this->close();
-    }
-
-    int close()
-    {
-        if (this->is_open()) {
-            const int ret = ::close(this->fd);
-            this->fd = -1;
-            return ret;
-        }
-        return 0;
-    }
-
-    bool is_open() const noexcept
-    { return -1 != this->fd; }
-
-    int flush() const
-    { return 0; }
-};
-
-
 struct wrmcapture_OutMetaSequenceTransport : public Transport
 {
     class MetaSeqBuf
@@ -1448,14 +1355,88 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             unsigned num_file_;
             int groupid_;
 
-            wrmcapture_cctx_ochecksum_file ttt_meta_buf_;
+            int ttt_meta_buf_fd;
+
+            static constexpr size_t nosize = ~size_t{};
+            static constexpr size_t quick_size = 4096;
+
+            SslHMAC_Sha256_Delayed ttt_meta_buf_hmac;
+            SslHMAC_Sha256_Delayed ttt_meta_buf_quick_hmac;
+
+            unsigned char const (&ttt_meta_buf_hmac_key)[MD_HASH_LENGTH];
+            size_t ttt_meta_buf_file_size = nosize;
+
             MetaFilename ttt_mf_;
             MetaFilename ttt_hf_;
             time_t ttt_start_sec_;
             time_t ttt_stop_sec_;
 
-
         public:
+
+            int ttt_meta_buf_open(const char * filename, mode_t mode)
+            {
+                this->ttt_meta_buf_hmac.init(this->ttt_meta_buf_hmac_key, sizeof(this->ttt_meta_buf_hmac_key));
+                this->ttt_meta_buf_quick_hmac.init(this->ttt_meta_buf_hmac_key, sizeof(this->ttt_meta_buf_hmac_key));
+                this->ttt_meta_buf_file_size = 0;
+                this->ttt_meta_buf_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+                return this->ttt_meta_buf_fd;
+            }
+
+            ssize_t ttt_meta_buf_write(const void * data, size_t len)
+            {
+                REDASSERT(this->ttt_meta_buf_file_size != nosize);
+
+                // TODO: hmac returns error as exceptions while write errors are returned as -1
+                // this is inconsistent and probably need a fix.
+                // also, if we choose to raise exception every error should have it's own one
+                this->ttt_meta_buf_hmac.update(static_cast<const uint8_t *>(data), len);
+                if (this->ttt_meta_buf_file_size < quick_size) {
+                    auto const remaining = std::min(quick_size - this->ttt_meta_buf_file_size, len);
+                    this->ttt_meta_buf_quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
+                    this->ttt_meta_buf_file_size += remaining;
+                }
+
+                size_t remaining_len = len;
+                size_t total_sent = 0;
+                while (remaining_len) {
+                    ssize_t ret = ::write(this->ttt_meta_buf_fd,
+                        static_cast<const char*>(data) + total_sent, remaining_len);
+                    if (ret <= 0){
+                        if (errno == EINTR){
+                            continue;
+                        }
+                        return -1;
+                    }
+                    remaining_len -= ret;
+                    total_sent += ret;
+                }
+                return total_sent;
+            }
+
+            int ttt_meta_buf_close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
+            {
+                REDASSERT(this->ttt_meta_buf_file_size != nosize);
+                this->ttt_meta_buf_quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
+                this->ttt_meta_buf_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
+                this->ttt_meta_buf_file_size = nosize;
+                return this->ttt_meta_buf_close();
+            }
+
+            int ttt_meta_buf_close()
+            {
+                if (this->ttt_meta_buf_is_open()) {
+                    const int ret = ::close(this->ttt_meta_buf_fd);
+                    this->ttt_meta_buf_fd = -1;
+                    return ret;
+                }
+                return 0;
+            }
+
+            bool ttt_meta_buf_is_open() const noexcept
+            { return -1 != this->ttt_meta_buf_fd; }
+
+            int ttt_meta_buf_flush() const
+            { return 0; }
 
             ssize_t ttt_write(const void * data, size_t len)
             {
@@ -1535,8 +1516,8 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             if (err) {
                 return err;
             }
-            if (this->ttt_meta_buf().is_open()){
-                err = this->ttt_meta_buf_.close();
+            if (this->ttt_meta_buf_is_open()){
+                err = this->ttt_meta_buf_close();
                 if (err) {
                     return err;
                 }
@@ -1732,7 +1713,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             for (; *epfile; ++epfile) {
                 if (*epfile == '\\') {
                     ssize_t len = epfile - pfile + 1;
-                    auto res = this->ttt_meta_buf_.write(pfile, len);
+                    auto res = this->ttt_meta_buf_write(pfile, len);
                     if (res < len) {
                         return res < 0 ? res : 1;
                     }
@@ -1740,11 +1721,11 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                 }
                 if (*epfile == ' ') {
                     ssize_t len = epfile - pfile;
-                    auto res = this->ttt_meta_buf_.write(pfile, len);
+                    auto res = this->ttt_meta_buf_write(pfile, len);
                     if (res < len) {
                         return res < 0 ? res : 1;
                     }
-                    res = this->ttt_meta_buf_.write("\\", 1u);
+                    res = this->ttt_meta_buf_write("\\", 1u);
                     if (res < 1) {
                         return res < 0 ? res : 1;
                     }
@@ -1754,7 +1735,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
 
             if (pfile != epfile) {
                 ssize_t len = epfile - pfile;
-                auto res = this->ttt_meta_buf_.write(pfile, len);
+                auto res = this->ttt_meta_buf_write(pfile, len);
                 if (res < len) {
                     return res < 0 ? res : 1;
                 }
@@ -1799,7 +1780,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             write(reinterpret_cast<const unsigned char *>(&hash[MD_HASH_LENGTH]));
             *p++ = '\n';
 
-            ssize_t res = this->ttt_meta_buf_.write(mes, p-mes);
+            ssize_t res = this->ttt_meta_buf_write(mes, p-mes);
 
             if (res < p-mes) {
                 return res < 0 ? res : 1;
@@ -1831,9 +1812,6 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             }
             ::unlink(this->ttt_mf_.filename);
         }
-
-        wrmcapture_cctx_ochecksum_file & ttt_meta_buf() noexcept
-        { return this->ttt_meta_buf_; }
 
         void ttt_update_sec(time_t sec)
         { this->ttt_stop_sec_ = sec; }
@@ -1904,7 +1882,8 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         , buf_()
         , num_file_(0)
         , groupid_(groupid)
-        , ttt_meta_buf_(cctx)
+        , ttt_meta_buf_fd(-1)
+        , ttt_meta_buf_hmac_key(cctx.get_hmac_key())
         , ttt_mf_(prefix, filename)
         , ttt_hf_(hash_prefix, filename)
         , ttt_start_sec_(start_sec)
@@ -1913,7 +1892,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         , sum_buf(cctx.get_hmac_key())
         {
             this->current_filename_[0] = 0;
-            if (this->ttt_meta_buf_.open(this->ttt_mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+            if (this->ttt_meta_buf_open(this->ttt_mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
                 LOG(LOG_ERR, "Failed to open meta file %s", this->ttt_mf_.filename);
                 throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
             }
@@ -1923,6 +1902,11 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                    , "u+r, g+r"
                    , strerror(errno), errno);
             }
+        }
+
+        ~MetaSeqBuf() 
+        {
+            this->ttt_meta_buf_close();
         }
 
         ssize_t write(const void * data, size_t len)
@@ -2002,13 +1986,13 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                 { return 0; }
             } hash_buf;
 
-            if (!this->ttt_meta_buf().is_open()) {
+            if (!this->ttt_meta_buf_is_open()) {
                 return 1;
             }
 
             wrmcapture_hash_type hash;
 
-            if (this->ttt_meta_buf().close(hash)) {
+            if (this->ttt_meta_buf_close(hash)) {
                 return 1;
             }
 
@@ -2173,7 +2157,6 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             this->set_authentifier(authentifier);
         }
 
-        auto & writer = this->buf.ttt_meta_buf();
         char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
         const int len = sprintf(
             header1,
@@ -2185,7 +2168,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             unsigned(height),
             "checksum"
         );
-        const ssize_t res = writer.write(header1, len);
+        const ssize_t res = this->buf.ttt_meta_buf_write(header1, len);
         if (res < 0) {
             int err = errno;
             LOG(LOG_ERR, "Write to transport failed (M5): code=%d", err);
