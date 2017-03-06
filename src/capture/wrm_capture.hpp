@@ -1015,11 +1015,10 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
                         if (!err) {
                             using ull = unsigned long long;
                             using ll = long long;
-                            char mes[
-                                (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-                                (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-                                wrmcapture_hash_string_len + 1 +
-                                2
+                            char mes[ (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 
+                                    + (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 
+                                    +  wrmcapture_hash_string_len + 1 
+                                    +  2
                             ];
                             ssize_t len = std::sprintf(
                                 mes,
