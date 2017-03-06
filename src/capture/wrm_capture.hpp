@@ -779,9 +779,7 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
         time_t start_sec_;
         time_t stop_sec_;
 
-
-
-    public:
+    private:
 
         int meta_buf_open(const char * filename, mode_t mode)
         {
@@ -800,6 +798,7 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
             return 0;
         }
 
+    public:
         ssize_t meta_buf_write(const void * data, size_t len)
         {
             size_t remaining_len = len;
@@ -818,6 +817,8 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
             }
             return total_sent;
         }
+
+    private:
 
         bool meta_buf_is_open() const noexcept
         { return -1 != this->meta_buf_fd; }
@@ -1366,9 +1367,18 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
 
             SslHMAC_Sha256_Delayed ttt_meta_buf_hmac;
             SslHMAC_Sha256_Delayed ttt_meta_buf_quick_hmac;
-
             unsigned char const (&ttt_meta_buf_hmac_key)[MD_HASH_LENGTH];
             size_t ttt_meta_buf_file_size = nosize;
+
+            CryptoContext & cctx;
+
+            static constexpr size_t zzz_nosize = ~size_t{};
+            static constexpr size_t zzz_quick_size = 4096;
+
+            SslHMAC_Sha256_Delayed zzz_hmac;
+            SslHMAC_Sha256_Delayed zzz_quick_hmac;
+            unsigned char const (&zzz_hmac_key)[MD_HASH_LENGTH];
+            size_t zzz_file_size = zzz_nosize;
 
 
         public:
@@ -1810,58 +1820,6 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         void ttt_update_sec(time_t sec)
         { this->stop_sec_ = sec; }
 
-        CryptoContext & cctx;
-        class wrmcapture_ochecksum_buf_null_buf
-        {
-            static constexpr size_t zzz_nosize = ~size_t{};
-            static constexpr size_t zzz_quick_size = 4096;
-
-            SslHMAC_Sha256_Delayed zzz_hmac;
-            SslHMAC_Sha256_Delayed zzz_quick_hmac;
-            unsigned char const (&zzz_hmac_key)[MD_HASH_LENGTH];
-            size_t zzz_file_size = zzz_nosize;
-
-        public:
-            explicit wrmcapture_ochecksum_buf_null_buf(unsigned char const (&hmac_key)[MD_HASH_LENGTH])
-            : zzz_hmac_key(hmac_key)
-            {}
-
-            template<class... Ts>
-            int zzz_open(Ts && ... args)
-            {
-                this->zzz_hmac.init(this->zzz_hmac_key, sizeof(this->zzz_hmac_key));
-                this->zzz_quick_hmac.init(this->zzz_hmac_key, sizeof(this->zzz_hmac_key));
-                int ret = 0;
-                this->zzz_file_size = 0;
-                return ret;
-            }
-
-            ssize_t zzz_write(const void * data, size_t len)
-            {
-                REDASSERT(this->zzz_file_size != zzz_nosize);
-                this->zzz_hmac.update(static_cast<const uint8_t *>(data), len);
-                if (this->zzz_file_size < zzz_quick_size) {
-                    auto const remaining = std::min(zzz_quick_size - this->zzz_file_size, len);
-                    this->zzz_quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
-                    this->zzz_file_size += remaining;
-                }
-                return len;
-            }
-
-            int zzz_close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
-            {
-                REDASSERT(this->zzz_file_size != zzz_nosize);
-                this->zzz_quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
-                this->zzz_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
-                this->zzz_file_size = zzz_nosize;
-                return 0;
-            }
-
-            int zzz_close() {
-                return 0;
-            }
-        } sum_buf;
-
     public:
         explicit MetaSeqBuf(
             CryptoContext & cctx,
@@ -1877,13 +1835,13 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         , num_file_(0)
         , groupid_(groupid)
         , meta_buf_fd(-1)
-        , ttt_meta_buf_hmac_key(cctx.get_hmac_key())
         , mf_(prefix, filename)
         , hf_(hash_prefix, filename)
         , start_sec_(start_sec)
         , stop_sec_(start_sec)
+        , ttt_meta_buf_hmac_key(cctx.get_hmac_key())
         , cctx(cctx)
-        , sum_buf(cctx.get_hmac_key())
+        , zzz_hmac_key(cctx.get_hmac_key())
         {
             this->current_filename_[0] = 0;
             if (this->ttt_meta_buf_open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
@@ -1911,11 +1869,18 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                 if (res < 0) {
                     return res;
                 }
-                if (int err = this->sum_buf.zzz_open()) {
-                    return err;
-                }
+                this->zzz_hmac.init(this->zzz_hmac_key, sizeof(this->zzz_hmac_key));
+                this->zzz_quick_hmac.init(this->zzz_hmac_key, sizeof(this->zzz_hmac_key));
+                this->zzz_file_size = 0;
             }
-            this->sum_buf.zzz_write(data, len);
+            
+            REDASSERT(this->zzz_file_size != zzz_nosize);
+            this->zzz_hmac.update(static_cast<const uint8_t *>(data), len);
+            if (this->zzz_file_size < zzz_quick_size) {
+                auto const remaining = std::min(zzz_quick_size - this->zzz_file_size, len);
+                this->zzz_quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
+                this->zzz_file_size += remaining;
+            }
             return this->ttt_buf().write(data, len);
         }
 
@@ -2118,17 +2083,15 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         {
             if (this->ttt_buf().is_open()) {
                 wrmcapture_hash_type hash;
-                {
-                    const int res1 = this->sum_buf.zzz_close(hash);
-                    const int res2 = this->ttt_buf().close();
-                    if (res1) {
-                        return res1;
-                    }
-                    if (res2) {
-                        return res2;
-                    }
-                }
+                REDASSERT(this->zzz_file_size != zzz_nosize);
+                this->zzz_quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
+                this->zzz_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
+                this->zzz_file_size = zzz_nosize;
 
+                const int res2 = this->ttt_buf().close();
+                if (res2) {
+                    return res2;
+                }
                 return this->ttt_next_meta_file(&hash);
             }
             return 1;
