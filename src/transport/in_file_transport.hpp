@@ -22,9 +22,9 @@
 #pragma once
 
 #include "core/error.hpp"
-#include "transport/transport.hpp"
+#include "transport/file_transport.hpp"
 
-class InFileTransport : public Transport
+class InFileTransport : public FileTransport
 {
 protected:
     int fd;
@@ -76,7 +76,7 @@ private:
 //         }
 //     }
 
-    void do_recv_new(uint8_t * buffer, size_t len) override {
+    void do_recv(uint8_t * buffer, size_t len) override {
         // TODO the do_recv API is annoying (need some intermediate pointer to get result), fix it => read all or raise exeception?
         ssize_t res = -1;
         size_t remaining_len = len;

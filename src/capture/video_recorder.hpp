@@ -59,7 +59,7 @@ extern "C" {
 
 #include "utils/log.hpp"
 #include "core/error.hpp"
-#include "transport/transport.hpp"
+#include "transport/file_transport.hpp"
 
 #include <memory>
 #include <chrono>
@@ -523,7 +523,7 @@ public:
 
 struct io_video_recorder_with_transport
 {
-    io_video_recorder_with_transport(Transport& trans)
+    io_video_recorder_with_transport(FileTransport & trans)
     : trans(trans)
     {}
 
@@ -532,10 +532,10 @@ struct io_video_recorder_with_transport
     void * params() const { return &this->trans; }
 
 private:
-    Transport& trans;
+    FileTransport& trans;
 
     static int write_packet(void *opaque, uint8_t *buf, int buf_size) {
-        Transport * trans       = reinterpret_cast<Transport *>(opaque);
+        FileTransport * trans       = reinterpret_cast<FileTransport *>(opaque);
         int         return_code = buf_size;
         try {
             trans->send(buf, buf_size);
@@ -569,7 +569,7 @@ private:
             return -1;
         }
         try {
-            Transport *trans = reinterpret_cast<Transport *>(opaque);
+            FileTransport *trans = reinterpret_cast<FileTransport *>(opaque);
             trans->seek(offset, whence);
             return offset;
         }

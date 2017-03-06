@@ -167,12 +167,6 @@ public:
     }
 
 private:
-//     virtual void do_recv(uint8_t ** pbuffer, size_t len) __attribute__((deprecated))
-//     {
-//         (void)pbuffer;
-//         (void)len;
-//         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
-//     }
 
     // Note by CGR:
     // ============

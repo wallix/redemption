@@ -31,6 +31,7 @@
 
 #include "capture/video_recorder.hpp"
 #include "capture/flv_params.hpp"
+#include "transport/file_transport.hpp"
 
 #include <cerrno>
 #include <cstddef>
@@ -49,7 +50,7 @@ struct NotifyNextVideo : private noncopyable
 
 class FullVideoCaptureImpl : public gdi::CaptureApi
 {
-    struct TmpFileTransport : public Transport
+    struct TmpFileTransport : public FileTransport
     {
         char tmp_filename[1024];
         char final_filename[1024];
@@ -260,7 +261,7 @@ public:
 class SequencedVideoCaptureImpl : public gdi::CaptureApi
 {
 
-    struct SequenceTransport : public Transport
+    struct SequenceTransport : public FileTransport
     {
         char tmp_filename[1024];
         char final_filename[1024];
@@ -515,7 +516,7 @@ public:
 
     class VideoCapture
     {
-        Transport & trans;
+        FileTransport & trans;
         FlvParams flv_params;
 
         RDPDrawable & drawable;
@@ -528,7 +529,7 @@ public:
     public:
         VideoCapture(
             const timeval & now,
-            Transport & trans,
+            FileTransport & trans,
             RDPDrawable & drawable,
             bool no_timestamp,
             FlvParams flv_params)
@@ -685,7 +686,7 @@ public:
     }
 
     void dump24() {
-        ::transport_dump_png24(
+        ::file_transport_dump_png24(
             this->ic_trans, this->ic_drawable.data(),
             this->ic_drawable.width(), this->ic_drawable.height(),
             this->ic_drawable.rowsize(), true);
@@ -697,7 +698,7 @@ public:
             this->ic_scaled_width, this->ic_drawable.width(),
             this->ic_scaled_height, this->ic_drawable.height(),
             this->ic_drawable.rowsize());
-        ::transport_dump_png24(
+        ::file_transport_dump_png24(
             this->ic_trans, this->ic_scaled_buffer.get(),
             this->ic_scaled_width, this->ic_scaled_height,
             this->ic_scaled_width * 3, false);

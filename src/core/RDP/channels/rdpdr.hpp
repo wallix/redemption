@@ -1498,6 +1498,11 @@ struct DeviceWriteRequest {
     uint64_t  Offset = 0;
     uint8_t const * WriteData = nullptr;
 
+    enum :  unsigned {
+      TOTAL_PDU_HEADER_LEN = 56
+    , FISRT_PART_DATA_MAX_LEN = 1600 - TOTAL_PDU_HEADER_LEN
+    };
+
     DeviceWriteRequest() = default;
 
     DeviceWriteRequest( uint32_t Length
@@ -2261,7 +2266,7 @@ struct DeviceWriteResponse {
     }
 
     void log() {
-        LOG(LOG_INFO, "     Device Read Response:");
+        LOG(LOG_INFO, "     Device Write Response:");
         LOG(LOG_INFO, "          * Length = %d (4 bytes)", this->Length);
         LOG(LOG_INFO, "          * Padding - (1 byte) NOT USED");
     }
