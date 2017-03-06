@@ -27,6 +27,7 @@ namespace boost { namespace unit_test { namespace ut_detail {
 # define BOOST_REQUIRE_NE(a, b) (a) != (b)
 # define BOOST_REQUIRE(a) (a)
 # define BOOST_REQUIRE_EQUAL_RANGES(a, b) (a) != (b)
+# define BOOST_CHECK_MESSAGE(a, iostream_expr) (a), ""
 #else
 # define CHECK_EXCEPTION_ERROR_ID(stmt, ErrId)  \
     BOOST_CHECK_EXCEPTION(                      \

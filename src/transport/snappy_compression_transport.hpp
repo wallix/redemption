@@ -73,22 +73,20 @@ private:
             else {
                 uint8_t data_buf[SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
 
-                auto end = data_buf;
-                this->source_transport.recv(&end, sizeof(uint16_t));  // compressed_data_length(2);
+                this->source_transport.recv_new(data_buf, sizeof(uint16_t));  // compressed_data_length(2);
 
                 const uint16_t compressed_data_length = Parse(data_buf).in_uint16_le();
                 //if (this->verbose) {
                 //    LOG(LOG_INFO, "SnappyCompressionInTransport::do_recv: compressed_data_length=%" PRIu16, compressed_data_length);
                 //}
 
-                end = data_buf;
-                this->source_transport.recv(&end, compressed_data_length);
+                this->source_transport.recv_new(data_buf, compressed_data_length);
 
                 this->uncompressed_data        = this->uncompressed_data_buffer;
                 this->uncompressed_data_length = sizeof(this->uncompressed_data_buffer);
 
                 snappy_status status = ::snappy_uncompress(
-                      reinterpret_cast<char *>(data_buf) , end-data_buf
+                      reinterpret_cast<char *>(data_buf) , compressed_data_length
                     , reinterpret_cast<char *>(this->uncompressed_data), &this->uncompressed_data_length);
                 if (/*this->verbose & 0x2 || */(status != SNAPPY_OK)) {
                     LOG( ((status != SNAPPY_OK) ? LOG_ERR : LOG_INFO)

@@ -58,22 +58,21 @@ auto trim(R & r, Pred pred = Pred()) -> range<decltype(r.begin())> {
 // TODO subject : string_view
 inline std::string escape_delimiters(std::string const & subject)
 {
-    auto must_be_quoted = [](char c) {
-        static constexpr bool lookup_test[256]{
+    auto must_be_escaped = [](char c) {
+        static constexpr bool is_escaped_table[256]{
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, // '"'
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1                       // '\\'
         };
-        return lookup_test[static_cast<unsigned char>(c)];
+        return is_escaped_table[static_cast<unsigned char>(c)];
     };
 
     auto first = subject.begin();
     auto last = subject.end();
-    auto p = first;
 
-    p = std::find_if(first, last, must_be_quoted);
+    auto p = std::find_if(first, last, must_be_escaped);
     if (p == last) {
         return subject;
     }
@@ -85,7 +84,7 @@ inline std::string escape_delimiters(std::string const & subject)
         escaped_subject += '\\';
         escaped_subject += *p;
         first = p + 1;
-    } while ((p = std::find_if(first, last, must_be_quoted)) != last);
+    } while ((p = std::find_if(first, last, must_be_escaped)) != last);
 
     escaped_subject.append(first, last);
     return escaped_subject;

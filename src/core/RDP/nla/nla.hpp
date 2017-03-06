@@ -508,8 +508,7 @@ public:
         StreamBufMaker<65536> ts_request_received_maker;
         OutStream ts_request_received = ts_request_received_maker.reserve_out_stream(2 + byte + length);
         ts_request_received.out_copy_bytes(head, 2 + byte);
-        auto end = ts_request_received.get_current();
-        this->trans.recv(&end, length);
+        this->trans.recv_new(ts_request_received.get_current(), length);
         InStream in_stream(ts_request_received.get_data(), ts_request_received.get_capacity());
         this->ts_request.recv(in_stream);
 
