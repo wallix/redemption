@@ -25,6 +25,7 @@
 #include "acl/auth_api.hpp"
 #include "regex/regex.hpp"
 #include "utils/log.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include <memory>
 #include <cstring>

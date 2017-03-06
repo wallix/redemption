@@ -55,3 +55,38 @@ auto trim(R & r, Pred pred = Pred()) -> range<decltype(r.begin())> {
     return trim(begin(r), end(r), pred);
 }
 
+// TODO subject : string_view
+inline std::string escape_delimiters(std::string const & subject)
+{
+    auto must_be_quoted = [](char c) {
+        static constexpr bool lookup_test[256]{
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, // '"'
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1                       // '\\'
+        };
+        return lookup_test[static_cast<unsigned char>(c)];
+    };
+
+    auto first = subject.begin();
+    auto last = subject.end();
+    auto p = first;
+
+    p = std::find_if(first, last, must_be_quoted);
+    if (p == last) {
+        return subject;
+    }
+
+    std::string escaped_subject;
+    escaped_subject.reserve(subject.size() + 24);
+    do {
+        escaped_subject.append(first, p);
+        escaped_subject += '\\';
+        escaped_subject += *p;
+        first = p + 1;
+    } while ((p = std::find_if(first, last, must_be_quoted)) != last);
+
+    escaped_subject.append(first, last);
+    return escaped_subject;
+}

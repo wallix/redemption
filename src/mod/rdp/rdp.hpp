@@ -646,8 +646,8 @@ protected:
         void server_cert_error(const char * str_error) override {
             if (is_syslog_notification_enabled(this->server_cert_error_message)) {
                 std::string extra("description=\"X.509 server certificate internal error: \\\"");
-                extra += (str_error ? escape_delimiters(str_error) : std::string(""));
-                extra += std::string("\\\"\"");
+                extra += (str_error ? escape_delimiters(str_error) : std::string());
+                extra += "\\\"\"";
                 this->authentifier.log4((this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_ERROR",
                         extra.c_str());
@@ -4462,6 +4462,9 @@ public:
             }
             // TODO: actually show mouse cursor or get back to default
             this->process_system_pointer_pdu(stream);
+            if (this->verbose & RDPVerbose::basic_trace3) {
+                LOG(LOG_INFO, "Process pointer system done");
+            }
         }
         break;
         // Pointer Position Update (section 2.2.9.1.1.4.2)
@@ -6614,7 +6617,7 @@ public:
 
             for (unsigned int i = 0; i < height; ++i) {
                 const uint8_t* src  = indata + (height - i - 1) * src_xor_padded_line_length_in_byte;
-                      uint8_t* dest = data + i * dest_xor_line_length_in_byte;
+                      uint8_t* dest = data + i * dest_xor_padded_line_length_in_byte;
 
                 unsigned char and_bit_extraction_mask = 7;
 

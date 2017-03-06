@@ -467,29 +467,3 @@ inline void hexdump8_c(const char * data, size_t size)
 }
 
 } // anonymous namespace
-
-inline std::string escape_delimiters(const std::string subject) {
-    size_t pos = 0;
-    std::string backslash("\\");
-    std::string escaped_backslash("\\\\");
-    std::string double_quotes("\"");
-    std::string escaped_double_quotes("\\\"");
-
-    if (subject.empty()) {
-        return nullptr;
-    }
-
-    std::string escaped_subject = subject;
-
-    while ((pos = escaped_subject.find(backslash, pos)) != std::string::npos) {
-         escaped_subject.replace(pos, backslash.length(), escaped_backslash);
-         pos += escaped_backslash.length();
-    }
-    pos = 0;
-
-    while ((pos = escaped_subject.find(double_quotes, pos)) != std::string::npos) {
-         escaped_subject.replace(pos, double_quotes.length(), escaped_double_quotes);
-         pos += escaped_double_quotes.length();
-    }
-    return escaped_subject;
-}

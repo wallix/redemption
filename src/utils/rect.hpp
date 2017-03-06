@@ -184,6 +184,15 @@ struct Rect {
         return Rect(max_x, max_y, uint16_t(min_right - max_x), uint16_t(min_bottom - max_y));
     }
 
+    Rect disjunct(Rect r) const
+    {
+        auto x = std::min(r.x, this->x);
+        auto y = std::min(r.y, this->y);
+        auto cx = std::max(r.right(), this->right()) - x;
+        auto cy = std::max(r.bottom(), this->bottom()) - y;
+        return Rect(x, y, uint16_t(cx), uint16_t(cy));
+    }
+
     bool has_intersection(Rect in) const
     {
         return (this->cx && this->cx && !in.isempty()

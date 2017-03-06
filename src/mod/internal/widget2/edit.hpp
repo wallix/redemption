@@ -444,105 +444,91 @@ public:
                 case Keymap2::KEVENT_BACKSPACE:
                     keymap->get_kevent();
                     if (this->edit_pos > 0) {
-                        this->num_chars--;
-                        size_t pxtmp = this->cursor_px_pos;
-                        size_t ebpos = this->edit_buffer_pos;
-                        this->decrement_edit_pos();
-                        UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
-                        this->buffer_size += this->edit_buffer_pos - ebpos;
-                        this->drawable.begin_update();
-                        this->rdp_input_invalidate(
-                                   Rect(this->x() + this->cursor_px_pos + this->label.x_text,
-                                        this->y() + this->label.y_text + 1,
-                                        this->w_text - this->cursor_px_pos + 3,
-                                        this->h_text
-                                        ));
-                        this->drawable.end_update();
-                        this->w_text -= pxtmp - this->cursor_px_pos;
-                    }
-
-                    if (keymap->is_ctrl_pressed()) {
-                        while (this->label.buffer[(this->edit_buffer_pos)-1] != ' '){
-                            if (this->edit_pos > 0) {
-                                this->num_chars--;
-                                size_t pxtmp = this->cursor_px_pos;
-                                size_t ebpos = this->edit_buffer_pos;
-                                this->decrement_edit_pos();
-                                UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
-                                this->buffer_size += this->edit_buffer_pos - ebpos;
-                                this->drawable.begin_update();
-                                this->rdp_input_invalidate(
-                                   Rect(this->x() + this->cursor_px_pos + this->label.x_text,
-                                        this->y() + this->label.y_text + 1,
-                                        this->w_text - this->cursor_px_pos + 3,
-                                        this->h_text
-                                ));
-                                this->drawable.end_update();
-                                this->w_text -= pxtmp - this->cursor_px_pos;
+                        auto remove_one_char = [this]{
+                            this->num_chars--;
+                            size_t pxtmp = this->cursor_px_pos;
+                            size_t ebpos = this->edit_buffer_pos;
+                            this->decrement_edit_pos();
+                            UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
+                            this->buffer_size += this->edit_buffer_pos - ebpos;
+                            Rect const rect(
+                                this->x() + this->cursor_px_pos + this->label.x_text,
+                                this->y() + this->label.y_text + 1,
+                                this->w_text - this->cursor_px_pos + 3,
+                                this->h_text
+                            );
+                            this->w_text -= pxtmp - this->cursor_px_pos;
+                            return rect;
+                        };
+                        if (keymap->is_ctrl_pressed()) {
+                            // TODO remove_n_char
+                            Rect rect = this->get_cursor_rect();
+                            while (this->edit_pos > 0 && this->label.buffer[(this->edit_buffer_pos)-1] == ' ') {
+                                rect = rect.disjunct(remove_one_char());
                             }
-                            else
-                                break;
+                            while (this->edit_pos > 0 && this->label.buffer[(this->edit_buffer_pos)-1] != ' ') {
+                                rect = rect.disjunct(remove_one_char());
+                            }
+                            this->drawable.begin_update();
+                            this->rdp_input_invalidate(rect);
+                            this->drawable.end_update();
                         }
-                        break;
+                        else {
+                            this->drawable.begin_update();
+                            this->rdp_input_invalidate(remove_one_char());
+                            this->drawable.end_update();
+                        }
                     }
-
-
                     break;
                 case Keymap2::KEVENT_DELETE:
                     keymap->get_kevent();
                     if (this->edit_pos < this->num_chars) {
-                        size_t len = this->utf8len_current_char();
-                        char c = this->label.buffer[this->edit_buffer_pos + len];
-                        this->label.buffer[this->edit_buffer_pos + len] = 0;
-                        gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
-                        this->h_text = tm.height;
-                        this->label.buffer[this->edit_buffer_pos + len] = c;
-                        UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
-                        this->buffer_size -= len;
-                        this->num_chars--;
-                        this->drawable.begin_update();
-                        this->rdp_input_invalidate(
-                                   Rect(this->x() + this->cursor_px_pos + this->label.x_text,
-                                        this->y() + this->label.y_text + 1,
-                                        this->w_text - this->cursor_px_pos + 3,
-                                        this->h_text
-                                        ));
-                        this->draw_cursor(this->get_cursor_rect());
-                        this->drawable.end_update();
-                        this->w_text -= tm.width;
-                    }
-
-
-                    if (keymap->is_ctrl_pressed()) {
-                        while ((this->label.buffer[(this->edit_buffer_pos)] != ' ')
-                            || (this->label.buffer[(this->edit_buffer_pos)-1] == ' ')){
-                            if (this->edit_pos < this->num_chars) {
-                                size_t len = this->utf8len_current_char();
-                                char c = this->label.buffer[this->edit_buffer_pos + len];
-                                this->label.buffer[this->edit_buffer_pos + len] = 0;
-                                gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
-                                this->h_text = tm.height;
-                                this->label.buffer[this->edit_buffer_pos + len] = c;
-                                UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
-                                this->buffer_size -= len;
-                                this->num_chars--;
-                                this->drawable.begin_update();
-                                this->rdp_input_invalidate(
-                                           Rect(this->x() + this->cursor_px_pos + this->label.x_text,
-                                                this->y() + this->label.y_text + 1,
-                                                this->w_text - this->cursor_px_pos + 3,
-                                                this->h_text
-                                                ));
-                                this->draw_cursor(this->get_cursor_rect());
-                                this->drawable.end_update();
-                                this->w_text -= tm.width;
+                        auto remove_one_char = [this]{
+                            size_t len = this->utf8len_current_char();
+                            char c = this->label.buffer[this->edit_buffer_pos + len];
+                            this->label.buffer[this->edit_buffer_pos + len] = 0;
+                            gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
+                            this->h_text = tm.height;
+                            this->label.buffer[this->edit_buffer_pos + len] = c;
+                            UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
+                            this->buffer_size -= len;
+                            this->num_chars--;
+                            Rect const rect(
+                                this->x() + this->cursor_px_pos + this->label.x_text,
+                                this->y() + this->label.y_text + 1,
+                                this->w_text - this->cursor_px_pos + 3,
+                                this->h_text
+                            );
+                            this->w_text -= tm.width;
+                            return rect;
+                        };
+                        if (keymap->is_ctrl_pressed()) {
+                            // TODO remove_n_char
+                            Rect rect = this->get_cursor_rect();
+                            if (this->label.buffer[this->edit_buffer_pos] == ' ') {
+                                rect = rect.disjunct(remove_one_char());
+                                while (this->edit_pos < this->num_chars && this->label.buffer[this->edit_buffer_pos] == ' ') {
+                                    rect = rect.disjunct(remove_one_char());
+                                }
                             }
-                            else
-                                break;
+                            else {
+                                while (this->edit_pos < this->num_chars && this->label.buffer[this->edit_buffer_pos] != ' ') {
+                                    rect = rect.disjunct(remove_one_char());
+                                }
+                                while (this->edit_pos < this->num_chars && this->label.buffer[this->edit_buffer_pos] == ' ') {
+                                    rect = rect.disjunct(remove_one_char());
+                                }
+                            }
+                            this->drawable.begin_update();
+                            this->rdp_input_invalidate(this->get_cursor_rect().disjunct(rect));
+                            this->drawable.end_update();
                         }
-                        break;
+                        else {
+                            this->drawable.begin_update();
+                            this->rdp_input_invalidate(this->get_cursor_rect().disjunct(remove_one_char()));
+                            this->drawable.end_update();
+                        }
                     }
-
                     break;
                 case Keymap2::KEVENT_END:
                     keymap->get_kevent();
