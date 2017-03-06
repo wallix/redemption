@@ -1380,8 +1380,6 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             size_t zzz_file_size = zzz_nosize;
 
 
-        public:
-
             int ttt_meta_buf_open(const char * filename, mode_t mode)
             {
                 this->ttt_meta_buf_hmac.init(this->ttt_meta_buf_hmac_key, sizeof(this->ttt_meta_buf_hmac_key));
@@ -1391,7 +1389,8 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                 return this->meta_buf_fd;
             }
 
-            ssize_t ttt_meta_buf_write(const void * data, size_t len)
+        public:
+            ssize_t meta_buf_write(const void * data, size_t len)
             {
                 REDASSERT(this->ttt_meta_buf_file_size != nosize);
 
@@ -1716,7 +1715,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             for (; *epfile; ++epfile) {
                 if (*epfile == '\\') {
                     ssize_t len = epfile - pfile + 1;
-                    auto res = this->ttt_meta_buf_write(pfile, len);
+                    auto res = this->meta_buf_write(pfile, len);
                     if (res < len) {
                         return res < 0 ? res : 1;
                     }
@@ -1724,11 +1723,11 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                 }
                 if (*epfile == ' ') {
                     ssize_t len = epfile - pfile;
-                    auto res = this->ttt_meta_buf_write(pfile, len);
+                    auto res = this->meta_buf_write(pfile, len);
                     if (res < len) {
                         return res < 0 ? res : 1;
                     }
-                    res = this->ttt_meta_buf_write("\\", 1u);
+                    res = this->meta_buf_write("\\", 1u);
                     if (res < 1) {
                         return res < 0 ? res : 1;
                     }
@@ -1738,7 +1737,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
 
             if (pfile != epfile) {
                 ssize_t len = epfile - pfile;
-                auto res = this->ttt_meta_buf_write(pfile, len);
+                auto res = this->meta_buf_write(pfile, len);
                 if (res < len) {
                     return res < 0 ? res : 1;
                 }
@@ -1783,7 +1782,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             write(reinterpret_cast<const unsigned char *>(&hash[MD_HASH_LENGTH]));
             *p++ = '\n';
 
-            ssize_t res = this->ttt_meta_buf_write(mes, p-mes);
+            ssize_t res = this->meta_buf_write(mes, p-mes);
 
             if (res < p-mes) {
                 return res < 0 ? res : 1;
@@ -2124,7 +2123,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             unsigned(height),
             "checksum"
         );
-        const ssize_t res = this->buf.ttt_meta_buf_write(header1, len);
+        const ssize_t res = this->buf.meta_buf_write(header1, len);
         if (res < 0) {
             int err = errno;
             LOG(LOG_ERR, "Write to transport failed (M5): code=%d", err);
