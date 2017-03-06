@@ -1536,8 +1536,6 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
         BOOST_CHECK(true);
 
-        int size(0);
-
         BOOST_CHECK_NO_THROW(crypto_trans.recv_new(bob, 15));
 
         BOOST_CHECK(true);

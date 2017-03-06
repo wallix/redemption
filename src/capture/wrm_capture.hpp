@@ -1440,117 +1440,9 @@ private:
 
 struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
 
-    wrmcapture_OutMetaSequenceTransportWithSum(
-        CryptoContext & cctx,
-        const char * path,
-        const char * hash_path,
-        const char * basename,
-        timeval now,
-        uint16_t width,
-        uint16_t height,
-        const int groupid,
-        auth_api * authentifier)
-    : buf(cctx, now.tv_sec, hash_path, path, basename, ".wrm", groupid)
+    class MetaSeqBuf
     {
-        if (authentifier) {
-            this->set_authentifier(authentifier);
-        }
-
-        auto & writer = this->buffer().ttt_meta_buf();
-        char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
-        const int len = sprintf(
-            header1,
-            "v2\n"
-            "%u %u\n"
-            "%s\n"
-            "\n\n",
-            unsigned(width),
-            unsigned(height),
-            "checksum"
-        );
-        const ssize_t res = writer.write(header1, len);
-        if (res < 0) {
-            int err = errno;
-            LOG(LOG_ERR, "Write to transport failed (M5): code=%d", err);
-
-            if (err == ENOSPC) {
-                if (this->authentifier) {
-                    char message[1024];
-                    snprintf(message, sizeof(message), "100|%s", path);
-                    this->authentifier->report("FILESYSTEM_FULL", message);
-                }
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
-            }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
-            }
-        }
-    }
-
-    void timestamp(timeval now) override {
-        this->buffer().ttt_update_sec(now.tv_sec);
-    }
-
-    const WrmFGen * seqgen() const noexcept
-    {
-        return &(this->buffer().ttt_seqgen());
-    }
-
-    bool next() override {
-        if (this->status == false) {
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
-        const ssize_t res = this->buffer().next();
-        if (res) {
-            this->status = false;
-            if (res < 0){
-                LOG(LOG_ERR, "Write to transport failed (M6): code=%d", errno);
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
-            }
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-        }
-        ++this->seqno;
-        return true;
-    }
-
-    bool disconnect() override {
-        return !this->buf.close();
-    }
-
-    void request_full_cleaning() override {
-        this->buffer().ttt_request_full_cleaning();
-    }
-
-    ~wrmcapture_OutMetaSequenceTransportWithSum() {
-        this->buf.close();
-    }
-
-private:
-    void do_send(const uint8_t * data, size_t len) override {
-        const ssize_t res = this->buf.write(data, len);
-        if (res < 0) {
-            this->status = false;
-            if (errno == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|%s", this->buf.ttt_current_path());
-                this->authentifier->report("FILESYSTEM_FULL", message);
-                errno = ENOSPC;
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
-            }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
-        this->last_quantum_sent += res;
-    }
-
-private:
-
-
-    class wrmcapture_out_meta_sequence_filename_buf_impl_cctx
-    {
-
-            char ttt_current_filename_[1024];
+            char current_filename_[1024];
             WrmFGen ttt_filegen_;
             iofdbuf ttt_buf_;
             unsigned ttt_num_file_;
@@ -1584,7 +1476,7 @@ private:
 
             const char * ttt_current_path() const
             {
-                if (!this->ttt_current_filename_[0] && !this->ttt_num_file_) {
+                if (!this->current_filename_[0] && !this->ttt_num_file_) {
                     return nullptr;
                 }
                 return this->ttt_filegen_.get(this->ttt_num_file_ - 1);
@@ -1593,34 +1485,34 @@ private:
         protected:
             ssize_t ttt_open_filename(const char * filename)
             {
-                snprintf(this->ttt_current_filename_, sizeof(this->ttt_current_filename_),
+                snprintf(this->current_filename_, sizeof(this->current_filename_),
                             "%sred-XXXXXX.tmp", filename);
-                const int fd = ::mkostemps(this->ttt_current_filename_, 4, O_WRONLY | O_CREAT);
+                const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
                 if (fd < 0) {
                     return fd;
                 }
-                if (chmod(this->ttt_current_filename_, this->ttt_groupid_ 
+                if (chmod(this->current_filename_, this->ttt_groupid_ 
                             ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                     LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                       , this->ttt_current_filename_
+                       , this->current_filename_
                        , this->ttt_groupid_ ? "u+r, g+r" : "u+r"
                        , strerror(errno), errno);
                 }
-                this->ttt_filegen_.set_last_filename(this->ttt_num_file_, this->ttt_current_filename_);
+                this->ttt_filegen_.set_last_filename(this->ttt_num_file_, this->current_filename_);
                 return this->ttt_buf_.open(fd);
             }
 
             const char * ttt_rename_filename()
             {
                 const char * filename = this->ttt_get_filename_generate();
-                const int res = ::rename(this->ttt_current_filename_, filename);
+                const int res = ::rename(this->current_filename_, filename);
                 if (res < 0) {
                     LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                       , this->ttt_current_filename_, filename, errno, strerror(errno));
+                       , this->current_filename_, filename, errno, strerror(errno));
                     return nullptr;
                 }
 
-                this->ttt_current_filename_[0] = 0;
+                this->current_filename_[0] = 0;
                 ++this->ttt_num_file_;
                 this->ttt_filegen_.set_last_filename(-1u, "");
 
@@ -1631,42 +1523,11 @@ private:
             {
                 this->ttt_filegen_.set_last_filename(-1u, "");
                 const char * filename = this->ttt_filegen_.get(this->ttt_num_file_);
-                this->ttt_filegen_.set_last_filename(this->ttt_num_file_, this->ttt_current_filename_);
+                this->ttt_filegen_.set_last_filename(this->ttt_num_file_, this->current_filename_);
                 return filename;
             }
 
     public:
-        explicit wrmcapture_out_meta_sequence_filename_buf_impl_cctx(
-            time_t start_sec,
-            const char * const hash_prefix,
-            const char * const prefix,
-            const char * const filename,
-            const char * const extension,
-            const int groupid,
-            CryptoContext& cctx
-        )
-        : ttt_filegen_(prefix, filename, extension)
-        , ttt_buf_()
-        , ttt_num_file_(0)
-        , ttt_groupid_(groupid)
-        , ttt_meta_buf_(cctx)
-        , ttt_mf_(prefix, filename)
-        , ttt_hf_(hash_prefix, filename)
-        , ttt_start_sec_(start_sec)
-        , ttt_stop_sec_(start_sec)
-        {
-            this->ttt_current_filename_[0] = 0;
-            if (this->ttt_meta_buf_.open(this->ttt_mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
-                LOG(LOG_ERR, "Failed to open meta file %s", this->ttt_mf_.filename);
-                throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-            }
-            if (chmod(this->ttt_mf_.filename, S_IRUSR | S_IRGRP) == -1) {
-                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                   , this->ttt_mf_.filename
-                   , "u+r, g+r"
-                   , strerror(errno), errno);
-            }
-        }
 
         int ttt_close()
         {
@@ -1976,11 +1837,7 @@ private:
 
         void ttt_update_sec(time_t sec)
         { this->ttt_stop_sec_ = sec; }
-    };
 
-    class wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx
-    : public wrmcapture_out_meta_sequence_filename_buf_impl_cctx
-    {
         CryptoContext & cctx;
         class wrmcapture_ochecksum_buf_null_buf
         {
@@ -2034,7 +1891,7 @@ private:
         } sum_buf;
 
     public:
-        explicit wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx(
+        explicit MetaSeqBuf(
             CryptoContext & cctx,
             time_t start_sec,
             const char * const hash_prefix,
@@ -2043,12 +1900,30 @@ private:
             const char * const extension,
             const int groupid
         )
-        
-        : wrmcapture_out_meta_sequence_filename_buf_impl_cctx(start_sec,
-            hash_prefix, prefix, filename, extension, groupid, cctx)
+        : ttt_filegen_(prefix, filename, extension)
+        , ttt_buf_()
+        , ttt_num_file_(0)
+        , ttt_groupid_(groupid)
+        , ttt_meta_buf_(cctx)
+        , ttt_mf_(prefix, filename)
+        , ttt_hf_(hash_prefix, filename)
+        , ttt_start_sec_(start_sec)
+        , ttt_stop_sec_(start_sec)
         , cctx(cctx)
         , sum_buf(cctx.get_hmac_key())
-        {}
+        {
+            this->current_filename_[0] = 0;
+            if (this->ttt_meta_buf_.open(this->ttt_mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+                LOG(LOG_ERR, "Failed to open meta file %s", this->ttt_mf_.filename);
+                throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+            }
+            if (chmod(this->ttt_mf_.filename, S_IRUSR | S_IRGRP) == -1) {
+                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                   , this->ttt_mf_.filename
+                   , "u+r, g+r"
+                   , strerror(errno), errno);
+            }
+        }
 
         ssize_t write(const void * data, size_t len)
         {
@@ -2282,15 +2157,109 @@ private:
         }
     } buf;
 
-protected:
-    wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx & buffer() noexcept
-    { return this->buf; }
+    wrmcapture_OutMetaSequenceTransportWithSum(
+        CryptoContext & cctx,
+        const char * path,
+        const char * hash_path,
+        const char * basename,
+        timeval now,
+        uint16_t width,
+        uint16_t height,
+        const int groupid,
+        auth_api * authentifier)
+    : buf(cctx, now.tv_sec, hash_path, path, basename, ".wrm", groupid)
+    {
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
 
-    const wrmcapture_out_hash_meta_sequence_filename_buf_impl_cctx & buffer() const noexcept
-    { return this->buf; }
+        auto & writer = this->buf.ttt_meta_buf();
+        char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
+        const int len = sprintf(
+            header1,
+            "v2\n"
+            "%u %u\n"
+            "%s\n"
+            "\n\n",
+            unsigned(width),
+            unsigned(height),
+            "checksum"
+        );
+        const ssize_t res = writer.write(header1, len);
+        if (res < 0) {
+            int err = errno;
+            LOG(LOG_ERR, "Write to transport failed (M5): code=%d", err);
 
+            if (err == ENOSPC) {
+                if (this->authentifier) {
+                    char message[1024];
+                    snprintf(message, sizeof(message), "100|%s", path);
+                    this->authentifier->report("FILESYSTEM_FULL", message);
+                }
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
+            }
+        }
+    }
 
+    void timestamp(timeval now) override {
+        this->buf.ttt_update_sec(now.tv_sec);
+    }
 
+    const WrmFGen * seqgen() const noexcept
+    {
+        return &(this->buf.ttt_seqgen());
+    }
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buf.next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M6): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+    void request_full_cleaning() override {
+        this->buf.ttt_request_full_cleaning();
+    }
+
+    ~wrmcapture_OutMetaSequenceTransportWithSum() {
+        this->buf.close();
+    }
+
+private:
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", this->buf.ttt_current_path());
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
 };
 
 
