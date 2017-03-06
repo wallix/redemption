@@ -144,7 +144,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
     const auto len = CHANNELS::CHANNEL_CHUNK_LENGTH + 1024;
 
-    CHECK_EXCEPTION_ERROR_ID(transport->recv(&p, len), ERR_TRANSPORT_NO_MORE_DATA);
+    // TODO use a new interface for partial reading
+    CHECK_EXCEPTION_ERROR_ID(transport->recv_new(p, len), ERR_TRANSPORT_NO_MORE_DATA);
     BOOST_CHECK_EQUAL(1974, p-buf); // partial read
 
     //LogTransport log_transport;
