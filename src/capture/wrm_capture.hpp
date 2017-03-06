@@ -779,25 +779,6 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
         time_t start_sec_;
         time_t stop_sec_;
 
-    private:
-
-        int meta_buf_open(const char * filename, mode_t mode)
-        {
-            this->meta_buf_close();
-            this->meta_buf_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-            return this->meta_buf_fd;
-        }
-
-        int meta_buf_close()
-        {
-            if (this->meta_buf_is_open()) {
-                const int ret = ::close(this->meta_buf_fd);
-                this->meta_buf_fd = -1;
-                return ret;
-            }
-            return 0;
-        }
-
     public:
         ssize_t meta_buf_write(const void * data, size_t len)
         {
@@ -817,14 +798,6 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
             }
             return total_sent;
         }
-
-    private:
-
-        bool meta_buf_is_open() const noexcept
-        { return -1 != this->meta_buf_fd; }
-
-        int meta_buf_flush() const
-        { return 0; }
 
     public:
         explicit MetaSeqBuf(
@@ -1073,6 +1046,31 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
         }
 
     private:
+        int meta_buf_open(const char * filename, mode_t mode)
+        {
+            this->meta_buf_close();
+            this->meta_buf_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+            return this->meta_buf_fd;
+        }
+
+        int meta_buf_close()
+        {
+            if (this->meta_buf_is_open()) {
+                const int ret = ::close(this->meta_buf_fd);
+                this->meta_buf_fd = -1;
+                if (ret < 0) {
+                    return ret;
+                }
+            }
+            return 0;
+        }
+
+        bool meta_buf_is_open() const noexcept
+        { return -1 != this->meta_buf_fd; }
+
+        int meta_buf_flush() const
+        { return 0; }
+
         ssize_t open_filename(const char * filename)
         {
             snprintf(this->current_filename_, sizeof(this->current_filename_),
@@ -1361,6 +1359,8 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             time_t start_sec_;
             time_t stop_sec_;
 
+            CryptoContext & cctx;
+
             static constexpr size_t nosize = ~size_t{};
             static constexpr size_t quick_size = 4096;
 
@@ -1369,22 +1369,10 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             unsigned char const (&meta_buf_hmac_key)[MD_HASH_LENGTH];
             size_t meta_buf_file_size = nosize;
 
-            CryptoContext & cctx;
-
             SslHMAC_Sha256_Delayed sumbuf_hmac;
             SslHMAC_Sha256_Delayed sumbuf_quick_hmac;
             unsigned char const (&sumbuf_hmac_key)[MD_HASH_LENGTH];
             size_t sumbuf_file_size = nosize;
-
-
-            int meta_buf_open(const char * filename, mode_t mode)
-            {
-                this->meta_buf_hmac.init(this->meta_buf_hmac_key, sizeof(this->meta_buf_hmac_key));
-                this->meta_buf_quick_hmac.init(this->meta_buf_hmac_key, sizeof(this->meta_buf_hmac_key));
-                this->meta_buf_file_size = 0;
-                this->meta_buf_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-                return this->meta_buf_fd;
-            }
 
         public:
             ssize_t meta_buf_write(const void * data, size_t len)
@@ -1418,36 +1406,6 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                 return total_sent;
             }
 
-        private:
-            int ttt_meta_buf_close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
-            {
-                REDASSERT(this->meta_buf_file_size != nosize);
-                this->meta_buf_quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
-                this->meta_buf_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
-                this->meta_buf_file_size = nosize;
-                return this->ttt_meta_buf_close();
-            }
-
-            int ttt_meta_buf_close()
-            {
-                if (-1 != this->meta_buf_fd) {
-                    const int ret = ::close(this->meta_buf_fd);
-                    this->meta_buf_fd = -1;
-                    return ret;
-                }
-                return 0;
-            }
-
-            ssize_t ttt_write(const void * data, size_t len)
-            {
-                if (!this->buf_.is_open()) {
-                    const int res = this->ttt_open_filename(filegen_.get(this->num_file_));
-                    if (res < 0) {
-                        return res;
-                    }
-                }
-                return this->buf_.write(data, len);
-            }
 
         public:
             const WrmFGen & ttt_seqgen() const noexcept
@@ -1515,10 +1473,11 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             if (err) {
                 return err;
             }
-            if (-1 != this->meta_buf_fd){
-                err = this->ttt_meta_buf_close();
-                if (err) {
-                    return err;
+            if (-1 != this->meta_buf_fd) {
+                const int ret = ::close(this->meta_buf_fd);
+                this->meta_buf_fd = -1;
+                if (ret < 0) {
+                    return ret;
                 }
             }
             char const * hash_filename = this->hf_.filename;
@@ -1834,8 +1793,8 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         , hf_(hash_prefix, filename)
         , start_sec_(start_sec)
         , stop_sec_(start_sec)
-        , meta_buf_hmac_key(cctx.get_hmac_key())
         , cctx(cctx)
+        , meta_buf_hmac_key(cctx.get_hmac_key())
         , sumbuf_hmac_key(cctx.get_hmac_key())
         {
             this->current_filename_[0] = 0;
@@ -1853,7 +1812,9 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
 
         ~MetaSeqBuf() 
         {
-            this->ttt_meta_buf_close();
+            if (-1 != this->meta_buf_fd) {
+                ::close(this->meta_buf_fd);
+            }
         }
 
         ssize_t write(const void * data, size_t len)
@@ -1946,8 +1907,17 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
 
             wrmcapture_hash_type hash;
 
-            if (this->ttt_meta_buf_close(hash)) {
-                return 1;
+            REDASSERT(this->meta_buf_file_size != nosize);
+            this->meta_buf_quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
+            this->meta_buf_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
+            this->meta_buf_file_size = nosize;
+
+            if (-1 != this->meta_buf_fd) {
+                const int ret = ::close(this->meta_buf_fd);
+                this->meta_buf_fd = -1;
+                if (ret < 0) {
+                    return ret;
+                }
             }
 
             char const * hash_filename = this->ttt_hash_filename();
@@ -2091,6 +2061,44 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             }
             return 1;
         }
+        
+    private:
+        int meta_buf_open(const char * filename, mode_t mode)
+        {
+            this->meta_buf_hmac.init(this->meta_buf_hmac_key, sizeof(this->meta_buf_hmac_key));
+            this->meta_buf_quick_hmac.init(this->meta_buf_hmac_key, sizeof(this->meta_buf_hmac_key));
+            this->meta_buf_file_size = 0;
+            this->meta_buf_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+            return this->meta_buf_fd;
+        }
+
+        int ttt_meta_buf_close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
+        {
+            REDASSERT(this->meta_buf_file_size != nosize);
+            this->meta_buf_quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
+            this->meta_buf_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
+            this->meta_buf_file_size = nosize;
+
+            if (-1 != this->meta_buf_fd) {
+                const int ret = ::close(this->meta_buf_fd);
+                this->meta_buf_fd = -1;
+                if (ret < 0) {
+                    return ret;
+                }
+            }
+        }
+
+
+        ssize_t ttt_write(const void * data, size_t len)
+        {
+            if (!this->buf_.is_open()) {
+                const int res = this->ttt_open_filename(filegen_.get(this->num_file_));
+                if (res < 0) {
+                    return res;
+                }
+            }
+            return this->buf_.write(data, len);
+        }
     } buf;
 
     wrmcapture_OutMetaSequenceTransportWithSum(
@@ -2178,6 +2186,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
     }
 
 private:
+
     void do_send(const uint8_t * data, size_t len) override {
         const ssize_t res = this->buf.write(data, len);
         if (res < 0) {
