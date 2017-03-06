@@ -1380,7 +1380,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             size_t zzz_file_size = zzz_nosize;
 
 
-            int ttt_meta_buf_open(const char * filename, mode_t mode)
+            int meta_buf_open(const char * filename, mode_t mode)
             {
                 this->ttt_meta_buf_hmac.init(this->ttt_meta_buf_hmac_key, sizeof(this->ttt_meta_buf_hmac_key));
                 this->ttt_meta_buf_quick_hmac.init(this->ttt_meta_buf_hmac_key, sizeof(this->ttt_meta_buf_hmac_key));
@@ -1421,6 +1421,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                 return total_sent;
             }
 
+        private:
             int ttt_meta_buf_close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
             {
                 REDASSERT(this->ttt_meta_buf_file_size != nosize);
@@ -1451,12 +1452,15 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                 return this->buf_.write(data, len);
             }
 
+        public:
             const WrmFGen & ttt_seqgen() const noexcept
             { return this->filegen_; }
 
+        private:
             iofdbuf & ttt_buf() noexcept
             { return this->buf_; }
 
+        public:
             const char * ttt_current_path() const
             {
                 if (!this->current_filename_[0] && !this->num_file_) {
@@ -1842,7 +1846,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         , zzz_hmac_key(cctx.get_hmac_key())
         {
             this->current_filename_[0] = 0;
-            if (this->ttt_meta_buf_open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+            if (this->meta_buf_open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
                 LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
                 throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
             }
