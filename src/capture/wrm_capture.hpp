@@ -1670,7 +1670,7 @@ private:
 
         int ttt_close()
         {
-            int err = this->next();
+            int err = this->ttt_next();
             if (err) {
                 return err;
             }
@@ -1840,7 +1840,7 @@ private:
 
 
         /// \return 0 if success
-        int next()
+        int ttt_next()
         {
             if (this->ttt_buf().is_open()) {
                 this->ttt_buf().close();
