@@ -1599,7 +1599,8 @@ private:
                 if (fd < 0) {
                     return fd;
                 }
-                if (chmod(this->ttt_current_filename_, this->ttt_groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                if (chmod(this->ttt_current_filename_, this->ttt_groupid_ 
+                            ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                     LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
                        , this->ttt_current_filename_
                        , this->ttt_groupid_ ? "u+r, g+r" : "u+r"
@@ -1843,13 +1844,13 @@ private:
         {
             if (this->ttt_buf().is_open()) {
                 this->ttt_buf().close();
-                return this->next_meta_file();
+                return this->ttt_next_meta_file();
             }
             return 1;
         }
 
     protected:
-        int next_meta_file(wrmcapture_hash_type const * hash = nullptr)
+        int ttt_next_meta_file(wrmcapture_hash_type const * hash = nullptr)
         {
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->ttt_current_filename, this->ttt_rename_to);
             const char * filename = this->ttt_rename_filename();
@@ -2275,7 +2276,7 @@ private:
                     }
                 }
 
-                return this->next_meta_file(&hash);
+                return this->ttt_next_meta_file(&hash);
             }
             return 1;
         }
