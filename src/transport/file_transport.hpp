@@ -218,6 +218,6 @@ public:
     virtual int get_fd() const { return INVALID_SOCKET; }
 
 private:
-    FileTransport(const Transport &) = delete;
-    FileTransport& operator=(const Transport &) = delete;
+    FileTransport(const FileTransport &) = delete;
+    FileTransport& operator=(const FileTransport &) = delete;
 };

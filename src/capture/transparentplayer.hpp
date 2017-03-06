@@ -30,6 +30,7 @@
 class TransparentPlayer {
 private:
     Transport * t;
+
     FrontAPI  * consumer;
 
     bool meta_ok;
