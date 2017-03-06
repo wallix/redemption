@@ -1445,8 +1445,8 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             char current_filename_[1024];
             WrmFGen filegen_;
             iofdbuf buf_;
-            unsigned ttt_num_file_;
-            int ttt_groupid_;
+            unsigned num_file_;
+            int groupid_;
 
             wrmcapture_cctx_ochecksum_file ttt_meta_buf_;
             MetaFilename ttt_mf_;
@@ -1460,7 +1460,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             ssize_t ttt_write(const void * data, size_t len)
             {
                 if (!this->buf_.is_open()) {
-                    const int res = this->ttt_open_filename(filegen_.get(this->ttt_num_file_));
+                    const int res = this->ttt_open_filename(filegen_.get(this->num_file_));
                     if (res < 0) {
                         return res;
                     }
@@ -1476,10 +1476,10 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
 
             const char * ttt_current_path() const
             {
-                if (!this->current_filename_[0] && !this->ttt_num_file_) {
+                if (!this->current_filename_[0] && !this->num_file_) {
                     return nullptr;
                 }
-                return this->filegen_.get(this->ttt_num_file_ - 1);
+                return this->filegen_.get(this->num_file_ - 1);
             }
 
         protected:
@@ -1491,14 +1491,14 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                 if (fd < 0) {
                     return fd;
                 }
-                if (chmod(this->current_filename_, this->ttt_groupid_ 
+                if (chmod(this->current_filename_, this->groupid_ 
                             ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                     LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
                        , this->current_filename_
-                       , this->ttt_groupid_ ? "u+r, g+r" : "u+r"
+                       , this->groupid_ ? "u+r, g+r" : "u+r"
                        , strerror(errno), errno);
                 }
-                this->filegen_.set_last_filename(this->ttt_num_file_, this->current_filename_);
+                this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
                 return this->buf_.open(fd);
             }
 
@@ -1513,7 +1513,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                 }
 
                 this->current_filename_[0] = 0;
-                ++this->ttt_num_file_;
+                ++this->num_file_;
                 this->filegen_.set_last_filename(-1u, "");
 
                 return filename;
@@ -1522,8 +1522,8 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             const char * ttt_get_filename_generate()
             {
                 this->filegen_.set_last_filename(-1u, "");
-                const char * filename = this->filegen_.get(this->ttt_num_file_);
-                this->filegen_.set_last_filename(this->ttt_num_file_, this->current_filename_);
+                const char * filename = this->filegen_.get(this->num_file_);
+                this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
                 return filename;
             }
 
@@ -1823,7 +1823,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
     public:
         void ttt_request_full_cleaning()
         {
-            unsigned i = this->ttt_num_file_ + 1;
+            unsigned i = this->num_file_ + 1;
             while (i > 0 && !::unlink(this->filegen_.get(--i))) {
             }
             if (this->buf_.is_open()) {
@@ -1902,8 +1902,8 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         )
         : filegen_(prefix, filename, extension)
         , buf_()
-        , ttt_num_file_(0)
-        , ttt_groupid_(groupid)
+        , num_file_(0)
+        , groupid_(groupid)
         , ttt_meta_buf_(cctx)
         , ttt_mf_(prefix, filename)
         , ttt_hf_(hash_prefix, filename)
