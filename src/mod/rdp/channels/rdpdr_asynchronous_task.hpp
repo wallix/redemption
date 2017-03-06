@@ -133,7 +133,7 @@ public:
 
         auto end = out_stream.get_current();
         try {
-            this->transport->recv(&end, number_of_bytes_to_read);
+            this->transport->recv(&end, number_of_bytes_to_read); // partial read
         }
         catch (const Error & e) {
             if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
