@@ -202,6 +202,15 @@ struct ocrypto {
     uint32_t       raw_size;                // the unciphered/uncompressed file size
     uint32_t       file_size;               // the current file size
 
+    CryptoContext & cctx;
+    Random & rnd;
+
+    ocrypto(CryptoContext & cctx, Random & rnd) 
+        : cctx(cctx)
+        , rnd(rnd) 
+    {
+    }
+
     /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
      * Return 0 on success, negative value on error
      */
@@ -247,8 +256,14 @@ struct ocrypto {
         return 0;
     }
 
-    int open(uint8_t * buffer, size_t buflen, size_t & towrite, const unsigned char * trace_key, CryptoContext & cctx, const unsigned char * iv)
+    int open(uint8_t * buffer, size_t buflen, size_t & towrite, const uint8_t * derivator, size_t derivator_len)
     {
+    
+        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+        this->cctx.get_derived_key(trace_key, derivator, derivator_len);
+        unsigned char iv[32];
+        this->rnd.random(iv, 32);
+
         ::memset(this->buf, 0, sizeof(this->buf));
         ::memset(&this->ectx, 0, sizeof(this->ectx));
         ::memset(&this->hctx, 0, sizeof(this->hctx));
@@ -413,8 +428,9 @@ struct ocrypto {
         return 0;
     }
 
-    int close(uint8_t * buffer, size_t buflen, size_t & towrite, unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key)
+    int close(uint8_t * buffer, size_t buflen, size_t & towrite, unsigned char hash[MD_HASH_LENGTH << 1])
     {
+        const uint8_t * hmac_key = this->cctx.get_hmac_key();
         size_t tmp_towrite = 0;
         int err = this->flush(buffer + towrite, buflen - towrite, tmp_towrite);
         towrite += tmp_towrite;
@@ -562,15 +578,10 @@ class wrmcapture_ocrypto_filename_buf
     ocrypto encrypt;
     int file_fd;
 
-    CryptoContext & cctx;
-    Random & rnd;
-
 public:
     explicit wrmcapture_ocrypto_filename_buf(CryptoContext & cctx, Random & rnd)
-    : encrypt{} 
+    : encrypt(cctx, rnd)
     , file_fd(-1)
-    , cctx(cctx)
-    , rnd(rnd)
     {
         if (-1 != this->file_fd) {
             ::close(this->file_fd);
@@ -617,17 +628,13 @@ public:
         if (err < 0) {
             return err;
         }
-
-        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+        
         size_t base_len = 0;
         const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-        this->cctx.get_derived_key(trace_key, base, base_len);
-        unsigned char iv[32];
-        this->rnd.random(iv, 32);
         
         uint8_t buffer[40];
         size_t towrite = 0;
-        err = this->encrypt.open(buffer, sizeof(buffer), towrite, trace_key, this->cctx, iv);
+        err = this->encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
         if (!err) {
             err = this->raw_write(buffer, towrite);
         }
@@ -653,7 +660,7 @@ public:
     {
         uint8_t buffer[65536];
         size_t towrite = 0;
-        const int res1 = this->encrypt.close(buffer, sizeof(buffer), towrite, hash, this->cctx.get_hmac_key());
+        const int res1 = this->encrypt.close(buffer, sizeof(buffer), towrite, hash);
         if (res1) {
             return -1;
         }
@@ -687,28 +694,19 @@ class wrmcapture_ocrypto_filter
     iofdbuf & snk;
 
 public:
-    CryptoContext & cctx;
-    Random & rnd;
-
     explicit wrmcapture_ocrypto_filter(iofdbuf & buf, CryptoContext & cctx, Random & rnd)
-    : snk(buf)
-    , cctx(cctx)
-    , rnd(rnd)
+    : encrypt(cctx, rnd)
+    , snk(buf)
+    
     {}
 
     int open(char const * filename) {
-        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-
         size_t base_len = 0;
         const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-
-        this->cctx.get_derived_key(trace_key, base, base_len);
-        unsigned char iv[32];
-        this->rnd.random(iv, 32);
-        
+    
         uint8_t buffer[40];
         size_t towrite = 0;
-        int err = this->encrypt.open(buffer, sizeof(buffer), towrite, trace_key, this->cctx, iv);
+        int err = this->encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
         if (!err) {
             err = this->raw_write(buffer, towrite);
         }
@@ -734,7 +732,7 @@ public:
     {
         uint8_t buffer[65536];
         size_t towrite = 0;
-        const int res1 = this->encrypt.close(buffer, sizeof(buffer), towrite, hash, this->cctx.get_hmac_key());
+        const int res1 = this->encrypt.close(buffer, sizeof(buffer), towrite, hash);
         if (res1) {
             return -1;
         }
