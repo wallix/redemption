@@ -2303,72 +2303,60 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                         return 1;
                     }
 
-                    auto pfile = filename;
-                    auto epfile = filename;
-                    for (; *epfile; ++epfile) {
-                        if (*epfile == '\\') {
-                            ssize_t len = epfile - pfile + 1;
-                            size_t remaining_len = len;
-                            size_t total_sent = 0;
-                            while (remaining_len) {
-                                ssize_t ret = ::write(fd,  pfile + total_sent, remaining_len);
-                                if (ret <= 0){
-                                    if (errno == EINTR){
-                                        continue;
-                                    }
-                                    ::close(fd);
-                                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                                    return 1;
-                                }
-                                remaining_len -= ret;
-                                total_sent += ret;
-                            }
-                            pfile = epfile;
-                        }
-                        if (*epfile == ' ') {
-                            ssize_t len = epfile - pfile;
-                            size_t remaining_len = len;
-                            size_t total_sent = 0;
-                            while (remaining_len) {
-                                ssize_t ret = ::write(fd,  pfile + total_sent, remaining_len);
-                                if (ret <= 0){
-                                    if (errno == EINTR){
-                                        continue;
-                                    }
-                                    ::close(fd);
-                                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                                    return 1;
-                                }
-                                remaining_len -= ret;
-                                total_sent += ret;
-                            }
-                            remaining_len = 1u;
-                            total_sent = 0;
-                            for (;;) {
-                                ssize_t ret = ::write(fd,  "\\" + total_sent, 1u);
-                                if (ret <= 0){
-                                    if (errno == EINTR){
-                                        continue;
-                                    }
-                                    ::close(fd);
-                                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                                    return 1;
-                                }
-                            }
-                            pfile = epfile;
-                        }
-                    }
+                    // TODO escaped(str:range<It, Senti>, str_cpy:String, is_escapable_fn) (see algostring.hpp escape_delimiters)
+                    {
+                        char escaped_filename[std::rank<decltype(filename)>::value * 2];
+                        char const * new_filename = escaped_filename;
+                        std::ptrdiff_t len_filename = 0;
+                        auto is_escapable_fn = [](char c) {
+                            static constexpr bool is_escaped_table[256]{
+                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, // ' '
+                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1                       // '\\'
+                            };
+                            return is_escaped_table[static_cast<unsigned char>(c)];
+                        };
 
-                    if (pfile != epfile) {
-                        ssize_t len = epfile - pfile;
+                        auto p = filename;
+                        while (*p && !is_escapable_fn(*p)) {
+                            ++p;
+                        }
+
+                        if (!*p) {
+                            new_filename = filename;
+                            len_filename = p - filename;
+                        }
+                        else {
+                            auto first = filename;
+                            auto p_escaped = escaped_filename;
+                            do {
+                                p_escaped = std::copy(first, p, p_escaped);
+                                *p_escaped++ = '\\';
+                                *p_escaped++ = *p;
+                                ++p;
+                                first = p;
+                                while (*p && !is_escapable_fn(*p)) {
+                                    ++p;
+                                }
+                            } while (*p);
+
+                            len_filename = escaped_filename - std::copy(first, p, p_escaped);
+                        }
+
+                        assert(len_filename > 0);
+                        assert(std::size_t(len_filename) <= sizeof(sizeof(escaped_filename)));
+                        ssize_t const len = len_filename;
                         size_t remaining_len = len;
                         size_t total_sent = 0;
                         while (remaining_len) {
-                            ssize_t ret = ::write(fd,  pfile + total_sent, remaining_len);
+                            ssize_t ret = ::write(fd,  new_filename + total_sent, remaining_len);
                             if (ret <= 0){
                                 if (errno == EINTR){
                                     continue;
                                 }
+                                // TODO local_fd /utils/sugar/local_fd.hpp
                                 ::close(fd);
                                 LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
                                 return 1;
