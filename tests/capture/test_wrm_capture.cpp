@@ -34,6 +34,7 @@
 #include <snappy-c.h>
 #include <memory>
 
+#include "transport/file_transport.hpp"
 #include "utils/png.hpp"
 #include "utils/drawable.hpp"
 
@@ -49,7 +50,6 @@
 
 #include "capture/wrm_capture.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
-
 
 struct wrmcapture_OutFilenameSequenceTransport : public Transport
 {

@@ -1055,7 +1055,7 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
         int meta_buf_open(const char * filename, mode_t mode)
         {
             if (-1 != this->meta_buf_fd) {
-                const int ret = ::close(this->meta_buf_fd);
+                ::close(this->meta_buf_fd);
                 this->meta_buf_fd = -1;
             }
             this->meta_buf_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
@@ -1403,7 +1403,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             { return this->filegen_; }
 
         public:
-            const char * ttt_current_path() const
+            const char * current_path() const
             {
                 if (!this->current_filename_[0] && !this->num_file_) {
                     return nullptr;
@@ -1412,24 +1412,6 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             }
 
         protected:
-            ssize_t ttt_open_filename(const char * filename)
-            {
-                snprintf(this->current_filename_, sizeof(this->current_filename_),
-                            "%sred-XXXXXX.tmp", filename);
-                const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
-                if (fd < 0) {
-                    return fd;
-                }
-                if (chmod(this->current_filename_, this->groupid_ 
-                            ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-                    LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                       , this->current_filename_
-                       , this->groupid_ ? "u+r, g+r" : "u+r"
-                       , strerror(errno), errno);
-                }
-                this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-                return this->buf_.open(fd);
-            }
 
             const char * ttt_rename_filename()
             {
@@ -1644,10 +1626,17 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         int ttt_next_meta_file(wrmcapture_hash_type const * hash = nullptr)
         {
             // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->ttt_current_filename, this->ttt_rename_to);
-            const char * filename = this->ttt_rename_filename();
-            if (!filename) {
+            const char * filename = this->ttt_get_filename_generate();
+            const int res = ::rename(this->current_filename_, filename);
+            if (res < 0) {
+                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                   , this->current_filename_, filename, errno, strerror(errno));
                 return 1;
             }
+
+            this->current_filename_[0] = 0;
+            ++this->num_file_;
+            this->filegen_.set_last_filename(-1u, "");
 
             auto start_sec = this->start_sec_;
             auto stop_sec = this->stop_sec_+1;
@@ -1729,10 +1718,10 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             write(reinterpret_cast<const unsigned char *>(&hash[MD_HASH_LENGTH]));
             *p++ = '\n';
 
-            ssize_t res = this->meta_buf_write(mes, p-mes);
+            ssize_t res1 = this->meta_buf_write(mes, p-mes);
 
-            if (res < p-mes) {
-                return res < 0 ? res : 1;
+            if (res1 < p-mes) {
+                return res1 < 0 ? res1 : 1;
             }
 
             this->start_sec_ = this->stop_sec_;
@@ -1812,7 +1801,24 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         {
             if (!this->buf_.is_open()) {
                 const char * filename = this->ttt_get_filename_generate();
-                const int res = this->ttt_open_filename(filename);
+                snprintf(this->current_filename_, sizeof(this->current_filename_),
+                            "%sred-XXXXXX.tmp", filename);
+                const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+                int res = 0;
+                if (fd < 0) {
+                    return fd;
+                }
+                else {
+                    if (chmod(this->current_filename_, this->groupid_ 
+                                ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                        LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                           , this->current_filename_
+                           , this->groupid_ ? "u+r, g+r" : "u+r"
+                           , strerror(errno), errno);
+                    }
+                    this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+                    res = this->buf_.open(fd);
+                }
                 if (res < 0) {
                     return res;
                 }
@@ -2157,7 +2163,7 @@ private:
             this->status = false;
             if (errno == ENOSPC) {
                 char message[1024];
-                snprintf(message, sizeof(message), "100|%s", this->buf.ttt_current_path());
+                snprintf(message, sizeof(message), "100|%s", this->buf.current_path());
                 this->authentifier->report("FILESYSTEM_FULL", message);
                 errno = ENOSPC;
                 throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
