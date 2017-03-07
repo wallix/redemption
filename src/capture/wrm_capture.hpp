@@ -205,9 +205,9 @@ struct ocrypto {
     CryptoContext & cctx;
     Random & rnd;
 
-    ocrypto(CryptoContext & cctx, Random & rnd) 
+    ocrypto(CryptoContext & cctx, Random & rnd)
         : cctx(cctx)
-        , rnd(rnd) 
+        , rnd(rnd)
     {
     }
 
@@ -258,7 +258,7 @@ struct ocrypto {
 
     int open(uint8_t * buffer, size_t buflen, size_t & towrite, const uint8_t * derivator, size_t derivator_len)
     {
-    
+
         unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
         this->cctx.get_derived_key(trace_key, derivator, derivator_len);
         unsigned char iv[32];
@@ -455,7 +455,7 @@ struct ocrypto {
         }
         ::memcpy(buffer + towrite, tmp_buf, 8);
         towrite += 8;
-        
+
         this->file_size += 8;
 
         this->xmd_update(tmp_buf, 8);
@@ -573,7 +573,7 @@ struct ocrypto {
 
 };
 
-class wrmcapture_ocrypto_filename_buf 
+class wrmcapture_ocrypto_filename_buf
 {
     ocrypto encrypt;
     int file_fd;
@@ -628,10 +628,10 @@ public:
         if (err < 0) {
             return err;
         }
-        
+
         size_t base_len = 0;
         const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-        
+
         uint8_t buffer[40];
         size_t towrite = 0;
         err = this->encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
@@ -642,13 +642,13 @@ public:
     }
 
     ssize_t write(const void * data, size_t len)
-    { 
+    {
         uint8_t buffer[65536];
         size_t towrite = 0;
-        int lentobuf = this->encrypt.write(buffer, sizeof(buffer), towrite, data, len); 
+        int lentobuf = this->encrypt.write(buffer, sizeof(buffer), towrite, data, len);
         if (lentobuf < 0) {
             return -1;
-        }        
+        }
         if (this->raw_write(buffer, towrite))
         {
             return -1;
@@ -668,7 +668,7 @@ public:
         {
             return -1;
         }
-    
+
         int res2 = 0;
         if (-1 != this->file_fd) {
             res2 = ::close(this->file_fd);
@@ -697,13 +697,13 @@ public:
     explicit wrmcapture_ocrypto_filter(iofdbuf & buf, CryptoContext & cctx, Random & rnd)
     : encrypt(cctx, rnd)
     , snk(buf)
-    
+
     {}
 
     int open(char const * filename) {
         size_t base_len = 0;
         const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-    
+
         uint8_t buffer[40];
         size_t towrite = 0;
         int err = this->encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
@@ -714,13 +714,13 @@ public:
     }
 
     ssize_t write(const void * data, size_t len)
-    { 
+    {
         uint8_t buffer[65536];
         size_t towrite = 0;
-        int lentobuf = this->encrypt.write(buffer, sizeof(buffer), towrite, data, len); 
+        int lentobuf = this->encrypt.write(buffer, sizeof(buffer), towrite, data, len);
         if (lentobuf < 0) {
             return -1;
-        }        
+        }
         if (this->raw_write(buffer, towrite))
         {
             return -1;
@@ -740,7 +740,7 @@ public:
         {
             return -1;
         }
-    
+
         int res2 = snk.close();
         return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
     }
@@ -777,7 +777,7 @@ struct MSBuf {
 
     CryptoContext & cctx;
 
-public:    
+public:
     explicit MSBuf(
         CryptoContext & cctx,
         time_t start_sec,
@@ -1028,13 +1028,13 @@ public:
                             return 1;
                         }
                     }
-                    
+
                     if (!err) {
                         using ull = unsigned long long;
                         using ll = long long;
-                        char mes[ (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 
-                                + (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 
-                                +  wrmcapture_hash_string_len + 1 
+                        char mes[ (std::numeric_limits<ll>::digits10 + 1 + 1) * 8
+                                + (std::numeric_limits<ull>::digits10 + 1 + 1) * 2
+                                +  wrmcapture_hash_string_len + 1
                                 +  2
                         ];
                         ssize_t len = std::sprintf(
@@ -1282,7 +1282,7 @@ public:
         this->meta_buf_file_size = 0;
     }
 
-    ~MetaSeqBufSum() 
+    ~MetaSeqBufSum()
     {
     }
 
@@ -1317,7 +1317,7 @@ public:
             this->sumbuf_quick_hmac.init(this->sumbuf_hmac_key, sizeof(this->sumbuf_hmac_key));
             this->sumbuf_file_size = 0;
         }
-        
+
         REDASSERT(this->sumbuf_file_size != nosize);
         this->sumbuf_hmac.update(static_cast<const uint8_t *>(data), len);
         if (this->sumbuf_file_size < quick_size) {
@@ -1466,7 +1466,7 @@ public:
             LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
             return 1;
         }
-        
+
         auto pfile = filename;
         auto epfile = filename;
         for (; *epfile; ++epfile) {
@@ -1788,7 +1788,7 @@ public:
             LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
             return 1;
         }
-        
+
         auto pfile = filename;
         auto epfile = filename;
         for (; *epfile; ++epfile) {
@@ -2007,7 +2007,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         }
 
         char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
-        const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n", 
+        const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n",
             unsigned(width),  unsigned(height), "checksum");
         const ssize_t res = this->buf.meta_buf_write(header1, len);
         if (res < 0) {
@@ -2084,7 +2084,7 @@ private:
 
 
 
-struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport 
+struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 {
     private:
         class wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto
@@ -2209,72 +2209,60 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                         return 1;
                     }
 
-                    auto pfile = filename;
-                    auto epfile = filename;
-                    for (; *epfile; ++epfile) {
-                        if (*epfile == '\\') {
-                            ssize_t len = epfile - pfile + 1;
-                            size_t remaining_len = len;
-                            size_t total_sent = 0;
-                            while (remaining_len) {
-                                ssize_t ret = ::write(fd,  pfile + total_sent, remaining_len);
-                                if (ret <= 0){
-                                    if (errno == EINTR){
-                                        continue;
-                                    }
-                                    ::close(fd);
-                                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                                    return 1;
-                                }
-                                remaining_len -= ret;
-                                total_sent += ret;
-                            }
-                            pfile = epfile;
-                        }
-                        if (*epfile == ' ') {
-                            ssize_t len = epfile - pfile;
-                            size_t remaining_len = len;
-                            size_t total_sent = 0;
-                            while (remaining_len) {
-                                ssize_t ret = ::write(fd,  pfile + total_sent, remaining_len);
-                                if (ret <= 0){
-                                    if (errno == EINTR){
-                                        continue;
-                                    }
-                                    ::close(fd);
-                                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                                    return 1;
-                                }
-                                remaining_len -= ret;
-                                total_sent += ret;
-                            }
-                            remaining_len = 1u;
-                            total_sent = 0;
-                            for (;;) {
-                                ssize_t ret = ::write(fd,  "\\" + total_sent, 1u);
-                                if (ret <= 0){
-                                    if (errno == EINTR){
-                                        continue;
-                                    }
-                                    ::close(fd);
-                                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                                    return 1;
-                                }
-                            }
-                            pfile = epfile;
-                        }
-                    }
+                    // TODO escaped(str:range<It, Senti>, str_cpy:String, is_escapable_fn) (see algostring.hpp escape_delimiters)
+                    {
+                        char escaped_filename[std::rank<decltype(filename)>::value * 2];
+                        char const * new_filename = escaped_filename;
+                        std::ptrdiff_t len_filename = 0;
+                        auto is_escapable_fn = [](char c) {
+                            static constexpr bool is_escaped_table[256]{
+                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, // ' '
+                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1                       // '\\'
+                            };
+                            return is_escaped_table[static_cast<unsigned char>(c)];
+                        };
 
-                    if (pfile != epfile) {
-                        ssize_t len = epfile - pfile;
+                        auto p = filename;
+                        while (*p && !is_escapable_fn(*p)) {
+                            ++p;
+                        }
+
+                        if (!*p) {
+                            new_filename = filename;
+                            len_filename = p - filename;
+                        }
+                        else {
+                            auto first = filename;
+                            auto p_escaped = escaped_filename;
+                            do {
+                                p_escaped = std::copy(first, p, p_escaped);
+                                *p_escaped++ = '\\';
+                                *p_escaped++ = *p;
+                                ++p;
+                                first = p;
+                                while (*p && !is_escapable_fn(*p)) {
+                                    ++p;
+                                }
+                            } while (*p);
+
+                            len_filename = escaped_filename - std::copy(first, p, p_escaped);
+                        }
+
+                        assert(len_filename > 0);
+                        assert(std::size_t(len_filename) <= sizeof(sizeof(escaped_filename)));
+                        ssize_t const len = len_filename;
                         size_t remaining_len = len;
                         size_t total_sent = 0;
                         while (remaining_len) {
-                            ssize_t ret = ::write(fd,  pfile + total_sent, remaining_len);
+                            ssize_t ret = ::write(fd,  new_filename + total_sent, remaining_len);
                             if (ret <= 0){
                                 if (errno == EINTR){
                                     continue;
                                 }
+                                // TODO local_fd /utils/sugar/local_fd.hpp
                                 ::close(fd);
                                 LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
                                 return 1;
@@ -2450,7 +2438,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
         private:
             CryptoContext & cctx;
             Random & rnd;
-            
+
             wrmcapture_ocrypto_filter wrm_filter;
 
         public:
@@ -2618,7 +2606,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                         return 1;
                     }
                 }
-                    
+
                 using ull = unsigned long long;
                 using ll = long long;
                 char mes[
