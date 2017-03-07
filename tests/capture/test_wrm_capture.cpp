@@ -762,11 +762,18 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
 {
     unsigned sec_start = 1352304810;
     {
+        CryptoContext cctx;
+        cctx.set_master_key(cstr_array_view(
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+        ));
+        cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
+
         timeval now;
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        wrmcapture_OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid);
+        wrmcapture_OutMetaSequenceTransport wrm_trans(cctx, "./", "./hash-", "xxx", now, 800, 600, groupid, nullptr);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -912,12 +919,18 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
     unlink("./hash-xxx.mwrm");
 
     {
+        CryptoContext cctx;
+        cctx.set_master_key(cstr_array_view(
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+        ));
+        cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
 
         timeval now;
         now.tv_sec = 1352304810;
         now.tv_usec = 0;
         const int groupid = 0;
-        wrmcapture_OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid, nullptr);
+        wrmcapture_OutMetaSequenceTransport wrm_trans(cctx, "./", "./hash-", "xxx", now, 800, 600, groupid, nullptr);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
