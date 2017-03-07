@@ -3971,67 +3971,7 @@ void Front_Qt::call_Draw() {
     }
 }
 
-/*
-void log() {
-        LOG(LOG_INFO, "     File Fs Volume Information:");
-        LOG(LOG_INFO, "          * VolumeCreationTime = %" PRIx64 " (8 bytes)", this->VolumeCreationTime);
-        LOG(LOG_INFO, "          * VolumeSerialNumber = %08x (4 bytes)", this->VolumeSerialNumber);
-        LOG(LOG_INFO, "          * VolumeLabelLength = %d (4 bytes)", int(this->volume_label.size()));
-        LOG(LOG_INFO, "          * SupportsObjects = %02x (1 byte)", this->SupportsObjects);
-        LOG(LOG_INFO, "          * Padding - (1 byte) NOT USED");
-        LOG(LOG_INFO, "          * VolumeLabel = \"%s\"", this->volume_label.c_str());
-    }
 
-hexdump_c(this->WriteData,  this->Length);
-    void log() {
-
-        LOG(LOG_INFO, "     File Directory Information:");
-        LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
-        LOG(LOG_INFO, "          * FileIndex       = 0x%08x (4 bytes)", this->FileIndex);
-        LOG(LOG_INFO, "          * CreationTime    = 0x%" PRIx64 " (8 bytes)", this->CreationTime);
-        LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime_);
-        LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime_);
-        LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
-        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes)", this->FileAttributes_);
-        LOG(LOG_INFO, "          * FileNameLength  = %d (4 bytes)", int(this->FileName.size()));
-        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->FileName.c_str());
-    }
-
-    const unsigned expected = 32;  // Padding(32)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceCloseRequest: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-
-            DeviceWriteResponse
-
-    struct FileDispositionInformation {
-
-    uint8_t DeletePending = 0;
-
-    FileDispositionInformation() = default;
-
-    FileDispositionInformation( uint64_t DeletePending)
-      : DeletePending(DeletePending)
-      {}
-
-    void emit(OutStream & stream) {
-        stream.out_uint8(this->DeletePending);
-    }
-
-    void receive(InStream & stream) {
-        this->DeletePending = stream.in_uint8();
-    }
-
-    void log() {
-        LOG(LOG_INFO, "     File Disposition Information:");
-        LOG(LOG_INFO, "          * DeletePending = %02x (1 byte)", this->DeletePending);
-    }
-};
-*/
 ///////////////////////////////
 // APPLICATION
 int main(int argc, char** argv){
