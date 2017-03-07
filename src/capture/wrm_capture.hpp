@@ -761,7 +761,11 @@ private:
 
 };
 
-class MetaSeqBuf
+struct MSBuf {
+
+};
+
+class MetaSeqBuf : MSBuf
 {
     char current_filename_[1024];
     WrmFGen filegen_;
@@ -798,6 +802,7 @@ public:
 
 public:
     explicit MetaSeqBuf(
+        CryptoContext & cctx,
         time_t start_sec,
         const char * const hash_prefix,
         const char * const prefix,
@@ -1226,7 +1231,7 @@ public:
     { this->stop_sec_ = sec; }
 };
 
-class MetaSeqBufSum
+class MetaSeqBufSum : MSBuf
 {
         char current_filename_[1024];
         WrmFGen filegen_;
@@ -1967,31 +1972,21 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
     MetaSeqBuf buf;
 
     wrmcapture_OutMetaSequenceTransport(
-        const char * path,
-        const char * hash_path,
-        const char * basename,
+        CryptoContext & cctx,
+        const char * path, const char * hash_path, const char * basename,
         timeval now,
-        uint16_t width,
-        uint16_t height,
+        uint16_t width, uint16_t height,
         const int groupid,
-        auth_api * authentifier = nullptr)
-    : buf(now.tv_sec, hash_path, path, basename, ".wrm", groupid)
+        auth_api * authentifier)
+    : buf(cctx, now.tv_sec, hash_path, path, basename, ".wrm", groupid)
     {
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
 
         char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
-        const int len = sprintf(
-            header1,
-            "v2\n"
-            "%u %u\n"
-            "%s\n"
-            "\n\n",
-            unsigned(width),
-            unsigned(height),
-            "nochecksum"
-        );
+        const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n",
+            unsigned(width),  unsigned(height), "nochecksum");
         const ssize_t res = this->buf.meta_buf_write(header1, len);
         if (res < 0) {
             int err = errno;
@@ -2001,7 +1996,6 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
                 char message[1024];
                 snprintf(message, sizeof(message), "100|%s", path);
                 this->authentifier->report("FILESYSTEM_FULL", message);
-
                 throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
             }
             else {
@@ -2069,12 +2063,9 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
 
     wrmcapture_OutMetaSequenceTransportWithSum(
         CryptoContext & cctx,
-        const char * path,
-        const char * hash_path,
-        const char * basename,
+        const char * path, const char * hash_path, const char * basename,
         timeval now,
-        uint16_t width,
-        uint16_t height,
+        uint16_t width, uint16_t height,
         const int groupid,
         auth_api * authentifier)
     : buf(cctx, now.tv_sec, hash_path, path, basename, ".wrm", groupid)
@@ -2084,16 +2075,8 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
         }
 
         char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
-        const int len = sprintf(
-            header1,
-            "v2\n"
-            "%u %u\n"
-            "%s\n"
-            "\n\n",
-            unsigned(width),
-            unsigned(height),
-            "checksum"
-        );
+        const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n", 
+            unsigned(width),  unsigned(height), "checksum");
         const ssize_t res = this->buf.meta_buf_write(header1, len);
         if (res < 0) {
             int err = errno;
@@ -3715,7 +3698,7 @@ public:
                 default:
                 case TraceType::localfile:
                     this->trans = new (&this->variant.out)
-                    wrmcapture_OutMetaSequenceTransport(path, hash_path, basename, now, width, height, groupid, authentifier);
+                    wrmcapture_OutMetaSequenceTransport(cctx, path, hash_path, basename, now, width, height, groupid, authentifier);
                     break;
             }
         }
