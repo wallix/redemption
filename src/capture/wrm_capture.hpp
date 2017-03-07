@@ -831,6 +831,14 @@ public:
         }
         return total_sent;
     }
+
+    ~MSBuf()
+    {
+        if (-1 != this->meta_buf_fd) {
+            ::close(this->meta_buf_fd);
+        }
+    }
+
 };
 
 class MetaSeqBuf : MSBuf
@@ -848,9 +856,6 @@ public:
 
     ~MetaSeqBuf()
     {
-        if (-1 != this->meta_buf_fd) {
-            ::close(this->meta_buf_fd);
-        }
     }
 
     ssize_t write(const void * data, size_t len)
@@ -862,6 +867,24 @@ public:
             }
         }
         return this->buf_.write(data, len);
+    }
+
+    ssize_t open_filename(const char * filename)
+    {
+        snprintf(this->current_filename_, sizeof(this->current_filename_),
+                    "%sred-XXXXXX.tmp", filename);
+        const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+        if (fd < 0) {
+            return fd;
+        }
+        if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+               , this->current_filename_
+               , this->groupid_ ? "u+r, g+r" : "u+r"
+               , strerror(errno), errno);
+        }
+        this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+        return this->buf_.open(fd);
     }
 
     iofdbuf & buf() noexcept
@@ -1068,24 +1091,6 @@ public:
 
 private:
 
-    ssize_t open_filename(const char * filename)
-    {
-        snprintf(this->current_filename_, sizeof(this->current_filename_),
-                    "%sred-XXXXXX.tmp", filename);
-        const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
-        if (fd < 0) {
-            return fd;
-        }
-        if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-               , this->current_filename_
-               , this->groupid_ ? "u+r, g+r" : "u+r"
-               , strerror(errno), errno);
-        }
-        this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-        return this->buf_.open(fd);
-    }
-
     const char * rename_filename()
     {
         const char * filename = this->get_filename_generate();
@@ -1267,8 +1272,6 @@ public:
         return this->MSBuf::meta_buf_write(data, len);
     }
 
-
-public:
     explicit MetaSeqBufSum(CryptoContext & cctx, time_t start_sec, const char * const hash_prefix, const char * const prefix, const char * const filename, const char * const extension, const int groupid)
     : MSBuf(cctx, start_sec, hash_prefix, prefix, filename, extension, groupid)
     , meta_buf_hmac_key(cctx.get_hmac_key())
@@ -1281,10 +1284,50 @@ public:
 
     ~MetaSeqBufSum() 
     {
-        if (-1 != this->meta_buf_fd) {
-            ::close(this->meta_buf_fd);
-        }
     }
+
+
+    ssize_t open_filename(const char * filename)
+    {
+        snprintf(this->current_filename_, sizeof(this->current_filename_),
+                    "%sred-XXXXXX.tmp", filename);
+        const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+        if (fd < 0) {
+            return fd;
+        }
+        if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+               , this->current_filename_
+               , this->groupid_ ? "u+r, g+r" : "u+r"
+               , strerror(errno), errno);
+        }
+        this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+        return this->buf_.open(fd);
+    }
+
+    ssize_t write(const void * data, size_t len)
+    {
+        if (!this->buf_.is_open()) {
+            const char * filename = this->get_filename_generate();
+            int res = this->open_filename(filename);
+            if (res < 0) {
+                return res;
+            }
+            this->sumbuf_hmac.init(this->sumbuf_hmac_key, sizeof(this->sumbuf_hmac_key));
+            this->sumbuf_quick_hmac.init(this->sumbuf_hmac_key, sizeof(this->sumbuf_hmac_key));
+            this->sumbuf_file_size = 0;
+        }
+        
+        REDASSERT(this->sumbuf_file_size != nosize);
+        this->sumbuf_hmac.update(static_cast<const uint8_t *>(data), len);
+        if (this->sumbuf_file_size < quick_size) {
+            auto const remaining = std::min(quick_size - this->sumbuf_file_size, len);
+            this->sumbuf_quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
+            this->sumbuf_file_size += remaining;
+        }
+        return this->buf_.write(data, len);
+    }
+
 
     public:
         const char * current_path() const
@@ -1299,7 +1342,7 @@ public:
 
         const char * ttt_rename_filename()
         {
-            const char * filename = this->ttt_get_filename_generate();
+            const char * filename = this->get_filename_generate();
             const int res = ::rename(this->current_filename_, filename);
             if (res < 0) {
                 LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
@@ -1314,7 +1357,7 @@ public:
             return filename;
         }
 
-        const char * ttt_get_filename_generate()
+        const char * get_filename_generate()
         {
             this->filegen_.set_last_filename(-1u, "");
             const char * filename = this->filegen_.get(this->num_file_);
@@ -1503,7 +1546,7 @@ protected:
     int ttt_next_meta_file(wrmcapture_hash_type const * hash = nullptr)
     {
         // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->ttt_current_filename, this->ttt_rename_to);
-        const char * filename = this->ttt_get_filename_generate();
+        const char * filename = this->get_filename_generate();
         const int res = ::rename(this->current_filename_, filename);
         if (res < 0) {
             LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
@@ -1632,45 +1675,6 @@ public:
     { this->stop_sec_ = sec; }
 
 
-    ssize_t write(const void * data, size_t len)
-    {
-        if (!this->buf_.is_open()) {
-            const char * filename = this->ttt_get_filename_generate();
-            snprintf(this->current_filename_, sizeof(this->current_filename_),
-                        "%sred-XXXXXX.tmp", filename);
-            const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
-            int res = 0;
-            if (fd < 0) {
-                return fd;
-            }
-            else {
-                if (chmod(this->current_filename_, this->groupid_ 
-                            ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-                    LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                       , this->current_filename_
-                       , this->groupid_ ? "u+r, g+r" : "u+r"
-                       , strerror(errno), errno);
-                }
-                this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-                res = this->buf_.open(fd);
-            }
-            if (res < 0) {
-                return res;
-            }
-            this->sumbuf_hmac.init(this->sumbuf_hmac_key, sizeof(this->sumbuf_hmac_key));
-            this->sumbuf_quick_hmac.init(this->sumbuf_hmac_key, sizeof(this->sumbuf_hmac_key));
-            this->sumbuf_file_size = 0;
-        }
-        
-        REDASSERT(this->sumbuf_file_size != nosize);
-        this->sumbuf_hmac.update(static_cast<const uint8_t *>(data), len);
-        if (this->sumbuf_file_size < quick_size) {
-            auto const remaining = std::min(quick_size - this->sumbuf_file_size, len);
-            this->sumbuf_quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
-            this->sumbuf_file_size += remaining;
-        }
-        return this->buf_.write(data, len);
-    }
 
     int close()
     {
