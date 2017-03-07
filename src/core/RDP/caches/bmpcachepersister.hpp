@@ -96,14 +96,14 @@ public:
     };
 
     // Preloads bitmap from file to be used later with Client Persistent Key List PDUs.
-    BmpCachePersister(BmpCache & bmp_cache, FileTransport & t, const char * filename, Verbose verbose)
+    BmpCachePersister(BmpCache & bmp_cache, Transport & t, const char * filename, Verbose verbose)
     : bmp_cache(bmp_cache)
     , verbose(verbose)
     {
         uint8_t buf[16];
         InStream stream(buf);
 
-        t.recv(buf, 5);  /* magic(4) + version(1) */
+        t.recv_new(buf, 5);  /* magic(4) + version(1) */
 
         const uint8_t * magic   = stream.in_uint8p(4);  /* magic(4) */
               uint8_t   version = stream.in_uint8();
@@ -134,11 +134,11 @@ public:
     }
 
 private:
-    void preload_from_disk(FileTransport & t, uint8_t cache_id) {
+    void preload_from_disk(Transport & t, uint8_t cache_id) {
         uint8_t buf[65536];
         InStream stream(buf);
         auto end = buf;
-        t.recv(end, 2);
+        t.recv_new(end, 2);
         end += 2;
 
         uint16_t bitmap_count = stream.in_uint16_le();
@@ -147,7 +147,7 @@ private:
         }
 
         for (uint16_t i = 0; i < bitmap_count; i++) {
-            t.recv(end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
+            t.recv_new(end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
             end += 13;
 
             uint8_t sig[8];
@@ -162,21 +162,21 @@ private:
 
             BGRPalette original_palette{BGRPalette::no_init()};
             if (original_bpp == 8) {
-                t.recv(end, sizeof(original_palette));
+                t.recv_new(end, sizeof(original_palette));
                 end += sizeof(original_palette);
 
                 stream.in_copy_bytes(const_cast<char*>(original_palette.data()), sizeof(original_palette));
             }
 
             uint16_t bmp_size;
-            t.recv(end, sizeof(bmp_size));
+            t.recv_new(end, sizeof(bmp_size));
             end += sizeof(original_palette);
             bmp_size = stream.in_uint16_le();
 
             end = buf;
             stream = InStream(buf);
 
-            t.recv(end, bmp_size);
+            t.recv_new(end, bmp_size);
 
             if (bmp_cache.get_cache(cache_id).persistent()) {
                 map_key key(sig);
@@ -246,12 +246,12 @@ public:
     }
 
     // Loads bitmap from file to be placed immediately into the cache.
-    static void load_all_from_disk( BmpCache & bmp_cache, FileTransport & t, const char * filename
+    static void load_all_from_disk( BmpCache & bmp_cache, Transport & t, const char * filename
                                   , Verbose verbose) {
         uint8_t buf[16];
         InStream stream(buf);
 
-        t.recv(buf, 5);  /* magic(4) + version(1) */
+        t.recv_new(buf, 5);  /* magic(4) + version(1) */
 
         const uint8_t * magic   = stream.in_uint8p(4);  /* magic(4) */
               uint8_t   version = stream.in_uint8();
@@ -282,12 +282,12 @@ public:
     }
 
 private:
-    static void load_from_disk( BmpCache & bmp_cache, FileTransport & t
+    static void load_from_disk( BmpCache & bmp_cache, Transport & t
                               , uint8_t cache_id, Verbose verbose) {
         uint8_t buf[65536];
         InStream stream(buf);
         auto end = buf;
-        t.recv(end, 2);
+        t.recv_new(end, 2);
         end += 2;
 
         uint16_t bitmap_count = stream.in_uint16_le();
@@ -296,7 +296,7 @@ private:
         }
 
         for (uint16_t i = 0; i < bitmap_count; i++) {
-            t.recv(end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
+            t.recv_new(end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
             end +=  13;
 
             union {
@@ -314,20 +314,20 @@ private:
 
             BGRPalette original_palette{BGRPalette::no_init()};
             if (original_bpp == 8) {
-                t.recv(end, sizeof(original_palette));
+                t.recv_new(end, sizeof(original_palette));
                 end += sizeof(original_palette);
 
                 stream.in_copy_bytes(const_cast<char*>(original_palette.data()), sizeof(original_palette));
             }
 
             uint16_t bmp_size;
-            t.recv(end, sizeof(bmp_size));
+            t.recv_new(end, sizeof(bmp_size));
             bmp_size = stream.in_uint16_le();
 
             end = buf;
             stream = InStream(buf);
 
-            t.recv(end, bmp_size);
+            t.recv_new(end, bmp_size);
             end += bmp_size;
 
             if (bmp_cache.get_cache(cache_id).persistent() && (i < bmp_cache.get_cache(cache_id).size())) {

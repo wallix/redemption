@@ -86,67 +86,17 @@ public:
     virtual bool get_status() const
     { return this->status; }
 
-    void set_authentifier(auth_api * authentifier)
-    {
-        this->authentifier = authentifier;
-    }
-
-    //void reset_quantum_sent() noexcept
-    //{
-    //    this->last_quantum_sent = 0;
-    //}
-
-    void tick()
-    {
-        this->total_received += this->last_quantum_received;
-        this->total_sent += this->last_quantum_sent;
-        this->last_quantum_received = 0;
-        this->last_quantum_sent = 0;
-    }
-
-    virtual void enable_client_tls(
-            bool server_cert_store,
-            ServerCertCheck server_cert_check,
-            ServerNotifier & server_notifier,
-            const char * certif_path
-        )
-    {
-        // default enable_tls do nothing
-        (void)server_cert_store;
-        (void)server_cert_check;
-        (void)server_notifier;
-        (void)certif_path;
-    }
-
-    virtual void enable_server_tls(const char * certificate_password,
-        const char * ssl_cipher_list)
-    {
-        // default enable_tls do nothing
-        (void)certificate_password;
-        (void)ssl_cipher_list;
-    }
-
-    virtual const uint8_t * get_public_key() const
-    {
-        return nullptr;
-    }
-
-    virtual size_t get_public_key_length() const
-    {
-        return 0;
-    }
-
     void send(const char * const buffer, size_t len)
     {
         this->do_send(reinterpret_cast<const uint8_t * const>(buffer), len);
     }
 
-    void recv(char * buffer, size_t len)
+    int recv(char * buffer, size_t len)
     {
         return this->do_recv(reinterpret_cast<uint8_t*>(buffer), len);
     }
 
-    void recv(uint8_t * buffer, size_t len)
+    int recv(uint8_t * buffer, size_t len)
     {
         return this->do_recv(buffer, len);
     }
@@ -168,14 +118,7 @@ public:
 
 private:
 
-    // Note by CGR:
-    // ============
-    // The old API moved the buffer pointer...
-    // As the curent recv API is blocking and not
-    // receiving the expected amount of data throw an Error
-    // it is pretty useless to update buffer position
-
-    virtual void do_recv(uint8_t * buffer, size_t len) {
+    virtual int do_recv(uint8_t * buffer, size_t len) {
         (void)buffer;
         (void)len;
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);

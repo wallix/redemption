@@ -120,8 +120,6 @@ public:
             this->length = out_stream.get_offset() + this->total_number_of_bytes_to_read;
         }
 
-        const uint8_t * const saved_out_stream_p = out_stream.get_current();
-
         const uint32_t number_of_bytes_to_read =
             std::min<uint32_t>(out_stream.tailroom(), this->remaining_number_of_bytes_to_read);
 
@@ -132,43 +130,29 @@ public:
 
         this->transport->seek(this->Offset, SEEK_SET);
 
-        auto end = out_stream.get_current();
+        int number_of_bytes_read = 0;
         try {
-            #pragma warning PARTIAL READ !!!!!!!!!!!!!!!!
-            this->transport->recv(end, number_of_bytes_to_read);
-            end += number_of_bytes_to_read;
+            number_of_bytes_read = this->transport->recv(out_stream.get_current(), number_of_bytes_to_read);
+            out_stream.out_skip_bytes(number_of_bytes_read);
+            if (this->verbose & RDPVerbose::asynchronous_task) {
+                LOG(LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesRead=%u",
+                    number_of_bytes_read);
+            }
+            this->Offset += number_of_bytes_read;
+            this->remaining_number_of_bytes_to_read -= number_of_bytes_read;
+            if (0 == this->remaining_number_of_bytes_to_read) {
+                out_flags |= CHANNELS::CHANNEL_FLAG_LAST;
+            }
+
+            REDASSERT(this->length);
+
+            this->to_server_sender(this->length, out_flags, out_stream.get_data(), out_stream.get_offset());
         }
         catch (const Error & e) {
-            if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-                LOG(LOG_INFO, "RdpdrDriveReadTask::run: Exception=%d",
-                    e.id);
-                throw;
-            }
-            else {
-                LOG(LOG_WARNING, "RdpdrDriveReadTask::run: ERR_TRANSPORT_NO_MORE_DATA(%d)",
-                    e.id);
-            }
+            LOG(LOG_INFO, "RdpdrDriveReadTask::run: Exception=%d",
+                e.id);
+            throw;
         }
-        out_stream.out_skip_bytes(number_of_bytes_to_read);
-
-        const uint32_t number_of_bytes_read = out_stream.get_current() - saved_out_stream_p;
-
-        if (this->verbose & RDPVerbose::asynchronous_task) {
-            LOG(LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesRead=%u",
-                number_of_bytes_read);
-        }
-
-        this->Offset += number_of_bytes_read;
-
-        this->remaining_number_of_bytes_to_read -= number_of_bytes_read;
-        if (!this->remaining_number_of_bytes_to_read) {
-            out_flags |= CHANNELS::CHANNEL_FLAG_LAST;
-        }
-
-        REDASSERT(this->length);
-
-        this->to_server_sender(this->length, out_flags, out_stream.get_data(), out_stream.get_offset());
-
         return (this->remaining_number_of_bytes_to_read != 0);
     }
 };  // RdpdrDriveReadTask

@@ -184,13 +184,6 @@ private:
 //         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
 //     }
 
-    // Note by CGR:
-    // ============
-    // The old API moved the buffer pointer...
-    // As the curent recv API is blocking and not
-    // receiving the expected amount of data throw an Error
-    // it is pretty useless to update buffer position
-
     virtual void do_recv_new(uint8_t * buffer, size_t len) {
         (void)buffer;
         (void)len;

@@ -523,7 +523,7 @@ public:
 
 struct io_video_recorder_with_transport
 {
-    io_video_recorder_with_transport(FileTransport & trans)
+    io_video_recorder_with_transport(Transport & trans)
     : trans(trans)
     {}
 
@@ -532,10 +532,10 @@ struct io_video_recorder_with_transport
     void * params() const { return &this->trans; }
 
 private:
-    FileTransport& trans;
+    Transport& trans;
 
     static int write_packet(void *opaque, uint8_t *buf, int buf_size) {
-        FileTransport * trans       = reinterpret_cast<FileTransport *>(opaque);
+        Transport * trans       = reinterpret_cast<Transport *>(opaque);
         int         return_code = buf_size;
         try {
             trans->send(buf, buf_size);
@@ -569,7 +569,7 @@ private:
             return -1;
         }
         try {
-            FileTransport *trans = reinterpret_cast<FileTransport *>(opaque);
+            Transport *trans = reinterpret_cast<Transport *>(opaque);
             trans->seek(offset, whence);
             return offset;
         }
