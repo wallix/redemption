@@ -2692,7 +2692,7 @@ public:
         }
     }
 
-     virtual void clear_old() {
+     void clear_old() override {
         if (this->trans.get_seqno() < this->png_limit) {
             return;
         }
