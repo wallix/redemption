@@ -132,38 +132,6 @@ Front_Qt::Front_Qt(char* argv[], int argc, RDPVerbose verbose)
         }
     }
 
-    CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
-                                         , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                           GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                           GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                         , CHANNELS::CHANNEL_CHUNK_LENGTH+1
-                                         };
-    this->_to_client_sender._channel = channel_cliprdr;
-    this->_cl.push_back(channel_cliprdr);
-
-    this->_clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS
-                                        , this->_clipbrdFormatsList.FILECONTENTS
-                                        );
-    this->_clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW
-                                        , this->_clipbrdFormatsList.FILEGROUPDESCRIPTORW
-                                        );
-    this->_clipbrdFormatsList.add_format( RDPECLIP::CF_UNICODETEXT
-                                        , std::string("\0\0", 2)
-                                        );
-    this->_clipbrdFormatsList.add_format( RDPECLIP::CF_TEXT
-                                        , std::string("\0\0", 2)
-                                        );
-    this->_clipbrdFormatsList.add_format( RDPECLIP::CF_METAFILEPICT
-                                        , std::string("\0\0", 2)
-                                        );
-
-    CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
-                                      , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                        GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
-                                      , CHANNELS::CHANNEL_CHUNK_LENGTH+2
-                                      };
-    this->_cl.push_back(channel_rdpdr);
-
     if (this->mod_bpp == this->_info.bpp) {
         this->mod_palette = BGRPalette::classic_332();
     }
@@ -280,6 +248,19 @@ bool Front_Qt::setClientInfo() {
                 if (std::stoi(info)) {
                     this->_delta_time = std::stoi(info);
                 }
+            }else
+            if (tag.compare(std::string("enable_shared_clipboard")) == 0) {
+                if (std::stoi(info)) {
+                    this->_enable_shared_clipboard = true;
+                }
+            }else
+            if (tag.compare(std::string("enable_shared_virtual_disk")) == 0) {
+                if (std::stoi(info)) {
+                    this->_enable_shared_virtual_disk = true;
+                }
+            } else
+            if (tag.compare(std::string("SHARE_DIR")) == 0) {
+                this->SHARE_DIR                 = info;
             }
         }
 
@@ -308,7 +289,7 @@ void Front_Qt::writeClientInfo() {
     std::ofstream ofichier(this->USER_CONF_DIR, std::ios::out | std::ios::trunc);
     if(ofichier) {
 
-        ofichier << "User Info" << std::endl << std::endl;
+        ofichier << "User Info" << "\n\n";
 
         ofichier << "keylayout "             << this->_info.keylayout               << "\n";
         ofichier << "console_session "       << this->_info.console_session         << "\n";
@@ -324,6 +305,9 @@ void Front_Qt::writeClientInfo() {
         ofichier << "tls "                   << this->_mod_qt->_modRDPParamsData.enable_tls << "\n";
         ofichier << "nla "                   << this->_mod_qt->_modRDPParamsData.enable_nla << "\n";
         ofichier << "delta_time "            << this->_delta_time << "\n";
+        ofichier << "enable_shared_clipboard "    << this->_enable_shared_clipboard << "\n";
+        ofichier << "enable_shared_virtual_disk " << this->_enable_shared_virtual_disk << std::endl;
+        ofichier << "SHARE_DIR " << this->SHARE_DIR << std::endl;
     }
 }
 
@@ -481,6 +465,45 @@ void Front_Qt::setScreenDimension() {
 bool Front_Qt::connect() {
 
     this->setScreenDimension();
+
+    this->_clipbrdFormatsList.index = 0;
+    this->_cl.clear_channels();
+
+    if (this->_enable_shared_clipboard) {
+        CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
+                                            , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                              GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                              GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                            , CHANNELS::CHANNEL_CHUNK_LENGTH+1
+                                            };
+        this->_to_client_sender._channel = channel_cliprdr;
+        this->_cl.push_back(channel_cliprdr);
+
+        this->_clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS
+                                            , this->_clipbrdFormatsList.FILECONTENTS
+                                            );
+        this->_clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW
+                                            , this->_clipbrdFormatsList.FILEGROUPDESCRIPTORW
+                                            );
+        this->_clipbrdFormatsList.add_format( RDPECLIP::CF_UNICODETEXT
+                                            , std::string("\0\0", 2)
+                                            );
+        this->_clipbrdFormatsList.add_format( RDPECLIP::CF_TEXT
+                                            , std::string("\0\0", 2)
+                                            );
+        this->_clipbrdFormatsList.add_format( RDPECLIP::CF_METAFILEPICT
+                                            , std::string("\0\0", 2)
+                                            );
+    }
+
+    if (this->_enable_shared_virtual_disk) {
+        CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
+                                        , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                          GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
+                                        , CHANNELS::CHANNEL_CHUNK_LENGTH+2
+                                        };
+        this->_cl.push_back(channel_rdpdr);
+    }
 
     if (this->_mod_qt->connect()) {
 
@@ -3150,7 +3173,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (hd_driveid).", str_path.c_str());
                                     } else {
                                         ioctl(device, HDIO_GET_IDENTITY, &hd);
-                                        VolumeSerialNumber             = this->string_to_hex32(hd.serial_no);
+                                        VolumeSerialNumber = this->string_to_hex32(hd.serial_no);
                                     }
 
                                     deviceIOResponse.emit(out_stream);
@@ -3159,49 +3182,54 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         switch (sdqvir.FsInformationClass()) {
                                             case rdpdr::FileFsVolumeInformation:
                                             {
-                                                rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(17);
+                                                fscc::FileFsVolumeInformation ffvi(VolumeCreationTime, VolumeSerialNumber, 0, VolumeLabel);
+
+                                                rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(ffvi.size());
                                                 cdqvir.emit(out_stream);
 
-                                                fscc::FileFsVolumeInformation ffvi(VolumeCreationTime, VolumeSerialNumber, 0, VolumeLabel);
                                                 ffvi.emit(out_stream);
                                             }
                                                 break;
 
                                             case rdpdr::FileFsSizeInformation:
                                             {
-                                                rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(24);
+                                                fscc::FileFsSizeInformation ffsi(TotalAllocationUnits, AvailableAllocationUnits, SectorsPerAllocationUnit, BytesPerSector);
+
+                                                rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(ffsi.size());
                                                 cdqvir.emit(out_stream);
 
-                                                fscc::FileFsSizeInformation ffsi(TotalAllocationUnits, AvailableAllocationUnits, SectorsPerAllocationUnit, BytesPerSector);
                                                 ffsi.emit(out_stream);
                                             }
                                                 break;
 
                                             case rdpdr::FileFsAttributeInformation:
                                             {
-                                                rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(20);
+                                                fscc::FileFsAttributeInformation ffai(FileSystemAttributes, MaximumComponentNameLength, FileSystemName);
+
+                                                rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(ffai.size());
                                                 cdqvir.emit(out_stream);
 
-                                                fscc::FileFsAttributeInformation ffai(FileSystemAttributes, MaximumComponentNameLength, FileSystemName);
                                                 ffai.emit(out_stream);
                                             }
                                                 break;
                                             case rdpdr::FileFsFullSizeInformation:
                                             {
-                                                rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(32);
+                                                fscc::FileFsFullSizeInformation fffsi(TotalAllocationUnits, CallerAvailableAllocationUnits, ActualAvailableAllocationUnits, SectorsPerAllocationUnit, BytesPerSector);
+
+                                                rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(fffsi.size());
                                                 cdqvir.emit(out_stream);
 
-                                                fscc::FileFsFullSizeInformation fffsi(TotalAllocationUnits, CallerAvailableAllocationUnits, ActualAvailableAllocationUnits, SectorsPerAllocationUnit, BytesPerSector);
                                                 fffsi.emit(out_stream);
                                             }
                                                 break;
 
                                             case rdpdr::FileFsDeviceInformation:
                                             {
-                                                rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(8);
+                                                fscc::FileFsDeviceInformation ffdi(fscc::FILE_DEVICE_DISK, fscc::FILE_REMOTE_DEVICE | fscc::FILE_DEVICE_IS_MOUNTED);
+
+                                                rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(ffdi.size());
                                                 cdqvir.emit(out_stream);
 
-                                                fscc::FileFsDeviceInformation ffdi(fscc::FILE_DEVICE_DISK, fscc::FILE_REMOTE_DEVICE | fscc::FILE_DEVICE_IS_MOUNTED);
                                                 ffdi.emit(out_stream);
                                             }
                                                 break;
