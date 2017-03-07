@@ -193,7 +193,7 @@ public:
     const std::string    CB_TEMP_DIR;
     const std::string    USER_CONF_DIR;
     const std::string    REPLAY_DIR;
-    const std::string    SHARE_DIR;
+    std::string          SHARE_DIR;
     QPixmap            * _cache;
     QPixmap            * _cache_replay;
     bool                 _span;
@@ -203,6 +203,8 @@ public:
     int                  _delta_time;
     int                  _current_screen_index;
     bool                 _recv_disconnect_ultimatum;
+    bool                 _enable_shared_clipboard;
+    bool                 _enable_shared_virtual_disk;
 
 
 
@@ -232,6 +234,8 @@ public:
     , _delta_time(1000000)
     , _current_screen_index(0)
     , _recv_disconnect_ultimatum(false)
+    , _enable_shared_clipboard(false)
+    , _enable_shared_virtual_disk(false)
     {
         this->_to_client_sender._front = this;
     }
@@ -313,7 +317,7 @@ public:
 
 
     // Graphic members
-    uint8_t               mod_bpp;
+    int               mod_bpp;
     BGRPalette            mod_palette;
     Form_Qt            * _form;
     Screen_Qt          * _screen[MAX_MONITOR_COUNT] {};
