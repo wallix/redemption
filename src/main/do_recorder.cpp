@@ -389,15 +389,18 @@ static int do_recompress(
             }
         }
         else {
+            CryptoContext cctx;
             wrmcapture_OutMetaSequenceTransport trans(
-                    outfile_path.c_str(),
-                    ini.get<cfg::video::hash_path>().c_str(),
-                    outfile_basename.c_str(),
-                    begin_record,
-                    player.info_width,
-                    player.info_height,
-                    ini.get<cfg::video::capture_groupid>()
-                );
+                cctx,
+                outfile_path.c_str(),
+                ini.get<cfg::video::hash_path>().c_str(),
+                outfile_basename.c_str(),
+                begin_record,
+                player.info_width,
+                player.info_height,
+                ini.get<cfg::video::capture_groupid>(),
+                nullptr
+            );
             {
                 ChunkToFile recorder( &trans
                             , player.info_width
