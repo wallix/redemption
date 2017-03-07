@@ -762,11 +762,6 @@ private:
 };
 
 struct MSBuf {
-
-};
-
-class MetaSeqBuf : MSBuf
-{
     char current_filename_[1024];
     WrmFGen filegen_;
     iofdbuf buf_;
@@ -780,7 +775,44 @@ class MetaSeqBuf : MSBuf
     time_t start_sec_;
     time_t stop_sec_;
 
-public:
+    CryptoContext & cctx;
+
+public:    
+    explicit MSBuf(
+        CryptoContext & cctx,
+        time_t start_sec,
+        const char * const hash_prefix,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid
+    )
+    : current_filename_{}
+    , filegen_(prefix, filename, extension)
+    , buf_()
+    , num_file_(0)
+    , groupid_(groupid)
+    , meta_buf_fd(-1)
+    , mf_(prefix, filename)
+    , hf_(hash_prefix, filename)
+    , start_sec_(start_sec)
+    , stop_sec_(start_sec)
+    , cctx(cctx)
+    {
+        this->current_filename_[0] = 0;
+        this->meta_buf_fd = ::open(this->mf_.filename, O_WRONLY | O_CREAT, S_IRUSR | S_IRGRP | S_IWUSR);
+        if (this->meta_buf_fd < 0) {
+            LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+        }
+        if (chmod(this->mf_.filename, S_IRUSR | S_IRGRP) == -1) {
+            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+               , this->mf_.filename
+               , "u+r, g+r"
+               , strerror(errno), errno);
+        }
+    }
+
     ssize_t meta_buf_write(const void * data, size_t len)
     {
         size_t remaining_len = len;
@@ -799,38 +831,19 @@ public:
         }
         return total_sent;
     }
+};
+
+class MetaSeqBuf : MSBuf
+{
 
 public:
-    explicit MetaSeqBuf(
-        CryptoContext & cctx,
-        time_t start_sec,
-        const char * const hash_prefix,
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension,
-        const int groupid
-    )
-    : filegen_(prefix, filename, extension)
-    , buf_()
-    , num_file_(0)
-    , groupid_(groupid)
-    , meta_buf_fd(-1)
-    , mf_(prefix, filename)
-    , hf_(hash_prefix, filename)
-    , start_sec_(start_sec)
-    , stop_sec_(start_sec)
+    ssize_t meta_buf_write(const void * data, size_t len) {
+        return this->MSBuf::meta_buf_write(data, len);
+    }
+
+    explicit MetaSeqBuf(CryptoContext & cctx, time_t start_sec, const char * const hash_prefix, const char * const prefix, const char * const filename, const char * const extension, const int groupid)
+    : MSBuf(cctx, start_sec, hash_prefix, prefix, filename, extension, groupid)
     {
-        this->current_filename_[0] = 0;
-        if (this->meta_buf_open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
-            LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
-            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-        }
-        if (chmod(this->mf_.filename, S_IRUSR | S_IRGRP) == -1) {
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-               , this->mf_.filename
-               , "u+r, g+r"
-               , strerror(errno), errno);
-        }
     }
 
     ~MetaSeqBuf()
@@ -1054,15 +1067,6 @@ public:
     }
 
 private:
-    int meta_buf_open(const char * filename, mode_t mode)
-    {
-        if (-1 != this->meta_buf_fd) {
-            ::close(this->meta_buf_fd);
-            this->meta_buf_fd = -1;
-        }
-        this->meta_buf_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-        return this->meta_buf_fd;
-    }
 
     ssize_t open_filename(const char * filename)
     {
@@ -1233,70 +1237,54 @@ public:
 
 class MetaSeqBufSum : MSBuf
 {
-        char current_filename_[1024];
-        WrmFGen filegen_;
-        iofdbuf buf_;
-        unsigned num_file_;
-        int groupid_;
+    static constexpr size_t nosize = ~size_t{};
+    static constexpr size_t quick_size = 4096;
 
-        int meta_buf_fd;
+    SslHMAC_Sha256_Delayed meta_buf_hmac;
+    SslHMAC_Sha256_Delayed meta_buf_quick_hmac;
+    unsigned char const (&meta_buf_hmac_key)[MD_HASH_LENGTH];
+    size_t meta_buf_file_size = nosize;
 
-        MetaFilename mf_;
-        MetaFilename hf_;
-        time_t start_sec_;
-        time_t stop_sec_;
+    SslHMAC_Sha256_Delayed sumbuf_hmac;
+    SslHMAC_Sha256_Delayed sumbuf_quick_hmac;
+    unsigned char const (&sumbuf_hmac_key)[MD_HASH_LENGTH];
+    size_t sumbuf_file_size = nosize;
 
-        CryptoContext & cctx;
+public:
+    ssize_t meta_buf_write(const void * data, size_t len)
+    {
+        REDASSERT(this->meta_buf_file_size != nosize);
 
-        static constexpr size_t nosize = ~size_t{};
-        static constexpr size_t quick_size = 4096;
-
-        SslHMAC_Sha256_Delayed meta_buf_hmac;
-        SslHMAC_Sha256_Delayed meta_buf_quick_hmac;
-        unsigned char const (&meta_buf_hmac_key)[MD_HASH_LENGTH];
-        size_t meta_buf_file_size = nosize;
-
-        SslHMAC_Sha256_Delayed sumbuf_hmac;
-        SslHMAC_Sha256_Delayed sumbuf_quick_hmac;
-        unsigned char const (&sumbuf_hmac_key)[MD_HASH_LENGTH];
-        size_t sumbuf_file_size = nosize;
-
-    public:
-        ssize_t meta_buf_write(const void * data, size_t len)
-        {
-            REDASSERT(this->meta_buf_file_size != nosize);
-
-            // TODO: hmac returns error as exceptions while write errors are returned as -1
-            // this is inconsistent and probably need a fix.
-            // also, if we choose to raise exception every error should have it's own one
-            this->meta_buf_hmac.update(static_cast<const uint8_t *>(data), len);
-            if (this->meta_buf_file_size < quick_size) {
-                auto const remaining = std::min(quick_size - this->meta_buf_file_size, len);
-                this->meta_buf_quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
-                this->meta_buf_file_size += remaining;
-            }
-
-            size_t remaining_len = len;
-            size_t total_sent = 0;
-            while (remaining_len) {
-                ssize_t ret = ::write(this->meta_buf_fd,
-                    static_cast<const char*>(data) + total_sent, remaining_len);
-                if (ret <= 0){
-                    if (errno == EINTR){
-                        continue;
-                    }
-                    return -1;
-                }
-                remaining_len -= ret;
-                total_sent += ret;
-            }
-            return total_sent;
+        // TODO: hmac returns error as exceptions while write errors are returned as -1
+        // this is inconsistent and probably need a fix.
+        // also, if we choose to raise exception every error should have it's own one
+        this->meta_buf_hmac.update(static_cast<const uint8_t *>(data), len);
+        if (this->meta_buf_file_size < quick_size) {
+            auto const remaining = std::min(quick_size - this->meta_buf_file_size, len);
+            this->meta_buf_quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
+            this->meta_buf_file_size += remaining;
         }
+        return this->MSBuf::meta_buf_write(data, len);
+    }
 
 
-    public:
-        const WrmFGen & seqgen() const noexcept
-        { return this->filegen_; }
+public:
+    explicit MetaSeqBufSum(CryptoContext & cctx, time_t start_sec, const char * const hash_prefix, const char * const prefix, const char * const filename, const char * const extension, const int groupid)
+    : MSBuf(cctx, start_sec, hash_prefix, prefix, filename, extension, groupid)
+    , meta_buf_hmac_key(cctx.get_hmac_key())
+    , sumbuf_hmac_key(cctx.get_hmac_key())
+    {
+        this->meta_buf_hmac.init(this->meta_buf_hmac_key, sizeof(this->meta_buf_hmac_key));
+        this->meta_buf_quick_hmac.init(this->meta_buf_hmac_key, sizeof(this->meta_buf_hmac_key));
+        this->meta_buf_file_size = 0;
+    }
+
+    ~MetaSeqBufSum() 
+    {
+        if (-1 != this->meta_buf_fd) {
+            ::close(this->meta_buf_fd);
+        }
+    }
 
     public:
         const char * current_path() const
@@ -1338,7 +1326,11 @@ public:
 
     int ttt_close()
     {
-        int err = this->ttt_next();
+        int err = 1;
+        if (this->buf_.is_open()) {
+            this->buf_.close();
+            err = this->ttt_next_meta_file();
+        }
         if (err) {
             return err;
         }
@@ -1507,17 +1499,6 @@ public:
         return 0;
     }
 
-
-    /// \return 0 if success
-    int ttt_next()
-    {
-        if (this->buf_.is_open()) {
-            this->buf_.close();
-            return this->ttt_next_meta_file();
-        }
-        return 1;
-    }
-
 protected:
     int ttt_next_meta_file(wrmcapture_hash_type const * hash = nullptr)
     {
@@ -1650,48 +1631,6 @@ public:
     void update_sec(time_t sec)
     { this->stop_sec_ = sec; }
 
-public:
-    explicit MetaSeqBufSum(
-        CryptoContext & cctx,
-        time_t start_sec,
-        const char * const hash_prefix,
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension,
-        const int groupid
-    )
-    : filegen_(prefix, filename, extension)
-    , buf_()
-    , num_file_(0)
-    , groupid_(groupid)
-    , meta_buf_fd(-1)
-    , mf_(prefix, filename)
-    , hf_(hash_prefix, filename)
-    , start_sec_(start_sec)
-    , stop_sec_(start_sec)
-    , cctx(cctx)
-    , meta_buf_hmac_key(cctx.get_hmac_key())
-    , sumbuf_hmac_key(cctx.get_hmac_key())
-    {
-        this->current_filename_[0] = 0;
-        if (this->meta_buf_open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
-            LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
-            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-        }
-        if (chmod(this->mf_.filename, S_IRUSR | S_IRGRP) == -1) {
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-               , this->mf_.filename
-               , "u+r, g+r"
-               , strerror(errno), errno);
-        }
-    }
-
-    ~MetaSeqBufSum() 
-    {
-        if (-1 != this->meta_buf_fd) {
-            ::close(this->meta_buf_fd);
-        }
-    }
 
     ssize_t write(const void * data, size_t len)
     {
@@ -1954,17 +1893,6 @@ public:
         }
         return 1;
     }
-    
-private:
-    int meta_buf_open(const char * filename, mode_t mode)
-    {
-        this->meta_buf_hmac.init(this->meta_buf_hmac_key, sizeof(this->meta_buf_hmac_key));
-        this->meta_buf_quick_hmac.init(this->meta_buf_hmac_key, sizeof(this->meta_buf_hmac_key));
-        this->meta_buf_file_size = 0;
-        this->meta_buf_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-        return this->meta_buf_fd;
-    }
-
 };
 
 struct wrmcapture_OutMetaSequenceTransport : public Transport
@@ -2098,11 +2026,6 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
 
     void timestamp(timeval now) override {
         this->buf.update_sec(now.tv_sec);
-    }
-
-    const WrmFGen * seqgen() const noexcept
-    {
-        return &(this->buf.seqgen());
     }
 
     bool next() override {
@@ -2813,11 +2736,6 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 
     void timestamp(timeval now) override {
         this->buf.xxx_update_sec(now.tv_sec);
-    }
-
-    const WrmFGen * seqgen() const noexcept
-    {
-        return &(this->buf.filegen_);
     }
 
     bool next() override {
