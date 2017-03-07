@@ -401,17 +401,17 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
 
         struct CheckFiles {
             const char * filename;
-            size_t size;
-            size_t alt_size;
-        } fileinfo[] = {
+            int size;
+            int alt_size;
+        } fileinfos[] = {
             {"./capture-000000.wrm", 1646, 0},
             {"./capture-000001.wrm", 3508, 0},
             {"./capture-000002.wrm", 3463, 0},
-            {"./capture-000003.wrm", static_cast<size_t>(-1), static_cast<size_t>(-1)},
+            {"./capture-000003.wrm", -1, 0},
             {"./capture.mwrm", 288, 285},
         };
-        for (auto x: fileinfo) {
-            size_t fsize = filesize(x.filename);
+        for (auto x : fileinfos) {
+            int fsize = filesize(x.filename);
             if (x.alt_size != fsize) {
                 BOOST_CHECK_EQUAL(x.size, fsize);
             }
@@ -725,7 +725,7 @@ BOOST_AUTO_TEST_CASE(TestWriteFilename)
     } writer;
 
 #define TEST_WRITE_FILENAME(origin_filename, wrote_filename) \
-    wrmcapture_write_filename(writer, origin_filename);                 \
+    wrmcapture_write_filename(writer, origin_filename);      \
     BOOST_CHECK_EQUAL(writer.s, wrote_filename);             \
     writer.s.clear()
 

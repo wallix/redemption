@@ -205,9 +205,9 @@ struct ocrypto {
     CryptoContext & cctx;
     Random & rnd;
 
-    ocrypto(CryptoContext & cctx, Random & rnd) 
+    ocrypto(CryptoContext & cctx, Random & rnd)
         : cctx(cctx)
-        , rnd(rnd) 
+        , rnd(rnd)
     {
     }
 
@@ -258,7 +258,7 @@ struct ocrypto {
 
     int open(uint8_t * buffer, size_t buflen, size_t & towrite, const uint8_t * derivator, size_t derivator_len)
     {
-    
+
         unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
         this->cctx.get_derived_key(trace_key, derivator, derivator_len);
         unsigned char iv[32];
@@ -455,7 +455,7 @@ struct ocrypto {
         }
         ::memcpy(buffer + towrite, tmp_buf, 8);
         towrite += 8;
-        
+
         this->file_size += 8;
 
         this->xmd_update(tmp_buf, 8);
@@ -573,7 +573,7 @@ struct ocrypto {
 
 };
 
-class wrmcapture_ocrypto_filename_buf 
+class wrmcapture_ocrypto_filename_buf
 {
     ocrypto encrypt;
     int file_fd;
@@ -628,10 +628,10 @@ public:
         if (err < 0) {
             return err;
         }
-        
+
         size_t base_len = 0;
         const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-        
+
         uint8_t buffer[40];
         size_t towrite = 0;
         err = this->encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
@@ -642,13 +642,13 @@ public:
     }
 
     ssize_t write(const void * data, size_t len)
-    { 
+    {
         uint8_t buffer[65536];
         size_t towrite = 0;
-        int lentobuf = this->encrypt.write(buffer, sizeof(buffer), towrite, data, len); 
+        int lentobuf = this->encrypt.write(buffer, sizeof(buffer), towrite, data, len);
         if (lentobuf < 0) {
             return -1;
-        }        
+        }
         if (this->raw_write(buffer, towrite))
         {
             return -1;
@@ -668,7 +668,7 @@ public:
         {
             return -1;
         }
-    
+
         int res2 = 0;
         if (-1 != this->file_fd) {
             res2 = ::close(this->file_fd);
@@ -697,13 +697,13 @@ public:
     explicit wrmcapture_ocrypto_filter(iofdbuf & buf, CryptoContext & cctx, Random & rnd)
     : encrypt(cctx, rnd)
     , snk(buf)
-    
+
     {}
 
     int open(char const * filename) {
         size_t base_len = 0;
         const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-    
+
         uint8_t buffer[40];
         size_t towrite = 0;
         int err = this->encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
@@ -714,13 +714,13 @@ public:
     }
 
     ssize_t write(const void * data, size_t len)
-    { 
+    {
         uint8_t buffer[65536];
         size_t towrite = 0;
-        int lentobuf = this->encrypt.write(buffer, sizeof(buffer), towrite, data, len); 
+        int lentobuf = this->encrypt.write(buffer, sizeof(buffer), towrite, data, len);
         if (lentobuf < 0) {
             return -1;
-        }        
+        }
         if (this->raw_write(buffer, towrite))
         {
             return -1;
@@ -740,7 +740,7 @@ public:
         {
             return -1;
         }
-    
+
         int res2 = snk.close();
         return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
     }
@@ -990,13 +990,13 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
                                 return 1;
                             }
                         }
-                        
+
                         if (!err) {
                             using ull = unsigned long long;
                             using ll = long long;
-                            char mes[ (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 
-                                    + (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 
-                                    +  wrmcapture_hash_string_len + 1 
+                            char mes[ (std::numeric_limits<ll>::digits10 + 1 + 1) * 8
+                                    + (std::numeric_limits<ull>::digits10 + 1 + 1) * 2
+                                    +  wrmcapture_hash_string_len + 1
                                     +  2
                             ];
                             ssize_t len = std::sprintf(
@@ -1412,7 +1412,6 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             }
 
         protected:
-
             const char * ttt_rename_filename()
             {
                 const char * filename = this->ttt_get_filename_generate();
@@ -1535,7 +1534,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                 LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
                 return 1;
             }
-            
+
             auto pfile = filename;
             auto epfile = filename;
             for (; *epfile; ++epfile) {
@@ -1790,7 +1789,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             }
         }
 
-        ~MetaSeqBuf() 
+        ~MetaSeqBuf()
         {
             if (-1 != this->meta_buf_fd) {
                 ::close(this->meta_buf_fd);
@@ -1809,7 +1808,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                     return fd;
                 }
                 else {
-                    if (chmod(this->current_filename_, this->groupid_ 
+                    if (chmod(this->current_filename_, this->groupid_
                                 ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                         LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
                            , this->current_filename_
@@ -1826,7 +1825,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                 this->sumbuf_quick_hmac.init(this->sumbuf_hmac_key, sizeof(this->sumbuf_hmac_key));
                 this->sumbuf_file_size = 0;
             }
-            
+
             REDASSERT(this->sumbuf_file_size != nosize);
             this->sumbuf_hmac.update(static_cast<const uint8_t *>(data), len);
             if (this->sumbuf_file_size < quick_size) {
@@ -1949,7 +1948,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
                 LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
                 return 1;
             }
-            
+
             auto pfile = filename;
             auto epfile = filename;
             for (; *epfile; ++epfile) {
@@ -2058,7 +2057,7 @@ struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
             }
             return 1;
         }
-        
+
     private:
         int meta_buf_open(const char * filename, mode_t mode)
         {
@@ -2178,7 +2177,7 @@ private:
 
 
 
-struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport 
+struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 {
     private:
         class wrmcapture_out_hash_meta_sequence_filename_buf_impl_crypto
@@ -2532,7 +2531,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
         private:
             CryptoContext & cctx;
             Random & rnd;
-            
+
             wrmcapture_ocrypto_filter wrm_filter;
 
         public:
@@ -2700,7 +2699,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                         return 1;
                     }
                 }
-                    
+
                 using ull = unsigned long long;
                 using ll = long long;
                 char mes[
