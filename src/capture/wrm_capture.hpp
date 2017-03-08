@@ -865,6 +865,24 @@ public:
         }
     }
 
+    ssize_t open_filename(const char * filename)
+    {
+        snprintf(this->current_filename_, sizeof(this->current_filename_),
+                    "%sred-XXXXXX.tmp", filename);
+        const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+        if (fd < 0) {
+            return fd;
+        }
+        if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+               , this->current_filename_
+               , this->groupid_ ? "u+r, g+r" : "u+r"
+               , strerror(errno), errno);
+        }
+        this->filegen_.last_num = this->num_file_;
+        this->filegen_.last_filename = this->current_filename_;
+        return this->buf_.open(fd);
+    }
 };
 
 class MetaSeqBuf : public MSBuf
@@ -877,27 +895,6 @@ public:
     }
 
     ~MetaSeqBuf() {}
-
-    ssize_t open_filename(const char * filename)
-    {
-        snprintf(this->current_filename_, sizeof(this->current_filename_),
-                    "%sred-XXXXXX.tmp", filename);
-        const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
-        if (fd < 0) {
-            return fd;
-        }
-        
-        if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-               , this->current_filename_
-               , this->groupid_ ? "u+r, g+r" : "u+r"
-               , strerror(errno), errno);
-        }
-        this->filegen_.last_num = this->num_file_;
-        this->filegen_.last_filename = this->current_filename_;
-        return this->buf_.open(fd);
-    }
-
 
     ssize_t write(const void * data, size_t len)
     {
@@ -1270,25 +1267,6 @@ public:
     }
 
     ~MetaSeqBufSum() {}
-
-    ssize_t open_filename(const char * filename)
-    {
-        snprintf(this->current_filename_, sizeof(this->current_filename_),
-                    "%sred-XXXXXX.tmp", filename);
-        const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
-        if (fd < 0) {
-            return fd;
-        }
-        if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-               , this->current_filename_
-               , this->groupid_ ? "u+r, g+r" : "u+r"
-               , strerror(errno), errno);
-        }
-        this->filegen_.last_num = this->num_file_;
-        this->filegen_.last_filename = this->current_filename_;
-        return this->buf_.open(fd);
-    }
 
     ssize_t write(const void * data, size_t len)
     {
