@@ -1477,6 +1477,10 @@ class Sesman():
                                     "target_host": self._physical_target_host }
                     if is_interactive_login:
                         update_args["effective_login"] = kv.get('target_login')
+                    if self.full_path:
+                        # RT available if recording
+                        # TODO: decorrelate RT and recording
+                        update_args["rt"] = True
 
                     self.engine.update_session_target(physical_target,
                                                       **update_args)
