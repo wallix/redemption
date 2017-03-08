@@ -105,10 +105,7 @@ struct wrmcapture_OutFilenameSequenceTransport : public Transport
 
     void request_full_cleaning() override {
         unsigned i = this->num_file_ + 1;
-        while (i > 0 && !::unlink(
-            (--i == this->filegen_.last_num && this->filegen_.last_filename)
-                ? this->filegen_.last_filename
-                : this->filegen_.get(i))) {}
+        while (i > 0 && !::unlink(this->filegen_.get(--i))) {}
         if (this->buf_.is_open()) {
             this->buf_.close();
         }
@@ -154,10 +151,7 @@ private:
     ssize_t write(const void * data, size_t len)
     {
         if (!this->buf_.is_open()) {
-            const char * filename = (this->num_file_ == this->filegen_.last_num && this->filegen_.last_filename)
-                                    ? this->filegen_.last_filename
-                                    : this->filegen_.get(this->num_file_);
-            const int res = this->open_filename(filename);
+            const int res = this->open_filename(this->filegen_.get(this->num_file_));
             if (res < 0) {
                 return res;
             }
@@ -174,11 +168,8 @@ private:
         if (!this->current_filename_[0] && !this->num_file_) {
             return nullptr;
         }
-        const char * filename = (this->num_file_ -1 == this->filegen_.last_num && this->filegen_.last_filename)
-                                ? this->filegen_.last_filename
-                                : this->filegen_.get(this->num_file_-1);
         
-        return filename;
+        return this->filegen_.get(this->num_file_-1);
     }
 
 protected:
@@ -196,16 +187,12 @@ protected:
                , this->groupid_ ? "u+r, g+r" : "u+r"
                , strerror(errno), errno);
         }
-        this->filegen_.last_num = this->num_file_;
-        this->filegen_.last_filename = this->current_filename_;
         return this->buf_.open(fd);
     }
 
     const char * rename_filename()
     {
         const char * filename = this->filegen_.get(this->num_file_);
-        this->filegen_.last_num = this->num_file_;
-        this->filegen_.last_filename = this->current_filename_;
         const int res = ::rename(this->current_filename_, filename);
         if (res < 0) {
             LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
@@ -215,9 +202,6 @@ protected:
 
         this->current_filename_[0] = 0;
         ++this->num_file_;
-        this->filegen_.last_num = -1u;
-        this->filegen_.last_filename = "";
-
         return filename;
     }
 };
