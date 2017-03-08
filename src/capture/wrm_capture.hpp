@@ -76,6 +76,7 @@ private:
     char         extension[12];
     mutable char filename_gen[1024];
 
+public:
     const char * last_filename;
     unsigned     last_num;
 
@@ -97,21 +98,11 @@ public:
         this->filename_gen[0] = 0;
     }
 
-    const char * get(unsigned count) const
+    const char * get(int count) const
     {
-        if (count == this->last_num && this->last_filename) {
-            return this->last_filename;
-        }
-
         std::snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
                 , this->filename, count, this->extension);
         return this->filename_gen;
-    }
-
-    void set_last_filename(unsigned num, const char * name)
-    {
-        this->last_num = num;
-        this->last_filename = name;
     }
 };
 
@@ -775,10 +766,26 @@ struct MSBuf {
     time_t start_sec_;
     time_t stop_sec_;
 
+    bool with_checksum;
     CryptoContext & cctx;
+    
+
+// Only for Checksum Management
+    static constexpr size_t nosize = ~size_t{};
+    static constexpr size_t quick_size = 4096;
+
+    SslHMAC_Sha256_Delayed meta_buf_hmac;
+    SslHMAC_Sha256_Delayed meta_buf_quick_hmac;
+    size_t meta_buf_file_size = nosize;
+
+    SslHMAC_Sha256_Delayed sumbuf_hmac;
+    SslHMAC_Sha256_Delayed sumbuf_quick_hmac;
+    size_t sumbuf_file_size = nosize;
+
 
 public:
     explicit MSBuf(
+        bool with_checksum,
         CryptoContext & cctx,
         time_t start_sec,
         const char * const hash_prefix,
@@ -797,6 +804,7 @@ public:
     , hf_(hash_prefix, filename)
     , start_sec_(start_sec)
     , stop_sec_(start_sec)
+    , with_checksum(with_checksum)
     , cctx(cctx)
     {
         this->current_filename_[0] = 0;
@@ -811,10 +819,28 @@ public:
                , "u+r, g+r"
                , strerror(errno), errno);
         }
+        if (this->with_checksum) {
+            this->meta_buf_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+            this->meta_buf_quick_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+            this->meta_buf_file_size = 0;
+        }
     }
 
     ssize_t meta_buf_write(const void * data, size_t len)
     {
+        if (this->with_checksum) {
+            REDASSERT(this->meta_buf_file_size != nosize);
+
+            // TODO: hmac returns error as exceptions while write errors are returned as -1
+            // this is inconsistent and probably need a fix.
+            // also, if we choose to raise exception every error should have it's own one
+            this->meta_buf_hmac.update(static_cast<const uint8_t *>(data), len);
+            if (this->meta_buf_file_size < quick_size) {
+                auto const remaining = std::min(quick_size - this->meta_buf_file_size, len);
+                this->meta_buf_quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
+                this->meta_buf_file_size += remaining;
+            }
+        }
         size_t remaining_len = len;
         size_t total_sent = 0;
         while (remaining_len) {
@@ -841,33 +867,16 @@ public:
 
 };
 
-class MetaSeqBuf : MSBuf
+class MetaSeqBuf : public MSBuf
 {
 
 public:
-    ssize_t meta_buf_write(const void * data, size_t len) {
-        return this->MSBuf::meta_buf_write(data, len);
-    }
-
     explicit MetaSeqBuf(CryptoContext & cctx, time_t start_sec, const char * const hash_prefix, const char * const prefix, const char * const filename, const char * const extension, const int groupid)
-    : MSBuf(cctx, start_sec, hash_prefix, prefix, filename, extension, groupid)
+    : MSBuf(false, cctx, start_sec, hash_prefix, prefix, filename, extension, groupid)
     {
     }
 
-    ~MetaSeqBuf()
-    {
-    }
-
-    ssize_t write(const void * data, size_t len)
-    {
-        if (!this->buf_.is_open()) {
-            const int res = this->open_filename(this->filegen_.get(this->num_file_));
-            if (res < 0) {
-                return res;
-            }
-        }
-        return this->buf_.write(data, len);
-    }
+    ~MetaSeqBuf() {}
 
     ssize_t open_filename(const char * filename)
     {
@@ -877,15 +886,33 @@ public:
         if (fd < 0) {
             return fd;
         }
+        
         if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
             LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
                , this->current_filename_
                , this->groupid_ ? "u+r, g+r" : "u+r"
                , strerror(errno), errno);
         }
-        this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+        this->filegen_.last_num = this->num_file_;
+        this->filegen_.last_filename = this->current_filename_;
         return this->buf_.open(fd);
     }
+
+
+    ssize_t write(const void * data, size_t len)
+    {
+        if (!this->buf_.is_open()) {
+            const char * filename = (this->num_file_ == this->filegen_.last_num && this->filegen_.last_filename)
+                                    ? this->filegen_.last_filename
+                                    : this->filegen_.get(this->num_file_);
+            const int res = this->open_filename(filename);
+            if (res < 0) {
+                return res;
+            }
+        }
+        return this->buf_.write(data, len);
+    }
+
 
     iofdbuf & buf() noexcept
     { return this->buf_; }
@@ -895,7 +922,11 @@ public:
         if (!this->current_filename_[0] && !this->num_file_) {
             return nullptr;
         }
-        return this->filegen_.get(this->num_file_ - 1);
+        const char * filename = (this->num_file_ -1 == this->filegen_.last_num && this->filegen_.last_filename)
+                                ? this->filegen_.last_filename
+                                : this->filegen_.get(this->num_file_-1);
+
+        return filename;
     }
 
     int close()
@@ -1091,38 +1122,22 @@ public:
 
 private:
 
-    const char * rename_filename()
+    int next_meta_file(wrmcapture_hash_type const * hash = nullptr)
     {
-        const char * filename = this->get_filename_generate();
-        const int res = ::rename(this->current_filename_, filename);
-        if (res < 0) {
+        // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+        const char * filename = this->filegen_.get(this->num_file_);
+        this->filegen_.last_num = this->num_file_;
+        this->filegen_.last_filename = this->current_filename_;
+        if (::rename(this->current_filename_, filename) < 0) {
             LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
                , this->current_filename_, filename, errno, strerror(errno));
-            return nullptr;
+            return 1;
         }
 
         this->current_filename_[0] = 0;
         ++this->num_file_;
-        this->filegen_.set_last_filename(-1u, "");
-
-        return filename;
-    }
-
-    const char * get_filename_generate()
-    {
-        this->filegen_.set_last_filename(-1u, "");
-        const char * filename = this->filegen_.get(this->num_file_);
-        this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-        return filename;
-    }
-
-    int next_meta_file(wrmcapture_hash_type const * hash = nullptr)
-    {
-        // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-        const char * filename = this->rename_filename();
-        if (!filename) {
-            return 1;
-        }
+        this->filegen_.last_num = -1u;
+        this->filegen_.last_filename = "";
 
         struct stat stat;
         int err = ::stat(filename, &stat);
@@ -1228,7 +1243,12 @@ public:
     void request_full_cleaning()
     {
         unsigned i = this->num_file_ + 1;
-        while (i > 0 && !::unlink(this->filegen_.get(--i))) {
+        while (i > 0 
+            && !::unlink(
+                    (--i == this->filegen_.last_num && this->filegen_.last_filename)
+                    ? this->filegen_.last_filename
+                    : this->filegen_.get(i))) 
+        {
         }
         if (this->buf_.is_open()) {
             this->buf_.close();
@@ -1240,52 +1260,16 @@ public:
     { this->stop_sec_ = sec; }
 };
 
-class MetaSeqBufSum : MSBuf
+class MetaSeqBufSum : public MSBuf
 {
-    static constexpr size_t nosize = ~size_t{};
-    static constexpr size_t quick_size = 4096;
-
-    SslHMAC_Sha256_Delayed meta_buf_hmac;
-    SslHMAC_Sha256_Delayed meta_buf_quick_hmac;
-    unsigned char const (&meta_buf_hmac_key)[MD_HASH_LENGTH];
-    size_t meta_buf_file_size = nosize;
-
-    SslHMAC_Sha256_Delayed sumbuf_hmac;
-    SslHMAC_Sha256_Delayed sumbuf_quick_hmac;
-    unsigned char const (&sumbuf_hmac_key)[MD_HASH_LENGTH];
-    size_t sumbuf_file_size = nosize;
-
 public:
-    ssize_t meta_buf_write(const void * data, size_t len)
-    {
-        REDASSERT(this->meta_buf_file_size != nosize);
-
-        // TODO: hmac returns error as exceptions while write errors are returned as -1
-        // this is inconsistent and probably need a fix.
-        // also, if we choose to raise exception every error should have it's own one
-        this->meta_buf_hmac.update(static_cast<const uint8_t *>(data), len);
-        if (this->meta_buf_file_size < quick_size) {
-            auto const remaining = std::min(quick_size - this->meta_buf_file_size, len);
-            this->meta_buf_quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
-            this->meta_buf_file_size += remaining;
-        }
-        return this->MSBuf::meta_buf_write(data, len);
-    }
 
     explicit MetaSeqBufSum(CryptoContext & cctx, time_t start_sec, const char * const hash_prefix, const char * const prefix, const char * const filename, const char * const extension, const int groupid)
-    : MSBuf(cctx, start_sec, hash_prefix, prefix, filename, extension, groupid)
-    , meta_buf_hmac_key(cctx.get_hmac_key())
-    , sumbuf_hmac_key(cctx.get_hmac_key())
-    {
-        this->meta_buf_hmac.init(this->meta_buf_hmac_key, sizeof(this->meta_buf_hmac_key));
-        this->meta_buf_quick_hmac.init(this->meta_buf_hmac_key, sizeof(this->meta_buf_hmac_key));
-        this->meta_buf_file_size = 0;
-    }
-
-    ~MetaSeqBufSum()
+    : MSBuf(true, cctx, start_sec, hash_prefix, prefix, filename, extension, groupid)
     {
     }
 
+    ~MetaSeqBufSum() {}
 
     ssize_t open_filename(const char * filename)
     {
@@ -1301,20 +1285,23 @@ public:
                , this->groupid_ ? "u+r, g+r" : "u+r"
                , strerror(errno), errno);
         }
-        this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+        this->filegen_.last_num = this->num_file_;
+        this->filegen_.last_filename = this->current_filename_;
         return this->buf_.open(fd);
     }
 
     ssize_t write(const void * data, size_t len)
     {
         if (!this->buf_.is_open()) {
-            const char * filename = this->get_filename_generate();
+            const char * filename = this->filegen_.get(this->num_file_);
+            this->filegen_.last_num = this->num_file_;
+            this->filegen_.last_filename = this->current_filename_;
             int res = this->open_filename(filename);
             if (res < 0) {
                 return res;
             }
-            this->sumbuf_hmac.init(this->sumbuf_hmac_key, sizeof(this->sumbuf_hmac_key));
-            this->sumbuf_quick_hmac.init(this->sumbuf_hmac_key, sizeof(this->sumbuf_hmac_key));
+            this->sumbuf_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+            this->sumbuf_quick_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
             this->sumbuf_file_size = 0;
         }
 
@@ -1335,33 +1322,11 @@ public:
             if (!this->current_filename_[0] && !this->num_file_) {
                 return nullptr;
             }
-            return this->filegen_.get(this->num_file_ - 1);
-        }
-
-    protected:
-
-        const char * ttt_rename_filename()
-        {
-            const char * filename = this->get_filename_generate();
-            const int res = ::rename(this->current_filename_, filename);
-            if (res < 0) {
-                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                   , this->current_filename_, filename, errno, strerror(errno));
-                return nullptr;
-            }
-
-            this->current_filename_[0] = 0;
-            ++this->num_file_;
-            this->filegen_.set_last_filename(-1u, "");
-
-            return filename;
-        }
-
-        const char * get_filename_generate()
-        {
-            this->filegen_.set_last_filename(-1u, "");
-            const char * filename = this->filegen_.get(this->num_file_);
-            this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+            const char * filename = (this->num_file_ - 1 == this->filegen_.last_num 
+                                    && this->filegen_.last_filename)
+                                ? this->filegen_.last_filename
+                                : this->filegen_.get(this->num_file_ - 1);
+            
             return filename;
         }
 
@@ -1546,7 +1511,9 @@ protected:
     int ttt_next_meta_file(wrmcapture_hash_type const * hash = nullptr)
     {
         // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->ttt_current_filename, this->ttt_rename_to);
-        const char * filename = this->get_filename_generate();
+        const char * filename = this->filegen_.get(this->num_file_);
+        this->filegen_.last_num = this->num_file_;
+        this->filegen_.last_filename = this->current_filename_;
         const int res = ::rename(this->current_filename_, filename);
         if (res < 0) {
             LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
@@ -1556,7 +1523,8 @@ protected:
 
         this->current_filename_[0] = 0;
         ++this->num_file_;
-        this->filegen_.set_last_filename(-1u, "");
+        this->filegen_.last_num = -1u;
+        this->filegen_.last_filename = "";
 
         auto start_sec = this->start_sec_;
         auto stop_sec = this->stop_sec_+1;
@@ -1663,7 +1631,11 @@ public:
     void request_full_cleaning()
     {
         unsigned i = this->num_file_ + 1;
-        while (i > 0 && !::unlink(this->filegen_.get(--i))) {
+        while (i > 0 && 0 == ::unlink(
+                (--i == this->filegen_.last_num 
+                && this->filegen_.last_filename)
+                ? this->filegen_.last_filename
+                : this->filegen_.get(i))) {
         }
         if (this->buf_.is_open()) {
             this->buf_.close();
@@ -2103,33 +2075,11 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 if (!this->current_filename_[0] && !this->num_file_) {
                     return nullptr;
                 }
-                return this->filegen_.get(this->num_file_ - 1);
-            }
+                const char * filename = (this->num_file_ - 1 == this->filegen_.last_num 
+                        && this->filegen_.last_filename)
+                    ? this->filegen_.last_filename
+                    : this->filegen_.get(this->num_file_ - 1);
 
-        protected:
-
-            const char * rename_filename()
-            {
-                const char * filename = this->get_filename_generate();
-                const int res = ::rename(this->current_filename_, filename);
-                if (res < 0) {
-                    LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                       , this->current_filename_, filename, errno, strerror(errno));
-                    return nullptr;
-                }
-
-                this->current_filename_[0] = 0;
-                ++this->num_file_;
-                this->filegen_.set_last_filename(-1u, "");
-
-                return filename;
-            }
-
-            const char * get_filename_generate()
-            {
-                this->filegen_.set_last_filename(-1u, "");
-                const char * filename = this->filegen_.get(this->num_file_);
-                this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
                 return filename;
             }
 
@@ -2322,10 +2272,19 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             int next_meta_file(wrmcapture_hash_type const * hash = nullptr)
             {
                 // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-                const char * filename = this->rename_filename();
-                if (!filename) {
+                const char * filename = this->filegen_.get(this->num_file_);
+                this->filegen_.last_num = this->num_file_;
+                this->filegen_.last_filename = this->current_filename_;
+                if (::rename(this->current_filename_, filename) < 0) {
+                    LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                       , this->current_filename_, filename, errno, strerror(errno));
                     return 1;
                 }
+
+                this->current_filename_[0] = 0;
+                ++this->num_file_;
+                this->filegen_.last_num = -1u;
+                this->filegen_.last_filename = "";
 
                 auto start_sec = this->start_sec_;
                 auto stop_sec = this->stop_sec_+1;
@@ -2424,7 +2383,11 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             void xxx_request_full_cleaning()
             {
                 unsigned i = this->num_file_ + 1;
-                while (i > 0 && !::unlink(this->filegen_.get(--i))) {
+                while (i > 0 && !::unlink(
+                    (--i == this->filegen_.last_num 
+                    && this->filegen_.last_filename)
+                    ? this->filegen_.last_filename
+                    : this->filegen_.get(i))) {
                 }
                 if (this->buf_.is_open()) {
                     this->buf_.close();
@@ -2481,7 +2444,9 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             ssize_t write(const void * data, size_t len)
             {
                 if (!this->buf_.is_open()) {
-                    const char * filename = this->get_filename_generate();
+                    const char * filename = this->filegen_.get(this->num_file_);
+                    this->filegen_.last_num = this->num_file_;
+                    this->filegen_.last_filename = this->current_filename_;
                     snprintf(this->current_filename_, sizeof(this->current_filename_),
                             "%sred-XXXXXX.tmp", filename);
                     const int fd = ::mkostemps(this->current_filename_, 4
@@ -2496,7 +2461,8 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                             , this->groupid_ ? "u+r, g+r" : "u+r"
                             , strerror(errno), errno);
                     }
-                    this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+                    this->filegen_.last_num = this->num_file_;
+                    this->filegen_.last_filename = this->current_filename_;
                     const int res = this->buf_.open(fd);
                     if (res < 0) {
                         return res;
