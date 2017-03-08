@@ -911,18 +911,170 @@ public:
         }
         return this->filegen_.get(this->num_file_ - 1);
     }
-};
 
-class MetaSeqBuf : public MSBuf
-{
-
-public:
-    explicit MetaSeqBuf(CryptoContext & cctx, time_t start_sec, const char * const hash_prefix, const char * const prefix, const char * const filename, const char * const extension, const int groupid)
-    : MSBuf(false, cctx, start_sec, hash_prefix, prefix, filename, extension, groupid)
+    int next_meta_file(wrmcapture_hash_type const * hash)
     {
+        const char * filename = this->filegen_.get(this->num_file_);
+        if (::rename(this->current_filename_, filename) < 0) {
+            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+               , this->current_filename_, filename, errno, strerror(errno));
+            return 1;
+        }
+        this->current_filename_[0] = 0;
+        this->num_file_ ++;
+
+        struct stat stat;
+        int err = ::stat(filename, &stat);
+        if (err){
+            return err;
+        }
+
+        auto pfile = filename;
+        auto epfile = filename;
+        for (; *epfile; ++epfile) {
+            if (*epfile == '\\') {
+                ssize_t len = epfile - pfile + 1;
+                auto res = this->meta_buf_write(pfile, len);
+                if (res < len) {
+                    return res < 0 ? res : 1;
+                }
+                pfile = epfile;
+            }
+            if (*epfile == ' ') {
+                ssize_t len = epfile - pfile;
+                auto res = this->meta_buf_write(pfile, len);
+                if (res < len) {
+                    return res < 0 ? res : 1;
+                }
+                res = this->meta_buf_write("\\", 1u);
+                if (res < 1) {
+                    return res < 0 ? res : 1;
+                }
+                pfile = epfile;
+            }
+        }
+
+        if (pfile != epfile) {
+            ssize_t len = epfile - pfile;
+            auto res = this->meta_buf_write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+        }
+
+        if (this->with_checksum) {
+            using ull = unsigned long long;
+            using ll = long long;
+            char mes[
+                (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+                (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+                wrmcapture_hash_string_len + 1 +
+                2
+            ];
+            ssize_t len = std::sprintf(
+                mes,
+                " %lld %llu %lld %lld %llu %lld %lld %lld",
+                ll(stat.st_size),
+                ull(stat.st_mode),
+                ll(stat.st_uid),
+                ll(stat.st_gid),
+                ull(stat.st_dev),
+                ll(stat.st_ino),
+                ll(stat.st_mtim.tv_sec),
+                ll(stat.st_ctim.tv_sec)
+            );
+            len += std::sprintf(
+                mes + len,
+                " %lld %lld",
+                ll(this->start_sec_),
+                ll(this->stop_sec_+1)
+            );
+
+            char * p = mes + len;
+            auto write = [&p](unsigned char const * hash) {
+                *p++ = ' ';                // 1 octet
+                for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+                    sprintf(p, "%02x", c); // 64 octets (hash)
+                    p += 2;
+                }
+            };
+            write(reinterpret_cast<const unsigned char *>(&hash[0]));
+            write(reinterpret_cast<const unsigned char *>(&hash[MD_HASH_LENGTH]));
+            *p++ = '\n';
+
+            ssize_t res1 = this->meta_buf_write(mes, p-mes);
+
+            if (res1 < p-mes) {
+                return res1 < 0 ? res1 : 1;
+            }
+
+            this->start_sec_ = this->stop_sec_;
+
+            return 0;
+        }
+        else {
+            using ull = unsigned long long;
+            using ll = long long;
+            char mes[
+                (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+                (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+                wrmcapture_hash_string_len + 1 +
+                2
+            ];
+            ssize_t len = std::sprintf(
+                mes,
+                " %lld %llu %lld %lld %llu %lld %lld %lld",
+                ll(stat.st_size),
+                ull(stat.st_mode),
+                ll(stat.st_uid),
+                ll(stat.st_gid),
+                ull(stat.st_dev),
+                ll(stat.st_ino),
+                ll(stat.st_mtim.tv_sec),
+                ll(stat.st_ctim.tv_sec)
+            );
+            len += std::sprintf(
+                mes + len,
+                " %lld %lld",
+                ll(this->start_sec_),
+                ll(this->stop_sec_+1)
+            );
+
+            char * p = mes + len;
+            if (hash) {
+                auto write = [&p](unsigned char const * hash) {
+                    *p++ = ' ';                // 1 octet
+                    for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+                        sprintf(p, "%02x", c); // 64 octets (hash)
+                        p += 2;
+                    }
+                };
+                write(&(*hash[0]));
+                write(&(*hash[MD_HASH_LENGTH]));
+            }
+            *p++ = '\n';
+
+            ssize_t res = this->meta_buf_write(mes, p-mes);
+
+            if (res < p-mes) {
+                return res < 0 ? res : 1;
+            }
+
+            this->start_sec_ = this->stop_sec_;
+            return 0;
+        }
+        return 0;
     }
 
-    ~MetaSeqBuf() {}
+    /// \return 0 if success
+    int next()
+    {
+        if (this->buf_.is_open()) {
+            this->buf_.close();
+            return this->next_meta_file(nullptr);
+        }
+        return 1;
+    }
 
     int close()
     {
@@ -935,7 +1087,7 @@ public:
         int err = res1 ? res1 : res2;
         if (!err) {
             char const * hash_filename = this->hf_.filename;
-            char const * meta_filename = this->meta_filename();
+            char const * meta_filename = this->mf_.filename;
             class wrmcapture_ofile_buf_out
             {
                 int fd;
@@ -1105,128 +1257,23 @@ public:
         return err;
     }
 
-    /// \return 0 if success
-    int next()
+};
+
+class MetaSeqBuf : public MSBuf
+{
+
+public:
+    explicit MetaSeqBuf(CryptoContext & cctx, time_t start_sec, const char * const hash_prefix, const char * const prefix, const char * const filename, const char * const extension, const int groupid)
+    : MSBuf(false, cctx, start_sec, hash_prefix, prefix, filename, extension, groupid)
     {
-        if (this->buf_.is_open()) {
-            this->buf_.close();
-            return this->next_meta_file(nullptr);
-        }
-        return 1;
     }
+
+    ~MetaSeqBuf() {}
+
+
 
 private:
 
-    int next_meta_file(wrmcapture_hash_type const * hash)
-    {
-        const char * filename = this->filegen_.get(this->num_file_);
-        if (::rename(this->current_filename_, filename) < 0) {
-            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-               , this->current_filename_, filename, errno, strerror(errno));
-            return 1;
-        }
-        this->current_filename_[0] = 0;
-        this->num_file_ ++;
-
-        struct stat stat;
-        int err = ::stat(filename, &stat);
-
-        if (err){
-            return err;
-        }
-        auto pfile = filename;
-        auto epfile = filename;
-        for (; *epfile; ++epfile) {
-            if (*epfile == '\\') {
-                ssize_t len = epfile - pfile + 1;
-                auto res = this->meta_buf_write(pfile, len);
-                if (res < len) {
-                    return res < 0 ? res : 1;
-                }
-                pfile = epfile;
-            }
-            if (*epfile == ' ') {
-                ssize_t len = epfile - pfile;
-                auto res = this->meta_buf_write(pfile, len);
-                if (res < len) {
-                    return res < 0 ? res : 1;
-                }
-                res = this->meta_buf_write("\\", 1u);
-                if (res < 1) {
-                    return res < 0 ? res : 1;
-                }
-                pfile = epfile;
-            }
-        }
-
-        if (pfile != epfile) {
-            ssize_t len = epfile - pfile;
-            auto res = this->meta_buf_write(pfile, len);
-            if (res < len) {
-                return res < 0 ? res : 1;
-            }
-        }
-
-        using ull = unsigned long long;
-        using ll = long long;
-        char mes[
-            (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-            (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-            wrmcapture_hash_string_len + 1 +
-            2
-        ];
-        ssize_t len = std::sprintf(
-            mes,
-            " %lld %llu %lld %lld %llu %lld %lld %lld",
-            ll(stat.st_size),
-            ull(stat.st_mode),
-            ll(stat.st_uid),
-            ll(stat.st_gid),
-            ull(stat.st_dev),
-            ll(stat.st_ino),
-            ll(stat.st_mtim.tv_sec),
-            ll(stat.st_ctim.tv_sec)
-        );
-        len += std::sprintf(
-            mes + len,
-            " %lld %lld",
-            ll(this->start_sec_),
-            ll(this->stop_sec_+1)
-        );
-
-        char * p = mes + len;
-        if (hash) {
-            auto write = [&p](unsigned char const * hash) {
-                *p++ = ' ';                // 1 octet
-                for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
-                    sprintf(p, "%02x", c); // 64 octets (hash)
-                    p += 2;
-                }
-            };
-            write(&(*hash[0]));
-            write(&(*hash[MD_HASH_LENGTH]));
-        }
-        *p++ = '\n';
-
-        ssize_t res = this->meta_buf_write(mes, p-mes);
-
-        if (res < p-mes) {
-            return res < 0 ? res : 1;
-        }
-
-        this->start_sec_ = this->stop_sec_;
-        return 0;
-    }
-
-    char const * hash_filename() const noexcept
-    {
-        return this->hf_.filename;
-    }
-
-    char const * meta_filename() const noexcept
-    {
-        return this->mf_.filename;
-    }
 
 public:
     void request_full_cleaning()
@@ -1640,110 +1687,6 @@ public:
 
 
 protected:
-    int next_meta_file(wrmcapture_hash_type const * hash)
-    {
-        // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->ttt_current_filename, this->ttt_rename_to);
-        const char * filename = this->filegen_.get(this->num_file_);
-        const int res = ::rename(this->current_filename_, filename);
-        if (res < 0) {
-            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-               , this->current_filename_, filename, errno, strerror(errno));
-            return 1;
-        }
-
-        this->current_filename_[0] = 0;
-        this->num_file_ ++;
-
-        auto start_sec = this->start_sec_;
-        auto stop_sec = this->stop_sec_+1;
-
-        struct stat stat;
-        int err = ::stat(filename, &stat);
-        if (err){
-            return err;
-        }
-        auto pfile = filename;
-        auto epfile = filename;
-        for (; *epfile; ++epfile) {
-            if (*epfile == '\\') {
-                ssize_t len = epfile - pfile + 1;
-                auto res = this->meta_buf_write(pfile, len);
-                if (res < len) {
-                    return res < 0 ? res : 1;
-                }
-                pfile = epfile;
-            }
-            if (*epfile == ' ') {
-                ssize_t len = epfile - pfile;
-                auto res = this->meta_buf_write(pfile, len);
-                if (res < len) {
-                    return res < 0 ? res : 1;
-                }
-                res = this->meta_buf_write("\\", 1u);
-                if (res < 1) {
-                    return res < 0 ? res : 1;
-                }
-                pfile = epfile;
-            }
-        }
-
-        if (pfile != epfile) {
-            ssize_t len = epfile - pfile;
-            auto res = this->meta_buf_write(pfile, len);
-            if (res < len) {
-                return res < 0 ? res : 1;
-            }
-        }
-
-        using ull = unsigned long long;
-        using ll = long long;
-        char mes[
-            (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-            (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-            wrmcapture_hash_string_len + 1 +
-            2
-        ];
-        ssize_t len = std::sprintf(
-            mes,
-            " %lld %llu %lld %lld %llu %lld %lld %lld",
-            ll(stat.st_size),
-            ull(stat.st_mode),
-            ll(stat.st_uid),
-            ll(stat.st_gid),
-            ull(stat.st_dev),
-            ll(stat.st_ino),
-            ll(stat.st_mtim.tv_sec),
-            ll(stat.st_ctim.tv_sec)
-        );
-        len += std::sprintf(
-            mes + len,
-            " %lld %lld",
-            ll(start_sec),
-            ll(stop_sec)
-        );
-
-        char * p = mes + len;
-        auto write = [&p](unsigned char const * hash) {
-            *p++ = ' ';                // 1 octet
-            for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
-                sprintf(p, "%02x", c); // 64 octets (hash)
-                p += 2;
-            }
-        };
-        write(reinterpret_cast<const unsigned char *>(&hash[0]));
-        write(reinterpret_cast<const unsigned char *>(&hash[MD_HASH_LENGTH]));
-        *p++ = '\n';
-
-        ssize_t res1 = this->meta_buf_write(mes, p-mes);
-
-        if (res1 < p-mes) {
-            return res1 < 0 ? res1 : 1;
-        }
-
-        this->start_sec_ = this->stop_sec_;
-
-        return 0;
-    }
 
 public:
     void request_full_cleaning()
