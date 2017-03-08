@@ -1685,9 +1685,6 @@ public:
         return 0;
     }
 
-
-protected:
-
 public:
     void request_full_cleaning()
     {
@@ -1704,8 +1701,6 @@ public:
 
     void update_sec(time_t sec)
     { this->stop_sec_ = sec; }
-
-
 
 
     int next()
