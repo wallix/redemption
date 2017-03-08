@@ -905,6 +905,7 @@ public:
     
     const char * current_path() const
     {
+        // TODO: before the first write, no file created yet
         if (!this->current_filename_[0] && !this->num_file_) {
             return nullptr;
         }
@@ -922,11 +923,6 @@ public:
     }
 
     ~MetaSeqBuf() {}
-
-
-    iofdbuf & buf() noexcept
-    { return this->buf_; }
-
 
     int close()
     {
@@ -1112,8 +1108,8 @@ public:
     /// \return 0 if success
     int next()
     {
-        if (this->buf().is_open()) {
-            this->buf().close();
+        if (this->buf_.is_open()) {
+            this->buf_.close();
             return this->next_meta_file(nullptr);
         }
         return 1;
@@ -1281,7 +1277,7 @@ public:
             }
         }
         char const * hash_filename = this->hf_.filename;
-        char const * meta_filename = this->ttt_meta_filename();
+        char const * meta_filename = this->mf_.filename;
         class wrmcapture_ofile_buf_out
         {
             int fd;
@@ -1518,8 +1514,8 @@ public:
             }
         }
 
-        char const * hash_filename = this->ttt_hash_filename();
-        char const * meta_filename = this->ttt_meta_filename();
+        char const * hash_filename = this->hf_.filename;
+        char const * meta_filename = this->mf_.filename;
 
         char path[1024] = {};
         char basename[1024] = {};
@@ -1747,16 +1743,6 @@ protected:
         this->start_sec_ = this->stop_sec_;
 
         return 0;
-    }
-
-    char const * ttt_hash_filename() const noexcept
-    {
-        return this->hf_.filename;
-    }
-
-    char const * ttt_meta_filename() const noexcept
-    {
-        return this->mf_.filename;
     }
 
 public:
