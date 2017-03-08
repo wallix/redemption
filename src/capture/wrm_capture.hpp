@@ -1034,10 +1034,9 @@ public:
         if (!err) {
             char const * hash_filename = this->hf_.filename;
             char const * meta_filename = this->mf_.filename;
-            class wrmcapture_ofile_buf_out
+            struct wrmcapture_ofile_buf_out
             {
                 int fd;
-            public:
                 wrmcapture_ofile_buf_out() : fd(-1) {}
                 ~wrmcapture_ofile_buf_out()
                 {
@@ -1101,7 +1100,14 @@ public:
 
             snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
-            if (crypto_hash.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+            if (-1 != crypto_hash.fd) {
+                const int ret = ::close(crypto_hash.fd);
+                crypto_hash.fd = -1;
+                return ret;
+            }
+            crypto_hash.fd = ::open(hash_filename, O_WRONLY | O_CREAT, S_IRUSR|S_IRGRP);
+
+            if (crypto_hash.fd != 0) {
                 char header[] = "v2\n\n\n";
                 crypto_hash.write(header, sizeof(header)-1);
 
