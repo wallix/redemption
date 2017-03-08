@@ -962,35 +962,35 @@ public:
             }
         }
 
-        if (this->with_checksum) {
-            using ull = unsigned long long;
-            using ll = long long;
-            char mes[
-                (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-                (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-                wrmcapture_hash_string_len + 1 +
-                2
-            ];
-            ssize_t len = std::sprintf(
-                mes,
-                " %lld %llu %lld %lld %llu %lld %lld %lld",
-                ll(stat.st_size),
-                ull(stat.st_mode),
-                ll(stat.st_uid),
-                ll(stat.st_gid),
-                ull(stat.st_dev),
-                ll(stat.st_ino),
-                ll(stat.st_mtim.tv_sec),
-                ll(stat.st_ctim.tv_sec)
-            );
-            len += std::sprintf(
-                mes + len,
-                " %lld %lld",
-                ll(this->start_sec_),
-                ll(this->stop_sec_+1)
-            );
+        using ull = unsigned long long;
+        using ll = long long;
+        char mes[
+            (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+            (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+            wrmcapture_hash_string_len + 1 +
+            2
+        ];
+        ssize_t len = std::sprintf(
+            mes,
+            " %lld %llu %lld %lld %llu %lld %lld %lld",
+            ll(stat.st_size),
+            ull(stat.st_mode),
+            ll(stat.st_uid),
+            ll(stat.st_gid),
+            ull(stat.st_dev),
+            ll(stat.st_ino),
+            ll(stat.st_mtim.tv_sec),
+            ll(stat.st_ctim.tv_sec)
+        );
+        len += std::sprintf(
+            mes + len,
+            " %lld %lld",
+            ll(this->start_sec_),
+            ll(this->stop_sec_+1)
+        );
+        char * p = mes + len;
 
-            char * p = mes + len;
+        if (this->with_checksum || hash) {
             auto write = [&p](unsigned char const * hash) {
                 *p++ = ' ';                // 1 octet
                 for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
@@ -998,71 +998,17 @@ public:
                     p += 2;
                 }
             };
-            write(reinterpret_cast<const unsigned char *>(&hash[0]));
-            write(reinterpret_cast<const unsigned char *>(&hash[MD_HASH_LENGTH]));
-            *p++ = '\n';
-
-            ssize_t res1 = this->meta_buf_write(mes, p-mes);
-
-            if (res1 < p-mes) {
-                return res1 < 0 ? res1 : 1;
-            }
-
-            this->start_sec_ = this->stop_sec_;
-
-            return 0;
+            write(&(*hash[0]));
+            write(&(*hash[MD_HASH_LENGTH]));
         }
-        else {
-            using ull = unsigned long long;
-            using ll = long long;
-            char mes[
-                (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-                (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-                wrmcapture_hash_string_len + 1 +
-                2
-            ];
-            ssize_t len = std::sprintf(
-                mes,
-                " %lld %llu %lld %lld %llu %lld %lld %lld",
-                ll(stat.st_size),
-                ull(stat.st_mode),
-                ll(stat.st_uid),
-                ll(stat.st_gid),
-                ull(stat.st_dev),
-                ll(stat.st_ino),
-                ll(stat.st_mtim.tv_sec),
-                ll(stat.st_ctim.tv_sec)
-            );
-            len += std::sprintf(
-                mes + len,
-                " %lld %lld",
-                ll(this->start_sec_),
-                ll(this->stop_sec_+1)
-            );
 
-            char * p = mes + len;
-            if (hash) {
-                auto write = [&p](unsigned char const * hash) {
-                    *p++ = ' ';                // 1 octet
-                    for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
-                        sprintf(p, "%02x", c); // 64 octets (hash)
-                        p += 2;
-                    }
-                };
-                write(&(*hash[0]));
-                write(&(*hash[MD_HASH_LENGTH]));
-            }
-            *p++ = '\n';
-
-            ssize_t res = this->meta_buf_write(mes, p-mes);
-
-            if (res < p-mes) {
-                return res < 0 ? res : 1;
-            }
-
-            this->start_sec_ = this->stop_sec_;
-            return 0;
+        *p++ = '\n';
+        ssize_t res1 = this->meta_buf_write(mes, p-mes);
+        if (res1 < p-mes) {
+            return res1 < 0 ? res1 : 1;
         }
+
+        this->start_sec_ = this->stop_sec_;
         return 0;
     }
 
