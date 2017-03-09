@@ -415,6 +415,22 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
 
 BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 {
+    struct CheckFiles1 {
+        const char * filename;
+        size_t size;
+        size_t altsize;
+    } fileinfo1[] = {
+        {"./capture-000000.wrm", 1646, 0},
+        {"./capture-000001.wrm", 3508, 0},
+        {"./capture-000002.wrm", 3463, 0},
+        {"./capture-000003.wrm", static_cast<size_t>(-1), static_cast<size_t>(-1)},
+        {"./capture.mwrm", 676, 673},
+        {"/tmp/capture.mwrm", 676, 673},
+    };
+    for (auto x: fileinfo1) {
+        ::unlink(x.filename);
+    }
+
     {
         // Timestamps are applied only when flushing
         timeval now;
@@ -446,7 +462,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
             cctx,
             rnd,
             "./",
-            "/tmp",
+            "/tmp/",
             "capture",
             1000, // ini.get<cfg::video::capture_groupid>()
             std::chrono::seconds{1},
@@ -540,7 +556,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         if (x.size != fsize){
             BOOST_CHECK_EQUAL(x.altsize, fsize);
         }
-        ::unlink(x.filename);
+//        ::unlink(x.filename);
     }
 }
 
@@ -786,7 +802,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        wrmcapture_OutMetaSequenceTransport wrm_trans(cctx, "./", "./hash-", "xxx", now, 800, 600, groupid, nullptr);
+        wrmcapture_OutMetaSequenceTransport wrm_trans(false, cctx, "./", "./hash-", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -882,7 +898,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        wrmcapture_OutMetaSequenceTransportWithSum wrm_trans(cctx, "./", "./", "xxx", now, 800, 600, groupid, nullptr);
+        wrmcapture_OutMetaSequenceTransport wrm_trans(true, cctx, "./", "./", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -943,7 +959,7 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
         now.tv_sec = 1352304810;
         now.tv_usec = 0;
         const int groupid = 0;
-        wrmcapture_OutMetaSequenceTransport wrm_trans(cctx, "./", "./hash-", "xxx", now, 800, 600, groupid, nullptr);
+        wrmcapture_OutMetaSequenceTransport wrm_trans(false, cctx, "./", "./hash-", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -1543,7 +1559,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
         const int groupid = 0;
-        wrmcapture_CryptoOutMetaSequenceTransport crypto_trans(cctx, rnd, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid, nullptr);
+        wrmcapture_CryptoOutMetaSequenceTransport crypto_trans(false, cctx, rnd, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid);
         crypto_trans.send("AAAAX", 5);
         tv.tv_sec += 100;
         crypto_trans.timestamp(tv);

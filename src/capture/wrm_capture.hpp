@@ -746,7 +746,7 @@ private:
 
 };
 
-struct MSBuf {
+struct MetaSeqBuf {
     char current_filename_[1024];
     WrmFGen filegen_;
     iofdbuf buf_;
@@ -778,7 +778,7 @@ struct MSBuf {
 
 
 public:
-    explicit MSBuf(
+    explicit MetaSeqBuf(
         bool with_checksum,
         CryptoContext & cctx,
         time_t start_sec,
@@ -856,11 +856,9 @@ public:
         return total_sent;
     }
 
-    ~MSBuf()
+    ~MetaSeqBuf()
     {
-        if (-1 != this->meta_buf_fd) {
-            ::close(this->meta_buf_fd);
-        }
+        this->close();
     }
 
     ssize_t write(const void * data, size_t len)
@@ -1299,20 +1297,7 @@ public:
         }
         return 0;
     }
-};
 
-class MetaSeqBuf : public MSBuf
-{
-
-public:
-    explicit MetaSeqBuf(CryptoContext & cctx, time_t start_sec, const char * const hash_prefix, const char * const prefix, const char * const filename, const char * const extension, const int groupid)
-    : MSBuf(false, cctx, start_sec, hash_prefix, prefix, filename, extension, groupid)
-    {
-    }
-
-    ~MetaSeqBuf() {}
-
-public:
     void request_full_cleaning()
     {
         unsigned i = this->num_file_;
@@ -1328,41 +1313,6 @@ public:
 
     void update_sec(time_t sec)
     { this->stop_sec_ = sec; }
-};
-
-class MetaSeqBufSum : public MSBuf
-{
-public:
-
-    explicit MetaSeqBufSum(CryptoContext & cctx, time_t start_sec, const char * const hash_prefix, const char * const prefix, const char * const filename, const char * const extension, const int groupid)
-    : MSBuf(true, cctx, start_sec, hash_prefix, prefix, filename, extension, groupid)
-    {
-    }
-
-    ~MetaSeqBufSum() {}
-
-public:
-
-
-public:
-    void request_full_cleaning()
-    {
-        unsigned i = this->num_file_;
-        if (this->current_filename_[0] != 0){
-            ::unlink(this->mf_.filename);
-        }
-        while (i > 0 && !::unlink(this->filegen_.get(--i))){}
-        if (this->buf_.is_open()) {
-            this->buf_.close();
-        }
-        ::unlink(this->mf_.filename);
-    }
-
-    void update_sec(time_t sec)
-    { this->stop_sec_ = sec; }
-
-
-
 };
 
 struct wrmcapture_OutMetaSequenceTransport : public Transport
@@ -1370,30 +1320,29 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
     MetaSeqBuf buf;
 
     wrmcapture_OutMetaSequenceTransport(
+        bool with_checksum,
         CryptoContext & cctx,
         const char * path, const char * hash_path, const char * basename,
         timeval now,
         uint16_t width, uint16_t height,
-        const int groupid,
-        auth_api * authentifier)
-    : buf(cctx, now.tv_sec, hash_path, path, basename, ".wrm", groupid)
+        const int groupid)
+    : buf(with_checksum, cctx, now.tv_sec, hash_path, path, basename, ".wrm", groupid)
     {
-        if (authentifier) {
-            this->set_authentifier(authentifier);
-        }
-
-        char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
+    
+            char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
         const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n",
-            unsigned(width),  unsigned(height), "nochecksum");
+            unsigned(width),  unsigned(height), with_checksum?"checksum":"nochecksum");
         const ssize_t res = this->buf.meta_buf_write(header1, len);
         if (res < 0) {
             int err = errno;
-            LOG(LOG_ERR, "Write to transport failed (M3): code=%d", err);
+            LOG(LOG_ERR, "Write to transport failed (M5): code=%d", err);
 
             if (err == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|%s", path);
-                this->authentifier->report("FILESYSTEM_FULL", message);
+                if (this->authentifier) {
+                    char message[1024];
+                    snprintf(message, sizeof(message), "100|%s", path);
+                    this->authentifier->report("FILESYSTEM_FULL", message);
+                }
                 throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
             }
             else {
@@ -1454,101 +1403,6 @@ private:
         this->last_quantum_sent += res;
     }
 };
-
-struct wrmcapture_OutMetaSequenceTransportWithSum : public Transport {
-
-    MetaSeqBufSum buf;
-
-    wrmcapture_OutMetaSequenceTransportWithSum(
-        CryptoContext & cctx,
-        const char * path, const char * hash_path, const char * basename,
-        timeval now,
-        uint16_t width, uint16_t height,
-        const int groupid,
-        auth_api * authentifier)
-    : buf(cctx, now.tv_sec, hash_path, path, basename, ".wrm", groupid)
-    {
-        if (authentifier) {
-            this->set_authentifier(authentifier);
-        }
-
-        char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
-        const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n",
-            unsigned(width),  unsigned(height), "checksum");
-        const ssize_t res = this->buf.meta_buf_write(header1, len);
-        if (res < 0) {
-            int err = errno;
-            LOG(LOG_ERR, "Write to transport failed (M5): code=%d", err);
-
-            if (err == ENOSPC) {
-                if (this->authentifier) {
-                    char message[1024];
-                    snprintf(message, sizeof(message), "100|%s", path);
-                    this->authentifier->report("FILESYSTEM_FULL", message);
-                }
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
-            }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
-            }
-        }
-    }
-
-    void timestamp(timeval now) override {
-        this->buf.update_sec(now.tv_sec);
-    }
-
-    bool next() override {
-        if (this->status == false) {
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
-        const ssize_t res = this->buf.next();
-        if (res) {
-            this->status = false;
-            if (res < 0){
-                LOG(LOG_ERR, "Write to transport failed (M6): code=%d", errno);
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
-            }
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-        }
-        ++this->seqno;
-        return true;
-    }
-
-    bool disconnect() override {
-        return !this->buf.close();
-    }
-
-    void request_full_cleaning() override {
-        this->buf.request_full_cleaning();
-    }
-
-    ~wrmcapture_OutMetaSequenceTransportWithSum() {
-        this->buf.close();
-    }
-
-private:
-
-    void do_send(const uint8_t * data, size_t len) override {
-        const ssize_t res = this->buf.write(data, len);
-        if (res < 0) {
-            this->status = false;
-            if (errno == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|%s", this->buf.current_path());
-                this->authentifier->report("FILESYSTEM_FULL", message);
-                errno = ENOSPC;
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
-            }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
-        this->last_quantum_sent += res;
-    }
-};
-
-
 
 struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 {
@@ -2081,6 +1935,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 
     public:
     wrmcapture_CryptoOutMetaSequenceTransport(
+        bool with_checksum,
         CryptoContext & cctx,
         Random & rnd,
         const char * path,
@@ -2971,7 +2826,6 @@ public:
     {
         union Variant
         {
-            wrmcapture_OutMetaSequenceTransportWithSum out_with_sum;
             wrmcapture_CryptoOutMetaSequenceTransport out_crypto;
             wrmcapture_OutMetaSequenceTransport out;
 
@@ -3000,16 +2854,14 @@ public:
             switch (trace_type) {
                 case TraceType::cryptofile:
                     this->trans = new (&this->variant.out_crypto)
-                    wrmcapture_CryptoOutMetaSequenceTransport(cctx, rnd, path, hash_path, basename, now, width, height, groupid, authentifier);
-                    break;
-                case TraceType::localfile_hashed:
-                    this->trans = new (&this->variant.out_with_sum)
-                    wrmcapture_OutMetaSequenceTransportWithSum(cctx, path, hash_path, basename, now, width, height, groupid, authentifier);
+                    wrmcapture_CryptoOutMetaSequenceTransport(true, cctx, rnd, path, hash_path, basename, now, width, height, groupid, authentifier);
                     break;
                 default:
                 case TraceType::localfile:
+                case TraceType::localfile_hashed:
+                    bool with_checksum = (trace_type == TraceType::localfile_hashed);
                     this->trans = new (&this->variant.out)
-                    wrmcapture_OutMetaSequenceTransport(cctx, path, hash_path, basename, now, width, height, groupid, authentifier);
+                    wrmcapture_OutMetaSequenceTransport(with_checksum, cctx, path, hash_path, basename, now, width, height, groupid);
                     break;
             }
         }
