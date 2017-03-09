@@ -290,6 +290,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 BOOST_AUTO_TEST_CASE(TestWrmCapture)
 {
     ::unlink("./capture.mwrm");
+    ::unlink("/tmp/capture.mwrm");
 
     {
         // Timestamps are applied only when flushing
@@ -315,7 +316,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
 
         const char * record_path = "./";
         const int groupid = 0; // www-data
-        const char * hash_path = "/tmp";
+        const char * hash_path = "/tmp/";
 
         char path[1024];
         char basename[1024];
