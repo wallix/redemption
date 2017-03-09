@@ -342,6 +342,7 @@ static int do_recompress(
     try {
         if (ini.get<cfg::globals::trace_type>() == TraceType::cryptofile) {
             wrmcapture_CryptoOutMetaSequenceTransport trans(
+                true,
                 cctx,
                 rnd,
                 outfile_path.c_str(),
@@ -391,6 +392,7 @@ static int do_recompress(
         else {
             CryptoContext cctx;
             wrmcapture_OutMetaSequenceTransport trans(
+                false,
                 cctx,
                 outfile_path.c_str(),
                 ini.get<cfg::video::hash_path>().c_str(),
@@ -398,8 +400,7 @@ static int do_recompress(
                 begin_record,
                 player.info_width,
                 player.info_height,
-                ini.get<cfg::video::capture_groupid>(),
-                nullptr
+                ini.get<cfg::video::capture_groupid>()
             );
             {
                 ChunkToFile recorder( &trans

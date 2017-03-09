@@ -1300,119 +1300,98 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             iofdbuf buf_;
             unsigned num_file_;
             int groupid_;
-            class wrmcapture_ocrypto_filename_buf
+            ocrypto meta_buf_encrypt;
+            int meta_buf_file_fd;
+
+            ///\return 0 if success, otherwise a negatif number
+            ssize_t meta_buf_raw_write(void * data, size_t len)
             {
-                ocrypto encrypt;
-                int file_fd;
-
-            public:
-                explicit wrmcapture_ocrypto_filename_buf(CryptoContext & cctx, Random & rnd)
-                : encrypt(cctx, rnd)
-                , file_fd(-1)
-                {
-                    if (-1 != this->file_fd) {
-                        ::close(this->file_fd);
-                        this->file_fd = -1;
-                    }
-                }
-
-                ~wrmcapture_ocrypto_filename_buf()
-                {
-                    if (this->is_open()) {
-                        this->close();
-                    }
-                }
-
-                ///\return 0 if success, otherwise a negatif number
-                ssize_t raw_write(void * data, size_t len)
-                {
-                    size_t remaining_len = len;
-                    size_t total_sent = 0;
-                    while (remaining_len) {
-                        ssize_t ret = ::write(this->file_fd,
-                            static_cast<const char*>(data) + total_sent, remaining_len);
-                        if (ret <= 0){
-                            if (errno == EINTR){
-                                continue;
-                            }
-                            return -1;
+                size_t remaining_len = len;
+                size_t total_sent = 0;
+                while (remaining_len) {
+                    ssize_t ret = ::write(this->meta_buf_file_fd,
+                        static_cast<const char*>(data) + total_sent, remaining_len);
+                    if (ret <= 0){
+                        if (errno == EINTR){
+                            continue;
                         }
-                        remaining_len -= ret;
-                        total_sent += ret;
+                        return -1;
                     }
-                    return 0;
+                    remaining_len -= ret;
+                    total_sent += ret;
                 }
+                return 0;
+            }
 
-                int open(const char * filename, mode_t mode = 0600)
-                {
-                    if (-1 != this->file_fd) {
-                        ::close(this->file_fd);
-                        this->file_fd = -1;
-                    }
-                    this->file_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-                    int err = this->file_fd;
+            int meta_buf_open(const char * filename, mode_t mode = 0600)
+            {
+                if (-1 != this->meta_buf_file_fd) {
+                    ::close(this->meta_buf_file_fd);
+                    this->meta_buf_file_fd = -1;
+                }
+                this->meta_buf_file_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+                int err = this->meta_buf_file_fd;
 
-                    if (err < 0) {
-                        return err;
-                    }
-
-                    size_t base_len = 0;
-                    const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-
-                    uint8_t buffer[40];
-                    size_t towrite = 0;
-                    err = this->encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
-                    if (!err) {
-                        err = this->raw_write(buffer, towrite);
-                    }
+                if (err < 0) {
                     return err;
                 }
 
-                ssize_t write(const void * data, size_t len)
+                size_t base_len = 0;
+                const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
+
+                uint8_t buffer[40];
+                size_t towrite = 0;
+                err = this->meta_buf_encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
+                if (!err) {
+                    err = this->meta_buf_raw_write(buffer, towrite);
+                }
+                return err;
+            }
+
+            ssize_t meta_buf_write(const void * data, size_t len)
+            {
+                uint8_t buffer[65536];
+                size_t towrite = 0;
+                int lentobuf = this->meta_buf_encrypt.write(buffer, sizeof(buffer), towrite, data, len);
+                if (lentobuf < 0) {
+                    return -1;
+                }
+                if (this->meta_buf_raw_write(buffer, towrite))
                 {
-                    uint8_t buffer[65536];
-                    size_t towrite = 0;
-                    int lentobuf = this->encrypt.write(buffer, sizeof(buffer), towrite, data, len);
-                    if (lentobuf < 0) {
-                        return -1;
-                    }
-                    if (this->raw_write(buffer, towrite))
-                    {
-                        return -1;
-                    }
-                    return lentobuf;
+                    return -1;
+                }
+                return lentobuf;
+            }
+
+            int meta_buf_close(unsigned char hash[MD_HASH_LENGTH << 1])
+            {
+                uint8_t buffer[65536];
+                size_t towrite = 0;
+                const int res1 = this->meta_buf_encrypt.close(buffer, sizeof(buffer), towrite, hash);
+                if (res1) {
+                    return -1;
+                }
+                if (this->meta_buf_raw_write(buffer, towrite))
+                {
+                    return -1;
                 }
 
-                int close(unsigned char hash[MD_HASH_LENGTH << 1])
-                {
-                    uint8_t buffer[65536];
-                    size_t towrite = 0;
-                    const int res1 = this->encrypt.close(buffer, sizeof(buffer), towrite, hash);
-                    if (res1) {
-                        return -1;
-                    }
-                    if (this->raw_write(buffer, towrite))
-                    {
-                        return -1;
-                    }
-
-                    int res2 = 0;
-                    if (-1 != this->file_fd) {
-                        res2 = ::close(this->file_fd);
-                        this->file_fd = -1;
-                    }
-                    return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
+                int res2 = 0;
+                if (-1 != this->meta_buf_file_fd) {
+                    res2 = ::close(this->meta_buf_file_fd);
+                    this->meta_buf_file_fd = -1;
                 }
+                return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
+            }
 
-                int close()
-                {
-                    unsigned char hash[MD_HASH_LENGTH << 1];
-                    return this->close(hash);
-                }
+            int meta_buf_close()
+            {
+                unsigned char hash[MD_HASH_LENGTH << 1];
+                return this->meta_buf_close(hash);
+            }
 
-                bool is_open() const noexcept
-                { return -1 != this->file_fd; }
-            } meta_buf_;
+            bool meta_buf_is_open() const noexcept
+            { return -1 != this->meta_buf_file_fd; }
 
             MetaFilename mf_;
             MetaFilename hf_;
@@ -1428,9 +1407,6 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 return this->filegen_.get(this->num_file_ - 1);
             }
 
-        public:
-
-        public:
 
 //            int xxx_close()
 //            {
@@ -1440,7 +1416,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
 //                    res1 = this->next_meta_file(nullptr);
 //                }
 
-//                const int res2 = (this->meta_buf_.is_open() ? this->meta_buf_.close() : 0);
+//                const int res2 = (this->meta_buf_is_open() ? this->meta_buf_close() : 0);
 //                int err = res1 ? res1 : res2;
 //                if (!err) {
 //                    char const * hash_filename = this->hf_.filename;
@@ -1687,7 +1663,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                 }
                 *p++ = '\n';
 
-                ssize_t res = this->meta_buf_.write(mes, p-mes);
+                ssize_t res = this->meta_buf_write(mes, p-mes);
 
                 if (res < p-mes) {
                     return res < 0 ? res : 1;
@@ -1736,7 +1712,8 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             , buf_{}
             , num_file_(0)
             , groupid_(groupid)
-            , meta_buf_(cctx, rnd)
+            , meta_buf_encrypt(cctx, rnd)
+            , meta_buf_file_fd(-1)
             , mf_(prefix, filename)
             , hf_(hash_prefix, filename)
             , start_sec_(start_sec)
@@ -1745,8 +1722,12 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             , rnd(rnd)
             , wrm_filter(this->buf_, cctx, rnd)
             {
+                if (-1 != this->meta_buf_file_fd) {
+                    ::close(this->meta_buf_file_fd);
+                    this->meta_buf_file_fd = -1;
+                }
                 this->current_filename_[0] = 0;
-                if (this->meta_buf_.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+                if (this->meta_buf_open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
                     LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
                     throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
                 }
@@ -1755,6 +1736,14 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                        , this->mf_.filename
                        , "u+r, g+r"
                        , strerror(errno), errno);
+                }
+            }
+
+
+            ~MetaSeqBufCrypto()
+            {
+                if (this->meta_buf_is_open()) {
+                    this->meta_buf_close();
                 }
             }
 
@@ -1793,15 +1782,127 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
                     }
                 }
 
-                wrmcapture_ocrypto_filename_buf hash_buf(this->cctx, this->rnd);
+                class wrmcapture_ocrypto_filename_buf
+                {
+                    ocrypto encrypt;
+                    int file_fd;
 
-                if (!this->meta_buf_.is_open()) {
+                public:
+                    explicit wrmcapture_ocrypto_filename_buf(CryptoContext & cctx, Random & rnd)
+                    : encrypt(cctx, rnd)
+                    , file_fd(-1)
+                    {
+                        if (-1 != this->file_fd) {
+                            ::close(this->file_fd);
+                            this->file_fd = -1;
+                        }
+                    }
+
+                    ~wrmcapture_ocrypto_filename_buf()
+                    {
+                        if (this->is_open()) {
+                            this->close();
+                        }
+                    }
+
+                    ///\return 0 if success, otherwise a negatif number
+                    ssize_t raw_write(void * data, size_t len)
+                    {
+                        size_t remaining_len = len;
+                        size_t total_sent = 0;
+                        while (remaining_len) {
+                            ssize_t ret = ::write(this->file_fd,
+                                static_cast<const char*>(data) + total_sent, remaining_len);
+                            if (ret <= 0){
+                                if (errno == EINTR){
+                                    continue;
+                                }
+                                return -1;
+                            }
+                            remaining_len -= ret;
+                            total_sent += ret;
+                        }
+                        return 0;
+                    }
+
+                    int open(const char * filename, mode_t mode = 0600)
+                    {
+                        if (-1 != this->file_fd) {
+                            ::close(this->file_fd);
+                            this->file_fd = -1;
+                        }
+                        this->file_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+                        int err = this->file_fd;
+
+                        if (err < 0) {
+                            return err;
+                        }
+
+                        size_t base_len = 0;
+                        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
+
+                        uint8_t buffer[40];
+                        size_t towrite = 0;
+                        err = this->encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
+                        if (!err) {
+                            err = this->raw_write(buffer, towrite);
+                        }
+                        return err;
+                    }
+
+                    ssize_t write(const void * data, size_t len)
+                    {
+                        uint8_t buffer[65536];
+                        size_t towrite = 0;
+                        int lentobuf = this->encrypt.write(buffer, sizeof(buffer), towrite, data, len);
+                        if (lentobuf < 0) {
+                            return -1;
+                        }
+                        if (this->raw_write(buffer, towrite))
+                        {
+                            return -1;
+                        }
+                        return lentobuf;
+                    }
+
+                    int close(unsigned char hash[MD_HASH_LENGTH << 1])
+                    {
+                        uint8_t buffer[65536];
+                        size_t towrite = 0;
+                        const int res1 = this->encrypt.close(buffer, sizeof(buffer), towrite, hash);
+                        if (res1) {
+                            return -1;
+                        }
+                        if (this->raw_write(buffer, towrite))
+                        {
+                            return -1;
+                        }
+
+                        int res2 = 0;
+                        if (-1 != this->file_fd) {
+                            res2 = ::close(this->file_fd);
+                            this->file_fd = -1;
+                        }
+                        return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
+                    }
+
+                    int close()
+                    {
+                        unsigned char hash[MD_HASH_LENGTH << 1];
+                        return this->close(hash);
+                    }
+
+                    bool is_open() const noexcept
+                    { return -1 != this->file_fd; }
+                } hash_buf(this->cctx, this->rnd);
+
+                if (!this->meta_buf_is_open()) {
                     return 1;
                 }
 
                 wrmcapture_hash_type hash;
 
-                if (this->meta_buf_.close(hash)) {
+                if (this->meta_buf_close(hash)) {
                     return 1;
                 }
 
@@ -1959,7 +2060,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             unsigned(height),
             has_checksum  ? "checksum" : "nochecksum"
         );
-        const ssize_t res = this->buf.meta_buf_.write(header1, len);
+        const ssize_t res = this->buf.meta_buf_write(header1, len);
         if (res < 0) {
             int err = errno;
             LOG(LOG_ERR, "Write to transport failed (M2.0): code=%d", err);

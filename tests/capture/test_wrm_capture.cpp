@@ -556,7 +556,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         if (x.size != fsize){
             BOOST_CHECK_EQUAL(x.altsize, fsize);
         }
-//        ::unlink(x.filename);
+        ::unlink(x.filename);
     }
 }
 
