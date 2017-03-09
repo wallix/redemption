@@ -1032,25 +1032,8 @@ public:
         }
         int err = res1 ? res1 : res2;
         if (!err) {
-            printf("hash filename = %s\n", this->hf_.filename);
-            char const * hash_filename = this->hf_.filename;
-            char const * meta_filename = this->mf_.filename;
 
-            int crypto_hash_fd = -1;
-            char path[1024] = {};
-            char basename[1024] = {};
-            char extension[256] = {};
-            char filename[2048] = {};
-
-            canonical_path(
-                meta_filename,
-                path, sizeof(path),
-                basename, sizeof(basename),
-                extension, sizeof(extension)
-            );
-
-            snprintf(filename, sizeof(filename), "%s%s", basename, extension);
-            crypto_hash_fd = ::open(hash_filename, O_WRONLY | O_CREAT, S_IRUSR|S_IRGRP);
+            int crypto_hash_fd = ::open(this->hf_.filename, O_WRONLY | O_CREAT, S_IRUSR|S_IRGRP);
 
             if (crypto_hash_fd == -1) {
                 int e = errno;
@@ -1059,14 +1042,24 @@ public:
                 return 1;
             }
 
-            char header[] = "v2\n\n\n";
-
             struct stat stat;
-            int err = ::stat(meta_filename, &stat);
+            int err = ::stat(this->mf_.filename, &stat);
 
             if (!err) {
+                char path[1024] = {};
+                char basename[1024] = {};
+                char extension[256] = {};
+                char filename[2048] = {};
+
+                canonical_path(
+                    this->mf_.filename,
+                    path, sizeof(path),
+                    basename, sizeof(basename),
+                    extension, sizeof(extension)
+                );
+                snprintf(filename, sizeof(filename), "%s%s", basename, extension);
                 // 8Ko for a filename with expanded slash should be enough
-                // if not we will fail gracefully with a message.
+                // or we will truncate filename at buffersize
                 char tmp[8192];
                 size_t j = 0;
                 for (size_t i = 0; (filename[i]) && (j < 8190) ; i++){
@@ -1089,6 +1082,7 @@ public:
                         +  wrmcapture_hash_string_len + 1
                         +  2
                 ];
+                char header[] = "v2\n\n\n";
                 ssize_t len = std::sprintf(
                     mes,
                     "%s%s %lld %llu %lld %lld %llu %lld %lld %lld",
@@ -1115,7 +1109,7 @@ public:
                         if (errno == EINTR){
                             continue;
                         }
-                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, ret);
+                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", this->hf_.filename, ret);
                         return 1;
                     }
                     remaining_len -= ret;
@@ -1126,7 +1120,7 @@ public:
                 ::close(crypto_hash_fd);
             }
             if (err) {
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", this->hf_.filename, err);
                 return 1;
             }
             return 0;
