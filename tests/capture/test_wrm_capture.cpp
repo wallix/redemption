@@ -168,7 +168,8 @@ private:
         if (!this->current_filename_[0] && !this->num_file_) {
             return nullptr;
         }
-        return this->filegen_.get(this->num_file_ - 1);
+        
+        return this->filegen_.get(this->num_file_-1);
     }
 
 protected:
@@ -186,13 +187,12 @@ protected:
                , this->groupid_ ? "u+r, g+r" : "u+r"
                , strerror(errno), errno);
         }
-        this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
         return this->buf_.open(fd);
     }
 
     const char * rename_filename()
     {
-        const char * filename = this->get_filename_generate();
+        const char * filename = this->filegen_.get(this->num_file_);
         const int res = ::rename(this->current_filename_, filename);
         if (res < 0) {
             LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
@@ -202,16 +202,6 @@ protected:
 
         this->current_filename_[0] = 0;
         ++this->num_file_;
-        this->filegen_.set_last_filename(-1u, "");
-
-        return filename;
-    }
-
-    const char * get_filename_generate()
-    {
-        this->filegen_.set_last_filename(-1u, "");
-        const char * filename = this->filegen_.get(this->num_file_);
-        this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
         return filename;
     }
 };
@@ -299,6 +289,9 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 
 BOOST_AUTO_TEST_CASE(TestWrmCapture)
 {
+    ::unlink("./capture.mwrm");
+    ::unlink("/tmp/capture.mwrm");
+
     {
         // Timestamps are applied only when flushing
         timeval now;
@@ -323,7 +316,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
 
         const char * record_path = "./";
         const int groupid = 0; // www-data
-        const char * hash_path = "/tmp";
+        const char * hash_path = "/tmp/";
 
         char path[1024];
         char basename[1024];
@@ -422,6 +415,22 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
 
 BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 {
+    struct CheckFiles1 {
+        const char * filename;
+        size_t size;
+        size_t altsize;
+    } fileinfo1[] = {
+        {"./capture-000000.wrm", 1646, 0},
+        {"./capture-000001.wrm", 3508, 0},
+        {"./capture-000002.wrm", 3463, 0},
+        {"./capture-000003.wrm", static_cast<size_t>(-1), static_cast<size_t>(-1)},
+        {"./capture.mwrm", 676, 673},
+        {"/tmp/capture.mwrm", 676, 673},
+    };
+    for (auto x: fileinfo1) {
+        ::unlink(x.filename);
+    }
+
     {
         // Timestamps are applied only when flushing
         timeval now;
@@ -445,6 +454,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
              "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
         ));
 
+        BOOST_CHECK(true);
 
         WrmParams wrm_params(
             24,
@@ -452,7 +462,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
             cctx,
             rnd,
             "./",
-            "/tmp",
+            "/tmp/",
             "capture",
             1000, // ini.get<cfg::video::capture_groupid>()
             std::chrono::seconds{1},
@@ -461,9 +471,13 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
             0xFFFF
         );
 
+        BOOST_CHECK(true);
+
         RDPDrawable gd_drawable(scr.cx, scr.cy);
 
         WrmCaptureImpl wrm(now, wrm_params, nullptr /* authentifier */, gd_drawable);
+
+        BOOST_CHECK(true);
 
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
@@ -473,15 +487,21 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
+        BOOST_CHECK(true);
+
         gd_drawable.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
+        BOOST_CHECK(true);
+
         gd_drawable.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        BOOST_CHECK(true);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
@@ -490,15 +510,21 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
+        BOOST_CHECK(true);
+
         gd_drawable.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
+        BOOST_CHECK(true);
+
         gd_drawable.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        BOOST_CHECK(true);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
@@ -507,7 +533,10 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
+        BOOST_CHECK(true);
+
     }
+    BOOST_CHECK(true);
 
     // TODO: we may have several mwrm sizes as it contains varying length numbers
     // the right solution would be to inject predictable fstat in test environment
@@ -762,11 +791,18 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
 {
     unsigned sec_start = 1352304810;
     {
+        CryptoContext cctx;
+        cctx.set_master_key(cstr_array_view(
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+        ));
+        cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
+
         timeval now;
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        wrmcapture_OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid);
+        wrmcapture_OutMetaSequenceTransport wrm_trans(false, cctx, "./", "./hash-", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -862,7 +898,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        wrmcapture_OutMetaSequenceTransportWithSum wrm_trans(cctx, "./", "./", "xxx", now, 800, 600, groupid, nullptr);
+        wrmcapture_OutMetaSequenceTransport wrm_trans(true, cctx, "./", "./", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -912,12 +948,18 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
     unlink("./hash-xxx.mwrm");
 
     {
+        CryptoContext cctx;
+        cctx.set_master_key(cstr_array_view(
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+        ));
+        cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
 
         timeval now;
         now.tv_sec = 1352304810;
         now.tv_usec = 0;
         const int groupid = 0;
-        wrmcapture_OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid, nullptr);
+        wrmcapture_OutMetaSequenceTransport wrm_trans(false, cctx, "./", "./hash-", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -1517,7 +1559,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
         const int groupid = 0;
-        wrmcapture_CryptoOutMetaSequenceTransport crypto_trans(cctx, rnd, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid, nullptr);
+        wrmcapture_CryptoOutMetaSequenceTransport crypto_trans(false, cctx, rnd, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid);
         crypto_trans.send("AAAAX", 5);
         tv.tv_sec += 100;
         crypto_trans.timestamp(tv);

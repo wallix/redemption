@@ -2413,7 +2413,7 @@ public:
         {
             if (this->buf_.is_open()) {
                 this->buf_.close();
-                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+//                LOG(LOG_INFO, "pngcapture: \"%s\" -> \"%s\".", this->current_filename_, this->rename_to);
                 return this->rename_filename() ? 0 : 1;
             }
             return 1;
@@ -2455,6 +2455,7 @@ public:
             if (fd < 0) {
                 return fd;
             }
+            LOG(LOG_INFO, "pngcapture=%s\n", this->current_filename_); 
             // TODO PERF used fchmod
             if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                 LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
@@ -2470,6 +2471,8 @@ public:
         {
             const char * filename = this->get_filename_generate();
             const int res = ::rename(this->current_filename_, filename);
+            LOG( LOG_ERR, "renaming file \"%s\" to \"%s\"\n"
+                   , this->current_filename_, filename);
             if (res < 0) {
                 LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
                    , this->current_filename_, filename, errno, strerror(errno));
@@ -2692,7 +2695,7 @@ public:
         }
     }
 
-     virtual void clear_old() {
+     void clear_old() override {
         if (this->trans.get_seqno() < this->png_limit) {
             return;
         }

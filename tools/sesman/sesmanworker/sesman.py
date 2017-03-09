@@ -1477,9 +1477,13 @@ class Sesman():
                                     "target_host": self._physical_target_host }
                     if is_interactive_login:
                         update_args["effective_login"] = kv.get('target_login')
+                    if self.full_path:
+                        # RT available if recording
+                        # TODO: decorrelate RT and recording
+                        update_args["rt"] = True
 
-                    self.engine.update_session(physical_target,
-                                               **update_args)
+                    self.engine.update_session_target(physical_target,
+                                                      **update_args)
 
                     if not _status:
                         Logger().info( u"(%s):%s:REJECTED : User message: \"%s\""
@@ -1572,8 +1576,7 @@ class Sesman():
                                             update_args["target_host"] = redir_host
                                         if redir_login:
                                             update_args["target_account"] = redir_login
-                                        self.engine.update_session(physical_target,
-                                                                   **update_args)
+                                        self.engine.update_session(**update_args)
                                     elif _reporting_reason == u'SESSION_EXCEPTION':
                                         Logger().info(u"RDP connection terminated. Reason: Session exception")
                                         release_reason = u'Session exception: ' + _reporting_message

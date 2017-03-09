@@ -48,7 +48,7 @@ public:
     };
 
     Authentifier(const Authentifier&) = delete;
-    
+
     Authentifier(Verbose verbose)
         : connected_to_acl(false)
         , acl_serial(nullptr)
@@ -58,7 +58,7 @@ public:
             LOG(LOG_INFO, "auth::Authentifier");
         }
     }
-    
+
     void set_acl_serial(AclSerializer * acl_serial)
     {
         this->connected_to_acl = true;

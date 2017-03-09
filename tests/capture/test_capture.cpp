@@ -26,8 +26,8 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 
 #include "utils/log.hpp"
 
@@ -50,6 +50,8 @@
 
 BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 {
+    try {
+    BOOST_CHECK(true);
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
     ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
@@ -74,7 +76,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         ini.set<cfg::video::record_tmp_path>("./");
         ini.set<cfg::video::record_path>("./");
-        ini.set<cfg::video::hash_path>("/tmp");
+        ini.set<cfg::video::hash_path>("/tmp/");
         ini.set<cfg::globals::movie_path>("capture");
 
         LCGRandom rnd(0);
@@ -307,6 +309,9 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
             BOOST_CHECK_EQUAL(x.size, fsize);
         }
         ::unlink(x.filename);
+    }
+    } catch(Error & e) {
+        LOG(LOG_INFO, "Exit on exception\n");
     }
 }
 
