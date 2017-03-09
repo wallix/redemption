@@ -31,6 +31,7 @@
 #include "utils/utf.hpp"
 #include "core/SMB2/MessageSyntax.hpp"
 #include "core/FSCC/FileInformation.hpp"
+#include "core/ERREF/ntstatus.hpp"
 
 #include <vector>
 
@@ -2307,18 +2308,17 @@ struct DeviceWriteResponse {
 
 class ServerDeviceAnnounceResponse {
     uint32_t DeviceId_   = 0;
-    // TODO enum NTSTATUS
-    uint32_t ResultCode_ = 0;
+    erref::NTSTATUS ResultCode_ = erref::NTSTATUS::STATUS_SUCCESS;
 
 public:
     ServerDeviceAnnounceResponse() = default;
 
-    ServerDeviceAnnounceResponse(uint32_t device_id, uint32_t result_code) :
+    ServerDeviceAnnounceResponse(uint32_t device_id, erref::NTSTATUS result_code) :
         DeviceId_(device_id), ResultCode_(result_code) {}
 
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceId_);
-        stream.out_uint32_le(this->ResultCode_);
+        stream.out_uint32_le(static_cast<uint32_t>(this->ResultCode_));
     }
 
     void receive(InStream & stream) {
@@ -2334,12 +2334,12 @@ public:
         }
 
         this->DeviceId_   = stream.in_uint32_le();
-        this->ResultCode_ = stream.in_uint32_le();
+        this->ResultCode_ = erref::NTSTATUS(stream.in_uint32_le());
     }
 
     uint32_t DeviceId() const { return this->DeviceId_; }
 
-    uint32_t ResultCode() const { return this->ResultCode_; }
+    erref::NTSTATUS ResultCode() const { return this->ResultCode_; }
 
 private:
     size_t str(char * buffer, size_t size) const {
@@ -2360,7 +2360,7 @@ public:
     void log() {
         LOG(LOG_INFO, "     Server Device Announce Response:");
         LOG(LOG_INFO, "          * DeviceId   = 0x%08x (4 bytes)", this->DeviceId_);
-        LOG(LOG_INFO, "          * ResultCode = 0x%08x (4 bytes)", this->ResultCode_);
+        LOG(LOG_INFO, "          * ResultCode = 0x%08x (4 bytes): %s", this->ResultCode_, erref::get_NTStatus(this->ResultCode_));
     }
 };
 

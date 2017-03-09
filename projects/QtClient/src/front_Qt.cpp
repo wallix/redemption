@@ -80,22 +80,6 @@ Front_Qt::Front_Qt(char* argv[], int argc, RDPVerbose verbose)
     SSL_load_error_strings();
     SSL_library_init();
 
-    this->fileSystemData.drives[0].name[0] = 'R';
-    this->fileSystemData.drives[0].name[1] = 'D';
-    this->fileSystemData.drives[0].name[2] = 'P';
-    this->fileSystemData.drives[0].name[3] = ' ';
-    this->fileSystemData.drives[0].name[4] = 'C';
-    this->fileSystemData.drives[0].name[5] = ':';
-    this->fileSystemData.drives[0].ID = 1;
-
-//     this->fileSystemData.drives[1].name[0] = 'R';
-//     this->fileSystemData.drives[1].name[1] = 'D';
-//     this->fileSystemData.drives[1].name[2] = 'P';
-//     this->fileSystemData.drives[1].name[3] = ' ';
-//     this->fileSystemData.drives[1].name[4] = 'D';
-//     this->fileSystemData.drives[1].name[5] = ':';
-//     this->fileSystemData.drives[1].ID = 2;
-
     // Windows and socket contrainer
     this->_mod_qt = new Mod_Qt(this, this->_form);
     this->_form = new Form_Qt(this);
@@ -470,6 +454,26 @@ bool Front_Qt::connect() {
     this->_cl.clear_channels();
 
     if (this->_enable_shared_clipboard) {
+
+        std::string tmp(this->SHARE_DIR);
+        int pos(tmp.find("/"));
+
+        while (pos != -1) {
+            tmp = tmp.substr(pos+1, tmp.length());
+            pos = tmp.find("/");
+        }
+
+        size_t size(tmp.size());
+        if (size > 7) {
+            size = 7;
+        }
+
+        for (size_t i = 0; i < size; i++) {
+            this->fileSystemData.drives[0].name[i] = tmp.data()[i];
+        }
+
+        this->fileSystemData.drives[0].ID = 1;
+
         CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
                                             , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                               GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
@@ -2581,16 +2585,17 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                     case rdpdr::PAKID_CORE_DEVICE_REPLY:
                         {
-                        int deviceID = chunk.in_uint32_le();
-                        int resultCod = chunk.in_uint32_le();
-                        this->fileSystemData.drives[deviceID - 1].status = resultCod;
-                        if (resultCod == 0) {
+                        rdpdr::ServerDeviceAnnounceResponse sdar;
+                        sdar.receive(chunk);
+
+                        if (sdar.ResultCode() == erref::NTSTATUS::STATUS_SUCCESS) {
                             this->fileSystemData.drives_created = true;
                         } else {
                             this->fileSystemData.drives_created = false;
+                            LOG(LOG_WARNING, "SERVER >> RDPDR Channel: Can't create virtual disk ID=%x Hres=%x", sdar.DeviceId(), sdar.ResultCode());
                         }
                         if (this->verbose & RDPVerbose::rdpdr)
-                            LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Device Announce Response ID=%x Hres=%x", deviceID, resultCod);
+                            LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Device Announce Response ID=%x Hres=%x", sdar.DeviceId(), sdar.ResultCode());
                         }
                         break;
 
@@ -3018,13 +3023,14 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                 } else {
                                                     LastAccessTime  = UnixSecondsToWindowsTick(buff_child.st_atime);
                                                     LastWriteTime   = UnixSecondsToWindowsTick(buff_child.st_mtime);
-                                                    CreationTime    = LastWriteTime + 1;
+                                                    CreationTime    = LastWriteTime - 1;
                                                     EndOfFile       = buff_child.st_size;
                                                     AllocationSize  = buff_child.st_size;
                                                     if (S_ISDIR(buff_child.st_mode)) {
                                                         FileAttributes = fscc::FILE_ATTRIBUTE_DIRECTORY;
+                                                        EndOfFile       = 0;
+                                                        AllocationSize  = 0;
                                                     }
-
                                                 }
                                             }
                                         }
@@ -3035,11 +3041,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                             case rdpdr::FileDirectoryInformation:
                                             {
-                                                rdpdr::ClientDriveQueryDirectoryResponse cdqdr(
-                                                    fscc::FileDirectoryInformation::MIN_SIZE
-                                                  + (str_file_name.length()*2));
-                                                cdqdr.emit(out_stream);
-
                                                 fscc::FileDirectoryInformation fbdi(CreationTime,
                                                                                         LastAccessTime,
                                                                                         LastWriteTime,
@@ -3048,16 +3049,15 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                                         AllocationSize,
                                                                                         FileAttributes,
                                                                                         str_file_name.c_str());
+
+                                                rdpdr::ClientDriveQueryDirectoryResponse cdqdr(fbdi.total_size());
+                                                cdqdr.emit(out_stream);
+
                                                 fbdi.emit(out_stream);
                                             }
                                                 break;
                                             case rdpdr::FileFullDirectoryInformation:
                                             {
-                                                rdpdr::ClientDriveQueryDirectoryResponse cdqdr(
-                                                    fscc::FileFullDirectoryInformation::MIN_SIZE
-                                                  + (str_file_name.length()*2));
-                                                cdqdr.emit(out_stream);
-
                                                 fscc::FileFullDirectoryInformation ffdi(CreationTime,
                                                                                         LastAccessTime,
                                                                                         LastWriteTime,
@@ -3066,28 +3066,30 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                                         AllocationSize,
                                                                                         FileAttributes,
                                                                                         str_file_name.c_str());
+
+                                                rdpdr::ClientDriveQueryDirectoryResponse cdqdr(ffdi.total_size());
+                                                cdqdr.emit(out_stream);
+
                                                 ffdi.emit(out_stream);
                                             }
                                                 break;
                                             case rdpdr::FileBothDirectoryInformation:
                                             {
-                                                rdpdr::ClientDriveQueryDirectoryResponse cdqdr(
-                                                    fscc::FileBothDirectoryInformation::MIN_SIZE
-                                                  + (str_file_name.length()*2));
+                                                fscc::FileBothDirectoryInformation fbdi(CreationTime, LastAccessTime, LastWriteTime, ChangeTime, EndOfFile, AllocationSize, FileAttributes, str_file_name.c_str());
+
+                                                rdpdr::ClientDriveQueryDirectoryResponse cdqdr(fbdi.total_size());
                                                 cdqdr.emit(out_stream);
 
-                                                fscc::FileBothDirectoryInformation fbdi(CreationTime, LastAccessTime, LastWriteTime, ChangeTime, EndOfFile, AllocationSize, FileAttributes, str_file_name.c_str());
                                                 fbdi.emit(out_stream);
                                             }
                                                 break;
                                             case rdpdr::FileNamesInformation:
                                             {
-                                                rdpdr::ClientDriveQueryDirectoryResponse cdqdr(
-                                                    fscc::FileNamesInformation::MIN_SIZE
-                                                  + (str_file_name.length()*2));
+                                                fscc::FileNamesInformation ffi(str_file_name.c_str());
+
+                                                rdpdr::ClientDriveQueryDirectoryResponse cdqdr(ffi.total_size());
                                                 cdqdr.emit(out_stream);
 
-                                                fscc::FileNamesInformation ffi(str_file_name.c_str());
                                                 ffi.emit(out_stream);
                                             }
                                                 break;

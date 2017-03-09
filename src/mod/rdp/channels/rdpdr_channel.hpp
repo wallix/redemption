@@ -592,7 +592,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                         rdpdr::ServerDeviceAnnounceResponse
                             server_device_announce_response(
                                     DeviceId,
-                                    0xC0000001  // STATUS_UNSUCCESSFUL
+                                    erref::NTSTATUS::STATUS_UNSUCCESSFUL
                                 );
 
                         server_device_announce_response.emit(out_stream);
@@ -835,7 +835,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
             }
 
             if (server_device_announce_response.ResultCode() !=
-                0x00000000  // STATUS_SUCCESS
+                erref::NTSTATUS::STATUS_SUCCESS
                ) {
                 this->remove_known_device(
                     server_device_announce_response.DeviceId());

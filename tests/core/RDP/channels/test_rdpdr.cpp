@@ -867,10 +867,10 @@ BOOST_AUTO_TEST_CASE(ServerDeviceAnnounceResponseEmit)
 {
     const size_t len = 8;
     const char data[] =
-            "\x01\x00\x00\x00\x02\x00\x00\x00";
+            "\x01\x00\x00\x00\x01\x00\x00\xc0";
 
     StaticOutStream<128> stream;
-    rdpdr::ServerDeviceAnnounceResponse pdu(1, 2);
+    rdpdr::ServerDeviceAnnounceResponse pdu(1, erref::NTSTATUS::STATUS_UNSUCCESSFUL);
     pdu.emit(stream);
 
     std::string const out_data(data, len);
@@ -882,14 +882,14 @@ BOOST_AUTO_TEST_CASE(ServerDeviceAnnounceResponseReceive)
 {
     const size_t len = 8;
     const char data[] =
-            "\x01\x00\x00\x00\x02\x00\x00\x00";
+            "\x01\x00\x00\x00\x01\x00\x00\xc0";
 
     InStream in_stream(data, len);
     rdpdr::ServerDeviceAnnounceResponse pdu;
     pdu.receive(in_stream);
 
     BOOST_CHECK_EQUAL(pdu.DeviceId(), 1);
-    BOOST_CHECK_EQUAL(pdu.ResultCode(), 2);
+    BOOST_CHECK_EQUAL(uint32_t(pdu.ResultCode()), uint32_t(erref::NTSTATUS::STATUS_UNSUCCESSFUL));
 }
 
 BOOST_AUTO_TEST_CASE(DeviceWriteResponseEmit)
@@ -947,5 +947,4 @@ BOOST_AUTO_TEST_CASE(DeviceReadResponseReceive)
     pdu.receive(in_stream);
 
     BOOST_CHECK_EQUAL(pdu.Length, 4);
-
 }
