@@ -22,6 +22,8 @@
 #pragma once
 #include "capture/cryptofile.hpp"
 #include "configs/autogen/enums.hpp"
+#include "utils/genrandom.hpp"
+#include "utils/genfstat.hpp"
 
 struct WrmParams
 {
@@ -29,6 +31,7 @@ struct WrmParams
     TraceType trace_type;
     CryptoContext & cctx; 
     Random & rnd;
+    Fstat & fstat;
     const char * record_path;
     const char * hash_path;
     const char * basename;
@@ -44,6 +47,7 @@ struct WrmParams
               TraceType trace_type,
               CryptoContext & cctx,
               Random & rnd,
+              Fstat & fstat,
               const char * record_path,
               const char * hash_path,
               const char * basename,
@@ -58,6 +62,7 @@ struct WrmParams
     , trace_type(trace_type)
     , cctx(cctx)
     , rnd(rnd)
+    , fstat(fstat)
     , record_path(record_path)
     , hash_path(hash_path)
     , basename(basename)

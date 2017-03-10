@@ -646,6 +646,7 @@ private:
     } state;
 
     Random & gen;
+    Fstat fstat;
 
     bool fastpath_support;                    // choice of programmer
     bool client_fastpath_input_event_support; // = choice of programmer
@@ -1100,6 +1101,7 @@ public:
             wrm_trace_type,
             this->cctx,
             this->gen,
+            this->fstat,
             record_path,
             hash_path,
             basename,

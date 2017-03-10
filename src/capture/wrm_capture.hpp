@@ -32,6 +32,7 @@
 
 #include "utils/difftimeval.hpp"
 #include "utils/genrandom.hpp"
+#include "utils/genfstat.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/sugar/iter.hpp"
 #include "utils/stream.hpp"
@@ -558,81 +559,10 @@ struct ocrypto {
 
 };
 
-
-class wrmcapture_ocrypto_filter
-{
-    ocrypto encrypt;
-    iofdbuf & snk;
-
-public:
-    explicit wrmcapture_ocrypto_filter(iofdbuf & buf, CryptoContext & cctx, Random & rnd)
-    : encrypt(cctx, rnd)
-    , snk(buf)
-
-    {}
-
-    int open(char const * filename) {
-        size_t base_len = 0;
-        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-
-        uint8_t buffer[40];
-        size_t towrite = 0;
-        int err = this->encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
-        if (!err) {
-            err = this->raw_write(buffer, towrite);
-        }
-        return err;
-    }
-
-    ssize_t write(const void * data, size_t len)
-    {
-        uint8_t buffer[65536];
-        size_t towrite = 0;
-        int lentobuf = this->encrypt.write(buffer, sizeof(buffer), towrite, data, len);
-        if (lentobuf < 0) {
-            return -1;
-        }
-        if (this->raw_write(buffer, towrite))
-        {
-            return -1;
-        }
-        return lentobuf;
-    }
-
-    int close(unsigned char hash[MD_HASH_LENGTH << 1])
-    {
-        uint8_t buffer[65536];
-        size_t towrite = 0;
-        const int res1 = this->encrypt.close(buffer, sizeof(buffer), towrite, hash);
-        if (res1) {
-            return -1;
-        }
-        if (this->raw_write(buffer, towrite))
-        {
-            return -1;
-        }
-
-        int res2 = snk.close();
-        return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
-    }
-
-    int close()
-    {
-        unsigned char hash[MD_HASH_LENGTH << 1];
-        return this->close(hash);
-    }
-
-private:
-    ///\return 0 if success, otherwise a negatif number
-    ssize_t raw_write(void * data, size_t len)
-    {
-        ssize_t err = this->snk.write(data, len);
-        return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
-    }
-
-};
-
 struct MetaSeqBuf {
+    CryptoContext & cctx;
+    Random & rnd;
+    Fstat & fstat;
     char current_filename_[1024];
     WrmFGen filegen_;
     iofdbuf buf_;
@@ -648,7 +578,8 @@ struct MetaSeqBuf {
 
     bool with_checksum;
     bool with_encryption;
-    CryptoContext & cctx;
+    ocrypto meta_buf_encrypt;
+    ocrypto wrm_filter_encrypt;
     
 
 // Only for Checksum Management
@@ -666,8 +597,11 @@ struct MetaSeqBuf {
 
 public:
     explicit MetaSeqBuf(
+        bool with_encryption,
         bool with_checksum,
         CryptoContext & cctx,
+        Random & rnd,
+        Fstat & fstat,
         time_t start_sec,
         const char * const hash_prefix,
         const char * const prefix,
@@ -675,7 +609,10 @@ public:
         const char * const extension,
         const int groupid
     )
-    : current_filename_{}
+    : cctx(cctx)
+    , rnd(rnd)
+    , fstat(fstat)
+    , current_filename_{}
     , filegen_(prefix, filename, extension)
     , buf_()
     , num_file_(0)
@@ -687,7 +624,8 @@ public:
     , stop_sec_(start_sec)
     , with_checksum(with_checksum)
     , with_encryption(false)
-    , cctx(cctx)
+    , meta_buf_encrypt(cctx, rnd)
+    , wrm_filter_encrypt(cctx, rnd)
     {
         this->current_filename_[0] = 0;
         // TODO: ouverture du fichier meta : est-ce qu'on ne devrait pas le laisser fermer
@@ -1206,6 +1144,10 @@ public:
 
 struct MetaSeqBufCrypto
 {
+    CryptoContext & cctx;
+    Random & rnd;
+    Fstat & fstat;
+
     char current_filename_[1024];
     WrmFGen filegen_;
     iofdbuf buf_;
@@ -1219,8 +1161,8 @@ struct MetaSeqBufCrypto
 
     bool with_checksum;
     bool with_encryption;
-    CryptoContext & cctx;
     ocrypto meta_buf_encrypt;
+    ocrypto wrm_filter_encrypt;
 
 // Only for Checksum Management
     static constexpr size_t nosize = ~size_t{};
@@ -1236,107 +1178,95 @@ struct MetaSeqBufCrypto
 
 
 private:
-    Random & rnd;
 
-    class wrmcapture_ocrypto_filter
+    int wrm_filter_open(char const * filename) {
+        size_t base_len = 0;
+        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
+
+        uint8_t buffer[40];
+        size_t towrite = 0;
+        int err = this->wrm_filter_encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
+        if (!err) {
+            err = this->wrm_filter_raw_write(buffer, towrite);
+        }
+        return err;
+    }
+
+    ssize_t wrm_filter_write(const void * data, size_t len)
     {
-        ocrypto wrm_filter_encrypt;
-        iofdbuf & wrm_filter_snk;
-
-    public:
-        explicit wrmcapture_ocrypto_filter(iofdbuf & buf, CryptoContext & cctx, Random & rnd)
-        : wrm_filter_encrypt(cctx, rnd)
-        , wrm_filter_snk(buf)
-
-        {}
-
-        int wrm_filter_open(char const * filename) {
-            size_t base_len = 0;
-            const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-
-            uint8_t buffer[40];
-            size_t towrite = 0;
-            int err = this->wrm_filter_encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
-            if (!err) {
-                err = this->wrm_filter_raw_write(buffer, towrite);
-            }
-            return err;
+        uint8_t buffer[65536];
+        size_t towrite = 0;
+        int lentobuf = this->wrm_filter_encrypt.write(buffer, sizeof(buffer), towrite, data, len);
+        if (lentobuf < 0) {
+            return -1;
         }
-
-        ssize_t wrm_filter_write(const void * data, size_t len)
+        if (this->wrm_filter_raw_write(buffer, towrite))
         {
-            uint8_t buffer[65536];
-            size_t towrite = 0;
-            int lentobuf = this->wrm_filter_encrypt.write(buffer, sizeof(buffer), towrite, data, len);
-            if (lentobuf < 0) {
-                return -1;
-            }
-            if (this->wrm_filter_raw_write(buffer, towrite))
-            {
-                return -1;
-            }
-            return lentobuf;
+            return -1;
         }
+        return lentobuf;
+    }
 
-        int wrm_filter_close(unsigned char hash[MD_HASH_LENGTH << 1])
+    int wrm_filter_close(unsigned char hash[MD_HASH_LENGTH << 1])
+    {
+        uint8_t buffer[65536];
+        size_t towrite = 0;
+        const int res1 = this->wrm_filter_encrypt.close(buffer, sizeof(buffer), towrite, hash);
+        if (res1) {
+            return -1;
+        }
+        if (this->wrm_filter_raw_write(buffer, towrite))
         {
-            uint8_t buffer[65536];
-            size_t towrite = 0;
-            const int res1 = this->wrm_filter_encrypt.close(buffer, sizeof(buffer), towrite, hash);
-            if (res1) {
-                return -1;
-            }
-            if (this->wrm_filter_raw_write(buffer, towrite))
-            {
-                return -1;
-            }
-
-            int res2 = this->wrm_filter_snk.close();
-            return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
+            return -1;
         }
 
-        int wrm_filter_close()
-        {
-            unsigned char hash[MD_HASH_LENGTH << 1];
-            return this->wrm_filter_close(hash);
-        }
+        int res2 = this->buf_.close();
+        return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
+    }
 
-    private:
-        ///\return 0 if success, otherwise a negatif number
-        ssize_t wrm_filter_raw_write(void * data, size_t len)
-        {
-            ssize_t err = this->wrm_filter_snk.write(data, len);
-            return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
-        }
+//    int wrm_filter_close()
+//    {
+//        unsigned char hash[MD_HASH_LENGTH << 1];
+//        return this->wrm_filter_close(hash);
+//    }
 
-    } wrm_filter;
+private:
+    ///\return 0 if success, otherwise a negatif number
+    ssize_t wrm_filter_raw_write(void * data, size_t len)
+    {
+        ssize_t err = this->buf_.write(data, len);
+        return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
+    }
 
 public:
     explicit MetaSeqBufCrypto(
         bool with_encryption,
         bool with_checksum,
         CryptoContext & cctx,
+        Random & rnd,
+        Fstat & fstat,
+        
         time_t start_sec,
         const char * const hash_prefix,
         const char * const prefix,
         const char * const filename,
         const char * const extension,
-        const int groupid,
-        Random & rnd
+        const int groupid
     )
-    : filegen_(prefix, filename, extension)
+    : cctx(cctx)
+    , rnd(rnd)
+    , fstat(fstat)
+    , filegen_(prefix, filename, extension)
     , buf_{}
     , num_file_(0)
     , groupid_(groupid)
-    , meta_buf_encrypt(cctx, rnd)
     , meta_buf_fd(-1)
     , mf_(prefix, filename)
     , hf_(hash_prefix, filename)
     , start_sec_(start_sec)
     , stop_sec_(start_sec)
-    , cctx(cctx)
-    , rnd(rnd)
-    , wrm_filter(this->buf_, cctx, rnd)
+    , meta_buf_encrypt(cctx, rnd)
+    , wrm_filter_encrypt(cctx, rnd)
     {
         if (-1 != this->meta_buf_fd) {
             ::close(this->meta_buf_fd);
@@ -1768,11 +1698,11 @@ public:
             if (res < 0) {
                 return res;
             }
-            if (int err = this->wrm_filter.wrm_filter_open(filename)) {
+            if (int err = this->wrm_filter_open(filename)) {
                 return err;
             }
         }
-        return this->wrm_filter.wrm_filter_write(data, len);
+        return this->wrm_filter_write(data, len);
     }
 
     int close()
@@ -2014,7 +1944,7 @@ public:
         if (this->buf_.is_open()) {
             wrmcapture_hash_type hash;
             {
-                const int res1 = this->wrm_filter.wrm_filter_close(hash);
+                const int res1 = this->wrm_filter_close(hash);
                 const int res2 = this->buf_.close();
                 if (res1) {
                     return res1;
@@ -2041,6 +1971,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
         bool with_checksum,
         CryptoContext & cctx,
         Random & rnd,
+        Fstat & fstat,
         const char * path,
         const char * hash_path,
         const char * basename,
@@ -2049,7 +1980,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
         uint16_t height,
         const int groupid,
         auth_api * authentifier)
-    : buf(with_encryption, with_checksum, cctx, now.tv_sec, hash_path, path, basename, ".wrm", groupid, rnd) {
+    : buf(with_encryption, with_checksum, cctx, rnd, fstat, now.tv_sec, hash_path, path, basename, ".wrm", groupid) {
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
@@ -2144,13 +2075,16 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
     MetaSeqBuf buf;
 
     wrmcapture_OutMetaSequenceTransport(
+        bool with_encryption,
         bool with_checksum,
         CryptoContext & cctx,
+        Random & rnd,
+        Fstat & fstat,
         const char * path, const char * hash_path, const char * basename,
         timeval now,
         uint16_t width, uint16_t height,
         const int groupid)
-    : buf(with_checksum, cctx, now.tv_sec, hash_path, path, basename, ".wrm", groupid)
+    : buf(with_encryption, with_checksum, cctx, rnd, fstat, now.tv_sec, hash_path, path, basename, ".wrm", groupid)
     {
     
             char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
@@ -3034,6 +2968,7 @@ public:
             TraceType trace_type,
             CryptoContext & cctx,
             Random & rnd,
+            Fstat & fstat,
             const char * path,
             const char * hash_path,
             const char * basename,
@@ -3048,14 +2983,14 @@ public:
             switch (trace_type) {
                 case TraceType::cryptofile:
                     this->trans = new (&this->variant.out_crypto)
-                    wrmcapture_CryptoOutMetaSequenceTransport(true, true, cctx, rnd, path, hash_path, basename, now, width, height, groupid, authentifier);
+                    wrmcapture_CryptoOutMetaSequenceTransport(true, true, cctx, rnd, fstat, path, hash_path, basename, now, width, height, groupid, authentifier);
                     break;
                 default:
                 case TraceType::localfile:
                 case TraceType::localfile_hashed:
                     bool with_checksum = (trace_type == TraceType::localfile_hashed);
                     this->trans = new (&this->variant.out)
-                    wrmcapture_OutMetaSequenceTransport(with_checksum, cctx, path, hash_path, basename, now, width, height, groupid);
+                    wrmcapture_OutMetaSequenceTransport(false, with_checksum, cctx, rnd, fstat, path, hash_path, basename, now, width, height, groupid);
                     break;
             }
         }
@@ -3301,7 +3236,7 @@ public:
     , ptr_cache(/*pointerCacheSize=*/0x19)
     , dump_png24_api{drawable}
     , trans_variant(
-        wrm_params.trace_type, wrm_params.cctx, wrm_params.rnd, wrm_params.record_path, wrm_params.hash_path, wrm_params.basename, now,
+        wrm_params.trace_type, wrm_params.cctx, wrm_params.rnd, wrm_params.fstat, wrm_params.record_path, wrm_params.hash_path, wrm_params.basename, now,
         drawable.width(), drawable.height(), wrm_params.groupid, authentifier)
     , graphic_to_file(
         now, *this->trans_variant.trans, drawable.width(), drawable.height(), wrm_params.capture_bpp,

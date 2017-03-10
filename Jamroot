@@ -600,6 +600,7 @@ test-canonical utils/ellipse.hpp ;
 test-canonical utils/fdbuf.hpp ;
 test-canonical utils/fileutils.hpp ;
 test-canonical utils/genrandom.hpp ;
+test-canonical utils/genfstat.hpp ;
 test-canonical utils/get_printable_password.hpp ;
 test-canonical utils/log.hpp ;
 test-canonical utils/netutils.hpp ;
