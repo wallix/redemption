@@ -421,10 +421,10 @@ private:
                 }
 
                 std::string info("file_name=\"");
-                info += escape_delimiters(std::string(fd.fileName()));
+                append_escaped_delimiters(info, fd.fileName());
                 info += "\" size=\"";
                 info += std::to_string(fd.file_size());
-                info += "\"";
+                info += '"';
 
                 this->authentifier.log4(
                     !this->param_dont_log_data_into_syslog,
@@ -434,9 +434,9 @@ private:
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message("SendFileToServerClipboard=");
                     message += fd.fileName();
-                    message += "<";
+                    message += '<';
                     message += std::to_string(fd.file_size());
-                    message += ">";
+                    message += '>';
 
                     this->front.session_update(message);
                 }
@@ -462,10 +462,10 @@ private:
                 }
 
                 std::string info("file_name=\"");
-                info += escape_delimiters(std::string(fd.fileName()));
+                append_escaped_delimiters(info, fd.fileName());
                 info += "\" size=\"";
                 info += std::to_string(fd.file_size());
-                info += "\"";
+                info += '"';
 
                 this->authentifier.log4(
                     !this->param_dont_log_data_into_syslog,
@@ -475,9 +475,9 @@ private:
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message("SendFileToServerClipboard=");
                     message += fd.fileName();
-                    message += "<";
+                    message += '<';
                     message += std::to_string(fd.file_size());
-                    message += ">";
+                    message += '>';
 
                     this->front.session_update(message);
                 }
@@ -1052,7 +1052,7 @@ public:
                 }
 
                 std::string info("file_name=\"");
-                info += escape_delimiters(std::string(fd.fileName()));
+                append_escaped_delimiters(info, fd.fileName());
                 info += "\" size=\"";
                 info += std::to_string(fd.file_size());
                 info += "\"";
@@ -1084,7 +1084,7 @@ public:
                 }
 
                 std::string info("file_name=\"");
-                info += escape_delimiters(std::string(fd.fileName()));
+                append_escaped_delimiters(info, fd.fileName());
                 info += "\" size=\"";
                 info += std::to_string(fd.file_size());
                 info += "\"";

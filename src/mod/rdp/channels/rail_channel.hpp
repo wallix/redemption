@@ -844,7 +844,7 @@ public:
             if (!this->session_probe_channel ||
                 this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
                 std::string info("ExeOrFile=\"");
-                info += escape_delimiters(serpdu.ExeOrFile());
+                append_escaped_delimiters(info, serpdu.ExeOrFile());
                 info += "\"";
                 this->authentifier.log4(
                     false,

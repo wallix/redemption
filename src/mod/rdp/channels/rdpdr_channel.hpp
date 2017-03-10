@@ -1664,7 +1664,7 @@ public:
                                     sizeof("/desktop.ini")-1
                                 )) {
                                     std::string info("file_name=\"");
-                                    info += escape_delimiters(target_info.file_path);
+                                    append_escaped_delimiters(info, target_info.file_path);
                                     info += "\"";
 
                                     this->authentifier.log4(
@@ -1707,7 +1707,7 @@ public:
                             device_io_target_info_type & target_info = *target_iter;
                             if (!target_info.for_writing) {
                                 std::string info("file_name=\"");
-                                info += escape_delimiters(target_info.file_path);
+                                append_escaped_delimiters(info, target_info.file_path);
                                 info += "\"";
 
                                 this->authentifier.log4(
@@ -1761,7 +1761,7 @@ public:
                             if (target_iter != this->device_io_target_info_inventory.end()) {
                                 device_io_target_info_type & target_info = *target_iter;
                                 std::string info("file_name=\"");
-                                info += escape_delimiters(target_info.file_path);
+                                append_escaped_delimiters(info, target_info.file_path);
                                 info += "\"";
 
                                 this->authentifier.log4(
@@ -1780,7 +1780,7 @@ public:
                                 std::string info("old_file_name=\"");
                                 info += target_info.file_path;
                                 info += "\" new_file_name=\"";
-                                info += escape_delimiters(file_path);
+                                append_escaped_delimiters(info, file_path);
                                 info += "\"";
 
                                 this->authentifier.log4(

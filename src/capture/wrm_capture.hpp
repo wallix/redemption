@@ -1532,7 +1532,7 @@ public:
 //                        return 1;
 //                    }
 
-//                    // TODO escaped(str:range<It, Senti>, str_cpy:String, is_escapable_fn) (see algostring.hpp escape_delimiters)
+//                    // TODO append_escape_delimiters utils/algostring.hpp
 //                    {
 //                        char escaped_filename[std::rank<decltype(filename)>::value * 2];
 //                        char const * new_filename = escaped_filename;

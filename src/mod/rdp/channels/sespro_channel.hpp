@@ -971,7 +971,9 @@ public:
                 }
 
                 if (!order.compare("PASSWORD_TEXT_BOX_GET_FOCUS")) {
-                    std::string info("status=\"" + escape_delimiters(parameters[0]) + "\"");
+                    std::string info;
+                    info += "status=\""; append_escaped_delimiters(info, parameters[0]);
+                    info += '"';
                     this->authentifier.log4(
                         (this->verbose & RDPVerbose::sesprobe),
                         order.c_str(), info.c_str());
@@ -985,7 +987,9 @@ public:
                     }
                 }
                 else if (!order.compare("UAC_PROMPT_BECOME_VISIBLE")) {
-                    std::string info("status=\"" + escape_delimiters(parameters[0]) + "\"");
+                    std::string info;
+                    info += "status=\""; append_escaped_delimiters(info, parameters[0]);
+                    info += '"';
                     this->authentifier.log4
                         ((this->verbose & RDPVerbose::sesprobe),
                         order.c_str(), info.c_str());
@@ -1000,9 +1004,10 @@ public:
                 }
                 else if (!order.compare("INPUT_LANGUAGE")) {
                     if (parameters.size() == 2) {
-                        std::string info(
-                            "identifier=\"" + escape_delimiters(parameters[0]) +
-                            "\" display_name=\"" + escape_delimiters(parameters[1]) + "\"");
+                        std::string info;
+                        info += "identifier=\""; append_escaped_delimiters(info, parameters[0]);
+                        info += "\" display_name=\""; append_escaped_delimiters(info, parameters[1]);
+                        info += '"';
                         this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
@@ -1017,7 +1022,9 @@ public:
                 else if (!order.compare("NEW_PROCESS") ||
                          !order.compare("COMPLETED_PROCESS")) {
                     if (parameters.size() == 1) {
-                        std::string info("command_line=\"" + escape_delimiters(parameters[0]) + "\"");
+                        std::string info;
+                        info += "command_line=\""; append_escaped_delimiters(info, parameters[0]);
+                        info += '"';
                         this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
@@ -1031,9 +1038,10 @@ public:
                     bool deny = (!order.compare("OUTBOUND_CONNECTION_BLOCKED"));
 
                     if (parameters.size() == 2) {
-                        std::string info(
-                            "rule=\"" + escape_delimiters(parameters[0]) +
-                            "\" application_name=\"" + escape_delimiters(parameters[1]));
+                        std::string info;
+                        info += "rule=\""; append_escaped_delimiters(info, parameters[0]);
+                        info += "\" application_name=\""; append_escaped_delimiters(info, parameters[1]);
+                        info += '"';
                         this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
@@ -1075,12 +1083,13 @@ public:
                                 description);
 
                         if (result) {
-                            std::string info(
-                                "rule=\"" + escape_delimiters(description) +
-                                "\" app_name=\"" + escape_delimiters(parameters[1]) +
-                                "\" app_cmd_line=\"" + escape_delimiters(parameters[2]) +
-                                "\" dst_addr=\"" + escape_delimiters(parameters[3]) +
-                                "\" dst_port=\"" + escape_delimiters(parameters[4]) + "\"");
+                            std::string info;
+                            info += "rule=\""; append_escaped_delimiters(info, description);
+                            info += "\" app_name=\""; append_escaped_delimiters(info, parameters[1]);
+                            info += "\" app_cmd_line=\""; append_escaped_delimiters(info, parameters[2]);
+                            info += "\" dst_addr=\""; append_escaped_delimiters(info, parameters[3]);
+                            info += "\" dst_port=\""; append_escaped_delimiters(info, parameters[4]);
+                            info += '"';
                             this->authentifier.log4(
                                 (this->verbose & RDPVerbose::sesprobe),
                                 order.c_str(), info.c_str());
@@ -1128,10 +1137,11 @@ public:
                                 type, pattern, description);
 
                         if (result) {
-                            std::string info(
-                                "rule=\"" + escape_delimiters(description) +
-                                "\" app_name=\"" + escape_delimiters(parameters[1]) +
-                                "\" app_cmd_line=\"" + escape_delimiters(parameters[2]) + "\"");
+                            std::string info;
+                            info += "rule=\""; append_escaped_delimiters(info, description);
+                            info += "\" app_name=\""; append_escaped_delimiters(info, parameters[1]);
+                            info += "\" app_cmd_line=\""; append_escaped_delimiters(info, parameters[2]);
+                            info += '"';
                             this->authentifier.log4(
                                 (this->verbose & RDPVerbose::sesprobe),
                                 order.c_str(), info.c_str());
@@ -1146,7 +1156,6 @@ public:
                                 else {
                                     char message[4096];
 
-
                                     REDEMPTION_DIAGNOSTIC_PUSH
                                     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
                                     std::snprintf(message, sizeof(message),
@@ -1155,8 +1164,7 @@ public:
                                                 parameters[1].c_str());
                                     REDEMPTION_DIAGNOSTIC_POP
 
-                                    std::string string_message = message;
-                                    this->mod.display_osd_message(string_message);
+                                    this->mod.display_osd_message(message);
                                 }
                             }
                         }
@@ -1167,8 +1175,9 @@ public:
                 }
                 else if (!order.compare("FOREGROUND_WINDOW_CHANGED")) {
                     if ((parameters.size() == 2) || (parameters.size() == 3)) {
-                        std::string info(
-                            "source=\"Probe\" window=\"" + escape_delimiters(parameters[0]) + "\"");
+                        std::string info;
+                        info += "source=\"Probe\" window=\""; append_escaped_delimiters(info, parameters[0]);
+                        info += '"';
                         this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             "TITLE_BAR", info.c_str());
@@ -1179,9 +1188,10 @@ public:
                 }
                 else if (!order.compare("BUTTON_CLICKED")) {
                     if (parameters.size() == 2) {
-                        std::string info(
-                            "windows=\"" + escape_delimiters(parameters[0]) +
-                            "\" button=\"" + escape_delimiters(parameters[1]) + "\"");
+                        std::string info;
+                        info += "windows=\""; append_escaped_delimiters(info, parameters[0]);
+                        info += "\" button=\""; append_escaped_delimiters(info, parameters[1]);
+                        info += '"';
                         this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
@@ -1192,9 +1202,10 @@ public:
                 }
                 else if (!order.compare("EDIT_CHANGED")) {
                     if (parameters.size() == 2) {
-                        std::string info(
-                            "windows=\"" + escape_delimiters(parameters[0]) +
-                            "\" edit=\"" + escape_delimiters(parameters[1]) + "\"");
+                        std::string info;
+                        info += "windows=\""; append_escaped_delimiters(info, parameters[0]);
+                        info += "\" edit=\""; append_escaped_delimiters(info, parameters[1]);
+                        info += '"';
                         this->authentifier.log4(
                             (this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
