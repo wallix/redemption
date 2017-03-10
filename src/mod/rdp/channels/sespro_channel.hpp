@@ -176,7 +176,7 @@ public:
           params.outbound_connection_monitoring_rules)
     , process_monitor_rules(params.process_monitoring_rules)
     {
-        if (this->verbose & RDPVerbose::sesprobe) {
+        if (bool(this->verbose & RDPVerbose::sesprobe)) {
             LOG(LOG_INFO,
                 "SessionProbeVirtualChannel::SessionProbeVirtualChannel: "
                     "timeout=%" PRId64 " fallback_timeout=%" PRId64
@@ -194,7 +194,7 @@ public:
     {
         if ((this->session_probe_effective_launch_timeout.count() > 0) &&
             !this->session_probe_ready) {
-            if (this->verbose & RDPVerbose::sesprobe) {
+            if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO, "SessionProbeVirtualChannel::start_launch_timeout_timer");
             }
 
@@ -238,7 +238,7 @@ public:
         if (!this->session_probe_ready) {
             this->has_additional_launch_time = true;
 
-            if (this->verbose & RDPVerbose::sesprobe) {
+            if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::give_additional_launch_time");
             }
@@ -287,7 +287,7 @@ public:
             if (this->param_session_probe_on_launch_failure ==
                 SessionProbeOnLaunchFailure::ignore_and_continue) {
                 if (need_full_screen_update) {
-                    if (this->verbose & RDPVerbose::sesprobe) {
+                    if (bool(this->verbose & RDPVerbose::sesprobe)) {
                         LOG(LOG_INFO,
                             "SessionProbeVirtualChannel::process_event: "
                                 "Force full screen update. Rect=(0, 0, %u, %u)",
@@ -353,7 +353,7 @@ public:
                         out_s.get_data(), out_s.get_offset());
                 }
 
-                if (this->verbose & RDPVerbose::sesprobe_repetitive) {
+                if (bool(this->verbose & RDPVerbose::sesprobe_repetitive)) {
                     LOG(LOG_INFO,
                         "SessionProbeVirtualChannel::process_event: "
                             "Session Probe keep alive requested");
@@ -373,14 +373,14 @@ public:
     {
         (void)out_asynchronous_task;
 
-        if (this->verbose & RDPVerbose::sesprobe) {
+        if (bool(this->verbose & RDPVerbose::sesprobe)) {
             LOG(LOG_INFO,
                 "SessionProbeVirtualChannel::process_server_message: "
                     "total_length=%u flags=0x%08X chunk_data_length=%u",
                 total_length, flags, chunk_data_length);
         }
 
-        if (this->verbose & RDPVerbose::sesprobe_dump) {
+        if (bool(this->verbose & RDPVerbose::sesprobe_dump)) {
             const bool send              = false;
             const bool from_or_to_client = false;
             ::msgdump_c(send, from_or_to_client, total_length, flags,
@@ -404,7 +404,7 @@ public:
         while (this->server_message.back() == '\0') {
             this->server_message.pop_back();
         }
-        if (this->verbose & RDPVerbose::sesprobe) {
+        if (bool(this->verbose & RDPVerbose::sesprobe)) {
             LOG(LOG_INFO,
                 "SessionProbeVirtualChannel::process_server_message: \"%s\"",
                 this->server_message.c_str());
@@ -422,7 +422,7 @@ public:
         const char version[]   = "Version=";
 
         if (!this->server_message.compare(request_hello)) {
-            if (this->verbose & RDPVerbose::sesprobe) {
+            if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
                         "Session Probe is ready.");
@@ -441,7 +441,7 @@ public:
             const bool disable_graphics_update = false;
             if (this->mod.disable_input_event_and_graphics_update(
                     disable_input_event, disable_graphics_update)) {
-                if (this->verbose & RDPVerbose::sesprobe) {
+                if (bool(this->verbose & RDPVerbose::sesprobe)) {
                     LOG(LOG_INFO,
                         "SessionProbeVirtualChannel::process_server_message: "
                             "Force full screen update. Rect=(0, 0, %u, %u)",
@@ -484,7 +484,7 @@ public:
                         out_s.get_data(), out_s.get_offset());
                 }
 
-                if (this->verbose & RDPVerbose::sesprobe_repetitive) {
+                if (bool(this->verbose & RDPVerbose::sesprobe_repetitive)) {
                     LOG(LOG_INFO,
                         "SessionProbeVirtualChannel::process_event: "
                             "Session Probe keep alive requested");
@@ -735,7 +735,7 @@ public:
         }
         else if (!this->server_message.compare(
                      "Request=Disconnection-Reconnection")) {
-            if (this->verbose & RDPVerbose::sesprobe) {
+            if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
                         "Disconnection-Reconnection required.");
@@ -773,7 +773,7 @@ public:
             const char * session_probe_pid =
                 (this->server_message.c_str() + sizeof(ExtraInfo) - 1);
 
-            if (this->verbose & RDPVerbose::sesprobe) {
+            if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
                         "SessionProbePID=%s",
@@ -795,7 +795,7 @@ public:
 
                 this->other_version = ((major << 8) | minor);
 
-                if (this->verbose & RDPVerbose::sesprobe) {
+                if (bool(this->verbose & RDPVerbose::sesprobe)) {
                     LOG(LOG_INFO,
                         "SessionProbeVirtualChannel::process_server_message: "
                             "OtherVersion=%u.%u",
@@ -928,7 +928,7 @@ public:
             }
         }
         else if (!this->server_message.compare("KeepAlive=OK")) {
-            if (this->verbose & RDPVerbose::sesprobe_repetitive) {
+            if (bool(this->verbose & RDPVerbose::sesprobe_repetitive)) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
                         "Recevied Keep-Alive from Session Probe.");
@@ -937,7 +937,7 @@ public:
         }
         else if (!this->server_message.compare("SESSION_ENDING_IN_PROGRESS")) {
             this->authentifier.log4(
-                (this->verbose & RDPVerbose::sesprobe),
+                bool(this->verbose & RDPVerbose::sesprobe),
                 "SESSION_ENDING_IN_PROGRESS");
 
             this->session_probe_ending_in_progress = true;
@@ -975,7 +975,7 @@ public:
                     info += "status=\""; append_escaped_delimiters(info, parameters[0]);
                     info += '"';
                     this->authentifier.log4(
-                        (this->verbose & RDPVerbose::sesprobe),
+                        bool(this->verbose & RDPVerbose::sesprobe),
                         order.c_str(), info.c_str());
 
                     if (parameters.size() == 1) {
@@ -990,8 +990,8 @@ public:
                     std::string info;
                     info += "status=\""; append_escaped_delimiters(info, parameters[0]);
                     info += '"';
-                    this->authentifier.log4
-                        ((this->verbose & RDPVerbose::sesprobe),
+                    this->authentifier.log4(
+                        bool(this->verbose & RDPVerbose::sesprobe),
                         order.c_str(), info.c_str());
 
                     if (parameters.size() == 1) {
@@ -1009,7 +1009,7 @@ public:
                         info += "\" display_name=\""; append_escaped_delimiters(info, parameters[1]);
                         info += '"';
                         this->authentifier.log4(
-                            (this->verbose & RDPVerbose::sesprobe),
+                            bool(this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
 
                         this->front.set_keylayout(
@@ -1026,7 +1026,7 @@ public:
                         info += "command_line=\""; append_escaped_delimiters(info, parameters[0]);
                         info += '"';
                         this->authentifier.log4(
-                            (this->verbose & RDPVerbose::sesprobe),
+                            bool(this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
                     }
                     else {
@@ -1043,7 +1043,7 @@ public:
                         info += "\" application_name=\""; append_escaped_delimiters(info, parameters[1]);
                         info += '"';
                         this->authentifier.log4(
-                            (this->verbose & RDPVerbose::sesprobe),
+                            bool(this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
 
                         if (deny) {
@@ -1091,7 +1091,7 @@ public:
                             info += "\" dst_port=\""; append_escaped_delimiters(info, parameters[4]);
                             info += '"';
                             this->authentifier.log4(
-                                (this->verbose & RDPVerbose::sesprobe),
+                                bool(this->verbose & RDPVerbose::sesprobe),
                                 order.c_str(), info.c_str());
 
                             if (deny) {
@@ -1143,7 +1143,7 @@ public:
                             info += "\" app_cmd_line=\""; append_escaped_delimiters(info, parameters[2]);
                             info += '"';
                             this->authentifier.log4(
-                                (this->verbose & RDPVerbose::sesprobe),
+                                bool(this->verbose & RDPVerbose::sesprobe),
                                 order.c_str(), info.c_str());
 
                             if (deny) {
@@ -1179,7 +1179,7 @@ public:
                         info += "source=\"Probe\" window=\""; append_escaped_delimiters(info, parameters[0]);
                         info += '"';
                         this->authentifier.log4(
-                            (this->verbose & RDPVerbose::sesprobe),
+                            bool(this->verbose & RDPVerbose::sesprobe),
                             "TITLE_BAR", info.c_str());
                     }
                     else {
@@ -1193,7 +1193,7 @@ public:
                         info += "\" button=\""; append_escaped_delimiters(info, parameters[1]);
                         info += '"';
                         this->authentifier.log4(
-                            (this->verbose & RDPVerbose::sesprobe),
+                            bool(this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
                     }
                     else {
@@ -1207,7 +1207,7 @@ public:
                         info += "\" edit=\""; append_escaped_delimiters(info, parameters[1]);
                         info += '"';
                         this->authentifier.log4(
-                            (this->verbose & RDPVerbose::sesprobe),
+                            bool(this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
                     }
                     else {

@@ -639,7 +639,7 @@ private:
         char * e;
 
         Transport & trans;
-        const implicit_bool_flags<Verbose> verbose;
+        const Verbose verbose;
 
     public:
         Reader(Transport & trans, Verbose verbose)
@@ -778,7 +778,7 @@ private:
             this->trans.recv_new(e, buf_sz);
             e += buf_sz;
 
-            if (this->verbose & Verbose::buffer){
+            if (bool(this->verbose & Verbose::buffer)) {
                 if (this->has_next_buffer){
                     LOG(LOG_INFO, "ACL SERIALIZER : multi buffer (receive)");
                 }
@@ -796,7 +796,7 @@ public:
             auto authid = authid_from_string(key);
             if (auto field = this->ini.get_acl_field(authid)) {
                 if (reader.is_set_value()) {
-                    if (field.set(reader.get_val()) && (this->verbose & Verbose::variable)) {
+                    if (field.set(reader.get_val()) && bool(this->verbose & Verbose::variable)) {
                         const char * val         = field.c_str();
                         const char * display_val = val;
                         if (cfg::crypto::key0::index() == authid ||
@@ -814,7 +814,7 @@ public:
                 }
                 else if (reader.consume_ask()) {
                     field.ask();
-                    if (this->verbose & Verbose::variable) {
+                    if (bool(this->verbose & Verbose::variable)) {
                         LOG(LOG_INFO, "receiving ASK '%s'", key);
                     }
                 }
@@ -845,7 +845,7 @@ public:
             std::snprintf(this->session_id, sizeof(this->session_id), "%s",
                           this->ini.get<cfg::context::session_id>().c_str());
         }
-        if (this->verbose & Verbose::buffer){
+        if (bool(this->verbose & Verbose::buffer)){
             LOG(LOG_INFO, "SESSION_ID = %s", this->ini.get<cfg::context::session_id>());
         }
     }
@@ -864,7 +864,7 @@ private:
 
         Buffer buf;
         Transport & trans;
-        const implicit_bool_flags<Verbose> verbose;
+        const Verbose verbose;
 
     public:
         Buffers(Transport & trans, Verbose verbose)
@@ -892,7 +892,7 @@ private:
         }
 
         void send_buffer() {
-            if (this->verbose & Verbose::buffer){
+            if (bool(this->verbose & Verbose::buffer)){
                 LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %d", this->buf.sz - HEADER_SIZE);
             }
             OutStream stream(this->buf.data, HEADER_SIZE);
@@ -906,7 +906,7 @@ private:
     private:
         enum { MULTIBUF = 1 };
         void new_buffer() {
-            if (this->verbose & Verbose::buffer){
+            if (bool(this->verbose & Verbose::buffer)){
                 LOG(LOG_INFO, "ACL SERIALIZER : multi buffer (send)");
             }
             this->buf.flags |= MULTIBUF;
@@ -916,7 +916,7 @@ private:
 
 public:
     void send_acl_data() {
-        if (this->verbose & Verbose::variable){
+        if (bool(this->verbose & Verbose::variable)){
             LOG(LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %zu", this->ini.changed_field_size());
         }
         if (this->ini.changed_field_size()) {
@@ -931,7 +931,7 @@ public:
                     buffers.push('\n');
                     if (field.is_asked()) {
                         buffers.push("ASK\n");
-                        if (this->verbose & Verbose::variable) {
+                        if (bool(this->verbose & Verbose::variable)) {
                             LOG(LOG_INFO, "sending %s=ASK", key);
                         }
                     }
@@ -945,7 +945,7 @@ public:
                          || (strncasecmp("target_password", key, 15) == 0)) {
                             display_val = get_printable_password(val, password_printing_mode);
                         }
-                        if (this->verbose & Verbose::variable) {
+                        if (bool(this->verbose & Verbose::variable)) {
                             LOG(LOG_INFO, "sending %s=%s", key, display_val);
                         }
                     }

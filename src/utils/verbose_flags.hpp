@@ -70,6 +70,12 @@ inline detail::to_verbose_flags_
 to_verbose_flags(uint32_t verbose)
 { return {verbose}; }
 
+
+template<class E>
+typename std::enable_if<std::is_enum<E>::value, detail::to_verbose_flags_>::type
+convert_verbose_flags(E verbose)
+{ return {static_cast<uint32_t>(verbose)}; }
+
 #define REDEMPTION_VERBOSE_FLAGS(visibility, verbose_member_name)   \
     enum class Verbose : uint32_t;                             \
                                                                     \
