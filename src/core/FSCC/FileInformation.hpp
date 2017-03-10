@@ -423,6 +423,10 @@ struct FileObjectBuffer_Type1 {                             // FSCTL_CREATE_OR_G
         }
     }
 
+    inline static size_t size() {
+        return 64;   /* ObjectId(16) + BirthVolumeId(16) + */
+    }                /* BirthObjectId(16) + DomainId(16)*/
+
     void emit(OutStream & stream) {
         stream.out_copy_bytes(this->ObjectId, GUID_SIZE);
         stream.out_copy_bytes(this->BirthVolumeId, GUID_SIZE);
@@ -601,7 +605,7 @@ struct ReparseGUIDDataBuffer {
     }
 
     void log() {
-        LOG(LOG_INFO, "     File Object Buffer Type2:");
+        LOG(LOG_INFO, "     Reparse GUID Data Buffer:");
         LOG(LOG_INFO, "          * ReparseTag        = 0x%08x (4 bytes)", this->ReparseTag);
         LOG(LOG_INFO, "          * ReparseDataLength = %d (4 bytes)", int(this->ReparseDataLength));
         LOG(LOG_INFO, "          * Reserved - (2 bytes) NOT USED");
@@ -1322,12 +1326,12 @@ public:
         // Reserved(1), MUST NOT be transmitted.
 
         uint8_t const * const ShortName = stream.get_current();
-        uint8_t ShortName_utf8_string[24 /*ShortName(24)*/ * maximum_length_of_utf8_character_in_bytes];
-        const size_t length_of_ShortName_utf8_string = ::UTF16toUTF8(
-            ShortName, ShortNameLength / 2, ShortName_utf8_string,
-            sizeof(ShortName_utf8_string));
-        this->short_name.assign(::char_ptr_cast(ShortName_utf8_string),
-            length_of_ShortName_utf8_string);
+//         uint8_t ShortName_utf8_string[24 /*ShortName(24)*/ * maximum_length_of_utf8_character_in_bytes];
+//         const size_t length_of_ShortName_utf8_string = ::UTF16toUTF8(
+//             ShortName, ShortNameLength / 2, ShortName_utf8_string,
+//             sizeof(ShortName_utf8_string));
+        this->short_name.assign(::char_ptr_cast(ShortName),
+            ShortNameLength);
 
         stream.in_skip_bytes(24);   // ShortName(24)
 
@@ -1343,12 +1347,12 @@ public:
         }
 
         uint8_t const * const FileName_unicode_data = stream.get_current();
-        uint8_t FileName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
-        const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
-            FileName_unicode_data, FileNameLength / 2, FileName_utf8_string,
-            sizeof(FileName_utf8_string));
-        this->file_name.assign(::char_ptr_cast(FileName_utf8_string),
-            length_of_FileName_utf8_string);
+//         uint8_t FileName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
+//         const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
+//             FileName_unicode_data, FileNameLength / 2, FileName_utf8_string,
+//             sizeof(FileName_utf8_string));
+        this->file_name.assign(::char_ptr_cast(FileName_unicode_data),
+            FileNameLength);
 
         stream.in_skip_bytes(FileNameLength);
     }
