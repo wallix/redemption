@@ -58,7 +58,7 @@ auto trim(R & r, Pred pred = Pred()) -> range<decltype(r.begin())> {
 
 namespace algostring
 {
-    constexpr bool ascii_double_quote_escaped_table[256]{
+    constexpr const bool ascii_double_quote_escaped_table[256]{
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, // '"'
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -66,10 +66,9 @@ namespace algostring
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1                       // '\\'
     };
 
-    template<bool const (&table)[256]>
     struct is_escapable_with_table_fn
     {
-        constexpr is_escapable_with_table_fn() noexcept {}
+        bool const (&table)[256];
 
         constexpr bool operator()(char c) const noexcept
         { return table[static_cast<unsigned char>(c)]; }
@@ -78,8 +77,7 @@ namespace algostring
         { return table[c]; }
     };
 
-    constexpr is_escapable_with_table_fn<ascii_double_quote_escaped_table>
-    is_ascii_double_quote_escapable;
+    constexpr is_escapable_with_table_fn is_ascii_double_quote_escapable{ascii_double_quote_escaped_table};
 
 
     // TODO subject : string_view
