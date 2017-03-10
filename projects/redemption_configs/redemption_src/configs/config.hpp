@@ -151,7 +151,7 @@ namespace configs
                     return;
                 }
             }
-            theme.set_logo_path(logo_path);
+            theme.global.logo_path = logo_path;
         }
     }
 }

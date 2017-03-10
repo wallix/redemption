@@ -313,6 +313,7 @@ const char * get_FSCTLStructures(uint32_t FSCTLStructures) {
 //  |                                    | attribute.<165>                               |
 //  +------------------------------------+-----------------------------------------------+
 
+// TODO enum class FileAttribute:uint32_t{None, Readonly, ...}
 enum : uint32_t {
     FILE_ATTRIBUTE_NONE               = 0,
     FILE_ATTRIBUTE_READONLY           = 0x00000001,

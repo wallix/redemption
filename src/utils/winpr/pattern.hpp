@@ -83,6 +83,7 @@ static const char * FilePatternFindNextWildcardA(const char * lpPattern, unsigne
     return nullptr;
 }
 
+// TODO this function is incompatiable with utf8
 static bool FilePatternMatchSubExpressionA(const char * lpFileName, size_t cchFileName,
         const char * lpX, size_t cchX, const char * lpY, size_t cchY, const char * lpWildcard, const char ** ppMatchEnd)
 {
@@ -201,6 +202,7 @@ static bool FilePatternMatchSubExpressionA(const char * lpFileName, size_t cchFi
     return false;
 }
 
+// TODO this function is incompatiable with utf8
 static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
 {
     size_t cchPattern;

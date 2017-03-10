@@ -649,7 +649,7 @@ struct MetaSeqBuf {
     bool with_checksum;
     bool with_encryption;
     CryptoContext & cctx;
-    
+
 
 // Only for Checksum Management
     static constexpr size_t nosize = ~size_t{};
@@ -692,7 +692,7 @@ public:
         this->current_filename_[0] = 0;
         // TODO: ouverture du fichier meta : est-ce qu'on ne devrait pas le laisser fermer
         // et l'ouvrir et le refermer à chaque fois qu'on y ajoute une ligne ? (en O_APPEND)
-        // ça semble plus solide. 
+        // ça semble plus solide.
         this->meta_buf_fd = ::open(this->mf_.filename, O_WRONLY | O_CREAT, S_IRUSR | S_IRGRP | S_IWUSR);
         if (this->meta_buf_fd < 0) {
             LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
@@ -788,7 +788,7 @@ public:
         }
         return this->buf_.write(data, len);
     }
-    
+
     const char * current_path() const
     {
         // TODO: before the first write, no file created yet
@@ -824,6 +824,7 @@ public:
             case '\\':
             case ' ':
                 tmp[j++] = '\\';
+                REDEMPTION_CXX_FALLTHROUGH;
             default:
                 tmp[j++] = filename[i];
             break;
@@ -1022,6 +1023,7 @@ public:
                 case '\\':
                 case ' ':
                     tmp[j++] = '\\';
+                    REDEMPTION_CXX_FALLTHROUGH;
                 default:
                     tmp[j++] = filename[i];
                 break;
@@ -1123,6 +1125,7 @@ public:
                         case '\\':
                         case ' ':
                             tmp[j++] = '\\';
+                            REDEMPTION_CXX_FALLTHROUGH;
                         default:
                             tmp[j++] = filename[i];
                         break;
@@ -1132,7 +1135,7 @@ public:
 
                     using ull = unsigned long long;
                     using ll = long long;
-                    char mes[ 8192 
+                    char mes[ 8192
                             + (std::numeric_limits<ll>::digits10 + 1 + 1) * 8
                             + (std::numeric_limits<ull>::digits10 + 1 + 1) * 2
                             +  wrmcapture_hash_string_len + 1
@@ -1670,6 +1673,7 @@ protected:
             case '\\':
             case ' ':
                 tmp[j++] = '\\';
+                REDEMPTION_CXX_FALLTHROUGH;
             default:
                 tmp[j++] = filename[i];
             break;
@@ -1951,6 +1955,7 @@ public:
             case '\\':
             case ' ':
                 tmp[j++] = '\\';
+                REDEMPTION_CXX_FALLTHROUGH;
             default:
                 tmp[j++] = filename[i];
             break;
@@ -2152,7 +2157,7 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
         const int groupid)
     : buf(with_checksum, cctx, now.tv_sec, hash_path, path, basename, ".wrm", groupid)
     {
-    
+
             char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
         const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n",
             unsigned(width),  unsigned(height), with_checksum?"checksum":"nochecksum");

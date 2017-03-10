@@ -25,6 +25,9 @@
 #include "cfgloader.hpp"
 #include "utils/parse.hpp"
 
+#include <string>
+
+
 struct Theme final
 {
     struct {
@@ -34,8 +37,8 @@ struct Theme final
         int focus_color = WINBLUE;
         int error_color = YELLOW;
         bool logo = false;
-        char logo_path[1024] {};
-    } global {};
+        std::string logo_path;
+    } global {}; // fixes gcc-4.9 -Wuninitialized warning
 
     struct {
         int bgcolor = WHITE;
@@ -69,11 +72,6 @@ struct Theme final
         int bgcolor = MEDIUM_BLUE;
         int fgcolor = WHITE;
     } selector_label;
-
-    void set_logo_path(const char * logopath) {
-        strncpy(this->global.logo_path, logopath, sizeof(this->global.logo_path));
-        this->global.logo_path[sizeof(this->global.logo_path) - 1] = 0;
-    }
 };
 
 

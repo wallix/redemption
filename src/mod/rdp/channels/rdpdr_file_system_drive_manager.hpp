@@ -1064,6 +1064,7 @@ public:
         do {
             if (::readdir_r(this->dir, entry, &result) || !result) { break; }
 
+            // TODO this function is incompatiable with utf8
             if (::FilePatternMatchA(result->d_name, this->pattern.c_str())) {
                 break;
             }
