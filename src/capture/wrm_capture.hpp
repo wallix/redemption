@@ -1222,7 +1222,6 @@ struct MetaSeqBufCrypto
     CryptoContext & cctx;
     ocrypto meta_buf_encrypt;
 
-
 // Only for Checksum Management
     static constexpr size_t nosize = ~size_t{};
     static constexpr size_t quick_size = 4096;
@@ -1234,6 +1233,135 @@ struct MetaSeqBufCrypto
     SslHMAC_Sha256_Delayed sumbuf_hmac;
     SslHMAC_Sha256_Delayed sumbuf_quick_hmac;
     size_t sumbuf_file_size = nosize;
+
+
+private:
+    Random & rnd;
+
+    class wrmcapture_ocrypto_filter
+    {
+        ocrypto wrm_filter_encrypt;
+        iofdbuf & wrm_filter_snk;
+
+    public:
+        explicit wrmcapture_ocrypto_filter(iofdbuf & buf, CryptoContext & cctx, Random & rnd)
+        : wrm_filter_encrypt(cctx, rnd)
+        , wrm_filter_snk(buf)
+
+        {}
+
+        int wrm_filter_open(char const * filename) {
+            size_t base_len = 0;
+            const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
+
+            uint8_t buffer[40];
+            size_t towrite = 0;
+            int err = this->wrm_filter_encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
+            if (!err) {
+                err = this->wrm_filter_raw_write(buffer, towrite);
+            }
+            return err;
+        }
+
+        ssize_t wrm_filter_write(const void * data, size_t len)
+        {
+            uint8_t buffer[65536];
+            size_t towrite = 0;
+            int lentobuf = this->wrm_filter_encrypt.write(buffer, sizeof(buffer), towrite, data, len);
+            if (lentobuf < 0) {
+                return -1;
+            }
+            if (this->wrm_filter_raw_write(buffer, towrite))
+            {
+                return -1;
+            }
+            return lentobuf;
+        }
+
+        int wrm_filter_close(unsigned char hash[MD_HASH_LENGTH << 1])
+        {
+            uint8_t buffer[65536];
+            size_t towrite = 0;
+            const int res1 = this->wrm_filter_encrypt.close(buffer, sizeof(buffer), towrite, hash);
+            if (res1) {
+                return -1;
+            }
+            if (this->wrm_filter_raw_write(buffer, towrite))
+            {
+                return -1;
+            }
+
+            int res2 = this->wrm_filter_snk.close();
+            return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
+        }
+
+        int wrm_filter_close()
+        {
+            unsigned char hash[MD_HASH_LENGTH << 1];
+            return this->wrm_filter_close(hash);
+        }
+
+    private:
+        ///\return 0 if success, otherwise a negatif number
+        ssize_t wrm_filter_raw_write(void * data, size_t len)
+        {
+            ssize_t err = this->wrm_filter_snk.write(data, len);
+            return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
+        }
+
+    } wrm_filter;
+
+public:
+    explicit MetaSeqBufCrypto(
+        bool with_encryption,
+        bool with_checksum,
+        CryptoContext & cctx,
+        time_t start_sec,
+        const char * const hash_prefix,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        Random & rnd
+    )
+    : filegen_(prefix, filename, extension)
+    , buf_{}
+    , num_file_(0)
+    , groupid_(groupid)
+    , meta_buf_encrypt(cctx, rnd)
+    , meta_buf_fd(-1)
+    , mf_(prefix, filename)
+    , hf_(hash_prefix, filename)
+    , start_sec_(start_sec)
+    , stop_sec_(start_sec)
+    , cctx(cctx)
+    , rnd(rnd)
+    , wrm_filter(this->buf_, cctx, rnd)
+    {
+        if (-1 != this->meta_buf_fd) {
+            ::close(this->meta_buf_fd);
+            this->meta_buf_fd = -1;
+        }
+        this->current_filename_[0] = 0;
+        if (this->meta_buf_open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+            LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+        }
+        if (chmod(this->mf_.filename, S_IRUSR | S_IRGRP) == -1) {
+            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+               , this->mf_.filename
+               , "u+r, g+r"
+               , strerror(errno), errno);
+        }
+    }
+
+
+    ~MetaSeqBufCrypto()
+    {
+        if (this->meta_buf_is_open()) {
+            this->meta_buf_close();
+        }
+    }
 
     ssize_t meta_buf_write(const void * data, size_t len)
     {
@@ -1619,133 +1747,6 @@ public:
     void update_sec(time_t sec)
     { this->stop_sec_ = sec; }
 
-private:
-    Random & rnd;
-
-    class wrmcapture_ocrypto_filter
-    {
-        ocrypto encrypt;
-        iofdbuf & snk;
-
-    public:
-        explicit wrmcapture_ocrypto_filter(iofdbuf & buf, CryptoContext & cctx, Random & rnd)
-        : encrypt(cctx, rnd)
-        , snk(buf)
-
-        {}
-
-        int open(char const * filename) {
-            size_t base_len = 0;
-            const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-
-            uint8_t buffer[40];
-            size_t towrite = 0;
-            int err = this->encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
-            if (!err) {
-                err = this->raw_write(buffer, towrite);
-            }
-            return err;
-        }
-
-        ssize_t write(const void * data, size_t len)
-        {
-            uint8_t buffer[65536];
-            size_t towrite = 0;
-            int lentobuf = this->encrypt.write(buffer, sizeof(buffer), towrite, data, len);
-            if (lentobuf < 0) {
-                return -1;
-            }
-            if (this->raw_write(buffer, towrite))
-            {
-                return -1;
-            }
-            return lentobuf;
-        }
-
-        int close(unsigned char hash[MD_HASH_LENGTH << 1])
-        {
-            uint8_t buffer[65536];
-            size_t towrite = 0;
-            const int res1 = this->encrypt.close(buffer, sizeof(buffer), towrite, hash);
-            if (res1) {
-                return -1;
-            }
-            if (this->raw_write(buffer, towrite))
-            {
-                return -1;
-            }
-
-            int res2 = snk.close();
-            return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
-        }
-
-        int close()
-        {
-            unsigned char hash[MD_HASH_LENGTH << 1];
-            return this->close(hash);
-        }
-
-    private:
-        ///\return 0 if success, otherwise a negatif number
-        ssize_t raw_write(void * data, size_t len)
-        {
-            ssize_t err = this->snk.write(data, len);
-            return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
-        }
-
-    } wrm_filter;
-
-public:
-    explicit MetaSeqBufCrypto(
-        bool with_encryption,
-        bool with_checksum,
-        CryptoContext & cctx,
-        time_t start_sec,
-        const char * const hash_prefix,
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension,
-        const int groupid,
-        Random & rnd
-    )
-    : filegen_(prefix, filename, extension)
-    , buf_{}
-    , num_file_(0)
-    , groupid_(groupid)
-    , meta_buf_encrypt(cctx, rnd)
-    , meta_buf_fd(-1)
-    , mf_(prefix, filename)
-    , hf_(hash_prefix, filename)
-    , start_sec_(start_sec)
-    , stop_sec_(start_sec)
-    , cctx(cctx)
-    , rnd(rnd)
-    , wrm_filter(this->buf_, cctx, rnd)
-    {
-        if (-1 != this->meta_buf_fd) {
-            ::close(this->meta_buf_fd);
-            this->meta_buf_fd = -1;
-        }
-        this->current_filename_[0] = 0;
-        if (this->meta_buf_open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
-            LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
-            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-        }
-        if (chmod(this->mf_.filename, S_IRUSR | S_IRGRP) == -1) {
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-               , this->mf_.filename
-               , "u+r, g+r"
-               , strerror(errno), errno);
-        }
-    }
-
-
-    ~MetaSeqBufCrypto()
-    {
-        if (this->meta_buf_is_open()) {
-            this->meta_buf_close();
-        }
-    }
 
     ssize_t write(const void * data, size_t len)
     {
@@ -1767,11 +1768,11 @@ public:
             if (res < 0) {
                 return res;
             }
-            if (int err = this->wrm_filter.open(filename)) {
+            if (int err = this->wrm_filter.wrm_filter_open(filename)) {
                 return err;
             }
         }
-        return this->wrm_filter.write(data, len);
+        return this->wrm_filter.wrm_filter_write(data, len);
     }
 
     int close()
@@ -2013,7 +2014,7 @@ public:
         if (this->buf_.is_open()) {
             wrmcapture_hash_type hash;
             {
-                const int res1 = this->wrm_filter.close(hash);
+                const int res1 = this->wrm_filter.wrm_filter_close(hash);
                 const int res2 = this->buf_.close();
                 if (res1) {
                     return res1;

@@ -1559,7 +1559,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
         const int groupid = 0;
-        wrmcapture_CryptoOutMetaSequenceTransport crypto_trans(false, cctx, rnd, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid);
+        wrmcapture_CryptoOutMetaSequenceTransport crypto_trans(true, true, cctx, rnd, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid, nullptr);
         crypto_trans.send("AAAAX", 5);
         tv.tv_sec += 100;
         crypto_trans.timestamp(tv);
