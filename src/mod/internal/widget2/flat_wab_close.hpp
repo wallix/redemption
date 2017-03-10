@@ -105,7 +105,7 @@ public:
                                                 theme.global.focus_color, 2, font,
                                                 6, 2) : nullptr)
     , img(drawable,
-          theme.global.logo ? theme.global.logo_path :
+          theme.global.logo ? theme.global.logo_path.c_str() :
           SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
     , bg_color(theme.global.bgcolor)
     , prev_time(0)

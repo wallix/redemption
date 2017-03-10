@@ -47,7 +47,7 @@ class RdpdrDriveReadTask : public AsynchronousTask {
 
     VirtualChannelDataSender & to_server_sender;
 
-    const implicit_bool_flags<RDPVerbose> verbose;
+    const RDPVerbose verbose;
 
 public:
     RdpdrDriveReadTask(InFileSeekableTransport * transport,
@@ -67,7 +67,8 @@ public:
     , remaining_number_of_bytes_to_read(number_of_bytes_to_read)
     , Offset(Offset)
     , to_server_sender(to_server_sender.SynchronousSender())
-    , verbose(verbose) {}
+    , verbose(verbose)
+    {}
 
     void configure_wait_object(wait_obj & wait_object) const override {
         REDASSERT(!wait_object.waked_up_by_time);
@@ -100,7 +101,7 @@ public:
                     CompletionId,
                     erref::NTSTATUS::STATUS_SUCCESS
                 );
-            if (this->verbose & RDPVerbose::asynchronous_task) {
+            if (bool(this->verbose & RDPVerbose::asynchronous_task)) {
                 LOG(LOG_INFO, "RdpdrDriveReadTask::run");
                 device_io_response.log(LOG_INFO);
             }
@@ -108,7 +109,7 @@ public:
 
             out_stream.out_uint32_le(this->total_number_of_bytes_to_read);  // length(4)
 
-            if (this->verbose & RDPVerbose::asynchronous_task) {
+            if (bool(this->verbose & RDPVerbose::asynchronous_task)) {
                 LOG(LOG_INFO, "RdpdrDriveReadTask::run: Length=%u",
                     this->remaining_number_of_bytes_to_read);
             }
@@ -123,7 +124,7 @@ public:
         const uint32_t number_of_bytes_to_read =
             std::min<uint32_t>(out_stream.tailroom(), this->remaining_number_of_bytes_to_read);
 
-        if (this->verbose & RDPVerbose::asynchronous_task) {
+        if (bool(this->verbose & RDPVerbose::asynchronous_task)) {
             LOG(LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesToRead=%u",
                 number_of_bytes_to_read);
         }
@@ -134,7 +135,7 @@ public:
         try {
             number_of_bytes_read = this->transport->recv(out_stream.get_current(), number_of_bytes_to_read);
             out_stream.out_skip_bytes(number_of_bytes_read);
-            if (this->verbose & RDPVerbose::asynchronous_task) {
+            if (bool(this->verbose & RDPVerbose::asynchronous_task)) {
                 LOG(LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesRead=%u",
                     number_of_bytes_read);
             }

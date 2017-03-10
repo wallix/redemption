@@ -447,6 +447,8 @@ public:
         const uint32_t newFileAttributes = fscc::FILE_SUPPORTS_USN_JOURNAL | fscc::FILE_SUPPORTS_OPEN_BY_FILE_ID | fscc::FILE_SUPPORTS_EXTENDED_ATTRIBUTES | fscc::FILE_SUPPORTS_HARD_LINKS | fscc::FILE_SUPPORTS_TRANSACTIONS | fscc::FILE_NAMED_STREAMS | fscc::FILE_SUPPORTS_ENCRYPTION | fscc::FILE_SUPPORTS_OBJECT_IDS | fscc::FILE_SUPPORTS_REPARSE_POINTS | fscc::FILE_SUPPORTS_SPARSE_FILES | fscc::FILE_VOLUME_QUOTAS | fscc::FILE_FILE_COMPRESSION | fscc::FILE_PERSISTENT_ACLS | fscc::FILE_UNICODE_ON_DISK | fscc::FILE_CASE_PRESERVED_NAMES | fscc::FILE_CASE_SENSITIVE_SEARCH;
         //0x03e700ff;
 
+        std::vector<std::string> elem_in_path;
+
     } fileSystemData;
 
 
@@ -572,10 +574,12 @@ public:
         uint32_t hex32(0);
         for (size_t i = 0; i < size; i++) {
             int s = str[i];
-            if(s > 47 && s < 58) {                           //this covers 0-9
+            if(s > 47 && s < 58) {                      //this covers 0-9
                 hex32 += (s - 48) << (size - i - 1);
-            } else if (s > 64 && s < 71) {                 // this covers A-F
+            } else if (s > 64 && s < 71) {              // this covers A-F
                 hex32 += (s - 55) << (size - i - 1);
+            } else if (s > 'a'-1 && s < 'f'+1) {        // this covers a-f
+                hex32 += (s - 'a') << (size - i - 1);
             }
         }
 

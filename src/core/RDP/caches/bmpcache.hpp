@@ -453,7 +453,7 @@ public:
         this->storage.reserve(this->size_elements);
         this->lite_storage.reserve(this->size_lite_elements);
 
-        if (this->verbose & Verbose::life) {
+        if (bool(this->verbose & Verbose::life)) {
             LOG( LOG_INFO
                 , "BmpCache: %s bpp=%" PRIu8 " number_of_cache=%" PRIu8 " use_waiting_list=%s "
                     "cache_0(%zu, %" PRIu16 ", %s) cache_1(%zu, %" PRIu16 ", %s) cache_2(%zu, %" PRIu16 ", %s) "
@@ -510,13 +510,13 @@ public:
     }
 
     ~BmpCache() {
-        if (this->verbose & Verbose::life) {
+        if (bool(this->verbose & Verbose::life)) {
             this->log();
         }
     }
 
     void reset() {
-        if (this->verbose & Verbose::life) {
+        if (bool(this->verbose & Verbose::life)) {
             this->log();
         }
         this->stamp = 0;
@@ -682,7 +682,7 @@ public:
 
         const uint32_t cache_index_32 = cache.get_cache_index(e_compare);
         if (cache_index_32 != cache_range<cache_element>::invalid_cache_index) {
-            if (this->verbose & Verbose::persistent) {
+            if (bool(this->verbose & Verbose::persistent)) {
                 if (persistent) {
                     LOG( LOG_INFO
                         , "BmpCache: %s use bitmap %02X%02X%02X%02X%02X%02X%02X%02X stored in persistent disk bitmap cache"
@@ -720,7 +720,7 @@ public:
                 id_real     =  MAXIMUM_NUMBER_OF_CACHES;
                 id          |= IN_WAIT_LIST;
 
-                if (this->verbose & Verbose::persistent) {
+                if (bool(this->verbose & Verbose::persistent)) {
                     LOG( LOG_INFO, "BmpCache: %s Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into wait list."
                         , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
                         , le_compare.sha1[0], le_compare.sha1[1], le_compare.sha1[2], le_compare.sha1[3]
@@ -731,7 +731,7 @@ public:
                 this->waiting_list.remove(le_compare);
                 this->waiting_list[cache_index_32].reset();
 
-                if (this->verbose & Verbose::persistent) {
+                if (bool(this->verbose & Verbose::persistent)) {
                     LOG( LOG_INFO
                         , "BmpCache: %s Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into persistent cache, cache_index=%u"
                         , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))

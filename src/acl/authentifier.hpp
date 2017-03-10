@@ -54,7 +54,7 @@ public:
         , acl_serial(nullptr)
         , verbose(verbose)
     {
-        if (this->verbose & Verbose::state) {
+        if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "auth::Authentifier");
         }
     }
@@ -66,7 +66,7 @@ public:
     }
 
     ~Authentifier() override {
-        if (this->verbose & Verbose::state) {
+        if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "auth::~Authentifier");
         }
     }
