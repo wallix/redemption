@@ -420,26 +420,7 @@ private:
                     fd.log(LOG_INFO);
                 }
 
-                std::string info("file_name=\"");
-                append_escaped_delimiters(info, fd.fileName());
-                info += "\" size=\"";
-                info += std::to_string(fd.file_size());
-                info += '"';
-
-                this->authentifier.log4(
-                    !this->param_dont_log_data_into_syslog,
-                    "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
-                    info.c_str());
-
-                if (!this->param_dont_log_data_into_wrm) {
-                    std::string message("SendFileToServerClipboard=");
-                    message += fd.fileName();
-                    message += '<';
-                    message += std::to_string(fd.file_size());
-                    message += '>';
-
-                    this->front.session_update(message);
-                }
+                this->log_file_descriptor(fd);
 
                 this->file_descriptor_stream.rewind();
             }
@@ -461,26 +442,7 @@ private:
                     fd.log(LOG_INFO);
                 }
 
-                std::string info("file_name=\"");
-                append_escaped_delimiters(info, fd.fileName());
-                info += "\" size=\"";
-                info += std::to_string(fd.file_size());
-                info += '"';
-
-                this->authentifier.log4(
-                    !this->param_dont_log_data_into_syslog,
-                    "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
-                    info.c_str());
-
-                if (!this->param_dont_log_data_into_wrm) {
-                    std::string message("SendFileToServerClipboard=");
-                    message += fd.fileName();
-                    message += '<';
-                    message += std::to_string(fd.file_size());
-                    message += '>';
-
-                    this->front.session_update(message);
-                }
+                this->log_file_descriptor(fd);
             }
 
             if (chunk.in_remain()) {
@@ -502,6 +464,32 @@ private:
         return true;
     }   // process_client_format_data_response_pdu
 
+private:
+    void log_file_descriptor(RDPECLIP::FileDescriptor fd)
+    {
+        auto const file_size_str = std::to_string(fd.file_size());
+        std::string message("file_name=\""); append_escaped_delimiters(message, fd.fileName());
+        message += "\" size=\""; message += file_size_str;
+        message += '"';
+
+        this->authentifier.log4(
+            !this->param_dont_log_data_into_syslog,
+            "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
+            message.c_str());
+
+        if (!this->param_dont_log_data_into_wrm) {
+            message.clear();
+            message += "SendFileToServerClipboard=";
+            message += fd.fileName();
+            message += '<';
+            message += file_size_str;
+            message += '>';
+
+            this->front.session_update(message);
+        }
+    }
+
+public:
     bool process_client_format_list_pdu(uint32_t total_length, uint32_t flags,
         InStream& chunk)
     {
