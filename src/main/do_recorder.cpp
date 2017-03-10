@@ -206,7 +206,7 @@ public:
                 throw;
             }
 
-            if (this->verbose) {
+            if (bool(this->verbose)) {
                 LOG(LOG_INFO, "receive error %u : end of transport", e.id);
             }
             // receive error, end of transport

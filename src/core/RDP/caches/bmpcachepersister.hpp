@@ -142,7 +142,7 @@ private:
         end += 2;
 
         uint16_t bitmap_count = stream.in_uint16_le();
-        if (this->verbose & Verbose::from_disk) {
+        if (bool(this->verbose & Verbose::from_disk)) {
             LOG(LOG_INFO, "BmpCachePersister::preload_from_disk: bitmap_count=%u", bitmap_count);
         }
 
@@ -181,7 +181,7 @@ private:
             if (bmp_cache.get_cache(cache_id).persistent()) {
                 map_key key(sig);
 
-                if (this->verbose & Verbose::bmp_info) {
+                if (bool(this->verbose & Verbose::bmp_info)) {
                     LOG( LOG_INFO
                        , "BmpCachePersister::preload_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
                        , key.str(), original_bpp, cx, cy, bmp_size);
@@ -229,7 +229,7 @@ public:
 
             container_type::iterator it = this->bmp_map[cache_id].find(key);
             if (it != this->bmp_map[cache_id].end()) {
-                if (this->verbose & Verbose::bmp_info) {
+                if (bool(this->verbose & Verbose::bmp_info)) {
                     LOG(LOG_INFO, "BmpCachePersister: bitmap found. key=\"%s\"", key.str());
                 }
 
@@ -239,7 +239,7 @@ public:
 
                 this->bmp_map[cache_id].erase(it);
             }
-            else if (this->verbose & Verbose::bmp_info) {
+            else if (bool(this->verbose & Verbose::bmp_info)) {
                 LOG(LOG_WARNING, "BmpCachePersister: bitmap not found!!! key=\"%s\"", key.str());
             }
         }

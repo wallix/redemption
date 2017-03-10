@@ -173,13 +173,13 @@ public:
         , connected(false)
         , verbose(verbose)
     {
-        if (this->verbose & Verbose::state) {
+        if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "KEEP ALIVE CONSTRUCTOR");
         }
     }
 
     ~KeepAlive() {
-        if (this->verbose & Verbose::state) {
+        if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "KEEP ALIVE DESTRUCTOR");
         }
     }
@@ -190,7 +190,7 @@ public:
 
     void start(time_t now) {
         this->connected = true;
-        if (this->verbose & Verbose::state) {
+        if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "auth::start_keep_alive");
         }
         this->timeout    = now + 2 * this->grace_delay;
@@ -219,7 +219,7 @@ public:
             if (this->wait_answer
                 && !ini.is_asked<cfg::context::keepalive>()
                 && ini.get<cfg::context::keepalive>()) {
-                if (this->verbose & Verbose::state) {
+                if (bool(this->verbose & Verbose::state)) {
                     LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
                 }
                 this->timeout    = now + 2*this->grace_delay;
@@ -261,13 +261,13 @@ public:
     , last_activity_time(start)
     , verbose(verbose)
     {
-        if (this->verbose & Verbose::state) {
+        if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "INACTIVITY CONSTRUCTOR");
         }
     }
 
     ~Inactivity() {
-        if (this->verbose & Verbose::state) {
+        if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "INACTIVITY DESTRUCTOR");
         }
     }
@@ -332,7 +332,7 @@ public:
         , verbose(verbose)
     {
         std::snprintf(this->session_id, sizeof(this->session_id), "%d", getpid());
-        if (this->verbose & Verbose::state){
+        if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "auth::AclSerializer");
         }
     }
@@ -340,7 +340,7 @@ public:
     ~AclSerializer()
     {
         this->auth_trans.disconnect();
-        if (this->verbose & Verbose::state){
+        if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "auth::~AclSerializer");
         }
         char session_file[256];
@@ -792,7 +792,7 @@ public:
     {
         Reader reader(this->auth_trans, this->verbose);
 
-        while (auto key = reader.key(this->verbose & Verbose::variable)) {
+        while (auto key = reader.key(bool(this->verbose & Verbose::variable))) {
             auto authid = authid_from_string(key);
             if (auto field = this->ini.get_acl_field(authid)) {
                 if (reader.is_set_value()) {

@@ -24,33 +24,6 @@
 
 #include <cinttypes>
 
-template<class E>
-struct implicit_bool_flags
-{
-    operator bool() const { return bool(this->flags_); }
-    operator E() const { return this->flags_; }
-
-    implicit_bool_flags operator | (E y) const
-    { return {this->flags_ | y}; }
-
-    implicit_bool_flags operator & (E y) const
-    { return {this->flags_ & y}; }
-
-    implicit_bool_flags(E flags) : flags_(flags) {}
-
-#ifdef __clang__
-private:
-    template<class T> implicit_bool_flags operator | (T const &) const;
-    template<class T> implicit_bool_flags operator & (T const &) const;
-#else
-    template<class T> implicit_bool_flags operator | (T const &) const = delete;
-    template<class T> implicit_bool_flags operator & (T const &) const = delete;
-#endif
-
-private:
-    E const flags_;
-};
-
 namespace detail
 {
     struct to_verbose_flags_
@@ -70,33 +43,27 @@ inline detail::to_verbose_flags_
 to_verbose_flags(uint32_t verbose)
 { return {verbose}; }
 
-
 template<class E>
 typename std::enable_if<std::is_enum<E>::value, detail::to_verbose_flags_>::type
 convert_verbose_flags(E verbose)
 { return {static_cast<uint32_t>(verbose)}; }
 
-#define REDEMPTION_VERBOSE_FLAGS(visibility, verbose_member_name)   \
-    enum class Verbose : uint32_t;                             \
+
+#define REDEMPTION_VERBOSE_FLAGS_DEC_OPS(Prefix, enum_name)         \
+    enum class enum_name : uint32_t;                                \
                                                                     \
-    friend Verbose operator | (Verbose x, Verbose y) \
-    { return Verbose(uint32_t(x) | uint32_t(y)); }             \
-    friend Verbose operator & (Verbose x, Verbose y) \
-    { return Verbose(uint32_t(x) & uint32_t(y)); }             \
-                                                                    \
-visibility:                                                         \
-    implicit_bool_flags<Verbose> const verbose_member_name;    \
-                                                                    \
-public:                                                             \
-    enum class Verbose : uint32_t
+    Prefix enum_name operator | (enum_name x, enum_name y) noexcept \
+    { return enum_name(uint32_t(x) | uint32_t(y)); }                \
+    Prefix enum_name operator & (enum_name x, enum_name y) noexcept \
+    { return enum_name(uint32_t(x) & uint32_t(y)); }
+
+
+#define REDEMPTION_VERBOSE_FLAGS(visibility, verbose_member_name) \
+    REDEMPTION_VERBOSE_FLAGS_DEC_OPS(constexpr friend, Verbose)   \
+    visibility: Verbose const verbose_member_name;                \
+    public: enum class Verbose : uint32_t
 
 
 #define REDEMPTION_VERBOSE_FLAGS_DEF(enum_name)            \
-    enum class enum_name : uint32_t;                       \
-                                                           \
-    inline enum_name operator | (enum_name x, enum_name y) \
-    { return enum_name(uint32_t(x) | uint32_t(y)); }       \
-    inline enum_name operator & (enum_name x, enum_name y) \
-    { return enum_name(uint32_t(x) & uint32_t(y)); }       \
-                                                           \
+    REDEMPTION_VERBOSE_FLAGS_DEC_OPS(constexpr, enum_name) \
     enum class enum_name : uint32_t
