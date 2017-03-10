@@ -2609,7 +2609,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         rdpdr::DeviceIORequest deviceIORequest;
                         deviceIORequest.receive(chunk);
 
-                        StaticOutStream<256> out_stream;
+                        StaticOutStream<1024> out_stream;
                         rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
                                                         , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
                         sharedHeader.emit(out_stream);
@@ -2963,11 +2963,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                         } else {
 
-                                            if (sdqdr.InitialQuery()) {
-                                                this->fileSystemData.current_dir_id = id;
-                                                this->fileSystemData.current_file_index = 0;
-                                            }
-
                                             std::string str_dir_path;
                                             if (id <= this->fileSystemData.paths.size()) {
                                                 str_dir_path = this->fileSystemData.paths[id-1];
@@ -2983,39 +2978,52 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                 }
                                             }
 
-                                            DIR *dir;
-                                            struct dirent *ent;
-                                            std::string ignored1("..");
-                                            std::string ignored2(".");
 
-                                            if ((dir = opendir (str_dir_path.c_str())) != nullptr) {
-                                                int i = 0;
-                                                try {
-                                                    while ((ent = readdir (dir)) != nullptr) {
+                                            if (sdqdr.InitialQuery()) {
+                                                this->fileSystemData.current_dir_id = id;
+                                                this->fileSystemData.current_file_index = 0;
+                                                this->fileSystemData.elem_in_path.clear();
 
-                                                        std::string current_name = std::string (ent->d_name);
-                                                        if (!(current_name == ignored1) && !(current_name == ignored2)) {
+                                                DIR *dir;
+                                                struct dirent *ent;
+                                                std::string ignored1("..");
+                                                std::string ignored2(".");
 
-                                                            if (i == this->fileSystemData.current_file_index) {
-                                                                this->fileSystemData.current_file_index++;
-                                                                str_file_name = current_name;
-                                                                break;
+                                                if ((dir = opendir (str_dir_path.c_str())) != nullptr) {
+                                                    //int i = 0;
+                                                    try {
+                                                        while ((ent = readdir (dir)) != nullptr) {
+
+                                                            std::string current_name = std::string (ent->d_name);
+
+                                                            if (!(current_name == ignored1) && !(current_name == ignored2)) {
+                                                                this->fileSystemData.elem_in_path.push_back(current_name);
+
+                                                                //if (i == this->fileSystemData.current_file_index) {
+                                                                    //this->fileSystemData.current_file_index++;
+
+                                                                    //str_file_name = current_name;
+                                                                    //break;
+                                                                //}
+                                                                //i++;
                                                             }
-                                                            i++;
                                                         }
+                                                    } catch (Error & e) {
+                                                        LOG(LOG_WARNING, "readdir error: (%d) %s", e.id, e.errmsg());
                                                     }
-                                                } catch (Error & e) {
-                                                    LOG(LOG_WARNING, "readdir error: (%d) %s", e.id, e.errmsg());
+                                                    closedir (dir);
+                                                } else {
+                                                    deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
+                                                    LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_dir).", str_dir_path.c_str());
                                                 }
-                                                closedir (dir);
-                                            } else {
-                                                deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                                LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_dir).", str_dir_path.c_str());
                                             }
 
-                                            if (str_file_name.length() == 0) {
+                                            if (this->fileSystemData.elem_in_path.size() == 0) {
                                                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_MORE_FILES);
                                             } else {
+                                                str_file_name = this->fileSystemData.elem_in_path[0];
+                                                this->fileSystemData.elem_in_path.erase(this->fileSystemData.elem_in_path.begin());
+
                                                 std::string str_file_path_slash(str_dir_path + "/" + str_file_name);
                                                 if (stat(str_file_path_slash.c_str(), &buff_child)) {
                                                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
