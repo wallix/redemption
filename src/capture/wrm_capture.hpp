@@ -1182,19 +1182,6 @@ struct MetaSeqBufCrypto
 
 private:
 
-    int wrm_filter_open(char const * filename) {
-        size_t base_len = 0;
-        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-
-        uint8_t buffer[40];
-        size_t towrite = 0;
-        int err = this->wrm_filter_encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
-        if (!err) {
-            err = this->wrm_filter_raw_write(buffer, towrite);
-        }
-        return err;
-    }
-
     ssize_t wrm_filter_write(const void * data, size_t len)
     {
         uint8_t buffer[65536];
@@ -1226,12 +1213,6 @@ private:
         int res2 = this->buf_.close();
         return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
     }
-
-//    int wrm_filter_close()
-//    {
-//        unsigned char hash[MD_HASH_LENGTH << 1];
-//        return this->wrm_filter_close(hash);
-//    }
 
 private:
     ///\return 0 if success, otherwise a negatif number
@@ -1702,7 +1683,17 @@ public:
             if (res < 0) {
                 return res;
             }
-            if (int err = this->wrm_filter_open(filename)) {
+
+            size_t base_len = 0;
+            const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
+
+            uint8_t buffer[40];
+            size_t towrite = 0;
+            int err = this->wrm_filter_encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
+            if (!err) {
+                err = this->wrm_filter_raw_write(buffer, towrite);
+            }
+            if (err){
                 return err;
             }
         }
@@ -1948,17 +1939,22 @@ public:
     {
         if (this->buf_.is_open()) {
             wrmcapture_hash_type hash;
-            {
-                const int res1 = this->wrm_filter_close(hash);
-                const int res2 = this->buf_.close();
-                if (res1) {
-                    return res1;
-                }
-                if (res2) {
-                    return res2;
-                }
+            uint8_t buffer[65536];
+            size_t towrite = 0;
+            const int res1 = this->wrm_filter_encrypt.close(buffer, sizeof(buffer), towrite, hash);
+            if (res1) {
+                this->buf_.close();
+                return -1;
             }
-
+            if (this->wrm_filter_raw_write(buffer, towrite))
+            {
+                this->buf_.close();
+                return -1;
+            }
+            const int res2 = this->buf_.close();
+            if (res2) {
+                return res2;
+            }
             return this->next_meta_file(&hash);
         }
         return 1;
