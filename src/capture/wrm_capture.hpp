@@ -1181,40 +1181,6 @@ struct MetaSeqBufCrypto
 
 
 private:
-
-    ssize_t wrm_filter_write(const void * data, size_t len)
-    {
-        uint8_t buffer[65536];
-        size_t towrite = 0;
-        int lentobuf = this->wrm_filter_encrypt.write(buffer, sizeof(buffer), towrite, data, len);
-        if (lentobuf < 0) {
-            return -1;
-        }
-        if (this->wrm_filter_raw_write(buffer, towrite))
-        {
-            return -1;
-        }
-        return lentobuf;
-    }
-
-    int wrm_filter_close(unsigned char hash[MD_HASH_LENGTH << 1])
-    {
-        uint8_t buffer[65536];
-        size_t towrite = 0;
-        const int res1 = this->wrm_filter_encrypt.close(buffer, sizeof(buffer), towrite, hash);
-        if (res1) {
-            return -1;
-        }
-        if (this->wrm_filter_raw_write(buffer, towrite))
-        {
-            return -1;
-        }
-
-        int res2 = this->buf_.close();
-        return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
-    }
-
-private:
     ///\return 0 if success, otherwise a negatif number
     ssize_t wrm_filter_raw_write(void * data, size_t len)
     {
@@ -1697,7 +1663,17 @@ public:
                 return err;
             }
         }
-        return this->wrm_filter_write(data, len);
+        uint8_t buffer[65536];
+        size_t towrite = 0;
+        int lentobuf = this->wrm_filter_encrypt.write(buffer, sizeof(buffer), towrite, data, len);
+        int res = -1;
+        if (lentobuf >= 0)
+        {
+            int res2 = this->wrm_filter_raw_write(buffer, towrite);
+            res = (res2 == 0) ? lentobuf : res2;
+        }
+
+        return res;
     }
 
     int close()
