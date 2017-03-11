@@ -1180,14 +1180,6 @@ struct MetaSeqBufCrypto
     size_t sumbuf_file_size = nosize;
 
 
-private:
-    ///\return 0 if success, otherwise a negatif number
-    ssize_t wrm_filter_raw_write(void * data, size_t len)
-    {
-        ssize_t err = this->buf_.write(data, len);
-        return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
-    }
-
 public:
     explicit MetaSeqBufCrypto(
         bool with_encryption,
@@ -1657,7 +1649,8 @@ public:
             size_t towrite = 0;
             int err = this->wrm_filter_encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
             if (!err) {
-                err = this->wrm_filter_raw_write(buffer, towrite);
+                ssize_t err2 = this->buf_.write(buffer, towrite);
+                err = err2 < ssize_t(towrite) ? (err2 < 0 ? err2 : -1) : 0;
             }
             if (err){
                 return err;
@@ -1669,7 +1662,8 @@ public:
         int res = -1;
         if (lentobuf >= 0)
         {
-            int res2 = this->wrm_filter_raw_write(buffer, towrite);
+            ssize_t err = this->buf_.write(buffer, towrite);
+            int res2 = err < ssize_t(towrite) ? (err < 0 ? err : -1) : 0;
             res = (res2 == 0) ? lentobuf : res2;
         }
 
@@ -1922,8 +1916,8 @@ public:
                 this->buf_.close();
                 return -1;
             }
-            if (this->wrm_filter_raw_write(buffer, towrite))
-            {
+            ssize_t err = this->buf_.write(buffer, towrite);
+            if (err < ssize_t(towrite)){
                 this->buf_.close();
                 return -1;
             }
