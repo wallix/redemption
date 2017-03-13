@@ -468,8 +468,11 @@ bool Front_Qt::connect() {
             size = 7;
         }
 
+        LOG(LOG_WARNING, "tmp.data()[i] = %s,  size = %zu", tmp, size);
+
         for (size_t i = 0; i < size; i++) {
             this->fileSystemData.drives[0].name[i] = tmp.data()[i];
+
         }
 
         this->fileSystemData.drives[0].ID = 1;
@@ -1980,7 +1983,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                 case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
                     if (this->verbose & RDPVerbose::cliprdr) {
                     if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
-                        LOG(LOG_INFO, "SERVER >> CB Channel: Format List Response PDU FAILED");
+                        LOG(LOG_WARNING, "SERVER >> CB Channel: Format List Response PDU FAILED");
                     } else {
                         if (this->verbose & RDPVerbose::cliprdr) {
                             LOG(LOG_INFO, "SERVER >> CB Channel: Format List Response PDU");
@@ -1993,7 +1996,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                 case RDPECLIP::CB_FORMAT_LIST:
                     {
                         if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
-                            LOG(LOG_INFO, "SERVER >> CB Channel: Format List PDU FAILED");
+                            LOG(LOG_WARNING, "SERVER >> CB Channel: Format List PDU FAILED");
                         } else {
                             if (this->verbose & RDPVerbose::cliprdr) {
                                 LOG(LOG_INFO, "SERVER >> CB Channel: Format List PDU");
@@ -2105,7 +2108,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                     if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
 
                         if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
-                            LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Response PDU FAILED");
+                            LOG(LOG_WARNING, "SERVER >> CB Channel: Format Data Response PDU FAILED");
                         } else {
                             if (this->verbose & RDPVerbose::cliprdr) {
                                 LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Response PDU");
@@ -2119,7 +2122,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                 case RDPECLIP::CB_FORMAT_DATA_REQUEST:
                 {
                     if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
-                        LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Request PDU FAILED");
+                        LOG(LOG_WARNING, "SERVER >> CB Channel: Format Data Request PDU FAILED");
                     } else {
                         if (this->verbose & RDPVerbose::cliprdr) {
                             LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Request PDU");
@@ -2336,7 +2339,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                 case RDPECLIP::CB_FILECONTENTS_RESPONSE:
                     if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                         if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
-                            LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Response PDU FAILED");
+                            LOG(LOG_WARNING, "SERVER >> CB Channel: File Contents Response PDU FAILED");
                         } else {
                             if (this->verbose & RDPVerbose::cliprdr) {
                                 LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Response PDU");
@@ -2665,7 +2668,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                 LOG(LOG_WARNING, "new directory: \"%s\"", new_path);
                                                 mkdir(new_path.c_str(), ACCESSPERMS);
                                             } else {
-                                                LOG(LOG_WARNING, "new file: \"%s\"", new_path);
+                                                //LOG(LOG_WARNING, "new file: \"%s\"", new_path);
                                                 std::ofstream oFile(new_path, std::ios::out | std::ios::binary);
                                                 if (!oFile.good()) {
                                                     LOG(LOG_WARNING, "  Can't open create such file: \'%s\'.", new_path.c_str());
@@ -2981,7 +2984,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                             if (sdqdr.InitialQuery()) {
                                                 this->fileSystemData.current_dir_id = id;
-                                                this->fileSystemData.current_file_index = 0;
                                                 this->fileSystemData.elem_in_path.clear();
 
                                                 DIR *dir;
@@ -2990,7 +2992,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                 std::string ignored2(".");
 
                                                 if ((dir = opendir (str_dir_path.c_str())) != nullptr) {
-                                                    //int i = 0;
+
                                                     try {
                                                         while ((ent = readdir (dir)) != nullptr) {
 
@@ -2998,20 +3000,13 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                                             if (!(current_name == ignored1) && !(current_name == ignored2)) {
                                                                 this->fileSystemData.elem_in_path.push_back(current_name);
-
-                                                                //if (i == this->fileSystemData.current_file_index) {
-                                                                    //this->fileSystemData.current_file_index++;
-
-                                                                    //str_file_name = current_name;
-                                                                    //break;
-                                                                //}
-                                                                //i++;
                                                             }
                                                         }
                                                     } catch (Error & e) {
                                                         LOG(LOG_WARNING, "readdir error: (%d) %s", e.id, e.errmsg());
                                                     }
                                                     closedir (dir);
+
                                                 } else {
                                                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                                     LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_dir).", str_dir_path.c_str());
@@ -3122,7 +3117,31 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         if (this->verbose & RDPVerbose::rdpdr)
                                             LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Notify Change Directory Request");
                                         {
-                                        //deviceIOResponse.emit(out_stream);
+                                            rdpdr::ServerDriveNotifyChangeDirectoryRequest sdncdr;
+                                            sdncdr.receive(chunk);
+
+                                            if (sdncdr.WatchTree) {
+
+//                                                 deviceIOResponse.emit(out_stream);
+//
+//                                                 fscc::FileNotifyInformation fni();
+//                                                 fni.emit(out_stream);
+//
+//                                                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+//
+//                                                 this->_callback->send_to_mod_channel( channel_names::rdpdr
+//                                                                                     , chunk_to_send
+//                                                                                     , out_stream.get_offset()
+//                                                                                     , CHANNELS::CHANNEL_FLAG_LAST |
+//                                                                                       CHANNELS::CHANNEL_FLAG_FIRST
+//                                                                                     );
+
+                                                //if (this->verbose & RDPVerbose::rdpdr)
+                                                  LOG(LOG_WARNING, "CLIENT >> RDPDR: Device I/O Must Send Notify Change Directory Response");
+                                            }
+
+
+                                        //
                                         }
                                         break;
 

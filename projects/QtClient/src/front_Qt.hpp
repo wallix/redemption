@@ -420,8 +420,6 @@ public:
         struct DeviceData {
             char name[8] = {0};
             uint32_t ID = 0;
-            uint32_t status = -1;
-            uint32_t file_id = 0;
         };
 
         bool drives_created = false;
@@ -438,15 +436,13 @@ public:
 
         std::vector<std::string> paths;
 
-        uint32_t current_dir_id = 0;
-        int current_file_index = 0;
-
         int writeData_to_wait = 0;
         int file_to_write_id = 0;
 
         const uint32_t newFileAttributes = fscc::FILE_SUPPORTS_USN_JOURNAL | fscc::FILE_SUPPORTS_OPEN_BY_FILE_ID | fscc::FILE_SUPPORTS_EXTENDED_ATTRIBUTES | fscc::FILE_SUPPORTS_HARD_LINKS | fscc::FILE_SUPPORTS_TRANSACTIONS | fscc::FILE_NAMED_STREAMS | fscc::FILE_SUPPORTS_ENCRYPTION | fscc::FILE_SUPPORTS_OBJECT_IDS | fscc::FILE_SUPPORTS_REPARSE_POINTS | fscc::FILE_SUPPORTS_SPARSE_FILES | fscc::FILE_VOLUME_QUOTAS | fscc::FILE_FILE_COMPRESSION | fscc::FILE_PERSISTENT_ACLS | fscc::FILE_UNICODE_ON_DISK | fscc::FILE_CASE_PRESERVED_NAMES | fscc::FILE_CASE_SENSITIVE_SEARCH;
         //0x03e700ff;
 
+        uint32_t current_dir_id = 0;
         std::vector<std::string> elem_in_path;
 
     } fileSystemData;

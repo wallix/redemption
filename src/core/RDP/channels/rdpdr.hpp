@@ -29,6 +29,7 @@
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/stream.hpp"
 #include "utils/utf.hpp"
+
 #include "core/SMB2/MessageSyntax.hpp"
 #include "core/FSCC/FileInformation.hpp"
 #include "core/ERREF/ntstatus.hpp"
@@ -4203,7 +4204,7 @@ public:
         LOG(LOG_INFO, "          * InitialQuery       = 0x%02x (1 byte)", this->InitialQuery_);
         LOG(LOG_INFO, "          * PathLength         = %zu (4 bytes)", this->path.size());
         LOG(LOG_INFO, "          * Padding - (23 byte) NOT USED");
-        LOG(LOG_INFO, "          * path               = \"%s\" (%zu byte(s))", this->path.c_str(), 2*this->path.size());
+        LOG(LOG_INFO, "          * path               = \"%s\" (%zu byte(s))", this->path.c_str(), this->path.size());
     }
 };  // ServerDriveQueryDirectoryRequest
 
