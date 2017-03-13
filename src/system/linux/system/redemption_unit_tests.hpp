@@ -110,8 +110,8 @@ namespace redemption_unit_test__
             REDEMPTION_DIAGNOSTIC_PUSH
             REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
             boost::unit_test::unit_test_monitor.register_exception_translator<Error>(+[](Error const & e){
-                std::printf("Exception Error: %s\n", e.errmsg());
-                throw e;
+                std::string s = "Exception of type 'Error': "; s += e.errmsg();
+                throw std::runtime_error{std::move(s)};
             });
             REDEMPTION_DIAGNOSTIC_POP
         }

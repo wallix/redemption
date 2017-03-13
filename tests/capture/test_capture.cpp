@@ -50,7 +50,6 @@
 
 BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 {
-    try {
     BOOST_CHECK(true);
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
@@ -311,9 +310,6 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
             BOOST_CHECK_EQUAL(x.size, fsize);
         }
         ::unlink(x.filename);
-    }
-    } catch(Error & e) {
-        LOG(LOG_INFO, "Exit on exception\n");
     }
 }
 
