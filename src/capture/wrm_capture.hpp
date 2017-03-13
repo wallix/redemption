@@ -623,9 +623,14 @@ public:
     , start_sec_(start_sec)
     , stop_sec_(start_sec)
     , with_checksum(with_checksum)
-    , with_encryption(false)
+    , with_encryption(with_encryption)
     , meta_buf_encrypt(cctx, rnd)
     , wrm_filter_encrypt(cctx, rnd)
+    {
+    }
+
+
+    ssize_t open(uint16_t width, uint16_t height)
     {
         this->current_filename_[0] = 0;
         // TODO: ouverture du fichier meta : est-ce qu'on ne devrait pas le laisser fermer
@@ -648,6 +653,12 @@ public:
             this->meta_buf_quick_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
             this->meta_buf_file_size = 0;
         }
+
+        char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
+        const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n",
+        unsigned(width),  unsigned(height), with_checksum?"checksum":"nochecksum");
+        const ssize_t res = this->meta_buf_write(header1, len);
+        return res;
     }
 
     ssize_t meta_buf_write(const void * data, size_t len)
@@ -1207,9 +1218,15 @@ public:
     , hf_(hash_prefix, filename)
     , start_sec_(start_sec)
     , stop_sec_(start_sec)
+    , with_checksum(with_checksum)
+    , with_encryption(with_encryption)
     , meta_buf_encrypt(cctx, rnd)
     , wrm_filter_encrypt(cctx, rnd)
     {
+    }
+
+   ssize_t open(uint16_t width, uint16_t height)
+   {
         if (-1 != this->meta_buf_fd) {
             ::close(this->meta_buf_fd);
             this->meta_buf_fd = -1;
@@ -1225,8 +1242,21 @@ public:
                , "u+r, g+r"
                , strerror(errno), errno);
         }
-    }
 
+        char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
+        const int len = sprintf(
+            header1,
+            "v2\n"
+            "%u %u\n"
+            "%s\n"
+            "\n\n",
+            unsigned(width),
+            unsigned(height),
+            with_checksum  ? "checksum" : "nochecksum"
+        );
+        const ssize_t res = this->meta_buf_write(header1, len);
+        return res;
+    }
 
     ~MetaSeqBufCrypto()
     {
@@ -1234,6 +1264,7 @@ public:
             this->meta_buf_close();
         }
     }
+
 
     ssize_t meta_buf_write(const void * data, size_t len)
     {
@@ -1931,13 +1962,92 @@ public:
     }
 };
 
-struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
+struct wrmcapture_OutMetaSequenceTransport : public Transport
 {
     private:
-    MetaSeqBufCrypto buf;
+    struct MetaSeq {
+        MetaSeqBufCrypto crypto;
+        MetaSeqBuf plain;
+        bool with_encryption;
+        bool with_checksum;
+        
+        MetaSeq(
+            bool with_encryption,
+            bool with_checksum,
+            CryptoContext & cctx,
+            Random & rnd,
+            Fstat & fstat,
+            
+            time_t start_sec,
+            const char * const hash_prefix,
+            const char * const prefix,
+            const char * const filename,
+            const char * const extension,
+            const int groupid
+        )
+          : crypto(with_encryption, with_checksum, cctx, 
+                   rnd, fstat, start_sec, hash_prefix, prefix, filename, extension, groupid)
+          , plain(with_encryption, with_checksum, cctx, 
+                   rnd, fstat, start_sec, hash_prefix, prefix, filename, extension, groupid)
+          , with_encryption(with_encryption)
+          , with_checksum(with_checksum)
+          {}
+            
+        ssize_t write(const uint8_t * data, size_t len) {
+            if (this->with_encryption) {
+                return this->crypto.write(data, len);
+            }
+            return this->plain.write(data, len);
+        }
+
+        ssize_t open(uint16_t width, uint16_t height)
+        {
+            if (this->with_encryption){
+                return this->crypto.open(width, height);
+            }
+            return this->plain.open(width, height);
+        }            
+
+        const char * current_path()
+        {
+            if (this->with_encryption){
+                return this->crypto.current_path();
+            }
+            return this->plain.current_path();
+        }            
+
+        int next() {
+            if (this->with_encryption) {
+                return this->crypto.next();
+            }
+            return this->plain.next();
+        }
+
+        void update_sec(time_t sec) {
+            if (this->with_encryption) {
+                return this->crypto.update_sec(sec);
+            }
+            return this->plain.update_sec(sec);
+        }
+
+        bool close() {
+            if (this->with_encryption) {
+                return this->crypto.close();
+            }
+            return this->plain.close();
+        }
+
+        void request_full_cleaning() {
+            if (this->with_encryption) {
+                return this->crypto.request_full_cleaning();
+            }
+            return this->plain.request_full_cleaning();
+        }
+    } buf;
+
 
     public:
-    wrmcapture_CryptoOutMetaSequenceTransport(
+    wrmcapture_OutMetaSequenceTransport(
         bool with_encryption,
         bool with_checksum,
         CryptoContext & cctx,
@@ -1956,20 +2066,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
             this->set_authentifier(authentifier);
         }
 
-       bool has_checksum = true;
-
-        char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
-        const int len = sprintf(
-            header1,
-            "v2\n"
-            "%u %u\n"
-            "%s\n"
-            "\n\n",
-            unsigned(width),
-            unsigned(height),
-            has_checksum  ? "checksum" : "nochecksum"
-        );
-        const ssize_t res = this->buf.meta_buf_write(header1, len);
+        const ssize_t res = this->buf.open(width, height);
         if (res < 0) {
             int err = errno;
             LOG(LOG_ERR, "Write to transport failed (M2.0): code=%d", err);
@@ -2016,7 +2113,7 @@ struct wrmcapture_CryptoOutMetaSequenceTransport : public Transport
         this->buf.request_full_cleaning();
     }
 
-    ~wrmcapture_CryptoOutMetaSequenceTransport() {
+    ~wrmcapture_OutMetaSequenceTransport() {
         this->buf.close();
     }
 
@@ -2041,97 +2138,6 @@ private:
 };
 
 
-struct wrmcapture_OutMetaSequenceTransport : public Transport
-{
-    MetaSeqBuf buf;
-
-    wrmcapture_OutMetaSequenceTransport(
-        bool with_encryption,
-        bool with_checksum,
-        CryptoContext & cctx,
-        Random & rnd,
-        Fstat & fstat,
-        const char * path, const char * hash_path, const char * basename,
-        timeval now,
-        uint16_t width, uint16_t height,
-        const int groupid)
-    : buf(with_encryption, with_checksum, cctx, rnd, fstat, now.tv_sec, hash_path, path, basename, ".wrm", groupid)
-    {
-
-            char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
-        const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n",
-            unsigned(width),  unsigned(height), with_checksum?"checksum":"nochecksum");
-        const ssize_t res = this->buf.meta_buf_write(header1, len);
-        if (res < 0) {
-            int err = errno;
-            LOG(LOG_ERR, "Write to transport failed (M5): code=%d", err);
-
-            if (err == ENOSPC) {
-                if (this->authentifier) {
-                    char message[1024];
-                    snprintf(message, sizeof(message), "100|%s", path);
-                    this->authentifier->report("FILESYSTEM_FULL", message);
-                }
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
-            }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
-            }
-        }
-    }
-
-    void timestamp(timeval now) override {
-        this->buf.update_sec(now.tv_sec);
-    }
-
-    bool next() override {
-        if (this->status == false) {
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
-        const ssize_t res = this->buf.next();
-        if (res) {
-            this->status = false;
-            if (res < 0){
-                LOG(LOG_ERR, "Write to transport failed (M4): code=%d", errno);
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
-            }
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-        }
-        ++this->seqno;
-        return true;
-    }
-
-    bool disconnect() override {
-        return !this->buf.close();
-    }
-
-    void request_full_cleaning() override {
-        this->buf.request_full_cleaning();
-    }
-
-    ~wrmcapture_OutMetaSequenceTransport() {
-        this->buf.close();
-    }
-
-private:
-    void do_send(const uint8_t * data, size_t len) override {
-        const ssize_t res = this->buf.write(data, len);
-        if (res < 0) {
-            this->status = false;
-            if (errno == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|%s", this->buf.current_path());
-                this->authentifier->report("FILESYSTEM_FULL", message);
-                errno = ENOSPC;
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
-            }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
-        this->last_quantum_sent += res;
-    }
-};
 
 
 
@@ -2921,58 +2927,7 @@ public:
 
     DumpPng24FromRDPDrawableAdapter dump_png24_api;
 
-    struct TransportVariant
-    {
-        union Variant
-        {
-            wrmcapture_CryptoOutMetaSequenceTransport out_crypto;
-            wrmcapture_OutMetaSequenceTransport out;
-
-            struct {} dummy;
-            Variant() : dummy() {}
-            ~Variant() {}
-        } variant;
-        ::Transport * trans;
-
-        template<class... Ts>
-        TransportVariant(
-            TraceType trace_type,
-            CryptoContext & cctx,
-            Random & rnd,
-            Fstat & fstat,
-            const char * path,
-            const char * hash_path,
-            const char * basename,
-            timeval const & now,
-            uint16_t width,
-            uint16_t height,
-            const int groupid,
-            auth_api * authentifier
-        ) {
-            // TODO there should only be one outmeta, not two. Capture code should not really care if file is encrypted or not. Here is not the right level to manage anything related to encryption.
-            // TODO Also we may wonder why we are encrypting wrm and not png (This is related to the path split between png and wrm). We should stop and consider what we should actually do
-            switch (trace_type) {
-                case TraceType::cryptofile:
-                    this->trans = new (&this->variant.out_crypto)
-                    wrmcapture_CryptoOutMetaSequenceTransport(true, true, cctx, rnd, fstat, path, hash_path, basename, now, width, height, groupid, authentifier);
-                    break;
-                default:
-                case TraceType::localfile:
-                case TraceType::localfile_hashed:
-                    bool with_checksum = (trace_type == TraceType::localfile_hashed);
-                    this->trans = new (&this->variant.out)
-                    wrmcapture_OutMetaSequenceTransport(false, with_checksum, cctx, rnd, fstat, path, hash_path, basename, now, width, height, groupid);
-                    break;
-            }
-        }
-
-        TransportVariant & operator = (TransportVariant const &) = delete;
-
-        ~TransportVariant() {
-            this->trans->~Transport();
-        }
-    } trans_variant;
-
+    wrmcapture_OutMetaSequenceTransport out;
 
 private:
     struct Serializer final : GraphicToFile {
@@ -3206,11 +3161,18 @@ public:
         BmpCache::CacheOption(262, 12288, false))
     , ptr_cache(/*pointerCacheSize=*/0x19)
     , dump_png24_api{drawable}
-    , trans_variant(
-        wrm_params.trace_type, wrm_params.cctx, wrm_params.rnd, wrm_params.fstat, wrm_params.record_path, wrm_params.hash_path, wrm_params.basename, now,
-        drawable.width(), drawable.height(), wrm_params.groupid, authentifier)
-    , graphic_to_file(
-        now, *this->trans_variant.trans, drawable.width(), drawable.height(), wrm_params.capture_bpp,
+//    , out((trace_type == TraceType::cryptofile), (trace_type == TraceType::localfile_hashed), cctx, rnd, fstat, path, hash_path, basename, now, width, height, groupid, authentifier)
+
+    , out((wrm_params.trace_type == TraceType::cryptofile),
+          (wrm_params.trace_type == TraceType::localfile_hashed),
+           wrm_params.cctx,
+           wrm_params.rnd,
+           wrm_params.fstat,
+           wrm_params.record_path,
+           wrm_params.hash_path,
+           wrm_params.basename,
+           now, drawable.width(), drawable.height(), wrm_params.groupid, authentifier)
+    , graphic_to_file(now, this->out, drawable.width(), drawable.height(), wrm_params.capture_bpp,
         this->bmp_cache, this->gly_cache, this->ptr_cache, this->dump_png24_api,
         wrm_params.wrm_compression_algorithm, GraphicToFile::SendInput::YES,
         GraphicToFile::Verbose(wrm_params.wrm_verbose)
@@ -3240,7 +3202,7 @@ public:
     }
 
     void request_full_cleaning() {
-        this->trans_variant.trans->request_full_cleaning();
+        this->out.request_full_cleaning();
     }
 
     std::chrono::microseconds do_snapshot(
