@@ -2445,7 +2445,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         gethostname(username, LOGIN_NAME_MAX);
                         std::string str_username(username);
 
-                        rdpdr::ClientNameRequest clientNameRequest(username, 0x00000001);
+                        rdpdr::ClientNameRequest clientNameRequest(username, rdpdr::UNICODE_CHAR);
                         clientNameRequest.emit(stream);
 
                         int total_length(stream.get_offset());
@@ -2506,7 +2506,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         rdpdr::GeneralCapabilitySet gcs();
 
                         // General capability set
-                        const uint32_t general_capability_version = rdpdr::GENERAL_CAPABILITY_VERSION_02;
                         out_stream.out_uint16_le(rdpdr::CAP_GENERAL_TYPE);
                         out_stream.out_uint16_le(36 + 8);
                                 /*rdpdr::GeneralCapabilitySet::size(
@@ -2514,34 +2513,32 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 8   // CapabilityType(2) + CapabilityLength(2) +
                                     //     Version(4)
                             );*/
-                        out_stream.out_uint32_le(general_capability_version);
+                        out_stream.out_uint32_le(rdpdr::GENERAL_CAPABILITY_VERSION_02);
 
                         rdpdr::GeneralCapabilitySet general_capability_set(
                                 0x2,        // osType
-                                0,                          // osVNot Used ersion
                                 rdpdr::MINOR_VERSION_2,        // protocolMinorVersion -
                                 rdpdr::SUPPORT_ALL_REQUEST,     // ioCode1
-                                0x0,                        // ioCode2  Not Used
                                 rdpdr::RDPDR_DEVICE_REMOVE_PDUS |           // extendedPDU -
                                     rdpdr::RDPDR_CLIENT_DISPLAY_NAME_PDU  |
                                     rdpdr::RDPDR_USER_LOGGEDON_PDU,
                                 rdpdr::ENABLE_ASYNCIO,        // extraFlags1
-                                0x0,                        // extraFlags2 Not Used
-                                0           // SpecialTypeDeviceCap
+                                0,                          // SpecialTypeDeviceCap
+                                rdpdr::GENERAL_CAPABILITY_VERSION_02
                             );
 
-                        general_capability_set.emit(out_stream, general_capability_version);
+                        general_capability_set.emit(out_stream);
 
-                        rdpdr::CapabilityHeader ch1(rdpdr::CAP_PRINTER_TYPE, 8, rdpdr::PRINT_CAPABILITY_VERSION_01);
+                        rdpdr::CapabilityHeader ch1(rdpdr::CAP_PRINTER_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                         ch1.emit(out_stream);
 
-                        rdpdr::CapabilityHeader ch2(rdpdr::CAP_PORT_TYPE, 8, rdpdr::PRINT_CAPABILITY_VERSION_01);
+                        rdpdr::CapabilityHeader ch2(rdpdr::CAP_PORT_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                         ch2.emit(out_stream);
 
-                        rdpdr::CapabilityHeader ch3(rdpdr::CAP_DRIVE_TYPE, 8, rdpdr::PRINT_CAPABILITY_VERSION_01);
+                        rdpdr::CapabilityHeader ch3(rdpdr::CAP_DRIVE_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                         ch3.emit(out_stream);
 
-                        rdpdr::CapabilityHeader ch4(rdpdr::CAP_SMARTCARD_TYPE, 8, rdpdr::PRINT_CAPABILITY_VERSION_01);
+                        rdpdr::CapabilityHeader ch4(rdpdr::CAP_SMARTCARD_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                         ch4.emit(out_stream);
 
                         int total_length(out_stream.get_offset());

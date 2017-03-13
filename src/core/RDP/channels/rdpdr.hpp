@@ -384,10 +384,9 @@ struct CapabilityHeader {
     {}
 
     CapabilityHeader( uint16_t CapabilityType
-                    , uint16_t CapabilityLength
                     , uint32_t Version)
     : CapabilityType(CapabilityType)
-    , CapabilityLength(CapabilityLength)
+    , CapabilityLength(8)
     , Version(Version)
     {}
 
@@ -2609,6 +2608,11 @@ public:
 //  | 0x00000000 | ComputerName is in ASCII characters.   |
 //  +------------+----------------------------------------+
 
+enum {
+  ASCII_CHAR   = 0x00000000,
+  UNICODE_CHAR = 0x00000001
+};
+
 // CodePage (4 bytes): A 32-bit unsigned integer that specifies the code page
 //  of the ComputerName field; it MUST be set to 0.
 
@@ -2946,40 +2950,57 @@ public:
     uint32_t extraFlags1_         = 0;
     uint32_t extraFlags2          = 0;
     uint32_t SpecialTypeDeviceCap = 0;
+    uint32_t version              = 0;
 
 
     GeneralCapabilitySet() = default;
 
-    GeneralCapabilitySet(uint32_t osType, uint32_t osVersion,
-        uint16_t protocolMajorVersion, uint16_t protocolMinorVersion,
-        uint32_t ioCode1, uint32_t ioCode2, uint32_t extendedPDU,
-        uint32_t extraFlags1, uint32_t extraFlags2, uint32_t SpecialTypeDeviceCap)
-    : osType(osType)
-    , osVersion(osVersion)
-    , protocolMajorVersion(protocolMajorVersion)
-    , protocolMinorVersion(protocolMinorVersion)
-    , ioCode1(ioCode1)
-    , ioCode2(ioCode2)
-    , extendedPDU_(extendedPDU)
-    , extraFlags1_(extraFlags1)
-    , extraFlags2(extraFlags2)
-    , SpecialTypeDeviceCap(SpecialTypeDeviceCap) {}
+//     GeneralCapabilitySet(uint32_t osType, uint32_t osVersion,
+//         uint16_t protocolMajorVersion, uint16_t protocolMinorVersion,
+//         uint32_t ioCode1, uint32_t ioCode2, uint32_t extendedPDU,
+//         uint32_t extraFlags1, uint32_t extraFlags2, uint32_t SpecialTypeDeviceCap)
+//     : osType(osType)
+//     , osVersion(osVersion)
+//     , protocolMajorVersion(protocolMajorVersion)
+//     , protocolMinorVersion(protocolMinorVersion)
+//     , ioCode1(ioCode1)
+//     , ioCode2(ioCode2)
+//     , extendedPDU_(extendedPDU)
+//     , extraFlags1_(extraFlags1)
+//     , extraFlags2(extraFlags2)
+//     , SpecialTypeDeviceCap(SpecialTypeDeviceCap) {}
 
-    GeneralCapabilitySet(uint32_t osType, uint32_t osVersion,
+    GeneralCapabilitySet(uint32_t osType,
         uint16_t protocolMinorVersion,
-        uint32_t ioCode1, uint32_t ioCode2, uint32_t extendedPDU,
-        uint32_t extraFlags1, uint32_t extraFlags2, uint32_t SpecialTypeDeviceCap)
+        uint32_t ioCode1, uint32_t extendedPDU,
+        uint32_t extraFlags1, uint32_t SpecialTypeDeviceCap,
+        uint32_t version)
     : osType(osType)
     , osVersion(osVersion)
     , protocolMinorVersion(protocolMinorVersion)
     , ioCode1(ioCode1)
-    , ioCode2(ioCode2)
     , extendedPDU_(extendedPDU)
     , extraFlags1_(extraFlags1)
     , extraFlags2(extraFlags2)
-    , SpecialTypeDeviceCap(SpecialTypeDeviceCap) {}
+    , SpecialTypeDeviceCap(SpecialTypeDeviceCap)
+    , version(version) {}
 
-    void emit(OutStream & stream, uint32_t version) const {
+//     void emit(OutStream & stream, uint32_t version) const {
+//         stream.out_uint32_le(this->osType);
+//         stream.out_uint32_le(this->osVersion);
+//         stream.out_uint16_le(this->protocolMajorVersion);
+//         stream.out_uint16_le(this->protocolMinorVersion);
+//         stream.out_uint32_le(this->ioCode1);
+//         stream.out_uint32_le(this->ioCode2);
+//         stream.out_uint32_le(this->extendedPDU_);
+//         stream.out_uint32_le(this->extraFlags1_);
+//         stream.out_uint32_le(this->extraFlags2);
+//         if (version == GENERAL_CAPABILITY_VERSION_02) {
+//             stream.out_uint32_le(this->SpecialTypeDeviceCap);
+//         }
+//     }
+
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->osType);
         stream.out_uint32_le(this->osVersion);
         stream.out_uint16_le(this->protocolMajorVersion);
@@ -2989,7 +3010,7 @@ public:
         stream.out_uint32_le(this->extendedPDU_);
         stream.out_uint32_le(this->extraFlags1_);
         stream.out_uint32_le(this->extraFlags2);
-        if (version == GENERAL_CAPABILITY_VERSION_02) {
+        if (this->version == GENERAL_CAPABILITY_VERSION_02) {
             stream.out_uint32_le(this->SpecialTypeDeviceCap);
         }
     }

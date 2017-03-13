@@ -1046,7 +1046,7 @@ public:
                     ~rdpdr::ENABLE_ASYNCIO);
             }
 
-            general_capability_set.emit(out_stream, Version);
+            general_capability_set.emit(out_stream);
 
             general_capability_set.receive(chunk, Version);
 
@@ -2113,26 +2113,27 @@ public:
 
             rdpdr::GeneralCapabilitySet general_capability_set(
                     0x2,        // osType
-                    0x50001,    // osVersion
-                    0x1,        // protocolMajorVersion
+                   // 0x50001,                               // osVersion
+                   // 0x1,                                   // protocolMajorVersion
                     0xC,        // protocolMinorVersion -
                                 //     RDP Client 6.0 and 6.1
                     0xFFFF,     // ioCode1
-                    0x0,        // ioCode2
+                  // 0x0,                                   // ioCode2
                     0x7,        // extendedPDU -
                                 //     RDPDR_DEVICE_REMOVE_PDUS(1) |
                                 //     RDPDR_CLIENT_DISPLAY_NAME_PDU(2) |
                                 //     RDPDR_USER_LOGGEDON_PDU(4)
                     0x0,        // extraFlags1
-                    0x0,        // extraFlags2
-                    0           // SpecialTypeDeviceCap
+                   // 0x0,                                   // extraFlags2
+                    0,                                      // SpecialTypeDeviceCap
+                    general_capability_version
                 );
             if (bool(this->verbose & RDPVerbose::rdpdr)) {
                 LOG(LOG_INFO,
                     "FileSystemVirtualChannel::process_server_client_id_confirm:");
                 general_capability_set.log(LOG_INFO);
             }
-            general_capability_set.emit(out_stream, general_capability_version);
+            general_capability_set.emit(out_stream);
 
             // Print capability set
             out_stream.out_uint16_le(rdpdr::CAP_PRINTER_TYPE);
