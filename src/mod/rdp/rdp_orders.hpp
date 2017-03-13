@@ -94,7 +94,7 @@ public:
 private:
     GlyphCache gly_cache;
 
-    const implicit_bool_flags<RDPVerbose> verbose;
+    const RDPVerbose verbose;
 
 public:
     size_t recv_bmp_cache_count;
@@ -195,7 +195,7 @@ private:
         {
             OutFileTransport oft(fd);
 
-            BmpCachePersister::save_all_to_disk(*this->bmp_cache, oft, to_verbose_flags(this->verbose));
+            BmpCachePersister::save_all_to_disk(*this->bmp_cache, oft, convert_verbose_flags(this->verbose));
 
             ::close(fd);
 
@@ -254,10 +254,13 @@ public:
             InFileTransport ift(fd);
 
             try {
-                if (this->verbose & RDPVerbose::basic_trace) {
+                if (bool(this->verbose & RDPVerbose::basic_trace)) {
                     LOG(LOG_INFO, "rdp_orders::create_cache_bitmap: filename=\"%s\"", filename);
                 }
-                BmpCachePersister::load_all_from_disk(*this->bmp_cache, ift, filename, to_verbose_flags(this->verbose));
+                BmpCachePersister::load_all_from_disk(
+                    *this->bmp_cache, ift, filename,
+                    convert_verbose_flags(this->verbose)
+                );
             }
             catch (...) {
             }
@@ -269,7 +272,7 @@ public:
 private:
     void process_framemarker( InStream & stream, const RDP::AltsecDrawingOrderHeader & header
                             , gdi::GraphicApi & gd) {
-        if (this->verbose & RDPVerbose::graphics) {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "rdp_orders::process_framemarker");
         }
 
@@ -282,7 +285,7 @@ private:
 
     void process_windowing( InStream & stream, const RDP::AltsecDrawingOrderHeader & header
                           , gdi::GraphicApi & gd) {
-        if (this->verbose & RDPVerbose::graphics) {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "rdp_orders::process_windowing");
         }
 
@@ -319,7 +322,7 @@ private:
 
     void process_window_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
                                    , uint32_t FieldsPresentFlags, gdi::GraphicApi & gd) {
-        if (this->verbose & RDPVerbose::graphics) {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "rdp_orders::process_window_information");
         }
 
@@ -331,7 +334,7 @@ private:
             case RDP::RAIL::WINDOW_ORDER_ICON: {
                     RDP::RAIL::WindowIcon order;
                     order.receive(stream);
-                    if (this->verbose & RDPVerbose::rail_order) {
+                    if (bool(this->verbose & RDPVerbose::rail_order)) {
                         order.log(LOG_INFO);
                     }
                     gd.draw(order);
@@ -341,7 +344,7 @@ private:
             case RDP::RAIL::WINDOW_ORDER_CACHEDICON: {
                     RDP::RAIL::CachedIcon order;
                     order.receive(stream);
-                    if (this->verbose & RDPVerbose::rail_order) {
+                    if (bool(this->verbose & RDPVerbose::rail_order)) {
                         order.log(LOG_INFO);
                     }
                     gd.draw(order);
@@ -351,7 +354,7 @@ private:
             case RDP::RAIL::WINDOW_ORDER_STATE_DELETED: {
                     RDP::RAIL::DeletedWindow order;
                     order.receive(stream);
-                    if (this->verbose & RDPVerbose::rail_order) {
+                    if (bool(this->verbose & RDPVerbose::rail_order)) {
                         order.log(LOG_INFO);
                     }
                     gd.draw(order);
@@ -362,7 +365,7 @@ private:
             case RDP::RAIL::WINDOW_ORDER_STATE_NEW: {
                     RDP::RAIL::NewOrExistingWindow order;
                     order.receive(stream);
-                    if (this->verbose & RDPVerbose::rail_order) {
+                    if (bool(this->verbose & RDPVerbose::rail_order)) {
                         order.log(LOG_INFO);
                     }
                     gd.draw(order);
@@ -373,7 +376,7 @@ private:
 
     void process_notification_icon_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
                                               , uint32_t FieldsPresentFlags, gdi::GraphicApi & gd) {
-        if (this->verbose & RDPVerbose::graphics) {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "rdp_orders::process_notification_icon_information");
         }
 
@@ -383,7 +386,7 @@ private:
             case RDP::RAIL::WINDOW_ORDER_STATE_DELETED: {
                     RDP::RAIL::DeletedNotificationIcons order;
                     order.receive(stream);
-                    if (this->verbose & RDPVerbose::rail_order) {
+                    if (bool(this->verbose & RDPVerbose::rail_order)) {
                         order.log(LOG_INFO);
                     }
                     gd.draw(order);
@@ -394,7 +397,7 @@ private:
             case RDP::RAIL::WINDOW_ORDER_STATE_NEW: {
                     RDP::RAIL::NewOrExistingNotificationIcons order;
                     order.receive(stream);
-                    if (this->verbose & RDPVerbose::rail_order) {
+                    if (bool(this->verbose & RDPVerbose::rail_order)) {
                         order.log(LOG_INFO);
                     }
                     gd.draw(order);
@@ -405,14 +408,14 @@ private:
 
     void process_desktop_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
                                     , uint32_t FieldsPresentFlags, gdi::GraphicApi & gd) {
-        if (this->verbose & RDPVerbose::graphics) {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "rdp_orders::process_desktop_information");
         }
 
         if (FieldsPresentFlags & RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_NONE) {
             RDP::RAIL::NonMonitoredDesktop order;
             order.receive(stream);
-            if (this->verbose & RDPVerbose::rail_order) {
+            if (bool(this->verbose & RDPVerbose::rail_order)) {
                 order.log(LOG_INFO);
             }
             gd.draw(order);
@@ -420,7 +423,7 @@ private:
         else {
             RDP::RAIL::ActivelyMonitoredDesktop order;
             order.receive(stream);
-            if (this->verbose & RDPVerbose::rail_order) {
+            if (bool(this->verbose & RDPVerbose::rail_order)) {
                 order.log(LOG_INFO);
             }
             gd.draw(order);
@@ -429,10 +432,10 @@ private:
 
     void process_bmpcache(InStream & stream, const RDPSecondaryOrderHeader & header)
     {
-        if (this->verbose & RDPVerbose::graphics) {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "rdp_orders_process_bmpcache bpp=%u", this->bpp);
         }
-        RDPBmpCache bmp(this->verbose);
+        RDPBmpCache bmp(bool(this->verbose));
         bmp.receive(stream, header, this->global_palette, this->bpp);
 
         this->recv_bmp_cache_count++;
@@ -440,7 +443,7 @@ private:
         REDASSERT(bmp.bmp.is_valid());
 
         this->bmp_cache->put(bmp.id, bmp.idx, bmp.bmp, bmp.key1, bmp.key2);
-        if (this->verbose & RDPVerbose::graphics) {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG( LOG_ERR
                , "rdp_orders_process_bmpcache bitmap id=%d idx=%d cx=%" PRIu16 " cy=%" PRIu16
                  " bmp_size=%zu original_bpp=%" PRIu8 " bpp=%" PRIu8
@@ -459,7 +462,7 @@ private:
     }
 
     void process_glyphcache(InStream & stream, const RDPSecondaryOrderHeader &/* header*/) {
-        if (this->verbose & RDPVerbose::graphics) {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "rdp_orders_process_glyphcache");
         }
         const uint8_t cacheId = stream.in_uint8();
@@ -476,13 +479,13 @@ private:
 
             this->server_add_char(cacheId, cacheIndex, offset, baseline, width, height, data);
         }
-        if (this->verbose & RDPVerbose::graphics) {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "rdp_orders_process_glyphcache done");
         }
     }
 
     void process_colormap(InStream & stream, const RDPSecondaryOrderHeader & header, gdi::GraphicApi & gd) {
-        if (this->verbose & RDPVerbose::graphics) {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "process_colormap");
         }
         RDPColCache colormap;
@@ -490,7 +493,7 @@ private:
         RDPColCache cmd(colormap.cacheIndex, colormap.palette);
         gd.draw(cmd);
 
-        if (this->verbose & RDPVerbose::graphics) {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "process_colormap done");
         }
     }
@@ -501,7 +504,7 @@ public:
         InStream & stream, bool fast_path, gdi::GraphicApi & gd,
         uint16_t front_width, uint16_t front_height
     ) {
-        if (this->verbose & RDPVerbose::graphics) {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "process_orders bpp=%u", this->bpp);
         }
 
@@ -690,7 +693,7 @@ public:
             }
             processed++;
         }
-        if (this->verbose & RDPVerbose::graphics){
+        if (bool(this->verbose & RDPVerbose::graphics)){
             LOG(LOG_INFO, "process_orders done");
         }
         return 0;

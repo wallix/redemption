@@ -80,6 +80,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.set<cfg::globals::movie_path>("capture");
 
         LCGRandom rnd(0);
+        Fstat fstat;
         CryptoContext cctx;
 
         // TODO remove this after unifying capture interface
@@ -166,6 +167,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
             wrm_trace_type,
             cctx,
             rnd,
+            fstat,
             record_path,
             hash_path,
             basename,
@@ -344,6 +346,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     ini.set<cfg::globals::movie_path>("capture");
 
     LCGRandom rnd(0);
+    Fstat fstat;
     CryptoContext cctx;
 
     // TODO remove this after unifying capture interface
@@ -427,6 +430,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         wrm_trace_type,
         cctx,
         rnd,
+        fstat,
         record_path,
         hash_path,
         basename,

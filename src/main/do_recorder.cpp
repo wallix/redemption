@@ -206,7 +206,7 @@ public:
                 throw;
             }
 
-            if (this->verbose) {
+            if (bool(this->verbose)) {
                 LOG(LOG_INFO, "receive error %u : end of transport", e.id);
             }
             // receive error, end of transport
@@ -296,7 +296,7 @@ public:
 
 inline
 static int do_recompress(
-    CryptoContext & cctx, Random & rnd, Transport & in_wrm_trans, const timeval begin_record,
+    CryptoContext & cctx, Random & rnd, Fstat & fstat, Transport & in_wrm_trans, const timeval begin_record,
     bool & program_requested_to_shutdown,
     int wrm_compression_algorithm_, std::string const & output_filename, Inifile & ini, uint32_t verbose
 ) {
@@ -346,6 +346,7 @@ static int do_recompress(
                 true,
                 cctx,
                 rnd,
+                fstat,
                 outfile_path.c_str(),
                 ini.get<cfg::video::hash_path>().c_str(),
                 outfile_basename.c_str(),
@@ -395,7 +396,10 @@ static int do_recompress(
             CryptoContext cctx;
             wrmcapture_OutMetaSequenceTransport trans(
                 false,
+                false,
                 cctx,
+                rnd,
+                fstat,
                 outfile_path.c_str(),
                 ini.get<cfg::video::hash_path>().c_str(),
                 outfile_basename.c_str(),
@@ -1307,7 +1311,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   int wrm_compression_algorithm,
                   uint32_t flv_break_interval,
                   TraceType encryption_type,
-                  Inifile & ini, CryptoContext & cctx, Random & rnd,
+                  Inifile & ini, CryptoContext & cctx,
+                  Random & rnd, Fstat & fstat,
                   uint32_t verbose)
 {
 
@@ -1548,6 +1553,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             wrm_trace_type,
                             cctx,
                             rnd,
+                            fstat,
                             record_path,
                             hash_path,
                             basename,
@@ -1659,6 +1665,7 @@ bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & Keyb
             result = do_recompress(
                 cctx,
                 rnd,
+                fstat,
                 in_wrm_trans,
                 begin_record,
                 program_requested_to_shutdown,
@@ -2094,6 +2101,7 @@ extern "C" {
         ini.set<cfg::debug::config>(false);
 
         UdevRandom rnd;
+        Fstat fstat;
         CryptoContext cctx;
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
@@ -2212,7 +2220,7 @@ extern "C" {
                           rp.wrm_compression_algorithm_,
                           rp.flv_break_interval,
                           rp.encryption_type,
-                          ini, cctx, rnd,
+                          ini, cctx, rnd, fstat,
                           verbose);
 
             } catch (const Error & e) {

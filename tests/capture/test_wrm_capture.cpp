@@ -301,6 +301,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
         Rect scr(0, 0, 800, 600);
 
         LCGRandom rnd(0);
+        Fstat fstat;
         CryptoContext cctx;
 
         GraphicToFile::Verbose wrm_verbose = to_verbose_flags(0)
@@ -330,6 +331,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
             wrm_trace_type,
             cctx,
             rnd,
+            fstat,
             record_path,
             hash_path,
             basename,
@@ -440,6 +442,8 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         Rect scr(0, 0, 800, 600);
 
         LCGRandom rnd(0);
+        Fstat fstat;
+
         CryptoContext cctx;
         cctx.set_master_key(cstr_array_view(
             "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
@@ -461,6 +465,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
             TraceType::localfile_hashed,
             cctx,
             rnd,
+            fstat,
             "./",
             "/tmp/",
             "capture",
@@ -797,12 +802,14 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
             "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
         ));
         cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
+        LCGRandom rnd(0);
+        Fstat fstat;
 
         timeval now;
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        wrmcapture_OutMetaSequenceTransport wrm_trans(false, cctx, "./", "./hash-", "xxx", now, 800, 600, groupid);
+        wrmcapture_OutMetaSequenceTransport wrm_trans(false, false, cctx, rnd, fstat, "./", "./hash-", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -894,11 +901,15 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
             "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
         ));
         cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
+
+        LCGRandom rnd(0);
+        Fstat fstat;
+
         timeval now;
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        wrmcapture_OutMetaSequenceTransport wrm_trans(true, cctx, "./", "./", "xxx", now, 800, 600, groupid);
+        wrmcapture_OutMetaSequenceTransport wrm_trans(false, true, cctx, rnd, fstat, "./", "./", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -954,12 +965,14 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
             "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
         ));
         cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
+        LCGRandom rnd(0);
+        Fstat fstat;
 
         timeval now;
         now.tv_sec = 1352304810;
         now.tv_usec = 0;
         const int groupid = 0;
-        wrmcapture_OutMetaSequenceTransport wrm_trans(false, cctx, "./", "./hash-", "xxx", now, 800, 600, groupid);
+        wrmcapture_OutMetaSequenceTransport wrm_trans(false, false, cctx, rnd, fstat, "./", "./hash-", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -1555,11 +1568,13 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
     {
         LCGRandom rnd(0);
+        Fstat fstat;
+        
         timeval tv;
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
         const int groupid = 0;
-        wrmcapture_CryptoOutMetaSequenceTransport crypto_trans(true, true, cctx, rnd, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid, nullptr);
+        wrmcapture_CryptoOutMetaSequenceTransport crypto_trans(true, true, cctx, rnd, fstat, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid, nullptr);
         crypto_trans.send("AAAAX", 5);
         tv.tv_sec += 100;
         crypto_trans.timestamp(tv);
