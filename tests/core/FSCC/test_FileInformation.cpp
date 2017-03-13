@@ -229,7 +229,7 @@ BOOST_AUTO_TEST_CASE(TestFileObjectBuffer_Type1)
 
     fileObjectBuffer_Type1.receive(in_stream);
 
-    //file_both_directory_information.log();
+    //fileObjectBuffer_Type1.log();
 
     BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileObjectBuffer_Type1.size());
 
@@ -261,7 +261,7 @@ BOOST_AUTO_TEST_CASE(TestFileObjectBuffer_Type2)
 
     fileObjectBuffer_Type2.receive(in_stream);
 
-    //file_both_directory_information.log();
+    //fileObjectBuffer_Type2.log();
 
     BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileObjectBuffer_Type2.size());
 
@@ -318,7 +318,7 @@ BOOST_AUTO_TEST_CASE(TestFileAttributeTagInformation)
 
     fileAttributeTagInformation.receive(in_stream);
 
-    //file_both_directory_information.log();
+    //fileAttributeTagInformation.log();
 
     BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileAttributeTagInformation.size());
 
@@ -348,7 +348,7 @@ BOOST_AUTO_TEST_CASE(TestFileBasicInformation)
 
     fileBasicInformation.receive(in_stream);
 
-    //file_both_directory_information.log();
+    //fileBasicInformation.log();
 
     BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileBasicInformation.size());
 
@@ -379,7 +379,7 @@ BOOST_AUTO_TEST_CASE(TestFileDirectoryInformation)
 
     fileDirectoryInformation.receive(in_stream);
 
-    //file_both_directory_information.log();
+    //fileDirectoryInformation.log();
 
     BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileDirectoryInformation.total_size());
 
@@ -406,7 +406,7 @@ BOOST_AUTO_TEST_CASE(TestFileDispositionInformation)
 
     fileDispositionInformation.receive(in_stream);
 
-    //file_both_directory_information.log();
+    //fileDispositionInformation.log();
 
     BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileDispositionInformation.size());
 
@@ -463,7 +463,7 @@ BOOST_AUTO_TEST_CASE(TestFileStandardInformation)
 
     fileStandardInformation.receive(in_stream);
 
-    //fileNamesInformation.log();
+    //fileStandardInformation.log();
 
     BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileStandardInformation.size());
 
@@ -492,7 +492,7 @@ BOOST_AUTO_TEST_CASE(TestFileFsSizeInformation)
 
     fileFsSizeInformation.receive(in_stream);
 
-    //fileNamesInformation.log();
+    //fileFsSizeInformation.log();
 
     BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileFsSizeInformation.size());
 
@@ -521,7 +521,7 @@ BOOST_AUTO_TEST_CASE(TestFileFsVolumeInformation)
 
     fileFsVolumeInformation.receive(in_stream);
 
-    //fileNamesInformation.log();
+    //fileFsVolumeInformation.log();
 
     BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileFsVolumeInformation.size());
 
