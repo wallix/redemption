@@ -809,7 +809,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        wrmcapture_OutMetaSequenceTransport wrm_trans(false, false, cctx, rnd, fstat, "./", "./hash-", "xxx", now, 800, 600, groupid);
+        wrmcapture_OutMetaSequenceTransport wrm_trans(false, false, cctx, rnd, fstat, "./", "./hash-", "xxx", now, 800, 600, groupid, nullptr);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -909,7 +909,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        wrmcapture_OutMetaSequenceTransport wrm_trans(false, true, cctx, rnd, fstat, "./", "./", "xxx", now, 800, 600, groupid);
+        wrmcapture_OutMetaSequenceTransport wrm_trans(false, true, cctx, rnd, fstat, "./", "./", "xxx", now, 800, 600, groupid, nullptr);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -972,7 +972,7 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
         now.tv_sec = 1352304810;
         now.tv_usec = 0;
         const int groupid = 0;
-        wrmcapture_OutMetaSequenceTransport wrm_trans(false, false, cctx, rnd, fstat, "./", "./hash-", "xxx", now, 800, 600, groupid);
+        wrmcapture_OutMetaSequenceTransport wrm_trans(false, false, cctx, rnd, fstat, "./", "./hash-", "xxx", now, 800, 600, groupid, nullptr);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -1574,7 +1574,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
         const int groupid = 0;
-        wrmcapture_CryptoOutMetaSequenceTransport crypto_trans(true, true, cctx, rnd, fstat, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid, nullptr);
+        wrmcapture_OutMetaSequenceTransport crypto_trans(true, true, cctx, rnd, fstat, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid, nullptr);
         crypto_trans.send("AAAAX", 5);
         tv.tv_sec += 100;
         crypto_trans.timestamp(tv);
