@@ -42,7 +42,6 @@
 #include <sys/ioctl.h>
 #include <linux/types.h>
 #include <linux/hdreg.h>
-//#include <linux/fcntl.h>
 
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
@@ -168,7 +167,7 @@ public:
         MAX_MONITOR_COUNT = GCC::UserData::CSMonitor::MAX_MONITOR_COUNT / 4
     };
 
-    implicit_bool_flags<RDPVerbose>   verbose;
+    RDPVerbose        verbose;
     ClientInfo        _info;
     int               _width;
     int               _height;

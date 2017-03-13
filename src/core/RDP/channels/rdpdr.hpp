@@ -2870,6 +2870,10 @@ public:
 //  | 0x00008000                            | (IRP_MJ_SET_SECURITY).         |
 //  +---------------------------------------+--------------------------------+
 
+enum {
+      SUPPORT_ALL_REQUEST = 0xFFFF
+};
+
 // ioCode2 (4 bytes): A 32-bit unsigned integer that is currently reserved
 //  for future use, and MUST be set to 0.
 
@@ -2908,8 +2912,17 @@ enum {
 //  |                | from a redirected file system.<8>                     |
 //  +----------------+-------------------------------------------------------+
 
+
 enum {
       ENABLE_ASYNCIO = 0x00000001
+};
+
+enum {
+      MINOR_VERSION_13 = 0x000D
+    , MINOR_VERSION_12 = 0x000C
+    , MINOR_VERSION_10 = 0x000A
+    , MINOR_VERSION_5  = 0x0005
+    , MINOR_VERSION_2  = 0x0002
 };
 
 // extraFlags2 (4 bytes): A 32-bit unsigned integer that is currently
@@ -2925,7 +2938,7 @@ class GeneralCapabilitySet {
 public:
     uint32_t osType               = 0;
     uint32_t osVersion            = 0;
-    uint16_t protocolMajorVersion = 0;
+    uint16_t protocolMajorVersion = 0x1;
     uint16_t protocolMinorVersion = 0;
     uint32_t ioCode1              = 0;
     uint32_t ioCode2              = 0;
@@ -2944,6 +2957,20 @@ public:
     : osType(osType)
     , osVersion(osVersion)
     , protocolMajorVersion(protocolMajorVersion)
+    , protocolMinorVersion(protocolMinorVersion)
+    , ioCode1(ioCode1)
+    , ioCode2(ioCode2)
+    , extendedPDU_(extendedPDU)
+    , extraFlags1_(extraFlags1)
+    , extraFlags2(extraFlags2)
+    , SpecialTypeDeviceCap(SpecialTypeDeviceCap) {}
+
+    GeneralCapabilitySet(uint32_t osType, uint32_t osVersion,
+        uint16_t protocolMinorVersion,
+        uint32_t ioCode1, uint32_t ioCode2, uint32_t extendedPDU,
+        uint32_t extraFlags1, uint32_t extraFlags2, uint32_t SpecialTypeDeviceCap)
+    : osType(osType)
+    , osVersion(osVersion)
     , protocolMinorVersion(protocolMinorVersion)
     , ioCode1(ioCode1)
     , ioCode2(ioCode2)
