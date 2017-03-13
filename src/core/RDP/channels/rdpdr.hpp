@@ -2976,12 +2976,10 @@ public:
         uint32_t extraFlags1, uint32_t SpecialTypeDeviceCap,
         uint32_t version)
     : osType(osType)
-    , osVersion(osVersion)
     , protocolMinorVersion(protocolMinorVersion)
     , ioCode1(ioCode1)
     , extendedPDU_(extendedPDU)
     , extraFlags1_(extraFlags1)
-    , extraFlags2(extraFlags2)
     , SpecialTypeDeviceCap(SpecialTypeDeviceCap)
     , version(version) {}
 
