@@ -6648,7 +6648,7 @@ public:
         case 4 :
         {
             for (unsigned i = 0; i < dlen ; i++) {
-                BGRColor px = indata[i];
+                const uint8_t px = indata[i];
                 // target cursor will receive 8 bits input at once
                 ::out_bytes_le(&(data[6 * i]),     3, this->orders.global_palette[(px >> 4) & 0xF]);
                 ::out_bytes_le(&(data[6 * i + 3]), 3, this->orders.global_palette[ px       & 0xF]);
