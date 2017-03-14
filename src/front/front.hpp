@@ -4466,25 +4466,19 @@ protected:
     }
 
 public:
-    using Color = Drawable::Color;
-
-    Color u32_to_color(uint32_t color) const {
-        return {uint8_t(color >> 16), uint8_t(color >> 8), uint8_t(color)};
-    }
-
-    Color u32rgb_to_color(gdi::ColorCtx color_ctx, BGRColor color) const {
+    BGRColor_ u32rgb_to_color(gdi::ColorCtx color_ctx, RDPColor color) const {
         using gdi::Depth;
 
         switch (color_ctx.depth()){
             // TODO color_ctx.palette()
-            case Depth::depth8():  color = decode_color8_opaquerect()(color, this->mod_palette_rgb); break;
-            case Depth::depth15(): color = decode_color15_opaquerect()(color); break;
-            case Depth::depth16(): color = decode_color16_opaquerect()(color); break;
+            case Depth::depth8():  return decode_color8_opaquerect()(color, this->mod_palette_rgb); break;
+            case Depth::depth15(): return decode_color15_opaquerect()(color); break;
+            case Depth::depth16(): return decode_color16_opaquerect()(color); break;
             case Depth::depth24(): break;
             case Depth::unspecified(): default: REDASSERT(false);
         }
 
-        return this->u32_to_color(color);
+        return BGRColor_{};
     }
 
     struct GlyphTo24Bitmap
@@ -4493,8 +4487,8 @@ public:
         uint8_t raw_data[256*3];
 
         GlyphTo24Bitmap( FontChar const & fc
-                     , const Color color_fore
-                     , const Color color_back) {
+                     , const BGRColor_ color_fore
+                     , const BGRColor_ color_back) {
 
             for (int i = 0; i < 256*3; i += 3) {
                 this->raw_data[i  ] = color_fore.blue();
@@ -4538,8 +4532,8 @@ protected:
 
         if (this->client_glyphcache_caps.GlyphSupportLevel == GlyphCacheCaps::GLYPH_SUPPORT_NONE) {
             bool has_delta_bytes = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
-            const Color color_fore = this->u32rgb_to_color(color_ctx, cmd.fore_color.as_bgr().to_u32());
-            const Color color_back = this->u32rgb_to_color(color_ctx, cmd.back_color.as_bgr().to_u32());
+            const BGRColor_ color_fore = this->u32rgb_to_color(color_ctx, cmd.fore_color.as_bgr());
+            const BGRColor_ color_back = this->u32rgb_to_color(color_ctx, cmd.back_color.as_bgr());
 
             uint16_t draw_pos_ref = 0;
             InStream variable_bytes(cmd.data, cmd.data_len);
@@ -4687,11 +4681,11 @@ private:
         RDPMem3Blt cmd2(0, dst_tile, cmd.rop, 0, 0, cmd.back_color, cmd.fore_color, cmd.brush, 0);
 
         if (this->client_info.bpp != this->mod_bpp) {
-            const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-            const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+            const BGRColor_ back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+            const BGRColor_ fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
 
-            cmd2.back_color = RDPColor(color_encode(back_color24, this->client_info.bpp));
-            cmd2.fore_color = RDPColor(color_encode(fore_color24, this->client_info.bpp));
+            cmd2.back_color = color_encode(back_color24, this->client_info.bpp);
+            cmd2.fore_color = color_encode(fore_color24, this->client_info.bpp);
         }
 
         // this may change the brush add send it to to remote cache

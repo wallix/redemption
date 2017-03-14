@@ -401,6 +401,19 @@ inline BGRColor color_decode(const BGRColor c, const uint8_t in_bpp, const BGRPa
     return 0;
 }
 
+inline BGRColor_ color_decode(const RDPColor c, const uint8_t in_bpp, const BGRPalette & palette){
+    switch (in_bpp){
+        case 8:  return decode_color8()(c, palette);
+        case 15: return decode_color15()(c);
+        case 16: return decode_color16()(c);
+        case 24:
+        case 32: return decode_color24()(c);
+        default:
+            assert(!"unknown bpp");
+    }
+    return BGRColor_{0};
+}
+
 
 struct decode_color8_opaquerect {
     static constexpr const uint8_t bpp = 8;
@@ -480,8 +493,17 @@ inline RGBColor color_decode_opaquerect(const BGRColor c, const uint8_t in_bpp, 
     return 0;
 }
 
-inline RGBColor color_decode_opaquerect(RDPColor c, const uint8_t in_bpp, const BGRPalette & palette){
-    return color_decode_opaquerect(c.as_bgr().to_u32(), in_bpp, palette);
+inline BGRColor_ color_decode_opaquerect(RDPColor c, const uint8_t in_bpp, const BGRPalette & palette){
+    switch (in_bpp){
+        case 8:  return decode_color8_opaquerect()(c, palette);
+        case 15: return decode_color15_opaquerect()(c);
+        case 16: return decode_color16_opaquerect()(c);
+        case 24:
+        case 32: return decode_color24_opaquerect()(c);
+        default:
+            assert(!"unknown bpp");
+    }
+    return BGRColor_{0};
 }
 
 template<class Converter>
@@ -613,6 +635,20 @@ inline BGRColor color_encode(const BGRColor c, const uint8_t out_bpp){
         break;
     }
     return 0;
+}
+
+inline RDPColor color_encode(const BGRColor_ c, const uint8_t out_bpp){
+    switch (out_bpp){
+        case 8:  return encode_color8()(c);
+        case 15: return encode_color15()(c);
+        case 16: return encode_color16()(c);
+        case 32:
+        case 24: return encode_color24()(c);
+        default:
+            assert(false);
+        break;
+    }
+    return RDPColor{0};
 }
 
 
