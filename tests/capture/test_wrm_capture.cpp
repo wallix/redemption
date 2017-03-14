@@ -292,6 +292,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
     ::unlink("./capture.mwrm");
     ::unlink("/tmp/capture.mwrm");
 
+    try {
     {
         // Timestamps are applied only when flushing
         timeval now;
@@ -344,25 +345,37 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
 
         RDPDrawable gd_drawable(scr.cx, scr.cy);
 
+        LOG(LOG_INFO, "Trace 1\n");
+
         WrmCaptureImpl wrm(now, wrm_params, nullptr /* authentifier */, gd_drawable);
+
+        LOG(LOG_INFO, "Trace 2\n");
 
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
+
+        LOG(LOG_INFO, "Trace 3\n");
 
         gd_drawable.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
+        LOG(LOG_INFO, "Trace 4\n");
+
         gd_drawable.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
+        LOG(LOG_INFO, "Trace 5\n");
+
         gd_drawable.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        LOG(LOG_INFO, "Trace 6\n");
 
         // ------------------------------ BREAKPOINT ------------------------------
 
@@ -371,10 +384,14 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
+        LOG(LOG_INFO, "Trace 7\n");
+
         gd_drawable.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        LOG(LOG_INFO, "Trace 8\n");
 
         gd_drawable.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
@@ -383,12 +400,22 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
 
         // ------------------------------ BREAKPOINT ------------------------------
 
+        LOG(LOG_INFO, "Trace 9\n");
+
         gd_drawable.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
     }
+    
+    LOG(LOG_INFO, "Trace 10\n");
+
+    }
+    catch(Error & e) {
+        LOG(LOG_INFO, "Exception raised : %d\n", e.id);
+    };    
+    
 
     {
         // TODO: we may have several mwrm sizes as it contains varying length numbers
@@ -1574,16 +1601,45 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
         const int groupid = 0;
+
+        BOOST_CHECK(true);
+        LOG(LOG_INFO, "Trace XX1");
+
         wrmcapture_OutMetaSequenceTransport crypto_trans(true, true, cctx, rnd, fstat, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid, nullptr);
-        crypto_trans.send("AAAAX", 5);
+
+        BOOST_CHECK(true);
+        LOG(LOG_INFO, "Trace XX2");
+        BOOST_CHECK(true);
+        crypto_trans.send("AAAAXB", 6);
+
+        LOG(LOG_INFO, "wrmcapture_OutMetaSequenceTransport::6 bytes sent");
+
+        BOOST_CHECK(true);
+
+
+        BOOST_CHECK(true);
         tv.tv_sec += 100;
         crypto_trans.timestamp(tv);
+
+        LOG(LOG_INFO, "Trace XX3");
+
+        BOOST_CHECK(true);
+
         crypto_trans.next();
-        crypto_trans.send("BBBBXCCCCX", 10);
+
+        BOOST_CHECK(true);
+
+        crypto_trans.send("BBBXCCCCX", 9);
+        
+        LOG(LOG_INFO, "wrmcapture_OutMetaSequenceTransport::9 bytes sent");
+
         tv.tv_sec += 100;
         crypto_trans.timestamp(tv);
         BOOST_CHECK(true);
     }
+
+    LOG(LOG_INFO, "wrmcapture_OutMetaSequenceTransport:: closed by out of scope");
+
 
     {
         InMetaSequenceTransport crypto_trans(&cctx, "TESTOFS", ".mwrm", 1);
@@ -1593,7 +1649,8 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
         BOOST_CHECK(true);
 
-        BOOST_CHECK_NO_THROW(crypto_trans.recv_new(bob, 15));
+        BOOST_CHECK_NO_THROW(crypto_trans.recv_new(bob, 6));
+        BOOST_CHECK_NO_THROW(crypto_trans.recv_new(bob+6, 9));
 
         BOOST_CHECK(true);
 
