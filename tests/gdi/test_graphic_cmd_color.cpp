@@ -38,14 +38,14 @@ BOOST_AUTO_TEST_CASE(TestGdCmdConverter)
 {
     encode_color16 enc;
     decode_color16 dec;
-    BGRColor_ raw_color = 0x8ba93c;
-    BGRColor_ color16 = enc(raw_color);
-    RDPOpaqueRect opaque_rect({}, RDPColor(color16));
+    BGRColor_ raw_color(0x8ba93c);
+    RDPColor color16 = enc(raw_color);
+    RDPOpaqueRect opaque_rect({}, color16);
 
     BOOST_CHECK_EQUAL(gdi::GraphicCmdColor::is_encodable_cmd_color(opaque_rect).value, true);
     BOOST_CHECK_EQUAL(gdi::GraphicCmdColor::is_encodable_cmd_color(RDPMemBlt{0, {}, 0, 0, 0, 0}).value, false);
 
-    BOOST_CHECK_NE(opaque_rect.color.as_bgr().to_u32(), dec(color16).as_bgr().to_u32());
+    BOOST_CHECK_NE(opaque_rect.color.as_bgr().to_u32(), dec(color16).to_u32());
     gdi::GraphicCmdColor::encode_cmd_color(dec, opaque_rect);
-    BOOST_CHECK_EQUAL(opaque_rect.color.as_bgr().to_u32(), dec(color16).as_bgr().to_u32());
+    BOOST_CHECK_EQUAL(opaque_rect.color.as_bgr().to_u32(), dec(color16).to_u32());
 }
