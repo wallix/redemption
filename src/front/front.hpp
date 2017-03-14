@@ -496,16 +496,16 @@ private:
                 Cmd const & new_cmd = (depth == color_ctx.depth())
                     ? cmd
                     : [&cmd, &color_ctx]() {
-                        auto color_convertor = [&color_ctx](BGRColor c) {
+                        auto color_convertor = [&color_ctx](RDPColor c) {
                             Enc enc;
                             switch (color_ctx.depth()) {
-                                case gdi::Depth::depth8() : return enc(decode_color8_opaquerect()(c, *color_ctx.palette()));
-                                case gdi::Depth::depth15(): return enc(decode_color15_opaquerect()(c));
-                                case gdi::Depth::depth16(): return enc(decode_color16_opaquerect()(c));
-                                case gdi::Depth::depth24(): return enc(decode_color24_opaquerect()(c));
+                                case gdi::Depth::depth8() : return enc(decode_color8()(c, *color_ctx.palette()));
+                                case gdi::Depth::depth15(): return enc(decode_color15()(c));
+                                case gdi::Depth::depth16(): return enc(decode_color16()(c));
+                                case gdi::Depth::depth24(): return enc(decode_color24()(c));
                                 case gdi::Depth::unspecified(): default: assert(!"unknown depth");
                             }
-                            return RGBColor{};
+                            return RDPColor{};
                         };
                         Cmd new_cmd = cmd;
                         gdi::GraphicCmdColor::encode_cmd_color(color_convertor, new_cmd);

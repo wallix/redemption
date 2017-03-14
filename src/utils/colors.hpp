@@ -423,7 +423,7 @@ struct decode_color8_opaquerect {
     }
 
     BGRColor_ operator()(RDPColor c, BGRPalette const & palette) const noexcept {
-        return BGRColor_(palette[static_cast<uint8_t>(c.as_bgr().to_u32())]);
+        return BGRColor_(RGBtoBGR(palette[static_cast<uint8_t>(c.as_bgr().to_u32())]));
     }
 };
 
@@ -475,7 +475,7 @@ struct decode_color24_opaquerect {
     }
 
     BGRColor_ operator()(RDPColor c) const noexcept {
-        return c.as_bgr();
+        return BGRColor_(c.as_bgr().to_u32() & 0xFFFFFF);
     }
 };
 
@@ -568,12 +568,12 @@ struct encode_color15 {
     RDPColor operator()(BGRColor_ c) const noexcept {
         // 0 b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
         return RDPColor::from(
-            // b1 b2 b3 b4 b5 b6 b7 b8 --> b1 b2 b3 b4 b5 0 0 0 0 0 0 0 0 0 0 0
-            ((c.to_u32() >> 9) & 0xF800)
-            // g1 g2 g3 g4 g5 g6 g7 g8 --> 0 0 0 0 0 g1 g2 g3 g4 g5 g6 0 0 0 0 0
-          | ((c.to_u32() >> 6) & 0x03E0)
             // r1 r2 r3 r4 r5 r6 r7 r8 --> 0 0 0 0 0 0 0 0 0 0 0 r1 r2 r3 r4 r5
-          | ((c.to_u32() >> 3) & 0x1F)
+             (((c.to_u32() >> 16) & 0xFF) >> 3)
+            // g1 g2 g3 g4 g5 g6 g7 g8 --> 0 0 0 0 0 0 g1 g2 g3 g4 g5 0 0 0 0 0
+          | ((((c.to_u32() >>  8) & 0xFF) << 2) & 0x03E0)
+            // b1 b2 b3 b4 b5 b6 b7 b8 --> 0 b1 b2 b3 b4 b5 0 0 0 0 0 0 0 0 0 0
+          | (((c.to_u32()         & 0xFF) << 7) & 0x7C00)
         );
     }
 };
@@ -598,12 +598,12 @@ struct encode_color16 {
     RDPColor operator()(BGRColor_ c) const noexcept {
         // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
         return RDPColor::from(
-            // b1 b2 b3 b4 b5 b6 b7 b8 --> b1 b2 b3 b4 b5 0 0 0 0 0 0 0 0 0 0 0
-            ((c.to_u32() >> 8) & 0x7C00)
-            // g1 g2 g3 g4 g5 g6 g7 g8 --> 0 0 0 0 0 g1 g2 g3 g4 g5 g6 0 0 0 0 0
-          | ((c.to_u32() >> 5) & 0x07E0)
             // r1 r2 r3 r4 r5 r6 r7 r8 --> 0 0 0 0 0 0 0 0 0 0 0 r1 r2 r3 r4 r5
-          | ((c.to_u32() >> 3) & 0x1F)
+            (((c.to_u32() >> 16) & 0xFF) >> 3)
+            // g1 g2 g3 g4 g5 g6 g7 g8 --> 0 0 0 0 0 g1 g2 g3 g4 g5 g6 0 0 0 0 0
+          | ((((c.to_u32() >>  8) & 0xFF) << 3) & 0x07E0)
+            // b1 b2 b3 b4 b5 b6 b7 b8 --> b1 b2 b3 b4 b5 0 0 0 0 0 0 0 0 0 0 0
+          | (((c.to_u32()         & 0xFF) << 8) & 0xF800)
         );
     }
 };
