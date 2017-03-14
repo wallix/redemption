@@ -46,17 +46,17 @@ protected:
     uint16_t row_height[GRID_NB_ROWS_MAX];
 
 public:
-    const uint32_t bg_color_1;    // Odd
-    const uint32_t fg_color_1;
+    const BGRColor_ bg_color_1;    // Odd
+    const BGRColor_ fg_color_1;
 
-    const uint32_t bg_color_2;    // Even
-    const uint32_t fg_color_2;
+    const BGRColor_ bg_color_2;    // Even
+    const BGRColor_ fg_color_2;
 
-    const uint32_t bg_color_focus;
-    const uint32_t fg_color_focus;
+    const BGRColor_ bg_color_focus;
+    const BGRColor_ fg_color_focus;
 
-    const uint32_t bg_color_selection;
-    const uint32_t fg_color_selection;
+    const BGRColor_ bg_color_selection;
+    const BGRColor_ fg_color_selection;
 
     const uint16_t border;    // Width and height of cell's border.
 
@@ -85,10 +85,10 @@ protected:
 public:
     WidgetGrid(gdi::GraphicApi & drawable, Widget2 & parent,
                NotifyApi * notifier, uint16_t nb_rows, uint16_t nb_columns,
-               uint32_t bg_color_1, uint32_t fg_color_1,
-               uint32_t bg_color_2, uint32_t fg_color_2,
-               uint32_t bg_color_focus, uint32_t fg_color_focus,
-               uint32_t bg_color_selection, uint32_t fg_color_selection,
+               BGRColor_ bg_color_1, BGRColor_ fg_color_1,
+               BGRColor_ bg_color_2, BGRColor_ fg_color_2,
+               BGRColor_ bg_color_focus, BGRColor_ fg_color_focus,
+               BGRColor_ bg_color_selection, BGRColor_ fg_color_selection,
                uint16_t border = 0, int group_id = 0)
         : Widget2(drawable, parent, notifier, group_id)
         , widgets()
@@ -141,8 +141,8 @@ public:
     }
 
     void draw_row(uint16_t row_index, Rect const clip) {
-        uint32_t bg_color;
-        uint32_t fg_color;
+        BGRColor_ bg_color;
+        BGRColor_ fg_color;
 
         if (this->selection_y == row_index) {
             bg_color = (this->has_focus ? this->bg_color_focus : this->bg_color_selection);

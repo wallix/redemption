@@ -53,8 +53,8 @@ public:
 
     Widget2 * last_interactive;
 
-    int fgcolor;
-    int bgcolor;
+    BGRColor_ fgcolor;
+    BGRColor_ bgcolor;
 
     bool               ask_device;
     bool               ask_login;
@@ -76,32 +76,32 @@ public:
                           WidgetFlatButton * extra_button)
         : WidgetParent(drawable, parent, notifier)
         , caption_label(drawable, *this, nullptr, caption, -13,
-                        theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                        theme.global.fgcolor, theme.global.bgcolor, font)
         , separator(drawable, *this, this, -12,
-                    theme.global.separator_color.to_u32())
+                    theme.global.separator_color)
         , device_label(drawable, *this, nullptr, text_device, -13,
-                      theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                      theme.global.fgcolor, theme.global.bgcolor, font)
         , device(drawable, *this, nullptr, device_str, -13,
-                 theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                 theme.global.fgcolor, theme.global.bgcolor, font)
         , device_edit(drawable, *this, this, nullptr, -14,
-                      theme.edit.fgcolor.to_u32(), theme.edit.bgcolor.to_u32(),
-                      theme.edit.focus_color.to_u32(), theme.global.bgcolor.to_u32(), font, nullptr, false, -1u, 1, 1)
+                      theme.edit.fgcolor, theme.edit.bgcolor,
+                      theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1)
         , login_label(drawable, *this, nullptr, text_login, -13,
-                      theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                      theme.global.fgcolor, theme.global.bgcolor, font)
         , login(drawable, *this, nullptr, login_str, -13,
-                theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                theme.global.fgcolor, theme.global.bgcolor, font)
         , login_edit(drawable, *this, this, nullptr, -14,
-                     theme.edit.fgcolor.to_u32(), theme.edit.bgcolor.to_u32(),
-                     theme.edit.focus_color.to_u32(), theme.global.bgcolor.to_u32(), font, nullptr, false, -1u, 1, 1)
+                     theme.edit.fgcolor, theme.edit.bgcolor,
+                     theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1)
         , password_label(drawable, *this, nullptr, text_password, -13,
-                         theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                         theme.global.fgcolor, theme.global.bgcolor, font)
         , password_edit(drawable, *this, this, nullptr, -14,
-                        theme.edit.fgcolor.to_u32(), theme.edit.bgcolor.to_u32(),
-                        theme.edit.focus_color.to_u32(), theme.global.bgcolor.to_u32(), font, nullptr, false, -1u, 1, 1, true)
+                        theme.edit.fgcolor, theme.edit.bgcolor,
+                        theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1, true)
         , extra_button(extra_button)
         , last_interactive((ask_login || ask_password)?&this->password_edit:&this->device_edit)
-        , fgcolor(theme.global.fgcolor.to_u32())
-        , bgcolor(theme.global.bgcolor.to_u32())
+        , fgcolor(theme.global.fgcolor)
+        , bgcolor(theme.global.bgcolor)
         , ask_device(ask_device)
         , ask_login(ask_login)
         , ask_password(ask_password)
@@ -134,7 +134,7 @@ public:
             this->add_widget(&this->device);
             if ((0 == strncmp(device_str, "Error:", 6)) ||
                 (0 == strncmp(device_str, "Erreur:", 7))) {
-                this->device.fg_color = theme.global.error_color.to_u32();
+                this->device.fg_color = theme.global.error_color;
             }
         }
         this->add_widget(&this->login_label);
@@ -270,7 +270,7 @@ public:
         }
     }
 
-    int get_bg_color() const override {
+    BGRColor_ get_bg_color() const override {
         return this->bgcolor;
     }
 

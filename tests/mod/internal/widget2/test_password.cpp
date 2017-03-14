@@ -44,8 +44,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = BLUE;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = BLUE;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 0;
     int16_t y = 0;
@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword)
     size_t password_pos = 2;
 
     WidgetPassword wpassword(drawable.gd, parent, notifier, "test1", id,
-                     fg_color, bg_color, 0x000000, font, password_pos, xtext, ytext);
+                     fg_color, bg_color, BLACK, font, password_pos, xtext, ytext);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -88,14 +88,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword2)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = BLUE;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = BLUE;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 10;
     int16_t y = 100;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable.gd, parent, notifier, "test2", id, fg_color, bg_color, 0x000000, font, 0);
+    WidgetPassword wpassword(drawable.gd, parent, notifier, "test2", id, fg_color, bg_color, BLACK, font, 0);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -128,14 +128,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword3)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = BLUE;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = BLUE;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = -10;
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable.gd, parent, notifier, "test3", id, fg_color, bg_color, 0x000000, font, 0);
+    WidgetPassword wpassword(drawable.gd, parent, notifier, "test3", id, fg_color, bg_color, BLACK, font, 0);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -168,14 +168,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword4)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = BLUE;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = BLUE;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 770;
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable.gd, parent, notifier, "test4", id, fg_color, bg_color, 0x000000, font, 0);
+    WidgetPassword wpassword(drawable.gd, parent, notifier, "test4", id, fg_color, bg_color, BLACK, font, 0);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -208,14 +208,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword5)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = BLUE;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = BLUE;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = -20;
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable.gd, parent, notifier, "test5", id, fg_color, bg_color, 0x000000, font, 0);
+    WidgetPassword wpassword(drawable.gd, parent, notifier, "test5", id, fg_color, bg_color, BLACK, font, 0);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -248,14 +248,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword6)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = BLUE;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = BLUE;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 760;
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable.gd, parent, notifier, "test6", id, fg_color, bg_color, 0x000000, font, 0);
+    WidgetPassword wpassword(drawable.gd, parent, notifier, "test6", id, fg_color, bg_color, BLACK, font, 0);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -288,14 +288,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = BLUE;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = BLUE;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 760;
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable.gd, parent, notifier, "test6", id, fg_color, bg_color, 0x000000, font, 0);
+    WidgetPassword wpassword(drawable.gd, parent, notifier, "test6", id, fg_color, bg_color, BLACK, font, 0);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -328,14 +328,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = BLUE;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = BLUE;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(drawable.gd, parent, notifier, "test6", id, fg_color, bg_color, 0x000000, font, 0);
+    WidgetPassword wpassword(drawable.gd, parent, notifier, "test6", id, fg_color, bg_color, BLACK, font, 0);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -382,7 +382,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(drawable.gd, parent, &notifier, "abcdef", 0, YELLOW, 0x0000FF, 0x0000FF, font);
+    WidgetPassword wpassword(drawable.gd, parent, &notifier, "abcdef", 0, YELLOW, RED, RED, font);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -694,7 +694,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(drawable.gd, parent, &notifier, "aurélie", 0, YELLOW, 0x0000FF, 0x0000FF, font);
+    WidgetPassword wpassword(drawable.gd, parent, &notifier, "aurélie", 0, YELLOW, RED, RED, font);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -800,7 +800,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword2)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(drawable.gd, parent, &notifier, "aurélie", 0, YELLOW, 0x0000FF, 0x0000FF, font);
+    WidgetPassword wpassword(drawable.gd, parent, &notifier, "aurélie", 0, YELLOW, RED, RED, font);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);
@@ -919,7 +919,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(drawable.gd, parent, &notifier, "aurélie", 0, YELLOW, 0x0000FF, 0x0000FF, font);
+    WidgetPassword wpassword(drawable.gd, parent, &notifier, "aurélie", 0, YELLOW, RED, RED, font);
     Dimension dim = wpassword.get_optimal_dim();
     wpassword.set_wh(cx, dim.h);
     wpassword.set_xy(x, y);

@@ -28,10 +28,10 @@
 
 struct WidgetStackLayout : public WidgetLayout {
     size_t selected;
-    int bgcolor;
+    BGRColor_ bgcolor;
 
     WidgetStackLayout(gdi::GraphicApi & drawable, const Rect rect, Widget2 & parent,
-                      NotifyApi * notifier, int group_id = 0, int bgcolor = BLACK)
+                      NotifyApi * notifier, int group_id = 0, BGRColor_ bgcolor = BLACK)
         : WidgetLayout(drawable, rect, parent, notifier, group_id)
         , selected(0)
         , bgcolor(bgcolor)

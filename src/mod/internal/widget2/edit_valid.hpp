@@ -38,12 +38,12 @@ public:
 
     bool use_label_;
 
-    int border_none_color;
+    BGRColor_ border_none_color;
 
     WidgetEditValid(gdi::GraphicApi & drawable,
                     Widget2 & parent, NotifyApi* notifier, const char * text,
-                    int group_id, int fgcolor, int bgcolor,
-                    int focus_color, int border_none_color, Font const & font,
+                    int group_id, BGRColor_ fgcolor, BGRColor_ bgcolor,
+                    BGRColor_ focus_color, BGRColor_ border_none_color, Font const & font,
                     const char * title, bool use_title, std::size_t edit_position = -1,
                     // TODO re-enable
                     int /*xtext*/ = 0, int /*ytext*/ = 0, bool pass = false)
@@ -156,7 +156,7 @@ public:
         }
     }
 
-    void draw_border(const Rect clip, int color)
+    void draw_border(const Rect clip, BGRColor_ color)
     {
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(

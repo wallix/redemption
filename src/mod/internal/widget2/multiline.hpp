@@ -42,15 +42,15 @@ public:
     int y_text;
     int cy_text;
     bool auto_resize;
-    int bg_color;
-    int fg_color;
+    BGRColor_ bg_color;
+    BGRColor_ fg_color;
     Font const & font;
 
 public:
     WidgetMultiLine(gdi::GraphicApi & drawable, Widget2& parent,
                     NotifyApi* notifier, const char * text,
                     int group_id,
-                    int fgcolor, int bgcolor, Font const & font,
+                    BGRColor_ fgcolor, BGRColor_ bgcolor, Font const & font,
                     int xtext = 0, int ytext = 0)
     : Widget2(drawable, parent, notifier, group_id)
     , x_text(xtext)

@@ -41,8 +41,8 @@ public:
     WidgetEditValid password_edit;
     WidgetImage     img;
 
-    int fgcolor;
-    int bgcolor;
+    BGRColor_ fgcolor;
+    BGRColor_ bgcolor;
 
     CompositeArray composite_array;
 
@@ -52,17 +52,17 @@ public:
                             const char * label_text_password, Font const & font)
         : WidgetParent(drawable, parent, notifier)
         , message_label(drawable, *this, nullptr, label_text_message, -13,
-                        theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                        theme.global.fgcolor, theme.global.bgcolor, font)
         , password_label(drawable, *this, nullptr, label_text_password, -13,
-                         theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                         theme.global.fgcolor, theme.global.bgcolor, font)
         , password_edit(drawable, *this, this, password, -14,
-                        theme.edit.fgcolor.to_u32(), theme.edit.bgcolor.to_u32(),
-                        theme.edit.focus_color.to_u32(), theme.global.bgcolor.to_u32(), font, nullptr, false, -1u, 1, 1, true)
+                        theme.edit.fgcolor, theme.edit.bgcolor,
+                        theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1, true)
         , img(drawable,
               theme.global.logo ? theme.global.logo_path.c_str() :
               SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
-        , fgcolor(theme.global.fgcolor.to_u32())
-        , bgcolor(theme.global.bgcolor.to_u32())
+        , fgcolor(theme.global.fgcolor)
+        , bgcolor(theme.global.bgcolor)
     {
         this->set_xy(0, 0);
         this->set_wh(width, height);
@@ -117,7 +117,7 @@ public:
         this->clear();
     }
 
-    int get_bg_color() const override {
+    BGRColor_ get_bg_color() const override {
         return this->bgcolor;
     }
 

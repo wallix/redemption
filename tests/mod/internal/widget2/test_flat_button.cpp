@@ -44,9 +44,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
-    int fc_color = WINBLUE;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
+    BGRColor_ fc_color = WINBLUE;
     int id = 0;
     int16_t x = 0;
     int16_t y = 0;
@@ -83,9 +83,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton2)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
-    int fc_color = WINBLUE;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
+    BGRColor_ fc_color = WINBLUE;
     int id = 0;
     int16_t x = 10;
     int16_t y = 100;
@@ -124,9 +124,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton3)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
-    int fc_color = WINBLUE;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
+    BGRColor_ fc_color = WINBLUE;
     int id = 0;
     int16_t x = -10;
     int16_t y = 500;
@@ -165,9 +165,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton4)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
-    int fc_color = WINBLUE;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
+    BGRColor_ fc_color = WINBLUE;
     int id = 0;
     int16_t x = 770;
     int16_t y = 500;
@@ -206,9 +206,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton5)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
-    int fc_color = WINBLUE;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
+    BGRColor_ fc_color = WINBLUE;
     int id = 0;
     int16_t x = -20;
     int16_t y = -7;
@@ -247,9 +247,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton6)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
-    int fc_color = WINBLUE;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
+    BGRColor_ fc_color = WINBLUE;
     int id = 0;
     int16_t x = 760;
     int16_t y = -7;
@@ -288,10 +288,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
-    int fc_color = WINBLUE;
+    BGRColor_ fc_color = WINBLUE;
     int16_t x = 760;
     int16_t y = -7;
 
@@ -329,9 +329,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip2)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
-    int fc_color = WINBLUE;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
+    BGRColor_ fc_color = WINBLUE;
     int id = 0;
     int16_t x = 0;
     int16_t y = 0;
@@ -368,9 +368,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
-    int fc_color = WINBLUE;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
+    BGRColor_ fc_color = WINBLUE;
     int id = 0;
     int16_t x = 10;
     int16_t y = 10;
@@ -616,9 +616,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
-    int fc_color = WINBLUE;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
+    BGRColor_ fc_color = WINBLUE;
     int id = 0;
     int16_t x = 10;
     int16_t y = 10;
@@ -695,9 +695,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonLite)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
-    int fc_color = WINBLUE;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
+    BGRColor_ fc_color = WINBLUE;
     int id = 0;
     int xtext = 4;
     int ytext = 1;
@@ -744,9 +744,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonStrong)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
-    int fc_color = WINBLUE;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
+    BGRColor_ fc_color = WINBLUE;
     int id = 0;
     int xtext = 4;
     int ytext = 1;

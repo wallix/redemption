@@ -44,8 +44,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 0;
     int16_t y = 0;
@@ -89,8 +89,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 10;
     int16_t y = 100;
@@ -128,8 +128,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = -10;
     int16_t y = 500;
@@ -167,8 +167,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 770;
     int16_t y = 500;
@@ -206,8 +206,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = -20;
     int16_t y = -7;
@@ -245,8 +245,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 760;
     int16_t y = -7;
@@ -284,8 +284,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 760;
     int16_t y = -7;
@@ -323,8 +323,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 0;
     int16_t y = 0;
@@ -500,8 +500,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelMax)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 10;
     int16_t y = 100;

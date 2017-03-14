@@ -78,28 +78,28 @@ public:
              int flags = 0)
         : WidgetParent(drawable, parent, notifier, group_id)
         , warning_msg(drawable, *this, nullptr, "", group_id,
-                      theme.global.error_color.to_u32(), theme.global.bgcolor.to_u32(), font)
+                      theme.global.error_color, theme.global.bgcolor, font)
         , duration_label(drawable, *this, nullptr, TR("duration", lang),
-                         group_id, theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                         group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , duration_edit(drawable, *this, this,
-                        nullptr, group_id, theme.edit.fgcolor.to_u32(), theme.edit.bgcolor.to_u32(),
-                        theme.edit.focus_color.to_u32(), font, -1, 1, 1)
+                        nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
+                        theme.edit.focus_color, font, -1, 1, 1)
         , duration_format(drawable, *this, nullptr, TR("note_duration_format", lang),
-                          group_id, theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                          group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , ticket_label(drawable, *this, nullptr, TR("ticket", lang),
-                       group_id, theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                       group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , ticket_edit(drawable, *this, this,
-                      nullptr, group_id, theme.edit.fgcolor.to_u32(), theme.edit.bgcolor.to_u32(),
-                      theme.edit.focus_color.to_u32(), font, -1, 1, 1)
+                      nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
+                      theme.edit.focus_color, font, -1, 1, 1)
         , comment_label(drawable, *this, nullptr, TR("comment", lang),
-                        group_id, theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                        group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , comment_edit(drawable, *this, this,
-                       nullptr, group_id, theme.edit.fgcolor.to_u32(), theme.edit.bgcolor.to_u32(),
-                       theme.edit.focus_color.to_u32(), font, -1, 1, 1)
+                       nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
+                       theme.edit.focus_color, font, -1, 1, 1)
         , notes(drawable, *this, nullptr, TR("note_required", lang),
-                group_id, theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , confirm(drawable, *this, this, TR("confirm", lang), group_id,
-                  theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), theme.global.focus_color.to_u32(), 2, font,
+                  theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
                   6, 2)
         , flags(flags)
         , generic_warning(TR("%s field_required", lang))
@@ -110,7 +110,7 @@ public:
         , field_duration(TR("duration", lang))
         , warning_buffer()
     {
-        this->set_bg_color(theme.global.bgcolor.to_u32());
+        this->set_bg_color(theme.global.bgcolor);
 
         this->impl = &composite_array;
 
@@ -154,28 +154,28 @@ public:
              int flags = 0)
         : WidgetParent(drawable, parent, notifier, group_id)
         , warning_msg(drawable, *this, nullptr, "", group_id,
-                      theme.global.error_color.to_u32(), theme.global.bgcolor.to_u32(), font)
+                      theme.global.error_color, theme.global.bgcolor, font)
         , duration_label(drawable, *this, nullptr, TR("duration", lang),
-                         group_id, theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                         group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , duration_edit(drawable, *this, this,
-                        nullptr, group_id, theme.edit.fgcolor.to_u32(), theme.edit.bgcolor.to_u32(),
-                        theme.edit.focus_color.to_u32(), font, -1, 1, 1)
+                        nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
+                        theme.edit.focus_color, font, -1, 1, 1)
         , duration_format(drawable, *this, nullptr, TR("note_duration_format", lang),
-                          group_id, theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                          group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , ticket_label(drawable, *this, nullptr, TR("ticket", lang),
-                       group_id, theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                       group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , ticket_edit(drawable, *this, this,
-                      nullptr, group_id, theme.edit.fgcolor.to_u32(), theme.edit.bgcolor.to_u32(),
-                      theme.edit.focus_color.to_u32(), font, -1, 1, 1)
+                      nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
+                      theme.edit.focus_color, font, -1, 1, 1)
         , comment_label(drawable, *this, nullptr, TR("comment", lang),
-                        group_id, theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                        group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , comment_edit(drawable, *this, this,
-                       nullptr, group_id, theme.edit.fgcolor.to_u32(), theme.edit.bgcolor.to_u32(),
-                       theme.edit.focus_color.to_u32(), font, -1, 1, 1)
+                       nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
+                       theme.edit.focus_color, font, -1, 1, 1)
         , notes(drawable, *this, nullptr, TR("note_required", lang),
-                group_id, theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , confirm(drawable, *this, this, TR("confirm", lang), group_id,
-                  theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), theme.global.focus_color.to_u32(), 2, font,
+                  theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
                   6, 2)
         , flags(flags)
         , generic_warning(TR("%s field_required", lang))
@@ -186,7 +186,7 @@ public:
         , field_duration(TR("duration", lang))
         , warning_buffer()
     {
-        this->set_bg_color(theme.global.bgcolor.to_u32());
+        this->set_bg_color(theme.global.bgcolor);
 
         this->impl = &composite_array;
 

@@ -70,7 +70,7 @@ public:
     WidgetFlatButton apply;
     WidgetFlatButton connect;
 
-    int bg_color;
+    BGRColor_ bg_color;
 
     Font const & font;
 
@@ -121,70 +121,70 @@ public:
         : WidgetParent(drawable, parent, notifier)
         , less_than_800(width < 800)
         , device_label(drawable, *this, nullptr, device_name,
-                       -10, theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                       -10, theme.global.fgcolor, theme.global.bgcolor, font)
         , target_group_label(drawable, *this, nullptr, TR("authorization", lang),
-                             -10, theme.selector_label.fgcolor.to_u32(),
-                             theme.selector_label.bgcolor.to_u32(), font, 5)
+                             -10, theme.selector_label.fgcolor,
+                             theme.selector_label.bgcolor, font, 5)
         , target_label(drawable, *this, nullptr, TR("target", lang), -10,
-                       theme.selector_label.fgcolor.to_u32(),
-                       theme.selector_label.bgcolor.to_u32(), font, 5)
+                       theme.selector_label.fgcolor,
+                       theme.selector_label.bgcolor, font, 5)
         , protocol_label(drawable, *this, nullptr, TR("protocol", lang), -10,
-                         theme.selector_label.fgcolor.to_u32(),
-                         theme.selector_label.bgcolor.to_u32(), font, 5)
+                         theme.selector_label.fgcolor,
+                         theme.selector_label.bgcolor, font, 5)
         , selector_lines(drawable,
                          *this, this, 0, 3,
-                         theme.selector_line1.bgcolor.to_u32(),
-                         theme.selector_line1.fgcolor.to_u32(),
-                         theme.selector_line2.bgcolor.to_u32(),
-                         theme.selector_line2.fgcolor.to_u32(),
-                         theme.selector_focus.bgcolor.to_u32(),
-                         theme.selector_focus.fgcolor.to_u32(),
-                         theme.selector_selected.bgcolor.to_u32(),
-                         theme.selector_selected.fgcolor.to_u32(),
+                         theme.selector_line1.bgcolor,
+                         theme.selector_line1.fgcolor,
+                         theme.selector_line2.bgcolor,
+                         theme.selector_line2.fgcolor,
+                         theme.selector_focus.bgcolor,
+                         theme.selector_focus.fgcolor,
+                         theme.selector_selected.bgcolor,
+                         theme.selector_selected.fgcolor,
                          font, 2, -11)
         , filter_target_group(drawable, *this, this,
                               filter_target_group?filter_target_group:nullptr, -12,
-                              theme.edit.fgcolor.to_u32(), theme.edit.bgcolor.to_u32(),
-                              theme.edit.focus_color.to_u32(), font, -1, 1, 1)
+                              theme.edit.fgcolor, theme.edit.bgcolor,
+                              theme.edit.focus_color, font, -1, 1, 1)
         , filter_target(drawable, *this, this, filter_target?filter_target:nullptr,
-                        -12, theme.edit.fgcolor.to_u32(), theme.edit.bgcolor.to_u32(),
-                        theme.edit.focus_color.to_u32(), font, -1, 1, 1)
+                        -12, theme.edit.fgcolor, theme.edit.bgcolor,
+                        theme.edit.focus_color, font, -1, 1, 1)
         , filter_protocol(drawable, *this, this,
                           filter_protocol?filter_protocol:nullptr, -12,
-                          theme.edit.fgcolor.to_u32(), theme.edit.bgcolor.to_u32(),
-                          theme.edit.focus_color.to_u32(), font, -1, 1, 1)
+                          theme.edit.fgcolor, theme.edit.bgcolor,
+                          theme.edit.focus_color, font, -1, 1, 1)
           //BEGIN WidgetPager
         , first_page(drawable, *this, notifier, "◀◂", -15,
-                     theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(),
-                     theme.global.focus_color.to_u32(), 2, font, 6, 2, true)
+                     theme.global.fgcolor, theme.global.bgcolor,
+                     theme.global.focus_color, 2, font, 6, 2, true)
         , prev_page(drawable, *this, notifier, "◀", -15,
-                    theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(),
-                    theme.global.focus_color.to_u32(), 2, font, 6, 2, true)
+                    theme.global.fgcolor, theme.global.bgcolor,
+                    theme.global.focus_color, 2, font, 6, 2, true)
         , current_page(drawable, *this, notifier,
                        current_page ? current_page : "XXXX", -15,
-                       theme.edit.fgcolor.to_u32(), theme.edit.bgcolor.to_u32(),
-                       theme.edit.focus_color.to_u32(), font, -1, 1, 1)
+                       theme.edit.fgcolor, theme.edit.bgcolor,
+                       theme.edit.focus_color, font, -1, 1, 1)
         , number_page(drawable, *this, nullptr,
                       number_of_page ? temporary_number_of_page(number_of_page).buffer
-                      : "/XXX", -100, theme.global.fgcolor.to_u32(),
-                      theme.global.bgcolor.to_u32(), font)
+                      : "/XXX", -100, theme.global.fgcolor,
+                      theme.global.bgcolor, font)
         , next_page(drawable, *this, notifier, "▶", -15,
-                    theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(),
-                    theme.global.focus_color.to_u32(), 2, font, 6, 2, true)
+                    theme.global.fgcolor, theme.global.bgcolor,
+                    theme.global.focus_color, 2, font, 6, 2, true)
         , last_page(drawable, *this, notifier, "▸▶", -15,
-                    theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(),
-                    theme.global.focus_color.to_u32(), 2, font, 6, 2, true)
+                    theme.global.fgcolor, theme.global.bgcolor,
+                    theme.global.focus_color, 2, font, 6, 2, true)
           //END WidgetPager
         , logout(drawable, *this, this, TR("logout", lang), -16,
-                 theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(),
-                 theme.global.focus_color.to_u32(), 2, font, 6, 2)
+                 theme.global.fgcolor, theme.global.bgcolor,
+                 theme.global.focus_color, 2, font, 6, 2)
         , apply(drawable, *this, this, TR("filter", lang), -12,
-                theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(),
-                theme.global.focus_color.to_u32(), 2, font, 6, 2)
+                theme.global.fgcolor, theme.global.bgcolor,
+                theme.global.focus_color, 2, font, 6, 2)
         , connect(drawable, *this, this, TR("connect", lang), -18,
-                  theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(),
-                  theme.global.focus_color.to_u32(), 2, font, 6, 2)
-        , bg_color(theme.global.bgcolor.to_u32())
+                  theme.global.fgcolor, theme.global.bgcolor,
+                  theme.global.focus_color, 2, font, 6, 2)
+        , bg_color(theme.global.bgcolor)
         , font(font)
         , left(left)
         , top(top)
@@ -296,7 +296,7 @@ public:
         this->rearrange();
     }
 
-    int get_bg_color() const override {
+    BGRColor_ get_bg_color() const override {
         return this->bg_color;
     }
 

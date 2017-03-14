@@ -271,8 +271,10 @@ public:
     : WidgetParent(drawable, parent, notifier, group_id)
     , module_holder(*this, std::move(managed_mod))
     , drawable_ref(drawable)
-    , hscroll(drawable, *this, this, true, 0, 0x606060, 0xF0F0F0, 0xCDCDCD, font, true)
-    , vscroll(drawable, *this, this, false, 0, 0x606060, 0xF0F0F0, 0xCDCDCD, font, true)
+    , hscroll(drawable, *this, this, true, BLACK,
+        BGRColor_(0x606060), BGRColor_(0xF0F0F0), BGRColor_(0xCDCDCD), font, true)
+    , vscroll(drawable, *this, this, false, BLACK,
+        BGRColor_(0x606060), BGRColor_(0xF0F0F0), BGRColor_(0xCDCDCD), font, true)
     , monitors(cs_monitor)
     {
         this->impl = &composite_array;
@@ -633,7 +635,7 @@ public:
                 }
             }
 
-            ::fill_region(this->drawable, region, 0x000000);
+            ::fill_region(this->drawable, region, BLACK);
 
 
             Rect mod_update_rect = clip.intersect(this->vision_rect);

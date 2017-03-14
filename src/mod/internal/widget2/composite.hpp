@@ -29,7 +29,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
 
-inline void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, int bg_color) {
+inline void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, BGRColor_ bg_color) {
     for (Rect const & rect : region.rects) {
         drawable.draw(RDPOpaqueRect(rect, RDPColor(bg_color)), rect, gdi::ColorCtx::depth24());
     }
@@ -157,7 +157,7 @@ public:
 class WidgetParent : public Widget2 {
     Widget2 * pressed;
 
-    int bg_color;
+    BGRColor_ bg_color;
 
 protected:
     CompositeContainer * impl;
@@ -349,7 +349,7 @@ public:
         }
     }
 
-    virtual void draw_inner_free(Rect clip, int bg_color) {
+    virtual void draw_inner_free(Rect clip, BGRColor_ bg_color) {
         SubRegion region;
         region.rects.push_back(clip.intersect(this->get_rect()));
 
@@ -390,11 +390,11 @@ public:
     //    }
     //}
 
-    virtual int get_bg_color() const {
+    virtual BGRColor_ get_bg_color() const {
         return this->bg_color;
     }
 
-    virtual void set_bg_color(int color) {
+    virtual void set_bg_color(BGRColor_ color) {
         this->bg_color = color;
     }
 

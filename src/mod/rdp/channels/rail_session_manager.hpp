@@ -626,9 +626,9 @@ private:
                                false,   // logo
                                true,    // has_focus
                                TR("disconnect_now", this->lang),
-                               this->theme.global.fgcolor.to_u32(),
-                               this->theme.global.bgcolor.to_u32(),
-                               this->theme.global.focus_color.to_u32(),
+                               this->theme.global.fgcolor,
+                               this->theme.global.bgcolor,
+                               this->theme.global.focus_color,
                                Rect(),
                                state,
                                2,

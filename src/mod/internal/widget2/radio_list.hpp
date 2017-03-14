@@ -32,7 +32,7 @@ public:
 
     WidgetRadioButton(gdi::GraphicApi & drawable,
                       NotifyApi* notifier, const char * text, bool auto_resize,
-                      int group_id, int fgcolor, int bgcolor,
+                      int group_id, BGRColor_ fgcolor, BGRColor_ bgcolor,
                       int xtext = 0, int ytext = 0)
         : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
         , label(drawable, 1, 1, *this, 0, text, auto_resize, 0, fgcolor, bgcolor, 4, 2)

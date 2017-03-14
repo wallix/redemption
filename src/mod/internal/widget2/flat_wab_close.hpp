@@ -58,7 +58,7 @@ public:
     WidgetImage        img;
 
 private:
-    int bg_color;
+    BGRColor_ bg_color;
 
     long prev_time;
 
@@ -75,39 +75,39 @@ public:
                  Translation::language_t lang, bool back_selector = false)
     : WidgetParent(drawable, parent, notifier)
     , connection_closed_label(drawable, *this, nullptr, TR("connection_closed", lang),
-                              -13, theme.global.fgcolor.to_u32(),
-                              theme.global.bgcolor.to_u32(), font)
+                              -13, theme.global.fgcolor,
+                              theme.global.bgcolor, font)
     , separator(drawable, *this, this, -12,
-                theme.global.separator_color.to_u32())
+                theme.global.separator_color)
     , username_label(drawable, *this, nullptr, "Username:", -11,
-                     theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                     theme.global.fgcolor, theme.global.bgcolor, font)
     , username_value(drawable, *this, nullptr, username, -11,
-                     theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                     theme.global.fgcolor, theme.global.bgcolor, font)
     , target_label(drawable, *this, nullptr, "Target:", -12,
-                   theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                   theme.global.fgcolor, theme.global.bgcolor, font)
     , target_value(drawable, *this, nullptr, target, -12,
-                   theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                   theme.global.fgcolor, theme.global.bgcolor, font)
     , diagnostic_label(drawable, *this, nullptr, "Diagnostic:", -15,
-                       theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                       theme.global.fgcolor, theme.global.bgcolor, font)
     , diagnostic_value(drawable, *this, nullptr, diagnostic_text, -16,
-                       theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                       theme.global.fgcolor, theme.global.bgcolor, font)
     , timeleft_label(drawable, *this, nullptr, "Time left:", -12,
-                     theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                     theme.global.fgcolor, theme.global.bgcolor, font)
     , timeleft_value(drawable, *this, nullptr, nullptr, -12,
-                     theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                     theme.global.fgcolor, theme.global.bgcolor, font)
     , cancel(drawable, *this, this, TR("close", lang), -14,
-             theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(),
-             theme.global.focus_color.to_u32(), 2, font, 6, 2)
+             theme.global.fgcolor, theme.global.bgcolor,
+             theme.global.focus_color, 2, font, 6, 2)
     , back(back_selector ? new WidgetFlatButton(drawable, *this, this,
                                                 TR("back_selector", lang), -14,
-                                                theme.global.fgcolor.to_u32(),
-                                                theme.global.bgcolor.to_u32(),
-                                                theme.global.focus_color.to_u32(), 2, font,
+                                                theme.global.fgcolor,
+                                                theme.global.bgcolor,
+                                                theme.global.focus_color, 2, font,
                                                 6, 2) : nullptr)
     , img(drawable,
           theme.global.logo ? theme.global.logo_path.c_str() :
           SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
-    , bg_color(theme.global.bgcolor.to_u32())
+    , bg_color(theme.global.bgcolor)
     , prev_time(0)
     , lang(lang)
     , showtimer(showtimer)
@@ -283,7 +283,7 @@ public:
         }
     }
 
-    int get_bg_color() const override {
+    BGRColor_ get_bg_color() const override {
         return this->bg_color;
     }
 

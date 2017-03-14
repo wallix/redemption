@@ -194,7 +194,7 @@ public:
         this->set_wh(dim.w, dim.h);
     }
 
-    virtual void set_color(uint32_t bg_color, uint32_t fg_color) {
+    virtual void set_color(BGRColor_ bg_color, BGRColor_ fg_color) {
         (void)bg_color;
         (void)fg_color;
     }

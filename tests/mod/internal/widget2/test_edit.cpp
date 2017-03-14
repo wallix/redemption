@@ -44,8 +44,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 0;
     int16_t y = 0;
@@ -87,14 +87,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 10;
     int16_t y = 100;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable.gd, parent, notifier, "test2", id, fg_color, bg_color, 0, font);
+    WidgetEdit wedit(drawable.gd, parent, notifier, "test2", id, fg_color, bg_color, BLACK, font);
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);
@@ -126,14 +126,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = -10;
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable.gd, parent, notifier, "test3", id, fg_color, bg_color, 0, font);
+    WidgetEdit wedit(drawable.gd, parent, notifier, "test3", id, fg_color, bg_color, BLACK, font);
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);
@@ -165,14 +165,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit4)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 770;
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable.gd, parent, notifier, "test4", id, fg_color, bg_color, 0, font);
+    WidgetEdit wedit(drawable.gd, parent, notifier, "test4", id, fg_color, bg_color, BLACK, font);
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);
@@ -204,14 +204,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit5)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = -20;
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable.gd, parent, notifier, "test5", id, fg_color, bg_color, 0, font);
+    WidgetEdit wedit(drawable.gd, parent, notifier, "test5", id, fg_color, bg_color, BLACK, font);
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);
@@ -243,14 +243,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit6)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 760;
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable.gd, parent, notifier, "test6", id, fg_color, bg_color, 0, font);
+    WidgetEdit wedit(drawable.gd, parent, notifier, "test6", id, fg_color, bg_color, BLACK, font);
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);
@@ -282,14 +282,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 760;
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable.gd, parent, notifier, "test6", id, fg_color, bg_color, 0, font);
+    WidgetEdit wedit(drawable.gd, parent, notifier, "test6", id, fg_color, bg_color, BLACK, font);
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);
@@ -321,14 +321,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
     int id = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(drawable.gd, parent, notifier, "test6", id, fg_color, bg_color, 0, font);
+    WidgetEdit wedit(drawable.gd, parent, notifier, "test6", id, fg_color, bg_color, BLACK, font);
     Dimension dim = wedit.get_optimal_dim();
     wedit.set_wh(cx, dim.h);
     wedit.set_xy(x, y);

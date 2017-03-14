@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect)
 
     NotifyApi * notifier = nullptr;
     int id = 0; // unique identifier of widget used par parent, it will be sent back in case of event
-    int color = 0xCCF604; /* BGR */
+    BGRColor_ color(0xCCF604); /* BGR */
 
     WidgetRect wrect(drawable.gd, parent, notifier, id, color);
     wrect.set_wh(800, 600);
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0xCCF604; /* BGR */
+    BGRColor_ bgcolor(0xCCF604); /* BGR */
 
     WidgetRect wrect(drawable.gd, parent, notifier, id, bgcolor);
     wrect.set_wh(200, 200);
@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0xCCF604; /* BGR */
+    BGRColor_ bgcolor(0xCCF604); /* BGR */
 
     WidgetRect wrect(drawable.gd, parent, notifier, id, bgcolor);
     wrect.set_wh(200, 200);
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0xCCF604; /* BGR */
+    BGRColor_ bgcolor(0xCCF604); /* BGR */
 
     WidgetRect wrect(drawable.gd, parent, notifier, id, bgcolor);
     wrect.set_wh(200, 200);
@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0xCCF604; /* BGR */
+    BGRColor_ bgcolor(0xCCF604); /* BGR */
 
     WidgetRect wrect(drawable.gd, parent, notifier, id, bgcolor);
     wrect.set_wh(200, 200);
@@ -214,7 +214,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0xCCF604; /* BGR */
+    BGRColor_ bgcolor(0xCCF604); /* BGR */
 
     WidgetRect wrect(drawable.gd, parent, notifier, id, bgcolor);
     wrect.set_wh(200, 200);
@@ -248,7 +248,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip)
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0xCCF604; /* BGR */
+    BGRColor_ bgcolor(0xCCF604); /* BGR */
 
     WidgetRect wrect(drawable.gd, parent, notifier, id, bgcolor);
     wrect.set_wh(200, 200);
@@ -282,7 +282,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
 
     NotifyApi * notifier = nullptr;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0xCCF604; /* BGR */
+    BGRColor_ bgcolor(0xCCF604); /* BGR */
 
     WidgetRect wrect(drawable.gd, parent, notifier, id, bgcolor);
     wrect.set_wh(200, 200);

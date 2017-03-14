@@ -51,7 +51,7 @@ public:
     bool hasform;
 
 private:
-    int bg_color;
+    BGRColor_ bg_color;
 
 public:
     FlatWait(gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
@@ -62,19 +62,19 @@ public:
              bool showform = false, int required = FlatForm::NONE)
         : WidgetParent(drawable, parent, notifier, group_id)
         , groupbox(drawable, *this, nullptr, caption,
-                   theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                   theme.global.fgcolor, theme.global.bgcolor, font)
         , dialog(drawable, this->groupbox, nullptr, text, -10,
-                 theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font, 10, 2)
+                 theme.global.fgcolor, theme.global.bgcolor, font, 10, 2)
         , form(drawable, *this, this, -20, font, theme, lang, required)
         , goselector(drawable, this->groupbox, this, TR("back_selector", lang), -12,
-                     theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(),
-                     theme.global.focus_color.to_u32(), 2, font, 6, 2)
+                     theme.global.fgcolor, theme.global.bgcolor,
+                     theme.global.focus_color, 2, font, 6, 2)
         , exit(drawable, this->groupbox, this, TR("exit", lang), -11,
-               theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), theme.global.focus_color.to_u32(), 2, font,
+               theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
                6, 2)
         , extra_button(extra_button)
         , hasform(showform)
-        , bg_color(theme.global.bgcolor.to_u32())
+        , bg_color(theme.global.bgcolor)
     {
         this->impl = &composite_array;
 
@@ -144,7 +144,7 @@ public:
         }
     }
 
-    int get_bg_color() const override {
+    BGRColor_ get_bg_color() const override {
         return this->bg_color;
     }
 

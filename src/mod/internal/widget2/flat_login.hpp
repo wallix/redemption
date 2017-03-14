@@ -61,7 +61,7 @@ private:
 
     bool labels_added = false;
 
-    int bg_color;
+    BGRColor_ bg_color;
 
 public:
     FlatLogin(gdi::GraphicApi & drawable,
@@ -75,31 +75,31 @@ public:
               Font const & font, Translator tr, Theme const & theme)
         : WidgetParent(drawable, parent, notifier)
         , error_message_label(drawable, *this, nullptr, label_error_message, -15,
-                        theme.global.error_color.to_u32(), theme.global.bgcolor.to_u32(),
+                        theme.global.error_color, theme.global.bgcolor,
                         font)
         , login_label(drawable, *this, nullptr, label_text_login, -11,
-                      theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(), font)
+                      theme.global.fgcolor, theme.global.bgcolor, font)
         , login_edit(drawable, *this, this,
-                     login, -12, theme.edit.fgcolor.to_u32(), theme.edit.bgcolor.to_u32(),
-                     theme.edit.focus_color.to_u32(), theme.global.bgcolor.to_u32(), font,
+                     login, -12, theme.edit.fgcolor, theme.edit.bgcolor,
+                     theme.edit.focus_color, theme.global.bgcolor, font,
                      label_text_login, (width <= 640), -1u, 1, 1, false)
         , password_label(drawable, *this, nullptr, label_text_password, -13,
-                         theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(),
+                         theme.global.fgcolor, theme.global.bgcolor,
                          font)
         , password_edit(drawable, *this, this,
-                        password, -14, theme.edit.fgcolor.to_u32(),
-                        theme.edit.bgcolor.to_u32(), theme.edit.focus_color.to_u32(), theme.global.bgcolor.to_u32(),
+                        password, -14, theme.edit.fgcolor,
+                        theme.edit.bgcolor, theme.edit.focus_color, theme.global.bgcolor,
                         font, label_text_password, (width <= 640),
                         -1u, 1, 1, true)
         , img(drawable,
               theme.global.logo ? theme.global.logo_path.c_str() :
               SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
         , version_label(drawable, *this, nullptr, caption, -15,
-                        theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(),
+                        theme.global.fgcolor, theme.global.bgcolor,
                         font)
         , helpicon(drawable, *this, nullptr, "?", -16,
-                   theme.global.fgcolor.to_u32(), theme.global.bgcolor.to_u32(),
-                   theme.global.focus_color.to_u32(), 2, font, 6, 2)
+                   theme.global.fgcolor, theme.global.bgcolor,
+                   theme.global.focus_color, 2, font, 6, 2)
         , extra_button(extra_button)
         // , frame(drawable, Rect((width - 300) / 2, 10, 300, 250), parent, notifier, -17)
         // , wimage(drawable, 0, 0, SHARE_PATH "/Philips_PM5544_640.bmp",
@@ -109,7 +109,7 @@ public:
         // , hbar(drawable, parent, notifier, this->theme.selector_selected.bgcolor,
         //        this->theme.selector_line1.bgcolor, this->theme.selector_focus.bgcolor, -17)
         , tr(tr)
-        , bg_color(theme.global.bgcolor.to_u32())
+        , bg_color(theme.global.bgcolor)
     {
         this->impl = &composite_array;
 
@@ -237,7 +237,7 @@ public:
         }
     }
 
-    int get_bg_color() const override {
+    BGRColor_ get_bg_color() const override {
         return this->bg_color;
     }
 

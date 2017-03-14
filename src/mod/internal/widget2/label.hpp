@@ -36,8 +36,8 @@ public:
     int initial_x_text;
     int x_text;
     int y_text;
-    uint32_t bg_color;
-    uint32_t fg_color;
+    BGRColor_ bg_color;
+    BGRColor_ fg_color;
     bool tool;
 
     int w_border;
@@ -48,7 +48,7 @@ public:
 public:
     WidgetLabel(gdi::GraphicApi & drawable, Widget2& parent,
                 NotifyApi* notifier, const char * text,
-                int group_id, uint32_t fgcolor, uint32_t bgcolor, Font const & font,
+                int group_id, BGRColor_ fgcolor, BGRColor_ bgcolor, Font const & font,
                 int xtext = 0, int ytext = 0)
     : Widget2(drawable, parent, notifier, group_id)
     , initial_x_text(xtext)
@@ -101,7 +101,7 @@ public:
     }
 
     static void draw(Rect const clip, Rect const rect, gdi::GraphicApi& drawable,
-                     char const* text, uint32_t fgcolor, uint32_t bgcolor,
+                     char const* text, BGRColor_ fgcolor, BGRColor_ bgcolor,
                      Font const & font, int xtext, int ytext) {
         drawable.draw(RDPOpaqueRect(rect, RDPColor(bgcolor)), clip, gdi::ColorCtx::depth24());
         gdi::server_draw_text(drawable,
@@ -152,7 +152,7 @@ public:
         return res;
     }
 
-    void set_color(uint32_t bg_color, uint32_t fg_color) override {
+    void set_color(BGRColor_ bg_color, BGRColor_ fg_color) override {
         this->bg_color = bg_color;
         this->fg_color = fg_color;
     }
