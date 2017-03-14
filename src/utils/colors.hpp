@@ -408,6 +408,10 @@ struct decode_color8_opaquerect {
     RGBColor operator()(BGRColor c, BGRPalette const & palette) const noexcept {
         return RGBtoBGR(palette[static_cast<uint8_t>(c)]);
     }
+
+    BGRColor_ operator()(RDPColor c, BGRPalette const & palette) const noexcept {
+        return BGRColor_(palette[static_cast<uint8_t>(c.as_bgr().to_u32())]);
+    }
 };
 
 struct decode_color15_opaquerect {
@@ -419,6 +423,14 @@ struct decode_color15_opaquerect {
         const BGRColor g = ((c >> 2) & 0xf8) | ((c >>  7) & 0x7); // g1 g2 g3 g4 g5 g1 g2 g3
         const BGRColor r = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // r1 r2 r3 r4 r5 r1 r2 r3
         return (r << 16) | (g << 8) | b;
+    }
+
+    BGRColor_ operator()(RDPColor c) const noexcept {
+        // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
+        const BGRColor b = ((c.as_bgr().to_u32() >> 7) & 0xf8) | ((c.as_bgr().to_u32() >> 12) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
+        const BGRColor g = ((c.as_bgr().to_u32() >> 2) & 0xf8) | ((c.as_bgr().to_u32() >>  7) & 0x7); // g1 g2 g3 g4 g5 g1 g2 g3
+        const BGRColor r = ((c.as_bgr().to_u32() << 3) & 0xf8) | ((c.as_bgr().to_u32() >>  2) & 0x7); // r1 r2 r3 r4 r5 r1 r2 r3
+        return BGRColor_(r, g, b);
     }
 };
 
@@ -432,6 +444,14 @@ struct decode_color16_opaquerect {
         const BGRColor r = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // r1 r2 r3 r4 r5 r6 r7 r8
         return (r << 16) | (g << 8) | b;
     }
+
+    BGRColor_ operator()(RDPColor c) const noexcept {
+        // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
+        const BGRColor b = ((c.as_bgr().to_u32() >> 8) & 0xf8) | ((c.as_bgr().to_u32() >> 13) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
+        const BGRColor g = ((c.as_bgr().to_u32() >> 3) & 0xfc) | ((c.as_bgr().to_u32() >>  9) & 0x3); // g1 g2 g3 g4 g5 g6 g1 g2
+        const BGRColor r = ((c.as_bgr().to_u32() << 3) & 0xf8) | ((c.as_bgr().to_u32() >>  2) & 0x7); // r1 r2 r3 r4 r5 r6 r7 r8
+        return BGRColor_(r, g, b);
+    }
 };
 
 struct decode_color24_opaquerect {
@@ -439,6 +459,10 @@ struct decode_color24_opaquerect {
 
     RGBColor operator()(BGRColor c) const noexcept {
         return c & 0xFFFFFF;
+    }
+
+    BGRColor_ operator()(RDPColor c) const noexcept {
+        return c.as_bgr();
     }
 };
 

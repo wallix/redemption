@@ -304,12 +304,9 @@ struct DrawableTraitColor24
     {
         color_t operator()(const uint8_t * p) const
         {
-            const BGRColor c = (p[1] << 8) + p[0];
-            // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 b1 b2 b3 b4 b5
-            const BGRColor r = ((c >> 7) & 0xf8) | ((c >> 12) & 0x7); // r1 r2 r3 r4 r5 r1 r2 r3
-            const BGRColor g = ((c >> 2) & 0xf8) | ((c >>  7) & 0x7); // g1 g2 g3 g4 g5 g1 g2 g3
-            const BGRColor b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
-            return {uint8_t(b), uint8_t(g), uint8_t(r)};
+            const RDPColor c((p[1] << 8) + p[0]);
+            const BGRColor_ bgr = decode_color15_opaquerect()(c);
+            return {bgr.blue(), bgr.green(), bgr.red()};
         }
     };
 
@@ -317,12 +314,9 @@ struct DrawableTraitColor24
     {
         color_t operator()(const uint8_t * p) const
         {
-            const BGRColor c = (p[1] << 8) + p[0];
-            // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 g6 b1 b2 b3 b4 b5
-            const BGRColor r = ((c >> 8) & 0xf8) | ((c >> 13) & 0x7); // r1 r2 r3 r4 r5 r6 r7 r8
-            const BGRColor g = ((c >> 3) & 0xfc) | ((c >>  9) & 0x3); // g1 g2 g3 g4 g5 g6 g1 g2
-            const BGRColor b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
-            return {uint8_t(b), uint8_t(g), uint8_t(r)};
+            const RDPColor c((p[1] << 8) + p[0]);
+            const BGRColor_ bgr = decode_color16_opaquerect()(c);
+            return {bgr.blue(), bgr.green(), bgr.red()};
         }
     };
 
@@ -330,7 +324,7 @@ struct DrawableTraitColor24
     {
         color_t operator()(const uint8_t * p) const
         {
-            return {p[0], p[1], p[2]};
+            return {p[2], p[1], p[0]};
         }
     };
 };
