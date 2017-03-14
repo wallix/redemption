@@ -101,6 +101,27 @@ public:
     }
 };
 
+///\return 0 if success, otherwise a negatif number
+static inline ssize_t raw_write(int fd, const void * data, size_t len)
+{
+    size_t remaining_len = len;
+    size_t total_sent = 0;
+    while (remaining_len) {
+        ssize_t ret = ::write(fd,
+            static_cast<const char*>(data) + total_sent, remaining_len);
+        if (ret <= 0){
+            if (errno == EINTR){
+                continue;
+            }
+            return -1;
+        }
+        remaining_len -= ret;
+        total_sent += ret;
+    }
+    return 0;
+}
+
+
 class iofdbuf
 {
 public:
@@ -146,20 +167,7 @@ public:
 
     ssize_t write(const void * data, size_t len) const
     {
-        size_t remaining_len = len;
-        size_t total_sent = 0;
-        while (remaining_len) {
-            ssize_t ret = ::write(this->iofdbuf_fd, static_cast<const char*>(data) + total_sent, remaining_len);
-            if (ret <= 0){
-                if (errno == EINTR){
-                    continue;
-                }
-                return -1;
-            }
-            remaining_len -= ret;
-            total_sent += ret;
-        }
-        return total_sent;
+        return raw_write(this->iofdbuf_fd, data, len);
     }
 };
 
@@ -560,27 +568,6 @@ struct ocrypto {
 };
 
 
-///\return 0 if success, otherwise a negatif number
-static inline ssize_t hash_buf_raw_write(int hash_buf_file_fd, void * data, size_t len)
-{
-    size_t remaining_len = len;
-    size_t total_sent = 0;
-    while (remaining_len) {
-        ssize_t ret = ::write(hash_buf_file_fd,
-            static_cast<const char*>(data) + total_sent, remaining_len);
-        if (ret <= 0){
-            if (errno == EINTR){
-                continue;
-            }
-            return -1;
-        }
-        remaining_len -= ret;
-        total_sent += ret;
-    }
-    return 0;
-}
-
-
 static inline ssize_t hash_buf_write(int hash_buf_file_fd, ocrypto & hash_buf_encrypt, const void * data, size_t len)
 {
     uint8_t buffer[65536];
@@ -589,7 +576,7 @@ static inline ssize_t hash_buf_write(int hash_buf_file_fd, ocrypto & hash_buf_en
     if (lentobuf < 0) {
         return -1;
     }
-    if (hash_buf_raw_write(hash_buf_file_fd, buffer, towrite))
+    if (raw_write(hash_buf_file_fd, buffer, towrite))
     {
         return -1;
     }
@@ -616,7 +603,7 @@ static inline int hash_buf_open(int & hash_buf_file_fd, ocrypto & hash_buf_encry
     size_t towrite = 0;
     err = hash_buf_encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
     if (!err) {
-        err = hash_buf_raw_write(hash_buf_file_fd, buffer, towrite);
+        err = raw_write(hash_buf_file_fd, buffer, towrite);
     }
     return err;
 }
@@ -672,21 +659,7 @@ struct MetaSeqBuf {
                 this->meta_buf_file_size += remaining;
             }
         }
-        size_t remaining_len = len;
-        size_t total_sent = 0;
-        while (remaining_len) {
-            ssize_t ret = ::write(this->meta_buf_fd,
-                static_cast<const char*>(data) + total_sent, remaining_len);
-            if (ret <= 0){
-                if (errno == EINTR){
-                    continue;
-                }
-                return -1;
-            }
-            remaining_len -= ret;
-            total_sent += ret;
-        }
-        return total_sent;
+        return raw_write(this->meta_buf_fd, data, len);
     }
 
     int next_meta_file(wrmcapture_hash_type const * hash)
@@ -967,7 +940,7 @@ public:
                 return 1;
             }
             char header[] = "v2\n\n\n";
-            hash_buf_raw_write(hash_buf_fd, header, sizeof(header)-1);
+            raw_write(hash_buf_fd, header, sizeof(header)-1);
 
             struct stat stat;
             int err = ::stat(meta_filename, &stat);
@@ -1027,7 +1000,7 @@ public:
             write(&hash[MD_HASH_LENGTH]);
             *p++ = '\n';
 
-            ssize_t res = hash_buf_raw_write(hash_buf_fd, mes, p-mes);
+            ssize_t res = raw_write(hash_buf_fd, mes, p-mes);
 
             if (res < 0) {
                 LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, res);
@@ -1120,20 +1093,10 @@ public:
 
                     mes[len] = '\n';
 
-                    size_t remaining_len = len + 1;
-                    size_t total_sent = 0;
-                    while (remaining_len) {
-                        ssize_t ret = ::write(crypto_hash_fd,
-                            static_cast<const char*>(mes) + total_sent, remaining_len);
-                        if (ret <= 0){
-                            if (errno == EINTR){
-                                continue;
-                            }
-                            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", this->hf_.filename, int(ret?errno:0));
-                            return 1;
-                        }
-                        remaining_len -= ret;
-                        total_sent += ret;
+                    if (raw_write(crypto_hash_fd, mes, len + 1) != 0) {
+                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
+                            this->hf_.filename, int(errno));
+                        return 1;
                     }
                 }
                 if (!err) {
@@ -1213,33 +1176,13 @@ struct MetaSeqBufCrypto
         if (lentobuf < 0) {
             return -1;
         }
-        if (this->meta_buf_raw_write(buffer, towrite))
+        if (raw_write(this->meta_buf_fd, buffer, towrite))
         {
             return -1;
         }
         return lentobuf;
     }
 
-
-    ///\return 0 if success, otherwise a negatif number
-    ssize_t meta_buf_raw_write(void * data, size_t len)
-    {
-        size_t remaining_len = len;
-        size_t total_sent = 0;
-        while (remaining_len) {
-            ssize_t ret = ::write(this->meta_buf_fd,
-                static_cast<const char*>(data) + total_sent, remaining_len);
-            if (ret <= 0){
-                if (errno == EINTR){
-                    continue;
-                }
-                return -1;
-            }
-            remaining_len -= ret;
-            total_sent += ret;
-        }
-        return 0;
-    }
 
     int meta_buf_open(const char * filename, mode_t mode = 0600)
     {
@@ -1261,7 +1204,7 @@ struct MetaSeqBufCrypto
         size_t towrite = 0;
         err = this->meta_buf_encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
         if (!err) {
-            err = this->meta_buf_raw_write(buffer, towrite);
+            err = raw_write(this->meta_buf_fd, buffer, towrite);
         }
         return err;
     }
@@ -1274,7 +1217,7 @@ struct MetaSeqBufCrypto
         if (res1) {
             return -1;
         }
-        if (this->meta_buf_raw_write(buffer, towrite))
+        if (raw_write(this->meta_buf_fd, buffer, towrite))
         {
             return -1;
         }
@@ -1658,7 +1601,7 @@ public:
         uint8_t buffer[65536];
         size_t towrite = 0;
         const int res1 = hash_buf_encrypt.close(buffer, sizeof(buffer), towrite, hash2);
-        const int res2 = hash_buf_raw_write(hash_buf_file_fd, buffer, towrite);
+        const int res2 = raw_write(hash_buf_file_fd, buffer, towrite);
         const int res3 = ::close(hash_buf_file_fd);
         hash_buf_file_fd = -1;
         if (res1) {
