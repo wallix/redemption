@@ -23,6 +23,7 @@
 
 #include "core/error.hpp"
 #include "transport/transport.hpp"
+#include "transport/file_transport.hpp"
 
 class InFileTransport : public Transport
 {
@@ -49,12 +50,13 @@ public:
     }
 
 private:
-    void do_recv(uint8_t ** pbuffer, size_t len) override {
+
+    void do_recv_new(uint8_t * buffer, size_t len) override {
         // TODO the do_recv API is annoying (need some intermediate pointer to get result), fix it => read all or raise exeception?
         ssize_t res = -1;
         size_t remaining_len = len;
         while (remaining_len) {
-            res = ::read(this->fd, *pbuffer + (len - remaining_len), remaining_len);
+            res = ::read(this->fd, buffer + (len - remaining_len), remaining_len);
             if (res <= 0){
                 if ((res == 0)
                 ||  ((errno != EINTR) && (remaining_len != len))){
@@ -69,7 +71,7 @@ private:
             remaining_len -= res;
         }
         res = len - remaining_len;
-        *pbuffer += res;
+        //*pbuffer += res;
         this->last_quantum_received += res;
         if (remaining_len != 0){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
@@ -79,17 +81,61 @@ private:
 
 
 
-struct InFileSeekableTransport : public InFileTransport
+struct InFileSeekableTransport : public FileTransport
 {
-    public:
+protected:
+    int fd;
+
+public:
     explicit InFileSeekableTransport(int fd) noexcept
-    : InFileTransport(fd)
+    : fd(fd)
     {}
+
+    ~InFileSeekableTransport()
+    {
+        this->disconnect();
+    }
+
+    bool disconnect() override {
+        if (-1 != this->fd) {
+            const int ret = ::close(this->fd);
+            this->fd = -1;
+            return !ret;
+        }
+        return !0;
+    }
 
     void seek(int64_t offset, int whence) override {
         if (static_cast<off64_t>(-1) == lseek64(this->fd, offset, whence)){
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }
     }
+private:
+
+    int do_recv(uint8_t * buffer, size_t len) override {
+        ssize_t res = -1;
+        size_t remaining_len = len;
+        while (remaining_len) {
+            res = ::read(this->fd, buffer + (len - remaining_len), remaining_len);
+            if (res <= 0){
+                if ((res == 0)
+                ||  ((errno != EINTR) && (remaining_len != len))){
+                    break;
+                }
+                if (errno == EINTR){
+                    continue;
+                }
+                this->status = false;
+                throw Error(ERR_TRANSPORT_READ_FAILED, res);
+            }
+            remaining_len -= res;
+        }
+        res = len - remaining_len;
+        //*pbuffer += res;
+        this->last_quantum_received += res;
+        return res;
+    }
+
+
 };
 

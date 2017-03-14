@@ -42,12 +42,13 @@ struct Pointer {
 public:
     // Bitmap sizes (in bytes)
     enum {
-          DATA_SIZE = 32 * 32 * 4 // maxHeight x maxWidth x bpp = 32 pixel x 32 pixel x 32 bits
-        , MASK_SIZE = 32 * 32 / 8 // maxHeight x maxWidth x bpp = 32 pixel x 32 pixel x  1 bit
+          MAX_WIDTH  = 96
+        , MAX_HEIGHT = 96
+        , MAX_BPP    = 32
     };
     enum {
-          MAX_WIDTH  = 32
-        , MAX_HEIGHT = 32
+          DATA_SIZE = MAX_WIDTH * MAX_HEIGHT * MAX_BPP / 8
+        , MASK_SIZE = MAX_WIDTH * MAX_HEIGHT * 1 / 8
     };
 
 //    unsigned bpp;

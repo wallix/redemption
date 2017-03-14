@@ -31,6 +31,7 @@
 
 #include "capture/video_recorder.hpp"
 #include "capture/flv_params.hpp"
+#include "transport/file_transport.hpp"
 
 #include <cerrno>
 #include <cstddef>

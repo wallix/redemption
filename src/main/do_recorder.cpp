@@ -182,8 +182,7 @@ public:
             {
                 auto const buf_sz = FileToGraphic::HEADER_SIZE;
                 unsigned char buf[buf_sz];
-                auto * p = buf;
-                this->trans->recv(&p, buf_sz);
+                this->trans->recv_new(buf, buf_sz);
                 InStream header(buf);
                 this->chunk_type  = header.in_uint16_le();
                 this->chunk_size  = header.in_uint32_le();
@@ -195,10 +194,11 @@ public:
                 return false;
             }
             this->stream = InStream(this->stream_buf, 0);   // empty stream
-            if (this->chunk_size - FileToGraphic::HEADER_SIZE > 0) {
-                auto * p = this->stream_buf;
-                this->trans->recv(&p, this->chunk_size - FileToGraphic::HEADER_SIZE);
-                this->stream = InStream(this->stream_buf, p - this->stream_buf);
+            auto const ssize = this->chunk_size - FileToGraphic::HEADER_SIZE;
+            if (ssize > 0) {
+                auto const size = size_t(ssize);
+                this->trans->recv_new(this->stream_buf, size);
+                this->stream = InStream(this->stream_buf, size);
             }
         }
         catch (Error const & e) {
@@ -206,7 +206,7 @@ public:
                 throw;
             }
 
-            if (this->verbose) {
+            if (bool(this->verbose)) {
                 LOG(LOG_INFO, "receive error %u : end of transport", e.id);
             }
             // receive error, end of transport
@@ -296,7 +296,7 @@ public:
 
 inline
 static int do_recompress(
-    CryptoContext & cctx, Random & rnd, Transport & in_wrm_trans, const timeval begin_record,
+    CryptoContext & cctx, Random & rnd, Fstat & fstat, Transport & in_wrm_trans, const timeval begin_record,
     bool & program_requested_to_shutdown,
     int wrm_compression_algorithm_, std::string const & output_filename, Inifile & ini, uint32_t verbose
 ) {
@@ -341,16 +341,20 @@ static int do_recompress(
     int return_code = 0;
     try {
         if (ini.get<cfg::globals::trace_type>() == TraceType::cryptofile) {
-            wrmcapture_CryptoOutMetaSequenceTransport trans(
+            wrmcapture_OutMetaSequenceTransport trans(
+                true,
+                true,
                 cctx,
                 rnd,
+                fstat,
                 outfile_path.c_str(),
                 ini.get<cfg::video::hash_path>().c_str(),
                 outfile_basename.c_str(),
                 begin_record,
                 player.info_width,
                 player.info_height,
-                ini.get<cfg::video::capture_groupid>()
+                ini.get<cfg::video::capture_groupid>(),
+                nullptr
             );
             {
                 ChunkToFile recorder( &trans
@@ -389,15 +393,22 @@ static int do_recompress(
             }
         }
         else {
+            CryptoContext cctx;
             wrmcapture_OutMetaSequenceTransport trans(
-                    outfile_path.c_str(),
-                    ini.get<cfg::video::hash_path>().c_str(),
-                    outfile_basename.c_str(),
-                    begin_record,
-                    player.info_width,
-                    player.info_height,
-                    ini.get<cfg::video::capture_groupid>()
-                );
+                false,
+                false,
+                cctx,
+                rnd,
+                fstat,
+                outfile_path.c_str(),
+                ini.get<cfg::video::hash_path>().c_str(),
+                outfile_basename.c_str(),
+                begin_record,
+                player.info_width,
+                player.info_height,
+                ini.get<cfg::video::capture_groupid>(),
+                nullptr
+            );
             {
                 ChunkToFile recorder( &trans
                             , player.info_width
@@ -913,7 +924,7 @@ static inline int check_encrypted_or_checksumed(
             if (lstat(ctx.wrm_filename.c_str(), &sb) < 0) {
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
             }
-            
+
             const char * filename = ctx.filename.c_str();
             auto start_sec = ctx.start_time;
             auto stop_sec = ctx.stop_time;
@@ -1301,7 +1312,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   int wrm_compression_algorithm,
                   uint32_t flv_break_interval,
                   TraceType encryption_type,
-                  Inifile & ini, CryptoContext & cctx, Random & rnd,
+                  Inifile & ini, CryptoContext & cctx,
+                  Random & rnd, Fstat & fstat,
                   uint32_t verbose)
 {
 
@@ -1542,6 +1554,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             wrm_trace_type,
                             cctx,
                             rnd,
+                            fstat,
                             record_path,
                             hash_path,
                             basename,
@@ -1566,7 +1579,7 @@ bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_le
      != ::KeyboardInputMaskingLevel::fully_masked;
 bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
 
-                        Capture capture( 
+                        Capture capture(
                                   capture_wrm, wrm_params
                                 , capture_png, png_params
                                 , capture_pattern_checker, patter_checker_params
@@ -1653,6 +1666,7 @@ bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & Keyb
             result = do_recompress(
                 cctx,
                 rnd,
+                fstat,
                 in_wrm_trans,
                 begin_record,
                 program_requested_to_shutdown,
@@ -2088,6 +2102,7 @@ extern "C" {
         ini.set<cfg::debug::config>(false);
 
         UdevRandom rnd;
+        Fstat fstat;
         CryptoContext cctx;
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
@@ -2206,7 +2221,7 @@ extern "C" {
                           rp.wrm_compression_algorithm_,
                           rp.flv_break_interval,
                           rp.encryption_type,
-                          ini, cctx, rnd,
+                          ini, cctx, rnd, fstat,
                           verbose);
 
             } catch (const Error & e) {

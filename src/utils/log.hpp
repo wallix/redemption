@@ -59,6 +59,8 @@ namespace { namespace compiler_aux_ {
 #include <cstdio> // std::printf family
 
 #include <syslog.h>
+#include <iostream>
+#include <cstring>
 
 // enum type
 template<class T, typename std::enable_if<std::is_enum<T>::value, bool>::type = 1>
@@ -465,4 +467,3 @@ inline void hexdump8_c(const char * data, size_t size)
 }
 
 } // anonymous namespace
-

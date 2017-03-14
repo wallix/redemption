@@ -59,7 +59,7 @@ extern "C" {
 
 #include "utils/log.hpp"
 #include "core/error.hpp"
-#include "transport/transport.hpp"
+#include "transport/file_transport.hpp"
 
 #include <memory>
 #include <chrono>
@@ -523,7 +523,7 @@ public:
 
 struct io_video_recorder_with_transport
 {
-    io_video_recorder_with_transport(Transport& trans)
+    io_video_recorder_with_transport(Transport & trans)
     : trans(trans)
     {}
 

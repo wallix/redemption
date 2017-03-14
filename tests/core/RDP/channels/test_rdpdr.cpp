@@ -333,7 +333,7 @@ BOOST_AUTO_TEST_CASE(CapabilityHeaderEmit)
             "\x01\x00\x08\x00\x01\x00\x00\x00";
 
     StaticOutStream<8> stream;
-    rdpdr::CapabilityHeader ch(0x01, 0x08, 0x0001);
+    rdpdr::CapabilityHeader ch(0x01, 0x0001);
 
     ch.emit(stream);
 
@@ -796,13 +796,20 @@ BOOST_AUTO_TEST_CASE(GeneralCapabilitySetEmit)
 {
     const size_t len = 36;
     const char data[] =
-            "\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x04\x00\x05\x00\x00\x00"
-            "\x06\x00\x00\x00\x07\x00\x00\x00\x08\x00\x00\x00\x09\x00\x00\x00"
-            "\x0a\x00\x00\x00";
+        "\x02\x00\x00\x00\x00\x00\x00\x00\x01\x00\x02\x00\xff\xff\x00\x00"
+        "\x0\x00\x00\x00\x07\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00"
+        ;
 
     StaticOutStream<128> stream;
-    rdpdr::GeneralCapabilitySet pdu(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-    pdu.emit(stream, rdpdr::GENERAL_CAPABILITY_VERSION_02);
+    rdpdr::GeneralCapabilitySet pdu(0x2,        // osType
+                                    rdpdr::MINOR_VERSION_2,        // protocolMinorVersion -
+                                    rdpdr::SUPPORT_ALL_REQUEST,     // ioCode1
+                                    0x00000007,
+                                    rdpdr::ENABLE_ASYNCIO,        // extraFlags1
+                                    0,                          // SpecialTypeDeviceCap
+                                    rdpdr::GENERAL_CAPABILITY_VERSION_02);
+    pdu.emit(stream);
 
     std::string const out_data(data, len);
     std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
@@ -867,10 +874,10 @@ BOOST_AUTO_TEST_CASE(ServerDeviceAnnounceResponseEmit)
 {
     const size_t len = 8;
     const char data[] =
-            "\x01\x00\x00\x00\x02\x00\x00\x00";
+            "\x01\x00\x00\x00\x01\x00\x00\xc0";
 
     StaticOutStream<128> stream;
-    rdpdr::ServerDeviceAnnounceResponse pdu(1, 2);
+    rdpdr::ServerDeviceAnnounceResponse pdu(1, erref::NTSTATUS::STATUS_UNSUCCESSFUL);
     pdu.emit(stream);
 
     std::string const out_data(data, len);
@@ -882,14 +889,14 @@ BOOST_AUTO_TEST_CASE(ServerDeviceAnnounceResponseReceive)
 {
     const size_t len = 8;
     const char data[] =
-            "\x01\x00\x00\x00\x02\x00\x00\x00";
+            "\x01\x00\x00\x00\x01\x00\x00\xc0";
 
     InStream in_stream(data, len);
     rdpdr::ServerDeviceAnnounceResponse pdu;
     pdu.receive(in_stream);
 
     BOOST_CHECK_EQUAL(pdu.DeviceId(), 1);
-    BOOST_CHECK_EQUAL(pdu.ResultCode(), 2);
+    BOOST_CHECK_EQUAL(uint32_t(pdu.ResultCode()), uint32_t(erref::NTSTATUS::STATUS_UNSUCCESSFUL));
 }
 
 BOOST_AUTO_TEST_CASE(DeviceWriteResponseEmit)
@@ -947,5 +954,4 @@ BOOST_AUTO_TEST_CASE(DeviceReadResponseReceive)
     pdu.receive(in_stream);
 
     BOOST_CHECK_EQUAL(pdu.Length, 4);
-
 }

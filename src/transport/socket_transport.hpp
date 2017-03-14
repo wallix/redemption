@@ -94,7 +94,7 @@ public:
             delete this->tls;
         }
 
-        if (verbose) {
+        if (bool(verbose)) {
             LOG( LOG_INFO
                , "%s (%d): total_received=%" PRIu64 ", total_sent=%" PRIu64
                , this->name, this->sck, this->get_total_received(), this->get_total_sent());
@@ -236,27 +236,53 @@ public:
         return rv;
     }
 
-    void do_recv(uint8_t ** pbuffer, size_t len) override {
-        if (this->verbose & Verbose::dump){
+//     void do_recv(uint8_t ** pbuffer, size_t len) override {
+//         if (bool(this->verbose & Verbose::dump)) {
+//             LOG(LOG_INFO, "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
+//         }
+//
+//         uint8_t * start = *pbuffer;
+//         ssize_t res = (this->tls) ? this->tls->privrecv_tls(*pbuffer, len) : this->privrecv(*pbuffer, len);
+//         //std::cout << "res=" << int(res) << " len=" << int(len) <<  std::endl;
+//
+//         if (res < 0){
+//             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
+//         }
+//         *pbuffer += res;
+//
+//         if (static_cast<size_t>(res) < len){
+//             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
+//         }
+//
+//         if (bool(this->verbose & Verbose::dump)) {
+//             LOG(LOG_INFO, "Recv done on %s (%d) %zu bytes", this->name, this->sck, len);
+//             hexdump_c(start, len);
+//             LOG(LOG_INFO, "Dump done on %s (%d) %zu bytes", this->name, this->sck, len);
+//         }
+//
+//         // TODO move that to base class : accounting_recv(len)
+//         this->last_quantum_received += len;
+//     }
+
+    void do_recv_new(uint8_t * buffer, size_t len) override {
+        if (bool(this->verbose & Verbose::dump)) {
             LOG(LOG_INFO, "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
         }
 
-        uint8_t * start = *pbuffer;
-        ssize_t res = (this->tls) ? this->tls->privrecv_tls(*pbuffer, len) : this->privrecv(*pbuffer, len);
+        ssize_t res = (this->tls) ? this->tls->privrecv_tls(buffer, len) : this->privrecv(buffer, len);
         //std::cout << "res=" << int(res) << " len=" << int(len) <<  std::endl;
 
         if (res < 0){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
-        *pbuffer += res;
 
         if (static_cast<size_t>(res) < len){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
 
-        if (this->verbose & Verbose::dump){
+        if (bool(this->verbose & Verbose::dump)) {
             LOG(LOG_INFO, "Recv done on %s (%d) %zu bytes", this->name, this->sck, len);
-            hexdump_c(start, len);
+            hexdump_c(buffer, len);
             LOG(LOG_INFO, "Dump done on %s (%d) %zu bytes", this->name, this->sck, len);
         }
 
@@ -267,7 +293,7 @@ public:
     void do_send(const uint8_t * const buffer, size_t len) override {
         if (len == 0) { return; }
 
-        if (this->verbose & Verbose::dump){
+        if (bool(this->verbose & Verbose::dump)) {
             LOG(LOG_INFO, "Sending on %s (%d) %zu bytes", this->name, this->sck, len);
             hexdump_c(buffer, len);
             LOG(LOG_INFO, "Sent dumped on %s (%d) %zu bytes", this->name, this->sck, len);

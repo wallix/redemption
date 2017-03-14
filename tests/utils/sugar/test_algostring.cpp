@@ -44,3 +44,54 @@ BOOST_AUTO_TEST_CASE(TestTrim)
     BOOST_CHECK(trim(first, last) == trimmed);
     BOOST_CHECK(trim(r) == trimmed);
 }
+
+BOOST_AUTO_TEST_CASE(Test_escape_delimiters)
+{
+    std::string s;
+    char as[16]{};
+    std::pair<char *, char const *> p;
+    #define CHECK(Escaped, S)                                          \
+        s.clear();                                                     \
+        append_escaped_delimiters(s, S);                                \
+        BOOST_CHECK_EQUAL(Escaped, s);                                 \
+        s.clear();                                                     \
+        append_escaped_delimiters(s, std::string(S));                   \
+        BOOST_CHECK_EQUAL(Escaped, s);                                 \
+        std::fill(std::begin(as), std::end(as), 0);                    \
+        p = append_escaped_delimiters(as, sizeof(as), S);               \
+        BOOST_CHECK_EQUAL(sizeof(Escaped)-1u, p.first - as);           \
+        BOOST_CHECK_EQUAL(sizeof(S)-1u, p.second - S);                 \
+        BOOST_CHECK_EQUAL(Escaped, as)
+    CHECK("", "");
+    CHECK("\\\\", "\\");
+    CHECK("\\\"", "\"");
+    CHECK("\\\"\\\"", "\"\"");
+    CHECK("\\\"\\\"\\\"", "\"\"\"");
+    CHECK("abcd", "abcd");
+    CHECK("ab\\\"cd", "ab\"cd");
+    CHECK("ab\\\\cd", "ab\\cd");
+    CHECK("ab\\\\\\\"cd", "ab\\\"cd");
+    CHECK("\\\\ab\\\\\\\"cd", "\\ab\\\"cd");
+    CHECK("\\\\ab\\\\\\\"cd\\\"", "\\ab\\\"cd\"");
+
+    std::fill(std::begin(as), std::end(as), 0);
+
+    char long_astr[] = "0123456789";
+    p = append_escaped_delimiters(as, 5, long_astr);
+    BOOST_CHECK_EQUAL(5, p.first - as);
+    BOOST_CHECK_EQUAL(5, p.second - long_astr);
+    BOOST_CHECK_EQUAL("01234", as);
+
+    std::fill(std::begin(as), std::begin(as) + 5, 0);
+    char long_astr2[] = "\\0\\1\\2\\3\\4\\5\\6";
+    p = append_escaped_delimiters(as, 5, long_astr2);
+    BOOST_CHECK_EQUAL(5, p.first - as);
+    BOOST_CHECK_EQUAL(3, p.second - long_astr2);
+    BOOST_CHECK_EQUAL("\\\\0\\\\", as);
+
+    std::fill(std::begin(as), std::begin(as) + 4, 0);
+    p = append_escaped_delimiters(as, 4, long_astr2);
+    BOOST_CHECK_EQUAL(3, p.first - as);
+    BOOST_CHECK_EQUAL(2, p.second - long_astr2);
+    BOOST_CHECK_EQUAL("\\\\0", as);
+}

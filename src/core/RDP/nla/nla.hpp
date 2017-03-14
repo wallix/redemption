@@ -484,11 +484,13 @@ public:
         uint8_t head[4] = {};
         uint8_t * point = head;
         size_t length = 0;
-        this->trans.recv(&point, 2);
+        this->trans.recv_new(point, 2);
+        point += 2;
         uint8_t byte = head[1];
         if (byte & 0x80) {
             byte &= ~(0x80);
-            this->trans.recv(&point, byte);
+            this->trans.recv_new(point, byte);
+
             if (byte == 1) {
                 length = head[2];
             }
@@ -506,8 +508,7 @@ public:
         StreamBufMaker<65536> ts_request_received_maker;
         OutStream ts_request_received = ts_request_received_maker.reserve_out_stream(2 + byte + length);
         ts_request_received.out_copy_bytes(head, 2 + byte);
-        auto end = ts_request_received.get_current();
-        this->trans.recv(&end, length);
+        this->trans.recv_new(ts_request_received.get_current(), length);
         InStream in_stream(ts_request_received.get_data(), ts_request_received.get_capacity());
         this->ts_request.recv(in_stream);
 

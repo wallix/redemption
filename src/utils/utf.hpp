@@ -383,6 +383,7 @@ UTF8toUTF16_exit:
     return i_t;
 }
 
+
 // UTF8toUTF16 never writes the trailing zero (with Lf to CrLf conversion).
 static inline size_t UTF8toUTF16_CrLf(const uint8_t * source, uint8_t * target, size_t t_len)
 {

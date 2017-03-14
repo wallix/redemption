@@ -83,7 +83,7 @@ public:
                                                     theme.global.focus_color.to_u32(), 2, font,
                                                     6, 2) : nullptr)
         , img(drawable,
-              theme.global.logo ? theme.global.logo_path :
+              theme.global.logo ? theme.global.logo_path.c_str() :
               SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -8)
         , extra_button(extra_button)
         , font(font)
@@ -199,7 +199,7 @@ public:
 
         total_height += this->ok.cy();
 
-        this->move_xy(0, (height - total_height) / 2);
+        this->move_children_xy(0, (height - total_height) / 2);
 
         dim = this->img.get_optimal_dim();
         this->img.set_wh(dim);

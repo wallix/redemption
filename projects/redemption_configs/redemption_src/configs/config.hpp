@@ -106,8 +106,8 @@ namespace configs
         auto const err = ::configs::parse(x, u, av);
         if (err) {
             LOG(
-                LOG_ERR,
-                "parsing error with parameter '%s' in section [%s] for \"%*s\": %s",
+                LOG_WARNING,
+                "parsing error with parameter '%s' in section [%s] for \"%.*s\": %s",
                 key, context, int(av.size()), av.data(), err.c_str()
             );
         }
@@ -151,7 +151,7 @@ namespace configs
                     return;
                 }
             }
-            theme.set_logo_path(logo_path);
+            theme.global.logo_path = logo_path;
         }
     }
 }

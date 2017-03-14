@@ -24,10 +24,12 @@
 #define BOOST_TEST_MODULE TestInMetaSequenceTransport
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 
+#include "utils/sugar/iter.hpp"
 
+#include "capture/wrm_capture.hpp"
 #include "capture/capture.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "core/error.hpp"
@@ -38,40 +40,40 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
     // This is what we are actually testing, chaining of several files content
     InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr),
         FIXTURES_PATH "/sample", ".mwrm", 0);
-    char buffer[10000];
-    char * pbuffer = buffer;
+    unsigned char buffer[10000];
+    unsigned char * pbuffer = buffer;
     size_t total = 0;
     auto test = [&]{
         for (size_t i = 0; i < 221 ; i++){
             pbuffer = buffer;
-            wrm_trans.recv(&pbuffer, sizeof(buffer));
-            total += pbuffer - buffer;
+            wrm_trans.recv_new(pbuffer, sizeof(buffer));
+            total += sizeof(buffer);
         }
     };
     CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
     total += pbuffer - buffer;
     // total size if sum of sample sizes
-    BOOST_CHECK_EQUAL(1471394 + 444578 + 290245, total);
+    BOOST_CHECK_EQUAL(2200000, total);
 }
 
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
 {
     // This is what we are actually testing, chaining of several files content
     InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/sample_v2", ".mwrm", 0);
-    char buffer[10000];
-    char * pbuffer = buffer;
+    unsigned char buffer[10000];
+    unsigned char * pbuffer = buffer;
     size_t total = 0;
     auto test = [&]{
         for (size_t i = 0; i < 221 ; i++){
             pbuffer = buffer;
-            wrm_trans.recv(&pbuffer, sizeof(buffer));
-            total += pbuffer - buffer;
+            wrm_trans.recv_new(pbuffer, sizeof(buffer));
+            total += sizeof(buffer);
         }
     };
     CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
     total += pbuffer - buffer;
     // total size if sum of sample sizes
-    BOOST_CHECK_EQUAL(1471394 + 444578 + 290245, total);
+    BOOST_CHECK_EQUAL(2200000, total);                             // 1471394 + 444578 + 290245
 }
 
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
@@ -254,12 +256,12 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
     {
         LCGRandom rnd(0);
+        Fstat fstat;
         timeval tv;
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
         const int groupid = 0;
-        wrmcapture_CryptoOutMetaSequenceTransport crypto_trans(cctx, rnd, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid,
-                                                    nullptr, wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
+        wrmcapture_OutMetaSequenceTransport crypto_trans(true, true, cctx, rnd, fstat, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid, nullptr);
         crypto_trans.send("AAAAX", 5);
         tv.tv_sec += 100;
         crypto_trans.timestamp(tv);
@@ -275,38 +277,20 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
         char buffer[1024] = {};
         char * bob = buffer;
-        char ** pbuffer = &bob;
 
-        BOOST_CHECK(true);
+        BOOST_CHECK_NO_THROW(crypto_trans.recv_new(bob, 15));
 
-        BOOST_CHECK_NO_THROW(crypto_trans.recv(pbuffer, 15));
-
-        BOOST_CHECK(true);
-
-        BOOST_CHECK_EQUAL(15, *pbuffer - buffer);
-
-        if (0 != memcmp(buffer, "AAAAXBBBBXCCCCX", 15)){
-            BOOST_CHECK_EQUAL(0, buffer[15]); // this one should not have changed
-            buffer[15] = 0;
-            BOOST_CHECK(true);
-            LOG(LOG_ERR, "expected \"AAAAXBBBBXCCCCX\" got \"%s\"", buffer);
-            BOOST_CHECK(false);
-        }
-
-        BOOST_CHECK(true);
+        BOOST_CHECK_EQUAL_RANGES(make_array_view(buffer, 15), cstr_array_view("AAAAXBBBBXCCCCX"));
     }
 
-    const char * file[] = {
+    const char * files[] = {
         "/tmp/TESTOFS.mwrm", // hash
         "TESTOFS.mwrm",
         "TESTOFS-000000.wrm",
         "TESTOFS-000001.wrm"
     };
-    for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
-        if (::unlink(file[i])){
-            BOOST_CHECK(false);
-            LOG(LOG_ERR, "failed to unlink %s", file[i]);
-        }
+    for (const char * file : files){
+        BOOST_CHECK_MESSAGE(!::unlink(file), "failed to unlink " << file);
     }
 }
 

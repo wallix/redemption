@@ -26,8 +26,8 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 
 #include "utils/log.hpp"
 
@@ -50,6 +50,7 @@
 
 BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 {
+    BOOST_CHECK(true);
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
     ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
@@ -74,10 +75,11 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         ini.set<cfg::video::record_tmp_path>("./");
         ini.set<cfg::video::record_path>("./");
-        ini.set<cfg::video::hash_path>("/tmp");
+        ini.set<cfg::video::hash_path>("/tmp/");
         ini.set<cfg::globals::movie_path>("capture");
 
         LCGRandom rnd(0);
+        Fstat fstat;
         CryptoContext cctx;
 
         // TODO remove this after unifying capture interface
@@ -164,6 +166,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
             wrm_trace_type,
             cctx,
             rnd,
+            fstat,
             record_path,
             hash_path,
             basename,
@@ -293,16 +296,19 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
     struct CheckFiles {
         const char * filename;
         size_t size;
+        size_t altsize;
     } fileinfo[] = {
-        {"./capture-000000.wrm", 1646},
-        {"./capture-000001.wrm", 3508},
-        {"./capture-000002.wrm", 3463},
-        {"./capture-000003.wrm", static_cast<size_t>(-1)},
-        {"./capture.mwrm", 288},
+        {"./capture-000000.wrm", 1646, 0},
+        {"./capture-000001.wrm", 3508, 0},
+        {"./capture-000002.wrm", 3463, 0},
+        {"./capture-000003.wrm", static_cast<size_t>(-1), static_cast<size_t>(-1)},
+        {"./capture.mwrm", 288, 285},
     };
     for (auto x: fileinfo) {
         size_t fsize = filesize(x.filename);
-        BOOST_CHECK_EQUAL(x.size, fsize);
+        if (x.altsize != fsize){
+            BOOST_CHECK_EQUAL(x.size, fsize);
+        }
         ::unlink(x.filename);
     }
 }
@@ -336,6 +342,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     ini.set<cfg::globals::movie_path>("capture");
 
     LCGRandom rnd(0);
+    Fstat fstat;
     CryptoContext cctx;
 
     // TODO remove this after unifying capture interface
@@ -419,6 +426,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         wrm_trace_type,
         cctx,
         rnd,
+        fstat,
         record_path,
         hash_path,
         basename,
@@ -2336,7 +2344,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     constexpr std::size_t sz_buf = 8;
     uint8_t buf[sz_buf];
     auto end = buf;
-    in_png_trans.recv(&end, sz_buf); // skip first chunk header
+    in_png_trans.recv_new(end, sz_buf); // skip first chunk header
     InStream stream(buf);
 
 //    in_png_trans.recv(&stream.end, 107); // skip first chunk header

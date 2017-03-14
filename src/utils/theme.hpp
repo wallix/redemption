@@ -25,6 +25,9 @@
 #include "cfgloader.hpp"
 #include "utils/parse.hpp"
 
+#include <string>
+
+
 struct Theme
 {
     struct {
@@ -34,7 +37,7 @@ struct Theme
         BGRColor_ focus_color = WINBLUE;
         BGRColor_ error_color = YELLOW;
         bool logo = false;
-        char logo_path[1024] {};
+        std::string logo_path;
     } global;
 
     struct {
@@ -69,11 +72,6 @@ struct Theme
         BGRColor_ bgcolor = MEDIUM_BLUE;
         BGRColor_ fgcolor = WHITE;
     } selector_label;
-
-    void set_logo_path(const char * logopath) {
-        strncpy(this->global.logo_path, logopath, sizeof(this->global.logo_path));
-        this->global.logo_path[sizeof(this->global.logo_path) - 1] = 0;
-    }
 };
 
 struct ThemeHolder final : public ConfigurationHolder

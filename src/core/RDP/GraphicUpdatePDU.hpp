@@ -24,6 +24,7 @@
 #include <cinttypes>
 
 #include "utils/log.hpp"
+#include "utils/sugar/underlying_cast.hpp"
 #include "RDPSerializer.hpp"
 #include "gcc.hpp"
 #include "sec.hpp"
@@ -91,6 +92,7 @@ void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_s
                        , rdp_mppc_enc * mppc_enc, uint32_t shareId, int encryptionLevel
                        , CryptContext & encrypt, uint16_t initiator
                        , StaticOutReservedStreamHelper<1024, 65536-1024> & data
+                       // TODO enum Verbose
                        , uint32_t log_condition, uint32_t verbose) {
     REDASSERT(!compression_support || mppc_enc);
 
@@ -155,6 +157,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                        , CryptContext & encrypt, uint16_t initiator, ServerUpdateType type
                        , uint16_t data_extra
                        , StaticOutReservedStreamHelper<1024, 65536-1024> & data_common
+                       // TODO enum Verbose
                        , uint32_t verbose) {
     if (verbose & 4) {
         LOG( LOG_INFO
@@ -478,10 +481,10 @@ public:
         this->init_bitmaps();
     }
 
-    ~GraphicsUpdatePDU() override {}
+    ~GraphicsUpdatePDU() = default;
 
     void init_orders() {
-        if (this->verbose & Verbose::internal_buffer) {
+        if (bool(this->verbose & Verbose::internal_buffer)) {
             LOG( LOG_INFO
                , "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u"
                , this->userid
@@ -490,7 +493,7 @@ public:
     }
 
     void init_bitmaps() {
-        if (this->verbose & Verbose::internal_buffer) {
+        if (bool(this->verbose & Verbose::internal_buffer)) {
             LOG( LOG_INFO
                , "GraphicsUpdatePDU::init::Initializing bitmaps batch mcs_userid=%u shareid=%u"
                , this->userid
@@ -511,7 +514,7 @@ public:
 protected:
     void flush_orders() override {
         if (this->order_count > 0){
-            if (this->verbose & Verbose::internal_buffer) {
+            if (bool(this->verbose & Verbose::internal_buffer)) {
                 LOG( LOG_INFO, "GraphicsUpdatePDU::flush_orders: order_count=%zu"
                    , this->order_count);
             }
@@ -519,7 +522,7 @@ protected:
             ::send_server_update( this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel
                                 , this->encrypt, this->userid, SERVER_UPDATE_GRAPHICS_ORDERS
-                                , this->order_count, this->buffer_stream_orders, this->verbose);
+                                , this->order_count, this->buffer_stream_orders, underlying_cast(this->verbose));
 
             this->order_count = 0;
             this->buffer_stream_orders.rewind();
@@ -529,7 +532,7 @@ protected:
 
     void flush_bitmaps() override {
         if (this->bitmap_count > 0) {
-            if (this->verbose & Verbose::internal_buffer) {
+            if (bool(this->verbose & Verbose::internal_buffer)) {
                 LOG( LOG_INFO
                    , "GraphicsUpdatePDU::flush_bitmaps: bitmap_count=%zu offset=%" PRIu32
                    , this->bitmap_count, this->offset_bitmap_count);
@@ -539,7 +542,7 @@ protected:
             ::send_server_update( this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel, this->encrypt
                                 , this->userid, SERVER_UPDATE_GRAPHICS_BITMAP, 0
-                                , this->buffer_stream_bitmaps, this->verbose);
+                                , this->buffer_stream_bitmaps, underlying_cast(this->verbose));
 
             this->bitmap_count = 0;
             this->buffer_stream_bitmaps.rewind();
@@ -792,7 +795,7 @@ protected:
              source_xor_line_length_in_byte);
 
         if (cursor.only_black_white) {
-            uint8_t xorMaskData[32 * 32 / 8] = { 0 };
+            uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8] = { 0 };
 
             for (unsigned int h = 0; h < cursor.height; ++h) {
                 const uint8_t* psource = cursor.data + (cursor.height - h - 1) * source_xor_padded_line_length_in_byte;
@@ -832,7 +835,7 @@ protected:
             stream.out_copy_bytes(xorMaskData, xor_padded_line_length_in_byte * cursor.height);
         }
         else {
-            uint8_t xorMaskData[32 * 32 * 4] = { 0 };
+            uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 4] = { 0 };
 
             for (unsigned int h = 0; h < cursor.height; ++h) {
                 const uint8_t* psource = cursor.data + (cursor.height - h - 1) * source_xor_padded_line_length_in_byte;
@@ -860,7 +863,7 @@ protected:
 //      bytes).
 
         if (cursor.only_black_white) {
-            uint8_t andMaskData[32 * 32 / 8] = { 0 };
+            uint8_t andMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8] = { 0 };
 
             for (unsigned int h = 0; h < cursor.height; ++h) {
                 const uint8_t* psource = cursor.mask + (cursor.height - h - 1) * and_padded_line_length_in_byte;
@@ -880,7 +883,7 @@ protected:
     }
 
     void send_pointer(int cache_idx, const Pointer & cursor) override {
-        if (this->verbose & Verbose::pointer) {
+        if (bool(this->verbose & Verbose::pointer)) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer(cache_idx=%u x=%u y=%u)",
                 cache_idx, cursor.x, cursor.y);
         }
@@ -898,9 +901,9 @@ protected:
                             , this->mppc_enc, this->shareid, this->encryptionLevel
                             , this->encrypt, this->userid
                             , (this->send_new_pointer ? SERVER_UPDATE_POINTER_NEW : SERVER_UPDATE_POINTER_COLOR)
-                            , 0, stream, this->verbose);
+                            , 0, stream, underlying_cast(this->verbose));
 
-        if (this->verbose & Verbose::pointer) {
+        if (bool(this->verbose & Verbose::pointer)) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer done");
         }
     }   // void send_pointer(int cache_idx, const Pointer & cursor)
@@ -937,7 +940,7 @@ protected:
 //      New Pointer Update (section 2.2.9.1.1.4.5).
 
     void set_pointer(int cache_idx) override {
-        if (this->verbose & Verbose::pointer) {
+        if (bool(this->verbose & Verbose::pointer)) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer(cache_idx=%u)", cache_idx);
         }
 
@@ -947,9 +950,9 @@ protected:
         ::send_server_update( this->trans, this->fastpath_support, this->compression
                             , this->mppc_enc, this->shareid, this->encryptionLevel
                             , this->encrypt, this->userid, SERVER_UPDATE_POINTER_CACHED
-                            , 0, stream, this->verbose);
+                            , 0, stream, underlying_cast(this->verbose));
 
-        if (this->verbose & Verbose::pointer) {
+        if (bool(this->verbose & Verbose::pointer)) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer done");
         }
     }   // void set_pointer(int cache_idx)
@@ -958,7 +961,7 @@ public:
     using RDPSerializer::set_pointer;
 
     void update_pointer_position(uint16_t xPos, uint16_t yPos) {
-        if (this->verbose & Verbose::pointer) {
+        if (bool(this->verbose & Verbose::pointer)) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::update_pointer_position(xPos=%u, yPos=%u)", xPos, yPos);
         }
 
@@ -969,9 +972,9 @@ public:
         ::send_server_update( this->trans, this->fastpath_support, this->compression
                             , this->mppc_enc, this->shareid, this->encryptionLevel
                             , this->encrypt, this->userid, SERVER_UPDATE_POINTER_POSITION
-                            , 0, stream, this->verbose);
+                            , 0, stream, underlying_cast(this->verbose));
 
-        if (this->verbose & Verbose::pointer) {
+        if (bool(this->verbose & Verbose::pointer)) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::update_pointer_position done");
         }
     }

@@ -34,180 +34,362 @@
 class VncFront : public FrontAPI
 {
 public:
-    uint32_t                    verbose;
-    ClientInfo                & info;
-    CHANNELS::ChannelDefArray   cl;
+    bool verbose;
+    ClientInfo &info;
     uint8_t                     mod_bpp;
     BGRPalette                  mod_palette;
-
-    int mouse_x;
-    int mouse_y;
-
-    bool notimestamp;
-    bool nomouse;
-
     RDPDrawable gd;
+    CHANNELS::ChannelDefArray   cl;
+    int height = 0;
+    int width = 0;
 
-public:
-    using FrontAPI::FrontAPI;
 
-    void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd);}
+    bool can_be_start_capture() override { return false; }
+    bool must_be_stop_capture() override { return false; }
 
-    void draw(RDPDestBlt          const & cmd, Rect clip) override {this->draw_impl(cmd, clip);}
-
-    void draw(RDPMultiDstBlt      const & cmd, Rect clip) override {this->draw_impl(cmd, clip);}
-
-    void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->draw_impl(cmd, clip, color_ctx);
-    }
-
-    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->draw_impl(cmd, clip, color_ctx);
-    }
-
-    void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->draw_impl(cmd, clip, color_ctx);
-    }
-
-    void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->draw_impl(cmd, clip, color_ctx);
-    }
-
-    void draw(RDPScrBlt           const & cmd, Rect clip) override {
-        this->draw_impl(cmd, clip);
-    }
-
-    void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override {
-        this->draw_impl(cmd, clip);
-    }
-
-    void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->draw_impl(cmd, clip, color_ctx);
-    }
-
-    void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->draw_impl(cmd, clip, color_ctx);
-    }
-
-    void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->draw_impl(cmd, clip, color_ctx);
-    }
-
-    void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->draw_impl(cmd, clip, color_ctx);
-    }
-
-    void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->draw_impl(cmd, clip, color_ctx);
-    }
-
-    void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->draw_impl(cmd, clip, color_ctx);
-    }
-
-    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override {
-        this->draw_impl(cmd, bmp);
-    }
-
-    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override {
-        this->draw_impl(cmd, clip, bmp);
-    }
-
-    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
-        this->draw_impl(cmd, clip, color_ctx, bmp);
-    }
-
-    void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override {
-        this->draw_impl(cmd, clip, color_ctx, gly_cache);
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override {
-        this->draw_impl(cmd);
-    }
-    void draw(const RDP::RAIL::WindowIcon                     & cmd) override {
-        this->draw_impl(cmd);
-    }
-
-    void draw(const RDP::RAIL::CachedIcon                     & cmd) override {
-        this->draw_impl(cmd);
-    }
-
-    void draw(const RDP::RAIL::DeletedWindow                  & cmd) override {
-        this->draw_impl(cmd);
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override {
-        this->draw_impl(cmd);
-    }
-
-    void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override {
-        this->draw_impl(cmd);
-    }
-
-    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override {
-        this->draw_impl(cmd);
-    }
-
-    void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override {
-        this->draw_impl(cmd);
-    }
-
-    void draw(RDPColCache   const & cmd) override {
-        this->draw_impl(cmd);
-    }
-
-    void draw(RDPBrushCache const & cmd) override {
-        this->draw_impl(cmd);
-    }
-
-private:
-    void draw_impl(const RDPBitmapData & cmd, const Bitmap & bmp) {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO);
+    void flush() {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            LOG(LOG_INFO, "flush()");
             LOG(LOG_INFO, "========================================\n");
         }
-
-        this->gd.draw(cmd, bmp);
     }
 
-    template<class Cmd, class... Ts>
-    void draw_impl(Cmd const & cmd, Rect clip, Ts const & ... args) {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
+    void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->gd.draw(cmd, clip, args...);
+        RDPOpaqueRect new_cmd24 = cmd;
+        new_cmd24.color = BGRColor_(color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette));
+        this->gd.draw(new_cmd24, clip, color_ctx);
     }
 
-    template<class Cmd, class... Ts>
-    void draw_impl(Cmd const & cmd) {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
+    void draw(const RDPScrBlt & cmd, Rect clip) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip);
+    }
+
+    void draw(const RDPDestBlt & cmd, Rect clip) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip);
+    }
+
+    void draw(const RDPMultiDstBlt & cmd, Rect clip) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip);
+    }
+
+    void draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip, color_ctx);
+    }
+
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip, color_ctx);
+    }
+
+    void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip);
+    }
+
+    void draw(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        RDPPatBlt new_cmd24 = cmd;
+        new_cmd24.back_color = BGRColor_(color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette));
+        new_cmd24.fore_color = BGRColor_(color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette));
+        this->gd.draw(new_cmd24, clip, color_ctx);
+    }
+
+    void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip, bitmap);
+    }
+
+    void draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(cmd, clip, color_ctx, bitmap);
+    }
+
+    void draw(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        RDPLineTo new_cmd24 = cmd;
+        new_cmd24.back_color = BGRColor_(color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette));
+        new_cmd24.pen.color  = BGRColor_(color_decode_opaquerect(cmd.pen.color,  this->mod_bpp, this->mod_palette));
+        this->gd.draw(new_cmd24, clip, color_ctx);
+    }
+
+    void draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        RDPGlyphIndex new_cmd24 = cmd;
+        new_cmd24.back_color = BGRColor_(color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette));
+        new_cmd24.fore_color = BGRColor_(color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette));
+        this->gd.draw(new_cmd24, clip, color_ctx, gly_cache);
+    }
+
+    void draw(RDPPolygonSC const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        RDPPolygonSC new_cmd24 = cmd;
+        new_cmd24.BrushColor  = BGRColor_(color_decode_opaquerect(cmd.BrushColor,  this->mod_bpp, this->mod_palette));
+        this->gd.draw(new_cmd24, clip, color_ctx);
+    }
+
+    void draw(RDPPolygonCB const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        RDPPolygonCB new_cmd24 = cmd;
+        new_cmd24.foreColor  = BGRColor_(color_decode_opaquerect(cmd.foreColor,  this->mod_bpp, this->mod_palette));
+        new_cmd24.backColor  = BGRColor_(color_decode_opaquerect(cmd.backColor,  this->mod_bpp, this->mod_palette));
+        this->gd.draw(new_cmd24, clip, color_ctx);
+    }
+
+    void draw(RDPPolyline const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        RDPPolyline new_cmd24 = cmd;
+        new_cmd24.PenColor  = BGRColor_(color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette));
+        this->gd.draw(new_cmd24, clip, color_ctx);
+    }
+
+    void draw(RDPEllipseSC const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        RDPEllipseSC new_cmd24 = cmd;
+        new_cmd24.color = BGRColor_(color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette));
+        this->gd.draw(new_cmd24, clip, color_ctx);
+    }
+
+    void draw(RDPEllipseCB const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            cmd.log(LOG_INFO, clip);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        RDPEllipseCB new_cmd24 = cmd;
+        new_cmd24.fore_color = BGRColor_(color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette));
+        new_cmd24.back_color = BGRColor_(color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette));
+        this->gd.draw(new_cmd24, clip, color_ctx);
+    }
+
+    void draw(const RDPColCache   & cmd) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
             cmd.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
         }
-
-        this->gd.draw(cmd);
     }
 
-public:
-    bool can_be_start_capture() override { return false; }
-    bool must_be_stop_capture() override { return false; }
-
-    void set_palette(const BGRPalette &) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "set_palette");
+    void draw(const RDPBrushCache & cmd) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            cmd.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
         }
     }
 
+    void draw(const RDP::FrameMarker & order) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    void draw(const RDP::RAIL::WindowIcon & order) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    void draw(const RDP::RAIL::CachedIcon & order) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    void draw(const RDP::RAIL::DeletedWindow & order) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    void draw(const RDP::RAIL::DeletedNotificationIcons & order) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    void draw(const RDP::RAIL::NonMonitoredDesktop & order) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            bitmap_data.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(bitmap_data, bmp);
+
+    }
+
+    void set_palette(const BGRPalette&) override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            LOG(LOG_INFO, "set_palette()");
+            LOG(LOG_INFO, "========================================\n");
+        }
+    }
+
+    ResizeResult server_resize(int width, int height, int bpp) override {
+        this->height = height;
+        this->width = width;
+        this->mod_bpp = bpp;
+        this->info.bpp = bpp;
+
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
+            LOG(LOG_INFO, "========================================\n");
+        }
+        return ResizeResult::no_need;
+    }
+
     void set_pointer(const Pointer & cursor) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
             LOG(LOG_INFO, "set_pointer");
             LOG(LOG_INFO, "========================================\n");
         }
@@ -215,51 +397,54 @@ public:
         this->gd.set_pointer(cursor);
     }
 
-    void sync() override {
-        if (this->verbose > 10) {
-             LOG(LOG_INFO, "--------- FRONT ------------------------");
-             LOG(LOG_INFO, "sync()");
-             LOG(LOG_INFO, "========================================\n");
+    void begin_update() override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            LOG(LOG_INFO, "begin_update");
+            LOG(LOG_INFO, "========================================\n");
         }
     }
 
-    const CHANNELS::ChannelDefArray & get_channel_list(void) const override { return cl; }
+    void end_update() override {
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
+            LOG(LOG_INFO, "end_update");
+            LOG(LOG_INFO, "========================================\n");
+        }
+    }
 
-    void send_to_channel( const CHANNELS::ChannelDef &, uint8_t const * /*data*/, size_t /*length*/
-                        , size_t /*chunk_size*/, int /*flags*/) override {
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
+    const CHANNELS::ChannelDefArray & get_channel_list() const override { return cl; }
+
+    void send_to_channel( const CHANNELS::ChannelDef &, const uint8_t * data, std::size_t length
+                        , std::size_t chunk_size, int flags) override {
+        (void)data;
+        (void)length;
+        (void)chunk_size;
+        (void)flags;
+        if (this->verbose) {
+            LOG(LOG_INFO, "--------- VncFront ------------------");
             LOG(LOG_INFO, "send_to_channel");
             LOG(LOG_INFO, "========================================\n");
         }
     }
 
-    void begin_update() override {
-        //if (this->verbose > 10) {
-        //    LOG(LOG_INFO, "--------- FRONT ------------------------");
-        //    LOG(LOG_INFO, "begin_update");
-        //    LOG(LOG_INFO, "========================================\n");
-        //}
-    }
-
-    void end_update() override {
-        //if (this->verbose > 10) {
-        //    LOG(LOG_INFO, "--------- FRONT ------------------------");
-        //    LOG(LOG_INFO, "end_update");
-        //    LOG(LOG_INFO, "========================================\n");
-        //}
-    }
-
-    ResizeResult server_resize(int width, int height, int bpp) override {
-        this->mod_bpp = bpp;
-        this->info.bpp = bpp;
-        if (this->verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
-            LOG(LOG_INFO, "========================================\n");
+    VncFront(bool param1, bool param2, ClientInfo & info, uint32_t verbose)
+    : FrontAPI(param1, param2)
+    , verbose(verbose)
+    , info(info)
+    , mod_bpp(info.bpp)
+    , mod_palette(BGRPalette::no_init())
+    , gd(info.width, info.height)
+    {
+        if (this->mod_bpp == 8) {
+            this->mod_palette = BGRPalette::classic_332();
         }
-        return ResizeResult::done;
+
+        SSL_library_init();
     }
+
+    void update_pointer_position(uint16_t, uint16_t) override {}
+
 
     void dump_png(const char * prefix) {
         char tmpname[128];
@@ -278,52 +463,5 @@ public:
         fclose(file);
     }
 
-    VncFront(bool param1,
-             bool param2,
-             ClientInfo & info,
-             uint32_t verbose)
-    : FrontAPI(param1, param2)
-    , verbose(verbose)
-    , info(info)
-    , mod_bpp(info.bpp)
-    , mod_palette(BGRPalette::no_init())
-    , mouse_x(0)
-    , mouse_y(0)
-    , notimestamp(true)
-    , nomouse(true)
-    , gd(info.width, info.height)
-    {
-        if (this->mod_bpp == 8) {
-            this->mod_palette = BGRPalette::classic_332();
-        }
-        // -------- Start of system wide SSL_Ctx option ------------------------------
 
-        // ERR_load_crypto_strings() registers the error strings for all libcrypto
-        // functions. SSL_load_error_strings() does the same, but also registers the
-        // libssl error strings.
-
-        // One of these functions should be called before generating textual error
-        // messages. However, this is not required when memory usage is an issue.
-
-        // ERR_free_strings() frees all previously loaded error strings.
-
-        //SSL_load_error_strings();
-
-        // SSL_library_init() registers the available SSL/TLS ciphers and digests.
-        // OpenSSL_add_ssl_algorithms() and SSLeay_add_ssl_algorithms() are synonyms
-        // for SSL_library_init().
-
-        // - SSL_library_init() must be called before any other action takes place.
-        // - SSL_library_init() is not reentrant.
-        // - SSL_library_init() always returns "1", so it is safe to discard the return
-        // value.
-
-        // Note: OpenSSL 0.9.8o and 1.0.0a and later added SHA2 algorithms to
-        // SSL_library_init(). Applications which need to use SHA2 in earlier versions
-        // of OpenSSL should call OpenSSL_add_all_algorithms() as well.
-
-        //SSL_library_init();
-    }
-
-    void update_pointer_position(uint16_t, uint16_t) override {}
 };

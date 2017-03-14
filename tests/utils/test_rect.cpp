@@ -122,13 +122,55 @@ BOOST_AUTO_TEST_CASE(TestRect)
         BOOST_CHECK_EQUAL(110, res.bottom());
     }
 
-
     {
         Rect i1(-10, -20, 110, 120);
         Rect i2(-5, -7, 155, 157);
         /* here i2 is include " in i1 : then it is the intersection */
         Rect res = i1.intersect(i2);
         BOOST_CHECK_EQUAL(Rect(-5, -7, 105, 107), res);
+    }
+
+
+    /* we can build the union of two rect */
+    {
+        Rect i1(10, 110, 30, 30);
+        Rect i2(20, 120, 10, 10);
+        /* here i2 is include " in i1 : then it is the intersection */
+        Rect res = i1.disjunct(i2);
+        BOOST_CHECK_EQUAL(10, res.x);
+        BOOST_CHECK_EQUAL(110, res.y);
+        BOOST_CHECK_EQUAL(40, res.right());
+        BOOST_CHECK_EQUAL(140, res.bottom());
+    }
+
+    {
+        Rect i1(10, 110, 20, 20);
+        Rect i2(20, 120, 20, 20);
+
+        Rect res = i1.disjunct(i2);
+        BOOST_CHECK_EQUAL(10, res.x);
+        BOOST_CHECK_EQUAL(110, res.y);
+        BOOST_CHECK_EQUAL(40, res.right());
+        BOOST_CHECK_EQUAL(140, res.bottom());
+    }
+
+    {
+        Rect i1(10, 110, 10, 10);
+        Rect i2(10, 110, 10, 10);
+        Rect res = i1.disjunct(i2);
+
+        BOOST_CHECK_EQUAL(10, res.x);
+        BOOST_CHECK_EQUAL(110, res.y);
+        BOOST_CHECK_EQUAL(20, res.right());
+        BOOST_CHECK_EQUAL(120, res.bottom());
+    }
+
+    {
+        Rect i1(-10, -20, 110, 120);
+        Rect i2(-5, -7, 155, 157);
+        /* here i2 is include " in i1 : then it is the intersection */
+        Rect res = i1.disjunct(i2);
+        BOOST_CHECK_EQUAL(Rect(-10, -20, 160, 170), res);
     }
 
 

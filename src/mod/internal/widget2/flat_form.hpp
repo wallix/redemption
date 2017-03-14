@@ -262,7 +262,7 @@ public:
         int y = 20;
 
         if (this->flags & DURATION_DISPLAY) {
-            this->duration_label.set_xy(0, top + y);
+            this->duration_label.set_xy(left, top + y);
 
             dim = this->duration_format.get_optimal_dim();
             this->duration_format.set_wh(dim);
@@ -278,7 +278,7 @@ public:
         }
 
         if (this->flags & TICKET_DISPLAY) {
-            this->ticket_label.set_xy(0, top + y);
+            this->ticket_label.set_xy(left, top + y);
 
             dim = this->ticket_edit.get_optimal_dim();
             this->ticket_edit.set_wh(width - labelmaxwidth - 20, dim.h);
@@ -288,7 +288,7 @@ public:
         }
 
         if (this->flags & COMMENT_DISPLAY) {
-            this->comment_label.set_xy(0, top + y);
+            this->comment_label.set_xy(left, top + y);
 
             dim = this->comment_edit.get_optimal_dim();
             this->comment_edit.set_wh(width - labelmaxwidth - 20, dim.h);
@@ -306,11 +306,6 @@ public:
         dim = this->confirm.get_optimal_dim();
         this->confirm.set_wh(dim);
         this->confirm.set_xy(left + width - this->confirm.cx(), top + y + 10);
-    }
-
-    void move_xy(int16_t x, int16_t y) {
-        this->set_xy(this->x() + x, this->y() + y);
-        this->WidgetParent::move_xy(x, y);
     }
 
     void notify(Widget2* widget, NotifyApi::notify_event_t event) override {

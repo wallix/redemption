@@ -30,6 +30,7 @@
 class TransparentPlayer {
 private:
     Transport * t;
+
     FrontAPI  * consumer;
 
     bool meta_ok;
@@ -53,7 +54,7 @@ public:
             InStream header(array, TRANSPARENT_CHUNK_HEADER_SIZE);
 
             uint8_t * end = array;
-            this->t->recv(&end, header.get_capacity());
+            this->t->recv_new(end, header.get_capacity());
 
             uint8_t  chunk_type = header.in_uint8();
             uint16_t data_size  = header.in_uint16_le();
@@ -64,8 +65,8 @@ public:
             //LOG(LOG_INFO, "chunk_type=%u data_size=%u", chunk_type, data_size);
 
             end = array;
-            this->t->recv(&end, data_size);
-            InStream payload(array, end - array);
+            this->t->recv_new(end, data_size);
+            InStream payload(array, data_size);
 
             switch (chunk_type) {
                 case CHUNK_TYPE_META:

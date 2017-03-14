@@ -22,6 +22,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestGCC
 #include "system/redemption_unit_tests.hpp"
+
 #define LOGNULL
 //#define LOGPRINT
 
@@ -46,7 +47,7 @@ BOOST_AUTO_TEST_CASE(TestFileBothDirectoryInformation)
 
     //file_both_directory_information.log(LOG_INFO);
 
-    BOOST_CHECK_EQUAL(sizeof(in_data) - 1, file_both_directory_information.size());
+    BOOST_CHECK_EQUAL(sizeof(in_data) - 1, file_both_directory_information.total_size());
 
     char out_data[sizeof(in_data)];
 
@@ -81,7 +82,7 @@ BOOST_AUTO_TEST_CASE(TestFileBothDirectoryInformation1)
 
     //file_both_directory_information.log(LOG_INFO);
 
-    BOOST_CHECK_EQUAL(sizeof(in_data) - 1, file_both_directory_information.size());
+    BOOST_CHECK_EQUAL(sizeof(in_data) - 1, file_both_directory_information.total_size());
 
     char out_data[sizeof(in_data)];
 
@@ -211,125 +212,327 @@ BOOST_AUTO_TEST_CASE(TestFileFsVolumeInformation1)
     BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
 }
 
-BOOST_AUTO_TEST_CASE(FileObjectBuffer_Type1Emit)
+
+BOOST_AUTO_TEST_CASE(TestFileObjectBuffer_Type1)
 {
-    const size_t len = 64;
-    const char data[] =
-            "\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00"
-            "\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00"
-            "\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00"
-            "\x00\x00\00\x00\00\x00\00\x00\00\x00\x00\00\x00\00\x00\00\x00\00";
+    const char in_data[] =
+                        "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //@...............
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+        "\x00\x00\x00\x00"                                                 //....
 
-    StaticOutStream<128> stream;
-    uint8_t ObjectId[fscc::GUID_SIZE]      = { 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0 };
-    uint8_t BirthVolumeId[fscc::GUID_SIZE] = { 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0 };
-    uint8_t BirthObjectId[fscc::GUID_SIZE] = { 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0 };
-    //uint8_t DomainId[fscc::GUID_SIZE]      = { 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0 };
-    fscc::FileObjectBuffer_Type1 pdu(ObjectId, BirthVolumeId, BirthObjectId);
-    pdu.emit(stream);
+        ;
+    InStream in_stream(in_data, sizeof(in_data) - 1);
 
-    std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
-    BOOST_CHECK_EQUAL(expected, out_data);
+    fscc::FileObjectBuffer_Type1 fileObjectBuffer_Type1;
+
+    fileObjectBuffer_Type1.receive(in_stream);
+
+    //fileObjectBuffer_Type1.log();
+
+    BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileObjectBuffer_Type1.size());
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    fileObjectBuffer_Type1.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
 }
 
-BOOST_AUTO_TEST_CASE(FileObjectBuffer_Type1Receive)
+BOOST_AUTO_TEST_CASE(TestFileObjectBuffer_Type2)
 {
-    const size_t len = 64;
-    const char data[] =
-            "\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00"
-            "\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00"
-            "\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00"
-            "\x00\x00\00\x00\00\x00\00\x00\00\x00\x00\00\x00\00\x00\00\x00\00";
+    const char in_data[] =
+                        "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //@...............
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+        "\x00\x00\x00\x00"                                                 //....
 
-    InStream in_stream(data, len);
-    fscc::FileObjectBuffer_Type1 pdu;
-    pdu.receive(in_stream);
+        ;
+    InStream in_stream(in_data, sizeof(in_data) - 1);
 
-    BOOST_CHECK_EQUAL(pdu.ObjectId[0], 1);
-    BOOST_CHECK_EQUAL(pdu.BirthVolumeId[0], 2);
-    BOOST_CHECK_EQUAL(pdu.BirthObjectId[0], 3);
-    BOOST_CHECK_EQUAL(pdu.DomainId[0], 0);
-    BOOST_CHECK_EQUAL(pdu.ObjectId[4], 1);
-    BOOST_CHECK_EQUAL(pdu.BirthVolumeId[4], 2);
-    BOOST_CHECK_EQUAL(pdu.BirthObjectId[4], 3);
-    BOOST_CHECK_EQUAL(pdu.DomainId[4], 0);
+    fscc::FileObjectBuffer_Type2 fileObjectBuffer_Type2;
+
+    fileObjectBuffer_Type2.receive(in_stream);
+
+    //fileObjectBuffer_Type2.log();
+
+    BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileObjectBuffer_Type2.size());
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    fileObjectBuffer_Type2.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
 }
 
-BOOST_AUTO_TEST_CASE(FileObjectBuffer_Type2Emit)
+BOOST_AUTO_TEST_CASE(TestReparseGUIDDataBuffer)
 {
-    const size_t len = 64;
-    const char data[] =
-            "\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00"
-            "\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00"
-            "\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00"
-            "\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00";
-
-    StaticOutStream<128> stream;
-    uint8_t ObjectId[fscc::GUID_SIZE]      = { 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0 };
-    uint8_t ExtendedInfo[48] = { 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0,
-                                 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0,
-                                 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0 };
-    fscc::FileObjectBuffer_Type2 pdu(ObjectId, ExtendedInfo);
-    pdu.emit(stream);
-
-    std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
-    BOOST_CHECK_EQUAL(expected, out_data);
+//     const char in_data[] =
+//
+//         ""
+//         ;
+//     InStream in_stream(in_data, sizeof(in_data) - 1);
+//
+//     fscc::ReparseGUIDDataBuffer reparseGUIDDataBuffer;
+//
+//     reparseGUIDDataBuffer.receive(in_stream);
+//
+//     //file_both_directory_information.log();
+//
+//     BOOST_CHECK_EQUAL(sizeof(in_data) - 1, reparseGUIDDataBuffer.size());
+//
+//     char out_data[sizeof(in_data)];
+//
+//     OutStream out_stream(out_data, sizeof(out_data));
+//
+//     reparseGUIDDataBuffer.emit(out_stream);
+//     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+//     //hexdump(out_stream.get_data(), out_stream.get_offset());
+//
+//     BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+//     BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
 }
 
-BOOST_AUTO_TEST_CASE(FileObjectBuffer_Type2Receive)
+
+
+BOOST_AUTO_TEST_CASE(TestFileAttributeTagInformation)
 {
-    const size_t len = 64;
-    const char data[] =
-            "\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00"
-            "\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00"
-            "\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00\x03\x00"
-            "\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00\x04\x00";
+    const char in_data[] =
+         "\x20\x00\x00\x00\x00\x00\x00\x00"  //.... .......
+        ;
+    InStream in_stream(in_data, sizeof(in_data) - 1);
 
-    InStream in_stream(data, len);
-    fscc::FileObjectBuffer_Type2 pdu;
-    pdu.receive(in_stream);
+    fscc::FileAttributeTagInformation fileAttributeTagInformation;
 
-    BOOST_CHECK_EQUAL(pdu.ObjectId[0], 1);
-    BOOST_CHECK_EQUAL(pdu.ExtendedInfo[0], 2);
-    BOOST_CHECK_EQUAL(pdu.ExtendedInfo[16], 3);
-    BOOST_CHECK_EQUAL(pdu.ExtendedInfo[32], 4);
+    fileAttributeTagInformation.receive(in_stream);
+
+    //fileAttributeTagInformation.log();
+
+    BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileAttributeTagInformation.size());
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    fileAttributeTagInformation.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
 }
 
-BOOST_AUTO_TEST_CASE(ReparseGUIDDataBufferEmit)
+BOOST_AUTO_TEST_CASE(TestFileBasicInformation)
 {
-    const size_t len = 40;
-    const char data[] =
-            "\x01\x00\x00\x00\x10\x00\x00\x00"
-            "\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00"
-            "\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00";
+    const char in_data[] =
+                        "\x00\x02\x58\xcb\x31\x61\xd2\x01\x00\x76\x3e\x43" //$.....X.1a...v>C
+        "\x86\x99\xd2\x01\x00\x02\x58\xcb\x31\x61\xd2\x01\x00\x20\xcf\x53" //......X.1a... .S
+        "\xaa\x70\xd2\x01\x10\x00\x00\x00"                                 //.p......
 
-    StaticOutStream<128> stream;
-    uint8_t ReparseGuid[fscc::GUID_SIZE] = { 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0 };
-    uint8_t DataBuffer[16]               = { 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0 };
-    fscc::ReparseGUIDDataBuffer pdu(1, 16, ReparseGuid, DataBuffer);
-    pdu.emit(stream);
+        ;
+    InStream in_stream(in_data, sizeof(in_data) - 1);
 
-    std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
-    BOOST_CHECK_EQUAL(expected, out_data);
+    fscc::FileBasicInformation fileBasicInformation;
+
+    fileBasicInformation.receive(in_stream);
+
+    //fileBasicInformation.log();
+
+    BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileBasicInformation.size());
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    fileBasicInformation.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
 }
 
-BOOST_AUTO_TEST_CASE(ReparseGUIDDataBufferReceive)
+BOOST_AUTO_TEST_CASE(TestFileDirectoryInformation)
 {
-    const size_t len = 40;
-    const char data[] =
-            "\x01\x00\x00\x00\x10\x00\x00\x00"
-            "\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00"
-            "\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00\x02\x00";
+    const char in_data[] =
+                        "\x00\x00\x00\x00\x00\x00\x00\x00\x7f\x6e\x7f\x7b" //k............n.{
+        "\x88\x78\xd2\x01\x80\x36\x91\x6a\xe5\x98\xd2\x01\x80\x6e\x7f\x7b" //.x...6.j.....n.{
+        "\x88\x78\xd2\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //.x..............
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00" //................
+        "\x0e\x00\x00\x00\x73\x00\x68\x00\x61\x00\x72\x00\x65\x00\x2d\x00\x32\x00"     //.s.h.a.r.e.-.2.
+        ;
+    InStream in_stream(in_data, sizeof(in_data) - 1);
 
-    InStream in_stream(data, len);
-    fscc::ReparseGUIDDataBuffer pdu;
-    pdu.receive(in_stream);
+    fscc::FileDirectoryInformation fileDirectoryInformation;
 
-    BOOST_CHECK_EQUAL(pdu.ReparseTag, 1);
-    BOOST_CHECK_EQUAL(pdu.ReparseDataLength, 16);
-    BOOST_CHECK_EQUAL(pdu.ReparseGuid[0], 1);
-    BOOST_CHECK_EQUAL(pdu.DataBuffer.data()[0], 2);
+    fileDirectoryInformation.receive(in_stream);
+
+    //fileDirectoryInformation.log();
+
+    BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileDirectoryInformation.total_size());
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    fileDirectoryInformation.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+}
+
+BOOST_AUTO_TEST_CASE(TestFileDispositionInformation)
+{
+    const char in_data[] =
+        "\x10" //.
+        ;
+    InStream in_stream(in_data, sizeof(in_data) - 1);
+
+    fscc::FileDispositionInformation fileDispositionInformation;
+
+    fileDispositionInformation.receive(in_stream);
+
+    //fileDispositionInformation.log();
+
+    BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileDispositionInformation.size());
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    fileDispositionInformation.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+}
+
+BOOST_AUTO_TEST_CASE(TestFileNamesInformation)
+{
+    const char in_data[] =
+                                "\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x0e\x00\x00\x00\x73\x00\x68\x00\x61\x00\x72\x00\x65\x00\x2d\x00\x32\x00"     //.s.h.a.r.e.-.2.
+        ;
+    InStream in_stream(in_data, sizeof(in_data) - 1);
+
+    fscc::FileNamesInformation fileNamesInformation;
+
+    fileNamesInformation.receive(in_stream);
+
+    //fileNamesInformation.log();
+
+    BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileNamesInformation.total_size());
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    fileNamesInformation.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+}
+
+BOOST_AUTO_TEST_CASE(TestFileStandardInformation)
+{
+    const char in_data[] =
+         "\x00\x10\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00" //................
+         "\x00\x00\x00\x00\x05\x00\x00\x00\x01\x01"         //..........
+        ;
+
+    InStream in_stream(in_data, sizeof(in_data) - 1);
+
+    fscc::FileStandardInformation fileStandardInformation;
+
+    fileStandardInformation.receive(in_stream);
+
+    //fileStandardInformation.log();
+
+    BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileStandardInformation.size());
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    fileStandardInformation.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+}
+
+BOOST_AUTO_TEST_CASE(TestFileFsSizeInformation)
+{
+    const char in_data[] =
+         "\x00\x80\xad\x63\x50\x00\x00\x00"
+         "\x00\x80\xad\x62\x50\x00\x00\x00\x08\x00\x00\x00\x00\x10\x00\x00"
+        ;
+
+    InStream in_stream(in_data, sizeof(in_data) - 1);
+
+    fscc::FileFsSizeInformation fileFsSizeInformation;
+
+    fileFsSizeInformation.receive(in_stream);
+
+    //fileFsSizeInformation.log();
+
+    BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileFsSizeInformation.size());
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    fileFsSizeInformation.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+}
+
+BOOST_AUTO_TEST_CASE(TestFileFsVolumeInformation)
+{
+    const char in_data[] =
+         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+         "\x00\x00\x00\x00\x00"
+        ;
+
+    InStream in_stream(in_data, sizeof(in_data) - 1);
+
+    fscc::FileFsVolumeInformation fileFsVolumeInformation;
+
+    fileFsVolumeInformation.receive(in_stream);
+
+    //fileFsVolumeInformation.log();
+
+    BOOST_CHECK_EQUAL(sizeof(in_data) - 1, fileFsVolumeInformation.size());
+
+    char out_data[sizeof(in_data)];
+
+    OutStream out_stream(out_data, sizeof(out_data));
+
+    fileFsVolumeInformation.emit(out_stream);
+    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+    //hexdump(out_stream.get_data(), out_stream.get_offset());
+
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
 }

@@ -800,7 +800,7 @@ public:
                 this->ini.get<cfg::font>(),
                 false
             ));
-            if (this->verbose & Verbose::new_mod){
+            if (bool(this->verbose & Verbose::new_mod)) {
                 LOG(LOG_INFO, "ModuleManager::internal module 'bouncer2_mod' ready");
             }
             break;
@@ -817,7 +817,7 @@ public:
                 !this->ini.get<cfg::mod_replay::on_end_of_data>(),
                 to_verbose_flags(this->ini.get<cfg::debug::capture>())
             ));
-            if (this->verbose & Verbose::new_mod){
+            if (bool(this->verbose & Verbose::new_mod)) {
                 LOG(LOG_INFO, "ModuleManager::internal module 'test' ready");
             }
             break;
@@ -880,7 +880,7 @@ public:
                 )),
                 this->client_execute
             ));
-            if (this->verbose & Verbose::new_mod){
+            if (bool(this->verbose & Verbose::new_mod)) {
                 LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");
             }
             break;
@@ -1112,7 +1112,7 @@ public:
         case MODULE_XUP:
             {
                 const char * name = "XUP Target";
-                if (this->verbose & Verbose::new_mod){
+                if (bool(this->verbose & Verbose::new_mod)) {
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
                 }
 
@@ -1348,6 +1348,8 @@ public:
                 mod_rdp_params.use_client_provided_remoteapp       = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
 
                 mod_rdp_params.clean_up_32_bpp_cursor              = this->ini.get<cfg::mod_rdp::clean_up_32_bpp_cursor>();
+
+                mod_rdp_params.large_pointer_support               = this->ini.get<cfg::globals::large_pointer_support>();
 
                 try {
                     const char * const name = "RDP Target";

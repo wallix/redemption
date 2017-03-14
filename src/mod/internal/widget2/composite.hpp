@@ -398,14 +398,20 @@ public:
         this->bg_color = color;
     }
 
-    void move_xy(int16_t x, int16_t y) {
+    void move_xy(int16_t x, int16_t y) override {
+        this->set_xy(this->x() + x, this->y() + y);
+
+        this->move_children_xy(x, y);
+    }
+
+    void move_children_xy(int16_t x, int16_t y) {
         CompositeContainer::iterator iter_w_first = this->impl->get_first();
         if (iter_w_first != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
             CompositeContainer::iterator iter_w_current = iter_w_first;
             do {
                 Widget2 * w = this->impl->get(iter_w_current);
                 REDASSERT(w);
-                w->set_xy(x + w->x(), y + w->y());
+                w->move_xy(x, y);
 
                 iter_w_current = this->impl->get_next(iter_w_current);
             }

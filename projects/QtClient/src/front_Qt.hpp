@@ -36,7 +36,12 @@
 #include <string>
 #include <vector>
 #include <boost/algorithm/string.hpp>
+
 #include <sys/stat.h>
+#include <sys/statvfs.h>
+#include <sys/ioctl.h>
+#include <linux/types.h>
+#include <linux/hdreg.h>
 
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
@@ -105,7 +110,7 @@ class Form_Qt;
 class Screen_Qt;
 class Mod_Qt;
 class ClipBoard_Qt;
-class FileSysWatchWrapper_Qt;
+
 
 struct DummyAuthentifier : public auth_api
 {
@@ -162,7 +167,7 @@ public:
         MAX_MONITOR_COUNT = GCC::UserData::CSMonitor::MAX_MONITOR_COUNT / 4
     };
 
-    implicit_bool_flags<RDPVerbose>   verbose;
+    RDPVerbose        verbose;
     ClientInfo        _info;
     int               _width;
     int               _height;
@@ -187,7 +192,7 @@ public:
     const std::string    CB_TEMP_DIR;
     const std::string    USER_CONF_DIR;
     const std::string    REPLAY_DIR;
-    const std::string    SHARE_DIR;
+    std::string          SHARE_DIR;
     QPixmap            * _cache;
     QPixmap            * _cache_replay;
     bool                 _span;
@@ -197,6 +202,8 @@ public:
     int                  _delta_time;
     int                  _current_screen_index;
     bool                 _recv_disconnect_ultimatum;
+    bool                 _enable_shared_clipboard;
+    bool                 _enable_shared_virtual_disk;
 
 
 
@@ -226,6 +233,8 @@ public:
     , _delta_time(1000000)
     , _current_screen_index(0)
     , _recv_disconnect_ultimatum(false)
+    , _enable_shared_clipboard(false)
+    , _enable_shared_virtual_disk(false)
     {
         this->_to_client_sender._front = this;
     }
@@ -307,7 +316,7 @@ public:
 
 
     // Graphic members
-    uint8_t               mod_bpp;
+    int               mod_bpp;
     BGRPalette            mod_palette;
     Form_Qt            * _form;
     Screen_Qt          * _screen[MAX_MONITOR_COUNT] {};
@@ -385,8 +394,8 @@ public:
             int         size;
             std::string name;
         };
-        int                      cItems = 0;
-        int                      lindexToRequest = 0;
+        uint32_t                 cItems = 0;
+        uint32_t                 lindexToRequest = 0;
         int                      streamIDToRequest = 0;
         std::vector<CB_in_Files> itemslist;
         int                      lindex = 0;
@@ -405,19 +414,12 @@ public:
 
 
 
-
     struct FileSystemData {
 
         struct DeviceData {
             char name[8] = {0};
             uint32_t ID = 0;
-            uint32_t status = -1;
-            uint32_t file_id = 0;
         };
-
-        uint32_t clientID = 0;
-        uint16_t versionMajor = 0;
-        uint16_t versionMinor = 0;
 
         bool drives_created = false;
         bool fileSystemCapacity[5] = { false };
@@ -433,20 +435,64 @@ public:
 
         std::vector<std::string> paths;
 
-        uint32_t current_dir_id = 0;
-        int current_file_index = 0;
-
-        std::string current_path;
-
         int writeData_to_wait = 0;
-        int writeData_buffered = 0;
         int file_to_write_id = 0;
-        std::unique_ptr<uint8_t[]>  writeData = nullptr;
 
+        const uint32_t newFileAttributes = fscc::FILE_SUPPORTS_USN_JOURNAL | fscc::FILE_SUPPORTS_OPEN_BY_FILE_ID | fscc::FILE_SUPPORTS_EXTENDED_ATTRIBUTES | fscc::FILE_SUPPORTS_HARD_LINKS | fscc::FILE_SUPPORTS_TRANSACTIONS | fscc::FILE_NAMED_STREAMS | fscc::FILE_SUPPORTS_ENCRYPTION | fscc::FILE_SUPPORTS_OBJECT_IDS | fscc::FILE_SUPPORTS_REPARSE_POINTS | fscc::FILE_SUPPORTS_SPARSE_FILES | fscc::FILE_VOLUME_QUOTAS | fscc::FILE_FILE_COMPRESSION | fscc::FILE_PERSISTENT_ACLS | fscc::FILE_UNICODE_ON_DISK | fscc::FILE_CASE_PRESERVED_NAMES | fscc::FILE_CASE_SENSITIVE_SEARCH;
+        //0x03e700ff;
+
+        uint32_t current_dir_id = 0;
+        std::vector<std::string> elem_in_path;
 
     } fileSystemData;
 
-    FileSysWatchWrapper_Qt * file_watcher;
+
+//     struct OutStreamData {
+//
+//         size_t current_pos = 0;
+//
+//         virtual const uint8_t * get_data(size_t size) = 0;
+//
+//         virtual ~OutStreamData() {}
+//
+//     };
+//
+//     struct OutStreamDataRaw : OutStreamData {
+//         const uint8_t * data;
+//
+//         OutStreamDataRaw(const uint8_t * data)
+//           : data(data)
+//           {}
+//
+//         virtual const uint8_t * get_data(size_t size) {
+//             const uint8_t * data_to_send = data;
+//             data += size;
+//             return data_to_send;
+//         }
+//     };
+//
+//     struct OutStreamDataFStream : OutStreamData {
+//         std::ifstream ifile;
+//         char data_to_send[1600];
+//
+//         OutStreamDataFStream(std::string & file_name)
+//           : ifile(file_name.x, std::ios::in | std::ios::binary)
+//           {}
+//
+//         const uint8_t * get_data(size_t size) {
+//             this->ifile.read(this->data_to_send, size);
+//             return reinterpret_cast<const uint8_t *>(this->data_to_send);
+//         }
+//
+//         bool is_open() {
+//             return this->ifile.is_open();
+//         }
+//
+//         ~OutStreamDataFStream() {
+//             this->ifile.close();
+//         }
+//     };
+
 
 
 
@@ -480,7 +526,7 @@ public:
 
     void empty_buffer() override;
 
-    void process_client_clipboard_out_data(const char * const front_channel_name, const uint64_t total_length, OutStream & out_streamfirst, size_t firstPartSize, uint8_t const * data, const size_t data_len, uint32_t flags);
+    void process_client_clipboard_out_data(const char * const front_channel_name, const uint64_t total_length, OutStream & out_streamfirst, size_t firstPartSize, const uint8_t * data, const size_t data_len, uint32_t flags);
 
     virtual void set_pointer(Pointer const & cursor) override;
 
@@ -516,6 +562,23 @@ public:
     long long UnixSecondsToWindowsTick(unsigned unixSeconds)
     {
         return ((unixSeconds + _SEC_TO_UNIX_EPOCH) * _WINDOWS_TICK);
+    }
+
+    uint32_t string_to_hex32(unsigned char * str) {
+        size_t size = sizeof(str);
+        uint32_t hex32(0);
+        for (size_t i = 0; i < size; i++) {
+            int s = str[i];
+            if(s > 47 && s < 58) {                      //this covers 0-9
+                hex32 += (s - 48) << (size - i - 1);
+            } else if (s > 64 && s < 71) {              // this covers A-F
+                hex32 += (s - 55) << (size - i - 1);
+            } else if (s > 'a'-1 && s < 'f'+1) {        // this covers a-f
+                hex32 += (s - 'a') << (size - i - 1);
+            }
+        }
+
+        return hex32;
     }
 
 

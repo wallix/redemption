@@ -27,12 +27,18 @@
 #include <cassert>
 
 #include "transport/transport.hpp"
+#include "transport/file_transport.hpp"
 #include "utils/bitfu.hpp"
 
 namespace detail {
 
     struct NoExceptTransport {
         Transport * trans;
+        int         error_id;
+    };
+
+    struct NoExceptFileTransport {
+        FileTransport * trans;
         int         error_id;
     };
 
@@ -134,6 +140,34 @@ static inline void transport_dump_png24(Transport & trans, const uint8_t * data,
     // fwrite(this->data, 3, this->width * this->height, fd);
 }
 
+static inline void file_transport_dump_png24(FileTransport & trans, const uint8_t * data,
+                            const size_t width,
+                            const size_t height,
+                            const size_t rowsize,
+                            const bool bgr)
+{
+    detail::NoExceptFileTransport no_except_transport = { &trans, 0 };
+
+    png_struct * ppng = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+    png_set_write_fn(ppng, &no_except_transport, &detail::png_write_data, &detail::png_flush_data);
+
+    png_info * pinfo = png_create_info_struct(ppng);
+
+    detail::dump_png24_impl(
+        ppng, pinfo, data, width, height, rowsize, bgr,
+        [&]() noexcept {return !no_except_transport.error_id;}
+    );
+
+    if (!no_except_transport.error_id) {
+        png_write_end(ppng, pinfo);
+        trans.flush();
+    }
+
+    png_destroy_write_struct(&ppng, &pinfo);
+    // commented line below it to create row capture
+    // fwrite(this->data, 3, this->width * this->height, fd);
+}
+
 static inline void dump_png24(FILE * fd, const uint8_t * data,
                             const size_t width,
                             const size_t height,
@@ -175,7 +209,7 @@ inline void read_png24(FILE * fd, const uint8_t * data,
 
 static inline void png_read_data_fn(png_structp png_ptr, png_bytep data, png_size_t length) {
     uint8_t * tmp_data = data;
-    static_cast<Transport*>(png_ptr->io_ptr)->recv(&tmp_data, length);
+    static_cast<Transport*>(png_ptr->io_ptr)->recv_new(tmp_data, length);
 }
 
 

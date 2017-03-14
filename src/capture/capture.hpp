@@ -510,21 +510,57 @@ public:
         , trans(trans)
         , in_stream(this->buf, this->chunk_size - 8)
     {
-        auto * p = this->buf;
-        this->trans->recv(&p, this->in_stream.get_capacity());
+        this->trans->recv_new(this->buf, this->in_stream.get_capacity());
     }
 
 private:
-    void do_recv(uint8_t ** pbuffer, size_t len) override {
+//     void do_recv(uint8_t ** pbuffer, size_t len) override {
+//         size_t total_len = 0;
+//         while (total_len < len){
+//             size_t remaining = in_stream.in_remain();
+//             if (remaining >= (len - total_len)){
+//                 in_stream.in_copy_bytes(*pbuffer + total_len, len - total_len);
+//                 *pbuffer += len;
+//                 return;
+//             }
+//             in_stream.in_copy_bytes(*pbuffer + total_len, remaining);
+//             total_len += remaining;
+//             switch (this->chunk_type){
+//             case PARTIAL_IMAGE_CHUNK:
+//             {
+//                 const size_t header_sz = 8;
+//                 char header_buf[header_sz];
+//                 InStream header(header_buf);
+//                 auto * p = header_buf;
+//                 this->trans->recv(&p, header_sz);
+//                 this->chunk_type = header.in_uint16_le();
+//                 this->chunk_size = header.in_uint32_le();
+//                 this->chunk_count = header.in_uint16_le();
+//                 this->in_stream = InStream(this->buf, this->chunk_size - 8);
+//                 p = this->buf;
+//                 this->trans->recv(&p, this->chunk_size - 8);
+//             }
+//             break;
+//             case LAST_IMAGE_CHUNK:
+//                 LOG(LOG_ERR, "Failed to read embedded image from WRM (transport closed)");
+//                 throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+//             default:
+//                 LOG(LOG_ERR, "Failed to read embedded image from WRM");
+//                 throw Error(ERR_TRANSPORT_READ_FAILED);
+//             }
+//         }
+//     }
+
+    void do_recv_new(uint8_t * buffer, size_t len) override {
         size_t total_len = 0;
         while (total_len < len){
             size_t remaining = in_stream.in_remain();
             if (remaining >= (len - total_len)){
-                in_stream.in_copy_bytes(*pbuffer + total_len, len - total_len);
-                *pbuffer += len;
+                in_stream.in_copy_bytes(buffer + total_len, len - total_len);
+                //*pbuffer += len;
                 return;
             }
-            in_stream.in_copy_bytes(*pbuffer + total_len, remaining);
+            in_stream.in_copy_bytes(buffer + total_len, remaining);
             total_len += remaining;
             switch (this->chunk_type){
             case PARTIAL_IMAGE_CHUNK:
@@ -532,14 +568,14 @@ private:
                 const size_t header_sz = 8;
                 char header_buf[header_sz];
                 InStream header(header_buf);
-                auto * p = header_buf;
-                this->trans->recv(&p, header_sz);
+                //auto * p = header_buf;
+                this->trans->recv_new(header_buf, header_sz);
                 this->chunk_type = header.in_uint16_le();
                 this->chunk_size = header.in_uint32_le();
                 this->chunk_count = header.in_uint16_le();
                 this->in_stream = InStream(this->buf, this->chunk_size - 8);
-                p = this->buf;
-                this->trans->recv(&p, this->chunk_size - 8);
+                //p = this->buf;
+                this->trans->recv_new(this->buf, this->chunk_size - 8);
             }
             break;
             case LAST_IMAGE_CHUNK:
@@ -812,10 +848,7 @@ public:
 
             try {
                 uint8_t buf[HEADER_SIZE];
-                {
-                    auto end = buf;
-                    this->trans->recv(&end, HEADER_SIZE);
-                }
+                this->trans->recv_new(buf, HEADER_SIZE);
                 InStream header(buf);
                 this->chunk_type = header.in_uint16_le();
                 this->chunk_size = header.in_uint32_le();
@@ -837,8 +870,7 @@ public:
                     this->stream = InStream(this->stream_buf);
                     if (this->chunk_size - HEADER_SIZE > 0) {
                         this->stream = InStream(this->stream_buf, this->chunk_size - HEADER_SIZE);
-                        auto end = this->stream_buf;
-                        this->trans->recv(&end, this->chunk_size - HEADER_SIZE);
+                        this->trans->recv_new(this->stream_buf, this->chunk_size - HEADER_SIZE);
                     }
                 }
             }
@@ -880,7 +912,7 @@ public:
                         RDP::FrameMarker order;
 
                         order.receive(stream, header);
-                        if (this->verbose & Verbose::rdp_orders){
+                        if (bool(this->verbose & Verbose::rdp_orders)){
                             order.log(LOG_INFO);
                         }
                         for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -907,7 +939,7 @@ public:
                     this->statistics.CacheBitmap++;
                     RDPBmpCache cmd;
                     cmd.receive(this->stream, header, this->palette, this->info_bpp);
-                    if (this->verbose & Verbose::rdp_orders){
+                    if (bool(this->verbose & Verbose::rdp_orders)){
                         cmd.log(LOG_INFO);
                     }
                     this->bmp_cache->put(cmd.id, cmd.idx, cmd.bmp, cmd.key1, cmd.key2);
@@ -922,7 +954,7 @@ public:
                     this->statistics.CacheGlyph++;
                     RDPGlyphCache cmd;
                     cmd.receive(this->stream, header);
-                    if (this->verbose & Verbose::rdp_orders){
+                    if (bool(this->verbose & Verbose::rdp_orders)){
                         cmd.log(LOG_INFO);
                     }
                     this->gly_cache.set_glyph(
@@ -961,7 +993,7 @@ public:
                 case RDP::DESTBLT:
                     this->statistics.DstBlt++;
                     this->ssc.destblt.receive(this->stream, header);
-                    if (this->verbose & Verbose::rdp_orders){
+                    if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.destblt.log(LOG_INFO, clip);
                     }
 
@@ -972,7 +1004,7 @@ public:
                 case RDP::MULTIDSTBLT:
                     this->statistics.MultiDstBlt++;
                     this->ssc.multidstblt.receive(this->stream, header);
-                    if (this->verbose & Verbose::rdp_orders){
+                    if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.multidstblt.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -982,7 +1014,7 @@ public:
                 case RDP::MULTIOPAQUERECT:
                     this->statistics.MultiOpaqueRect++;
                     this->ssc.multiopaquerect.receive(this->stream, header);
-                    if (this->verbose & Verbose::rdp_orders){
+                    if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.multiopaquerect.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -992,7 +1024,7 @@ public:
                 case RDP::MULTIPATBLT:
                     this->statistics.MultiPatBlt++;
                     this->ssc.multipatblt.receive(this->stream, header);
-                    if (this->verbose & Verbose::rdp_orders){
+                    if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.multipatblt.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -1002,7 +1034,7 @@ public:
                 case RDP::MULTISCRBLT:
                     this->statistics.MultiScrBlt++;
                     this->ssc.multiscrblt.receive(this->stream, header);
-                    if (this->verbose & Verbose::rdp_orders){
+                    if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.multiscrblt.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -1012,7 +1044,7 @@ public:
                 case RDP::PATBLT:
                     this->statistics.PatBlt++;
                     this->ssc.patblt.receive(this->stream, header);
-                    if (this->verbose & Verbose::rdp_orders){
+                    if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.patblt.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -1022,7 +1054,7 @@ public:
                 case RDP::SCREENBLT:
                     this->statistics.ScrBlt++;
                     this->ssc.scrblt.receive(this->stream, header);
-                    if (this->verbose & Verbose::rdp_orders){
+                    if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.scrblt.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -1032,7 +1064,7 @@ public:
                 case RDP::LINE:
                     this->statistics.LineTo++;
                     this->ssc.lineto.receive(this->stream, header);
-                    if (this->verbose & Verbose::rdp_orders){
+                    if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.lineto.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -1042,7 +1074,7 @@ public:
                 case RDP::RECT:
                     this->statistics.OpaqueRect++;
                     this->ssc.opaquerect.receive(this->stream, header);
-                    if (this->verbose & Verbose::rdp_orders){
+                    if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.opaquerect.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -1053,7 +1085,7 @@ public:
                     {
                         this->statistics.MemBlt++;
                         this->ssc.memblt.receive(this->stream, header);
-                        if (this->verbose & Verbose::rdp_orders){
+                        if (bool(this->verbose & Verbose::rdp_orders)){
                             this->ssc.memblt.log(LOG_INFO, clip);
                         }
                         const Bitmap & bmp = this->bmp_cache->get(this->ssc.memblt.cache_id, this->ssc.memblt.cache_idx);
@@ -1072,7 +1104,7 @@ public:
                     {
                         this->statistics.Mem3Blt++;
                         this->ssc.mem3blt.receive(this->stream, header);
-                        if (this->verbose & Verbose::rdp_orders){
+                        if (bool(this->verbose & Verbose::rdp_orders)){
                             this->ssc.mem3blt.log(LOG_INFO, clip);
                         }
                         const Bitmap & bmp = this->bmp_cache->get(this->ssc.mem3blt.cache_id, this->ssc.mem3blt.cache_idx);
@@ -1090,7 +1122,7 @@ public:
                 case RDP::POLYLINE:
                     this->statistics.Polyline++;
                     this->ssc.polyline.receive(this->stream, header);
-                    if (this->verbose & Verbose::rdp_orders){
+                    if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.polyline.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -1100,7 +1132,7 @@ public:
                 case RDP::ELLIPSESC:
                     this->statistics.EllipseSC++;
                     this->ssc.ellipseSC.receive(this->stream, header);
-                    if (this->verbose & Verbose::rdp_orders){
+                    if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.ellipseSC.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -1143,7 +1175,7 @@ public:
                         this->ignore_frame_in_timeval = true;
                     }
 
-                    if (this->verbose & Verbose::timestamp) {
+                    if (bool(this->verbose & Verbose::timestamp)) {
                         LOG( LOG_INFO, "TIMESTAMP %lu.%lu mouse (x=%" PRIu16 ", y=%" PRIu16 ")\n"
                            , static_cast<unsigned long>(this->record_now.tv_sec)
                            , static_cast<unsigned long>(this->record_now.tv_usec)
@@ -1162,7 +1194,7 @@ public:
                         }
                     }
 
-                    if (this->verbose & Verbose::timestamp) {
+                    if (bool(this->verbose & Verbose::timestamp)) {
                         for (auto data = input_data, end = data + input_len/4; data != end; data += 4) {
                             uint8_t         key8[6];
                             const size_t    len = UTF32toUTF8(data, 4, key8, sizeof(key8)-1);
@@ -1352,8 +1384,7 @@ public:
                     // If no drawable is available ignore images chunks
                     this->stream.rewind();
                     std::size_t sz = this->chunk_size - HEADER_SIZE;
-                    auto end = this->stream_buf;
-                    this->trans->recv(&end, sz);
+                    this->trans->recv_new(this->stream_buf, sz);
                     this->stream = InStream(this->stream_buf, sz, sz);
                 }
                 this->remaining_order_count = 0;
@@ -1386,7 +1417,7 @@ public:
                              , (bitmap_data.flags & BITMAP_COMPRESSION)
                              );
 
-                if (this->verbose & Verbose::rdp_orders){
+                if (bool(this->verbose & Verbose::rdp_orders)){
                     bitmap_data.log(LOG_INFO);
                 }
 
@@ -1410,7 +1441,6 @@ public:
                     struct Pointer cursor(Pointer::POINTER_NULL);
                     cursor.width = 32;
                     cursor.height = 32;
-//                    cursor.bpp = 24;
                     cursor.x = this->stream.in_uint8();
                     cursor.y = this->stream.in_uint8();
                     stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
@@ -1426,9 +1456,8 @@ public:
                     this->statistics.PointerIndex++;
                     Pointer & pi = this->ptr_cache.Pointers[cache_idx];
                     Pointer cursor(Pointer::POINTER_NULL);
-                    cursor.width = 32;
-                    cursor.height = 32;
-//                    cursor.bpp = 24;
+                    cursor.width = pi.width;
+                    cursor.height = pi.height;
                     cursor.x = pi.x;
                     cursor.y = pi.y;
                     memcpy(cursor.data, pi.data, sizeof(pi.data));
@@ -1460,19 +1489,19 @@ public:
                 cursor.y = this->stream.in_uint8();
 
                 uint16_t data_size = this->stream.in_uint16_le();
-                REDASSERT(data_size <= 32 * 32 * 3);
+                REDASSERT(data_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 3);
 
                 uint16_t mask_size = this->stream.in_uint16_le();
-                REDASSERT(mask_size <= 128);
+                REDASSERT(mask_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8);
 
                 stream.in_copy_bytes(cursor.data, std::min<size_t>(sizeof(cursor.data), data_size));
                 stream.in_copy_bytes(cursor.mask, std::min<size_t>(sizeof(cursor.mask), mask_size));
 
                 this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->set_pointer(cursor);
-                    }
+                for (gdi::GraphicApi * gd : this->graphic_consumers){
+                    gd->set_pointer(cursor);
+                }
             }
             break;
             case RESET_CHUNK:
@@ -1542,7 +1571,7 @@ public:
 
 
     void process_windowing( InStream & stream, const RDP::AltsecDrawingOrderHeader & header) {
-        if (this->verbose & Verbose::probe) {
+        if (bool(this->verbose & Verbose::probe)) {
             LOG(LOG_INFO, "rdp_orders::process_windowing");
         }
 
@@ -1579,7 +1608,7 @@ public:
 
     void process_window_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
                                    , uint32_t FieldsPresentFlags) {
-        if (this->verbose & Verbose::probe) {
+        if (bool(this->verbose & Verbose::probe)) {
             LOG(LOG_INFO, "rdp_orders::process_window_information");
         }
 
@@ -1633,7 +1662,7 @@ public:
 
     void process_notification_icon_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
                                               , uint32_t FieldsPresentFlags) {
-        if (this->verbose & Verbose::probe) {
+        if (bool(this->verbose & Verbose::probe)) {
             LOG(LOG_INFO, "rdp_orders::process_notification_icon_information");
         }
 
@@ -1665,7 +1694,7 @@ public:
 
     void process_desktop_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
                                     , uint32_t FieldsPresentFlags) {
-        if (this->verbose & Verbose::probe) {
+        if (bool(this->verbose & Verbose::probe)) {
             LOG(LOG_INFO, "rdp_orders::process_desktop_information");
         }
 
@@ -1710,7 +1739,7 @@ private:
     template<class CbUpdateProgress>
     void privplay(CbUpdateProgress update_progess, bool const & requested_to_stop) {
         while (!requested_to_stop && this->next_order()) {
-            if (this->verbose & Verbose::play) {
+            if (bool(this->verbose & Verbose::play)) {
                 LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
                    , unsigned(this->record_now.tv_sec), unsigned(this->total_orders_count));
             }
@@ -1746,7 +1775,7 @@ private:
 
         if (elapsed >= this->movie_elapsed_qt) {
             if (this->next_order()) {
-                if (this->verbose & Verbose::play) {
+                if (bool(this->verbose & Verbose::play)) {
                     LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
                     , unsigned(this->record_now.tv_sec), unsigned(this->total_orders_count));
                 }
@@ -2399,7 +2428,7 @@ public:
         {
             if (this->buf_.is_open()) {
                 this->buf_.close();
-                // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+//                LOG(LOG_INFO, "pngcapture: \"%s\" -> \"%s\".", this->current_filename_, this->rename_to);
                 return this->rename_filename() ? 0 : 1;
             }
             return 1;
@@ -2441,6 +2470,7 @@ public:
             if (fd < 0) {
                 return fd;
             }
+            LOG(LOG_INFO, "pngcapture=%s\n", this->current_filename_);
             // TODO PERF used fchmod
             if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                 LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
@@ -2456,6 +2486,8 @@ public:
         {
             const char * filename = this->get_filename_generate();
             const int res = ::rename(this->current_filename_, filename);
+            LOG( LOG_ERR, "renaming file \"%s\" to \"%s\"\n"
+                   , this->current_filename_, filename);
             if (res < 0) {
                 LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
                    , this->current_filename_, filename, errno, strerror(errno));
@@ -2678,7 +2710,7 @@ public:
         }
     }
 
-     virtual void clear_old() {
+     void clear_old() override {
         if (this->trans.get_seqno() < this->png_limit) {
             return;
         }
@@ -3686,6 +3718,7 @@ public:
     {
 //        REDASSERT(authentifier ? order_bpp == capture_bpp : true);
 
+
         if (capture_png || (authentifier && (capture_flv || capture_ocr))) {
             if (recursive_create_directory(record_tmp_path, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {
                 LOG(LOG_INFO, "Failed to create directory: \"%s\"", record_tmp_path);
@@ -3997,4 +4030,3 @@ public:
         }
     }
 };
-

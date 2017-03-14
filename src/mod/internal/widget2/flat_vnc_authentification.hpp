@@ -59,7 +59,7 @@ public:
                         theme.edit.fgcolor.to_u32(), theme.edit.bgcolor.to_u32(),
                         theme.edit.focus_color.to_u32(), theme.global.bgcolor.to_u32(), font, nullptr, false, -1u, 1, 1, true)
         , img(drawable,
-              theme.global.logo ? theme.global.logo_path :
+              theme.global.logo ? theme.global.logo_path.c_str() :
               SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
         , fgcolor(theme.global.fgcolor.to_u32())
         , bgcolor(theme.global.bgcolor.to_u32())

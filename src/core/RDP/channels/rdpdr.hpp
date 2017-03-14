@@ -29,8 +29,10 @@
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/stream.hpp"
 #include "utils/utf.hpp"
+
 #include "core/SMB2/MessageSyntax.hpp"
 #include "core/FSCC/FileInformation.hpp"
+#include "core/ERREF/ntstatus.hpp"
 
 #include <vector>
 
@@ -382,10 +384,9 @@ struct CapabilityHeader {
     {}
 
     CapabilityHeader( uint16_t CapabilityType
-                    , uint16_t CapabilityLength
                     , uint32_t Version)
     : CapabilityType(CapabilityType)
-    , CapabilityLength(CapabilityLength)
+    , CapabilityLength(8)
     , Version(Version)
     {}
 
@@ -740,9 +741,9 @@ public:
         LOG(LOG_INFO, "     Device Announce:");
         LOG(LOG_INFO, "          * DeviceType       = 0x%08x (4 bytes): %s", this->DeviceType_, get_DeviceType_name(this->DeviceType_));
         LOG(LOG_INFO, "          * DeviceId         = 0x%08x (4 bytes)", this->DeviceId_);
-        LOG(LOG_INFO, "          * DeviceName       = \"%*s\" (8 bytes)", 8, this->PreferredDosName_);
+        LOG(LOG_INFO, "          * DeviceName       = \"%.*s\" (8 bytes)", 8, this->PreferredDosName_);
         LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->device_data.sz));
-        LOG(LOG_INFO, "          * DeviceData       = \"%*s\" (%d byte(s))", int(this->device_data.sz), this->device_data.p, int(2*this->device_data.sz));
+        LOG(LOG_INFO, "          * DeviceData       = \"%.*s\" (%d byte(s))", int(this->device_data.sz), this->device_data.p, int(2*this->device_data.sz));
     }
 };  // DeviceAnnounceHeader
 
@@ -1498,6 +1499,11 @@ struct DeviceWriteRequest {
     uint64_t  Offset = 0;
     uint8_t const * WriteData = nullptr;
 
+    enum :  unsigned {
+      TOTAL_PDU_HEADER_LEN = 56
+    , FISRT_PART_DATA_MAX_LEN = 1600 - TOTAL_PDU_HEADER_LEN
+    };
+
     DeviceWriteRequest() = default;
 
     DeviceWriteRequest( uint32_t Length
@@ -1786,7 +1792,7 @@ struct ClientDriveControlResponse {
 
     void log() {
         LOG(LOG_INFO, "     Client Drive Control Response:");
-        LOG(LOG_INFO, "          * OutputBufferLength = %d (4 bytes)", this->OutputBufferLength);
+        LOG(LOG_INFO, "          * OutputBufferLength = %u (4 bytes)", this->OutputBufferLength);
     }
 };
 
@@ -2261,7 +2267,7 @@ struct DeviceWriteResponse {
     }
 
     void log() {
-        LOG(LOG_INFO, "     Device Read Response:");
+        LOG(LOG_INFO, "     Device Write Response:");
         LOG(LOG_INFO, "          * Length = %d (4 bytes)", this->Length);
         LOG(LOG_INFO, "          * Padding - (1 byte) NOT USED");
     }
@@ -2302,18 +2308,17 @@ struct DeviceWriteResponse {
 
 class ServerDeviceAnnounceResponse {
     uint32_t DeviceId_   = 0;
-    // TODO enum NTSTATUS
-    uint32_t ResultCode_ = 0;
+    erref::NTSTATUS ResultCode_ = erref::NTSTATUS::STATUS_SUCCESS;
 
 public:
     ServerDeviceAnnounceResponse() = default;
 
-    ServerDeviceAnnounceResponse(uint32_t device_id, uint32_t result_code) :
+    ServerDeviceAnnounceResponse(uint32_t device_id, erref::NTSTATUS result_code) :
         DeviceId_(device_id), ResultCode_(result_code) {}
 
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceId_);
-        stream.out_uint32_le(this->ResultCode_);
+        stream.out_uint32_le(static_cast<uint32_t>(this->ResultCode_));
     }
 
     void receive(InStream & stream) {
@@ -2329,12 +2334,12 @@ public:
         }
 
         this->DeviceId_   = stream.in_uint32_le();
-        this->ResultCode_ = stream.in_uint32_le();
+        this->ResultCode_ = erref::NTSTATUS(stream.in_uint32_le());
     }
 
     uint32_t DeviceId() const { return this->DeviceId_; }
 
-    uint32_t ResultCode() const { return this->ResultCode_; }
+    erref::NTSTATUS ResultCode() const { return this->ResultCode_; }
 
 private:
     size_t str(char * buffer, size_t size) const {
@@ -2355,7 +2360,7 @@ public:
     void log() {
         LOG(LOG_INFO, "     Server Device Announce Response:");
         LOG(LOG_INFO, "          * DeviceId   = 0x%08x (4 bytes)", this->DeviceId_);
-        LOG(LOG_INFO, "          * ResultCode = 0x%08x (4 bytes)", this->ResultCode_);
+        LOG(LOG_INFO, "          * ResultCode = 0x%08x (4 bytes): %s", this->ResultCode_, erref::get_NTStatus(this->ResultCode_));
     }
 };
 
@@ -2602,6 +2607,11 @@ public:
 //  +------------+----------------------------------------+
 //  | 0x00000000 | ComputerName is in ASCII characters.   |
 //  +------------+----------------------------------------+
+
+enum {
+  ASCII_CHAR   = 0x00000000,
+  UNICODE_CHAR = 0x00000001
+};
 
 // CodePage (4 bytes): A 32-bit unsigned integer that specifies the code page
 //  of the ComputerName field; it MUST be set to 0.
@@ -2864,6 +2874,10 @@ public:
 //  | 0x00008000                            | (IRP_MJ_SET_SECURITY).         |
 //  +---------------------------------------+--------------------------------+
 
+enum {
+      SUPPORT_ALL_REQUEST = 0xFFFF
+};
+
 // ioCode2 (4 bytes): A 32-bit unsigned integer that is currently reserved
 //  for future use, and MUST be set to 0.
 
@@ -2902,8 +2916,17 @@ enum {
 //  |                | from a redirected file system.<8>                     |
 //  +----------------+-------------------------------------------------------+
 
+
 enum {
       ENABLE_ASYNCIO = 0x00000001
+};
+
+enum {
+      MINOR_VERSION_13 = 0x000D
+    , MINOR_VERSION_12 = 0x000C
+    , MINOR_VERSION_10 = 0x000A
+    , MINOR_VERSION_5  = 0x0005
+    , MINOR_VERSION_2  = 0x0002
 };
 
 // extraFlags2 (4 bytes): A 32-bit unsigned integer that is currently
@@ -2919,7 +2942,7 @@ class GeneralCapabilitySet {
 public:
     uint32_t osType               = 0;
     uint32_t osVersion            = 0;
-    uint16_t protocolMajorVersion = 0;
+    uint16_t protocolMajorVersion = 0x1;
     uint16_t protocolMinorVersion = 0;
     uint32_t ioCode1              = 0;
     uint32_t ioCode2              = 0;
@@ -2927,26 +2950,55 @@ public:
     uint32_t extraFlags1_         = 0;
     uint32_t extraFlags2          = 0;
     uint32_t SpecialTypeDeviceCap = 0;
+    uint32_t version              = 0;
 
 
     GeneralCapabilitySet() = default;
 
-    GeneralCapabilitySet(uint32_t osType, uint32_t osVersion,
-        uint16_t protocolMajorVersion, uint16_t protocolMinorVersion,
-        uint32_t ioCode1, uint32_t ioCode2, uint32_t extendedPDU,
-        uint32_t extraFlags1, uint32_t extraFlags2, uint32_t SpecialTypeDeviceCap)
+//     GeneralCapabilitySet(uint32_t osType, uint32_t osVersion,
+//         uint16_t protocolMajorVersion, uint16_t protocolMinorVersion,
+//         uint32_t ioCode1, uint32_t ioCode2, uint32_t extendedPDU,
+//         uint32_t extraFlags1, uint32_t extraFlags2, uint32_t SpecialTypeDeviceCap)
+//     : osType(osType)
+//     , osVersion(osVersion)
+//     , protocolMajorVersion(protocolMajorVersion)
+//     , protocolMinorVersion(protocolMinorVersion)
+//     , ioCode1(ioCode1)
+//     , ioCode2(ioCode2)
+//     , extendedPDU_(extendedPDU)
+//     , extraFlags1_(extraFlags1)
+//     , extraFlags2(extraFlags2)
+//     , SpecialTypeDeviceCap(SpecialTypeDeviceCap) {}
+
+    GeneralCapabilitySet(uint32_t osType,
+        uint16_t protocolMinorVersion,
+        uint32_t ioCode1, uint32_t extendedPDU,
+        uint32_t extraFlags1, uint32_t SpecialTypeDeviceCap,
+        uint32_t version)
     : osType(osType)
-    , osVersion(osVersion)
-    , protocolMajorVersion(protocolMajorVersion)
     , protocolMinorVersion(protocolMinorVersion)
     , ioCode1(ioCode1)
-    , ioCode2(ioCode2)
     , extendedPDU_(extendedPDU)
     , extraFlags1_(extraFlags1)
-    , extraFlags2(extraFlags2)
-    , SpecialTypeDeviceCap(SpecialTypeDeviceCap) {}
+    , SpecialTypeDeviceCap(SpecialTypeDeviceCap)
+    , version(version) {}
 
-    void emit(OutStream & stream, uint32_t version) const {
+//     void emit(OutStream & stream, uint32_t version) const {
+//         stream.out_uint32_le(this->osType);
+//         stream.out_uint32_le(this->osVersion);
+//         stream.out_uint16_le(this->protocolMajorVersion);
+//         stream.out_uint16_le(this->protocolMinorVersion);
+//         stream.out_uint32_le(this->ioCode1);
+//         stream.out_uint32_le(this->ioCode2);
+//         stream.out_uint32_le(this->extendedPDU_);
+//         stream.out_uint32_le(this->extraFlags1_);
+//         stream.out_uint32_le(this->extraFlags2);
+//         if (version == GENERAL_CAPABILITY_VERSION_02) {
+//             stream.out_uint32_le(this->SpecialTypeDeviceCap);
+//         }
+//     }
+
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->osType);
         stream.out_uint32_le(this->osVersion);
         stream.out_uint16_le(this->protocolMajorVersion);
@@ -2956,7 +3008,7 @@ public:
         stream.out_uint32_le(this->extendedPDU_);
         stream.out_uint32_le(this->extraFlags1_);
         stream.out_uint32_le(this->extraFlags2);
-        if (version == GENERAL_CAPABILITY_VERSION_02) {
+        if (this->version == GENERAL_CAPABILITY_VERSION_02) {
             stream.out_uint32_le(this->SpecialTypeDeviceCap);
         }
     }
@@ -4198,7 +4250,7 @@ public:
         LOG(LOG_INFO, "          * InitialQuery       = 0x%02x (1 byte)", this->InitialQuery_);
         LOG(LOG_INFO, "          * PathLength         = %zu (4 bytes)", this->path.size());
         LOG(LOG_INFO, "          * Padding - (23 byte) NOT USED");
-        LOG(LOG_INFO, "          * path               = \"%s\" (%zu byte(s))", this->path.c_str(), 2*this->path.size());
+        LOG(LOG_INFO, "          * path               = \"%s\" (%zu byte(s))", this->path.c_str(), this->path.size());
     }
 };  // ServerDriveQueryDirectoryRequest
 
@@ -4713,6 +4765,61 @@ struct ServerDriveLockControlRequest {
         LOG(LOG_INFO, "          * Padding - (7 bits and 3 bytes) NOT USED");
         LOG(LOG_INFO, "          * NumLocks  = %d (4 bytes)", int(this->Operation));
         LOG(LOG_INFO, "          * Padding - (20 byte) NOT USED");
+    }
+};
+
+
+
+// 2.2.3.4.12 Client Drive Lock Control Response (DR_DRIVE_LOCK_RSP)
+//
+// This message is sent by the client as a response to the Server Drive Lock Control Request (section 2.2.3.3.12).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                    DeviceIoReply (16 bytes)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                            Padding                            |
+// +---------------+-----------------------------------------------+
+// |      ...      |                                               |
+// +---------------+-----------------------------------------------+
+
+// DeviceIoReply (16 bytes):  A DR_DEVICE_IOCOMPLETION (section 2.2.1.5) header. The CompletionId field of the DR_DEVICE_IOCOMPLETION header MUST match a Device I/O Request (section 2.2.1.4) that has the MajorFunction field set to IRP_MJ_LOCK_CONTROL.
+//
+// Padding (5 bytes): 5 bytes of padding. This field is unused and MUST be ignored.
+
+struct ClientDriveLockControlResponse {
+
+    ClientDriveLockControlResponse() = default;
+
+    void emit(OutStream & stream) {
+        stream.out_clear_bytes(5);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 5;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientDriveLockControlResponse (0): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        stream.in_skip_bytes(5);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Client Drive Lock Control Response:");
+        LOG(LOG_INFO, "          * Padding - (5 bytes) NOT USED");
+
     }
 };
 
@@ -5454,8 +5561,9 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                 cdcr.receive(s);
                                 cdcr.log();
 
-                                if (cdcr.OutputBufferLength > 0) {
+                                //if (cdcr.OutputBufferLength > 0) {
                                     switch (status_dior.IOControlCode) {
+                                        case fscc::FSCTL_GET_OBJECT_ID:
                                         case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID:
                                         {
                                             fscc::FileObjectBuffer_Type1 rgdb;
@@ -5468,7 +5576,7 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                         default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Code: 0x%08x", status_dior.IOControlCode);
                                             break;
                                     }
-                                }
+                                //}
                             }
                             break;
                         case IRP_MJ_QUERY_VOLUME_INFORMATION:

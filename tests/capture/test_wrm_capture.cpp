@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2012
    Author(s): Christophe Grosjean
 
-   Unit test to capture interface to video recording to flv or mp4
+   Unit test to capture interface to video recording to flv or mp4frecv
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -30,15 +30,13 @@
 #define LOGPRINT
 
 #include "utils/log.hpp"
-#include "utils/genrandom.hpp"
-#include "utils/sugar/iter.hpp"
-#include <snappy-c.h>
 
+#include <snappy-c.h>
 #include <memory>
 
+#include "transport/file_transport.hpp"
 #include "utils/png.hpp"
 #include "utils/drawable.hpp"
-#include "utils/stream.hpp"
 
 #include "transport/transport.hpp"
 #include "transport/test_transport.hpp"
@@ -47,17 +45,209 @@
 
 #include "check_sig.hpp"
 #include "get_file_contents.hpp"
-#include "utils/fileutils.hpp"
 #include "utils/bitmap_shrink.hpp"
+#include "capture/capture.hpp"
 
 #include "capture/wrm_capture.hpp"
+#include "transport/in_meta_sequence_transport.hpp"
 
+struct wrmcapture_OutFilenameSequenceTransport : public Transport
+{
+    char current_filename_[1024];
+    WrmFGen filegen_;
+    iofdbuf buf_;
+    unsigned num_file_;
+    int groupid_;
+
+    wrmcapture_OutFilenameSequenceTransport(
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension,
+        const int groupid,
+        auth_api * authentifier)
+    : filegen_(prefix, filename, extension)
+    , buf_()
+    , num_file_(0)
+    , groupid_(groupid)
+    {
+        this->current_filename_[0] = 0;
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+    }
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        ssize_t res = 1;
+        if (this->buf_.is_open()) {
+            this->buf_.close();
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+            res = this->rename_filename() ? 0 : 1;
+        }
+
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M1): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override {
+        return !this->close();
+    }
+
+    void request_full_cleaning() override {
+        unsigned i = this->num_file_ + 1;
+        while (i > 0 && !::unlink(this->filegen_.get(--i))) {}
+        if (this->buf_.is_open()) {
+            this->buf_.close();
+        }
+    }
+
+    ~wrmcapture_OutFilenameSequenceTransport() {
+        this->close();
+    }
+
+private:
+
+    void do_send(const uint8_t * data, size_t len) override {
+        const ssize_t res = this->write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|unknown");
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+    public:
+
+    int close()
+    {
+        ssize_t res = 1;
+        if (this->buf_.is_open()) {
+            this->buf_.close();
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+            res = this->rename_filename() ? 0 : 1;
+        }
+        return res;
+    }
+
+    ssize_t write(const void * data, size_t len)
+    {
+        if (!this->buf_.is_open()) {
+            const int res = this->open_filename(this->filegen_.get(this->num_file_));
+            if (res < 0) {
+                return res;
+            }
+        }
+        return this->buf_.write(data, len);
+    }
+
+
+    iofdbuf & buf() noexcept
+    { return this->buf_; }
+
+    const char * current_path() const
+    {
+        if (!this->current_filename_[0] && !this->num_file_) {
+            return nullptr;
+        }
+
+        return this->filegen_.get(this->num_file_-1);
+    }
+
+protected:
+    ssize_t open_filename(const char * filename)
+    {
+        snprintf(this->current_filename_, sizeof(this->current_filename_),
+                    "%sred-XXXXXX.tmp", filename);
+        const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+        if (fd < 0) {
+            return fd;
+        }
+        if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+               , this->current_filename_
+               , this->groupid_ ? "u+r, g+r" : "u+r"
+               , strerror(errno), errno);
+        }
+        return this->buf_.open(fd);
+    }
+
+    const char * rename_filename()
+    {
+        const char * filename = this->filegen_.get(this->num_file_);
+        const int res = ::rename(this->current_filename_, filename);
+        if (res < 0) {
+            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+               , this->current_filename_, filename, errno, strerror(errno));
+            return nullptr;
+        }
+
+        this->current_filename_[0] = 0;
+        ++this->num_file_;
+        return filename;
+    }
+};
+
+
+template<class Writer>
+void wrmcapture_write_meta_headers(Writer & writer, const char * path,
+                        uint16_t width, uint16_t height,
+                        auth_api * authentifier,
+                        bool has_checksum
+                       )
+{
+    char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
+    const int len = sprintf(
+        header1,
+        "v2\n"
+        "%u %u\n"
+        "%s\n"
+        "\n\n",
+        unsigned(width),
+        unsigned(height),
+        has_checksum  ? "checksum" : "nochecksum"
+    );
+    const ssize_t res = writer.write(header1, len);
+    if (res < 0) {
+        int err = errno;
+        LOG(LOG_ERR, "Write to transport failed (M2): code=%d", err);
+
+        if (err == ENOSPC) {
+            char message[1024];
+            snprintf(message, sizeof(message), "100|%s", path);
+            authentifier->report("FILESYSTEM_FULL", message);
+
+            throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
+        }
+        else {
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
+        }
+    }
+}
 
 BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 {
     Rect scr(0, 0, 800, 600);
     const int groupid = 0;
-    wrmcapture_OutFilenameSequenceTransport trans(wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION, "./", "test", ".wrm", groupid, nullptr);
+    wrmcapture_OutFilenameSequenceTransport trans("./", "test", ".wrm", groupid, nullptr);
 
     struct timeval now;
     now.tv_sec = 1000;
@@ -90,15 +280,18 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 
     const char * filename0 = "./test-000000.wrm";
     BOOST_CHECK_EQUAL(1560, ::filesize(filename0));
-//    ::unlink(filename);
+   ::unlink(filename0);
     const char * filename1 = "./test-000001.wrm";
     BOOST_CHECK_EQUAL(3365, ::filesize(filename1));
-//    ::unlink(filename);
+   ::unlink(filename1);
 }
 
 
 BOOST_AUTO_TEST_CASE(TestWrmCapture)
 {
+    ::unlink("./capture.mwrm");
+    ::unlink("/tmp/capture.mwrm");
+
     {
         // Timestamps are applied only when flushing
         timeval now;
@@ -108,6 +301,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
         Rect scr(0, 0, 800, 600);
 
         LCGRandom rnd(0);
+        Fstat fstat;
         CryptoContext cctx;
 
         GraphicToFile::Verbose wrm_verbose = to_verbose_flags(0)
@@ -123,7 +317,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
 
         const char * record_path = "./";
         const int groupid = 0; // www-data
-        const char * hash_path = "/tmp";
+        const char * hash_path = "/tmp/";
 
         char path[1024];
         char basename[1024];
@@ -137,6 +331,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
             wrm_trace_type,
             cctx,
             rnd,
+            fstat,
             record_path,
             hash_path,
             basename,
@@ -196,19 +391,25 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
     }
 
     {
+        // TODO: we may have several mwrm sizes as it contains varying length numbers
+        // the right solution would be to inject predictable fstat in test environment
+
         struct CheckFiles {
             const char * filename;
-            size_t size;
-        } fileinfo[] = {
-            {"./capture-000000.wrm", 1646},
-            {"./capture-000001.wrm", 3508},
-            {"./capture-000002.wrm", 3463},
-            {"./capture-000003.wrm", static_cast<size_t>(-1)},
-            {"./capture.mwrm", 288},
+            int size;
+            int alt_size;
+        } fileinfos[] = {
+            {"./capture-000000.wrm", 1646, 0},
+            {"./capture-000001.wrm", 3508, 0},
+            {"./capture-000002.wrm", 3463, 0},
+            {"./capture-000003.wrm", -1, 0},
+            {"./capture.mwrm", 288, 285},
         };
-        for (auto x: fileinfo) {
-            size_t fsize = filesize(x.filename);
-            BOOST_CHECK_EQUAL(x.size, fsize);
+        for (auto x : fileinfos) {
+            int fsize = filesize(x.filename);
+            if (x.alt_size != fsize) {
+                BOOST_CHECK_EQUAL(x.size, fsize);
+            }
             ::unlink(x.filename);
         }
     }
@@ -216,6 +417,22 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
 
 BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 {
+    struct CheckFiles1 {
+        const char * filename;
+        size_t size;
+        size_t altsize;
+    } fileinfo1[] = {
+        {"./capture-000000.wrm", 1646, 0},
+        {"./capture-000001.wrm", 3508, 0},
+        {"./capture-000002.wrm", 3463, 0},
+        {"./capture-000003.wrm", static_cast<size_t>(-1), static_cast<size_t>(-1)},
+        {"./capture.mwrm", 676, 673},
+        {"/tmp/capture.mwrm", 676, 673},
+    };
+    for (auto x: fileinfo1) {
+        ::unlink(x.filename);
+    }
+
     {
         // Timestamps are applied only when flushing
         timeval now;
@@ -225,6 +442,8 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         Rect scr(0, 0, 800, 600);
 
         LCGRandom rnd(0);
+        Fstat fstat;
+
         CryptoContext cctx;
         cctx.set_master_key(cstr_array_view(
             "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
@@ -239,14 +458,16 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
              "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
         ));
 
+        BOOST_CHECK(true);
 
         WrmParams wrm_params(
             24,
             TraceType::localfile_hashed,
             cctx,
             rnd,
+            fstat,
             "./",
-            "/tmp",
+            "/tmp/",
             "capture",
             1000, // ini.get<cfg::video::capture_groupid>()
             std::chrono::seconds{1},
@@ -255,9 +476,13 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
             0xFFFF
         );
 
+        BOOST_CHECK(true);
+
         RDPDrawable gd_drawable(scr.cx, scr.cy);
 
         WrmCaptureImpl wrm(now, wrm_params, nullptr /* authentifier */, gd_drawable);
+
+        BOOST_CHECK(true);
 
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
@@ -267,15 +492,21 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
+        BOOST_CHECK(true);
+
         gd_drawable.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
+        BOOST_CHECK(true);
+
         gd_drawable.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        BOOST_CHECK(true);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
@@ -284,15 +515,21 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
+        BOOST_CHECK(true);
+
         gd_drawable.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
+        BOOST_CHECK(true);
+
         gd_drawable.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        BOOST_CHECK(true);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
@@ -301,50 +538,211 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
-    }
+        BOOST_CHECK(true);
 
+    }
+    BOOST_CHECK(true);
+
+    // TODO: we may have several mwrm sizes as it contains varying length numbers
+    // the right solution would be to inject predictable fstat in test environment
     struct CheckFiles {
         const char * filename;
         size_t size;
+        size_t altsize;
     } fileinfo[] = {
-        {"./capture-000000.wrm", 1646},
-        {"./capture-000001.wrm", 3508},
-        {"./capture-000002.wrm", 3463},
-        {"./capture-000003.wrm", static_cast<size_t>(-1)},
-        {"./capture.mwrm", 676},
+        {"./capture-000000.wrm", 1646, 0},
+        {"./capture-000001.wrm", 3508, 0},
+        {"./capture-000002.wrm", 3463, 0},
+        {"./capture-000003.wrm", static_cast<size_t>(-1), static_cast<size_t>(-1)},
+        {"./capture.mwrm", 676, 673},
     };
     for (auto x: fileinfo) {
         size_t fsize = filesize(x.filename);
-        BOOST_CHECK_EQUAL(x.size, fsize);
+        if (x.size != fsize){
+            BOOST_CHECK_EQUAL(x.altsize, fsize);
+        }
         ::unlink(x.filename);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestOSumBuf)
+inline char * wrmcapture_swrite_hash(char * p, wrmcapture_hash_type const & hash)
 {
-    CryptoContext cctx;
-    cctx.set_master_key(cstr_array_view(
-        "\x00\x01\x02\x03\x04\x05\x06\x07"
-        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-        "\x10\x11\x12\x13\x14\x15\x16\x17"
-        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-    ));
-    cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
-    wrmcapture_ochecksum_buf_null_buf buf(cctx.get_hmac_key());
-    buf.open();
-    BOOST_CHECK_EQUAL(buf.write("ab", 2), 2);
-    BOOST_CHECK_EQUAL(buf.write("cde", 3), 3);
+    auto write = [&p](unsigned char const * hash) {
+        *p++ = ' ';                // 1 octet
+        for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+            sprintf(p, "%02x", c); // 64 octets (hash)
+            p += 2;
+        }
+    };
+    write(hash);
+    write(hash + MD_HASH_LENGTH);
+    return p;
+}
 
-    wrmcapture_hash_type hash;
-    buf.close(hash);
 
-    char hash_str[wrmcapture_hash_string_len + 1];
-    *wrmcapture_swrite_hash(hash_str, hash) = 0;
-    BOOST_CHECK_EQUAL(
-        hash_str,
-        " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
-        " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
+//BOOST_AUTO_TEST_CASE(TestOSumBuf)
+//{
+//    CryptoContext cctx;
+//    cctx.set_master_key(cstr_array_view(
+//        "\x00\x01\x02\x03\x04\x05\x06\x07"
+//        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+//        "\x10\x11\x12\x13\x14\x15\x16\x17"
+//        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+//    ));
+//    cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
+//    wrmcapture_ochecksum_buf_null_buf buf(cctx.get_hmac_key());
+//    buf.open();
+//    BOOST_CHECK_EQUAL(buf.write("ab", 2), 2);
+//    BOOST_CHECK_EQUAL(buf.write("cde", 3), 3);
+
+//    wrmcapture_hash_type hash;
+//    buf.close(hash);
+
+//    char hash_str[wrmcapture_hash_string_len + 1];
+//    *wrmcapture_swrite_hash(hash_str, hash) = 0;
+//    BOOST_CHECK_EQUAL(
+//        hash_str,
+//        " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
+//        " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
+//    );
+//}
+
+template<class Writer>
+int wrmcapture_write_filename(Writer & writer, const char * filename)
+{
+    auto pfile = filename;
+    auto epfile = filename;
+    for (; *epfile; ++epfile) {
+        if (*epfile == '\\') {
+            ssize_t len = epfile - pfile + 1;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+            pfile = epfile;
+        }
+        if (*epfile == ' ') {
+            ssize_t len = epfile - pfile;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+            res = writer.write("\\", 1u);
+            if (res < 1) {
+                return res < 0 ? res : 1;
+            }
+            pfile = epfile;
+        }
+    }
+
+    if (pfile != epfile) {
+        ssize_t len = epfile - pfile;
+        auto res = writer.write(pfile, len);
+        if (res < len) {
+            return res < 0 ? res : 1;
+        }
+    }
+
+    return 0;
+}
+
+
+template<class Writer>
+int wrmcapture_write_meta_file(
+    Writer & writer, const char * filename,
+    time_t start_sec, time_t stop_sec,
+    wrmcapture_hash_type const * hash
+) {
+    struct stat stat;
+    int err = ::stat(filename, &stat);
+    if (err){
+        return err;
+    }
+
+    auto pfile = filename;
+    auto epfile = filename;
+    for (; *epfile; ++epfile) {
+        if (*epfile == '\\') {
+            ssize_t len = epfile - pfile + 1;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+            pfile = epfile;
+        }
+        if (*epfile == ' ') {
+            ssize_t len = epfile - pfile;
+            auto res = writer.write(pfile, len);
+            if (res < len) {
+                return res < 0 ? res : 1;
+            }
+            res = writer.write("\\", 1u);
+            if (res < 1) {
+                return res < 0 ? res : 1;
+            }
+            pfile = epfile;
+        }
+    }
+
+    if (pfile != epfile) {
+        ssize_t len = epfile - pfile;
+        auto res = writer.write(pfile, len);
+        if (res < len) {
+            return res < 0 ? res : 1;
+        }
+    }
+
+    if (err) {
+        return err;
+    }
+
+    using ull = unsigned long long;
+    using ll = long long;
+    char mes[
+        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+        wrmcapture_hash_string_len + 1 +
+        2
+    ];
+    ssize_t len = std::sprintf(
+        mes,
+        " %lld %llu %lld %lld %llu %lld %lld %lld",
+        ll(stat.st_size),
+        ull(stat.st_mode),
+        ll(stat.st_uid),
+        ll(stat.st_gid),
+        ull(stat.st_dev),
+        ll(stat.st_ino),
+        ll(stat.st_mtim.tv_sec),
+        ll(stat.st_ctim.tv_sec)
     );
+    len += std::sprintf(
+        mes + len,
+        " %lld %lld",
+        ll(start_sec),
+        ll(stop_sec)
+    );
+
+    char * p = mes + len;
+    if (hash) {
+        auto write = [&p](unsigned char const * hash) {
+            *p++ = ' ';                // 1 octet
+            for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+                sprintf(p, "%02x", c); // 64 octets (hash)
+                p += 2;
+            }
+        };
+        write(&(*hash)[0]);
+        write(&(*hash)[MD_HASH_LENGTH]);
+    }
+    *p++ = '\n';
+
+    ssize_t res = writer.write(mes, p-mes);
+
+    if (res < p-mes) {
+        return res < 0 ? res : 1;
+    }
+    return 0;
 }
 
 #include <string>
@@ -361,7 +759,7 @@ BOOST_AUTO_TEST_CASE(TestWriteFilename)
     } writer;
 
 #define TEST_WRITE_FILENAME(origin_filename, wrote_filename) \
-    wrmcapture_write_filename(writer, origin_filename);                 \
+    wrmcapture_write_filename(writer, origin_filename);      \
     BOOST_CHECK_EQUAL(writer.s, wrote_filename);             \
     writer.s.clear()
 
@@ -398,11 +796,20 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
 {
     unsigned sec_start = 1352304810;
     {
+        CryptoContext cctx;
+        cctx.set_master_key(cstr_array_view(
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+        ));
+        cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
+        LCGRandom rnd(0);
+        Fstat fstat;
+
         timeval now;
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        wrmcapture_OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid);
+        wrmcapture_OutMetaSequenceTransport wrm_trans(false, false, cctx, rnd, fstat, "./", "./hash-", "xxx", now, 800, 600, groupid, nullptr);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -494,11 +901,15 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
             "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
         ));
         cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
+
+        LCGRandom rnd(0);
+        Fstat fstat;
+
         timeval now;
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        wrmcapture_OutMetaSequenceTransportWithSum wrm_trans(cctx, "./", "./", "xxx", now, 800, 600, groupid);
+        wrmcapture_OutMetaSequenceTransport wrm_trans(false, true, cctx, rnd, fstat, "./", "./", "xxx", now, 800, 600, groupid, nullptr);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -545,29 +956,50 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
     unlink("./xxx-000000.wrm");
     unlink("./xxx-000001.wrm");
     unlink("./xxx.mwrm");
+    unlink("./hash-xxx.mwrm");
 
-    timeval now;
-    now.tv_sec = 1352304810;
-    now.tv_usec = 0;
-    const int groupid = 0;
-    wrmcapture_OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid, nullptr,
-                                       wrmcapture_FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
-    wrm_trans.send("AAAAX", 5);
-    wrm_trans.send("BBBBX", 5);
-    wrm_trans.next();
-    wrm_trans.send("CCCCX", 5);
+    {
+        CryptoContext cctx;
+        cctx.set_master_key(cstr_array_view(
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+        ));
+        cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
+        LCGRandom rnd(0);
+        Fstat fstat;
 
-    const wrmcapture_FilenameGenerator * sqgen = wrm_trans.seqgen();
+        timeval now;
+        now.tv_sec = 1352304810;
+        now.tv_usec = 0;
+        const int groupid = 0;
+        wrmcapture_OutMetaSequenceTransport wrm_trans(false, false, cctx, rnd, fstat, "./", "./hash-", "xxx", now, 800, 600, groupid, nullptr);
+        wrm_trans.send("AAAAX", 5);
+        wrm_trans.send("BBBBX", 5);
+        wrm_trans.next();
+        wrm_trans.send("CCCCX", 5);
 
-    BOOST_CHECK(-1 != filesize(sqgen->get(0)));
-    BOOST_CHECK(-1 != filesize(sqgen->get(1)));
-    BOOST_CHECK(-1 != filesize("./xxx.mwrm"));
+// TODO: we can't really check files are here and of expected size
+// because they will only be flushed when wrm_trans object destructor is called.
+// we should call a flush or explicit close for that purpose
+// but it's no part yet of our Transport API.
+//        BOOST_CHECK_EQUAL(10, filesize("./xxx-000000.wrm"));
+//        BOOST_CHECK_EQUAL(5, filesize("./xxx-000001.wrm"));
+//        BOOST_CHECK_EQUAL(69, filesize("./hash-xxx.mwrm"));
+//        BOOST_CHECK_EQUAL(209, filesize("./xxx.mwrm"));
 
-    wrm_trans.request_full_cleaning();
+        wrm_trans.request_full_cleaning();
+    }
 
-    BOOST_CHECK_EQUAL(-1, filesize(sqgen->get(0)));
-    BOOST_CHECK_EQUAL(-1, filesize(sqgen->get(1)));
-    BOOST_CHECK_EQUAL(-1, filesize("./xxx.mwrm"));
+    // TODO: request full_cleaning does not remove hash signature
+    // not sure what to do with that and even if request full cleaning
+    // is a good idea. Wouldn't it remove partial traces whenever
+    // a problem occurs (like full disk ?)
+    ::unlink("./hash-xxx.mwrm");
+
+    BOOST_CHECK_EQUAL(-1 , filesize("./xxx-000000.wrm"));
+    BOOST_CHECK_EQUAL(-1 , filesize("./xxx-000001.wrm"));
+    BOOST_CHECK_EQUAL(-1 , filesize("./hash-xxx.mwrm"));
+    BOOST_CHECK_EQUAL(-1 , filesize("./xxx.mwrm"));
 }
 
 //void simple_movie(timeval now, unsigned duration, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse);
@@ -915,3 +1347,291 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 //    }
 //}
 
+BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
+{
+    // This is what we are actually testing, chaining of several files content
+    InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr),
+        FIXTURES_PATH "/sample", ".mwrm", 0);
+    unsigned char buffer[10000];
+    unsigned char * pbuffer = buffer;
+    size_t total = 0;
+    auto test = [&]{
+        for (size_t i = 0; i < 221 ; i++){
+            pbuffer = buffer;
+            wrm_trans.recv_new(pbuffer, sizeof(buffer));
+            total += sizeof(buffer);
+        }
+    };
+    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    total += pbuffer - buffer;
+    // total size if sum of sample sizes
+    BOOST_CHECK_EQUAL(2200000, total);                             // 1471394 + 444578 + 290245
+}
+
+BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
+{
+    // This is what we are actually testing, chaining of several files content
+    InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/sample_v2", ".mwrm", 0);
+    unsigned char buffer[10000];
+    unsigned char * pbuffer = buffer;
+    size_t total = 0;
+    auto test = [&]{
+        for (size_t i = 0; i < 221 ; i++){
+            pbuffer = buffer;
+            wrm_trans.recv_new(pbuffer, sizeof(buffer));
+            total += sizeof(buffer);
+        }
+    };
+    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    total += pbuffer - buffer;
+    // total size if sum of sample sizes
+    BOOST_CHECK_EQUAL(2200000, total);
+}
+
+BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
+{
+//        "800 600\n",
+//        "0\n",
+//        "\n",
+//        FIXTURES_PATH "/sample0.wrm 1352304810 1352304870\n",
+//        FIXTURES_PATH "/sample1.wrm 1352304870 1352304930\n",
+//        FIXTURES_PATH "/sample2.wrm 1352304930 1352304990\n",
+
+    // This is what we are actually testing, chaining of several files content
+    {
+        InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/sample", ".mwrm", 0);
+        BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
+
+        mwrm_trans.next();
+        BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample0.wrm", mwrm_trans.path());
+        BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
+        BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
+        BOOST_CHECK_EQUAL(1, mwrm_trans.get_seqno());
+
+        mwrm_trans.next();
+        BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample1.wrm", mwrm_trans.path());
+        BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
+        BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
+        BOOST_CHECK_EQUAL(2, mwrm_trans.get_seqno());
+
+        mwrm_trans.next();
+        BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample2.wrm", mwrm_trans.path());
+        BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
+        BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
+        BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
+
+        CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
+    }
+
+    // check we can do it two times
+    InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/sample", ".mwrm", 0);
+
+    BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
+
+    mwrm_trans.next();
+    BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample0.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
+    BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
+    BOOST_CHECK_EQUAL(1, mwrm_trans.get_seqno());
+
+    mwrm_trans.next();
+    BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample1.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
+    BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
+    BOOST_CHECK_EQUAL(2, mwrm_trans.get_seqno());
+
+    mwrm_trans.next();
+    BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample2.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
+    BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
+    BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
+}
+
+BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
+{
+//        "800 600\n",
+//        "0\n",
+//        "\n",
+//        FIXTURES_PATH "/sample0.wrm 1352304810 1352304870\n",
+//        FIXTURES_PATH "/sample1.wrm 1352304870 1352304930\n",
+//        FIXTURES_PATH "/sample2.wrm 1352304930 1352304990\n",
+
+    // This is what we are actually testing, chaining of several files content
+    InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/sample", ".mwrm", 0);
+    BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
+
+    mwrm_trans.next();
+    BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample0.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
+    BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
+    BOOST_CHECK_EQUAL(1, mwrm_trans.get_seqno());
+
+    mwrm_trans.next();
+    BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample1.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
+    BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
+    BOOST_CHECK_EQUAL(2, mwrm_trans.get_seqno());
+
+    mwrm_trans.next();
+    BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample2.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
+    BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
+    BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
+
+    CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
+}
+
+BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
+{
+//        "800 600\n",
+//        "0\n",
+//        "\n",
+//        "/var/rdpproxy/recorded/sample0.wrm 1352304810 1352304870\n",
+//        "/var/rdpproxy/recorded/sample1.wrm 1352304870 1352304930\n",
+//        "/var/rdpproxy/recorded/sample2.wrm 1352304930 1352304990\n",
+
+    // This is what we are actually testing, chaining of several files content
+
+    {
+        InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/moved_sample", ".mwrm", 0);
+        BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
+
+        mwrm_trans.next();
+        BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample0.wrm", mwrm_trans.path());
+        BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
+        BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
+        BOOST_CHECK_EQUAL(1, mwrm_trans.get_seqno());
+
+        mwrm_trans.next();
+        BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample1.wrm", mwrm_trans.path());
+        BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
+        BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
+        BOOST_CHECK_EQUAL(2, mwrm_trans.get_seqno());
+
+        mwrm_trans.next();
+        BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample2.wrm", mwrm_trans.path());
+        BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
+        BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
+        BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
+
+        CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
+    }
+
+    // check we can do it two times
+    InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/moved_sample", ".mwrm", 0);
+
+    BOOST_CHECK_EQUAL(0, mwrm_trans.get_seqno());
+
+    mwrm_trans.next();
+    BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample0.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
+    BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
+    BOOST_CHECK_EQUAL(1, mwrm_trans.get_seqno());
+
+    mwrm_trans.next();
+    BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample1.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
+    BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
+    BOOST_CHECK_EQUAL(2, mwrm_trans.get_seqno());
+
+    mwrm_trans.next();
+    BOOST_CHECK_EQUAL(FIXTURES_PATH "/sample2.wrm", mwrm_trans.path());
+    BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
+    BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
+    BOOST_CHECK_EQUAL(3, mwrm_trans.get_seqno());
+}
+
+BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
+{
+    OpenSSL_add_all_digests();
+
+    // cleanup of possible previous test files
+    {
+        const char * file[] = {"/tmp/TESTOFS.mwrm", "TESTOFS.mwrm", "TESTOFS-000000.wrm", "TESTOFS-000001.wrm"};
+        for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
+            ::unlink(file[i]);
+        }
+    }
+
+    BOOST_CHECK(true);
+
+    CryptoContext cctx;
+    cctx.set_master_key(cstr_array_view(
+        "\x00\x01\x02\x03\x04\x05\x06\x07"
+        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        "\x10\x11\x12\x13\x14\x15\x16\x17"
+        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+    ));
+    cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
+
+    BOOST_CHECK(true);
+
+    {
+        LCGRandom rnd(0);
+        Fstat fstat;
+
+        timeval tv;
+        tv.tv_usec = 0;
+        tv.tv_sec = 1352304810;
+        const int groupid = 0;
+        wrmcapture_OutMetaSequenceTransport crypto_trans(true, true, cctx, rnd, fstat, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid, nullptr);
+        crypto_trans.send("AAAAX", 5);
+        tv.tv_sec += 100;
+        crypto_trans.timestamp(tv);
+        crypto_trans.next();
+        crypto_trans.send("BBBBXCCCCX", 10);
+        tv.tv_sec += 100;
+        crypto_trans.timestamp(tv);
+        BOOST_CHECK(true);
+    }
+
+    {
+        InMetaSequenceTransport crypto_trans(&cctx, "TESTOFS", ".mwrm", 1);
+
+        char buffer[1024] = {};
+        char * bob = buffer;
+
+        BOOST_CHECK(true);
+
+        BOOST_CHECK_NO_THROW(crypto_trans.recv_new(bob, 15));
+
+        BOOST_CHECK(true);
+
+        if (0 != memcmp(buffer, "AAAAXBBBBXCCCCX", 15)){
+            BOOST_CHECK_EQUAL(0, buffer[15]); // this one should not have changed
+            buffer[15] = 0;
+            BOOST_CHECK(true);
+            LOG(LOG_ERR, "expected \"AAAAXBBBBXCCCCX\" got \"%s\"", buffer);
+            BOOST_CHECK(false);
+        }
+
+        BOOST_CHECK(true);
+    }
+
+    const char * file[] = {
+        "/tmp/TESTOFS.mwrm", // hash
+        "TESTOFS.mwrm",
+        "TESTOFS-000000.wrm",
+        "TESTOFS-000001.wrm"
+    };
+    for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
+        if (::unlink(file[i])){
+            BOOST_CHECK(false);
+            LOG(LOG_ERR, "failed to unlink %s", file[i]);
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)
+{
+    CryptoContext cctx;
+    cctx.set_master_key(cstr_array_view(
+        "\x00\x01\x02\x03\x04\x05\x06\x07"
+        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        "\x10\x11\x12\x13\x14\x15\x16\x17"
+        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+    ));
+    cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
+
+    CHECK_EXCEPTION_ERROR_ID(InMetaSequenceTransport(&cctx, "TESTOFSXXX", ".mwrm", 1), ERR_TRANSPORT_OPEN_FAILED);
+}

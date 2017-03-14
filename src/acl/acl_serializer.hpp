@@ -39,8 +39,10 @@
 #include "module_manager.hpp"
 
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <ctime>
+#include "utils/log.hpp"
 
 #define LOG_SESSION(normal_log, session_log, session_type, type, session_id,    \
         ip_client, ip_target, user, device, service, account, priority, format, \
@@ -171,13 +173,13 @@ public:
         , connected(false)
         , verbose(verbose)
     {
-        if (this->verbose & Verbose::state) {
+        if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "KEEP ALIVE CONSTRUCTOR");
         }
     }
 
     ~KeepAlive() {
-        if (this->verbose & Verbose::state) {
+        if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "KEEP ALIVE DESTRUCTOR");
         }
     }
@@ -188,7 +190,7 @@ public:
 
     void start(time_t now) {
         this->connected = true;
-        if (this->verbose & Verbose::state) {
+        if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "auth::start_keep_alive");
         }
         this->timeout    = now + 2 * this->grace_delay;
@@ -217,7 +219,7 @@ public:
             if (this->wait_answer
                 && !ini.is_asked<cfg::context::keepalive>()
                 && ini.get<cfg::context::keepalive>()) {
-                if (this->verbose & Verbose::state) {
+                if (bool(this->verbose & Verbose::state)) {
                     LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
                 }
                 this->timeout    = now + 2*this->grace_delay;
@@ -259,13 +261,13 @@ public:
     , last_activity_time(start)
     , verbose(verbose)
     {
-        if (this->verbose & Verbose::state) {
+        if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "INACTIVITY CONSTRUCTOR");
         }
     }
 
     ~Inactivity() {
-        if (this->verbose & Verbose::state) {
+        if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "INACTIVITY DESTRUCTOR");
         }
     }
@@ -330,7 +332,7 @@ public:
         , verbose(verbose)
     {
         std::snprintf(this->session_id, sizeof(this->session_id), "%d", getpid());
-        if (this->verbose & Verbose::state){
+        if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "auth::AclSerializer");
         }
     }
@@ -338,7 +340,7 @@ public:
     ~AclSerializer()
     {
         this->auth_trans.disconnect();
-        if (this->verbose & Verbose::state){
+        if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "auth::~AclSerializer");
         }
         char session_file[256];
@@ -404,12 +406,11 @@ public:
             else {
                 std::time_t t = std::time(nullptr);
                 char mbstr[100];
-                if (std::strftime(mbstr, sizeof(mbstr), "%F %T", std::localtime(&t))) {
+                if (std::strftime(mbstr, sizeof(mbstr), "%F %T ", std::localtime(&t))) {
                     log_file << mbstr;
                 }
 
-                log_file << " [" << (this->session_type.empty() ? "Neutral" : this->session_type.c_str()) << " Session] " << " " ;
-                log_file << "type=" << type << " " ;
+                log_file << "type=\"" << type << "\" " ;
                 log_file << (extra ? extra : "") << std::endl;
                 log_file.close();
             }
@@ -638,7 +639,7 @@ private:
         char * e;
 
         Transport & trans;
-        const implicit_bool_flags<Verbose> verbose;
+        const Verbose verbose;
 
     public:
         Reader(Transport & trans, Verbose verbose)
@@ -765,8 +766,7 @@ private:
         void safe_read_packet() {
             uint16_t buf_sz = 0;
             do {
-                auto end = this->buf;
-                this->trans.recv(&end, HEADER_SIZE);
+                this->trans.recv_new(this->buf, HEADER_SIZE);
 
                 InStream in_stream(this->buf, 4);
                 this->has_next_buffer = in_stream.in_uint16_be();
@@ -775,9 +775,10 @@ private:
 
             this->p = this->buf;
             this->e = this->buf;
-            this->trans.recv(&e, buf_sz);
+            this->trans.recv_new(e, buf_sz);
+            e += buf_sz;
 
-            if (this->verbose & Verbose::buffer){
+            if (bool(this->verbose & Verbose::buffer)) {
                 if (this->has_next_buffer){
                     LOG(LOG_INFO, "ACL SERIALIZER : multi buffer (receive)");
                 }
@@ -791,11 +792,11 @@ public:
     {
         Reader reader(this->auth_trans, this->verbose);
 
-        while (auto key = reader.key(this->verbose & Verbose::variable)) {
+        while (auto key = reader.key(bool(this->verbose & Verbose::variable))) {
             auto authid = authid_from_string(key);
             if (auto field = this->ini.get_acl_field(authid)) {
                 if (reader.is_set_value()) {
-                    if (field.set(reader.get_val()) && (this->verbose & Verbose::variable)) {
+                    if (field.set(reader.get_val()) && bool(this->verbose & Verbose::variable)) {
                         const char * val         = field.c_str();
                         const char * display_val = val;
                         if (cfg::crypto::key0::index() == authid ||
@@ -813,7 +814,7 @@ public:
                 }
                 else if (reader.consume_ask()) {
                     field.ask();
-                    if (this->verbose & Verbose::variable) {
+                    if (bool(this->verbose & Verbose::variable)) {
                         LOG(LOG_INFO, "receiving ASK '%s'", key);
                     }
                 }
@@ -844,7 +845,7 @@ public:
             std::snprintf(this->session_id, sizeof(this->session_id), "%s",
                           this->ini.get<cfg::context::session_id>().c_str());
         }
-        if (this->verbose & Verbose::buffer){
+        if (bool(this->verbose & Verbose::buffer)){
             LOG(LOG_INFO, "SESSION_ID = %s", this->ini.get<cfg::context::session_id>());
         }
     }
@@ -863,7 +864,7 @@ private:
 
         Buffer buf;
         Transport & trans;
-        const implicit_bool_flags<Verbose> verbose;
+        const Verbose verbose;
 
     public:
         Buffers(Transport & trans, Verbose verbose)
@@ -891,7 +892,7 @@ private:
         }
 
         void send_buffer() {
-            if (this->verbose & Verbose::buffer){
+            if (bool(this->verbose & Verbose::buffer)){
                 LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %d", this->buf.sz - HEADER_SIZE);
             }
             OutStream stream(this->buf.data, HEADER_SIZE);
@@ -905,7 +906,7 @@ private:
     private:
         enum { MULTIBUF = 1 };
         void new_buffer() {
-            if (this->verbose & Verbose::buffer){
+            if (bool(this->verbose & Verbose::buffer)){
                 LOG(LOG_INFO, "ACL SERIALIZER : multi buffer (send)");
             }
             this->buf.flags |= MULTIBUF;
@@ -915,7 +916,7 @@ private:
 
 public:
     void send_acl_data() {
-        if (this->verbose & Verbose::variable){
+        if (bool(this->verbose & Verbose::variable)){
             LOG(LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %zu", this->ini.changed_field_size());
         }
         if (this->ini.changed_field_size()) {
@@ -930,7 +931,7 @@ public:
                     buffers.push('\n');
                     if (field.is_asked()) {
                         buffers.push("ASK\n");
-                        if (this->verbose & Verbose::variable) {
+                        if (bool(this->verbose & Verbose::variable)) {
                             LOG(LOG_INFO, "sending %s=ASK", key);
                         }
                     }
@@ -944,7 +945,7 @@ public:
                          || (strncasecmp("target_password", key, 15) == 0)) {
                             display_val = get_printable_password(val, password_printing_mode);
                         }
-                        if (this->verbose & Verbose::variable) {
+                        if (bool(this->verbose & Verbose::variable)) {
                             LOG(LOG_INFO, "sending %s=%s", key, display_val);
                         }
                     }

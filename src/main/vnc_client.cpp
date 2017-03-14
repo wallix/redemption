@@ -138,8 +138,6 @@ int main(int argc, char** argv)
     TimeSystem timeobj;
 
     /* mod_api */
- //   mod_rdp mod( mod_trans, front, client_info, redir_info, gen, timeobj, mod_rdp_params);
-
      mod_vnc mod(
         sock_trans
       , "10.10.46.70"
@@ -162,16 +160,19 @@ int main(int argc, char** argv)
       , authentifier       // acl
       , verbose);
     mod.get_event().set();
-
+    
     run_mod(mod, front, &sock_trans);
 
     return 0;
 }
 
 
+
+
 void run_mod(mod_api &mod, VncFront &front, SocketTransport *st_mod) {
     struct      timeval time_mark = { 0, 50000 };
     bool        run_session       = true;
+
 
     while (run_session) {
         try {
@@ -183,14 +184,11 @@ void run_mod(mod_api &mod, VncFront &front, SocketTransport *st_mod) {
             io_fd_zero(wfds);
             struct timeval timeout = time_mark;
 
-            mod.get_event().wait_on_fd(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
-
-//            if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
-//                timeout = time_mark;
-//            }
+            mod.get_event().wait_on_fd(st_mod->sck, rfds, max, timeout);
 
             int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
 
+            LOG(LOG_INFO, "VNC CLIENT :: select num = %d\n", num);
 
             if (num < 0) {
                 if (errno == EINTR) {
@@ -201,61 +199,16 @@ void run_mod(mod_api &mod, VncFront &front, SocketTransport *st_mod) {
                 break;
             }
 
-            if (num > 0){ // incoming data from network socket
-                LOG(LOG_INFO, "VNC CLIENT :: select num = %d\n", num);
-            }
-
-            if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
+            if (mod.get_event().is_set(st_mod->sck, rfds)) {
                 mod.get_event().reset();
-                mod.rdp_input_up_and_running(); // really we only need this once
-                LOG(LOG_INFO, "VNC CLIENT :: draw_event");
                 mod.draw_event(time(nullptr), front);
+
             }
-
-
-
-/*
-
-            if (front_event.is_set(st_front?st_front->sck:INVALID_SOCKET, rfds)) {
-                time_t now = time(nullptr);
-
-                try {
-                    front.incoming(mod, now);
-                }
-                catch (...) {
-                    run_session = false;
-                    continue;
-                };
-            }
-
-
-            if (front.up_and_running) {
-                if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
-                    mod.get_event().reset();
-                    mod.draw_event(time(nullptr), front);
-                    if (mod.get_event().signal != BACK_EVENT_NONE) {
-                        mod_event_signal = mod.get_event().signal;
-                    }
-
-                    if (mod_event_signal == BACK_EVENT_NEXT) {
-                        run_session = false;
-                    }
-                }
-            }
-            else {
-            }
-
-*/
-
-
-
-
-
-
         } catch (Error & e) {
             LOG(LOG_ERR, "VNC CLIENT :: Exception raised = %d!\n", e.id);
             run_session = false;
         };
     }   // while (run_session)
+    LOG(LOG_INFO, "VNC CLIENT :: << run_mod");
     return;
 }

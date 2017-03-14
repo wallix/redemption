@@ -48,17 +48,17 @@ public:
     };
 
     Authentifier(const Authentifier&) = delete;
-    
+
     Authentifier(Verbose verbose)
         : connected_to_acl(false)
         , acl_serial(nullptr)
         , verbose(verbose)
     {
-        if (this->verbose & Verbose::state) {
+        if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "auth::Authentifier");
         }
     }
-    
+
     void set_acl_serial(AclSerializer * acl_serial)
     {
         this->connected_to_acl = true;
@@ -66,7 +66,7 @@ public:
     }
 
     ~Authentifier() override {
-        if (this->verbose & Verbose::state) {
+        if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "auth::~Authentifier");
         }
     }

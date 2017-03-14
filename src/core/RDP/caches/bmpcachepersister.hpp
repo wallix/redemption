@@ -103,8 +103,7 @@ public:
         uint8_t buf[16];
         InStream stream(buf);
 
-        auto end = buf;
-        t.recv(&end, 5);  /* magic(4) + version(1) */
+        t.recv_new(buf, 5);  /* magic(4) + version(1) */
 
         const uint8_t * magic   = stream.in_uint8p(4);  /* magic(4) */
               uint8_t   version = stream.in_uint8();
@@ -139,15 +138,17 @@ private:
         uint8_t buf[65536];
         InStream stream(buf);
         auto end = buf;
-        t.recv(&end, 2);
+        t.recv_new(end, 2);
+        end += 2;
 
         uint16_t bitmap_count = stream.in_uint16_le();
-        if (this->verbose & Verbose::from_disk) {
+        if (bool(this->verbose & Verbose::from_disk)) {
             LOG(LOG_INFO, "BmpCachePersister::preload_from_disk: bitmap_count=%u", bitmap_count);
         }
 
         for (uint16_t i = 0; i < bitmap_count; i++) {
-            t.recv(&end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
+            t.recv_new(end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
+            end += 13;
 
             uint8_t sig[8];
 
@@ -161,24 +162,26 @@ private:
 
             BGRPalette original_palette{BGRPalette::no_init()};
             if (original_bpp == 8) {
-                t.recv(&end, sizeof(original_palette));
+                t.recv_new(end, sizeof(original_palette));
+                end += sizeof(original_palette);
 
                 stream.in_copy_bytes(const_cast<char*>(original_palette.data()), sizeof(original_palette));
             }
 
             uint16_t bmp_size;
-            t.recv(&end, sizeof(bmp_size));
+            t.recv_new(end, sizeof(bmp_size));
+            end += sizeof(original_palette);
             bmp_size = stream.in_uint16_le();
 
             end = buf;
             stream = InStream(buf);
 
-            t.recv(&end, bmp_size);
+            t.recv_new(end, bmp_size);
 
             if (bmp_cache.get_cache(cache_id).persistent()) {
                 map_key key(sig);
 
-                if (this->verbose & Verbose::bmp_info) {
+                if (bool(this->verbose & Verbose::bmp_info)) {
                     LOG( LOG_INFO
                        , "BmpCachePersister::preload_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
                        , key.str(), original_bpp, cx, cy, bmp_size);
@@ -226,7 +229,7 @@ public:
 
             container_type::iterator it = this->bmp_map[cache_id].find(key);
             if (it != this->bmp_map[cache_id].end()) {
-                if (this->verbose & Verbose::bmp_info) {
+                if (bool(this->verbose & Verbose::bmp_info)) {
                     LOG(LOG_INFO, "BmpCachePersister: bitmap found. key=\"%s\"", key.str());
                 }
 
@@ -236,7 +239,7 @@ public:
 
                 this->bmp_map[cache_id].erase(it);
             }
-            else if (this->verbose & Verbose::bmp_info) {
+            else if (bool(this->verbose & Verbose::bmp_info)) {
                 LOG(LOG_WARNING, "BmpCachePersister: bitmap not found!!! key=\"%s\"", key.str());
             }
         }
@@ -248,8 +251,7 @@ public:
         uint8_t buf[16];
         InStream stream(buf);
 
-        auto end = buf;
-        t.recv(&end, 5);  /* magic(4) + version(1) */
+        t.recv_new(buf, 5);  /* magic(4) + version(1) */
 
         const uint8_t * magic   = stream.in_uint8p(4);  /* magic(4) */
               uint8_t   version = stream.in_uint8();
@@ -285,7 +287,8 @@ private:
         uint8_t buf[65536];
         InStream stream(buf);
         auto end = buf;
-        t.recv(&end, 2);
+        t.recv_new(end, 2);
+        end += 2;
 
         uint16_t bitmap_count = stream.in_uint16_le();
         if (bool(verbose & Verbose::from_disk)) {
@@ -293,7 +296,8 @@ private:
         }
 
         for (uint16_t i = 0; i < bitmap_count; i++) {
-            t.recv(&end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
+            t.recv_new(end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
+            end +=  13;
 
             union {
                 uint8_t  sig_8[8];
@@ -310,19 +314,21 @@ private:
 
             BGRPalette original_palette{BGRPalette::no_init()};
             if (original_bpp == 8) {
-                t.recv(&end, sizeof(original_palette));
+                t.recv_new(end, sizeof(original_palette));
+                end += sizeof(original_palette);
 
                 stream.in_copy_bytes(const_cast<char*>(original_palette.data()), sizeof(original_palette));
             }
 
             uint16_t bmp_size;
-            t.recv(&end, sizeof(bmp_size));
+            t.recv_new(end, sizeof(bmp_size));
             bmp_size = stream.in_uint16_le();
 
             end = buf;
             stream = InStream(buf);
 
-            t.recv(&end, bmp_size);
+            t.recv_new(end, bmp_size);
+            end += bmp_size;
 
             if (bmp_cache.get_cache(cache_id).persistent() && (i < bmp_cache.get_cache(cache_id).size())) {
                 if (bool(verbose & Verbose::bmp_info)) {

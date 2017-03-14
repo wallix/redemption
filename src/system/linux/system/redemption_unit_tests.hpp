@@ -17,15 +17,30 @@ namespace boost { namespace unit_test { namespace ut_detail {
 # define CHECK_EXCEPTION_ERROR_ID(stmt, id) do { stmt; id; } while (0)
 # define BOOST_CHECK_NO_THROW(stmt) do { stmt; } while (0)
 # define BOOST_CHECK_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
+# define BOOST_CHECK_EXCEPTION(stmt, exception, predicate) do {\
+    stmt; [](exception & e) { predicate(e); }; } while (0)
 # define BOOST_CHECK_EQUAL(a, b) (a) == (b)
 # define BOOST_CHECK_NE(a, b) (a) != (b)
-# define BOOST_CHECK(a, b) (a) != (b)
+# define BOOST_CHECK_LT(a, b) (a) < (b)
+# define BOOST_CHECK_LE(a, b) (a) <= (b)
+# define BOOST_CHECK_GT(a, b) (a) > (b)
+# define BOOST_CHECK_GE(a, b) (a) >= (b)
+# define BOOST_CHECK(a) (a)
+# define BOOST_CHECK_MESSAGE(a, iostream_expr) (a), ""
 # define BOOST_CHECK_EQUAL_RANGES(a, b) (a) != (b)
+
 # define BOOST_REQUIRE_NO_THROW(stmt) do { stmt; } while (0)
 # define BOOST_REQUIRE_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
+# define BOOST_REQUIRE_EXCEPTION(stmt, exception, predicate) do {\
+    stmt; [](exception & e) { predicate(e); }; } while (0)
 # define BOOST_REQUIRE_EQUAL(a, b) (a) == (b)
 # define BOOST_REQUIRE_NE(a, b) (a) != (b)
+# define BOOST_REQUIRE_LT(a, b) (a) < (b)
+# define BOOST_REQUIRE_LE(a, b) (a) <= (b)
+# define BOOST_REQUIRE_GT(a, b) (a) > (b)
+# define BOOST_REQUIRE_GE(a, b) (a) >= (b)
 # define BOOST_REQUIRE(a) (a)
+# define BOOST_REQUIRE_MESSAGE(a, iostream_expr) (a), ""
 # define BOOST_REQUIRE_EQUAL_RANGES(a, b) (a) != (b)
 #else
 # define CHECK_EXCEPTION_ERROR_ID(stmt, ErrId)  \
@@ -95,8 +110,8 @@ namespace redemption_unit_test__
             REDEMPTION_DIAGNOSTIC_PUSH
             REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
             boost::unit_test::unit_test_monitor.register_exception_translator<Error>(+[](Error const & e){
-                std::printf("Exception Error: %s\n", e.errmsg());
-                throw e;
+                std::string s = "Exception of type 'Error': "; s += e.errmsg();
+                throw std::runtime_error{std::move(s)};
             });
             REDEMPTION_DIAGNOSTIC_POP
         }

@@ -106,6 +106,9 @@
 "#_advanced\n"
 "video_quality = option('low', 'medium', 'high', default='high')\n\n"
 
+"#_advanced\n"
+"large_pointer_support = boolean(default=True)\n\n"
+
 "[session_log]\n\n"
 
 "enable_session_log = boolean(default=True)\n\n"

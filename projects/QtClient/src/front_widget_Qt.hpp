@@ -233,7 +233,7 @@ public Q_SLOTS:
 //         QString qpath(front->SHARE_DIR.c_str());
 //
 //         this->addPaths(this->scan_dir(qpath));
-// 
+//
 //         //this->QObject::connect(this, SIGNAL (directoryChanged(const QString &)),  this, SLOT (sync_dir_change(const QString &)));
 //
 //         this->QObject::connect(this, SIGNAL (fileChanged(const QString &)),  this, SLOT (sync_file_change(const QString &)));
@@ -305,16 +305,20 @@ public:
     Front_Qt_API       * _front;
     const int            _width;
     const int            _height;
+
     QWidget              _emptyPanel;
     QWidget            * _viewTab;
     QWidget            * _connectionTab;
+    QWidget            * _servicesTab;
     QWidget            * _keyboardTab;
+
     QGridLayout        * _layout;
     QPushButton          _buttonSave;
     QPushButton          _buttonCancel;
     QPushButton        * _buttonDeleteKey;
     QPushButton        * _buttonAddKey;
     QTabWidget         * _tabs;
+
     QComboBox            _bppComboBox;
     QComboBox            _resolutionComboBox;
     QCheckBox            _perfCheckBox;
@@ -322,13 +326,22 @@ public:
     QCheckBox            _recordingCB;
     QCheckBox            _tlsBox;
     QCheckBox            _nlaBox;
+    QCheckBox            _clipboardCheckBox;
+    QCheckBox            _shareCheckBox;
+
+    QLineEdit            _sharePath;
+    QPushButton          _buttonSharePath;
+
     QComboBox            _languageComboBox;
     QComboBox            _fpsComboBox;
     QComboBox            _monitorCountComboBox;
     QComboBox            _captureSnapFreqComboBox;
+
     QFormLayout        * _layoutView;
     QFormLayout        * _layoutConnection;
+    QFormLayout        * _layoutServices;
     QFormLayout        * _layoutKeyboard;
+
     QLabel               _labelBpp;
     QLabel               _labelResolution;
     QLabel               _labelPerf;
@@ -340,6 +353,10 @@ public:
     QLabel               _labelTls;
     QLabel               _labelNla;
     QLabel               _labelCaptureFreq;
+    QLabel               _labelClipboard;
+    QLabel               _labelShare;
+    QLabel               _labelSharePath;
+
     QTableWidget       * _tableKeySetting;
     const int            _columnNumber;
     const int            _tableKeySettingMaxHeight;
@@ -353,6 +370,7 @@ public:
         , _emptyPanel(this)
         , _viewTab(nullptr)
         , _connectionTab(nullptr)
+        , _servicesTab(nullptr)
         , _keyboardTab(nullptr)
         , _layout(nullptr)
         , _buttonSave("Save", this)
@@ -365,6 +383,12 @@ public:
         , _perfCheckBox(this)
         , _spanCheckBox(this)
         , _recordingCB(this)
+        , _tlsBox(this)
+        , _nlaBox(this)
+        , _clipboardCheckBox(this)
+        , _shareCheckBox(this)
+        , _sharePath(this->_front->SHARE_DIR.c_str(), this)
+        , _buttonSharePath("Select a Directory", this)
         , _languageComboBox(this)
         , _fpsComboBox(this)
         , _monitorCountComboBox(this)
@@ -383,6 +407,9 @@ public:
         , _labelTls("TLS :", this)
         , _labelNla("NLA :", this)
         , _labelCaptureFreq("Capture per second :", this)
+        , _labelClipboard("Active Shared Clipboard :", this)
+        , _labelShare("Active Shared Virtual Disk :", this)
+        , _labelSharePath("Shared Path :", this)
         , _tableKeySetting(nullptr)
         , _columnNumber(4)
         , _tableKeySettingMaxHeight((20*6)+11)
@@ -398,6 +425,7 @@ public:
         // Tab options
         this->_viewTab = new QWidget(this);
         this->_connectionTab = new QWidget(this);
+        this->_servicesTab = new QWidget(this);
         this->_keyboardTab = new QWidget(this);
         this->_tabs = new QTabWidget(this);
 
@@ -509,6 +537,38 @@ public:
 
         this->_connectionTab->setLayout(this->_layoutConnection);
         this->_tabs->addTab(this->_connectionTab, strConnection);
+
+
+
+        // Services tab
+        const QString strServices("Services");
+        this->_layoutServices = new QFormLayout(this->_servicesTab);
+
+        this->_clipboardCheckBox.setCheckState(Qt::Unchecked);
+        if (this->_front->_enable_shared_clipboard) {
+            this->_clipboardCheckBox.setCheckState(Qt::Checked);
+        }
+        this->_layoutServices->addRow(&(this->_labelClipboard), &(this->_clipboardCheckBox));
+
+        this->_shareCheckBox.setCheckState(Qt::Unchecked);
+        if (this->_front->_enable_shared_virtual_disk) {
+            this->_shareCheckBox.setCheckState(Qt::Checked);
+        }
+        this->QObject::connect(&(this->_shareCheckBox), SIGNAL(stateChanged(int)), this, SLOT(setEnableSharePath(int)));
+        this->_layoutServices->addRow(&(this->_labelShare), &(this->_shareCheckBox));
+
+        this->_sharePath.setEnabled(this->_front->_enable_shared_virtual_disk);
+        this->_layoutServices->addRow(&(this->_labelSharePath), &(this->_sharePath));
+
+        QRect rectPath(QPoint(190, 226),QSize(180, 24));
+        this->_buttonSharePath.setGeometry(rectPath);
+        this->_buttonSharePath.setCursor(Qt::PointingHandCursor);
+        this->QObject::connect(&(this->_buttonSharePath) , SIGNAL (pressed()) , this, SLOT (dirPathPressed()));
+        QLabel dirButtonLabel("", this);
+        this->_layoutServices->addRow(&(dirButtonLabel), &(this->_buttonSharePath));
+
+        this->_servicesTab->setLayout(this->_layoutServices);
+        this->_tabs->addTab(this->_servicesTab, strServices);
 
 
 
@@ -667,6 +727,21 @@ private:
 
 
 public Q_SLOTS:
+    void setEnableSharePath(int value) {
+        this->_sharePath.setEnabled(value);
+        this->_buttonSharePath.setEnabled(value);
+    }
+
+    void dirPathPressed() {
+        QString filePath("");
+        filePath = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
+                                                     this->_front->SHARE_DIR.c_str(),
+                                                     QFileDialog::ShowDirsOnly |
+                                                     QFileDialog::DontResolveSymlinks);
+        std::string str_share_path(filePath.toStdString());
+        this->_sharePath.setText(filePath);
+    }
+
     void savePressed() {}
 
     void saveReleased() {
@@ -710,6 +785,20 @@ public Q_SLOTS:
         this->_front->_info.width   = this->_front->_width * this->_front->_monitorCount;
         this->_front->_info.height  = this->_front->_height;
         this->_front->_delta_time   = this->_captureSnapFreqComboBox.itemData(this->_captureSnapFreqComboBox.currentIndex()).toInt();
+
+        if (this->_clipboardCheckBox.isChecked()) {
+            this->_front->_enable_shared_clipboard = true;
+        } else {
+            this->_front->_enable_shared_clipboard = false;
+        }
+
+        if (this->_shareCheckBox.isChecked()) {
+            this->_front->_enable_shared_virtual_disk = true;
+        } else {
+            this->_front->_enable_shared_virtual_disk = false;
+        }
+
+        this->_front->SHARE_DIR = this->_sharePath.text().toStdString();
 
         this->_front->writeClientInfo();
 
@@ -1587,13 +1676,13 @@ public:
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
     }
 
-    void write_clipboard_temp_file(std::string fileName, uint8_t * data, size_t data_len) {
+    void write_clipboard_temp_file(std::string fileName, const uint8_t * data, size_t data_len) {
         std::string filePath(this->_front->CB_TEMP_DIR + std::string("/") + fileName);
         std::string filePath_mem(filePath);
         this->_temp_files_list.push_back(filePath_mem);
-        std::ofstream oFile(filePath, std::ios::out | std::ios::binary);
+        std::ofstream oFile(filePath, std::ios::out | std::ios::binary | std::ios::app);
         if(oFile.is_open()) {
-            oFile.write(reinterpret_cast<char *>(data), data_len);
+            oFile.write(reinterpret_cast<const char *>(data), data_len);
             oFile.close();
         }
     }
@@ -1643,7 +1732,7 @@ public:
             //std::cout <<  path <<  std::endl;
             QString qpath(path.c_str());
 
-            qDebug() << "QUrl" << QUrl::fromLocalFile(qpath);
+            //qDebug() << "QUrl" << QUrl::fromLocalFile(qpath);
 
             gnomeFormat.append(QUrl::fromLocalFile(qpath).toEncoded());
         }

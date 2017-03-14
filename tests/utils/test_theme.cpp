@@ -85,12 +85,14 @@ BOOST_AUTO_TEST_CASE(TestColorFromFile)
     BOOST_CHECK_EQUAL(BGRColor_(0xb72d30),  colors.selector_label.bgcolor);
     BOOST_CHECK_EQUAL((WHITE),              colors.selector_label.fgcolor);
 }
+
 BOOST_AUTO_TEST_CASE(TestConfigDefault)
 {
     std::stringstream   oss("");
     Theme          colors;
     ThemeHolder    theme_holder(colors);
     ConfigurationLoader cfg_loader(theme_holder, oss);
+
     BOOST_CHECK_EQUAL((DARK_BLUE_BIS),  colors.global.bgcolor);
     BOOST_CHECK_EQUAL((WHITE),          colors.global.fgcolor);
     BOOST_CHECK_EQUAL((LIGHT_BLUE),     colors.global.separator_color);
@@ -113,7 +115,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL((WHITE),          colors.selector_focus.fgcolor);
     BOOST_CHECK_EQUAL((MEDIUM_BLUE),    colors.selector_label.bgcolor);
     BOOST_CHECK_EQUAL((WHITE),          colors.selector_label.fgcolor);
-
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigPartial)
@@ -131,6 +132,7 @@ BOOST_AUTO_TEST_CASE(TestConfigPartial)
                             "\n"
                             );
     Theme          colors;
+
     ThemeHolder    theme_holder(colors);
     ConfigurationLoader cfg_loader(theme_holder, oss);
     BOOST_CHECK_EQUAL((DARK_BLUE_BIS),      colors.global.bgcolor);
@@ -155,12 +157,12 @@ BOOST_AUTO_TEST_CASE(TestConfigPartial)
     BOOST_CHECK_EQUAL((WHITE),              colors.selector_focus.fgcolor);
     BOOST_CHECK_EQUAL((MEDIUM_BLUE),        colors.selector_label.bgcolor);
     BOOST_CHECK_EQUAL((WHITE),              colors.selector_label.fgcolor);
-
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigPartialFile)
 {
     Theme          colors;
+
     ThemeHolder    theme_holder(colors);
     ConfigurationLoader cfg_loader(theme_holder, CFG_PATH "/themes/test_theme/theme.ini");
     BOOST_CHECK_EQUAL((DARK_BLUE_BIS),      colors.global.bgcolor);
@@ -185,7 +187,6 @@ BOOST_AUTO_TEST_CASE(TestConfigPartialFile)
     BOOST_CHECK_EQUAL((WHITE),              colors.selector_focus.fgcolor);
     BOOST_CHECK_EQUAL((MEDIUM_BLUE),        colors.selector_label.bgcolor);
     BOOST_CHECK_EQUAL((WHITE),              colors.selector_label.fgcolor);
-
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigPartialIni)
