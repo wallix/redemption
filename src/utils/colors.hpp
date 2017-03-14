@@ -514,6 +514,11 @@ struct with_color8_palette
     RGBColor operator()(BGRColor c) const noexcept {
         return Converter()(c, this->palette);
     }
+
+    BGRColor_ operator()(RDPColor c) const noexcept {
+        return Converter()(c, this->palette);
+    }
+
     BGRPalette const & palette;
 };
 using decode_color8_with_palette = with_color8_palette<decode_color8>;
