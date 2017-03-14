@@ -559,6 +559,69 @@ struct ocrypto {
 
 };
 
+
+///\return 0 if success, otherwise a negatif number
+static inline ssize_t hash_buf_raw_write(int hash_buf_file_fd, void * data, size_t len)
+{
+    size_t remaining_len = len;
+    size_t total_sent = 0;
+    while (remaining_len) {
+        ssize_t ret = ::write(hash_buf_file_fd,
+            static_cast<const char*>(data) + total_sent, remaining_len);
+        if (ret <= 0){
+            if (errno == EINTR){
+                continue;
+            }
+            return -1;
+        }
+        remaining_len -= ret;
+        total_sent += ret;
+    }
+    return 0;
+}
+
+
+static inline ssize_t hash_buf_write(int hash_buf_file_fd, ocrypto & hash_buf_encrypt, const void * data, size_t len)
+{
+    uint8_t buffer[65536];
+    size_t towrite = 0;
+    int lentobuf = hash_buf_encrypt.write(buffer, sizeof(buffer), towrite, data, len);
+    if (lentobuf < 0) {
+        return -1;
+    }
+    if (hash_buf_raw_write(hash_buf_file_fd, buffer, towrite))
+    {
+        return -1;
+    }
+    return lentobuf;
+}
+
+static inline int hash_buf_open(int & hash_buf_file_fd, ocrypto & hash_buf_encrypt, const char * filename, mode_t mode = 0600)
+{
+    if (-1 != hash_buf_file_fd) {
+        ::close(hash_buf_file_fd);
+        hash_buf_file_fd = -1;
+    }
+    hash_buf_file_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+    int err = hash_buf_file_fd;
+
+    if (err < 0) {
+        return err;
+    }
+
+    size_t base_len = 0;
+    const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
+
+    uint8_t buffer[40];
+    size_t towrite = 0;
+    err = hash_buf_encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
+    if (!err) {
+        err = hash_buf_raw_write(hash_buf_file_fd, buffer, towrite);
+    }
+    return err;
+}
+
+
 struct MetaSeqBuf {
     CryptoContext & cctx;
     Random & rnd;
@@ -860,59 +923,6 @@ public:
                 }
             }
 
-            class wrmcapture_ofile_buf_out
-            {
-                int fd;
-            public:
-                wrmcapture_ofile_buf_out() : fd(-1) {}
-                ~wrmcapture_ofile_buf_out()
-                {
-                    this->close();
-                }
-
-                int open(const char * filename, mode_t mode)
-                {
-                    this->close();
-                    this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-                    return this->fd;
-                }
-
-                int close()
-                {
-                    if (this->is_open()) {
-                        const int ret = ::close(this->fd);
-                        this->fd = -1;
-                        return ret;
-                    }
-                    return 0;
-                }
-
-                ssize_t write(const void * data, size_t len)
-                {
-                    size_t remaining_len = len;
-                    size_t total_sent = 0;
-                    while (remaining_len) {
-                        ssize_t ret = ::write(this->fd,
-                            static_cast<const char*>(data) + total_sent, remaining_len);
-                        if (ret <= 0){
-                            if (errno == EINTR){
-                                continue;
-                            }
-                            return -1;
-                        }
-                        remaining_len -= ret;
-                        total_sent += ret;
-                    }
-                    return total_sent;
-                }
-
-                bool is_open() const noexcept
-                { return -1 != this->fd; }
-
-                int flush() const
-                { return 0; }
-            } hash_buf;
-
             if (-1 == this->meta_buf_fd) {
                 return 1;
             }
@@ -949,14 +959,15 @@ public:
 
             snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
-            if (hash_buf.open(hash_filename, S_IRUSR|S_IRGRP) < 0) {
+            int hash_buf_fd = ::open(hash_filename, O_WRONLY | O_CREAT, S_IRUSR|S_IRGRP);
+            if (hash_buf_fd < 0) {
                 int e = errno;
                 LOG(LOG_ERR, "Open to transport failed: code=%d", e);
                 errno = e;
                 return 1;
             }
             char header[] = "v2\n\n\n";
-            hash_buf.write(header, sizeof(header)-1);
+            hash_buf_raw_write(hash_buf_fd, header, sizeof(header)-1);
 
             struct stat stat;
             int err = ::stat(meta_filename, &stat);
@@ -1016,15 +1027,14 @@ public:
             write(&hash[MD_HASH_LENGTH]);
             *p++ = '\n';
 
-            ssize_t res = hash_buf.write(mes, p-mes);
+            ssize_t res = hash_buf_raw_write(hash_buf_fd, mes, p-mes);
 
-            if (res < p-mes) {
-                err = res < 0 ? res : 1;
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+            if (res < 0) {
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, res);
                 return 1;
             }
 
-            err = hash_buf.close(/*hash*/);
+            err = ::close(hash_buf_fd);
             if (err) {
                 LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
                 return 1;
@@ -1158,65 +1168,6 @@ public:
 };
 
 
-///\return 0 if success, otherwise a negatif number
-static inline ssize_t hash_buf_raw_write(int hash_buf_file_fd, void * data, size_t len)
-{
-    size_t remaining_len = len;
-    size_t total_sent = 0;
-    while (remaining_len) {
-        ssize_t ret = ::write(hash_buf_file_fd,
-            static_cast<const char*>(data) + total_sent, remaining_len);
-        if (ret <= 0){
-            if (errno == EINTR){
-                continue;
-            }
-            return -1;
-        }
-        remaining_len -= ret;
-        total_sent += ret;
-    }
-    return 0;
-}
-
-static inline ssize_t hash_buf_write(int hash_buf_file_fd, ocrypto & hash_buf_encrypt, const void * data, size_t len)
-{
-    uint8_t buffer[65536];
-    size_t towrite = 0;
-    int lentobuf = hash_buf_encrypt.write(buffer, sizeof(buffer), towrite, data, len);
-    if (lentobuf < 0) {
-        return -1;
-    }
-    if (hash_buf_raw_write(hash_buf_file_fd, buffer, towrite))
-    {
-        return -1;
-    }
-    return lentobuf;
-}
-
-static inline int hash_buf_open(int & hash_buf_file_fd, ocrypto & hash_buf_encrypt, const char * filename, mode_t mode = 0600)
-{
-    if (-1 != hash_buf_file_fd) {
-        ::close(hash_buf_file_fd);
-        hash_buf_file_fd = -1;
-    }
-    hash_buf_file_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-    int err = hash_buf_file_fd;
-
-    if (err < 0) {
-        return err;
-    }
-
-    size_t base_len = 0;
-    const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-
-    uint8_t buffer[40];
-    size_t towrite = 0;
-    err = hash_buf_encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
-    if (!err) {
-        err = hash_buf_raw_write(hash_buf_file_fd, buffer, towrite);
-    }
-    return err;
-}
 
 
 struct MetaSeqBufCrypto
