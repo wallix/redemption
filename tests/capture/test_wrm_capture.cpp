@@ -1630,18 +1630,12 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         BOOST_CHECK(true);
 
         crypto_trans.send("BBBXCCCCX", 9);
-        
-        LOG(LOG_INFO, "wrmcapture_OutMetaSequenceTransport::9 bytes sent");
-
-        tv.tv_sec += 100;
+         tv.tv_sec += 100;
         crypto_trans.timestamp(tv);
         BOOST_CHECK(true);
     }
 
-    LOG(LOG_INFO, "wrmcapture_OutMetaSequenceTransport:: closed by out of scope");
-
-
-    {
+     {
         InMetaSequenceTransport crypto_trans(&cctx, "TESTOFS", ".mwrm", 1);
 
         char buffer[1024] = {};
@@ -1649,8 +1643,8 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
         BOOST_CHECK(true);
 
-        BOOST_CHECK_NO_THROW(crypto_trans.recv_new(bob, 6));
-        BOOST_CHECK_NO_THROW(crypto_trans.recv_new(bob+6, 9));
+        BOOST_CHECK_NO_THROW(crypto_trans.recv_new(bob, 15));
+//        BOOST_CHECK_NO_THROW(crypto_trans.recv_new(bob+6, 9));
 
         BOOST_CHECK(true);
 
@@ -1671,12 +1665,17 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         "TESTOFS-000000.wrm",
         "TESTOFS-000001.wrm"
     };
-    for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
-        if (::unlink(file[i])){
-            BOOST_CHECK(false);
-            LOG(LOG_ERR, "failed to unlink %s", file[i]);
-        }
+    for (auto x: file) {
+        ::unlink(x);
     }
+ 
+
+//   for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
+//        if (::unlink(file[i])){
+//            BOOST_CHECK(false);
+//            LOG(LOG_ERR, "failed to unlink %s", file[i]);
+//        }
+//    }
 }
 
 BOOST_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)

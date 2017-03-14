@@ -1426,11 +1426,13 @@ public:
                 LOG(LOG_INFO, "next() : 1426\n");
                 this->next();
             }
-            LOG(LOG_INFO, "MetaSeqBufCrypto::closing meta buf");
-            if (this->meta_buf_is_open()) {
-                LOG(LOG_INFO, "MetaSeqBufCrypto::close meta buf");
-                this->meta_buf_close();
-            }
+
+            this->close();
+//            LOG(LOG_INFO, "MetaSeqBufCrypto::closing meta buf");
+//            if (this->meta_buf_is_open()) {
+//                LOG(LOG_INFO, "MetaSeqBufCrypto::close meta buf");
+//                this->meta_buf_close();
+//            }
         }
     }
 
