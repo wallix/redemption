@@ -87,8 +87,8 @@ public:
                                , this->x() + text_indentation
                                , this->y()
                                , this->buffer
-                               , this->fg_color
-                               , this->bg_color
+                               , BGRColor_(this->fg_color)
+                               , BGRColor_(this->bg_color)
                                , color_ctx
                                , rect_intersect
                                );

@@ -136,8 +136,8 @@ public:
                                      , this->x_text + this->x()
                                      , dy
                                      , line->str
-                                     , this->fg_color
-                                     , this->bg_color
+                                     , RDPColor(this->fg_color)
+                                     , RDPColor(this->bg_color)
                                      , gdi::ColorCtx::depth24()
                                      , rect_intersect.intersect(
                                                 Rect(this->x(),

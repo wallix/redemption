@@ -319,7 +319,7 @@ struct TextMetrics
 static inline void server_draw_text(
     GraphicApi & drawable, Font const & font,
     int16_t x, int16_t y, const char * text,
-    uint32_t fgcolor, uint32_t bgcolor,
+    RDPColor fgcolor, RDPColor bgcolor,
     ColorCtx color_ctx,
     Rect clip
 ) {
@@ -372,8 +372,8 @@ static inline void server_draw_text(
             0x03,               // fl_accel
             0x0,                // ui_charinc
             1,                  // f_op_redundant,
-            RDPColor(fgcolor),  // BackColor (text color)
-            RDPColor(bgcolor),  // ForeColor (color of the opaque rectangle)
+            fgcolor,            // BackColor (text color)
+            bgcolor,            // ForeColor (color of the opaque rectangle)
             bk,                 // bk
             bk,                 // op
             // brush

@@ -109,8 +109,8 @@ public:
                               xtext + rect.x,
                               ytext + rect.y,
                               text,
-                              fgcolor,
-                              bgcolor,
+                              RDPColor(fgcolor),
+                              RDPColor(bgcolor),
                               gdi::ColorCtx::depth24(),
                               rect.intersect(clip)
                               );

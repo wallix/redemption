@@ -560,8 +560,8 @@ private:
                               this->protected_rect.x + (this->protected_rect.cx - tm.width) / 2,
                               this->protected_rect.y + (this->protected_rect.cy - tm.height) / 2,
                               TR("starting_remoteapp", this->lang),
-                              this->theme.global.fgcolor.to_u32(),
-                              this->theme.global.bgcolor.to_u32(),
+                              this->theme.global.fgcolor,
+                              this->theme.global.bgcolor,
                               gdi::ColorCtx::depth24(),
                               this->protected_rect
                               );
@@ -607,8 +607,8 @@ private:
                               this->protected_rect.x + (this->protected_rect.cx - tm_msg.width) / 2,
                               ypos,
                               TR("closing_remoteapp", this->lang),
-                              this->theme.global.fgcolor.to_u32(),
-                              this->theme.global.bgcolor.to_u32(),
+                              this->theme.global.fgcolor,
+                              this->theme.global.bgcolor,
                               gdi::ColorCtx::depth24(),
                               this->protected_rect
                               );
