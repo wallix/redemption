@@ -1422,15 +1422,16 @@ public:
     {
         if (this->with_encryption){
             LOG(LOG_INFO, "MetaSeqBufCrypto::destructor");
-            if (this->buf_.is_open()) {
-                LOG(LOG_INFO, "next() : 1426\n");
-                this->next();
-            }
+//            if (this->buf_.is_open()) {
+//                LOG(LOG_INFO, "next() : 1426\n");
+//                this->next();
+//            }
             LOG(LOG_INFO, "MetaSeqBufCrypto::closing meta buf");
-            if (this->meta_buf_is_open()) {
-                LOG(LOG_INFO, "MetaSeqBufCrypto::close meta buf");
-                this->meta_buf_close();
-            }
+            this->close();
+//            if (this->meta_buf_is_open()) {
+//                LOG(LOG_INFO, "MetaSeqBufCrypto::close meta buf");
+//                this->meta_buf_close();
+//            }
         }
     }
 
