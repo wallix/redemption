@@ -18,9 +18,6 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
 */
 
-
-#pragma once
-
 #include "gdi/graphic_api.hpp"
 #include "transport/transport.hpp"
 #include "transport/file_transport.hpp"
@@ -252,7 +249,7 @@ void set_rows_from_image_chunk(
     Transport & trans,
     const uint16_t chunk_type,
     const uint32_t chunk_size,
-    const uint16_t width,
+    const size_t width,
     const array_view<gdi::GraphicApi*> graphic_consumers
 ) {
     struct InChunkedImage
@@ -317,6 +314,7 @@ void set_rows_from_image_chunk(
     InChunkedImage chunk_trans(chunk_type, chunk_size, trans);
     detail::PngReadStruct png;
     png_set_read_fn(png.ppng, &chunk_trans, png_read_data_fn);
+    png_read_info(png.ppng, png.pinfo);
 
     size_t height = png_get_image_height(png.ppng, png.pinfo);
     // TODO check png row_size is identical to drawable rowsize
@@ -348,7 +346,6 @@ void set_rows_from_image_chunk(
         }
 
         for (gdi::GraphicApi * gd : graphic_consumers){
-            // TODO u8* -> u32* is an UB
             gd->set_row(k, reinterpret_cast<uint8_t*>(bgrtmp));
         }
     }

@@ -34,50 +34,50 @@ namespace gdi
 void transport_dump_png24(
     Transport & trans,
     uint8_t const * data,
-    size_t width,
-    size_t height,
-    size_t rowsize,
+    std::size_t width,
+    std::size_t height,
+    std::size_t rowsize,
     bool bgr
 );
 
 void file_transport_dump_png24(
     FileTransport & trans,
     uint8_t const * data,
-    size_t width,
-    size_t height,
-    size_t rowsize,
+    std::size_t width,
+    std::size_t height,
+    std::size_t rowsize,
     bool bgr
 );
 
 void dump_png24(
     std::FILE * fd,
     uint8_t const * data,
-    size_t width,
-    size_t height,
-    size_t rowsize,
+    std::size_t width,
+    std::size_t height,
+    std::size_t rowsize,
     bool bgr
 );
 
 void read_png24(
     std::FILE * fd,
     uint8_t * data,
-    size_t width,
-    size_t height,
-    size_t rowsize
+    std::size_t width,
+    std::size_t height,
+    std::size_t rowsize
 );
 
 void transport_read_png24(
     Transport & trans,
     uint8_t * data,
-    size_t width,
-    size_t height,
-    size_t rowsize
+    std::size_t width,
+    std::size_t height,
+    std::size_t rowsize
 );
 
 void set_rows_from_image_chunk(
     Transport & trans,
     uint16_t chunk_type,
     uint32_t chunk_size,
-    uint16_t cx,
+    std::size_t cx,
     array_view<gdi::GraphicApi*>
 );

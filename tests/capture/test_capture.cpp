@@ -26,7 +26,7 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-//#define LOGNULL
+// #define LOGNULL
 #define LOGPRINT
 
 #include "utils/log.hpp"
@@ -2354,14 +2354,10 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     uint16_t chunk_count = stream.in_uint16_le();
     (void)chunk_count;
 
-    InChunkedImageTransport chunk_trans(chunk_type, chunk_size, &in_png_trans);
-
-
     RDPDrawable d(20, 10);
-    ::transport_read_png24(
-        chunk_trans, const_cast<uint8_t*>(d.data()),
-        d.width(), d.height(), d.rowsize()
-    );
+    gdi::GraphicApi * gdi = &d;
+    set_rows_from_image_chunk(in_png_trans, chunk_type, chunk_size, d.width(), {&gdi, 1});
+
     const int groupid = 0;
     PngCapture::OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
     DumpPng24FromRDPDrawableAdapter(d).dump_png24(png_trans, true);
