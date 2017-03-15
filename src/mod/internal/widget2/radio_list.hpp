@@ -104,12 +104,12 @@ class WidgetRadioList : public Widget2
     WidgetRadioButton * child_list[AUTOSIZE];
     size_t size;
     int selected;
-    int fgcolor;
-    int bgcolor;
+    BGRColor_ fgcolor;
+    BGRColor_ bgcolor;
 
 public:
     WidgetRadioList(mod_api & drawable, int x, int y, Widget2 & parent,
-                    NotifyApi * notifier, int group_id, int fgcolor, int bgcolor)
+                    NotifyApi * notifier, int group_id, BGRColor_ fgcolor, BGRColor_ bgcolor)
         : Widget2(drawable, Rect(x, y, 1, 1), parent, notifier, group_id)
         , size(0)
         , selected(-1)

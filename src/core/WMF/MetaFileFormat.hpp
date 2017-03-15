@@ -899,44 +899,26 @@ enum : int {
                PLANES_NUMBER = 0x0001
             };
 
-            uint32_t headerSize;
-            uint32_t height;
-            uint32_t width;
-            uint16_t planes;
-            uint16_t bitCount;
-            uint32_t compression;
-            uint32_t imageSize;
-            uint32_t xPelsPerMeter;
-            uint32_t yPelsPerMeter;
-            uint32_t colorUsed;
-            uint32_t colorImportant;
+            uint32_t headerSize = 40;
+            uint32_t height = 0;
+            uint32_t width = 0;
+            uint16_t planes = 0;
+            uint16_t bitCount = 0;
+            uint32_t compression = 0;
+            uint32_t imageSize = 0;
+            uint32_t xPelsPerMeter = 0;
+            uint32_t yPelsPerMeter = 0;
+            uint32_t colorUsed = 0;
+            uint32_t colorImportant = 0;
 
-            BitmapInfoHeader()
-              : headerSize(40)
-              , height(0)
-              , width(0)
-              , planes(0)
-              , bitCount(0)
-              , compression(0)
-              , imageSize(0)
-              , xPelsPerMeter(0)
-              , yPelsPerMeter(0)
-              , colorUsed(0)
-              , colorImportant(0)
-            {}
+            BitmapInfoHeader() = default;
 
             BitmapInfoHeader(const std::size_t data_length, const uint16_t height, const uint16_t width, const uint16_t bitCount)
-              : headerSize(40)
-              , height( - height)
+              : height( - height) // TODO UB ?
               , width(width)
               , planes(PLANES_NUMBER)
               , bitCount(bitCount)
-              , compression(0)
               , imageSize(data_length)
-              , xPelsPerMeter(0)
-              , yPelsPerMeter(0)
-              , colorUsed(0)
-              , colorImportant(0)
             {}
 
             void emit(OutStream & stream) {

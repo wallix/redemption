@@ -29,7 +29,7 @@ struct WrmParams
 {
     uint8_t capture_bpp;
     TraceType trace_type;
-    CryptoContext & cctx; 
+    CryptoContext & cctx;
     Random & rnd;
     Fstat & fstat;
     const char * record_path;
@@ -41,7 +41,7 @@ struct WrmParams
     std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval;
     std::chrono::seconds break_interval;
     WrmCompressionAlgorithm wrm_compression_algorithm;
-    int wrm_verbose;
+    uint32_t wrm_verbose;
 
     WrmParams(uint8_t capture_bpp,
               TraceType trace_type,
@@ -57,7 +57,8 @@ struct WrmParams
               std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval,
               std::chrono::seconds break_interval,
               WrmCompressionAlgorithm wrm_compression_algorithm,
-              int wrm_verbose)
+              // TODO Verbose::WrmCapture
+              uint32_t wrm_verbose)
     : capture_bpp(capture_bpp)
     , trace_type(trace_type)
     , cctx(cctx)

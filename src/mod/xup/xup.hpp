@@ -71,7 +71,7 @@ enum {
     int bpp;
     Transport & t;
     int rop;
-    int fgcolor;
+    BGRColor_ fgcolor;
     BGRPalette const & palette332 = BGRPalette::classic_332();
 
     RDPPen pen;
@@ -294,7 +294,7 @@ enum {
                     break;
                     case 12: /* server_set_fgcolor */
                     {
-                        this->fgcolor = stream.in_uint32_le();
+                        this->fgcolor = BGRColor_(stream.in_uint32_le()); // TODO RGB or BGR ?
                     }
                     break;
                     case 14:
@@ -316,7 +316,7 @@ enum {
                         int y2 = stream.in_sint16_le();
                         const RDPLineTo lineto(1, x1, y1, x2, y2, WHITE,
                                                this->rop,
-                                               RDPPen(this->pen.style, this->pen.width, RDPColor(this->fgcolor)));
+                                               RDPPen(this->pen.style, this->pen.width, this->fgcolor));
                         drawable.draw(lineto, Rect(0,0,1,1), gdi::ColorCtx::from_bpp(this->bpp, this->palette332));
                     }
                     break;

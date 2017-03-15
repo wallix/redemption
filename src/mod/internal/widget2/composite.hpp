@@ -369,7 +369,7 @@ public:
         ::fill_region(this->drawable, region, bg_color);
     }
 
-    //virtual void hide_child(Rect clip, int bg_color) {
+    //virtual void hide_child(Rect clip, BGRColor_ bg_color) {
     //    SubRegion region;
     //
     //    CompositeContainer::iterator iter_w_current = this->impl->get_first();

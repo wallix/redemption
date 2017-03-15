@@ -643,7 +643,7 @@ struct MetaSeqBuf {
     bool with_encryption;
     ocrypto meta_buf_encrypt;
     ocrypto wrm_filter_encrypt;
-    
+
 
 // Only for Checksum Management
     static constexpr size_t nosize = ~size_t{};
@@ -1396,7 +1396,7 @@ public:
         CryptoContext & cctx,
         Random & rnd,
         Fstat & fstat,
-        
+
         time_t start_sec,
         const char * const hash_prefix,
         const char * const prefix,
@@ -1711,14 +1711,14 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
         MetaSeqBuf plain;
         bool with_encryption;
         bool with_checksum;
-        
+
         MetaSeq(
             bool with_encryption,
             bool with_checksum,
             CryptoContext & cctx,
             Random & rnd,
             Fstat & fstat,
-            
+
             time_t start_sec,
             const char * const hash_prefix,
             const char * const prefix,
@@ -1726,14 +1726,14 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
             const char * const extension,
             const int groupid
         )
-          : crypto(with_encryption, with_checksum, cctx, 
+          : crypto(with_encryption, with_checksum, cctx,
                    rnd, fstat, start_sec, hash_prefix, prefix, filename, extension, groupid)
-          , plain(with_encryption, with_checksum, cctx, 
+          , plain(with_encryption, with_checksum, cctx,
                    rnd, fstat, start_sec, hash_prefix, prefix, filename, extension, groupid)
           , with_encryption(with_encryption)
           , with_checksum(with_checksum)
           {}
-            
+
         ssize_t write(const uint8_t * data, size_t len) {
             if (this->with_encryption) {
                 return this->crypto.write(data, len);
@@ -1747,7 +1747,7 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
                 return this->crypto.open(width, height);
             }
             return this->plain.open(width, height);
-        }            
+        }
 
         const char * current_path()
         {
@@ -1755,7 +1755,7 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
                 return this->crypto.current_path();
             }
             return this->plain.current_path();
-        }            
+        }
 
         int next() {
             if (this->with_encryption) {
@@ -2303,7 +2303,7 @@ public:
                 , Transport & trans
                 , const uint16_t width
                 , const uint16_t height
-                , const uint8_t  capture_bpp
+                , const uint8_t  capture_bpp // TODO gdi::GraphicDepth
                 , BmpCache & bmp_cache
                 , GlyphCache & gly_cache
                 , PointerCache & ptr_cache
