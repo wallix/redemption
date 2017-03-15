@@ -27,9 +27,8 @@
    color model.
 */
 
-#pragma once
+#include "utils/bitmap_from_file.hpp"
 
-//#include "utils/png_bitmap.hpp"
 #include "utils/png.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/log.hpp"
@@ -70,7 +69,7 @@ inline Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename);
 inline Bitmap bitmap_from_png_without_sig(int fd, const char * filename);
 
 
-inline Bitmap bitmap_from_file_impl(const char * filename)
+Bitmap bitmap_from_file_impl(const char * filename)
 {
     png_byte type1[8];
 
@@ -105,7 +104,7 @@ inline Bitmap bitmap_from_file_impl(const char * filename)
 }
 
 
-inline Bitmap bitmap_from_file(const char * filename)
+Bitmap bitmap_from_file(const char * filename)
 {
     Bitmap bitmap = bitmap_from_file_impl(filename);
     if (bitmap.is_valid()) {
@@ -332,48 +331,64 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
         }
     }
 
-    const uint8_t Bpp = 3;
-    Bitmap::PrivateData::Data & data
-      = Bitmap::PrivateData::initialize(bitmap, 24, header.image_width, header.image_height);
-    uint8_t * dest = data.get();
-
-    const size_t line_size = data.line_size();
-    int k = 0;
-    for (unsigned y = 0; y < header.image_height ; y++) {
-        for (unsigned x = 0 ; x < header.image_width; x++) {
-            uint32_t pixel = 0;
-            switch (header.bit_count){
-            case 24:
-                {
-                    uint8_t r = stream.in_uint8();
-                    uint8_t g = stream.in_uint8();
-                    uint8_t b = stream.in_uint8();
-                    pixel = (b << 16) | (g << 8) | r;
-                }
-                break;
-            case 8:
-                pixel = stream.in_uint8();
-                break;
-            case 4:
-                if ((x & 1) == 0) {
-                    k = stream.in_uint8();
-                    pixel = (k >> 4) & 0xf;
-                }
-                else {
-                    pixel = k & 0xf;
-                }
-                pixel = palette1[pixel];
-                break;
+    auto initializer_data = [&header, &bitmap](auto init_pixel_at) {
+        Bitmap::PrivateData::Data & data
+          = Bitmap::PrivateData::initialize(bitmap, 24, header.image_width, header.image_height);
+        const uint8_t Bpp = 3;
+        uint8_t * dest = data.get();
+        const size_t line_size = data.line_size();
+        for (unsigned y = 0; y < header.image_height ; y++) {
+            auto const p = dest + y * line_size;
+            for (unsigned x = 0 ; x < header.image_width; x++) {
+                init_pixel_at(p + x * Bpp, x);
             }
+            if (line_size > header.image_width * Bpp) {
+                memset(p + header.image_width * Bpp, 0, line_size - header.image_width * Bpp);
+            }
+        }
+    };
 
-            uint32_t px = color_decode(pixel, header.bit_count, palette1);
-            ::out_bytes_le(dest + y * line_size + x * Bpp, Bpp, px);
-        }
-        if (line_size > header.image_width * Bpp){
-            memset(dest + y * line_size + header.image_width * Bpp,
-                    0,
-                    line_size - header.image_width * Bpp);
-        }
+    switch (header.bit_count){
+    case 24:
+        initializer_data([&stream](uint8_t * d, unsigned /*x*/){
+            d[0] = stream.in_uint8();
+            d[1] = stream.in_uint8();
+            d[2] = stream.in_uint8();
+        });
+        break;
+    case 16:
+        initializer_data([&stream](uint8_t * d, unsigned /*x*/){
+            BGRColor c = decode_color16()(stream.in_uint16_le());
+            d[0] = c >> 16;
+            d[1] = (c >> 8) & 0xf;
+            d[2] = c & 0xf;
+        });
+        break;
+    case 8:
+        initializer_data([&stream, &palette1](uint8_t * d, unsigned /*x*/){
+            BGRColor c = decode_color8()(stream.in_uint8(), palette1);
+            d[0] = c >> 16;
+            d[1] = (c >> 8) & 0xf;
+            d[2] = c & 0xf;
+        });
+        break;
+    case 4:
+        int k = 0;
+        initializer_data([&stream, &palette1, &k](uint8_t * d, unsigned x){
+            uint8_t idx_palette;
+            if ((x & 1) == 0) {
+                k = stream.in_uint8();
+                idx_palette = (k >> 4) & 0xf;
+            }
+            else {
+                idx_palette = k & 0xf;
+            }
+            BGRColor c = palette1[idx_palette];
+            d[0] = c >> 16;
+            d[1] = (c >> 8) & 0xf;
+            d[2] = c & 0xf;
+        });
+        break;
     }
 
     return bitmap;

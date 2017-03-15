@@ -32,7 +32,7 @@
 #include "capture/title_extractors/ocr_title_filter.hpp"
 
 #include "utils/drawable.hpp"
-#include "utils/bitmap_with_png.hpp"
+#include "utils/bitmap_from_file.hpp"
 
 
 namespace {

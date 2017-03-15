@@ -32,7 +32,7 @@
 #include "capture/title_extractors/ocr_title_filter.hpp"
 
 #include "utils/drawable.hpp"
-#include "utils/bitmap_with_png.hpp"
+#include "utils/bitmap_from_file.hpp"
 
 namespace {
     template<class... Str>
@@ -43,6 +43,7 @@ namespace {
 
     void draw_bitmap(Drawable & drawable, char const * bitmap_filename) {
         Bitmap bmp = bitmap_from_file(bitmap_filename);
+        BOOST_REQUIRE(bmp.is_valid());
         drawable.draw_bitmap({0, 0, drawable.width(), drawable.height()}, bmp);
     }
 }

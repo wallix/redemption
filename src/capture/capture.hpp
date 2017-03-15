@@ -478,102 +478,6 @@ private:
     }
 };
 
-class InChunkedImageTransport : public Transport
-{
-    uint16_t chunk_type;
-    uint32_t chunk_size;
-    uint16_t chunk_count;
-    Transport * trans;
-    char buf[65536];
-    InStream in_stream;
-
-public:
-    InChunkedImageTransport(uint16_t chunk_type, uint32_t chunk_size, Transport * trans)
-        : chunk_type(chunk_type)
-        , chunk_size(chunk_size)
-        , chunk_count(1)
-        , trans(trans)
-        , in_stream(this->buf, this->chunk_size - 8)
-    {
-        this->trans->recv_new(this->buf, this->in_stream.get_capacity());
-    }
-
-private:
-//     void do_recv(uint8_t ** pbuffer, size_t len) override {
-//         size_t total_len = 0;
-//         while (total_len < len){
-//             size_t remaining = in_stream.in_remain();
-//             if (remaining >= (len - total_len)){
-//                 in_stream.in_copy_bytes(*pbuffer + total_len, len - total_len);
-//                 *pbuffer += len;
-//                 return;
-//             }
-//             in_stream.in_copy_bytes(*pbuffer + total_len, remaining);
-//             total_len += remaining;
-//             switch (this->chunk_type){
-//             case PARTIAL_IMAGE_CHUNK:
-//             {
-//                 const size_t header_sz = 8;
-//                 char header_buf[header_sz];
-//                 InStream header(header_buf);
-//                 auto * p = header_buf;
-//                 this->trans->recv(&p, header_sz);
-//                 this->chunk_type = header.in_uint16_le();
-//                 this->chunk_size = header.in_uint32_le();
-//                 this->chunk_count = header.in_uint16_le();
-//                 this->in_stream = InStream(this->buf, this->chunk_size - 8);
-//                 p = this->buf;
-//                 this->trans->recv(&p, this->chunk_size - 8);
-//             }
-//             break;
-//             case LAST_IMAGE_CHUNK:
-//                 LOG(LOG_ERR, "Failed to read embedded image from WRM (transport closed)");
-//                 throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-//             default:
-//                 LOG(LOG_ERR, "Failed to read embedded image from WRM");
-//                 throw Error(ERR_TRANSPORT_READ_FAILED);
-//             }
-//         }
-//     }
-
-    void do_recv_new(uint8_t * buffer, size_t len) override {
-        size_t total_len = 0;
-        while (total_len < len){
-            size_t remaining = in_stream.in_remain();
-            if (remaining >= (len - total_len)){
-                in_stream.in_copy_bytes(buffer + total_len, len - total_len);
-                //*pbuffer += len;
-                return;
-            }
-            in_stream.in_copy_bytes(buffer + total_len, remaining);
-            total_len += remaining;
-            switch (this->chunk_type){
-            case PARTIAL_IMAGE_CHUNK:
-            {
-                const size_t header_sz = 8;
-                char header_buf[header_sz];
-                InStream header(header_buf);
-                //auto * p = header_buf;
-                this->trans->recv_new(header_buf, header_sz);
-                this->chunk_type = header.in_uint16_le();
-                this->chunk_size = header.in_uint32_le();
-                this->chunk_count = header.in_uint16_le();
-                this->in_stream = InStream(this->buf, this->chunk_size - 8);
-                //p = this->buf;
-                this->trans->recv_new(this->buf, this->chunk_size - 8);
-            }
-            break;
-            case LAST_IMAGE_CHUNK:
-                LOG(LOG_ERR, "Failed to read embedded image from WRM (transport closed)");
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-            default:
-                LOG(LOG_ERR, "Failed to read embedded image from WRM");
-                throw Error(ERR_TRANSPORT_READ_FAILED);
-            }
-        }
-    }
-};
-
 struct FileToGraphic
 {
     enum {
@@ -633,6 +537,8 @@ public:
 
         T * * begin() { return this->arr; }
         T * * end() { return this->last; }
+
+        T * * data() noexcept { return this->arr; }
 
         std::size_t size() const noexcept {
             return static_cast<std::size_t>(this->last - this->arr);
@@ -1320,50 +1226,13 @@ public:
             case PARTIAL_IMAGE_CHUNK:
             {
                 if (this->graphic_consumers.size()) {
-
-                    InChunkedImageTransport chunk_trans(this->chunk_type, this->chunk_size, this->trans);
-
-                    png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-                    png_set_read_fn(ppng, &chunk_trans, &png_read_data_fn);
-                    png_info * pinfo = png_create_info_struct(ppng);
-                    png_read_info(ppng, pinfo);
-
-                    size_t height = png_get_image_height(ppng, pinfo);
-                    const size_t width = screen_rect.cx;
-                    // TODO check png row_size is identical to drawable rowsize
-
-                    uint32_t tmp[8192];
-                    assert(sizeof(tmp) / sizeof(tmp[0]) >= width);
-                    for (size_t k = 0; k < height; ++k) {
-                        png_read_row(ppng, reinterpret_cast<uint8_t*>(tmp), nullptr);
-
-                        uint32_t bgrtmp[8192];
-                        const uint32_t * s = reinterpret_cast<const uint32_t*>(tmp);
-                        uint32_t * t = bgrtmp;
-                        for (size_t n = 0; n < (width / 4); n++){
-                            unsigned bRGB = *s++;
-                            unsigned GBrg = *s++;
-                            unsigned rgbR = *s++;
-                            *t++ = ((GBrg << 16) & 0xFF000000)
-                                 | ((bRGB << 16) & 0x00FF0000)
-                                 | (bRGB         & 0x0000FF00)
-                                 | ((bRGB >> 16) & 0x000000FF);
-                            *t++ = (GBrg         & 0xFF000000)
-                                 | ((rgbR << 16) & 0x00FF0000)
-                                 | ((bRGB >> 16) & 0x0000FF00)
-                                 | ( GBrg        & 0x000000FF);
-                            *t++ = ((rgbR << 16) & 0xFF000000)
-                                 | (rgbR         & 0x00FF0000)
-                                 | ((rgbR >> 16) & 0x0000FF00)
-                                 | ((GBrg >> 16) & 0x000000FF);
-                        }
-
-                        for (gdi::GraphicApi * gd : this->graphic_consumers){
-                            gd->set_row(k, reinterpret_cast<uint8_t*>(bgrtmp));
-                        }
-                    }
-                    png_read_end(ppng, pinfo);
-                    png_destroy_read_struct(&ppng, &pinfo, nullptr);
+                    set_rows_from_image_chunk(
+                        *this->trans,
+                        this->chunk_type,
+                        this->chunk_size,
+                        this->screen_rect.cx,
+                        this->graphic_consumers
+                    );
                 }
                 else {
                     // If no drawable is available ignore images chunks

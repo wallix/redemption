@@ -21,7 +21,7 @@
 #pragma once
 
 #include "widget.hpp"
-#include "utils/bitmap_with_png.hpp"
+#include "utils/bitmap_from_file.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "gdi/graphic_api.hpp"
 
