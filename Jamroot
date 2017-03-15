@@ -573,6 +573,7 @@ test-canonical capture/cryptofile.hpp : <library>openssl <library>crypto <librar
 
 
 obj do_recorder_test : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(TEST_DEPENDENCIES) ;
+
 test-canonical main/do_recorder.hpp :
     <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z
     <library>do_recorder_test <library>ffmpeg <library>ocr <library>ppocr_test <library>bitmap
