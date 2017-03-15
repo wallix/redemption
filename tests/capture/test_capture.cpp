@@ -1848,10 +1848,10 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
 
     RDPDrawable d(20, 10);
     GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);
-    ::transport_read_png24(&in_png_trans, d.data(),
-                 d.width(), d.height(),
-                 d.rowsize()
-                );
+    ::transport_read_png24(
+        in_png_trans, const_cast<uint8_t*>(d.data()),
+        d.width(), d.height(), d.rowsize()
+    );
     const int groupid = 0;
     PngCapture::OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
     DumpPng24FromRDPDrawableAdapter(d).dump_png24(png_trans, true);
@@ -2358,10 +2358,10 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 
 
     RDPDrawable d(20, 10);
-    ::transport_read_png24(&chunk_trans, d.data(),
-                 d.width(), d.height(),
-                 d.rowsize()
-                 );
+    ::transport_read_png24(
+        chunk_trans, const_cast<uint8_t*>(d.data()),
+        d.width(), d.height(), d.rowsize()
+    );
     const int groupid = 0;
     PngCapture::OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
     DumpPng24FromRDPDrawableAdapter(d).dump_png24(png_trans, true);

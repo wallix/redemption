@@ -45,6 +45,9 @@
 
 #include <cstdlib>
 
+#include <zlib.h>
+
+
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
 

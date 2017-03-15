@@ -35,7 +35,7 @@
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/windowing_api.hpp"
 #include "utils/bitmap.hpp"
-#include "utils/bitmap_with_png.hpp"
+#include "utils/bitmap_from_file.hpp"
 #include "utils/stream.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
 

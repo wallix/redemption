@@ -49,6 +49,8 @@
 #include <fcntl.h>
 #include <cstddef>
 
+#include <png.h>
+
 #include "core/error.hpp"
 
 #include "utils/log.hpp"
@@ -1338,8 +1340,11 @@ public:
 
                     InChunkedImageTransport chunk_trans(this->chunk_type, this->chunk_size, this->trans);
 
+                    auto png_read_data_fn = [](png_structp png_ptr, png_bytep data, png_size_t length) {
+                        static_cast<Transport*>(png_ptr->io_ptr)->recv_new(data, length);
+                    };
                     png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-                    png_set_read_fn(ppng, &chunk_trans, &png_read_data_fn);
+                    png_set_read_fn(ppng, &chunk_trans, png_read_data_fn);
                     png_info * pinfo = png_create_info_struct(ppng);
                     png_read_info(ppng, pinfo);
 

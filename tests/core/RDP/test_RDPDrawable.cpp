@@ -737,10 +737,13 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
 
     {
         const char * filename = FIXTURES_PATH "/win2008capture10.png";
-        FILE * fd = fopen(filename, "r");
+        std::FILE * fd = std::fopen(filename, "r");
         // TODO "Add ability to write image to file or read image from file in RDPDrawable"
-        read_png24(fd, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize());
-        fclose(fd);
+        read_png24(
+            fd, const_cast<uint8_t*>(drawable.data()),
+            drawable.width(), drawable.height(), drawable.rowsize()
+        );
+        std::fclose(fd);
     }
 
     // TODO: zooming should be managed by some dedicated Drawable
