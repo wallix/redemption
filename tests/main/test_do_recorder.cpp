@@ -602,7 +602,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
             ssize_t raw_write(iofdbuf & snk, void * data, size_t len)
             {
                 ssize_t err = snk.write(data, len);
-                return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
+                return err < 0 ? -1 : 0;
             }
 
             /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
