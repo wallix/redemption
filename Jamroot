@@ -141,6 +141,7 @@ obj d3des : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 obj png_utils : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
 obj bitmap : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
 obj do_recorder : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(EXE_DEPENDENCIES) ;
+obj capture : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(EXE_DEPENDENCIES) ;
 obj program_options : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 constant LIBBITMAP_FROM_FILE : <library>bitmap <library>bitmap_from_file <library>png ;
 
@@ -151,6 +152,7 @@ constant LIBBITMAP_FROM_FILE : <library>bitmap <library>bitmap_from_file <librar
 exe rdpproxy
     :
         $(REDEMPTION_SRC_PATH)/main/main.cpp
+        capture
         bitmap
         bitmap_from_file
         program_options
@@ -185,6 +187,7 @@ exe rdpproxy
 
 lib libredrec
     :
+        capture
         do_recorder
         bitmap
         bitmap_from_file
@@ -213,6 +216,7 @@ lib libredrec
 exe rdptproxy
     :
         $(REDEMPTION_SRC_PATH)/main/transparent.cpp
+        capture
         png_utils
         bitmap
         bitmap_from_file
@@ -281,6 +285,7 @@ exe rdpclient
 
 exe vncclient
     : $(REDEMPTION_SRC_PATH)/main/vnc_client.cpp
+        capture
         program_options
         bitmap_from_file
         png_utils
@@ -584,11 +589,12 @@ test-canonical capture/cryptofile.hpp : <library>openssl <library>crypto <librar
 
 
 obj do_recorder_test : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(TEST_DEPENDENCIES) ;
+obj capture_test : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(TEST_DEPENDENCIES) ;
 
 test-canonical main/do_recorder.hpp :
     <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z
     <library>do_recorder_test <library>ffmpeg <library>ocr <library>ppocr_test <library>bitmap
-    <library>png_utils
+    <library>png_utils <library>capture_test
 ;
 
 
@@ -987,43 +993,46 @@ test-run cli_vnc_connection
 ## server/
 ## @{
 test-run test_rdesktop_client
-    : server/test_rdesktop_client.cpp
-    :
-    : $(LIBBITMAP_FROM_FILE)
-      <library>png_utils
-      <library>openssl
-      <library>snappy
-      <library>d3des
-      <library>crypto
-      <library>dl
-      <library>ocr
-      <library>ppocr_test
-      <library>ffmpeg
-      <covflag>nocover
-    ;
+  : server/test_rdesktop_client.cpp
+  :
+  : $(LIBBITMAP_FROM_FILE)
+    <library>capture_test
+    <library>png_utils
+    <library>openssl
+    <library>snappy
+    <library>d3des
+    <library>crypto
+    <library>dl
+    <library>ocr
+    <library>ppocr_test
+    <library>ffmpeg
+    <covflag>nocover
+;
 
 
 test-run test_mstsc_client
-    : server/test_mstsc_client.cpp
-    :
-    : $(LIBBITMAP_FROM_FILE)
-      <library>png_utils
-      <library>openssl
-      <library>snappy
-      <library>d3des
-      <library>crypto
-      <library>dl
-      <library>ocr
-      <library>ppocr_test
-      <library>ffmpeg
-      <covflag>nocover
-    ;
+  : server/test_mstsc_client.cpp
+  :
+  : $(LIBBITMAP_FROM_FILE)
+    <library>capture_test
+    <library>png_utils
+    <library>openssl
+    <library>snappy
+    <library>d3des
+    <library>crypto
+    <library>dl
+    <library>ocr
+    <library>ppocr_test
+    <library>ffmpeg
+    <covflag>nocover
+;
 
 
 test-run test_mstsc_client_rdp50bulk
   : server/test_mstsc_client_rdp50bulk.cpp
   :
   : $(LIBBITMAP_FROM_FILE)
+    <library>capture_test
     <library>png_utils
     <library>openssl
     <library>snappy
@@ -1065,6 +1074,7 @@ test-canonical core/wait_obj.hpp ;
 
 test-canonical front/front.hpp
   : $(LIBBITMAP_FROM_FILE)
+    <library>capture_test
     <library>png_utils
     <library>openssl
     <library>snappy

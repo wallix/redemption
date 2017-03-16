@@ -61,6 +61,7 @@
 #include "capture/flv_params.hpp"
 #include "capture/ocr_params.hpp"
 #include "capture/wrm_capture.hpp"
+#include "capture/RDPChunkedDevice.hpp"
 
 enum {
     USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF

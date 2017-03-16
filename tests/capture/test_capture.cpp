@@ -43,6 +43,7 @@
 #include "transport/in_file_transport.hpp"
 
 #include "capture/capture.hpp"
+#include "capture/capture.cpp" // Yeaaahh...
 #include "check_sig.hpp"
 #include "get_file_contents.hpp"
 #include "utils/fileutils.hpp"
@@ -1209,7 +1210,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     InFileTransport in_wrm_trans(fd);
 
     const int groupid = 0;
-    PngCapture::OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testcap", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testcap", ".png", groupid, nullptr);
 
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
@@ -1361,7 +1362,7 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
 
     const int groupid = 0;
-    PngCapture::OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png", groupid, nullptr);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
@@ -1495,7 +1496,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
 
     const int groupid = 0;
-    PngCapture::OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png", groupid, nullptr);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
@@ -1586,7 +1587,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
 
     const int groupid = 0;
-    PngCapture::OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid, nullptr);
     const FilenameGenerator * seq = out_png_trans.seqgen();
     BOOST_CHECK(seq);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
@@ -1853,7 +1854,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
         d.width(), d.height(), d.rowsize()
     );
     const int groupid = 0;
-    PngCapture::OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
     DumpPng24FromRDPDrawableAdapter(d).dump_png24(png_trans, true);
 //    d.dump_png24(png_trans, true);
     ::unlink(png_trans.seqgen()->get(0));
@@ -1916,7 +1917,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
 
     const int groupid = 0;
-    PngCapture::OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
@@ -1987,11 +1988,11 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
     const int groupid = 0;
-    PngCapture::OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable1.impl(), 100);
 
-    PngCapture::OutFilenameSequenceTransport second_out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport second_out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid, nullptr);
     DrawableToFile second_png_recorder(second_out_png_trans, drawable1.impl(), 100);
 
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
@@ -2069,7 +2070,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
     const int groupid = 0;
-    PngCapture::OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
@@ -2233,14 +2234,14 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
 
     const int groupid = 0;
-    PngCapture::OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid, nullptr);
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable1.impl(), 100);
 
 //    png_recorder.update_config(ini);
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
 
-    PngCapture::OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid, nullptr);
+    OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid, nullptr);
 
     const struct ToCacheOption {
         ToCacheOption(){}
@@ -2359,7 +2360,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     set_rows_from_image_chunk(in_png_trans, chunk_type, chunk_size, d.width(), {&gdi, 1});
 
     const int groupid = 0;
-    PngCapture::OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
     DumpPng24FromRDPDrawableAdapter(d).dump_png24(png_trans, true);
 //    d.dump_png24(png_trans, true);
     ::unlink(png_trans.seqgen()->get(0));
@@ -2418,7 +2419,7 @@ public:
 
 BOOST_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
 {
-    PngCapture::OutFilenameSequenceTransport fnt(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test_outfilenametransport", ".txt", getgid(), nullptr);
+    OutFilenameSequenceTransport fnt(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test_outfilenametransport", ".txt", getgid(), nullptr);
     fnt.send("We write, ", 10);
     fnt.send("and again, ", 11);
     fnt.send("and so on.", 10);

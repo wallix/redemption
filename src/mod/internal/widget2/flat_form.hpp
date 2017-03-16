@@ -31,7 +31,6 @@
 #include "utils/theme.hpp"
 #include "group_box.hpp"
 #include "utils/translation.hpp"
-#include "regex/regex.hpp"
 #include "gdi/graphic_api.hpp"
 
 
