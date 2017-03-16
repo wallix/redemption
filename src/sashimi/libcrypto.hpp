@@ -1187,7 +1187,7 @@ struct ssh_crypto_struct {
     unsigned char *encryptkey;
     unsigned char *encryptMAC;
     unsigned char *decryptMAC;
-    unsigned char hmacbuf[EVP_MAX_MD_SIZE];
+    unsigned char hmacbuf[SslSha1::DIGEST_LENGTH];
     struct ssh_cipher_struct *in_cipher, *out_cipher; /* the cipher structures/objects */
     SSHString server_pubkey;
     const char *server_pubkey_type;
@@ -1680,7 +1680,7 @@ struct ssh_crypto_struct {
     }
 
 
-    unsigned char *packet_encrypt(uint32_t seq, uint8_t *data, uint32_t len, error_struct & error) {
+    unsigned char * packet_encrypt(uint32_t seq, uint8_t *data, uint32_t len, error_struct & error) {
         std::vector<uint8_t> out;
         out.reserve(len);
 

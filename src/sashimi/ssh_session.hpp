@@ -233,7 +233,7 @@ struct ssh_session_struct {
      *                      occurred.
      */
     int packet_hmac_verify(ssh_buffer_struct* buffer, unsigned char *mac) {
-        unsigned char hmacbuf[EVP_MAX_MD_SIZE] = {0};
+        unsigned char hmacbuf[SslSha1::DIGEST_LENGTH] = {0};
 
         uint32_t seq = htonl(this->recv_seq);
 
@@ -245,7 +245,7 @@ struct ssh_session_struct {
 //      hexa("received mac",mac,SHA_DIGEST_LENGTH);
 //      hexa("Computed mac",hmacbuf,SHA_DIGEST_LENGTH);
 //      hexa("seq",static_cast<unsigned char *>(&seq),sizeof(uint32_t));
-        if (memcmp(mac, hmacbuf, SHA_DIGEST_LENGTH) == 0) {
+        if (memcmp(mac, hmacbuf, sizeof(hmacbuf)) == 0) {
             return 0;
         }
         return -1;
@@ -552,7 +552,7 @@ struct ssh_session_struct {
                     this->out_buffer->in_remain(),
                     this->error);
             if (hmac) {
-                this->out_buffer->out_blob(hmac, 20);
+                this->out_buffer->out_blob(hmac, 20); // TODO Magic number
             }
         }
 

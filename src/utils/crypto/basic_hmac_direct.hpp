@@ -69,7 +69,7 @@ public:
         context.update(data, data_size);
     }
 
-    void final(uint8_t * out_data)
+    void final(uint8_t (&out_data)[Ssl::DIGEST_LENGTH])
     {
         context.final(out_data);
 

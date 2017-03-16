@@ -56,7 +56,7 @@ public:
         }
     }
 
-    void final(uint8_t * out_data)
+    void final(uint8_t (&out_data)[DigestLength])
     {
         unsigned int len = 0;
         int res = HMAC_Final(&this->hmac, out_data, &len);
@@ -74,7 +74,7 @@ class DelayedHMAC
 
 public:
     DelayedHMAC() {}
-    
+
     void init(const uint8_t * const key, size_t key_size)
     {
         HMAC_CTX_init(&this->hmac);
@@ -100,7 +100,7 @@ public:
         }
     }
 
-    void final(uint8_t * out_data)
+    void final(uint8_t (&out_data)[DigestLength])
     {
         unsigned int len = 0;
         int res = HMAC_Final(&this->hmac, out_data, &len);
