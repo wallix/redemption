@@ -25,7 +25,6 @@
 #include <functional>
 #include <cerrno>
 #include <fcntl.h>
-#include <snappy-c.h>
 #include <stdint.h>
 #include <unistd.h>
 #include <time.h> // localtime_r
@@ -80,6 +79,9 @@
 #include "utils/fdbuf.hpp"
 
 #include "cxx/cxx.hpp"
+
+#include "capture/cryptofile.hpp"
+
 
 #include "transport/transport.hpp"
 #include "transport/out_file_transport.hpp"
@@ -139,15 +141,10 @@
 #include "capture/pattern_checker_params.hpp"
 #include "capture/kbdlog_params.hpp"
 
-#include "capture/cryptofile.hpp"
-
 #include "capture/video_capture.hpp"
 #include "capture/wrm_capture.hpp"
 
 #include "capture/RDPChunkedDevice.hpp"
-
-#include "openssl_crypto.hpp"
-
 
 
 struct FilenameGenerator

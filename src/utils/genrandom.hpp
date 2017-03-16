@@ -68,35 +68,28 @@ public:
     }
 
     void random(void * dest, size_t size) override {
-        for (size_t x = 0; x < size ; ++x) {
+        for (size_t x = 0; x < size/4 ; ++x) {
+            // these 3 calls are a bug 
+            // ... but won't change because it would modify random sequence
+            this->rand32();
+            this->rand32();
+            this->rand32();
             uint32_t r{this->rand32()};
 
-            // TODO suspicious, p[0..3] re-assigned 4 times.
-            uint8_t * p = reinterpret_cast<uint8_t*>(dest) + x / sizeof(uint32_t) * sizeof(uint32_t);
-            // BUG buffer overflow if size % 4 > 0
+            uint8_t * p = reinterpret_cast<uint8_t*>(dest) + x * 4;
             p[0] = r >> 0;
             p[1] = r >> 8;
             p[2] = r >> 16;
             p[3] = r >> 24;
         }
-        /*
-        uint8_t * p = reinterpret_cast<uint8_t*>(dest);
-        for (size_t x = 0; x < size/4 ; ++x) {
+        // fill last bytes if size % 4 > 0
+        if (size % 4){
             uint32_t r{this->rand32()};
-            *p++ = r >> 0;
-            *p++ = r >> 8;
-            *p++ = r >> 16;
-            *p++ = r >> 24;
+            uint8_t * p = reinterpret_cast<uint8_t*>(dest) + size - (size % 4);
+            if (size % 4 > 2) { p[2] = r >> 16; }
+            if (size % 4 > 1) { p[1] = r >> 8; }
+            if (size % 4 > 0) { p[0] = r >> 0; }
         }
-        if (size % 4) {
-            uint32_t r{this->rand32()};
-            switch (size % 4) {
-                case 3: *p++ = r >> 0; REDEMPTION_CXX_FALLTHROUGH;
-                case 2: *p++ = r >> 8; REDEMPTION_CXX_FALLTHROUGH;
-                case 1: *p++ = r >> 16; REDEMPTION_CXX_FALLTHROUGH;
-                default:;
-            }
-        }*/
     }
 
     uint32_t rand32() override

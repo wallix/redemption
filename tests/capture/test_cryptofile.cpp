@@ -24,10 +24,10 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestVerifier
 #include "system/redemption_unit_tests.hpp"
+#include "check_mem.hpp"
 
-
-#define LOGNULL
-// #define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 
 #include "capture/cryptofile.hpp"
 
@@ -65,3 +65,246 @@ BOOST_AUTO_TEST_CASE(TestDerivationOfHmacKeyFromCryptoKey)
     BOOST_CHECK(0 == memcmp(expected_master_key, cctx.get_master_key(), 32));
     BOOST_CHECK(0 == memcmp(expected_hmac_key, cctx.get_hmac_key(), 32));
 }
+
+
+BOOST_AUTO_TEST_CASE(TestEncryption1)
+{
+    OpenSSL_add_all_digests();
+    
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    cctx.set_master_key(cstr_array_view(
+        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+    ));
+    cctx.set_hmac_key(cstr_array_view(
+         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+         "\x49\x21\x57\x87\x47\x74\x08\x8a"
+         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+    ));
+    
+
+    uint8_t result[8192];
+    unsigned char hash[MD_HASH_LENGTH << 1];
+    size_t offset = 0;
+    uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
+
+    ocrypto encrypter(cctx, rnd);
+    // Opening an encrypted stream usually results in some header put in result buffer
+    // Of course no such header will be needed in non encrypted files
+    size_t towrite = 0;
+    encrypter.open(result+offset, sizeof(result)-offset, towrite, derivator, sizeof(derivator));
+    offset += towrite;
+    BOOST_CHECK_EQUAL(towrite, 40);
+
+    // writing data to compressed/encrypted buffer may result in data to write
+    // ... or not as this writing may be differed.
+    towrite = 0;
+    encrypter.write(result+offset, sizeof(result)-offset, towrite, "toto", 4);
+    offset += towrite;
+    BOOST_CHECK_EQUAL(towrite, 0);
+    
+    // close flushes all opened buffers and writes potential trailer
+    // the full file hash is also returned which is made of two parts
+    // a partial hash for the first 4K of the file
+    // and a full hash for the whole file
+    // obviously the two will be identical for short files
+    // and differs for larger ones
+    towrite = 0;
+    encrypter.close(result+offset, sizeof(result)-offset, towrite, hash);
+    BOOST_CHECK_EQUAL(towrite, 28);
+
+    uint8_t expected_result[68] =  { 'W', 'C', 'F', 'M', // Magic
+                                       1, 0, 0, 0,       // Version
+                                  // iv
+                                  0xb8, 0x6c, 0xda, 0xa6, 0xf0, 0xf6, 0x30, 0x8d,
+                                  0xa8, 0x16, 0xa6, 0x6e, 0xe0, 0xc3, 0xe5, 0xcc,
+                                  0x98, 0x76, 0xdd, 0xf5, 0xd0, 0x26, 0x74, 0x5f,
+                                  0x88, 0x4c, 0xc2, 0x50, 0xc0, 0xdf, 0xc9, 0x50,
+                                  // Data
+                                  0x10, 0x00, 0x00, 0x00,
+                                  0x26, 0xf6, 0x39, 0x17, 0x14, 0x45, 0x7e, 0x3b,
+                                  0xfa, 0xfc, 0x11, 0x8a, 0xc0, 0x92, 0xf7, 0x53,
+                                  'M', 'F', 'C', 'W',    // EOF Magic
+                                  0x04, 0x00, 0x00, 0x00 // Total Length of decrypted data
+                                  }; 
+    CHECK_MEM(result, 68, expected_result);
+
+    char expected_hash[MD_HASH_LENGTH+1] = 
+                                  "\x29\x5c\x52\xcd\xf6\x99\x92\xc3"
+                                  "\xfe\x2f\x05\x90\x0b\x62\x92\xdd"
+                                  "\x12\x31\x2d\x3e\x1d\x17\xd3\xfd"
+                                  "\x8e\x9c\x3b\x52\xcd\x1d\xf7\x29";
+    CHECK_MEM(hash, MD_HASH_LENGTH, expected_hash);
+    CHECK_MEM(hash + MD_HASH_LENGTH, MD_HASH_LENGTH, expected_hash);
+
+}
+
+BOOST_AUTO_TEST_CASE(TestEncryption2)
+{
+    OpenSSL_add_all_digests();
+    
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    cctx.set_master_key(cstr_array_view(
+        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+    ));
+    cctx.set_hmac_key(cstr_array_view(
+         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+         "\x49\x21\x57\x87\x47\x74\x08\x8a"
+         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+    ));
+    
+
+    uint8_t result[8192];
+    unsigned char hash[MD_HASH_LENGTH << 1];
+    size_t offset = 0;
+    uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
+
+    ocrypto encrypter(cctx, rnd);
+    // Opening an encrypted stream usually results in some header put in result buffer
+    // Of course no such header will be needed in non encrypted files
+    size_t towrite = 0;
+    encrypter.open(result+offset, sizeof(result)-offset, towrite, derivator, sizeof(derivator));
+    offset += towrite;
+    BOOST_CHECK_EQUAL(towrite, 40);
+
+    // writing data to compressed/encrypted buffer may result in data to write
+    // ... or not as this writing may be differed.
+    towrite = 0;
+    encrypter.write(result+offset, sizeof(result)-offset, towrite, "to", 2);
+    offset += towrite;
+    BOOST_CHECK_EQUAL(towrite, 0);
+    
+    // This test is very similar to Encryption1, but we are performing 2 writes
+    encrypter.write(result+offset, sizeof(result)-offset, towrite, "to", 2);
+    offset += towrite;
+    BOOST_CHECK_EQUAL(towrite, 0);
+    
+    // close flushes all opened buffers and writes potential trailer
+    // the full file hash is also returned which is made of two parts
+    // a partial hash for the first 4K of the file
+    // and a full hash for the whole file
+    // obviously the two will be identical for short files
+    // and differs for larger ones
+    towrite = 0;
+    encrypter.close(result+offset, sizeof(result)-offset, towrite, hash);
+    BOOST_CHECK_EQUAL(towrite, 28);
+
+    uint8_t expected_result[68] =  { 'W', 'C', 'F', 'M', // Magic
+                                       1, 0, 0, 0,       // Version
+                                  // iv
+                                  0xb8, 0x6c, 0xda, 0xa6, 0xf0, 0xf6, 0x30, 0x8d,
+                                  0xa8, 0x16, 0xa6, 0x6e, 0xe0, 0xc3, 0xe5, 0xcc,
+                                  0x98, 0x76, 0xdd, 0xf5, 0xd0, 0x26, 0x74, 0x5f,
+                                  0x88, 0x4c, 0xc2, 0x50, 0xc0, 0xdf, 0xc9, 0x50,
+                                  // Data
+                                  0x10, 0x00, 0x00, 0x00,
+                                  0x26, 0xf6, 0x39, 0x17, 0x14, 0x45, 0x7e, 0x3b,
+                                  0xfa, 0xfc, 0x11, 0x8a, 0xc0, 0x92, 0xf7, 0x53,
+                                  'M', 'F', 'C', 'W',    // EOF Magic
+                                  0x04, 0x00, 0x00, 0x00 // Total Length of decrypted data
+                                  }; 
+    CHECK_MEM(result, 68, expected_result);
+
+    char expected_hash[MD_HASH_LENGTH+1] = 
+                                  "\x29\x5c\x52\xcd\xf6\x99\x92\xc3"
+                                  "\xfe\x2f\x05\x90\x0b\x62\x92\xdd"
+                                  "\x12\x31\x2d\x3e\x1d\x17\xd3\xfd"
+                                  "\x8e\x9c\x3b\x52\xcd\x1d\xf7\x29";
+    CHECK_MEM(hash, MD_HASH_LENGTH, expected_hash);
+    CHECK_MEM(hash + MD_HASH_LENGTH, MD_HASH_LENGTH, expected_hash);
+
+}
+
+//BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
+//{
+//    OpenSSL_add_all_digests();
+//    
+//    LCGRandom rnd(0);
+//    CryptoContext cctx;
+//    cctx.set_master_key(cstr_array_view(
+//        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+//        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+//        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+//        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+//    ));
+//    cctx.set_hmac_key(cstr_array_view(
+//         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+//         "\x49\x21\x57\x87\x47\x74\x08\x8a"
+//         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+//         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+//    ));
+//    
+
+//    uint8_t result[8192];
+//    unsigned char hash[MD_HASH_LENGTH << 1];
+//    size_t offset = 0;
+//    uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
+
+//    ocrypto encrypter(cctx, rnd);
+//    // Opening an encrypted stream usually results in some header put in result buffer
+//    // Of course no such header will be needed in non encrypted files
+//    size_t towrite = 0;
+//    encrypter.open(result+offset, sizeof(result)-offset, towrite, derivator, sizeof(derivator));
+//    offset += towrite;
+//    BOOST_CHECK_EQUAL(towrite, 40);
+
+//    // writing data to compressed/encrypted buffer may result in data to write
+//    // ... or not as this writing may be differed.
+
+//    // Let's send a large block of data
+//    uint8_t block[32768];
+//    LCGRandom rnd2(0);
+//    for (auto & x: block){
+//        uint8_t b[0];
+//        
+//        x = (uint8_t)rnd2.rand32(); 
+//    }
+//    towrite = 0;
+//    encrypter.write(result+offset, sizeof(result)-offset, towrite, block, 32768);
+//    offset += towrite;
+//    BOOST_CHECK_EQUAL(towrite, 0);
+//    
+//    // close flushes all opened buffers and writes potential trailer
+//    // the full file hash is also returned which is made of two parts
+//    // a partial hash for the first 4K of the file
+//    // and a full hash for the whole file
+//    // obviously the two will be identical for short files
+//    // and differs for larger ones
+//    towrite = 0;
+//    encrypter.close(result+offset, sizeof(result)-offset, towrite, hash);
+//    BOOST_CHECK_EQUAL(towrite, 28);
+
+////    uint8_t expected_result[68] =  { 'W', 'C', 'F', 'M', // Magic
+////                                       1, 0, 0, 0,       // Version
+////                                  // iv
+////                                  0xb8, 0x6c, 0xda, 0xa6, 0xf0, 0xf6, 0x30, 0x8d,
+////                                  0xa8, 0x16, 0xa6, 0x6e, 0xe0, 0xc3, 0xe5, 0xcc,
+////                                  0x98, 0x76, 0xdd, 0xf5, 0xd0, 0x26, 0x74, 0x5f,
+////                                  0x88, 0x4c, 0xc2, 0x50, 0xc0, 0xdf, 0xc9, 0x50,
+////                                  // Data
+////                                  0x10, 0x00, 0x00, 0x00,
+////                                  0x26, 0xf6, 0x39, 0x17, 0x14, 0x45, 0x7e, 0x3b,
+////                                  0xfa, 0xfc, 0x11, 0x8a, 0xc0, 0x92, 0xf7, 0x53,
+////                                  'M', 'F', 'C', 'W',    // EOF Magic
+////                                  0x04, 0x00, 0x00, 0x00 // Total Length of decrypted data
+////                                  }; 
+////    CHECK_MEM(result, 68, expected_result);
+
+////    char expected_hash[MD_HASH_LENGTH+1] = 
+////                                  "\x29\x5c\x52\xcd\xf6\x99\x92\xc3"
+////                                  "\xfe\x2f\x05\x90\x0b\x62\x92\xdd"
+////                                  "\x12\x31\x2d\x3e\x1d\x17\xd3\xfd"
+////                                  "\x8e\x9c\x3b\x52\xcd\x1d\xf7\x29";
+////    CHECK_MEM(hash, MD_HASH_LENGTH, expected_hash);
+////    CHECK_MEM(hash + MD_HASH_LENGTH, MD_HASH_LENGTH, expected_hash);
+
+//}
