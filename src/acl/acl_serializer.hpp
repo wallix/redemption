@@ -377,7 +377,7 @@ public:
 
             if (this->ini.get<cfg::context::manager_disconnect_reason>().empty()) {
                 this->ini.set_acl<cfg::context::rejected>(
-                    TR("manager_close_cnx", language(this->ini)));
+                    TR(trkeys::manager_close_cnx, language(this->ini)));
             }
             else {
                 this->ini.set_acl<cfg::context::rejected>(
@@ -457,7 +457,7 @@ public:
         const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
         if (enddate != 0 && (static_cast<uint32_t>(now) > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
-            const char * message = TR("session_out_time", language(this->ini));
+            const char * message = TR(trkeys::session_out_time, language(this->ini));
             mm.invoke_close_box(message, signal, now, authentifier);
 
             return true;
@@ -477,13 +477,13 @@ public:
 
         // Keep Alive
         if (this->keepalive.check(now, this->ini)) {
-            mm.invoke_close_box(TR("miss_keepalive", language(this->ini)), signal, now, authentifier);
+            mm.invoke_close_box(TR(trkeys::miss_keepalive, language(this->ini)), signal, now, authentifier);
             return true;
         }
 
         // Inactivity management
         if (this->inactivity.check_user_activity(now, has_user_activity)) {
-            mm.invoke_close_box(TR("close_inactivity", language(this->ini)), signal, now, authentifier);
+            mm.invoke_close_box(TR(trkeys::close_inactivity, language(this->ini)), signal, now, authentifier);
             return true;
         }
 
@@ -955,7 +955,7 @@ public:
             }
             catch (Error const &) {
                 this->ini.set_acl<cfg::context::authenticated>(false);
-                this->ini.set_acl<cfg::context::rejected>(TR("acl_fail", language(this->ini)));
+                this->ini.set_acl<cfg::context::rejected>(TR(trkeys::acl_fail, language(this->ini)));
                 // this->ini.context.rejected.set_from_cstr("Authentifier service failed");
             }
 

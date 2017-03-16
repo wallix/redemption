@@ -77,8 +77,8 @@ public:
             front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
             this->screen, this, "Redemption " VERSION,
             nullptr, nullptr,
-            TR("login", language(vars)),
-            TR("password", language(vars)),
+            TR(trkeys::login, language(vars)),
+            TR(trkeys::password, language(vars)),
             vars.get<cfg::context::opt_message>().c_str(),
             &this->language_button,
             this->font(), Translator(language(vars)), this->theme())

@@ -63,7 +63,7 @@ class FlatWabCloseMod : public LocallyIntegrableMod, public NotifyApi
         explicit temporary_text(FlatWabCloseModVariables vars)
         {
             if (vars.get<cfg::context::module>() == "selector") {
-                snprintf(text, sizeof(text), "%s", TR("selector", language(vars)));
+                snprintf(text, sizeof(text), "%s", TR(trkeys::selector, language(vars)));
             }
             else {
                 // TODO target_application only used for user message, the two branches of alternative should be unified et message prepared by sesman

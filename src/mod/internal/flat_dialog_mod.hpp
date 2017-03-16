@@ -67,7 +67,7 @@ public:
             this->screen, this, caption, message,
             &this->language_button,
             vars.get<cfg::theme>(), vars.get<cfg::font>(),
-            TR("OK", language(vars)),
+            TR(trkeys::OK, language(vars)),
             cancel_text, has_challenge)
         , vars(vars)
         , timeout(now, vars.get<cfg::debug::pass_dialog_box>())

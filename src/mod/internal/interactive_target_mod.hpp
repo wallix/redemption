@@ -66,10 +66,10 @@ public:
             this->screen, this,
             this->ask_device, this->ask_login, this->ask_password,
             vars.get<cfg::theme>(),
-            TR("target_info_required", language(vars)),
-            TR("device", language(vars)), vars.get<cfg::globals::target_device>().c_str(),
-            TR("login", language(vars)), vars.get<cfg::globals::target_user>().c_str(),
-            TR("password", language(vars)),
+            TR(trkeys::target_info_required, language(vars)),
+            TR(trkeys::device, language(vars)), vars.get<cfg::globals::target_device>().c_str(),
+            TR(trkeys::login, language(vars)), vars.get<cfg::globals::target_user>().c_str(),
+            TR(trkeys::password, language(vars)),
             vars.get<cfg::font>(),
             &this->language_button)
         , vars(vars)

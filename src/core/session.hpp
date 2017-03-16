@@ -428,9 +428,9 @@ public:
                                     const unsigned minutes = (enddate - now + 30) / 60;
                                     mes += std::to_string(minutes);
                                     mes += ' ';
-                                    mes += TR("minute", language(this->ini));
+                                    mes += TR(trkeys::minute, language(this->ini));
                                     mes += (minutes > 1) ? "s " : " ";
-                                    mes += TR("before_closing", language(this->ini));
+                                    mes += TR(trkeys::before_closing, language(this->ini));
                                     mm.osd_message(std::move(mes), true);
                                     ++osd_state;
                                 }

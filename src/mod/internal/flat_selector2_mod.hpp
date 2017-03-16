@@ -289,7 +289,7 @@ private:
         if (this->selector.selector_lines.get_nb_rows() == 0) {
             this->selector.selector_lines.tab_flag = Widget2::IGNORE_TAB;
             this->selector.selector_lines.focus_flag = Widget2::IGNORE_FOCUS;
-            this->selector.add_device("", TR("no_results", language(this->vars)), "");
+            this->selector.add_device("", TR(trkeys::no_results, language(this->vars)), "");
         } else {
             this->selector.selector_lines.tab_flag = Widget2::NORMAL_TAB;
             this->selector.selector_lines.focus_flag = Widget2::NORMAL_FOCUS;

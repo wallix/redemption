@@ -79,35 +79,35 @@ public:
         : WidgetParent(drawable, parent, notifier, group_id)
         , warning_msg(drawable, *this, nullptr, "", group_id,
                       theme.global.error_color, theme.global.bgcolor, font)
-        , duration_label(drawable, *this, nullptr, TR("duration", lang),
+        , duration_label(drawable, *this, nullptr, TR(trkeys::duration, lang),
                          group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , duration_edit(drawable, *this, this,
                         nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                         theme.edit.focus_color, font, -1, 1, 1)
-        , duration_format(drawable, *this, nullptr, TR("note_duration_format", lang),
+        , duration_format(drawable, *this, nullptr, TR(trkeys::note_duration_format, lang),
                           group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-        , ticket_label(drawable, *this, nullptr, TR("ticket", lang),
+        , ticket_label(drawable, *this, nullptr, TR(trkeys::ticket, lang),
                        group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , ticket_edit(drawable, *this, this,
                       nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                       theme.edit.focus_color, font, -1, 1, 1)
-        , comment_label(drawable, *this, nullptr, TR("comment", lang),
+        , comment_label(drawable, *this, nullptr, TR(trkeys::comment, lang),
                         group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , comment_edit(drawable, *this, this,
                        nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                        theme.edit.focus_color, font, -1, 1, 1)
-        , notes(drawable, *this, nullptr, TR("note_required", lang),
+        , notes(drawable, *this, nullptr, TR(trkeys::note_required, lang),
                 group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-        , confirm(drawable, *this, this, TR("confirm", lang), group_id,
+        , confirm(drawable, *this, this, TR(trkeys::confirm, lang), group_id,
                   theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
                   6, 2)
         , flags(flags)
-        , generic_warning(TR("%s field_required", lang))
-        , format_warning(TR("%s invalid_format", lang))
-        , toohigh_warning(TR("%s toohigh_duration", lang))
-        , field_comment(TR("comment", lang))
-        , field_ticket(TR("ticket", lang))
-        , field_duration(TR("duration", lang))
+        , generic_warning(TR(trkeys::fmt_field_required, lang))
+        , format_warning(TR(trkeys::fmt_invalid_format, lang))
+        , toohigh_warning(TR(trkeys::fmt_toohigh_duration, lang))
+        , field_comment(TR(trkeys::comment, lang))
+        , field_ticket(TR(trkeys::ticket, lang))
+        , field_duration(TR(trkeys::duration, lang))
         , warning_buffer()
     {
         this->set_bg_color(theme.global.bgcolor);
@@ -130,13 +130,13 @@ public:
             this->add_widget(&this->comment_edit);
         }
         if (this->flags & DURATION_MANDATORY) {
-            this->duration_label.set_text(TR("duration_r", lang));
+            this->duration_label.set_text(TR(trkeys::duration_r, lang));
         }
         if (this->flags & TICKET_MANDATORY) {
-            this->ticket_label.set_text(TR("ticket_r", lang));
+            this->ticket_label.set_text(TR(trkeys::ticket_r, lang));
         }
         if (this->flags & COMMENT_MANDATORY) {
-            this->comment_label.set_text(TR("comment_r", lang));
+            this->comment_label.set_text(TR(trkeys::comment_r, lang));
         }
 
         if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
@@ -155,35 +155,35 @@ public:
         : WidgetParent(drawable, parent, notifier, group_id)
         , warning_msg(drawable, *this, nullptr, "", group_id,
                       theme.global.error_color, theme.global.bgcolor, font)
-        , duration_label(drawable, *this, nullptr, TR("duration", lang),
+        , duration_label(drawable, *this, nullptr, TR(trkeys::duration, lang),
                          group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , duration_edit(drawable, *this, this,
                         nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                         theme.edit.focus_color, font, -1, 1, 1)
-        , duration_format(drawable, *this, nullptr, TR("note_duration_format", lang),
+        , duration_format(drawable, *this, nullptr, TR(trkeys::note_duration_format, lang),
                           group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-        , ticket_label(drawable, *this, nullptr, TR("ticket", lang),
+        , ticket_label(drawable, *this, nullptr, TR(trkeys::ticket, lang),
                        group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , ticket_edit(drawable, *this, this,
                       nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                       theme.edit.focus_color, font, -1, 1, 1)
-        , comment_label(drawable, *this, nullptr, TR("comment", lang),
+        , comment_label(drawable, *this, nullptr, TR(trkeys::comment, lang),
                         group_id, theme.global.fgcolor, theme.global.bgcolor, font)
         , comment_edit(drawable, *this, this,
                        nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                        theme.edit.focus_color, font, -1, 1, 1)
-        , notes(drawable, *this, nullptr, TR("note_required", lang),
+        , notes(drawable, *this, nullptr, TR(trkeys::note_required, lang),
                 group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-        , confirm(drawable, *this, this, TR("confirm", lang), group_id,
+        , confirm(drawable, *this, this, TR(trkeys::confirm, lang), group_id,
                   theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
                   6, 2)
         , flags(flags)
-        , generic_warning(TR("%s field_required", lang))
-        , format_warning(TR("%s invalid_format", lang))
-        , toohigh_warning(TR("%s toohigh_duration", lang))
-        , field_comment(TR("comment", lang))
-        , field_ticket(TR("ticket", lang))
-        , field_duration(TR("duration", lang))
+        , generic_warning(TR(trkeys::fmt_field_required, lang))
+        , format_warning(TR(trkeys::fmt_invalid_format, lang))
+        , toohigh_warning(TR(trkeys::fmt_toohigh_duration, lang))
+        , field_comment(TR(trkeys::comment, lang))
+        , field_ticket(TR(trkeys::ticket, lang))
+        , field_duration(TR(trkeys::duration, lang))
         , warning_buffer()
     {
         this->set_bg_color(theme.global.bgcolor);
@@ -206,13 +206,13 @@ public:
             this->add_widget(&this->comment_edit);
         }
         if (this->flags & DURATION_MANDATORY) {
-            this->duration_label.set_text(TR("duration_r", lang));
+            this->duration_label.set_text(TR(trkeys::duration_r, lang));
         }
         if (this->flags & TICKET_MANDATORY) {
-            this->ticket_label.set_text(TR("ticket_r", lang));
+            this->ticket_label.set_text(TR(trkeys::ticket_r, lang));
         }
         if (this->flags & COMMENT_MANDATORY) {
-            this->comment_label.set_text(TR("comment_r", lang));
+            this->comment_label.set_text(TR(trkeys::comment_r, lang));
         }
 
         if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {

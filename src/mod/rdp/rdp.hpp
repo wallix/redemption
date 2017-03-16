@@ -1829,7 +1829,7 @@ private:
             this->end_session_message.clear();
 
             this->authentifier.disconnect_target();
-            this->authentifier.set_auth_error_message(TR("session_logoff_in_progress", this->lang));
+            this->authentifier.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
 
             if (event) {
                 event->signal = BACK_EVENT_NEXT;
@@ -4035,7 +4035,7 @@ public:
             this->end_session_message.clear();
 
             this->authentifier.disconnect_target();
-            this->authentifier.set_auth_error_message(TR("session_logoff_in_progress", this->lang));
+            this->authentifier.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
 
             this->event.signal = BACK_EVENT_NEXT;
         }
@@ -5295,7 +5295,7 @@ public:
             break;
         case ERRINFO_DISCONNECTED_BY_OTHERCONNECTION:
             LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DISCONNECTED_BY_OTHERCONNECTION");
-            this->authentifier.set_auth_error_message(TR("disconnected_by_otherconnection", this->lang));
+            this->authentifier.set_auth_error_message(TR(trkeys::disconnected_by_otherconnection, this->lang));
             break;
         case ERRINFO_OUT_OF_MEMORY:
             LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "OUT_OF_MEMORY");
