@@ -29,16 +29,16 @@
 
 inline void dump_png(const char * filename, const Drawable & drawable)
 {
-    if (FILE * f = fopen(filename, "wb")) {
+    if (std::FILE * f = std::fopen(filename, "wb")) {
         ::dump_png24(f, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize(), true);
-        ::fclose(f);
+        std::fclose(f);
     }
 }
 
 inline void dump_png(const char * filename, const Bitmap & bmp)
 {
-    if (FILE * f = fopen(filename, "wb")) {
+    if (std::FILE * f = std::fopen(filename, "wb")) {
         dump_png24(f, bmp.data(), bmp.cx(), bmp.cy(), bmp.line_size(), true);
-        ::fclose(f);
+        std::fclose(f);
     }
 }

@@ -135,11 +135,14 @@ constant TEST_DEPENDENCIES :
 ;
 
 
+obj bitmap_from_file : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp : <cxxflags>-std=c++14 ;
 obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : $(EXE_DEPENDENCIES) ;
 obj d3des : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
+obj png_utils : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
 obj bitmap : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
 obj do_recorder : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(EXE_DEPENDENCIES) ;
 obj program_options : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
+constant LIBBITMAP_FROM_FILE : <library>bitmap <library>bitmap_from_file <library>png ;
 
 #
 # Redemption
@@ -149,7 +152,9 @@ exe rdpproxy
     :
         $(REDEMPTION_SRC_PATH)/main/main.cpp
         bitmap
+        bitmap_from_file
         program_options
+        png_utils
 
         ocr
         ppocr
@@ -182,7 +187,9 @@ lib libredrec
     :
         do_recorder
         bitmap
+        bitmap_from_file
         program_options
+        png_utils
 
         ocr
         ppocr_static
@@ -206,7 +213,9 @@ lib libredrec
 exe rdptproxy
     :
         $(REDEMPTION_SRC_PATH)/main/transparent.cpp
+        png_utils
         bitmap
+        bitmap_from_file
         program_options
 
         ## @{
@@ -273,6 +282,8 @@ exe rdpclient
 exe vncclient
     : $(REDEMPTION_SRC_PATH)/main/vnc_client.cpp
         program_options
+        bitmap_from_file
+        png_utils
         bitmap
         openssl
         d3des
@@ -477,10 +488,10 @@ test-canonical acl/mm_api.hpp ;
 
 ## Ocr
 ## {
-test-run test_ocr : capture/test_ocr.cpp : : <library>bitmap <library>png <library>ocr <library>ppocr_test ;
-test-run test_ppocr : capture/test_ocr.cpp : : <library>bitmap <library>png <library>ocr <library>ppocr_test ;
-test-run test_bogus_ocr : capture/test_bogus_ocr.cpp : : <library>bitmap <library>png <library>ocr ;
-test-run test_bogus_ppocr : capture/test_bogus_ppocr.cpp : : <library>bitmap <library>png <library>ocr <library>ppocr_test ;
+test-run test_ocr : capture/test_ocr.cpp : : $(LIBBITMAP_FROM_FILE) <library>ocr <library>ppocr_test ;
+test-run test_ppocr : capture/test_ocr.cpp : : $(LIBBITMAP_FROM_FILE) <library>ocr <library>ppocr_test ;
+test-run test_bogus_ocr : capture/test_bogus_ocr.cpp : : $(LIBBITMAP_FROM_FILE) <library>ocr ;
+test-run test_bogus_ppocr : capture/test_bogus_ppocr.cpp : : $(LIBBITMAP_FROM_FILE) <library>ocr <library>ppocr_test ;
 test-canonical capture/ocr/locale/latin_to_cyrillic.hpp : <library>ocr ;
 ## }
 
@@ -488,9 +499,9 @@ test-canonical capture/ocr/locale/latin_to_cyrillic.hpp : <library>ocr ;
 ## Capture tests
 ## @{
 test-canonical capture/RDPChunkedDevice.hpp ;
-test-canonical capture/capture.hpp : <library>bitmap <library>png <library>crypto <library>dl <library>z <library>snappy <library>ppocr_test <library>ocr <library>ffmpeg ;
-test-canonical capture/video_capture.hpp : <library>bitmap <library>png <library>dl <library>ffmpeg ;
-test-canonical capture/wrm_capture.hpp : <library>bitmap <library>crypto <library>png <library>z <library>snappy <library>dl ;
+test-canonical capture/capture.hpp : <library>bitmap <library>png_utils <library>crypto <library>dl <library>z <library>snappy <library>ppocr_test <library>ocr <library>ffmpeg ;
+test-canonical capture/video_capture.hpp : <library>bitmap <library>png_utils <library>dl <library>ffmpeg ;
+test-canonical capture/wrm_capture.hpp : <library>bitmap <library>png_utils <library>crypto <library>png <library>z <library>snappy <library>dl ;
 test-canonical capture/transparentchunk.hpp ;
 test-canonical capture/transparentplayer.hpp ;
 test-canonical capture/transparentrecorder.hpp ;
@@ -573,9 +584,11 @@ test-canonical capture/cryptofile.hpp : <library>openssl <library>crypto <librar
 
 
 obj do_recorder_test : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(TEST_DEPENDENCIES) ;
+
 test-canonical main/do_recorder.hpp :
     <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z
     <library>do_recorder_test <library>ffmpeg <library>ocr <library>ppocr_test <library>bitmap
+    <library>png_utils
 ;
 
 
@@ -595,7 +608,7 @@ test-canonical utils/confdescriptor.hpp ;
 test-canonical utils/d3des.hpp ;
 test-canonical utils/diffiehellman.hpp ;
 test-canonical utils/difftimeval.hpp ;
-test-canonical utils/drawable.hpp : <library>bitmap  <library>crypto <library>png ;
+test-canonical utils/drawable.hpp : $(LIBBITMAP_FROM_FILE) <library>crypto ;
 test-canonical utils/ellipse.hpp ;
 test-canonical utils/fdbuf.hpp ;
 test-canonical utils/fileutils.hpp ;
@@ -630,32 +643,32 @@ test-canonical utils/winpr/pattern.hpp ;
 ## Widget tests
 ## @{
 # TODO test-canonical mod/internal/widget2/columnlayout.hpp ;
-test-canonical mod/internal/widget2/composite.hpp : <library>png <library>crypto ;
-test-canonical mod/internal/widget2/edit.hpp : <library>png <library>crypto ;
-test-canonical mod/internal/widget2/edit_valid.hpp : <library>png <library>crypto ;
-test-canonical mod/internal/widget2/flat_button.hpp : <library>png <library>crypto ;
-test-canonical mod/internal/widget2/flat_dialog.hpp : <library>bitmap <library>png <library>crypto ;
-test-canonical mod/internal/widget2/flat_interactive_target.hpp : <library>png <library>crypto ;
-test-canonical mod/internal/widget2/flat_login.hpp : <library>bitmap <library>png <library>crypto ;
-test-canonical mod/internal/widget2/flat_selector2.hpp : <library>png <library>crypto ;
-test-canonical mod/internal/widget2/flat_wab_close.hpp : <library>bitmap <library>png <library>crypto ;
-test-canonical mod/internal/widget2/grid.hpp : <library>png <library>crypto ;
-test-canonical mod/internal/widget2/group_box.hpp : <library>png <library>crypto ;
-test-canonical mod/internal/widget2/image.hpp : <library>bitmap <library>png <library>crypto ;
-test-canonical mod/internal/widget2/label.hpp : <library>png <library>crypto ;
-test-canonical mod/internal/widget2/labelgrid.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget2/composite.hpp : <library>png_utils <library>png <library>crypto ;
+test-canonical mod/internal/widget2/edit.hpp : <library>crypto ;
+test-canonical mod/internal/widget2/edit_valid.hpp : <library>crypto ;
+test-canonical mod/internal/widget2/flat_button.hpp : <library>crypto ;
+test-canonical mod/internal/widget2/flat_dialog.hpp : $(LIBBITMAP_FROM_FILE) <library>png_utils <library>png <library>crypto ;
+test-canonical mod/internal/widget2/flat_interactive_target.hpp : <library>crypto ;
+test-canonical mod/internal/widget2/flat_login.hpp : $(LIBBITMAP_FROM_FILE) <library>crypto ;
+test-canonical mod/internal/widget2/flat_selector2.hpp : <library>crypto ;
+test-canonical mod/internal/widget2/flat_wab_close.hpp : $(LIBBITMAP_FROM_FILE) <library>crypto ;
+test-canonical mod/internal/widget2/grid.hpp : <library>crypto ;
+test-canonical mod/internal/widget2/group_box.hpp : <library>crypto ;
+test-canonical mod/internal/widget2/image.hpp : $(LIBBITMAP_FROM_FILE) <library>crypto ;
+test-canonical mod/internal/widget2/label.hpp : <library>crypto ;
+test-canonical mod/internal/widget2/labelgrid.hpp : <library>crypto ;
 # TODO test-canonical mod/internal/widget2/linelayout.hpp ;
-test-canonical mod/internal/widget2/multiline.hpp : <library>png <library>crypto ;
-test-canonical mod/internal/widget2/number_edit.hpp : <library>png <library>crypto ;
-test-canonical mod/internal/widget2/password.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget2/multiline.hpp : <library>crypto ;
+test-canonical mod/internal/widget2/number_edit.hpp : <library>crypto ;
+test-canonical mod/internal/widget2/password.hpp : <library>crypto ;
 # TODO test-canonical mod/internal/widget2/radio_list.hpp ;
-test-canonical mod/internal/widget2/screen.hpp : <library>png <library>crypto ;
-test-canonical mod/internal/widget2/scroll.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget2/screen.hpp : <library>crypto ;
+test-canonical mod/internal/widget2/scroll.hpp : <library>crypto ;
 # TODO test-canonical mod/internal/widget2/stacklayout.hpp ;
 test-canonical mod/internal/widget2/tab.hpp ;
-test-canonical mod/internal/widget2/tooltip.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget2/tooltip.hpp : <library>crypto ;
 test-canonical mod/internal/widget2/widget.hpp : <library>crypto ;
-test-canonical mod/internal/widget2/widget2_rect.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget2/widget2_rect.hpp : <library>crypto ;
 test-canonical mod/internal/widget2/flat_vnc_authentification.hpp ;
 test-canonical mod/internal/widget2/language_button.hpp ;
 test-canonical mod/internal/widget2/layout.hpp ;
@@ -674,14 +687,14 @@ test-canonical mod/internal/widget2/flat_form.hpp : <library>png <library>crypto
 ## @{
 test-canonical mod/internal/bouncer2_mod.hpp : <library>png ;
 test-canonical mod/internal/copy_paste.hpp : <library>png <library>crypto ;
-test-canonical mod/internal/flat_dialog_mod.hpp : <library>bitmap <library>png ;
-test-canonical mod/internal/flat_login_mod.hpp : <library>bitmap <library>png ;
-test-canonical mod/internal/flat_wab_close_mod.hpp : <library>bitmap <library>png ;
-test-canonical mod/internal/interactive_target_mod.hpp : <library>bitmap <library>png <library>crypto ;
+test-canonical mod/internal/flat_dialog_mod.hpp : $(LIBBITMAP_FROM_FILE) ;
+test-canonical mod/internal/flat_login_mod.hpp : $(LIBBITMAP_FROM_FILE) ;
+test-canonical mod/internal/flat_wab_close_mod.hpp : $(LIBBITMAP_FROM_FILE) ;
+test-canonical mod/internal/interactive_target_mod.hpp : $(LIBBITMAP_FROM_FILE) <library>crypto ;
 test-canonical mod/internal/internal_mod.hpp ;
 test-canonical mod/internal/replay_mod.hpp : <library>png ;
-test-canonical mod/internal/test_card_mod.hpp : <library>png ;
-test-canonical mod/internal/widget_test_mod.hpp : <library>bitmap <library>png ;
+test-canonical mod/internal/test_card_mod.hpp : $(LIBBITMAP_FROM_FILE) ;
+test-canonical mod/internal/widget_test_mod.hpp : $(LIBBITMAP_FROM_FILE) ;
 test-canonical mod/internal/flat_selector2_mod.hpp ;
 test-canonical mod/internal/flat_wait_mod.hpp ;
 test-canonical mod/internal/transparent_replay_mod.hpp ;
@@ -734,7 +747,7 @@ test-canonical core/RDP/nla/ntlm/ntlm_message.hpp ;
 
 ## RDP caches
 ## @{
-test-canonical core/RDP/caches/bmpcache.hpp : <library>bitmap <library>crypto <library>png ;
+test-canonical core/RDP/caches/bmpcache.hpp : $(LIBBITMAP_FROM_FILE) <library>crypto ;
 test-canonical core/RDP/caches/bmpcachepersister.hpp : <library>bitmap <library>crypto ;
 test-canonical core/RDP/caches/brushcache.hpp ;
 test-canonical core/RDP/caches/glyphcache.hpp ;
@@ -746,13 +759,13 @@ test-canonical core/RDP/caches/pointercache.hpp ;
 ## @{
 test-canonical core/RDP/GraphicUpdatePDU.hpp ;
 test-canonical core/RDP/PersistentKeyListPDU.hpp ;
-test-canonical core/RDP/RDPDrawable.hpp : <library>crypto <library>bitmap <library>png ;
+test-canonical core/RDP/RDPDrawable.hpp : $(LIBBITMAP_FROM_FILE) <library>png_utils <library>crypto ;
 test-canonical core/RDP/RDPSerializer.hpp ;
 test-canonical core/RDP/RefreshRectPDU.hpp : <library>crypto ;
 test-canonical core/RDP/SaveSessionInfoPDU.hpp ;
 test-canonical core/RDP/ServerRedirection.hpp ;
 test-canonical core/RDP/autoreconnect.hpp ;
-test-canonical core/RDP/bitmapupdate.hpp : <library>bitmap <library>crypto <library>libpng ;
+test-canonical core/RDP/bitmapupdate.hpp : <library>bitmap <library>crypto ;
 test-canonical core/RDP/clipboard.hpp ;
 test-canonical core/WMF/MetaFileFormat.hpp ;
 test-canonical core/RDP/fastpath.hpp : <library>crypto ;
@@ -849,7 +862,7 @@ test-canonical mod/null/null.hpp ;
 test-canonical mod/rdp/rdp_log.hpp ;
 test-canonical mod/rdp/rdp_orders.hpp ;
 test-canonical mod/rdp/rdp_params.hpp ;
-test-canonical mod/vnc/vnc.hpp : <library>png <library>d3des ;
+test-canonical mod/vnc/vnc.hpp : $(LIBBITMAP_FROM_FILE) <library>d3des ;
 test-canonical mod/xup/xup.hpp ;
 test-canonical mod/rdp/rdp.hpp : <library>bitmap <library>krb5 <library>gssglue <library>png <library>d3des <library>z <library>dl <library>crypto ;
 ## @}
@@ -857,12 +870,12 @@ test-canonical mod/rdp/rdp.hpp : <library>bitmap <library>krb5 <library>gssglue 
 
 ## Bitmap
 ## @{
-test-canonical utils/bitmap.hpp : <library>bitmap <library>png <library>crypto ;
-test-canonical utils/bitmap_with_png.hpp : <library>bitmap <library>png ;
+test-canonical utils/bitmap.hpp : $(LIBBITMAP_FROM_FILE) <library>crypto ;
+test-canonical utils/bitmap_from_file.hpp : $(LIBBITMAP_FROM_FILE) ;
 test-canonical utils/bitmap_data_allocator.hpp ;
 
 test-run test_libpng : test_libpng.cpp : : <library>png <library>z <covflag>nocover ;
-test-run test_bitmap_perf : test_bitmap_perf.cpp : : <library>bitmap <library>png <covflag>nocover ;
+test-run test_bitmap_perf : test_bitmap_perf.cpp : : $(LIBBITMAP_FROM_FILE) <covflag>nocover ;
 ## @}
 
 
@@ -901,9 +914,8 @@ test-canonical system/linux/system/ssl_sha512.hpp : <library>openssl <library>cr
 test-run test_rdp_client_test_card
     : client_mods/test_rdp_client_test_card.cpp
     :
-    : <library>bitmap
+    : $(LIBBITMAP_FROM_FILE)
       <library>z
-      <library>png
       <library>crypto
       <library>dl
       <library>openssl
@@ -928,6 +940,7 @@ test-run test_rdp_client_wab
     : client_mods/test_rdp_client_wab.cpp
     :
     : <library>bitmap
+      <library>png_utils
       <library>krb5
       <library>gssglue
       <library>png
@@ -943,10 +956,9 @@ test-run test_rdp_client_wab
 test-run test_vnc_client_simple
     : client_mods/test_vnc_client_simple.cpp
     :
-    : <library>bitmap
+    : $(LIBBITMAP_FROM_FILE)
       <library>krb5
       <library>gssglue
-      <library>png
       <library>crypto
       <library>d3des
       <library>dl
@@ -977,8 +989,8 @@ test-run cli_vnc_connection
 test-run test_rdesktop_client
     : server/test_rdesktop_client.cpp
     :
-    : <library>bitmap
-      <library>png
+    : $(LIBBITMAP_FROM_FILE)
+      <library>png_utils
       <library>openssl
       <library>snappy
       <library>d3des
@@ -994,8 +1006,8 @@ test-run test_rdesktop_client
 test-run test_mstsc_client
     : server/test_mstsc_client.cpp
     :
-    : <library>bitmap
-      <library>png
+    : $(LIBBITMAP_FROM_FILE)
+      <library>png_utils
       <library>openssl
       <library>snappy
       <library>d3des
@@ -1009,20 +1021,20 @@ test-run test_mstsc_client
 
 
 test-run test_mstsc_client_rdp50bulk
-    : server/test_mstsc_client_rdp50bulk.cpp
-    :
-    : <library>bitmap
-      <library>png
-      <library>openssl
-      <library>snappy
-      <library>d3des
-      <library>crypto
-      <library>dl
-      <library>ocr
-      <library>ppocr_test
-      <library>ffmpeg
-      <covflag>nocover
-    ;
+  : server/test_mstsc_client_rdp50bulk.cpp
+  :
+  : $(LIBBITMAP_FROM_FILE)
+    <library>png_utils
+    <library>openssl
+    <library>snappy
+    <library>d3des
+    <library>crypto
+    <library>dl
+    <library>ocr
+    <library>ppocr_test
+    <library>ffmpeg
+    <covflag>nocover
+;
 ## @}
 
 
@@ -1052,26 +1064,26 @@ test-canonical core/wait_obj.hpp ;
 
 
 test-canonical front/front.hpp
-    : <library>bitmap
-      <library>openssl
-      <library>snappy
-      <library>d3des
-      <library>krb5
-      <library>gssglue
-      <library>d3des
-      <library>dl
-      <library>crypto
-      <library>ocr
-      <library>ppocr_test
-      <library>ffmpeg
-      <library>png
-    ;
+  : $(LIBBITMAP_FROM_FILE)
+    <library>png_utils
+    <library>openssl
+    <library>snappy
+    <library>d3des
+    <library>krb5
+    <library>gssglue
+    <library>d3des
+    <library>dl
+    <library>crypto
+    <library>ocr
+    <library>ppocr_test
+    <library>ffmpeg
+;
 
 test-canonical keyboard/keymap2.hpp ;
 test-canonical keyboard/keymapSym.hpp ;
 
 test-canonical gdi/graphic_cmd_color.hpp ;
-test-canonical gdi/protected_graphics.hpp : <library>bitmap  <library>png <library>crypto <library>z <library>snappy <library>dl ;
+test-canonical gdi/protected_graphics.hpp : $(LIBBITMAP_FROM_FILE) <library>png_utils <library>crypto <library>z <library>snappy <library>dl ;
 
 
 #explicit test_show_data.o bitmap_data_allocator.o test_data_draw ; #
