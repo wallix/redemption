@@ -215,7 +215,7 @@ void read_png24(
     png_read_info(png.ppng, png.pinfo);
 
     for (size_t k = 0 ; k < height ; ++k) {
-        png_read_row(png.ppng, const_cast<unsigned char*>(data), nullptr);
+        png_read_row(png.ppng, data, nullptr);
         data += rowsize;
     }
 
@@ -238,7 +238,7 @@ void transport_read_png24(
     png_read_info(png.ppng, png.pinfo);
 
     for (size_t k = 0 ; k < height ; ++k) {
-        png_read_row(png.ppng, const_cast<unsigned char*>(data), nullptr);
+        png_read_row(png.ppng, data, nullptr);
         data += rowsize;
     }
 
