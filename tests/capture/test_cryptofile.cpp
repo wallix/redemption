@@ -328,14 +328,15 @@ BOOST_AUTO_TEST_CASE(TestEncryption1)
     ocrypto encrypter(cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
     // Of course no such header will be needed in non encrypted files
-    size_t towrite = 0;
-    encrypter.open(result+offset, sizeof(result)-offset, towrite, derivator, sizeof(derivator));
-    offset += towrite;
-    BOOST_CHECK_EQUAL(towrite, 40);
+    ocrypto::Result res = encrypter.open(derivator, sizeof(derivator));
+    memcpy(result + offset, res.buf.data(), res.buf.size());
+    offset += res.buf.size();
+    BOOST_CHECK_EQUAL(res.buf.size(), 40);
+    BOOST_CHECK_EQUAL(res.err_code, 0);
 
     // writing data to compressed/encrypted buffer may result in data to write
     // ... or not as this writing may be differed.
-    towrite = 0;
+    size_t towrite = 0;
     encrypter.write(result+offset, sizeof(result)-offset, towrite, "toto", 4);
     offset += towrite;
     BOOST_CHECK_EQUAL(towrite, 0);
@@ -405,13 +406,14 @@ BOOST_AUTO_TEST_CASE(TestEncryption2)
     // Opening an encrypted stream usually results in some header put in result buffer
     // Of course no such header will be needed in non encrypted files
     size_t towrite = 0;
-    encrypter.open(result+offset, sizeof(result)-offset, towrite, derivator, sizeof(derivator));
-    offset += towrite;
-    BOOST_CHECK_EQUAL(towrite, 40);
+    ocrypto::Result res = encrypter.open(derivator, sizeof(derivator));
+    memcpy(result + offset, res.buf.data(), res.buf.size());
+    offset += res.buf.size();
+    BOOST_CHECK_EQUAL(res.buf.size(), 40);
+    BOOST_CHECK_EQUAL(res.err_code, 0);
 
     // writing data to compressed/encrypted buffer may result in data to write
     // ... or not as this writing may be differed.
-    towrite = 0;
     encrypter.write(result+offset, sizeof(result)-offset, towrite, "to", 2);
     offset += towrite;
     BOOST_CHECK_EQUAL(towrite, 0);
@@ -459,12 +461,18 @@ BOOST_AUTO_TEST_CASE(TestEncryption2)
     read_encrypted decrypter(cctx, 1, result, offset);
     decrypter.open(derivator, sizeof(derivator));
     
-    size_t res = decrypter.read(clear, sizeof(clear));
-    BOOST_CHECK_EQUAL(res, 4);
+    size_t res2 = decrypter.read(clear, sizeof(clear));
+    BOOST_CHECK_EQUAL(res2, 4);
     CHECK_MEM(clear, 4, "toto");
 
 }
 
+
+
+// This sample was generated using udevrandom on Linux
+uint8_t randomSample[8192] = {
+#include "fixtures/randomdata.cpp"
+};
 
 BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
 {
@@ -486,9 +494,7 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
     ));
     
 
-    uint8_t zero[8192] = {};
-    uint8_t result[sizeof(zero)];
-    uint8_t dummy[sizeof(zero)] = {};
+    uint8_t result[16384];
     unsigned char hash[MD_HASH_LENGTH << 1];
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
@@ -496,27 +502,27 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
     ocrypto encrypter(cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
     // Of course no such header will be needed in non encrypted files
-    size_t towrite = 0;
-    encrypter.open(result+offset, sizeof(result)-offset, towrite, derivator, sizeof(derivator));
-    offset += towrite;
-    BOOST_CHECK_EQUAL(towrite, 40);
+    ocrypto::Result res = encrypter.open(derivator, sizeof(derivator));
+    memcpy(result + offset, res.buf.data(), res.buf.size());
+    offset += res.buf.size();
+    BOOST_CHECK_EQUAL(res.buf.size(), 40);
+    BOOST_CHECK_EQUAL(res.err_code, 0);
 
     // writing data to compressed/encrypted buffer may result in data to write
     // ... or not as this writing may be differed.
 
-    // Let's send a large block of data 
-    // (size of block that I can send depends of data and compressibility)
-    uint8_t block[129400];
-//    LCGRandom rnd2(0);
-    int i = 0;
-    for (auto & x: block){
-        x = i++; // uint8_t(rnd2.rand32()); 
-    }
+    // Let's send a large block of pseudo random data 
+    // with that kind of data I expect poor compression results
 
-    towrite = 0;
-    encrypter.write(result+offset, sizeof(result)-offset, towrite, block, sizeof(block));
+    size_t towrite = 0;
+    encrypter.write(result+offset, sizeof(result)-offset, towrite, randomSample, sizeof(randomSample));
     offset += towrite;
-    BOOST_CHECK_EQUAL(towrite, 7196);
+    BOOST_CHECK_EQUAL(towrite, 0);
+
+    // I write the same block *again* now I should reach some compression
+    encrypter.write(result+offset, sizeof(result)-offset, towrite, randomSample, sizeof(randomSample));
+    offset += towrite;
+    BOOST_CHECK_EQUAL(towrite, 8612);
     
     // close flushes all opened buffers and writes potential trailer
     // the full file hash is also returned which is made of two parts
@@ -527,32 +533,24 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
     towrite = 0;
     encrypter.close(result+offset, sizeof(result)-offset, towrite, hash);
     offset += towrite;
-    BOOST_CHECK_EQUAL(towrite, 956);
-    BOOST_CHECK_EQUAL(offset, 8192);
+    BOOST_CHECK_EQUAL(towrite, 8);
+    BOOST_CHECK_EQUAL(offset, 8660);
 
 //    CHECK_MEM(result, offset, tmp);
 
 
-    char clear[sizeof(block)] = {};
+    char clear[sizeof(randomSample)] = {};
     read_encrypted decrypter(cctx, 1, result, offset);
     decrypter.open(derivator, sizeof(derivator));
     
-    size_t res = decrypter.read(clear, sizeof(clear));
-    BOOST_CHECK_EQUAL(res, sizeof(block));
-    CHECK_MEM(clear, sizeof(block), block);
-    CHECK_MEM(dummy, sizeof(dummy), zero);
+    size_t res2 = decrypter.read(clear, sizeof(clear));
+    BOOST_CHECK_EQUAL(res2, sizeof(randomSample));
+    CHECK_MEM(clear, sizeof(randomSample), randomSample);
 
-    char expected_hash1[MD_HASH_LENGTH+1] = "\xac\x59\xfe\x8b\x0f\xb5\x56\x2d"
-                                            "\xdc\xc7\xa5\x4c\xf5\x52\x6e\x58"
-                                            "\x24\x5e\xdb\x97\xc6\x12\x8d\x3a"
-                                            "\x05\xe6\xf1\xae\xfb\x9c\xef\x34";
-    char expected_hash2[MD_HASH_LENGTH+1] = "\x2a\x98\xb5\x16\x64\x3c\xde\x35"
-                                            "\x3e\x29\x30\x6c\x24\xda\x5b\x70"
-                                            "\xc0\x6c\x9b\xf8\x7b\x4f\xf9\xf4"
-                                            "\x6b\x3c\xbb\x5b\x7e\x27\xeb\x6e";
+    char expected_hash1[MD_HASH_LENGTH+1] = "\x88\x80\x2e\x37\x08\xca\x43\x30\xed\xd2\x72\x27\x2d\x05\x5d\xee\x01\x71\x4a\x12\xa5\xd9\x72\x84\xec\x0e\xd5\xaa\x47\x9e\xc3\xc2";
+    char expected_hash2[MD_HASH_LENGTH+1] = "\x62\x96\xe9\xa2\x20\x4f\x39\x21\x06\x4d\x1a\xcf\xf8\x6e\x34\x9c\xd6\xae\x6c\x44\xd4\x55\x57\xd5\x29\x04\xde\x58\x7f\x1d\x0b\x35";
 
     CHECK_MEM(hash, MD_HASH_LENGTH, expected_hash1);
     CHECK_MEM(hash + MD_HASH_LENGTH, MD_HASH_LENGTH, expected_hash2);
-
-
 }
+
