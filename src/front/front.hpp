@@ -119,6 +119,7 @@
 #include "capture/flv_params.hpp"
 #include "capture/wrm_params.hpp"
 #include "capture/ocr_params.hpp"
+#include "capture/flv_params_from_ini.hpp"
 
 
 class Front : public FrontAPI

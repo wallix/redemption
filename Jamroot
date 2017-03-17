@@ -135,6 +135,7 @@ constant TEST_DEPENDENCIES :
 ;
 
 
+obj video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.cpp ;
 obj bitmap_from_file : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp : <cxxflags>-std=c++14 ;
 obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : $(EXE_DEPENDENCIES) ;
 obj d3des : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
@@ -152,6 +153,7 @@ constant LIBBITMAP_FROM_FILE : <library>bitmap <library>bitmap_from_file <librar
 exe rdpproxy
     :
         $(REDEMPTION_SRC_PATH)/main/main.cpp
+        video_capture.o
         capture
         bitmap
         bitmap_from_file
@@ -187,6 +189,7 @@ exe rdpproxy
 
 lib libredrec
     :
+        video_capture.o
         capture
         do_recorder
         bitmap
@@ -216,6 +219,7 @@ lib libredrec
 exe rdptproxy
     :
         $(REDEMPTION_SRC_PATH)/main/transparent.cpp
+        video_capture.o
         capture
         png_utils
         bitmap
@@ -285,6 +289,7 @@ exe rdpclient
 
 exe vncclient
     : $(REDEMPTION_SRC_PATH)/main/vnc_client.cpp
+        video_capture.o
         capture
         program_options
         bitmap_from_file
@@ -483,7 +488,7 @@ test-canonical redemptionio/redemptionio.hpp ;
 
 ## Acl tests
 ## @{
-test-canonical acl/acl_serializer.hpp : <library>png <library>crypto <library>snappy ;
+test-canonical acl/acl_serializer.hpp : $(LIBBITMAP_FROM_FILE) <library>png_utils <library>video_capture.o <library>ffmpeg <library>crypto <library>snappy ;
 test-canonical acl/auth_api.hpp ;
 test-canonical acl/authentifier.hpp : <library>crypto <library>png <library>snappy ;
 test-canonical acl/module_manager.hpp : <library>crypto <library>png <library>snappy ;
@@ -504,8 +509,8 @@ test-canonical capture/ocr/locale/latin_to_cyrillic.hpp : <library>ocr ;
 ## Capture tests
 ## @{
 test-canonical capture/RDPChunkedDevice.hpp ;
-test-canonical capture/capture.hpp : <library>bitmap <library>png_utils <library>crypto <library>dl <library>z <library>snappy <library>ppocr_test <library>ocr <library>ffmpeg ;
-test-canonical capture/video_capture.hpp : <library>bitmap <library>png_utils <library>dl <library>ffmpeg ;
+test-canonical capture/capture.hpp : <library>bitmap <library>png_utils <library>crypto <library>dl <library>z <library>snappy <library>ppocr_test <library>ocr <library>video_capture.o <library>ffmpeg ;
+test-canonical capture/video_capture.hpp : <library>bitmap <library>png_utils <library>dl <library>ffmpeg <library>video_capture.o ;
 test-canonical capture/wrm_capture.hpp : <library>bitmap <library>png_utils <library>crypto <library>png <library>z <library>snappy <library>dl ;
 test-canonical capture/transparentchunk.hpp ;
 test-canonical capture/transparentplayer.hpp ;
@@ -594,7 +599,7 @@ obj capture_test : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(TEST_DEPENDENC
 test-canonical main/do_recorder.hpp :
     <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z
     <library>do_recorder_test <library>ffmpeg <library>ocr <library>ppocr_test <library>bitmap
-    <library>png_utils <library>capture_test
+    <library>png_utils <library>capture_test <library>video_capture.o
 ;
 
 
@@ -996,6 +1001,7 @@ test-run test_rdesktop_client
   : server/test_rdesktop_client.cpp
   :
   : $(LIBBITMAP_FROM_FILE)
+    <library>video_capture.o
     <library>capture_test
     <library>png_utils
     <library>openssl
@@ -1014,6 +1020,7 @@ test-run test_mstsc_client
   : server/test_mstsc_client.cpp
   :
   : $(LIBBITMAP_FROM_FILE)
+    <library>video_capture.o
     <library>capture_test
     <library>png_utils
     <library>openssl
@@ -1032,6 +1039,7 @@ test-run test_mstsc_client_rdp50bulk
   : server/test_mstsc_client_rdp50bulk.cpp
   :
   : $(LIBBITMAP_FROM_FILE)
+    <library>video_capture.o
     <library>capture_test
     <library>png_utils
     <library>openssl
@@ -1074,6 +1082,7 @@ test-canonical core/wait_obj.hpp ;
 
 test-canonical front/front.hpp
   : $(LIBBITMAP_FROM_FILE)
+    <library>video_capture.o
     <library>capture_test
     <library>png_utils
     <library>openssl

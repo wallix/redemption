@@ -44,6 +44,7 @@
 
 #include "capture/capture.hpp"
 #include "capture/capture.cpp" // Yeaaahh...
+#include "capture/flv_params_from_ini.hpp"
 #include "check_sig.hpp"
 #include "get_file_contents.hpp"
 #include "utils/fileutils.hpp"
