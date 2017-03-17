@@ -146,5 +146,19 @@ public:
 
         return false;
     }
+
+    bool is_set()
+    {
+        this->waked_up_by_time = false;
+
+        if (this->set_state) {
+            if (tvtime() >= this->trigger_time) {
+                this->waked_up_by_time = true;
+                return true;
+            }
+        }
+
+        return false;
+    }
 };
 

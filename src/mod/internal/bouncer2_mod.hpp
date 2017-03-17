@@ -152,7 +152,7 @@ public:
         drawable.end_update();
 
         // Final with setting next idle time
-        this->event.set(33333); // 0.3s is 30fps
+        this->event.set(33333); // 0.03s is 30fps
     }
 
     bool is_up_and_running() override { return true; }
