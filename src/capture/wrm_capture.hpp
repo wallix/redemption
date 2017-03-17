@@ -232,7 +232,7 @@ struct MetaSeqBuf {
     CryptoContext & cctx;
     Random & rnd;
     Fstat & fstat;
-    
+
     char current_filename_[1024];
     WrmFGen filegen_;
     iofdbuf buf_;
@@ -250,7 +250,7 @@ struct MetaSeqBuf {
     bool with_encryption;
     ocrypto meta_buf_encrypt;
     ocrypto wrm_filter_encrypt;
-    
+
 
 // Only for Checksum Management
     static constexpr size_t nosize = ~size_t{};
@@ -462,11 +462,11 @@ struct MetaSeqBuf {
         unsigned char hash[MD_HASH_LENGTH << 1];
         return this->meta_buf_close(hash);
     }
-    
+
     bool meta_buf_is_open() const noexcept
     { return -1 != this->meta_buf_fd; }
 
-    
+
 
 public:
     explicit MetaSeqBuf(
@@ -670,7 +670,7 @@ public:
         if (!this->current_filename_[0] && !this->num_file_) {
             return nullptr;
         }
-        return this->filegen_.get(this->num_file_ - 1);        
+        return this->filegen_.get(this->num_file_ - 1);
     }
 
 
@@ -695,7 +695,7 @@ public:
                 }
                 const int res2 = this->buf_.close();
                 if (res2) {
-                    LOG(LOG_INFO, "MetaSeqBuf::next() : close error\n");            
+                    LOG(LOG_INFO, "MetaSeqBuf::next() : close error\n");
                     return res2;
                 }
                 return this->next_meta_file(&hash);
@@ -1068,7 +1068,7 @@ public:
 
                         if (raw_write(crypto_hash_fd, mes, len + 1) != 0) {
                             LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
-                                this->hf_.filename, int(errno));
+                                this->hf_.filename, errno);
                             return 1;
                         }
                     }
@@ -2054,10 +2054,10 @@ private:
         bool kbd_input(const timeval & now, uint32_t uchar) override {
             return this->GraphicToFile::kbd_input(now, uchar);
         }
-        
+
         ~Serializer() {
         }
-        
+
     } graphic_to_file;
 
 public:
