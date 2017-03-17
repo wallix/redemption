@@ -161,7 +161,7 @@ namespace trkeys
         "Se déconnecter maintenant"
     );
 #undef TR_KV
-};
+}
 
 
 struct Translation
