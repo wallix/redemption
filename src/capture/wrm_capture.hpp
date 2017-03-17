@@ -218,13 +218,11 @@ static inline int hash_buf_open(int & hash_buf_file_fd, ocrypto & hash_buf_encry
     size_t base_len = 0;
     const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
 
-    uint8_t buffer[40];
-    size_t towrite = 0;
-    err = hash_buf_encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
-    if (!err) {
-        err = raw_write(hash_buf_file_fd, buffer, towrite);
+    ocrypto::Result ores = hash_buf_encrypt.open(base, base_len);
+    if (ores.err_code) {
+        return ores.err_code;
     }
-    return err;
+    return raw_write(hash_buf_file_fd, ores.buf.data(), ores.buf.size());
 }
 
 
@@ -427,13 +425,11 @@ struct MetaSeqBuf {
         size_t base_len = 0;
         const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
 
-        uint8_t buffer[40];
-        size_t towrite = 0;
-        err = this->meta_buf_encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
-        if (!err) {
-            err = raw_write(this->meta_buf_fd, buffer, towrite);
+        ocrypto::Result ores = this->meta_buf_encrypt.open(base, base_len);
+        if (ores.err_code) {
+            return ores.err_code;
         }
-        return err;
+        return raw_write(this->meta_buf_fd, ores.buf.data(), ores.buf.size());
     }
 
     int meta_buf_close(unsigned char hash[MD_HASH_LENGTH << 1])
@@ -602,13 +598,12 @@ public:
                 size_t base_len = 0;
                 const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
 
-                uint8_t buffer[40];
-                size_t towrite = 0;
-                int err = this->wrm_filter_encrypt.open(buffer, sizeof(buffer), towrite, base, base_len);
-                if (err) {
+                ocrypto::Result ores = this->wrm_filter_encrypt.open(base, base_len);
+                if (ores.err_code) {
                     LOG(LOG_INFO, "MetaSeqBufCrypto::write() encrypt open failed");
+                    return ores.err_code;
                 }
-                err = this->buf_.write(buffer, towrite);
+                int err = this->buf_.write(ores.buf.data(), ores.buf.size());
                 if (err < 0){
                     LOG(LOG_INFO, "MetaSeqBufCrypto::write() write failed %s", strerror(errno));
                     return err;
