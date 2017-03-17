@@ -87,7 +87,7 @@ static inline int file_start_hmac_sha256(const char * filename,
                      uint8_t const * crypto_key,
                      size_t          key_len,
                      size_t          check_size,
-                     uint8_t (& hash)[SHA256_DIGEST_LENGTH])
+                     uint8_t (& hash)[SslSha256::DIGEST_LENGTH])
 {
     // TODO: use ifile_read
     local_fd file(filename, O_RDONLY);
@@ -117,7 +117,7 @@ static inline int file_start_hmac_sha256(const char * filename,
         hmac.update(buf, ret);
         ret = ::read(fd, buf, sizeof(buf));
     }
-    hmac.final(&hash[0]);
+    hmac.final(hash);
     return 0;
 }
 

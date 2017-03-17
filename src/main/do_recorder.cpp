@@ -61,6 +61,7 @@
 #include "capture/flv_params.hpp"
 #include "capture/ocr_params.hpp"
 #include "capture/wrm_capture.hpp"
+#include "capture/RDPChunkedDevice.hpp"
 
 enum {
     USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF
@@ -341,7 +342,7 @@ static int do_recompress(
     int return_code = 0;
     try {
         if (ini.get<cfg::globals::trace_type>() == TraceType::cryptofile) {
-            wrmcapture_CryptoOutMetaSequenceTransport trans(
+            wrmcapture_OutMetaSequenceTransport trans(
                 true,
                 true,
                 cctx,
@@ -406,7 +407,8 @@ static int do_recompress(
                 begin_record,
                 player.info_width,
                 player.info_height,
-                ini.get<cfg::video::capture_groupid>()
+                ini.get<cfg::video::capture_groupid>(),
+                nullptr
             );
             {
                 ChunkToFile recorder( &trans

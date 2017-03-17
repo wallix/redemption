@@ -45,6 +45,9 @@
 
 #include <cstdlib>
 
+#include <zlib.h>
+
+
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
 
@@ -219,8 +222,8 @@ public:
     : InternalMod(front, front_width, front_height, font, theme, false)
     , challenge(front, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
                 "Redemption " VERSION, this->theme(),
-                tr("authentication_required"),
-                tr("password"),
+                tr(trkeys::authentication_required),
+                tr(trkeys::password),
                 this->font())
     , mod_name{0}
     , palette(nullptr)

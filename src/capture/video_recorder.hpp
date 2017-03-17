@@ -59,6 +59,7 @@ extern "C" {
 
 #include "utils/log.hpp"
 #include "core/error.hpp"
+#include "transport/transport.hpp"
 #include "transport/file_transport.hpp"
 
 #include <memory>

@@ -1052,7 +1052,7 @@ public:
                             REDEMPTION_DIAGNOSTIC_PUSH
                             REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
                             std::snprintf(message, sizeof(message),
-                                TR("process_interrupted_security_policies",
+                                TR(trkeys::process_interrupted_security_policies,
                                    this->param_lang),
                                 parameters[1].c_str());
                             REDEMPTION_DIAGNOSTIC_POP
@@ -1107,7 +1107,7 @@ public:
                                     REDEMPTION_DIAGNOSTIC_PUSH
                                     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
                                     std::snprintf(message, sizeof(message),
-                                        TR("process_interrupted_security_policies",
+                                        TR(trkeys::process_interrupted_security_policies,
                                            this->param_lang),
                                         parameters[1].c_str());
                                     REDEMPTION_DIAGNOSTIC_POP
@@ -1159,7 +1159,7 @@ public:
                                     REDEMPTION_DIAGNOSTIC_PUSH
                                     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
                                     std::snprintf(message, sizeof(message),
-                                                TR("process_interrupted_security_policies",
+                                                TR(trkeys::process_interrupted_security_policies,
                                                 this->param_lang),
                                                 parameters[1].c_str());
                                     REDEMPTION_DIAGNOSTIC_POP

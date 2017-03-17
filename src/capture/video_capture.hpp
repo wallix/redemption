@@ -32,6 +32,8 @@
 #include "capture/video_recorder.hpp"
 #include "capture/flv_params.hpp"
 #include "transport/file_transport.hpp"
+#include "transport/transport.hpp"
+#include "utils/bitmap_shrink.hpp"
 
 #include <cerrno>
 #include <cstddef>
@@ -260,7 +262,6 @@ public:
 
 class SequencedVideoCaptureImpl : public gdi::CaptureApi
 {
-
     struct SequenceTransport : public Transport
     {
         char tmp_filename[1024];

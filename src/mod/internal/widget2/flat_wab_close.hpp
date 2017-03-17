@@ -74,7 +74,7 @@ public:
                  bool showtimer, Font const & font, Theme const & theme,
                  Translation::language_t lang, bool back_selector = false)
     : WidgetParent(drawable, parent, notifier)
-    , connection_closed_label(drawable, *this, nullptr, TR("connection_closed", lang),
+    , connection_closed_label(drawable, *this, nullptr, TR(trkeys::connection_closed, lang),
                               -13, theme.global.fgcolor,
                               theme.global.bgcolor, font)
     , separator(drawable, *this, this, -12,
@@ -95,11 +95,11 @@ public:
                      theme.global.fgcolor, theme.global.bgcolor, font)
     , timeleft_value(drawable, *this, nullptr, nullptr, -12,
                      theme.global.fgcolor, theme.global.bgcolor, font)
-    , cancel(drawable, *this, this, TR("close", lang), -14,
+    , cancel(drawable, *this, this, TR(trkeys::close, lang), -14,
              theme.global.fgcolor, theme.global.bgcolor,
              theme.global.focus_color, 2, font, 6, 2)
     , back(back_selector ? new WidgetFlatButton(drawable, *this, this,
-                                                TR("back_selector", lang), -14,
+                                                TR(trkeys::back_selector, lang), -14,
                                                 theme.global.fgcolor,
                                                 theme.global.bgcolor,
                                                 theme.global.focus_color, 2, font,
@@ -117,13 +117,13 @@ public:
         this->add_widget(&this->img);
 
         char label[255];
-        snprintf(label, sizeof(label), "%s:", TR("username", lang));
+        snprintf(label, sizeof(label), "%s:", TR(trkeys::username, lang));
         this->username_label.set_text(label);
-        snprintf(label, sizeof(label), "%s:", TR("target", lang));
+        snprintf(label, sizeof(label), "%s:", TR(trkeys::target, lang));
         this->target_label.set_text(label);
-        snprintf(label, sizeof(label), "%s:", TR("diagnostic", lang));
+        snprintf(label, sizeof(label), "%s:", TR(trkeys::diagnostic, lang));
         this->diagnostic_label.set_text(label);
-        snprintf(label, sizeof(label), "%s:", TR("timeleft", lang));
+        snprintf(label, sizeof(label), "%s:", TR(trkeys::timeleft, lang));
         this->timeleft_label.set_text(label);
 
         this->add_widget(&this->connection_closed_label);
@@ -297,9 +297,9 @@ public:
             char buff[256];
             snprintf(buff, sizeof(buff), "%ld %s%s %s. ",
                      tl,
-                     seconds?TR("second", this->lang):TR("minute", this->lang),
+                     seconds?TR(trkeys::second, this->lang):TR(trkeys::minute, this->lang),
                      (tl <= 1)?"":"s",
-                     TR("before_closing", this->lang)
+                     TR(trkeys::before_closing, this->lang)
                      );
 
             Rect old = this->timeleft_value.get_rect();

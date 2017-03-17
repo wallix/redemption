@@ -122,13 +122,13 @@ public:
         , less_than_800(width < 800)
         , device_label(drawable, *this, nullptr, device_name,
                        -10, theme.global.fgcolor, theme.global.bgcolor, font)
-        , target_group_label(drawable, *this, nullptr, TR("authorization", lang),
+        , target_group_label(drawable, *this, nullptr, TR(trkeys::authorization, lang),
                              -10, theme.selector_label.fgcolor,
                              theme.selector_label.bgcolor, font, 5)
-        , target_label(drawable, *this, nullptr, TR("target", lang), -10,
+        , target_label(drawable, *this, nullptr, TR(trkeys::target, lang), -10,
                        theme.selector_label.fgcolor,
                        theme.selector_label.bgcolor, font, 5)
-        , protocol_label(drawable, *this, nullptr, TR("protocol", lang), -10,
+        , protocol_label(drawable, *this, nullptr, TR(trkeys::protocol, lang), -10,
                          theme.selector_label.fgcolor,
                          theme.selector_label.bgcolor, font, 5)
         , selector_lines(drawable,
@@ -175,13 +175,13 @@ public:
                     theme.global.fgcolor, theme.global.bgcolor,
                     theme.global.focus_color, 2, font, 6, 2, true)
           //END WidgetPager
-        , logout(drawable, *this, this, TR("logout", lang), -16,
+        , logout(drawable, *this, this, TR(trkeys::logout, lang), -16,
                  theme.global.fgcolor, theme.global.bgcolor,
                  theme.global.focus_color, 2, font, 6, 2)
-        , apply(drawable, *this, this, TR("filter", lang), -12,
+        , apply(drawable, *this, this, TR(trkeys::filter, lang), -12,
                 theme.global.fgcolor, theme.global.bgcolor,
                 theme.global.focus_color, 2, font, 6, 2)
-        , connect(drawable, *this, this, TR("connect", lang), -18,
+        , connect(drawable, *this, this, TR(trkeys::connect, lang), -18,
                   theme.global.fgcolor, theme.global.bgcolor,
                   theme.global.focus_color, 2, font, 6, 2)
         , bg_color(theme.global.bgcolor)

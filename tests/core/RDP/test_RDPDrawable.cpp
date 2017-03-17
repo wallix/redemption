@@ -546,7 +546,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
 BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
 {
     const int groupid = 0;
-    PngCapture::OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid, nullptr);
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);
@@ -578,9 +578,9 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     Rect screen_rect(0, 0, 800, 600);
     const int groupid = 0;
-    struct CleanupTransport : PngCapture::OutFilenameSequenceTransport {
+    struct CleanupTransport : OutFilenameSequenceTransport {
         CleanupTransport()
-        : PngCapture::OutFilenameSequenceTransport(
+        : OutFilenameSequenceTransport(
             FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION,
             "./", "xxxtest", ".png", groupid, nullptr)
         {}
@@ -596,7 +596,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
                 // unlink may fail, for instance if file does not exist, just don't care
                 ::unlink(this->seqgen()->get(this->get_seqno() - this->png_limit));
             }
-            return PngCapture::OutFilenameSequenceTransport::next();
+            return OutFilenameSequenceTransport::next();
         }
 
         unsigned num_start = 0;
@@ -713,7 +713,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 BOOST_AUTO_TEST_CASE(TestSmallImage)
 {
     const int groupid = 0;
-    PngCapture::OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid, nullptr);
     Rect scr(0, 0, 20, 10);
     RDPDrawable drawable(20, 10);
     auto const color_cxt = gdi::ColorCtx::depth24();
@@ -731,16 +731,19 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
     const int width = 800;
     const int height = 600;
     const int groupid = 0;
-    PngCapture::OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid, nullptr);
     Rect scr(0, 0, width, height);
     RDPDrawable drawable(scr.cx, scr.cy);
 
     {
         const char * filename = FIXTURES_PATH "/win2008capture10.png";
-        FILE * fd = fopen(filename, "r");
+        std::FILE * fd = std::fopen(filename, "r");
         // TODO "Add ability to write image to file or read image from file in RDPDrawable"
-        read_png24(fd, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize());
-        fclose(fd);
+        read_png24(
+            fd, const_cast<uint8_t*>(drawable.data()),
+            drawable.width(), drawable.height(), drawable.rowsize()
+        );
+        std::fclose(fd);
     }
 
     // TODO: zooming should be managed by some dedicated Drawable
@@ -772,7 +775,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
 {
     BOOST_CHECK(1);
     const int groupid = 0;
-    PngCapture::OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, nullptr);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
@@ -901,7 +904,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
 {
     BOOST_CHECK(1);
     const int groupid = 0;
-    PngCapture::OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, nullptr);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();

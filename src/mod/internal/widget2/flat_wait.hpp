@@ -66,10 +66,10 @@ public:
         , dialog(drawable, this->groupbox, nullptr, text, -10,
                  theme.global.fgcolor, theme.global.bgcolor, font, 10, 2)
         , form(drawable, *this, this, -20, font, theme, lang, required)
-        , goselector(drawable, this->groupbox, this, TR("back_selector", lang), -12,
+        , goselector(drawable, this->groupbox, this, TR(trkeys::back_selector, lang), -12,
                      theme.global.fgcolor, theme.global.bgcolor,
                      theme.global.focus_color, 2, font, 6, 2)
-        , exit(drawable, this->groupbox, this, TR("exit", lang), -11,
+        , exit(drawable, this->groupbox, this, TR(trkeys::exit, lang), -11,
                theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
                6, 2)
         , extra_button(extra_button)

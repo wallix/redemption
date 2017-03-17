@@ -554,12 +554,12 @@ private:
             this->drawable->draw(order, rect, gdi::ColorCtx::depth24());
         }
 
-        gdi::TextMetrics tm(this->font, TR("starting_remoteapp", this->lang));
+        gdi::TextMetrics tm(this->font, TR(trkeys::starting_remoteapp, this->lang));
         gdi::server_draw_text(*this->drawable,
                               this->font,
                               this->protected_rect.x + (this->protected_rect.cx - tm.width) / 2,
                               this->protected_rect.y + (this->protected_rect.cy - tm.height) / 2,
-                              TR("starting_remoteapp", this->lang),
+                              TR(trkeys::starting_remoteapp, this->lang),
                               this->theme.global.fgcolor,
                               this->theme.global.bgcolor,
                               gdi::ColorCtx::depth24(),
@@ -589,12 +589,12 @@ private:
             this->drawable->draw(order, rect, gdi::ColorCtx::depth24());
         }
 
-        const gdi::TextMetrics tm_msg(this->font, TR("closing_remoteapp", this->lang));
+        const gdi::TextMetrics tm_msg(this->font, TR(trkeys::closing_remoteapp, this->lang));
 
         const int xtext = 6;
         const int ytext = 2;
 
-        const Dimension dim_button = WidgetFlatButton::get_optimal_dim(2, this->font, TR("disconnect_now", this->lang), xtext, ytext);
+        const Dimension dim_button = WidgetFlatButton::get_optimal_dim(2, this->font, TR(trkeys::disconnect_now, this->lang), xtext, ytext);
 
         const uint32_t interspace = 60;
 
@@ -606,7 +606,7 @@ private:
                               this->font,
                               this->protected_rect.x + (this->protected_rect.cx - tm_msg.width) / 2,
                               ypos,
-                              TR("closing_remoteapp", this->lang),
+                              TR(trkeys::closing_remoteapp, this->lang),
                               this->theme.global.fgcolor,
                               this->theme.global.bgcolor,
                               gdi::ColorCtx::depth24(),
@@ -625,7 +625,7 @@ private:
                                *this->drawable,
                                false,   // logo
                                true,    // has_focus
-                               TR("disconnect_now", this->lang),
+                               TR(trkeys::disconnect_now, this->lang),
                                this->theme.global.fgcolor,
                                this->theme.global.bgcolor,
                                this->theme.global.focus_color,

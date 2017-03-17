@@ -30,7 +30,7 @@
 //#define LOGPRINT
 
 #include "utils/bitmap.hpp"
-#include "utils/bitmap_with_png.hpp"
+#include "utils/bitmap_from_file.hpp"
 #include "utils/drawable.hpp"
 #include "check_sig.hpp"
 #include "dump_png.hpp"

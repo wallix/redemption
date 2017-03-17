@@ -39,7 +39,7 @@
 #include "gdi/capture_api.hpp"
 #include "gdi/protected_graphics.hpp"
 #include "core/RDP/RDPDrawable.hpp"
-#include "utils/bitmap_with_png.hpp"
+#include "utils/bitmap_from_file.hpp"
 
 BOOST_AUTO_TEST_CASE(TestModOSD)
 {
@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
     auto const color_cxt = gdi::ColorCtx::depth24();
 
     const int groupid = 0;
-    PngCapture::OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test", ".png", groupid, nullptr);
 
     timeval now;
     now.tv_sec = 1350998222;
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
             OSD(GraphicApi & drawable, Rect const rect)
             : gdi::ProtectedGraphics(drawable, rect)
             {}
-            
+
             void refresh_rects(array_view<Rect const>) override {}
         } osd(drawable, rect);
         osd.draw(RDPOpaqueRect(Rect(100, 100, 200, 200), GREEN), screen_rect, color_cxt);

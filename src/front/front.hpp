@@ -113,6 +113,8 @@
 #include "utils/sugar/non_null_ptr.hpp"
 
 #include "gdi/clip_from_cmd.hpp"
+#include "gdi/graphic_cmd_color.hpp"
+
 #include "capture/png_params.hpp"
 #include "capture/flv_params.hpp"
 #include "capture/wrm_params.hpp"
