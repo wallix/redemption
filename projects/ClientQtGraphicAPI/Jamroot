@@ -78,6 +78,19 @@ install install-bin
 obj bitmap : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
 obj d3des : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 
+obj capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp :
+    $(EXE_DEPENDENCIES) ; 
+
+obj video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.cpp :
+    $(EXE_DEPENDENCIES) ;
+
+obj png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp :
+    $(EXE_DEPENDENCIES) ; 
+
+obj bitmap_from_file.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp :
+    $(EXE_DEPENDENCIES) 
+    <cxxflags>-std=c++14 ; 
+
 using qt : /usr ; #4
 
 obj front_Qt4_Demo.o : src/frontDemoQtClient.cpp :
@@ -89,6 +102,10 @@ exe client_demo_Qt4 :
     src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp
     src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
     front_Qt4_Demo.o
+    video_capture.o
+    capture.o
+    png.o
+    bitmap_from_file.o
     /qt//QtGui       #4
     bitmap
     krb5
@@ -97,8 +114,7 @@ exe client_demo_Qt4 :
     gssglue
     png
     d3des
-    ppocr
-    ocr
+    ocr_static
     ffmpeg
     dl
     snappy
@@ -109,6 +125,8 @@ exe client_demo_Qt4 :
 obj front_Qt4_rdp.o : src/rdp_client_qt_front.cpp :
     $(EXE_DEPENDENCIES) ; 
 
+
+
 exe client_rdp_Qt4 :
     src/rdp_client_graphic_api/Qt4/Qt.hpp
     src/rdp_client_graphic_api/qt_widget.hpp
@@ -116,6 +134,10 @@ exe client_rdp_Qt4 :
     src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
     src/rdp_client_qt_widget.hpp
     front_Qt4_rdp.o
+    capture.o
+    video_capture.o
+    png.o
+    bitmap_from_file.o
     /qt//QtGui       #4
     bitmap
     krb5
@@ -124,8 +146,7 @@ exe client_rdp_Qt4 :
     gssglue
     png
     d3des
-    ppocr
-    ocr
+    ocr_static
     ffmpeg
     dl
     snappy
@@ -154,6 +175,10 @@ exe client_rdp_Qt5 :
     src/front_widget_Qt.hpp
     src/keymaps/Qt_ScanCode_KeyMap.hpp
     front_Qt5.o
+    capture.o
+    video_capture.o
+    png.o
+    bitmap_from_file.o
     /qt5//QtGui
     /qt5//QtNetwork
     /qt5//QtWidgets
@@ -164,8 +189,7 @@ exe client_rdp_Qt5 :
     gssglue
     png
     d3des
-    ppocr
-    ocr
+    ocr_static
     ffmpeg
     dl
     snappy

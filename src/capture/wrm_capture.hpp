@@ -189,13 +189,11 @@ struct MetaFilename
 
 static inline ssize_t hash_buf_write(int hash_buf_file_fd, ocrypto & hash_buf_encrypt, const void * data, size_t len)
 {
-    uint8_t buffer[65536];
-    size_t towrite = 0;
-    int lentobuf = hash_buf_encrypt.write(buffer, sizeof(buffer), towrite, data, len);
-    if (lentobuf < 0) {
-        return -1;
-    }
-    if (raw_write(hash_buf_file_fd, buffer, towrite))
+    ocrypto::Result res = hash_buf_encrypt.write(data, len);
+//     if (res.buf.size() < 0) {
+//         return -1;
+//     }
+    if (raw_write(hash_buf_file_fd, res.buf.data(), res.buf.size()))
     {
         return -1;
     }
@@ -265,17 +263,15 @@ struct MetaSeqBuf {
     ssize_t meta_buf_write(const void * data, size_t len)
     {
         if (this->with_encryption){
-            uint8_t buffer[65536];
-            size_t towrite = 0;
-            int lentobuf = this->meta_buf_encrypt.write(buffer, sizeof(buffer), towrite, data, len);
-            if (lentobuf < 0) {
-                return -1;
-            }
-            if (raw_write(this->meta_buf_fd, buffer, towrite))
+            ocrypto::Result res = this->meta_buf_encrypt.write(data, len);
+//             if (lentobuf < 0) {
+//                 return -1;
+//             }
+            if (raw_write(this->meta_buf_fd, res.buf.data(), res.buf.size()))
             {
                 return -1;
             }
-            return lentobuf;
+            return res.buf.size();
         }
         else {
             if (this->with_checksum) {
@@ -609,14 +605,10 @@ public:
                     return err;
                 }
             }
-            uint8_t buffer[65536];
-            size_t towrite = 0;
-            int lentobuf = this->wrm_filter_encrypt.write(buffer, sizeof(buffer), towrite, data, len);
             int res = -1;
-            if (lentobuf >= 0)
-            {
-                res = this->buf_.write(buffer, towrite);
-            }
+            ocrypto::Result result = this->wrm_filter_encrypt.write(data, len);
+            res = this->buf_.write(result.buf.data(), result.buf.size());
+
             return res;
         }
         else {

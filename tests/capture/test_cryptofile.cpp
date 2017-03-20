@@ -336,10 +336,12 @@ BOOST_AUTO_TEST_CASE(TestEncryption1)
 
     // writing data to compressed/encrypted buffer may result in data to write
     // ... or not as this writing may be differed.
-    size_t towrite = 0;
-    encrypter.write(result+offset, sizeof(result)-offset, towrite, "toto", 4);
-    offset += towrite;
-    BOOST_CHECK_EQUAL(towrite, 0);
+    ocrypto::Result res2 = encrypter.write("toto", 4);
+    memcpy(result + offset, res2.buf.data(), res2.buf.size());
+    offset += res2.buf.size();
+    BOOST_CHECK_EQUAL(res2.buf.size(), 0);
+    BOOST_CHECK_EQUAL(res2.consumed, 4);
+    BOOST_CHECK_EQUAL(res2.err_code, 0);
     
     // close flushes all opened buffers and writes potential trailer
     // the full file hash is also returned which is made of two parts
@@ -347,7 +349,7 @@ BOOST_AUTO_TEST_CASE(TestEncryption1)
     // and a full hash for the whole file
     // obviously the two will be identical for short files
     // and differs for larger ones
-    towrite = 0;
+    size_t towrite = 0;
     encrypter.close(result+offset, sizeof(result)-offset, towrite, hash);
     BOOST_CHECK_EQUAL(towrite, 28);
 
@@ -414,15 +416,23 @@ BOOST_AUTO_TEST_CASE(TestEncryption2)
 
     // writing data to compressed/encrypted buffer may result in data to write
     // ... or not as this writing may be differed.
-    encrypter.write(result+offset, sizeof(result)-offset, towrite, "to", 2);
-    offset += towrite;
-    BOOST_CHECK_EQUAL(towrite, 0);
-    
+    {
+        ocrypto::Result res2 = encrypter.write("toto", 2);
+        memcpy(result + offset, res2.buf.data(), res2.buf.size());
+        offset += res2.buf.size();
+        BOOST_CHECK_EQUAL(res2.buf.size(), 0);
+        BOOST_CHECK_EQUAL(res2.consumed, 2);
+        BOOST_CHECK_EQUAL(res2.err_code, 0);
+    }
     // This test is very similar to Encryption1, but we are performing 2 writes
-    encrypter.write(result+offset, sizeof(result)-offset, towrite, "to", 2);
-    offset += towrite;
-    BOOST_CHECK_EQUAL(towrite, 0);
-    
+    {
+        ocrypto::Result res2 = encrypter.write("toto", 2);
+        memcpy(result + offset, res2.buf.data(), res2.buf.size());
+        offset += res2.buf.size();
+        BOOST_CHECK_EQUAL(res2.buf.size(), 0);
+        BOOST_CHECK_EQUAL(res2.consumed, 2);
+        BOOST_CHECK_EQUAL(res2.err_code, 0);
+    }    
     // close flushes all opened buffers and writes potential trailer
     // the full file hash is also returned which is made of two parts
     // a partial hash for the first 4K of the file
@@ -513,16 +523,27 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
 
     // Let's send a large block of pseudo random data 
     // with that kind of data I expect poor compression results
+    {
+        ocrypto::Result res2 = encrypter.write(randomSample, sizeof(randomSample));
+        memcpy(result + offset, res2.buf.data(), res2.buf.size());
+        offset += res2.buf.size();
+        BOOST_CHECK_EQUAL(res2.buf.size(), 0);
+        BOOST_CHECK_EQUAL(res2.err_code, 0);
+    }
 
-    size_t towrite = 0;
-    encrypter.write(result+offset, sizeof(result)-offset, towrite, randomSample, sizeof(randomSample));
-    offset += towrite;
-    BOOST_CHECK_EQUAL(towrite, 0);
+    {
+        ocrypto::Result res2 = encrypter.write(randomSample, sizeof(randomSample));
+        memcpy(result + offset, res2.buf.data(), res2.buf.size());
+        offset += res2.buf.size();
+        BOOST_CHECK_EQUAL(res2.buf.size(), 8612);
+        BOOST_CHECK_EQUAL(res2.err_code, 0);
+    }
 
     // I write the same block *again* now I should reach some compression
-    encrypter.write(result+offset, sizeof(result)-offset, towrite, randomSample, sizeof(randomSample));
-    offset += towrite;
-    BOOST_CHECK_EQUAL(towrite, 8612);
+//    size_t towrite = 0;
+//    encrypter.write(result+offset, sizeof(result)-offset, towrite, randomSample, sizeof(randomSample));
+//    offset += towrite;
+//    BOOST_CHECK_EQUAL(towrite, 8612);
     
     // close flushes all opened buffers and writes potential trailer
     // the full file hash is also returned which is made of two parts
@@ -530,7 +551,7 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
     // and a full hash for the whole file
     // obviously the two will be identical for short files
     // and differs for larger ones
-    towrite = 0;
+    size_t towrite = 0;
     encrypter.close(result+offset, sizeof(result)-offset, towrite, hash);
     offset += towrite;
     BOOST_CHECK_EQUAL(towrite, 8);

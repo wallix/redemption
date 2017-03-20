@@ -70,6 +70,8 @@
 
 #include "mod/rdp/rdp_log.hpp"
 #include "core/RDP/pointer.hpp"
+#include "configs/config.hpp"
+#include "capture/flv_params_from_ini.hpp"
 // #include "core/RDP/clipboard.hpp"
 // #include "core/FSCC/FileInformation.hpp"
 // #include "core/RDP/channels/rdpdr.hpp"

@@ -266,11 +266,12 @@ typedef unsigned char wrmcapture_hash_type[MD_HASH_LENGTH*2];
 constexpr std::size_t wrmcapture_hash_string_len = (1 + MD_HASH_LENGTH * 2) * 2;
 
 struct ocrypto {
+    uint8_t result_buffer[32768] = {};
     struct Result {
         const_bytes_array buf;
         std::size_t consumed;
         int err_code; // no error = 0
-        
+
         static Result error(int err_code)
         {
             return Result{{}, 0, err_code};
@@ -341,6 +342,7 @@ struct ocrypto {
         return 0;
     }
 
+public:
     Result open(const uint8_t * derivator, size_t derivator_len)
     {
         unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
@@ -435,7 +437,7 @@ struct ocrypto {
         this->header_buf[6] = (WABCRYPTOFILE_VERSION >> 16) & 0xFF;
         this->header_buf[7] = (WABCRYPTOFILE_VERSION >> 24) & 0xFF;
         ::memcpy(this->header_buf + 8, iv, 32);
-        
+
         // update file_size
         this->file_size += 40;
         int err_code = this->xmd_update(this->header_buf, 40);
@@ -623,8 +625,11 @@ struct ocrypto {
         return result;
     }
 
-    ssize_t write(uint8_t * buffer, size_t buflen, size_t & towrite, const void * data, size_t len)
+//    ocrypto::Result write(uint8_t * buffer, size_t buflen, size_t & towrite, const void * data, size_t len)
+    ocrypto::Result write(const void * data, size_t len)
     {
+        size_t buflen = sizeof(this->result_buffer);
+        size_t towrite = 0;
         unsigned int remaining_size = len;
         while (remaining_size > 0) {
             // Check how much we can append into buffer
@@ -635,18 +640,44 @@ struct ocrypto {
             // If buffer is full, flush it to disk
             if (this->pos == CRYPTO_BUFFER_SIZE) {
                 size_t tmp_towrite = 0;
-                int err = this->flush(buffer + towrite, buflen - towrite, tmp_towrite);
+                int err = this->flush(this->result_buffer + towrite, buflen - towrite, tmp_towrite);
                 towrite += tmp_towrite;
                 if (err) {
-                    return -1;
+                    return Result::error(-1);
                 }
             }
             remaining_size -= available_size;
         }
         // Update raw size counter
         this->raw_size += len;
-        return len;
+        return {{this->result_buffer, towrite}, len, 0};
     }
+
+//     ssize_t write(uint8_t * buffer, size_t buflen, size_t & towrite, const void * data, size_t len)
+//     {
+//         unsigned int remaining_size = len;
+//         while (remaining_size > 0) {
+//             // Check how much we can append into buffer
+//             unsigned int available_size = MIN(CRYPTO_BUFFER_SIZE - this->pos, remaining_size);
+//             // Append and update pos pointer
+//             ::memcpy(this->buf + this->pos, static_cast<const char*>(data) + (len - remaining_size), available_size);
+//             this->pos += available_size;
+//             // If buffer is full, flush it to disk
+//             if (this->pos == CRYPTO_BUFFER_SIZE) {
+//                 size_t tmp_towrite = 0;
+//                 int err = this->flush(buffer + towrite, buflen - towrite, tmp_towrite);
+//                 towrite += tmp_towrite;
+//                 if (err) {
+//                     return -1;
+//                 }
+//             }
+//             remaining_size -= available_size;
+//         }
+//         // Update raw size counter
+//         this->raw_size += len;
+//         return len;
+//     }
+
 
 };
 

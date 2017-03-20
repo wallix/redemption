@@ -92,7 +92,6 @@ exe client_rdp_Qt4 :
     png
     d3des
     ppocr
-    ocr
     ffmpeg
     dl
     snappy
