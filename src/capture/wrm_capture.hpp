@@ -430,13 +430,11 @@ struct MetaSeqBuf {
 
     int meta_buf_close(unsigned char hash[MD_HASH_LENGTH << 1])
     {
-        uint8_t buffer[65536];
-        size_t towrite = 0;
-        const int res1 = this->meta_buf_encrypt.close(buffer, sizeof(buffer), towrite, hash);
-        if (res1) {
+        ocrypto::Result result = this->meta_buf_encrypt.close(hash);
+        if (result.err_code) {
             return -1;
         }
-        if (raw_write(this->meta_buf_fd, buffer, towrite))
+        if (raw_write(this->meta_buf_fd, result.buf.data(), result.buf.size()))
         {
             return -1;
         }
@@ -446,7 +444,7 @@ struct MetaSeqBuf {
             res2 = ::close(this->meta_buf_fd);
             this->meta_buf_fd = -1;
         }
-        return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
+        return res2 < 0 ? res2 : 0;
     }
 
     int meta_buf_close()
@@ -666,15 +664,13 @@ public:
         if (this->with_encryption){
             if (this->buf_.is_open()) {
                 wrmcapture_hash_type hash;
-                uint8_t buffer[65536];
-                size_t towrite = 0;
-                const int res1 = this->wrm_filter_encrypt.close(buffer, sizeof(buffer), towrite, hash);
-                if (res1) {
+                ocrypto::Result result = this->wrm_filter_encrypt.close(hash);
+                if (result.err_code) {
                     this->buf_.close();
                     LOG(LOG_INFO, "MetaSeqBuf::next() : encryption error\n");
                     return -1;
                 }
-                ssize_t err = this->buf_.write(buffer, towrite);
+                ssize_t err = this->buf_.write(result.buf.data(), result.buf.size());
                 if (err < 0){
                     this->buf_.close();
                     LOG(LOG_INFO, "MetaSeqBuf::next() : write error\n");
@@ -826,14 +822,13 @@ public:
             }
 
             unsigned char hash2[MD_HASH_LENGTH << 1];
-            uint8_t buffer[65536];
-            size_t towrite = 0;
-            const int res1 = hash_buf_encrypt.close(buffer, sizeof(buffer), towrite, hash2);
-            const int res2 = raw_write(hash_buf_file_fd, buffer, towrite);
+            ocrypto::Result result = hash_buf_encrypt.close(hash2);
+            const int res2 = raw_write(hash_buf_file_fd, result.buf.data(), result.buf.size());
             const int res3 = ::close(hash_buf_file_fd);
             hash_buf_file_fd = -1;
-            if (res1) {
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [res1 = %d]\n", hash_filename, int(res1));
+            if (result.err_code) {
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [%d]\n", 
+                        hash_filename, result.err_code);
                 return 1;
             }
             if (res2) {

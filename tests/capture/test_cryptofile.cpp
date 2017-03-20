@@ -321,7 +321,6 @@ BOOST_AUTO_TEST_CASE(TestEncryption1)
     
 
     uint8_t result[8192];
-    unsigned char hash[MD_HASH_LENGTH << 1];
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
@@ -349,9 +348,14 @@ BOOST_AUTO_TEST_CASE(TestEncryption1)
     // and a full hash for the whole file
     // obviously the two will be identical for short files
     // and differs for larger ones
-    size_t towrite = 0;
-    encrypter.close(result+offset, sizeof(result)-offset, towrite, hash);
-    BOOST_CHECK_EQUAL(towrite, 28);
+    unsigned char hash[MD_HASH_LENGTH << 1];
+    {
+        ocrypto::Result res2 = encrypter.close(hash);
+        memcpy(result + offset, res2.buf.data(), res2.buf.size());
+        offset += res2.buf.size();
+        BOOST_CHECK_EQUAL(res2.buf.size(), 28);
+        BOOST_CHECK_EQUAL(res2.consumed, 0);
+    }
 
     uint8_t expected_result[68] =  { 'W', 'C', 'F', 'M', // Magic
                                        1, 0, 0, 0,       // Version
@@ -400,14 +404,12 @@ BOOST_AUTO_TEST_CASE(TestEncryption2)
     
 
     uint8_t result[8192];
-    unsigned char hash[MD_HASH_LENGTH << 1];
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
     ocrypto encrypter(cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
     // Of course no such header will be needed in non encrypted files
-    size_t towrite = 0;
     ocrypto::Result res = encrypter.open(derivator, sizeof(derivator));
     memcpy(result + offset, res.buf.data(), res.buf.size());
     offset += res.buf.size();
@@ -439,9 +441,14 @@ BOOST_AUTO_TEST_CASE(TestEncryption2)
     // and a full hash for the whole file
     // obviously the two will be identical for short files
     // and differs for larger ones
-    towrite = 0;
-    encrypter.close(result+offset, sizeof(result)-offset, towrite, hash);
-    BOOST_CHECK_EQUAL(towrite, 28);
+    unsigned char hash[MD_HASH_LENGTH << 1];
+    {
+        ocrypto::Result res2 = encrypter.close(hash);
+        memcpy(result + offset, res2.buf.data(), res2.buf.size());
+        offset += res2.buf.size();
+        BOOST_CHECK_EQUAL(res2.buf.size(), 28);
+        BOOST_CHECK_EQUAL(res2.consumed, 0);
+    }
 
     uint8_t expected_result[68] =  { 'W', 'C', 'F', 'M', // Magic
                                        1, 0, 0, 0,       // Version
@@ -505,7 +512,6 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
     
 
     uint8_t result[16384];
-    unsigned char hash[MD_HASH_LENGTH << 1];
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
@@ -551,10 +557,14 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
     // and a full hash for the whole file
     // obviously the two will be identical for short files
     // and differs for larger ones
-    size_t towrite = 0;
-    encrypter.close(result+offset, sizeof(result)-offset, towrite, hash);
-    offset += towrite;
-    BOOST_CHECK_EQUAL(towrite, 8);
+    unsigned char hash[MD_HASH_LENGTH << 1];
+    {
+        ocrypto::Result res2 = encrypter.close(hash);
+        memcpy(result + offset, res2.buf.data(), res2.buf.size());
+        offset += res2.buf.size();
+        BOOST_CHECK_EQUAL(res2.buf.size(), 8);
+        BOOST_CHECK_EQUAL(res2.consumed, 0);
+    }
     BOOST_CHECK_EQUAL(offset, 8660);
 
 //    CHECK_MEM(result, offset, tmp);
