@@ -1,4 +1,4 @@
-obj ocr : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp : ;
+obj ocr.o : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp : ;
 
 ## ppocr {
 alias ppocr_dictionary_src      : $(PPOCR_SRC_PATH)/ppocr/spell/dictionary.cpp ;
@@ -62,3 +62,6 @@ lib ppocr_test
 : ppocr/<cxxflags>-frtti,<linkflags>-fvisibility=default,<define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
 : <link>static ;
 ## } ppocr
+
+alias ocr_static : ocr.o ppocr_static ;
+alias ocr_test : ocr.o ppocr_test ;

@@ -68,7 +68,7 @@ public:
     // Connexion socket members
     int                  _timer;
     bool                 connected;
-    Capture            * capture;
+     std::unique_ptr<Capture>  capture;
     Font                 _font;
     std::string          _error;
 
@@ -99,7 +99,6 @@ public:
       , trans_cache(nullptr)
       , graph_capture(nullptr)
       , _timer(0)
-      , capture(nullptr)
       , _error("error")
       , keymap()
       , ctrl_alt_delete(false)
@@ -150,7 +149,7 @@ public:
             this->graph_capture->end_update();
             struct timeval time;
             gettimeofday(&time, nullptr);
-            this->capture->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
     }
 
@@ -221,7 +220,7 @@ public:
                 this->graph_capture->set_pointer(cursor);
                 struct timeval time;
                 gettimeofday(&time, nullptr);
-                this->capture->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+                this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
             }
         }
     }
@@ -667,7 +666,7 @@ public:
             this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette));
             struct timeval time;
             gettimeofday(&time, nullptr);
-            this->capture->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
     }
 
@@ -691,7 +690,7 @@ public:
             this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette));
             struct timeval time;
             gettimeofday(&time, nullptr);
-            this->capture->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
     }
 
@@ -745,7 +744,7 @@ public:
             this->graph_capture->draw(bitmap_data, bmp);
             struct timeval time;
             gettimeofday(&time, nullptr);
-            this->capture->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
     }
 
@@ -771,7 +770,7 @@ public:
             this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette));
             struct timeval time;
             gettimeofday(&time, nullptr);
-            this->capture->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
     }
 
@@ -818,7 +817,7 @@ public:
             this->graph_capture->draw(cmd, clip);
             struct timeval time;
             gettimeofday(&time, nullptr);
-            this->capture->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
     }
 
@@ -882,7 +881,7 @@ public:
             this->graph_capture->draw(cmd, clip, bitmap);
             struct timeval time;
             gettimeofday(&time, nullptr);
-            this->capture->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
     }
 
@@ -957,7 +956,7 @@ public:
             this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette), bitmap);
             struct timeval time;
             gettimeofday(&time, nullptr);
-            this->capture->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
     }
 
@@ -991,7 +990,7 @@ public:
             this->graph_capture->draw(cmd, clip);
             struct timeval time;
             gettimeofday(&time, nullptr);
-            this->capture->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
     }
 
@@ -1140,7 +1139,7 @@ public:
             this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette), gly_cache);
             struct timeval time;
             gettimeofday(&time, nullptr);
-            this->capture->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
     }
 
@@ -1226,7 +1225,7 @@ public:
             this->graph_capture->draw(order);
             struct timeval time;
             gettimeofday(&time, nullptr);
-            this->capture->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
 
         LOG(LOG_INFO, "DEFAULT: FrameMarker");
@@ -1379,7 +1378,6 @@ public:
         this->disconnect("");
         this->cache = nullptr;
         this->trans_cache = nullptr;
-        delete(this->capture);
         this->capture = nullptr;
         this->graph_capture = nullptr;
     }
@@ -1422,7 +1420,6 @@ public:
             this->screen = nullptr;
         }
 
-        delete(this->capture);
         this->capture = nullptr;
         this->graph_capture = nullptr;
 
@@ -1539,7 +1536,7 @@ public:
                 MetaParams meta_params;
                 KbdLogParams kbd_log_params;
 
-                this->capture = new Capture( true, wrmParams
+                this->capture = std::make_unique<Capture>( true, wrmParams
                                             , false, png_params
                                             , false, patternCheckerParams
                                             , false, ocr_params
@@ -1574,7 +1571,7 @@ public:
                                             , false
                                             );
 
-                this->graph_capture = this->capture->get_graphic_api();
+                this->graph_capture = this->capture.get()->get_graphic_api();
             }
 
             if (this->mod_qt->listen()) {

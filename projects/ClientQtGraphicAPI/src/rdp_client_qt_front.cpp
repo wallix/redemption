@@ -434,7 +434,6 @@ public:
     }
 
     ~RDPClientQtFront() {
-        delete(this->capture);
         this->empty_buffer();
         this->fileSystemData.paths.clear();
     }
@@ -2568,7 +2567,6 @@ public:
             this->disconnect(labelErrorMsg);
             this->cache = nullptr;
             this->trans_cache = nullptr;
-            delete(this->capture);
             this->capture = nullptr;
             this->graph_capture = nullptr;
             this->_recv_disconnect_ultimatum = false;
