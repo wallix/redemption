@@ -347,6 +347,38 @@ struct ocrypto {
     }
 
 
+    int init_hmac(const EVP_MD *md, EVP_MD_CTX * hctx, uint8_t * key_buf, size_t blocksize, uint8_t * hash)
+    {
+        unsigned char tmp[MD_HASH_LENGTH];
+        if (::EVP_DigestFinal_ex(hctx, tmp, nullptr) != 1) {
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute 4k message digest\n", ::getpid());
+            tmp[0] = '\0';
+            return -1;
+        }
+
+        EVP_MD_CTX mdctx;
+        ::EVP_MD_CTX_init(&mdctx);
+        if (::EVP_DigestInit_ex(&mdctx, md, nullptr) != 1) {
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context\n", ::getpid());
+            return -1;
+        }
+        if (::EVP_DigestUpdate(&mdctx, key_buf, blocksize) != 1) {
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
+            return -1;
+        }
+        if (::EVP_DigestUpdate(&mdctx, tmp, MD_HASH_LENGTH) != 1) {
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
+            return -1;
+        }
+        if (::EVP_DigestFinal_ex(&mdctx, hash, nullptr) != 1) {
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
+            hash[0] = '\0';
+            return -1;
+        }
+        ::EVP_MD_CTX_cleanup(&mdctx);
+        return 0;
+    }
+
 public:
     Result open(const uint8_t * derivator, size_t derivator_len)
     {
@@ -512,8 +544,7 @@ public:
         return 0;
     }
 
-    ocrypto::Result  close(unsigned char hash[MD_HASH_LENGTH << 1])
-//    ocrypto::Result close(unsigned char hash[MD_HASH_LENGTH], unsigned char qhash[MD_HASH_LENGTH])
+    ocrypto::Result close(unsigned char qhash[MD_HASH_LENGTH], unsigned char fhash[MD_HASH_LENGTH])
     {
         size_t buflen = sizeof(this->result_buffer);
         size_t towrite = 0;
@@ -545,34 +576,15 @@ public:
 
         this->hash_update(tmp_buf, 8);
 
-        int result = 0;
-        if (hash) {
-            // this->hash_finalize();
-            unsigned char tmp_hash[MD_HASH_LENGTH << 1];
-            if (::EVP_DigestFinal_ex(&this->hctx4k, tmp_hash, nullptr) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute 4k MD digests\n", ::getpid());
-                result = -1;
-                tmp_hash[0] = '\0';
-            }
-            if (::EVP_DigestFinal_ex(&this->hctx, tmp_hash + MD_HASH_LENGTH, nullptr) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
-                result = -1;
-                tmp_hash[MD_HASH_LENGTH] = '\0';
-            }
+        if (qhash && fhash) {
             // HMAC: MD(key^opad + MD(key^ipad))
             const EVP_MD *md = ::EVP_get_digestbyname(MD_HASH_NAME);
             if (!md) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not find MD message digest\n", ::getpid());
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not find message digest\n", ::getpid());
                 return Result::error(-1);
             }
-            const int     blocksize = ::EVP_MD_block_size(md);
-            unsigned char * key_buf = new(std::nothrow) unsigned char[blocksize];
-            if (key_buf == nullptr) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc\n", ::getpid());
-                return Result::error(-1);
-           }
-            const std::unique_ptr<unsigned char[]> auto_free(key_buf);
-            ::memset(key_buf, '\0', blocksize);
+            const int blocksize = ::EVP_MD_block_size(md);
+            unsigned char key_buf[EVP_MAX_MD_SIZE] = {};
             if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
                 unsigned char keyhash[MD_HASH_LENGTH];
                 if ( ! ::MD_HASH_FUNC(hmac_key, CRYPTO_KEY_LENGTH, keyhash)) {
@@ -584,8 +596,16 @@ public:
             else {
                 ::memcpy(key_buf, hmac_key, CRYPTO_KEY_LENGTH);
             }
-            for (int idx = 0; idx <  blocksize; idx++) {
+            for (int idx = 0; idx < blocksize; idx++) {
                 key_buf[idx] = key_buf[idx] ^ 0x5c;
+            }
+
+//            init_hmac(md, &this->hctx4k, key_buf, blocksize, qhash);
+            unsigned char tmp_qhash[MD_HASH_LENGTH];
+            if (::EVP_DigestFinal_ex(&this->hctx4k, tmp_qhash, nullptr) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute 4k message digest\n", ::getpid());
+                tmp_qhash[0] = '\0';
+                return Result::error(-1);
             }
 
             EVP_MD_CTX mdctx;
@@ -598,16 +618,25 @@ public:
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
                 return Result::error(-1);
             }
-            if (::EVP_DigestUpdate(&mdctx, tmp_hash, MD_HASH_LENGTH) != 1) {
+            if (::EVP_DigestUpdate(&mdctx, tmp_qhash, MD_HASH_LENGTH) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
                 return Result::error(-1);
             }
-            if (::EVP_DigestFinal_ex(&mdctx, hash, nullptr) != 1) {
+            if (::EVP_DigestFinal_ex(&mdctx, qhash, nullptr) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
-                result = -1;
-                hash[0] = '\0';
+                qhash[0] = '\0';
+                return Result::error(-1);
             }
             ::EVP_MD_CTX_cleanup(&mdctx);
+
+
+           unsigned char tmp_fhash[MD_HASH_LENGTH];
+            if (::EVP_DigestFinal_ex(&this->hctx, tmp_fhash, nullptr) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute message digest\n", ::getpid());
+                tmp_fhash[0] = '\0';
+                return Result::error(-1);
+            }
+ 
             ::EVP_MD_CTX_init(&mdctx);
             if (::EVP_DigestInit_ex(&mdctx, md, nullptr) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context\n", ::getpid());
@@ -617,19 +646,16 @@ public:
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
                 return Result::error(-1);
             }
-            if (::EVP_DigestUpdate(&mdctx, tmp_hash + MD_HASH_LENGTH, MD_HASH_LENGTH) != 1){
+            if (::EVP_DigestUpdate(&mdctx, tmp_fhash, MD_HASH_LENGTH) != 1){
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
                 return Result::error(-1);
             }
-            if (::EVP_DigestFinal_ex(&mdctx, hash + MD_HASH_LENGTH, nullptr) != 1) {
+            if (::EVP_DigestFinal_ex(&mdctx, fhash, nullptr) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
-                result = -1;
-                hash[MD_HASH_LENGTH] = '\0';
+                fhash[0] = '\0';
+                return Result::error(-1);
             }
             ::EVP_MD_CTX_cleanup(&mdctx);
-        }
-        if (result < 0) {
-           return Result::error(-1);
         }
         return Result{{this->result_buffer, towrite}, 0u, 0};
     }

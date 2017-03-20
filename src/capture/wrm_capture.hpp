@@ -431,7 +431,7 @@ struct MetaSeqBuf {
 
     int meta_buf_close(unsigned char hash[MD_HASH_LENGTH << 1])
     {
-        ocrypto::Result result = this->meta_buf_encrypt.close(hash);
+        ocrypto::Result result = this->meta_buf_encrypt.close(hash, hash+MD_HASH_LENGTH);
         if (result.err_code) {
             return -1;
         }
@@ -666,7 +666,7 @@ public:
         if (this->with_encryption){
             if (this->buf_.is_open()) {
                 wrmcapture_hash_type hash;
-                ocrypto::Result result = this->wrm_filter_encrypt.close(hash);
+                ocrypto::Result result = this->wrm_filter_encrypt.close(hash, hash+MD_HASH_LENGTH);
                 if (result.err_code) {
                     this->buf_.close();
                     LOG(LOG_INFO, "MetaSeqBuf::next() : encryption error\n");
@@ -824,7 +824,7 @@ public:
             }
 
             unsigned char hash2[MD_HASH_LENGTH << 1];
-            ocrypto::Result result = hash_buf_encrypt.close(hash2);
+            ocrypto::Result result = hash_buf_encrypt.close(hash2, hash2+MD_HASH_LENGTH);
             const int res2 = raw_write(hash_buf_file_fd, result.buf.data(), result.buf.size());
             const int res3 = ::close(hash_buf_file_fd);
             hash_buf_file_fd = -1;
