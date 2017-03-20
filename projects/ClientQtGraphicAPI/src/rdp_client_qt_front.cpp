@@ -28,6 +28,7 @@
 #include "configs/autogen/enums.hpp"
 
 #include "rdp_client_qt_widget.hpp"
+#include <unordered_map>
 
 #pragma GCC diagnostic pop
 
@@ -103,7 +104,8 @@ public:
             return this->next_file_id;
         }
 
-        std::vector<std::string> paths;
+        std::unordered_map<int, std::string> paths;
+        //std::vector<std::string> paths;
 
         int writeData_to_wait = 0;
         int file_to_write_id = 0;
@@ -1007,12 +1009,14 @@ public:
 
                 this->fileSystemData.writeData_to_wait -= length;
 
-                std::ofstream oFile(this->fileSystemData.paths[this->fileSystemData.file_to_write_id-1].c_str(), std::ios::out | std::ios::binary | std::ios::app);
+                std::string file_to_write = this->fileSystemData.paths.at(this->fileSystemData.file_to_write_id);
+
+                std::ofstream oFile(file_to_write.c_str(), std::ios::out | std::ios::binary | std::ios::app);
                 if (oFile.good()) {
                     oFile.write(reinterpret_cast<const char *>(chunk.get_current()), length);
                     oFile.close();
                 }  else {
-                    LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", this->fileSystemData.paths[this->fileSystemData.file_to_write_id-1].c_str());
+                    LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_write.c_str());
                 }
 
                 return;
@@ -1280,12 +1284,12 @@ public:
                                         std::ifstream file(new_path.c_str());
                                         if (file.good()) {
                                             id = this->fileSystemData.get_file_id();
-                                            this->fileSystemData.paths.push_back(new_path);
+                                            this->fileSystemData.paths.emplace(id, new_path);
                                         } else {
                                             if (request.CreateDisposition() & smb2::FILE_CREATE) {
 
                                                 id = this->fileSystemData.get_file_id();
-                                                this->fileSystemData.paths.push_back(new_path);
+                                                this->fileSystemData.paths.emplace(id, new_path);
 
                                                 if (request.CreateOptions() & smb2::FILE_DIRECTORY_FILE) {
                                                     LOG(LOG_WARNING, "new directory: \"%s\"", new_path);
@@ -1345,10 +1349,12 @@ public:
                                                 LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Basic Query Information Request");
                                             {
 
-                                            std::ifstream file(this->fileSystemData.paths[id-1].c_str());
+                                            std::string file_to_request = this->fileSystemData.paths.at(id);
+
+                                            std::ifstream file(file_to_request.c_str());
                                             if (!file.good()) {
                                                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                                LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str());
+                                                LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", file_to_request.c_str());
                                             }
 
                                             deviceIOResponse.emit(out_stream);
@@ -1357,7 +1363,7 @@ public:
                                             cdqir.emit(out_stream);
 
                                             struct stat buff;
-                                            stat(this->fileSystemData.paths[id-1].c_str(), &buff);
+                                            stat(file_to_request.c_str(), &buff);
 
                                             uint64_t LastAccessTime = UnixSecondsToWindowsTick(buff.st_atime);
                                             uint64_t LastWriteTime  = UnixSecondsToWindowsTick(buff.st_mtime);
@@ -1393,7 +1399,7 @@ public:
                                             cdqir.emit(out_stream);
 
                                             struct stat buff;
-                                            stat(this->fileSystemData.paths[id-1].c_str(), &buff);
+                                            stat(this->fileSystemData.paths.at(id).c_str(), &buff);
 
                                             int64_t  AllocationSize = buff.st_size;;
                                             int64_t  EndOfFile      = buff.st_size;
@@ -1429,15 +1435,17 @@ public:
                                             if (bool(this->verbose & RDPVerbose::rdpdr))
                                                 LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query File Attribute Tag Information Request");
                                             {
-                                                std::ifstream file(this->fileSystemData.paths[id-1].c_str());
+                                                std::string file_to_request = this->fileSystemData.paths.at(id);
+
+                                                std::ifstream file(file_to_request.c_str());
                                                 if (!file.good()) {
                                                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_ACCESS_DENIED);
-                                                    LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", this->fileSystemData.paths[id-1].c_str());
+                                                    LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", file_to_request.c_str());
                                                 }
                                                 deviceIOResponse.emit(out_stream);
 
                                                 struct stat buff;
-                                                stat(this->fileSystemData.paths[id-1].c_str(), &buff);
+                                                stat(file_to_request.c_str(), &buff);
                                                 uint32_t fileAttributes(0);
                                                 if (!S_ISDIR(buff.st_mode)) {
                                                     fileAttributes = fscc::FILE_ATTRIBUTE_ARCHIVE;
@@ -1476,6 +1484,9 @@ public:
                                     if (bool(this->verbose & RDPVerbose::rdpdr))
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Close Request");
                                     {
+
+                                    this->fileSystemData.paths.erase(id);
+
                                     deviceIOResponse.emit(out_stream);
 
                                     out_stream.out_uint32_le(0);
@@ -1504,25 +1515,27 @@ public:
                                     int file_size(drr.Length());
                                     int offset(drr.Offset());
 
-                                    std::ifstream ateFile(this->fileSystemData.paths[id-1], std::ios::binary| std::ios::ate);
+                                    std::string file_to_tread = this->fileSystemData.paths.at(id);
+
+                                    std::ifstream ateFile(file_to_tread, std::ios::binary| std::ios::ate);
                                     if(ateFile.is_open()) {
                                         if (file_size > ateFile.tellg()) {
                                             file_size = ateFile.tellg();
                                         }
                                         ateFile.close();
 
-                                        std::ifstream inFile(this->fileSystemData.paths[id-1], std::ios::in | std::ios::binary);
+                                        std::ifstream inFile(file_to_tread, std::ios::in | std::ios::binary);
                                         if(inFile.is_open()) {
                                             ReadData = std::make_unique<uint8_t[]>(file_size+offset);
                                             inFile.read(reinterpret_cast<char *>(ReadData.get()), file_size+offset);
                                             inFile.close();
                                         } else {
                                             deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                            LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", this->fileSystemData.paths[id-1].c_str());
+                                            LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_tread.c_str());
                                         }
                                     } else {
                                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                        LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", this->fileSystemData.paths[id-1].c_str());
+                                        LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_tread.c_str());
                                     }
 
                                     deviceIOResponse.emit(out_stream);
@@ -1591,11 +1604,11 @@ public:
                                             } else {
 
                                                 std::string str_dir_path;
-                                                if (id <= this->fileSystemData.paths.size()) {
-                                                    str_dir_path = this->fileSystemData.paths[id-1];
+                                                if (this->fileSystemData.paths.end() != this->fileSystemData.paths.find(id)) {
+                                                    str_dir_path = this->fileSystemData.paths.at(id);
                                                 } else {
                                                     LOG(LOG_WARNING, " Device I/O Query Directory Request Unknow ID (%d).", id);
-                                                    return;
+                                                    deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                                 }
 
                                                 if (str_dir_path.length() > 0) {
@@ -1796,11 +1809,12 @@ public:
                                         uint32_t VolumeSerialNumber             = 0;
 
                                         std::string str_path;
-                                        if (id <= this->fileSystemData.paths.size()) {
-                                            str_path = this->fileSystemData.paths[id-1];
+
+                                        if (this->fileSystemData.paths.end() != this->fileSystemData.paths.find(id)) {
+                                            str_path = this->fileSystemData.paths.at(id);
                                         } else {
                                             LOG(LOG_WARNING, " Device I/O Query Volume Information Request Unknow ID (%d).", id);
-                                            return;
+                                            deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                         }
 
                                         struct statvfs buffvfs;
@@ -1923,12 +1937,14 @@ public:
                                             WriteDataLen = rdpdr::DeviceWriteRequest::FISRT_PART_DATA_MAX_LEN;
                                         }
 
-                                        std::ofstream oFile(this->fileSystemData.paths[id-1].c_str(), std::ios::out | std::ios::binary);
+                                        std::string file_to_write = this->fileSystemData.paths.at(id);
+
+                                        std::ofstream oFile(file_to_write.c_str(), std::ios::out | std::ios::binary);
                                         if (oFile.good()) {
                                             oFile.write(reinterpret_cast<const char *>(dwr.WriteData), WriteDataLen);
                                             oFile.close();
                                         }  else {
-                                            LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", this->fileSystemData.paths[id-1].c_str());
+                                            LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_write.c_str());
                                             deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                         }
 
@@ -1957,9 +1973,11 @@ public:
                                         rdpdr::ServerDriveSetInformationRequest sdsir;
                                         sdsir.receive(chunk);
 
-                                        std::ifstream file(this->fileSystemData.paths[id-1].c_str(), std::ios::in |std::ios::binary);
+                                        std::string file_to_request = this->fileSystemData.paths.at(id);
+
+                                        std::ifstream file(file_to_request.c_str(), std::ios::in |std::ios::binary);
                                         if (!file.good()) {
-                                            LOG(LOG_WARNING, "  Can't open such file of directory : \'%s\'.", this->fileSystemData.paths[id-1].c_str());
+                                            LOG(LOG_WARNING, "  Can't open such file of directory : \'%s\'.", file_to_request.c_str());
                                             deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                             file.close();
                                         }
@@ -1976,8 +1994,8 @@ public:
                                                 rdpfri.receive(chunk);
 
                                                 std::string fileName(this->SHARE_DIR + rdpfri.FileName());
-                                                if (rename(this->fileSystemData.paths[id-1].c_str(), fileName.c_str()) !=  0) {
-                                                    LOG(LOG_WARNING, "  Can't rename such file of directory : \'%s\' to \'%s\'.", this->fileSystemData.paths[id-1].c_str(), fileName.c_str());
+                                                if (rename(file_to_request.c_str(), fileName.c_str()) !=  0) {
+                                                    LOG(LOG_WARNING, "  Can't rename such file of directory : \'%s\' to \'%s\'.", file_to_request.c_str(), fileName.c_str());
                                                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_OBJECT_NAME_INVALID);
                                                 }
 
@@ -2000,10 +2018,12 @@ public:
                                             {
                                                 uint8_t DeletePending = 1;
 
-                                                if (remove(this->fileSystemData.paths[id-1].c_str()) != 0) {
+                                                std::string file_to_request = this->fileSystemData.paths.at(id);
+
+                                                if (remove(file_to_request.c_str()) != 0) {
                                                     DeletePending = 0;
                                                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_ACCESS_DENIED);
-                                                    LOG(LOG_WARNING, "  Can't delete such file of directory : \'%s\'.", this->fileSystemData.paths[id-1].c_str());
+                                                    LOG(LOG_WARNING, "  Can't delete such file of directory : \'%s\'.", file_to_request.c_str());
                                                 }
 
                                                 deviceIOResponse.emit(out_stream);
