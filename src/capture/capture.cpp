@@ -1509,3 +1509,31 @@ void Capture::set_row(size_t rownum, const uint8_t * data)
         this->gd_drawable->set_row(rownum, data);
     }
 }
+
+std::chrono::microseconds Capture::do_snapshot(
+    timeval const & now,
+    int cursor_x, int cursor_y,
+    bool ignore_frame_in_timeval
+) {
+    this->capture_event.reset();
+
+    if (this->gd_drawable) {
+        this->gd_drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
+    }
+    this->mouse_info = {now, cursor_x, cursor_y};
+
+    std::chrono::microseconds time = std::chrono::microseconds::max();
+    if (!this->caps.empty()) {
+        for (gdi::CaptureApi & cap : this->caps) {
+            time = std::min(time, cap.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
+        }
+        this->capture_event.update(time.count());
+    }
+    return time;
+}
+
+void Capture::set_pointer_display() {
+    if (this->capture_drawable) {
+        this->gd_drawable->show_mouse_cursor(false);
+    }
+}

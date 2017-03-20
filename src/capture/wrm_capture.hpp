@@ -56,6 +56,7 @@
 #include "utils/compression_transport_builder.hpp"
 #include "core/RDP/share.hpp"
 
+
 // TODO enum class
 enum {
     META_FILE           = 1006,

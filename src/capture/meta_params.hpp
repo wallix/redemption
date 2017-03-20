@@ -18,10 +18,7 @@
 *   Author(s): Christophe Grosjean
 */
 
-
 #pragma once
-
-#include <chrono>
 
 struct MetaParams
 {

@@ -35,9 +35,10 @@
 #include "capture/full_video_params.hpp"
 #include "capture/meta_params.hpp"
 #include "capture/kbdlog_params.hpp"
-#include "capture/wrm_capture.hpp"
+#include "capture/wrm_capture.hpp" // TODO only for META_FILE, SAVE_STATE, etc
 #include "RDPChunkedDevice.hpp"
 #include "core/wait_obj.hpp"
+#include "core/RDP/RDPSerializer.hpp"
 #include "utils/fdbuf.hpp"
 
 #include <vector>
@@ -2055,6 +2056,7 @@ class MetaCaptureImpl;
 class TitleCaptureImpl;
 class PatternsChecker;
 class UpdateProgressData;
+class RDPDrawable;
 
 struct MouseTrace
 {
@@ -2359,23 +2361,7 @@ protected:
         timeval const & now,
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
-    ) override {
-        this->capture_event.reset();
-
-        if (this->gd_drawable) {
-            this->gd_drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
-        }
-        this->mouse_info = {now, cursor_x, cursor_y};
-
-        std::chrono::microseconds time = std::chrono::microseconds::max();
-        if (!this->caps.empty()) {
-            for (gdi::CaptureApi & cap : this->caps) {
-                time = std::min(time, cap.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
-            }
-            this->capture_event.update(time.count());
-        }
-        return time;
-    }
+    ) override;
 
     template<class... Ts>
     void draw_impl(const Ts & ... args) {
@@ -2397,11 +2383,7 @@ public:
         }
     }
 
-    void set_pointer_display() {
-        if (this->capture_drawable) {
-            this->gd_drawable->show_mouse_cursor(false);
-        }
-    }
+    void set_pointer_display();
 
     void external_breakpoint() override {
         for (gdi::ExternalCaptureApi & obj : this->objs) {

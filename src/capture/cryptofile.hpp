@@ -26,7 +26,6 @@
 #define MD_HASH_NAME   "SHA256"
 #define MD_HASH_LENGTH SHA256_DIGEST_LENGTH
 
-#include <libgen.h>
 #include <string.h>
 #include <cstdio>
 #include <unistd.h>
