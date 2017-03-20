@@ -1608,7 +1608,7 @@ public:
                                                     str_dir_path = this->fileSystemData.paths.at(id);
                                                 } else {
                                                     LOG(LOG_WARNING, " Device I/O Query Directory Request Unknow ID (%d).", id);
-                                                    return;
+                                                    deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                                 }
 
                                                 if (str_dir_path.length() > 0) {
@@ -1814,7 +1814,7 @@ public:
                                             str_path = this->fileSystemData.paths.at(id);
                                         } else {
                                             LOG(LOG_WARNING, " Device I/O Query Volume Information Request Unknow ID (%d).", id);
-                                            return;
+                                            deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                         }
 
                                         struct statvfs buffvfs;
