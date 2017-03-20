@@ -31,6 +31,7 @@
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/stream.hpp"
 #include "utils/utf.hpp"
+#include "utils/sugar/underlying_cast.hpp"
 
 #include "core/SMB2/MessageSyntax.hpp"
 #include "core/FSCC/FileInformation.hpp"
@@ -2346,8 +2347,8 @@ public:
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "ServerDeviceAnnounceResponse: DeviceId=%u ResultCode=0x%08X",
-            this->DeviceId_, this->ResultCode_);
+            "ServerDeviceAnnounceResponse: DeviceId=%" PRIu32 " ResultCode=0x%08" PRIX32,
+            this->DeviceId_, underlying_cast(this->ResultCode_));
         return ((length < size) ? length : size - 1);
     }
 

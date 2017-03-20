@@ -471,7 +471,7 @@ BOOST_AUTO_TEST_CASE(TestEncryption2)
 
 // This sample was generated using udevrandom on Linux
 uint8_t randomSample[8192] = {
-#include "fixtures/randomdata.cpp"
+#include "fixtures/randomdata.hpp"
 };
 
 BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
