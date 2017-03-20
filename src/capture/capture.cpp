@@ -1313,7 +1313,7 @@ Capture::Capture(
     }
 
     if (capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full) {
-        this->gd_drawable = new RDPDrawable(width, height);
+        this->gd_drawable.reset(new RDPDrawable(width, height));
         this->gds.push_back(*this->gd_drawable);
 
         this->graphic_api.reset(new Graphic(this->mouse_info, this->gds, this->caps));

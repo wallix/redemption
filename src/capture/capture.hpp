@@ -2136,7 +2136,7 @@ private:
 
 public:
 
-    RDPDrawable * gd_drawable;
+    std::unique_ptr<RDPDrawable> gd_drawable;
 
 private:
     class Graphic final : public gdi::GraphicApi
