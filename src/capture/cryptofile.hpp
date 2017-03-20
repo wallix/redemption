@@ -513,8 +513,7 @@ public:
         return 0;
     }
 
-    ocrypto::Result  close(unsigned char hash[MD_HASH_LENGTH << 1])
-//    ocrypto::Result close(unsigned char hash[MD_HASH_LENGTH], unsigned char qhash[MD_HASH_LENGTH])
+    ocrypto::Result close(unsigned char hash[MD_HASH_LENGTH], unsigned char qhash[MD_HASH_LENGTH])
     {
         size_t buflen = sizeof(this->result_buffer);
         size_t towrite = 0;
@@ -547,8 +546,7 @@ public:
         this->hash_update(tmp_buf, 8);
 
         int result = 0;
-        if (hash) {
-            // this->hash_finalize();
+        if (hash && qhash) {
             unsigned char tmp_hash[MD_HASH_LENGTH << 1];
             if (::EVP_DigestFinal_ex(&this->hctx4k, tmp_hash, nullptr) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute 4k MD digests\n", ::getpid());
@@ -567,13 +565,9 @@ public:
                 return Result::error(-1);
             }
             const int     blocksize = ::EVP_MD_block_size(md);
-            unsigned char * key_buf = new(std::nothrow) unsigned char[blocksize];
-            if (key_buf == nullptr) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc\n", ::getpid());
-                return Result::error(-1);
-           }
-            const std::unique_ptr<unsigned char[]> auto_free(key_buf);
-            ::memset(key_buf, '\0', blocksize);
+            // TODO: check that key_buf buffer size is a majorant of all EVP_MD_block_size
+            // (at in current uses it is 32, the buffer is way larger for now)
+            unsigned char key_buf[256] = {};
             if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
                 unsigned char keyhash[MD_HASH_LENGTH];
                 if ( ! ::MD_HASH_FUNC(hmac_key, CRYPTO_KEY_LENGTH, keyhash)) {
@@ -585,7 +579,7 @@ public:
             else {
                 ::memcpy(key_buf, hmac_key, CRYPTO_KEY_LENGTH);
             }
-            for (int idx = 0; idx <  blocksize; idx++) {
+            for (int idx = 0; idx < blocksize; idx++) {
                 key_buf[idx] = key_buf[idx] ^ 0x5c;
             }
 
@@ -622,10 +616,10 @@ public:
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
                 return Result::error(-1);
             }
-            if (::EVP_DigestFinal_ex(&mdctx, hash + MD_HASH_LENGTH, nullptr) != 1) {
+            if (::EVP_DigestFinal_ex(&mdctx, qhash, nullptr) != 1) {
                 LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
                 result = -1;
-                hash[MD_HASH_LENGTH] = '\0';
+                qhash[0] = '\0';
             }
             ::EVP_MD_CTX_cleanup(&mdctx);
         }
