@@ -562,6 +562,7 @@ public:
     ~MetaSeqBuf()
     {
         this->close();
+        // TODO check if temporary file is removed
     }
 
     ssize_t write(const void * data, size_t len)
@@ -827,7 +828,7 @@ public:
             const int res3 = ::close(hash_buf_file_fd);
             hash_buf_file_fd = -1;
             if (result.err_code) {
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [%d]\n", 
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [%d]\n",
                         hash_filename, result.err_code);
                 return 1;
             }
@@ -1070,23 +1071,6 @@ public:
         return -1;
     }
 
-    void request_full_cleaning()
-    {
-        if (this->with_encryption){
-        }
-        else {
-            unsigned i = this->num_file_;
-            if (this->current_filename_[0] != 0){
-                ::unlink(this->mf_.filename);
-            }
-            while (i > 0 && !::unlink(this->filegen_.get(--i))){}
-            if (this->buf_.is_open()) {
-                this->buf_.close();
-            }
-            ::unlink(this->mf_.filename);
-        }
-    }
-
     void update_sec(time_t sec)
     { this->stop_sec_ = sec; }
 };
@@ -1159,13 +1143,6 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
 
     bool disconnect() override {
         return !this->buf.close();
-    }
-
-    void request_full_cleaning() override {
-        this->buf.request_full_cleaning();
-    }
-
-    ~wrmcapture_OutMetaSequenceTransport() {
     }
 
 private:
@@ -2252,10 +2229,6 @@ public:
     void send_timestamp_chunk(timeval const & now, bool ignore_time_interval) {
         this->graphic_to_file.timestamp(now);
         this->graphic_to_file.send_timestamp_chunk(ignore_time_interval);
-    }
-
-    void request_full_cleaning() {
-        this->out.request_full_cleaning();
     }
 
     std::chrono::microseconds do_snapshot(

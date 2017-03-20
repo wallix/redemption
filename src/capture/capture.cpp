@@ -66,7 +66,6 @@
 
 #include "transport/transport.hpp"
 #include "transport/out_file_transport.hpp"
-#include "transport/sequence_generator.hpp"
 
 #include "core/RDP/bitmapupdate.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
@@ -1163,10 +1162,6 @@ public:
     SessionMeta & get_session_meta() {
         return this->meta;
     }
-
-    void request_full_cleaning() {
-        this->meta_trans.request_full_cleaning();
-    }
 };
 
 
@@ -1468,10 +1463,8 @@ Capture::~Capture()
             try {
                 this->sequenced_video_capture_obj->encoding_video_frame();
             }
-            catch (Error const &) {
-                if (this->meta_capture_obj) {
-                    this->meta_capture_obj->request_full_cleaning();
-                }
+            catch (Error const & e) {
+                LOG(LOG_ERR, "Sequenced video: last encoding video frame error: %s", e.errmsg());
             }
             this->sequenced_video_capture_obj.reset();
         }
@@ -1479,7 +1472,8 @@ Capture::~Capture()
             try {
                 this->full_video_capture_obj->encoding_video_frame();
             }
-            catch (Error const &) {
+            catch (Error const & e) {
+                LOG(LOG_ERR, "Full video: last encoding video frame error: %s", e.errmsg());
             }
             this->full_video_capture_obj.reset();
         }

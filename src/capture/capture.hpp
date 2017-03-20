@@ -1900,16 +1900,6 @@ struct OutFilenameSequenceTransport : public Transport
             return 1;
         }
 
-        void request_full_cleaning()
-        {
-            unsigned i = this->num_file_ + 1;
-            while (i > 0 && !::unlink(this->filegen_.get(--i))) {
-            }
-            if (this->buf_.is_open()) {
-                this->buf_.close();
-            }
-        }
-
         off64_t seek(int64_t offset, int whence)
         { return this->buf_.seek(offset, whence); }
 
@@ -2014,10 +2004,6 @@ struct OutFilenameSequenceTransport : public Transport
 
     bool disconnect() override {
         return !this->buf.close();
-    }
-
-    void request_full_cleaning() override {
-        this->buffer().request_full_cleaning();
     }
 
     ~OutFilenameSequenceTransport() {
