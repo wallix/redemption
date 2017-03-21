@@ -18,12 +18,12 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
 */
 
+#include "utils/png.hpp"
 #include "gdi/graphic_api.hpp"
 #include "transport/transport.hpp"
 #include "transport/file_transport.hpp"
-#include "utils/bitfu.hpp"
 #include "utils/sugar/array_view.hpp"
-#include "capture/wrm_capture.hpp" // TODO only for PARTIAL_IMAGE_CHUNK and LAST_IMAGE_CHUNK
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
 #include <cassert>
 #include <cstdint>
@@ -246,7 +246,7 @@ void transport_read_png24(
 
 void set_rows_from_image_chunk(
     Transport & trans,
-    const uint16_t chunk_type,
+    const WrmChunkType chunk_type,
     const uint32_t chunk_size,
     const size_t width,
     const array_view<gdi::GraphicApi*> graphic_consumers
@@ -260,8 +260,8 @@ void set_rows_from_image_chunk(
         char buf[65536];
         InStream in_stream;
 
-        InChunkedImage(uint16_t chunk_type, uint32_t chunk_size, Transport & trans)
-        : chunk_type(chunk_type)
+        InChunkedImage(WrmChunkType chunk_type, uint32_t chunk_size, Transport & trans)
+        : chunk_type(safe_cast<uint16_t>(chunk_type))
         , chunk_size(chunk_size)
         , chunk_count(1)
         , trans(trans)
@@ -284,8 +284,8 @@ void set_rows_from_image_chunk(
             }
             chunk_trans.in_stream.in_copy_bytes(buffer + total_len, remaining);
             total_len += remaining;
-            switch (chunk_trans.chunk_type){
-            case PARTIAL_IMAGE_CHUNK:
+            switch (safe_cast<WrmChunkType>(chunk_trans.chunk_type)) {
+            case WrmChunkType::PARTIAL_IMAGE_CHUNK:
             {
                 const size_t header_sz = 8;
                 char header_buf[header_sz];
@@ -298,7 +298,7 @@ void set_rows_from_image_chunk(
                 chunk_trans.trans.recv_new(chunk_trans.buf, chunk_trans.chunk_size - 8);
             }
             break;
-            case LAST_IMAGE_CHUNK:
+            case WrmChunkType::LAST_IMAGE_CHUNK:
                 LOG(LOG_ERR, "Failed to read embedded image from WRM (transport closed)");
                 png_error(png_ptr, "Failed to read embedded image from WRM (transport closed)");
                 throw Error(ERR_TRANSPORT_NO_MORE_DATA);
