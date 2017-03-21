@@ -23,12 +23,20 @@
 #define LOGPRINT
 #include "utils/log.hpp"
 
+#include <sys/stat.h>
+#include <sys/statvfs.h>
+#include <sys/ioctl.h>
+#include <linux/types.h>
+#include <linux/hdreg.h>
+#include <unordered_map>
+
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "configs/autogen/enums.hpp"
+#include "capture/flv_params_from_ini.hpp"
 
 #include "rdp_client_qt_widget.hpp"
-#include <unordered_map>
+
 
 #pragma GCC diagnostic pop
 
@@ -48,24 +56,14 @@ public:
     };
 
     enum : int {
-        PDU_MAX_SIZE    = 1600
-      , PDU_HEADER_SIZE =    8
+       PDU_HEADER_SIZE =    8
     };
 
     enum : int {
-        PASTE_TEXT_CONTENT_SIZE = PDU_MAX_SIZE - PDU_HEADER_SIZE
-      , PASTE_PIC_CONTENT_SIZE  = PDU_MAX_SIZE - RDPECLIP::METAFILE_HEADERS_SIZE - PDU_HEADER_SIZE
+        PASTE_TEXT_CONTENT_SIZE = CHANNELS::CHANNEL_CHUNK_LENGTH - PDU_HEADER_SIZE
+      , PASTE_PIC_CONTENT_SIZE  = CHANNELS::CHANNEL_CHUNK_LENGTH - RDPECLIP::METAFILE_HEADERS_SIZE - PDU_HEADER_SIZE
     };
 
-
-    // Graphic members
-//     int               mod_bpp;
-//     BGRPalette            mod_palette;
-//     Form_Qt            * _form;
-//     Screen_Qt          * _screen[MAX_MONITOR_COUNT] {};
-//     QPixmap            * _cache;
-//     QPixmap            * _trans_cache;
-//     gdi::GraphicApi    * _graph_capture;
 
     struct MouseData {
         QImage cursor_image;
@@ -105,7 +103,6 @@ public:
         }
 
         std::unordered_map<int, std::string> paths;
-        //std::vector<std::string> paths;
 
         int writeData_to_wait = 0;
         int file_to_write_id = 0;
@@ -762,7 +759,7 @@ public:
                             chunk.in_skip_bytes(4);
                             int first_part_data_size(0);
                             uint32_t total_length(this->clipboard_qt->_cliboard_data_length + PDU_HEADER_SIZE);
-                            StaticOutStream<PDU_MAX_SIZE> out_stream_first_part;
+                            StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
 
                             if (this->clipboard_qt->_bufferTypeID == chunk.in_uint32_le()) {
 
@@ -858,7 +855,7 @@ public:
 
                                         for (int i = 1; i < this->clipboard_qt->_cItems; i++) {
 
-                                            StaticOutStream<PDU_MAX_SIZE> out_stream_next_part;
+                                            StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_next_part;
                                             file = this->clipboard_qt->_items_list[i];
                                             RDPECLIP::FileDescriptor fdn( file->nameUTF8
                                                                         , file->size
@@ -936,15 +933,15 @@ public:
 
                                 case RDPECLIP::FILECONTENTS_RANGE :
                                 {
-                                    StaticOutStream<PDU_MAX_SIZE> out_stream_first_part;
+                                    StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
                                     RDPECLIP::FileContentsResponse_Range fileRange( streamID
                                                                                 , this->clipboard_qt->_items_list[lindex]->size);
                                     this->clipboard_qt->_cliboard_data_length = this->clipboard_qt->_items_list[lindex]->size;
                                     int total_length(this->clipboard_qt->_items_list[lindex]->size + 12);
                                     int first_part_data_size(this->clipboard_qt->_items_list[lindex]->size);
                                     first_part_data_size = this->clipboard_qt->_items_list[lindex]->size;
-                                    if (first_part_data_size > PDU_MAX_SIZE - 12) {
-                                        first_part_data_size = PDU_MAX_SIZE - 12;
+                                    if (first_part_data_size > CHANNELS::CHANNEL_CHUNK_LENGTH - 12) {
+                                        first_part_data_size = CHANNELS::CHANNEL_CHUNK_LENGTH - 12;
                                     }
                                     fileRange.emit(out_stream_first_part);
 
@@ -2229,7 +2226,7 @@ public:
             }
 
             // Last part
-                StaticOutStream<PDU_MAX_SIZE> out_stream_last_part;
+                StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_last_part;
                 out_stream_last_part.out_copy_bytes(data + data_sent, remains_PDU);
 
                 data_sent += remains_PDU;
