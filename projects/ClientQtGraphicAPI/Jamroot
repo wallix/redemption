@@ -114,7 +114,7 @@ exe client_demo_Qt4 :
     gssglue
     png
     d3des
-    ocr_static
+    ocr/<link>static
     ffmpeg
     dl
     snappy
@@ -145,7 +145,7 @@ exe client_rdp_Qt4 :
     gssglue
     png
     d3des
-    ocr_static
+    ocr/<link>static
     ffmpeg
     dl
     snappy
@@ -188,7 +188,7 @@ exe client_rdp_Qt5 :
     gssglue
     png
     d3des
-    ocr_static
+    ocr/<link>static
     ffmpeg
     dl
     snappy
