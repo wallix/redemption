@@ -792,15 +792,15 @@ public:
             );
 
             char * p = mes + len;
-            auto write = [&p](unsigned char const * hash) {
+            auto hexdump = [&p](uint8_t (&hash)[MD_HASH_LENGTH]) {
                 *p++ = ' ';                // 1 octet
                 for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
                     sprintf(p, "%02x", c); // 64 octets (hash)
                     p += 2;
                 }
             };
-            write(qhash);
-            write(fhash);
+            hexdump(qhash);
+            hexdump(fhash);
             *p++ = '\n';
 
             ssize_t res = hash_buf_write(hash_buf_file_fd, hash_buf_encrypt, mes, p-mes);
@@ -811,10 +811,6 @@ public:
                 return 1;
             }
 
-            //unsigned char hash2[MD_HASH_LENGTH << 1];
-            //uint8_t qhash[MD_HASH_LENGTH];
-            //uint8_t fhash[MD_HASH_LENGTH];
-            
             ocrypto::Result result = hash_buf_encrypt.close(qhash, fhash);
             const int res2 = raw_write(hash_buf_file_fd, result.buf.data(), result.buf.size());
             const int res3 = ::close(hash_buf_file_fd);
@@ -832,8 +828,6 @@ public:
                 LOG(LOG_ERR, "Failed writing signature to hash file %s [res3 = %d]\n", hash_filename, int(res3));
                 return 1;
             }
-
-            return 0;
         }
         else {
             if (this->with_checksum)
@@ -961,8 +955,6 @@ public:
                     LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
                     return 1;
                 }
-
-                return 0;
             }
             else {
                 const int res1 = this->next();
@@ -972,96 +964,88 @@ public:
                     this->meta_buf_fd = -1;
                 }
                 int err = res1 ? res1 : res2;
-                if (!err) {
-
-                    int crypto_hash_fd = ::open(this->hf_.filename, O_WRONLY | O_CREAT, S_IRUSR|S_IRGRP);
-
-                    if (crypto_hash_fd == -1) {
-                        int e = errno;
-                        LOG(LOG_ERR, "Open to transport failed: code=%d", e);
-                        errno = e;
-                        return 1;
-                    }
-
-                    struct stat stat;
-                    int err = ::stat(this->mf_.filename, &stat);
-
-                    if (!err) {
-                        char path[1024] = {};
-                        char basename[1024] = {};
-                        char extension[256] = {};
-                        char filename[2048] = {};
-
-                        canonical_path(
-                            this->mf_.filename,
-                            path, sizeof(path),
-                            basename, sizeof(basename),
-                            extension, sizeof(extension)
-                        );
-                        snprintf(filename, sizeof(filename), "%s%s", basename, extension);
-                        // 8Ko for a filename with expanded slash should be enough
-                        // or we will truncate filename at buffersize
-                        char tmp[8192];
-                        size_t j = 0;
-                        for (size_t i = 0; (filename[i]) && (j < 8190) ; i++){
-                            switch (filename[i]){
-                            case '\\':
-                            case ' ':
-                                tmp[j++] = '\\';
-                                REDEMPTION_CXX_FALLTHROUGH;
-                            default:
-                                tmp[j++] = filename[i];
-                            break;
-                            }
-                        }
-                        tmp[j] = 0;
-
-                        using ull = unsigned long long;
-                        using ll = long long;
-                        char mes[ 8192
-                                + (std::numeric_limits<ll>::digits10 + 1 + 1) * 8
-                                + (std::numeric_limits<ull>::digits10 + 1 + 1) * 2
-                                +  wrmcapture_hash_string_len + 1
-                                +  2
-                        ];
-                        char header[] = "v2\n\n\n";
-                        ssize_t len = std::sprintf(
-                            mes,
-                            "%s%s %lld %llu %lld %lld %llu %lld %lld %lld",
-                            header,
-                            tmp,
-                            ll(stat.st_size),
-                            ull(stat.st_mode),
-                            ll(stat.st_uid),
-                            ll(stat.st_gid),
-                            ull(stat.st_dev),
-                            ll(stat.st_ino),
-                            ll(stat.st_mtim.tv_sec),
-                            ll(stat.st_ctim.tv_sec)
-                        );
-
-                        mes[len] = '\n';
-
-                        if (raw_write(crypto_hash_fd, mes, len + 1) != 0) {
-                            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
-                                this->hf_.filename, errno);
-                            return 1;
-                        }
-                    }
-                    if (!err) {
-                        ::close(crypto_hash_fd);
-                    }
-                    if (err) {
-                        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", this->hf_.filename, err);
-                        return 1;
-                    }
-                    return 0;
+                if (err) {
+                    return err;
                 }
-                return err;
+                int crypto_hash_fd = ::open(this->hf_.filename, O_WRONLY | O_CREAT, S_IRUSR|S_IRGRP);
+
+                if (crypto_hash_fd == -1) {
+                    int e = errno;
+                    LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+                    errno = e;
+                    return 1;
+                }
+
+                struct stat stat;
+                if (::stat(this->mf_.filename, &stat)) {
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s\n", this->hf_.filename);
+                    return 1;
+                }
+
+                char path[1024] = {};
+                char basename[1024] = {};
+                char extension[256] = {};
+                char filename[2048] = {};
+
+                canonical_path(
+                    this->mf_.filename,
+                    path, sizeof(path),
+                    basename, sizeof(basename),
+                    extension, sizeof(extension)
+                );
+                snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+                // 8Ko for a filename with expanded slash should be enough
+                // or we will truncate filename at buffersize
+                char tmp[8192];
+                size_t j = 0;
+                for (size_t i = 0; (filename[i]) && (j < 8190) ; i++){
+                    switch (filename[i]){
+                    case '\\':
+                    case ' ':
+                        tmp[j++] = '\\';
+                        REDEMPTION_CXX_FALLTHROUGH;
+                    default:
+                        tmp[j++] = filename[i];
+                    break;
+                    }
+                }
+                tmp[j] = 0;
+
+                using ull = unsigned long long;
+                using ll = long long;
+                char mes[ 8192
+                        + (std::numeric_limits<ll>::digits10 + 1 + 1) * 8
+                        + (std::numeric_limits<ull>::digits10 + 1 + 1) * 2
+                        +  wrmcapture_hash_string_len + 1
+                        +  2
+                ];
+                char header[] = "v2\n\n\n";
+                ssize_t len = std::sprintf(
+                    mes,
+                    "%s%s %lld %llu %lld %lld %llu %lld %lld %lld",
+                    header,
+                    tmp,
+                    ll(stat.st_size),
+                    ull(stat.st_mode),
+                    ll(stat.st_uid),
+                    ll(stat.st_gid),
+                    ull(stat.st_dev),
+                    ll(stat.st_ino),
+                    ll(stat.st_mtim.tv_sec),
+                    ll(stat.st_ctim.tv_sec)
+                );
+
+                mes[len] = '\n';
+
+                if (raw_write(crypto_hash_fd, mes, len + 1) != 0) {
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
+                        this->hf_.filename, errno);
+                    return 1;
+                }
+                ::close(crypto_hash_fd);
             }
-            return 0;
         }
-        return -1;
+        return 0;
     }
 
     void update_sec(time_t sec)
