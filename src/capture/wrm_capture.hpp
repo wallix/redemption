@@ -294,7 +294,7 @@ struct MetaSeqBuf {
     }
 
 
-    int next_meta_file(wrmcapture_hash_type const * hash)
+    int next_meta_file(uint8_t (&qhash)[MD_HASH_LENGTH], uint8_t (&fhash)[MD_HASH_LENGTH])
     {
         const char * filename = this->filegen_.get(this->num_file_);
         LOG(LOG_INFO, "MetaSeqBufCrypto::next_meta_file:\"%s\" -> \"%s\".",
@@ -363,35 +363,19 @@ struct MetaSeqBuf {
         );
         char * p = mes + len;
 
-        if (this->with_encryption) {
-            if (hash){
-                auto write = [&p](unsigned char const * hash) {
-                    *p++ = ' ';                // 1 octet
-                    for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
-                        sprintf(p, "%02x", c); // 64 octets (hash)
-                        p += 2;
-                    }
-                };
-                write(&(*hash)[0]);
-                write(&(*hash)[MD_HASH_LENGTH]);
-            }
-            *p++ = '\n';
+        if (this->with_checksum) {
+            auto hexdump = [&p](uint8_t (&hash)[MD_HASH_LENGTH]) {
+                *p++ = ' ';                // 1 octet
+                for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+                    sprintf(p, "%02x", c); // 64 octets (hash)
+                    p += 2;
+                }
+            };
+            hexdump(qhash);
+            hexdump(fhash);
         }
-        else {
-            if (this->with_checksum) {
-                auto hexdump = [&p](unsigned char const * hash) {
-                    *p++ = ' ';                // 1 octet
-                    for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
-                        sprintf(p, "%02x", c); // 64 octets (hash)
-                        p += 2;
-                    }
-                };
-                hexdump(&(*hash[0]));
-                hexdump(&(*hash[MD_HASH_LENGTH]));
-            }
-            *p++ = '\n';
-            len = p-mes;
-        }
+        *p++ = '\n';
+
         ssize_t res = this->meta_buf_write(mes, p-mes);
 
         if (res < 0) {
@@ -429,9 +413,9 @@ struct MetaSeqBuf {
         return raw_write(this->meta_buf_fd, ores.buf.data(), ores.buf.size());
     }
 
-    int meta_buf_close(unsigned char hash[MD_HASH_LENGTH << 1])
+    int meta_buf_close(uint8_t (&qhash)[MD_HASH_LENGTH], uint8_t (&fhash)[MD_HASH_LENGTH])
     {
-        ocrypto::Result result = this->meta_buf_encrypt.close(hash, hash+MD_HASH_LENGTH);
+        ocrypto::Result result = this->meta_buf_encrypt.close(qhash, fhash);
         if (result.err_code) {
             return -1;
         }
@@ -450,8 +434,9 @@ struct MetaSeqBuf {
 
     int meta_buf_close()
     {
-        unsigned char hash[MD_HASH_LENGTH << 1];
-        return this->meta_buf_close(hash);
+        unsigned char qhash[MD_HASH_LENGTH];
+        unsigned char fhash[MD_HASH_LENGTH];
+        return this->meta_buf_close(qhash, fhash);
     }
 
     bool meta_buf_is_open() const noexcept
@@ -665,8 +650,9 @@ public:
     {
         if (this->with_encryption){
             if (this->buf_.is_open()) {
-                wrmcapture_hash_type hash;
-                ocrypto::Result result = this->wrm_filter_encrypt.close(hash, hash+MD_HASH_LENGTH);
+                uint8_t qhash[MD_HASH_LENGTH];
+                uint8_t fhash[MD_HASH_LENGTH];
+                ocrypto::Result result = this->wrm_filter_encrypt.close(qhash, fhash);
                 if (result.err_code) {
                     this->buf_.close();
                     LOG(LOG_INFO, "MetaSeqBuf::next() : encryption error\n");
@@ -683,21 +669,22 @@ public:
                     LOG(LOG_INFO, "MetaSeqBuf::next() : close error\n");
                     return res2;
                 }
-                return this->next_meta_file(&hash);
+                return this->next_meta_file(qhash, fhash);
             }
             return 1;
         }
         else {
             if (this->buf_.is_open()) {
-                wrmcapture_hash_type hash;
+                uint8_t qhash[MD_HASH_LENGTH];
+                uint8_t fhash[MD_HASH_LENGTH];
                 if (this->with_checksum) {
                     REDASSERT(this->sumbuf_file_size != nosize);
-                    this->sumbuf_quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
-                    this->sumbuf_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
+                    this->sumbuf_quick_hmac.final(qhash);
+                    this->sumbuf_hmac.final(fhash);
                     this->sumbuf_file_size = nosize;
                 }
                 this->buf_.close();
-                int r = this->next_meta_file(&hash);
+                int r = this->next_meta_file(qhash, fhash);
                 return r;
             }
             return 1;
@@ -722,9 +709,10 @@ public:
                 return 1;
             }
 
-            wrmcapture_hash_type hash;
+            uint8_t qhash[MD_HASH_LENGTH];
+            uint8_t fhash[MD_HASH_LENGTH];
 
-            if (this->meta_buf_close(hash)) {
+            if (this->meta_buf_close(qhash, fhash)) {
                 LOG(LOG_INFO, "MetaSeqBufCrypto::close() metafile close failed\n");
                 return 1;
             }
@@ -811,8 +799,8 @@ public:
                     p += 2;
                 }
             };
-            write(&hash[0]);
-            write(&hash[MD_HASH_LENGTH]);
+            write(qhash);
+            write(fhash);
             *p++ = '\n';
 
             ssize_t res = hash_buf_write(hash_buf_file_fd, hash_buf_encrypt, mes, p-mes);
@@ -823,8 +811,11 @@ public:
                 return 1;
             }
 
-            unsigned char hash2[MD_HASH_LENGTH << 1];
-            ocrypto::Result result = hash_buf_encrypt.close(hash2, hash2+MD_HASH_LENGTH);
+            //unsigned char hash2[MD_HASH_LENGTH << 1];
+            //uint8_t qhash[MD_HASH_LENGTH];
+            //uint8_t fhash[MD_HASH_LENGTH];
+            
+            ocrypto::Result result = hash_buf_encrypt.close(qhash, fhash);
             const int res2 = raw_write(hash_buf_file_fd, result.buf.data(), result.buf.size());
             const int res3 = ::close(hash_buf_file_fd);
             hash_buf_file_fd = -1;
@@ -857,11 +848,12 @@ public:
                     return 1;
                 }
 
-                wrmcapture_hash_type hash;
+                uint8_t qhash[MD_HASH_LENGTH];
+                uint8_t fhash[MD_HASH_LENGTH];
 
                 REDASSERT(this->meta_buf_file_size != nosize);
-                this->meta_buf_quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
-                this->meta_buf_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
+                this->meta_buf_quick_hmac.final(qhash);
+                this->meta_buf_hmac.final(fhash);
                 this->meta_buf_file_size = nosize;
 
                 if (-1 != this->meta_buf_fd) {
@@ -953,8 +945,8 @@ public:
                         p += 2;
                     }
                 };
-                write(&hash[0]);
-                write(&hash[MD_HASH_LENGTH]);
+                write(qhash);
+                write(fhash);
                 *p++ = '\n';
 
                 ssize_t res = raw_write(hash_buf_fd, mes, p-mes);
