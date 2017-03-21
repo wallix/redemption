@@ -21,10 +21,9 @@
 #include "gdi/graphic_api.hpp"
 #include "transport/transport.hpp"
 #include "transport/file_transport.hpp"
-#include "utils/parse.hpp"
 #include "utils/bitfu.hpp"
 #include "utils/sugar/array_view.hpp"
-#include "capture/wrm_capture.hpp"
+#include "capture/wrm_capture.hpp" // TODO only for PARTIAL_IMAGE_CHUNK and LAST_IMAGE_CHUNK
 
 #include <cassert>
 #include <cstdint>
@@ -319,34 +318,23 @@ void set_rows_from_image_chunk(
     size_t height = png_get_image_height(png.ppng, png.pinfo);
     // TODO check png row_size is identical to drawable rowsize
 
-    uint32_t tmp[8192];
+    uint8_t tmp[8192*4];
     assert(sizeof(tmp) / sizeof(tmp[0]) >= width);
     for (size_t k = 0; k < height; ++k) {
-        png_read_row(png.ppng, reinterpret_cast<uint8_t*>(tmp), nullptr);
+        png_read_row(png.ppng, tmp, nullptr);
 
-        uint32_t bgrtmp[8192];
-        const uint32_t * s = reinterpret_cast<const uint32_t*>(tmp);
-        uint32_t * t = bgrtmp;
-        for (size_t n = 0; n < (width / 4); n++){
-            unsigned bRGB = *s++;
-            unsigned GBrg = *s++;
-            unsigned rgbR = *s++;
-            *t++ = ((GBrg << 16) & 0xFF000000)
-                    | ((bRGB << 16) & 0x00FF0000)
-                    | (bRGB         & 0x0000FF00)
-                    | ((bRGB >> 16) & 0x000000FF);
-            *t++ = (GBrg         & 0xFF000000)
-                    | ((rgbR << 16) & 0x00FF0000)
-                    | ((bRGB >> 16) & 0x0000FF00)
-                    | ( GBrg        & 0x000000FF);
-            *t++ = ((rgbR << 16) & 0xFF000000)
-                    | (rgbR         & 0x00FF0000)
-                    | ((rgbR >> 16) & 0x0000FF00)
-                    | ((GBrg >> 16) & 0x000000FF);
+        uint8_t * t = tmp;
+        const uint8_t * e = t + (width / 4) * 12;
+        for (; t < e; t += 12){
+            using std::swap;
+            swap(t[0], t[2]);
+            swap(t[3], t[5]);
+            swap(t[6], t[8]);
+            swap(t[9], t[11]);
         }
 
         for (gdi::GraphicApi * gd : graphic_consumers){
-            gd->set_row(k, reinterpret_cast<uint8_t*>(bgrtmp));
+            gd->set_row(k, tmp);
         }
     }
     png_read_end(png.ppng, png.pinfo);

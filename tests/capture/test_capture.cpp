@@ -1143,7 +1143,6 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
 BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
 {
     // Same as above, show timestamps are applied only when flushing
-    BOOST_CHECK_EQUAL(0, 0);
     timeval now;
     now.tv_usec = 0;
     now.tv_sec = 1000;

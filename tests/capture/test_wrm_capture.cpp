@@ -103,14 +103,6 @@ struct wrmcapture_OutFilenameSequenceTransport : public Transport
         return !this->close();
     }
 
-    void request_full_cleaning() override {
-        unsigned i = this->num_file_ + 1;
-        while (i > 0 && !::unlink(this->filegen_.get(--i))) {}
-        if (this->buf_.is_open()) {
-            this->buf_.close();
-        }
-    }
-
     ~wrmcapture_OutFilenameSequenceTransport() {
         this->close();
     }
@@ -168,7 +160,7 @@ private:
         if (!this->current_filename_[0] && !this->num_file_) {
             return nullptr;
         }
-        
+
         return this->filegen_.get(this->num_file_-1);
     }
 
@@ -394,8 +386,8 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
     }
     catch(Error & e) {
         LOG(LOG_INFO, "Exception raised : %d\n", e.id);
-    };    
-    
+    };
+
 
     {
         // TODO: we may have several mwrm sizes as it contains varying length numbers
@@ -955,58 +947,6 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
     const char * meta_path = "./xxx.mwrm";
     BOOST_CHECK_EQUAL(meta_len_writer.len, filesize(meta_path));
     BOOST_CHECK_EQUAL(0, ::unlink(meta_path));
-}
-
-
-BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
-{
-    unlink("./xxx-000000.wrm");
-    unlink("./xxx-000001.wrm");
-    unlink("./xxx.mwrm");
-    unlink("./hash-xxx.mwrm");
-
-    {
-        CryptoContext cctx;
-        cctx.set_master_key(cstr_array_view(
-            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-        ));
-        cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
-        LCGRandom rnd(0);
-        Fstat fstat;
-
-        timeval now;
-        now.tv_sec = 1352304810;
-        now.tv_usec = 0;
-        const int groupid = 0;
-        wrmcapture_OutMetaSequenceTransport wrm_trans(false, false, cctx, rnd, fstat, "./", "./hash-", "xxx", now, 800, 600, groupid, nullptr);
-        wrm_trans.send("AAAAX", 5);
-        wrm_trans.send("BBBBX", 5);
-        wrm_trans.next();
-        wrm_trans.send("CCCCX", 5);
-
-// TODO: we can't really check files are here and of expected size
-// because they will only be flushed when wrm_trans object destructor is called.
-// we should call a flush or explicit close for that purpose
-// but it's no part yet of our Transport API.
-//        BOOST_CHECK_EQUAL(10, filesize("./xxx-000000.wrm"));
-//        BOOST_CHECK_EQUAL(5, filesize("./xxx-000001.wrm"));
-//        BOOST_CHECK_EQUAL(69, filesize("./hash-xxx.mwrm"));
-//        BOOST_CHECK_EQUAL(209, filesize("./xxx.mwrm"));
-
-        wrm_trans.request_full_cleaning();
-    }
-
-    // TODO: request full_cleaning does not remove hash signature
-    // not sure what to do with that and even if request full cleaning
-    // is a good idea. Wouldn't it remove partial traces whenever
-    // a problem occurs (like full disk ?)
-    ::unlink("./hash-xxx.mwrm");
-
-    BOOST_CHECK_EQUAL(-1 , filesize("./xxx-000000.wrm"));
-    BOOST_CHECK_EQUAL(-1 , filesize("./xxx-000001.wrm"));
-    BOOST_CHECK_EQUAL(-1 , filesize("./hash-xxx.mwrm"));
-    BOOST_CHECK_EQUAL(-1 , filesize("./xxx.mwrm"));
 }
 
 //void simple_movie(timeval now, unsigned duration, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse);
@@ -1573,7 +1513,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
     {
         LCGRandom rnd(0);
         Fstat fstat;
-        
+
         timeval tv;
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;

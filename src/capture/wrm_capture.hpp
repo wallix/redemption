@@ -56,6 +56,7 @@
 #include "utils/compression_transport_builder.hpp"
 #include "core/RDP/share.hpp"
 
+
 // TODO enum class
 enum {
     META_FILE           = 1006,
@@ -430,13 +431,11 @@ struct MetaSeqBuf {
 
     int meta_buf_close(unsigned char hash[MD_HASH_LENGTH << 1])
     {
-        uint8_t buffer[65536];
-        size_t towrite = 0;
-        const int res1 = this->meta_buf_encrypt.close(buffer, sizeof(buffer), towrite, hash);
-        if (res1) {
+        ocrypto::Result result = this->meta_buf_encrypt.close(hash, hash+MD_HASH_LENGTH);
+        if (result.err_code) {
             return -1;
         }
-        if (raw_write(this->meta_buf_fd, buffer, towrite))
+        if (raw_write(this->meta_buf_fd, result.buf.data(), result.buf.size()))
         {
             return -1;
         }
@@ -446,7 +445,7 @@ struct MetaSeqBuf {
             res2 = ::close(this->meta_buf_fd);
             this->meta_buf_fd = -1;
         }
-        return res1 < 0 ? res1 : (res2 < 0 ? res2 : 0);
+        return res2 < 0 ? res2 : 0;
     }
 
     int meta_buf_close()
@@ -564,6 +563,7 @@ public:
     ~MetaSeqBuf()
     {
         this->close();
+        // TODO check if temporary file is removed
     }
 
     ssize_t write(const void * data, size_t len)
@@ -666,15 +666,13 @@ public:
         if (this->with_encryption){
             if (this->buf_.is_open()) {
                 wrmcapture_hash_type hash;
-                uint8_t buffer[65536];
-                size_t towrite = 0;
-                const int res1 = this->wrm_filter_encrypt.close(buffer, sizeof(buffer), towrite, hash);
-                if (res1) {
+                ocrypto::Result result = this->wrm_filter_encrypt.close(hash, hash+MD_HASH_LENGTH);
+                if (result.err_code) {
                     this->buf_.close();
                     LOG(LOG_INFO, "MetaSeqBuf::next() : encryption error\n");
                     return -1;
                 }
-                ssize_t err = this->buf_.write(buffer, towrite);
+                ssize_t err = this->buf_.write(result.buf.data(), result.buf.size());
                 if (err < 0){
                     this->buf_.close();
                     LOG(LOG_INFO, "MetaSeqBuf::next() : write error\n");
@@ -826,14 +824,13 @@ public:
             }
 
             unsigned char hash2[MD_HASH_LENGTH << 1];
-            uint8_t buffer[65536];
-            size_t towrite = 0;
-            const int res1 = hash_buf_encrypt.close(buffer, sizeof(buffer), towrite, hash2);
-            const int res2 = raw_write(hash_buf_file_fd, buffer, towrite);
+            ocrypto::Result result = hash_buf_encrypt.close(hash2, hash2+MD_HASH_LENGTH);
+            const int res2 = raw_write(hash_buf_file_fd, result.buf.data(), result.buf.size());
             const int res3 = ::close(hash_buf_file_fd);
             hash_buf_file_fd = -1;
-            if (res1) {
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [res1 = %d]\n", hash_filename, int(res1));
+            if (result.err_code) {
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [%d]\n",
+                        hash_filename, result.err_code);
                 return 1;
             }
             if (res2) {
@@ -1075,23 +1072,6 @@ public:
         return -1;
     }
 
-    void request_full_cleaning()
-    {
-        if (this->with_encryption){
-        }
-        else {
-            unsigned i = this->num_file_;
-            if (this->current_filename_[0] != 0){
-                ::unlink(this->mf_.filename);
-            }
-            while (i > 0 && !::unlink(this->filegen_.get(--i))){}
-            if (this->buf_.is_open()) {
-                this->buf_.close();
-            }
-            ::unlink(this->mf_.filename);
-        }
-    }
-
     void update_sec(time_t sec)
     { this->stop_sec_ = sec; }
 };
@@ -1164,13 +1144,6 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
 
     bool disconnect() override {
         return !this->buf.close();
-    }
-
-    void request_full_cleaning() override {
-        this->buf.request_full_cleaning();
-    }
-
-    ~wrmcapture_OutMetaSequenceTransport() {
     }
 
 private:
@@ -2257,10 +2230,6 @@ public:
     void send_timestamp_chunk(timeval const & now, bool ignore_time_interval) {
         this->graphic_to_file.timestamp(now);
         this->graphic_to_file.send_timestamp_chunk(ignore_time_interval);
-    }
-
-    void request_full_cleaning() {
-        this->out.request_full_cleaning();
     }
 
     std::chrono::microseconds do_snapshot(

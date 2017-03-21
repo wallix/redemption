@@ -66,7 +66,6 @@
 
 #include "transport/transport.hpp"
 #include "transport/out_file_transport.hpp"
-#include "transport/sequence_generator.hpp"
 
 #include "core/RDP/bitmapupdate.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
@@ -1163,10 +1162,6 @@ public:
     SessionMeta & get_session_meta() {
         return this->meta;
     }
-
-    void request_full_cleaning() {
-        this->meta_trans.request_full_cleaning();
-    }
 };
 
 
@@ -1318,7 +1313,7 @@ Capture::Capture(
     }
 
     if (capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full) {
-        this->gd_drawable = new RDPDrawable(width, height);
+        this->gd_drawable.reset(new RDPDrawable(width, height));
         this->gds.push_back(*this->gd_drawable);
 
         this->graphic_api.reset(new Graphic(this->mouse_info, this->gds, this->caps));
@@ -1468,10 +1463,8 @@ Capture::~Capture()
             try {
                 this->sequenced_video_capture_obj->encoding_video_frame();
             }
-            catch (Error const &) {
-                if (this->meta_capture_obj) {
-                    this->meta_capture_obj->request_full_cleaning();
-                }
+            catch (Error const & e) {
+                LOG(LOG_ERR, "Sequenced video: last encoding video frame error: %s", e.errmsg());
             }
             this->sequenced_video_capture_obj.reset();
         }
@@ -1479,7 +1472,8 @@ Capture::~Capture()
             try {
                 this->full_video_capture_obj->encoding_video_frame();
             }
-            catch (Error const &) {
+            catch (Error const & e) {
+                LOG(LOG_ERR, "Full video: last encoding video frame error: %s", e.errmsg());
             }
             this->full_video_capture_obj.reset();
         }
@@ -1513,5 +1507,33 @@ void Capture::set_row(size_t rownum, const uint8_t * data)
 {
     if (this->capture_drawable) {
         this->gd_drawable->set_row(rownum, data);
+    }
+}
+
+std::chrono::microseconds Capture::do_snapshot(
+    timeval const & now,
+    int cursor_x, int cursor_y,
+    bool ignore_frame_in_timeval
+) {
+    this->capture_event.reset();
+
+    if (this->gd_drawable) {
+        this->gd_drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
+    }
+    this->mouse_info = {now, cursor_x, cursor_y};
+
+    std::chrono::microseconds time = std::chrono::microseconds::max();
+    if (!this->caps.empty()) {
+        for (gdi::CaptureApi & cap : this->caps) {
+            time = std::min(time, cap.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
+        }
+        this->capture_event.update(time.count());
+    }
+    return time;
+}
+
+void Capture::set_pointer_display() {
+    if (this->capture_drawable) {
+        this->gd_drawable->show_mouse_cursor(false);
     }
 }

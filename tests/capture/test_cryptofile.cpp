@@ -321,7 +321,6 @@ BOOST_AUTO_TEST_CASE(TestEncryption1)
     
 
     uint8_t result[8192];
-    unsigned char hash[MD_HASH_LENGTH << 1];
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
@@ -349,9 +348,15 @@ BOOST_AUTO_TEST_CASE(TestEncryption1)
     // and a full hash for the whole file
     // obviously the two will be identical for short files
     // and differs for larger ones
-    size_t towrite = 0;
-    encrypter.close(result+offset, sizeof(result)-offset, towrite, hash);
-    BOOST_CHECK_EQUAL(towrite, 28);
+    unsigned char fhash[MD_HASH_LENGTH];
+    unsigned char qhash[MD_HASH_LENGTH];
+    {
+        ocrypto::Result res2 = encrypter.close(qhash, fhash);
+        memcpy(result + offset, res2.buf.data(), res2.buf.size());
+        offset += res2.buf.size();
+        BOOST_CHECK_EQUAL(res2.buf.size(), 28);
+        BOOST_CHECK_EQUAL(res2.consumed, 0);
+    }
 
     uint8_t expected_result[68] =  { 'W', 'C', 'F', 'M', // Magic
                                        1, 0, 0, 0,       // Version
@@ -374,8 +379,8 @@ BOOST_AUTO_TEST_CASE(TestEncryption1)
                                   "\xfe\x2f\x05\x90\x0b\x62\x92\xdd"
                                   "\x12\x31\x2d\x3e\x1d\x17\xd3\xfd"
                                   "\x8e\x9c\x3b\x52\xcd\x1d\xf7\x29";
-    CHECK_MEM(hash, MD_HASH_LENGTH, expected_hash);
-    CHECK_MEM(hash + MD_HASH_LENGTH, MD_HASH_LENGTH, expected_hash);
+    CHECK_MEM(qhash, MD_HASH_LENGTH, expected_hash);
+    CHECK_MEM(fhash, MD_HASH_LENGTH, expected_hash);
 
 }
 
@@ -400,14 +405,12 @@ BOOST_AUTO_TEST_CASE(TestEncryption2)
     
 
     uint8_t result[8192];
-    unsigned char hash[MD_HASH_LENGTH << 1];
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
     ocrypto encrypter(cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
     // Of course no such header will be needed in non encrypted files
-    size_t towrite = 0;
     ocrypto::Result res = encrypter.open(derivator, sizeof(derivator));
     memcpy(result + offset, res.buf.data(), res.buf.size());
     offset += res.buf.size();
@@ -439,9 +442,15 @@ BOOST_AUTO_TEST_CASE(TestEncryption2)
     // and a full hash for the whole file
     // obviously the two will be identical for short files
     // and differs for larger ones
-    towrite = 0;
-    encrypter.close(result+offset, sizeof(result)-offset, towrite, hash);
-    BOOST_CHECK_EQUAL(towrite, 28);
+    unsigned char qhash[MD_HASH_LENGTH];
+    unsigned char fhash[MD_HASH_LENGTH];
+    {
+        ocrypto::Result res2 = encrypter.close(qhash, fhash);
+        memcpy(result + offset, res2.buf.data(), res2.buf.size());
+        offset += res2.buf.size();
+        BOOST_CHECK_EQUAL(res2.buf.size(), 28);
+        BOOST_CHECK_EQUAL(res2.consumed, 0);
+    }
 
     uint8_t expected_result[68] =  { 'W', 'C', 'F', 'M', // Magic
                                        1, 0, 0, 0,       // Version
@@ -464,8 +473,8 @@ BOOST_AUTO_TEST_CASE(TestEncryption2)
                                   "\xfe\x2f\x05\x90\x0b\x62\x92\xdd"
                                   "\x12\x31\x2d\x3e\x1d\x17\xd3\xfd"
                                   "\x8e\x9c\x3b\x52\xcd\x1d\xf7\x29";
-    CHECK_MEM(hash, MD_HASH_LENGTH, expected_hash);
-    CHECK_MEM(hash + MD_HASH_LENGTH, MD_HASH_LENGTH, expected_hash);
+    CHECK_MEM(qhash, MD_HASH_LENGTH, expected_hash);
+    CHECK_MEM(fhash, MD_HASH_LENGTH, expected_hash);
 
     char clear[8192] = {};
     read_encrypted decrypter(cctx, 1, result, offset);
@@ -505,7 +514,6 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
     
 
     uint8_t result[16384];
-    unsigned char hash[MD_HASH_LENGTH << 1];
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
@@ -551,10 +559,15 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
     // and a full hash for the whole file
     // obviously the two will be identical for short files
     // and differs for larger ones
-    size_t towrite = 0;
-    encrypter.close(result+offset, sizeof(result)-offset, towrite, hash);
-    offset += towrite;
-    BOOST_CHECK_EQUAL(towrite, 8);
+    unsigned char qhash[MD_HASH_LENGTH];
+    unsigned char fhash[MD_HASH_LENGTH];
+    {
+        ocrypto::Result res2 = encrypter.close(qhash, fhash);
+        memcpy(result + offset, res2.buf.data(), res2.buf.size());
+        offset += res2.buf.size();
+        BOOST_CHECK_EQUAL(res2.buf.size(), 8);
+        BOOST_CHECK_EQUAL(res2.consumed, 0);
+    }
     BOOST_CHECK_EQUAL(offset, 8660);
 
 //    CHECK_MEM(result, offset, tmp);
@@ -568,10 +581,10 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
     BOOST_CHECK_EQUAL(res2, sizeof(randomSample));
     CHECK_MEM(clear, sizeof(randomSample), randomSample);
 
-    char expected_hash1[MD_HASH_LENGTH+1] = "\x88\x80\x2e\x37\x08\xca\x43\x30\xed\xd2\x72\x27\x2d\x05\x5d\xee\x01\x71\x4a\x12\xa5\xd9\x72\x84\xec\x0e\xd5\xaa\x47\x9e\xc3\xc2";
-    char expected_hash2[MD_HASH_LENGTH+1] = "\x62\x96\xe9\xa2\x20\x4f\x39\x21\x06\x4d\x1a\xcf\xf8\x6e\x34\x9c\xd6\xae\x6c\x44\xd4\x55\x57\xd5\x29\x04\xde\x58\x7f\x1d\x0b\x35";
+    char expected_qhash[MD_HASH_LENGTH+1] = "\x88\x80\x2e\x37\x08\xca\x43\x30\xed\xd2\x72\x27\x2d\x05\x5d\xee\x01\x71\x4a\x12\xa5\xd9\x72\x84\xec\x0e\xd5\xaa\x47\x9e\xc3\xc2";
+    char expected_fhash[MD_HASH_LENGTH+1] = "\x62\x96\xe9\xa2\x20\x4f\x39\x21\x06\x4d\x1a\xcf\xf8\x6e\x34\x9c\xd6\xae\x6c\x44\xd4\x55\x57\xd5\x29\x04\xde\x58\x7f\x1d\x0b\x35";
 
-    CHECK_MEM(hash, MD_HASH_LENGTH, expected_hash1);
-    CHECK_MEM(hash + MD_HASH_LENGTH, MD_HASH_LENGTH, expected_hash2);
+    CHECK_MEM(qhash, MD_HASH_LENGTH, expected_qhash);
+    CHECK_MEM(fhash, MD_HASH_LENGTH, expected_fhash);
 }
 

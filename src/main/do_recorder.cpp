@@ -390,9 +390,9 @@ static int do_recompress(
                 player.play(program_requested_to_shutdown);
             }
 
-            if (program_requested_to_shutdown) {
-                trans.request_full_cleaning();
-            }
+            //if (program_requested_to_shutdown) {
+            //    trans.request_full_cleaning();
+            //}
         }
         else {
             CryptoContext cctx;
@@ -443,9 +443,9 @@ static int do_recompress(
                 player.play(program_requested_to_shutdown);
             }
 
-            if (program_requested_to_shutdown) {
-                trans.request_full_cleaning();
-            }
+            //if (program_requested_to_shutdown) {
+            //    trans.request_full_cleaning();
+            //}
         }
     }
     catch (...) {

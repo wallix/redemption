@@ -155,9 +155,6 @@ public:
         return true;
     }
 
-    virtual void request_full_cleaning()
-    {}
-
     virtual int get_fd() const { return INVALID_SOCKET; }
 
 private:
