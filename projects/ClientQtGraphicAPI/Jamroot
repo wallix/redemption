@@ -98,9 +98,9 @@ obj front_Qt4_Demo.o : src/frontDemoQtClient.cpp :
 
 exe client_demo_Qt4 :
     src/rdp_client_graphic_api/Qt4/Qt.hpp
-    src/rdp_client_graphic_api/qt_widget.hpp
     src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp
     src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
+    src/rdp_client_qt_widget.hpp
     front_Qt4_Demo.o
     video_capture.o
     capture.o
@@ -114,7 +114,7 @@ exe client_demo_Qt4 :
     gssglue
     png
     d3des
-    ocr_static
+    ocr/<link>static
     ffmpeg
     dl
     snappy
@@ -129,7 +129,6 @@ obj front_Qt4_rdp.o : src/rdp_client_qt_front.cpp :
 
 exe client_rdp_Qt4 :
     src/rdp_client_graphic_api/Qt4/Qt.hpp
-    src/rdp_client_graphic_api/qt_widget.hpp
     src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp
     src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
     src/rdp_client_qt_widget.hpp
@@ -146,7 +145,7 @@ exe client_rdp_Qt4 :
     gssglue
     png
     d3des
-    ocr_static
+    ocr/<link>static
     ffmpeg
     dl
     snappy
@@ -170,10 +169,10 @@ obj front_Qt5.o : src/front_Qt.cpp :
     $(EXE_DEPENDENCIES) ;
 
 exe client_rdp_Qt5 :
-    src/Qt5/Qt.hpp
-    src/front_Qt.hpp
-    src/front_widget_Qt.hpp
-    src/keymaps/Qt_ScanCode_KeyMap.hpp
+    src/rdp_client_graphic_api/Qt5/Qt.hpp
+    src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp
+    src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
+    src/rdp_client_qt_widget.hpp
     front_Qt5.o
     capture.o
     video_capture.o
@@ -189,7 +188,7 @@ exe client_rdp_Qt5 :
     gssglue
     png
     d3des
-    ocr_static
+    ocr/<link>static
     ffmpeg
     dl
     snappy
