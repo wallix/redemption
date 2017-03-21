@@ -570,9 +570,6 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
     }
     BOOST_CHECK_EQUAL(offset, 8660);
 
-//    CHECK_MEM(result, offset, tmp);
-
-
     char clear[sizeof(randomSample)] = {};
     read_encrypted decrypter(cctx, 1, result, offset);
     decrypter.open(derivator, sizeof(derivator));
@@ -586,6 +583,24 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
 
     CHECK_MEM(qhash, MD_HASH_LENGTH, expected_qhash);
     CHECK_MEM(fhash, MD_HASH_LENGTH, expected_fhash);
+
+    unsigned char fhash2[MD_HASH_LENGTH];
+    
+    SslHMAC_Sha256_Delayed hmac;
+    hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+    hmac.update(result, offset);
+    hmac.final(fhash2);
+
+    CHECK_MEM(fhash2, MD_HASH_LENGTH, expected_fhash);
+
+    unsigned char qhash2[MD_HASH_LENGTH];
+    
+    SslHMAC_Sha256_Delayed hmac2;
+    hmac2.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+    hmac2.update(result, 4096);
+    hmac2.final(qhash2);
+
+    CHECK_MEM(qhash2, MD_HASH_LENGTH, expected_qhash);
 }
 
 BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
@@ -663,11 +678,29 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
     }
     BOOST_CHECK_EQUAL(offset, sizeof(randomSample)*2);
 
-    char expected_qhash[MD_HASH_LENGTH+1] = "\x57\x7a\xae\x29\xab\x0e\x2a\xf3\xdd\x8e\x10\x43\xb5\x8e\xc3\x2d\xf0\x4f\x98\xed\xc5\x82\x8c\x7c\x46\x5b\x29\x1e\xc1\x17\x11\x75";
+    char expected_qhash[MD_HASH_LENGTH+1] = "\x73\xe8\x21\x3a\x8f\xa3\x61\x0e\x0f\xfe\x14\x28\xff\xcd\x1d\x97\x7f\xc8\xe8\x90\x44\xfc\x4f\x75\xf7\x6c\xa3\x5b\x0d\x2e\x14\x80";
     char expected_fhash[MD_HASH_LENGTH+1] = "\x07\xa7\xe7\x14\x9b\xf7\xeb\x34\x57\xdc\xce\x07\x5c\x62\x61\x34\x51\x42\x7d\xe0\x0f\xbe\xda\x53\x11\x08\x75\x31\x40\xc5\x50\xe8";
 
     CHECK_MEM(qhash, MD_HASH_LENGTH, expected_qhash);
     CHECK_MEM(fhash, MD_HASH_LENGTH, expected_fhash);
+
+    uint8_t qhash2[MD_HASH_LENGTH] {};
+    uint8_t fhash2[MD_HASH_LENGTH] {};
+
+    SslHMAC_Sha256_Delayed hmac;
+    hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+    hmac.update(randomSample, sizeof(randomSample));
+    hmac.update(randomSample, sizeof(randomSample));
+    hmac.final(fhash2);
+
+    SslHMAC_Sha256_Delayed quick_hmac;
+    quick_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+    quick_hmac.update(randomSample, 4096);
+    quick_hmac.final(qhash2);
+
+    CHECK_MEM(fhash2, MD_HASH_LENGTH, expected_fhash);
+    // "\x73\xe8\x21\x3a\x8f\xa3\x61\x0e\x0f\xfe\x14\x28\xff\xcd\x1d\x97\x7f\xc8\xe8\x90\x44\xfc\x4f\x75\xf7\x6c\xa3\x5b\x0d\x2e\x14\x80"
+    CHECK_MEM(qhash2, MD_HASH_LENGTH, expected_qhash);
 }
 
 BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
@@ -722,6 +755,7 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
         BOOST_CHECK_EQUAL(res2.err_code, 0);
     }
 
+
     // I write the same block *again* now I should reach some compression
 //    size_t towrite = 0;
 //    encrypter.write(result+offset, sizeof(result)-offset, towrite, randomSample, sizeof(randomSample));
@@ -759,5 +793,103 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
     // Check qhash and fhash are left unchanged if no checksum is enabled
     CHECK_MEM(qhash, MD_HASH_LENGTH, expected_qhash);
     CHECK_MEM(fhash, MD_HASH_LENGTH, expected_fhash);
+}
+
+BOOST_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
+{
+    OpenSSL_add_all_digests();
+    
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    cctx.set_master_key(cstr_array_view(
+        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+    ));
+    cctx.set_hmac_key(cstr_array_view(
+         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+         "\x49\x21\x57\x87\x47\x74\x08\x8a"
+         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+    ));
+    
+
+    uint8_t result[16384];
+    size_t offset = 0;
+    uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
+
+    ocrypto encrypter(false, true, cctx, rnd);
+    // Opening an encrypted stream usually results in some header put in result buffer
+    // Of course no such header will be needed in non encrypted files
+    ocrypto::Result res = encrypter.open(derivator, sizeof(derivator));
+    BOOST_CHECK_EQUAL(res.buf.size(), 0);
+    BOOST_CHECK_EQUAL(res.err_code, 0);
+
+    // writing data to compressed/encrypted buffer may result in data to write
+    // ... or not as this writing may be differed.
+
+    // Let's send a small block of data 
+    {
+        uint8_t data[5] = {1, 2, 3, 4, 5};
+        ocrypto::Result res2 = encrypter.write(data, sizeof(data));
+        memcpy(result + offset, res2.buf.data(), res2.buf.size());
+        offset += res2.buf.size();
+        BOOST_CHECK_EQUAL(res2.buf.size(), 5);
+        BOOST_CHECK_EQUAL(res2.err_code, 0);
+    }
+
+    // Let's send a small block of data 
+    {
+        uint8_t data[5] = {1, 2, 3, 4, 5};
+        ocrypto::Result res2 = encrypter.write(data, sizeof(data));
+        memcpy(result + offset, res2.buf.data(), res2.buf.size());
+        offset += res2.buf.size();
+        BOOST_CHECK_EQUAL(res2.buf.size(), 5);
+        BOOST_CHECK_EQUAL(res2.err_code, 0);
+    }
+
+    BOOST_CHECK_EQUAL(offset, 10);
+
+    // close flushes all opened buffers and writes potential trailer
+    // the full file hash is also returned which is made of two parts
+    // a partial hash for the first 4K of the file
+    // and a full hash for the whole file
+    // obviously the two will be identical for short files
+    // and differs for larger ones
+    uint8_t qhash[MD_HASH_LENGTH] {};
+    uint8_t fhash[MD_HASH_LENGTH] {};
+    {
+        ocrypto::Result res2 = encrypter.close(qhash, fhash);
+        memcpy(result + offset, res2.buf.data(), res2.buf.size());
+        offset += res2.buf.size();
+        BOOST_CHECK_EQUAL(res2.buf.size(), 0);
+        BOOST_CHECK_EQUAL(res2.consumed, 0);
+    }
+
+    char expected_qhash[MD_HASH_LENGTH+1] = "\x3b\x79\xd5\x76\x98\x66\x4f\xe1\xdd\xd4\x90\x5b\xa5\x56\x6a\xa3\x14\x45\x5e\xf3\x8c\x04\xc4\xc4\x49\x6b\x00\xd4\x5e\x82\x13\x68";
+    char expected_fhash[MD_HASH_LENGTH+1] = "\x3b\x79\xd5\x76\x98\x66\x4f\xe1\xdd\xd4\x90\x5b\xa5\x56\x6a\xa3\x14\x45\x5e\xf3\x8c\x04\xc4\xc4\x49\x6b\x00\xd4\x5e\x82\x13\x68";
+
+    CHECK_MEM(qhash, MD_HASH_LENGTH, expected_qhash);
+    CHECK_MEM(fhash, MD_HASH_LENGTH, expected_fhash);
+
+    uint8_t qhash2[MD_HASH_LENGTH] {};
+    uint8_t fhash2[MD_HASH_LENGTH] {};
+
+    SslHMAC_Sha256_Delayed hmac;
+    hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+    uint8_t data[5] = {1, 2, 3, 4, 5};
+    hmac.update(data, sizeof(data));
+    hmac.update(data, sizeof(data));
+    hmac.final(fhash2);
+
+    SslHMAC_Sha256_Delayed quick_hmac;
+    quick_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+    quick_hmac.update(data, sizeof(data));
+    quick_hmac.update(data, sizeof(data));
+    quick_hmac.final(qhash2);
+
+    CHECK_MEM(fhash2, MD_HASH_LENGTH, expected_fhash);
+    CHECK_MEM(qhash2, MD_HASH_LENGTH, expected_qhash);
 }
 
