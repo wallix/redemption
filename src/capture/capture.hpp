@@ -35,11 +35,12 @@
 #include "capture/full_video_params.hpp"
 #include "capture/meta_params.hpp"
 #include "capture/kbdlog_params.hpp"
-#include "capture/wrm_capture.hpp" // TODO only for META_FILE, SAVE_STATE, etc
+#include "capture/wrm_capture.hpp"
 #include "RDPChunkedDevice.hpp"
 #include "core/wait_obj.hpp"
 #include "core/RDP/RDPSerializer.hpp"
 #include "utils/fdbuf.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
 #include <vector>
 #include <memory>
@@ -277,10 +278,10 @@ private:
 };
 
 
-inline void send_wrm_chunk(Transport & t, uint16_t chunktype, uint16_t data_size, uint16_t count)
+inline void send_wrm_chunk(Transport & t, WrmChunkType chunktype, uint16_t data_size, uint16_t count)
 {
     StaticOutStream<8> header;
-    header.out_uint16_le(chunktype);
+    header.out_uint16_le(safe_cast<uint16_t>(chunktype));
     header.out_uint32_le(8 + data_size);
     header.out_uint16_le(count);
     t.send(header.get_data(), header.get_offset());
@@ -346,7 +347,7 @@ inline void send_meta_chunk(
         payload.out_uint8(index_algorithm);
     }
 
-    send_wrm_chunk(t, META_FILE, payload.get_offset(), 1);
+    send_wrm_chunk(t, WrmChunkType::META_FILE, payload.get_offset(), 1);
     t.send(payload.get_data(), payload.get_offset());
 }
 
@@ -433,9 +434,12 @@ public:
     }
 
 public:
-    void chunk(uint16_t chunk_type, uint16_t chunk_count, InStream stream) override {
-        switch (chunk_type) {
-        case META_FILE:
+    void chunk(uint16_t chunk_type, uint16_t chunk_count, InStream stream) override
+    {
+        auto wrm_chunk_type = safe_cast<WrmChunkType>(chunk_type);
+        switch (wrm_chunk_type)
+        {
+        case WrmChunkType::META_FILE:
             {
                 this->info_version                  = stream.in_uint16_le();
                 uint16_t info_width                 = stream.in_uint16_le();
@@ -516,7 +520,7 @@ public:
             }
             break;
 
-        case SAVE_STATE:
+        case WrmChunkType::SAVE_STATE:
             {
                 StateChunk sc;
                 SaveStateChunk ssc;
@@ -527,19 +531,19 @@ public:
 
                 ssc.send(payload, sc);
 
-                send_wrm_chunk(this->trans, SAVE_STATE, payload.get_offset(), chunk_count);
+                send_wrm_chunk(this->trans, WrmChunkType::SAVE_STATE, payload.get_offset(), chunk_count);
                 this->trans.send(payload.get_data(), payload.get_offset());
             }
             break;
 
-        case RESET_CHUNK:
+        case WrmChunkType::RESET_CHUNK:
             {
-                send_wrm_chunk(this->trans, RESET_CHUNK, 0, 1);
+                send_wrm_chunk(this->trans, WrmChunkType::RESET_CHUNK, 0, 1);
                 this->trans.next();
             }
             break;
 
-        case TIMESTAMP:
+        case WrmChunkType::TIMESTAMP:
             {
                 timeval record_now;
                 stream.in_timeval_from_uint64le_usec(record_now);
@@ -548,7 +552,7 @@ public:
             REDEMPTION_CXX_FALLTHROUGH;
         default:
             {
-                send_wrm_chunk(this->trans, chunk_type, stream.get_capacity(), chunk_count);
+                send_wrm_chunk(this->trans, wrm_chunk_type, stream.get_capacity(), chunk_count);
                 this->trans.send(stream.get_data(), stream.get_capacity());
             }
             break;
@@ -583,7 +587,7 @@ public:
 
     // variables used to read batch of orders "chunks"
     uint32_t chunk_size;
-    uint16_t chunk_type;
+    WrmChunkType chunk_type;
     uint16_t chunk_count;
 private:
     uint16_t remaining_order_count;
@@ -722,7 +726,7 @@ public:
         , bmp_cache(nullptr)
         // variables used to read batch of orders "chunks"
         , chunk_size(0)
-        , chunk_type(0)
+        , chunk_type(WrmChunkType::INVALID_CHUNK)
         , chunk_count(0)
         , remaining_order_count(0)
         , total_orders_count(0)
@@ -797,8 +801,8 @@ public:
      */
     bool next_order()
     {
-        if (this->chunk_type != LAST_IMAGE_CHUNK
-         && this->chunk_type != PARTIAL_IMAGE_CHUNK) {
+        if (this->chunk_type != WrmChunkType::LAST_IMAGE_CHUNK
+         && this->chunk_type != WrmChunkType::PARTIAL_IMAGE_CHUNK) {
             if (this->stream.get_current() == this->stream.get_data_end()
              && this->remaining_order_count) {
                 LOG(LOG_ERR, "Incomplete order batch at chunk %" PRIu16 " "
@@ -819,18 +823,19 @@ public:
                 uint8_t buf[HEADER_SIZE];
                 this->trans->recv_new(buf, HEADER_SIZE);
                 InStream header(buf);
-                this->chunk_type = header.in_uint16_le();
+                this->chunk_type = safe_cast<WrmChunkType>(header.in_uint16_le());
                 this->chunk_size = header.in_uint32_le();
                 this->remaining_order_count = this->chunk_count = header.in_uint16_le();
 
-                if (this->chunk_type != LAST_IMAGE_CHUNK && this->chunk_type != PARTIAL_IMAGE_CHUNK) {
+                if (this->chunk_type != WrmChunkType::LAST_IMAGE_CHUNK && this->chunk_type != WrmChunkType::PARTIAL_IMAGE_CHUNK) {
                     switch (this->chunk_type) {
-                        case RDP_UPDATE_ORDERS:
+                        case WrmChunkType::RDP_UPDATE_ORDERS:
                             this->statistics.graphics_update_chunk++; break;
-                        case RDP_UPDATE_BITMAP:
+                        case WrmChunkType::RDP_UPDATE_BITMAP:
                             this->statistics.bitmap_update_chunk++;   break;
-                        case TIMESTAMP:
+                        case WrmChunkType::TIMESTAMP:
                             this->statistics.timestamp_chunk++;       break;
+                        default: ;
                     }
                     if (this->chunk_size > 65536){
                         LOG(LOG_ERR,"chunk_size (%d) > 65536", this->chunk_size);
@@ -859,8 +864,9 @@ public:
     void interpret_order()
     {
         this->total_orders_count++;
-        switch (this->chunk_type){
-        case RDP_UPDATE_ORDERS:
+        switch (this->chunk_type)
+        {
+        case WrmChunkType::RDP_UPDATE_ORDERS:
         {
             if (!this->meta_ok){
                 LOG(LOG_ERR, "Drawing orders chunk must be preceded by a META chunk to get drawing device size");
@@ -1119,315 +1125,264 @@ public:
                 LOG(LOG_ERR, "Unsupported drawing order detected : protocol error");
                 throw Error(ERR_WRM);
             }
+        }
+        break;
+        case WrmChunkType::TIMESTAMP:
+        {
+            this->stream.in_timeval_from_uint64le_usec(this->record_now);
+
+            for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
+                obj->external_time(this->record_now);
             }
-            break;
-            case TIMESTAMP:
-            {
-                this->stream.in_timeval_from_uint64le_usec(this->record_now);
 
-                for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
-                    obj->external_time(this->record_now);
+            // If some data remains, it is input data : mouse_x, mouse_y and decoded keyboard keys (utf8)
+            if (this->stream.in_remain() > 0){
+                if (this->stream.in_remain() < 4){
+                    LOG(LOG_WARNING, "Input data truncated");
+                    hexdump_d(stream.get_data(), stream.in_remain());
                 }
-
-                // If some data remains, it is input data : mouse_x, mouse_y and decoded keyboard keys (utf8)
-                if (this->stream.in_remain() > 0){
-                    if (this->stream.in_remain() < 4){
-                        LOG(LOG_WARNING, "Input data truncated");
-                        hexdump_d(stream.get_data(), stream.in_remain());
-                    }
-
-                    this->mouse_x = this->stream.in_uint16_le();
-                    this->mouse_y = this->stream.in_uint16_le();
-
-                    if (  (this->info_version > 1)
-                       && this->stream.in_uint8()) {
-                        this->ignore_frame_in_timeval = true;
-                    }
-
-                    if (bool(this->verbose & Verbose::timestamp)) {
-                        LOG( LOG_INFO, "TIMESTAMP %lu.%lu mouse (x=%" PRIu16 ", y=%" PRIu16 ")\n"
-                           , static_cast<unsigned long>(this->record_now.tv_sec)
-                           , static_cast<unsigned long>(this->record_now.tv_usec)
-                           , this->mouse_x
-                           , this->mouse_y);
-                    }
-
-
-                    auto const input_data = this->stream.get_current();
-                    auto const input_len = this->stream.in_remain();
-                    this->stream.in_skip_bytes(input_len);
-                    for (gdi::KbdInputApi * kbd : this->kbd_input_consumers){
-                        InStream input(input_data, input_len);
-                        while (input.in_remain()) {
-                            kbd->kbd_input(this->record_now, input.in_uint32_le());
-                        }
-                    }
-
-                    if (bool(this->verbose & Verbose::timestamp)) {
-                        for (auto data = input_data, end = data + input_len/4; data != end; data += 4) {
-                            uint8_t         key8[6];
-                            const size_t    len = UTF32toUTF8(data, 4, key8, sizeof(key8)-1);
-                            key8[len] = 0;
-
-                            LOG( LOG_INFO, "TIMESTAMP %lu.%lu keyboard '%s'"
-                                , static_cast<unsigned long>(this->record_now.tv_sec)
-                                , static_cast<unsigned long>(this->record_now.tv_usec)
-                                , key8);
-                        }
-                    }
-                }
-
-                if (!this->timestamp_ok) {
-                   if (this->real_time) {
-                        this->start_record_now   = this->record_now;
-                        this->start_synctime_now = tvtime();
-                    }
-                    this->timestamp_ok = true;
-                }
-                else {
-                   if (this->real_time) {
-                        for (gdi::GraphicApi * gd : this->graphic_consumers){
-                            gd->sync();
-                        }
-
-                        this->movie_elapsed_qt = difftimeval(this->record_now, this->start_record_now);
-
-                        /*struct timeval now     = tvtime();
-                        uint64_t       elapsed = difftimeval(now, this->start_synctime_now);
-
-                        uint64_t movie_elapsed = difftimeval(this->record_now, this->start_record_now);
-                        this->movie_elapsed_qt = movie_elapsed;
-
-                        if (elapsed < movie_elapsed) {
-                            struct timespec wtime     = {
-                                  static_cast<time_t>( (movie_elapsed - elapsed) / 1000000LL)
-                                , static_cast<time_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
-                                };
-                            struct timespec wtime_rem = { 0, 0 };*/
-
-                            /*while ((nanosleep(&wtime, &wtime_rem) == -1) && (errno == EINTR)) {
-                                wtime = wtime_rem;
-                            }
-                        } */
-                    }
-                }
-            }
-            break;
-            case META_FILE:
-            // TODO Cache meta_data (sizes, number of entries) should be put in META chunk
-            {
-                this->info_version                   = this->stream.in_uint16_le();
-                this->info_width                     = this->stream.in_uint16_le();
-                this->info_height                    = this->stream.in_uint16_le();
-                this->info_bpp                       = this->stream.in_uint16_le();
-                this->info_cache_0_entries           = this->stream.in_uint16_le();
-                this->info_cache_0_size              = this->stream.in_uint16_le();
-                this->info_cache_1_entries           = this->stream.in_uint16_le();
-                this->info_cache_1_size              = this->stream.in_uint16_le();
-                this->info_cache_2_entries           = this->stream.in_uint16_le();
-                this->info_cache_2_size              = this->stream.in_uint16_le();
-
-                if (this->info_version <= 3) {
-                    this->info_number_of_cache       = 3;
-                    this->info_use_waiting_list      = false;
-
-                    this->info_cache_0_persistent    = false;
-                    this->info_cache_1_persistent    = false;
-                    this->info_cache_2_persistent    = false;
-                }
-                else {
-                    this->info_number_of_cache       = this->stream.in_uint8();
-                    this->info_use_waiting_list      = (this->stream.in_uint8() ? true : false);
-
-                    this->info_cache_0_persistent    = (this->stream.in_uint8() ? true : false);
-                    this->info_cache_1_persistent    = (this->stream.in_uint8() ? true : false);
-                    this->info_cache_2_persistent    = (this->stream.in_uint8() ? true : false);
-
-                    this->info_cache_3_entries       = this->stream.in_uint16_le();
-                    this->info_cache_3_size          = this->stream.in_uint16_le();
-                    this->info_cache_3_persistent    = (this->stream.in_uint8() ? true : false);
-
-                    this->info_cache_4_entries       = this->stream.in_uint16_le();
-                    this->info_cache_4_size          = this->stream.in_uint16_le();
-                    this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
-
-                    this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
-                    REDASSERT(is_valid_enum_value(this->info_compression_algorithm));
-                    if (!is_valid_enum_value(this->info_compression_algorithm)) {
-                        this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
-                    }
-
-                    this->trans = &this->compression_builder.reset(
-                        *this->trans_source, this->info_compression_algorithm
-                    );
-                }
-
-                this->stream.in_skip_bytes(this->stream.in_remain());
-
-                if (!this->meta_ok) {
-                    this->bmp_cache = new BmpCache(BmpCache::Recorder, this->info_bpp, this->info_number_of_cache,
-                        this->info_use_waiting_list,
-                        BmpCache::CacheOption(
-                            this->info_cache_0_entries, this->info_cache_0_size, this->info_cache_0_persistent),
-                        BmpCache::CacheOption(
-                            this->info_cache_1_entries, this->info_cache_1_size, this->info_cache_1_persistent),
-                        BmpCache::CacheOption(
-                            this->info_cache_2_entries, this->info_cache_2_size, this->info_cache_2_persistent),
-                        BmpCache::CacheOption(
-                            this->info_cache_3_entries, this->info_cache_3_size, this->info_cache_3_persistent),
-                        BmpCache::CacheOption(
-                            this->info_cache_4_entries, this->info_cache_4_size, this->info_cache_4_persistent));
-                    this->screen_rect = Rect(0, 0, this->info_width, this->info_height);
-                    this->meta_ok = true;
-                }
-                else {
-                    if (this->screen_rect.cx != this->info_width ||
-                        this->screen_rect.cy != this->info_height) {
-                        LOG( LOG_ERR,"Inconsistant redundant meta chunk: (%u x %u) -> (%u x %u)"
-                           , this->screen_rect.cx, this->screen_rect.cy, this->info_width, this->info_height);
-                        throw Error(ERR_WRM);
-                    }
-                }
-
-                for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
-                    obj->external_breakpoint();
-                }
-            }
-            break;
-            case SAVE_STATE:
-            {
-                SaveStateChunk ssc;
-                ssc.recv(this->stream, this->ssc, this->info_version);
-            }
-            break;
-            case LAST_IMAGE_CHUNK:
-            case PARTIAL_IMAGE_CHUNK:
-            {
-                if (this->graphic_consumers.size()) {
-                    set_rows_from_image_chunk(
-                        *this->trans,
-                        this->chunk_type,
-                        this->chunk_size,
-                        this->screen_rect.cx,
-                        this->graphic_consumers
-                    );
-                }
-                else {
-                    // If no drawable is available ignore images chunks
-                    this->stream.rewind();
-                    std::size_t sz = this->chunk_size - HEADER_SIZE;
-                    this->trans->recv_new(this->stream_buf, sz);
-                    this->stream = InStream(this->stream_buf, sz, sz);
-                }
-                this->remaining_order_count = 0;
-            }
-            break;
-            case RDP_UPDATE_BITMAP:
-            {
-                if (!this->meta_ok) {
-                    LOG(LOG_ERR, "Drawing orders chunk must be preceded by a META chunk to get drawing device size");
-                    throw Error(ERR_WRM);
-                }
-                if (!this->timestamp_ok) {
-                    LOG(LOG_ERR, "Drawing orders chunk must be preceded by a TIMESTAMP chunk to get drawing timing");
-                    throw Error(ERR_WRM);
-                }
-
-                this->statistics.BitmapUpdate++;
-                RDPBitmapData bitmap_data;
-                bitmap_data.receive(this->stream);
-
-                const uint8_t * data = this->stream.in_uint8p(bitmap_data.bitmap_size());
-
-                Bitmap bitmap( this->info_bpp
-                             , bitmap_data.bits_per_pixel
-                             , /*0*/&this->palette
-                             , bitmap_data.width
-                             , bitmap_data.height
-                             , data
-                             , bitmap_data.bitmap_size()
-                             , (bitmap_data.flags & BITMAP_COMPRESSION)
-                             );
-
-                if (bool(this->verbose & Verbose::rdp_orders)){
-                    bitmap_data.log(LOG_INFO);
-                }
-
-                for (gdi::GraphicApi * gd : this->graphic_consumers){
-                    gd->draw(bitmap_data, bitmap);
-                }
-
-            }
-            break;
-            case POINTER:
-            {
-                uint8_t          cache_idx;
 
                 this->mouse_x = this->stream.in_uint16_le();
                 this->mouse_y = this->stream.in_uint16_le();
-                cache_idx     = this->stream.in_uint8();
 
-                if (  chunk_size - 8 /*header(8)*/
-                    > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
-                    this->statistics.CachePointer++;
-                    struct Pointer cursor(Pointer::POINTER_NULL);
-                    cursor.width = 32;
-                    cursor.height = 32;
-                    cursor.x = this->stream.in_uint8();
-                    cursor.y = this->stream.in_uint8();
-                    stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
-                    stream.in_copy_bytes(cursor.mask, 128);
+                if (  (this->info_version > 1)
+                    && this->stream.in_uint8()) {
+                    this->ignore_frame_in_timeval = true;
+                }
 
-                    this->ptr_cache.add_pointer_static(cursor, cache_idx);
+                if (bool(this->verbose & Verbose::timestamp)) {
+                    LOG( LOG_INFO, "TIMESTAMP %lu.%lu mouse (x=%" PRIu16 ", y=%" PRIu16 ")\n"
+                        , static_cast<unsigned long>(this->record_now.tv_sec)
+                        , static_cast<unsigned long>(this->record_now.tv_usec)
+                        , this->mouse_x
+                        , this->mouse_y);
+                }
 
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->set_pointer(cursor);
+
+                auto const input_data = this->stream.get_current();
+                auto const input_len = this->stream.in_remain();
+                this->stream.in_skip_bytes(input_len);
+                for (gdi::KbdInputApi * kbd : this->kbd_input_consumers){
+                    InStream input(input_data, input_len);
+                    while (input.in_remain()) {
+                        kbd->kbd_input(this->record_now, input.in_uint32_le());
                     }
                 }
-                else {
-                    this->statistics.PointerIndex++;
-                    Pointer & pi = this->ptr_cache.Pointers[cache_idx];
-                    Pointer cursor(Pointer::POINTER_NULL);
-                    cursor.width = pi.width;
-                    cursor.height = pi.height;
-                    cursor.x = pi.x;
-                    cursor.y = pi.y;
-                    memcpy(cursor.data, pi.data, sizeof(pi.data));
-                    memcpy(cursor.mask, pi.mask, sizeof(pi.mask));
 
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->set_pointer(cursor);
+                if (bool(this->verbose & Verbose::timestamp)) {
+                    for (auto data = input_data, end = data + input_len/4; data != end; data += 4) {
+                        uint8_t         key8[6];
+                        const size_t    len = UTF32toUTF8(data, 4, key8, sizeof(key8)-1);
+                        key8[len] = 0;
+
+                        LOG( LOG_INFO, "TIMESTAMP %lu.%lu keyboard '%s'"
+                            , static_cast<unsigned long>(this->record_now.tv_sec)
+                            , static_cast<unsigned long>(this->record_now.tv_usec)
+                            , key8);
                     }
                 }
             }
-            break;
-            case POINTER2:
-            {
-                uint8_t cache_idx;
 
-                this->mouse_x = this->stream.in_uint16_le();
-                this->mouse_y = this->stream.in_uint16_le();
-                cache_idx     = this->stream.in_uint8();
+            if (!this->timestamp_ok) {
+                if (this->real_time) {
+                    this->start_record_now   = this->record_now;
+                    this->start_synctime_now = tvtime();
+                }
+                this->timestamp_ok = true;
+            }
+            else {
+                if (this->real_time) {
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->sync();
+                    }
 
+                    this->movie_elapsed_qt = difftimeval(this->record_now, this->start_record_now);
+
+                    /*struct timeval now     = tvtime();
+                    uint64_t       elapsed = difftimeval(now, this->start_synctime_now);
+
+                    uint64_t movie_elapsed = difftimeval(this->record_now, this->start_record_now);
+                    this->movie_elapsed_qt = movie_elapsed;
+
+                    if (elapsed < movie_elapsed) {
+                        struct timespec wtime     = {
+                                static_cast<time_t>( (movie_elapsed - elapsed) / 1000000LL)
+                            , static_cast<time_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
+                            };
+                        struct timespec wtime_rem = { 0, 0 };*/
+
+                        /*while ((nanosleep(&wtime, &wtime_rem) == -1) && (errno == EINTR)) {
+                            wtime = wtime_rem;
+                        }
+                    } */
+                }
+            }
+        }
+        break;
+        case WrmChunkType::META_FILE:
+        // TODO Cache meta_data (sizes, number of entries) should be put in META chunk
+        {
+            this->info_version                   = this->stream.in_uint16_le();
+            this->info_width                     = this->stream.in_uint16_le();
+            this->info_height                    = this->stream.in_uint16_le();
+            this->info_bpp                       = this->stream.in_uint16_le();
+            this->info_cache_0_entries           = this->stream.in_uint16_le();
+            this->info_cache_0_size              = this->stream.in_uint16_le();
+            this->info_cache_1_entries           = this->stream.in_uint16_le();
+            this->info_cache_1_size              = this->stream.in_uint16_le();
+            this->info_cache_2_entries           = this->stream.in_uint16_le();
+            this->info_cache_2_size              = this->stream.in_uint16_le();
+
+            if (this->info_version <= 3) {
+                this->info_number_of_cache       = 3;
+                this->info_use_waiting_list      = false;
+
+                this->info_cache_0_persistent    = false;
+                this->info_cache_1_persistent    = false;
+                this->info_cache_2_persistent    = false;
+            }
+            else {
+                this->info_number_of_cache       = this->stream.in_uint8();
+                this->info_use_waiting_list      = (this->stream.in_uint8() ? true : false);
+
+                this->info_cache_0_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_1_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_2_persistent    = (this->stream.in_uint8() ? true : false);
+
+                this->info_cache_3_entries       = this->stream.in_uint16_le();
+                this->info_cache_3_size          = this->stream.in_uint16_le();
+                this->info_cache_3_persistent    = (this->stream.in_uint8() ? true : false);
+
+                this->info_cache_4_entries       = this->stream.in_uint16_le();
+                this->info_cache_4_size          = this->stream.in_uint16_le();
+                this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
+
+                this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
+                REDASSERT(is_valid_enum_value(this->info_compression_algorithm));
+                if (!is_valid_enum_value(this->info_compression_algorithm)) {
+                    this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+                }
+
+                this->trans = &this->compression_builder.reset(
+                    *this->trans_source, this->info_compression_algorithm
+                );
+            }
+
+            this->stream.in_skip_bytes(this->stream.in_remain());
+
+            if (!this->meta_ok) {
+                this->bmp_cache = new BmpCache(BmpCache::Recorder, this->info_bpp, this->info_number_of_cache,
+                    this->info_use_waiting_list,
+                    BmpCache::CacheOption(
+                        this->info_cache_0_entries, this->info_cache_0_size, this->info_cache_0_persistent),
+                    BmpCache::CacheOption(
+                        this->info_cache_1_entries, this->info_cache_1_size, this->info_cache_1_persistent),
+                    BmpCache::CacheOption(
+                        this->info_cache_2_entries, this->info_cache_2_size, this->info_cache_2_persistent),
+                    BmpCache::CacheOption(
+                        this->info_cache_3_entries, this->info_cache_3_size, this->info_cache_3_persistent),
+                    BmpCache::CacheOption(
+                        this->info_cache_4_entries, this->info_cache_4_size, this->info_cache_4_persistent));
+                this->screen_rect = Rect(0, 0, this->info_width, this->info_height);
+                this->meta_ok = true;
+            }
+            else {
+                if (this->screen_rect.cx != this->info_width ||
+                    this->screen_rect.cy != this->info_height) {
+                    LOG( LOG_ERR,"Inconsistant redundant meta chunk: (%u x %u) -> (%u x %u)"
+                        , this->screen_rect.cx, this->screen_rect.cy, this->info_width, this->info_height);
+                    throw Error(ERR_WRM);
+                }
+            }
+
+            for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
+                obj->external_breakpoint();
+            }
+        }
+        break;
+        case WrmChunkType::SAVE_STATE:
+        {
+            SaveStateChunk ssc;
+            ssc.recv(this->stream, this->ssc, this->info_version);
+        }
+        break;
+        case WrmChunkType::LAST_IMAGE_CHUNK:
+        case WrmChunkType::PARTIAL_IMAGE_CHUNK:
+        {
+            if (this->graphic_consumers.size()) {
+                set_rows_from_image_chunk(
+                    *this->trans,
+                    this->chunk_type,
+                    this->chunk_size,
+                    this->screen_rect.cx,
+                    this->graphic_consumers
+                );
+            }
+            else {
+                // If no drawable is available ignore images chunks
+                this->stream.rewind();
+                std::size_t sz = this->chunk_size - HEADER_SIZE;
+                this->trans->recv_new(this->stream_buf, sz);
+                this->stream = InStream(this->stream_buf, sz, sz);
+            }
+            this->remaining_order_count = 0;
+        }
+        break;
+        case WrmChunkType::RDP_UPDATE_BITMAP:
+        {
+            if (!this->meta_ok) {
+                LOG(LOG_ERR, "Drawing orders chunk must be preceded by a META chunk to get drawing device size");
+                throw Error(ERR_WRM);
+            }
+            if (!this->timestamp_ok) {
+                LOG(LOG_ERR, "Drawing orders chunk must be preceded by a TIMESTAMP chunk to get drawing timing");
+                throw Error(ERR_WRM);
+            }
+
+            this->statistics.BitmapUpdate++;
+            RDPBitmapData bitmap_data;
+            bitmap_data.receive(this->stream);
+
+            const uint8_t * data = this->stream.in_uint8p(bitmap_data.bitmap_size());
+
+            Bitmap bitmap( this->info_bpp
+                            , bitmap_data.bits_per_pixel
+                            , /*0*/&this->palette
+                            , bitmap_data.width
+                            , bitmap_data.height
+                            , data
+                            , bitmap_data.bitmap_size()
+                            , (bitmap_data.flags & BITMAP_COMPRESSION)
+                            );
+
+            if (bool(this->verbose & Verbose::rdp_orders)){
+                bitmap_data.log(LOG_INFO);
+            }
+
+            for (gdi::GraphicApi * gd : this->graphic_consumers){
+                gd->draw(bitmap_data, bitmap);
+            }
+
+        }
+        break;
+        case WrmChunkType::POINTER:
+        {
+            uint8_t          cache_idx;
+
+            this->mouse_x = this->stream.in_uint16_le();
+            this->mouse_y = this->stream.in_uint16_le();
+            cache_idx     = this->stream.in_uint8();
+
+            if (  chunk_size - 8 /*header(8)*/
+                > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
                 this->statistics.CachePointer++;
                 struct Pointer cursor(Pointer::POINTER_NULL);
-
-                cursor.width    = this->stream.in_uint8();
-                cursor.height   = this->stream.in_uint8();
-                /* cursor.bpp   = this->stream.in_uint8();*/
-                this->stream.in_skip_bytes(1);
-
+                cursor.width = 32;
+                cursor.height = 32;
                 cursor.x = this->stream.in_uint8();
                 cursor.y = this->stream.in_uint8();
-
-                uint16_t data_size = this->stream.in_uint16_le();
-                REDASSERT(data_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 3);
-
-                uint16_t mask_size = this->stream.in_uint16_le();
-                REDASSERT(mask_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8);
-
-                stream.in_copy_bytes(cursor.data, std::min<size_t>(sizeof(cursor.data), data_size));
-                stream.in_copy_bytes(cursor.mask, std::min<size_t>(sizeof(cursor.mask), mask_size));
+                stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
+                stream.in_copy_bytes(cursor.mask, 128);
 
                 this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
@@ -1435,69 +1390,120 @@ public:
                     gd->set_pointer(cursor);
                 }
             }
-            break;
-            case RESET_CHUNK:
-                this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+            else {
+                this->statistics.PointerIndex++;
+                Pointer & pi = this->ptr_cache.Pointers[cache_idx];
+                Pointer cursor(Pointer::POINTER_NULL);
+                cursor.width = pi.width;
+                cursor.height = pi.height;
+                cursor.x = pi.x;
+                cursor.y = pi.y;
+                memcpy(cursor.data, pi.data, sizeof(pi.data));
+                memcpy(cursor.mask, pi.mask, sizeof(pi.mask));
 
-                this->trans = this->trans_source;
-            break;
-            case SESSION_UPDATE:
-                this->stream.in_timeval_from_uint64le_usec(this->record_now);
-
-                for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
-                    obj->external_time(this->record_now);
+                for (gdi::GraphicApi * gd : this->graphic_consumers){
+                    gd->set_pointer(cursor);
                 }
+            }
+        }
+        break;
+        case WrmChunkType::POINTER2:
+        {
+            uint8_t cache_idx;
 
-                {
-                    uint16_t message_length = this->stream.in_uint16_le();
+            this->mouse_x = this->stream.in_uint16_le();
+            this->mouse_y = this->stream.in_uint16_le();
+            cache_idx     = this->stream.in_uint8();
 
-                    const char * message =  ::char_ptr_cast(this->stream.get_current()); // Null-terminator is included.
+            this->statistics.CachePointer++;
+            struct Pointer cursor(Pointer::POINTER_NULL);
 
-                    this->stream.in_skip_bytes(message_length);
+            cursor.width    = this->stream.in_uint8();
+            cursor.height   = this->stream.in_uint8();
+            /* cursor.bpp   = this->stream.in_uint8();*/
+            this->stream.in_skip_bytes(1);
 
-                    for (gdi::CaptureProbeApi * cap_probe : this->capture_probe_consumers){
-                        cap_probe->session_update(this->record_now, {message, message_length});
+            cursor.x = this->stream.in_uint8();
+            cursor.y = this->stream.in_uint8();
+
+            uint16_t data_size = this->stream.in_uint16_le();
+            REDASSERT(data_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 3);
+
+            uint16_t mask_size = this->stream.in_uint16_le();
+            REDASSERT(mask_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8);
+
+            stream.in_copy_bytes(cursor.data, std::min<size_t>(sizeof(cursor.data), data_size));
+            stream.in_copy_bytes(cursor.mask, std::min<size_t>(sizeof(cursor.mask), mask_size));
+
+            this->ptr_cache.add_pointer_static(cursor, cache_idx);
+
+            for (gdi::GraphicApi * gd : this->graphic_consumers){
+                gd->set_pointer(cursor);
+            }
+        }
+        break;
+        case WrmChunkType::RESET_CHUNK:
+            this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+
+            this->trans = this->trans_source;
+        break;
+        case WrmChunkType::SESSION_UPDATE:
+            this->stream.in_timeval_from_uint64le_usec(this->record_now);
+
+            for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
+                obj->external_time(this->record_now);
+            }
+
+            {
+                uint16_t message_length = this->stream.in_uint16_le();
+
+                const char * message =  ::char_ptr_cast(this->stream.get_current()); // Null-terminator is included.
+
+                this->stream.in_skip_bytes(message_length);
+
+                for (gdi::CaptureProbeApi * cap_probe : this->capture_probe_consumers){
+                    cap_probe->session_update(this->record_now, {message, message_length});
+                }
+            }
+
+            if (!this->timestamp_ok) {
+                if (this->real_time) {
+                    this->start_record_now   = this->record_now;
+                    this->start_synctime_now = tvtime();
+                }
+                this->timestamp_ok = true;
+            }
+            else {
+                if (this->real_time) {
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->sync();
                     }
-                }
 
-                if (!this->timestamp_ok) {
-                   if (this->real_time) {
-                        this->start_record_now   = this->record_now;
-                        this->start_synctime_now = tvtime();
-                    }
-                    this->timestamp_ok = true;
-                }
-                else {
-                   if (this->real_time) {
-                        for (gdi::GraphicApi * gd : this->graphic_consumers){
-                            gd->sync();
+                    this->movie_elapsed_qt = difftimeval(this->record_now, this->start_record_now);
+
+                    /*struct timeval now     = tvtime();
+                    uint64_t       elapsed = difftimeval(now, this->start_synctime_now);
+
+                    uint64_t movie_elapsed = difftimeval(this->record_now, this->start_record_now);
+
+
+                    if (elapsed < movie_elapsed) {
+                        struct timespec wtime     = {
+                                static_cast<time_t>( (movie_elapsed - elapsed) / 1000000LL)
+                            , static_cast<time_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
+                            };
+                        struct timespec wtime_rem = { 0, 0 };*/
+
+                        /*while ((nanosleep(&wtime, &wtime_rem) == -1) && (errno == EINTR)) {
+                            wtime = wtime_rem;
                         }
-
-                        this->movie_elapsed_qt = difftimeval(this->record_now, this->start_record_now);
-
-                        /*struct timeval now     = tvtime();
-                        uint64_t       elapsed = difftimeval(now, this->start_synctime_now);
-
-                        uint64_t movie_elapsed = difftimeval(this->record_now, this->start_record_now);
-
-
-                        if (elapsed < movie_elapsed) {
-                            struct timespec wtime     = {
-                                  static_cast<time_t>( (movie_elapsed - elapsed) / 1000000LL)
-                                , static_cast<time_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
-                                };
-                            struct timespec wtime_rem = { 0, 0 };*/
-
-                            /*while ((nanosleep(&wtime, &wtime_rem) == -1) && (errno == EINTR)) {
-                                wtime = wtime_rem;
-                            }
-                        }*/
-                    }
+                    }*/
                 }
-            break;
-            default:
-                LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
-                throw Error(ERR_WRM);
+            }
+        break;
+        default:
+            LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
+            throw Error(ERR_WRM);
         }
     }
 

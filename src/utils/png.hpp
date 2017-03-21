@@ -23,6 +23,7 @@
 #include <cstddef>
 #include <cstdio> // FILE
 #include "utils/sugar/array_view.hpp"
+#include "capture/wrm_chunk_type.hpp"
 
 class Transport;
 class FileTransport;
@@ -76,7 +77,7 @@ void transport_read_png24(
 
 void set_rows_from_image_chunk(
     Transport & trans,
-    uint16_t chunk_type,
+    WrmChunkType chunk_type,
     uint32_t chunk_size,
     std::size_t cx,
     array_view<gdi::GraphicApi*>

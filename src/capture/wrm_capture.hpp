@@ -23,13 +23,6 @@
 
 #include "utils/log.hpp"
 
-#include <cerrno>
-#include <cstddef>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
 #include "utils/difftimeval.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/genfstat.hpp"
@@ -37,6 +30,7 @@
 #include "utils/sugar/iter.hpp"
 #include "utils/stream.hpp"
 
+#include "capture/wrm_chunk_type.hpp"
 #include "capture/cryptofile.hpp"
 
 #include "gdi/capture_api.hpp"
@@ -54,23 +48,16 @@
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/RDP/RDPSerializer.hpp"
 #include "utils/compression_transport_builder.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 #include "core/RDP/share.hpp"
 
+#include <cerrno>
+#include <cstddef>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
-// TODO enum class
-enum {
-    META_FILE           = 1006,
-    TIMESTAMP           = 1008,
-    POINTER             = 1009,
-    POINTER2            = 1010,
-    LAST_IMAGE_CHUNK    = 0x1000,   // 4096
-    PARTIAL_IMAGE_CHUNK = 0x1001,   // 4097
-    SAVE_STATE          = 0x1002,   // 4098
-    RESET_CHUNK         = 0x1003,   // 4099
-    SESSION_UPDATE      = 0x1004,
-
-    INVALID_CHUNK       = 0x8000
-};
 
 struct WrmFGen
 {
@@ -1182,10 +1169,10 @@ struct DumpPng24FromRDPDrawableAdapter : gdi::DumpPng24Api  {
 };
 
 
-inline void wrmcapture_send_wrm_chunk(Transport & t, uint16_t chunktype, uint16_t data_size, uint16_t count)
+inline void wrmcapture_send_wrm_chunk(Transport & t, WrmChunkType chunktype, uint16_t data_size, uint16_t count)
 {
     StaticOutStream<8> header;
-    header.out_uint16_le(chunktype);
+    header.out_uint16_le(safe_cast<uint16_t>(chunktype));
     header.out_uint32_le(8 + data_size);
     header.out_uint16_le(count);
     t.send(header.get_data(), header.get_offset());
@@ -1254,7 +1241,7 @@ inline void wrmcapture_send_meta_chunk(
         payload.out_uint8(index_algorithm);
     }
 
-    wrmcapture_send_wrm_chunk(t, META_FILE, payload.get_offset(), 1);
+    wrmcapture_send_wrm_chunk(t, WrmChunkType::META_FILE, payload.get_offset(), 1);
     t.send(payload.get_data(), payload.get_offset());
 }
 
@@ -1279,7 +1266,7 @@ public:
 
     void flush() override {
         if (this->stream.get_offset() > 0) {
-            wrmcapture_send_wrm_chunk(this->trans, LAST_IMAGE_CHUNK, this->stream.get_offset(), 1);
+            wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::LAST_IMAGE_CHUNK, this->stream.get_offset(), 1);
             this->trans.send(this->stream.get_data(), this->stream.get_offset());
             this->stream = OutStream(buf);
         }
@@ -1289,7 +1276,7 @@ private:
     void do_send(const uint8_t * const buffer, size_t len) override {
         size_t to_buffer_len = len;
         while (this->stream.get_offset() + to_buffer_len > this->max) {
-            wrmcapture_send_wrm_chunk(this->trans, PARTIAL_IMAGE_CHUNK, this->max, 1);
+            wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::PARTIAL_IMAGE_CHUNK, this->max, 1);
             this->trans.send(this->stream.get_data(), this->stream.get_offset());
             size_t to_send = this->max - this->stream.get_offset();
             this->trans.send(buffer + len - to_buffer_len, to_send);
@@ -1693,7 +1680,7 @@ public:
 
     void send_reset_chunk()
     {
-        wrmcapture_send_wrm_chunk(this->trans, RESET_CHUNK, 0, 1);
+        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::RESET_CHUNK, 0, 1);
     }
 
     void send_timestamp_chunk(bool ignore_time_interval = false)
@@ -1710,7 +1697,7 @@ public:
             keyboard_buffer_32 = OutStream(keyboard_buffer_32_buf);
         }
 
-        wrmcapture_send_wrm_chunk(this->trans, TIMESTAMP, payload.get_offset(), 1);
+        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::TIMESTAMP, payload.get_offset(), 1);
         this->trans.send(payload.get_data(), payload.get_offset());
 
         this->last_sent_timer = this->timer;
@@ -1724,7 +1711,7 @@ public:
 
         //------------------------------ missing variable length ---------------
 
-        wrmcapture_send_wrm_chunk(this->trans, SAVE_STATE, payload.get_offset(), 1);
+        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::SAVE_STATE, payload.get_offset(), 1);
         this->trans.send(payload.get_data(), payload.get_offset());
     }
 
@@ -1805,7 +1792,7 @@ protected:
 public:
     void send_orders_chunk()
     {
-        wrmcapture_send_wrm_chunk(this->trans, RDP_UPDATE_ORDERS, this->stream_orders.get_offset(), this->order_count);
+        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::RDP_UPDATE_ORDERS, this->stream_orders.get_offset(), this->order_count);
         this->trans.send(this->stream_orders.get_data(), this->stream_orders.get_offset());
         this->order_count = 0;
         this->stream_orders.rewind();
@@ -1829,7 +1816,7 @@ public:
 
     void send_bitmaps_chunk()
     {
-        wrmcapture_send_wrm_chunk(this->trans, RDP_UPDATE_BITMAP, this->stream_bitmaps.get_offset(), this->bitmap_count);
+        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::RDP_UPDATE_BITMAP, this->stream_bitmaps.get_offset(), this->bitmap_count);
         this->trans.send(this->stream_bitmaps.get_data(), this->stream_bitmaps.get_offset());
         this->bitmap_count = 0;
         this->stream_bitmaps.rewind();
@@ -1850,7 +1837,7 @@ protected:
                       + 32 * 32 * 3 // data
                       + 128         // mask
                       ;
-        wrmcapture_send_wrm_chunk(this->trans, POINTER, size, 0);
+        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::POINTER, size, 0);
 
         StaticOutStream<16> payload;
         payload.out_uint16_le(this->mouse_x);
@@ -1882,7 +1869,7 @@ protected:
                       + cursor.data_size()  // data
                       + cursor.mask_size()  // mask
                       ;
-        wrmcapture_send_wrm_chunk(this->trans, POINTER2, size, 0);
+        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::POINTER2, size, 0);
 
         StaticOutStream<32> payload;
         payload.out_uint16_le(this->mouse_x);
@@ -1910,7 +1897,7 @@ protected:
                       + 2                   // mouse y
                       + 1                   // cache index
                       ;
-        wrmcapture_send_wrm_chunk(this->trans, POINTER, size, 0);
+        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::POINTER, size, 0);
 
         StaticOutStream<16> payload;
         payload.out_uint16_le(this->mouse_x);
@@ -1927,7 +1914,7 @@ public:
         payload.out_timeval_to_uint64le_usec(now);
         payload.out_uint16_le(message_length);
 
-        wrmcapture_send_wrm_chunk(this->trans, SESSION_UPDATE, payload.get_offset() + message_length, 1);
+        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::SESSION_UPDATE, payload.get_offset() + message_length, 1);
         this->trans.send(payload.get_data(), payload.get_offset());
         this->trans.send(message.data(), message.size());
         this->trans.send("\0", 1);
