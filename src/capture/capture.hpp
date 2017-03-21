@@ -35,12 +35,14 @@
 #include "capture/full_video_params.hpp"
 #include "capture/meta_params.hpp"
 #include "capture/kbdlog_params.hpp"
-#include "capture/wrm_capture.hpp"
+#include "capture/wrm_chunk_type.hpp"
 #include "RDPChunkedDevice.hpp"
 #include "core/wait_obj.hpp"
 #include "core/RDP/RDPSerializer.hpp"
 #include "utils/fdbuf.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
+#include "utils/compression_transport_builder.hpp"
+#include "utils/png.hpp"
 
 #include <vector>
 #include <memory>
@@ -2053,6 +2055,7 @@ struct NotifyTitleChanged : private noncopyable
 };
 
 class SessionMeta;
+class WrmCaptureImpl;
 class PngCapture;
 class PngCaptureRT;
 class SyslogKbd;
