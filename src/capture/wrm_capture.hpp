@@ -188,7 +188,7 @@ struct MetaFilename
 
 
 
-static inline ssize_t hash_buf_write(int hash_buf_file_fd, ocrypto & hash_buf_encrypt, const void * data, size_t len)
+static inline ssize_t hash_buf_write(int hash_buf_file_fd, ocrypto & hash_buf_encrypt, const uint8_t * data, size_t len)
 {
     ocrypto::Result res = hash_buf_encrypt.write(data, len);
 //     if (res.buf.size() < 0) {
@@ -261,7 +261,7 @@ struct MetaSeqBuf {
     SslHMAC_Sha256_Delayed sumbuf_quick_hmac;
     size_t sumbuf_file_size = nosize;
 
-    ssize_t meta_buf_write(const void * data, size_t len)
+    ssize_t meta_buf_write(const uint8_t * data, size_t len)
     {
         if (this->with_encryption){
             ocrypto::Result res = this->meta_buf_encrypt.write(data, len);
@@ -376,7 +376,7 @@ struct MetaSeqBuf {
         }
         *p++ = '\n';
 
-        ssize_t res = this->meta_buf_write(mes, p-mes);
+        ssize_t res = this->meta_buf_write(reinterpret_cast<uint8_t *>(mes), p-mes);
 
         if (res < 0) {
             LOG(LOG_INFO, "meta buf write error for \"%s\"", filename);
@@ -473,8 +473,8 @@ public:
     , stop_sec_(start_sec)
     , with_checksum(with_checksum)
     , with_encryption(with_encryption)
-    , meta_buf_encrypt(cctx, rnd)
-    , wrm_filter_encrypt(cctx, rnd)
+    , meta_buf_encrypt(with_encryption, with_checksum, cctx, rnd)
+    , wrm_filter_encrypt(with_encryption, with_checksum, cctx, rnd)
     {
     }
 
@@ -509,7 +509,7 @@ public:
                 unsigned(height),
                 with_checksum  ? "checksum" : "nochecksum"
             );
-            const ssize_t res = this->meta_buf_write(header1, len);
+            const ssize_t res = this->meta_buf_write(reinterpret_cast<uint8_t*>(header1), len);
             return res;
         }
         else {
@@ -538,7 +538,7 @@ public:
             char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
             const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n",
             unsigned(width),  unsigned(height), with_checksum?"checksum":"nochecksum");
-            const ssize_t res = this->meta_buf_write(header1, len);
+            const ssize_t res = this->meta_buf_write(reinterpret_cast<uint8_t*>(header1), len);
             return res;
         }
         return -1;
@@ -551,7 +551,7 @@ public:
         // TODO check if temporary file is removed
     }
 
-    ssize_t write(const void * data, size_t len)
+    ssize_t write(const uint8_t * data, size_t len)
     {
         if (this->with_encryption){
             if (!this->buf_.is_open()) {
@@ -701,7 +701,7 @@ public:
                 }
             }
 
-            ocrypto hash_buf_encrypt(this->cctx, this->rnd);
+            ocrypto hash_buf_encrypt(this->with_encryption, this->with_checksum, this->cctx, this->rnd);
             int hash_buf_file_fd = -1;
 
             if (!this->meta_buf_is_open()) {
@@ -742,7 +742,7 @@ public:
             }
 
             char header[] = "v2\n\n\n";
-            hash_buf_write(hash_buf_file_fd, hash_buf_encrypt, header, sizeof(header)-1);
+            hash_buf_write(hash_buf_file_fd, hash_buf_encrypt, reinterpret_cast<uint8_t*>(header), sizeof(header)-1);
 
             struct stat stat;
             int err = ::stat(meta_filename, &stat);
@@ -803,7 +803,7 @@ public:
             hexdump(fhash);
             *p++ = '\n';
 
-            ssize_t res = hash_buf_write(hash_buf_file_fd, hash_buf_encrypt, mes, p-mes);
+            ssize_t res = hash_buf_write(hash_buf_file_fd, hash_buf_encrypt, reinterpret_cast<uint8_t*>(mes), p-mes);
 
             if (res < 0) {
                 err = res < 0 ? res : 1;

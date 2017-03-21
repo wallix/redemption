@@ -265,7 +265,6 @@ typedef unsigned char wrmcapture_hash_type[MD_HASH_LENGTH*2];
 constexpr std::size_t wrmcapture_hash_string_len = (1 + MD_HASH_LENGTH * 2) * 2;
 
 struct ocrypto {
-    uint8_t result_buffer[32768] = {};
     struct Result {
         const_bytes_array buf;
         std::size_t consumed;
@@ -277,6 +276,8 @@ struct ocrypto {
         }
     };
 
+private:
+    uint8_t result_buffer[32768] = {};
 
     char           buf[CRYPTO_BUFFER_SIZE]; //
     EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
@@ -289,13 +290,9 @@ struct ocrypto {
 
     CryptoContext & cctx;
     Random & rnd;
-
-    ocrypto(CryptoContext & cctx, Random & rnd)
-        : cctx(cctx)
-        , rnd(rnd)
-    {
-    }
-
+    bool encryption;
+    bool checksum;
+    
     /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
      * Return 0 on success, negative value on error
      */
@@ -380,8 +377,19 @@ struct ocrypto {
     }
 
 public:
+    ocrypto(bool encryption, bool checksum, CryptoContext & cctx, Random & rnd)
+        : cctx(cctx)
+        , rnd(rnd)
+        , encryption(encryption)
+        , checksum(checksum)
+    {
+    }
+
     Result open(const uint8_t * derivator, size_t derivator_len)
     {
+        if (!this->encryption) {
+            return Result{{this->header_buf, 0u}, 0u, 0};
+        }
         unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
         this->cctx.get_derived_key(trace_key, derivator, derivator_len);
         unsigned char iv[32];
@@ -546,6 +554,10 @@ public:
 
     ocrypto::Result close(uint8_t (&qhash)[MD_HASH_LENGTH], uint8_t (&fhash)[MD_HASH_LENGTH])
     {
+        if (!this->encryption) {
+            return Result{{this->header_buf, 0u}, 0u, 0};
+        }
+
         size_t buflen = sizeof(this->result_buffer);
         size_t towrite = 0;
         int err = this->flush(this->result_buffer, buflen, towrite);
@@ -612,8 +624,12 @@ public:
         return Result{{this->result_buffer, towrite}, 0u, 0};
     }
 
-    ocrypto::Result write(const void * data, size_t len)
+    ocrypto::Result write(const uint8_t * data, size_t len)
     {
+        if (!this->encryption) {
+            return Result{{data, len}, len, 0};
+        }
+
         size_t buflen = sizeof(this->result_buffer);
         size_t towrite = 0;
         unsigned int remaining_size = len;
@@ -621,7 +637,7 @@ public:
             // Check how much we can append into buffer
             unsigned int available_size = MIN(CRYPTO_BUFFER_SIZE - this->pos, remaining_size);
             // Append and update pos pointer
-            ::memcpy(this->buf + this->pos, static_cast<const char*>(data) + (len - remaining_size), available_size);
+            ::memcpy(this->buf + this->pos, data + (len - remaining_size), available_size);
             this->pos += available_size;
             // If buffer is full, flush it to disk
             if (this->pos == CRYPTO_BUFFER_SIZE) {
