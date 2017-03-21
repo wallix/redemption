@@ -376,120 +376,7 @@ private:
         return 0;
     }
 
-public:
-    ocrypto(bool encryption, bool checksum, CryptoContext & cctx, Random & rnd)
-        : cctx(cctx)
-        , rnd(rnd)
-        , encryption(encryption)
-        , checksum(checksum)
-    {
-    }
-
-    Result open(const uint8_t * derivator, size_t derivator_len)
-    {
-        if (!this->encryption) {
-            return Result{{this->header_buf, 0u}, 0u, 0};
-        }
-        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-        this->cctx.get_derived_key(trace_key, derivator, derivator_len);
-        unsigned char iv[32];
-        this->rnd.random(iv, 32);
-
-        ::memset(this->buf, 0, sizeof(this->buf));
-        ::memset(&this->ectx, 0, sizeof(this->ectx));
-        this->pos = 0;
-        this->raw_size = 0;
-        this->file_size = 0;
-
-        const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
-        const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
-        const int          nrounds = 5;
-        unsigned char      key[32];
-        const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
-                                       trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
-        if (i != 32) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
-            Result::error(-1);
-        }
-
-        ::EVP_CIPHER_CTX_init(&this->ectx);
-        if (::EVP_EncryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize encrypt context\n", ::getpid());
-            Result::error(-1);
-        }
-
-        // MD stuff
-        ::memset(&this->hctx, 0, sizeof(this->hctx));
-        ::memset(&this->hctx4k, 0, sizeof(this->hctx4k));
-        const EVP_MD * md = EVP_get_digestbyname(MD_HASH_NAME);
-        if (!md) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not find message digest algorithm!\n", ::getpid());
-            Result::error(-1);
-        }
-
-        ::EVP_MD_CTX_init(&this->hctx);
-        ::EVP_MD_CTX_init(&this->hctx4k);
-        if (::EVP_DigestInit_ex(&this->hctx, md, nullptr) != 1) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context!\n", ::getpid());
-            Result::error(-1);
-        }
-        if (::EVP_DigestInit_ex(&this->hctx4k, md, nullptr) != 1) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize 4k MD hash context!\n", ::getpid());
-            Result::error(-1);
-        }
-
-        // HMAC: key^ipad
-        const int     blocksize = ::EVP_MD_block_size(md);
-        unsigned char * key_buf = new(std::nothrow) unsigned char[blocksize];
-        {
-            if (key_buf == nullptr) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc!\n", ::getpid());
-                Result::error(-1);
-            }
-            const std::unique_ptr<unsigned char[]> auto_free(key_buf);
-            ::memset(key_buf, 0, blocksize);
-            if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
-                unsigned char keyhash[MD_HASH_LENGTH];
-                if ( ! ::MD_HASH_FUNC(cctx.get_hmac_key(), CRYPTO_KEY_LENGTH, keyhash)) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key!\n", ::getpid());
-                    Result::error(-1);
-                }
-                ::memcpy(key_buf, keyhash, MIN(MD_HASH_LENGTH, blocksize));
-            }
-            else {
-                ::memcpy(key_buf, cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
-            }
-            for (int idx = 0; idx <  blocksize; idx++) {
-                key_buf[idx] = key_buf[idx] ^ 0x36;
-            }
-            if (::EVP_DigestUpdate(&this->hctx, key_buf, blocksize) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
-                Result::error(-1);
-            }
-            if (::EVP_DigestUpdate(&this->hctx4k, key_buf, blocksize) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
-                Result::error(-1);
-            }
-        }
-
-        // update context with previously written data
-        this->header_buf[0] = WABCRYPTOFILE_MAGIC & 0xFF;
-        this->header_buf[1] = (WABCRYPTOFILE_MAGIC >> 8) & 0xFF;
-        this->header_buf[2] = (WABCRYPTOFILE_MAGIC >> 16) & 0xFF;
-        this->header_buf[3] = (WABCRYPTOFILE_MAGIC >> 24) & 0xFF;
-        this->header_buf[4] = WABCRYPTOFILE_VERSION & 0xFF;
-        this->header_buf[5] = (WABCRYPTOFILE_VERSION >> 8) & 0xFF;
-        this->header_buf[6] = (WABCRYPTOFILE_VERSION >> 16) & 0xFF;
-        this->header_buf[7] = (WABCRYPTOFILE_VERSION >> 24) & 0xFF;
-        ::memcpy(this->header_buf + 8, iv, 32);
-
-        // update file_size
-        this->file_size += 40;
-        int err_code = this->hash_update(this->header_buf, 40);
-        return {{this->header_buf, 40u}, 0u, err_code};
-    }
-
-    /* Flush procedure (compression, encryption, effective file writing)
+    /* Flush procedure (compression, encryption)
      * Return 0 on success, negatif on error
      */
     int flush(uint8_t * buffer, size_t buflen, size_t & towrite)
@@ -552,42 +439,157 @@ public:
         return 0;
     }
 
-    ocrypto::Result close(uint8_t (&qhash)[MD_HASH_LENGTH], uint8_t (&fhash)[MD_HASH_LENGTH])
+public:
+    ocrypto(bool encryption, bool checksum, CryptoContext & cctx, Random & rnd)
+        : cctx(cctx)
+        , rnd(rnd)
+        , encryption(encryption)
+        , checksum(checksum)
     {
-        if (!this->encryption) {
+    }
+
+    Result open(const uint8_t * derivator, size_t derivator_len)
+    {
+        if (this->checksum) {
+            // MD stuff
+            ::memset(&this->hctx, 0, sizeof(this->hctx));
+            ::memset(&this->hctx4k, 0, sizeof(this->hctx4k));
+            const EVP_MD * md = EVP_get_digestbyname(MD_HASH_NAME);
+            if (!md) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not find message digest algorithm!\n", ::getpid());
+                Result::error(-1);
+            }
+
+            ::EVP_MD_CTX_init(&this->hctx);
+            ::EVP_MD_CTX_init(&this->hctx4k);
+            if (::EVP_DigestInit_ex(&this->hctx, md, nullptr) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize MD hash context!\n", ::getpid());
+                Result::error(-1);
+            }
+            if (::EVP_DigestInit_ex(&this->hctx4k, md, nullptr) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize 4k MD hash context!\n", ::getpid());
+                Result::error(-1);
+            }
+
+            // HMAC: key^ipad
+            const int     blocksize = ::EVP_MD_block_size(md);
+            unsigned char * key_buf = new(std::nothrow) unsigned char[blocksize];
+            {
+                if (key_buf == nullptr) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: malloc!\n", ::getpid());
+                    Result::error(-1);
+                }
+                const std::unique_ptr<unsigned char[]> auto_free(key_buf);
+                ::memset(key_buf, 0, blocksize);
+                if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
+                    unsigned char keyhash[MD_HASH_LENGTH];
+                    if ( ! ::MD_HASH_FUNC(cctx.get_hmac_key(), CRYPTO_KEY_LENGTH, keyhash)) {
+                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key!\n", ::getpid());
+                        Result::error(-1);
+                    }
+                    ::memcpy(key_buf, keyhash, MIN(MD_HASH_LENGTH, blocksize));
+                }
+                else {
+                    ::memcpy(key_buf, cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
+                }
+                for (int idx = 0; idx <  blocksize; idx++) {
+                    key_buf[idx] = key_buf[idx] ^ 0x36;
+                }
+                if (::EVP_DigestUpdate(&this->hctx, key_buf, blocksize) != 1) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash!\n", ::getpid());
+                    Result::error(-1);
+                }
+                if (::EVP_DigestUpdate(&this->hctx4k, key_buf, blocksize) != 1) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update 4k hash!\n", ::getpid());
+                    Result::error(-1);
+                }
+            }
+        }
+
+
+        if (this->encryption) {
+            unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+            this->cctx.get_derived_key(trace_key, derivator, derivator_len);
+            unsigned char iv[32];
+            this->rnd.random(iv, 32);
+
+            ::memset(this->buf, 0, sizeof(this->buf));
+            ::memset(&this->ectx, 0, sizeof(this->ectx));
+            this->pos = 0;
+            this->raw_size = 0;
+            this->file_size = 0;
+
+            const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
+            const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
+            const int          nrounds = 5;
+            unsigned char      key[32];
+            const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
+                                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
+            if (i != 32) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
+                Result::error(-1);
+            }
+
+            ::EVP_CIPHER_CTX_init(&this->ectx);
+            if (::EVP_EncryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize encrypt context\n", ::getpid());
+                Result::error(-1);
+            }
+
+            // update context with previously written data
+            this->header_buf[0] = WABCRYPTOFILE_MAGIC & 0xFF;
+            this->header_buf[1] = (WABCRYPTOFILE_MAGIC >> 8) & 0xFF;
+            this->header_buf[2] = (WABCRYPTOFILE_MAGIC >> 16) & 0xFF;
+            this->header_buf[3] = (WABCRYPTOFILE_MAGIC >> 24) & 0xFF;
+            this->header_buf[4] = WABCRYPTOFILE_VERSION & 0xFF;
+            this->header_buf[5] = (WABCRYPTOFILE_VERSION >> 8) & 0xFF;
+            this->header_buf[6] = (WABCRYPTOFILE_VERSION >> 16) & 0xFF;
+            this->header_buf[7] = (WABCRYPTOFILE_VERSION >> 24) & 0xFF;
+            ::memcpy(this->header_buf + 8, iv, 32);
+
+            // update file_size
+            this->file_size += 40;
+            int err_code = this->hash_update(this->header_buf, 40);
+            return {{this->header_buf, 40u}, 0u, err_code};
+        }
+        else {
             return Result{{this->header_buf, 0u}, 0u, 0};
         }
+    }
 
-        size_t buflen = sizeof(this->result_buffer);
+    ocrypto::Result close(uint8_t (&qhash)[MD_HASH_LENGTH], uint8_t (&fhash)[MD_HASH_LENGTH])
+    {
         size_t towrite = 0;
-        int err = this->flush(this->result_buffer, buflen, towrite);
-        if (err) {
-            return Result::error(-1);
+        if (this->encryption) {
+            size_t buflen = sizeof(this->result_buffer);
+            int err = this->flush(this->result_buffer, buflen, towrite);
+            if (err) {
+                return Result::error(-1);
+            }
+
+            const uint32_t eof_magic = WABCRYPTOFILE_EOF_MAGIC;
+            unsigned char tmp_buf[8] = {
+                eof_magic & 0xFF,
+                (eof_magic >> 8) & 0xFF,
+                (eof_magic >> 16) & 0xFF,
+                (eof_magic >> 24) & 0xFF,
+                uint8_t(this->raw_size & 0xFF),
+                uint8_t((this->raw_size >> 8) & 0xFF),
+                uint8_t((this->raw_size >> 16) & 0xFF),
+                uint8_t((this->raw_size >> 24) & 0xFF),
+            };
+
+            if (towrite + 8 > buflen){
+               return Result::error(-1);
+            }
+            ::memcpy(this->result_buffer + towrite, tmp_buf, 8);
+            towrite += 8;
+
+            this->file_size += 8;
+            this->hash_update(tmp_buf, 8);
         }
 
-        const uint32_t eof_magic = WABCRYPTOFILE_EOF_MAGIC;
-        unsigned char tmp_buf[8] = {
-            eof_magic & 0xFF,
-            (eof_magic >> 8) & 0xFF,
-            (eof_magic >> 16) & 0xFF,
-            (eof_magic >> 24) & 0xFF,
-            uint8_t(this->raw_size & 0xFF),
-            uint8_t((this->raw_size >> 8) & 0xFF),
-            uint8_t((this->raw_size >> 16) & 0xFF),
-            uint8_t((this->raw_size >> 24) & 0xFF),
-        };
-
-        if (towrite + 8 > buflen){
-           return Result::error(-1);
-        }
-        ::memcpy(this->result_buffer + towrite, tmp_buf, 8);
-        towrite += 8;
-
-        this->file_size += 8;
-
-        this->hash_update(tmp_buf, 8);
-
-        if (qhash && fhash) {
+        if (this->checksum && qhash && fhash) {
             // TODO: key_buf is a constant henceforth we should compute that at init
             // if there is some trouble loading Message Digest we shouldn't wait until
             // the end of recording.
@@ -622,12 +624,17 @@ public:
             }
         }
         return Result{{this->result_buffer, towrite}, 0u, 0};
+
     }
 
     ocrypto::Result write(const uint8_t * data, size_t len)
     {
         if (!this->encryption) {
-            return Result{{data, len}, len, 0};
+            int err = 0;
+            if (this->checksum){
+                err = this->hash_update(data, len);
+            }
+            return Result{{data, len}, len, err};
         }
 
         size_t buflen = sizeof(this->result_buffer);

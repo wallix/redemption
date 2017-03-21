@@ -588,6 +588,88 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
     CHECK_MEM(fhash, MD_HASH_LENGTH, expected_fhash);
 }
 
+BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
+{
+    OpenSSL_add_all_digests();
+    
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    cctx.set_master_key(cstr_array_view(
+        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+    ));
+    cctx.set_hmac_key(cstr_array_view(
+         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+         "\x49\x21\x57\x87\x47\x74\x08\x8a"
+         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+    ));
+    
+
+    uint8_t result[16384];
+    size_t offset = 0;
+    uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
+
+    ocrypto encrypter(false, true, cctx, rnd);
+    // Opening an encrypted stream usually results in some header put in result buffer
+    // Of course no such header will be needed in non encrypted files
+    ocrypto::Result res = encrypter.open(derivator, sizeof(derivator));
+    BOOST_CHECK_EQUAL(res.buf.size(), 0);
+    BOOST_CHECK_EQUAL(res.err_code, 0);
+
+    // writing data to compressed/encrypted buffer may result in data to write
+    // ... or not as this writing may be differed.
+
+    // Let's send a large block of pseudo random data 
+    // with that kind of data I expect poor compression results
+    {
+        ocrypto::Result res2 = encrypter.write(randomSample, sizeof(randomSample));
+        memcpy(result + offset, res2.buf.data(), res2.buf.size());
+        offset += res2.buf.size();
+        BOOST_CHECK_EQUAL(res2.buf.size(), sizeof(randomSample));
+        BOOST_CHECK_EQUAL(res2.err_code, 0);
+    }
+
+    {
+        ocrypto::Result res2 = encrypter.write(randomSample, sizeof(randomSample));
+        memcpy(result + offset, res2.buf.data(), res2.buf.size());
+        offset += res2.buf.size();
+        BOOST_CHECK_EQUAL(res2.buf.size(), sizeof(randomSample));
+        BOOST_CHECK_EQUAL(res2.err_code, 0);
+    }
+
+    // I write the same block *again* now I should reach some compression
+//    size_t towrite = 0;
+//    encrypter.write(result+offset, sizeof(result)-offset, towrite, randomSample, sizeof(randomSample));
+//    offset += towrite;
+//    BOOST_CHECK_EQUAL(towrite, 8612);
+    
+    // close flushes all opened buffers and writes potential trailer
+    // the full file hash is also returned which is made of two parts
+    // a partial hash for the first 4K of the file
+    // and a full hash for the whole file
+    // obviously the two will be identical for short files
+    // and differs for larger ones
+    unsigned char qhash[MD_HASH_LENGTH] {};
+    unsigned char fhash[MD_HASH_LENGTH] {};
+    {
+        ocrypto::Result res2 = encrypter.close(qhash, fhash);
+        memcpy(result + offset, res2.buf.data(), res2.buf.size());
+        offset += res2.buf.size();
+        BOOST_CHECK_EQUAL(res2.buf.size(), 0);
+        BOOST_CHECK_EQUAL(res2.consumed, 0);
+    }
+    BOOST_CHECK_EQUAL(offset, sizeof(randomSample)*2);
+
+    char expected_qhash[MD_HASH_LENGTH+1] = "\x57\x7a\xae\x29\xab\x0e\x2a\xf3\xdd\x8e\x10\x43\xb5\x8e\xc3\x2d\xf0\x4f\x98\xed\xc5\x82\x8c\x7c\x46\x5b\x29\x1e\xc1\x17\x11\x75";
+    char expected_fhash[MD_HASH_LENGTH+1] = "\x07\xa7\xe7\x14\x9b\xf7\xeb\x34\x57\xdc\xce\x07\x5c\x62\x61\x34\x51\x42\x7d\xe0\x0f\xbe\xda\x53\x11\x08\x75\x31\x40\xc5\x50\xe8";
+
+    CHECK_MEM(qhash, MD_HASH_LENGTH, expected_qhash);
+    CHECK_MEM(fhash, MD_HASH_LENGTH, expected_fhash);
+}
+
 BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
 {
     OpenSSL_add_all_digests();
@@ -652,8 +734,19 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
     // and a full hash for the whole file
     // obviously the two will be identical for short files
     // and differs for larger ones
-    unsigned char qhash[MD_HASH_LENGTH];
-    unsigned char fhash[MD_HASH_LENGTH];
+    uint8_t expected_qhash[MD_HASH_LENGTH] = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
+    };
+    uint8_t expected_fhash[MD_HASH_LENGTH] = {
+        0x10, 0x01, 0x12, 0x03, 0x14, 0x05, 0x16, 0x07, 0x18, 0x09,0x1A, 0x0B, 0x1C, 0x0D, 0x1E, 0x0F,
+        0x10, 0x01, 0x12, 0x03, 0x14, 0x05, 0x16, 0x07, 0x18, 0x09,0x1A, 0x0B, 0x1C, 0x0D, 0x0E, 0x0F
+    };
+
+    uint8_t qhash[MD_HASH_LENGTH];
+    ::memcpy(qhash, expected_qhash, MD_HASH_LENGTH);
+    uint8_t fhash[MD_HASH_LENGTH];
+    ::memcpy(fhash, expected_fhash, MD_HASH_LENGTH);
     {
         ocrypto::Result res2 = encrypter.close(qhash, fhash);
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
@@ -663,20 +756,8 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
     }
     BOOST_CHECK_EQUAL(offset, sizeof(randomSample)*2);
 
-//    CHECK_MEM(result, offset, tmp);
-
-//    char clear[sizeof(randomSample)] = {};
-//    read_encrypted decrypter(cctx, 1, result, offset);
-//    decrypter.open(derivator, sizeof(derivator));
-//    
-//    size_t res2 = decrypter.read(clear, sizeof(clear));
-//    BOOST_CHECK_EQUAL(res2, sizeof(randomSample));
-//    CHECK_MEM(clear, sizeof(randomSample), randomSample);
-
-//    char expected_qhash[MD_HASH_LENGTH+1] = "\x88\x80\x2e\x37\x08\xca\x43\x30\xed\xd2\x72\x27\x2d\x05\x5d\xee\x01\x71\x4a\x12\xa5\xd9\x72\x84\xec\x0e\xd5\xaa\x47\x9e\xc3\xc2";
-//    char expected_fhash[MD_HASH_LENGTH+1] = "\x62\x96\xe9\xa2\x20\x4f\x39\x21\x06\x4d\x1a\xcf\xf8\x6e\x34\x9c\xd6\xae\x6c\x44\xd4\x55\x57\xd5\x29\x04\xde\x58\x7f\x1d\x0b\x35";
-
-//    CHECK_MEM(qhash, MD_HASH_LENGTH, expected_qhash);
-//    CHECK_MEM(fhash, MD_HASH_LENGTH, expected_fhash);
+    // Check qhash and fhash are left unchanged if no checksum is enabled
+    CHECK_MEM(qhash, MD_HASH_LENGTH, expected_qhash);
+    CHECK_MEM(fhash, MD_HASH_LENGTH, expected_fhash);
 }
 
