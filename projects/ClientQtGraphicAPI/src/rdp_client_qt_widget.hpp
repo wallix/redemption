@@ -100,7 +100,7 @@ public:
     bool                 enable_shared_clipboard;
     bool                 enable_shared_virtual_disk;
 
-    std::string    CB_TEMP_DIR;
+    const std::string    CB_TEMP_DIR;
     std::string    SHARE_DIR;
 
     struct ModRDPParamsData

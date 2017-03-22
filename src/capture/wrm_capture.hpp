@@ -20,7 +20,7 @@
 
 #pragma once
 
-
+#define LOGPRINT
 #include "utils/log.hpp"
 
 #include <cerrno>
@@ -207,6 +207,7 @@ static inline int hash_buf_open(int & hash_buf_file_fd, ocrypto & hash_buf_encry
         ::close(hash_buf_file_fd);
         hash_buf_file_fd = -1;
     }
+
     hash_buf_file_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
     int err = hash_buf_file_fd;
 
@@ -412,6 +413,7 @@ struct MetaSeqBuf {
             ::close(this->meta_buf_fd);
             this->meta_buf_fd = -1;
         }
+
         this->meta_buf_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
         int err = this->meta_buf_fd;
 
@@ -532,6 +534,7 @@ public:
             // TODO: ouverture du fichier meta : est-ce qu'on ne devrait pas le laisser fermer
             // et l'ouvrir et le refermer à chaque fois qu'on y ajoute une ligne ? (en O_APPEND)
             // ça semble plus solide.
+
             this->meta_buf_fd = ::open(this->mf_.filename, O_WRONLY | O_CREAT, S_IRUSR | S_IRGRP | S_IWUSR);
             if (this->meta_buf_fd < 0) {
                 LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
