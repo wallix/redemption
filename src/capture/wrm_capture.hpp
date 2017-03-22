@@ -444,18 +444,17 @@ public:
 
     ssize_t open(uint16_t width, uint16_t height)
     {
-        if (this->with_encryption){
-            this->current_filename_[0] = 0;
-            if (-1 != this->meta_buf_fd) {
-                ::close(this->meta_buf_fd);
-                this->meta_buf_fd = -1;
-            }
-            this->meta_buf_fd = ::open(this->mf_.filename, O_WRONLY | O_CREAT, S_IRUSR | S_IRGRP | S_IWUSR);
-            if (this->meta_buf_fd < 0) {
-                LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
-                throw Error(ERR_TRANSPORT_OPEN_FAILED, this->meta_buf_fd);
-            }
+        this->current_filename_[0] = 0;
+        // TODO: ouverture du fichier meta : est-ce qu'on ne devrait pas le laisser fermer
+        // et l'ouvrir et le refermer à chaque fois qu'on y ajoute une ligne ? (en O_APPEND)
+        // ça semble plus solide.
+        this->meta_buf_fd = ::open(this->mf_.filename, O_WRONLY | O_CREAT, S_IRUSR | S_IRGRP | S_IWUSR);
+        if (this->meta_buf_fd < 0) {
+            LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+        }
 
+        if (this->with_encryption){
             size_t derivator_len = 0;
             const uint8_t * derivator = reinterpret_cast<const uint8_t *>(basename_len(this->mf_.filename, derivator_len));
 
@@ -468,51 +467,19 @@ public:
                 LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
                 throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
             }
-
-            char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
-            const int len = sprintf(
-                header1,
-                "v2\n"
-                "%u %u\n"
-                "%s\n"
-                "\n\n",
-                unsigned(width),
-                unsigned(height),
-                with_checksum  ? "checksum" : "nochecksum"
-            );
-            const ssize_t res = this->meta_buf_write(reinterpret_cast<uint8_t*>(header1), len);
-            return res;
         }
-        else {
-            this->current_filename_[0] = 0;
-            // TODO: ouverture du fichier meta : est-ce qu'on ne devrait pas le laisser fermer
-            // et l'ouvrir et le refermer à chaque fois qu'on y ajoute une ligne ? (en O_APPEND)
-            // ça semble plus solide.
-            this->meta_buf_fd = ::open(this->mf_.filename, O_WRONLY | O_CREAT, S_IRUSR | S_IRGRP | S_IWUSR);
-            if (this->meta_buf_fd < 0) {
-                LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
-                throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-            }
-            // TODO: un echec du chmod n'est pas considéré comme fatal, peut-être devrait-on le rendre fatal
-            if (chmod(this->mf_.filename, S_IRUSR | S_IRGRP) == -1) {
-                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                   , this->mf_.filename
-                   , "u+r, g+r"
-                   , strerror(errno), errno);
-            }
-            if (this->with_checksum) {
-                this->meta_buf_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
-                this->meta_buf_quick_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
-                this->meta_buf_file_size = 0;
-            }
 
-            char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
-            const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n",
-            unsigned(width),  unsigned(height), with_checksum?"checksum":"nochecksum");
-            const ssize_t res = this->meta_buf_write(reinterpret_cast<uint8_t*>(header1), len);
-            return res;
+        if (this->with_checksum) {
+            this->meta_buf_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+            this->meta_buf_quick_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+            this->meta_buf_file_size = 0;
         }
-        return -1;
+
+        char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
+        const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n",
+        unsigned(width),  unsigned(height), with_checksum?"checksum":"nochecksum");
+        const ssize_t res = this->meta_buf_write(reinterpret_cast<uint8_t*>(header1), len);
+        return res;
     }
 
 
