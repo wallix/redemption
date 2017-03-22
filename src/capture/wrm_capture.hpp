@@ -20,7 +20,6 @@
 
 #pragma once
 
-#define LOGPRINT
 #include "utils/log.hpp"
 
 #include "utils/difftimeval.hpp"
