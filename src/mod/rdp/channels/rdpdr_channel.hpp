@@ -911,11 +911,11 @@ public:
 
     ~FileSystemVirtualChannel() override
     {
+#ifndef NDEBUG
         for (device_io_request_info_type & request_info : this->device_io_request_info_inventory)
         {
             REDASSERT(request_info.major_function != rdpdr::IRP_MJ_DIRECTORY_CONTROL);
 
-#ifndef NDEBUG
             LOG(LOG_WARNING,
                 "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
                     "There is Device I/O request information "
@@ -929,8 +929,8 @@ public:
                 request_info.extra_data,
                 request_info.path.c_str()
             );
-#endif  // #ifndef NDEBUG
         }
+#endif  // #ifndef NDEBUG
 
 #ifndef NDEBUG
         for (device_io_target_info_type & target_info : this->device_io_target_info_inventory)

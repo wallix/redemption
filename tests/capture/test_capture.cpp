@@ -2357,7 +2357,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 
     RDPDrawable d(20, 10);
     gdi::GraphicApi * gdi = &d;
-    set_rows_from_image_chunk(in_png_trans, chunk_type, chunk_size, d.width(), {&gdi, 1});
+    set_rows_from_image_chunk(in_png_trans, WrmChunkType(chunk_type), chunk_size, d.width(), {&gdi, 1});
 
     const int groupid = 0;
     OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);

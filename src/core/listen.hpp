@@ -98,8 +98,10 @@ struct Listen {
         } u;
         memset(&u, 0, sizeof(u));
         u.s4.sin_family = AF_INET;
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
         u.s4.sin_port = htons(this->port);
-//        u.s4.sin_addr.s_addr = INADDR_ANY;
+        REDEMPTION_DIAGNOSTIC_POP
         u.s4.sin_addr.s_addr = this->s_addr;
 
         LOG(LOG_INFO, "Listen: binding socket %d on %s:%d", sck.sck, ::inet_ntoa(u.s4.sin_addr), this->port);

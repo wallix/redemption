@@ -40,6 +40,7 @@
 #include <sstream>
 #include "utils/fileutils.hpp"
 #include "capture/capture.hpp"
+#include "capture/wrm_capture.hpp" // TODO only for iofdbuf
 
 #ifdef HASH_LEN
 #undef HASH_LEN
@@ -303,7 +304,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
             //{}
 
             int open(iofdbuf & snk, const unsigned char * trace_key, CryptoContext & cctx, const unsigned char * iv)         {
-            
+
                 ::memset(this->buf, 0, sizeof(this->buf));
                 ::memset(&this->ectx, 0, sizeof(this->ectx));
                 ::memset(&this->hctx, 0, sizeof(this->hctx));
