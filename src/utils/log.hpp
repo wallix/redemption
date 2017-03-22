@@ -223,10 +223,9 @@ namespace {
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
 
-REDEMPTION_LIB_EXPORT
-void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...);
-
-REDEMPTION_LIB_EXPORT
+// No inline, one definition by exe. Otherwise, bad config
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-prototypes")
+REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wmissing-declarations")
 void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...)
 #ifdef IN_IDE_PARSER
 ;
