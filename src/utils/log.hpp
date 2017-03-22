@@ -164,11 +164,7 @@ char const * log_value(redemption_log_s<n> && x) { return x.data; }
 #   endif
 # endif
 
-namespace { namespace compiler_aux_ {
-  template<class... Ts> void unused_variables(Ts const & ...) {}
-} }
-
-# define LOG_REDEMPTION_FORMAT_CHECK(...) compiler_aux_::unused_variables(__VA_ARGS__)
+# define LOG_REDEMPTION_FORMAT_CHECK(...) ::compiler_aux_::unused_variables(__VA_ARGS__)
 # define REDEMPTION_LOG_VALUE(x) log_value(x)
 # define LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(...) __VA_ARGS__
 
@@ -178,36 +174,13 @@ namespace { namespace compiler_aux_ {
 #ifdef IN_IDE_PARSER
 #  define LOG LOGSYSLOG__REDEMPTION__INTERNAL
 
-#elif defined(LOGPRINT)
-#  define LOG(priority, ...)                                      \
-    LOGCHECK__REDEMPTION__INTERNAL((                              \
-        LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__),                 \
-        LOGPRINT__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- " \
-        LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__)),  \
-        1                                                         \
-    ))
-
-#elif defined(LOGNULL)
-#  define LOG(priority, ...)                               \
-    LOGCHECK__REDEMPTION__INTERNAL((                       \
-        LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__), priority \
-    ))
-
-#elif defined(LOGASMJS) && defined(EM_ASM)
-#  define LOG(priority, ...) LOGCHECK__REDEMPTION__INTERNAL((    \
+#else
+#  define LOG(priority, ...)                                     \
+    LOGCHECK__REDEMPTION__INTERNAL((                             \
         LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__),                \
-        LOGPRINT__REDEMPTION__ASMJS(priority, "%s (%d/%d) -- "   \
+        LOG__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- "     \
         LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__)), \
         1                                                        \
-    ))
-
-#else
-#  define LOG(priority, ...)                                       \
-    LOGCHECK__REDEMPTION__INTERNAL((                               \
-        LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__),                  \
-        LOGSYSLOG__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- " \
-        LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__)),   \
-        1                                                          \
     ))
 #endif
 
@@ -237,40 +210,87 @@ namespace {
     inline void LOGCHECK__REDEMPTION__INTERNAL(int)
     {}
 
-    REDEMPTION_DIAGNOSTIC_PUSH
-    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
-
-    template<class... Ts>
-    void LOGPRINT__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args)
+    namespace compiler_aux_
     {
-        int const pid = getpid();
-        std::printf(format, prioritynames[priority], pid, pid, REDEMPTION_LOG_VALUE(args)...);
-        std::puts("");
+        template<class... Ts>
+        void unused_variables(Ts const & ...)
+        {}
     }
+}
 
-#if defined(LOGASMJS) && defined(EM_ASM)
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+
+REDEMPTION_LIB_EXPORT
+void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...);
+
+REDEMPTION_LIB_EXPORT
+void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...)
+#ifdef IN_IDE_PARSER
+;
+#elif defined(LOGPRINT)
+{
+    (void)priority;
+    va_list ap;
+    va_start(ap, format);
+    std::vprintf(format, ap);
+    std::puts("");
+    va_end(ap);
+}
+#elif defined(LOGNULL)
+{
+    (void)priority;
+    (void)format;
+}
+#elif defined(LOGASMJS) && defined(EM_ASM)
+{
+    (void)priority;
+    va_list ap;
+    char buffer[4096];
+    va_start(ap, format);
+    int len = snprintf(buffer, sizeof(buffer)-2, format, args...);
+    va_end(ap);
+    buffer[len] = '\n';
+    buffer[len+1] = 0;
+    EM_ASM_({console.log(Pointer_stringify($0));}, buffer);
+}
+#else
+# ifdef REDEMPTION_DECL_LOG_SYSLOG
+{
+    va_list ap;
+    va_start(ap, format);
+    vsyslog(priority, format, ap);
+    va_end(ap);
+}
+# else
+;
+# endif
+# ifdef REDEMPTION_DECL_LOG_TEST
+#    error "Missing macro in the .cpp test: LOGNULL or LOGPRINT"
+# endif
+#endif
+
+REDEMPTION_DIAGNOSTIC_POP
+
+namespace
+{
     template<class... Ts>
-    void LOGPRINT__REDEMPTION__ASMJS(int priority, char const * format, Ts const & ... args)
+    void LOG__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args)
     {
+    #if !defined(LOGPRINT) && defined(LOGNULL)
+        compiler_aux_::unused_variables(priority, format, args...);
+    #else
         int const pid = getpid();
-        char buffer[4096];
-        int len = snprintf(
-            buffer, sizeof(buffer)-2, format,
-            prioritynames[priority], pid, pid, REDEMPTION_LOG_VALUE(args)...);
-        buffer[len] = '\n';
-        buffer[len+1] = 0;
-        EM_ASM_({console.log(Pointer_stringify($0));}, buffer);
+        LOG__REDEMPTION__INTERNAL__IMPL(
+            priority,
+            format,
+            prioritynames[priority],
+            pid,
+            pid,
+            REDEMPTION_LOG_VALUE(args)...
+        );
+    #endif
     }
-#endif  // #if defined(LOGASMJS) && defined(EM_ASM)
-
-    template<class... Ts>
-    void LOGSYSLOG__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args)
-    {
-        int const pid = getpid();
-        syslog(priority, format, prioritynames[priority], pid, pid, REDEMPTION_LOG_VALUE(args)...);
-    }
-
-    REDEMPTION_DIAGNOSTIC_POP
 }
 
 namespace {

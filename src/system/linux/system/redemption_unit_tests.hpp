@@ -51,7 +51,6 @@ namespace boost { namespace unit_test { namespace ut_detail {
                 BOOST_CHECK_EQUAL(e.id, ErrId); \
                 return true;                    \
             }                                   \
-            LOG(LOG_ERR, "Exception=%d", e.id); \
             return false;                       \
         }                                       \
     )
