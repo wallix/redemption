@@ -57,9 +57,11 @@ namespace { namespace compiler_aux_ {
 
 #include <cstdint>
 #include <cstdio> // std::printf family
+#if defined(LOGPRINT) || !defined(LOGNULL)
+# include <cstdarg>
+#endif
 
 #include <syslog.h>
-#include <iostream>
 #include <cstring>
 
 // enum type
