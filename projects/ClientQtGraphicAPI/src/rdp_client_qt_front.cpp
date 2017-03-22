@@ -469,7 +469,6 @@ public:
 
             for (size_t i = 0; i < size; i++) {
                 this->fileSystemData.drives[0].name[i] = tmp.data()[i];
-
             }
 
             this->fileSystemData.drives[0].ID = 1;
@@ -1303,7 +1302,7 @@ public:
                                                 }
 
                                             } else {
-                                                LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", new_path.c_str());
+                                                //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", new_path.c_str());
                                                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                             }
                                         }
@@ -1351,7 +1350,7 @@ public:
                                             std::ifstream file(file_to_request.c_str());
                                             if (!file.good()) {
                                                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                                LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", file_to_request.c_str());
+                                                //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", file_to_request.c_str());
                                             }
 
                                             deviceIOResponse.emit(out_stream);
@@ -1437,7 +1436,7 @@ public:
                                                 std::ifstream file(file_to_request.c_str());
                                                 if (!file.good()) {
                                                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_ACCESS_DENIED);
-                                                    LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", file_to_request.c_str());
+                                                    //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", file_to_request.c_str());
                                                 }
                                                 deviceIOResponse.emit(out_stream);
 
@@ -1595,7 +1594,7 @@ public:
                                                 std::string str_file_path_slash(this->SHARE_DIR + path);
                                                 if (stat(str_file_path_slash.c_str(), &buff_child)) {
                                                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                                    LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());
+                                                    //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());
                                                 }
 
                                             } else {
@@ -1643,7 +1642,7 @@ public:
 
                                                     } else {
                                                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                                        LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_dir).", str_dir_path.c_str());
+                                                        //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_dir).", str_dir_path.c_str());
                                                     }
                                                 }
 
@@ -1656,7 +1655,7 @@ public:
                                                     std::string str_file_path_slash(str_dir_path + "/" + str_file_name);
                                                     if (stat(str_file_path_slash.c_str(), &buff_child)) {
                                                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                                        LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());
+                                                        //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());
                                                     } else {
                                                         LastAccessTime  = UnixSecondsToWindowsTick(buff_child.st_atime);
                                                         LastWriteTime   = UnixSecondsToWindowsTick(buff_child.st_mtime);
@@ -1834,7 +1833,7 @@ public:
                                         int device = open(str_path.c_str(), O_RDONLY | O_NONBLOCK);
                                         if (device < 0) {
                                             deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                            LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (hd_driveid).", str_path.c_str());
+                                            //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (hd_driveid).", str_path.c_str());
                                         } else {
                                             ioctl(device, HDIO_GET_IDENTITY, &hd);
                                             VolumeSerialNumber = this->string_to_hex32(hd.serial_no);

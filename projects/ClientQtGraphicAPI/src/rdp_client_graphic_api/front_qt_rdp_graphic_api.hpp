@@ -20,7 +20,6 @@
 
 
 
-
 #pragma once
 
 #define LOGPRINT
@@ -119,10 +118,10 @@ public:
     bool                 is_spanning;
 
 
-    std::string    MAIN_DIR;
-    std::string    USER_CONF_DIR;
-    std::string    REPLAY_DIR;
-    std::string    USER_CONF_LOG;
+    const std::string    MAIN_DIR;
+    const std::string    USER_CONF_DIR;
+    const std::string    REPLAY_DIR;
+    const std::string    USER_CONF_LOG;
 
 
     Front_Qt_API( RDPVerbose verbose)
@@ -282,71 +281,13 @@ public:
 
         this->_callback = this->_front->init_mod();
 
-//         struct      timeval time_mark = { 0, 50000 };
-//         bool        run_session       = true;
-
         if (this->_callback !=  nullptr) {
-
-//             while (run_session) {
-//                 try {
-//                     unsigned max = 0;
-//                     fd_set   rfds;
-//                     fd_set   wfds;
-//
-//                     io_fd_zero(rfds);
-//                     io_fd_zero(wfds);
-//                     struct timeval timeout = time_mark;
-//
-//                     this->_callback->get_event().wait_on_fd(this->_client_sck, rfds, max, timeout);
-//
-//                     int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
-//
-//                     LOG(LOG_INFO, "VNC CLIENT :: select num = %d\n", num);
-//
-//                     if (num < 0) {
-//                         if (errno == EINTR) {
-//                             continue;
-//                         }
-//
-//                         LOG(LOG_INFO, "VNC CLIENT :: errno = %d\n", errno);
-//                         break;
-//                     }
-//
-//                     if (this->_callback->get_event().is_set(this->_client_sck, rfds)) {
-//                         this->_callback->get_event().reset();
-//                         this->_callback->draw_event(time(nullptr), *(this->_front));
-//                     }
-//
-//                     if (this->_callback->is_up_and_running()) {
-//                         run_session = false;
-//                     }
-//
-//
-//                 } catch (Error & e) {
-//                     LOG(LOG_ERR, "VNC CLIENT :: Exception raised = %d!\n", e.id);
-//                     run_session = false;
-//                 };
-//             }
-
-//             while (!this->_callback->is_up_and_running()) {
-//                 try {
-//                     this->_callback->draw_event(time(nullptr), *(this->_front));
-//                     LOG(LOG_INFO, "draw_event");
-//
-//                 } catch (const Error &) {
-//                     const std::string errorMsg("Error: Failed during early negociations.");
-//                     LOG(LOG_WARNING, "%s", errorMsg.c_str());
-//                     std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
-//                     this->_front->dropScreen();
-//                     this->_front->disconnect(labelErrorMsg);
-//                     return false;
-//                 }
-//             }
 
             this->_sckRead = new QSocketNotifier(this->_client_sck, QSocketNotifier::Read, this);
             this->QObject::connect(this->_sckRead,   SIGNAL(activated(int)), this,  SLOT(call_draw_event()));
 
             this->QObject::connect(&(this->timer),   SIGNAL(timeout()), this,  SLOT(call_draw_event()));
+
             if (this->_callback->get_event().set_state) {
                 struct timeval now = tvtime();
                 int time_to_wake = (this->_callback->get_event().trigger_time.tv_usec - now.tv_usec) / 1000
@@ -1315,36 +1256,30 @@ public:
         }
     }
 
-    //void setScreenDimension();
-
     void load_replay_mod(std::string const & movie_name) override {
-        this->replay_mod.reset(new ReplayMod( *this
-                                            , (this->REPLAY_DIR + "/").c_str()
-                                            , movie_name.c_str()
-                                            , 0
-                                            , 0
-                                            , this->_error
-                                            , this->_font
-                                            , true
-                                            , to_verbose_flags(0)
-                                            ));
+        try {
+            this->replay_mod.reset(new ReplayMod( *this
+                                                , (this->REPLAY_DIR + "/").c_str()
+                                                , movie_name.c_str()
+                                                , 0             //this->info.width
+                                                , 0             //this->info.height
+                                                , this->_error
+                                                , this->_font
+                                                , true
+                                                , to_verbose_flags(0)
+                                                ));
 
-        this->replay_mod->add_consumer(nullptr, &this->snapshoter, nullptr, nullptr, nullptr);
+            this->replay_mod->add_consumer(nullptr, &this->snapshoter, nullptr, nullptr, nullptr);
+        } catch (const Error &) {
+            LOG(LOG_WARNING, "new ReplayMod error %s", this->_error.c_str());
+        }
+
+
     }
 
     void delete_replay_mod() override {
         this->replay_mod.reset();
     }
-
-//     unsigned WindowsTickToUnixSeconds(long long windowsTicks)
-//     {
-//         return unsigned((windowsTicks / _WINDOWS_TICK) - _SEC_TO_UNIX_EPOCH);
-//     }
-//
-//     long long UnixSecondsToWindowsTick(unsigned unixSeconds)
-//     {
-//         return ((unixSeconds + _SEC_TO_UNIX_EPOCH) * _WINDOWS_TICK);
-//     }
 
     uint32_t string_to_hex32(unsigned char * str) {
         size_t size = sizeof(str);
@@ -2600,7 +2535,8 @@ public:
                                         ini.get<cfg::ocr::interval>()
                                     };
 
-                const char * record_path = "/replay";
+
+                std::string record_path = this->REPLAY_DIR.c_str() + std::string("/");
 
                 Fstat fstat;
 
@@ -2610,9 +2546,9 @@ public:
                     , cctx
                     , gen
                     , fstat
-                    , record_path
+                    , record_path.c_str()
                     , ini.get<cfg::video::hash_path>().c_str()
-                    , ""
+                    , movie_name.c_str()
                     , ini.get<cfg::video::capture_groupid>()
                     , std::chrono::duration<unsigned int, std::ratio<1l, 100l> >{60}
                     , std::chrono::seconds{1}

@@ -23,10 +23,10 @@
 #include "utils/log.hpp"
 
 #include "rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp"
-//#include "mod/rdp/rdp.hpp"
+
+// VNC
 #include "mod/vnc/vnc.hpp"
-// #include "mod/internal/test_card_mod.hpp"
-// #include "mod/internal/bouncer2_mod.hpp"
+
 
 
 class FrontDemoQtClient : public FrontQtRDPGraphicAPI
@@ -41,14 +41,14 @@ public:
 
     virtual mod_api * init_mod() override {
 
+        // VNC
         Inifile ini;
-
-    // VNC CONF
         Translator translator(Translation::language_t::FR);
         Theme theme;
 
-
         try {
+
+            // VNC
             this->mod = new mod_vnc( *(this->socket)
                                    , this->user_name.c_str()
                                    , this->user_password.c_str()
@@ -70,19 +70,6 @@ public:
                                    , this->authentifier
                                    , 0xffffffff);
 
-
-//               this->mod = new TestCardMod( *(this)
-//                                          , this->info.width
-//                                          , this->info.height
-//                                          , ini.get<cfg::font>()
-//                                          , true);
-
-//               this->mod = new Bouncer2Mod( *(this)
-//                                          , this->info.width
-//                                          , this->info.height
-//                                          , ini.get<cfg::font>()
-//                                          , true);
-
         } catch (const Error &) {
             return nullptr;
         }
@@ -98,9 +85,9 @@ public:
         return FrontQtRDPGraphicAPI::connect();
     }
 
-
-
 };
+
+
 
 ///////////////////////////////
 // APPLICATION
