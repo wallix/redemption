@@ -376,30 +376,6 @@ struct MetaSeqBuf {
     }
 
 
-    // Only used with encryption
-    int meta_buf_open(const char * filename, mode_t mode = 0600)
-    {
-        if (-1 != this->meta_buf_fd) {
-            ::close(this->meta_buf_fd);
-            this->meta_buf_fd = -1;
-        }
-        this->meta_buf_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-        int err = this->meta_buf_fd;
-
-        if (err < 0) {
-            return err;
-        }
-
-        size_t base_len = 0;
-        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-
-        ocrypto::Result ores = this->meta_buf_encrypt.open(base, base_len);
-        if (ores.err_code) {
-            return ores.err_code;
-        }
-        return raw_write(this->meta_buf_fd, ores.buf.data(), ores.buf.size());
-    }
-
     int meta_buf_close(uint8_t (&qhash)[MD_HASH_LENGTH], uint8_t (&fhash)[MD_HASH_LENGTH])
     {
         ocrypto::Result result = this->meta_buf_encrypt.close(qhash, fhash);
@@ -469,20 +445,28 @@ public:
     ssize_t open(uint16_t width, uint16_t height)
     {
         if (this->with_encryption){
+            this->current_filename_[0] = 0;
             if (-1 != this->meta_buf_fd) {
                 ::close(this->meta_buf_fd);
                 this->meta_buf_fd = -1;
             }
-            this->current_filename_[0] = 0;
-            if (this->meta_buf_open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+            this->meta_buf_fd = ::open(this->mf_.filename, O_WRONLY | O_CREAT, S_IRUSR | S_IRGRP | S_IWUSR);
+            if (this->meta_buf_fd < 0) {
+                LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
+                throw Error(ERR_TRANSPORT_OPEN_FAILED, this->meta_buf_fd);
+            }
+
+            size_t derivator_len = 0;
+            const uint8_t * derivator = reinterpret_cast<const uint8_t *>(basename_len(this->mf_.filename, derivator_len));
+
+            ocrypto::Result ores = this->meta_buf_encrypt.open(derivator, derivator_len);
+            if (ores.err_code) {
+                LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
+                throw Error(ERR_TRANSPORT_OPEN_FAILED, ores.err_code);
+            }
+            if (raw_write(this->meta_buf_fd, ores.buf.data(), ores.buf.size()) < 0){
                 LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
                 throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-            }
-            if (chmod(this->mf_.filename, S_IRUSR | S_IRGRP) == -1) {
-                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                   , this->mf_.filename
-                   , "u+r, g+r"
-                   , strerror(errno), errno);
             }
 
             char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
