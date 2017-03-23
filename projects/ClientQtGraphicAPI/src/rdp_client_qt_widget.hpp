@@ -21,7 +21,6 @@
 
 #pragma once
 
-#define LOGPRINT
 #include "utils/log.hpp"
 
 #include <vector>
@@ -39,6 +38,9 @@
 
 #define _SHARE_PATH "/share"
 #define CB_FILE_TEMP_PATH "/clipboard_temp"
+#define KEY_SETTING_PATH "/config/keySetting.config"
+#define USER_CONF_PATH "/config/userConfig.config"
+
 
 #define _WINDOWS_TICK 10000000
 #define _SEC_TO_UNIX_EPOCH 11644473600LL
@@ -102,6 +104,7 @@ public:
 
     const std::string    CB_TEMP_DIR;
     std::string    SHARE_DIR;
+    const std::string    USER_CONF_DIR;
 
     struct ModRDPParamsData
     {
@@ -197,6 +200,7 @@ public:
     , enable_shared_virtual_disk(false)
     , CB_TEMP_DIR(MAIN_DIR + std::string(CB_FILE_TEMP_PATH))
     , SHARE_DIR(MAIN_DIR + std::string(_SHARE_PATH))
+    , USER_CONF_DIR(MAIN_DIR + std::string(USER_CONF_PATH))
     , clipbrdFormatsList()
     , _cb_filesList()
     , _cb_buffers()
