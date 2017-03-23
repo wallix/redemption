@@ -20,7 +20,6 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 
-#define LOGPRINT
 #include "utils/log.hpp"
 
 #include <sys/stat.h>
@@ -337,7 +336,7 @@ public:
                                 );
 
         mod_rdp_params.device_id                       = "device_id";
-        mod_rdp_params.enable_tls                      = this->modRDPParamsData.enable_tls;;
+        mod_rdp_params.enable_tls                      = this->modRDPParamsData.enable_tls;
         mod_rdp_params.enable_nla                      = this->modRDPParamsData.enable_nla;
         mod_rdp_params.enable_fastpath                 = false;
         mod_rdp_params.enable_mem3blt                  = true;
