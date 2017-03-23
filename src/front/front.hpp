@@ -667,10 +667,10 @@ private:
     GlyphCacheCaps          client_glyphcache_caps;
     RailCaps                client_rail_caps;
     WindowListCaps          client_window_list_caps;
-    LargePointerCaps        client_large_pointer_caps;
-    MultiFragmentUpdateCaps client_multi_frag_caps;
+//    LargePointerCaps        client_large_pointer_caps;
+//    MultiFragmentUpdateCaps client_multi_frag_caps;
     bool                    use_bitmapcache_rev2;
-    bool                    use_multi_frag = false;
+//    bool                    use_multi_frag = false;
 
     std::string server_capabilities_filename;
 
@@ -2904,14 +2904,14 @@ private:
             break;
 
             case CAPSETTYPE_MULTIFRAGMENTUPDATE:
-                if (!this->use_multi_frag) {
+                if (!this->client_info.multi_fragment_update_caps.MaxRequestSize) {
                     return false;
                 }
-                ::memcpy(&caps, &this->client_multi_frag_caps, sizeof(this->client_multi_frag_caps));
+                ::memcpy(&caps, &this->client_info.multi_fragment_update_caps, sizeof(this->client_info.multi_fragment_update_caps));
             break;
 
             case CAPSETTYPE_LARGE_POINTER:
-                ::memcpy(&caps, &this->client_large_pointer_caps, sizeof(this->client_large_pointer_caps));
+                ::memcpy(&caps, &this->client_info.large_pointer_caps, sizeof(this->client_info.large_pointer_caps));
             break;
         }
 #ifdef __clang__
@@ -3499,16 +3499,16 @@ private:
                 }
                 break;
             case CAPSETTYPE_MULTIFRAGMENTUPDATE: /* 26 */
-                this->client_multi_frag_caps.recv(stream, capset_length);
+                this->client_info.multi_fragment_update_caps.recv(stream, capset_length);
                 if (bool(this->verbose)) {
-                    this->client_multi_frag_caps.log("Receiving from client");
+                    this->client_info.multi_fragment_update_caps.log("Receiving from client");
                 }
-                this->use_multi_frag = true;
+//                this->use_multi_frag = true;
                 break;
             case CAPSETTYPE_LARGE_POINTER: /* 27 */
-                this->client_large_pointer_caps.recv(stream, capset_length);
+                this->client_info.large_pointer_caps.recv(stream, capset_length);
                 if (bool(this->verbose)) {
-                    this->client_large_pointer_caps.log("Receiving from client");
+                    this->client_info.large_pointer_caps.log("Receiving from client");
                 }
                 break;
             case CAPSETTYPE_SURFACE_COMMANDS: /* 28 */

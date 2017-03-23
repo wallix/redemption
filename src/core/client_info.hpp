@@ -31,6 +31,8 @@
 #include "core/RDP/gcc.hpp"
 #include "core/RDP/logon.hpp"
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
+#include "core/RDP/capabilities/largepointer.hpp"
+#include "core/RDP/capabilities/multifragmentupdate.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "utils/get_printable_password.hpp"
 
@@ -95,13 +97,15 @@ struct ClientInfo {
     uint16_t cbAutoReconnectCookie = 0;
     uint8_t  autoReconnectCookie[28] = { 0 };
 
-
     GlyphCache::number_of_entries_t number_of_entries_in_glyph_cache = { {
           NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
         , NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
         , NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
         , NUMBER_OF_GLYPH_CACHE_ENTRIES
     } };
+
+    LargePointerCaps        large_pointer_caps;
+    MultiFragmentUpdateCaps multi_fragment_update_caps;
 
     ClientInfo() = default;
 
