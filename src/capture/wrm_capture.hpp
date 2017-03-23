@@ -240,29 +240,12 @@ struct MetaSeqBuf {
     static constexpr size_t nosize = ~size_t{};
     static constexpr size_t quick_size = 4096;
 
-    SslHMAC_Sha256_Delayed meta_buf_hmac;
-    SslHMAC_Sha256_Delayed meta_buf_quick_hmac;
-    size_t meta_buf_file_size = nosize;
-
     SslHMAC_Sha256_Delayed sumbuf_hmac;
     SslHMAC_Sha256_Delayed sumbuf_quick_hmac;
     size_t sumbuf_file_size = nosize;
 
     ssize_t meta_buf_write(const uint8_t * data, size_t len)
     {
-        if (this->with_checksum) {
-            REDASSERT(this->meta_buf_file_size != nosize);
-
-            // TODO: hmac returns error as exceptions while write errors are returned as -1
-            // this is inconsistent and probably need a fix.
-            // also, if we choose to raise exception every error should have it's own one
-            this->meta_buf_hmac.update(static_cast<const uint8_t *>(data), len);
-            if (this->meta_buf_file_size < quick_size) {
-                auto const remaining = std::min(quick_size - this->meta_buf_file_size, len);
-                this->meta_buf_quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
-                this->meta_buf_file_size += remaining;
-            }
-        }
         const ocrypto::Result res = this->meta_buf_encrypt.write(data, len);
         if (raw_write(this->meta_buf_fd, res.buf.data(), res.buf.size()))
         {
@@ -457,12 +440,6 @@ public:
             throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
         }
 
-        if (this->with_checksum) {
-            this->meta_buf_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
-            this->meta_buf_quick_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
-            this->meta_buf_file_size = 0;
-        }
-
         char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
         const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n",
         unsigned(width),  unsigned(height), with_checksum?"checksum":"nochecksum");
@@ -640,22 +617,6 @@ public:
                 return -1;
             }
             this->meta_buf_fd = -1;
-        }
-
-        if (this->with_checksum)
-        {
-            REDASSERT(this->meta_buf_file_size != nosize);
-            this->meta_buf_quick_hmac.final(qhash);
-            this->meta_buf_hmac.final(fhash);
-            this->meta_buf_file_size = nosize;
-
-            if (-1 != this->meta_buf_fd) {
-                const int ret = ::close(this->meta_buf_fd);
-                this->meta_buf_fd = -1;
-                if (ret < 0) {
-                    return ret;
-                }
-            }
         }
 
         int hash_buf_file_fd = -1;
