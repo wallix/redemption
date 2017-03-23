@@ -416,6 +416,9 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
 
 BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 {
+
+    OpenSSL_add_all_digests();
+
     struct CheckFiles1 {
         const char * filename;
         size_t size;

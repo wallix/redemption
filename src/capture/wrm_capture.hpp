@@ -250,34 +250,25 @@ struct MetaSeqBuf {
 
     ssize_t meta_buf_write(const uint8_t * data, size_t len)
     {
-        if (this->with_encryption){
-            ocrypto::Result res = this->meta_buf_encrypt.write(data, len);
-//             if (lentobuf < 0) {
-//                 return -1;
-//             }
-            if (raw_write(this->meta_buf_fd, res.buf.data(), res.buf.size()))
-            {
-                return -1;
-            }
-            return res.buf.size();
-        }
-        else {
-            if (this->with_checksum) {
-                REDASSERT(this->meta_buf_file_size != nosize);
+        if (this->with_checksum) {
+            REDASSERT(this->meta_buf_file_size != nosize);
 
-                // TODO: hmac returns error as exceptions while write errors are returned as -1
-                // this is inconsistent and probably need a fix.
-                // also, if we choose to raise exception every error should have it's own one
-                this->meta_buf_hmac.update(static_cast<const uint8_t *>(data), len);
-                if (this->meta_buf_file_size < quick_size) {
-                    auto const remaining = std::min(quick_size - this->meta_buf_file_size, len);
-                    this->meta_buf_quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
-                    this->meta_buf_file_size += remaining;
-                }
+            // TODO: hmac returns error as exceptions while write errors are returned as -1
+            // this is inconsistent and probably need a fix.
+            // also, if we choose to raise exception every error should have it's own one
+            this->meta_buf_hmac.update(static_cast<const uint8_t *>(data), len);
+            if (this->meta_buf_file_size < quick_size) {
+                auto const remaining = std::min(quick_size - this->meta_buf_file_size, len);
+                this->meta_buf_quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
+                this->meta_buf_file_size += remaining;
             }
-            return raw_write(this->meta_buf_fd, data, len);
         }
-        return -1;
+        ocrypto::Result res = this->meta_buf_encrypt.write(data, len);
+        if (raw_write(this->meta_buf_fd, res.buf.data(), res.buf.size()))
+        {
+            return -1;
+        }
+        return res.buf.size();
     }
 
 
@@ -454,19 +445,17 @@ public:
             throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
         }
 
-        if (this->with_encryption){
-            size_t derivator_len = 0;
-            const uint8_t * derivator = reinterpret_cast<const uint8_t *>(basename_len(this->mf_.filename, derivator_len));
+        size_t derivator_len = 0;
+        const uint8_t * derivator = reinterpret_cast<const uint8_t *>(basename_len(this->mf_.filename, derivator_len));
 
-            ocrypto::Result ores = this->meta_buf_encrypt.open(derivator, derivator_len);
-            if (ores.err_code) {
-                LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
-                throw Error(ERR_TRANSPORT_OPEN_FAILED, ores.err_code);
-            }
-            if (raw_write(this->meta_buf_fd, ores.buf.data(), ores.buf.size()) < 0){
-                LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
-                throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-            }
+        ocrypto::Result ores = this->meta_buf_encrypt.open(derivator, derivator_len);
+        if (ores.err_code) {
+            LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, ores.err_code);
+        }
+        if (raw_write(this->meta_buf_fd, ores.buf.data(), ores.buf.size()) < 0){
+            LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
         }
 
         if (this->with_checksum) {
@@ -491,88 +480,64 @@ public:
 
     ssize_t write(const uint8_t * data, size_t len)
     {
-        if (this->with_encryption){
-            if (!this->buf_.is_open()) {
-                const char * filename = this->filegen_.get(this->num_file_);
-                snprintf(this->current_filename_, sizeof(this->current_filename_), "%sred-XXXXXX.tmp", filename);
-                const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
-                LOG(LOG_INFO, "New temporary file %s -> \n", this->current_filename_);
-                if (fd < 0) {
-                    LOG(LOG_INFO, "mkostemps error\n");
-                    return fd;
-                }
-                if (chmod(this->current_filename_
-                         , this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-                    LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                        , this->current_filename_
-                        , this->groupid_ ? "u+r, g+r" : "u+r"
-                        , strerror(errno), errno);
-                }
-                const int res = this->buf_.open(fd);
-                if (res < 0) {
-                    LOG(LOG_INFO, "MetaSeqBufCrypto::write() -> open failed for %s\n", this->current_filename_);
-                    return res;
-                }
-
-                size_t base_len = 0;
-                const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-
-                ocrypto::Result ores = this->wrm_filter_encrypt.open(base, base_len);
-                if (ores.err_code) {
-                    LOG(LOG_INFO, "MetaSeqBufCrypto::write() encrypt open failed");
-                    return ores.err_code;
-                }
-                int err = this->buf_.write(ores.buf.data(), ores.buf.size());
-                if (err < 0){
-                    LOG(LOG_INFO, "MetaSeqBufCrypto::write() write failed %s", strerror(errno));
-                    return err;
-                }
+        if (!this->buf_.is_open()) {
+            const char * filename = this->filegen_.get(this->num_file_);
+            snprintf(this->current_filename_, sizeof(this->current_filename_), "%sred-XXXXXX.tmp", filename);
+            const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
+            LOG(LOG_INFO, "New temporary file %s -> \n", this->current_filename_);
+            if (fd < 0) {
+                LOG(LOG_INFO, "mkostemps error\n");
+                return fd;
             }
-            int res = -1;
-            ocrypto::Result result = this->wrm_filter_encrypt.write(data, len);
-            res = this->buf_.write(result.buf.data(), result.buf.size());
+            if (chmod(this->current_filename_
+                     , this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                    , this->current_filename_
+                    , this->groupid_ ? "u+r, g+r" : "u+r"
+                    , strerror(errno), errno);
+            }
+            const int res = this->buf_.open(fd);
+            if (res < 0) {
+                LOG(LOG_INFO, "MetaSeqBufCrypto::write() -> open failed for %s\n", this->current_filename_);
+                return res;
+            }
 
-            return res;
-        }
-        else {
-            if (!this->buf_.is_open()) {
-                snprintf(this->current_filename_, sizeof(this->current_filename_),
-                            "%sred-XXXXXX.tmp", this->filegen_.get(this->num_file_));
-                const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
-                if (fd < 0) {
-                    return fd;
-                }
-                // TODO: un echec du chmod n'est pas considéré comme fatal, peut-être devrait-on le rendre fatal
-                if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-                    LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                       , this->current_filename_
-                       , this->groupid_ ? "u+r, g+r" : "u+r"
-                       , strerror(errno), errno);
-                }
-                int res = this->buf_.open(fd);
-                if (res < 0){
-                    return res;
-                }
+            size_t base_len = 0;
+            const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
 
-                if (this->with_checksum) {
-                    this->sumbuf_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
-                    this->sumbuf_quick_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
-                    this->sumbuf_file_size = 0;
-                }
+            ocrypto::Result ores = this->wrm_filter_encrypt.open(base, base_len);
+            if (ores.err_code) {
+                LOG(LOG_INFO, "MetaSeqBufCrypto::write() encrypt open failed");
+                return ores.err_code;
+            }
+            int err = this->buf_.write(ores.buf.data(), ores.buf.size());
+            if (err < 0){
+                LOG(LOG_INFO, "MetaSeqBufCrypto::write() write failed %s", strerror(errno));
+                return err;
             }
 
             if (this->with_checksum) {
-                REDASSERT(this->sumbuf_file_size != nosize);
-                this->sumbuf_hmac.update(static_cast<const uint8_t *>(data), len);
-                if (this->sumbuf_file_size < quick_size) {
-                    auto const remaining = std::min(quick_size - this->sumbuf_file_size, len);
-                    this->sumbuf_quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
-                    this->sumbuf_file_size += remaining;
-                }
+                this->sumbuf_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+                this->sumbuf_quick_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+                this->sumbuf_file_size = 0;
             }
-            return this->buf_.write(data, len);
+
         }
-        return -1;
+        int res = -1;
+        ocrypto::Result result = this->wrm_filter_encrypt.write(data, len);
+        res = this->buf_.write(result.buf.data(), result.buf.size());
+
+        if (this->with_checksum) {
+            REDASSERT(this->sumbuf_file_size != nosize);
+            this->sumbuf_hmac.update(static_cast<const uint8_t *>(data), len);
+            if (this->sumbuf_file_size < quick_size) {
+                auto const remaining = std::min(quick_size - this->sumbuf_file_size, len);
+                this->sumbuf_quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
+                this->sumbuf_file_size += remaining;
+            }
+        }
+
+        return res;
     }
 
     const char * current_path() const
