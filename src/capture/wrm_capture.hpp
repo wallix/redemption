@@ -236,13 +236,9 @@ struct MetaSeqBuf {
     ocrypto wrm_filter_encrypt;
 
 
-// Only for Checksum Management
-    static constexpr size_t nosize = ~size_t{};
-    static constexpr size_t quick_size = 4096;
-
-    SslHMAC_Sha256_Delayed sumbuf_hmac;
-    SslHMAC_Sha256_Delayed sumbuf_quick_hmac;
-    size_t sumbuf_file_size = nosize;
+//// Only for Checksum Management
+//    static constexpr size_t nosize = ~size_t{};
+//    static constexpr size_t quick_size = 4096;
 
     ssize_t meta_buf_write(const uint8_t * data, size_t len)
     {
@@ -492,26 +488,10 @@ public:
                 return err;
             }
 
-            if (this->with_checksum) {
-                this->sumbuf_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
-                this->sumbuf_quick_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
-                this->sumbuf_file_size = 0;
-            }
-
         }
         int res = -1;
         const ocrypto::Result result = this->wrm_filter_encrypt.write(data, len);
         res = this->buf_.write(result.buf.data(), result.buf.size());
-
-        if (this->with_checksum) {
-            REDASSERT(this->sumbuf_file_size != nosize);
-            this->sumbuf_hmac.update(static_cast<const uint8_t *>(data), len);
-            if (this->sumbuf_file_size < quick_size) {
-                auto const remaining = std::min(quick_size - this->sumbuf_file_size, len);
-                this->sumbuf_quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
-                this->sumbuf_file_size += remaining;
-            }
-        }
 
         return res;
     }
@@ -530,12 +510,6 @@ public:
         if (this->buf_.is_open()) {
             uint8_t qhash[MD_HASH_LENGTH];
             uint8_t fhash[MD_HASH_LENGTH];
-            if (this->with_checksum) {
-                REDASSERT(this->sumbuf_file_size != nosize);
-                this->sumbuf_quick_hmac.final(qhash);
-                this->sumbuf_hmac.final(fhash);
-                this->sumbuf_file_size = nosize;
-            }
             const ocrypto::Result result = this->wrm_filter_encrypt.close(qhash, fhash);
             if (result.err_code) {
                 this->buf_.close();
@@ -563,12 +537,6 @@ public:
         if (this->buf_.is_open()) {
             uint8_t qhash[MD_HASH_LENGTH];
             uint8_t fhash[MD_HASH_LENGTH];
-            if (this->with_checksum) {
-                REDASSERT(this->sumbuf_file_size != nosize);
-                this->sumbuf_quick_hmac.final(qhash);
-                this->sumbuf_hmac.final(fhash);
-                this->sumbuf_file_size = nosize;
-            }
             const ocrypto::Result result = this->wrm_filter_encrypt.close(qhash, fhash);
             if (result.err_code) {
                 this->buf_.close();
