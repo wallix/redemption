@@ -625,32 +625,44 @@ public:
         uint8_t qhash[MD_HASH_LENGTH];
         uint8_t fhash[MD_HASH_LENGTH];
 
-        if (this->with_encryption){
-
-            if (!this->meta_buf_is_open()) {
-                LOG(LOG_INFO, "MetaSeqBufCrypto::close() metafile not opened\n");
-                return 1;
-            }
-
-            if (this->meta_buf_close(qhash, fhash)) {
-                LOG(LOG_INFO, "MetaSeqBufCrypto::close() metafile close failed\n");
-                return 1;
-            }
+        if (!this->meta_buf_is_open()) {
+            LOG(LOG_INFO, "MetaSeqBufCrypto::close() metafile not opened\n");
+            return 1;
         }
-        else {
-            if (this->with_checksum)
-            {
-                REDASSERT(this->meta_buf_file_size != nosize);
-                this->meta_buf_quick_hmac.final(qhash);
-                this->meta_buf_hmac.final(fhash);
-                this->meta_buf_file_size = nosize;
 
-                if (-1 != this->meta_buf_fd) {
-                    const int ret = ::close(this->meta_buf_fd);
-                    this->meta_buf_fd = -1;
-                    if (ret < 0) {
-                        return ret;
-                    }
+        ocrypto::Result result = this->meta_buf_encrypt.close(qhash, fhash);
+        if (result.err_code) {
+            LOG(LOG_INFO, "MetaSeqBufCrypto::close() metafile close failed\n");
+            return -1;
+        }
+        if (raw_write(this->meta_buf_fd, result.buf.data(), result.buf.size()))
+        {
+            LOG(LOG_INFO, "MetaSeqBufCrypto::close() metafile close failed\n");
+            return -1;
+        }
+
+        int res2 = 0;
+        if (-1 != this->meta_buf_fd) {
+            res2 = ::close(this->meta_buf_fd);
+            this->meta_buf_fd = -1;
+        }
+        if (res2 < 0) {
+            LOG(LOG_INFO, "MetaSeqBufCrypto::close() metafile close failed\n");
+            return res2;
+        }
+
+        if (this->with_checksum)
+        {
+            REDASSERT(this->meta_buf_file_size != nosize);
+            this->meta_buf_quick_hmac.final(qhash);
+            this->meta_buf_hmac.final(fhash);
+            this->meta_buf_file_size = nosize;
+
+            if (-1 != this->meta_buf_fd) {
+                const int ret = ::close(this->meta_buf_fd);
+                this->meta_buf_fd = -1;
+                if (ret < 0) {
+                    return ret;
                 }
             }
         }
