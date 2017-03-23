@@ -280,7 +280,7 @@ struct MetaSeqBuf {
         if (::rename(this->current_filename_, filename) < 0) {
             LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
                , this->current_filename_, filename, errno, strerror(errno));
-            return 1;
+            return -1;
         }
 
         this->current_filename_[0] = 0;
@@ -579,14 +579,47 @@ public:
             }
             return this->next_meta_file(qhash, fhash);
         }
-        return 1;
+        return -1;
     }
 
     int close()
     {
+    
+//        if (this->buf_.is_open()) {
+//            if (this->next() < 0) {
+//                return 1;
+//            }
+//        }
+
         if (this->with_encryption){
             if (this->buf_.is_open()) {
-                if (this->next() < 0) {
+                LOG(LOG_INFO, "Closing sumbuf buffer");
+                uint8_t qhash[MD_HASH_LENGTH];
+                uint8_t fhash[MD_HASH_LENGTH];
+                if (this->with_checksum) {
+                    REDASSERT(this->sumbuf_file_size != nosize);
+                    this->sumbuf_quick_hmac.final(qhash);
+                    this->sumbuf_hmac.final(fhash);
+                    this->sumbuf_file_size = nosize;
+                }
+                ocrypto::Result result = this->wrm_filter_encrypt.close(qhash, fhash);
+                if (result.err_code) {
+                    this->buf_.close();
+                    LOG(LOG_INFO, "MetaSeqBuf::next() : encryption error\n");
+                    return -1;
+                }
+                ssize_t err = this->buf_.write(result.buf.data(), result.buf.size());
+                if (err < 0){
+                    this->buf_.close();
+                    LOG(LOG_INFO, "MetaSeqBuf::next() : write error\n");
+                    return -1;
+                }
+                const int res2 = this->buf_.close();
+                if (res2) {
+                    LOG(LOG_INFO, "MetaSeqBuf::next() : close error\n");
+                    return res2;
+                }
+                if (this->next_meta_file(qhash, fhash)){
                     return 1;
                 }
             }
@@ -717,11 +750,39 @@ public:
             }
         }
         else {
+            LOG(LOG_INFO, "Not encrypted closing sumbuf buffer");
+
             if (this->with_checksum)
             {
+                LOG(LOG_INFO, "Not encrypted closing sumbuf buffer : checksum");
                 if (this->buf_.is_open()) {
-                    if (this->next()) {
-                        return 1;
+                    uint8_t qhash[MD_HASH_LENGTH];
+                    uint8_t fhash[MD_HASH_LENGTH];
+                    if (this->with_checksum) {
+                        REDASSERT(this->sumbuf_file_size != nosize);
+                        this->sumbuf_quick_hmac.final(qhash);
+                        this->sumbuf_hmac.final(fhash);
+                        this->sumbuf_file_size = nosize;
+                    }
+                    ocrypto::Result result = this->wrm_filter_encrypt.close(qhash, fhash);
+                    if (result.err_code) {
+                        this->buf_.close();
+                        LOG(LOG_INFO, "MetaSeqBuf::next() : encryption error\n");
+                        return -1;
+                    }
+                    ssize_t err = this->buf_.write(result.buf.data(), result.buf.size());
+                    if (err < 0){
+                        this->buf_.close();
+                        LOG(LOG_INFO, "MetaSeqBuf::next() : write error\n");
+                        return -1;
+                    }
+                    const int res2 = this->buf_.close();
+                    if (res2) {
+                        LOG(LOG_INFO, "MetaSeqBuf::next() : close error\n");
+                        return res2;
+                    }
+                    if (this->next_meta_file(qhash, fhash)){
+                        return -1;
                     }
                 }
 
@@ -841,18 +902,45 @@ public:
                 }
             }
             else {
-                const int res1 = this->next();
-                int res2 = 0;
+                LOG(LOG_INFO, "Not encrypted not checksum");
+                if (this->buf_.is_open()) {
+                    uint8_t qhash[MD_HASH_LENGTH];
+                    uint8_t fhash[MD_HASH_LENGTH];
+                    if (this->with_checksum) {
+                        REDASSERT(this->sumbuf_file_size != nosize);
+                        this->sumbuf_quick_hmac.final(qhash);
+                        this->sumbuf_hmac.final(fhash);
+                        this->sumbuf_file_size = nosize;
+                    }
+                    ocrypto::Result result = this->wrm_filter_encrypt.close(qhash, fhash);
+                    if (result.err_code) {
+                        this->buf_.close();
+                        LOG(LOG_INFO, "MetaSeqBuf::next() : encryption error\n");
+                        return -1;
+                    }
+                    ssize_t err = this->buf_.write(result.buf.data(), result.buf.size());
+                    if (err < 0){
+                        this->buf_.close();
+                        LOG(LOG_INFO, "MetaSeqBuf::next() : write error\n");
+                        return -1;
+                    }
+                    const int res2 = this->buf_.close();
+                    if (res2) {
+                        LOG(LOG_INFO, "MetaSeqBuf::next() : close error\n");
+                        return res2;
+                    }
+                    if (this->next_meta_file(qhash, fhash)){
+                        return -1;
+                    }
+                }
                 if (-1 != this->meta_buf_fd) {
-                    res2 = ::close(this->meta_buf_fd);
+                    if (::close(this->meta_buf_fd)){
+                        return -1;
+                    }
                     this->meta_buf_fd = -1;
                 }
-                int err = res1 ? res1 : res2;
-                if (err) {
-                    return err;
-                }
-                int crypto_hash_fd = ::open(this->hf_.filename, O_WRONLY | O_CREAT, S_IRUSR|S_IRGRP);
 
+                int crypto_hash_fd = ::open(this->hf_.filename, O_WRONLY | O_CREAT, S_IRUSR|S_IRGRP);
                 if (crypto_hash_fd == -1) {
                     int e = errno;
                     LOG(LOG_ERR, "Open to transport failed: code=%d", e);
