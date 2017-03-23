@@ -622,23 +622,43 @@ public:
             }
         }
 
-        if (this->with_encryption){
+        uint8_t qhash[MD_HASH_LENGTH];
+        uint8_t fhash[MD_HASH_LENGTH];
 
-            ocrypto hash_buf_encrypt(this->with_encryption, this->with_checksum, this->cctx, this->rnd);
-            int hash_buf_file_fd = -1;
+        if (this->with_encryption){
 
             if (!this->meta_buf_is_open()) {
                 LOG(LOG_INFO, "MetaSeqBufCrypto::close() metafile not opened\n");
                 return 1;
             }
 
-            uint8_t qhash[MD_HASH_LENGTH];
-            uint8_t fhash[MD_HASH_LENGTH];
-
             if (this->meta_buf_close(qhash, fhash)) {
                 LOG(LOG_INFO, "MetaSeqBufCrypto::close() metafile close failed\n");
                 return 1;
             }
+        }
+        else {
+            if (this->with_checksum)
+            {
+                REDASSERT(this->meta_buf_file_size != nosize);
+                this->meta_buf_quick_hmac.final(qhash);
+                this->meta_buf_hmac.final(fhash);
+                this->meta_buf_file_size = nosize;
+
+                if (-1 != this->meta_buf_fd) {
+                    const int ret = ::close(this->meta_buf_fd);
+                    this->meta_buf_fd = -1;
+                    if (ret < 0) {
+                        return ret;
+                    }
+                }
+            }
+        }
+
+        if (this->with_encryption){
+
+            ocrypto hash_buf_encrypt(this->with_encryption, this->with_checksum, this->cctx, this->rnd);
+            int hash_buf_file_fd = -1;
 
             char path[1024] = {};
             char basename[1024] = {};
@@ -752,24 +772,6 @@ public:
         else {
             LOG(LOG_INFO, "Not encrypted closing sumbuf buffer");
 
-            if (this->with_checksum)
-            {
-                uint8_t qhash[MD_HASH_LENGTH];
-                uint8_t fhash[MD_HASH_LENGTH];
-
-                REDASSERT(this->meta_buf_file_size != nosize);
-                this->meta_buf_quick_hmac.final(qhash);
-                this->meta_buf_hmac.final(fhash);
-                this->meta_buf_file_size = nosize;
-
-                if (-1 != this->meta_buf_fd) {
-                    const int ret = ::close(this->meta_buf_fd);
-                    this->meta_buf_fd = -1;
-                    if (ret < 0) {
-                        return ret;
-                    }
-                }
-            }
 
             int crypto_hash_fd = ::open(this->hf_.filename, O_WRONLY | O_CREAT, S_IRUSR|S_IRGRP);
             if (crypto_hash_fd == -1) {
