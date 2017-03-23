@@ -40,6 +40,7 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include "utils/genfstat.hpp"
 #include "core/front_api.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/rdp_log.hpp"
