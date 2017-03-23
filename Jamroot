@@ -902,6 +902,23 @@ test-run test_rdp_client_test_card
       <library>openssl
       <covflag>nocover
     ;
+
+test-run test_rdp_client_large_pointer
+    : client_mods/test_rdp_client_large_pointer.cpp
+    :
+    : <library>bitmap
+      <library>png.o
+      <library>krb5
+      <library>gssglue
+      <library>png
+      <library>crypto
+      <library>d3des.o
+      <library>z
+      <library>dl
+      <library>openssl
+      <covflag>nocover
+    ;
+
 test-run test_rdp_client_tls_w2008
     : client_mods/test_rdp_client_tls_w2008.cpp
     :
