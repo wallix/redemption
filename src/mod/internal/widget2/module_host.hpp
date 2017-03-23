@@ -722,9 +722,7 @@ private:
             std::is_same<Cmd, RDPEllipseSC       >::value ||
             std::is_same<Cmd, RDPPolygonCB       >::value ||
             std::is_same<Cmd, RDPPolygonSC       >::value ||
-            std::is_same<Cmd, RDPPolyline        >::value ||
-            std::is_same<Cmd, RDPGlyphIndex      >::value ||
-            std::is_same<Cmd, RDP::RDPMultiScrBlt>::value
+            std::is_same<Cmd, RDPGlyphIndex      >::value
         >;
 
     template<class Cmd, class... Args, typename std::enable_if<
